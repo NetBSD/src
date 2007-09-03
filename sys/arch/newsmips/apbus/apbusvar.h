@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.6 2005/06/03 13:44:50 tsutsui Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.6.2.1 2007/09/03 14:28:21 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -47,5 +47,6 @@ int apbus_intr_dispatch(int, int);
 void *apbus_intr_establish(int, int, int, int (*)(void *), void *,
     const char *, int);
 struct newsmips_bus_dma_tag *apbus_dmatag_init(struct apbus_attach_args *);
+void apbus_wbflush(void);
 
 #define	SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)

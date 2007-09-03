@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.5.18.2 2006/12/30 20:46:53 yamt Exp $	*/
+/*	$NetBSD: newport.c,v 1.5.18.3 2007/09/03 14:29:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.5.18.2 2006/12/30 20:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.5.18.3 2007/09/03 14:29:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void newport_eraserows(void *, int, int, long);
 static int  newport_allocattr(void *, int, int, int, long *);
 
 /* accessops */
-static int     newport_ioctl(void *, void *, u_long, caddr_t, int,
+static int     newport_ioctl(void *, void *, u_long, void *, int,
     struct lwp *);
 static paddr_t newport_mmap(void *, void *, off_t, int);
 static int     newport_alloc_screen(void *, const struct wsscreen_descr *,
@@ -861,7 +861,7 @@ newport_allocattr(void *c, int fg, int bg, int flags, long *attr)
 /**** wsdisplay accessops ****/
 
 static int
-newport_ioctl(void *c, void *vs, u_long cmd, caddr_t data, int flag,
+newport_ioctl(void *c, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct newport_softc *sc = c;

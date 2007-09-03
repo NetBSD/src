@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158.2.2 2006/12/30 20:46:25 yamt Exp $
+# $NetBSD: GENERIC,v 1.158.2.3 2007/09/03 14:27:17 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158.2.2 $"
+#ident 		"GENERIC-$Revision: 1.158.2.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -120,8 +120,9 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	CODA		# Venus/Coda distributed file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -143,7 +144,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -199,8 +200,6 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
-fpu0 at mainbus?			# Floating-Point Coprocessor support
 
 
 # Basic Bus Support
@@ -334,6 +333,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons

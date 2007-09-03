@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87.16.2 2007/02/26 09:07:43 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87.16.3 2007/09/03 14:28:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.2 2007/02/26 09:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.3 2007/09/03 14:28:34 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.2 2007/02/26 09:07:43 yamt Exp $
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
@@ -188,6 +189,7 @@ cpu_startup()
 	 */
 	splhigh();
 	mtmsr(mfmsr() | PSL_EE | PSL_RI);
+	softintr__init();
 	if (platform.softintr_init != NULL)
 		platform.softintr_init();
 }

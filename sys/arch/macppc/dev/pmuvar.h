@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2.4.2 2007/02/26 09:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2.4.3 2007/09/03 14:27:37 yamt Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -68,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2.4.2 2007/02/26 09:07:21 yamt Exp $");
 #define PMU_INT_ACK		0x78	/* Read interrupt bits */
 #define PMU_CPU_SPEED		0x7d	/* Control CPU speed on some models */
 #define PMU_SLEEP		0x7f	/* Put CPU to sleep */
+#define PMU_SET_POLL_MASK	0x86	/*
+					 * 16bit mask enables autopolling per
+					 * device
+					 */
 #define PMU_I2C_CMD		0x9a	/* i2c commands */
 #define PMU_GET_LID_STATE	0xdc	/* Report lid state */
 #define PMU_GET_VERSION		0xea	/* Identify thyself */
@@ -141,7 +145,8 @@ enum {
 
 struct pmu_ops {
 	void *cookie;
-	int (*do_command)(void *, int, int, uint8_t *, uint8_t *);
+	int (*do_command)(void *, int, int, uint8_t *, int, uint8_t *);
+	void (*register_callback)(void *, void (*)(void *), void *);
 };
 
 void pmu_poweroff(void);

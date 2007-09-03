@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.11.12.1 2006/06/21 14:51:23 yamt Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.11.12.2 2007/09/03 14:25:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.11.12.1 2006/06/21 14:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.11.12.2 2007/09/03 14:25:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ static int	grfdevprint(void *, const char *);
 
 void
 grfdev_attach(struct grfdev_softc *sc,
-    int (*init)(struct grf_data *, int, caddr_t),
-    caddr_t regs, struct grfsw *sw)
+    int (*init)(struct grf_data *, int, uint8_t *),
+    void *regs, struct grfsw *sw)
 {
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;

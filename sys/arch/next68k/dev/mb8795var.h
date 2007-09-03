@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.8 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.8.8.1 2007/09/03 14:28:27 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -108,7 +108,7 @@ struct mb8795_softc {
 
 void mb8795_config(struct mb8795_softc *, int *, int, int);
 void mb8795_init(struct mb8795_softc *);
-int mb8795_ioctl(struct ifnet *, u_long, caddr_t);
+int mb8795_ioctl(struct ifnet *, u_long, void *);
 void mb8795_reset(struct mb8795_softc *);
 void mb8795_start(struct ifnet *);
 void mb8795_stop(struct mb8795_softc *);

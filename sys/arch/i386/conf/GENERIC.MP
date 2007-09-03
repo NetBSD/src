@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MP,v 1.5.12.2 2006/12/30 20:46:04 yamt Exp $
+#	$NetBSD: GENERIC.MP,v 1.5.12.3 2007/09/03 14:26:30 yamt Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #
@@ -14,5 +14,3 @@ options 	APM_NO_IDLE
 #options 	MPVERBOSE
 #options 	DEBUG
 options 	MPBIOS		# configure CPUs and APICs using MPBIOS
-
-ioapic*		at mainbus? apid ?

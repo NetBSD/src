@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.1.46.1 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.1.46.2 2007/09/03 14:29:08 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -52,7 +52,7 @@ NS16550_init(int addr, int speed)
 	com_port->dlm = speed >> 8;
 
 	com_port->lcr = 0x03;  /* 8 data, 1 stop, no parity */
-	com_port->mcr = 0x00;
+	com_port->mcr = 0x03;  /* Set DTR and RTS */
 	com_port->fcr = 0x07;  /* Clear & enable FIFOs */
 	com_port->ier = 0x00;
 

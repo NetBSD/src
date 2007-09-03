@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.16.16.1 2006/12/30 20:45:26 yamt Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.16.16.2 2007/09/03 14:22:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,9 +89,9 @@ struct grfdyninfo {
 };
 
 struct	grfinfo {
-	caddr_t	gd_regaddr;		/* control registers physaddr */
+	void *	gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
-	caddr_t	gd_fbaddr;		/* frame buffer physaddr */
+	void *	gd_fbaddr;		/* frame buffer physaddr */
 	int	gd_fbsize;		/* frame buffer size */
 	short	gd_colors;		/* number of colors */
 	short	gd_planes;		/* number of planes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.22.10.1 2007/09/03 14:27:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -50,6 +50,8 @@ extern adb_trace_xlate_t adb_trace_xlations[];
 
 extern int	adb_polling;
 
+extern void	*adb_softintr_cookie;
+
 #ifdef DEBUG
 #ifndef ADB_DEBUG
 #define ADB_DEBUG
@@ -97,3 +99,4 @@ int	ADBOp(Ptr, Ptr, Ptr, short);
 int	adb_read_date_time(unsigned long *);
 int	adb_set_date_time(unsigned long);
 #endif /* !MRG_ADB */
+void	adb_soft_intr(void);

@@ -34,7 +34,7 @@
 /*** needs to be completed MK-990306 ***/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15.2.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15.2.3 2007/09/03 14:30:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15.2.2 2006/12/30 20:47:14 yamt Exp $");
 static	void	ka48_conf __P((void));
 static	void	ka48_steal_pages __P((void));
 static	void	ka48_memerr __P((void));
-static	int	ka48_mchk __P((caddr_t));
+static	int	ka48_mchk __P((void *));
 static	void	ka48_halt __P((void));
 static	void	ka48_reboot __P((int));
 static	void	ka48_cache_enable __P((void));
@@ -132,7 +132,7 @@ ka48_memerr()
 
 int
 ka48_mchk(addr)
-	caddr_t addr;
+	void *addr;
 {
 	panic("Machine check");
 	return 0;

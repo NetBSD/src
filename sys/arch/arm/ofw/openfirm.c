@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 2005/06/03 13:01:29 scw Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4.2.1 2007/09/03 14:23:23 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.4 2005/06/03 13:01:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.4.2.1 2007/09/03 14:23:23 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -222,6 +222,39 @@ OF_getprop(handle, prop, buf, buflen)
 		int size;
 	} args = {
 		"getprop",
+		4,
+		1,
+	};
+
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = buf;
+	args.buflen = buflen;
+
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.size;
+}
+
+int
+OF_setprop(handle, prop, buf, buflen)
+	int handle;
+	const char *prop;
+	const void *buf;
+	int buflen;
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		const char *prop;
+		const void *buf;
+		int buflen;
+		int size;
+	} args = {
+		"setprop",
 		4,
 		1,
 	};

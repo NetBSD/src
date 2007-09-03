@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.8 2004/03/24 19:42:04 matt Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.8.16.1 2007/09/03 14:27:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,9 +140,7 @@ struct zsc_softc {
 	dbdma_regmap_t *zsc_txdmareg[2];
 	dbdma_command_t *zsc_txdmacmd[2];
 	/* XXX tx only, for now */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void *zsc_si;			/* softintr handler */
-#endif
 };
 
 /*
@@ -169,7 +167,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 #define splzs spltty
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
+int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, void *data));
 /* XXX - This is a bit gross... */
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 
@@ -192,5 +190,5 @@ void zs_kgdb_init __P((void));
 
 #ifdef ZS_TXDMA
 void zstty_txdma_int __P((void *));
-void zs_dma_setup __P((struct zs_chanstate *, caddr_t, int));
+void zs_dma_setup __P((struct zs_chanstate *, void *, int));
 #endif

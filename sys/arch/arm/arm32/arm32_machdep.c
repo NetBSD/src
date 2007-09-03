@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.45.2.1 2007/02/26 09:05:54 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.45.2.2 2007/09/03 14:23:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.45.2.1 2007/02/26 09:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.45.2.2 2007/09/03 14:23:13 yamt Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.45.2.1 2007/02/26 09:05:54 yamt 
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -89,7 +90,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
@@ -419,4 +420,17 @@ parse_mi_bootargs(args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+
+	want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
 }

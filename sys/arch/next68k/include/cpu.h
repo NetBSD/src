@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.8.1 2007/02/26 09:07:40 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29.8.2 2007/09/03 14:28:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -105,8 +105,10 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
 	int	ci_mtx_count;
-        int	ci_mtx_oldspl;
+	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -152,8 +154,8 @@ extern volatile unsigned int interrupt_depth;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched; 	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched = 1; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched = 1; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -171,35 +173,20 @@ extern int want_resched; 	/* resched() was called */
 #define aston() (astpending++)
 
 extern	int	astpending;	/* need to trap before returning to user mode */
-extern	int	want_resched;	/* resched() was called */
 
 extern	void (*vectab[])(void);
 
-struct frame;
 struct fpframe;
-struct pcb;
 
 /* locore.s functions */
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 
-int	suline(caddr_t, caddr_t);
-void	savectx(struct pcb *);
-void	switch_exit(struct lwp *);
-void	switch_lwp_exit(struct lwp *);
-void	proc_trampoline(void);
+int	suline(void *, void *);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));
-int   	nmihand(void *);
-
-/* sys_machdep.c functions */
-int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-
-/* vm_machdep.c functions */
-void	physaccess(caddr_t, caddr_t, int, int);
-void	physunaccess(caddr_t, int);
-int	kvtop(caddr_t);
+int	nmihand(void *);
 
 /* clock.c functions */
 void	next68k_calibrate_delay(void);
@@ -222,7 +209,7 @@ void	next68k_calibrate_delay(void);
 #else
 #define	NEXT_SLOT_ID_BMAP	0x00100000
 #endif
-#define NEXT_SLOT_ID            0x0
+#define NEXT_SLOT_ID		0x0
 #endif	/* M68040 */
 
 /****************************************************************/
@@ -344,11 +331,11 @@ void	next68k_calibrate_delay(void);
 #define	NEXT_I_ENETX_DMA	NEXT_I(6,1,28)
 #define	NEXT_I_ENETR_DMA	NEXT_I(6,2,27)
 #define	NEXT_I_SCSI_DMA		NEXT_I(6,3,26)
-#define	NEXT_I_DISK_DMA	        NEXT_I(6,4,25)
+#define	NEXT_I_DISK_DMA		NEXT_I(6,4,25)
 #define	NEXT_I_PRINTER_DMA	NEXT_I(6,5,24)
 #define	NEXT_I_SOUND_OUT_DMA	NEXT_I(6,6,23)
 #define	NEXT_I_SOUND_IN_DMA	NEXT_I(6,7,22)
-#define	NEXT_I_SCC_DMA	        NEXT_I(6,8,21)
+#define	NEXT_I_SCC_DMA		NEXT_I(6,8,21)
 #define	NEXT_I_DSP_DMA		NEXT_I(6,9,20)
 #define	NEXT_I_M2R_DMA		NEXT_I(6,10,19)
 #define	NEXT_I_R2M_DMA		NEXT_I(6,11,18)
@@ -396,11 +383,11 @@ void	next68k_calibrate_delay(void);
 
 #define	INTIOBASE	(0x02000000)
 #define	INTIOTOP	(0x02120000)
-#define MONOBASE        (0x0b000000)
-#define MONOTOP         (0x0b03a800)
+#define MONOBASE	(0x0b000000)
+#define MONOTOP		(0x0b03a800)
 #define COLORBASE	(0x2c000000)
 #define COLORTOP	(0x2c1D4000)
-                                     
+
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"
 

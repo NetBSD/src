@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44.2.3 2007/09/03 14:31:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44.2.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44.2.3 2007/09/03 14:31:15 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44.2.2 2006/12/30 20:47:22 yamt Exp $
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/malloc.h>
 #include <machine/cpu.h>
 #include <x68k/x68k/iodevice.h>
 #include <machine/bootinfo.h>
@@ -63,8 +62,6 @@ static struct device *find_dev_byname(const char *);
 
 int x68k_realconfig;
 
-#include <sys/kernel.h>
-
 /*
  * called at boot time, configure all devices on system
  */
@@ -72,6 +69,8 @@ void
 cpu_configure(void)
 {
 	x68k_realconfig = 1;
+
+	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
@@ -93,8 +92,8 @@ cpu_rootconf(void)
 
 /*
  * use config_search_ia to find appropriate device, then call that device
- * directly with NULL device variable storage.  A device can then 
- * always tell the difference between the real and console init 
+ * directly with NULL device variable storage.  A device can then
+ * always tell the difference between the real and console init
  * by checking for NULL.
  */
 int
@@ -129,7 +128,7 @@ x68k_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 
 /*
  * this function needs to get enough configured to do a console
- * basically this means start attaching the grfxx's that support 
+ * basically this means start attaching the grfxx's that support
  * the console. Kinda hacky but it works.
  */
 void
@@ -292,8 +291,8 @@ find_dev_byname(const char *name)
 	return dv;
 }
 
-/* 
- * mainbus driver 
+/*
+ * mainbus driver
  */
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);

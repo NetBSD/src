@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.6.2.3 2007/02/26 09:09:02 yamt Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.6.2.4 2007/09/03 14:31:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.3 2007/02/26 09:09:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.4 2007/09/03 14:31:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.3 2007/02/26 09:09:02 yamt Exp
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/kauth.h>
 
 #include <compat/sys/signal.h>
@@ -105,7 +106,6 @@ darwin_sys_getattrlist(l, v, retval)
 		syscallarg(size_t) buflen;
 		syscallarg(unsigned long) options;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct darwin_attrlist kalist;
 	char *tbuf;
 	char *bp;
@@ -113,24 +113,17 @@ darwin_sys_getattrlist(l, v, retval)
 	size_t shift = 0;
 	int null = 0;
 	int error = 0;
-	int follow = 0;
+	int follow = NOFOLLOW;
 	u_long *whole_len_p = NULL;
 	darwin_attrreference_t *cmn_name_p = NULL;
 	darwin_attrreference_t *vol_mountpoint_p = NULL;
 	darwin_attrreference_t *vol_name_p = NULL;
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
-	struct sys___stat30_args cup1;
-	struct stat *ust;
 	struct stat st;
-	struct compat_20_sys_statfs_args cup2;
-	struct statfs12 *uf;
-	struct statfs12 f;
+	struct statvfs *f;
 	struct nameidata nd;
 	struct vnode *vp;
 	kauth_cred_t cred;
-	const char *path;
-	caddr_t sg = stackgap_init(p, 0);
-	int fl;
 
 	if ((error = copyin(SCARG(uap, alist), &kalist, sizeof(kalist))) != 0)
 		return error;
@@ -151,64 +144,39 @@ darwin_sys_getattrlist(l, v, retval)
 	    kalist.fileattr, kalist.forkattr);
 #endif
 
-	/*
-	 * Lookup emulation shadow tree once
-	 */
-	fl = CHECK_ALT_FL_EXISTS;
-	if (follow == 0)
-		fl |= CHECK_ALT_FL_SYMLINK;
-	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
-
-	/*
-	 * Get the informations for path: file related info
-	 */
-	ust = stackgap_alloc(p, &sg, sizeof(st));
-	SCARG(&cup1, path) = path;
-	SCARG(&cup1, ub) = ust;
-	if (follow) {
-		if ((error = sys___stat30(l, &cup1, retval)) != 0)
-			return error;
-	} else {
-		if ((error = sys___lstat30(l, &cup1, retval)) != 0)
-			return error;
-	}
-
-	if ((error = copyin(ust, &st, sizeof(st))) != 0)
-		return error;
-
-	/*
-	 * filesystem related info
-	 */
-	uf = stackgap_alloc(p, &sg, sizeof(f));
-	SCARG(&cup2, path) = path;
-	SCARG(&cup2, buf) = uf;
-	if ((error = compat_20_sys_statfs(l, &cup2, retval)) != 0)
-	 	return error;
-
-	if ((error = copyin(uf, &f, sizeof(f))) != 0)
-		return error;
-
-	/*
-	 * Prepare the buffer
-	 */
+	/* Allocate buffers now... */
+	f = STATVFSBUF_GET();
 	tbuf = malloc(len, M_TEMP, M_WAITOK);
-	bp = tbuf;
 
-	/*
-	 * vnode structure
-	 */
+	/* We are going to need the vnode itself... */
 
 	cred = kauth_cred_dup(l->l_cred);
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 
 	vp = nd.ni_vp;
 	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
 		goto out3;
+
+	/* Get the informations for path: file related info */
+	error = vn_stat(vp, &st, l);
+	if (error != 0)
+		goto out3;
+
+	/* filesystem related info */
+	error = dostatvfs(vp->v_mount, f, l, 0, 1);
+	if (error != 0)
+		goto out3;
+
+	/*
+	 * Prepare the buffer
+	 */
+	bp = tbuf;
 
 	/*
 	 * Buffer whole length: is always present
@@ -240,7 +208,7 @@ darwin_sys_getattrlist(l, v, retval)
 
 	if (kalist.commonattr & DARWIN_ATTR_CMN_FSID) {
 		fsid_t fs;
-		fs = f.f_fsid;
+		fs = f->f_fsidx;
 		if (ATTR_APPEND(fs, bp, len) != 0)
 			goto out3;
 	}
@@ -410,7 +378,8 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_FSTYPE) {
 		unsigned long fstype;
 
-		fstype = f.f_type;
+		/* We'd need to convert f_fstypename - done for COMPAT_09 */
+		fstype = 0;  /* f->f_type; */
 		if (ATTR_APPEND(fstype, bp, len) != 0)
 			goto out3;
 	}
@@ -422,7 +391,7 @@ darwin_sys_getattrlist(l, v, retval)
 		 * XXX Volume signature, used to distinguish
 		 * between volumes inside the same filesystem.
 		 */
-		sign = f.f_fsid.__fsid_val[0];
+		sign = f->f_fsidx.__fsid_val[0];
 		if (ATTR_APPEND(sign, bp, len) != 0)
 			goto out3;
 	}
@@ -430,7 +399,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_SIZE) {
 		off_t size;
 
-		size = f.f_blocks * f.f_bsize;
+		size = f->f_blocks * f->f_bsize;
 		if (ATTR_APPEND(size, bp, len) != 0)
 			goto out3;
 	}
@@ -438,7 +407,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_SPACEFREE) {
 		off_t ofree;
 
-		ofree = f.f_bfree * f.f_bsize;
+		ofree = f->f_bfree * f->f_bsize;
 		if (ATTR_APPEND(ofree, bp, len) != 0)
 			goto out3;
 	}
@@ -446,7 +415,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_SPACEAVAIL) {
 		off_t avail;
 
-		avail = f.f_bavail * f.f_bsize;
+		avail = f->f_bavail * f->f_bsize;
 		if (ATTR_APPEND(avail, bp, len) != 0)
 			goto out3;
 	}
@@ -454,7 +423,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_MINALLOCATION) {
 		off_t omin;
 
-		omin = f.f_bsize; /* XXX proably wrong */
+		omin = f->f_bsize; /* XXX probably wrong */
 		if (ATTR_APPEND(omin, bp, len) != 0)
 			goto out3;
 	}
@@ -462,7 +431,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_ALLOCATIONCLUMP) {
 		off_t clump;
 
-		clump = f.f_bsize; /* XXX proably wrong */
+		clump = f->f_bsize; /* XXX proably wrong */
 		if (ATTR_APPEND(clump, bp, len) != 0)
 			goto out3;
 	}
@@ -470,7 +439,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_IOBLOCKSIZE) {
 		unsigned long size;
 
-		size = f.f_iosize;
+		size = f->f_iosize;
 		if (ATTR_APPEND(size, bp, len) != 0)
 			goto out3;
 	}
@@ -478,7 +447,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_OBJCOUNT) {
 		unsigned long cnt;
 
-		cnt = f.f_files;
+		cnt = f->f_files;
 		if (ATTR_APPEND(cnt, bp, len) != 0)
 			goto out3;
 	}
@@ -486,7 +455,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_FILECOUNT) {
 		unsigned long cnt;
 
-		cnt = f.f_files; /* XXX only files */
+		cnt = f->f_files; /* XXX only files */
 		if (ATTR_APPEND(cnt, bp, len) != 0)
 			goto out3;
 	}
@@ -502,7 +471,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_MAXOBJCOUNT) {
 		unsigned long cnt;
 
-		cnt = f.f_files + f.f_ffree;
+		cnt = f->f_files + f->f_ffree;
 		if (ATTR_APPEND(cnt, bp, len) != 0)
 			goto out3;
 	}
@@ -526,7 +495,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_MOUNTFLAGS) {
 		unsigned long flags;
 
-		flags = f.f_flags; /* XXX need convertion? */
+		flags = f->f_flag; /* XXX need convertion? */
 		if (ATTR_APPEND(flags, bp, len) != 0)
 			goto out3;
 	}
@@ -609,7 +578,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.fileattr & DARWIN_ATTR_FILE_ALLOCSIZE) {
 		off_t size;
 
-		size = st.st_blocks * f.f_bsize;
+		size = st.st_blocks * f->f_bsize;
 		if (ATTR_APPEND(size, bp, len) != 0)
 			goto out3;
 	}
@@ -672,7 +641,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.fileattr & DARWIN_ATTR_FILE_DATAALLOCSIZE) { /* All forks */
 		off_t size;
 
-		size = st.st_blocks * f.f_bsize;
+		size = st.st_blocks * f->f_bsize;
 		if (ATTR_APPEND(size, bp, len) != 0)
 			goto out3;
 	}
@@ -722,7 +691,7 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.forkattr & DARWIN_ATTR_FORK_ALLOCSIZE) {
 		off_t size;
 
-		size = st.st_blocks * f.f_bsize;
+		size = st.st_blocks * f->f_bsize;
 		if (ATTR_APPEND(size, bp, len) != 0)
 			goto out3;
 	}
@@ -747,8 +716,8 @@ darwin_sys_getattrlist(l, v, retval)
 	if (vol_mountpoint_p) {		/* DARWIN_ATTR_VOL_MOUNTPOINT */
 		vol_mountpoint_p->attr_dataoffset =
 		    (u_long)bp - (u_long)vol_mountpoint_p;
-		vol_mountpoint_p->attr_length = strlen(f.f_mntonname);
-		if (darwin_attr_append(f.f_mntonname,
+		vol_mountpoint_p->attr_length = strlen(f->f_mntonname);
+		if (darwin_attr_append(f->f_mntonname,
 		    vol_mountpoint_p->attr_length, &bp, &len) != 0)
 			goto out3;
 
@@ -761,8 +730,8 @@ darwin_sys_getattrlist(l, v, retval)
 	if (vol_mounteddevice_p) {	/* DARWIN_ATTR_VOL_MOUNTEDDEVICE */
 		vol_mounteddevice_p->attr_dataoffset =
 		    (u_long)bp - (u_long)vol_mounteddevice_p;
-		vol_mounteddevice_p->attr_length = strlen(f.f_mntfromname);
-		if (darwin_attr_append(f.f_mntfromname,
+		vol_mounteddevice_p->attr_length = strlen(f->f_mntfromname);
+		if (darwin_attr_append(f->f_mntfromname,
 		    vol_mounteddevice_p->attr_length, &bp, &len) != 0)
 			goto out3;
 
@@ -803,5 +772,6 @@ out2:
 	kauth_cred_free(cred);
 	free(tbuf, M_TEMP);
 
+	STATVFSBUF_PUT(f);
 	return error;
 }

@@ -1,9 +1,8 @@
-/*	$NetBSD: linux32_syscall.c,v 1.5.12.4 2007/02/26 09:05:39 yamt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.5.12.5 2007/09/03 14:22:31 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.4 2007/02/26 09:05:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.5 2007/09/03 14:22:31 yamt Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_systrace.h"
 
 #include <sys/param.h>
@@ -11,12 +10,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.4 2007/02/26 09:05:39 yam
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -45,7 +38,7 @@ void
 linux32_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -61,7 +54,7 @@ linux32_syscall_plain(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -106,7 +99,7 @@ linux32_syscall_plain(frame)
 			args[0] = frame->tf_rbx & 0xffffffff;
 			break;
 		default:
-			printf("linux syscall %d bogus argument size %ld",
+			printf("linux32 syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
 			goto out;
@@ -142,7 +135,8 @@ out:
 		/* nothing to do */
 		break;
 	default:
-		frame->tf_rax = native_to_linux32_errno[error];
+		error = native_to_linux32_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -154,7 +148,7 @@ void
 linux32_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -162,10 +156,8 @@ linux32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
-#if defined(KTRACE) || defined(SYSTRACE)
 	int i;
 	register_t args64[8];
-#endif
 
 	uvmexp.syscalls++;
 	l = curlwp;
@@ -174,7 +166,7 @@ linux32_syscall_fancy(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -219,13 +211,10 @@ linux32_syscall_fancy(frame)
 			args[0] = frame->tf_rbx & 0xffffffff;
 			break;
 		default:
-			printf("linux syscall %d bogus argument size %ld",
+			printf("linux32 syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
-#if defined(KTRACE) || defined(SYSTRACE)
 			goto out;
-#endif
-			break;
 		}
 	}
 
@@ -236,32 +225,17 @@ linux32_syscall_fancy(frame)
 #endif
 	KERNEL_LOCK(1, l);
 
-#if defined(KTRACE) || defined(SYSTRACE)
-	if (
-#ifdef KTRACE
-	    KTRPOINT(p, KTR_SYSCALL) ||
-#endif
-#ifdef SYSTRACE
-	    ISSET(p->p_flag, PK_SYSTRACE)
-#else
-	0
-#endif
-	) {
-		for (i = 0; i < (argsize >> 2); i++)
-			args64[i] = args[i] & 0xffffffff;
-		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
-			goto out;
-	}
-#endif
+	for (i = 0; i < (argsize >> 2); i++)
+		args64[i] = args[i] & 0xffffffff;
+	/* XXX we need to pass argsize << 1 here? */
+	if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 
 	error = (*callp->sy_call)(l, args, rval);
-#if defined(KTRACE) || defined(SYSTRACE)
 out:
-#endif
 	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
@@ -280,14 +254,12 @@ out:
 		/* nothing to do */
 		break;
 	default:
-		frame->tf_rax = native_to_linux32_errno[error];
+		error = native_to_linux32_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
-#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(l, code, args64, rval, error);
-#endif
-
 	userret(l);
 }

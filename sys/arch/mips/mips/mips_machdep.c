@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.178.2.3 2007/02/26 09:07:30 yamt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.178.2.4 2007/09/03 14:28:02 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178.2.3 2007/02/26 09:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178.2.4 2007/09/03 14:28:02 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -139,9 +139,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178.2.3 2007/02/26 09:07:30 yamt 
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <machine/kcore.h>
+#include <machine/cpu.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -153,7 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.178.2.3 2007/02/26 09:07:30 yamt 
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
-#include <machine/cpu.h>
 #include <mips/userret.h>
 
 #ifdef __HAVE_BOOTINFO_H
@@ -208,11 +210,9 @@ int mips3_pg_cached;
 u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
-struct	lwp  *fpcurlwp;
-struct	pcb  *curpcb;
 struct	segtab *segbase;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -779,6 +779,14 @@ mips_vector_init(void)
 {
 	const struct pridtab *ct;
 
+	/*
+	 * XXX Set-up curlwp/curcpu again.  They may have been clobbered
+	 * beween verylocore and here.
+	 */
+	lwp0.l_cpu = &cpu_info_store;
+	cpu_info_store.ci_curlwp = &lwp0;
+	curlwp = &lwp0;
+
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
 		if (MIPS_PRID_CID(cpu_id) != ct->cpu_cid ||
@@ -1243,7 +1251,7 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1295,7 +1303,7 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -1357,7 +1365,7 @@ dumpsys(void)
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1415,7 +1423,7 @@ dumpsys(void)
 				n = BYTES_PER_DUMP;
 
 			error = (*dump)(dumpdev, blkno,
-			    (caddr_t)MIPS_PHYS_TO_KSEG0(maddr), n);
+			    (void *)MIPS_PHYS_TO_KSEG0(maddr), n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1475,7 +1483,7 @@ mips_init_msgbuf(void)
 
 	vps->end -= atop(sz);
 	vps->avail_end -= atop(sz);
-	msgbufaddr = (caddr_t) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
+	msgbufaddr = (void *) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
 	initmsgbuf(msgbufaddr, sz);
 
 	/* Remove the last segment if it now has no pages. */
@@ -1687,7 +1695,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_SR]    = f->f_regs[_R_SR];
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_EPC])) != -1)
+	    (void *) gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;
@@ -1761,4 +1769,26 @@ cpu_setmcontext(l, mcp, flags)
 	mutex_exit(&p->p_smutex);
 
 	return (0);
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+	ci->ci_want_resched = 1;
+
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		aston(curlwp);
+}
+
+void
+cpu_idle(void)
+{
+	void (*mach_idle)(void) = (void (*)(void))CPU_IDLE;
+
+	while (!curcpu()->ci_want_resched)
+		(*mach_idle)();
 }

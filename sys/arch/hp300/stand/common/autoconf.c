@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.4.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.4.2 2007/09/03 14:25:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -231,7 +231,7 @@ find_devs(void)
 {
 	short sc, sctop;
 	u_char *id_reg;
-	caddr_t addr;
+	void *addr;
 	struct hp_hw *hw;
 
 	hw = sc_table;
@@ -239,7 +239,7 @@ find_devs(void)
 	for (sc = -1; sc < sctop; sc++) {
 		if (DIO_INHOLE(sc))
 			continue;
-		addr = (caddr_t)sctoaddr(sc);
+		addr = (void *)sctoaddr(sc);
 		if (badaddr(addr))
 			continue;
 

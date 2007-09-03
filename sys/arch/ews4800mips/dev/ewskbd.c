@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.1.18.3 2007/02/26 09:06:25 yamt Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.1.18.4 2007/09/03 14:24:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.1.18.3 2007/02/26 09:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.1.18.4 2007/09/03 14:24:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -118,7 +118,7 @@ static void ewskbd_wskbd_input(struct zs_chanstate *, u_char);
 static int  ewskbd_wskbd_enable(void *, int);
 static void ewskbd_wskbd_set_leds(void *, int);
 static int  ewskbd_wskbd_get_leds(void *);
-static int  ewskbd_wskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int  ewskbd_wskbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 void ewskbd_zsc_cnattach(uint32_t, uint32_t, int);
 static void ewskbd_zsc_wskbd_getc(void *, u_int *, int *);
@@ -459,7 +459,7 @@ ewskbd_wskbd_get_leds(void *cookie)
 }
 
 static int
-ewskbd_wskbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+ewskbd_wskbd_ioctl(void *cookie, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 
@@ -555,6 +555,7 @@ ewskbd_wskbd_pollc(void *cookie, int on)
 	if (on && !__polling) {
 		/* disable interrupt driven I/O */
 		s = splhigh();
+		__polling = true;
 	} else if (!on && __polling) {
 		/* enable interrupt driven I/O */
 		__polling = false;

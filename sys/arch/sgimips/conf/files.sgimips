@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.38.12.2 2006/12/30 20:46:51 yamt Exp $
+#	$NetBSD: files.sgimips,v 1.38.12.3 2007/09/03 14:29:13 yamt Exp $
 
 maxpartitions 16
 
@@ -37,10 +37,17 @@ file dev/cons.c
 # Machine-dependent drivers
 include "arch/sgimips/ioc/files.ioc"
 include "arch/sgimips/dev/files.dev"
+defflag opt_sgimace.h MACE_NEEDS_DELAYS
 include "arch/sgimips/mace/files.mace"
 
 # Machine-independent drivers.
 include "dev/i2o/files.i2o"
+
+# wscons stuff
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+include "dev/wsfb/files.wsfb"
 
 include "dev/pci/files.pci"
 file	arch/sgimips/pci/pci_machdep.c	pci
@@ -49,8 +56,6 @@ include "dev/eisa/files.eisa"
 file	arch/sgimips/eisa/eisa_machdep.c	eisa
 
 include "dev/vme/files.vme"
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 include "dev/pckbport/files.pckbport"
 include "dev/usb/files.usb"
 include "dev/scsipi/files.scsipi"

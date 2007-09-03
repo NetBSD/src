@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.19.2.2 2006/12/30 20:45:29 yamt Exp $
+ * $NetBSD: main.c,v 1.19.2.3 2007/09/03 14:23:00 yamt Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -118,7 +118,7 @@ pain(void *aio,	void *cons)
 	void (*start_it)(void *, u_long, u_long, void *, u_long, u_long, int,
 	    void *, int, int, u_long, u_long, u_long, int);
 
-	caddr_t kp;
+	void *kp;
 	u_int16_t *kvers;
 	int	ksize;
 	void	*esym = 0;

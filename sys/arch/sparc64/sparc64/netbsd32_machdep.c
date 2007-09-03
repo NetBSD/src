@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.3 2007/02/26 09:08:28 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.4 2007/09/03 14:30:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.3 2007/02/26 09:08:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.4 2007/09/03 14:30:24 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -252,9 +252,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
+	kwin = (struct rwindow32 *)((char *)tf - CCFSZ);
 	error = (rwindow_save(l) || 
-	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
 	mutex_enter(&p->p_smutex);
 	if (error) {
@@ -321,7 +321,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	ucontext32_t uc;
 	struct sparc32_sigframe_siginfo *fp;
-	netbsd32_pointer_t catcher;
+	netbsd32_intptr_t catcher;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow32 *oldsp, *newsp;
 	int ucsz, error;
@@ -336,7 +336,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sparc32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
+		    ((char *)l->l_sigstk.ss_sp +
 					  l->l_sigstk.ss_size);
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
@@ -348,7 +348,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
-	uc.uc_link = 0;
+	uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
@@ -453,7 +453,7 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 	}
 #endif
 	scp = (struct netbsd32_sigcontext13 *)(u_long)SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 	{
 #ifdef DEBUG
 		printf("compat_13_netbsd32_sigreturn: copyin failed\n");
@@ -548,7 +548,7 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 	}
 #endif
 	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 	{
 #ifdef DEBUG
 		printf("netbsd32_sigreturn14: copyin failed: scp=%p\n", scp);
@@ -955,7 +955,7 @@ ev_out32(struct firm_event *e, int n, struct uio *uio)
 		e32.value = e->value;
 		e32.time.tv_sec = e->time.tv_sec;
 		e32.time.tv_usec = e->time.tv_usec;
-		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		error = uiomove((void *)&e32, sizeof(e32), uio);
 		e++;
 	}
 	return (error);
@@ -1042,9 +1042,9 @@ netbsd32_to_fbcmap(s32p, p, cmd)
 
 	p->index = s32p->index;
 	p->count = s32p->count;
-	p->red = (u_char *)(u_long)s32p->red;
-	p->green = (u_char *)(u_long)s32p->green;
-	p->blue = (u_char *)(u_long)s32p->blue;
+	p->red = NETBSD32PTR64(s32p->red);
+	p->green = NETBSD32PTR64(s32p->green);
+	p->blue = NETBSD32PTR64(s32p->blue);
 }
 
 static inline void
@@ -1060,8 +1060,8 @@ netbsd32_to_fbcursor(s32p, p, cmd)
 	p->hot = s32p->hot;
 	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap, cmd);
 	p->size = s32p->size;
-	p->image = (char *)(u_long)s32p->image;
-	p->mask = (char *)(u_long)s32p->mask;
+	p->image = NETBSD32PTR64(s32p->image);
+	p->mask = NETBSD32PTR64(s32p->mask);
 }
 
 static inline void
@@ -1073,9 +1073,9 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 
 	p->op_nodeid = s32p->op_nodeid;
 	p->op_namelen = s32p->op_namelen;
-	p->op_name = (char *)(u_long)s32p->op_name;
+	p->op_name = NETBSD32PTR64(s32p->op_name);
 	p->op_buflen = s32p->op_buflen;
-	p->op_buf = (char *)(u_long)s32p->op_buf;
+	p->op_buf = NETBSD32PTR64(s32p->op_buf);
 }
 
 static inline void
@@ -1124,9 +1124,9 @@ netbsd32_from_opiocdesc(p, s32p, cmd)
 
 	s32p->op_nodeid = p->op_nodeid;
 	s32p->op_namelen = p->op_namelen;
-	s32p->op_name = (netbsd32_charp)(u_long)p->op_name;
+	NETBSD32PTR32(s32p->op_name, p->op_name);
 	s32p->op_buflen = p->op_buflen;
-	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
+	NETBSD32PTR32(s32p->op_buf, p->op_buf);
 }
 
 int
@@ -1137,7 +1137,7 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 	struct lwp *l;
 {
 	u_int size;
-	caddr_t data, memp = NULL;
+	void *data, *memp = NULL;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 	int error;

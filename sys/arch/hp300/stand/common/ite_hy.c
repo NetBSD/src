@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.4.4.1 2006/06/21 14:51:28 yamt Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.4.4.2 2007/09/03 14:25:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -134,7 +134,7 @@ hyper_ite_fontinit(struct ite_data *ip)
 	int stride, width;
 
 	dp = (u_char *)(getword(ip, getword(ip, FONTROM) + FONTADDR) +
-	    ip->regbase) + FONTDATA;
+	    (char *)ip->regbase) + FONTDATA;
 	stride = ip->fbwidth >> 3;
 	width = (ip->ftwidth + 7) / 8;
 

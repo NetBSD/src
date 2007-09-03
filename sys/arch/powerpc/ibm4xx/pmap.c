@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36.2.3 2007/02/26 09:07:51 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36.2.4 2007/09/03 14:28:56 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36.2.3 2007/02/26 09:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36.2.4 2007/09/03 14:28:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36.2.3 2007/02/26 09:07:51 yamt Exp $");
  * 4GB.  At 16KB/page it is 256K entries or 2MB.
  */
 #define KERNMAP_SIZE	((0xffffffffU/PAGE_SIZE)+1)
-caddr_t kernmap;
+void *kernmap;
 
 #define MINCTX		2
 #define NUMCTX		256
@@ -181,7 +181,7 @@ static inline char *pa_to_attr(paddr_t);
 static inline volatile u_int *pte_find(struct pmap *, vaddr_t);
 static inline int pte_enter(struct pmap *, vaddr_t, u_int);
 
-static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, bool);
+static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, int);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
@@ -273,7 +273,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Allocate the kernel page table at the end of
 	 * kernel space so it's in the locked TTE.
 	 */
-	kernmap = (caddr_t)kernelend;
+	kernmap = (void *)kernelend;
 
 	/*
 	 * Initialize kernel page table.
@@ -483,7 +483,8 @@ pmap_init(void)
 	splx(s);
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL,
+	    IPL_VM);
 }
 
 /*
@@ -693,7 +694,7 @@ pmap_zero_page(paddr_t pa)
 {
 
 #ifdef PPC_4XX_NOCACHE
-	memset((caddr_t)pa, 0, PAGE_SIZE);
+	memset((void *)pa, 0, PAGE_SIZE);
 #else
 	int i;
 
@@ -711,15 +712,15 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
-	memcpy((caddr_t)dst, (caddr_t)src, PAGE_SIZE);
+	memcpy((void *)dst, (void *)src, PAGE_SIZE);
 	dcache_flush_page(dst);
 }
 
 /*
- * This returns whether this is the first mapping of a page.
+ * This returns != 0 on success.
  */
 static inline int
-pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, bool wired)
+pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 {
 	struct pv_entry *pv, *npv = NULL;
 	int s;
@@ -741,14 +742,20 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, bool wired)
 		 * There is at least one other VA mapping this page.
 		 * Place this entry after the header.
 		 */
-		npv = pool_get(&pv_pool, PR_WAITOK);
+		npv = pool_get(&pv_pool, PR_NOWAIT);
+		if (npv == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_enter_pv: failed");
+			splx(s);
+			return 0;
+		}
 		npv->pv_va = va;
 		npv->pv_pm = pm;
 		npv->pv_next = pv->pv_next;
 		pv->pv_next = npv;
 		pv = npv;
 	}
-	if (wired) {
+	if (flags & PMAP_WIRED) {
 		PV_WIRE(pv);
 		pm->pm_stats.wired_count++;
 	}
@@ -857,7 +864,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pmap_initialized && managed) {
 		char *attr;
 
-		if (!pmap_enter_pv(pm, va, pa, flags & PMAP_WIRED)) {
+		if (!pmap_enter_pv(pm, va, pa, flags)) {
 			/* Could not enter pv on a managed page */
 			return 1;
 		}

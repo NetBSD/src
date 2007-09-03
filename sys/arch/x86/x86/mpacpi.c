@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.33.2.3 2007/02/26 09:08:51 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.33.2.4 2007/09/03 14:31:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.3 2007/02/26 09:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.4 2007/09/03 14:31:27 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.3 2007/02/26 09:08:51 yamt Exp $")
 #include "ioapic.h"
 #include "lapic.h"
 
+#include "locators.h"
+
+#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
+
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)
 
@@ -93,9 +97,8 @@ static TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
 
 #endif
 
-static int mpacpi_print(void *, const char *);
-static int mpacpi_submatch(struct device *, struct cfdata *,
-	const int *, void *);
+static int mpacpi_cpuprint(void *, const char *);
+static int mpacpi_ioapicprint(void *, const char *);
 
 /* acpi_madt_walk callbacks */
 static ACPI_STATUS mpacpi_count(APIC_HEADER *, void *);
@@ -139,23 +142,25 @@ int mpacpi_step;
 int mpacpi_force;
 
 static int
-mpacpi_print(void *aux, const char *pnp)
+mpacpi_cpuprint(void *aux, const char *pnp)
 {
-	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
+	struct cpu_attach_args *caa = aux;
+
 	if (pnp)
-		printf("%s at %s:",caa->caa_name, pnp);
+		printf("cpu at %s", pnp);
+	printf(" apid %d", caa->cpu_number);
 	return (UNCONF);
 }
 
 static int
-mpacpi_submatch(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
+mpacpi_ioapicprint(void *aux, const char *pnp)
 {
-	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
-	if (strcmp(caa->caa_name, cf->cf_name))
-		return 0;
+	struct apic_attach_args *aaa = aux;
 
-	return (config_match(parent, cf, aux));
+	if (pnp)
+		printf("ioapic at %s", pnp);
+	printf(" apid %d", aaa->apic_id);
+	return (UNCONF);
 }
 
 /*
@@ -221,9 +226,12 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		break;
 	case APIC_XRUPT_OVERRIDE:
 		isa_ovr = (MADT_INTERRUPT_OVERRIDE *)hdrp;
-		if (mp_verbose)
-			printf("mpacpi: ISA interrupt override  %d -> %d\n",
-			    isa_ovr->Source, isa_ovr->Interrupt);
+		if (mp_verbose) {
+			printf("mpacpi: ISA interrupt override %d -> %d (%d/%d)\n",
+			    isa_ovr->Source, isa_ovr->Interrupt,
+			    isa_ovr->Polarity,
+			    isa_ovr->TriggerMode);
+		}
 		if (isa_ovr->Source > 15 || isa_ovr->Source == 2 ||
 		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
 			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
@@ -323,6 +331,7 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 	MADT_PROCESSOR_APIC *p;
 	struct cpu_attach_args caa;
 	int cpunum = 0;
+	int locs[CPUBUSCF_NLOCS];
 
 #if defined(MULTIPROCESSOR) || defined(IOAPIC)
 	if (mpacpi_ncpu > 1)
@@ -336,11 +345,11 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
-			caa.caa_name = "cpu";
 			caa.cpu_number = p->LocalApicId;
 			caa.cpu_func = &mp_cpu_funcs;
-			config_found_sm_loc(parent, "cpubus", NULL,
-				&caa, mpacpi_print, mpacpi_submatch);
+			locs[CPUBUSCF_APID] = caa.cpu_number;
+			config_found_sm_loc(parent, "cpubus", locs,
+				&caa, mpacpi_cpuprint, config_stdsubmatch);
 		}
 	}
 	return AE_OK;
@@ -352,17 +361,18 @@ mpacpi_config_ioapic(APIC_HEADER *hdrp, void *aux)
 	struct device *parent = aux;
 	struct apic_attach_args aaa;
 	MADT_IO_APIC *p;
+	int locs[IOAPICBUSCF_NLOCS];
 
 	if (hdrp->Type == APIC_IO) {
 		p = (MADT_IO_APIC *)hdrp;
-		aaa.aaa_name = "ioapic";
 		aaa.apic_id = p->IoApicId;
 		aaa.apic_address = p->Address;
 		aaa.apic_version = -1;
 		aaa.flags = IOAPIC_VWIRE;
 		aaa.apic_vecbase = p->Interrupt;
-		config_found_sm_loc(parent, "cpubus", NULL, &aaa,
-			mpacpi_print, mpacpi_submatch);
+		locs[IOAPICBUSCF_APID] = aaa.apic_id;
+		config_found_sm_loc(parent, "ioapicbus", locs, &aaa,
+			mpacpi_ioapicprint, config_stdsubmatch);
 	}
 	return AE_OK;
 }
@@ -470,11 +480,25 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 	/* first, search parent root bus */
 	for (current = handle;; current = parent) {
-		dev = malloc(sizeof(struct ac_dev), M_TEMP, M_WAITOK|M_ZERO);
-		if (dev == NULL)
+		buf.Pointer = NULL;
+		buf.Length = ACPI_ALLOCATE_BUFFER;
+		rv = AcpiGetObjectInfo(current, &buf);
+		if (ACPI_FAILURE(rv))
 			return -1;
-		dev->handle = current;
-		TAILQ_INSERT_HEAD(&dev_list, dev, list);
+
+		devinfo = buf.Pointer;
+		/* add this device to the list only if it's active */
+		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
+		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
+			AcpiOsFree(buf.Pointer);
+			dev = malloc(sizeof(struct ac_dev), M_TEMP,
+			    M_WAITOK|M_ZERO);
+			if (dev == NULL)
+				return -1;
+			dev->handle = current;
+			TAILQ_INSERT_HEAD(&dev_list, dev, list);
+		} else
+			AcpiOsFree(buf.Pointer);
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
@@ -487,6 +511,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 			return -1;
 
 		devinfo = buf.Pointer;
+
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
 			rv = acpi_eval_integer(parent, METHOD_NAME__BBN, &val);
 			AcpiOsFree(buf.Pointer);
@@ -564,8 +589,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 		return AE_OK;
 
 	devinfo = buf.Pointer;
-
-#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
 	/* if this device is not active, ignore it */
 	if ((devinfo->Valid & ACPI_VALID_STA) &&

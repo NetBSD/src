@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154.2.2 2007/02/26 09:05:55 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154.2.3 2007/09/03 14:23:15 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154.2.2 2007/02/26 09:05:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154.2.3 2007/09/03 14:23:15 yamt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -307,7 +307,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
 char *memhook;
-extern caddr_t msgbufaddr;
+extern void *msgbufaddr;
 
 /*
  * Flag to indicate if pmap_init() has done its thing
@@ -3064,6 +3064,7 @@ pmap_activate(struct lwp *l)
 
 	if (l == curlwp) {
 		u_int cur_dacr, cur_ttb;
+		int oldirqstate;
 
 		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
 		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
@@ -3080,7 +3081,7 @@ pmap_activate(struct lwp *l)
 
 		s = splhigh();
 		pmap_acquire_pmap_lock(pm);
-		disable_interrupts(I32_bit | F32_bit);
+		oldirqstate = disable_interrupts(I32_bit | F32_bit);
 
 		/*
 		 * We MUST, I repeat, MUST fix up the L1 entry corresponding
@@ -3100,7 +3101,7 @@ pmap_activate(struct lwp *l)
 		cpu_domains(pcb->pcb_dacr);
 		cpu_setttb(pcb->pcb_pagedir);
 
-		enable_interrupts(I32_bit | F32_bit);
+		restore_interrupts(oldirqstate);
 
 		/*
 		 * Flag any previous userland pmap as being NOT
@@ -3365,7 +3366,7 @@ pmap_pageidlezero(paddr_t phys)
 
 	for (i = 0, ptr = (int *)cdstp;
 			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 			/*
 			 * A process has become ready.  Abort now,
 			 * so we don't keep it waiting while we
@@ -3999,7 +4000,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialize the pmap pool and cache
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pmap_cache, &pmap_pmap_pool,
 	    pmap_pmap_ctor, NULL, NULL);
 	LIST_INIT(&pmap_pmaps);
@@ -4009,13 +4010,13 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialize the pv pool.
 	 */
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvepl",
-	    &pmap_bootstrap_pv_allocator);
+	    &pmap_bootstrap_pv_allocator, IPL_NONE);
 
 	/*
 	 * Initialize the L2 dtable pool and cache.
 	 */
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
-	    "l2dtblpl", NULL);
+	    "l2dtblpl", NULL, IPL_NONE);
 	pool_cache_init(&pmap_l2dtable_cache, &pmap_l2dtable_pool,
 	    pmap_l2dtable_ctor, NULL, NULL);
 
@@ -4023,7 +4024,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialise the L2 descriptor table pool and cache
 	 */
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, 0, L2_TABLE_SIZE_REAL,
-	    0, "l2ptppl", NULL);
+	    0, "l2ptppl", NULL, IPL_NONE);
 	pool_cache_init(&pmap_l2ptp_cache, &pmap_l2ptp_pool,
 	    pmap_l2ptp_ctor, NULL, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.47.2.1 2006/06/21 14:53:02 yamt Exp $	*/
+/*	$NetBSD: adb.c,v 1.47.2.2 2007/09/03 14:27:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.47.2.1 2006/06/21 14:53:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.47.2.2 2007/09/03 14:27:18 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -97,6 +97,9 @@ adbmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 adbattach(struct device *parent, struct device *self, void *aux)
 {
+
+	adb_softintr_cookie = softintr_establish(IPL_SOFT,
+	    (void (*)(void *))adb_soft_intr, NULL);
 	printf("\n");
 
 	/*

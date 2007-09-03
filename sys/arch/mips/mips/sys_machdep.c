@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.29.2.1 2007/02/26 09:07:31 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.29.2.2 2007/09/03 14:28:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.1 2007/02/26 09:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.2 2007/09/03 14:28:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 	return (0);
 
 #else
-	void * uncached_physaddr;
+	void *uncached_physaddr;
 	size_t len;
 
 	/*

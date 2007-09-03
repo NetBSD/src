@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4.16.3 2007/02/26 09:05:43 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.16.4 2007/09/03 14:22:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ tlbflushg(void)
 }
 
 #ifdef notyet
-void	setidt	__P((int idx, /*XXX*/caddr_t func, int typ, int dpl));
+void	setidt	__P((int idx, /*XXX*/void *func, int typ, int dpl));
 #endif
 
 

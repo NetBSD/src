@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.22.16.1 2006/06/21 14:49:56 yamt Exp $	*/
+/*	$NetBSD: view.c,v 1.22.16.2 2007/09/03 14:23:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.22.16.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.22.16.2 2007/09/03 14:23:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ int
 viewioctl (dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
-caddr_t		data;
+void *		data;
 int		flag;
 struct lwp	*l;
 {

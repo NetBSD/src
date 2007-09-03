@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft_plb.c,v 1.1.4.2 2006/12/30 20:45:54 yamt Exp $ */
+/* 	$NetBSD: tft_plb.c,v 1.1.4.3 2007/09/03 14:24:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft_plb.c,v 1.1.4.2 2006/12/30 20:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft_plb.c,v 1.1.4.3 2007/09/03 14:24:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +130,9 @@ plb_tft_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_4;
 	}
 	/* XXX hack, we linear map whole RAM and we have single segment */
-	/* sc->sc_image = (caddr_t)psc->psc_dmap->dm_segs[0].ds_addr; */
+	/* sc->sc_image = (void *)psc->psc_dmap->dm_segs[0].ds_addr; */
 	/* XXX hack, use predefined base addr */
-	sc->sc_image = (caddr_t)(uintptr_t)0x3c00000;
+	sc->sc_image = (void *)(uintptr_t)0x3c00000;
 
 	/* XXX fuck the hack above, use "virtex-tft-framebuffer-base" prop */
 

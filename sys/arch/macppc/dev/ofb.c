@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.41.10.3 2007/02/26 09:07:21 yamt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.41.10.4 2007/09/03 14:27:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41.10.3 2007/02/26 09:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41.10.4 2007/09/03 14:27:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41.10.3 2007/02/26 09:07:21 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,7 +79,8 @@ struct ofb_softc {
 	
 	int sc_node, sc_ih, sc_mode;
 	paddr_t sc_fbaddr;
-	
+	uint32_t sc_fbsize;
+
 	struct vcons_data vd;
 };
 
@@ -97,7 +99,7 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int	ofb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	ofb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	ofb_mmap(void *, void *, off_t, int);
 
 static void	ofb_init_screen(void *, struct vcons_screen *, int, long *);
@@ -117,6 +119,7 @@ static void	ofb_putpalreg(struct ofb_softc *, int, uint8_t, uint8_t,
 static int	ofb_getcmap(struct ofb_softc *, struct wsdisplay_cmap *);
 static int	ofb_putcmap(struct ofb_softc *, struct wsdisplay_cmap *);
 static void	ofb_init_cmap(struct ofb_softc *);
+static int	ofb_drm_print(void *, const char *);
 
 extern const u_char rasops_cmap[768];
 
@@ -164,7 +167,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 			sub = OF_peer(sub);
 		}
 		if (sub == console_node) {
-			console = TRUE;
+			console = true;
 		}
 	}
 	
@@ -191,13 +194,14 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_fbaddr = 0;
 	if (OF_getprop(sc->sc_node, "address", &sc->sc_fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, 1, &sc->sc_fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &sc->sc_fbaddr);
 	if (sc->sc_fbaddr == 0) {
 		printf("%s: Unable to find the framebuffer address.\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	
+	sc->sc_fbsize = round_page(ri->ri_stride * ri->ri_height);
+
 	/* XXX */
 	if (OF_getprop(sc->sc_node, "assigned-addresses", sc->sc_addrs,
 	    sizeof(sc->sc_addrs)) == -1) {
@@ -214,6 +218,16 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = &sc->vd;
 
 	config_found(self, &a, wsemuldisplaydevprint);
+
+	config_found_ia(self, "drm", aux, ofb_drm_print);
+}
+
+static int
+ofb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
 }
 
 static void
@@ -229,7 +243,7 @@ ofb_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static int
-ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct ofb_softc *sc = vd->cookie;
@@ -246,8 +260,8 @@ ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		/* we won't get here without any screen anyway */
 		if (ms != NULL) {
 			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_width;
-			wdf->width = ms->scr_ri.ri_height;
+			wdf->height = ms->scr_ri.ri_height;
+			wdf->width = ms->scr_ri.ri_width;
 			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
@@ -265,11 +279,16 @@ ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (ms != NULL) {
 			gm = (void *)data;
 			memset(gm, 0, sizeof(struct grfinfo));
-			gm->gd_fbaddr = (caddr_t)sc->sc_fbaddr;
+			gm->gd_fbaddr = (void *)sc->sc_fbaddr;
 			gm->gd_fbrowbytes = ms->scr_ri.ri_stride;
 			return 0;
 		} else
 			return ENODEV;
+	case WSDISPLAYIO_LINEBYTES:
+		{
+			*(int *)data = ms->scr_ri.ri_stride;
+			return 0;
+		}
 	case WSDISPLAYIO_SMODE:
 		{
 			int new_mode = *(int*)data;
@@ -311,8 +330,9 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	ri = &vd->active->scr_ri;
 	
 	/* framebuffer at offset 0 */
-	if (offset >=0 && offset < (ri->ri_stride * ri->ri_height))
-		return sc->sc_fbaddr + offset;
+	if ((offset >= 0) && (offset < sc->sc_fbsize))
+		return bus_space_mmap(sc->sc_memt, sc->sc_fbaddr, offset, prot,
+		    BUS_SPACE_MAP_LINEAR);
 
 	/*
 	 * restrict all other mappings to processes with superuser privileges
@@ -348,7 +368,6 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 		}
 		ap += 5;
 	}
-
 	return -1;
 }
 

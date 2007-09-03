@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.1.18.4 2007/02/26 09:08:52 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.1.18.5 2007/09/03 14:31:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.18.4 2007/02/26 09:08:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.18.5 2007/09/03 14:31:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.18.4 2007/02/26 09:08:52 yamt Ex
 #include <sys/kcore.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
+
+#include <x86/cpu_msr.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -99,11 +102,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 	extern int mem_cluster_cnt;
 	int i;
 
-	if (kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) == 0) {
-		return 0;
-	}
-
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		const phys_ram_seg_t *seg = &mem_clusters[i];
 		paddr_t lstart = seg->start;
@@ -113,7 +111,8 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 		}
 	}
 
-	return EPERM;
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
 
 /*
@@ -128,4 +127,15 @@ void
 x86_pause(void)
 {
 	__asm volatile("pause");
+}
+
+/*
+ * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
+ */
+void
+x86_init(void)
+{
+#ifndef XEN
+	msr_cpu_broadcast_initmtx();
+#endif
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.45.12.1 2006/12/30 20:45:45 yamt Exp $
+#	$NetBSD: files.bebox,v 1.45.12.2 2007/09/03 14:23:43 yamt Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -53,6 +53,10 @@ device	cpu
 attach	cpu at mainbus
 
 file	arch/bebox/bebox/mainbus.c	mainbus|cpu needs-flag
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
+
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches

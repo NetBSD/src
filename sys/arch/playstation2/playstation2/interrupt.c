@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2003/07/15 02:54:38 lukem Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2.16.1 2007/09/03 14:28:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2 2003/07/15 02:54:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2.16.1 2007/09/03 14:28:49 yamt Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -308,7 +308,6 @@ splset(int npl)
 void
 spl0()
 {
-	extern void _spllower(int);
 
 	splset(0);
 	_spllower(0);

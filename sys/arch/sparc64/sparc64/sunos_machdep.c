@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20.16.2 2007/02/26 09:08:29 yamt Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.16.3 2007/09/03 14:30:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.16.2 2007/02/26 09:08:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.16.3 2007/09/03 14:30:25 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -165,9 +165,9 @@ sunos_sendsig(ksi, mask)
 	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
+	kwin = (struct rwindow32 *)(((char *)tf)-CCFSZ);
 	error = (rwindow_save(l) || 
-	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
 	mutex_enter(&p->p_smutex);
 
@@ -244,7 +244,7 @@ sunos_sys_sigreturn(l, v, retval)
 #endif
 
 	scp = (struct sunos_sigcontext *)SCARG(uap, sigcntxp);
-	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 		return (EFAULT);
 	scp = &sc;
 

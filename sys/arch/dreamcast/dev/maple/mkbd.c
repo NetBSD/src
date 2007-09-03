@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.21.4.1 2006/06/21 14:50:32 yamt Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.21.4.2 2007/09/03 14:23:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.21.4.1 2006/06/21 14:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.21.4.2 2007/09/03 14:23:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,7 +68,7 @@ static	int mkbddetach(struct device *, int);
 
 int	mkbd_enable(void *, int);
 void	mkbd_set_leds(void *, int);
-int	mkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	mkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 struct wskbd_accessops mkbd_accessops = {
 	mkbd_enable,
@@ -203,7 +203,7 @@ mkbd_set_leds(void *v, int on)
 }
 
 int
-mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {
@@ -306,7 +306,7 @@ mkbd_cngetc(void *v, u_int *type, int *data)
 	polledkey = -1;
 	maple_polling = 1;
 	while (polledkey == -1) {
-		if (mkbd_console_softc != NULL ||
+		if (mkbd_console_softc != NULL &&
 		    mkbd_console_softc->sc_parent != NULL) {
 			int t;
 			for (t = 0; t < 1000000; t++);

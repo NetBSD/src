@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.11.2.1 2006/12/30 20:46:50 yamt Exp $ */
+/* $NetBSD: rtc.c,v 1.11.2.2 2007/09/03 14:29:12 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11.2.1 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11.2.2 2007/09/03 14:29:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <dev/clock_subr.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.14.10.1 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.14.10.2 2007/09/03 14:27:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.14.10.1 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.14.10.2 2007/09/03 14:27:30 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -139,7 +139,7 @@ mc_obio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dmasegs_tx, rsegs, 2 * 0x800,
-		&sc->sc_txbuf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+		(void*)&sc->sc_txbuf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
 		printf(": failed to map TX DMA buffers.\n");
 		return;
 	}
@@ -151,7 +151,7 @@ mc_obio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dmasegs_rx, rsegs,
-		MC_RXDMABUFS * 0x800, &sc->sc_rxbuf,
+		MC_RXDMABUFS * 0x800, (void*)&sc->sc_rxbuf,
 		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
 		printf(": failed to map RX DMA buffers.\n");
 		return;

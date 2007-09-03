@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.55.2.2 2007/02/26 09:08:08 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.55.2.3 2007/09/03 14:29:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.2 2007/02/26 09:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.3 2007/09/03 14:29:31 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -232,7 +232,7 @@ sh_proc0_init()
 
 	sf = &curpcb->pcb_sf;
 	sf->sf_r6_bank = u + PAGE_SIZE;
-	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
+	sf->sf_r7_bank = sf->sf_r15 = u + USPACE;
 	__asm volatile("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
 	__asm volatile("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
@@ -456,7 +456,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	--fp;
 
 	frame.sf_si._info = ksi->ksi_info;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
@@ -530,7 +530,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore signal context. */
@@ -610,7 +610,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_R15]    = tf->tf_r15;
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;
@@ -634,7 +634,7 @@ cpu_setmcontext(l, mcp, flags)
 		/* Check for security violations. */
 		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
 			return (EINVAL);
-	
+
 		/* _REG_EXPEVT not restored */
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];
@@ -692,7 +692,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
 	tf->tf_r3 = 0;
-	tf->tf_r4 = fuword((caddr_t)stack);	/* argc */
+	tf->tf_r4 = fuword((void *)stack);	/* argc */
 	tf->tf_r5 = stack + 4;			/* argv */
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;

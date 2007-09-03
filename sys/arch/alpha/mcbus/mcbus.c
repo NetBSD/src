@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.15.2.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: mcbus.c,v 1.15.2.2 2007/09/03 14:22:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.15.2.1 2006/06/21 14:48:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.15.2.2 2007/09/03 14:22:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.15.2.1 2006/06/21 14:48:15 yamt Exp $");
 
 #include "locators.h"
 
-#define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	MCPCIA_EXISTS(mid, gid)	\
 	(!badaddr((void *)KV(MCPCIA_BRIDGE_ADDR(gid, mid)), sizeof (u_int32_t)))
 

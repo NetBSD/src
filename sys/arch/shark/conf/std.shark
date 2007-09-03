@@ -1,4 +1,4 @@
-#	$NetBSD: std.shark,v 1.3.18.1 2006/06/21 14:55:47 yamt Exp $
+#	$NetBSD: std.shark,v 1.3.18.2 2007/09/03 14:29:46 yamt Exp $
 #
 # standard NetBSD/shark options
 
@@ -16,3 +16,8 @@ options 	ARM32
 
 # XXX
 options 	OFW
+
+# The font to be used by vga(4); the hardware built-in font is broken.
+# This also requires wsfont to be useful.  Does not disturb if it is
+# not enabled.
+options 	FONT_VT220L8x16

@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.13.2.1 2006/12/30 20:46:02 yamt Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.13.2.2 2007/09/03 14:25:49 yamt Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.13.2.1 2006/12/30 20:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.13.2.2 2007/09/03 14:25:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ ipaqpcic_attach(struct device *parent, struct device *self, void *aux)
 			    &sc->sc_socket[i]);
 
 		/* schedule kthread creation */
-		kthread_create(sapcic_kthread_create, &sc->sc_socket[i]);
+		sapcic_kthread_create(&sc->sc_socket[i]);
 
 #if 0 /* XXX */
 		/* establish_intr should be after creating the kthread */

@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.6.4.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: powernow.h,v 1.6.4.3 2007/09/03 14:31:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -132,11 +132,6 @@
 #define ACPI_PN8_CTRL_TO_RVO(x)		(((x) >> 28) & 0x03)
 #define ACPI_PN8_CTRL_TO_IRT(x)		(((x) >> 30) & 0x03)
 
-
-#define WRITE_FIDVID(fid, vid, ctrl)	\
-	wrmsr(MSR_AMDK7_FIDVID_CTL,	\
-		(((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)))
-
 #define POWERNOW_MAX_STATES		16
 
 struct powernow_state {
@@ -175,7 +170,7 @@ struct powernow_pst_s {
 	uint8_t n_states;
 };
 
-int	powernow_probe(struct cpu_info *);
+int powernow_probe(struct cpu_info *);
 
 /* i386/i386/powernow_k7.c */
 void k7_powernow_init(void);

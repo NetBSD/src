@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.12 2004/09/12 08:41:47 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.12.12.1 2007/09/03 14:26:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -108,15 +108,17 @@ ENTRY(start)
 	movw	$BOOTADDR, %sp
 	mov	%ax, %es
 	mov	%ax, %ds
-	mov	%sp, %si
-	movw	$start, %di
-	movw	$(bss_start - start)/2, %cx
+	movw	$mbr, %di
+	mov     $mbr - LOADADDR + BOOTADDR, %si
+	push	%ax
+	push	%di
+	movw	$(bss_start - mbr), %cx
 	rep
-	movsw				/* relocate code */
+	movsb				/* relocate code */
 	mov	$(bss_end - bss_start + 1)/2, %cx
 	rep
 	stosw				/* zero bss */
-	ljmp	$0, $mbr		/* leap into copy of code */
+	lret				/* Ensure %cs == 0 */
 
 /*
  * Sanity check the drive number passed by the BIOS. Some BIOSs may not

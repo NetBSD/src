@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.4.8.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.4.8.3 2007/09/03 14:28:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,12 +78,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.4.8.2 2006/12/30 20:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.4.8.3 2007/09/03 14:28:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/cpu.h>
+
 #include <mips/mips3_clock.h>
+
 #include <machine/intr.h>
 #include <machine/locore.h>
 

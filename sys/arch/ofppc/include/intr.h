@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.16.3 2007/02/26 09:07:42 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.16.4 2007/09/03 14:28:34 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -98,6 +98,8 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#include <powerpc/softintr.h>
+
 struct clockframe;
 
 extern int imask[];
@@ -133,6 +135,7 @@ extern struct machvec machine_interface;
 
 #define	setsoftnet()	setsoftintr(IPL_SOFTNET)
 #define	setsoftclock()	setsoftintr(IPL_SOFTCLOCK)
+#define	setsoftserial()	setsoftintr(IPL_SERIAL)
 
 /*
  * Software interrupt support.

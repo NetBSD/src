@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183.2.3 2007/02/26 09:06:33 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.183.2.4 2007/09/03 14:25:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183.2.3 2007/02/26 09:06:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183.2.4 2007/09/03 14:25:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -169,7 +169,6 @@ extern paddr_t avail_end;
 paddr_t	bootinfo_pa;
 vaddr_t	bootinfo_va;
 
-caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -193,7 +192,7 @@ static void	identifycpu(void);
 static void	initcpu(void);
 
 static int	cpu_dumpsize(void);
-static int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+static int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 static void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
@@ -650,7 +649,7 @@ cpu_reboot(int howto, char *bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
@@ -781,7 +780,7 @@ cpu_dumpsize(void)
  * Called by dumpsys() to dump the machine-dependent header.
  */
 static int
-cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
+cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
 	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -797,7 +796,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return error;
 }
@@ -862,7 +861,7 @@ dumpsys(void)
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -979,7 +978,7 @@ straytrap(int pc, u_short evec)
 int	*nofault;
 
 int
-badaddr(caddr_t addr)
+badaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -995,7 +994,7 @@ badaddr(caddr_t addr)
 }
 
 int
-badbaddr(caddr_t addr)
+badbaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -1047,7 +1046,7 @@ static void	candbtimer(void *);
 
 int crashandburn;
 
-struct callout candbtimer_ch = CALLOUT_INITIALIZER;
+callout_t candbtimer_ch;
 
 void
 candbtimer(void *arg)
@@ -1091,6 +1090,8 @@ nmihand(struct frame frame)
 #else
 #ifdef PANICBUTTON
 		if (panicbutton) {
+			/* XXX */
+			callout_init(&candbtimer_ch, 0);
 			if (crashandburn) {
 				crashandburn = 0;
 				printf(": CRASH AND BURN!\n");

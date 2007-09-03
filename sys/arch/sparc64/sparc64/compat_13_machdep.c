@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.14.16.2 2007/02/26 09:08:25 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.14.16.3 2007/09/03 14:30:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.2 2007/02/26 09:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.3 2007/09/03 14:30:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,7 +103,7 @@ compat_13_sys_sigreturn(l, v, retval)
 #endif
 
 	scp = SCARG(uap, sigcntxp);
-	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+	if ((vaddr_t)scp & 3 || (copyin((void *)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("compat_13_sys_sigreturn: copyin failed: scp=%p\n", scp);

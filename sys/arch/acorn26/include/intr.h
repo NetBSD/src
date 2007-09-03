@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.16.3 2007/02/26 09:05:28 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.16.4 2007/09/03 14:22:01 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -86,7 +86,7 @@ extern int raisespl(int);
 extern void lowerspl(int);
 extern int hardsplx(int);
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

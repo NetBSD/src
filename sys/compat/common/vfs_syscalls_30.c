@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.4 2007/02/26 09:09:01 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.5 2007/09/03 14:31:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.4 2007/02/26 09:09:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.5 2007/09/03 14:31:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.4 2007/02/26 09:09:01 yamt
 #include <sys/dirent.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <sys/syscallargs.h>
 
@@ -102,14 +103,8 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -132,14 +127,8 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -234,9 +223,9 @@ compat_30_sys_getdents(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* NetBSD-3.0-format */
+	char *outp;		/* NetBSD-3.0-format */
 	int resid;	
 	struct file *fp;
 	struct uio auio;
@@ -373,7 +362,7 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, fname), l);
 	error = namei(&nd);
 	if (error)
@@ -416,10 +405,14 @@ compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
 	struct compat_30_sys___fhstat30_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct stat *) sb;
-	} */ *uap = v;
+	} */ *uap_30 = v;
+	struct sys___fhstat40_args uap;
 
-	return dofhstat(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
-	    SCARG(uap, sb), retval);
+	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
+	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
+	SCARG(&uap, sb) = SCARG(uap_30, sb);
+
+	return sys___fhstat40(l, &uap, retval);
 }
 
 /* ARGSUSED */
@@ -430,8 +423,13 @@ compat_30_sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
-	} */ *uap = v;
+	} */ *uap_30 = v;
+	struct sys___fhstatvfs140_args uap;
 
-	return dofhstatvfs(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
-	    SCARG(uap, buf), SCARG(uap, flags), retval);
+	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
+	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
+	SCARG(&uap, buf) = SCARG(uap_30, buf);
+	SCARG(&uap, flags) = SCARG(uap_30, flags);
+
+	return sys___fhstatvfs140(l, &uap, retval);
 }

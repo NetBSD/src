@@ -1,9 +1,8 @@
-# $NetBSD: HDL-U,v 1.2.6.2 2006/12/30 20:46:21 yamt Exp $
+# $NetBSD: HDL-U,v 1.2.6.3 2007/09/03 14:27:01 yamt Exp $
 #
 # HDL-U/LAN Tank
 #
 
-include "arch/landisk/conf/GENERIC.in"
+include "arch/landisk/conf/GENERIC"
 
-pciide*		at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*	at pci? dev ? function ?	# Acard IDE controllers
+no wdc0 at obio?

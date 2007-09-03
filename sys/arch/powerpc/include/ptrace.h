@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8.12.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8.12.2 2007/09/03 14:28:58 yamt Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -31,7 +31,7 @@
 	case PT_GETVECREGS: \
 	case PT_SETVECREGS:
 
-int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, caddr_t, int);
+int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, void *, int);
 int process_machdep_dovecregs(struct lwp *, struct lwp *, struct uio *);
 int process_machdep_validvecregs(struct proc *);
 

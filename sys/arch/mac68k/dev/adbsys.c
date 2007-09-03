@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.45 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.45.10.1 2007/09/03 14:27:18 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.45 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.45.10.1 2007/09/03 14:27:18 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -52,7 +52,7 @@ void    adb_processevent(adb_event_t *);
 extern void adb_jadbproc(void);
 
 void 
-adb_complete(caddr_t buffer, caddr_t data_area, int adb_command)
+adb_complete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;
@@ -94,7 +94,7 @@ adb_complete(caddr_t buffer, caddr_t data_area, int adb_command)
 }
 
 void 
-adb_msa3_complete(caddr_t buffer, caddr_t data_area, int adb_command)
+adb_msa3_complete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;
@@ -136,7 +136,7 @@ adb_msa3_complete(caddr_t buffer, caddr_t data_area, int adb_command)
 }
 
 void 
-adb_mm_nonemp_complete(caddr_t buffer, caddr_t data_area, int adb_command)
+adb_mm_nonemp_complete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;

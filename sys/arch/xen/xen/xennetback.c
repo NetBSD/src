@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.11.2.1 2006/06/21 14:58:23 yamt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.11.2.2 2007/09/03 14:31:39 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -137,7 +137,7 @@ struct xnetback_instance {
 #define xni_if    xni_ec.ec_if
 #define xni_bpf   xni_if.if_bpf
 
-static int  xennetback_ifioctl(struct ifnet *, u_long, caddr_t);
+static int  xennetback_ifioctl(struct ifnet *, u_long, void *);
 static void xennetback_ifstart(struct ifnet *);
 static void xennetback_ifsoftstart(void *);
 static void xennetback_ifwatchdog(struct ifnet *);
@@ -146,7 +146,7 @@ static void xennetback_ifstop(struct ifnet *, int);
 
 static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
-static void xennetback_tx_free(struct mbuf * , caddr_t, size_t, void *);
+static void xennetback_tx_free(struct mbuf * , void *, size_t, void *);
 
 
 SLIST_HEAD(, xnetback_instance) xnetback_instances;
@@ -226,11 +226,12 @@ xennetback_init()
 
 	/* initialise pools */
 	pool_init(&xni_pkt_pool, sizeof(struct xni_pkt), 0, 0, 0,
-	    "xnbpkt", NULL);
+	    "xnbpkt", NULL, IPL_VM);
 	pool_init(&xni_page_pool, sizeof(struct xni_page), 0, 0, 0,
-	    "xnbpa", NULL);
+	    "xnbpa", NULL, IPL_VM);
 #if MCLBYTES != PAGE_SIZE
-	pool_init(&xmit_pages_pool, PAGE_SIZE, 0, 0, 0, "xnbxm", NULL);
+	pool_init(&xmit_pages_pool, PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
+	    IPL_VM);
 	pool_cache_init(&xmit_pages_pool_cache, &xmit_pages_pool,
 	    NULL, NULL, NULL);
 	xmit_pages_pool_cachep = &xmit_pages_pool_cache;
@@ -679,7 +680,7 @@ again:
 			struct ether_header *eh =
 			    (void*)(pkt_va | (txreq->addr & PAGE_MASK));
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				pool_put(&xni_pkt_pool, pkt);
 				m_freem(m);
@@ -707,7 +708,7 @@ again:
 			m->m_len = min(MHLEN, txreq->size);
 			m->m_pkthdr.len = 0;
 			m_copyback(m, 0, txreq->size,
-			    (caddr_t)(pkt_va | (txreq->addr & PAGE_MASK)));
+			    (void *)(pkt_va | (txreq->addr & PAGE_MASK)));
 			if (pkt_page->refcount == 0) {
 				xen_shm_unmap(pkt_page->va, &pkt_page->ma, 1,
 				    xneti->domid);
@@ -758,7 +759,7 @@ again:
 	return 1;
 }
 static void
-xennetback_tx_free(struct mbuf *m, caddr_t va, size_t size, void * arg)
+xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
 {
 	int s = splnet();
 	struct xni_pkt *pkt = arg;
@@ -803,7 +804,7 @@ xennetback_tx_free(struct mbuf *m, caddr_t va, size_t size, void * arg)
 }
 
 static int
-xennetback_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+xennetback_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	//struct xnetback_instance *xneti = ifp->if_softc;
 	//struct ifreq *ifr = (struct ifreq *)data;
@@ -916,7 +917,7 @@ xennetback_ifsoftstart(void *arg)
 				    "0x%x ma 0x%x\n", (u_int)xmit_va,
 				    (u_int)xmit_ma));
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (caddr_t)xmit_va);
+				    (void *)xmit_va);
 				rxresp->addr = xmit_ma;
 				pages_pool_free[nppitems].va = xmit_va;
 				pages_pool_free[nppitems].pa = xmit_pa;

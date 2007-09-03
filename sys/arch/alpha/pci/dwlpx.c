@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.30 2004/11/04 19:22:28 ragge Exp $ */
+/* $NetBSD: dwlpx.c,v 1.30.12.1 2007/09/03 14:22:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.30 2004/11/04 19:22:28 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.30.12.1 2007/09/03 14:22:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.30 2004/11/04 19:22:28 ragge Exp $");
 #include <alpha/pci/dwlpxvar.h>
 #include <alpha/pci/pci_kn8ae.h>
 
-#define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	DWLPX_SYSBASE(sc)	\
 	    ((((unsigned long)((sc)->dwlpx_node - 4))	<< 36) |	\
 	     (((unsigned long) (sc)->dwlpx_hosenum)	<< 34) |	\

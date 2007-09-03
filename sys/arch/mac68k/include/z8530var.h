@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.8 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.8.10.1 2007/09/03 14:27:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,6 +136,7 @@ struct zsc_softc {
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
 	struct xzs_chanstate xzsc_xcs_store[2];
+	void *zsc_softintr_cookie;
 };
 
 /*
@@ -161,7 +162,7 @@ void  zs_write_data(struct zs_chanstate *, u_char);
 /* XXX - Could define splzs() here instead of in psl.h */
 
 /* Hook for MD ioctl support */
-int	zsmdioctl(struct zs_chanstate *, u_long, caddr_t);
+int	zsmdioctl(struct zs_chanstate *, u_long, void *);
 /* XXX - This is a bit gross... */
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 

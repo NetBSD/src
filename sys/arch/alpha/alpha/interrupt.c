@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.66.18.3 2007/02/26 09:05:32 yamt Exp $ */
+/* $NetBSD: interrupt.c,v 1.66.18.4 2007/09/03 14:22:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.66.18.3 2007/02/26 09:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.66.18.4 2007/09/03 14:22:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,10 +206,8 @@ void
 interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
     struct trapframe *framep)
 {
-	static int microset_iter;	/* call cc_microset() once per sec. */
 	struct cpu_info *ci = curcpu();
 	struct cpu_softc *sc = ci->ci_softc;
-	struct lwp *l;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
@@ -241,23 +239,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 */
 		sc->sc_evcnt_clock.ev_count++;
 		uvmexp.intrs++;
-		/*
-		 * Update the PCC frequency for use by microtime().
-		 */
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-
-		    microset_iter-- == 0) {
-			microset_iter = hz - 1;
-			cc_microset_time = time;
-#if defined(MULTIPROCESSOR)
-			alpha_multicast_ipi(cpus_running,
-			    ALPHA_IPI_MICROSET);
-#endif
-			cc_microset(ci);
-		}
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call
@@ -271,8 +252,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * do so.
 			 */
 			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
-			    (l = ci->ci_curlwp) != NULL && schedhz != 0)
-				schedclock(l);
+			    schedhz != 0)
+				schedclock(ci->ci_curlwp);
 		}
 		break;
 

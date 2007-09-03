@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.12.10.1 2006/06/21 14:55:47 yamt Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.12.10.2 2007/09/03 14:29:49 yamt Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.12.10.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.12.10.2 2007/09/03 14:29:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,7 +157,7 @@ ofromrw(dev, uio, flags)
 	/* lock against other uses of shared vmmap */
 	while (physlock > 0) {
 		physlock++;
-		error = tsleep((caddr_t)&physlock, PZERO | PCATCH, "ofromrw",
+		error = tsleep((void *)&physlock, PZERO | PCATCH, "ofromrw",
 		    0);
 		if (error)
 			return (error);
@@ -189,14 +189,14 @@ ofromrw(dev, uio, flags)
 		pmap_update(pmap_kernel());
 		o = uio->uio_offset & PGOFSET;
 		c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-		error = uiomove((caddr_t)memhook + o, c, uio);
+		error = uiomove((char *)memhook + o, c, uio);
 		pmap_remove(pmap_kernel(), (vaddr_t)memhook,
 		    (vaddr_t)memhook + PAGE_SIZE);
 		pmap_update(pmap_kernel());
 	}
 
 	if (physlock > 1)
-		wakeup((caddr_t)&physlock);
+		wakeup((void *)&physlock);
 	physlock = 0;
 
 	return (error);

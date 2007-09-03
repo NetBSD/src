@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.19.16.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.19.16.2 2007/09/03 14:23:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ struct read_info {
     struct buf	*bp;		/* buffer for strategy function		*/
     long	nbytes;		/* total number of bytes to read	*/
     long	offset;		/* offset in input medium		*/
-    caddr_t	bufp;		/* current output buffer		*/
-    caddr_t	ebufp;		/* absolute maximum for bufp		*/
+    char	*bufp;		/* current output buffer		*/
+    char	*ebufp;		/* absolute maximum for bufp		*/
     int		chunk;		/* chunk size on input medium		*/
     int		media_sz;	/* size of input medium			*/
     void	(*strat)(struct buf *);	/* strategy function for read	*/
@@ -104,8 +104,8 @@ static int  loaddisk __P((struct  md_conf *, dev_t ld_dev, struct lwp *));
 static int  ramd_norm_read __P((struct read_info *));
 
 #ifdef support_compression
-static int  cpy_uncompressed __P((caddr_t, int, struct read_info *));
-static int  md_compressed __P((caddr_t, int, struct read_info *));
+static int  cpy_uncompressed __P((void *, int, struct read_info *));
+static int  md_compressed __P((void *, int, struct read_info *));
 #endif
 
 /*
@@ -184,7 +184,7 @@ struct lwp		*lwp;
 	rs.nbytes   = md->md_size;
 	rs.offset   = 0;
 	rs.bufp     = md->md_addr;
-	rs.ebufp    = md->md_addr + md->md_size;
+	rs.ebufp    = (char *)md->md_addr + md->md_size;
 	rs.chunk    = RAMD_CHUNK;
 	rs.media_sz = md->md_size;
 	rs.strat    = bdp->d_strategy;
@@ -194,7 +194,7 @@ struct lwp		*lwp;
 	 */
 	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0)
 		return(error);
-	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, lwp) == 0) {
+	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (void *)&dl, FREAD, lwp) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
 		rs.media_sz = dl.d_secperunit * dl.d_secsize;
@@ -232,6 +232,7 @@ struct read_info	*rsp;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = rsp->chunk;
 		bp->b_data   = rsp->bufp;
+		bp->b_error  = 0;
 
 		/* Initiate read */
 		(*rsp->strat)(bp);
@@ -239,10 +240,9 @@ struct read_info	*rsp;
 		/* Wait for results	*/
 		s = splbio();
 		while ((bp->b_flags & B_DONE) == 0)
-			tsleep((caddr_t) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		if (bp->b_flags & B_ERROR)
-			error = (bp->b_error ? bp->b_error : EIO);
+			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
 		splx(s);
+		error = bp->b_error;
 
 		/* Dot counter */
 		printf(".");
@@ -277,7 +277,7 @@ struct read_info	*rsp;
  */
 static int
 cpy_uncompressed(buf, nbyte, rsp)
-caddr_t			buf;
+void *			buf;
 struct read_info	*rsp;
 int			nbyte;
 {
@@ -293,7 +293,7 @@ int			nbyte;
  */
 static int
 md_compressed(buf, nbyte, rsp)
-caddr_t			buf;
+void *			buf;
 struct read_info	*rsp;
 int			nbyte;
 {
@@ -315,6 +315,7 @@ int			nbyte;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
+		bp->b_error  = 0;
 
 		/* Initiate read */
 		(*rsp->strat)(bp);
@@ -322,9 +323,8 @@ int			nbyte;
 		/* Wait for results	*/
 		s = splbio();
 		while ((bp->b_flags & B_DONE) == 0)
-			tsleep((caddr_t) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		if (bp->b_flags & B_ERROR)
-			error = (bp->b_error ? bp->b_error : EIO);
+			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
+		error = bp->b_error;
 		splx(s);
 
 		/* Dot counter */

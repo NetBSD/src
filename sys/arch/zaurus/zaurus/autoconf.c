@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.4.2 2006/12/30 20:47:31 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.4.3 2007/09/03 14:31:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.4.2 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.4.3 2007/09/03 14:31:45 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.4.2 2006/12/30 20:47:31 yamt Exp $"
 
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
+#include <machine/config_hook.h>
 
 void
 cpu_rootconf(void)
@@ -67,6 +68,8 @@ cpu_configure(void)
 	splserial();
 
 	softintr_init();
+
+	config_hook_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");

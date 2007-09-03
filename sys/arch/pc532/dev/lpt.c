@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.41.4.3 2007/02/26 09:07:43 yamt Exp $	*/
+/*	$NetBSD: lpt.c,v 1.41.4.4 2007/09/03 14:28:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.41.4.3 2007/02/26 09:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.41.4.4 2007/09/03 14:28:36 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -195,7 +195,7 @@ static int pushbytes(struct lpt_softc *);
 /* Functions for the plip# interface */
 static void	plipattach(struct lpt_softc *,int);
 static void	plipinput(struct lpt_softc *);
-static int	plipioctl(struct ifnet *, u_long, caddr_t);
+static int	plipioctl(struct ifnet *, u_long, void *);
 static void	plipoutput(void *);
 #ifndef __OPTIMIZE__
 static
@@ -277,7 +277,7 @@ lptattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_state = 0;
 	sc->sc_i8255 = i8255;
 
-	callout_init(&sc->sc_out_ch);
+	callout_init(&sc->sc_out_ch, 0);
 
 #if defined(INET) && defined(PLIP)
 	plipattach(sc, device_unit(self));
@@ -337,7 +337,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		error = tsleep((void *)sc, LPTPRI | PCATCH, "lptopen", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
@@ -410,7 +410,7 @@ pushbytes(struct lpt_softc *sc)
 
 	while (sc->sc_count > 0) {
 		i8255->port_control = LPT_IRQENABLE;
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptwrite", 0);
+		error = tsleep((void *)sc, LPTPRI | PCATCH, "lptwrite", 0);
 		if (error != 0)
 			return error;
 	}
@@ -487,12 +487,12 @@ lptintr(void *arg)
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */
 		i8255->port_control = LPT_IRQDISABLE;
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 	}
 }
 
 int
-lptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lptioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
 
@@ -536,7 +536,7 @@ plipattach(struct lpt_softc *sc, int unit)
  * Process an ioctl request.
  */
 static int
-plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+plipioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX ktrace-lwp */
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
@@ -583,15 +583,15 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					       M_DEVBUF, M_WAITOK);
 			LLADDR(sdl)[0] = 0xfc;
 			LLADDR(sdl)[1] = 0xfc;
-			memcpy((caddr_t)&LLADDR(sdl)[2],
-				(caddr_t)&IA_SIN(ifa)->sin_addr, 4);
+			memcpy((void *)&LLADDR(sdl)[2],
+				(void *)&IA_SIN(ifa)->sin_addr, 4);
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
 				LLADDR(sdl)[0] = 0xfd;
 				LLADDR(sdl)[1] = 0xfd;
 				for (i = sc->sc_adrcksum = 0; i < 5; i++)
-					sc->sc_adrcksum += LLADDR(sdl)[i];
+					sc->sc_adrcksum += CLLADDR(sdl)[i];
 				sc->sc_adrcksum *= 2;
 			}
 #endif

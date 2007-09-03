@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.75.4.3 2007/02/26 09:06:59 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.75.4.4 2007/09/03 14:26:44 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.75.4.3 2007/02/26 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.75.4.4 2007/09/03 14:26:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.75.4.3 2007/02/26 09:06:59 yamt E
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
 void svr4_fasttrap(struct trapframe);
 
 #ifdef DEBUG_SVR4
@@ -271,7 +271,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	union svr4_siginfo	*si;
 	int			 sig;
 	u_long			 code;
-	caddr_t			 addr;
+	void *			 addr;
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -394,7 +394,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 *	  modify many kernel files to enable that]
 	 */
 	svr4_getcontext(l, &frame.sf_uc);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
+	svr4_getsiginfo(&frame.sf_si, sig, code, (void *) tf->tf_eip);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
@@ -439,11 +439,6 @@ svr4_sys_sysarch(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
-#ifdef USER_LDT
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-	int error;
-#endif
 	*retval = 0;	/* XXX: What to do */
 
 	switch (SCARG(uap, op)) {
@@ -453,20 +448,21 @@ svr4_sys_sysarch(l, v, retval)
 	case SVR4_SYSARCH_DSCR:
 #ifdef USER_LDT
 		{
-			struct i386_set_ldt_args sa, *sap;
-			struct sys_sysarch_args ua;
-
+			struct x86_set_ldt_args sa;
 			struct svr4_ssd ssd;
 			union descriptor bsd;
+			int error;
 
 			if ((error = copyin(SCARG(uap, a1), &ssd,
 					    sizeof(ssd))) != 0) {
-				printf("Cannot copy arg1\n");
+#ifdef DEBUG
+				printf("svr4_sys_sysarch: Cannot copy arg1\n");
+#endif
 				return error;
 			}
 
 #ifdef DEBUG
-			printf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
+			printf("svr4_sys_sysarch: s=%x, b=%x, l=%x, a1=%x a2=%x\n",
 			       ssd.selector, ssd.base, ssd.limit,
 			       ssd.access1, ssd.access2);
 #endif
@@ -474,7 +470,7 @@ svr4_sys_sysarch(l, v, retval)
 			/* We can only set ldt's for now. */
 			if (!ISLDT(ssd.selector)) {
 #ifdef DEBUG
-				printf("Not an ldt\n");
+				printf("svr4_sys_sysarch: Not an ldt\n");
 #endif
 				return EPERM;
 			}
@@ -498,22 +494,10 @@ svr4_sys_sysarch(l, v, retval)
 			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
 
 			sa.start = IDXSEL(ssd.selector);
-			sa.desc = stackgap_alloc(p, &sg,
-			    sizeof(union descriptor));
+			sa.desc = NULL;
 			sa.num = 1;
-			sap = stackgap_alloc(p, &sg,
-			     sizeof(struct i386_set_ldt_args));
 
-			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
-				return error;
-
-			SCARG(&ua, op) = I386_SET_LDT;
-			SCARG(&ua, parms) = (char *) sap;
-
-			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0)
-				return error;
-
-			return sys_sysarch(l, &ua, retval);
+			return x86_set_ldt1(l, &sa, &bsd);
 		}
 #endif
 

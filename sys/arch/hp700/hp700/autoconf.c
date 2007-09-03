@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.2.2 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.3 2007/09/03 14:25:38 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.2 2006/12/30 20:45:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.3 2007/09/03 14:25:38 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -174,7 +174,7 @@ cpu_configure(void)
 
 #ifdef USELEDS
 	memset(_hp700_led_on_cycles, 0, sizeof(_hp700_led_on_cycles));
-	callout_init(&hp700_led_callout);
+	callout_init(&hp700_led_callout, 0);
 	hp700_led_blinker((void *) 0);
 #endif
 }

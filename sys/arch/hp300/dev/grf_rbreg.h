@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rbreg.h,v 1.6 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: grf_rbreg.h,v 1.6.16.1 2007/09/03 14:25:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -85,12 +85,12 @@
 #define rb_waitbusy(regaddr) \
 	while (((struct rboxfb *)(regaddr))->wbusy & 0x01) DELAY(100)
 
-#define	CM1RED	((struct rencm  *)(ip->regbase + 0x6400))
-#define	CM1GRN	((struct rencm  *)(ip->regbase + 0x6800))
-#define	CM1BLU	((struct rencm  *)(ip->regbase + 0x6C00))
-#define	CM2RED	((struct rencm  *)(ip->regbase + 0x7400))
-#define	CM2GRN	((struct rencm  *)(ip->regbase + 0x7800))
-#define	CM2BLU	((struct rencm  *)(ip->regbase + 0x7C00))
+#define	CM1RED	((struct rencm  *)((char *)ip->regbase + 0x6400))
+#define	CM1GRN	((struct rencm  *)((char *)ip->regbase + 0x6800))
+#define	CM1BLU	((struct rencm  *)((char *)ip->regbase + 0x6C00))
+#define	CM2RED	((struct rencm  *)((char *)ip->regbase + 0x7400))
+#define	CM2GRN	((struct rencm  *)((char *)ip->regbase + 0x7800))
+#define	CM2BLU	((struct rencm  *)((char *)ip->regbase + 0x7C00))
 
 struct	rencm {
 	u_char  :8, :8, :8;

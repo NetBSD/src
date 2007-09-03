@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.18.4 2007/02/26 09:06:27 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.18.5 2007/09/03 14:24:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2004 The NetBSD Foundation, Inc.
@@ -88,17 +88,9 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-#ifdef _KERNEL
+#include <mips/locore.h>
 
 extern const uint32_t *ipl_sr_bits;
-
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(int);
-extern int		_splnone(int);
-extern int		_setsoftintr(int);
-extern int		_clrsoftintr(int);
 
 #define spl0()		(void) _spllower(0)
 #define splx(s)		(void) _splset(s)
@@ -130,5 +122,4 @@ void intr_disestablish(void *);
 
 #include <mips/softintr.h>
 
-#endif /* _KERNEL */
 #endif /* !_EWS4800MIPS_INTR_H_ */

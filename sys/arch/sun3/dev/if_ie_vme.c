@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.19 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.19.2.1 2007/09/03 14:30:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.19 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.19.2.1 2007/09/03 14:30:35 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -177,7 +177,7 @@ ie_vme_attach(struct device *parent, struct device *self, void *args)
 	 * at the end of the RAM on the VME board.
 	 */
 	off = IE_SCP_ADDR & 0xFFFF;
-	sc->scp = (volatile void *) (sc->sc_maddr + off);
+	sc->scp = (volatile void *)((char *)sc->sc_maddr + off);
 
 	/*
 	 * The rest of ram is used for buffers, etc.

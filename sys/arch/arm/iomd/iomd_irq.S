@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.4 2003/11/05 21:10:59 scw Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.4.16.1 2007/09/03 14:23:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -95,6 +95,8 @@ Lcurrent_intr_depth:
 
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
+
+LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -337,14 +339,13 @@ exitirq:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
+	LOCK_CAS_CHECK
+
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 
 	/* NOT REACHED */
 	b	. - 8
-
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
 
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
@@ -357,9 +358,11 @@ ENTRY(irq_setmasks)
 
 	/* Calculate IOMD interrupt mask */
 	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
-	ldr	r2, Lspl_mask		/* Block due to current spl level */
 	ldr	r1, [r1]
+	ldr	r0, Lspl_masks		/* Block due to current spl level */
+	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2]
+	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]

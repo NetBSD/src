@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.32.6.2 2006/12/30 20:47:14 yamt Exp $	*/
+/*	$NetBSD: macros.h,v 1.32.6.3 2007/09/03 14:30:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 void	__blkset(void *, int, size_t);
 void	__blkcpy(const void *, void *, size_t);
 
+#if !__GNUC_PREREQ__(4, 1)
 /* Here general macros are supposed to be stored */
 
 static __inline int __attribute__((__unused__))
@@ -55,6 +56,7 @@ vax_ffs(int reg)
 	return	val;
 }
 #define ffs vax_ffs
+#endif
 
 static __inline void __attribute__((__unused__))
 vax_remque(void *p)
@@ -77,7 +79,7 @@ vax_insque(void *p, void *q)
 #define _insque vax_insque
 
 #if 0
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memcpy(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
@@ -92,13 +94,13 @@ vax_memcpy(void *to, const void *from, size_t len)
 }
 #define memcpy vax_memcpy
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memmove(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
 		__blkcpy(from, to, len);
 	} else {
-		__asm volatile ("movc3 %1,%2,%0"
+		__asm __volatile ("movc3 %1,%2,%0"
 			: "=m" (*(char *)to)
 			: "g" (len), "mo" (*(const char *)from)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -108,13 +110,13 @@ vax_memmove(void *to, const void *from, size_t len)
 #define memmove vax_memmove
 #endif
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 vax_memset(void *block, int c, size_t len)
 {
 	if (len > 65535) {
 		__blkset(block, c, len);
 	} else {
-		__asm volatile ("movc5 $0,(%%sp),%2,%1,%0"
+		__asm __volatile ("movc5 $0,(%%sp),%2,%1,%0"
 			: "=m" (*(char *)block)
 			:  "g" (len), "g" (c)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
@@ -222,7 +224,7 @@ strncpy(char *cp, const char *c2, size_t len)
         return  cp;
 }
 
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 memchr(const void *cp, int c, size_t len)
 {
         void *ret;
@@ -337,21 +339,21 @@ bbcci(int bitnr, long *addr)
 	return ret;
 }
 
-#define setrunqueue(p)	\
-	__asm volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
-
-#define remrunqueue(p)	\
-	__asm volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
-
-#define cpu_switch(p, newp) ({ 						\
-	register int ret;						\
-	__asm volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
-	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\
-	ret; })
-
-#define	cpu_switchto(p, newp)						\
-	__asm volatile("movpsl -(%%sp); movl %0,%%r2; jsb Swtchto"	\
-	    :: "g" (newp) : "r0", "r1", "r2", "r3", "r4", "r5")
+static inline struct lwp *
+cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	struct lwp *prevlwp;
+	__asm volatile(
+		"movl %1,%%r0;"
+		"movl %2,%%r1;"
+		"movpsl -(%%sp);"
+		"jsb Swtchto;"
+		"movl %%r0,%0"
+	    : "=g"(prevlwp)
+	    : "g" (oldlwp), "g" (newlwp)
+	    : "r0", "r1");
+	return prevlwp;
+}
 
 /*
  * Interlock instructions. Used both in multiprocessor environments to
@@ -387,7 +389,7 @@ insqti(void *entry, void *header) {
  * Returns -1 if interlock failed, 0 if queue empty, address of the 
  * removed element otherwise.
  */
-static __inline void * __attribute__((__unused__))
+static __inline void *__attribute__((__unused__))
 remqhi(void *header) {
 	register void *ret;
 

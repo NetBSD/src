@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11.12.1 2006/06/21 14:52:09 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.11.12.2 2007/09/03 14:26:27 yamt Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -72,7 +72,6 @@ typedef int			register_t;
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
-#define	__HAVE_MD_RUNQUEUE
 #define	__HAVE_RAS
 
 /*

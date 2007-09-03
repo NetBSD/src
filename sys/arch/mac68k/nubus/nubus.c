@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.59.2.1 2007/09/03 14:27:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.59 2005/06/03 23:56:55 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.59.2.1 2007/09/03 14:27:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ notfound:
 			goto notfound;
 
 		if (nubus_get_ind_data(bst, bsh, &fmtblock, &dirent,
-		    (caddr_t)&slottype, sizeof(nubus_type)) <= 0)
+		    (void *)&slottype, sizeof(nubus_type)) <= 0)
 			goto notfound;
 
 		/*
@@ -232,7 +232,7 @@ notfound:
 					goto notfound;
 
 				if (nubus_get_ind_data(bst, bsh,
-				    &fmtblock, &dirent, (caddr_t)&slottype,
+				    &fmtblock, &dirent, (void *)&slottype,
 				    sizeof(nubus_type)) <= 0)
 					goto notfound;
 
@@ -644,7 +644,7 @@ nubus_find_rsrc(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
 
 int
 nubus_get_ind_data(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
-    nubus_dirent *dirent, caddr_t data_return, int nbytes)
+    nubus_dirent *dirent, char *data_return, int nbytes)
 {
 	u_long loc;
 	u_int8_t lanes = fmt->bytelanes;
@@ -668,7 +668,7 @@ nubus_get_ind_data(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
 
 int
 nubus_get_c_string(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
-    nubus_dirent *dirent, caddr_t data_return, int max_bytes)
+    nubus_dirent *dirent, char *data_return, int max_bytes)
 {
 	u_long loc;
 	u_int8_t lanes = fmt->bytelanes;
@@ -700,12 +700,12 @@ nubus_get_c_string(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
  */
 int
 nubus_get_smem_addr_rangelist(bus_space_tag_t bst, bus_space_handle_t bsh,
-    nubus_slot *fmt, nubus_dirent *dirent, caddr_t data_return)
+    nubus_slot *fmt, nubus_dirent *dirent, void *data_return)
 {
 	u_long loc;
 	u_int8_t lanes = fmt->bytelanes;
 	long blocklen;
-	caddr_t blocklist;
+	void *blocklist;
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
@@ -724,7 +724,7 @@ nubus_get_smem_addr_rangelist(bus_space_tag_t bst, bus_space_handle_t bsh,
 	 * malloc a block of (blocklen) bytes
 	 * caller must recycle block after use  
 	 */
-	MALLOC(blocklist,caddr_t,blocklen,M_TEMP,M_WAITOK);
+	MALLOC(blocklist,void *,blocklen,M_TEMP,M_WAITOK);
 	
 	/* read ((blocklen - 4) / 8) (length,offset) pairs into block */
 	nubus_get_ind_data(bst, bsh, fmt, dirent, blocklist, blocklen);
@@ -742,7 +742,7 @@ nubus_get_smem_addr_rangelist(bus_space_tag_t bst, bus_space_handle_t bsh,
 		}
 	}
 #endif
-	*(caddr_t *)data_return = blocklist;
+	*(void **)data_return = blocklist;
 
 	return 1;
 }

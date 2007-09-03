@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.40.2.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: esp.c,v 1.40.2.2 2007/09/03 14:27:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.40.2.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.40.2.2 2007/09/03 14:27:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,14 +123,14 @@ void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_dma_isintr(struct ncr53c9x_softc *);
 void	esp_dma_reset(struct ncr53c9x_softc *);
 int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+int	esp_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
 	    size_t *);
 void	esp_dma_go(struct ncr53c9x_softc *);
 void	esp_dma_stop(struct ncr53c9x_softc *);
 int	esp_dma_isactive(struct ncr53c9x_softc *);
 void	esp_quick_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_quick_dma_intr(struct ncr53c9x_softc *);
-int	esp_quick_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+int	esp_quick_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
 	     size_t *);
 void	esp_quick_dma_go(struct ncr53c9x_softc *);
 
@@ -296,6 +296,13 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/* We need this to fit into the TCR... */
 	sc->sc_maxxfer = 64 * 1024;
 
+        switch (current_mac_model->machineid) {
+        case MACH_MACQ630:
+		/* XXX on LC630 64k xfer causes timeout error */
+		sc->sc_maxxfer = 63 * 1024;
+		break;
+	}
+
 	if (!quick) {
 		sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
 		sc->sc_maxxfer = 8 * 1024;
@@ -449,12 +456,12 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
+esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len, int datain,
     size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = (char **)addr;
 	esc->sc_dmalen = len;
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;
@@ -550,12 +557,12 @@ esp_quick_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-esp_quick_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+esp_quick_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = (char **)addr;
 	esc->sc_dmalen = len;
 
 	if (*len & 1) {

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.4.3 2007/02/26 09:08:57 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.4 2007/09/03 14:31:43 yamt Exp $
 
 INCSDIR= /usr/include/zaurus
 
-INCS=	ansi.h aout_machdep.h asm.h \
+INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
 	disklabel.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.16.3 2007/02/26 09:08:08 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.16.4 2007/09/03 14:29:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.16.3 2007/02/26 09:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.16.4 2007/09/03 14:29:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,9 @@ struct pmap __pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
 paddr_t avail_start;		/* PA of first available physical page */
 paddr_t avail_end;		/* PA of last available physical page */
+
+/* For the fast tlb miss handler */
+pt_entry_t **curptd;		/* p1 va of curlwp->...->pm_ptp */
 
 /* pmap pool */
 STATIC struct pool __pmap_pmap_pool;
@@ -108,7 +111,7 @@ pmap_bootstrap()
 {
 
 	/* Steal msgbuf area */
-	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
+	initmsgbuf((void *)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
@@ -159,7 +162,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	}
 
 	va = SH3_PHYS_TO_P1SEG(pa);
-	memset((caddr_t)va, 0, size);
+	memset((void *)va, 0, size);
 
 	return (va);
 }
@@ -218,9 +221,9 @@ pmap_init()
 
 	/* Initialize pmap module */
 	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	    &pmap_pv_page_allocator, IPL_NONE);
 	pool_setlowat(&__pmap_pv_pool, 16);
 
 #ifdef SH4
@@ -313,7 +316,9 @@ pmap_activate(struct lwp *l)
 		pmap->pm_asid = __pmap_asid_alloc();
 
 	KDASSERT(pmap->pm_asid >=0 && pmap->pm_asid < 256);
+
 	sh_tlb_set_asid(pmap->pm_asid);
+	curptd = pmap->pm_ptp;
 }
 
 void
@@ -343,7 +348,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvh = &pg->mdpage;
 		entry |= PG_C;	/* always cached */
 
-		/* Modified/reference tracking */
+		/* Seed modified/reference tracking */
 		if (flags & VM_PROT_WRITE) {
 			entry |= PG_V | PG_D;
 			pvh->pvh_flags |= PVH_MODIFIED | PVH_REFERENCED;
@@ -359,7 +364,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			else
 				entry |= PG_PR_URW;
 		} else {
-			/* RO, COW page */
+			/* RO or COW page */
 			if (kva)
 				entry |= PG_PR_KRO | PG_SH;
 			else
@@ -884,7 +889,7 @@ pmap_clear_modify(struct vm_page *pg)
 }
 
 paddr_t
-pmap_phys_address(int cookie)
+pmap_phys_address(paddr_t cookie)
 {
 
 	return (sh3_ptob(cookie));

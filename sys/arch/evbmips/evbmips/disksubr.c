@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.8.2.1 2006/12/30 20:45:51 yamt Exp $ */
+/* $NetBSD: disksubr.c,v 1.8.2.2 2007/09/03 14:24:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8.2.1 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8.2.2 2007/09/03 14:24:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct disklabel *dlp;
 	struct dkbad *bdp;
 	const char *msg = NULL;
+	uint32_t secperunit;
 	int i;
 
 	/* minimal requirements for archtypal disk label */
@@ -66,25 +67,23 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
+	secperunit = lp->d_secperunit;
+
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
-
-	/* next, dig out disk label */
 	bp->b_dev = dev;
-	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	(*strat)(bp);
 
-	/* if successful, locate disk label within block and validate */
-	if (biowait(bp)) {
+	/* Next, dig out disk label.  If successful, locate disk
+	 * label within block and validate.
+	 */
+	if (disk_read_sectors(strat, lp, bp, LABELSECTOR, 1) != 0) {
 		msg = "disk label read error";
 		goto done;
 	}
 
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
+	     sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -100,6 +99,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 	if (msg)
+		goto done;
+
+	if ((msg = convertdisklabel(lp, strat, bp, secperunit)) != NULL)
 		goto done;
 
 	/* obtain bad sector table if requested and present */
@@ -134,7 +136,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 				} else
 					msg = "bad sector table corrupted";
 			}
-		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (bp->b_error != 0 && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 
@@ -211,7 +213,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
 	bp->b_flags &= ~(B_READ|B_DONE);

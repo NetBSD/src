@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.3.4.2 2006/06/21 14:58:23 yamt Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.3.4.3 2007/09/03 14:31:40 yamt Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.3.4.2 2006/06/21 14:58:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.3.4.3 2007/09/03 14:31:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -60,9 +60,9 @@ extern int xenstored_ready;
 
 static int wake_waiting(void *);
 static int check_indexes(XENSTORE_RING_IDX, XENSTORE_RING_IDX);
-static void * get_output_chunk(XENSTORE_RING_IDX, XENSTORE_RING_IDX,
+static void *get_output_chunk(XENSTORE_RING_IDX, XENSTORE_RING_IDX,
     char *, uint32_t *);
-static const void * get_input_chunk(XENSTORE_RING_IDX, XENSTORE_RING_IDX,
+static const void *get_input_chunk(XENSTORE_RING_IDX, XENSTORE_RING_IDX,
     const char *, uint32_t *);
 
 

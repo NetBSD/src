@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.7.2.1 2007/02/26 09:05:50 yamt Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.7.2.2 2007/09/03 14:23:03 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.7.2.1 2007/02/26 09:05:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.7.2.2 2007/09/03 14:23:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.7.2.1 2007/02/26 09:05:50 yam
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -137,53 +138,39 @@ struct platform platform_desktech_arcstation_i = {
  */
 /* XXX see comments in p_dti_arcstation_init() */
 static const uint32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_{CLOCK,HIGH} */
+	[IPL_NONE] = 0,
+	[IPL_SOFT] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
+	[IPL_NET] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
+	[IPL_CLOCK] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
 };
 
 #if NPC_ISA > 0 || NOPMS_ISA > 0
@@ -265,6 +252,17 @@ p_dti_arcstation_init(void)
 {
 
 	/*
+	 * Initialize interrupt priority
+	 */
+	/*
+	 * XXX
+	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
+	 * or
+	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
+	 */
+	ipl_sr_bits = dti_arcstation_ipl_sr_bits;
+
+	/*
 	 * XXX - should be enabled, if tested.
 	 *
 	 * We use safe default for now, because this platform is untested.
@@ -283,18 +281,8 @@ p_dti_arcstation_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	/* no need to initialize wired TLB */
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	/*
-	 * XXX
-	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
-	 * or
-	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
-	 */
-	ipl_sr_bits = dti_arcstation_ipl_sr_bits;
 
 	/*
 	 * common configuration for DTI platforms

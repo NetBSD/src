@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.7.6.1 2007/09/03 14:28:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.7.6.1 2007/09/03 14:28:21 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -88,7 +88,7 @@ sn_ap_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	u_int intrmask;
 
-	sc->sc_hwbase = (caddr_t)apa->apa_hwbase;
+	sc->sc_hwbase = (void *)apa->apa_hwbase;
 	sc->sc_regbase = (void *)(apa->apa_hwbase + SONIC_APBUS_REG_OFFSET);
 	sc->space = (void *)(apa->apa_hwbase + SONIC_APBUS_MEM_OFFSET);
 
@@ -122,7 +122,7 @@ sn_ap_attach(struct device *parent, struct device *self, void *aux)
 int
 sn_ap_getaddr(struct sn_softc *sc, uint8_t *lladdr)
 {
-	u_int *p = (u_int *)(sc->sc_hwbase + SONIC_MACROM_OFFSET);
+	u_int *p = (u_int *)((char *)sc->sc_hwbase + SONIC_MACROM_OFFSET);
 	int i;
 
 	for (i = 0; i < 6; i++) {

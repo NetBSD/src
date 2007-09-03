@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6.12.1 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.6.12.2 2007/09/03 14:26:26 yamt Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -102,8 +102,6 @@
 /*
  * Mach derived conversion macros
  */
-#define hppa_round_page(x)	((((unsigned long)(x)) + NBPG - 1) & ~(NBPG-1))
-#define hppa_trunc_page(x)	((unsigned long)(x) & ~(NBPG-1))
 
 #define btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define ptob(x)		((unsigned long)(x) << PGSHIFT)

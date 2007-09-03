@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.4.2.2 2006/12/30 20:47:25 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.4.2.3 2007/09/03 14:31:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.4.2.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.4.2.3 2007/09/03 14:31:37 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.4.2.2 2006/12/30 20:47:25 yamt Exp $")
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
@@ -119,7 +120,7 @@ privcmd_ioctl(void *v)
 
 		pmap_t pmap = vm_map_pmap(vmm);
 		for (i = 0; i < mcmd->num; i++) {
-			error = copyin(mcmd->entry, &mentry, sizeof(mentry));
+			error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
 			if (error)
 				return error;
 			//printf("entry %d va 0x%lx npages %lu mfm 0x%lx\n", i, mentry.va, mentry.npages, mentry.mfn);
@@ -222,6 +223,7 @@ privcmd_ioctl(void *v)
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
 			}
 		}
+		error = 0;
 		break;
 	}
 #ifndef XEN3

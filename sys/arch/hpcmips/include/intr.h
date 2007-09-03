@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.26.2 2007/02/26 09:06:38 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.26.3 2007/09/03 14:26:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -86,18 +86,12 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 #include <mips/cpuregs.h>
+#include <mips/locore.h>
 
 extern const u_int32_t *ipl_sr_bits;
 extern const u_int32_t ipl_si_to_sr[SI_NQUEUES];
 
 void	intr_init(void);
-int	_splraise(int);
-int	_spllower(int);
-int	_splset(int);
-int	_splget(void);
-void	_splnone(void);
-void	_setsoftintr(int);
-void	_clrsoftintr(int);
 
 #define	spl0()		(void) _spllower(0)
 #define	splx(s)		(void) _splset(s)

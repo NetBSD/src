@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.13.2.1 2007/02/26 09:06:42 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.13.2.2 2007/09/03 14:26:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13.2.1 2007/02/26 09:06:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13.2.2 2007/09/03 14:26:24 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -191,7 +191,7 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 		((l->l_sigstk.ss_flags & SS_ONSTACK) ?
 		 _UC_SETSTACK : _UC_CLRSTACK);
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.135 2005/01/13 16:11:38 is Exp $
+#	$NetBSD: files.amiga,v 1.135.10.1 2007/09/03 14:22:44 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -439,11 +439,13 @@ file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
 file	arch/amiga/amiga/pmap.c
+file	arch/amiga/amiga/pmap_bootstrap.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/cc.c
 file	dev/md_root.c			memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
+#file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
@@ -462,6 +464,10 @@ include "dev/ata/files.ata"
 # Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
+
+# Buddha wdc
+attach	wdc at zbus with wdc_buddha
+file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 
 # Compatibility modules
 

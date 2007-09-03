@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63.2.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63.2.2 2007/09/03 14:27:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63.2.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63.2.2 2007/09/03 14:27:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63.2.1 2006/06/21 14:53:13 yamt Exp $
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include "scsibus.h"
+
 static void findbootdev(void);
+#if NSCSIBUS > 0
 static int target_to_unit(u_long, u_long, u_long);
+#endif /* NSCSIBUS > 0 */
 
 /*
  * cpu_configure:
@@ -80,6 +84,7 @@ void
 cpu_configure(void)
 {
 
+	softintr_init();
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before ADB attached */
 
@@ -127,9 +132,14 @@ findbootdev(void)
 
 	switch (major) {
 	case 4: /* SCSI drive */
+#if NSCSIBUS > 0
 		bootdev &= ~(B_UNITMASK << B_UNITSHIFT); /* XXX */
 		unit = target_to_unit(-1, unit, 0);
 		bootdev |= (unit << B_UNITSHIFT); /* XXX */
+#else /* NSCSIBUS > 0 */
+		panic("Boot device is on a SCSI drive but SCSI support "
+		    "is not present");
+#endif /* NSCSIBUS > 0 */
 		break;
 	case 22: /* IDE drive */
 		/*
@@ -155,6 +165,7 @@ findbootdev(void)
  * This could be tape, disk, CD.  The calling routine, though,
  * assumes DISK.  It would be nice to allow CD, too...
  */
+#if NSCSIBUS > 0
 static int
 target_to_unit(u_long bus, u_long target, u_long lun)
 {
@@ -200,3 +211,4 @@ extern	struct cfdriver		scsibus_cd;
 	}
 	return -1;
 }
+#endif /* NSCSIBUS > 0 */

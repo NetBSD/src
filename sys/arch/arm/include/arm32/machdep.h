@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.7 2002/02/21 02:52:21 thorpej Exp $ */
+/* $NetBSD: machdep.h,v 1.7.34.1 2007/09/03 14:23:21 yamt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -12,7 +12,7 @@ void undefinedinstruction_bounce __P((trapframe_t *));
 void dumpsys	__P((void));
 
 /* 
- * note that we use void * as all the platforms have different ideas on what
+ * note that we use void *as all the platforms have different ideas on what
  * the structure is
  */
 u_int initarm __P((void *));

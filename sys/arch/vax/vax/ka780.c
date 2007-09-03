@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.24.2.1 2006/12/30 20:47:14 yamt Exp $ */
+/*	$NetBSD: ka780.c,v 1.24.2.2 2007/09/03 14:30:57 yamt Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.24.2.1 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.24.2.2 2007/09/03 14:30:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.24.2.1 2006/12/30 20:47:14 yamt Exp $");
 #include "locators.h"
 
 static	void ka780_memerr(void);
-static	int ka780_mchk(caddr_t);
+static	int ka780_mchk(void *);
 static	void ka780_conf(void);
 static	int mem_sbi_match(struct device *, struct cfdata *, void *);
 static	void mem_sbi_attach(struct device *, struct device *, void *);
@@ -318,7 +318,7 @@ struct mc780frame {
 };
 
 int
-ka780_mchk(caddr_t cmcf)
+ka780_mchk(void *cmcf)
 {
 	register struct mc780frame *mcf = (struct mc780frame *)cmcf;
 	register int type = mcf->mc8_summary;

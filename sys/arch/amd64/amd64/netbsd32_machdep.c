@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.3 2007/02/26 09:05:40 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.4 2007/09/03 14:22:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.3 2007/02/26 09:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.4 2007/09/03 14:22:32 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.3 2007/02/26 09:05:40 ya
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";	
 
-extern void (osyscall_return) __P((void));
+extern void (osyscall_return)(void);
 
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
@@ -183,8 +183,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_sigcontext *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
-					  l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_sigcontext *)tf->tf_rsp;
 	fp--;
@@ -286,8 +285,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk.ss_sp +
-					  l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_siginfo *)tf->tf_rsp;
 
@@ -312,7 +310,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_si_to_si32(&frame.sf_si, (const siginfo_t *)&ksi->ksi_info);
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = 0;
+	frame.sf_uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -378,8 +376,8 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = (struct netbsd32_sigcontext *)(uintptr_t)SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	scp = NETBSD32PTR64(SCARG(uap, sigcntxp));
+	if (copyin(scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore register context. */
@@ -582,10 +580,7 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 }
 
 int
-netbsd32_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sysarch_args /* {
 		syscallarg(int) op;
@@ -594,19 +589,17 @@ netbsd32_sysarch(l, v, retval)
 	int error;
 
 	switch (SCARG(uap, op)) {
-		case X86_64_IOPL:
-			error = x86_64_iopl(l,
-			    (void *)(uintptr_t)SCARG(uap, parms), retval);
+		case X86_IOPL:
+			error = x86_iopl(l,
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
-		case X86_64_GET_MTRR:
+		case X86_GET_MTRR:
 			error = x86_64_get_mtrr32(l,
-			    (void *)(uintptr_t)SCARG(uap, parms),
-			    retval);
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
-		case X86_64_SET_MTRR:
+		case X86_SET_MTRR:
 			error = x86_64_set_mtrr32(l,
-			    (void *)(uintptr_t)SCARG(uap, parms),
-			    retval);
+			    NETBSD32PTR64(SCARG(uap, parms)), retval);
 			break;
 		default:
 			error = EINVAL;
@@ -892,7 +885,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg32_t)(uintptr_t)ras_lookup(l->l_proc,
-	    (caddr_t) (uintptr_t)gr[_REG32_EIP])) != -1)
+	    (void *) (uintptr_t)gr[_REG32_EIP])) != -1)
 		gr[_REG32_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;

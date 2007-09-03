@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.21.2.3 2007/02/26 09:08:07 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.21.2.4 2007/09/03 14:29:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,24 +79,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21.2.3 2007/02/26 09:08:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21.2.4 2007/09/03 14:29:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/user.h>
+#include <sys/proc.h>
 #include <sys/signal.h>
-#include <sys/syscall.h>
 
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #ifdef DDB
 #include <sh3/db_machdep.h>
 #endif
@@ -146,13 +140,11 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	bool usermode = !KERNELMODE(tf->tf_ssr);
-	int ipl;
 	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
-	ipl = tf->tf_ssr & PSL_IMASK;
-	splx(ipl);
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	if (l == NULL)
  		goto do_panic;
@@ -277,15 +269,18 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			}				\
 		} while(/*CONSTCOND*/0)
 
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
+#if 0 /* FIXME: probably wrong for yamt-idlelwp */
 		KDASSERT(l == NULL ||		/* idle */
 		    l == &lwp0 ||		/* kthread */
 		    l->l_md.md_regs != tf);	/* other */
+#endif
 	}
 
 	switch (tf->tf_expevt) {
@@ -436,8 +431,16 @@ void
 ast(struct lwp *l, struct trapframe *tf)
 {
 
-	if (KERNELMODE(tf->tf_ssr))
+	if (KERNELMODE(tf->tf_ssr)) {
+		extern char _lock_cas_ras_start[];
+		extern char _lock_cas_ras_end[];
+
+		if ((uintptr_t)tf->tf_spc > (uintptr_t)_lock_cas_ras_start
+		    && (uintptr_t)tf->tf_spc < (uintptr_t)_lock_cas_ras_end)
+			tf->tf_spc = (uintptr_t)_lock_cas_ras_start;
 		return;
+	}
+
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 
@@ -457,51 +460,4 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		userret(l);
 	}
-}
-
-/*
- * void child_return(void *arg):
- *
- *	uvm_fork sets this routine to proc_trampoline's service function.
- *	when return from here, jump to user-land.
- */
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-	struct trapframe *tf = l->l_md.md_regs;
-
-	tf->tf_r0 = 0;
-	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
-
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
-}
-
-/*
- * void startlwp(void *arg):
- *
- *	Start a new LWP.
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (error)
-		printf("startlwp: error %d from cpu_setmcontext()", error);
-#endif
-	pool_put(&lwp_uc_pool, uc);
-
-	userret(l);
 }

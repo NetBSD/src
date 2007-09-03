@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.31.2.2 2006/12/30 20:45:21 yamt Exp $
+#	$NetBSD: P4032,v 1.31.2.3 2007/09/03 14:22:09 yamt Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.31.2.2 $"
+#ident 		"P4032-$Revision: 1.31.2.3 $"
 
 maxusers 32
 
@@ -247,7 +247,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?
