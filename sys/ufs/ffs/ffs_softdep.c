@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.95.2.1 2007/08/15 13:51:10 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.95.2.2 2007/09/03 10:24:24 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.95.2.1 2007/08/15 13:51:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.95.2.2 2007/09/03 10:24:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -209,7 +209,7 @@ static	int softdep_process_worklist(struct mount *);
 static	void softdep_move_dependencies(struct buf *, struct buf *);
 static	int softdep_count_dependencies(struct buf *bp, int);
 
-struct bio_ops bioops = {
+static struct bio_ops bioops_softdep = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
@@ -1183,6 +1183,8 @@ void
 softdep_initialize()
 {
 	int i;
+
+	bioopsp = &bioops_softdep;
 
 	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
