@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.3 2007/09/01 21:52:06 ober Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4 2007/09/03 03:35:00 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.3 2007/09/01 21:52:06 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4 2007/09/03 03:35:00 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,9 +275,9 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	unsigned int period;
 
 	/*
-	 * Map the memory space necessary for the GCS register.
-	 * This is only used for ICH6 or newer, to clear the NO_REBOOT
-	 * bit.
+	 * Map the memory space necessary for GCS (General Control
+	 * and Status Register). This is where the No Reboot (NR) bit
+	 * lives on ICH6 and newer.
 	 */
 	if (lpcib_ich6) {
 		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_RCBA);
@@ -291,7 +291,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	}
 
 	/* 
-	 * Clear the NO_REBOOT bit. If this fails, enabling the TCO_EN bit
+	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
 	if (tcotimer_disable_noreboot(sc, pa->pa_memt, gcs_memh)) {
@@ -433,7 +433,8 @@ tcotimer_status_reset(struct lpcib_softc *sc)
 }
 
 /*
- * Clear the NO_REBOOT bit, this enables reboots.
+ * Clear the No Reboot (NR) bit, this enables reboots when the timer
+ * reaches the timeout for the second time.
  */
 static int
 tcotimer_disable_noreboot(struct lpcib_softc *sc, bus_space_tag_t gcs_memt,
