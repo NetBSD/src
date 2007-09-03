@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.30 2007/04/26 23:08:22 matt Exp $ */
+/*      $NetBSD: sgec.c,v 1.30.2.1 2007/09/03 10:20:26 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30 2007/04/26 23:08:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.2.1 2007/09/03 10:20:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -588,11 +588,7 @@ zeioctl(ifp, cmd, data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -672,7 +668,7 @@ ze_setup(sc)
 	struct ether_multistep step;
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 	int j, idx, reg;
 
 	if (sc->sc_inq == (TXDESCS - 1)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.28 2007/05/13 19:24:20 mhitch Exp $ */
+/*	$NetBSD: siop2.c,v 1.28.4.1 2007/09/03 10:18:22 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.28 2007/05/13 19:24:20 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.28.4.1 2007/09/03 10:18:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -977,7 +977,7 @@ siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 		if (rp->siop_dsa != kvtop((void *)&acb->ds)) {
 			printf ("siopng: invalid dsa: %lx %x\n", rp->siop_dsa,
-			    kvtop((void *)&acb->ds));
+			    (unsigned)kvtop((void *)&acb->ds));
 			panic("*** siopng DSA invalid ***");
 		}
 #endif
@@ -1511,9 +1511,10 @@ bad_phase:
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
 	printf ("siopngchkintr: target %x ds %p\n", target, &acb->ds);
-	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
-	    kvtop((void *)&acb->ds), kvtop((void *)__UNVOLATILE(rp)), 
-	    rp->siop_dsp, *((long *)__UNVOLATILE(&rp->siop_dcmd)));
+	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n",
+	    sc->sc_scriptspa, (unsigned)kvtop((void *)&acb->ds),
+	    (unsigned)kvtop((void *)__UNVOLATILE(rp)), rp->siop_dsp,
+	    *((long *)__UNVOLATILE(&rp->siop_dcmd)));
 	printf ("siopngchkintr: istat %x dstat %x sist %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sist, rp->siop_dsps, rp->siop_dsa,
 	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1], rp->siop_sfbr);

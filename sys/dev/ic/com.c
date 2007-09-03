@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.261 2007/07/14 21:02:37 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.261.2.1 2007/09/03 10:20:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261 2007/07/14 21:02:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261.2.1 2007/09/03 10:20:18 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -359,19 +359,13 @@ comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 static void
 com_enable_debugport(struct com_softc *sc)
 {
-	int s;
-
 	/* Turn on line break interrupt, set carrier. */
-	s = splserial();
-	COM_LOCK(sc);
 	sc->sc_ier = IER_ERXRDY;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_MCR, sc->sc_mcr);
-	COM_UNLOCK(sc);
-	splx(s);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.10.2.1 2007/08/15 13:49:09 skrll Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.10.2.2 2007/09/03 10:23:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.10.2.1 2007/08/15 13:49:09 skrll Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.10.2.2 2007/09/03 10:23:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -56,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.10.2.1 2007/08/15 13:49:09 skrll E
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/sleepq.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -242,10 +238,7 @@ sleepq_block(int timo, bool catch)
 	lwp_t *l = curlwp;
 	bool early = false;
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 1, 0);
-#endif
+	ktrcsw(1, 0);
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
@@ -254,19 +247,18 @@ sleepq_block(int timo, bool catch)
 	if (catch) {
 		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
-			/* lwp_unsleep() will release the lock */
-			lwp_unsleep(l);
 			early = true;
 		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
-			/* lwp_unsleep() will release the lock */
-			lwp_unsleep(l);
 			early = true;
 		}
 	}
 
-	if (!early) {
+	if (early) {
+		/* lwp_unsleep() will release the lock */
+		lwp_unsleep(l);
+	} else {
 		if (timo)
 			callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 		mi_switch(l);
@@ -296,10 +288,7 @@ sleepq_block(int timo, bool catch)
 		}
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 0, 0);
-#endif
+	ktrcsw(0, 0);
 
 	KERNEL_LOCK(l->l_biglocks, l);
 	return error;

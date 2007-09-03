@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.24 2007/03/12 18:18:29 ad Exp $      */
+/*      $NetBSD: xennetback.c,v 1.24.12.1 2007/09/03 10:19:55 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -680,7 +680,7 @@ again:
 			struct ether_header *eh =
 			    (void*)(pkt_va | (txreq->addr & PAGE_MASK));
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				pool_put(&xni_pkt_pool, pkt);
 				m_freem(m);

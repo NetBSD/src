@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2007/02/09 22:09:32 ad Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2007/09/03 10:14:17 skrll Exp $
 #
 
 WARNS=	2
@@ -6,10 +6,6 @@ WARNS=	2
 .include <bsd.own.mk>
 
 LIBPDIR=	${.CURDIR}/../libpthread
-
-# Define PT_FIXEDSTACKSIZE_LG to set a fixed stacksize (same as libpthread)
-#CPPFLAGS+=-DPT_FIXEDSTACKSIZE_LG=18
-#CPPFLAGS+=	-DPTHREAD_SA
 
 .if exists(${LIBPDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}

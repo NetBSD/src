@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.3 2006/08/28 00:16:54 christos Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.3.22.1 2007/09/03 10:23:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -106,17 +106,12 @@ TAILQ_HEAD(evcntlist, evcnt);
  * initializer for an event count structure.  the lengths are initted and
  * it is added to the evcnt list at attach time.
  */
-#define	EVCNT_INITIALIZER(type, parent, group, name)			\
-    {									\
-	0,			/* ev_count */				\
-	{ NULL, NULL },		/* ev_list */				\
-	type,			/* ev_type */				\
-	0,			/* ev_grouplen */			\
-	0,			/* ev_namelen */			\
-	0,			/* ev_pad1 */				\
-	parent,			/* ev_parent */				\
-	group,			/* ev_group */				\
-	name,			/* ev_name */				\
+#define	EVCNT_INITIALIZER(type, parent, group, name)	\
+    {							\
+	.ev_type = type,				\
+	.ev_parent = parent,				\
+	.ev_group = group,				\
+	.ev_name = name,				\
     }
 
 /*

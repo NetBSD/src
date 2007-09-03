@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.15 2007/03/04 06:00:07 christos Exp $ */
+/* $NetBSD: macfb.c,v 1.15.14.1 2007/09/03 10:19:08 skrll Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.15 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.15.14.1 2007/09/03 10:19:08 skrll Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.15 2007/03/04 06:00:07 christos Exp $");
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+#include <machine/video.h>
 #include <machine/grfioctl.h>
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/grfvar.h>
@@ -116,15 +117,6 @@ static void	init_itefont(void);
 #endif /* WSDISPLAY_COMPAT_ITEFONT */
 
 static struct macfb_devconfig macfb_console_dc;
-
-/* From Booter via locore */
-extern long		videoaddr;
-extern long		videorowbytes;
-extern long		videobitdepth;
-extern u_long		videosize;
-extern u_int32_t	mac68k_vidlog;
-extern u_int32_t	mac68k_vidphys;
-extern u_int32_t	mac68k_vidlen;
 
 static int
 macfb_is_console(paddr_t addr)
@@ -341,17 +333,17 @@ macfb_cnattach(paddr_t addr)
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
 
-	dc->dc_vaddr = m68k_trunc_page(videoaddr);
-	dc->dc_paddr = m68k_trunc_page(mac68k_vidphys);
+	dc->dc_vaddr = m68k_trunc_page(mac68k_video.mv_kvaddr);
+	dc->dc_paddr = m68k_trunc_page(mac68k_video.mv_phys);
 
-	dc->dc_wid = videosize & 0xffff;
-	dc->dc_ht = (videosize >> 16) & 0xffff;
-	dc->dc_depth = videobitdepth;
-	dc->dc_rowbytes = videorowbytes;
+	dc->dc_wid = mac68k_video.mv_width;
+	dc->dc_ht = mac68k_video.mv_height;
+	dc->dc_depth = mac68k_video.mv_depth;
+	dc->dc_rowbytes = mac68k_video.mv_stride;
 
-	dc->dc_size = (mac68k_vidlen > 0) ?
-	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
-	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
+	dc->dc_size = (mac68k_video.mv_len > 0) ?
+	    mac68k_video.mv_len : dc->dc_ht * dc->dc_rowbytes;
+	dc->dc_offset = m68k_page_offset(mac68k_video.mv_phys);
 
 	/* set up the display */
 	macfb_init(&macfb_console_dc);

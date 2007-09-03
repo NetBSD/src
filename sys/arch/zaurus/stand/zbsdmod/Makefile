@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.24.1 2007/08/15 13:48:05 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.24.2 2007/09/03 10:19:56 skrll Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -14,7 +14,7 @@ cleandir:
 .include <bsd.prog.mk>
 
 afterinstall:
-	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
+	${INSTALL_FILE} ${INSTALL_COPY} -o root -g wheel -m 644 \
 		${OBJS} ${DESTDIR}/${BINDIR}
 
 CFLAGS=		-Wall -Wmissing-prototypes -Wstrict-prototypes

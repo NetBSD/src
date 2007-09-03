@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.3.2.2 2007/08/15 13:50:50 skrll Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.3.2.3 2007/09/03 10:23:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/vnode.h>
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);

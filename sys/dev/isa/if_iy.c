@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.75 2007/03/04 06:02:12 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.75.10.1 2007/09/03 10:20:55 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.75 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.75.10.1 2007/09/03 10:20:55 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -477,7 +477,7 @@ struct iy_softc *sc;
 		bus_space_write_1(iot, ioh, EEPROM_REG, temp & ~0x10);
 
 	for (i=0; i<6; ++i) {
-		bus_space_write_1(iot, ioh, I_ADD(i), LLADDR(ifp->if_sadl)[i]);
+		bus_space_write_1(iot, ioh, I_ADD(i), CLLADDR(ifp->if_sadl)[i]);
 	}
 
 	temp = bus_space_read_1(iot, ioh, REG1);
@@ -1267,11 +1267,7 @@ iyioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom):
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

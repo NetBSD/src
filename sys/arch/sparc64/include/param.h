@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: param.h,v 1.39.4.1 2007/09/03 10:19:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,8 +191,8 @@ extern int nbpg, pgofset, pgshift;
 #define	CPUINFO_VA	(    EINTSTACK              )
 #define	PANICSTACK	(     INTSTACK +  8*_MAXNBPG)
 #define	KSTACK_VA	(     INTSTACK + 16*_MAXNBPG)	/* make this 16 to have a redzone */
-#define	INITSTACK_VA	(    KSTACK_VA +  8*_MAXNBPG)
-#define	IODEV_BASE	( INITSTACK_VA +  0*_MAXNBPG)
+/* #define	INITSTACK_VA	(    KSTACK_VA +  8*_MAXNBPG) */
+#define	IODEV_BASE	(    KSTACK_VA +  8*_MAXNBPG)
 #define	IODEV_END	0x0f0000000UL		/* 16 MB of iospace */
 
 /*

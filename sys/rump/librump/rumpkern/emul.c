@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8.2.2 2007/08/15 13:50:36 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.8.2.3 2007/09/03 10:23:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  */
 
+#define malloc(a,b,c) __wrap_malloc(a,b,c)
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
@@ -46,7 +48,7 @@
 
 #include <uvm/uvm_map.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 time_t time_second = 1;
@@ -243,6 +245,18 @@ malloc_type_detach(struct malloc_type *type)
 	return;
 }
 
+void *
+__wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
+{
+	void *rv;
+
+	rv = rumpuser_malloc(size, flags * (M_CANFAIL | M_NOWAIT));
+	if (rv && flags & M_ZERO)
+		memset(rv, 0, size);
+
+	return rv;
+}
+
 void
 nanotime(struct timespec *ts)
 {
@@ -300,4 +314,24 @@ void
 workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
 
+}
+
+void
+callout_init(callout_t *c, u_int flags)
+{
+
+}
+
+void
+callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+bool
+callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
 }

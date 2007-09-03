@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.322.2.1 2007/08/15 13:49:24 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.322.2.2 2007/09/03 10:23:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.322.2.1 2007/08/15 13:49:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.322.2.2 2007/09/03 10:23:05 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_fileassoc.h"
-#include "opt_ktrace.h"
 #include "fss.h"
 #include "veriexec.h"
 
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.322.2.1 2007/08/15 13:49:24 skrll
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
@@ -778,13 +775,14 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
 	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
 	    SCARG(uap, arg), l);
+	vrele(nd.ni_vp);
 	return (error);
 }
 
@@ -3077,9 +3075,9 @@ sys_fsync(struct lwp *l, void *v, register_t *retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, l);
-	if (error == 0 && bioops.io_fsync != NULL &&
+	if (error == 0 && bioopsp != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp, 0);
+		bioopsp->io_fsync(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -3150,9 +3148,9 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e, l);
 
-	if (error == 0 && bioops.io_fsync != NULL &&
+	if (error == 0 && bioopsp != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp, nflags);
+		bioopsp->io_fsync(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
 out:
@@ -3450,14 +3448,7 @@ sys___getdents30(struct lwp *l, void *v, register_t *retval)
 	}
 	error = vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
 			SCARG(uap, count), &done, l, 0, 0);
-#ifdef KTRACE
-	if (!error && KTRPOINT(p, KTR_GENIO)) {
-		struct iovec iov;
-		iov.iov_base = SCARG(uap, buf);
-		iov.iov_len = done;
-		ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov, done, 0);
-	}
-#endif
+	ktrgenio(SCARG(uap, fd), UIO_READ, SCARG(uap, buf), done, error);
 	*retval = done;
  out:
 	FILE_UNUSE(fp, l);

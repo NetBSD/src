@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.38 2007/03/04 05:59:20 christos Exp $ */
+/*	$NetBSD: if_es.c,v 1.38.14.1 2007/09/03 10:18:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.38 2007/03/04 05:59:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.38.14.1 2007/09/03 10:18:21 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -287,9 +287,9 @@ esinit(struct es_softc *sc)
 	smc->b1.bsr = BSR_BANK1;	/* Select bank 1 */
 	smc->b1.cr = CR_RAM32K | CR_NO_WAIT_ST | CR_SET_SQLCH;
 	smc->b1.ctr = CTR_AUTO_RLSE | CTR_TE_ENA;
-	smc->b1.iar[0] = *((unsigned short *) &LLADDR(ifp->if_sadl)[0]);
-	smc->b1.iar[1] = *((unsigned short *) &LLADDR(ifp->if_sadl)[2]);
-	smc->b1.iar[2] = *((unsigned short *) &LLADDR(ifp->if_sadl)[4]);
+	smc->b1.iar[0] = *((const unsigned short *) &CLLADDR(ifp->if_sadl)[0]);
+	smc->b1.iar[1] = *((const unsigned short *) &CLLADDR(ifp->if_sadl)[2]);
+	smc->b1.iar[2] = *((const unsigned short *) &CLLADDR(ifp->if_sadl)[4]);
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
 	smc->b2.mmucr = MMUCR_RESET;
 	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
@@ -1041,11 +1041,7 @@ esioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

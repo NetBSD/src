@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.15.2.1 2007/08/15 13:48:37 skrll Exp $ */
+/* $NetBSD: radeonfb.c,v 1.15.2.2 2007/09/03 10:21:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15.2.1 2007/08/15 13:48:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15.2.2 2007/09/03 10:21:08 skrll Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -498,7 +498,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	    (sc->sc_family == RADEON_RV250) ||
 	    (sc->sc_family == RADEON_RV280) ||
 	    (sc->sc_family == RADEON_RV350)) {
-		int inverted = 0;
+		bool inverted = 0;
 		/* backlight level is linear */
 		DPRINTF(("found RV* chip, backlight is supposedly linear\n"));
 		prop_dictionary_get_bool(device_properties(&sc->sc_dev),

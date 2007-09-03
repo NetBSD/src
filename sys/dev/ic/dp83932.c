@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.17 2007/06/08 17:08:46 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.17.2.1 2007/09/03 10:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.17 2007/06/08 17:08:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.17.2.1 2007/09/03 10:20:19 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1194,7 +1194,7 @@ sonic_set_filter(struct sonic_softc *sc)
 	}
 
 	/* Put our station address in the first CAM slot. */
-	sonic_set_camentry(sc, entry, LLADDR(ifp->if_sadl));
+	sonic_set_camentry(sc, entry, CLLADDR(ifp->if_sadl));
 	camvalid |= (1U << entry);
 	entry++;
 

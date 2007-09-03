@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.254 2007/07/09 21:10:53 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.254.2.1 2007/09/03 10:23:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,9 +73,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254 2007/07/09 21:10:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.2.1 2007/09/03 10:23:00 skrll Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
@@ -740,8 +739,6 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * The (unsupplied) definition of the `current execution stack'
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
-	 *
-	 * XXXLWP this is borken for multiple LWPs.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = (void *)USRSTACK;
@@ -923,11 +920,8 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_stats->p_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(l, signo, SIGACTION_PS(ps, signo).sa_handler,
-			    &l->l_sigmask, ksi);
-#endif
+		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
+		    &l->l_sigmask, ksi);
 	} else {
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_lwp = l->l_lid;
@@ -1819,13 +1813,11 @@ postsig(int signo)
 	p->p_stats->p_ru.ru_nsignals++;
 	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_PSIG)) {
+	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(&p->p_smutex);
-		ktrpsig(l, signo, action, returnmask, NULL);
+		ktrpsig(signo, action, returnmask, NULL);
 		mutex_enter(&p->p_smutex);
 	}
-#endif
 
 	if (action == SIG_DFL) {
 		/*
@@ -2066,7 +2058,7 @@ proc_stop(struct proc *p, int notify, int signo)
  * information to the parent could be delayed indefinitely.
  *
  * To handle this race, proc_stop_callout() runs once per tick while there
- * are stopping processes it the system.  It sets LWPs that are sleeping
+ * are stopping processes in the system.  It sets LWPs that are sleeping
  * interruptably into the LSSTOP state.
  *
  * Note that we are not concerned about keeping all LWPs stopped while the

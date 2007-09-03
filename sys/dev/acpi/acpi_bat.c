@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.51.2.1 2007/08/15 13:48:14 skrll Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.51.2.2 2007/09/03 10:20:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.2.1 2007/08/15 13:48:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.2.2 2007/09/03 10:20:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.2.1 2007/08/15 13:48:14 skrll Exp 
 #define ACPIBAT_DISCHARGERATE	9
 #define ACPIBAT_CAPACITY	10
 #define ACPIBAT_CHARGING	11
-#define ACPIBAT_NSENSORS	12  /* number of sensors */
+#define ACPIBAT_CHARGE_STATE	12
+#define ACPIBAT_NSENSORS	13  /* number of sensors */
 
 struct acpibat_softc {
 	struct device sc_dev;		/* base device glue */
@@ -367,34 +368,28 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_WCAPACITY].units = capunit;
 	sc->sc_data[ACPIBAT_LCAPACITY].units = capunit;
 	sc->sc_data[ACPIBAT_CHARGERATE].units = rateunit;
-	sc->sc_data[ACPIBAT_CHARGERATE].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DISCHARGERATE].units = rateunit;
-	sc->sc_data[ACPIBAT_DISCHARGERATE].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_CAPACITY].units = capunit;
 
 	sc->sc_data[ACPIBAT_DCAPACITY].value_cur = p2[1].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DCAPACITY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].value_cur = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_CAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].value_cur = p2[3].Integer.Value;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_TECHNOLOGY].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DVOLTAGE].value_cur = p2[4].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DVOLTAGE].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_WCAPACITY].value_cur = p2[5].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_WCAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_WCAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_WCAPACITY].flags |=
-	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX|ENVSYS_FMONNOTSUPP);
+	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
 	sc->sc_data[ACPIBAT_LCAPACITY].value_cur = p2[6].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LCAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LCAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_LCAPACITY].flags |=
-	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX|ENVSYS_FMONNOTSUPP);
+	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
 	sc->sc_available = ABAT_ALV_INFO;
 
 	mutex_exit(&sc->sc_mtx);
@@ -425,6 +420,7 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
+	const char *chargestate = "NORMAL";
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (ACPI_FAILURE(rv)) {
@@ -474,24 +470,29 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].flags |=
 	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
-	sc->sc_data[ACPIBAT_CAPACITY].monitor = true;
-	sc->sc_data[ACPIBAT_CAPACITY].flags |=
-	    (ENVSYS_FMONCRITICAL|ENVSYS_FMONCRITUNDER|ENVSYS_FMONWARNUNDER);
 	sc->sc_data[ACPIBAT_VOLTAGE].value_cur = p2[3].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_VOLTAGE].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_VOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
-	    sc->sc_data[ACPIBAT_WCAPACITY].value_cur)
+	    sc->sc_data[ACPIBAT_WCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SWARNUNDER;
+		chargestate = "WARNING";
+	}
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
-	    sc->sc_data[ACPIBAT_LCAPACITY].value_cur)
+	    sc->sc_data[ACPIBAT_LCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITUNDER;
+		chargestate = "LOW";
+	}
 
-	if (status & ACPIBAT_ST_CRITICAL)
+	if (status & ACPIBAT_ST_CRITICAL) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITICAL;
+		chargestate = "CRITICAL";
+	}
 
+	(void)strlcpy(sc->sc_data[ACPIBAT_CHARGE_STATE].genstr, chargestate,
+		      sizeof(sc->sc_data->genstr));
+	
 	mutex_exit(&sc->sc_mtx);
 
 	rv = AE_OK;
@@ -668,6 +669,7 @@ static void
 acpibat_init_envsys(struct acpibat_softc *sc)
 {
 	int capunit, rateunit;
+	const char *chargestate = "UNKNOWN";
 
 	if (sc->sc_flags & ABAT_F_PWRUNIT_MA) {
 		capunit = ENVSYS_SAMPHOUR;
@@ -696,8 +698,29 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
 	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
+	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_GSTRING, "charge state");
 
 #undef INITDATA
+
+	/* We don't know yet at which state is the battery... */
+	(void)strlcpy(sc->sc_data[ACPIBAT_CHARGE_STATE].genstr, chargestate,
+		      sizeof(sc->sc_data->genstr));
+
+	/* Enable monitoring for the charge sensor */
+	sc->sc_data[ACPIBAT_CAPACITY].monitor = true;
+	sc->sc_data[ACPIBAT_CAPACITY].flags =
+	    (ENVSYS_FMONCRITICAL|ENVSYS_FMONCRITUNDER|ENVSYS_FMONWARNUNDER);
+
+	/* Disable userland monitoring on these sensors */
+	sc->sc_data[ACPIBAT_VOLTAGE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_CHARGERATE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DISCHARGERATE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_WCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_LCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;	

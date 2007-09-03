@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.5 2007/03/18 21:38:32 dsl Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.5.4.1 2007/09/03 10:19:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,9 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.5 2007/03/18 21:38:32 dsl Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.5.4.1 2007/09/03 10:19:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.5 2007/03/18 21:38:32 dsl Exp $
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -197,10 +193,7 @@ linux32_sys___sysctl(l, v, retval)
 	   ls32.nlen * sizeof(int))) != 0)
 		return error;
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MIB))
-		ktrmib(l, name, ls32.nlen);
-#endif
+	ktrmib(name, ls32.nlen);
 
 	if ((error = sysctl_lock(l, 
 	    NETBSD32PTR64(ls32.oldval), savelen)) != 0)

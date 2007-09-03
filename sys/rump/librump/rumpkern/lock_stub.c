@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.5.2.2 2007/08/15 13:50:38 skrll Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.5.2.3 2007/09/03 10:23:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,73 +28,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
-
-/* oh sweet crackmgr, what would I do without you? */
-int
-lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
-{
-	u_int lktype = flags & LK_TYPE_MASK;
-
-	switch (lktype) {
-	case LK_SHARED:
-	case LK_EXCLUSIVE:
-		lock->lk_flags = lktype;
-		break;
-
-	case LK_RELEASE:
-		lock->lk_flags = 0;
-		break;
-
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-		assert(lock->lk_flags == LK_SHARED);
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-
-	case LK_DOWNGRADE:
-		assert(lock->lk_flags == LK_EXCLUSIVE);
-		lock->lk_flags = LK_SHARED;
-		break;
-
-	case LK_DRAIN:
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-	}
-
-	return 0;
-}
-
-void
-lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
-	int flags)
-{
-
-	lock->lk_flags = 0;
-}
-
-int
-lockstatus(struct lock *lock)
-{
-
-	return lock->lk_flags;
-}
-
-void
-lockmgr_printinfo(volatile struct lock *lock)
-{
-
-	return;
-}
-
-void
-transferlockers(struct lock *from, struct lock *to)
-{
-
-	return;
-}
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)

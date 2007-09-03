@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.42.2.1 2007/08/15 13:46:52 skrll Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.42.2.2 2007/09/03 10:14:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _LIB_PTHREAD_INT_H
 #define _LIB_PTHREAD_INT_H
 
-#define PTHREAD__DEBUG
+/* #define PTHREAD__DEBUG */
 #define ERRORCHECK
 
 #include "pthread_types.h"
@@ -81,7 +81,6 @@ struct	__pthread_st {
 	void		*pt_mutexhint;	/* Last mutex held. */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
-	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
 	int		pt_willpark;	/* About to park */
@@ -91,9 +90,6 @@ struct	__pthread_st {
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
 
-	/* Thread-specific data */
-	void		*pt_specific[PTHREAD_KEYS_MAX];
-
 	/* For debugger: LWPs waiting to join. */
 	pthread_queue_t	pt_joiners;
 	PTQ_ENTRY(__pthread_st) pt_joinq;
@@ -101,6 +97,7 @@ struct	__pthread_st {
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
 	PTQ_ENTRY(__pthread_st)	pt_allq;
+	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
 	/*
 	 * General synchronization data.  We try to align, as threads
@@ -110,9 +107,18 @@ struct	__pthread_st {
 	int		pt_sleeponq;	/* on a sleep queue */
 	int		pt_signalled;	/* Received pthread_cond_signal() */
 	void		*pt_sleepobj;	/* object slept on */
-	pthread_queue_t	*pt_sleepq;	/* sleep queue */
 	PTQ_ENTRY(__pthread_st)	pt_sleep;
 	int		pt_dummy2 __aligned(128);
+
+	/* Thread-specific data.  Large so it sits close to the end. */
+	int		pt_havespecific;
+	void		*pt_specific[PTHREAD_KEYS_MAX];
+
+	/*
+	 * Context for thread creation.  At the end as it's cached
+	 * and then only ever passed to _lwp_create(). 
+	 */
+	ucontext_t	pt_uc;
 };
 
 /* Thread states */
@@ -136,23 +142,12 @@ struct	__pthread_st {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-#ifdef PT_FIXEDSTACKSIZE_LG
-
-#define	PT_STACKSIZE_LG	PT_FIXEDSTACKSIZE_LG 
-#define	PT_STACKSIZE	(1<<(PT_STACKSIZE_LG)) 
-#define	PT_STACKMASK	(PT_STACKSIZE-1)
-
-#else  /* PT_FIXEDSTACKSIZE_LG */
-
-extern	int		pthread_stacksize_lg;
-extern	size_t		pthread_stacksize;
-extern	vaddr_t		pthread_stackmask;
-
-#define	PT_STACKSIZE_LG	pthread_stacksize_lg
-#define	PT_STACKSIZE	pthread_stacksize
-#define	PT_STACKMASK	pthread_stackmask
-
-#endif /* PT_FIXEDSTACKSIZE_LG */
+extern int	pthread__stacksize_lg;
+extern size_t	pthread__stacksize;
+extern vaddr_t	pthread__stackmask;
+extern int	pthread__nspins;
+extern int	pthread__concurrency;
+extern int 	pthread__osrev;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
@@ -164,10 +159,6 @@ extern	vaddr_t		pthread_stackmask;
 void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Utility functions */
-
-/* Get offset from stack start to struct sa_stackinfo */
-ssize_t	pthread__stackinfo_offset(void);
-
 void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			    pthread_queue_t *threadq);
 void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
@@ -177,15 +168,12 @@ int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      const struct timespec *abs_timeout,
 		      int cancelpt, const void *hint);
 
-int	pthread__stackalloc(pthread_t *t);
-void	pthread__initmain(pthread_t *t);
-
 /* Internal locking primitives */
-void	pthread__lockprim_init(int ncpu);
-void	pthread_lockinit(pthread_spin_t *lock);
-void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
-int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
-void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
+void	pthread__lockprim_init(void);
+void	pthread_lockinit(pthread_spin_t *);
+void	pthread_spinlock(pthread_spin_t *);
+int	pthread_spintrylock(pthread_spin_t *);
+void	pthread_spinunlock(pthread_spin_t *);
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
@@ -204,8 +192,8 @@ int	_setcontext_u(const ucontext_t *);
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 #endif
 
-void	pthread__testcancel(pthread_t self);
-int	pthread__find(pthread_t self, pthread_t target);
+void	pthread__testcancel(pthread_t);
+int	pthread__find(pthread_t);
 
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
@@ -225,7 +213,7 @@ int	pthread__find(pthread_t self, pthread_t target);
 #else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
-	((pthread_t) (((vaddr_t)(sp)) & ~PT_STACKMASK))
+	((pthread_t) (((vaddr_t)(sp)) & ~pthread__stackmask))
 
 #define pthread__id_reg() pthread__sp()
 #endif
@@ -255,11 +243,9 @@ void	pthread__errorfunc(const char *file, int line, const char *function,
 
 #if defined(i386) || defined(__x86_64__)
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	PTHREAD__CHEAP_UNLOCK
 #else
 #define	pthread__smt_pause()	/* nothing */
 #endif
-
-extern int pthread__nspins;
-extern int pthread__osrev;
 
 #endif /* _LIB_PTHREAD_INT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2007/05/21 08:10:39 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.4.1 2007/09/03 10:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,23 +60,27 @@
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
+
+	/*
+	 * Will be accessed by other CPUs.
+	 */
 	struct cpu_info *ci_next;
-
 	struct lwp *ci_curlwp;
-	struct simplelock ci_slock;
-	u_int ci_cpuid;
-	u_int ci_apicid;
-
-	u_int64_t ci_scratch;
-
+	struct pmap_cpu *ci_pmap_cpu;
 	struct lwp *ci_fpcurlwp;
 	int ci_fpsaving;
+	u_int ci_cpuid;
+	int ci_cpumask;			/* (1 << CPU ID) */
+	u_int ci_apicid;
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
+	/*
+	 * Private members.
+	 */
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	u_int64_t ci_scratch;
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
@@ -97,9 +101,11 @@ struct cpu_info {
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
-	u_int32_t	ci_feature_flags;
+	int32_t		ci_cpuid_level;
+	uint32_t	ci_signature;
+	uint32_t	ci_feature_flags;
 	uint32_t	ci_feature2_flags;
-	u_int32_t	ci_signature;
+	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
 
 	const struct cpu_functions *ci_func;
@@ -197,7 +203,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
 #define CLKF_PC(frame)		((frame)->cf_if.if_rip)
-#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -234,6 +240,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
+extern int cpu_feature2;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;

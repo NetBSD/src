@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.29.4.1 2007/08/15 13:48:42 skrll Exp $
+#	$NetBSD: files.sbus,v 1.29.4.2 2007/09/03 10:21:59 skrll Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -124,6 +124,7 @@ attach	zx at sbus
 file	dev/sbus/zx.c			zx
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
+defflag	opt_pnozz.h	PNOZZ_DEBUG
 device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag
@@ -138,3 +139,10 @@ file	dev/sbus/dbri.c			dbri
 # an SBus frontend for genfb
 attach genfb at sbus with genfb_sbus : fb
 file	dev/sbus/genfb_sbus.c	genfb_sbus
+
+# Fujitsu AG-10e
+defflag	opt_agten.h	AGTEN_DEBUG
+device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
+attach	agten at sbus
+file	dev/sbus/agten.c		agten needs-flag
+file	dev/ic/i128.c			agten

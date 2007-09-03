@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.13 2007/03/04 06:01:59 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.13.10.1 2007/09/03 10:20:24 skrll Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.10.1 2007/09/03 10:20:24 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -583,33 +583,28 @@ mtd_ioctl(ifp, cmd, data)
 	void *data;
 {
 	struct mtd_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	/* Don't do anything special */
 	switch(cmd) {
-		case SIOCADDMULTI:
-		case SIOCDELMULTI:
-			error = (cmd == SIOCADDMULTI) ?
-			    ether_addmulti(ifr, &sc->ethercom) :
-			    ether_delmulti(ifr, &sc->ethercom);
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			 if (ifp->if_flags & IFF_RUNNING)
+				 mtd_setmulti(sc);
+			 error = 0;
+		}
+		break;
 
-			if (error == ENETRESET) {
-				/*
-				 * Multicast list has changed; set the hardware
-				 * filter accordingly.
-				 */
-				 if (ifp->if_flags & IFF_RUNNING)
-					 mtd_setmulti(sc);
-				 error = 0;
-			}
-			break;
-
-		default:
-			error = ether_ioctl(ifp, cmd, data);
-			break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
 	splx(s);

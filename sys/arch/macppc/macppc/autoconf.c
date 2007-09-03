@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57.6.1 2007/08/15 13:47:29 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57.6.2 2007/09/03 10:19:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.6.1 2007/08/15 13:47:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.6.2 2007/09/03 10:19:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -570,6 +570,15 @@ copyprops(int node, prop_dictionary_t dict)
 	}
 	OF_to_dataprop(dict, console_node, "EDID", "EDID");
 	add_model_specifics(dict);
+
+	temp = 0;
+	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+
+		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		    sizeof(temp));
+	}
+	if (temp != 0)
+		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
 }
 
 static void

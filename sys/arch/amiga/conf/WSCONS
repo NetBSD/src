@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.58 2007/07/16 06:23:58 he Exp $
+# $NetBSD: WSCONS,v 1.58.4.1 2007/09/03 10:18:17 skrll Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.60 2007/07/16 06:23:28 he Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.62 2007/08/20 07:40:29 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.58.4.1 $"
 
 
 maxusers	8
@@ -70,7 +70,7 @@ options 	INET6		# IPV6
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -399,6 +399,8 @@ empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
+wdc*		at zbus0		# Buddha / Catweasel
+
 atabus* 	at wdc? channel ?	# ATA bus
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus

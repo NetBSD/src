@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.1.2.2 2007/08/15 13:50:32 skrll Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.1.2.3 2007/09/03 10:23:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,19 +33,50 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/vnode.h>
+
+#include <stdint.h>
+
+struct vnode;
 
 struct ukfs;
 
 int		ukfs_init(void);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
-void		ukfs_unmount(struct ukfs *, int);
+void		ukfs_release(struct ukfs *, int);
 
 int		ukfs_getdents(struct ukfs *, const char *, off_t,
-			      char *, size_t);
+			      uint8_t *, size_t);
+ssize_t		ukfs_read(struct ukfs *, const char *, off_t,
+			      uint8_t *, size_t);
+ssize_t		ukfs_write(struct ukfs *, const char *, off_t,
+			       uint8_t *, size_t);
+ssize_t		ukfs_readlink(struct ukfs *, const char *, char *, size_t);
+
+int		ukfs_create(struct ukfs *, const char *, mode_t);
+int		ukfs_mkdir(struct ukfs *, const char *, mode_t);
+int		ukfs_mknod(struct ukfs *, const char *, mode_t, dev_t);
+int		ukfs_symlink(struct ukfs *, const char *, char *);
+
+int		ukfs_remove(struct ukfs *, const char *);
+int		ukfs_rmdir(struct ukfs *, const char *);
+
+int		ukfs_link(struct ukfs *, const char *, const char *);
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
+
+#define UKFS_UIOINIT(uio, iov, buf, bufsize, offset, rw)		\
+do {									\
+	iov.iov_base = buf;						\
+	iov.iov_len = bufsize;						\
+	uio.uio_iov = &(iov);						\
+	uio.uio_iovcnt = 1;						\
+	uio.uio_offset = offset;					\
+	uio.uio_resid = bufsize;					\
+	uio.uio_rw = rw;						\
+	uio.uio_vmspace = UIO_VMSPACE_SYS;				\
+} while (/*CONSTCOND*/0)
+
 
 #endif /* _SYS_RUMPFS_UKFS_H_ */

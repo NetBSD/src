@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70.4.1 2007/08/15 13:47:04 skrll Exp $ */
+/*	$NetBSD: fd.c,v 1.70.4.2 2007/09/03 10:18:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70.4.1 2007/08/15 13:47:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70.4.2 2007/09/03 10:18:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ fdcattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fdcargs args;
 
-	printf(": dmabuf pa 0x%x", kvtop(fdc_dmap));
+	printf(": dmabuf pa 0x%x", (unsigned)kvtop(fdc_dmap));
 	printf(": dmabuf ka %p\n", fdc_dmap);
 	args.unit = 0;
 	args.type = fdcgetfdtype(args.unit);

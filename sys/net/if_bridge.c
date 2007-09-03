@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.52 2007/07/09 21:10:59 ad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.52.2.1 2007/09/03 10:23:08 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.52 2007/07/09 21:10:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.52.2.1 2007/09/03 10:23:08 skrll Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1514,7 +1514,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		/* It is destined for us. */
-		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
+		if (memcmp(CLLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
 		    ETHER_ADDR_LEN) == 0
 #if NCARP > 0
 		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
@@ -1529,7 +1529,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		}
 
 		/* We just received a packet that we sent out. */
-		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
+		if (memcmp(CLLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
 		    ETHER_ADDR_LEN) == 0
 #if NCARP > 0
 		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,

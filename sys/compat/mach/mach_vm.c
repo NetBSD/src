@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.55 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.55.10.1 2007/09/03 10:20:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,10 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ktrace.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.55 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.55.10.1 2007/09/03 10:20:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -781,10 +779,8 @@ mach_vm_read(args)
 		return mach_msg_error(args, EFAULT);
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l, tbuf, size, (void *)va);
-#endif
+	if (error == 0)
+		ktrmool(tbuf, size, (void *)va);
 
 	free(tbuf, M_WAITOK);
 
@@ -806,9 +802,6 @@ mach_vm_write(args)
 	mach_vm_write_request_t *req = args->smsg;
 	mach_vm_write_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-#ifdef KTRACE
-	struct lwp *l = args->l;
-#endif
 	struct lwp *tl = args->tl;
 	size_t size;
 	void *addr;
@@ -841,10 +834,8 @@ mach_vm_write(args)
 		return mach_msg_error(args, EFAULT);
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l, tbuf, size, (void *)addr);
-#endif
+	if (error == 0)
+		ktrmool(tbuf, size, (void *)addr);
 
 	free(tbuf, M_WAITOK);
 

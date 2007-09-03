@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.16 2007/07/09 21:00:54 ad Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.16.2.1 2007/09/03 10:21:01 skrll Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16 2007/07/09 21:00:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.2.1 2007/09/03 10:21:01 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -591,11 +591,7 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				nfe_setmulti(sc);
 			error = 0;

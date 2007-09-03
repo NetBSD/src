@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.8 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.8.14.1 2007/09/03 10:19:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,11 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.8 2007/02/09 21:55:16 ad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.8.14.1 2007/09/03 10:19:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.8 2007/02/09 21:55:16 ad Exp $"
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <sys/syscallargs.h>
 
@@ -119,10 +113,7 @@ freebsd_sys_sysctl(l, v, retval)
 	if (namelen > 0 && name[0] != 0)
 		return(sys___sysctl(l, v, retval));
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MIB))
-		ktrmib(l, name, namelen);
-#endif
+	ktrmib(name, namelen);
 
 	/*
 	 * FreeBSD sysctl uses an undocumented set of special OIDs in it's
@@ -169,16 +160,8 @@ freebsd_sys_sysctl(l, v, retval)
 			free(locnew, M_TEMP);
 			return(error);
 		}
-#ifdef KTRACE
-		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
-			struct iovec iov;
 
-			iov.iov_base = new;
-			iov.iov_len = newlen + 1;
-			ktrgenio(l, -1, UIO_WRITE, &iov, newlen + 1, 0);
-		}
-#endif
-
+		ktrmibio(-1, UIO_WRITE, new, newlen + 1, error);
 		error = freebsd_sysctl_name2oid(locnew, oid, &oidlen);
 		sysctl_unlock(l);
 		free(locnew, M_TEMP);
@@ -190,15 +173,9 @@ freebsd_sys_sysctl(l, v, retval)
 				MIN(oidlen, *SCARG(uap, oldlenp)));
 		if (error)
 			return(error);
-#ifdef KTRACE
-		if (KTRPOINT(l->l_proc, KTR_MIB)) {
-			struct iovec iov;
+		ktrmibio(-1, UIO_READ, SCARG(uap, old),
+		    MIN(oidlen, *SCARG(uap, oldlenp)),  0);
 
-			iov.iov_base = SCARG(uap, old);
-			iov.iov_len = MIN(oidlen, *SCARG(uap, oldlenp));
-			ktrgenio(l, -1, UIO_READ, &iov, iov.iov_len, 0);
-		}
-#endif
 		error = copyout(&oidlen, SCARG(uap, oldlenp), sizeof(u_int));
 
 		return(error);

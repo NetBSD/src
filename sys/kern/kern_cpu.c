@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.6.1 2007/08/15 13:49:06 skrll Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.6.2 2007/09/03 10:22:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.6.1 2007/08/15 13:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.6.2 2007/09/03 10:22:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.6.1 2007/08/15 13:49:06 skrll Exp $
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
 
 void	cpuctlattach(int);
 
@@ -99,6 +101,7 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	mutex_init(&spc->spc_lwplock, MUTEX_SPIN, IPL_SCHED);
 	sched_cpuattach(ci);
+	uvm_cpu_attach(ci);
 
 	error = create_idle_lwp(ci);
 	if (error != 0) {

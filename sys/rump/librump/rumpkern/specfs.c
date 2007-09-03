@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.5.2.2 2007/08/15 13:50:41 skrll Exp $	*/
+/*	$NetBSD: specfs.c,v 1.5.2.3 2007/09/03 10:23:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 /* We have special special ops */

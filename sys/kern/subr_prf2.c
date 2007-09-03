@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf_bitmask.c,v 1.1.6.2 2007/08/15 13:49:14 skrll Exp $	*/
+/*	$NetBSD: subr_prf2.c,v 1.1.8.2 2007/09/03 10:23:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf_bitmask.c,v 1.1.6.2 2007/08/15 13:49:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf2.c,v 1.1.8.2 2007/09/03 10:23:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

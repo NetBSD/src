@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.14.2.2 2007/08/15 13:50:37 skrll Exp $	*/
+/*	$NetBSD: genfs.c,v 1.14.2.3 2007/09/03 10:23:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/genfs/genfs.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 void
@@ -169,8 +169,8 @@ genfs_getpages(void *v)
 	printf("a_offset: %x, startoff: 0x%x, endoff 0x%x\n", (int)ap->a_offset, (int)curoff, (int)endoff);
 
 	/* read everything into a buffer */
-	tmpbuf = rumpuser_malloc(remain, 0);
-	memset(tmpbuf, 0, remain);
+	tmpbuf = rumpuser_malloc(round_page(remain), 0);
+	memset(tmpbuf, 0, round_page(remain));
 	for (bufoff = 0; remain; remain -= xfersize, bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t lbn, bn;
@@ -197,7 +197,7 @@ genfs_getpages(void *v)
 		buf.b_bcount = xfersize;
 		buf.b_blkno = bn;
 		buf.b_lblkno = 0;
-		buf.b_flags = B_READ;
+		buf.b_flags = B_READ | B_BUSY;
 		buf.b_vp = vp;
 
 		VOP_STRATEGY(devvp, &buf);
@@ -235,8 +235,6 @@ genfs_getpages(void *v)
 
 /*
  * simplesimplesimple: we put all pages every time.
- *
- * ayh: I don't even want to think about bsize < PAGE_SIZE
  */
 int
 genfs_putpages(void *v)
@@ -266,6 +264,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
+	int async = (flags & PGO_SYNCIO) == 0;
 
  restart:
 	/* check if all pages are clean */
@@ -291,19 +290,23 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* we need to flush */
 	for (curoff = smallest; curoff < eof; curoff += PAGE_SIZE) {
+		void *curva;
+
 		if (curoff - smallest >= MAXPHYS)
 			break;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg == NULL)
 			break;
-		memcpy(databuf + (curoff-smallest),
-		    (void *)pg->uanon, PAGE_SIZE);
+		curva = databuf + (curoff-smallest);
+		memcpy(curva, (void *)pg->uanon, PAGE_SIZE);
+		rumpvm_enterva((vaddr_t)curva, pg);
+
 		pg->flags |= PG_CLEAN;
 	}
 	assert(curoff > smallest);
 
 	/* then we write */
-	for (bufoff = 0; bufoff < curoff - smallest; bufoff += xfersize) {
+	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t bn, lbn;
 		int run, error;
@@ -317,6 +320,15 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		xfersize = MIN(((lbn+1+run) << bshift) - (smallest+bufoff),
 		     curoff - (smallest+bufoff));
+
+		/*
+		 * We might run across blocks which aren't allocated yet.
+		 * A reason might be e.g. the write operation being still
+		 * in the kernel page cache while truncate has already
+		 * enlarged the file.  So just ignore those ranges.
+		 */
+		if (bn == -1)
+			continue;
 
 		/* only write max what we are allowed to write */
 		buf.b_bcount = xfersize;
@@ -332,11 +344,17 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		    (int)(smallest + bufoff + buf.b_bcount),
 		    (int)eof);
 
+		buf.b_bufsize = round_page(buf.b_bcount);
 		buf.b_lblkno = 0;
 		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		buf.b_data = databuf + bufoff;
-		buf.b_flags = B_WRITE;
 		buf.b_vp = vp;
+		buf.b_flags = B_WRITE | B_BUSY;
+		buf.b_iodone = uvm_aio_biodone;
+		if (async) {
+			buf.b_flags |= B_CALL | B_ASYNC;
+			buf.b_iodone = uvm_aio_biodone;
+		}
 
 		vp->v_numoutput++;
 		VOP_STRATEGY(devvp, &buf);
@@ -344,6 +362,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 			panic("%s: VOP_STRATEGY lazy bum %d",
 			    __func__, buf.b_error);
 	}
+	rumpvm_flushva();
 
 	goto restart;
 }

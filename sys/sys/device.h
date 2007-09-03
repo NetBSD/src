@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96 2007/07/09 11:46:21 tsutsui Exp $ */
+/* $NetBSD: device.h,v 1.96.2.1 2007/09/03 10:23:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -227,14 +227,25 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_match		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
 }
 
 #define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
-    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, \
-		rescanfn, chdetfn \
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_match 		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
+	.ca_rescan		= rescanfn,				\
+	.ca_childdetached	= chdetfn,				\
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -254,7 +265,9 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-    { NULL, NULL }, { NULL }, NULL, ___STRING(name), class, 0, attrs	\
+	.cd_name		= ___STRING(name),			\
+	.cd_class		= class,				\
+	.cd_attrs		= attrs,				\
 }
 
 /*

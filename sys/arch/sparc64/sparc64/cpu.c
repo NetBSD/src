@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.59 2007/05/25 12:42:07 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.59.4.1 2007/09/03 10:19:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2007/05/25 12:42:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59.4.1 2007/09/03 10:19:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
 	cpi->ci_spinup = NULL;						/* XXX */
-	cpi->ci_initstack = (void *)INITSTACK_VA;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
@@ -364,7 +363,6 @@ cpu_boot_secondary_processors()
 
 		cpu_args->cb_node = ci->ci_node;
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
-		cpu_args->cb_initstack = ci->ci_initstack;
 		membar_sync();
 
 		/* Disable interrupts and start another CPU. */

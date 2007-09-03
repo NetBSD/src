@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_tsd.c,v 1.2 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.2.20.1 2007/09/03 10:14:16 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.2 2003/09/29 09:50:22 wiz Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.2.20.1 2007/09/03 10:14:16 skrll Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -180,6 +180,9 @@ pthread__destroy_tsd(pthread_t self)
 	void *val;
 	void (*destructor)(void *);
 
+	if (!self->pt_havespecific)
+		return;
+
 	/* Butenhof, section 5.4.2 (page 167):
 	 * 
 	 * ``Also, Pthreads sets the thread-specific data value for a
@@ -222,4 +225,6 @@ pthread__destroy_tsd(pthread_t self)
 			}
 		}
 	} while (!done && iterations--);
+
+	self->pt_havespecific = 0;
 }

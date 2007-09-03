@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.75 2007/07/09 21:00:38 ad Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.75.2.1 2007/09/03 10:20:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.75 2007/07/09 21:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.75.2.1 2007/09/03 10:20:26 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1420,7 +1420,7 @@ rtk_init(struct ifnet *ifp)
 
 	/* Init our MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		CSR_WRITE_1(sc, RTK_IDR0 + i, LLADDR(ifp->if_sadl)[i]);
+		CSR_WRITE_1(sc, RTK_IDR0 + i, CLLADDR(ifp->if_sadl)[i]);
 	}
 
 	/* Init the RX buffer pointer register. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.76.2.1 2007/08/15 13:49:40 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.76.2.2 2007/09/03 10:23:11 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.76.2.1 2007/08/15 13:49:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.76.2.2 2007/09/03 10:23:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -779,12 +779,10 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
                 dldst = CLLADDR(satocsdl(rt->rt_gateway));
                 break;
 
 	case AF_LINK:
-		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
 		dldst = CLLADDR(satocsdl(dst));
 		break;
 
@@ -1303,7 +1301,7 @@ stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 
 #ifdef INET
 		case AF_INET:

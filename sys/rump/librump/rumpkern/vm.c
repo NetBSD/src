@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.12.2.2 2007/08/15 13:50:43 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.12.2.3 2007/09/03 10:23:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@
 
 #include <machine/pmap.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 /* dumdidumdum */
@@ -106,6 +106,36 @@ rumpvm_freepage(struct vm_page *pg)
 	TAILQ_REMOVE(&uobj->memq, pg, listq);
 	rumpuser_free((void *)pg->uanon);
 	rumpuser_free(pg);
+}
+
+struct rumpva {
+	vaddr_t addr;
+	struct vm_page *pg;
+
+	LIST_ENTRY(rumpva) entries;
+};
+static LIST_HEAD(, rumpva) rvahead = LIST_HEAD_INITIALIZER(rvahead);
+
+void
+rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
+{
+	struct rumpva *rva;
+
+	rva = rumpuser_malloc(sizeof(struct rumpva), 0);
+	rva->addr = addr;
+	rva->pg = pg;
+	LIST_INSERT_HEAD(&rvahead, rva, entries);
+}
+
+void
+rumpvm_flushva()
+{
+	struct rumpva *rva;
+
+	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
+		LIST_REMOVE(rva, entries);
+		rumpuser_free(rva);
+	}
 }
 
 /*
@@ -346,6 +376,18 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	return NULL;
 }
 
+struct vm_page *
+uvm_pageratop(vaddr_t va)
+{
+	struct rumpva *rva;
+
+	LIST_FOREACH(rva, &rvahead, entries)
+		if (rva->addr == va)
+			return rva->pg;
+
+	panic("%s: va %llu", __func__, (unsigned long long)va);
+}
+
 void
 uvm_estimatepageable(int *active, int *inactive)
 {
@@ -366,7 +408,15 @@ void
 uvm_aio_biodone(struct buf *bp)
 {
 
-	panic("%s: unimplemented", __func__);
+	uvm_aio_aiodone(bp);
+}
+
+void
+uvm_aio_aiodone(struct buf *bp)
+{
+
+	if ((bp->b_flags & (B_READ | B_NOCACHE)) == 0 && bioopsp)
+		bioopsp->io_pageiodone(bp);
 }
 
 void

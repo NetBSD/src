@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6 2007/07/09 19:38:52 degroote Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.2.1 2007/09/03 10:21:05 skrll Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -144,7 +144,6 @@ struct wpi_softc {
 
 	struct wpi_tx_ring	txq[4];
 	struct wpi_tx_ring	cmdq;
-	struct wpi_tx_ring	svcq;
 	struct wpi_rx_ring	rxq;
 
 	bus_space_tag_t		sc_st;
@@ -186,4 +185,6 @@ struct wpi_softc {
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 #endif
+
+	bool		is_scanning;
 };

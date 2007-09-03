@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.62 2007/03/04 06:02:29 christos Exp $ */
+/*      $NetBSD: if_qe.c,v 1.62.10.1 2007/09/03 10:21:58 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.10.1 2007/09/03 10:21:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -698,11 +698,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

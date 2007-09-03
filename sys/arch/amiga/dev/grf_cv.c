@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.44 2007/03/05 19:48:19 he Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.44.14.1 2007/09/03 10:18:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.44 2007/03/05 19:48:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.44.14.1 2007/09/03 10:18:19 skrll Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -67,6 +67,16 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.44 2007/03/05 19:48:19 he Exp $");
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
+
+/*
+ * finish all bus operations, flush pipelines
+ * XXX is this really needed?
+ */
+#if defined(__m68k__)
+#define cpu_sync() __asm volatile ("nop")
+#elif defined(__powerpc__)
+#define cpu_sync() __asm volatile ("sync; isync")
+#endif
 
 int	grfcvmatch(struct device *, struct cfdata *, void *);
 void	grfcvattach(struct device *, struct device *, void *);
@@ -304,7 +314,7 @@ cvintr(void *arg)
 		/* Save old CR index */
 		cridx = vgar (ba, CRT_ADDRESS);
 
-#if 0
+#if !defined(__m68k__)
 		test = RCrt(ba, CRT_ID_END_VER_RETR);
 		/* Clear int (bit 4) */
 		test &= ~0x10;
@@ -325,7 +335,7 @@ cvintr(void *arg)
 			curs_update_flag = 0;
 		}
 		/* Reenable int */
-#if 0
+#if !defined(__m68k__)
 		test |= 0x10;
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
@@ -336,7 +346,7 @@ cvintr(void *arg)
 
 		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
-		__asm volatile("nop");
+		cpu_sync();
 #endif  /* !CV_NO_HARDWARE_CURSOR */
 		return (1);
 	}
@@ -358,7 +368,7 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02000000);
 	*testfbw = 0x87654321;
-	__asm volatile("nop");
+	cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -366,15 +376,15 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)((volatile char*)fb + 0x00200000);
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02200000);
 	*testfbw = 0x87654321;
-	__asm volatile("nop");
+	cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
-	__asm volatile("nop");
+	cpu_sync();
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
-	__asm volatile("nop");
+	cpu_sync();
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
@@ -1848,9 +1858,9 @@ cv_setup_hwc(struct grf_softc *gp)
 		return;
 
 	/* reset colour stack */
-#if 0
+#if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm volatile("nop");
+	cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -1863,9 +1873,9 @@ cv_setup_hwc(struct grf_softc *gp)
 	*hwc = 0;
 	*hwc = 0;
 
-#if 0
+#if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm volatile("nop");
+	cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -2107,7 +2117,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm volatile("nop");
+		cpu_sync();
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -2126,7 +2136,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm volatile("nop");
+		cpu_sync();
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

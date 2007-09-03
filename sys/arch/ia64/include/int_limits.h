@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.1.44.1 2007/09/03 10:19:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
 #define	INT64_MAX	0x7fffffffffffffffL		/* int64_t	  */
 
 /* maximum values of exact-width unsigned integer types */
-#define	UINT8_MAX	0xffU				/* uint8_t	  */
-#define	UINT16_MAX	0xffffU				/* uint16_t	  */
+#define	UINT8_MAX	0xff				/* uint8_t	  */
+#define	UINT16_MAX	0xffff				/* uint16_t	  */
 #define	UINT32_MAX	0xffffffffU			/* uint32_t	  */
 #define	UINT64_MAX	0xffffffffffffffffUL		/* uint64_t	  */
 
@@ -78,8 +78,8 @@
 #define	INT_LEAST64_MAX	0x7fffffffffffffffL		/* int_least64_t  */
 
 /* maximum values of minimum-width unsigned integer types */
-#define	UINT_LEAST8_MAX	 0xffU				/* uint_least8_t  */
-#define	UINT_LEAST16_MAX 0xffffU			/* uint_least16_t */
+#define	UINT_LEAST8_MAX	 0xff				/* uint_least8_t  */
+#define	UINT_LEAST16_MAX 0xffff				/* uint_least16_t */
 #define	UINT_LEAST32_MAX 0xffffffffU			/* uint_least32_t */
 #define	UINT_LEAST64_MAX 0xffffffffffffffffUL		/* uint_least64_t */
 

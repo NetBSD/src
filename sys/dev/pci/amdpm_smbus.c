@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.12 2007/02/06 14:39:47 jmcneill Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.12.14.1 2007/09/03 10:20:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,13 +32,15 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.12 2007/02/06 14:39:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.12.14.1 2007/09/03 10:20:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
+#include <sys/rwlock.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -59,18 +61,18 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.12 2007/02/06 14:39:47 jmcneill Ex
 extern int arch_i386_is_xbox;
 #endif
 
-static int       amdpm_smbus_acquire_bus(void *cookie, int flags);
-static void      amdpm_smbus_release_bus(void *cookie, int flags);
-static int       amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
-				  const void *cmd, size_t cmdlen, void *vbuf,
-				  size_t buflen, int flags);
-static int       amdpm_smbus_check_done(struct amdpm_softc *sc, i2c_op_t op);
-static void      amdpm_smbus_clear_gsr(struct amdpm_softc *sc);
-static u_int16_t amdpm_smbus_get_gsr(struct amdpm_softc *sc);
-static int       amdpm_smbus_send_1(struct amdpm_softc *sc, u_int8_t val, i2c_op_t op);
-static int       amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int8_t data, i2c_op_t op);
-static int       amdpm_smbus_receive_1(struct amdpm_softc *sc, i2c_op_t op);
-static int       amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd, i2c_op_t op);
+static int       amdpm_smbus_acquire_bus(void *, int);
+static void      amdpm_smbus_release_bus(void *, int);
+static int       amdpm_smbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
+				  size_t, void *, size_t, int);
+static int       amdpm_smbus_check_done(struct amdpm_softc *, i2c_op_t);
+static void      amdpm_smbus_clear_gsr(struct amdpm_softc *);
+static uint16_t	amdpm_smbus_get_gsr(struct amdpm_softc *);
+static int       amdpm_smbus_send_1(struct amdpm_softc *, uint8_t, i2c_op_t);
+static int       amdpm_smbus_write_1(struct amdpm_softc *, uint8_t,
+				     uint8_t, i2c_op_t);
+static int       amdpm_smbus_receive_1(struct amdpm_softc *, i2c_op_t);
+static int       amdpm_smbus_read_1(struct amdpm_softc *sc, uint8_t, i2c_op_t);
 
 #ifdef XBOX
 static int	 amdpm_smbus_intr(void *);
@@ -96,7 +98,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
 
-	lockinit(&sc->sc_lock, PZERO, "amdpm_smbus", 0, 0);
+	rw_init(&sc->sc_rwlock);
 
 #ifdef XBOX
 #define XBOX_SMBA	0x8000
@@ -137,7 +139,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 #endif
 
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void)config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 #ifdef XBOX
@@ -165,11 +167,9 @@ static int
 amdpm_smbus_acquire_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
-	int err;
 
-	err = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-
-	return err;
+	rw_enter(&sc->sc_rwlock, RW_WRITER);
+	return 0;
 }
 
 static void
@@ -177,61 +177,62 @@ amdpm_smbus_release_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-
-	return;
+	rw_exit(&sc->sc_rwlock);
 }
 
 static int
 amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
-    size_t cmdlen, void *vbuf, size_t buflen, int flags)
+		 size_t cmdlen, void *vbuf, size_t buflen, int flags)
 {
         struct amdpm_softc *sc  = (struct amdpm_softc *) cookie;
 	sc->sc_smbus_slaveaddr  = addr;
-	u_int8_t *p = vbuf;
+	uint8_t *p = vbuf;
 	int rv;
 	
 	if (I2C_OP_READ_P(op) && (cmdlen == 0) && (buflen == 1)) {
-	  rv = amdpm_smbus_receive_1(sc, op);
-	  if (rv == -1)
-		return -1;
-	  *p = (u_int8_t)rv;
-	  return 0;
+		rv = amdpm_smbus_receive_1(sc, op);
+		if (rv == -1)
+			return -1;
+		*p = (uint8_t)rv;
+		return 0;
 	}
 	
-	if ( (I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  rv = amdpm_smbus_read_1(sc, *(const uint8_t*)cmd, op);
-	  if (rv == -1)
-		return -1;
-	  *p = (u_int8_t)rv;
-	  return 0;
+	if ((I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 1)) {
+		rv = amdpm_smbus_read_1(sc, *(const uint8_t *)cmd, op);
+		if (rv == -1)
+			return -1;
+		*p = (uint8_t)rv;
+		return 0;
 	}
 	
-	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1)) {
-	  return amdpm_smbus_send_1(sc, *(uint8_t*)vbuf, op);
-	}
+	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1))
+		return amdpm_smbus_send_1(sc, *(uint8_t*)vbuf, op);
 	
-	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  return amdpm_smbus_write_1(sc,  *(const uint8_t*)cmd, *(uint8_t*)vbuf, op);
-	}
+	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 1))
+		return amdpm_smbus_write_1(sc,
+					   *(const uint8_t*)cmd,
+					   *(uint8_t*)vbuf,
+					   op);
 	
-	return (-1);  
+	return -1;  
 }
 
 static int 
 amdpm_smbus_check_done(struct amdpm_softc *sc, i2c_op_t op)
 {  
-        int i = 0;    
+        int i;
+
 	for (i = 0; i < 1000; i++) {
-	  /* check gsr and wait till cycle is done */
-	  u_int16_t data = amdpm_smbus_get_gsr(sc);
-	  if (data & AMDPM_8111_GSR_CYCLE_DONE) {
-	    return (0);	
-	  }
-	  if (!(op & I2C_F_POLL))
-	    delay(1);
+	/* check gsr and wait till cycle is done */
+		uint16_t data = amdpm_smbus_get_gsr(sc);
+		if (data & AMDPM_8111_GSR_CYCLE_DONE)
+			return 0;	
 	}
-	return (-1);    
+
+	if (!(op & I2C_F_POLL))
+	    delay(1);
+
+	return -1;    
 }
 
 
@@ -239,28 +240,28 @@ static void
 amdpm_smbus_clear_gsr(struct amdpm_softc *sc)
 {
         /* clear register */
-        u_int16_t data = 0xFFFF;
+        uint16_t data = 0xFFFF;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_STAT - off, data);
 }
 
-static u_int16_t
+static uint16_t
 amdpm_smbus_get_gsr(struct amdpm_softc *sc)
 {
 	int off = (sc->sc_nforce ? 0xe0 : 0);
-        return (bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    AMDPM_8111_SMBUS_STAT - off));  
+        return bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_STAT - off);
 }
 
 static int
-amdpm_smbus_send_1(struct amdpm_softc *sc,  u_int8_t val, i2c_op_t op)
+amdpm_smbus_send_1(struct amdpm_softc *sc, uint8_t val, i2c_op_t op)
 {
-	u_int16_t data = 0;
+	uint16_t data = 0;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 
-        /* first clear gsr */
-        amdpm_smbus_clear_gsr(sc);
+	/* first clear gsr */
+	amdpm_smbus_clear_gsr(sc);
 
 	/* write smbus slave address to register */
 	data = sc->sc_smbus_slaveaddr;
@@ -278,18 +279,19 @@ amdpm_smbus_send_1(struct amdpm_softc *sc,  u_int8_t val, i2c_op_t op)
 	    AMDPM_8111_SMBUS_CTRL - off,
 	    AMDPM_8111_SMBUS_GSR_SB);	
 
-	return(amdpm_smbus_check_done(sc, op));
+	return amdpm_smbus_check_done(sc, op);
 }
 
   
 static int
-amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int8_t val, i2c_op_t op)
+amdpm_smbus_write_1(struct amdpm_softc *sc, uint8_t cmd, uint8_t val,
+		    i2c_op_t op)
 {
-	u_int16_t data = 0;
+	uint16_t data = 0;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 
-        /* first clear gsr */
-        amdpm_smbus_clear_gsr(sc);  
+	/* first clear gsr */
+	amdpm_smbus_clear_gsr(sc);  
   
 	data = sc->sc_smbus_slaveaddr;
 	data <<= 1;
@@ -308,17 +310,17 @@ amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int8_t val, i2c_op_t
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_CTRL - off, AMDPM_8111_SMBUS_GSR_WB);
 	
-	return (amdpm_smbus_check_done(sc, op));
+	return amdpm_smbus_check_done(sc, op);
 }
 
 static int
 amdpm_smbus_receive_1(struct amdpm_softc *sc, i2c_op_t op)
 {
-	u_int16_t data = 0;
+	uint16_t data = 0;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 
-        /* first clear gsr */
-        amdpm_smbus_clear_gsr(sc);  
+	/* first clear gsr */
+	amdpm_smbus_clear_gsr(sc);  
 
 	/* write smbus slave address to register */
 	data = sc->sc_smbus_slaveaddr;
@@ -333,24 +335,24 @@ amdpm_smbus_receive_1(struct amdpm_softc *sc, i2c_op_t op)
 	
 	/* check for errors */
 	if (amdpm_smbus_check_done(sc, op) < 0)
-	  return (-1);
+		return -1;
 	
 	/* read data */
 	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_HOSTDATA - off);
-	u_int8_t ret = (u_int8_t)(data & 0x00FF);
-	return (ret);
+	uint8_t ret = (uint8_t)(data & 0x00FF);
+	return ret;
 }
 
 static int
-amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd, i2c_op_t op)
+amdpm_smbus_read_1(struct amdpm_softc *sc, uint8_t cmd, i2c_op_t op)
 {
-	u_int16_t data = 0;
-	u_int8_t ret;
+	uint16_t data = 0;
+	uint8_t ret;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 
-        /* first clear gsr */
-        amdpm_smbus_clear_gsr(sc);  
+	/* first clear gsr */
+	amdpm_smbus_clear_gsr(sc);  
 
 	/* write smbus slave address to register */
 	data = sc->sc_smbus_slaveaddr;
@@ -368,11 +370,11 @@ amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd, i2c_op_t op)
 	
 	/* check for errors */
 	if (amdpm_smbus_check_done(sc, op) < 0)
-	  return (-1);
+		return -1;
 	
 	/* store data */    
 	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_HOSTDATA - off);
-	ret = (u_int8_t)(data & 0x00FF);
-	return (ret);
+	ret = (uint8_t)(data & 0x00FF);
+	return ret;
 }

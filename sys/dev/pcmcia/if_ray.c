@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.65 2007/07/09 21:01:20 ad Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.65.2.1 2007/09/03 10:21:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65 2007/07/09 21:01:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.2.1 2007/09/03 10:21:55 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -971,11 +971,7 @@ ray_ioctl(ifp, cmd, data)
 		if (cmd == SIOCDELMULTI)
 			RAY_DPRINTF(("%s: ioctl: cmd SIOCDELMULTI\n",
 			    ifp->if_xname));
-		if (cmd == SIOCADDMULTI)
-			error = ether_addmulti(ifr, &sc->sc_ec);
-		else
-			error = ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ray_update_mcast(sc);
 			error = 0;

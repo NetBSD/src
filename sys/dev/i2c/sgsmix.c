@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.1 2007/01/17 23:32:10 macallan Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.1.18.1 2007/09/03 10:20:15 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.1 2007/01/17 23:32:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.1.18.1 2007/09/03 10:20:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.1 2007/01/17 23:32:10 macallan Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
-#include <machine/autoconf.h>
 #include <dev/i2c/sgsmixvar.h>
+#include "opt_sgsmix.h"
 
 #ifdef SGSMIX_DEBUG
 #define DPRINTF printf
@@ -157,6 +157,7 @@ sgsmix_set_speaker_vol(void *cookie, int left, int right)
 {
 	struct sgsmix_softc *sc = cookie;
 
+	DPRINTF("%s: speaker %d %d\n", sc->sc_dev.dv_xname, left, right);
 	if (left == 0) {
 		sgsmix_writereg(sc, SGSREG_SPEAKER_L, 0x20);
 	} else {
@@ -177,6 +178,7 @@ sgsmix_set_headphone_vol(void *cookie, int left, int right)
 {
 	struct sgsmix_softc *sc = cookie;
 
+	DPRINTF("%s: headphones %d %d\n", sc->sc_dev.dv_xname, left, right);
 	if (left == 0) {
 		sgsmix_writereg(sc, SGSREG_HEADPHONES_L, 0x20);
 	} else {

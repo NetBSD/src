@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.103 2007/07/09 21:10:56 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.103.2.1 2007/09/03 10:23:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,9 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103 2007/07/09 21:10:56 ad Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.2.1 2007/09/03 10:23:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103 2007/07/09 21:10:56 ad Exp $")
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -163,9 +159,6 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	struct vmspace *vm;
 	size_t cnt;
 	int error;
-#ifdef KTRACE
-	struct iovec	ktriov;
-#endif
 	p = l->l_proc;
 
 	error = proc_vmspace_getref(p, &vm);
@@ -191,10 +184,6 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 		goto out;
 	}
 
-#ifdef KTRACE
-	/* In case we are tracing, save a copy of iovec */
-	ktriov = aiov;
-#endif
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
@@ -202,10 +191,7 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(l, fd, UIO_READ, &ktriov, cnt, error);
-#endif
+	ktrgenio(fd, UIO_READ, buf, cnt, error);
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
@@ -242,9 +228,7 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	u_int		iovlen;
 	struct file	*fp;
 	struct filedesc	*fdp;
-#ifdef KTRACE
 	struct iovec	*ktriov = NULL;
-#endif
 
 	if (iovcnt == 0)
 		return EINVAL;
@@ -325,16 +309,14 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		}
 	}
 
-#ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		if (ktriov != NULL)
 			memcpy(ktriov, auio.uio_iov, iovlen);
 	}
-#endif
 
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
@@ -345,13 +327,10 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	cnt -= auio.uio_resid;
 	*retval = cnt;
 
-#ifdef KTRACE
 	if (ktriov != NULL) {
-		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
-			ktrgenio(l, fd, UIO_READ, ktriov, cnt, error);
+		ktrgeniov(fd, UIO_READ, ktriov, cnt, error);
 		kmem_free(ktriov, iovlen);
 	}
-#endif
 
  done:
 	if (needfree)
@@ -407,9 +386,6 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	struct vmspace *vm;
 	size_t cnt;
 	int error;
-#ifdef KTRACE
-	struct iovec	ktriov;
-#endif
 
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
@@ -434,10 +410,6 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 		goto out;
 	}
 
-#ifdef KTRACE
-	/* In case we are tracing, save a copy of iovec */
-	ktriov = aiov;
-#endif
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
 	if (error) {
@@ -451,10 +423,7 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 		}
 	}
 	cnt -= auio.uio_resid;
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(l, fd, UIO_WRITE, &ktriov, cnt, error);
-#endif
+	ktrgenio(fd, UIO_WRITE, buf, cnt, error);
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
@@ -491,9 +460,7 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	u_int		iovlen;
 	struct file	*fp;
 	struct filedesc	*fdp;
-#ifdef KTRACE
 	struct iovec	*ktriov = NULL;
-#endif
 
 	if (iovcnt == 0)
 		return EINVAL;
@@ -574,16 +541,15 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		}
 	}
 
-#ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		if (ktriov != NULL)
 			memcpy(ktriov, auio.uio_iov, iovlen);
 	}
-#endif
+
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
 	if (error) {
@@ -599,13 +565,10 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	cnt -= auio.uio_resid;
 	*retval = cnt;
 
-#ifdef KTRACE
 	if (ktriov != NULL) {
-		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
-			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt, error);
+		ktrgeniov(fd, UIO_WRITE, ktriov, cnt, error);
 		kmem_free(ktriov, iovlen);
 	}
-#endif
 
  done:
 	if (needfree)
@@ -686,15 +649,8 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 					kmem_free(memp, size);
 				goto out;
 			}
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_GENIO)) {
-				struct iovec iov;
-				iov.iov_base = SCARG(uap, data);
-				iov.iov_len = size;
-				ktrgenio(l, SCARG(uap, fd), UIO_WRITE, &iov,
-					size, 0);
-			}
-#endif
+			ktrgenio(SCARG(uap, fd), UIO_WRITE, SCARG(uap, data),
+			    size, 0);
 		} else
 			*(void **)data = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
@@ -732,15 +688,8 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 */
 		if (error == 0 && (com&IOC_OUT) && size) {
 			error = copyout(data, SCARG(uap, data), size);
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_GENIO)) {
-				struct iovec iov;
-				iov.iov_base = SCARG(uap, data);
-				iov.iov_len = size;
-				ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov,
-					size, error);
-			}
-#endif
+			ktrgenio(SCARG(uap, fd), UIO_READ, SCARG(uap, data),
+			    size, error);
 		}
 		break;
 	}
