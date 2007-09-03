@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.122.2.3 2007/04/28 18:17:27 bouyer Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.122.2.3.2.1 2007/09/03 07:04:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3 2007/04/28 18:17:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3.2.1 2007/09/03 07:04:29 wrstuden Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -277,6 +277,8 @@ int	bge_tso_debug = 0;
 #define BGE_IS_5750_OR_BEYOND(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 || \
 	 BGE_IS_5714_FAMILY(sc) )
 
 #define BGE_IS_5705_OR_BEYOND(sc)  \
@@ -1585,11 +1587,24 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Set the BD ring replentish thresholds. The recommended
+	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
 	 * each ring.
 	 */
-	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, BGE_STD_RX_RING_CNT/8);
+	i = BGE_STD_RX_RING_CNT / 8;
+
+	/*
+ 	 * Use a value of 8 for the following chips to workaround HW errata.
+	 * Some of these chips have been added based on empirical
+	 * evidence (they don't work unless this is done).
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+		i = 8;
+
+	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
 	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT/8);
 
 	/*
@@ -1770,8 +1785,17 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/* Turn on write DMA state machine */
-	CSR_WRITE_4(sc, BGE_WDMA_MODE,
-	    BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS);
+	{
+		uint32_t bge_wdma_mode =
+			BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS;
+
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+		  /* Enable host coalescing bug fix; see Linux tg3.c */
+		  bge_wdma_mode |= (1 << 29);
+
+		CSR_WRITE_4(sc, BGE_WDMA_MODE, bge_wdma_mode);
+        }
 
 	/* Turn on read DMA state machine */
 	{
@@ -1988,6 +2012,18 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5752 A2" },
 
+	{ BGE_CHIPID_BCM5787_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5754/5787 A0" },
+
+	{ BGE_CHIPID_BCM5787_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5754/5787 A1" },
+
+	{ BGE_CHIPID_BCM5787_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5754/5787 A2" },
+
 	{ 0, 0, NULL }
 };
 
@@ -2032,10 +2068,17 @@ static const struct bge_revision bge_majorrevs[] = {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5752 family" },
 
+	{ BGE_ASICREV_BCM5755,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5755" },
 
 	{ BGE_ASICREV_BCM5780,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5780" },
+
+	{ BGE_ASICREV_BCM5787,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5787" },
 
 	{ 0,
 	  0,
@@ -2154,6 +2197,10 @@ static const struct bge_product {
 	  "Broadcom BCM5714/5715 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5715,
+	  "Broadcom BCM5714/5715 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5789,
 	  "Broadcom BCM5789 Gigabit Ethernet",
 	  },
@@ -2203,6 +2250,26 @@ static const struct bge_product {
 	  "Broadcom BCM5753M Gigabit Ethernet",
 	  },
 
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5754,
+	  "Broadcom BCM5754 Gigabit Ethernet",
+	},
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5754M,
+	  "Broadcom BCM5754M Gigabit Ethernet",
+	},
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5755,
+	  "Broadcom BCM5755 Gigabit Ethernet",
+	},
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5755M,
+	  "Broadcom BCM5755M Gigabit Ethernet",
+	},
+
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5780,
 	  "Broadcom BCM5780 Gigabit Ethernet",
@@ -2216,7 +2283,17 @@ static const struct bge_product {
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5782,
 	  "Broadcom BCM5782 Gigabit Ethernet",
-	  },
+	},
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5787,
+	  "Broadcom BCM5787 Gigabit Ethernet",
+	},
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5787M,
+	  "Broadcom BCM5787M Gigabit Ethernet",
+	},
 
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5788,
@@ -2733,7 +2810,9 @@ bge_reset(struct bge_softc *sc)
 	 * Disable the firmware fastboot feature on 5752 ASIC
 	 * to avoid firmware timeout.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
@@ -2749,6 +2828,11 @@ bge_reset(struct bge_softc *sc)
 			val |= (1<<29);
 		}
 	}
+	/*
+	 * Write the magic number to the firmware mailbox at 0xb50
+	 * so that the driver can synchronize with the firmware.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, val);
@@ -2795,12 +2879,6 @@ bge_reset(struct bge_softc *sc)
 		}
  		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
-
-	/*
-	 * Prevent PXE restart: write a magic number to the
-	 * general communications memory at 0xB50.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/*
 	 * Poll the value location we just wrote until
@@ -3781,7 +3859,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING || sc->bge_link == 0)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.3.6.1 2007/09/03 06:56:14 wrstuden Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -26,7 +26,7 @@ extern	struct refclock	refclock_local;
 #define	refclock_local	refclock_none
 #endif
 
-#if defined(CLOCK_TRAK) && defined(PPS)
+#if 0 && defined(CLOCK_TRAK) && defined(PPS)
 extern	struct refclock	refclock_trak;
 #else
 #define	refclock_trak	refclock_none
@@ -98,7 +98,7 @@ extern	struct refclock	refclock_irig;
 #define refclock_irig	refclock_none
 #endif
 
-#if defined(CLOCK_MSFEES) && defined(PPS)
+#if 0 && defined(CLOCK_MSFEES) && defined(PPS)
 extern	struct refclock	refclock_msfees;
 #else
 #define refclock_msfees	refclock_none
@@ -269,7 +269,7 @@ extern	struct refclock	refclock_neoclock4x;
 struct refclock *refclock_conf[] = {
 	&refclock_none,		/* 0 REFCLK_NONE */
 	&refclock_local,	/* 1 REFCLK_LOCAL */
-	&refclock_trak,		/* 2 REFCLK_GPS_TRAK */
+	&refclock_none,		/* 2 deprecated: REFCLK_GPS_TRAK */
 	&refclock_pst,		/* 3 REFCLK_WWV_PST */
 	&refclock_wwvb, 	/* 4 REFCLK_SPECTRACOM */
 	&refclock_true,		/* 5 REFCLK_TRUETIME */
@@ -281,7 +281,7 @@ struct refclock *refclock_conf[] = {
 	&refclock_arbiter,	/* 11 REFCLK_GPS_ARBITER */
 	&refclock_tpro,		/* 12 REFCLK_IRIG_TPRO */
 	&refclock_leitch,	/* 13 REFCLK_ATOM_LEITCH */
-	&refclock_msfees,	/* 14 REFCLK_MSF_EES */
+	&refclock_none,		/* 14 deprecated: REFCLK_MSF_EES */
 	&refclock_none,		/* 15 not used */
 	&refclock_bancomm,	/* 16 REFCLK_IRIG_BANCOMM */
 	&refclock_datum,	/* 17 REFCLK_GPS_DATUM */

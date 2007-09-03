@@ -1,4 +1,4 @@
-/*	$NetBSD: initparse.c,v 1.1.1.1.18.1 2007/05/07 17:04:38 pavel Exp $	*/
+/*	$NetBSD: initparse.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:03 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2002 by Darren Reed.

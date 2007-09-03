@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.21.2.1 2007/05/03 05:07:06 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.21.2.1.2.1 2007/09/03 07:04:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -177,6 +177,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_BEM	(1U << 1)	/* big-endian mode */
 #define	CTRL_PRIOR	(1U << 2)	/* 0 = receive, 1 = fair */
 #define	CTRL_LRST	(1U << 3)	/* link reset */
+#define	CTRL_GIO_M_DIS	(1U << 3)	/* disabl PCI master access */
 #define	CTRL_ASDE	(1U << 5)	/* auto speed detect enable */
 #define	CTRL_SLU	(1U << 6)	/* set link up */
 #define	CTRL_ILOS	(1U << 7)	/* invert loss of signal */
@@ -228,6 +229,7 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
 #define	STATUS_PCIXSPD_100_133 STATUS_PCIXSPD(2)
 #define	STATUS_PCIXSPD_MASK    STATUS_PCIXSPD(3)
+#define	STATUS_GIO_M_ENA (1U << 16)	/* PCIX master enable */
 
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
 #define	EECD_SK		(1U << 0)	/* clock */
@@ -590,6 +592,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
 #define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
 #define	PBA_8K		0x0008
+#define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_22K		0x0016

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.4.12.1 2007/05/07 17:05:04 pavel Exp $	*/
+/*	$NetBSD: var.c,v 1.4.12.1.2.1 2007/09/03 06:54:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 by Darren Reed.

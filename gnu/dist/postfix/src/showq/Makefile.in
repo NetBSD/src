@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -72,6 +72,7 @@ showq.o: ../../include/mail_proto.h
 showq.o: ../../include/mail_queue.h
 showq.o: ../../include/mail_scan_dir.h
 showq.o: ../../include/mail_server.h
+showq.o: ../../include/mail_version.h
 showq.o: ../../include/msg.h
 showq.o: ../../include/mymalloc.h
 showq.o: ../../include/quote_822_local.h

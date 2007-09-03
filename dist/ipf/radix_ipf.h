@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.h,v 1.1.1.2.4.1 2007/05/07 17:04:26 pavel Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.1.1.2.4.1.2.1 2007/09/03 06:53:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.12 2006/08/27 00:39:32 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.12.4.1 2007/09/03 06:59:28 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -517,7 +517,7 @@ static void cleanup_header_callback(void *context, int header_class,
     if (hdr_opts->type == HDR_CONTENT_TRANSFER_ENCODING) {
 	for (cmp = code_map; cmp->name != 0; cmp++) {
 	    if (strcasecmp(hdrval, cmp->name) == 0) {
-		if (strcmp(cmp->encoding, MAIL_ATTR_ENC_8BIT) == 0)
+		if (strcasecmp(cmp->encoding, MAIL_ATTR_ENC_8BIT) == 0)
 		    nvtable_update(state->attr, MAIL_ATTR_ENCODING,
 				   cmp->encoding);
 		break;
@@ -597,6 +597,16 @@ static void cleanup_header_done_callback(void *context)
     struct tm *tp;
     TOK822 *token;
     time_t  tv;
+
+    /*
+     * XXX Workaround: when we reach the end of headers, mime_state_update()
+     * may execute up to three call-backs before returning to the caller:
+     * head_out(), head_end(), and body_out() or body_end(). As long as
+     * call-backs don't return a result, each call-back has to check for
+     * itself if the previous call-back experienced a problem.
+     */
+    if (CLEANUP_OUT_OK(state) == 0)
+	return;
 
     /*
      * Add a missing (Resent-)Message-Id: header. The message ID gives the
@@ -683,7 +693,7 @@ static void cleanup_header_done_callback(void *context)
 #define VISIBLE_RCPT	((1 << HDR_TO) | (1 << HDR_RESENT_TO) \
 			| (1 << HDR_CC) | (1 << HDR_RESENT_CC))
 
-    if ((state->headers_seen & VISIBLE_RCPT) == 0)
+    if ((state->headers_seen & VISIBLE_RCPT) == 0 && *var_rcpt_witheld)
 	cleanup_out_format(state, REC_TYPE_NORM, "%s", var_rcpt_witheld);
 
     /*
@@ -697,6 +707,7 @@ static void cleanup_header_done_callback(void *context)
 	cleanup_out_format(state, REC_TYPE_PTR, REC_TYPE_PTR_FORMAT, 0L);
 	if ((state->append_hdr_pt_target = vstream_ftell(state->dst)) < 0)
 	    msg_fatal("%s: vstream_ftell %s: %m", myname, cleanup_path);
+	state->body_offset = state->append_hdr_pt_target;
     }
 }
 
@@ -707,6 +718,16 @@ static void cleanup_body_callback(void *context, int type,
 				          off_t offset)
 {
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
+
+    /*
+     * XXX Workaround: when we reach the end of headers, mime_state_update()
+     * may execute up to three call-backs before returning to the caller:
+     * head_out(), head_end(), and body_out() or body_end(). As long as
+     * call-backs don't return a result, each call-back has to check for
+     * itself if the previous call-back experienced a problem.
+     */
+    if (CLEANUP_OUT_OK(state) == 0)
+	return;
 
     /*
      * Crude message body content filter for emergencies. This code has
@@ -813,6 +834,7 @@ static void cleanup_message_headerbody(CLEANUP_STATE *state, int type,
 	state->mime_state = mime_state_free(state->mime_state);
 	if ((state->xtra_offset = vstream_ftell(state->dst)) < 0)
 	    msg_fatal("%s: vstream_ftell %s: %m", myname, cleanup_path);
+	state->cont_length = state->xtra_offset - state->data_offset;
 	state->action = cleanup_extracted;
     }
 
@@ -893,6 +915,15 @@ void    cleanup_message(CLEANUP_STATE *state, int type, const char *buf, ssize_t
 					 (MIME_STATE_ANY_END) 0,
 					 cleanup_mime_error_callback,
 					 (void *) state);
+
+    /*
+     * XXX Workaround: truncate a long message header so that we don't exceed
+     * the Milter request size limit of 65535.
+     */
+#define KLUDGE_HEADER_LIMIT	60000
+    if ((cleanup_milters || state->milters)
+	&& var_header_limit > KLUDGE_HEADER_LIMIT)
+	var_header_limit = KLUDGE_HEADER_LIMIT;
 
     /*
      * Pass control to the header processing routine.

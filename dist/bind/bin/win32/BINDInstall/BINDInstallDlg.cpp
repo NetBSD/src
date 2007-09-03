@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.15.18.10 2006/11/08 01:51:10 marka Exp */
+/* Id: BINDInstallDlg.cpp,v 1.15.18.10.12.2 2007/06/27 01:06:14 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -114,21 +114,25 @@ const FileData installFiles[] =
 #  endif
 #endif
 #if _MSC_VER >= 1400
-	{"mfc80.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"mfc80u.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"mfcm80.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"mfcm80u.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"Microsoft.VC80.MFC.manifest", FileData::BinDir, FileData::Critical, FALSE},
-	{"msvcm80.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"msvcp80.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"msvcr80.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"Microsoft.VC80.CRT.manifest", FileData::BinDir, FileData::Critical, FALSE},
-#elif _MSC_VER >= 1310
+	{"MFC80CHS.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80CHT.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80DEU.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80ENU.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80ESP.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80FRA.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80ITA.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80JPN.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"MFC80KOR.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"Microsoft.VC80.MFCLOC.manifest", FileData::BinDir, FileData::Critical, FALSE},
+#endif
+#if _MSC_VER < 1400
+#if _MSC_VER >= 1310
 	{"mfc71.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"msvcr71.dll", FileData::WinSystem, FileData::Critical, TRUE},
-#elif _MSC_VER > 1200
+#elif _MSC_VER > 1200 && _MSC_VER < 1310
 	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE},
+#endif
 #endif
 	{"bindevt.dll", FileData::BinDir, FileData::Normal, FALSE},
 	{"libbind9.dll", FileData::BinDir, FileData::Critical, FALSE},
@@ -481,6 +485,16 @@ void CBINDInstallDlg::OnInstall() {
 
 	ProgramGroup(FALSE);
 
+#if _MSC_VER >= 1400
+	/*
+	 * Install Visual Studio libraries.  As per:
+	 * http://blogs.msdn.com/astebner/archive/2006/08/23/715755.aspx
+	 *
+	 * Vcredist_x86.exe /q:a /c:"msiexec /i vcredist.msi /qn /l*v %temp%\vcredist_x86.log"
+	 */
+	/*system(".\\Vcredist_x86.exe /q:a /c:\"msiexec /i vcredist.msi /qn /l*v %temp%\vcredist_x86.log\"");*/
+	system(".\\Vcredist_x86.exe");
+#endif
 	try {
 		CreateDirs();
  		CopyFiles();

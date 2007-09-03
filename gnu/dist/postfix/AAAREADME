@@ -135,7 +135,6 @@ Postfix daemons:
     src/cleanup/	Canonicalize and enqueue mail
     src/discard/	Trivial discard mailer
     src/error/		Trivial error mailer
-    src/lmtp/		LMTP client
     src/local/		Local delivery
     src/master/		Postfix resident superserver
     src/oqmgr/		Old queue manager
@@ -144,9 +143,10 @@ Postfix daemons:
     src/qmgr/		Queue manager
     src/qmqpd/		QMQPD server
     src/showq/		List Postfix queue status
-    src/smtp/		SMTP client
+    src/smtp/		SMTP and LMTP client
     src/smtpd/		SMTP server
     src/spawn/		Run non-Postfix server
+    src/tlsmgr/		TLS session keys and random pool
     src/trivial-rewrite/ Address rewriting and resolving
     src/verify/		address verification service
     src/virtual/	virtual mailbox-only delivery agent

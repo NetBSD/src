@@ -11,6 +11,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 
 <b>SYNOPSIS</b>
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-f</b>
+       <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-i</b> <i>queue</i><b>_</b><i>id</i>
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-p</b>
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-s</b> <i>site</i>
 
@@ -41,115 +42,125 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               will  result  in  poor  delivery performance of all
               other mail.
 
+       <b>-i</b> <i>queue</i><b>_</b><i>id</i>
+              Schedule immediate delivery of deferred  mail  with
+              the specified queue ID.
+
+              This option implements the traditional <b>sendmail -qI</b>
+              command, by contacting the <a href="flush.8.html"><b>flush</b>(8)</a> server.
+
+              This feature is available with Postfix version  2.4
+              and later.
+
        <b>-p</b>     Produce a traditional sendmail-style queue listing.
-              This  option  implements the traditional <b>mailq</b> com-
+              This option implements the traditional  <b>mailq</b>  com-
               mand, by contacting the Postfix <a href="showq.8.html"><b>showq</b>(8)</a> daemon.
 
-              Each queue entry shows the queue file  ID,  message
+              Each  queue  entry shows the queue file ID, message
               size, arrival time, sender, and the recipients that
-              still need to be delivered.  If mail could  not  be
-              delivered  upon  the  last  attempt, the reason for
-              failure is shown. This mode of operation is  imple-
-              mented  by  executing the <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command. The
-              queue ID string is followed by an  optional  status
+              still  need  to be delivered.  If mail could not be
+              delivered upon the last  attempt,  the  reason  for
+              failure  is shown. This mode of operation is imple-
+              mented by executing the <a href="postqueue.1.html"><b>postqueue</b>(1)</a>  command.  The
+              queue  ID  string is followed by an optional status
               character:
 
               <b>*</b>      The message is in the <b>active</b> queue, i.e. the
                      message is selected for delivery.
 
-              <b>!</b>      The message is in the <b>hold</b>  queue,  i.e.  no
-                     further  delivery attempt will be made until
+              <b>!</b>      The  message  is  in the <b>hold</b> queue, i.e. no
+                     further delivery attempt will be made  until
                      the mail is taken off hold.
 
        <b>-s</b> <i>site</i>
-              Schedule immediate delivery of  all  mail  that  is
+              Schedule  immediate  delivery  of  all mail that is
               queued for the named <i>site</i>. A numerical site must be
-              specified as  a  valid  <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC  2821</a>  address  literal
-              enclosed  in [], just like in email addresses.  The
+              specified  as  a  valid  <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC  2821</a>  address literal
+              enclosed in [], just like in email addresses.   The
               site must be eligible for the "fast flush" service.
-              See  <a href="flush.8.html"><b>flush</b>(8)</a>  for more information about the "fast
+              See <a href="flush.8.html"><b>flush</b>(8)</a> for more information about  the  "fast
               flush" service.
 
-              This option implements  the  traditional  "<b>sendmail</b>
-              <b>-qR</b><i>site</i>"   command,   by   contacting  the  Postfix
+              This  option  implements  the traditional "<b>sendmail</b>
+              <b>-qR</b><i>site</i>"  command,  by   contacting   the   Postfix
               <a href="flush.8.html"><b>flush</b>(8)</a> daemon.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple  <b>-v</b>  options  make  the software increasingly
-              verbose. As of Postfix 2.3, this option  is  avail-
+              tiple <b>-v</b> options  make  the  software  increasingly
+              verbose.  As  of Postfix 2.3, this option is avail-
               able for the super-user only.
 
 <b>SECURITY</b>
-       This  program  is designed to run with set-group ID privi-
+       This program is designed to run with set-group  ID  privi-
        leges, so that it can connect to Postfix daemon processes.
 
 <b>DIAGNOSTICS</b>
-       Problems  are  logged  to  <b>syslogd</b>(8)  and to the standard
+       Problems are logged to  <b>syslogd</b>(8)  and  to  the  standard
        error stream.
 
 <b>ENVIRONMENT</b>
        MAIL_CONFIG
-              Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to  avoid
-              exploitation  of  set-group  ID  privileges, a non-
+              Directory  with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid
+              exploitation of set-group  ID  privileges,  a  non-
               standard directory is allowed only if:
 
-              <b>o</b>      The name is listed in the  standard  <a href="postconf.5.html"><b>main.cf</b></a>
-                     file  with  the <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>
+              <b>o</b>      The  name  is listed in the standard <a href="postconf.5.html"><b>main.cf</b></a>
+                     file with  the  <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>
                      configuration parameter.
 
               <b>o</b>      The command is invoked by the super-user.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
        to this program.  The text below provides only a parameter
-       summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including  exam-
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
        ples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
-              A  list of non-default Postfix configuration direc-
+              A list of non-default Postfix configuration  direc-
               tories that may be specified with "-c <a href="postconf.5.html#config_directory">config_direc</a>-
-              <a href="postconf.5.html#config_directory">tory</a>"  on  the command line, or via the MAIL_CONFIG
+              <a href="postconf.5.html#config_directory">tory</a>" on the command line, or via  the  MAIL_CONFIG
               environment parameter.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
-              The  location  of  all  postfix administrative com-
+              The location of  all  postfix  administrative  com-
               mands.
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
               Optional list of destinations that are eligible for
-              per-destination  logfiles  with mail that is queued
+              per-destination logfiles with mail that  is  queued
               to those destinations.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters that  a  Postfix
+              The  list  of environment parameters that a Postfix
               process  will  import  from  a  non-Postfix  parent
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The  time  limit for sending a trigger to a Postfix
-              daemon (for example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a>  dae-
+              The time limit for sending a trigger to  a  Postfix
+              daemon  (for example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> dae-
               mon).
 
        Available in Postfix version 2.2 and later:
 
        <b><a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> (static:anyone)</b>
-              List  of  users  who  are  authorized  to flush the
+              List of users  who  are  authorized  to  flush  the
               queue.
 
        <b><a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a> (static:anyone)</b>
@@ -169,11 +180,11 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>HISTORY</b>
-       The  postqueue command was introduced with Postfix version
+       The postqueue command was introduced with Postfix  version
        1.1.
 
 <b>AUTHOR(S)</b>

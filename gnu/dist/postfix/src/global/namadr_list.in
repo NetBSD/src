@@ -15,3 +15,19 @@
 ./namadr_list 168.100.189.2 dummy 168.100.189.3
 ./namadr_list '[168.100.189.2]' dummy 168.100.189.2
 ./namadr_list '[168.100.189.2]' dummy 168.100.189.3
+echo foo !bar baz >junk
+./namadr_list !`pwd`/junk dummy 168.100.189.3
+./namadr_list !`pwd`/junk foo 168.100.189.3
+./namadr_list !`pwd`/junk bar 168.100.189.3
+./namadr_list !`pwd`/junk baz 168.100.189.3
+./namadr_list `pwd`/junk dummy 168.100.189.3
+./namadr_list `pwd`/junk foo 168.100.189.3
+./namadr_list `pwd`/junk bar 168.100.189.3
+./namadr_list `pwd`/junk baz 168.100.189.3
+rm -f junk
+env foo=x ./namadr_list environ:junk foo 168.100.189.3
+env foo=x ./namadr_list environ:junk bar 168.100.189.3
+env foo=x ./namadr_list !environ:junk foo 168.100.189.3
+env foo=x ./namadr_list !environ:junk bar 168.100.189.3
+env foo=x ./namadr_list !!environ:junk foo 168.100.189.3
+env foo=x ./namadr_list !!environ:junk bar 168.100.189.3

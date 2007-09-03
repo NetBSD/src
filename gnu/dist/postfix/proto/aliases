@@ -31,8 +31,9 @@
 # .IP \(bu
 #	An alias definition has the form
 # .sp
-# .ti +5
-#	\fIname\fR: \fIvalue1\fR, \fIvalue2\fR, \fI...\fR
+# .nf
+#	     \fIname\fR: \fIvalue1\fR, \fIvalue2\fR, \fI...\fR
+# .fi
 # .IP \(bu
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
@@ -69,8 +70,8 @@
 #	When the command fails, a limited amount of command output is
 #	mailed back to the sender.  The file \fB/usr/include/sysexits.h\fR
 #	defines the expected exit status codes. For example, use
-#	\fB|"exit 67"\fR to simulate a "user unknown" error, and
-#	\fB|"exit 0"\fR to implement an expensive black hole.
+#	\fB"|exit 67"\fR to simulate a "user unknown" error, and
+#	\fB"|exit 0"\fR to implement an expensive black hole.
 # .IP \fB:include:\fI/file/name\fR
 #	Mail is sent to the destinations listed in the named file.
 #	Lines in \fB:include:\fR files have the same syntax

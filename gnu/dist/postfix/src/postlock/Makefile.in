@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -66,6 +66,7 @@ postlock.o: ../../include/dsn_util.h
 postlock.o: ../../include/iostuff.h
 postlock.o: ../../include/mail_conf.h
 postlock.o: ../../include/mail_params.h
+postlock.o: ../../include/mail_version.h
 postlock.o: ../../include/mbox_conf.h
 postlock.o: ../../include/mbox_open.h
 postlock.o: ../../include/msg.h

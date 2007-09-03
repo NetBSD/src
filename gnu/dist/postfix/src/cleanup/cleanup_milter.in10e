@@ -1,0 +1,13 @@
+#
+# Replace a short body by increasingly longer ones and do header
+# updates in between.
+#
+#verbose on
+open test-queue-file10.tmp
+
+add_header foo1 foobar
+replbody loremipsum
+add_header foo2 foobar
+replbody loremipsum2
+
+close

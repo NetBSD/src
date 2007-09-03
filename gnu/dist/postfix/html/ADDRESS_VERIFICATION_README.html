@@ -21,7 +21,8 @@
 
 <p> The sender/recipient address verification feature described in this
 document is suitable only for low-traffic sites. It performs poorly
-under high load and may cause your site to be blacklisted by some
+under high load; excessive sender address verification activity may
+even cause your site to be blacklisted by some
 providers. See the "<a href="#limitations">Limitations</a>" section
 below for details. </p>
 
@@ -228,7 +229,10 @@ MAILER-DAEMON messages. </p>
 <p> Recipient address verification is relatively straightforward
 and there are no surprises. If a recipient probe fails, then Postfix
 rejects mail for the recipient address.  If a recipient probe
-succeeds, then Postfix accepts mail for the recipient address. </p>
+succeeds, then Postfix accepts mail for the recipient address.
+However, recipient address verification probes can increase the
+load on down-stream MTAs when you're being flooded by backscatter
+bounces, or when some spammer is mounting a dictionary attack. </p>
 
 <p> By default, address verification results are not saved. To avoid
 probing the same address repeatedly, you can store the result in a

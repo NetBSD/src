@@ -35,6 +35,13 @@ mysqlclient library (and libm) to AUXLIBS, for example:
         'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
         'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
 
+On Solaris, use this instead:
+
+    make -f Makefile.init makefiles \
+        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+        'AUXLIBS=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+            -lmysqlclient -lz -lm'
+
 Then, just run 'make'. This requires libz, the compression library. Older mysql
 implementations build without libz.
 

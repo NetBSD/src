@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.6 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.6.6.1 2007/09/03 06:56:01 wrstuden Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -160,7 +160,6 @@ int	state;			/* clock discipline state */
 u_char	sys_poll = NTP_MINDPOLL; /* time constant/poll (log2 s) */
 int	tc_counter;		/* jiggle counter */
 double	last_offset;		/* last offset (s) */
-double	last_base;		/* last base offset (s) */
 
 /*
  * Huff-n'-puff filter variables
@@ -335,10 +334,13 @@ local_clock(
 	 * these actions interact with the command line options.
 	 *
 	 * Note the system poll is set to minpoll only if the clock is
-	 * stepped. 
+	 * stepped. Note also the kernel is disabled if step is
+	 * disabled or greater than 0.5 s. 
 	 */
 	clock_frequency = flladj = plladj = 0;
 	mu = peer->epoch - sys_clocktime;
+	if (clock_max == 0 || clock_max > 0.5)
+		kern_enable = 0;
 	rval = 1;
 	if (fabs(fp_offset) > clock_max && clock_max > 0) {
 		switch (state) {
@@ -361,8 +363,8 @@ local_clock(
 			if (mu < clock_minstep)
 				return (0);
 
-			clock_frequency = (fp_offset - last_base -
-			    clock_offset) / mu;
+			clock_frequency = (fp_offset - clock_offset) /
+			    mu;
 
 			/* fall through to S_SPIK */
 
@@ -433,21 +435,22 @@ local_clock(
 
 		/*
 		 * In S_NSET state this is the first update received and
-		 * the frequency has not been initialized. The first
-		 * thing to do is directly measure the frequency offset.
+		 * the frequency has not been initialized. Adjust the
+		 * phase, but do not adjust the frequency until after
+		 * the stepout threshold.
 		 */
 		case S_NSET:
-			clock_offset = fp_offset;
 			rstclock(S_FREQ, peer->epoch, fp_offset);
-			return (0);
+			break;
 
 		/*
-		 * In S_FSET state this is the first update and the
-		 * frequency has been initialized. Adjust the phase, but
-		 * don't adjust the frequency until the next update.
+		 * In S_FSET state this is the first update received and
+		 * the frequency has been initialized. Adjust the phase,
+		 * but do not adjust the frequency until the next
+		 * update.
 		 */
 		case S_FSET:
-			clock_offset = fp_offset;
+			rstclock(S_SYNC, peer->epoch, fp_offset);
 			break;
 
 		/*
@@ -459,8 +462,9 @@ local_clock(
 			if (mu < clock_minstep)
 				return (0);
 
-			clock_frequency = (fp_offset - last_base -
-			    clock_offset) / mu;
+			clock_frequency = (fp_offset - clock_offset) /
+			    mu;
+			rstclock(S_SYNC, peer->epoch, fp_offset);
 			break;
 
 		/*
@@ -495,9 +499,9 @@ local_clock(
 			etemp = min(mu, (u_long)ULOGTOD(sys_poll));
 			dtemp = 4 * CLOCK_PLL * ULOGTOD(sys_poll);
 			plladj = fp_offset * etemp / (dtemp * dtemp);
+			rstclock(S_SYNC, peer->epoch, fp_offset);
 			break;
 		}
-		rstclock(S_SYNC, peer->epoch, fp_offset);
 	}
 
 #ifdef OPENSSL
@@ -541,13 +545,11 @@ local_clock(
 	 * clock, respectively.
 	 *
 	 * Important note: The kernel discipline is used only if the
-	 * offset is less than 0.5 s, as anything higher can lead to
-	 * overflow problems. This might occur if some misguided lad set
-	 * the step threshold to something ridiculous. No problem; use
-	 * the ntp discipline until the residual offset sinks beneath
-	 * the waves.
+	 * step threshold is less than 0.5 s, as anything higher can
+	 * lead to overflow problems. This might occur if some misguided
+	 * lad set the step threshold to something ridiculous.
 	 */
-	if (pll_control && kern_enable && fabs(clock_offset) < .5) {
+	if (pll_control && kern_enable) {
 
 		/*
 		 * We initialize the structure for the ntp_adjtime()
@@ -620,16 +622,6 @@ local_clock(
 			}
 
 			/*
-			 * Switch to FLL mode if the poll interval is
-			 * greater than MAXDPOLL, so that the kernel
-			 * loop behaves as the daemon loop; viz.,
-			 * selects the FLL when necessary, etc. For
-			 * legacy only.
-			 */
-			if (sys_poll > NTP_MAXDPOLL)
-				ntv.status |= STA_FLL;
-
-			/*
 			 * If the PPS signal is up and enabled, light
 			 * the frequency bit. If the PPS driver is
 			 * working, light the phase bit as well. If not,
@@ -652,17 +644,15 @@ local_clock(
 		 * frequency and pretend we did it here.
 		 */
 		if (ntp_adjtime(&ntv) == TIME_ERROR) {
-			if (ntv.status != pll_status)
-				NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
-				    msyslog(LOG_NOTICE,
-				    "kernel time sync disabled %04x",
-				    ntv.status);
+			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
+			    msyslog(LOG_NOTICE,
+			    "kernel time sync error %04x", ntv.status);
 			ntv.status &= ~(STA_PPSFREQ | STA_PPSTIME);
 		} else {
-			if (ntv.status != pll_status)
+			if ((ntv.status ^ pll_status) & ~STA_FLL)
 				NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)
 				    msyslog(LOG_NOTICE,
-				    "kernel time sync enabled %04x",
+				    "kernel time sync status change %04x",
 				    ntv.status);
 		}
 		pll_status = ntv.status;
@@ -795,6 +785,14 @@ adj_host_clock(
 
 #ifndef LOCKCLOCK
 	/*
+	 * If clock discipline is disabled or if the kernel is enabled,
+	 * get out of Dodge quick.
+	 */
+	if (!ntp_enable || mode_ntpdate || (pll_control &&
+	    kern_enable))
+		return;
+
+	/*
 	 * Declare PPS kernel unsync if the pps signal has not been
 	 * heard for a few minutes.
 	 */
@@ -804,14 +802,6 @@ adj_host_clock(
 			    msyslog(LOG_NOTICE, "pps sync disabled");
 		pps_control = 0;
 	}
-
-	/*
-	 * If NTP is disabled or ntpdate mode enabled or the kernel
-	 * discipline is enabled, we have no business going further.
-	 */
-	if (!ntp_enable || mode_ntpdate || (pll_control &&
-	    kern_enable))
-		return;
 
 	/*
 	 * Implement the phase and frequency adjustments. The gain
@@ -840,16 +830,14 @@ rstclock(
 	double	offset		/* new offset */
 	)
 {
-	state = trans;
-	sys_clocktime = update;
-	last_base = offset - clock_offset;
-	last_offset = clock_offset = offset;
 #ifdef DEBUG
 	if (debug)
-		printf("local_clock: time %lu base %.6f offset %.6f freq %.3f state %d\n",
-		    sys_clocktime, last_base, last_offset, drift_comp *
-		    1e6, trans);
+		printf("local_clock: time %lu offset %.6f freq %.3f state %d\n",
+		    update, offset, drift_comp * 1e6, trans);
 #endif
+	state = trans;
+	sys_clocktime = update;
+	last_offset = clock_offset = offset;
 }
 
 
@@ -900,15 +888,8 @@ loop_config(
 		 * behind. While at it, ask to set nanosecond mode. If
 		 * the kernel agrees, rejoice; othewise, it does only
 		 * microseconds.
-		 *
-		 * Call out the safety patrol. If ntpdate mode or if the
-		 * step threshold has been increased by the -x option or
-		 * tinker command, kernel discipline is unsafe, so don't
-		 * do any of this stuff. Otherwise, initialize the
-		 * kernel to appear unsynchronized until the first
-		 * update is received.
 		 */
-		if (mode_ntpdate || clock_max > CLOCK_MAX)
+		if (mode_ntpdate)
 			break;
 
 		pll_control = 1;
@@ -991,7 +972,7 @@ loop_config(
 		 */
 		if (pll_control && kern_enable) {
 			memset((char *)&ntv, 0, sizeof(ntv));
-			ntv.modes = MOD_FREQUENCY;
+			ntv.modes = MOD_OFFSET | MOD_FREQUENCY;
 			ntv.freq = (int32)(drift_comp * 65536e6);
 			ntp_adjtime(&ntv);
 		}
@@ -1005,7 +986,7 @@ loop_config(
 		/* Completely turn off the kernel time adjustments. */
 		if (pll_control) {
 			memset((char *)&ntv, 0, sizeof(ntv));
-			ntv.modes = MOD_BITS | MOD_FREQUENCY;
+			ntv.modes = MOD_BITS | MOD_OFFSET | MOD_FREQUENCY;
 			ntv.status = STA_UNSYNC;
 			ntp_adjtime(&ntv);
 			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)

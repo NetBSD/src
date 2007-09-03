@@ -19,8 +19,10 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 <b>DESCRIPTION</b>
        The  optional  <a href="transport.5.html"><b>transport</b>(5)</a> table specifies a mapping from
        email addresses to message delivery transports  and  next-
-       hop hosts. The table is searched by the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
-       daemon.
+       hop  destinations.   Message  delivery  transports such as
+       <b>local</b> or <b>smtp</b> are defined in the <a href="master.5.html"><b>master.cf</b></a> file, and next-
+       hop  destinations are typically hosts or domain names. The
+       table is searched by the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> daemon.
 
        This  mapping  overrides  the  default   <i>transport</i>:<i>nexthop</i>
        selection that is built into Postfix:
@@ -55,8 +57,8 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        file that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.   The
        result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
        fast searching by the mail  system.  Execute  the  command
-       "<b>postmap  /etc/postfix/transport</b>"  in order to rebuild the
-       indexed file after changing the transport table.
+       "<b>postmap  /etc/postfix/transport</b>"  to  rebuild  an indexed
+       file after changing the corresponding transport table.
 
        When the table is provided via other means  such  as  NIS,
        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -65,9 +67,9 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        Alternatively, the table can be  provided  as  a  regular-
        expression map where patterns are given as regular expres-
        sions, or lookups can be directed to TCP-based server.  In
-       that  case,  the  lookups are done in a slightly different
+       those  case,  the lookups are done in a slightly different
        way as described below under "REGULAR  EXPRESSION  TABLES"
-       and "TCP-BASED TABLES".
+       or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
        The  search  string is folded to lowercase before database
@@ -172,7 +174,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
             <b>my.domain    :</b>
             <b>.my.domain   :</b>
-            <b>*         <a href="smtp.8.html">smtp</a>:outbound-relay.my.domain</b>
+            <b>*            <a href="smtp.8.html">smtp</a>:outbound-relay.my.domain</b>
 
        In  order  to send mail for <b>example.com</b> and its subdomains
        via the <b>uucp</b> transport to the UUCP host named <b>example</b>:
@@ -213,37 +215,37 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
        The error mailer can be used to bounce mail:
 
-            <b>.example.com     <a href="error.8.html">error</a>:mail for *.example.com is  not</b>
-       <b>deliverable</b>
+            <b>.example.com     <a href="error.8.html">error</a>:mail for *.example.com is not deliverable</b>
 
-       This  causes  all mail for <i>user</i>@<i>anything</i><b>.example.com</b> to be
+       This causes all mail for <i>user</i>@<i>anything</i><b>.example.com</b>  to  be
        bounced.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This section describes how the table lookups  change  when
+       This  section  describes how the table lookups change when
        the table is given in the form of regular expressions. For
-       a description of regular expression lookup  table  syntax,
+       a  description  of regular expression lookup table syntax,
        see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each  pattern  is  a regular expression that is applied to
-       the   entire    address    being    looked    up.    Thus,
-       <i>some.domain.hierarchy</i>  is  not  looked  up  via its parent
-       domains, nor is <i>user+foo@domain</i> looked up as  <i>user@domain</i>.
+       Each pattern is a regular expression that  is  applied  to
+       the    entire    address    being    looked    up.   Thus,
+       <i>some.domain.hierarchy</i> is not  looked  up  via  its  parent
+       domains,  nor is <i>user+foo@domain</i> looked up as <i>user@domain</i>.
 
-       Patterns  are applied in the order as specified in the ta-
-       ble, until a pattern is  found  that  matches  the  search
+       Patterns are applied in the order as specified in the  ta-
+       ble,  until  a  pattern  is  found that matches the search
        string.
 
-       Results  are  the  same as with indexed file lookups, with
-       the additional feature that parenthesized substrings  from
-       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+       The <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> server disallows regular expression
+       substitution  of  $1  etc.  in  regular  expression lookup
+       tables, because that could open a security  hole  (Postfix
+       version 2.3 and later).
 
 <b>TCP-BASED TABLES</b>
        This  section  describes how the table lookups change when
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.3.
+       Postfix version 2.4.
 
        Each  lookup  operation  uses the entire recipient address
        once.  Thus, <i>some.domain.hierarchy</i> is not  looked  up  via
@@ -275,6 +277,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
 
 <b>README FILES</b>
+       <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="FILTER_README.html">FILTER_README</a>, external content filter
 

@@ -1,0 +1,11 @@
+#
+# Replace a short body by a longer one. The result is two body
+# regions: the original region with the head of the new text, and
+# one region at the end of the queue file with the remainder of the
+# new text.
+#
+open test-queue-file10.tmp
+
+replbody loremipsum
+
+close

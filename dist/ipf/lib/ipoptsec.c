@@ -1,4 +1,4 @@
-/*	$NetBSD: ipoptsec.c,v 1.1.1.1.18.1 2007/05/07 17:04:42 pavel Exp $	*/
+/*	$NetBSD: ipoptsec.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:09 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2001-2002 by Darren Reed.

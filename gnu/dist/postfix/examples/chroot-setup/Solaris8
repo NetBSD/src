@@ -61,6 +61,7 @@ more="
 /dev/tcp6
 /dev/udp
 /dev/tcp
+/dev/poll
 /dev/rawip
 /dev/ticlts
 /dev/ticotsord
@@ -71,6 +72,7 @@ more="
 /devices/pseudo/tcp6@0:tcp6
 /devices/pseudo/udp@0:udp
 /devices/pseudo/tcp@0:tcp
+/devices/pseudo/poll@0:poll
 /devices/pseudo/icmp@0:icmp
 /devices/pseudo/tl@0:ticlts
 /devices/pseudo/tl@0:ticotsord

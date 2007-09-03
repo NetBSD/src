@@ -1,0 +1,5 @@
+$Id: README,v 1.1.24.2 2007/09/03 07:03:19 wrstuden Exp $
+
+NetBSD/evbsh5 was removed from the tree on April 8 2007.
+
+The source is still preserved in the CVS attic, for anyone who cares to look.

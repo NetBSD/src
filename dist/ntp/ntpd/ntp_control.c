@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.8 2006/06/25 03:02:19 mrg Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.8.6.1 2007/09/03 06:55:59 wrstuden Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -365,11 +365,11 @@ int num_ctl_traps;
 static u_char clocktypes[] = {
 	CTL_SST_TS_NTP, 	/* REFCLK_NONE (0) */
 	CTL_SST_TS_LOCAL,	/* REFCLK_LOCALCLOCK (1) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_TRAK (2) */
+	CTL_SST_TS_UHF, 	/* deprecated REFCLK_GPS_TRAK (2) */
 	CTL_SST_TS_HF,		/* REFCLK_WWV_PST (3) */
 	CTL_SST_TS_LF,		/* REFCLK_WWVB_SPECTRACOM (4) */
 	CTL_SST_TS_UHF, 	/* REFCLK_TRUETIME (5) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GOES_TRAK (6) */
+	CTL_SST_TS_UHF, 	/* REFCLK_GOES_TRAK (6) IRIG_AUDIO? */
 	CTL_SST_TS_HF,		/* REFCLK_CHU (7) */
 	CTL_SST_TS_LF,		/* REFCLOCK_PARSE (default) (8) */
 	CTL_SST_TS_LF,		/* REFCLK_GPS_MX4200 (9) */
@@ -377,7 +377,7 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_UHF, 	/* REFCLK_GPS_ARBITER (11) */
 	CTL_SST_TS_UHF, 	/* REFCLK_IRIG_TPRO (12) */
 	CTL_SST_TS_ATOM,	/* REFCLK_ATOM_LEITCH (13) */
-	CTL_SST_TS_LF,		/* REFCLK_MSF_EES (14) */
+	CTL_SST_TS_LF,		/* deprecated REFCLK_MSF_EES (14) */
 	CTL_SST_TS_NTP, 	/* not used (15) */
 	CTL_SST_TS_UHF, 	/* REFCLK_IRIG_BANCOMM (16) */
 	CTL_SST_TS_UHF, 	/* REFCLK_GPS_DATU (17) */
@@ -1503,8 +1503,13 @@ ctl_putpeer(
 		break;
 
 	case CP_DSTADR:
-		ctl_putadr(peer_var[CP_DSTADR].text, 0,
-		    &(peer->dstadr->sin));
+		if (peer->dstadr) {
+			ctl_putadr(peer_var[CP_DSTADR].text, 0,
+				   &(peer->dstadr->sin));
+		} else {
+			ctl_putadr(peer_var[CP_DSTADR].text, 0,
+				   NULL);
+		}
 		break;
 
 	case CP_DSTPORT:
@@ -2971,7 +2976,7 @@ set_var(
 
 void
 set_sys_var(
-	char *data,
+	const char *data,
 	u_long size,
 	u_short def
 	)

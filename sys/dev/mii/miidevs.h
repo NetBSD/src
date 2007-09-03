@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.72 2006/11/26 16:28:19 tsutsui Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.72.6.1 2007/09/03 07:04:27 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.69 2006/11/26 16:26:35 tsutsui Exp
+ *	NetBSD: miidevs,v 1.69.2.2 2007/08/31 21:52:40 xtraeme Exp
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
@@ -176,6 +177,10 @@
 #define	MII_STR_BROADCOM_BCM5714	"BCM5714 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5780	0x0035
 #define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5755	0x000c
+#define	MII_STR_BROADCOM2_BCM5755	"BCM5755 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5754	0x000e
+#define	MII_STR_BROADCOM2_BCM5754	"BCM5754/5787 1000BASE-T media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
@@ -223,6 +228,8 @@
 #define	MII_STR_yyINTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
+#define	MII_MODEL_yyINTEL_I82566	0x0039
+#define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 

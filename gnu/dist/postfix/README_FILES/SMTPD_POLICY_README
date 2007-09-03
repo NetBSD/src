@@ -10,15 +10,18 @@ policy decisions to an external server that runs outside Postfix.
 
 With this policy delegation mechanism, a simple greylist policy can be
 implemented with only a dozen lines of Perl, as is shown at the end of this
-document. Another example of policy delegation is the SPF policy server by Meng
-Wong at http://spf.pobox.com/. Examples of both policies can be found in the
-Postfix source code, in the directory examples/smtpd-policy.
+document. A complete example can be found in the Postfix source code, in the
+directory examples/smtpd-policy.
+
+Another example of policy delegation is the SPF policy server at http://
+www.openspf.org/Software.
 
 Policy delegation is now the preferred method for adding policies to Postfix.
-It's much easier to develop a new feature in few lines of Perl, than trying to
-do the same in C code. The difference in performance will be unnoticeable
-except in the most demanding environments. On active systems a policy daemon
-process is used multiple times, for up to $max_use incoming SMTP connections.
+It's much easier to develop a new feature in few lines of Perl, Python, Ruby,
+or TCL, than trying to do the same in C code. The difference in performance
+will be unnoticeable except in the most demanding environments. On active
+systems a policy daemon process is used multiple times, for up to $max_use
+incoming SMTP connections.
 
 This document covers the following topics:
 
@@ -40,6 +43,7 @@ terminated by an empty line.
 Here is an example of all the attributes that the Postfix SMTP server sends in
 a delegated SMTPD access policy request:
 
+    PPoossttffiixx vveerrssiioonn 22..11 aanndd llaatteerr::
     request=smtpd_access_policy
     protocol_state=RCPT
     protocol_name=SMTP
@@ -116,7 +120,7 @@ Notes:
     how the client was authenticated via TLS. These attributes are empty in
     case of no certificate authentication. As of Postfix 2.2.11 these attribute
     values are encoded as xtext: some characters are represented by +XX, where
-    XX is the two-digit hecadecimal representation of the character value.
+    XX is the two-digit hexadecimal representation of the character value.
 
   * The "encryption_*" attributes (Postfix 2.3 and later) specify information
     about how the connection is encrypted. With plaintext connections the
@@ -167,7 +171,7 @@ To create a policy service that listens on a UNIX-domain socket called
 use something like this:
 
      1 /etc/postfix/master.cf:
-     2     policy  unix  -       n       n       -       -       spawn
+     2     policy  unix  -       n       n       -       0       spawn
      3       user=nobody argv=/some/where/policy-server
      4
      5 /etc/postfix/main.cf:
@@ -187,13 +191,17 @@ NOTES:
     "policy_time_limit" setting. The name of the parameter is the name of the
     master.cf entry ("policy") concatenated with the "_time_limit" suffix.
 
+  * Line 2: specify a "0" process limit instead of the default "-", to avoid
+    "connection refused" and other problems when the smtpd process limit
+    exceeds the default_process_limit setting.
+
   * Lines 8, 9: always specify "check_policy_service" AFTER
     "reject_unauth_destination" or else your system could become an open relay.
 
   * Solaris UNIX-domain sockets do not work reliably. Use TCP sockets instead:
 
      1 /etc/postfix/master.cf:
-     2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
+     2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
      3       user=nobody argv=/some/where/policy-server
      4
      5 /etc/postfix/main.cf:
@@ -261,7 +269,7 @@ daemon. For example, to run the script as user "nobody", using a UNIX-domain
 socket that is accessible by Postfix processes only:
 
     1 /etc/postfix/master.cf:
-    2     policy  unix  -       n       n       -       -       spawn
+    2     policy  unix  -       n       n       -       0       spawn
     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
     4
     5 /etc/postfix/main.cf:
@@ -279,11 +287,15 @@ Notes:
     "policy_time_limit" setting. The name of the parameter is the name of the
     master.cf entry ("policy") concatenated with the "_time_limit" suffix.
 
+  * Line 2: specify a "0" process limit instead of the default "-", to avoid
+    "connection refused" and other problems when the smtpd process limit
+    exceeds the default_process_limit setting.
+
 On Solaris you must use inet: style sockets instead of unix: style, as detailed
 in the "Policy client/server configuration" section above.
 
     1 /etc/postfix/master.cf:
-    2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
+    2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
     4
     5 /etc/postfix/main.cf:

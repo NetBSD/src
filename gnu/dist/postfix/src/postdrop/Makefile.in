@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -68,6 +68,7 @@ postdrop.o: ../../include/mail_proto.h
 postdrop.o: ../../include/mail_queue.h
 postdrop.o: ../../include/mail_stream.h
 postdrop.o: ../../include/mail_task.h
+postdrop.o: ../../include/mail_version.h
 postdrop.o: ../../include/msg.h
 postdrop.o: ../../include/msg_syslog.h
 postdrop.o: ../../include/msg_vstream.h

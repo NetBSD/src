@@ -1,0 +1,14 @@
+#
+# Replace a short body by a longer one, and then clobber that with
+# an even longer body. The result is three body regions: the original
+# region, the region that contained the tail of the first replacement,
+# and a region that contains the tail of the second replacement.
+#
+
+#verbose on
+open test-queue-file10.tmp
+
+replbody loremipsum
+replbody loremipsum2
+
+close
