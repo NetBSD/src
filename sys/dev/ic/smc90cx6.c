@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.49 2007/09/01 04:32:50 dyoung Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.50 2007/09/03 11:32:07 he Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.49 2007/09/01 04:32:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.50 2007/09/03 11:32:07 he Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -907,9 +907,9 @@ bah_reconwatch(arg)
  * This code needs some work - it looks pretty ugly.
  */
 int
-bah_ioctl(ifp, command, data)
+bah_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	void *data;
 {
 	struct bah_softc *sc;
@@ -925,10 +925,10 @@ bah_ioctl(ifp, command, data)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: ioctl() called, cmd = 0x%x\n",
-	    sc->sc_dev.dv_xname, command);
+	    sc->sc_dev.dv_xname, cmd);
 #endif
 
-	switch (command) {
+	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
