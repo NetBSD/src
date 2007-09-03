@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.19 2007/09/02 18:47:27 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.20 2007/09/03 02:45:06 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.19 2007/09/02 18:47:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.20 2007/09/03 02:45:06 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -1323,11 +1323,7 @@ radeonfb_getclocks(struct radeonfb_softc *sc)
 			refclk = refclk ? refclk : 1432;
 		else
 			refclk = refclk ? refclk : 2700;
-		if (refdiv < 2)
-			refdiv = GETPLL(sc, RADEON_PPLL_REF_DIV) &
-			    RADEON_PPLL_REF_DIV_MASK;
-		if (refdiv < 2)
-			refdiv = 12;
+		refdiv = refdiv ? refdiv : 12;
 		minpll = minpll ? minpll : 12500;
 		maxpll = maxpll ? maxpll : 35000;
 	} else if (IS_ATOM(sc)) {
