@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.7 2007/08/15 16:48:31 kiyohara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.8 2007/09/03 12:38:27 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.7 2007/08/15 16:48:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.8 2007/09/03 12:38:27 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,9 +374,6 @@ init_ericsson(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -432,9 +429,6 @@ init_digi(struct btuart_softc *sc)
 	}
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_DIGIANSWER_SET_UART_BAUD_RATE	0xfc07		/* XXXX */
@@ -514,9 +508,6 @@ init_csr(struct btuart_softc *sc)
 	} bccmd;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -586,9 +577,6 @@ init_swave(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	/* first send 'param access set' command. */
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
@@ -671,9 +659,6 @@ init_st(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_ST_SET_UART_BAUD_RATE	0xfc46	/* XXXX */
@@ -706,8 +691,6 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 	uint8_t seq;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 	seq = 0;
 	offset = 0;
 	error = 0;
@@ -760,9 +743,6 @@ init_stlc2500(struct btuart_softc *sc)
 	const char *suffix[] = { ".ptc", ".ssf", NULL };
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	opcode = htole16(HCI_CMD_READ_LOCAL_VER);
 	p->type = HCI_CMD_PKT;
@@ -929,8 +909,6 @@ init_bcm2035(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 
 	/*
 	 * XXXX: Should we send some commands?
