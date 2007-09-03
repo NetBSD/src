@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.3 2007/09/03 18:04:58 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.4 2007/09/03 18:06:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.3 2007/09/03 18:04:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.4 2007/09/03 18:06:26 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -449,6 +449,8 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 			return PNP_STATUS_UNSUPPORTED;
 
 		if (ci->ci_flags & CPUF_PRIMARY)
+			return PNP_STATUS_SUCCESS;
+		if (ci->ci_data.cpu_idlelwp == NULL)
 			return PNP_STATUS_SUCCESS;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			return PNP_STATUS_SUCCESS;
