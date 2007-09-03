@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.37.8.1 2007/08/04 19:43:14 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.37.8.2 2007/09/03 04:14:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.8.1 2007/08/04 19:43:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.8.2 2007/09/03 04:14:55 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -162,8 +162,11 @@ struct cpu_info cpu_info_primary = {
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
-static void	cpu_set_tss_gates(struct cpu_info *ci);
+static void	cpu_set_tss_gates(struct cpu_info *);
 static void	cpu_init_tss(struct i386tss *, void *, void *);
+#ifdef MULTIPROCESSOR
+static void	cpu_init_idle_lwp(struct cpu_info *);
+#endif
 
 uint32_t cpus_attached = 0;
 
@@ -405,6 +408,9 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 	pnp_capabilities_t *pcaps;
 	pnp_state_t *pstate;
 	int err;
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	sc = (struct cpu_softc *)dv;
 	ci = sc->sc_info;
@@ -422,12 +428,30 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 		pstate = opaque;
 		if (*pstate != PNP_STATE_D0 && *pstate != PNP_STATE_D3)
 			return PNP_STATUS_UNSUPPORTED;
+
 		if (ci->ci_flags & CPUF_PRIMARY)
 			return PNP_STATUS_SUCCESS;
+
+#ifdef MULTIPROCESSOR
+		if (*pstate == PNP_STATE_D0 && sc->sc_pmstate != PNP_STATE_D0) {
+			s = splhigh();
+			cpu_start_secondary(ci);
+			cpu_init_idle_lwp(ci);
+			splx(s);
+
+			cpu_boot_secondary(ci);
+		} else {
+			ci->ci_flags &= ~CPUF_GO;
+			ci->ci_flags &= ~CPUF_RUNNING;
+		}
+#endif
+
 		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
 		if (err)
 			return PNP_STATUS_BUSY;
 		sc->sc_pmstate = *pstate;
+		if (sc->sc_pmstate == PNP_STATE_D0)
+			cpu_need_resched(ci, 0);
 		break;
 	default:
 		return PNP_STATUS_UNSUPPORTED;
@@ -749,8 +773,8 @@ cpu_set_tss_gates(struct cpu_info *ci)
 {
 	struct segment_descriptor sd;
 
-	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
-	    UVM_KMF_WIRED);
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map,
+	    USPACE, 0, UVM_KMF_WIRED);
 	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
 	    IDTVEC(tss_trap08));
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
@@ -789,6 +813,7 @@ mp_cpu_start(struct cpu_info *ci)
 	int error;
 #endif
 	unsigned short dwordptr[2];
+	vaddr_t kva;
 
 	/*
 	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
@@ -805,9 +830,20 @@ mp_cpu_start(struct cpu_info *ci)
 	dwordptr[0] = 0;
 	dwordptr[1] = MP_TRAMPOLINE >> 4;
 
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((uint8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, PAGE_SIZE);
+	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	if ((void *)kva == NULL)
+		return ENOMEM;
+	pmap_kenter_pa(kva, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+	memcpy((uint8_t *)(kva + 0x467), dwordptr, 4);
+#if 0
+	/* XXXjmcneill pmap_kremove causes a hang on resume -- FIXME */
+	printf("  pmap_kremove\n");
+	pmap_kremove(kva, PAGE_SIZE);
+	printf("  pmap_update\n");
+	pmap_update(pmap_kernel());
+#endif
+	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
 
 #if NLAPIC > 0
 	/*
@@ -836,6 +872,7 @@ mp_cpu_start(struct cpu_info *ci)
 		}
 	}
 #endif
+
 	return 0;
 }
 
