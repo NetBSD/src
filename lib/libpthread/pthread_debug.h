@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.9.2.1 2007/08/15 13:46:52 skrll Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.9.2.2 2007/09/03 10:14:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,16 +80,15 @@ struct	pthread_msgbuf {
 	char	msg_bufc[1];
 };
 
-void pthread__debug_init(int ncpu);
-struct pthread_msgbuf* pthread__debuglog_init(int force);
-void pthread__debuglog_printf(const char *fmt, ...);
+void pthread__debug_init(void);
+struct pthread_msgbuf *pthread__debuglog_init(int);
+void pthread__debuglog_printf(const char *, ...);
 int pthread__debuglog_newline(void);
 
 #ifdef PTHREAD__DEBUG
 
 #undef	PTHREAD_ALARM_DEBUG
 #define PTHREAD_MAIN_DEBUG
-#undef	PTHREAD_PID_DEBUG
 #define PTHREAD_SPIN_DEBUG
 #undef	PTHREAD_SPIN_DEBUG_PRINT
 

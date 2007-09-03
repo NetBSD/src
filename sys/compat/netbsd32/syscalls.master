@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59.10.1 2007/08/15 13:48:09 skrll Exp $
+	$NetBSD: syscalls.master,v 1.59.10.2 2007/09/03 10:20:03 skrll Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -36,7 +36,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ntp.h"
@@ -110,11 +109,7 @@
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS MPSAFE	{ gid_t sys_getegid(void); }
 44	STD		{ int netbsd32_profil(netbsd32_caddr_t samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
-#if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int netbsd32_ktrace(const netbsd32_charp fname, int ops, int facs, int pid); }
-#else
-45	EXCL		netbsd32_ktrace
-#endif
 46	STD		{ int netbsd32_sigaction(int signum, const netbsd32_sigactionp_t nsa, netbsd32_sigactionp_t osa); }
 47	NOARGS MPSAFE	{ gid_t sys_getgid(void); }
 48	COMPAT_13	{ int netbsd32_sigprocmask(int how, \
@@ -450,11 +445,7 @@
 285	STD		{ int netbsd32___posix_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
 286	STD		{ pid_t netbsd32_getsid(pid_t pid); }
 287	STD		{ int netbsd32___clone(int flags, netbsd32_voidp stack); }
-#if defined(KTRACE) || !defined(_KERNEL)
 288	STD		{ int netbsd32_fktrace(const int fd, int ops, int facs, int pid); }
-#else
-288	EXCL		netbsd32_fktrace
-#endif
 289	STD		{ netbsd32_ssize_t netbsd32_preadv(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
 290	STD		{ netbsd32_ssize_t netbsd32_pwritev(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
 291	STD		{ int netbsd32___sigaction14(int signum, \

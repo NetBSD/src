@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.93.2.1 2007/08/15 13:49:22 skrll Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.93.2.2 2007/09/03 10:23:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.93.2.1 2007/08/15 13:49:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.93.2.2 2007/09/03 10:23:05 skrll Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_systrace.h"
 #include "opt_magiclinks.h"
 
@@ -58,10 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.93.2.1 2007/08/15 13:49:22 skrll Ex
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
+
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
@@ -301,8 +298,7 @@ namei(struct nameidata *ndp)
 	VREF(dp);
 	rw_exit(&cwdi->cwdi_lock);
  
-#ifdef KTRACE
-	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
+	if (ktrpoint(KTR_NAMEI)) {
 		if (ndp->ni_erootdir != NULL) {
 			/*
 			 * To make any sense, the trace entry need to have the
@@ -317,12 +313,12 @@ namei(struct nameidata *ndp)
 				emul_path = ndp->ni_next;
 			else
 				emul_path = cnp->cn_lwp->l_proc->p_emul->e_path;
-			ktrnamei2(cnp->cn_lwp, emul_path, strlen(emul_path),
+			ktrnamei2(emul_path, strlen(emul_path),
 			    cnp->cn_pnbuf, ndp->ni_pathlen);
 		} else
-			ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf, ndp->ni_pathlen);
+			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
-#endif
+
 #ifdef SYSTRACE
 	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
 		systrace_namei(ndp);

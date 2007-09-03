@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.90 2007/06/24 20:35:37 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.90.2.1 2007/09/03 10:23:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -296,6 +296,7 @@ typedef struct {
 #define	EM_NS32K	97	/* National Semiconductor 32000 series */
 
 /* Unofficial machine types follow */
+#define	EM_AVR32	6317	/* used by NetBSD/avr32 */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
 

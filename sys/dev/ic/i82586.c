@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.58 2007/03/04 06:01:56 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.58.10.1 2007/09/03 10:20:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.58 2007/03/04 06:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.58.10.1 2007/09/03 10:20:22 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1610,7 +1610,7 @@ ie_ia_setup(sc, cmdbuf)
 
 	setup_simple_command(sc, IE_CMD_IASETUP, cmdbuf);
 
-	(sc->memcopyout)(sc, LLADDR(ifp->if_sadl),
+	(sc->memcopyout)(sc, CLLADDR(ifp->if_sadl),
 			 IE_CMD_IAS_EADDR(cmdbuf), ETHER_ADDR_LEN);
 
 	cmdresult = i82586_start_cmd(sc, IE_CUC_START, cmdbuf, IE_STAT_COMPL, 0);

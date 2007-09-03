@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.76 2007/07/01 18:45:36 dsl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.76.2.1 2007/09/03 10:19:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76 2007/07/01 18:45:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.2.1 2007/09/03 10:19:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_inet.h"
 #endif /* defined(_KERNEL_OPT) */
 
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76 2007/07/01 18:45:36 dsl Exp $"
 #include <sys/kauth.h>
 
 #include <sys/syscallargs.h>
-#ifdef KTRACE 
 #include <sys/ktrace.h>
-#endif
 
 #include <lib/libkern/libkern.h>
 
@@ -1069,13 +1066,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		found=1;
 		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
 			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-				sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+				sadl = satosdl(ifa->ifa_addr);
 				/* only return ethernet addresses */
 				/* XXX what about FDDI, etc. ? */
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy(&lreq.hwaddr.sa_data, LLADDR(sadl),
+				memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
@@ -1108,7 +1105,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				continue;
 			else
 				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-					sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+					sadl = satosdl(ifa->ifa_addr);
 					/* only return ethernet addresses */
 					/* XXX what about FDDI, etc. ? */
 					if (sadl->sdl_family != AF_LINK ||
@@ -1118,7 +1115,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 						/* not the reqested iface */
 						continue;
 					memcpy(&lreq.hwaddr.sa_data,
-					       LLADDR(sadl),
+					       CLLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
@@ -1395,10 +1392,8 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 				error, osa, salen));
 		goto bad;
 	}
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktrkuser(l, "linux sockaddr", kosa, salen);
-#endif
+
+	ktrkuser("linux sockaddr", kosa, salen);
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
@@ -1465,10 +1460,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 	sa->sa_family = bdom;
 	sa->sa_len = salen;
 	m->m_len = salen;
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktrkuser(l, "new sockaddr", kosa, salen);
-#endif
+	ktrkuser("new sockaddr", kosa, salen);
 
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));

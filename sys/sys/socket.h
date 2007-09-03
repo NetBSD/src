@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.87 2007/06/24 18:00:16 dsl Exp $	*/
+/*	$NetBSD: socket.h,v 1.87.2.1 2007/09/03 10:24:01 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -546,8 +546,9 @@ __END_DECLS
 
 #ifdef	_KERNEL
 __BEGIN_DECLS
-struct sockaddr *sockaddr_copy(struct sockaddr *, const struct sockaddr *);
-struct sockaddr *sockaddr_alloc(sa_family_t, int);
+struct sockaddr *sockaddr_copy(struct sockaddr *, socklen_t,
+    const struct sockaddr *);
+struct sockaddr *sockaddr_alloc(sa_family_t, socklen_t, int);
 int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
 void sockaddr_free(struct sockaddr *);

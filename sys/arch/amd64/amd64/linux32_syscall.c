@@ -1,9 +1,8 @@
-/*	$NetBSD: linux32_syscall.c,v 1.13 2007/04/26 12:54:17 njoly Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.13.6.1 2007/09/03 10:18:10 skrll Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.13 2007/04/26 12:54:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.13.6.1 2007/09/03 10:18:10 skrll Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_systrace.h"
 
 #include <sys/param.h>
@@ -11,12 +10,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.13 2007/04/26 12:54:17 njoly E
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -163,10 +156,8 @@ linux32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
-#if defined(KTRACE) || defined(SYSTRACE)
 	int i;
 	register_t args64[8];
-#endif
 
 	uvmexp.syscalls++;
 	l = curlwp;
@@ -223,10 +214,7 @@ linux32_syscall_fancy(frame)
 			printf("linux32 syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
-#if defined(KTRACE) || defined(SYSTRACE)
 			goto out;
-#endif
-			break;
 		}
 	}
 
@@ -237,32 +225,17 @@ linux32_syscall_fancy(frame)
 #endif
 	KERNEL_LOCK(1, l);
 
-#if defined(KTRACE) || defined(SYSTRACE)
-	if (
-#ifdef KTRACE
-	    KTRPOINT(p, KTR_SYSCALL) ||
-#endif
-#ifdef SYSTRACE
-	    ISSET(p->p_flag, PK_SYSTRACE)
-#else
-	0
-#endif
-	) {
-		for (i = 0; i < (argsize >> 2); i++)
-			args64[i] = args[i] & 0xffffffff;
-		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
-			goto out;
-	}
-#endif
+	for (i = 0; i < (argsize >> 2); i++)
+		args64[i] = args[i] & 0xffffffff;
+	/* XXX we need to pass argsize << 1 here? */
+	if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 
 	error = (*callp->sy_call)(l, args, rval);
-#if defined(KTRACE) || defined(SYSTRACE)
 out:
-#endif
 	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
@@ -287,9 +260,6 @@ out:
 		break;
 	}
 
-#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(l, code, args64, rval, error);
-#endif
-
 	userret(l);
 }

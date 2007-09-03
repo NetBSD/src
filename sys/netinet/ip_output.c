@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.180 2007/05/02 20:40:25 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.180.2.1 2007/09/03 10:23:46 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180 2007/05/02 20:40:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180.2.1 2007/09/03 10:23:46 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -887,10 +887,16 @@ spd_done:
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
 			error =
-			    (*ifp->if_output)(ifp, m, sintocsa(dst), ro->ro_rt);
+			    (*ifp->if_output)(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		} else {
 			error =
-			    ip_tso_output(ifp, m, sintocsa(dst), ro->ro_rt);
+			    ip_tso_output(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		}
 		goto done;
 	}
@@ -956,7 +962,9 @@ spd_done:
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-				error = (*ifp->if_output)(ifp, m, sintocsa(dst),
+				error = (*ifp->if_output)(ifp, m,
+				    (m->m_flags & M_MCAST) ?
+					sintocsa(rdst) : sintocsa(dst),
 				    ro->ro_rt);
 			}
 		} else
@@ -1049,7 +1057,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			mhip->ip_off |= IP_MF;
 		HTONS(mhip->ip_off);
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
-		m->m_next = m_copy(m0, off, len);
+		m->m_next = m_copym(m0, off, len, M_DONTWAIT);
 		if (m->m_next == 0) {
 			error = ENOBUFS;	/* ??? */
 			ipstat.ips_odropped++;
@@ -1961,7 +1969,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 	struct ip *ip;
 	struct mbuf *copym;
 
-	copym = m_copy(m, 0, M_COPYALL);
+	copym = m_copypacket(m, M_DONTWAIT);
 	if (copym != NULL
 	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
 		copym = m_pullup(copym, sizeof(struct ip));

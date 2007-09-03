@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.1 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.1.2.1 2007/09/03 10:14:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.1 2007/03/02 18:53:52 ad Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.1.2.1 2007/09/03 10:14:15 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -83,13 +83,10 @@ pthread_setschedparam(pthread_t thread, int policy,
 int
 pthread_kill(pthread_t thread, int sig)
 {
-	pthread_t self;
-
-	self = pthread__self();
 
 	if ((sig < 0) || (sig >= _NSIG))
 		return EINVAL;
-	if (pthread__find(self, thread) != 0)
+	if (pthread__find(thread) != 0)
 		return ESRCH;
 
 	return _lwp_kill(thread->pt_lid, sig);

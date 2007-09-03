@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.48.14.1 2007/08/15 13:47:43 skrll Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.48.14.2 2007/09/03 10:19:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -370,6 +370,8 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
 	if (isconsole)
 		printf(" (console)\n");
+	else
+		printf("\n");
 
 	sc->sc_depth = 8;
 	cg14_setup_wsdisplay(sc, isconsole);

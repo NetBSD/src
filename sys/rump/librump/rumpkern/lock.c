@@ -1,4 +1,4 @@
-/*	$NetBSD: kauth_stub.c,v 1.1.2.2 2007/08/15 13:50:37 skrll Exp $	*/
+/*	$NetBSD: lock.c,v 1.1.4.2 2007/09/03 10:23:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,56 +28,71 @@
  */
 
 #include <sys/param.h>
-#include <sys/kauth.h>
+#include <sys/lock.h>
+
+/* oh sweet crackmgr, what would I do without you? */
+int
+lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
+{
+	u_int lktype = flags & LK_TYPE_MASK;
+
+	switch (lktype) {
+	case LK_SHARED:
+	case LK_EXCLUSIVE:
+		lock->lk_flags = lktype;
+		lock->lk_recurselevel++;
+		break;
+
+	case LK_RELEASE:
+		assert(lock->lk_flags != 0);
+		if (--lock->lk_recurselevel == 0)
+			lock->lk_flags = 0;
+		break;
+
+	case LK_UPGRADE:
+	case LK_EXCLUPGRADE:
+		assert(lock->lk_flags == LK_SHARED);
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+
+	case LK_DOWNGRADE:
+		assert(lock->lk_flags == LK_EXCLUSIVE);
+		lock->lk_flags = LK_SHARED;
+		break;
+
+	case LK_DRAIN:
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+	}
+
+	return 0;
+}
+
+void
+lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
+	int flags)
+{
+
+	lock->lk_flags = 0;
+}
 
 int
-kauth_authorize_generic(kauth_cred_t cred, kauth_action_t op, void *arg0)
+lockstatus(struct lock *lock)
 {
 
-	return 0;
+	return lock->lk_flags;
 }
 
-int
-kauth_authorize_system(kauth_cred_t cred, kauth_action_t op,
-	enum kauth_system_req req, void *arg1, void *arg2, void *arg3)
+void
+lockmgr_printinfo(volatile struct lock *lock)
 {
 
-	return 0;
+	return;
 }
 
-uid_t
-kauth_cred_geteuid(kauth_cred_t cred)
+void
+transferlockers(struct lock *from, struct lock *to)
 {
 
-	return 0;
-}
-
-gid_t
-kauth_cred_getegid(kauth_cred_t cred)
-{
-
-	return 0;
-}
-
-int
-kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
-{
-
-	*resultp = 1;
-
-	return 0;
-}
-
-u_int
-kauth_cred_ngroups(kauth_cred_t cred)
-{
-
-	return 1;
-}
-
-gid_t
-kauth_cred_group(kauth_cred_t cred, u_int idx)
-{
-
-	return 0;
+	return;
 }

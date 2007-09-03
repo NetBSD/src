@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.37 2007/03/10 06:01:43 itohy Exp $	*/
+/*	$NetBSD: piixide.c,v 1.37.10.1 2007/09/03 10:21:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37 2007/03/10 06:01:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.10.1 2007/09/03 10:21:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,11 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82801H Serial ATA Controller (ICH8)",
 	  piixsata_chip_map,
 	},
+	{ PCI_PRODUCT_INTEL_82801HBM_IDE,
+	  0,
+	  "Intel 82801HBM IDE Controller (ICH8M)",
+	  piix_chip_map,
+	},
 	{ PCI_PRODUCT_INTEL_82801HBM_SATA_1,
 	  0,
 	  "Intel 82801HBM Serial ATA Controller (ICH8M)",
@@ -214,6 +219,21 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  "Intel 631xESB/632xESB IDE Controller",
 	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_1,
+	  0,
+	  "Intel 82801I Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_2,
+	  0,
+	  "Intel 82801I Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_3,
+	  0,
+	  "Intel 82801I Serial ATA Controller (ICH9)",
+	  piixsata_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_63XXESB_SATA,
 	  0,
@@ -327,6 +347,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_6300ESB_IDE:
 		case PCI_PRODUCT_INTEL_82801FB_IDE:
 		case PCI_PRODUCT_INTEL_82801G_IDE:
+		case PCI_PRODUCT_INTEL_82801HBM_IDE:
 			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 		}
 	}
@@ -346,6 +367,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_6300ESB_IDE:
 	case PCI_PRODUCT_INTEL_82801FB_IDE:
 	case PCI_PRODUCT_INTEL_82801G_IDE:
+	case PCI_PRODUCT_INTEL_82801HBM_IDE:
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	default:
@@ -381,7 +403,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE) {
 			ATADEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -445,7 +468,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE) {
 			ATADEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -608,7 +632,8 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
@@ -620,7 +645,8 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801G_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)

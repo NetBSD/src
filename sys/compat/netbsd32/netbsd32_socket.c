@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.26 2007/06/01 22:53:52 dsl Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.26.2.1 2007/09/03 10:20:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.26 2007/06/01 22:53:52 dsl Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.26.2.1 2007/09/03 10:20:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +109,11 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 {
 	struct file *fp;
 	struct uio auio;
-	int i;
-	int len, error;
+	int i, len, error, iovlen;
 	struct mbuf *from = 0, *control = 0;
 	struct socket *so;
 	struct proc *p;
-#ifdef KTRACE
 	struct iovec *ktriov = NULL;
-#endif
 	p = l->l_proc;
 
 	/* getsock() will use the descriptor for us */
@@ -151,14 +144,13 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 			goto out1;
 		}
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
+	if (ktrpoint(KTR_GENIO)) {
+		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 		ktriov = (struct iovec *)malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
-#endif
+
 	len = auio.uio_resid;
 	so = (struct socket *)fp->f_data;
 	error = (*so->so_receive)(so, &from, &auio, NULL,
@@ -169,14 +161,12 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	}
-#ifdef KTRACE
+
 	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(l, s, UIO_READ, ktriov,
-			    len - auio.uio_resid, error);
+		ktrgeniov(s, UIO_READ, ktriov, len - auio.uio_resid, error);
 		FREE(ktriov, M_TEMP);
 	}
-#endif
+
 	if (error)
 		goto out;
 	*retsize = len - auio.uio_resid;

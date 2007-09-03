@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.h,v 1.3.2.2 2007/08/15 13:50:28 skrll Exp $	*/
+/*	$NetBSD: p2k.h,v 1.3.2.3 2007/09/03 10:23:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,9 +35,6 @@
 #include <sys/vnode.h>
 
 #include <puffs.h>
-
-#define P2K_MAKECN(p)	\
-  rump_makecn(p->pcn_nameiop, p->pcn_flags, p->pcn_name, p->pcn_namelen,curlwp);
 
 int p2k_run_fs(const char *, const char *, const char *, int,
 	       void *, size_t, uint32_t);

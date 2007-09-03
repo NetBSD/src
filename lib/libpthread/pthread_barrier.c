@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.12.2.1 2007/08/15 13:46:52 skrll Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.12.2.2 2007/09/03 10:14:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.12.2.1 2007/08/15 13:46:52 skrll Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.12.2.2 2007/09/03 10:14:14 skrll Exp $");
 
 #include <errno.h>
 
@@ -56,7 +56,6 @@ int
 pthread_barrier_init(pthread_barrier_t *barrier,
     const pthread_barrierattr_t *attr, unsigned int count)
 {
-	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) ||
@@ -67,22 +66,20 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 	if (count == 0)
 		return EINVAL;
 
-	self = pthread__self();
-
 	if (barrier->ptb_magic == _PT_BARRIER_MAGIC) {
 		/*
 		 * We're simply reinitializing the barrier to a
 		 * new count.
 		 */
-		pthread_spinlock(self, &barrier->ptb_lock);
+		pthread_spinlock(&barrier->ptb_lock);
 
 		if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-			pthread_spinunlock(self, &barrier->ptb_lock);
+			pthread_spinunlock(&barrier->ptb_lock);
 			return EINVAL;
 		}
 
 		if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-			pthread_spinunlock(self, &barrier->ptb_lock);
+			pthread_spinunlock(&barrier->ptb_lock);
 			return EBUSY;
 		}
 
@@ -90,7 +87,7 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation = 0;
 
-		pthread_spinunlock(self, &barrier->ptb_lock);
+		pthread_spinunlock(&barrier->ptb_lock);
 
 		return 0;
 	}
@@ -109,30 +106,27 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 int
 pthread_barrier_destroy(pthread_barrier_t *barrier)
 {
-	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
 		return EINVAL;
 #endif
 
-	self = pthread__self();
-
-	pthread_spinlock(self, &barrier->ptb_lock);
+	pthread_spinlock(&barrier->ptb_lock);
 
 	if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-		pthread_spinunlock(self, &barrier->ptb_lock);
+		pthread_spinunlock(&barrier->ptb_lock);
 		return EINVAL;
 	}
 
 	if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-		pthread_spinunlock(self, &barrier->ptb_lock);
+		pthread_spinunlock(&barrier->ptb_lock);
 		return EBUSY;
 	}
 
 	barrier->ptb_magic = _PT_BARRIER_DEAD;
 
-	pthread_spinunlock(self, &barrier->ptb_lock);
+	pthread_spinunlock(&barrier->ptb_lock);
 
 	return 0;
 }
@@ -150,7 +144,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 #endif
 	self = pthread__self();
 
-	pthread_spinlock(self, &barrier->ptb_lock);
+	pthread_spinlock(&barrier->ptb_lock);
 
 	/*
 	 * A single arbitrary thread is supposed to return
@@ -180,15 +174,15 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &barrier->ptb_waiters;
-		pthread_spinunlock(self, &barrier->ptb_lock);
+		pthread_spinunlock(&barrier->ptb_lock);
 		(void)pthread__park(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters, NULL, 0,
 		    &barrier->ptb_waiters);
 		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
 		    self, barrier));
-		pthread_spinlock(self, &barrier->ptb_lock);
+		pthread_spinlock(&barrier->ptb_lock);
 	}
-	pthread_spinunlock(self, &barrier->ptb_lock);
+	pthread_spinunlock(&barrier->ptb_lock);
 
 	return 0;
 }

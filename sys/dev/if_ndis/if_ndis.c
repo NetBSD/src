@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.13 2007/03/04 06:02:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.13.10.1 2007/09/03 10:20:55 skrll Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -368,7 +368,7 @@ ndis_setmulti(sc)
 #ifdef __FreeBSD__
 		if (ifma->ifma_addr->sa_family != AF_LINK)
 			continue;
-		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
+		bcopy(CLLADDR(satosdl(ifma->ifma_addr)),
 		    mclist + (ETHER_ADDR_LEN * len), ETHER_ADDR_LEN);
 #else /* __NetBSD__ */
 /*

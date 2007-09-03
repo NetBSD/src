@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.66 2007/07/09 21:01:21 ad Exp $	*/
+/*	$NetBSD: if_se.c,v 1.66.2.1 2007/09/03 10:21:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.66 2007/07/09 21:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.66.2.1 2007/09/03 10:21:59 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -886,6 +886,9 @@ se_set_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_set_multi, set_multi_cmd);
 	_lto2b(sizeof(addr), set_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&set_multi_cmd, sizeof(set_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
@@ -906,6 +909,9 @@ se_remove_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_remove_multi, remove_multi_cmd);
 	_lto2b(sizeof(addr), remove_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&remove_multi_cmd, sizeof(remove_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
@@ -978,6 +984,7 @@ se_ioctl(ifp, cmd, data)
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
@@ -1051,17 +1058,20 @@ se_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_NOWAIT);
+		if (sa == NULL) {
+			error = ENOBUFS;
+			break;
+		}
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				error = (cmd == SIOCADDMULTI) ?
-				   se_set_multi(sc, ifr->ifr_addr.sa_data) :
-				   se_remove_multi(sc, ifr->ifr_addr.sa_data);
+				   se_set_multi(sc, sa->sa_data) :
+				   se_remove_multi(sc, sa->sa_data);
 			} else
 				error = 0;
 		}
+		sockaddr_free(sa);
 		break;
 
 	default:

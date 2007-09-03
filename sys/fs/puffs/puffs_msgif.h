@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.42.2.1 2007/08/15 13:48:59 skrll Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.42.2.2 2007/09/03 10:22:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _PUFFS_MSGIF_H_
-#define _PUFFS_MSGIF_H_
+#ifndef _FS_PUFFS_PUFFS_MSGIF_H_
+#define _FS_PUFFS_PUFFS_MSGIF_H_
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -85,7 +85,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	16
+#define PUFFSVERSION	17
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -125,10 +125,12 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
 #define PUFFS_KFLAG_MASK		0x3f
 
-#define PUFFS_FHFLAG_DYNAMIC	0x01
-#define PUFFS_FHFLAG_NFSV2	0x02
-#define PUFFS_FHFLAG_NFSV3	0x04
-#define PUFFS_FHFLAG_PROTOMASK	0x06
+#define PUFFS_FHFLAG_DYNAMIC		0x01
+#define PUFFS_FHFLAG_NFSV2		0x02
+#define PUFFS_FHFLAG_NFSV3		0x04
+#define PUFFS_FHFLAG_PROTOMASK		0x06
+#define PUFFS_FHFLAG_PASSTHROUGH	0x08
+#define PUFFS_FHFLAG_MASK		0x0f
 
 #define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
 
@@ -350,27 +352,13 @@ struct puffs_kcid {
 /* puffs struct componentname built by kernel */
 struct puffs_kcn {
 	/* args */
-	u_long			pkcn_nameiop;	/* namei operation	*/
-	u_long			pkcn_flags;	/* flags		*/
+	uint32_t		pkcn_nameiop;	/* namei operation	*/
+	uint32_t		pkcn_flags;	/* flags		*/
 
 	char pkcn_name[MAXPATHLEN];	/* nulterminated path component */
-	long pkcn_namelen;		/* current component length	*/
-	long pkcn_consume;		/* IN: extra chars server ate   */
+	size_t pkcn_namelen;		/* current component length	*/
+	size_t pkcn_consume;		/* IN: extra chars server ate   */
 };
-
-/*
- * XXX: figure out what to do with these, copied from namei.h for now
- */
-#define	PUFFSLOOKUP_LOOKUP	0	/* perform name lookup only */
-#define PUFFSLOOKUP_CREATE	1	/* setup for file creation */
-#define PUFFSLOOKUP_DELETE	2	/* setup for file deletion */
-#define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
-#define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
-
-#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
-#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
-#define PUFFSLOOKUP_REQUIREDIR	0x80000 /* must be directory */
 
 
 /*
@@ -740,4 +728,4 @@ struct puffs_vnreq_listextattr { };
 	memset(&a##_arg, 0, sizeof(struct puffs_vnreq_##a))
 #endif
 
-#endif /* _PUFFS_MSGIF_H_ */
+#endif /* _FS_PUFFS_PUFFS_MSGIF_H_ */
