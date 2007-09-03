@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.11.2.3 2007/02/26 09:11:34 yamt Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.11.2.4 2007/09/03 14:42:06 yamt Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -54,24 +54,16 @@ struct gif_softc {
 	struct sockaddr	*gif_pdst; /* Physical dst addr */
 	union {
 		struct route  gifscr_ro;    /* xxx */
-#ifdef INET6
-		struct route_in6 gifscr_ro6; /* xxx */
-#endif
 	} gifsc_gifscr;
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void	*gif_si;		/* softintr handle */
-#endif
 };
 #define GIF_ROUTE_TTL	10
 
 #define gif_ro gifsc_gifscr.gifscr_ro
-#ifdef INET6
-#define gif_ro6 gifsc_gifscr.gifscr_ro6
-#endif
 
 #define GIF_MTU		(1280)	/* Default MTU */
 #define	GIF_MTU_MIN	(1280)	/* Minimum MTU */
@@ -82,7 +74,7 @@ void	gifattach0(struct gif_softc *);
 void	gif_input(struct mbuf *, int, struct ifnet *);
 int	gif_output(struct ifnet *, struct mbuf *,
 		   const struct sockaddr *, struct rtentry *);
-int	gif_ioctl(struct ifnet *, u_long, caddr_t);
+int	gif_ioctl(struct ifnet *, u_long, void *);
 int	gif_set_tunnel(struct ifnet *, struct sockaddr *, struct sockaddr *);
 void	gif_delete_tunnel(struct ifnet *);
 #ifdef GIF_ENCAPCHECK

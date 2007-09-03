@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.65.2.3 2007/02/26 09:12:32 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.65.2.4 2007/09/03 14:47:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.65.2.3 2007/02/26 09:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.65.2.4 2007/09/03 14:47:11 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -126,7 +126,7 @@ uvm_wait(const char *wmsg)
 	 * check for page daemon going to sleep (waiting for itself)
 	 */
 
-	if (curproc == uvm.pagedaemon_proc && uvmexp.paging == 0) {
+	if (curlwp == uvm.pagedaemon_lwp && uvmexp.paging == 0) {
 		/*
 		 * now we have a problem: the pagedaemon wants to go to
 		 * sleep until it frees more memory.   but how can it
@@ -152,10 +152,10 @@ uvm_wait(const char *wmsg)
 #endif
 	}
 
-	simple_lock(&uvm.pagedaemon_lock);
+	mutex_enter(&uvm_pagedaemon_lock);
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, false, wmsg,
-	    timo);
+	mtsleep(&uvmexp.free, PVM, wmsg, timo, &uvm_pagedaemon_lock);
+	mutex_exit(&uvm_pagedaemon_lock);
 
 	splx(s);
 }
@@ -228,7 +228,7 @@ uvm_pageout(void *arg)
 	 * ensure correct priority and set paging parameters...
 	 */
 
-	uvm.pagedaemon_proc = curproc;
+	uvm.pagedaemon_lwp = curlwp;
 	uvm_lock_pageq();
 	npages = uvmexp.npages;
 	uvmpd_tune();
@@ -239,11 +239,11 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		simple_lock(&uvm.pagedaemon_lock);
+		mutex_enter(&uvm_pagedaemon_lock);
 
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-		    &uvm.pagedaemon_lock, false, "pgdaemon", 0);
+		mtsleep(&uvm.pagedaemon, PVM | PNORELOCK, "pgdaemon", 0,
+		    &uvm_pagedaemon_lock);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
@@ -321,7 +321,7 @@ uvm_pageout(void *arg)
 void
 uvm_aiodone_worker(struct work *wk, void *dummy)
 {
-	int s, free;
+	int free;
 	struct buf *bp = (void *)wk;
 
 	KASSERT(&bp->b_work == wk);
@@ -333,13 +333,13 @@ uvm_aiodone_worker(struct work *wk, void *dummy)
 	free = uvmexp.free;
 	(*bp->b_iodone)(bp);
 	if (free <= uvmexp.reserve_kernel) {
-		s = uvm_lock_fpageq();
+		mutex_spin_enter(&uvm_fpageqlock);
 		wakeup(&uvm.pagedaemon);
-		uvm_unlock_fpageq(s);
+		mutex_spin_exit(&uvm_fpageqlock);
 	} else {
-		simple_lock(&uvm.pagedaemon_lock);
+		mutex_enter(&uvm_pagedaemon_lock);
 		wakeup(&uvmexp.free);
-		simple_unlock(&uvm.pagedaemon_lock);
+		mutex_exit(&uvm_pagedaemon_lock);
 	}
 }
 
@@ -736,10 +736,10 @@ uvmpd_scan_queue(void)
 
 			if (slot > 0) {
 				/* this page is now only in swap. */
-				simple_lock(&uvm.swap_data_lock);
+				mutex_enter(&uvm_swap_data_lock);
 				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
 				uvmexp.swpgonly++;
-				simple_unlock(&uvm.swap_data_lock);
+				mutex_exit(&uvm_swap_data_lock);
 			}
 			continue;
 		}
@@ -865,7 +865,8 @@ uvmpd_scan(void)
 	 * we need to unlock the page queues for this.
 	 */
 
-	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0) {
+	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0 &&
+	    uvm.swapout_enabled) {
 		uvmexp.pdswout++;
 		UVMHIST_LOG(pdhist,"  free %d < target %d: swapout",
 		    uvmexp.free, uvmexp.freetarg, 0, 0);

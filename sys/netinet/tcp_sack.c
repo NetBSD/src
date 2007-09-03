@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.13.2.1 2006/12/30 20:50:34 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.13.2.2 2007/09/03 14:43:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.13.2.1 2006/12/30 20:50:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.13.2.2 2007/09/03 14:43:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -171,7 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.13.2.1 2006/12/30 20:50:34 yamt Exp $
 
 /* SACK block pool. */
 static POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl",
-    NULL);
+    NULL, IPL_SOFTNET);
 
 static struct sackhole *
 sack_allochole(struct tcpcb *tp)

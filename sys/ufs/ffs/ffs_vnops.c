@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.69.4.3 2007/02/26 09:12:20 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.69.4.4 2007/09/03 14:46:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.4.3 2007/02/26 09:12:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.4.4 2007/09/03 14:46:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,16 +101,16 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, ffs_lock },			/* lock */
+	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
 	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
 	{ &vop_strategy_desc, ufs_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
@@ -156,12 +156,12 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, ffs_lock },			/* lock */
+	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -211,12 +211,12 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, ffs_lock },			/* lock */
+	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
 	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -254,8 +254,7 @@ ffs_fsync(void *v)
 
 	vp = ap->a_vp;
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
@@ -361,7 +360,7 @@ ffs_full_fsync(void *v)
 		softdep_fsync_mountdev(vp);
 
 	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
-	    && vp->v_uobj.uo_npages == 0 && LIST_EMPTY(&vp->v_dirtyblkhd);
+	    && UVM_OBJ_IS_CLEAN(&vp->v_uobj) && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/*
 	 * Flush all dirty data associated with a vnode.
@@ -493,8 +492,7 @@ ffs_reclaim(void *v)
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = fstrans_start(mp, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_LAZY);
 	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
 		fstrans_done(mp);
 		return (error);
@@ -516,6 +514,7 @@ ffs_reclaim(void *v)
 	return (0);
 }
 
+#if 0
 int
 ffs_getpages(void *v)
 {
@@ -550,6 +549,7 @@ ffs_getpages(void *v)
 	}
 	return genfs_getpages(v);
 }
+#endif
 
 /*
  * Return the last logical file offset that should be written for this file
@@ -631,8 +631,7 @@ ffs_getextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_getextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -664,8 +663,7 @@ ffs_setextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_setextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -717,8 +715,7 @@ ffs_deleteextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_deleteextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -729,4 +726,97 @@ ffs_deleteextattr(void *v)
 
 	/* XXX Not implemented for UFS2 file systems. */
 	return (EOPNOTSUPP);
+}
+
+/*
+ * Lock the node.
+ */
+int
+ffs_lock(void *v)
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
+	struct lock *lkp;
+	int flags = ap->a_flags;
+	int result;
+
+	/*
+	 * Fake lock during file system suspension.
+	 */
+	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
+	    fstrans_is_owner(mp) &&
+	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
+		if ((flags & LK_INTERLOCK) != 0)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
+
+	if ((flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (lockmgr(vp->v_vnlock, flags, &vp->v_interlock));
+
+	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
+	    LK_INTERLOCK | LK_NOWAIT | LK_SETRECURSE | LK_CANRECURSE)) == 0);
+	for (;;) {
+		if ((flags & LK_INTERLOCK) == 0) {
+			simple_lock(&vp->v_interlock);
+			flags |= LK_INTERLOCK;
+		}
+		lkp = vp->v_vnlock;
+		result = lockmgr(lkp, flags, &vp->v_interlock);
+		if (lkp == vp->v_vnlock || result != 0)
+			return result;
+		/*
+		 * Apparent success, except that the vnode mutated between
+		 * snapshot file vnode and regular file vnode while this
+		 * thread slept.  The lock currently held is not the right
+		 * lock.  Release it, and try to get the new lock.
+		 */
+		(void) lockmgr(lkp, LK_RELEASE, NULL);
+		flags &= ~LK_INTERLOCK;
+	}
+}
+
+/*
+ * Unlock the node.
+ */
+int
+ffs_unlock(void *v)
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
+
+	/*
+	 * Fake unlock during file system suspension.
+	 */
+	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
+	    fstrans_is_owner(mp) &&
+	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
+		if ((ap->a_flags & LK_INTERLOCK) != 0)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
+	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
+	    &vp->v_interlock));
+}
+
+/*
+ * Return whether or not the node is locked.
+ */
+int
+ffs_islocked(void *v)
+{
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	return (lockstatus(vp->v_vnlock));
 }

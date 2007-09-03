@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.72.2.2 2007/02/26 09:11:45 yamt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.72.2.3 2007/09/03 14:42:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -212,6 +212,7 @@ extern struct mowner ip_tx_mowner;
 #endif
 #ifdef GATEWAY
 extern int ip_maxflows;
+extern int ip_hashsize;
 #endif
 extern struct pool inmulti_pool;
 extern struct pool ipqent_pool;
@@ -250,11 +251,11 @@ void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-void	ipflow_init(void);
+int	ipflow_init(int);
 struct	ipflow *ipflow_reap(int);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
-void	ipflow_invalidate_all(void);
+int	ipflow_invalidate_all(int);
 
 extern uint16_t	ip_id;
 static __inline uint16_t ip_newid(void);

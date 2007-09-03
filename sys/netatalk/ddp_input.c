@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.10.2.2 2007/02/26 09:11:41 yamt Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.10.2.3 2007/09/03 14:42:31 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.10.2.2 2007/02/26 09:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.10.2.3 2007/09/03 14:42:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ atintr()
 		if (elhp->el_type == ELAP_DDPEXTEND) {
 			ddp_input(m, ifp, (struct elaphdr *) NULL, 1);
 		} else {
-			bcopy((caddr_t) elhp, (caddr_t) & elh, SZ_ELAPHDR);
+			bcopy((void *) elhp, (void *) & elh, SZ_ELAPHDR);
 			ddp_input(m, ifp, &elh, 1);
 		}
 	}
@@ -144,8 +144,12 @@ ddp_input(m, ifp, elh, phase)
 	struct ddpcb   *ddp;
 	int             dlen, mlen;
 	u_short         cksum = 0;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_at	dsta;
+	} u;
 
-	bzero((caddr_t) & from, sizeof(struct sockaddr_at));
+	bzero((void *) & from, sizeof(struct sockaddr_at));
 	if (elh) {
 		ddpstat.ddps_short++;
 
@@ -155,7 +159,7 @@ ddp_input(m, ifp, elh, phase)
 			return;
 		}
 		dsh = mtod(m, struct ddpshdr *);
-		bcopy((caddr_t) dsh, (caddr_t) & ddps, sizeof(struct ddpshdr));
+		bcopy((void *) dsh, (void *) & ddps, sizeof(struct ddpshdr));
 		ddps.dsh_bytes = ntohl(ddps.dsh_bytes);
 		dlen = ddps.dsh_len;
 
@@ -187,7 +191,7 @@ ddp_input(m, ifp, elh, phase)
 			return;
 		}
 		deh = mtod(m, struct ddpehdr *);
-		bcopy((caddr_t) deh, (caddr_t) & ddpe, sizeof(struct ddpehdr));
+		bcopy((void *) deh, (void *) & ddpe, sizeof(struct ddpehdr));
 		ddpe.deh_bytes = ntohl(ddpe.deh_bytes);
 		dlen = ddpe.deh_len;
 
@@ -267,27 +271,18 @@ ddp_input(m, ifp, elh, phase)
 			m_freem(m);
 			return;
 		}
-		if (satocsat(rtcache_getdst(&forwro))->sat_addr.s_net != to.sat_addr.s_net ||
-		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_node != to.sat_addr.s_node)
-			rtcache_free(&forwro);
-		else
-			rtcache_check(&forwro);
-		if (forwro.ro_rt == NULL) {
-			memset(&forwro.ro_dst, 0, sizeof(struct sockaddr_at));
-			forwro.ro_dst.sa_len = sizeof(struct sockaddr_at);
-			forwro.ro_dst.sa_family = AF_APPLETALK;
-			satosat(&forwro.ro_dst)->sat_addr.s_net =
-			    to.sat_addr.s_net;
-			satosat(&forwro.ro_dst)->sat_addr.s_node =
-			    to.sat_addr.s_node;
-			rtcache_init(&forwro);
-		}
+		sockaddr_at_init(&u.dsta, &to.sat_addr, 0);
+		(void)rtcache_lookup(&forwro, &u.dst);
+#if 0		/* XXX The if-condition is always false.  What was this
+		 * actually trying to test?
+		 */
 		if (to.sat_addr.s_net !=
 		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_net &&
 		    ddpe.deh_hops == DDP_MAXHOPS) {
 			m_freem(m);
 			return;
 		}
+#endif
 		if (ddp_firewall &&
 		    (forwro.ro_rt == NULL || forwro.ro_rt->rt_ifp != ifp)) {
 			m_freem(m);
@@ -295,7 +290,7 @@ ddp_input(m, ifp, elh, phase)
 		}
 		ddpe.deh_hops++;
 		ddpe.deh_bytes = htonl(ddpe.deh_bytes);
-		bcopy((caddr_t) & ddpe, (caddr_t) deh, sizeof(u_short));/*XXX*/
+		bcopy((void *) & ddpe, (void *) deh, sizeof(u_short));/*XXX*/
 		if (ddp_route(m, &forwro)) {
 			ddpstat.ddps_cantforward++;
 		} else {

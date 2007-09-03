@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.24.2.1 2006/06/21 15:11:50 yamt Exp $	*/
+/*	$NetBSD: keydb.h,v 1.24.2.2 2007/09/03 14:44:10 yamt Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -70,11 +70,7 @@ struct secashead {
 					/* SA chain */
 					/* The first of this list is newer SA */
 
-	union {
-		struct route sau_route;
-		struct route_in6 sau_route6;
-	} sa_u;
-#define sa_route sa_u.sau_route
+	struct route sa_route;
 };
 
 /* Security Association */
@@ -93,7 +89,7 @@ struct secasvar {
 
 	struct sadb_key *key_auth;	/* Key for Authentication */
 	struct sadb_key *key_enc;	/* Key for Encryption */
-	caddr_t iv;			/* Initilization Vector */
+	void *iv;			/* Initilization Vector */
 	u_int ivlen;			/* length of IV */
 	void *sched;			/* intermediate encryption key */
 	size_t schedlen;

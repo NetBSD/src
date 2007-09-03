@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.41.4.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: inode.h,v 1.41.4.2 2007/09/03 14:46:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -249,7 +249,7 @@ struct inode {
 
 #define  SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == UFS1) ? \
-	(caddr_t)(ip)->i_ffs1_db : (caddr_t)(ip)->i_ffs2_db)
+	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
 
 
 /*
@@ -269,7 +269,7 @@ struct indir {
 /* Determine if soft dependencies are being done */
 #define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)
 
-/* This overlays the fid structure (see mount.h). */
+/* This overlays the fid structure (see fstypes.h). */
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */

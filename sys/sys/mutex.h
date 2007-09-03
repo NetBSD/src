@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.18.1 2007/02/26 09:12:13 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.18.2 2007/09/03 14:46:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  *	  to acquire the lock determines if the thread that holds it is
  *	  currently running.  If so, it spins, else it sleeps.
  *
- *	* Spin -- If the lock is already held, the thead attempting to
+ *	* Spin -- If the lock is already held, the thread attempting to
  *	  acquire the lock spins.  The IPL will be raised on entry.
  *
  * Machine dependent code must provide the following:
@@ -98,10 +98,10 @@
  *	MUTEX_SPIN_P(mtx)
  *		Evaluates to true if the mutex is a spin mutex.
  *
- *	MUTEX_OWNED(owner)
+ *	MUTEX_OWNER(owner)
  *		Returns the owner of the adaptive mutex (LWP address).
  *
- *	MUTEX_OWNER(owner)
+ *	MUTEX_OWNED(owner)
  *		Returns non-zero if an adaptive mutex is currently
  *		held by an LWP.
  *
@@ -152,11 +152,16 @@
 #include <sys/inttypes.h>
 #endif
 
+/*
+ * MUTEX_NODEBUG disables most LOCKDEBUG checks for the lock.  It should
+ * not be used.
+ */
 typedef enum kmutex_type_t {
 	MUTEX_SPIN = 0,
 	MUTEX_ADAPTIVE = 1,
 	MUTEX_DEFAULT = 2,
-	MUTEX_DRIVER = 3
+	MUTEX_DRIVER = 3,
+	MUTEX_NODEBUG = 4
 } kmutex_type_t;
 
 typedef struct kmutex kmutex_t;
@@ -204,7 +209,6 @@ void	mutex_spin_exit(kmutex_t *);
 
 int	mutex_tryenter(kmutex_t *);
 
-struct lwp *mutex_owner(kmutex_t *);
 int	mutex_owned(kmutex_t *);
 
 #endif /* _KERNEL */

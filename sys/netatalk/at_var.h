@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.3.26.2 2007/02/26 09:11:41 yamt Exp $	 */
+/*	$NetBSD: at_var.h,v 1.3.26.3 2007/09/03 14:42:31 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -67,6 +67,40 @@ struct at_aliasreq {
 #define AFA_PHASE2	0x0004
 
 #ifdef _KERNEL
+int sockaddr_at_cmp(const struct sockaddr *, const struct sockaddr *);
+
+static inline void
+sockaddr_at_init1(struct sockaddr_at *sat, const struct at_addr *addr,
+    uint8_t port)
+{
+	sat->sat_port = port;
+	sat->sat_addr = *addr;
+	memset(&sat->sat_range, 0, sizeof(sat->sat_range));
+}
+
+static inline void
+sockaddr_at_init(struct sockaddr_at *sat, const struct at_addr *addr,
+    uint8_t port)
+{
+	sat->sat_family = AF_APPLETALK;
+	sat->sat_len = sizeof(*sat);
+	sockaddr_at_init1(sat, addr, port);
+}
+
+static inline struct sockaddr *
+sockaddr_at_alloc(const struct at_addr *addr, uint8_t port, int flags)
+{
+	struct sockaddr *sa;
+
+	sa = sockaddr_alloc(AF_APPLETALK, sizeof(struct sockaddr_at), flags);
+
+	if (sa == NULL)
+		return NULL;
+
+	sockaddr_at_init1(satosat(sa), addr, port);
+
+	return sa;
+}
 TAILQ_HEAD(at_ifaddrhead, at_ifaddr);
 extern struct at_ifaddrhead at_ifaddr;
 extern struct ifqueue atintrq1, atintrq2;

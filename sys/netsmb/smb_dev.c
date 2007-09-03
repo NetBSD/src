@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.20.4.2 2006/12/30 20:50:51 yamt Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.20.4.3 2007/09/03 14:44:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.20.4.2 2006/12/30 20:50:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.20.4.3 2007/09/03 14:44:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,7 +261,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 
 
 int
-nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct smb_dev *sdp;

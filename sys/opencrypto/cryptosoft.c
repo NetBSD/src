@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.9.4.2 2007/02/26 09:12:08 yamt Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.9.4.3 2007/09/03 14:44:23 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.9.4.2 2007/02/26 09:12:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.9.4.3 2007/09/03 14:44:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ int32_t swcr_id = -1;
 	(x) == CRYPTO_BUF_MBUF ? m_copydata((struct mbuf *)a,b,c,d) \
 	: cuio_copydata((struct uio *)a,b,c,d)
 
-static	int swcr_encdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
-static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
+static	int swcr_encdec(struct cryptodesc *, struct swcr_data *, void *, int);
+static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, void *, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
@@ -69,9 +69,10 @@ static	int swcr_freesession(void *, u_int64_t);
  * Apply a symmetric encryption/decryption algorithm.
  */
 static int
-swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
+swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
     int outtype)
 {
+	char *buf = bufv;
 	unsigned char iv[EALG_MAX_BLOCK_LEN], blk[EALG_MAX_BLOCK_LEN], *idat;
 	unsigned char *ivp, piv[EALG_MAX_BLOCK_LEN];
 	const struct swcr_enc_xform *exf;
@@ -478,7 +479,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			 * we only use it in the while() loop, only if
 			 * there are indeed enough data.
 			 */
-			idat = ((caddr_t)uio->uio_iov[ind].iov_base) + k;
+			idat = ((char *)uio->uio_iov[ind].iov_base) + k;
 
 			while (uio->uio_iov[ind].iov_len >= k + blks &&
 			    i > 0) {
@@ -530,7 +531,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
  */
 int
 swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, caddr_t buf, int outtype)
+    struct swcr_data *sw, void *buf, int outtype)
 {
 	unsigned char aalg[AALG_MAX_RESULT_LEN];
 	const struct swcr_auth_hash *axf;
@@ -546,12 +547,12 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
-		axf->Update(&ctx, buf + crd->crd_skip, crd->crd_len);
+		axf->Update(&ctx, (char *)buf + crd->crd_skip, crd->crd_len);
 		break;
 	case CRYPTO_BUF_MBUF:
 		err = m_apply((struct mbuf *) buf, crd->crd_skip, crd->crd_len,
-		    (int (*)(void*, caddr_t, unsigned int)) axf->Update,
-		    (caddr_t) &ctx);
+		    (int (*)(void*, void *, unsigned int)) axf->Update,
+		    (void *) &ctx);
 		if (err)
 			return err;
 		break;
@@ -562,8 +563,8 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 #else
 		err = cuio_apply((struct uio *) buf, crd->crd_skip,
 		    crd->crd_len,
-		    (int (*)(caddr_t, caddr_t, unsigned int)) axf->Update,
-		    (caddr_t) &ctx);
+		    (int (*)(void *, void *, unsigned int)) axf->Update,
+		    (void *) &ctx);
 		if (err) {
 			return err;
 		}
@@ -606,7 +607,8 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	/* Inject the authentication data */
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
-		bcopy(aalg, buf + crd->crd_inject, axf->auth_hash->authsize);
+		(void)memcpy((char *)buf + crd->crd_inject, aalg,
+		    axf->auth_hash->authsize);
 		break;
 	case CRYPTO_BUF_MBUF:
 		m_copyback((struct mbuf *) buf, crd->crd_inject,
@@ -626,7 +628,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
  */
 static int
 swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
-    caddr_t buf, int outtype)
+    void *buf, int outtype)
 {
 	u_int8_t *data, *out;
 	const struct swcr_comp_algo *cxf;

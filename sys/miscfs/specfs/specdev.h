@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.26.12.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: specdev.h,v 1.26.12.2 2007/09/03 14:41:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -118,7 +118,7 @@ int	spec_ioctl(void *);
 int	spec_poll(void *);
 int	spec_kqfilter(void *);
 #define spec_revoke	genfs_revoke
-#define	spec_mmap	genfs_mmap
+int	spec_mmap(void *);
 int	spec_fsync(void *);
 #define	spec_seek	genfs_nullop		/* XXX should query device */
 #define	spec_remove	genfs_badop
@@ -143,6 +143,5 @@ int	spec_advlock(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
-int	spec_size(void *);
 
 #endif /* _MISCFS_SPECFS_SPECDEV_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.11.4.2 2007/02/26 09:12:04 yamt Exp $	*/
+/*	$NetBSD: natm.c,v 1.11.4.3 2007/09/03 14:44:11 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.11.4.2 2007/02/26 09:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.11.4.3 2007/09/03 14:44:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct proc *p;
           break;
       }
 
-      so->so_pcb = (caddr_t) (npcb = npcb_alloc(M_WAITOK));
+      so->so_pcb = (void *) (npcb = npcb_alloc(M_WAITOK));
       npcb->npcb_socket = so;
 
       break;
@@ -199,7 +199,7 @@ struct proc *p;
       api.rxhand = npcb;
       s2 = splnet();
       if (ifp->if_ioctl == NULL ||
-	  ifp->if_ioctl(ifp, SIOCATMENA, (caddr_t) &api) != 0) {
+	  ifp->if_ioctl(ifp, SIOCATMENA, (void *) &api) != 0) {
 	splx(s2);
 	npcb_free(npcb, NPCB_REMOVE);
         error = EIO;
@@ -230,7 +230,7 @@ struct proc *p;
       api.rxhand = npcb;
       s2 = splnet();
       if (ifp->if_ioctl != NULL)
-	  ifp->if_ioctl(ifp, SIOCATMDIS, (caddr_t) &api);
+	  ifp->if_ioctl(ifp, SIOCATMDIS, (void *) &api);
       splx(s);
 
       npcb_free(npcb, NPCB_REMOVE);
@@ -300,7 +300,7 @@ struct proc *p;
         ario.npcb = npcb;
         ario.rawvalue = *((int *)nam);
         error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp,
-				SIOCXRAWATM, (caddr_t) &ario);
+				SIOCXRAWATM, (void *) &ario);
 	if (!error) {
           if (ario.rawvalue)
 	    npcb->npcb_flags |= NPCB_RAW;

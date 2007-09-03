@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.82.2.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.82.2.3 2007/09/03 14:46:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -81,6 +81,7 @@ struct sockbuf {
 #define	SB_NOINTR	0x40		/* operations not interruptible */
     	/* XXXLUKEM: 0x80 left for FreeBSD's SB_AIO */
 #define	SB_KNOTE	0x100		/* kernel note attached */
+#define	SB_AUTOSIZE	0x800		/* automatically size socket buffer */
 
 /*
  * Kernel structure per socket.
@@ -122,8 +123,8 @@ struct socket {
 	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
-	void		(*so_upcall) (struct socket *, caddr_t, int);
-	caddr_t		so_upcallarg;	/* Arg for above */
+	void		(*so_upcall) (struct socket *, void *, int);
+	void *		so_upcallarg;	/* Arg for above */
 	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
 					struct mbuf *, int, struct lwp *);
@@ -162,7 +163,7 @@ do {									\
 					 * hint from sosend to lower layer;
 					 * more data coming
 					 */
-#define	SS_ISAPIPE 		0x800	/* socket is implementing a pipe */
+#define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
 
 
 /*
@@ -228,7 +229,7 @@ do {									\
 #define	sblock(sb, wf)							\
 	((sb)->sb_flags & SB_LOCK ?					\
 	    (((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) :		\
-	    ((sb)->sb_flags |= SB_LOCK), 0)
+	    ((sb)->sb_flags |= SB_LOCK, 0))
 
 /* release lock on sockbuf sb */
 #define	sbunlock(sb)							\
@@ -236,7 +237,7 @@ do {									\
 	(sb)->sb_flags &= ~SB_LOCK;					\
 	if ((sb)->sb_flags & SB_WANT) {					\
 		(sb)->sb_flags &= ~SB_WANT;				\
-		wakeup((caddr_t)&(sb)->sb_flags);			\
+		wakeup((void *)&(sb)->sb_flags);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -291,7 +292,7 @@ void	sbappendrecord(struct sockbuf *, struct mbuf *);
 void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
-	sbcreatecontrol(caddr_t, int, int, int);
+	sbcreatecontrol(void *, int, int, int);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
@@ -335,8 +336,20 @@ int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
-int	sendit(struct lwp *, int, struct msghdr *, int, register_t *);
-int	recvit(struct lwp *, int, struct msghdr *, caddr_t, register_t *);
+int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
+int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
+void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
+
+
+int	do_sys_getsockname(struct lwp *, int, int, struct mbuf **);
+int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
+int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
+	    struct mbuf **, register_t *);
+
+int	do_sys_bind(struct lwp *, int, struct mbuf *);
+int	do_sys_connect(struct lwp *, int, struct mbuf *);
+int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *);
+
 
 #ifdef SOCKBUF_DEBUG
 /*
@@ -359,7 +372,7 @@ void	sblastmbufchk(struct sockbuf *, const char *);
 /* sosend loan */
 vaddr_t	sokvaalloc(vsize_t, struct socket *);
 void	sokvafree(vaddr_t, vsize_t);
-void	soloanfree(struct mbuf *, caddr_t, size_t, void *);
+void	soloanfree(struct mbuf *, void *, size_t, void *);
 
 /*
  * Values for socket-buffer-append priority argument to sbappendaddrchain().

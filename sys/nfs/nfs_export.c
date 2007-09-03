@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.14.2.4 2007/02/26 09:12:05 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.14.2.5 2007/09/03 14:44:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.14.2.4 2007/02/26 09:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.14.2.5 2007/09/03 14:44:17 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -392,38 +392,27 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  * Otherwise, returns 0 on success or an appropriate error code otherwise.
  */
 int
-nfs_update_exports_30(struct mount *mp, const char *path, void *data,
-    struct lwp *l)
+nfs_update_exports_30(struct mount *mp, const char *path,
+    struct mnt_export_args30 *args, struct lwp *l)
 {
-	int error;
-	struct {
-		const char *fspec;
-		struct export_args30 eargs;
-	} args;
 	struct mountd_exports_list mel;
 
 	mel.mel_path = path;
 
-	error = copyin(data, &args, sizeof(args));
-	if (error != 0)
+	if (args->fspec != NULL)
 		return EJUSTRETURN;
 
-	if (args.fspec != NULL)
-		return EJUSTRETURN;
-
-	if (args.eargs.ex_flags & 0x00020000) {
+	if (args->eargs.ex_flags & 0x00020000) {
 		/* Request to delete exports.  The mask above holds the
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
 	} else {
-		struct export_args eargs;
-
 		/* The following assumes export_args has not changed since
-		 * export_args30. */
-		memcpy(&eargs, &args.eargs, sizeof(struct export_args));
+		 * export_args30 - typedef checks sizes. */
+		typedef char x[sizeof args->eargs == sizeof *mel.mel_exports ? 1 : -1];
 
 		mel.mel_nexports = 1;
-		mel.mel_exports = &eargs;
+		mel.mel_exports = (void *)&args->eargs;
 	}
 
 	return mountd_set_exports_list(&mel, l);
@@ -519,7 +508,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 	if (sacheck(saddr) == -1)
 		return EINVAL;
 	if (argp->ex_masklen) {
-		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
+		smask = (struct sockaddr *)((char *)saddr + argp->ex_addrlen);
 		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
 		if (error)
 			goto out;
@@ -659,7 +648,7 @@ netexport_clear(struct netexport *ne)
 
 	for (i = 0; i <= AF_MAX; i++) {
 		if ((rnh = ne->ne_rtable[i]) != NULL) {
-			(*rnh->rnh_walktree)(rnh, free_netcred, rnh);
+			rn_walktree(rnh, free_netcred, rnh);
 			free(rnh, M_RTABLE);
 			ne->ne_rtable[i] = NULL;
 		}
@@ -815,7 +804,7 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 		rnh = ne->ne_rtable[saddr->sa_family];
 		if (rnh != NULL) {
 			np = (struct netcred *)
-				(*rnh->rnh_matchaddr)((caddr_t)saddr,
+				(*rnh->rnh_matchaddr)((void *)saddr,
 						      rnh);
 			if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
 				np = NULL;
@@ -830,32 +819,32 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 	return np;
 }
 
-static struct lock netexport_lock = LOCK_INITIALIZER(PVFS, "netexp", 0, 0);
+krwlock_t netexport_lock;
 
 void
 netexport_rdlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_SHARED, NULL);
+	rw_enter(&netexport_lock, RW_READER);
 }
 
 void
 netexport_rdunlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_RELEASE, NULL);
+	rw_exit(&netexport_lock);
 }
 
 static void
 netexport_wrlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&netexport_lock, RW_WRITER);
 }
 
 static void
 netexport_wrunlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_RELEASE, NULL);
+	rw_exit(&netexport_lock);
 }

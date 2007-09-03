@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.110.2.3 2007/02/26 09:11:33 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.110.2.4 2007/09/03 14:42:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ struct ifnet {				/* and the entries */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
-	caddr_t	if_bpf;			/* packet filter structure */
+	void *	if_bpf;			/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
@@ -262,7 +262,7 @@ struct ifnet {				/* and the entries */
 	void	(*if_start)		/* initiate output routine */
 		    (struct ifnet *);
 	int	(*if_ioctl)		/* ioctl routine */
-		    (struct ifnet *, u_long, caddr_t);
+		    (struct ifnet *, u_long, void *);
 	int	(*if_init)		/* init routine */
 		    (struct ifnet *);
 	void	(*if_stop)		/* stop routine */
@@ -280,7 +280,7 @@ struct ifnet {				/* and the entries */
 	uint64_t if_capabilities;	/* interface capabilities */
 	uint64_t if_capenable;		/* capabilities enabled */
 	union {
-		caddr_t		carp_s;	/* carp structure (used by !carp ifs) */
+		void *		carp_s;	/* carp structure (used by !carp ifs) */
 		struct ifnet	*carp_d;/* ptr to carpdev (used by carp ifs) */
 	} if_carp_ptr;
 #define if_carp		if_carp_ptr.carp_s
@@ -537,12 +537,13 @@ struct	ifreq {
 		struct	sockaddr ifru_addr;
 		struct	sockaddr ifru_dstaddr;
 		struct	sockaddr ifru_broadaddr;
+		struct	sockaddr_storage ifru_space;
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
 		int	ifru_dlt;
 		u_int	ifru_value;
-		caddr_t	ifru_data;
+		void *	ifru_data;
 		struct {
 			uint32_t	b_buflen;
 			void		*b_buf;
@@ -563,6 +564,19 @@ struct	ifreq {
 #define	ifr_buf		ifr_ifru.ifru_b.b_buf	/* new interface ioctls */
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
 };
+
+#ifdef _KERNEL
+#define	ifreq_setdstaddr	ifreq_setaddr
+#define	ifreq_setbroadaddr	ifreq_setaddr
+#define	ifreq_getdstaddr	ifreq_getaddr
+#define	ifreq_getbroadaddr	ifreq_getaddr
+
+static inline const struct sockaddr *
+ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
+{
+	return &ifr->ifr_addr;
+}
+#endif /* _KERNEL */
 
 struct ifcapreq {
 	char		ifcr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -611,7 +625,7 @@ struct  ifdrv {
 struct	ifconf {
 	int	ifc_len;		/* size of associated buffer */
 	union {
-		caddr_t	ifcu_buf;
+		void *	ifcu_buf;
 		struct	ifreq *ifcu_req;
 	} ifc_ifcu;
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
@@ -743,7 +757,7 @@ do {									\
 			(pattr)->pattr_class = (*(ifq)->altq_classify)	\
 				((ifq)->altq_clfier, (m), (af));	\
 		(pattr)->pattr_af = (af);				\
-		(pattr)->pattr_hdr = mtod((m), caddr_t);		\
+		(pattr)->pattr_hdr = mtod((m), void *);		\
 	}								\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
@@ -796,6 +810,8 @@ extern size_t if_indexlim;
 
 void    ether_input(struct ifnet *, struct mbuf *);
 
+int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
+
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
@@ -807,9 +823,9 @@ void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
 void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
-int	ifconf(u_long, caddr_t);
+int	ifconf(u_long, void *);
 void	ifinit(void);
-int	ifioctl(struct socket *, u_long, caddr_t, struct lwp *);
+int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
 
@@ -835,7 +851,7 @@ int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
 int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
     ALTQ_DECL(struct altq_pktattr *));
 
-int	loioctl(struct ifnet *, u_long, caddr_t);
+int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, struct rtentry *);
@@ -849,7 +865,7 @@ int	if_nulloutput(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, struct rtentry *);
 void	if_nullinput(struct ifnet *, struct mbuf *);
 void	if_nullstart(struct ifnet *);
-int	if_nullioctl(struct ifnet *, u_long, caddr_t);
+int	if_nullioctl(struct ifnet *, u_long, void *);
 int	if_nullinit(struct ifnet *);
 void	if_nullstop(struct ifnet *, int);
 void	if_nullwatchdog(struct ifnet *);

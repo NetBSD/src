@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.4.12.3 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: spl.h,v 1.4.12.4 2007/09/03 14:46:37 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -60,7 +60,6 @@ _SPL_DECL(vm, VM)
 _SPL_DECL(statclock, STATCLOCK)
 _SPL_DECL(clock, CLOCK)
 _SPL_DECL(sched, SCHED)
-_SPL_DECL(lock, LOCK)
 _SPL_DECL(high, HIGH)
 
 #if defined(IPL_SERIAL)

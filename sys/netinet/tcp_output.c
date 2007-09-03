@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.136.2.3 2007/02/26 09:11:46 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.136.2.4 2007/09/03 14:43:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.3 2007/02/26 09:11:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.4 2007/09/03 14:43:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -220,6 +220,10 @@ extern struct mbuf *m_copypack();
  */
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
+
+int	tcp_do_autosndbuf = 0;
+int	tcp_autosndbuf_inc = 8 * 1024;
+int	tcp_autosndbuf_max = 256 * 1024;
 
 #ifdef TCP_OUTPUT_COUNTERS
 #include <sys/device.h>
@@ -520,11 +524,11 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	off = tp->t_inoff;
 
 	if (len <= M_TRAILINGSPACE(m)) {
-		m_copydata(m0, off, (int) len, mtod(m, caddr_t) + hdrlen);
+		m_copydata(m0, off, (int) len, mtod(m, char *) + hdrlen);
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		m->m_next = m_copy(m0, off, (int) len);
+		m->m_next = m_copym(m0, off, (int) len, M_DONTWAIT);
 		if (m->m_next == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
@@ -589,7 +593,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef INET6
 	else if (tp->t_in6pcb) {
 		so = tp->t_in6pcb->in6p_socket;
-		ro = (struct route *)&tp->t_in6pcb->in6p_route;
+		ro = &tp->t_in6pcb->in6p_route;
 	}
 #endif
 
@@ -906,6 +910,49 @@ again:
 				tcp_setpersist(tp);
 		}
 	}
+
+	/*
+	 * Automatic sizing enables the performance of large buffers
+	 * and most of the efficiency of small ones by only allocating
+	 * space when it is needed.
+	 *
+	 * The criteria to step up the send buffer one notch are:
+	 *  1. receive window of remote host is larger than send buffer
+	 *     (with a fudge factor of 5/4th);
+	 *  2. send buffer is filled to 7/8th with data (so we actually
+	 *     have data to make use of it);
+	 *  3. send buffer fill has not hit maximal automatic size;
+	 *  4. our send window (slow start and cogestion controlled) is
+	 *     larger than sent but unacknowledged data in send buffer.
+	 *
+	 * The remote host receive window scaling factor may limit the
+	 * growing of the send buffer before it reaches its allowed
+	 * maximum.
+	 *
+	 * It scales directly with slow start or congestion window
+	 * and does at most one step per received ACK.  This fast
+	 * scaling has the drawback of growing the send buffer beyond
+	 * what is strictly necessary to make full use of a given
+	 * delay*bandwith product.  However testing has shown this not
+	 * to be much of an problem.  At worst we are trading wasting
+	 * of available bandwith (the non-use of it) for wasting some
+	 * socket buffer memory.
+	 *
+	 * TODO: Shrink send buffer during idle periods together
+	 * with congestion window.  Requires another timer.
+	 */
+	if (tcp_do_autosndbuf && so->so_snd.sb_flags & SB_AUTOSIZE) {
+		if ((tp->snd_wnd / 4 * 5) >= so->so_snd.sb_hiwat &&
+		    so->so_snd.sb_cc >= (so->so_snd.sb_hiwat / 8 * 7) &&
+		    so->so_snd.sb_cc < tcp_autosndbuf_max &&
+		    win >= (so->so_snd.sb_cc - (tp->snd_nxt - tp->snd_una))) {
+			if (!sbreserve(&so->so_snd,
+			    min(so->so_snd.sb_hiwat + tcp_autosndbuf_inc,
+			     tcp_autosndbuf_max), so))
+				so->so_snd.sb_flags &= ~SB_AUTOSIZE;
+		}
+	}
+
 	if (len > txsegsize) {
 		if (use_tso) {
 			/*
@@ -1128,6 +1175,10 @@ send:
 		*lp++ = htonl(TCP_TIMESTAMP(tp));
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
+
+		/* Set receive buffer autosizing timestamp. */
+		if (tp->rfbuf_ts == 0 && (so->so_rcv.sb_flags & SB_AUTOSIZE))
+			tp->rfbuf_ts = TCP_TIMESTAMP(tp);
 	}
 
 	/*
@@ -1268,7 +1319,7 @@ send:
 		panic("tcp_output");
 	if (tp->t_template->m_len < iphdrlen)
 		panic("tcp_output");
-	bcopy(mtod(tp->t_template, caddr_t), mtod(m, caddr_t), iphdrlen);
+	bcopy(mtod(tp->t_template, void *), mtod(m, void *), iphdrlen);
 
 	/*
 	 * If we are starting a connection, send ECN setup
@@ -1347,7 +1398,7 @@ send:
 	}
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
+		bcopy((void *)opt, (void *)(th + 1), optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 	th->th_flags = flags;
@@ -1391,8 +1442,8 @@ send:
 		}
 
 		m->m_pkthdr.len = hdrlen + len;
-		sigp = (caddr_t)th + sizeof(*th) + sigoff;
-		tcp_signature(m, th, (caddr_t)th - mtod(m, caddr_t), sav, sigp);
+		sigp = (char *)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (char *)th - mtod(m, char *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
 #ifdef FAST_IPSEC
@@ -1578,9 +1629,8 @@ timer:
 			opts = tp->t_in6pcb->in6p_outputopts;
 		else
 			opts = NULL;
-		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
+			NULL, so, NULL);
 		break;
 	    }
 #endif

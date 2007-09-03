@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.22.8.3 2007/02/26 09:12:25 yamt Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.22.8.4 2007/09/03 14:47:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.3 2007/02/26 09:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.4 2007/09/03 14:47:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -66,8 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.3 2007/02/26 09:12:25 yamt Exp
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
 
-POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
-    &pool_allocator_nointr);
+struct pool ufs_direct_pool;
 
 /*
  * Make a filesystem operational.
@@ -204,10 +203,8 @@ ufs_init(void)
 	if (ufs_initcount++ > 0)
 		return;
 
-#ifdef _LKM
 	pool_init(&ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
-	    &pool_allocator_nointr);
-#endif
+	    &pool_allocator_nointr, IPL_NONE);
 
 	ufs_ihashinit();
 #ifdef QUOTA
@@ -215,6 +212,9 @@ ufs_init(void)
 #endif
 #ifdef UFS_DIRHASH
 	ufsdirhash_init();
+#endif
+#ifdef UFS_EXTATTR
+	ufs_extattr_init();
 #endif
 }
 
@@ -240,10 +240,11 @@ ufs_done(void)
 #ifdef QUOTA
 	dqdone();
 #endif
-#ifdef _LKM
 	pool_destroy(&ufs_direct_pool);
-#endif
 #ifdef UFS_DIRHASH
 	ufsdirhash_done();
+#endif
+#ifdef UFS_EXTATTR
+	ufs_extattr_done();
 #endif
 }

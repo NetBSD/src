@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.35.12.3 2007/02/26 09:12:14 yamt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.35.12.4 2007/09/03 14:46:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -159,7 +159,7 @@ struct protosw {
 #define	PRU_NREQ		23
 
 #ifdef PRUREQUESTS
-const char * const prurequests[] = {
+static const char * const prurequests[] = {
 	"ATTACH",	"DETACH",	"BIND",		"LISTEN",
 	"CONNECT",	"ACCEPT",	"DISCONNECT",	"SHUTDOWN",
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
@@ -173,7 +173,7 @@ const char * const prurequests[] = {
  * The arguments to the ctlinput routine are
  *	(*protosw[].pr_ctlinput)(cmd, sa, arg);
  * where cmd is one of the commands below, sa is a pointer to a sockaddr,
- * and arg is an optional caddr_t argument used within a protocol family.
+ * and arg is an optional void *argument used within a protocol family.
  */
 #define	PRC_IFDOWN		0	/* interface transition */
 #define	PRC_ROUTEDEAD		1	/* select new route if possible ??? */
@@ -202,7 +202,7 @@ const char * const prurequests[] = {
 	((cmd) >= PRC_REDIRECT_NET && (cmd) <= PRC_REDIRECT_TOSHOST)
 
 #ifdef PRCREQUESTS
-const char * const prcrequests[] = {
+static const char * const prcrequests[] = {
 	"IFDOWN", "ROUTEDEAD", "#2", "DEC-BIT-QUENCH2",
 	"QUENCH", "MSGSIZE", "HOSTDEAD", "#7",
 	"NET-UNREACH", "HOST-UNREACH", "PROTO-UNREACH", "PORT-UNREACH",
@@ -231,15 +231,12 @@ const char * const prcrequests[] = {
 #define	PRCO_NCMDS	2
 
 #ifdef PRCOREQUESTS
-const char * const prcorequests[] = {
+static const char * const prcorequests[] = {
 	"GETOPT", "SETOPT",
 };
 #endif
 
 #ifdef _KERNEL
-extern const char * const prurequests[];
-extern const char * const prcrequests[];
-extern const char * const prcorequests[];
 /*
  * Monotonically increasing time values for slow and fast timers.
  */

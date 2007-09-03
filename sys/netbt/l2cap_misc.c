@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,8 +49,10 @@ struct l2cap_channel_list
 struct l2cap_channel_list
 	l2cap_listen_list = LIST_HEAD_INITIALIZER(l2cap_listen_list);
 
-POOL_INIT(l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0, "l2cap_req", NULL);
-POOL_INIT(l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0, "l2cap_pdu", NULL);
+POOL_INIT(l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0, "l2cap_req", NULL,
+    IPL_SOFTNET);
+POOL_INIT(l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0, "l2cap_pdu", NULL,
+    IPL_SOFTNET);
 
 const l2cap_qos_t l2cap_default_qos = {
 	0,			/* flags */
@@ -67,6 +69,33 @@ const l2cap_qos_t l2cap_default_qos = {
  */
 int l2cap_response_timeout = 30;		/* seconds */
 int l2cap_response_extended_timeout = 180;	/* seconds */
+
+/*
+ * Set Link Mode on channel
+ */
+int
+l2cap_setmode(struct l2cap_channel *chan)
+{
+
+	KASSERT(chan != NULL);
+	KASSERT(chan->lc_link != NULL);
+
+	DPRINTF("CID #%d, auth %s, encrypt %s, secure %s\n", chan->lc_lcid,
+		(chan->lc_mode & L2CAP_LM_AUTH ? "yes" : "no"),
+		(chan->lc_mode & L2CAP_LM_ENCRYPT ? "yes" : "no"),
+		(chan->lc_mode & L2CAP_LM_SECURE ? "yes" : "no"));
+
+	if (chan->lc_mode & L2CAP_LM_AUTH)
+		chan->lc_link->hl_flags |= HCI_LINK_AUTH_REQ;
+
+	if (chan->lc_mode & L2CAP_LM_ENCRYPT)
+		chan->lc_link->hl_flags |= HCI_LINK_ENCRYPT_REQ;
+
+	if (chan->lc_mode & L2CAP_LM_SECURE)
+		chan->lc_link->hl_flags |= HCI_LINK_SECURE_REQ;
+
+	return hci_acl_setmode(chan->lc_link);
+}
 
 /*
  * Allocate a new Request structure & ID and set the timer going
@@ -101,7 +130,7 @@ l2cap_request_alloc(struct l2cap_channel *chan, uint8_t code)
 	req->lr_chan = chan;
 	req->lr_link = link;
 
-	callout_init(&req->lr_rtx);
+	callout_init(&req->lr_rtx, 0);
 	callout_reset(&req->lr_rtx, l2cap_response_timeout*hz, l2cap_rtx, req);
 
 	TAILQ_INSERT_TAIL(&link->hl_reqs, req, lr_next);

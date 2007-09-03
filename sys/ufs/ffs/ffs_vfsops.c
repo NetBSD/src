@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.165.2.3 2007/02/26 09:12:19 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.165.2.4 2007/09/03 14:46:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.3 2007/02/26 09:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.4 2007/09/03 14:46:49 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -93,6 +93,7 @@ const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 
 struct vfsops ffs_vfsops = {
 	MOUNT_FFS,
+	sizeof (struct ufs_args),
 	ffs_mount,
 	ufs_start,
 	ffs_unmount,
@@ -132,12 +133,9 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_balloc = ffs_balloc,
 };
 
-POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
-    &pool_allocator_nointr);
-POOL_INIT(ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "dino1pl",
-    &pool_allocator_nointr);
-POOL_INIT(ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0, "dino2pl",
-    &pool_allocator_nointr);
+struct pool ffs_inode_pool;
+struct pool ffs_dinode1_pool;
+struct pool ffs_dinode2_pool;
 
 static void ffs_oldfscompat_read(struct fs *, struct ufsmount *, daddr_t);
 static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
@@ -187,26 +185,28 @@ ffs_mountroot(void)
  * mount system call
  */
 int
-ffs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp, struct lwp *l)
+ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct vnode *devvp = NULL;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
-	int error, flags, update;
+	int error = 0, flags, update;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct ufs_args));
-	if (error)
-		return (error);
 
 #if !defined(SOFTDEP)
 	mp->mnt_flag &= ~MNT_SOFTDEP;
@@ -215,14 +215,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -339,7 +339,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			/*
 			 * Changing from r/w to r/o
 			 */
-			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -364,7 +363,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 				fs->fs_clean = FS_ISCLEAN;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
-			vn_finished_write(mp, 0);
 			if (error)
 				return (error);
 			fs->fs_ronly = 1;
@@ -379,7 +377,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    !(mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
-			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -387,7 +384,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (error == 0 && ffs_cgupdate(ump, MNT_WAIT) == 0)
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
-			vn_finished_write(mp);
 #elif defined(SOFTDEP)
 			mp->mnt_flag |= MNT_SOFTDEP;
 #endif
@@ -400,12 +396,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
 		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
-			vn_start_write(NULL, &mp, V_WAIT);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = ffs_flushfiles(mp, flags, l);
-			vn_finished_write(mp);
 #else
 			mp->mnt_flag &= ~MNT_SOFTDEP;
 #endif
@@ -433,7 +427,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (fs->fs_snapinum[0] != 0)
 				ffs_snapshot_mount(mp);
 		}
-		if (args.fspec == NULL)
+		if (args->fspec == NULL)
 			return EINVAL;
 		if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
 		    (MNT_SOFTDEP | MNT_ASYNC)) {
@@ -443,8 +437,8 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		}
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
-	    UIO_USERSPACE, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
 		    sizeof(fs->fs_fsmnt));
@@ -828,7 +822,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
-	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -1087,14 +1080,14 @@ ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 	}
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
-		ump->um_maxfilesize = (u_quad_t) 1LL << 39;
+		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
 
 	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
-	if (ump->um_maxfilesize > maxfilesize)
-		ump->um_maxfilesize = maxfilesize;
+	if (fs->fs_maxfilesize > maxfilesize)
+		fs->fs_maxfilesize = maxfilesize;
 
 	/* Compatibility for old filesystems */
 	if (fs->fs_avgfilesize <= 0)
@@ -1318,8 +1311,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
-	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1343,7 +1335,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -1432,6 +1424,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
+ retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
@@ -1443,15 +1436,15 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 
 	/*
-	 * If someone beat us to it while sleeping in getnewvnode(),
-	 * push back the freshly allocated vnode we don't need, and return.
+	 * If someone beat us to it, put back the freshly allocated
+	 * vnode/inode pair and retry.
 	 */
 	mutex_enter(&ufs_hashlock);
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+	if (ufs_ihashget(dev, ino, 0) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
 		pool_put(&ffs_inode_pool, ip);
-		return (0);
+		goto retry;
 	}
 
 	vp->v_flag |= VLOCKSWORK;
@@ -1470,12 +1463,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip->i_number = ino;
 	LIST_INIT(&ip->i_pcbufhd);
 #ifdef QUOTA
-	{
-		int i;
-
-		for (i = 0; i < MAXQUOTAS; i++)
-			ip->i_dquot[i] = NODQUOT;
-	}
+	ufsquota_init(ip);
 #endif
 
 	/*
@@ -1602,15 +1590,14 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
-#ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
-		  "ffsinopl", &pool_allocator_nointr);
+		  "ffsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-		  "dino1pl", &pool_allocator_nointr);
+		  "dino1pl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
-		  "dino2pl", &pool_allocator_nointr);
-#endif
+		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
 	softdep_initialize();
+	ffs_snapshot_init();
 	ufs_init();
 }
 
@@ -1628,12 +1615,11 @@ ffs_done(void)
 		return;
 
 	/* XXX softdep cleanup ? */
+	ffs_snapshot_fini();
 	ufs_done();
-#ifdef _LKM
 	pool_destroy(&ffs_dinode2_pool);
 	pool_destroy(&ffs_dinode1_pool);
 	pool_destroy(&ffs_inode_pool);
-#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")

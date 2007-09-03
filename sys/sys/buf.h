@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.81.2.3 2007/02/26 09:12:10 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.81.2.4 2007/09/03 14:45:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ struct buf {
 	int	b_resid;		/* Remaining I/O. */
 	dev_t	b_dev;			/* Device associated with buffer. */
 	struct {
-		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
+		void *	b_addr;		/* Memory, superblocks, indirect etc. */
 	} b_un;
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
@@ -175,6 +175,7 @@ do {									\
 	LIST_INIT(&(bp)->b_dep);					\
 	simple_lock_init(&(bp)->b_interlock);				\
 	(bp)->b_dev = NODEV;						\
+	(bp)->b_error = 0;						\
 	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
 } while (/*CONSTCOND*/0)
 
@@ -199,7 +200,6 @@ do {									\
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
 #define	B_DONE		0x00000200	/* I/O completed. */
-#define	B_ERROR		0x00000800	/* I/O error occurred. */
 #define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
@@ -217,7 +217,7 @@ do {									\
 
 #define BUF_FLAGBITS \
     "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI" \
-    "\11DIRTY\12DONE\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
+    "\11DIRTY\12DONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
 
@@ -262,7 +262,7 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	struct bio_ops bioops;
+extern	struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 __BEGIN_DECLS

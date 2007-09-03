@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.54.6.3 2007/02/26 09:12:07 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.54.6.4 2007/09/03 14:44:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _NFS_NFSNODE_H_
 #define _NFS_NFSNODE_H_
 
+#include <sys/condvar.h>
 #include <sys/mutex.h>
 
 #ifndef _NFS_NFS_H_
@@ -212,19 +213,25 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define VTONFS(vp)	((struct nfsnode *)(vp)->v_data)
 #define NFSTOV(np)	((np)->n_vnode)
 
+#ifdef _KERNEL
+
 /*
  * Per-nfsiod datas
  */
 struct nfs_iod {
-	struct simplelock nid_slock;
-	struct proc *nid_proc;
-	struct proc *nid_want;
+	kmutex_t nid_lock;
+	kcondvar_t nid_cv;
+	LIST_ENTRY(nfs_iod) nid_idle;
 	struct nfsmount *nid_mount;
+	bool nid_exiting;
+
+	LIST_ENTRY(nfs_iod) nid_all;
 };
 
-#ifdef _KERNEL
-
-extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+LIST_HEAD(nfs_iodlist, nfs_iod);
+extern kmutex_t nfs_iodlist_lock;
+extern struct nfs_iodlist nfs_iodlist_idle;
+extern struct nfs_iodlist nfs_iodlist_all;
 extern u_long nfsdirhashmask;
 
 /*

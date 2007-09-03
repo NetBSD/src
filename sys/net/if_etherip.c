@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.4.2.2 2006/12/30 20:50:20 yamt Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.4.2.3 2007/09/03 14:42:04 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -140,6 +140,8 @@
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
+#include <compat/sys/sockio.h>
+
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
 SYSCTL_SETUP_PROTO(sysctl_etherip_setup);
@@ -157,7 +159,7 @@ extern struct cfdriver etherip_cd;
 static void etherip_start(struct ifnet *);
 static void etherip_stop(struct ifnet *, int);
 static int  etherip_init(struct ifnet *);
-static int  etherip_ioctl(struct ifnet *, u_long, caddr_t);
+static int  etherip_ioctl(struct ifnet *, u_long, void *);
 
 static int  etherip_mediachange(struct ifnet *);
 static void etherip_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -211,9 +213,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t ui;
 	int error;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si  = NULL;
-#endif
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
 
@@ -321,6 +321,7 @@ etherip_detach(struct device* self, int flags)
 	etherip_delete_tunnel(ifp);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	rtcache_free(&sc->sc_ro);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 
 	return 0;
@@ -353,12 +354,8 @@ etherip_start(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if(sc->sc_si)
 		softintr_schedule(sc->sc_si);
-#else
-	etheripintr(sc);
-#endif
 }
 
 static void
@@ -404,10 +401,10 @@ etheripintr(void *arg)
 }
 
 static int
-etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr = data;
 	struct sockaddr *src, *dst;
 	int s, error;
 
@@ -473,6 +470,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 		break;
 
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		s = splnet();
@@ -523,12 +523,10 @@ etherip_set_tunnel(struct ifnet *ifp,
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softintr_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
@@ -545,11 +543,9 @@ etherip_set_tunnel(struct ifnet *ifp,
 
 	ifp->if_flags |= IFF_RUNNING;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
-#endif
 
 out:
 	splx(s);
@@ -565,12 +561,10 @@ etherip_delete_tunnel(struct ifnet *ifp)
 
 	s = splsoftnet();
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softintr_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	if (sc->sc_src) {
 		FREE(sc->sc_src, M_IFADDR);
@@ -588,7 +582,6 @@ etherip_delete_tunnel(struct ifnet *ifp)
 static int
 etherip_init(struct ifnet *ifp)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
@@ -596,7 +589,6 @@ etherip_init(struct ifnet *ifp)
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);
-#endif
 
 	ifp->if_flags |= IFF_RUNNING;
 	etherip_start(ifp);
@@ -686,11 +678,12 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	int error;
 	size_t len;
 	char addr[3 * ETHER_ADDR_LEN];
+	char enaddr[ETHER_ADDR_LEN];
 
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), CLLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -701,7 +694,9 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
+	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	                        enaddr, ETHER_ADDR_LEN) == NULL)
 		return EINVAL;
 
 	return error;

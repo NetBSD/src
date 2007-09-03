@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.43.2.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.43.2.3 2007/09/03 14:42:27 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.43.2.2 2006/12/30 20:50:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.43.2.3 2007/09/03 14:42:27 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -802,8 +802,8 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		/* XXX stat, msg */
 		return NULL;
 	}
-	memcpy(&wh, mtod(m, caddr_t), hdrlen);
-	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
+	memcpy(&wh, mtod(m, void *), hdrlen);
+	llc = (struct llc *)(mtod(m, char *) + hdrlen);
 	if (llc->llc_dsap == LLC_SNAP_LSAP && llc->llc_ssap == LLC_SNAP_LSAP &&
 	    llc->llc_control == LLC_UI && llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 && llc->llc_snap.org_code[2] == 0) {
@@ -832,9 +832,9 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		break;
 	}
 #ifdef ALIGNED_POINTER
-	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
+	if (!ALIGNED_POINTER(mtod(m, char *) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
-		caddr_t newdata;
+		char *newdata;
 		int off, pktlen;
 
 		n0 = NULL;
@@ -866,14 +866,14 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 			}
 			if (n0 == NULL) {
 				newdata =
-				    (caddr_t)ALIGN(n->m_data + sizeof(*eh)) -
+				    (char *)ALIGN(n->m_data + sizeof(*eh)) -
 				    sizeof(*eh);
 				n->m_len -= newdata - n->m_data;
 				n->m_data = newdata;
 			}
 			if (n->m_len > pktlen - off)
 				n->m_len = pktlen - off;
-			m_copydata(m, off, n->m_len, mtod(n, caddr_t));
+			m_copydata(m, off, n->m_len, mtod(n, void *));
 			off += n->m_len;
 			*np = n;
 			np = &n->m_next;

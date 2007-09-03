@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.3.12.3 2007/02/26 09:12:10 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.3.12.4 2007/09/03 14:46:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,6 @@
 #ifndef _SYS_CPU_DATA_H_
 #define	_SYS_CPU_DATA_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_multiprocessor.h"
-#endif
-
 struct callout;
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
@@ -62,25 +58,38 @@ struct lwp;
  */
 
 struct cpu_data {
+	/*
+	 * The first section is likely to be touched by other CPUs -
+	 * it is cache hot.
+	 */
+	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
+	void		*cpu_callout;		/* running callout */
+	void		*cpu_callout_cancel;	/* callout to be cancelled */
+	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
-
-	struct callout * volatile cpu_callout;	/* MP: a callout running */
-
-#if defined(MULTIPROCESSOR)
-	u_int		cpu_biglock_count;
-	struct lwp	*cpu_biglock_wanted;
-#endif /* defined(MULTIPROCESSOR) */
-
-	/* For LOCKDEBUG. */
-	u_long		cpu_spin_locks;		/* # of spinlockmgr locks */
-	u_long		cpu_simple_locks;	/* # of simple locks held */
+		
+	/*
+	 * This section is mostly CPU-private.
+	 */
+	lwp_t		*cpu_idlelwp;		/* idle lwp */
 	void		*cpu_lockstat;		/* lockstat private tables */
+	u_int		cpu_index;		/* CPU index */
+	u_int		cpu_biglock_count;	/* # recursive holds */
+	u_int		cpu_spin_locks;		/* # of spinlockmgr locks */
+	u_int		cpu_simple_locks;	/* # of simple locks held */
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
+	void		*cpu_softcpu;		/* soft interrupt table */
+	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
+	u_int		cpu_netisrs;		/* legacy netisrs XXX */
+	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
+	u_int		cpu_uarea_cnt;		/* count of free uareas */
+	vaddr_t		cpu_uarea_list;		/* free uareas */
 };
 
 /* compat definitions */
 #define	ci_schedstate		ci_data.cpu_schedstate
+#define	ci_index		ci_data.cpu_index
 #define	ci_biglock_count	ci_data.cpu_biglock_count
 #define	ci_biglock_wanted	ci_data.cpu_biglock_wanted
 #define	ci_spin_locks		ci_data.cpu_spin_locks
@@ -89,6 +98,6 @@ struct cpu_data {
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 
-void	mi_cpu_init(struct cpu_info *ci);
+int mi_cpu_attach(struct cpu_info *ci);
 
 #endif /* _SYS_CPU_DATA_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_srt.c,v 1.2.2.3 2007/02/26 09:11:36 yamt Exp $ */
+/* $NetBSD: if_srt.c,v 1.2.2.4 2007/09/03 14:42:12 yamt Exp $ */
 /* This file is in the public domain. */
 
 #include "opt_inet.h"
@@ -128,7 +128,7 @@ static RT *find_rt(SOFTC *sc, int af, ...)
 
 /* Network device interface. */
 
-static int srt_if_ioctl(struct ifnet *intf, u_long cmd, caddr_t data)
+static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
 {
  struct ifaddr *ifa;
  struct ifreq *ifr;
@@ -328,7 +328,7 @@ static int srt_close(dev_t dev, int flag, int mode, struct lwp *l)
 static int srt_ioctl(
 	dev_t dev,
 	u_long cmd,
-	caddr_t data,
+	void *data,
 	int flag,
 	struct lwp *l )
 {

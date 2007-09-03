@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.3.2.1 2006/06/21 15:10:46 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.3.2.2 2007/09/03 14:42:29 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -263,7 +263,7 @@ struct ieee80211_michael_event {
 
 void	if_printf(struct ifnet *, const char *, ...);
 void	m_align(struct mbuf *, int);
-int	m_append(struct mbuf *, int, const caddr_t);
+int	m_append(struct mbuf *, int, const void *);
 void	get_random_bytes(void *, size_t);
 
 void	ieee80211_sysctl_attach(struct ieee80211com *);

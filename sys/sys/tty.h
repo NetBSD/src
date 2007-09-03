@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.67.2.2 2007/02/26 09:12:16 yamt Exp $	*/
+/*	$NetBSD: tty.h,v 1.67.2.3 2007/09/03 14:46:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -222,7 +222,7 @@ int	 unputc(struct clist *);
 
 int	 nullmodem(struct tty *, int);
 int	 tputchar(int, int, struct tty *);
-int	 ttioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+int	 ttioctl(struct tty *, u_long, void *, int, struct lwp *);
 int	 ttread(struct tty *, struct uio *, int);
 void	 ttrstrt(void *);
 int	 ttpoll(struct tty *, int, struct lwp *);
@@ -271,7 +271,7 @@ void	clfree(struct clist *);
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
     defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
 # define COMPAT_OLDTTY
-int 	ttcompat(struct tty *, u_long, caddr_t, int, struct lwp *);
+int 	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 #endif
 
 #endif /* _KERNEL */

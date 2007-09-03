@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.6.8.2 2007/02/26 09:11:41 yamt Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.6.8.3 2007/09/03 14:42:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.6.8.2 2007/02/26 09:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.6.8.3 2007/09/03 14:42:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct domain atalkdomain = {
 	.dom_externalize = NULL,
 	.dom_dispose = NULL,
 	.dom_protosw = atalksw,
-	.dom_protoswNPROTOSW = &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
+	.dom_protoswNPROTOSW = &atalksw[__arraycount(atalksw)],
 	.dom_rtattach = rn_inithead,
 	.dom_rtoffset = 32,
 	.dom_maxrtkey = sizeof(struct sockaddr_at),
@@ -78,7 +78,28 @@ struct domain atalkdomain = {
 	.dom_ifqueues = { &atintrq1, &atintrq2 },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = NULL,
-	.dom_rtflush = NULL,
-	.dom_rtflushall = NULL
+	.dom_sa_cmpofs = offsetof(struct sockaddr_at, sat_addr),
+	.dom_sa_cmplen = sizeof(struct at_addr),
+	.dom_rtcache = LIST_HEAD_INITIALIZER(atalkdomain.dom_rtcache)
 };
+
+int
+sockaddr_at_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	int rc;
+	uint_fast8_t len;
+	const uint_fast8_t addrofs = offsetof(struct sockaddr_at, sat_addr),
+			   addrend = addrofs + sizeof(struct at_addr);
+	const struct sockaddr_at *sat1, *sat2;
+
+	sat1 = satocsat(sa1);
+	sat2 = satocsat(sa2);
+
+	len = MIN(addrend, MIN(sat1->sat_len, sat2->sat_len));
+
+	if (len > addrofs &&
+	    (rc = memcmp(&sat1->sat_addr, &sat2->sat_addr, len - addrofs)) != 0)
+		return rc;
+
+	return sat1->sat_len - sat2->sat_len;
+}

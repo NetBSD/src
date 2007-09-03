@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.22.16.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: kernel.h,v 1.22.16.2 2007/09/03 14:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,6 @@ extern int tickfixinterval;	/* interval at which to apply adjustment */
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
-extern int lbolt;		/* once a second sleep address */
 
 extern int profsrc;		/* profiling source */
 

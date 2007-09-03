@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.21.4.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.21.4.2 2007/09/03 14:41:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.21.4.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.21.4.2 2007/09/03 14:41:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,5 +194,5 @@ umap_mapids(v_mount, credp)
 			groups[i] = NULLGROUP;
 	}
 
-	kauth_cred_setgroups(credp, groups, ngroups, -1);
+	kauth_cred_setgroups(credp, groups, ngroups, -1, UIO_SYSSPACE);
 }
