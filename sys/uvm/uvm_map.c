@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.237.2.1 2007/08/15 13:51:22 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.237.2.2 2007/09/03 10:24:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.237.2.1 2007/08/15 13:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.237.2.2 2007/09/03 10:24:25 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4055,6 +4055,10 @@ uvmspace_free(struct vmspace *vm)
 	}
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
+	mutex_destroy(&map->misc_lock);
+	mutex_destroy(&map->hint_lock);
+	mutex_destroy(&map->mutex);
+	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
 	pool_put(&uvm_vmspace_pool, vm);
 }
@@ -4961,10 +4965,10 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	if ((flags & VM_MAP_INTRSAFE) != 0) {
 		ipl = IPL_VM;
 	} else {
-		rw_init(&map->lock);
 		ipl = IPL_NONE;
 	}
 
+	rw_init(&map->lock);
 	cv_init(&map->cv, "vm_map");
 	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
 	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
