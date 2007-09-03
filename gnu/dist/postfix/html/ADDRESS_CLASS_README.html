@@ -53,9 +53,11 @@ address classes are very important for the operation of Postfix. </p>
 <li> <p> The list of domains that are a member of the class: for
 example, all <a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a>, or all <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a>. </p>
 
-<li> <p> The default delivery method. For example, the local or
-smtp delivery agent. This helps to keep Postfix configurations
-simple. </p>
+<li> <p> The default delivery transport. For example, the local,
+virtual or relay delivery transport (delivery transports are defined
+in <a href="master.5.html">master.cf</a>). This helps to keep Postfix configurations simple,
+by avoiding the need for explicit routing information in transport
+maps. </p>
 
 <li> <p> The list of valid recipient addresses for that address
 class. The Postfix SMTP server rejects invalid recipients with
@@ -95,7 +97,7 @@ empty, then the Postfix SMTP server accepts any address in the
 <a href="ADDRESS_CLASS_README.html#local_domain_class">local domain</a> class. </p>
 
 <li> <p> The mail delivery transport is specified with the
-<a href="postconf.5.html#local_transport">local_transport</a> parameter. The default value is <b>local:$<a href="postconf.5.html#myhostname">myhostname</a></b>
+<a href="postconf.5.html#local_transport">local_transport</a> parameter. The default value is <b><a href="local.8.html">local</a>:$<a href="postconf.5.html#myhostname">myhostname</a></b>
 for delivery with the <a href="local.8.html">local(8)</a> delivery agent. </p>
 
 </ul>
@@ -265,7 +267,7 @@ default.  The Postfix SMTP server uses this to reject mail for
 unknown local recipients. See the <a href="LOCAL_RECIPIENT_README.html">LOCAL_RECIPIENT_README</a> file hints
 and tips. </p>
 
-<li> <p> Introduction of the relay delivery transport in master.cf.
+<li> <p> Introduction of the relay delivery transport in <a href="master.5.html">master.cf</a>.
 This helps to avoid mail delivery scheduling problems on inbound
 mail relays when there is a lot of outbound mail, but may require
 that you update your "<a href="postconf.5.html#defer_transports">defer_transports</a>" setting. </p>

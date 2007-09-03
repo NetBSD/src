@@ -1,4 +1,4 @@
-/*	$NetBSD: ntomask.c,v 1.1.1.1.18.1 2007/05/07 17:04:48 pavel Exp $	*/
+/*	$NetBSD: ntomask.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:19 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.

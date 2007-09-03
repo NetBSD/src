@@ -11,7 +11,10 @@
 #	\fBpostmap -q - /etc/postfix/transport <\fIinputfile\fR
 # DESCRIPTION
 #	The optional \fBtransport\fR(5) table specifies a mapping from email
-#	addresses to message delivery transports and next-hop hosts. The
+#	addresses to message delivery transports and next-hop destinations. 
+#	Message delivery transports such as \fBlocal\fR or \fBsmtp\fR
+#	are defined in the \fBmaster.cf\fR file, and next-hop
+#	destinations are typically hosts or domain names. The
 #	table is searched by the \fBtrivial-rewrite\fR(8) daemon.
 #
 #	This mapping overrides the default \fItransport\fR:\fInexthop\fR
@@ -43,17 +46,17 @@
 #	that serves as input to the \fBpostmap\fR(1) command.
 #	The result, an indexed file in \fBdbm\fR or \fBdb\fR format, is used
 #	for fast searching by the mail system. Execute the command
-#	"\fBpostmap /etc/postfix/transport\fR" in order to rebuild the indexed
-#	file after changing the transport table.
+#	"\fBpostmap /etc/postfix/transport\fR" to rebuild an indexed
+#	file after changing the corresponding transport table.
 #
 #	When the table is provided via other means such as NIS, LDAP
 #	or SQL, the same lookups are done as for ordinary indexed files.
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions, or lookups
-#	can be directed to TCP-based server. In that case, the lookups are
-#	done in a slightly different way as described below under
-#	"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+#	can be directed to TCP-based server. In those case, the lookups
+#	are done in a slightly different way as described below under
+#	"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 # CASE FOLDING
 # .ad
 # .fi
@@ -149,20 +152,19 @@
 #	the nexthop information) and specify a wildcard for all other
 #	destinations.
 #
-# .ti +5
-#	\fB\&my.domain    :\fR
-# .ti +5
-#	\fB\&.my.domain   :\fR
-# .ti +5
-#	\fB*	     smtp:outbound-relay.my.domain\fR
+# .nf
+#	     \fB\&my.domain    :\fR
+#	     \fB\&.my.domain   :\fR
+#	     \fB*            smtp:outbound-relay.my.domain\fR
+# .fi
 #
 #	In order to send mail for \fBexample.com\fR and its subdomains
 #	via the \fBuucp\fR transport to the UUCP host named \fBexample\fR:
 #
-# .ti +5
-#	\fBexample.com      uucp:example\fR
-# .ti +5
-#	\fB\&.example.com     uucp:example\fR
+# .nf
+#	     \fBexample.com      uucp:example\fR
+#	     \fB\&.example.com     uucp:example\fR
+# .fi
 #
 #	When no nexthop host name is specified, the destination domain
 #	name is used instead. For example, the following directs mail for
@@ -170,18 +172,19 @@
 #	exchanger for \fBexample.com\fR.  The \fBslow\fR transport could be
 #	configured to run at most one delivery process at a time:
 #
-# .ti +5
-#	\fBexample.com      slow:\fR
+# .nf
+#	     \fBexample.com      slow:\fR
+# .fi
 #
 #	When no transport is specified, Postfix uses the transport that
 #	matches the address domain class (see DESCRIPTION
 #	above).  The following sends all mail for \fBexample.com\fR and its
 #	subdomains to host \fBgateway.example.com\fR:
 #
-# .ti +5
-#	\fBexample.com      :[gateway.example.com]\fR
-# .ti +5
-#	\fB\&.example.com     :[gateway.example.com]\fR
+# .nf
+#	     \fBexample.com      :[gateway.example.com]\fR
+#	     \fB\&.example.com     :[gateway.example.com]\fR
+# .fi
 #
 #	In the above example, the [] suppress MX lookups.
 #	This prevents mail routing loops when your machine is primary MX
@@ -190,8 +193,9 @@
 #	In the case of delivery via SMTP, one may specify
 #	\fIhostname\fR:\fIservice\fR instead of just a host:
 #
-# .ti +5
-#	\fBexample.com      smtp:bar.example:2025\fR
+# .nf
+#	     \fBexample.com      smtp:bar.example:2025\fR
+# .fi
 #
 #	This directs mail for \fIuser\fR@\fBexample.com\fR to host \fBbar.example\fR
 #	port \fB2025\fR. Instead of a numerical port a symbolic name may be
@@ -199,8 +203,9 @@
 #
 #	The error mailer can be used to bounce mail:
 #
-# .ti +5
-#	\fB\&.example.com     error:mail for *.example.com is not deliverable\fR
+# .nf
+#	     \fB\&.example.com     error:mail for *.example.com is not deliverable\fR
+# .fi
 #
 #	This causes all mail for \fIuser\fR@\fIanything\fB.example.com\fR
 #	to be bounced.
@@ -220,16 +225,17 @@
 #	Patterns are applied in the order as specified in the table, until a
 #	pattern is found that matches the search string.
 #
-#	Results are the same as with indexed file lookups, with
-#	the additional feature that parenthesized substrings from the
-#	pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
+#	The \fBtrivial-rewrite\fR(8) server disallows regular
+#	expression substitution of $1 etc. in regular expression
+#	lookup tables, because that could open a security hole
+#	(Postfix version 2.3 and later).
 # TCP-BASED TABLES
 # .ad
 # .fi
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available up to and including Postfix version 2.3.
+#	This feature is not available up to and including Postfix version 2.4.
 #
 #	Each lookup operation uses the entire recipient address once.  Thus,
 #	\fIsome.domain.hierarchy\fR is not looked up via its parent domains,
@@ -261,6 +267,7 @@
 #	"\fBpostconf html_directory\fR" to locate this information.
 # .na
 # .nf
+#	ADDRESS_REWRITING_README, address rewriting guide
 #	DATABASE_README, Postfix lookup table overview
 #	FILTER_README, external content filter
 # LICENSE

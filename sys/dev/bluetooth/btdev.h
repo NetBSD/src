@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.5 2006/10/04 19:23:59 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.5.16.1 2007/09/03 07:04:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -43,6 +43,10 @@
 #define BTDEVladdr		"local-bdaddr"
 #define BTDEVraddr		"remote-bdaddr"
 #define BTDEVservice		"service-name"
+#define BTDEVmode		"link-mode"
+#define BTDEVauth		"auth"
+#define BTDEVencrypt		"encrypt"
+#define BTDEVsecure		"secure"
 
 #ifdef _KERNEL
 struct btdev {

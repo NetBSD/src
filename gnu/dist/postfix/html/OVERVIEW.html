@@ -359,8 +359,7 @@ is optimized for delivery to mailbox servers such as Cyrus.  The
 advantage of this setup is that one Postfix machine can feed multiple
 mailbox servers over LMTP. The opposite is true as well:  one
 mailbox server can be fed over LMTP by multiple Postfix machines.
-The <a href="LMTP_README.html">LMTP_README</a> document gives examples of how to use the <a href="lmtp.8.html">lmtp(8)</a>
-client.  </p>
+</p>
 
 <li> <p> The <a href="local.8.html">local(8)</a> delivery agent understands UNIX-style mailboxes,
 qmail-compatible maildir files, Sendmail-style system-wide <a href="aliases.5.html">aliases(5)</a>
@@ -461,12 +460,13 @@ bgcolor="#f0f0ff"> <br> <a href="smtpd.8.html">smtpd(8)</a><br><br> </td> <td> <
 
 </table>
 
-<li> <p> The <a href="bounce.8.html">bounce(8)</a>, <a href="defer.8.html">defer(8)</a> and <a href="trace.8.html">trace(8)</a> servers each maintain
-their own queue directory trees with per-message logfiles. This
-information is used to send delivery or non-delivery notifications
-to the sender. </p>
+<li> <p> The <a href="bounce.8.html">bounce(8)</a>, <a href="defer.8.html">defer(8)</a> and <a href="trace.8.html">trace(8)</a> services each maintain
+their own queue directory trees with per-message logfiles. Postfix
+uses this information when sending "failed", "delayed" or "success"
+delivery status notifications to the sender. </p>
 
-<p> The <a href="trace.8.html">trace(8)</a> service implements support for the Postfix "sendmail
+<p> The <a href="trace.8.html">trace(8)</a> service also implements support for the Postfix
+"sendmail
 -bv" and "sendmail -v" commands which produce reports about how
 Postfix delivers mail, and is available with Postfix version 2.1
 and later. See <a href="DEBUG_README.html#trace_mail"> DEBUG_README
@@ -550,15 +550,30 @@ of times that a connection may be reused.  </p>
 
 <p> When delivering mail to a destination with multiple mail servers,
 connection caching can help to skip over a non-responding server,
-and thus dramatically speed up delivery.  </p>
+and thus dramatically speed up delivery. SMTP connection caching
+is available in Postfix version 2.2 and later.  More information
+about this feature is in the <a href="CONNECTION_CACHE_README.html">CONNECTION_CACHE_README</a> document. </p>
 
 <table>
 
-<tr> <td align="center" bgcolor="#f0f0ff"> <br> <a href="smtp.8.html">smtp(8)</a> <br>
-&nbsp; </td> <td> <tt> &lt;-&gt; </tt> </td> <td align="center"
-bgcolor="#f0f0ff"> <br> <a href="scache.8.html">scache(8)</a> <br> &nbsp; </td> <td> <tt>
-&lt;-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> <br>
-<a href="smtp.8.html">smtp(8)</a> <br> &nbsp; </td>
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td colspan="2"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td align="center" bgcolor="#f0f0ff"> <a href="qmgr.8.html">qmgr(8)</a> </td> <td> </td>
+<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
+rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+</tr>
+ 
+<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="2" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td align="left"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
+<td> &nbsp; </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> <a href="scache.8.html">scache(8)</a> </td> </tr>
 
 </table>
 

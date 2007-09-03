@@ -81,7 +81,11 @@ specify: </p>
 
 <p> That is, an empty value. With this setting, the Postfix SMTP
 server will not reject mail with "User unknown in local recipient
-table". </p>
+table". <b> Don't do this on systems that receive mail directly 
+from the Internet. With today's worms and viruses, Postfix will
+become a backscatter source: it accepts mail for non-existent
+recipients and then tries to return that mail as "undeliverable"
+to the often forged sender address</b>. </p>
 
 <h2><a name="change">When you need to change the local_recipient_maps
 setting in main.cf</a></h2>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.82 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.82.4.1 2007/09/03 07:05:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.82 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.82.4.1 2007/09/03 07:05:23 wrstuden Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -401,11 +401,13 @@ uao_free(struct uvm_aobj *aobj)
 {
 	int swpgonlydelta = 0;
 
+#if defined(VMSWAP)
+	uao_dropswap_range1(aobj, 0, 0);
+#endif /* defined(VMSWAP) */
+
 	simple_unlock(&aobj->u_obj.vmobjlock);
 
 #if defined(VMSWAP)
-	uao_dropswap_range1(aobj, 0, 0);
-
 	if (UAO_USES_SWHASH(aobj)) {
 
 		/*

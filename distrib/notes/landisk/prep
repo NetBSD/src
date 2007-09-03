@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1.2.2 2007/04/16 19:58:48 bouyer Exp $
+.\"	$NetBSD: prep,v 1.1.2.2.2.1 2007/09/03 06:57:32 wrstuden Exp $
 .
 Landisk NAS appliances come preinstalled with Linux on the internal
 hard disk or, in case of USL-5P that has no dedicated storage, Compact

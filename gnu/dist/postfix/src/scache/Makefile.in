@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -65,6 +65,7 @@ scache.o: ../../include/mail_conf.h
 scache.o: ../../include/mail_params.h
 scache.o: ../../include/mail_proto.h
 scache.o: ../../include/mail_server.h
+scache.o: ../../include/mail_version.h
 scache.o: ../../include/msg.h
 scache.o: ../../include/ring.h
 scache.o: ../../include/scache.h

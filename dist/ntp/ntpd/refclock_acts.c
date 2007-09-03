@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.4 2006/06/18 21:25:13 kardel Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.4.6.1 2007/09/03 06:56:13 wrstuden Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -370,8 +370,8 @@ acts_message(
 	up = (struct actsunit *)pp->unitptr;
 #ifdef DEBUG
 	ioctl(pp->io.fd, TIOCMGET, (char *)&modem);
-	sprintf(tbuf, "acts: %04x (%d %d) %d %s", modem, up->state,
-	    up->timer, (int)strlen(pp->a_lastcode), pp->a_lastcode);
+	sprintf(tbuf, "acts: %04x (%d %d) %lu %s", modem, up->state,
+	    up->timer, (unsigned long)strlen(pp->a_lastcode), pp->a_lastcode);
 	if (debug)
 		printf("%s\n", tbuf);
 #endif

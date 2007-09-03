@@ -18,7 +18,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -77,6 +77,7 @@ pipe.o: ../../include/mail_conf.h
 pipe.o: ../../include/mail_copy.h
 pipe.o: ../../include/mail_params.h
 pipe.o: ../../include/mail_server.h
+pipe.o: ../../include/mail_version.h
 pipe.o: ../../include/msg.h
 pipe.o: ../../include/msg_stats.h
 pipe.o: ../../include/mymalloc.h

@@ -117,23 +117,24 @@ PROXYMAP(8)                                                        PROXYMAP(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a> (see 'postconf -d' output)</b>
-              The lookup tables that the  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  is
+              The  lookup  tables  that the <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server is
               allowed to access.
 
 <b>SEE ALSO</b>
@@ -144,7 +145,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>HISTORY</b>

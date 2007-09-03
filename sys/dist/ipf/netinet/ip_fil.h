@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.6.12.1.2.1 2007/06/03 17:26:07 wrstuden Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.6.12.1.2.2 2007/09/03 07:04:49 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.43 2007/05/11 13:41:53 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.45 2007/05/28 11:56:22 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -158,14 +158,15 @@ typedef	union	i6addr	{
 #define	iplookupptr	vptr[0]
 #define	iplookupfunc	lptr[1]
 
-#define	I60(x)	(((i6addr_t *)(x))->i6[0])
-#define	I61(x)	(((i6addr_t *)(x))->i6[1])
-#define	I62(x)	(((i6addr_t *)(x))->i6[2])
-#define	I63(x)	(((i6addr_t *)(x))->i6[3])
-#define	HI60(x)	ntohl(((i6addr_t *)(x))->i6[0])
-#define	HI61(x)	ntohl(((i6addr_t *)(x))->i6[1])
-#define	HI62(x)	ntohl(((i6addr_t *)(x))->i6[2])
-#define	HI63(x)	ntohl(((i6addr_t *)(x))->i6[3])
+/* Avoid casting to a type presuming 64-bit alignment. */
+#define	I60(x)	(((u_32_t *)(x))[0])
+#define	I61(x)	(((u_32_t *)(x))[1])
+#define	I62(x)	(((u_32_t *)(x))[2])
+#define	I63(x)	(((u_32_t *)(x))[3])
+#define	HI60(x)	ntohl(((u_32_t *)(x))[0])
+#define	HI61(x)	ntohl(((u_32_t *)(x))[1])
+#define	HI62(x)	ntohl(((u_32_t *)(x))[2])
+#define	HI63(x)	ntohl(((u_32_t *)(x))[3])
 
 #define	IP6_EQ(a,b)	((I63(a) == I63(b)) && (I62(a) == I62(b)) && \
 			 (I61(a) == I61(b)) && (I60(a) == I60(b)))
@@ -331,6 +332,7 @@ typedef	struct	fr_info	{
 	void	*fin_nat;
 	void	*fin_state;
 	void	*fin_nattag;
+	void	*fin_exthdr;
 	ip_t	*fin_ip;
 	mb_t	**fin_mp;		/* pointer to pointer to mbuf */
 	mb_t	*fin_m;			/* pointer to mbuf */
@@ -1345,11 +1347,13 @@ extern	int	iplioctl __P((dev_t, u_long, void *, int, struct thread *));
 #      endif /* __FreeBSD_version >= 502116 */
 #     else
 #      if  (__NetBSD_Version__ >= 499001000)
-extern	int	iplioctl __P((dev_t, u_long, void*, int, struct lwp *));
-#      elif  (__NetBSD_Version__ >= 399001400)
+extern	int	iplioctl __P((dev_t, u_long, void *, int, struct lwp *));
+#       else
+#       if  (__NetBSD_Version__ >= 399001400)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
-#      else
+#       else
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+#       endif
 #      endif
 #     endif /* __FreeBSD_version >= 500024 */
 #    else
@@ -1410,8 +1414,8 @@ extern	char	*memstr __P((const char *, char *, size_t, size_t));
 extern	int	count4bits __P((u_32_t));
 extern	int	frrequest __P((int, ioctlcmd_t, void *, int, int));
 extern	char	*getifname __P((struct ifnet *));
-extern	int	iplattach __P((void));
-extern	int	ipldetach __P((void));
+extern	int	ipfattach __P((void));
+extern	int	ipfdetach __P((void));
 extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	copyinptr __P((void *, void *, size_t));
 extern	int	copyoutptr __P((void *, void *, size_t));

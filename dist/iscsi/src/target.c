@@ -1346,7 +1346,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 		int             read_status = 0;
 		iscsi_r2t_t     r2t;
 		int             desired_xfer_len = MIN(sess->sess_params.first_burst_length,
-				      (args->trans_len - args->bytes_recv));
+				      args->trans_len) - args->bytes_recv;
 
 		(void) memset(&r2t, 0x0, sizeof(r2t));
 		do {

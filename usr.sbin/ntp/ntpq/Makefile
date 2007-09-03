@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2006/07/29 08:18:36 kardel Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2007/09/03 07:05:41 wrstuden Exp $
 
 PROG=	ntpq
 MAN=	ntpq.8
-SRCS=	ntpq.c ntpq_ops.c
+SRCS=	ntpq.c ntpq-subs.c ntpq-opts.c
 
 LDADD+=	-L${LIBISC} -lisc
 LDADD+=	-ledit -ltermcap

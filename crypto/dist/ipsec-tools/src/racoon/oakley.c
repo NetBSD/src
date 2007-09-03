@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.9.2.1 2007/05/13 10:14:05 jdc Exp $	*/
+/*	$NetBSD: oakley.c,v 1.9.2.1.2.1 2007/09/03 06:51:17 wrstuden Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1878,6 +1878,8 @@ oakley_check_certid(iph1)
 		if (error != 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"ID mismatched with ASN1 SubjectName.\n");
+			plogdump(LLV_DEBUG, id_b + 1, idlen);
+			plogdump(LLV_DEBUG, name->v, idlen);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		return 0;
@@ -1948,6 +1950,8 @@ oakley_check_certid(iph1)
 		if (error != 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"ID mismatched with subjectAltName.\n");
+			plogdump(LLV_DEBUG, id_b + 1, idlen);
+			plogdump(LLV_DEBUG, a, idlen);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		return 0;
@@ -1996,6 +2000,8 @@ oakley_check_certid(iph1)
 		error = memcmp(id_b + 1, altname, idlen);
 		if (error) {
 			plog(LLV_ERROR, LOCATION, NULL, "ID mismatched.\n");
+			plogdump(LLV_DEBUG, id_b + 1, idlen);
+			plogdump(LLV_DEBUG, altname, idlen);
 			racoon_free(altname);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}

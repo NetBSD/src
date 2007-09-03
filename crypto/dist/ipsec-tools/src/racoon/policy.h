@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.4.2.1 2007/05/13 10:14:06 jdc Exp $	*/
+/*	$NetBSD: policy.h,v 1.4.2.1.2.1 2007/09/03 06:51:20 wrstuden Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -155,6 +155,7 @@ extern const char *spidx2str __P((const struct policyindex *));
 #ifdef HAVE_SECCTX
 #include <selinux/selinux.h>
 extern int get_security_context __P((vchar_t *, struct policyindex *));
+extern void init_avc __P((void));
 extern int within_range __P((security_context_t, security_context_t));
 extern void set_secctx_in_proposal __P((struct ph2handle *, struct policyindex));
 #endif

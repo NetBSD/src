@@ -1,0 +1,53 @@
+*** ENVELOPE RECORDS test-queue-file10.tmp ***
+        0 message_size:             332             199               1               0             332
+       81 message_arrival_time: Sat Jan 20 20:53:54 2007
+      100 create_time: Sat Jan 20 20:53:59 2007
+      124 named_attribute: rewrite_context=local
+      147 sender_fullname: Wietse Venema
+      162 sender: me@porcupine.org
+      180 pointer_record:               0
+      197 *** MESSAGE CONTENTS test-queue-file10.tmp ***
+      199 regular_text: Received: by hades.porcupine.org (Postfix, from userid 1001)
+      261 regular_text: 	id B85F1290407; Sat, 20 Jan 2007 20:53:59 -0500 (EST)
+      317 regular_text: From: me@porcupine.org
+      341 regular_text: To: you@porcupine.org
+      364 regular_text: Message-Id: <20060725192735.5EC2D29013F@hades.porcupine.org>
+      426 regular_text: Date: Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+      471 regular_text: Subject: hey!
+      486 padding: 0
+      489 pointer_record:             506
+      506 regular_text: 
+      508 pointer_record:             573
+      573 regular_text: Sed ut perspiciatis unde omnis iste natus error sit voluptatem
+      638 regular_text: accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
+      705 regular_text: quae ab illo inventore veritatis et quasi architecto beatae vitae
+      773 regular_text: dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit
+      842 regular_text: aspernatur aut odit aut fugit, sed quia consequuntur magni dolores
+      911 regular_text: eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam
+      977 regular_text: est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci
+     1045 regular_text: velit, sed quia non numquam eius modi tempora incidunt ut labore
+     1112 regular_text: et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima
+     1177 regular_text: veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam,
+     1251 regular_text: nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure
+     1320 regular_text: reprehenderit qui in ea voluptate velit esse quam nihil molestiae
+     1388 regular_text: consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla
+     1455 regular_text: pariatur?
+     1467 regular_text: 
+     1470 regular_text: At vero eos et accusamus et iusto odio dignissimos ducimus qui
+     1535 regular_text: blanditiis praesentium voluptatum deleniti atque corrupti quos
+     1600 regular_text: dolores et quas molestias excepturi sint occaecati cupiditate non
+     1668 regular_text: provident, similique sunt in culpa qui officia deserunt mollitia
+     1735 regular_text: animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis
+     1806 regular_text: est et expedita distinctio. Nam libero tempore, cum soluta nobis
+     1873 regular_text: est eligendi optio cumque nihil impedit quo minus id quod maxime
+     1940 regular_text: placeat facere possimus, omnis voluptas assumenda est, omnis dolor
+     2009 regular_text: repellendus. Temporibus autem quibusdam et aut officiis debitis aut
+     2079 regular_text: rerum necessitatibus saepe eveniet ut et voluptates repudiandae
+     2145 regular_text: sint et molestiae non recusandae. Itaque earum rerum hic tenetur a
+     2214 regular_text: sapiente delectus, ut aut reiciendis voluptatibus maiores alias
+     2280 regular_text: consequatur aut perferendis doloribus asperiores repellat.
+     2341 pointer_record:             531
+      531 *** HEADER EXTRACTED test-queue-file10.tmp ***
+      533 original_recipient: you@porcupine.org
+      552 recipient: you@porcupine.org
+      571 *** MESSAGE FILE END test-queue-file10.tmp ***

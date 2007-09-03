@@ -1,4 +1,4 @@
-/*	$NetBSD: remove_hashnode.c,v 1.1.1.1.18.1 2007/05/07 17:05:00 pavel Exp $	*/
+/*	$NetBSD: remove_hashnode.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:39 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.

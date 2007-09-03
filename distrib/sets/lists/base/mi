@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.4 2007/05/08 10:45:07 pavel Exp $
+# $NetBSD: mi,v 1.678.2.4.2.1 2007/09/03 06:57:37 wrstuden Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1312,7 +1312,6 @@
 ./usr/share/doc/html/bind9			base-htmldoc-share
 ./usr/share/doc/html/bind9/arm			base-htmldoc-share
 ./usr/share/doc/html/bzip2			base-htmldoc-share
-./usr/share/doc/html/ntp			base-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints			base-obsolete		obsolete
 ./usr/share/doc/html/postfix			base-htmldoc-share
 ./usr/share/doc/psd				base-psd-share
@@ -2526,7 +2525,7 @@
 ./usr/share/man/cat8/evbmips			base-man-share
 ./usr/share/man/cat8/evbppc			base-man-share
 ./usr/share/man/cat8/evbsh3			base-man-share
-./usr/share/man/cat8/evbsh5			base-man-share
+./usr/share/man/cat8/evbsh5			base-obsolete	obsolete
 ./usr/share/man/cat8/hp300			base-man-share
 ./usr/share/man/cat8/hp700			base-man-share
 ./usr/share/man/cat8/hpcarm			base-man-share
@@ -2643,7 +2642,7 @@
 ./usr/share/man/html8/evbmips			base-man-share
 ./usr/share/man/html8/evbppc			base-man-share
 ./usr/share/man/html8/evbsh3			base-man-share
-./usr/share/man/html8/evbsh5			base-man-share
+./usr/share/man/html8/evbsh5			base-obsolete	obsolete
 ./usr/share/man/html8/hp300			base-man-share
 ./usr/share/man/html8/hp700			base-man-share
 ./usr/share/man/html8/hpcarm			base-man-share
@@ -2763,7 +2762,7 @@
 ./usr/share/man/man8/evbmips			base-man-share
 ./usr/share/man/man8/evbppc			base-man-share
 ./usr/share/man/man8/evbsh3			base-man-share
-./usr/share/man/man8/evbsh5			base-man-share
+./usr/share/man/man8/evbsh5			base-obsolete	obsolete
 ./usr/share/man/man8/hp300			base-man-share
 ./usr/share/man/man8/hp700			base-man-share
 ./usr/share/man/man8/hpcarm			base-man-share
@@ -3249,7 +3248,7 @@
 ./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
-./usr/share/wscons/keymaps/pckbd.fr_CA.iso8859-1	base-util-share
+./usr/share/wscons/keymaps/pckbd.fr_CA.iso8859-1	base-util-share 	share
 ./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-obsolete	obsolete
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share

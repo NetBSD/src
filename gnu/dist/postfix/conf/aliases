@@ -114,8 +114,8 @@ decode:		root
 #               When the command fails, a limited amount of command
 #               output is mailed back  to  the  sender.   The  file
 #               /usr/include/sysexits.h  defines  the expected exit
-#               status codes. For example, use |"exit 67" to  simu-
-#               late  a  "user  unknown"  error,  and  |"exit 0" to
+#               status codes. For example, use "|exit 67" to  simu-
+#               late  a  "user  unknown"  error,  and  "|exit 0" to
 #               implement an expensive black hole.
 # 
 #        :include:/file/name

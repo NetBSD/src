@@ -1,4 +1,4 @@
-/*	$NetBSD: facpri.h,v 1.1.1.1.18.1 2007/05/07 17:04:33 pavel Exp $	*/
+/*	$NetBSD: facpri.h,v 1.1.1.1.18.1.2.1 2007/09/03 06:53:58 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2001 by Darren Reed.

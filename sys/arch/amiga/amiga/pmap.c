@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.8.1 2007/06/04 01:54:14 wrstuden Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.8.2 2007/09/03 07:03:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.8.1 2007/06/04 01:54:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.8.2 2007/09/03 07:03:06 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,12 @@ static void	pmap_pvdump(paddr_t);
  * Get STEs and PTEs for user/kernel address space
  */
 #if defined(M68040) || defined(M68060)
-#define	pmap_ste(m, v)	(&((m)->pm_stab[(vaddr_t)(v) >> pmap_ishift]))
+#if defined(M68020) || defined(M68030)
+#define	pmap_ste(m, v)	(&((m)->pm_stab[(vaddr_t)(v) \
+	>> (mmutype == MMU_68040 ? SG4_SHIFT1 : SG_ISHIFT)]))
+#else
+#define	pmap_ste(m, v)	(&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
+#endif
 #define	pmap_ste1(m, v) (&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
 /* XXX assumes physically contiguous ST pages (if more than one) */
 #define	pmap_ste2(m, v) \
@@ -290,7 +295,6 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 #if defined(M68040) || defined(M68060)
-static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
@@ -458,11 +462,8 @@ pmap_bootstrap(firstaddr, loadaddr)
 	pmap_kernel()->pm_stab = Sysseg;
 	pmap_kernel()->pm_ptab = Sysmap;
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
-		pmap_ishift = SG4_SHIFT1;
+	if (mmutype == MMU_68040)
 		pmap_kernel()->pm_stfree = protostfree;
-	} else
-		pmap_ishift = SG_ISHIFT;
 #endif
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
@@ -479,6 +480,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t	,CADDR1	 ,1			)
 	SYSMAP(caddr_t	,CADDR2	 ,1			)
 	SYSMAP(caddr_t	,vmmap	 ,1			)
+	SYSMAP(caddr_t	,msgbufaddr ,btoc(MSGBUFSIZE)	)
 
 	DCIS();
 

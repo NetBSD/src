@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.15 2006/07/20 01:00:52 rpaulo Exp $
+#	$NetBSD: Makefile.inc,v 1.15.6.1 2007/09/03 07:01:06 wrstuden Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client and server
 
 WARNS?=	0
 

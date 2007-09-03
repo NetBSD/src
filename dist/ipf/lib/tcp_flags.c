@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_flags.c,v 1.1.1.1.18.1 2007/05/07 17:05:02 pavel Exp $	*/
+/*	$NetBSD: tcp_flags.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:41 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2004 by Darren Reed.

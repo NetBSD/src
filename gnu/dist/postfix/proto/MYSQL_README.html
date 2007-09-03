@@ -57,6 +57,17 @@ make -f Makefile.init makefiles \
 </pre>
 </blockquote>
 
+<p> On Solaris, use this instead: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+    'AUXLIBS=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+        -lmysqlclient -lz -lm'
+</pre>
+</blockquote>
+
 <p> Then, just run 'make'. This requires libz, the compression
 library.  Older mysql implementations build without libz. </p>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.3.6.1 2007/09/03 06:56:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -904,12 +904,14 @@ jupiter_debug(peer, function, fmt, va_alist)
 	 */
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	record_clock_stats(&(peer->srcadr), buffer);
+#ifdef DEBUG
 	if (debug) {
 		fprintf(stdout, "%s: ", function);
 		fprintf(stdout, buffer);
 		fprintf(stdout, "\n");
 		fflush(stdout);
 	}
+#endif
 
 	va_end(ap);
 }

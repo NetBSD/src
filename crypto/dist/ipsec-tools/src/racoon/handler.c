@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9.2.1 2007/05/13 10:14:04 jdc Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.2.1.2.1 2007/09/03 06:51:11 wrstuden Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -147,13 +147,23 @@ getph1byaddr(local, remote)
 {
 	struct ph1handle *p;
 
+	plog(LLV_DEBUG2, LOCATION, NULL, "getph1byaddr: start\n");
+	plog(LLV_DEBUG2, LOCATION, NULL, "local: %s\n", saddr2str(local));
+	plog(LLV_DEBUG2, LOCATION, NULL, "remote: %s\n", saddr2str(remote));
+
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (p->status == PHASE1ST_EXPIRED)
 			continue;
+		plog(LLV_DEBUG2, LOCATION, NULL, "p->local: %s\n", saddr2str(p->local));
+		plog(LLV_DEBUG2, LOCATION, NULL, "p->remote: %s\n", saddr2str(p->remote));
 		if (CMPSADDR(local, p->local) == 0
-		 && CMPSADDR(remote, p->remote) == 0)
+			&& CMPSADDR(remote, p->remote) == 0){
+			plog(LLV_DEBUG2, LOCATION, NULL, "matched\n");
 			return p;
+		}
 	}
+
+	plog(LLV_DEBUG2, LOCATION, NULL, "no match\n");
 
 	return NULL;
 }
@@ -692,12 +702,21 @@ flushph2()
 {
 	struct ph2handle *p, *next;
 
+	plog(LLV_DEBUG2, LOCATION, NULL,
+		 "flushing all ph2 handlers...\n");
+
 	for (p = LIST_FIRST(&ph2tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
 		/* send delete information */
-		if (p->status == PHASE2ST_ESTABLISHED) 
+		if (p->status == PHASE2ST_ESTABLISHED){
+			plog(LLV_DEBUG2, LOCATION, NULL,
+				 "got a ph2 handler to flush...\n");
 			isakmp_info_send_d2(p);
+		}else{
+			plog(LLV_DEBUG2, LOCATION, NULL,
+				 "skipping ph2 handler (state %d)\n", p->status);
+		}
 
 		delete_spd(p, 0);
 		unbindph12(p);
@@ -1053,6 +1072,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	int found, check_level;
 	struct sainfo *sainfo;
 	struct saprop *approval;
+	struct ph1handle *iph1;
 
 	/* 
 	 * Get the new sainfo using values of the old one
@@ -1099,11 +1119,18 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	 * XXX try tu find the new remote section to get the new check level ?
 	 * XXX lifebyte
 	 */
-	if (iph2->ph1 != NULL && iph2->ph1->rmconf != NULL) {
-		check_level = iph2->ph1->rmconf->pcheck_level;
+	if (iph2->ph1 != NULL)
+		iph1=iph2->ph1;
+	else
+		iph1=getph1byaddr(iph2->src, iph2->dst);
+
+	if(iph1 != NULL && iph1->rmconf != NULL) {
+		check_level = iph1->rmconf->pcheck_level;
 	} else {
-		plog(LLV_DEBUG, LOCATION, NULL,
-			 "No phase1 rmconf found !\n");
+		if(iph1 != NULL)
+			plog(LLV_DEBUG, LOCATION, NULL, "No phase1 rmconf found !\n");
+		else
+			plog(LLV_DEBUG, LOCATION, NULL, "No phase1 found !\n");
 		check_level = PROP_CHECK_EXACT;
 	}
 
@@ -1123,11 +1150,15 @@ static int revalidate_ph2(struct ph2handle *iph2){
 			return 0;
 		}
 
+#if 0
+		/* Lifebyte is deprecated, just ignore it
+		 */
 		if (sainfo->lifebyte < approval->lifebyte) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				 "Reload: lifebyte mismatch\n");
 			return 0;
 		}
+#endif
 
 		if (sainfo->pfs_group &&
 		   sainfo->pfs_group != approval->pfs_group) {
@@ -1139,7 +1170,11 @@ static int revalidate_ph2(struct ph2handle *iph2){
 
 	case PROP_CHECK_EXACT:
 		if (sainfo->lifetime != approval->lifetime ||
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 		    sainfo->lifebyte != approval->lifebyte ||
+#endif
 		    sainfo->pfs_group != iph2->approval->pfs_group) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 			    "Reload: lifetime | pfs mismatch\n");
@@ -1379,11 +1414,15 @@ static int revalidate_ph1(struct ph1handle *iph1){
 				continue;
 			}
 
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 			if (approval->lifebyte > p->lifebyte) {
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Reload: lifebyte mismatch\n");
 				continue;
 			}
+#endif
 			break;
 
 		case PROP_CHECK_EXACT:
@@ -1399,11 +1438,15 @@ static int revalidate_ph1(struct ph1handle *iph1){
 				continue;
 			}
 
+#if 0
+			/* Lifebyte is deprecated, just ignore it
+			 */
 			if (approval->lifebyte != p->lifebyte) {
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Reload: lifebyte mismatch\n");
 				continue;
 			}
+#endif
 			break;
 
 		default:

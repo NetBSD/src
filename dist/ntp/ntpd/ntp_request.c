@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.5 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.5.6.1 2007/09/03 06:56:03 wrstuden Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -100,7 +100,9 @@ static	void	req_clr_trap	P((struct sockaddr_storage *, struct interface *, struc
 static	void	do_setclr_trap	P((struct sockaddr_storage *, struct interface *, struct req_pkt *, int));
 static	void	set_request_keyid P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
 static	void	set_control_keyid P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
-static	void	get_ctl_stats P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
+static	void	get_ctl_stats   P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
+static	void	get_if_stats    P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
+static	void	do_if_reload    P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
 #ifdef KERNEL_PLL
 static	void	get_kernel_info P((struct sockaddr_storage *, struct interface *, struct req_pkt *));
 #endif /* KERNEL_PLL */
@@ -173,6 +175,9 @@ static	struct req_proc ntp_codes[] = {
 	{ REQ_GET_CLKBUGINFO, NOAUTH, sizeof(u_int32), sizeof(u_int32),
 				get_clkbug_info },
 #endif
+	{ REQ_IF_STATS,		AUTH, 0, 0,	get_if_stats },
+	{ REQ_IF_RELOAD,        AUTH, 0, 0,	do_if_reload },
+
 	{ NO_REQUEST,		NOAUTH,	0, 0,	0 }
 };
 
@@ -733,7 +738,10 @@ peer_list_sum(
 				if (client_v6_capable) {
 					ips->srcadr6 = GET_INADDR6(pp->srcadr);
 					ips->v6_flag = 1;
-					ips->dstadr6 = GET_INADDR6(pp->dstadr->sin);
+					if (pp->dstadr)
+						ips->dstadr6 = GET_INADDR6(pp->dstadr->sin);
+					else
+						memset(&ips->dstadr6, 0, sizeof(ips->dstadr6));
 					skip = 0;
 				} else {
 					skip = 1;
@@ -744,17 +752,22 @@ peer_list_sum(
 				if (client_v6_capable)
 					ips->v6_flag = 0;
 /* XXX PDM This code is buggy. Need to replace with a straightforward assignment */
-				ips->dstadr = (pp->processed) ?
-					pp->cast_flags == MDF_BCAST ?
-					GET_INADDR(pp->dstadr->bcast):
-					pp->cast_flags ?
-					GET_INADDR(pp->dstadr->sin) ?
-					GET_INADDR(pp->dstadr->sin):
-					GET_INADDR(pp->dstadr->bcast):
-					1 : GET_INADDR(pp->dstadr->sin);
+				
+				if (pp->dstadr)
+					ips->dstadr = (pp->processed) ?
+						pp->cast_flags == MDF_BCAST ?
+						GET_INADDR(pp->dstadr->bcast):
+						pp->cast_flags ?
+						GET_INADDR(pp->dstadr->sin) ?
+						GET_INADDR(pp->dstadr->sin):
+						GET_INADDR(pp->dstadr->bcast):
+						1 : GET_INADDR(pp->dstadr->sin);
+				else
+						memset(&ips->dstadr, 0, sizeof(ips->dstadr));
 
 				skip = 0;
 			}
+			
 			if (!skip){ 
 				ips->srcport = NSRCPORT(&pp->srcadr);
 				ips->stratum = pp->stratum;
@@ -834,21 +847,28 @@ peer_info (
 		if ((pp = findexistingpeer(&addr, (struct peer *)0, -1)) == 0)
 		    continue;
 		if (pp->srcadr.ss_family == AF_INET6) {
-			ip->dstadr6 = pp->cast_flags == MDF_BCAST ?
-				GET_INADDR6(pp->dstadr->bcast) :
-				GET_INADDR6(pp->dstadr->sin);
+			if (pp->dstadr)
+				ip->dstadr6 = pp->cast_flags == MDF_BCAST ?
+					GET_INADDR6(pp->dstadr->bcast) :
+					GET_INADDR6(pp->dstadr->sin);
+			else
+				memset(&ip->dstadr6, 0, sizeof(ip->dstadr6));
+
 			ip->srcadr6 = GET_INADDR6(pp->srcadr);
 			ip->v6_flag = 1;
 		} else {
 /* XXX PDM This code is buggy. Need to replace with a straightforward assignment */
-			ip->dstadr = (pp->processed) ?
-				pp->cast_flags == MDF_BCAST ?
-				GET_INADDR(pp->dstadr->bcast):
-				pp->cast_flags ?
-				GET_INADDR(pp->dstadr->sin) ?
-				GET_INADDR(pp->dstadr->sin):
-				GET_INADDR(pp->dstadr->bcast):
-				2 : GET_INADDR(pp->dstadr->sin);
+			if (pp->dstadr)
+				ip->dstadr = (pp->processed) ?
+					pp->cast_flags == MDF_BCAST ?
+					GET_INADDR(pp->dstadr->bcast):
+					pp->cast_flags ?
+					GET_INADDR(pp->dstadr->sin) ?
+					GET_INADDR(pp->dstadr->sin):
+					GET_INADDR(pp->dstadr->bcast):
+					2 : GET_INADDR(pp->dstadr->sin);
+			else
+				memset(&ip->dstadr, 0, sizeof(ip->dstadr));
 
 			ip->srcadr = GET_INADDR(pp->srcadr);
 			if (client_v6_capable)
@@ -970,21 +990,29 @@ peer_stats (
 		     printf("peer_stats: found %s\n", stoa(&addr));
 #endif
 		if (pp->srcadr.ss_family == AF_INET) {
-			ip->dstadr = (pp->processed) ?
-				pp->cast_flags == MDF_BCAST ?
-				GET_INADDR(pp->dstadr->bcast):
-				pp->cast_flags ?
-				GET_INADDR(pp->dstadr->sin) ?
-				GET_INADDR(pp->dstadr->sin):
-				GET_INADDR(pp->dstadr->bcast):
-				3 : 7;
+			if (pp->dstadr)
+				ip->dstadr = (pp->processed) ?
+					pp->cast_flags == MDF_BCAST ?
+					GET_INADDR(pp->dstadr->bcast):
+					pp->cast_flags ?
+					GET_INADDR(pp->dstadr->sin) ?
+					GET_INADDR(pp->dstadr->sin):
+					GET_INADDR(pp->dstadr->bcast):
+					3 : 7;
+			else
+				memset(&ip->dstadr, 0, sizeof(ip->dstadr));
+			
 			ip->srcadr = GET_INADDR(pp->srcadr);
 			if (client_v6_capable)
 				ip->v6_flag = 0;
 		} else {
-			ip->dstadr6 = pp->cast_flags == MDF_BCAST ?
-				GET_INADDR6(pp->dstadr->bcast):
-				GET_INADDR6(pp->dstadr->sin);
+			if (pp->dstadr)
+				ip->dstadr6 = pp->cast_flags == MDF_BCAST ?
+					GET_INADDR6(pp->dstadr->bcast):
+					GET_INADDR6(pp->dstadr->sin);
+			else
+				memset(&ip->dstadr6, 0, sizeof(ip->dstadr6));
+			
 			ip->srcadr6 = GET_INADDR6(pp->srcadr);
 			ip->v6_flag = 1;
 		}	
@@ -1319,7 +1347,7 @@ do_conf(
 		    && temp_cp.hmode != MODE_BROADCAST)
 		    fl = 1;
 		if (temp_cp.flags & ~(CONF_FLAG_AUTHENABLE | CONF_FLAG_PREFER
-				  | CONF_FLAG_BURST | CONF_FLAG_IBURST | CONF_FLAG_SKEY))
+				  | CONF_FLAG_BURST | CONF_FLAG_IBURST | CONF_FLAG_SKEY | CONF_FLAG_DYNAMIC))
 		    fl = 1;
 		cp = (struct conf_peer *)
 		    ((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
@@ -1343,15 +1371,18 @@ do_conf(
 
 		fl = 0;
 		if (temp_cp.flags & CONF_FLAG_AUTHENABLE)
-		    fl |= FLAG_AUTHENABLE;
+			fl |= FLAG_AUTHENABLE;
 		if (temp_cp.flags & CONF_FLAG_PREFER)
-		    fl |= FLAG_PREFER;
+			fl |= FLAG_PREFER;
 		if (temp_cp.flags & CONF_FLAG_BURST)
 		    fl |= FLAG_BURST;
 		if (temp_cp.flags & CONF_FLAG_IBURST)
 		    fl |= FLAG_IBURST;
 		if (temp_cp.flags & CONF_FLAG_SKEY)
 			fl |= FLAG_SKEY;
+		if (temp_cp.flags & CONF_FLAG_DYNAMIC)
+			fl |= FLAG_DYNAMIC;
+		
 		if (client_v6_capable && temp_cp.v6_flag != 0) {
 			peeraddr.ss_family = AF_INET6;
 			GET_INADDR6(peeraddr) = temp_cp.peeraddr6; 
@@ -2772,3 +2803,91 @@ get_clkbug_info(
 	flush_pkt();
 }
 #endif
+
+/*
+ * receiver of interface structures
+ */
+static void
+fill_info_if_stats(void *data, interface_info_t *interface_info)
+{
+	struct info_if_stats **ifsp = (struct info_if_stats **)data;
+	struct info_if_stats *ifs = *ifsp;
+	struct interface *interface = interface_info->interface;
+	
+	memset((char*)ifs, 0, sizeof(*ifs));
+	
+	if (interface->sin.ss_family == AF_INET6) {
+		if (!client_v6_capable) {
+			return;
+		}
+		ifs->v6_flag = 1;
+		memcpy((char *)&ifs->unaddr.addr6, (char *)&CAST_V6(interface->sin)->sin6_addr, sizeof(struct in6_addr));
+		memcpy((char *)&ifs->unbcast.addr6, (char *)&CAST_V6(interface->bcast)->sin6_addr, sizeof(struct in6_addr));
+		memcpy((char *)&ifs->unmask.addr6, (char *)&CAST_V6(interface->mask)->sin6_addr, sizeof(struct in6_addr));
+	} else {
+		ifs->v6_flag = 0;
+		memcpy((char *)&ifs->unaddr.addr, (char *)&CAST_V4(interface->sin)->sin_addr, sizeof(struct in_addr));
+		memcpy((char *)&ifs->unbcast.addr, (char *)&CAST_V4(interface->bcast)->sin_addr, sizeof(struct in_addr));
+		memcpy((char *)&ifs->unmask.addr, (char *)&CAST_V4(interface->mask)->sin_addr, sizeof(struct in_addr));
+	}
+	ifs->v6_flag = htonl(ifs->v6_flag);
+	strcpy(ifs->name, interface->name);
+	ifs->family = htons(interface->family);
+	ifs->flags = htonl(interface->flags);
+	ifs->last_ttl = htonl(interface->last_ttl);
+	ifs->num_mcast = htonl(interface->num_mcast);
+	ifs->received = htonl(interface->received);
+	ifs->sent = htonl(interface->sent);
+	ifs->notsent = htonl(interface->notsent);
+	ifs->scopeid = htonl(interface->scopeid);
+	ifs->ifindex = htonl(interface->ifindex);
+	ifs->ifnum = htonl(interface->ifnum);
+	ifs->uptime = htonl(current_time - interface->starttime);
+	ifs->ignore_packets = interface->ignore_packets;
+	ifs->peercnt = htonl(interface->peercnt);
+	ifs->action = interface_info->action;
+	
+	*ifsp = (struct info_if_stats *)more_pkt();
+}
+
+/*
+ * get_if_stats - get interface statistics
+ */
+static void
+get_if_stats(
+	struct sockaddr_storage *srcadr,
+	struct interface *inter,
+	struct req_pkt *inpkt
+	)
+{
+	struct info_if_stats *ifs;
+
+	DPRINTF(3, ("wants interface statistics\n"));
+
+	ifs = (struct info_if_stats *)prepare_pkt(srcadr, inter, inpkt,
+	    v6sizeof(struct info_if_stats));
+
+	interface_enumerate(fill_info_if_stats, &ifs);
+	
+	flush_pkt();
+}
+
+static void
+do_if_reload(
+	struct sockaddr_storage *srcadr,
+	struct interface *inter,
+	struct req_pkt *inpkt
+	)
+{
+	struct info_if_stats *ifs;
+
+	DPRINTF(3, ("wants interface reload\n"));
+
+	ifs = (struct info_if_stats *)prepare_pkt(srcadr, inter, inpkt,
+	    v6sizeof(struct info_if_stats));
+
+	interface_update(fill_info_if_stats, &ifs);
+	
+	flush_pkt();
+}
+

@@ -224,42 +224,56 @@ seconds or $smtpd_error_sleep_time, whichever is more.  </p>
 
 <h2><a name="conn_limit">Measures against clients that make too many connections</a></h2>
 
-<p> Note: this feature is not included with Postfix version 2.1. </p>
+<p> Note: these features use the Postfix anvil(8) service, introduced
+with Postfix version 2.2. </p>
 
 <p> The Postfix smtpd(8) server can limit the number of simultaneous
-connections from the same SMTP client, as well as the number of
-connections that a client is allowed to make per unit time.
+connections from the same SMTP client, as well as the connection
+rate and the rate of certain SMTP commands from the same client.
 These statistics are maintained by the anvil(8) server (translation:
 if anvil(8) breaks, then connection limits stop working). </p>
 
-<p> IMPORTANT: These limits are designed to protect the smtpd(8) server
-against flagrant abuse. Do not use these limits to regulate legitimate
-traffic: mail will suffer grotesque delays if you do so. </p>
+<p> IMPORTANT: These limits must not be used to regulate legitimate
+traffic: mail will suffer grotesque delays if you do so.  The limits
+are designed to protect the smtpd(8) server against abuse by
+out-of-control clients.  </p>
 
-<ul>
+<blockquote>
 
-<li> <p> An SMTP client may make up to $smtpd_client_connection_count_limit
-simultaneous connections (default: 50). This is half the default
-process limit. </p>
+<dl>
 
-<li> <p> An SMTP client may make up to $smtpd_client_message_rate_limit
-message delivery requests per unit time (default: no limit). </p>
+<dt> smtpd_client_connection_count_limit (default: 50) </dt> <dd>
+The maximum number of connections than an SMTP client may make
+simultaneously. </dd>
 
-<li> <p> An SMTP client may send up to $smtpd_client_recipient_rate_limit
-recipient addresses per unit time (default: no limit). </p>
+<dt> smtpd_client_connection_rate_limit (default: no limit) </dt>
+<dd> The maximum number of connections that an SMTP client may make
+in the time interval specified with anvil_rate_time_unit (default:
+60s).  </dd>
 
-<li> <p> An SMTP client may make up to $smtpd_client_connection_rate_limit
-connections per unit time (default: no limit). </p>
+<dt> smtpd_client_message_rate_limit (default: no limit) </dt> <dd>
+The maximum number of message delivery requests that an SMTP client
+may make in the time interval specified with anvil_rate_time_unit
+(default: 60s). </dd>
 
-<li> <p> These limits are not applied to SMTP clients in the networks
-specified with $smtpd_client_event_limit_exceptions (default:
-clients in $mynetworks may make an unlimited number of connections).
+<dt> smtpd_client_recipient_rate_limit (default: no limit) </dt>
+<dd> The maximum number of recipient addresses that an SMTP client
+may specify in the time interval specified with anvil_rate_time_unit
+(default: 60s). </dd>
 
-<li> <p> The anvil_rate_time_unit parameter specifies the time
-unit over which client connection rates are computed (default:
-60s).
+<dt> smtpd_client_new_tls_session_rate_limit (default: no limit)
+</dt> <dd> The maximum number of new TLS sessions (without using
+the TLS session cache) that an SMTP client may negotiate in the
+time interval specified with anvil_rate_time_unit (default: 60s).
+</dd>
 
-</ul>
+<dt> smtpd_client_event_limit_exceptions (default: $mynetworks)
+</dt> <dd> SMTP clients that are excluded from connection and rate
+limits specified above. </dd>
+
+</dl>
+
+</blockquote>
 
 <h2><a name="mailing_tips">General mail delivery performance tips</a></h2>
 
@@ -359,7 +373,7 @@ is not useful. Another good reason to limit delivery concurrency
 to the same recipient: if the recipient has an expensive shell
 command in her .forward file, or if the recipient is a mailing list
 manager, you don't want to run too many instances of those processes
-the same time.  </p>
+at the same time.  </p>
 
 <li> <p> The default smtp_destination_concurrency_limit of 20 seems
 enough to noticeably load a system without bringing it to its knees.
@@ -464,10 +478,12 @@ some amount of time. </p>
 
 <dl>
 
-<dt> queue_run_delay (default: 1000 seconds) </dt> <dd> How often
+<dt> queue_run_delay (default: 300 seconds; before Postfix 2.4:
+1000s) </dt> <dd> How often
 the queue manager scans the queue for deferred mail. </dd>
 
-<dt> minimal_backoff_time (default: 1000 seconds) </dt> <dd> The
+<dt> minimal_backoff_time (default: 300 seconds; before Postfix
+2.4: 1000s) </dt> <dd> The
 minimal amount of time a message won't be looked at, and the minimal
 amount of time to stay away from a "dead" destination. </dd>
 
@@ -518,7 +534,8 @@ that usually requires timing out one or more SMTP connections. </p>
 always better than increasing the frequency of delivery attempts.
 However, if you can control only the delivery attempt frequency,
 consider using a dedicated fallback_relay "graveyard" machine for
-bad destinations so that they do not ruin the performance of normal
+bad destinations, so that these destinations do not ruin the
+performance of normal
 mail deliveries.  </p>
 
 <h2><a name="proc_limit">Tuning the number of Postfix processes</a></h2>
@@ -572,6 +589,20 @@ errors. </p>
 
 <ul>
 
+<li> <p> Depending on your Postfix and operating system versions
+you may need to recompile Postfix if you need more than 1024 file
+descriptors per process: </p>
+
+<ul> <li> <p> No recompilation is needed for Postfix version 2.4
+and later, when it was compiled for systems that support BSD kqueue(2)
+(FreeBSD 4.1, NetBSD 2.0, OpenBSD 2.9), Solaris 8 /dev/poll, or
+Linux 2.6 epoll(4).  </p>
+
+<li> <p> Otherwise, Postfix needs to be recompiled to override the
+default FD_SETSIZE value. </p>
+
+</ul>
+
 <li> <p> Reduce the number of processes as described under "<a
 href="#proc_limit">Tuning the number of Postfix processes</a>" above. 
 Fewer processes need fewer open files and sockets. </p>
@@ -584,7 +615,8 @@ with your system tuning guide:  </p>
 <ul>
 
 <li> <p> Some FreeBSD kernel parameters can be specified in
-/boot/loader.conf, and some can be changed with sysctl commands.
+/boot/loader.conf, and some can be specified in /etc/sysctl.conf
+or changed with sysctl commands.
 Which is which depends on the version.
 </p>
 
@@ -597,7 +629,7 @@ kern.maxfilesperproc="16384"
 </pre>
 
 <li> <p> Linux kernel parameters can be specified in /etc/sysctl.conf
-and can also be changed with sysctl commands: </p>
+or changed with sysctl commands: </p>
 
 <pre>
 fs.file-max=16384
@@ -606,7 +638,7 @@ kernel.threads-max=2048
 
 <li> <p> Solaris kernel parameters can be specified in /etc/system,
 as described in the <a
-href="http://www.science.uva.nl/pub/solaris/solaris2.html#q3.46">Solaris
+href="http://www.science.uva.nl/pub/solaris/solaris2.html#q3.48">Solaris
 FAQ</a> entry titled "How can I increase the number of file
 descriptors per process?" </p>
 

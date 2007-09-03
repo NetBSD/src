@@ -28,15 +28,21 @@ this happens before mail is queued.  </p>
 <p> The reason for adding Milter support to Postfix is that there
 exists a large collection of applications, not only to block unwanted
 mail, but also to verify authenticity (examples: <a
+href="http://sourceforge.net/projects/dkim-milter/">Domain keys
+identified mail</a>, <a
 href="http://sourceforge.net/projects/sid-milter/">SenderID+SPF</a> and
 <a href="http://sourceforge.net/projects/dk-milter/">Domain keys</a>)
-or to digitally sign mail (example: <a
+or to digitally sign mail (examples: <a
+href="http://sourceforge.net/projects/dkim-milter/">Domain keys
+identified mail</a>, <a
 href="http://sourceforge.net/projects/dk-milter/">Domain keys</a>).
 Having yet another Postfix-specific version of all that software
 is a poor use of human and system resources. </p>
 
-<p> Postfix 2.3 implements all the requests of Sendmail version 8
-Milter protocols up to version 4, except one: message body replacement.
+<p> Postfix version 2.4 implements all the requests of Sendmail
+version 8 Milter protocols up to version 4, including message body
+replacement (body replacement is not available with Postfix version
+2.3).
 See, however, the <a href="#workarounds">workarounds</a> and <a
 href="#limitations">limitations</a> sections at the end of this
 document. </p>
@@ -200,14 +206,14 @@ does. </p>
 
 <p> On some Linux and *BSD distributions, the Sendmail libmilter
 library is installed by default. With this, applications such as
-<a href="http://sourceforge.net/projects/dk-milter/">dk-milter</a>
+<a href="http://sourceforge.net/projects/dkim-milter/">dkim-milter</a>
 and <a href="http://sourceforge.net/projects/sid-milter/">sid-milter</a>
 build out of the box without requiring any tinkering:</p>
 
 <blockquote>
 <pre>
-$ <b>gzcat dk-milter-<i>x.y.z</i>.tar.gz | tar xf -</b>
-$ <b>cd dk-milter-<i>x.y.z</i></b>
+$ <b>gzcat dkim-milter-<i>x.y.z</i>.tar.gz | tar xf -</b>
+$ <b>cd dkim-milter-<i>x.y.z</i></b>
 $ <b>make</b>
 [...<i>lots of output omitted</i>...]
 </pre>
@@ -258,7 +264,7 @@ for options.  A typical command looks like this:</p>
 
 <blockquote>
 <pre>
-# <b>/some/where/dk-filter -u <i>userid</i> -p inet:<i>portnumber</i>@localhost ...<i>other options</i>...</b>
+# <b>/some/where/dkim-filter -u <i>userid</i> -p inet:<i>portnumber</i>@localhost ...<i>other options</i>...</b>
 </pre>
 </blockquote>
 
@@ -650,23 +656,67 @@ X-SenderID: Sendmail Sender-ID Filter vx.y.z host.example.com &lt;unknown-msgid&
 </pre>
 </blockquote>
 
-<p> This happens because some Milter applications expect that the
+<p> This happens because those Milter applications expect that the
 queue ID is known <i>before</i> the MTA accepts the MAIL FROM
 (sender) command.  Postfix, on the other hand, does not choose a
 queue file name until <i>after</i> it accepts the first valid RCPT
-TO (recipient) command. Postfix queue file names must be unique
+TO (recipient) command (Postfix queue file names must be unique
 across multiple directories, so the name can't be chosen before the
-file is created.  If multiple messages were to use the same queue
-ID <i>simultaneously</i>, mail would be lost.  </p>
+file is created; if multiple messages were to use the same queue
+ID <i>simultaneously</i>, mail would be lost).  </p>
 
-<p> To work around the ugly message header from Milter applications,
-we add a little code to the Milter source to look up the queue ID
-after Postfix receives the end of the message. </p>
+</ul>
+
+<p> If you experience the ugly header problem, see if a recent
+version of the Milter application fixes it. For example, current
+versions of dkim-filter and dk-filter already have code that looks
+up the Postfix queue ID at a later protocol stage. </p>
+
+<p> To fix the ugly message header with sid-filter applications,
+we change the source code, so that it does the queue ID lookup after
+Postfix receives the end of the message. </p>
+
+<ul>
+
+<li> <p> Edit the filter source file (named
+<tt>sid-filter/sid-filter.c</tt>). </p>
+
+<li> <p> Look up the <tt>smfilter</tt> table and replace
+<tt>mlfi_eoh</tt> by <tt>NULL</tt>.
+</p>
+
+<li> <p> Look up the <tt>mlfi_eom()</tt> function and add code near
+the top that calls <tt>mlfi_eoh()</tt> as shown by the <b>bold</b>
+text below: </p>
+
+</ul>
+
+<blockquote>
+<pre>
+        assert(ctx != NULL);
+#endif /* !DEBUG */
+<b>
+        ret = mlfi_eoh(ctx);
+        if (ret != SMFIS_CONTINUE)
+                return ret;</b>
+</pre>
+</blockquote>
+
+<p> NOTES: </p>
+
+<ul>
+
+<li> <p> This was tested with sid-milter-0.2.10 and sid-milter-0.2.14. </p>
+
+</ul>
+
+<p> To fix the ugly message header with other Milter applications,
+you will need to do something like this: </p>
 
 <ul>
 
 <li> <p> Edit the filter source file (typically named
-<tt>dk-filter/dk-filter.c</tt> or similar). </p>
+<tt>xxx-filter/xxx-filter.c</tt> or similar). </p>
 
 <li> <p> Look up the <tt>mlfi_eom()</tt> function and add code near
 the top shown as <b>bold</b> text below: </p>
@@ -698,43 +748,7 @@ variables. If the above code does not compile, look for the code
 at the start of the <tt>mlfi_eoh()</tt> routine. </p>
 
 <li> <p> This fixes only the ugly message header, but not the WARNING
-message.  Fortunately, dk-filter logs that message only once. </p>
-
-</ul>
-
-<p> With some Milter applications we can fix both the WARNING and
-the "unknown-msgid" by postponing the call of <tt>mlfi_eoh()</tt>
-(or whatever routine logs the WARNING) until the end of the message.
-</p>
-
-<ul>
-
-<li> <p> Edit the filter source file (typically named
-<tt>sid-filter/sid-filter.c</tt> or similar). </p>
-
-<li> <p> Look up the <tt>smfilter</tt> table and replace
-<tt>mlfi_eoh</tt> (or whatever routine logs the WARNING) by NULL.
-</p>
-
-<li> <p> Look up the <tt>mlfi_eom()</tt> function and add code near
-the top that calls <tt>mlfi_eoh()</tt> as shown by the <b>bold</b>
-text below: </p>
-
-</ul>
-
-<blockquote>
-<pre>
-        assert(ctx != NULL);
-#endif /* !DEBUG */
-<b>
-        ret = mlfi_eoh(ctx);
-        if (ret != SMFIS_CONTINUE)
-                return ret;</b>
-</pre>
-</blockquote>
-
-<p> This works with sid-milter-0.2.10. Other Milter applications
-will dump core when you do this. </p>
+message.  Fortunately, many Milters log that message only once. </p>
 
 </ul>
 
@@ -793,8 +807,7 @@ operation will log a warning like this: </p>
 </pre>
 </blockquote>
 
-<p> The solution is (to wait for) a Postfix version that supports
-the missing functionality.
+<p> The solution is to use Postfix version 2.4 or later. </p>
 
 <li> <p> Most Milter configuration options are global. Future Postfix
 versions may support per-Milter timeouts, per-Milter error handling,

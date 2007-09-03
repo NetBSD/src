@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.15 2006/08/26 18:15:39 christos Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2007/09/03 07:05:40 wrstuden Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
 SRCS=	cmd_args.c ntp_config.c ntp_control.c ntp_crypto.c ntp_filegen.c \
 	ntp_intres.c ntp_io.c ntp_loopfilter.c ntp_monitor.c \
 	ntp_peer.c ntp_proto.c ntp_refclock.c ntp_request.c \
-	ntp_restrict.c ntp_timer.c ntp_util.c ntpd.c refclock_acts.c \
+	ntp_restrict.c ntp_timer.c ntp_util.c ntpd-opts.c ntpd.c \
+	refclock_acts.c \
 	refclock_arbiter.c refclock_arc.c refclock_as2201.c \
 	refclock_atom.c refclock_bancomm.c refclock_chronolog.c \
 	refclock_chu.c refclock_conf.c refclock_datum.c \
@@ -19,9 +20,11 @@ SRCS=	cmd_args.c ntp_config.c ntp_control.c ntp_crypto.c ntp_filegen.c \
 	refclock_ripencc.c refclock_shm.c refclock_tpro.c \
 	refclock_trak.c refclock_true.c refclock_tt560.c \
 	refclock_ulink.c refclock_wwv.c refclock_wwvb.c \
-	refclock_zyfer.c
+	refclock_zyfer.c emalloc.c
 
 .include <bsd.own.mk>
+
+.PATH:	${NETBSDSRCDIR}/dist/ntp/libntp
 
 LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -lisc

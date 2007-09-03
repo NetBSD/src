@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.246 2006/11/18 18:28:15 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.246.4.1 2007/09/03 07:03:40 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.246 $"
+#ident 		"GENERIC-$Revision: 1.246.4.1 $"
 
 maxusers	32
 
@@ -277,8 +277,9 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
-radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
-options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+# radeonfb causes trouble on some hardware so it's experimental for now
+#radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
+#options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
@@ -562,6 +563,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm

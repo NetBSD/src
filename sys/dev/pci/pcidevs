@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.5 2007/05/02 04:48:25 snj Exp $
+$NetBSD: pcidevs,v 1.855.2.5.2.1 2007/09/03 07:04:38 wrstuden Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -602,6 +602,7 @@ vendor RALINK		0x1814	Ralink Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
+vendor JMICRON		0x197b	JMicron Technology
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -873,6 +874,13 @@ product AMD AMD64_MISC	0x1103	AMD64 Miscellaneous configuration
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
+product AMD GEODELX_PCHB	0x2080	Geode LX Host-PCI Bridge
+product AMD GEODELX_VGA 	0x2081	Geode LX VGA Controller
+product AMD GEODELX_AES 	0x2082	Geode LX AES Security Block
+product AMD CS5536_PCIB	0x2090	CS5536 PCI-ISA Bridge
+product AMD CS5536_OHCI	0x2094	CS5536 OHCI USB Controller
+product AMD CS5536_EHCI	0x2095	CS5536 EHCI USB Controller
+product AMD CS5536_IDE	0x209a	CS5536 IDE Controller
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-PCI Bridge
@@ -1614,9 +1622,11 @@ product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 product DLINK DFE690TXD		0x1340	DFE-690TXD 10/100 Ethernet
 product	DLINK DWL610		0x3300	DWL-610 802.11b WLAN
 product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
+product DLINK DGE550SX		0x4001	DGE-550SX
 product DLINK DGE528T		0x4300	DGE-528T Gigabit Ethernet
 product DLINK DGE560T		0x4b00	DGE-560T Gigabit Ethernet
 product DLINK DGE560T_2		0x4b01	DGE-560T_2 Gigabit Ethernet
+product DLINK DGE560SX		0x4b02	DGE-560SX
 product DLINK DGE530T		0x4c00	DGE-530T Gigabit Ethernet
 
 /* Distributed Processing Technology products */
@@ -1759,10 +1769,18 @@ product MARVELL YUKONII_8062X	0x4347	Yukon-II 88E8062X
 product MARVELL YUKON_8035	0x4350	Yukon 88E8035
 product MARVELL YUKON_8036	0x4351	Yukon 88E8036
 product MARVELL YUKON_8038	0x4352	Yukon 88E8038
+product MARVELL YUKON_8039	0x4353	Yukon 88E8039
+product MARVELL YUKON_C033	0x4356	Yukon 88EC033
 product MARVELL YUKON_8052	0x4360	Yukon 88E8052
 product MARVELL YUKON_8050	0x4361	Yukon 88E8050
 product MARVELL YUKON_8053	0x4362	Yukon 88E8053
-product MARVELL YUKON_3		0x4363	Yukon
+product MARVELL YUKON_8055	0x4363	Yukon 88E8055
+product MARVELL YUKON_8056	0x4364	Yukon 88E8056
+product MARVELL YUKON_1		0x4365	Yukon
+product MARVELL YUKON_C036	0x4366	Yukon 88EC036
+product MARVELL YUKON_C032	0x4367	Yukon 88EC032
+product MARVELL YUKON_C034	0x4368	Yukon 88EC034
+product MARVELL YUKON_C042	0x4369	Yukon 88EC042
 product MARVELL	GT64120		0x4620	GT-64120 System Controller
 product MARVELL	BELKIN		0x5005	Belkin Gigabit Ethernet
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
@@ -2000,6 +2018,10 @@ product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Etherne
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
+product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
+product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
+product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
 product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
@@ -2251,6 +2273,7 @@ product INTEL 82801H_EXP_4	0x2845	82801H PCI Express Port #4
 product INTEL 82801H_EXP_5	0x2847	82801H PCI Express Port #5
 product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
+product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
@@ -2347,6 +2370,14 @@ product ITE IT8212		0x8212	IT8212 IDE Controller
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
 product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
+
+/* JMicron products */
+product JMICRON	JMB360	0x02360 JMB360 SATA controller
+product JMICRON	JMB361	0x02361 JMB361 SATA/PATA controller
+product JMICRON	JMB363	0x02363 JMB363 SATA/PATA controller
+product JMICRON	JMB365	0x02365 JMB365 SATA/PATA controller
+product JMICRON	JMB366	0x02366 JMB366 SATA/PATA controller
+product JMICRON	JMB368	0x02368 JMB368 PATA controller
 
 /* JNI products */
 product JNI JNIC1460	0x1460	JNIC-1460 Fibre-Channel adapter
@@ -2525,6 +2556,12 @@ product NATIONALINST MXI3	0x2c30	MXI-3 PCI extender
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
 product NS DP83820	0x0022	DP83820 10/100/1000 Ethernet
+product NS CS5535_HB	0x0028	CS5535 Host-PCI Bridge
+product NS CS5535_ISA	0x002b	CS5535 PCI-ISA Bridge
+product NS CS5535_IDE	0x002d	CS5535 IDE Controller
+product NS CS5535_AUDIO	0x002e	CS5535 Audio Controller
+product NS CS5535_USB	0x002f	CS5535 USB Host Controller
+product NS CS5535_VIDEO	0x0030	CS5535 Video Controller
 product NS NS87410	0xd001	NS87410
 product NS SC1100_IDE	0x0502	SC1100 PCI IDE
 product NS SC1100_AUDIO	0x0503	SC1100 XpressAUDIO

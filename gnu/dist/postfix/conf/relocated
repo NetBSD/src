@@ -15,8 +15,8 @@
 #        file that serves as input to the postmap(1) command.   The
 #        result,  an  indexed file in dbm or db format, is used for
 #        fast searching by the mail  system.  Execute  the  command
-#        "postmap  /etc/postfix/relocated"  in order to rebuild the
-#        indexed file after changing the relocated table.
+#        "postmap  /etc/postfix/relocated"  to  rebuild  an indexed
+#        file after changing the corresponding relocated table.
 # 
 #        When the table is provided via other means  such  as  NIS,
 #        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -25,9 +25,9 @@
 #        Alternatively, the table can be  provided  as  a  regular-
 #        expression map where patterns are given as regular expres-
 #        sions, or lookups can be directed to TCP-based server.  In
-#        that  case,  the  lookups are done in a slightly different
+#        those  case,  the lookups are done in a slightly different
 #        way as described below under "REGULAR  EXPRESSION  TABLES"
-#        and "TCP-BASED TABLES".
+#        or "TCP-BASED TABLES".
 # 
 #        Table lookups are case insensitive.
 # 
@@ -41,7 +41,9 @@
 #        The input format for the postmap(1) command is as follows:
 # 
 #        o      An entry has one of the following form:
+# 
 #                    pattern      new_location
+# 
 #               Where  new_location  specifies  contact information
 #               such as an  email  address,  or  perhaps  a  street
 #               address or telephone number.
@@ -85,7 +87,7 @@
 #        regexp_table(5) or pcre_table(5). For a description of the
 #        TCP client/server table lookup protocol, see tcp_table(5).
 #        This feature is not available up to and including  Postfix
-#        version 2.3.
+#        version 2.4.
 # 
 #        Each  pattern  is  a regular expression that is applied to
 #        the entire address being looked up. Thus, user@domain mail
@@ -106,7 +108,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.3.
+#        Postfix version 2.4.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain mail addresses are not broken  up  into  their

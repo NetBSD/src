@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.6.12.2 2007/05/07 17:05:26 pavel Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.6.12.2.2.1 2007/09/03 07:04:59 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.

@@ -252,45 +252,46 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#relocated_maps">relocated_maps</a> (empty)</b>
               Optional lookup tables with new contact information
               for users or domains that no longer exist.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#show_user_unknown_table_name">show_user_unknown_table_name</a> (yes)</b>
-              Display the name of  the  recipient  table  in  the
+              Display  the  name  of  the  recipient table in the
               "User unknown" responses.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#helpful_warnings">helpful_warnings</a> (yes)</b>
-              Log  warnings  about problematic configuration set-
+              Log warnings about problematic  configuration  set-
               tings, and provide helpful suggestions.
 
 <b>SEE ALSO</b>
@@ -305,7 +306,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, Postfix address verification
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

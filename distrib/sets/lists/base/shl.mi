@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.381.2.1 2007/05/13 10:14:07 jdc Exp $
+# $NetBSD: shl.mi,v 1.381.2.1.2.1 2007/09/03 06:57:38 wrstuden Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.149				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.3.1				base-crypto-shlib	crypto
+./lib/libcrypto.so.3.2				base-crypto-shlib	crypto
 ./lib/libedit.so.2.10				base-sys-shlib
 ./lib/libevent.so.1.0				base-sys-shlib
 ./lib/libipsec.so.2.2				base-net-shlib
@@ -10,7 +10,7 @@
 ./lib/libm.so.0.5				base-sys-shlib
 ./lib/libprop.so.0.5				base-sys-shlib
 ./lib/libradius.so.1.0				base-sys-shlib
-./lib/libssp.so.0.0				base-sys-shlib
+./lib/libssp.so.0.0				base-obsolete		obsolete
 ./lib/libtermcap.so.0.6				base-sys-shlib
 ./lib/libtermlib.so.0.6				base-sys-shlib
 ./lib/libutil.so.7.11				base-sys-shlib
@@ -48,7 +48,7 @@
 ./usr/lib/libcdk.so.1.0				base-obsolete		obsolete
 ./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
-./usr/lib/libcrypto.so.3.1			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.3.2			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.1			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libedit.so.2.10			base-sys-shlib
@@ -96,7 +96,7 @@
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.2.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.4.0				base-krb5-shlib		kerberos
-./usr/lib/libssp.so.0.0				base-sys-shlib
+./usr/lib/libssp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libssh.so.2.0				base-obsolete		obsolete
 ./usr/lib/libssh.so.3.0				base-obsolete		obsolete
 ./usr/lib/libssh.so.4.0				base-obsolete		obsolete

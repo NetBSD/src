@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_scan0.c,v 1.1.1.6 2006/07/19 01:17:50 rpaulo Exp $	*/
+/*	$NetBSD: attr_scan0.c,v 1.1.1.6.6.1 2007/09/03 07:00:45 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -267,6 +267,13 @@ int     attr_vscan0(VSTREAM *fp, int flags, va_list ap)
      */
     if (flags & ~ATTR_FLAG_ALL)
 	msg_panic("%s: bad flags: 0x%x", myname, flags);
+
+    /*
+     * EOF check.
+     */
+    if ((ch = VSTREAM_GETC(fp)) == VSTREAM_EOF)
+	return (0);
+    vstream_ungetc(fp, ch);
 
     /*
      * Initialize.

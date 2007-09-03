@@ -26,9 +26,9 @@ Postfix distributions for general use.  </p>
 <h2>General distributions: please provide a small default main.cf
 file</h2>
 
-<p> The installed main.cf file must be small. PLEASE resist the
-temptation to list all 400+ parameters in the main.cf file.  Postfix
-is supposed to be easy to configure. Listing all 400+ in main.cf
+<p> The installed <a href="postconf.5.html">main.cf</a> file must be small. PLEASE resist the
+temptation to list all parameters in the <a href="postconf.5.html">main.cf</a> file.  Postfix
+is supposed to be easy to configure. Listing all parameters in <a href="postconf.5.html">main.cf</a>
 defeats the purpose. It is an invitation for hobbyists to make
 random changes without understanding what they do, and gets them
 into endless trouble.  </p>
@@ -70,7 +70,7 @@ script directly (<tt>% <b>sh post-install</b></tt>). </p>
 
 <p> You will be prompted for installation parameters.  Specify an
 install_root directory other than /.  The <a href="postconf.5.html#mail_owner">mail_owner</a> and <a href="postconf.5.html#setgid_group">setgid_group</a>
-installation parameter settings will be recorded in the main.cf
+installation parameter settings will be recorded in the <a href="postconf.5.html">main.cf</a>
 file, but they won't take effect until the package is unpacked and
 installed on the destination machine. </p>
 

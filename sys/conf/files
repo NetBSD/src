@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819.2.4 2007/05/13 10:28:08 jdc Exp $
+#	$NetBSD: files,v 1.819.2.4.2.1 2007/09/03 07:04:16 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -886,6 +886,11 @@ file	dev/ic/upc.c			upc
 file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
+
+# AHCI-compatible SATA controllers
+define ahcisata_core
+file dev/ic/ahcisata_core.c ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
 
 # Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.10.1 2007/09/03 07:04:03 wrstuden Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.10.1 2007/09/03 07:04:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,7 @@ clockintr(void *arg)
 	}
 #endif
 	hardclock(frame);
-	return(0);
+	return(1);
 }
 
 static int

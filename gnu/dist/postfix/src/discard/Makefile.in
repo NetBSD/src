@@ -18,7 +18,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -67,6 +67,7 @@ discard.o: ../../include/dsn_util.h
 discard.o: ../../include/flush_clnt.h
 discard.o: ../../include/mail_queue.h
 discard.o: ../../include/mail_server.h
+discard.o: ../../include/mail_version.h
 discard.o: ../../include/msg.h
 discard.o: ../../include/msg_stats.h
 discard.o: ../../include/recipient_list.h

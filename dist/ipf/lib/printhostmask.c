@@ -1,4 +1,4 @@
-/*	$NetBSD: printhostmask.c,v 1.1.1.1.18.1 2007/05/07 17:04:54 pavel Exp $	*/
+/*	$NetBSD: printhostmask.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:29 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2005 by Darren Reed.

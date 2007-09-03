@@ -92,28 +92,41 @@ by the mail delivering process that creates the connection.  To get
 the same performance improvement as with a shared connection cache,
 non-shared connections need to be kept open for a longer time. </p>
 
+<p> The <a href="scache.8.html">scache(8)</a> server, introduced with Postfix version 2.2,
+maintains the shared connection cache.  With Postfix version 2.2,
+only the <a href="smtp.8.html">smtp(8)</a> client has support to access this cache.  </p>
+
 <blockquote>
 
 <table>
 
-<tr> <td> Internet &lt;-- </td> <td align="center" bgcolor="#f0f0ff">
-<br> <a href="smtp.8.html">smtp(8)</a> <br> &nbsp; </td> <td> <tt> &lt;-&gt; </tt> </td> <td
-align="center" bgcolor="#f0f0ff"> <br> <a href="scache.8.html">scache(8)</a> <br> &nbsp; </td>
-<td> <tt> &lt;-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff">
-<br> <a href="smtp.8.html">smtp(8)</a> <br> &nbsp; </td> <td> --&gt; Internet </td>
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td colspan="2"> <tt>
+--&gt; </tt> Internet </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> <a href="qmgr.8.html">qmgr(8)</a> </td> <td> </td>
+<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
+rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+</tr>
+
+<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="2" bgcolor="#f0f0ff"> <a href="smtp.8.html">smtp(8)</a> </td> <td align="left"> <tt>
+--&gt; </tt> Internet </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
+<td> &nbsp; </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> <a href="scache.8.html">scache(8)</a> </td> </tr>
 
 </table>
 
 </blockquote>
 
-<p> The <a href="scache.8.html">scache(8)</a> server, introduced with Postfix version 2.2,
-maintains the shared connection cache.  With Postfix version 2.2,
-only the <a href="smtp.8.html">smtp(8)</a> client has support to access this cache.  </p>
-
 <p> When SMTP connection caching is enabled (see next section), the
 <a href="smtp.8.html">smtp(8)</a> client does not disconnect after a mail transaction, but
 gives the connection to the <a href="scache.8.html">scache(8)</a> server which keeps the
-connection open for a limited amount of time.  </p>
+connection open for a limited amount of time. </p>
 
 <p> After handing over the open connection to the <a href="scache.8.html">scache(8)</a> server,
 the <a href="smtp.8.html">smtp(8)</a> client continues with some other mail delivery request.
@@ -144,7 +157,7 @@ destination has a high volume of mail in the <a href="QSHAPE_README.html#active_
 <blockquote>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_connection_cache_on_demand">smtp_connection_cache_on_demand</a> = yes
 </pre>
 
@@ -167,7 +180,7 @@ right-hand side of an email address, without the [] around a numeric
 IP address), </p>
 
 <li> <p> if mail is sent via a <a href="postconf.5.html#relayhost">relay host</a>: a <a href="postconf.5.html#relayhost">relay host</a> name (without
-the [] or non-default TCP port), as specified in main.cf or in the
+the [] or non-default TCP port), as specified in <a href="postconf.5.html">main.cf</a> or in the
 transport map, </p>
 
 <li> <p> a /file/name with domain names and/or <a href="postconf.5.html#relayhost">relay host</a> names as
@@ -184,7 +197,7 @@ lookups is ignored.  </p>
 <blockquote>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = $<a href="postconf.5.html#relayhost">relayhost</a>
     <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = hotmail.com, ...
     <a href="postconf.5.html#smtp_connection_cache_destinations">smtp_connection_cache_destinations</a> = static:all (<i>not recommended</i>)

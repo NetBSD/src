@@ -36,7 +36,7 @@ main.cf:
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -107,6 +107,7 @@ bounce.o: ../../include/mail_params.h
 bounce.o: ../../include/mail_proto.h
 bounce.o: ../../include/mail_queue.h
 bounce.o: ../../include/mail_server.h
+bounce.o: ../../include/mail_version.h
 bounce.o: ../../include/msg.h
 bounce.o: ../../include/msg_stats.h
 bounce.o: ../../include/rcpt_buf.h
@@ -166,6 +167,7 @@ bounce_notify_service.o: ../../include/deliver_request.h
 bounce_notify_service.o: ../../include/dsn.h
 bounce_notify_service.o: ../../include/dsn_buf.h
 bounce_notify_service.o: ../../include/dsn_mask.h
+bounce_notify_service.o: ../../include/int_filt.h
 bounce_notify_service.o: ../../include/mail_addr.h
 bounce_notify_service.o: ../../include/mail_error.h
 bounce_notify_service.o: ../../include/mail_params.h
@@ -191,6 +193,7 @@ bounce_notify_util.o: ../../include/dsn.h
 bounce_notify_util.o: ../../include/dsn_buf.h
 bounce_notify_util.o: ../../include/dsn_mask.h
 bounce_notify_util.o: ../../include/events.h
+bounce_notify_util.o: ../../include/int_filt.h
 bounce_notify_util.o: ../../include/iostuff.h
 bounce_notify_util.o: ../../include/is_header.h
 bounce_notify_util.o: ../../include/lex_822.h
@@ -228,6 +231,7 @@ bounce_notify_verp.o: ../../include/deliver_request.h
 bounce_notify_verp.o: ../../include/dsn.h
 bounce_notify_verp.o: ../../include/dsn_buf.h
 bounce_notify_verp.o: ../../include/dsn_mask.h
+bounce_notify_verp.o: ../../include/int_filt.h
 bounce_notify_verp.o: ../../include/mail_addr.h
 bounce_notify_verp.o: ../../include/mail_error.h
 bounce_notify_verp.o: ../../include/mail_params.h
@@ -254,6 +258,7 @@ bounce_one_service.o: ../../include/deliver_request.h
 bounce_one_service.o: ../../include/dsn.h
 bounce_one_service.o: ../../include/dsn_buf.h
 bounce_one_service.o: ../../include/dsn_mask.h
+bounce_one_service.o: ../../include/int_filt.h
 bounce_one_service.o: ../../include/mail_addr.h
 bounce_one_service.o: ../../include/mail_error.h
 bounce_one_service.o: ../../include/mail_params.h
@@ -309,6 +314,7 @@ bounce_trace_service.o: ../../include/deliver_request.h
 bounce_trace_service.o: ../../include/dsn.h
 bounce_trace_service.o: ../../include/dsn_buf.h
 bounce_trace_service.o: ../../include/dsn_mask.h
+bounce_trace_service.o: ../../include/int_filt.h
 bounce_trace_service.o: ../../include/mail_addr.h
 bounce_trace_service.o: ../../include/mail_error.h
 bounce_trace_service.o: ../../include/mail_params.h
@@ -332,6 +338,7 @@ bounce_warn_service.o: ../../include/cleanup_user.h
 bounce_warn_service.o: ../../include/dsn.h
 bounce_warn_service.o: ../../include/dsn_buf.h
 bounce_warn_service.o: ../../include/dsn_mask.h
+bounce_warn_service.o: ../../include/int_filt.h
 bounce_warn_service.o: ../../include/mail_addr.h
 bounce_warn_service.o: ../../include/mail_error.h
 bounce_warn_service.o: ../../include/mail_params.h

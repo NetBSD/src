@@ -1,4 +1,4 @@
-/*	$NetBSD: printpooldata.c,v 1.1.1.1.2.2 2007/05/07 17:04:58 pavel Exp $	*/
+/*	$NetBSD: printpooldata.c,v 1.1.1.1.2.2.2.1 2007/09/03 06:54:35 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.

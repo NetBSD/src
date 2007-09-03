@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.5.12.1 2007/05/07 17:04:28 pavel Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.5.12.1.2.1 2007/09/03 06:53:51 wrstuden Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)

@@ -13,8 +13,10 @@
 # DESCRIPTION
 #        The  optional  transport(5) table specifies a mapping from
 #        email addresses to message delivery transports  and  next-
-#        hop hosts. The table is searched by the trivial-rewrite(8)
-#        daemon.
+#        hop  destinations.   Message  delivery  transports such as
+#        local or smtp are defined in the master.cf file, and next-
+#        hop  destinations are typically hosts or domain names. The
+#        table is searched by the trivial-rewrite(8) daemon.
 # 
 #        This  mapping  overrides  the  default   transport:nexthop
 #        selection that is built into Postfix:
@@ -49,8 +51,8 @@
 #        file that serves as input to the postmap(1) command.   The
 #        result,  an  indexed file in dbm or db format, is used for
 #        fast searching by the mail  system.  Execute  the  command
-#        "postmap  /etc/postfix/transport"  in order to rebuild the
-#        indexed file after changing the transport table.
+#        "postmap  /etc/postfix/transport"  to  rebuild  an indexed
+#        file after changing the corresponding transport table.
 # 
 #        When the table is provided via other means  such  as  NIS,
 #        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -59,9 +61,9 @@
 #        Alternatively, the table can be  provided  as  a  regular-
 #        expression map where patterns are given as regular expres-
 #        sions, or lookups can be directed to TCP-based server.  In
-#        that  case,  the  lookups are done in a slightly different
+#        those  case,  the lookups are done in a slightly different
 #        way as described below under "REGULAR  EXPRESSION  TABLES"
-#        and "TCP-BASED TABLES".
+#        or "TCP-BASED TABLES".
 # 
 # CASE FOLDING
 #        The  search  string is folded to lowercase before database
@@ -166,7 +168,7 @@
 # 
 #             my.domain    :
 #             .my.domain   :
-#             *         smtp:outbound-relay.my.domain
+#             *            smtp:outbound-relay.my.domain
 # 
 #        In  order  to send mail for example.com and its subdomains
 #        via the uucp transport to the UUCP host named example:
@@ -207,37 +209,37 @@
 # 
 #        The error mailer can be used to bounce mail:
 # 
-#             .example.com     error:mail for *.example.com is  not
-#        deliverable
+#             .example.com     error:mail for *.example.com is not deliverable
 # 
-#        This  causes  all mail for user@anything.example.com to be
+#        This causes all mail for user@anything.example.com  to  be
 #        bounced.
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
+#        a  description  of regular expression lookup table syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each  pattern  is  a regular expression that is applied to
-#        the   entire    address    being    looked    up.    Thus,
-#        some.domain.hierarchy  is  not  looked  up  via its parent
-#        domains, nor is user+foo@domain looked up as  user@domain.
+#        Each pattern is a regular expression that  is  applied  to
+#        the    entire    address    being    looked    up.   Thus,
+#        some.domain.hierarchy is not  looked  up  via  its  parent
+#        domains,  nor is user+foo@domain looked up as user@domain.
 # 
-#        Patterns  are applied in the order as specified in the ta-
-#        ble, until a pattern is  found  that  matches  the  search
+#        Patterns are applied in the order as specified in the  ta-
+#        ble,  until  a  pattern  is  found that matches the search
 #        string.
 # 
-#        Results  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
-#        the pattern can be interpolated as $1, $2 and so on.
+#        The trivial-rewrite(8) server disallows regular expression
+#        substitution  of  $1  etc.  in  regular  expression lookup
+#        tables, because that could open a security  hole  (Postfix
+#        version 2.3 and later).
 # 
 # TCP-BASED TABLES
 #        This  section  describes how the table lookups change when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.3.
+#        Postfix version 2.4.
 # 
 #        Each  lookup  operation  uses the entire recipient address
 #        once.  Thus, some.domain.hierarchy is not  looked  up  via
@@ -271,6 +273,7 @@
 # README FILES
 #        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
+#        ADDRESS_REWRITING_README, address rewriting guide
 #        DATABASE_README, Postfix lookup table overview
 #        FILTER_README, external content filter
 # 

@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.11.2.1 2007/05/13 10:14:06 jdc Exp $	*/
+/*	$NetBSD: proposal.c,v 1.11.2.1.2.1 2007/09/03 06:51:20 wrstuden Exp $	*/
 
-/* $Id: proposal.c,v 1.11.2.1 2007/05/13 10:14:06 jdc Exp $ */
+/* $Id: proposal.c,v 1.11.2.1.2.1 2007/09/03 06:51:20 wrstuden Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,11 +39,7 @@
 #include <sys/queue.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

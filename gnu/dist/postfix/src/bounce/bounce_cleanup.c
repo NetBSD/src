@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_cleanup.c,v 1.1.1.3 2006/07/19 01:17:17 rpaulo Exp $	*/
+/*	$NetBSD: bounce_cleanup.c,v 1.1.1.3.6.1 2007/09/03 06:59:18 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -131,7 +131,7 @@ static void bounce_cleanup_sig(int sig)
      */
     if (bounce_cleanup_path)
 	(void) unlink(vstring_str(bounce_cleanup_path));
-    exit(sig);
+    _exit(sig);
 }
 
 /* bounce_cleanup_register - register logfile to clean up */

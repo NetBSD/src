@@ -19,7 +19,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -65,6 +65,7 @@ postfix.o: ../../include/argv.h
 postfix.o: ../../include/clean_env.h
 postfix.o: ../../include/mail_conf.h
 postfix.o: ../../include/mail_params.h
+postfix.o: ../../include/mail_version.h
 postfix.o: ../../include/msg.h
 postfix.o: ../../include/msg_syslog.h
 postfix.o: ../../include/msg_vstream.h

@@ -28,8 +28,10 @@ An address class is defined by three items.
   * The list of domains that are a member of the class: for example, all local
     domains, or all relay domains.
 
-  * The default delivery method. For example, the local or smtp delivery agent.
-    This helps to keep Postfix configurations simple.
+  * The default delivery transport. For example, the local, virtual or relay
+    delivery transport (delivery transports are defined in master.cf). This
+    helps to keep Postfix configurations simple, by avoiding the need for
+    explicit routing information in transport maps.
 
   * The list of valid recipient addresses for that address class. The Postfix
     SMTP server rejects invalid recipients with "User unknown in <name of

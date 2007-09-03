@@ -41,7 +41,9 @@ file processing. You would typically do this for hosted domains with
 recipients that don't have UNIX home directories. </p>
 
 <p> The following example shows how to use maildrop for some.domain
-and for someother.domain.  </p>
+and for someother.domain. The example comes in two parts. </p>
+
+<p> Part 1 describes changes to the main.cf file: </p>
 
 <blockquote>
 <pre>
@@ -95,6 +97,8 @@ documentation), then maildrop will change to the appropriate owner
 to deliver the mail.  </p>
 
 <p> Note: Do not use the postfix user as the maildrop user. </p>
+
+<p> Part 2 describes changes to the master.cf file: </p>
 
 <blockquote>
 <pre>

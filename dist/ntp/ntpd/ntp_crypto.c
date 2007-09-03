@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.10 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.10.6.1 2007/09/03 06:56:00 wrstuden Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -195,6 +195,9 @@ session_key(
 	u_int32	header[10];	/* data in network byte order */
 	u_int	hdlen, len;
 
+	if (!dstadr)
+		return 0;
+	
 	/*
 	 * Generate the session key and key ID. If the lifetime is
 	 * greater than zero, install the key and call it trusted.
@@ -268,6 +271,9 @@ make_keylist(
 	u_int	len, mpoll;
 	int	i;
 
+	if (!dstadr)
+		return XEVNT_OK;
+	
 	/*
 	 * Allocate the key list if necessary.
 	 */
@@ -2048,6 +2054,9 @@ bighash(
 	EVP_DigestUpdate(&ctx, ptr, len);
 	EVP_DigestFinal(&ctx, dgst, &len);
 	BN_bin2bn(dgst, len, bk);
+
+	/* XXX MEMLEAK? free ptr? */
+
 	return (1);
 }
 
@@ -3606,7 +3615,7 @@ crypto_key(
 	if (debug)
 		printf("crypto_key: %s\n", statstr);
 	if (debug > 1) {
-		if (EVP_MD_type(pkey) == EVP_PKEY_DSA)
+		if (pkey->type == EVP_PKEY_DSA)
 			DSA_print_fp(stdout, pkey->pkey.dsa, 0);
 		else
 			RSA_print_fp(stdout, pkey->pkey.rsa, 0);
@@ -3854,7 +3863,6 @@ crypto_setup(void)
 	tstamp_t sstamp;	/* sign filestamp */
 	u_int	len, bytes;
 	u_char	*ptr;
-	const char *fnptr;
 
 	/*
 	 * Initialize structures.
@@ -3881,10 +3889,9 @@ crypto_setup(void)
 	 */
 	ERR_load_crypto_strings();
 	if (rand_file == NULL) {
-		fnptr = RAND_file_name(filename, MAXFILENAME);
-		if (fnptr != NULL) {
-			rand_file = emalloc(strlen(fnptr) + 1);
-			strcpy(rand_file, fnptr);
+		if ((RAND_file_name(filename, MAXFILENAME)) != NULL) {
+			rand_file = emalloc(strlen(filename) + 1);
+			strcpy(rand_file, filename);
 		}
 	} else if (*rand_file != '/') {
 		snprintf(filename, MAXFILENAME, "%s/%s", keysdir,
@@ -3936,7 +3943,7 @@ crypto_setup(void)
 	sign_pkey = pkey;
 	sstamp = fstamp;
 	hostval.fstamp = htonl(fstamp);
-	if (EVP_MD_type(host_pkey) != EVP_PKEY_RSA) {
+	if (host_pkey->type != EVP_PKEY_RSA) {
 		msyslog(LOG_ERR,
 		    "crypto_setup: host key is not RSA key type");
 		exit (-1);

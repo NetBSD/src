@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -76,6 +76,7 @@ sendmail.o: ../../include/mail_queue.h
 sendmail.o: ../../include/mail_run.h
 sendmail.o: ../../include/mail_stream.h
 sendmail.o: ../../include/mail_task.h
+sendmail.o: ../../include/mail_version.h
 sendmail.o: ../../include/mime_state.h
 sendmail.o: ../../include/msg.h
 sendmail.o: ../../include/msg_stats.h

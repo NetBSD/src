@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.8.2.1 2007/06/03 17:25:48 wrstuden Exp $
+# $NetBSD: mi,v 1.955.2.8.2.2 2007/09/03 06:57:41 wrstuden Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -931,8 +931,10 @@
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elansc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/gcscide.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/geodewdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/geodecntr.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/glxsb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/gscpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ie.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman		.cat
@@ -1020,6 +1022,7 @@
 ./usr/share/man/cat4/isp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/it.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iteide.0			man-sys-catman		.cat
+./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ix.0			man-sys-catman		.cat
@@ -1523,6 +1526,7 @@
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
+./usr/share/man/cat4/xirc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/yds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ym.0			man-sys-catman		.cat
 ./usr/share/man/cat4/zero.0			man-sys-catman		.cat
@@ -2126,6 +2130,7 @@
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdate.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdc.0			man-ntp-catman		.cat
@@ -3339,8 +3344,10 @@
 ./usr/share/man/man4/i386/ed.4			man-sys-man		.man
 ./usr/share/man/man4/i386/elansc.4		man-sys-man		.man
 ./usr/share/man/man4/i386/fdc.4			man-sys-man		.man
+./usr/share/man/man4/i386/gcscide.4		man-sys-man		.man
 ./usr/share/man/man4/i386/geodewdog.4		man-sys-man		.man
 ./usr/share/man/man4/i386/geodecntr.4		man-sys-man		.man
+./usr/share/man/man4/i386/glxsb.4		man-sys-man		.man
 ./usr/share/man/man4/i386/gscpcib.4		man-sys-man		.man
 ./usr/share/man/man4/i386/ie.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/intro.4		man-sys-man		.man
@@ -3428,6 +3435,7 @@
 ./usr/share/man/man4/isp.4			man-sys-man		.man
 ./usr/share/man/man4/it.4			man-sys-man		.man
 ./usr/share/man/man4/iteide.4			man-sys-man		.man
+./usr/share/man/man4/jmide.4			man-sys-man		.man
 ./usr/share/man/man4/iwi.4			man-sys-man		.man
 ./usr/share/man/man4/iwic.4			man-sys-man		.man
 ./usr/share/man/man4/ix.4			man-sys-man		.man
@@ -3931,6 +3939,7 @@
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
+./usr/share/man/man4/xirc.4			man-sys-man		.man
 ./usr/share/man/man4/yds.4			man-sys-man		.man
 ./usr/share/man/man4/ym.4			man-sys-man		.man
 ./usr/share/man/man4/zero.4			man-sys-man		.man
@@ -4534,6 +4543,7 @@
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
+./usr/share/man/man8/ntp-keygen.8		man-ntp-man		.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdate.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdc.8			man-ntp-man		.man

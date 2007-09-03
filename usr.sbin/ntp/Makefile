@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2004/01/04 00:06:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.20.1 2007/09/03 07:05:38 wrstuden Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	libisc libntp libparse .WAIT
+SUBDIR=	libopts libisc libntp libparse .WAIT
 SUBDIR+= ntpd ntpdate ntpdc ntpq ntptime
-SUBDIR+= ntptrace
+SUBDIR+= ntptrace html
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= ntp-keygen

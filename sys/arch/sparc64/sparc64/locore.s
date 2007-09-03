@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232 2006/10/25 11:56:56 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.232.4.1 2007/09/03 07:04:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4968,10 +4968,15 @@ _C_LABEL(cpu_initialize):
 	sllx	%l3, 41, %l4			! Mask off high bits
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 
+	set	64*1024, %l5			! calculate pa of second mapping
+	add	%l1, %l5, %l6
 	andn	%l1, %l4, %l1			! Mask the phys page number
+	andn	%l6, %l4, %l6			! for both mappings
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
+	or	%l2, %l6, %l6
 	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=0|G=0
+	or	%l6, TTE_DATABITS, %l6
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
@@ -4991,7 +4996,7 @@ _C_LABEL(cpu_initialize):
 	sethi	%hi(KSTACK_VA), %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
+	stxa	%l6, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync
 	flush	%o5
 

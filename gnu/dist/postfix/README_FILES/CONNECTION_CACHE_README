@@ -57,12 +57,20 @@ reused only by the mail delivering process that creates the connection. To get
 the same performance improvement as with a shared connection cache, non-shared
 connections need to be kept open for a longer time.
 
-    Internet <-- smtp(8)  <-> scache(8)  <-> smtp(8)  --> Internet
-                                                 
-
 The scache(8) server, introduced with Postfix version 2.2, maintains the shared
 connection cache. With Postfix version 2.2, only the smtp(8) client has support
 to access this cache.
+
+            /-- smtp(8) --> Internet
+
+    qmgr(8)       |  
+                  |
+            \--   | smtp(8) --> Internet
+                  |
+                  ^          
+                  |
+
+                  scache(8)
 
 When SMTP connection caching is enabled (see next section), the smtp(8) client
 does not disconnect after a mail transaction, but gives the connection to the

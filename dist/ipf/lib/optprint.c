@@ -1,4 +1,4 @@
-/*	$NetBSD: optprint.c,v 1.1.1.2.4.1 2007/05/07 17:04:49 pavel Exp $	*/
+/*	$NetBSD: optprint.c,v 1.1.1.2.4.1.2.1 2007/09/03 06:54:20 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2005 by Darren Reed.

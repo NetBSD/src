@@ -20,7 +20,9 @@ typically do this for hosted domains with recipients that don't have UNIX home
 directories.
 
 The following example shows how to use maildrop for some.domain and for
-someother.domain.
+someother.domain. The example comes in two parts.
+
+Part 1 describes changes to the main.cf file:
 
      1 /etc/postfix/main.cf:
      2     maildrop_destination_recipient_limit = 1
@@ -63,6 +65,8 @@ maildrop is suid (see maildrop documentation), then maildrop will change to the
 appropriate owner to deliver the mail.
 
 Note: Do not use the postfix user as the maildrop user.
+
+Part 2 describes changes to the master.cf file:
 
     /etc/postfix/master.cf:
         maildrop  unix  -       n       n       -       -       pipe

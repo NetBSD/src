@@ -20,8 +20,8 @@
 #        file  that serves as input to the postmap(1) command.  The
 #        result, an indexed file in dbm or db format, is  used  for
 #        fast  searching  by  the  mail system. Execute the command
-#        "postmap /etc/postfix/canonical" in order to  rebuild  the
-#        indexed file after changing the text file.
+#        "postmap /etc/postfix/canonical"  to  rebuild  an  indexed
+#        file after changing the corresponding text file.
 # 
 #        When  the  table  is provided via other means such as NIS,
 #        LDAP or SQL, the same lookups are  done  as  for  ordinary
@@ -30,9 +30,9 @@
 #        Alternatively,  the  table  can  be provided as a regular-
 #        expression map where patterns are given as regular expres-
 #        sions,  or lookups can be directed to TCP-based server. In
-#        that case, the lookups are done in  a  slightly  different
+#        those cases, the lookups are done in a slightly  different
 #        way  as  described below under "REGULAR EXPRESSION TABLES"
-#        and "TCP-BASED TABLES".
+#        or "TCP-BASED TABLES".
 # 
 #        By default the canonical(5) mapping affects  both  message
 #        header  addresses  (i.e. addresses that appear inside mes-
@@ -53,11 +53,9 @@
 #        addresses produced by legacy mail systems.
 # 
 #        The canonical(5) mapping is not to be confused  with  vir-
-#        tual  domain support. Use the virtual(5) map for that pur-
-#        pose.
-# 
-#        The canonical(5) mapping is not to be confused with  local
-#        aliasing.  Use the aliases(5) map for that purpose.
+#        tual  alias  support or with local aliasing. To change the
+#        destination but not the headers,  use  the  virtual(5)  or
+#        aliases(5) map instead.
 # 
 # CASE FOLDING
 #        The  search  string is folded to lowercase before database
@@ -109,6 +107,15 @@
 #               Replace other addresses in domain by address.  This
 #               form has the lowest precedence.
 # 
+#               Note:  @domain  is  a  wild-card. When this form is
+#               applied to recipient addresses,  the  Postfix  SMTP
+#               server  accepts  mail  for any recipient in domain,
+#               regardless of whether that recipient exists.   This
+#               may  turn  your  mail  system  into  a  backscatter
+#               source: Postfix first accepts mail for non-existent
+#               recipients  and  then  tries to return that mail as
+#               "undeliverable" to the often forged sender address.
+# 
 # RESULT ADDRESS REWRITING
 #        The lookup result is subject to address rewriting:
 # 
@@ -156,7 +163,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.3.
+#        Postfix version 2.4.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain  mail  addresses  are not broken up into their

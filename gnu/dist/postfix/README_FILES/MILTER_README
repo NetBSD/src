@@ -11,13 +11,15 @@ FROM, etc.) as well as mail content. All this happens before mail is queued.
 
 The reason for adding Milter support to Postfix is that there exists a large
 collection of applications, not only to block unwanted mail, but also to verify
-authenticity (examples: SenderID+SPF and Domain keys) or to digitally sign mail
-(example: Domain keys). Having yet another Postfix-specific version of all that
-software is a poor use of human and system resources.
+authenticity (examples: Domain keys identified mail, SenderID+SPF and Domain
+keys) or to digitally sign mail (examples: Domain keys identified mail, Domain
+keys). Having yet another Postfix-specific version of all that software is a
+poor use of human and system resources.
 
-Postfix 2.3 implements all the requests of Sendmail version 8 Milter protocols
-up to version 4, except one: message body replacement. See, however, the
-workarounds and limitations sections at the end of this document.
+Postfix version 2.4 implements all the requests of Sendmail version 8 Milter
+protocols up to version 4, including message body replacement (body replacement
+is not available with Postfix version 2.3). See, however, the workarounds and
+limitations sections at the end of this document.
 
 This document provides information on the following topics:
 
@@ -85,11 +87,11 @@ implements the Sendmail 8 Milter protocol. Postfix currently does not provide
 such a library, but Sendmail does.
 
 On some Linux and *BSD distributions, the Sendmail libmilter library is
-installed by default. With this, applications such as dk-milter and sid-milter
-build out of the box without requiring any tinkering:
+installed by default. With this, applications such as dkim-milter and sid-
+milter build out of the box without requiring any tinkering:
 
-    $ ggzzccaatt ddkk--mmiilltteerr--xx..yy..zz..ttaarr..ggzz || ttaarr xxff --
-    $ ccdd ddkk--mmiilltteerr--xx..yy..zz
+    $ ggzzccaatt ddkkiimm--mmiilltteerr--xx..yy..zz..ttaarr..ggzz || ttaarr xxff --
+    $ ccdd ddkkiimm--mmiilltteerr--xx..yy..zz
     $ mmaakkee
     [...lots of output omitted...]
 
@@ -125,7 +127,7 @@ RRuunnnniinngg MMiilltteerr aapppplliiccaattiioonnss
 To run a Milter application, see the documentation of the filter for options. A
 typical command looks like this:
 
-    # //ssoommee//wwhheerree//ddkk--ffiilltteerr --uu uusseerriidd --pp iinneett::ppoorrttnnuummbbeerr@@llooccaallhhoosstt ......ootthheerr
+    # //ssoommee//wwhheerree//ddkkiimm--ffiilltteerr --uu uusseerriidd --pp iinneett::ppoorrttnnuummbbeerr@@llooccaallhhoosstt ......ootthheerr
     ooppttiioonnss......
 
 Please specify a userid value that isn't used for other applications (not
@@ -406,68 +408,70 @@ Milter applications make assumptions that aren't true in a Postfix environment.
         X-SenderID: Sendmail Sender-ID Filter vx.y.z host.example.com <unknown-
         msgid>
 
-    This happens because some Milter applications expect that the queue ID is
+    This happens because those Milter applications expect that the queue ID is
     known before the MTA accepts the MAIL FROM (sender) command. Postfix, on
     the other hand, does not choose a queue file name until after it accepts
-    the first valid RCPT TO (recipient) command. Postfix queue file names must
+    the first valid RCPT TO (recipient) command (Postfix queue file names must
     be unique across multiple directories, so the name can't be chosen before
-    the file is created. If multiple messages were to use the same queue ID
-    simultaneously, mail would be lost.
+    the file is created; if multiple messages were to use the same queue ID
+    simultaneously, mail would be lost).
 
-    To work around the ugly message header from Milter applications, we add a
-    little code to the Milter source to look up the queue ID after Postfix
-    receives the end of the message.
+If you experience the ugly header problem, see if a recent version of the
+Milter application fixes it. For example, current versions of dkim-filter and
+dk-filter already have code that looks up the Postfix queue ID at a later
+protocol stage.
 
-      o Edit the filter source file (typically named dk-filter/dk-filter.c or
-        similar).
+To fix the ugly message header with sid-filter applications, we change the
+source code, so that it does the queue ID lookup after Postfix receives the end
+of the message.
 
-      o Look up the mlfi_eom() function and add code near the top shown as bboolldd
-        text below:
+  * Edit the filter source file (named sid-filter/sid-filter.c).
 
-        dfc = cc->cctx_msg;
-        assert(dfc != NULL);
+  * Look up the smfilter table and replace mlfi_eoh by NULL.
 
-        //** DDeetteerrmmiinnee tthhee jjoobb IIDD ffoorr llooggggiinngg.. **//
-        iiff ((ddffcc-->>mmccttxx__jjoobbiidd ==== 00 |||| ssttrrccmmpp((ddffcc-->>mmccttxx__jjoobbiidd,, JJOOBBIIDDUUNNKKNNOOWWNN)) ==== 00))
-        {{
-                cchhaarr **jjoobbiidd == ssmmffii__ggeettssyymmvvaall((ccttxx,, ""ii""));;
-                iiff ((jjoobbiidd !!== 00))
-                        ddffcc-->>mmccttxx__jjoobbiidd == jjoobbiidd;;
-        }}
+  * Look up the mlfi_eom() function and add code near the top that calls
+    mlfi_eoh() as shown by the bboolldd text below:
 
-        /* get hostname; used in the X header and in new MIME boundaries */
+            assert(ctx != NULL);
+    #endif /* !DEBUG */
 
-    NOTES:
+            rreett == mmllffii__eeoohh((ccttxx));;
+            iiff ((rreett !!== SSMMFFIISS__CCOONNTTIINNUUEE))
+                    rreettuurrnn rreett;;
 
-      o Different mail filters use slightly different names for variables. If
-        the above code does not compile, look for the code at the start of the
-        mlfi_eoh() routine.
+NOTES:
 
-      o This fixes only the ugly message header, but not the WARNING message.
-        Fortunately, dk-filter logs that message only once.
+  * This was tested with sid-milter-0.2.10 and sid-milter-0.2.14.
 
-    With some Milter applications we can fix both the WARNING and the "unknown-
-    msgid" by postponing the call of mlfi_eoh() (or whatever routine logs the
-    WARNING) until the end of the message.
+To fix the ugly message header with other Milter applications, you will need to
+do something like this:
 
-      o Edit the filter source file (typically named sid-filter/sid-filter.c or
-        similar).
+  * Edit the filter source file (typically named xxx-filter/xxx-filter.c or
+    similar).
 
-      o Look up the smfilter table and replace mlfi_eoh (or whatever routine
-        logs the WARNING) by NULL.
+  * Look up the mlfi_eom() function and add code near the top shown as bboolldd
+    text below:
 
-      o Look up the mlfi_eom() function and add code near the top that calls
-        mlfi_eoh() as shown by the bboolldd text below:
+    dfc = cc->cctx_msg;
+    assert(dfc != NULL);
 
-                assert(ctx != NULL);
-        #endif /* !DEBUG */
+    //** DDeetteerrmmiinnee tthhee jjoobb IIDD ffoorr llooggggiinngg.. **//
+    iiff ((ddffcc-->>mmccttxx__jjoobbiidd ==== 00 |||| ssttrrccmmpp((ddffcc-->>mmccttxx__jjoobbiidd,, JJOOBBIIDDUUNNKKNNOOWWNN)) ==== 00)) {{
+            cchhaarr **jjoobbiidd == ssmmffii__ggeettssyymmvvaall((ccttxx,, ""ii""));;
+            iiff ((jjoobbiidd !!== 00))
+                    ddffcc-->>mmccttxx__jjoobbiidd == jjoobbiidd;;
+    }}
 
-                rreett == mmllffii__eeoohh((ccttxx));;
-                iiff ((rreett !!== SSMMFFIISS__CCOONNTTIINNUUEE))
-                        rreettuurrnn rreett;;
+    /* get hostname; used in the X header and in new MIME boundaries */
 
-    This works with sid-milter-0.2.10. Other Milter applications will dump core
-    when you do this.
+NOTES:
+
+  * Different mail filters use slightly different names for variables. If the
+    above code does not compile, look for the code at the start of the mlfi_eoh
+    () routine.
+
+  * This fixes only the ugly message header, but not the WARNING message.
+    Fortunately, many Milters log that message only once.
 
 LLiimmiittaattiioonnss
 
@@ -513,8 +517,7 @@ the CONTENT_INSPECTION_README document for a discussion.
         application name: st_optionneg[134563840]: 0x3d does not fulfill action
         requirements 0x1e
 
-    The solution is (to wait for) a Postfix version that supports the missing
-    functionality.
+    The solution is to use Postfix version 2.4 or later.
 
   * Most Milter configuration options are global. Future Postfix versions may
     support per-Milter timeouts, per-Milter error handling, etc.

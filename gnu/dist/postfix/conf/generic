@@ -33,8 +33,8 @@
 #        that serves as  input  to  the  postmap(1)  command.   The
 #        result,  an  indexed file in dbm or db format, is used for
 #        fast searching by the mail  system.  Execute  the  command
-#        "postmap  /etc/postfix/generic"  in  order  to rebuild the
-#        indexed file after changing the text file.
+#        "postmap  /etc/postfix/generic" to rebuild an indexed file
+#        after changing the corresponding text file.
 # 
 #        When the table is provided via other means  such  as  NIS,
 #        LDAP  or  SQL,  the  same lookups are done as for ordinary
@@ -43,9 +43,9 @@
 #        Alternatively, the table can be  provided  as  a  regular-
 #        expression map where patterns are given as regular expres-
 #        sions, or lookups can be directed to TCP-based server.  In
-#        that  case,  the  lookups are done in a slightly different
+#        those  case,  the lookups are done in a slightly different
 #        way as described below under "REGULAR  EXPRESSION  TABLES"
-#        and "TCP-BASED TABLES".
+#        or "TCP-BASED TABLES".
 # 
 # CASE FOLDING
 #        The  search  string is folded to lowercase before database
@@ -136,7 +136,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.3.
+#        Postfix version 2.4.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain  mail  addresses  are not broken up into their
@@ -155,12 +155,12 @@
 #        that the ISP supports "+" style address extensions).
 # 
 #        /etc/postfix/main.cf:
-#                smtp_generic_maps = hash:/etc/postfix/generic
+#            smtp_generic_maps = hash:/etc/postfix/generic
 # 
 #        /etc/postfix/generic:
-#                his@localdomain.local   hisaccount@hisisp.example
-#                her@localdomain.local   heraccount@herisp.example
-#                @localdomain.local      hisaccount+local@hisisp.example
+#            his@localdomain.local   hisaccount@hisisp.example
+#            her@localdomain.local   heraccount@herisp.example
+#            @localdomain.local      hisaccount+local@hisisp.example
 # 
 #        Execute  the  command "postmap /etc/postfix/generic" when-
 #        ever the table is changed.  Instead of hash, some  systems

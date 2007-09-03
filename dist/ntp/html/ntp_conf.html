@@ -11,7 +11,6 @@
 
 	<body>
 		<h3>Configuration File Definition (Advanced)</h3>
-		<img src="pic/bustardfly.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Pogo</i>, Walt Kelly</a>
 		<p>A typical NTP monitoring packet</p>
 		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">19:46</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="223">Friday, June 16, 2006</csobj></p>
 		<br clear="left">
@@ -68,7 +67,6 @@
 		</table>
 		<h4 id="high-level">High-Level Description</h4>
 		<p>A high-level description of the configuration process showing where all the files fit in is given below:</p>
-		<p><img src="pic/description.jpg" alt="JPEG" border="0"></p>
 		<p>The scanner reads in an NTP configuration file and converts it into tokens. The Bison generated parser reads these tokens and converts them into an AST. The AST traverser consists of a set of functions that configure parts of NTP on the basis of what is on the tree. A more detailed description of these parts and the files used is given below:</p>
 		<h4 id="detailed">Detailed Description</h4>
 		<dl>

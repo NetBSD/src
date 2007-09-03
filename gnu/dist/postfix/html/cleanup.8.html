@@ -102,12 +102,12 @@ CLEANUP(8)                                                          CLEANUP(8)
 
        <b><a href="postconf.5.html#body_checks">body_checks</a> (empty)</b>
               Optional  lookup  tables  for content inspection as
-              specified in the <b><a href="postconf.5.html#body_checks">body_checks</a></b>(5) manual page.
+              specified in the <a href="header_checks.5.html"><b>body_checks</b>(5)</a> manual page.
 
        <b><a href="postconf.5.html#header_checks">header_checks</a> (empty)</b>
               Optional lookup tables for  content  inspection  of
               primary  non-MIME  message headers, as specified in
-              the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
+              the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
 
        Available in Postfix version 2.0 and later:
 
@@ -119,12 +119,12 @@ CLEANUP(8)                                                          CLEANUP(8)
        <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
               Optional lookup tables for  content  inspection  of
               MIME  related  message headers, as described in the
-              <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
+              <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
               Optional lookup tables for  content  inspection  of
               non-MIME  message  headers in attached messages, as
-              described in the <b><a href="postconf.5.html#header_checks">header_checks</a></b>(5) manual page.
+              described in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
 
        Available in Postfix version 2.3 and later:
 
@@ -412,31 +412,32 @@ CLEANUP(8)                                                          CLEANUP(8)
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#myhostname">myhostname</a> (see 'postconf -d' output)</b>
               The internet hostname of this mail system.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The domain name that locally-posted mail appears to
-              come  from,  and that locally posted mail is deliv-
+              come from, and that locally posted mail  is  deliv-
               ered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#soft_bounce">soft_bounce</a> (no)</b>
@@ -447,14 +448,14 @@ CLEANUP(8)                                                          CLEANUP(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable  support  for  the   X-Original-To   message
+              Enable   support   for  the  X-Original-To  message
               header.
 
 <b>FILES</b>
@@ -478,7 +479,7 @@ CLEANUP(8)                                                          CLEANUP(8)
        <a href="CONTENT_INSPECTION_README.html">CONTENT_INSPECTION_README</a> content inspection
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

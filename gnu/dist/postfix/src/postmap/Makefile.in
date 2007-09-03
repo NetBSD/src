@@ -18,7 +18,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 update: ../../bin/$(PROG)
 
@@ -87,6 +87,7 @@ postmap.o: ../../include/mail_conf.h
 postmap.o: ../../include/mail_dict.h
 postmap.o: ../../include/mail_params.h
 postmap.o: ../../include/mail_task.h
+postmap.o: ../../include/mail_version.h
 postmap.o: ../../include/mkmap.h
 postmap.o: ../../include/msg.h
 postmap.o: ../../include/msg_syslog.h

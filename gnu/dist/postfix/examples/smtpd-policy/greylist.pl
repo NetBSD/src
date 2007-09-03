@@ -77,6 +77,13 @@ $database_name="/var/mta/greylist.db";
 $greylist_delay=60;
 
 #
+# Auto-whitelist threshold. Specify 0 to disable, or the number of
+# successful "come backs" after which a client is no longer subject
+# to greylisting.
+#
+$auto_whitelist_threshold = 10;
+
+#
 # Syslogging options for verbose mode and for fatal errors.
 # NOTE: comment out the $syslog_socktype line if syslogging does not
 # work on your system.
@@ -92,10 +99,18 @@ $syslog_priority="info";
 # table.  Request attributes are available via the %attr hash.
 #
 sub smtpd_access_policy {
-    my($key, $time_stamp, $now);
+    my($key, $time_stamp, $now, $count);
 
     # Open the database on the fly.
     open_database() unless $database_obj;
+
+    # Search the auto-whitelist.
+    if ($auto_whitelist_threshold > 0) {
+        $count = read_database($attr{"client_address"});
+        if ($count > $auto_whitelist_threshold) {
+	    return "dunno";
+        }
+    }
 
     # Lookup the time stamp for this client/sender/recipient.
     $key =
@@ -121,6 +136,10 @@ sub smtpd_access_policy {
     #
     syslog $syslog_priority, "request age %d", $now - $time_stamp if $verbose;
     if ($now - $time_stamp > $greylist_delay) {
+	# Update the auto-whitelist.
+	if ($auto_whitelist_threshold > 0) {
+	    update_database($attr{"client_address"}, $count + 1);
+	}
 	return "dunno";
     } else {
 	return "defer_if_permit Service is unavailable";

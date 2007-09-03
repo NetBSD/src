@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsim.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: ntpsim.c,v 1.3.6.1 2007/09/03 06:56:13 wrstuden Exp $	*/
 
 /*
  * NTP simulator engine - Harish Nair
@@ -6,6 +6,7 @@
  */
 #include "ntpd.h"
 #include "ntpsim.h"
+#include "ntpdsim-opts.h"
 
 /*
  * Defines...
@@ -74,7 +75,15 @@ ntpsim(
         init_io();
         init_loopfilter();
         mon_start(MON_OFF);
+
+	{
+		int optct = optionProcess(&ntpdsimOptions, argc, argv);
+		argc -= optct;
+		argv += optct;
+	}
+
 	getconfig(argc, argv);
+
         initializing = 0;
 	loop_config(LOOP_DRIFTCOMP, old_drift / 1e6);
 

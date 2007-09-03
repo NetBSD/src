@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.39.2.1.2.1 2007/06/04 01:54:20 wrstuden Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.39.2.1.2.2 2007/09/03 07:04:30 wrstuden Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -275,6 +275,8 @@
 #define BGE_CHIPID_BCM5715_A0		0x90000000
 #define BGE_CHIPID_BCM5715_A1		0x90010000
 #define BGE_CHIPID_BCM5715_A3		0x90030000
+#define BGE_CHIPID_BCM5787_A0		0xb0000000
+#define BGE_CHIPID_BCM5787_A1		0xb0010000
 #define BGE_CHIPID_BCM5787_A2		0xb0020000
 #define BGE_CHIPID_BCM5906_A1		0xc0010000
 
