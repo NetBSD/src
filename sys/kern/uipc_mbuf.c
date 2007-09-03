@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.13 2007/09/03 14:41:17 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.14 2007/09/03 14:58:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.13 2007/09/03 14:41:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.14 2007/09/03 14:58:03 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1516,7 +1516,7 @@ m_ext_free(struct mbuf *m)
 }
 
 #if defined(__HAVE_LAZY_MBUF) || defined(DEBUG)
-caddr_t
+char *
 m_mapin(struct mbuf *m)
 {
 #if defined(__HAVE_LAZY_MBUF)
