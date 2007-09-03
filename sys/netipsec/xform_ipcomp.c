@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.5.4.2 2007/02/26 09:11:57 yamt Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.5.4.3 2007/09/03 14:43:48 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.5.4.2 2007/02/26 09:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.5.4.3 2007/09/03 14:43:48 yamt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -182,10 +182,10 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_input_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_spi = sav->spi;
@@ -225,7 +225,12 @@ ipcomp_input_cb(struct cryptop *crp)
 	struct secasindex *saidx;
 	int s, hlen = IPCOMP_HLENGTH, error, clen;
 	u_int8_t nproto;
-	caddr_t addr;
+	void *addr;
+	u_int16_t dport = 0;
+	u_int16_t sport = 0;
+#ifdef IPSEC_NAT_T
+	struct m_tag * tag = NULL;
+#endif
 
 	crd = crp->crp_desc;
 
@@ -236,9 +241,17 @@ ipcomp_input_cb(struct cryptop *crp)
 	mtag = (struct mtag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT-T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
+
 	s = splsoftnet();
 
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi);
+	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_input_cb: SA expired while in crypto\n"));
@@ -295,7 +308,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 
 	/* Keep the next protocol field */
-	addr = (caddr_t) mtod(m, struct ip *) + skip;
+	addr =  mtod(m, struct ip *) + skip;
 	nproto = ((struct ipcomp *) addr)->comp_nxt;
 
 	/* Remove the IPCOMP header */
@@ -454,9 +467,9 @@ ipcomp_output(
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_output_cb;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 	crp->crp_sid = sav->tdb_cryptoid;
 
 	return crypto_dispatch(crp);
@@ -491,7 +504,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	s = splsoftnet();
 
 	isr = tc->tc_isr;
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi);
+	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 	if (sav == NULL) {
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_output_cb: SA expired while in crypto\n"));
@@ -537,7 +550,7 @@ ipcomp_output_cb(struct cryptop *crp)
 			error = ENOBUFS;
 			goto bad;
 		}
-		ipcomp = (struct ipcomp *)(mtod(mo, caddr_t) + roff);
+		ipcomp = (struct ipcomp *)(mtod(mo, char *) + roff);
 
 		/* Initialize the IPCOMP header */
 		/* XXX alignment always correct? */

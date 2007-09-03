@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.9 2003/07/08 10:20:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.9.16.1 2007/09/03 14:43:33 yamt Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -218,7 +218,6 @@ struct mif6 {
 	u_quad_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_quad_t	m6_bytes_in;	/* # bytes in on interface	     */
 	u_quad_t	m6_bytes_out;	/* # bytes out on interface	     */
-	struct route_in6 m6_route;/* cached route if this is a tunnel */
 #ifdef notyet
 	u_int		m6_rsvp_on;	/* RSVP listening on this vif */
 	struct socket   *m6_rsvpd;	/* RSVP daemon socket */
@@ -272,7 +271,7 @@ int	ip6_mrouter_set __P((int, struct socket *, struct mbuf *));
 int	ip6_mrouter_get __P((int, struct socket *, struct mbuf **));
 int	ip6_mrouter_done __P((void));
 void	ip6_mrouter_detach __P((struct ifnet *));
-int	mrt6_ioctl __P((int, caddr_t));
+int	mrt6_ioctl __P((int, void *));
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_MROUTE_H_ */

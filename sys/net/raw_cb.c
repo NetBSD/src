@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.15.4.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.15.4.2 2007/09/03 14:42:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.15.4.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.15.4.2 2007/09/03 14:42:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ raw_detach(struct rawcb *rp)
 		m_freem(dtom(rp->rcb_laddr));
 	rp->rcb_laddr = 0;
 #endif
-	free((caddr_t)rp, M_PCB);
+	free((void *)rp, M_PCB);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.19.2.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.19.2.3 2007/09/03 14:42:30 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -143,7 +143,7 @@ struct ieee80211com {
 	u_int8_t		ic_dtim_period;	/* DTIM period */
 	u_int8_t		ic_dtim_count;	/* DTIM count for last bcn */
 	struct ifmedia		ic_media;	/* interface media config */
-	caddr_t			ic_rawbpf;	/* packet filter structure */
+	void *			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
 	struct ieee80211_channel *ic_ibss_chan;
 	struct ieee80211_channel *ic_curchan;	/* current channel */
@@ -297,9 +297,9 @@ void	ieee80211_media_init(struct ieee80211com *,
 struct ieee80211com *ieee80211_find_vap(const u_int8_t mac[IEEE80211_ADDR_LEN]);
 int	ieee80211_media_change(struct ifnet *);
 void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
-int	ieee80211_ioctl(struct ieee80211com *, u_long, caddr_t);
-int	ieee80211_cfgget(struct ieee80211com *, u_long, caddr_t);
-int	ieee80211_cfgset(struct ieee80211com *, u_long, caddr_t);
+int	ieee80211_ioctl(struct ieee80211com *, u_long, void *);
+int	ieee80211_cfgget(struct ieee80211com *, u_long, void *);
+int	ieee80211_cfgset(struct ieee80211com *, u_long, void *);
 void	ieee80211_watchdog(struct ieee80211com *);
 int	ieee80211_rate2media(struct ieee80211com *, int,
 		enum ieee80211_phymode);

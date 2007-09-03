@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.59.2.3 2007/02/26 09:12:12 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.59.2.4 2007/09/03 14:46:23 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,47 +84,9 @@
 #endif
 
 #include <sys/queue.h>
+#include <sys/simplelock.h>
+
 #include <machine/lock.h>
-
-/*
- * The simple lock.  Provides a simple spinning mutex.  Note the
- * member which is used in atomic operations must be aligned in
- * order for it to work on the widest range of processor types.
- */
-struct simplelock {
-	__cpu_simple_lock_t lock_data;
-#ifdef __CPU_SIMPLE_LOCK_PAD
-	/*
-	 * For binary compatibility where the lock word has been
-	 * made shorter.
-	 */
-	uint8_t lock_pad[3];
-#endif
-#ifdef LOCKDEBUG
-	const char *lock_file;
-	const char *unlock_file;
-	short lock_line;
-	short unlock_line;
-	_TAILQ_ENTRY(struct simplelock, volatile) list;
-	cpuid_t lock_holder;		/* CPU ID */
-#endif
-};
-
-#ifdef __CPU_SIMPLE_LOCK_PAD
-#ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0}, NULL, \
-				  NULL, 0, 0, { NULL, NULL }, LK_NOCPU }
-#else
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0 } }
-#endif
-#else	/* __CPU_SIMPLE_LOCK_PAD */
-#ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0, \
-				  0, { NULL, NULL }, LK_NOCPU }
-#else
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
-#endif
-#endif	/* __CPU_SIMPLE_LOCK_PAD */
 
 /*
  * The general lock structure.  Provides for multiple shared locks,
@@ -132,7 +94,7 @@ struct simplelock {
  * lock can be gained.
  */
 struct lock {
-	struct	simplelock lk_interlock; /* lock on remaining fields */
+	struct  simplelock lk_interlock;/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
@@ -152,7 +114,7 @@ struct lock {
 			lwpid_t lk_sleep_locklwp;
 
 			/* priority at which to sleep */
-			int lk_sleep_prio;
+			pri_t lk_sleep_prio;
 
 			/* maximum sleep time (for tsleep) */
 			int lk_sleep_timo;
@@ -267,7 +229,7 @@ struct lock {
  * or passed in as arguments to the lock manager. The LK_REENABLE flag may be
  * set only at the release of a lock obtained by drain.
  */
-#define	LK_EXTFLG_MASK	0x00700070	/* mask of external flags */
+#define	LK_EXTFLG_MASK	0x00f00070	/* mask of external flags */
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define	LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
@@ -275,6 +237,7 @@ struct lock {
 #define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
 #define	LK_SPIN		0x00400000	/* lock spins instead of sleeps */
+#define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
  * Internal lock flags.
  *
@@ -336,18 +299,11 @@ struct lock {
  * or LK_FORCEUPGRADE will have released its shared access lock).
  */
 
-/*
- * Indicator that no process/cpu holds exclusive lock
- */
-#define	LK_KERNPROC	((pid_t) -2)
-#define	LK_NOPROC	((pid_t) -1)
-#define	LK_NOCPU	((cpuid_t) -1)
-
 #ifdef _KERNEL
 
 struct proc;
 
-void	lockinit(struct lock *, int, const char *, int, int);
+void	lockinit(struct lock *, pri_t, const char *, int, int);
 #if defined(LOCKDEBUG)
 int	_lockmgr(volatile struct lock *, u_int, struct simplelock *,
 	    const char *, int);
@@ -387,61 +343,6 @@ int	spinlock_release_all(volatile struct lock *);
 void	spinlock_acquire_count(volatile struct lock *, int);
 #endif
 
-#if defined(LOCKDEBUG)
-
-void _simple_lock(volatile struct simplelock *, const char *, int);
-int  _simple_lock_try(volatile struct simplelock *, const char *, int);
-void _simple_unlock(volatile struct simplelock *, const char *, int);
-int  _simple_lock_held(volatile struct simplelock *);
-void simple_lock_only_held(volatile struct simplelock *, const char *);
-void _simple_lock_assert_locked(volatile struct simplelock *, const char *,
-    const char *, int l);
-void _simple_lock_assert_unlocked(volatile struct simplelock *, const char *,
-    const char *, int l);
-
-#define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
-#define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
-#define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
-#define	simple_lock_held(alp)	_simple_lock_held((alp))
-#define simple_lock_assert_locked(alp,lockname)	\
-	_simple_lock_assert_locked((alp),(lockname), __FILE__, __LINE__)
-#define simple_lock_assert_unlocked(alp,lockname) \
-	_simple_lock_assert_unlocked((alp),(lockname), __FILE__, __LINE__)
-
-#define	LOCK_ASSERT(x)		KASSERT(x)
-
-void	simple_lock_init(volatile struct simplelock *);
-void	simple_lock_dump(void);
-void	simple_lock_freecheck(void *, void *);
-void	simple_lock_switchcheck(void);
-#elif defined(MULTIPROCESSOR)
-#define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
-#define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
-#define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
-#define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
-#define	LOCK_ASSERT(x)		/* nothing */
-#define	simple_lock_only_held(x,y)		/* nothing */
-#define simple_lock_assert_locked(alp,lockname)	/* nothing */
-#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
-#else
-#define	simple_lock_try(alp)	(1)
-#ifndef __lint__
-#define	simple_lock_init(alp)	(void)(alp)
-#define	simple_lock(alp)	(void)(alp)
-#define	simple_unlock(alp)	(void)(alp)
-#define simple_lock_assert_locked(alp,lockname)	(void)(alp)
-#define simple_lock_assert_unlocked(alp,lockname)	(void)(alp)
-#else /* __lint__ */
-#define	simple_lock_init(alp)	/* nothing */
-#define	simple_lock(alp)	/* nothing */
-#define	simple_unlock(alp)	/* nothing */
-#define	simple_lock_only_held(x,y)		/* nothing */
-#define simple_lock_assert_locked(alp,lockname)	/* nothing */
-#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
-#endif /* __lint__ */
-#define	LOCK_ASSERT(x)		/* nothing */
-#endif
-
 /*
  * From <machine/lock.h>.
  */
@@ -452,10 +353,10 @@ void	simple_lock_switchcheck(void);
 #define	SPINLOCK_BACKOFF_HOOK		nullop(NULL)
 #endif
 #ifndef	SPINLOCK_BACKOFF_MIN
-#define	SPINLOCK_BACKOFF_MIN	8
+#define	SPINLOCK_BACKOFF_MIN	4
 #endif
 #ifndef	SPINLOCK_BACKOFF_MAX
-#define	SPINLOCK_BACKOFF_MAX	512
+#define	SPINLOCK_BACKOFF_MAX	128
 #endif
 
 #define	SPINLOCK_BACKOFF(count)					\

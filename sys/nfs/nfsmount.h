@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.33.8.3 2007/02/26 09:12:07 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.33.8.4 2007/09/03 14:44:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,9 @@
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
 #ifdef _KERNEL
+#include <sys/condvar.h>
 #include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/disk.h>
 #endif
 
@@ -125,7 +127,9 @@ struct nfs_args {
  * Holds NFS specific information for mount.
  */
 struct	nfsmount {
-	struct simplelock nm_slock;	/* Lock for this structure */
+	kmutex_t nm_lock;		/* Lock for this structure */
+	kcondvar_t nm_rcvcv;
+	kcondvar_t nm_sndcv;
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */
@@ -160,12 +164,13 @@ struct	nfsmount {
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
 	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];
 	TAILQ_HEAD(, buf) nm_bufq;      /* async io buffer queue */
-	short	nm_bufqlen;		/* number of buffers in queue */
-	short	nm_bufqwant;		/* process wants to add to the queue */
+	int	nm_bufqlen;		/* number of buffers in queue */
+	kcondvar_t nm_aiocv;
 	int	nm_bufqiods;		/* number of iods processing queue */
 	u_int64_t nm_maxfilesize;	/* maximum file size */
 	int	nm_iflag;		/* internal flags */
 	int	nm_waiters;		/* number of waiting listeners.. */
+	kcondvar_t nm_disconcv;
 	long	nm_wcckludgetime;	/* see nfs_check_wccdata() */
 	struct io_stats *nm_stats;	/* per nfs mount statistics */
 };
@@ -178,27 +183,16 @@ struct	nfsmount {
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount __P((struct mount *mp, const char *path, void *data,
-		struct nameidata *ndp, struct lwp *l));
+VFS_PROTOS(nfs);
+
 int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
 		struct vnode **vpp, struct lwp *p));
-int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
 		struct lwp *l));
-int	nfs_start __P((struct mount *mp, int flags, struct lwp *l));
-int	nfs_unmount __P((struct mount *mp, int mntflags, struct lwp *l));
-int	nfs_root __P((struct mount *mp, struct vnode **vpp));
-int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, void *arg,
-		struct lwp *l));
-int	nfs_statvfs __P((struct mount *mp, struct statvfs *sbp, struct lwp *l));
-int	nfs_sync __P((struct mount *mp, int waitfor, kauth_cred_t cred,
-		struct lwp *p));
-int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
-int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp, size_t *fh_size));
 int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, kauth_cred_t,
 			struct lwp *));
+
 void	nfs_vfs_init __P((void));
 void	nfs_vfs_reinit __P((void));
 void	nfs_vfs_done __P((void));

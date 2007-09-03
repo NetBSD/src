@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.17.4.2 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.17.4.3 2007/09/03 14:44:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -126,10 +126,10 @@ struct nl_protosw {
 				(void *, struct sockaddr *, int);
 						/* with sockaddr */
 	void		(*nlp_putsufx)		/* puts transport suffixes in */
-				(void *, caddr_t, int, int);
+				(void *, void *, int, int);
 						/* nl pcb */
 	void		(*nlp_getsufx)		/* gets transport suffixes */
-				(void *, u_short *, caddr_t, int);
+				(void *, u_short *, void *, int);
 						/* from nl pcb */
 	void		(*nlp_recycle_suffix)	/* clears suffix from nl pcb */
 				(void *);
@@ -150,9 +150,9 @@ struct nl_protosw {
 	int		(*nlp_dgoutput)		/* prepare a packet to give */
 				(struct mbuf *, ...); /*to nl*/
 	int		(*nlp_ctloutput)	/* hook for network set/get */
-				(int, int, caddr_t, struct mbuf *);
+				(int, int, void *, struct mbuf *);
 						/* options */
-	caddr_t		nlp_pcblist;	/* list of xx_pcb's for connections */
+	void *		nlp_pcblist;	/* list of xx_pcb's for connections */
 };
 
 
@@ -163,7 +163,7 @@ struct tp_pcb {
 	struct socket  *tp_sock;/* back ptr */
 	u_short		tp_state;	/* state of fsm */
 	short		tp_retrans;	/* # times can still retrans */
-	caddr_t		tp_npcb;/* to lower layer pcb */
+	void *		tp_npcb;/* to lower layer pcb */
 	struct nl_protosw *tp_nlproto;	/* lower-layer dependent routines */
 	struct rtentry **tp_routep;	/* obtain mtu; inside npcb */
 

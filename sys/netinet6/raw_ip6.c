@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72.2.3 2007/02/26 09:11:54 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72.2.4 2007/09/03 14:43:42 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.3 2007/02/26 09:11:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.4 2007/09/03 14:43:42 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -104,8 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.3 2007/02/26 09:11:54 yamt Exp $"
 #include <netipsec/ipsec6.h>
 #endif
 
-#include <machine/stdarg.h>
-
 #include "faith.h"
 #if defined(NFAITH) && 0 < NFAITH
 #include <net/if_faith.h>
@@ -137,9 +135,7 @@ rip6_init()
  * mbuf chain.
  */
 int
-rip6_input(mp, offp, proto)
-	struct	mbuf **mp;
-	int	*offp, proto;
+rip6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
@@ -390,17 +386,9 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
  * Tack on options user may have setup with control call.
  */
 int
-#if __STDC__
-rip6_output(struct mbuf *m, ...)
-#else
-rip6_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
+rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
+    struct mbuf *control)
 {
-	struct socket *so;
-	struct sockaddr_in6 *dstsock;
-	struct mbuf *control;
 	struct in6_addr *dst;
 	struct ip6_hdr *ip6;
 	struct in6pcb *in6p;
@@ -412,13 +400,6 @@ rip6_output(m, va_alist)
 	int priv = 0;
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
-	va_list ap;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	dstsock = va_arg(ap, struct sockaddr_in6 *);
-	control = va_arg(ap, struct mbuf *);
-	va_end(ap);
 
 	in6p = sotoin6pcb(so);
 
@@ -532,14 +513,14 @@ rip6_output(m, va_alist)
 		off += sizeof(struct ip6_hdr);
 
 		sum = 0;
-		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		m = m_copyback_cow(m, off, sizeof(sum), (void *)&sum,
 		    M_DONTWAIT);
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		m = m_copyback_cow(m, off, sizeof(sum), (void *)&sum,
 		    M_DONTWAIT);
 		if (m == NULL) {
 			error = ENOBUFS;
@@ -622,11 +603,8 @@ extern	u_long rip6_sendspace;
 extern	u_long rip6_recvspace;
 
 int
-rip6_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
+	struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int s;
@@ -639,7 +617,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 		priv++;
 
 	if (req == PRU_CONTROL)
-		return in6_control(so, (u_long)m, (caddr_t)nam,
+		return in6_control(so, (u_long)m, (void *)nam,
 		    (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {

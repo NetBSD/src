@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.69.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.69.2.3 2007/09/03 14:46:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_STATS	 6
 #define LFS_DO_RFW	 7
 #define LFS_DEBUGLOG	 8
-#define LFS_MAXID	 9
+#define LFS_IGNORE_LAZY_SYNC	9
+#define LFS_MAXID	 10
 
 struct fid;
 struct mount;
@@ -216,7 +217,7 @@ void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
-struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_do_segclean(struct lfs *, unsigned long);
 int lfs_segwait(fsid_t *, struct timeval *);
 int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);
@@ -227,7 +228,8 @@ void lfs_init(void);
 void lfs_reinit(void);
 void lfs_done(void);
 int lfs_mountroot(void);
-int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
+int lfs_mount(struct mount *, const char *, void *, size_t *,
+		struct lwp *);
 int lfs_unmount(struct mount *, int, struct lwp *);
 int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int lfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.3.42.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.3.42.2 2007/09/03 14:42:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ const char *ieee1394_sprintf(const u_int8_t *);
 void ieee1394_input(struct ifnet *, struct mbuf *, u_int16_t);
 void ieee1394_ifattach(struct ifnet *, const struct ieee1394_hwaddr *);
 void ieee1394_ifdetach(struct ifnet *);
-int  ieee1394_ioctl(struct ifnet *, u_long, caddr_t);
+int  ieee1394_ioctl(struct ifnet *, u_long, void *);
 struct mbuf * ieee1394_fragment(struct ifnet *, struct mbuf *, int, u_int16_t);
 void ieee1394_drain(struct ifnet *);
 void ieee1394_watchdog(struct ifnet *);

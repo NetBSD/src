@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.28.4.2 2006/12/30 20:50:51 yamt Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.28.4.3 2007/09/03 14:44:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,9 +51,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.28.4.2 2006/12/30 20:50:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.28.4.3 2007/09/03 14:44:16 yamt Exp $");
 
 #include "opt_nfs_boot.h"
+#include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +286,7 @@ out:
 
 struct bootpcontext {
 	int xid;
-	u_char *haddr;
+	const u_char *haddr;
 	u_char halen;
 	struct bootp *replybuf;
 	int replylen;
@@ -379,7 +380,7 @@ bootpcheck(m, context)
 	 * (doesn't allocate a cluster if necessary).
 	 */
 	bpc->replylen = m->m_pkthdr.len;
-	m_copydata(m, 0, bpc->replylen, (caddr_t)bpc->replybuf);
+	m_copydata(m, 0, bpc->replylen, (void *)bpc->replybuf);
 	bootp = bpc->replybuf;
 
 	/*
@@ -450,7 +451,7 @@ bootpc_call(nd, lwp)
 	struct mbuf *m, *nam;
 	struct sockaddr_in *sin;
 	int error;
-	u_char *haddr;
+	const u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
 #ifdef NFS_BOOT_DHCP
@@ -488,7 +489,7 @@ bootpc_call(nd, lwp)
 			goto out;
 		}
 		halen = sdl->sdl_alen;
-		haddr = (unsigned char *)LLADDR(sdl);
+		haddr = (const unsigned char *)CLLADDR(sdl);
 	}
 
 	/*
@@ -573,7 +574,7 @@ bootpc_call(nd, lwp)
 	 * Build the BOOTP reqest message.
 	 * Note: xid is host order! (opaque to server)
 	 */
-	memset((caddr_t)bootp, 0, BOOTP_SIZE_MAX);
+	memset((void *)bootp, 0, BOOTP_SIZE_MAX);
 	bootp->bp_op    = BOOTREQUEST;
 	bootp->bp_htype = hafmt;
 	bootp->bp_hlen  = halen;	/* Hardware address length */
@@ -696,6 +697,7 @@ bootp_extract(bootp, replylen, nd)
 	gateway.s_addr = 0;
 	mydomain    = myname    = rootpath = NULL;
 	mydomainlen = mynamelen = rootpathlen = 0;
+
 	/* default root server to bootp next-server */
 	rootserver = bootp->bp_siaddr;
 	/* assume that server name field is not overloaded by default */
@@ -807,7 +809,7 @@ bootp_extract(bootp, replylen, nd)
 
 		/* Server IP address. */
 		sin = (struct sockaddr_in *) &ndm->ndm_saddr;
-		memset((caddr_t)sin, 0, sizeof(*sin));
+		memset((void *)sin, 0, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_addr = rootserver;
@@ -831,4 +833,15 @@ bootp_extract(bootp, replylen, nd)
 			ndm->ndm_host[len + rootpathlen] = '\0';
 		} /* else: upper layer will handle error */
 	}
+
+#ifdef TFTPROOT
+#if BP_FILE_LEN > MNAMELEN
+#define BOOTFILELEN MNAMELEN
+#else
+#define BOOTFILELEN BP_FILE_LEN
+#endif
+	strncpy(nd->nd_bootfile, bootp->bp_file, BOOTFILELEN);
+	nd->nd_bootfile[BOOTFILELEN - 1] = '\0';
+#undef BOOTFILELEN
+#endif /* TFTPROOT */
 }

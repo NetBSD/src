@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.92.2.3 2007/02/26 09:11:44 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.92.2.4 2007/09/03 14:42:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.3 2007/02/26 09:11:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.4 2007/09/03 14:42:57 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -253,7 +253,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
-	  !ICMP_INFOTYPE(((struct icmp *)((caddr_t)oip + oiplen))->icmp_type)) {
+	  !ICMP_INFOTYPE(((struct icmp *)((char *)oip + oiplen))->icmp_type)) {
 		icmpstat.icps_oldicmp++;
 		goto freeit;
 	}
@@ -332,7 +332,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	}
 
 	icp->icmp_code = code;
-	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
+	m_copydata(n, 0, icmplen, (void *)&icp->icmp_ip);
 
 	/*
 	 * Now, copy old ip header (without options)
@@ -618,8 +618,7 @@ reflect:
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
-		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    sintosa(&icmpgw), (struct rtentry **)&rt);
+		    NULL, RTF_GATEWAY | RTF_HOST, sintosa(&icmpgw), &rt);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			i = rt_timer_add(rt, icmp_redirect_timeout,
 					 icmp_redirect_timeout_q);
@@ -828,15 +827,15 @@ icmp_reflect(struct mbuf *m)
 			     */
 			    if (opt == IPOPT_RR || opt == IPOPT_TS ||
 				opt == IPOPT_SECURITY) {
-				    bcopy((caddr_t)cp,
-					mtod(opts, caddr_t) + opts->m_len, len);
+				    memmove(mtod(opts, char *) + opts->m_len,
+					cp, len);
 				    opts->m_len += len;
 			    }
 		    }
 		    /* Terminate & pad, if necessary */
 		    if ((cnt = opts->m_len % 4) != 0) {
 			    for (; cnt < 4; cnt++) {
-				    *(mtod(opts, caddr_t) + opts->m_len) =
+				    *(mtod(opts, char *) + opts->m_len) =
 					IPOPT_EOL;
 				    opts->m_len++;
 			    }
@@ -856,8 +855,8 @@ icmp_reflect(struct mbuf *m)
 		if (m->m_flags & M_PKTHDR)
 			m->m_pkthdr.len -= optlen;
 		optlen += sizeof(struct ip);
-		bcopy((caddr_t)ip + optlen, (caddr_t)(ip + 1),
-			 (unsigned)(m->m_len - sizeof(struct ip)));
+		memmove(ip + 1, (char *)ip + optlen,
+		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
 	m_tag_delete_nonpersistent(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -1187,7 +1186,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		rtrequest((int) RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
@@ -1203,7 +1202,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp_redirect_timeout:  bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		rtrequest((int) RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }

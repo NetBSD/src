@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29.2.3 2007/02/26 09:12:14 yamt Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.4 2007/09/03 14:46:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,11 +34,10 @@
 #ifndef	_SYS_RESOURCEVAR_H_
 #define	_SYS_RESOURCEVAR_H_
 
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 /*
  * Kernel per-process accounting / statistics
- * (not necessarily resident except when running).
  */
 struct pstats {
 #define	pstat_startzero	p_ru
@@ -50,7 +49,7 @@ struct pstats {
 	struct	itimerval p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
-		caddr_t	pr_base;	/* buffer base */
+		char *	pr_base;	/* buffer base */
 		size_t  pr_size;	/* buffer size */
 		u_long	pr_off;		/* pc offset */
 		u_int   pr_scale;	/* pc scaling */
@@ -75,7 +74,7 @@ struct plimit {
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
 	int	p_lflags;
 	int	p_refcnt;		/* number of references */
-	struct simplelock p_slock;	/* mutex for p_refcnt */
+	kmutex_t p_lock;		/* mutex for p_refcnt */
 };
 
 /* add user profiling from AST XXXSMP */
@@ -98,26 +97,17 @@ struct uidinfo {
 	long	ui_proccnt;	/* Number of processes */
 	long	ui_lockcnt;	/* Number of locks */
 	rlim_t	ui_sbsize;	/* socket buffer size */
-	struct simplelock ui_slock; /* mutex for everything */
+	kmutex_t ui_lock;	/* mutex for everything */
 
 };
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-#define UILOCK(uip, s) \
-    do { \
-	s = splsoftnet(); \
-	simple_lock(&uip->ui_slock); \
-    } while (/*CONSTCOND*/0)
-#define UIUNLOCK(uip, s) \
-    do { \
-	simple_unlock(&uip->ui_slock); \
-	splx(s); \
-    } while (/*CONSTCOND*/0)
 
 extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 extern u_long uihash;		/* size of hash table - 1 */
 int       chgproccnt(uid_t, int);
 int       chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
+void	uid_init(void);
 
 extern char defcorename[];
 

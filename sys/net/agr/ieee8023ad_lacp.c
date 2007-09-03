@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.1.8.2 2007/02/26 09:11:38 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.1.8.3 2007/09/03 14:42:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.1.8.2 2007/02/26 09:11:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.1.8.3 2007/09/03 14:42:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -96,7 +96,6 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 	struct agr_port *port;
 	struct lacp_port *lp;
 	int error = 0;
-	int s;
 
 	port = ifp->if_agrprivate; /* XXX race with agr_remport. */
 	if (__predict_false(port->port_flags & AGRPORT_DETACHING)) {
@@ -150,7 +149,7 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 		goto bad;
 	}
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	lp = LACP_PORT(port);
 
 #if defined(LACP_DEBUG)
@@ -161,7 +160,7 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* defined(LACP_DEBUG) */
 	lacp_sm_rx(lp, du);
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	m_freem(m);
 
@@ -179,7 +178,7 @@ lacp_fill_actorinfo(struct agr_port *port, struct lacp_peerinfo *info)
 
 	info->lip_systemid.lsi_prio = htobe16(LACP_SYSTEM_PRIO);
 	memcpy(&info->lip_systemid.lsi_mac,
-	    LLADDR(port->port_ifp->if_sadl), ETHER_ADDR_LEN);
+	    CLLADDR(port->port_ifp->if_sadl), ETHER_ADDR_LEN);
 	info->lip_portid.lpi_prio = htobe16(LACP_PORT_PRIO);
 	info->lip_portid.lpi_portno = htobe16(port->port_ifp->if_index);
 	info->lip_state = lp->lp_state;
@@ -420,12 +419,11 @@ lacp_transit_expire(void *vp)
 {
 	struct agr_softc *sc = vp;
 	struct lacp_softc *lsc = LACP_SOFTC(sc);
-	int s;
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	LACP_DPRINTF((NULL, "%s\n", __func__));
 	lsc->lsc_suppress_distributing = false;
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 }
 
 /* -------------------- */
@@ -444,13 +442,12 @@ void
 ieee8023ad_portfini(struct agr_port *port)
 {
 	struct agr_softc *sc = AGR_SC_FROM_PORT(port);
-	int s;
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 
 	lacp_portfini(port);
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 }
 
 void
@@ -461,7 +458,7 @@ ieee8023ad_ctor(struct agr_softc *sc)
 
 	lsc->lsc_active_aggregator = NULL;
 	TAILQ_INIT(&lsc->lsc_aggregators);
-	callout_init(&lsc->lsc_transit_callout);
+	callout_init(&lsc->lsc_transit_callout, 0);
 	callout_setfunc(&lsc->lsc_transit_callout, lacp_transit_expire, sc);
 }
 

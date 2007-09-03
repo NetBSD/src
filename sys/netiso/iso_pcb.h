@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.11.12.3 2007/02/26 09:12:01 yamt Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.11.12.4 2007/09/03 14:44:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,8 @@ SOFTWARE.
 #ifndef _NETISO_ISO_PCB_H_
 #define _NETISO_ISO_PCB_H_
 
+#include <net/route.h>
+
 #define	MAXX25CRUDLEN	16	/* 16 bytes of call request user data */
 
 /*
@@ -73,14 +75,11 @@ struct isopcb {
 	struct socket  *isop_socket;	/* back pointer to socket */
 	struct sockaddr_iso *isop_laddr;
 	struct sockaddr_iso *isop_faddr;
-	struct route_iso {
-		struct rtentry *ro_rt;
-		struct sockaddr_iso ro_dst;
-	}               isop_route;	/* CLNP routing entry */
+	struct route   isop_route;	/* CLNP routing entry */
 	struct mbuf    *isop_options;	/* CLNP options */
 	struct mbuf    *isop_optindex;	/* CLNP options index */
 	struct mbuf    *isop_clnpcache;	/* CLNP cached hdr */
-	caddr_t         isop_chan;	/* actually struct pklcb * */
+	void *        isop_chan;	/* actually struct pklcb * */
 	u_short         isop_refcnt;	/* mult TP4 tpcb's -> here */
 	u_short         isop_lport;	/* MISLEADLING work var */
 	u_short         isop_tuba_cached;	/* for tuba address ref cnts */
@@ -124,7 +123,7 @@ void iso_pcbdisconnect (void *);
 void iso_pcbdetach (void *);
 void iso_pcbnotify(struct isopcb *, const struct sockaddr_iso *, int,
                    void (*)(struct isopcb *));
-struct isopcb  *iso_pcblookup (struct isopcb *, int, caddr_t,
+struct isopcb  *iso_pcblookup (struct isopcb *, int, void *,
 				   const struct sockaddr_iso *);
 #endif
 

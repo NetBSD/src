@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.55.4.3 2007/02/26 09:11:35 yamt Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.55.4.4 2007/09/03 14:42:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.55.4.3 2007/02/26 09:11:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.55.4.4 2007/09/03 14:42:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -410,7 +410,7 @@ lortrequest(int cmd, struct rtentry *rt,
  */
 /* ARGSUSED */
 int
-loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+loioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -445,7 +445,7 @@ loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 
 #ifdef INET
 		case AF_INET:

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15.2.3 2007/02/26 09:12:16 yamt Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15.2.4 2007/09/03 14:46:41 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -164,7 +164,7 @@ struct systrace_replace {
 	uint16_t strr_seqnr;
 	int16_t reserved;
 	int32_t strr_nrepl;
-	caddr_t	strr_base;	/* Base memory */
+	void *	strr_base;	/* Base memory */
 	size_t strr_len;	/* Length of memory */
 	int32_t strr_argind[SYSTR_MAXARGS];
 	size_t strr_off[SYSTR_MAXARGS];

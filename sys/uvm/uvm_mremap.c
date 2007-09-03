@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.3.18.3 2007/02/26 09:12:31 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.3.18.4 2007/09/03 14:47:09 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,9 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.3.18.3 2007/02/26 09:12:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.3.18.4 2007/09/03 14:47:09 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/mman.h>
+#include <sys/syscallargs.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -111,8 +114,9 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	vaddr_t dstva;
 	vsize_t movesize;
 	vaddr_t newva;
+	vaddr_t align = 0;
 	int error = 0;
-	const bool fixed = (flags & UVM_MREMAP_FIXED) != 0;
+	const bool fixed = (flags & MAP_FIXED) != 0;
 
 	if (fixed) {
 		newva = *newvap;
@@ -131,10 +135,35 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	}
 
 	/*
+	 * Try to see if any requested alignment can even be attemped.
+	 * Make sure we can express the alignment (asking for a >= 4GB
+	 * alignment on an ILP32 architecure make no sense) and the
+	 * alignment is at least for a page sized quanitiy.  If the
+	 * request was for a fixed mapping, make sure supplied address
+	 * adheres to the request alignment.
+	 */
+	align = (flags & MAP_ALIGNMENT_MASK) >> MAP_ALIGNMENT_SHIFT;
+	if (align) {
+		if (align >= sizeof(vaddr_t) * NBBY)
+			return(EINVAL);
+		align = 1L << align;
+		if (align < PAGE_SIZE)
+			return(EINVAL);
+		if (align >= vm_map_max(oldmap))
+			return(ENOMEM);
+		if (flags & MAP_FIXED) {
+			if ((*newvap & (align-1)) != 0)
+				return(EINVAL);
+			align = 0;
+		}
+	}
+
+	/*
 	 * check the easy cases first.
 	 */
 
-	if ((!fixed || newva == oldva) && newmap == oldmap) {
+	if ((!fixed || newva == oldva) && newmap == oldmap &&
+	    (align == 0 || (oldva & ~(align - 1)) == 0)) {
 		vaddr_t va;
 
 		if (newsize == oldsize) {
@@ -167,7 +196,7 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 		    (vaddr_t)newproc->p_vmspace->vm_daddr, newsize);
 	}
 	dstva = newva;
-	if (!uvm_map_reserve(newmap, newsize, oldva, 0, &dstva, 
+	if (!uvm_map_reserve(newmap, newsize, oldva, align, &dstva, 
 	    fixed ? UVM_FLAG_FIXED : 0)) {
 		return ENOMEM;
 	}
@@ -203,4 +232,53 @@ extend:
 done:
 	*newvap = newva;
 	return 0;
+}
+
+/*
+ * sys_mremap: mremap system call.
+ */
+
+int
+sys_mremap(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_mremap_args /* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(void *) new_address;
+		syscallarg(size_t) new_size;
+		syscallarg(int) flags;
+	} */ *uap = v;
+
+	struct proc *p;
+	struct vm_map *map;
+	vaddr_t oldva;
+	vaddr_t newva;
+	size_t oldsize;
+	size_t newsize;
+	int flags;
+	int error;
+
+	flags = SCARG(uap, flags);
+	oldva = (vaddr_t)SCARG(uap, old_address);
+	oldsize = (vsize_t)(SCARG(uap, old_size));
+	newva = (vaddr_t)SCARG(uap, new_address);
+	newsize = (vsize_t)(SCARG(uap, new_size));
+
+	if ((flags & ~(MAP_FIXED | MAP_ALIGNMENT_MASK)) != 0) {
+		error = EINVAL;
+		goto done;
+	}
+
+	oldsize = round_page(oldsize);
+	newsize = round_page(newsize);
+
+	p = l->l_proc;
+	map = &p->p_vmspace->vm_map;
+	error = uvm_mremap(map, oldva, oldsize, map, &newva, newsize, p,
+	    flags);
+
+done:
+	*retval = (error != 0) ? 0 : (register_t)newva;
+	return error;
+
 }

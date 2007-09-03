@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.83.2.3 2007/02/26 09:12:29 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.83.2.4 2007/09/03 14:47:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.83.2.3 2007/02/26 09:12:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.83.2.4 2007/09/03 14:47:07 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -216,6 +216,7 @@ km_vacache_init(struct vm_map *map, const char *name, size_t size)
 	struct vm_map_kernel *vmk;
 	struct pool *pp;
 	struct pool_allocator *pa;
+	int ipl;
 
 	KASSERT(VM_MAP_IS_KERNEL(map));
 	KASSERT(size < (vm_map_max(map) - vm_map_min(map)) / 2); /* sanity */
@@ -229,7 +230,14 @@ km_vacache_init(struct vm_map *map, const char *name, size_t size)
 	pa->pa_pagesz = (unsigned int)size;
 	pa->pa_backingmap = map;
 	pa->pa_backingmapptr = NULL;
-	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa);
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0)
+		ipl = IPL_VM;
+	else
+		ipl = IPL_NONE;
+
+	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa,
+	    ipl);
 }
 
 void
@@ -289,7 +297,7 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 
 	/* kernel_object: for pageable anonymous kernel memory */
 	uao_init();
-	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
+	uvm_kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
 	/*
@@ -400,7 +408,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 void
 uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 {
-	struct uvm_object * const uobj = uvm.kernel_object;
+	struct uvm_object * const uobj = uvm_kernel_object;
 	const voff_t start = startva - vm_map_min(kernel_map);
 	const voff_t end = endva - vm_map_min(kernel_map);
 	struct vm_page *pg;
@@ -444,10 +452,10 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	simple_unlock(&uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 }
 
@@ -503,10 +511,10 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, bool intrsafe)
 		if (!intrsafe) {
 			const struct vm_page *pg;
 
-			simple_lock(&uvm.kernel_object->vmobjlock);
-			pg = uvm_pagelookup(uvm.kernel_object,
+			simple_lock(&uvm_kernel_object->vmobjlock);
+			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			simple_unlock(&uvm.kernel_object->vmobjlock);
+			simple_unlock(&uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p", (const void *)va);
@@ -548,7 +556,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
-	obj = (flags & UVM_KMF_PAGEABLE) ? uvm.kernel_object : NULL;
+	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
 	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
 		    map, obj, size, flags);
 

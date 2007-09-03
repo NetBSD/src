@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.138.2.3 2007/02/26 09:11:46 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.138.2.4 2007/09/03 14:43:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.3 2007/02/26 09:11:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.4 2007/09/03 14:43:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -384,16 +384,8 @@ udp_input(struct mbuf *m, ...)
 		goto badcsum;
 
 	/* construct source and dst sockaddrs. */
-	bzero(&src, sizeof(src));
-	src.sin_family = AF_INET;
-	src.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_src, &src.sin_addr, sizeof(src.sin_addr));
-	src.sin_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_dst, &dst.sin_addr, sizeof(dst.sin_addr));
-	dst.sin_port = uh->uh_dport;
+	sockaddr_in_init(&src, &ip->ip_src, uh->uh_sport);
+	sockaddr_in_init(&dst, &ip->ip_dst, uh->uh_dport);
 
 	if ((n = udp4_realinput(&src, &dst, &m, iphlen)) == -1) {
 		udpstat.udps_hdrops++;
@@ -625,14 +617,14 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		ipsecstat.in_polvio++;
-		if ((n = m_copy(m, 0, M_COPYALL)) != NULL)
+		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
 			    0, 0);
 		return;
 	}
 #endif /*IPSEC*/
 
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (inp && (inp->inp_flags & INP_CONTROLOPTS
 			 || so->so_options & SO_TIMESTAMP)) {
 			struct ip *ip = mtod(n, struct ip *);
@@ -672,14 +664,14 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		ipsec6stat.in_polvio++;
-		if ((n = m_copy(m, 0, M_COPYALL)) != NULL)
+		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_ADMIN, 0);
 		return;
 	}
 #endif /*IPSEC*/
 
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
 			  || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
@@ -983,7 +975,7 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	else if (errno == 0)
 		return NULL;
 	if (ip) {
-		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		uh = (struct udphdr *)((char *)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
 
@@ -1175,7 +1167,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)nam,
+		return (in_control(so, (long)m, (void *)nam,
 		    (struct ifnet *)control, l));
 
 	s = splsoftnet();
@@ -1417,7 +1409,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
     struct socket *so)
 {
 	size_t len;
-	caddr_t data;
+	void *data;
 	struct inpcb *inp;
 	size_t skip = 0;
 	size_t minlen;
@@ -1446,11 +1438,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	}
 
 	len = m->m_len - off;
-	data = mtod(m, caddr_t) + off;
+	data = mtod(m, char *) + off;
 	inp = sotoinpcb(so);
 
 	/* Ignore keepalive packets */
-	if ((len == 1) && (data[0] == '\xff')) {
+	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
 		return 1;
 	}
 
@@ -1482,7 +1474,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	 * Get the UDP ports. They are handled in network 
 	 * order everywhere in IPSEC_NAT_T code.
 	 */
-	udphdr = (struct udphdr *)(data - skip);
+	udphdr = (struct udphdr *)((char *)data - skip);
 	sport = udphdr->uh_sport;
 	dport = udphdr->uh_dport;
 
@@ -1502,7 +1494,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	 *   <-skip->
 	 */
 	iphdrlen = off - sizeof(struct udphdr);
-	memmove(mtod(m, caddr_t) + skip, mtod(m, caddr_t), iphdrlen);
+	memmove(mtod(m, char *) + skip, mtod(m, void *), iphdrlen);
 	m_adj(m, skip);
 
 	ip = mtod(m, struct ip *);
@@ -1536,7 +1528,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	m_tag_prepend(n, tag);
 
 #ifdef FAST_IPSEC
-	ipsec4_common_input(n, iphdrlen);
+	ipsec4_common_input(n, iphdrlen, IPPROTO_ESP);
 #else
 	esp4_input(n, iphdrlen);
 #endif

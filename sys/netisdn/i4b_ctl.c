@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.13.4.3 2007/02/26 09:11:57 yamt Exp $
+ *	$Id: i4b_ctl.c,v 1.13.4.4 2007/09/03 14:43:48 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13.4.3 2007/02/26 09:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13.4.4 2007/09/03 14:43:48 yamt Exp $");
 
 #include "isdnctl.h"
 
@@ -149,7 +149,7 @@ static void *devfs_token;
 void isdnctlattach __P((void));
 int isdnctlopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdnctlclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
-int isdnctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
+int isdnctlioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
 #endif	/* !FreeBSD */
 
 #ifdef __NetBSD__
@@ -265,7 +265,7 @@ isdnctlclose(dev_t dev, int flag, int fmt,
  *	i4bctlioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+isdnctlioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 #if DO_I4B_DEBUG

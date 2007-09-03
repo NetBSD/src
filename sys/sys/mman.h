@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.35.6.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: mman.h,v 1.35.6.3 2007/09/03 14:46:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -157,6 +157,7 @@ typedef	__off_t		off_t;		/* file offset */
 
 __BEGIN_DECLS
 void   *mmap(void *, size_t, int, int, int, off_t);
+void   *mremap(void *, size_t, void *, size_t, int);
 int	munmap(void *, size_t);
 int	mprotect(void *, size_t, int);
 #ifndef __LIBC12_SOURCE__

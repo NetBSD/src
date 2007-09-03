@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.21.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.21.2.2 2007/09/03 14:47:07 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.21.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.21.2.2 2007/09/03 14:47:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ uvm_io(struct vm_map *map, struct uio *uio)
 		sz = chunksz - pageoffset;
 		if (sz > togo)
 			sz = togo;
-		error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
+		error = uiomove((void *) (kva + pageoffset), sz, uio);
 		togo -= sz;
 		baseva += chunksz;
 

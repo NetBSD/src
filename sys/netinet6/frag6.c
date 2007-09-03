@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.26.16.3 2007/02/26 09:11:47 yamt Exp $	*/
+/*	$NetBSD: frag6.c,v 1.26.16.4 2007/09/03 14:43:17 yamt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26.16.3 2007/02/26 09:11:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26.16.4 2007/09/03 14:43:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
 	struct ifnet *dstifp;
 #ifdef IN6_IFSTAT_STRICT
-	static struct route_in6 ro;
-	const struct sockaddr_in6 *cdst;
+	static struct route ro;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 #endif
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -199,21 +202,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	dstifp = NULL;
 #ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
-	cdst = (const struct sockaddr_in6 *)rtcache_getdst((struct route *)&ro);
-	if (!IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &ip6->ip6_dst))
-		rtcache_free((struct route *)&ro);
-	else
-		rtcache_check((struct route *)&ro);
-	if (ro.ro_rt == NULL) {
-		struct sockaddr_in6 *dst;
-
-		dst = (struct sockaddr_in6 *)&ro.ro_dst;
-		memset(dst, 0, sizeof(*dst));
-		dst->sin6_family = AF_INET6;
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_addr = ip6->ip6_dst;
-		rtcache_init((struct route *)&ro);
-	}
+	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
+	rtcache_lookup(&ro, &u.dst);
 	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
 		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
 #else
@@ -541,8 +531,7 @@ insert:
 	 * Delete frag6 header with as a few cost as possible.
 	 */
 	if (offset < m->m_len) {
-		ovbcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
-			offset);
+		memmove((char *)ip6 + sizeof(struct ip6_frag), ip6, offset);
 		m->m_data += sizeof(struct ip6_frag);
 		m->m_len -= sizeof(struct ip6_frag);
 	} else {
@@ -604,8 +593,7 @@ insert:
  * associated datagrams.
  */
 void
-frag6_freef(q6)
-	struct ip6q *q6;
+frag6_freef(struct ip6q *q6)
 {
 	struct ip6asfrag *af6, *down6;
 
@@ -649,8 +637,7 @@ frag6_freef(q6)
  * Like insque, but pointers in middle of structure.
  */
 void
-frag6_enq(af6, up6)
-	struct ip6asfrag *af6, *up6;
+frag6_enq(struct ip6asfrag *af6, struct ip6asfrag *up6)
 {
 
 	IP6Q_LOCK_CHECK();
@@ -665,8 +652,7 @@ frag6_enq(af6, up6)
  * To frag6_enq as remque is to insque.
  */
 void
-frag6_deq(af6)
-	struct ip6asfrag *af6;
+frag6_deq(struct ip6asfrag *af6)
 {
 
 	IP6Q_LOCK_CHECK();
@@ -676,8 +662,7 @@ frag6_deq(af6)
 }
 
 void
-frag6_insque(new, old)
-	struct ip6q *new, *old;
+frag6_insque(struct ip6q *new, struct ip6q *old)
 {
 
 	IP6Q_LOCK_CHECK();
@@ -689,8 +674,7 @@ frag6_insque(new, old)
 }
 
 void
-frag6_remque(p6)
-	struct ip6q *p6;
+frag6_remque(struct ip6q *p6)
 {
 
 	IP6Q_LOCK_CHECK();
@@ -741,8 +725,8 @@ frag6_slowtimo()
 	 * make sure we notice eventually, even if forwarding only for one
 	 * destination and the cache is never replaced.
 	 */
-	rtcache_free((struct route *)&ip6_forward_rt);
-	rtcache_free((struct route *)&ipsrcchk_rt);
+	rtcache_free(&ip6_forward_rt);
+	rtcache_free(&ipsrcchk_rt);
 #endif
 
 	splx(s);

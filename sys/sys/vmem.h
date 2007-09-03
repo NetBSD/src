@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.4.4.3 2007/02/26 09:12:17 yamt Exp $	*/
+/*	$NetBSD: vmem.h,v 1.4.4.4 2007/09/03 14:46:44 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@ typedef size_t vmem_size_t;
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_addr_t (*)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
     void (*)(vmem_t *, vmem_addr_t, vmem_size_t), vmem_t *, vmem_size_t,
-    vm_flag_t);
+    vm_flag_t, int);
 void vmem_destroy(vmem_t *);
 vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
@@ -56,6 +56,7 @@ void vmem_xfree(vmem_t *, vmem_addr_t, vmem_size_t);
 vmem_addr_t vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 vmem_size_t vmem_roundup_size(vmem_t *, vmem_size_t);
 bool vmem_reap(vmem_t *);
+void vmem_rehash_start(void);
 
 /* vm_flag_t */
 #define	VM_SLEEP	0x00000001

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.32.2.3 2007/02/26 09:11:40 yamt Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.32.2.4 2007/09/03 14:42:29 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.3 2007/02/26 09:11:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.4 2007/09/03 14:42:29 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -528,7 +528,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	int hdrsize, datalen, addqos, txfrag;
 
 	IASSERT(m->m_len >= sizeof(eh), ("no ethernet header!"));
-	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
+	memcpy(&eh, mtod(m, void *), sizeof(struct ether_header));
 
 	/*
 	 * Insure space for additional headers.  First identify
@@ -2002,7 +2002,7 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ni->ni_savedq.ifq_drops, IEEE80211_PS_MAX_QUEUE);
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_msg_dumppkts(ic))
-			ieee80211_dump_pkt(mtod(m, caddr_t), m->m_len, -1, -1);
+			ieee80211_dump_pkt(mtod(m, void *), m->m_len, -1, -1);
 #endif
 		m_freem(m);
 		return;

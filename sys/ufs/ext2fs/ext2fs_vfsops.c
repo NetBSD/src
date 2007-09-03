@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.3 2007/02/26 09:12:18 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.4 2007/09/03 14:46:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.3 2007/02/26 09:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.4 2007/09/03 14:46:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,6 +123,7 @@ const struct vnodeopv_desc * const ext2fs_vnodeopv_descs[] = {
 
 struct vfsops ext2fs_vfsops = {
 	MOUNT_EXT2FS,
+	sizeof (struct ufs_args),
 	ext2fs_mount,
 	ufs_start,
 	ext2fs_unmount,
@@ -139,7 +140,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,	/* vfs_suspendctl */
 	ext2fs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -161,22 +162,19 @@ static const struct ufs_ops ext2fs_ufsops = {
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
  */
-POOL_INIT(ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0, "ext2fsinopl",
-    &pool_allocator_nointr);
-POOL_INIT(ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-    "ext2dinopl", &pool_allocator_nointr);
+struct pool ext2fs_inode_pool;
+struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
 
 void
 ext2fs_init(void)
 {
-#ifdef _LKM
+
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
-	    "ext2fsinopl", &pool_allocator_nointr);
+	    "ext2fsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-	    "ext2dinopl", &pool_allocator_nointr);
-#endif
+	    "ext2dinopl", &pool_allocator_nointr, IPL_NONE);
 	ufs_init();
 }
 
@@ -189,11 +187,10 @@ ext2fs_reinit(void)
 void
 ext2fs_done(void)
 {
+
 	ufs_done();
-#ifdef _LKM
 	pool_destroy(&ext2fs_inode_pool);
 	pool_destroy(&ext2fs_dinode_pool);
-#endif
 }
 
 /*
@@ -252,39 +249,42 @@ ext2fs_mountroot(void)
  * mount system call
  */
 int
-ext2fs_mount(struct mount *mp, const char *path, void *data,
-	struct nameidata *ndp, struct lwp *l)
+ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+	struct lwp *l)
 {
+	struct nameidata nd;
 	struct vnode *devvp;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
 	size_t size;
-	int error, flags, update;
+	int error = 0, flags, update;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		memset(args, 0, sizeof *args);
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct ufs_args));
-	if (error)
-		return (error);
 
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -402,7 +402,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ext2fs_reload(mp, ndp->ni_cnd.cn_cred, l);
+			error = ext2fs_reload(mp, l->l_cred, l);
 			if (error)
 				return (error);
 		}
@@ -418,12 +418,12 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				fs->e2fs.e2fs_state = E2FS_ERRORS;
 			fs->e2fs_fmod = 1;
 		}
-		if (args.fspec == NULL)
+		if (args->fspec == NULL)
 			return EINVAL;
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
-	    UIO_USERSPACE, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
 	    sizeof(fs->e2fs_fsmnt) - 1, &size);
 	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);
@@ -472,7 +472,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 	struct ext2fs *newfs;
 	struct partinfo dpart;
 	int i, size, error;
-	caddr_t cp;
+	void *cp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -577,7 +577,7 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		cp = (caddr_t)bp->b_data +
+		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 		brelse(bp);
@@ -870,7 +870,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -932,7 +932,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
-	caddr_t cp;
+	void *cp;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -994,7 +994,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	cp = (caddr_t)bp->b_data +
+	cp = (char *)bp->b_data +
 	    (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
 	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
@@ -1038,7 +1038,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-	vp->v_size = ext2fs_size(ip);
+	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*vpp = vp;
 	return (0);
 }

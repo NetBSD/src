@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.16.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -102,7 +102,7 @@ static int eco_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 static void eco_input(struct ifnet *, struct mbuf *);
 static void eco_start(struct ifnet *);
-static int eco_ioctl(struct ifnet *, u_long, caddr_t);
+static int eco_ioctl(struct ifnet *, u_long, void *);
 
 static int eco_interestingp(struct ifnet *ifp, struct mbuf *m);
 static struct mbuf *eco_immediate(struct ifnet *ifp, struct mbuf *m);
@@ -130,7 +130,8 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 /*	ifp->if_baudrate...; */
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
+	    ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = eco_broadcastaddr;
 
@@ -306,7 +307,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	eh = mtod(m, struct eco_header *);
 	*eh = ehdr;
 	if (!hdrcmplt)
-		memcpy(eh->eco_shost, LLADDR(ifp->if_sadl),
+		memcpy(eh->eco_shost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
 
 	if ((m->m_flags & M_BCAST) == 0) {
@@ -375,7 +376,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	/* Copy the mbuf header and trim it off. */
 	/* XXX use m_split? */
 	eh = &ehdr;
-	m_copydata(m, 0, ECO_HDR_LEN, (caddr_t)eh);
+	m_copydata(m, 0, ECO_HDR_LEN, (void *)eh);
 	m_adj(m, ECO_HDR_LEN);
 
 	switch (eh->eco_port) {
@@ -413,7 +414,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			m1->m_pkthdr.len = m1->m_len;
 			MH_ALIGN(m1, m1->m_len);
 			ah = mtod(m1, struct arphdr *);
-			bzero((caddr_t)ah, m1->m_len);
+			bzero((void *)ah, m1->m_len);
 			ah->ar_pro = htons(ETHERTYPE_IP);
 			ah->ar_hln = ifp->if_data.ifi_addrlen;
 			ah->ar_pln = sizeof(struct in_addr);
@@ -517,7 +518,7 @@ eco_start(struct ifnet *ifp)
 }
 
 static int
-eco_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -604,7 +605,7 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		    ECO_ADDR_LEN) == 0) {
 			/* Broadcast */
 			eco_input(ifp, m);
-		} else if (memcmp(eh->eco_dhost, LLADDR(ifp->if_sadl),
+		} else if (memcmp(eh->eco_dhost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN) == 0) {
 			/* Unicast for us */
 			if (eh->eco_port == ECO_PORT_IMMEDIATE)
@@ -730,9 +731,9 @@ eco_immediate(struct ifnet *ifp, struct mbuf *m)
 		reh = mtod(n, struct eco_header *);
 		memcpy(reh->eco_dhost, eh->eco_shost,
 		    ECO_ADDR_LEN);
-		memcpy(reh->eco_shost, LLADDR(ifp->if_sadl),
+		memcpy(reh->eco_shost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
-		memcpy(mtod(n, caddr_t) + ECO_SHDR_LEN, machinepeek_data,
+		memcpy(mtod(n, void *) + ECO_SHDR_LEN, machinepeek_data,
 		    sizeof(machinepeek_data));
 		m_freem(m);
 		return n;
@@ -760,7 +761,7 @@ eco_ack(struct ifnet *ifp, struct mbuf *m)
 	n->m_len = n->m_pkthdr.len = ECO_SHDR_LEN;
 	reh = mtod(n, struct eco_header *);
 	memcpy(reh->eco_dhost, eh->eco_shost, ECO_ADDR_LEN);
-	memcpy(reh->eco_shost, LLADDR(ifp->if_sadl), ECO_ADDR_LEN);
+	memcpy(reh->eco_shost, CLLADDR(ifp->if_sadl), ECO_ADDR_LEN);
 	return n;
 }
 
@@ -831,7 +832,7 @@ eco_defer(struct ifnet *ifp, struct mbuf *m, int retry_delay)
 		m_freem(m);
 		return;
 	}
-	callout_init(&er->er_callout);
+	callout_init(&er->er_callout, 0);
 	er->er_packet = m;
 	er->er_ifp = ifp;
 	s = splnet();
@@ -850,6 +851,7 @@ eco_retry_free(struct eco_retry *er)
 	s = splnet();
 	LIST_REMOVE(er, er_link);
 	splx(s);
+	callout_destroy(&er->er_callout);
 	FREE(er, M_TEMP);
 }
 

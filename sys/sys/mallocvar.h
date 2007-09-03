@@ -1,4 +1,4 @@
-/*	$NetBSD: mallocvar.h,v 1.3.16.1 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: mallocvar.h,v 1.3.16.2 2007/09/03 14:46:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -60,7 +60,7 @@ struct malloc_type {
 };
 
 #ifdef _KERNEL
-#define	MALLOC_DEFINE_LIMIT(type, shortdesc, longdesc, limit)		\
+#define	MALLOC_JUSTDEFINE_LIMIT(type, shortdesc, longdesc, limit)	\
 struct malloc_type type[1] = {						\
 	{ NULL, M_MAGIC, shortdesc,					\
 	  0, /* ks_inuse */						\
@@ -72,8 +72,14 @@ struct malloc_type type[1] = {						\
 	  limit, /* ks_limit */						\
 	  0, /* ks_size */						\
 	  0, /* ks_spare */ }						\
-};									\
-__link_set_add_data(malloc_types, type)
+};
+
+#define	MALLOC_JUSTDEFINE(type, shortdesc, longdesc)			\
+	MALLOC_JUSTDEFINE_LIMIT(type, shortdesc, longdesc, 0)
+
+#define	MALLOC_DEFINE_LIMIT(type, shortdesc, longdesc, limit)		\
+	MALLOC_JUSTDEFINE_LIMIT(type, shortdesc, longdesc, limit)	\
+	__link_set_add_data(malloc_types, type)
 
 #define	MALLOC_DEFINE(type, shortdesc, longdesc)			\
 	MALLOC_DEFINE_LIMIT(type, shortdesc, longdesc, 0)

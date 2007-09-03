@@ -18,7 +18,7 @@
  *
  * From: if_sppp.h,v 1.14 1999/03/30 13:28:26 phk Exp
  *
- * $Id: i4b_isppp.h,v 1.1.1.1.42.1 2006/06/21 15:11:24 yamt Exp $
+ * $Id: i4b_isppp.h,v 1.1.1.1.42.2 2007/09/03 14:43:56 yamt Exp $
  */
 
 #ifndef _NETISDN_I4B_ISPPP_H_
@@ -185,8 +185,8 @@ struct sppp {
  * to a SIOCSIFGENERIC ioctl.
  */
 
-#define SPPPIOGDEFS  ((caddr_t)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
-#define SPPPIOSDEFS  ((caddr_t)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
+#define SPPPIOGDEFS  ((void *)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
+#define SPPPIOSDEFS  ((void *)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
 
 struct spppreq {
 	u_long	cmd;

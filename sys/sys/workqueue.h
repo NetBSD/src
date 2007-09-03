@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.2.18.3 2006/12/30 20:50:56 yamt Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2.18.4 2007/09/03 14:46:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -29,7 +29,7 @@
 #ifndef _SYS_WORKQUEUE_H_
 #define	_SYS_WORKQUEUE_H_
 
-#include <sys/queue.h>
+#include <machine/cpu.h>
 
 /*
  * a simple "do it in thread context" framework.
@@ -40,15 +40,18 @@
  */
 
 struct work {
-	SIMPLEQ_ENTRY(work) wk_entry;
+	void *wk_dummy;
 };
 
 struct workqueue;
 
+#define	WQ_MPSAFE	0x01
+#define	WQ_PERCPU	0x02
+
 int workqueue_create(struct workqueue **, const char *,
-    void (*)(struct work *, void *), void *, int, int, int);
+    void (*)(struct work *, void *), void *, pri_t, int, int);
 void workqueue_destroy(struct workqueue *);
 
-void workqueue_enqueue(struct workqueue *, struct work *);
+void workqueue_enqueue(struct workqueue *, struct work *, struct cpu_info *);
 
 #endif /* _SYS_WORKQUEUE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.56.2.3 2007/02/26 09:11:34 yamt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.56.2.4 2007/09/03 14:42:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.3 2007/02/26 09:11:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.4 2007/09/03 14:42:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -194,6 +194,7 @@ extern u_char	aarp_org_code[ 3 ];
 #endif
 
 #define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
+#define	CFDDIADDR(ifp)		CLLADDR((ifp)->if_sadl)
 
 static	int fddi_output(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, struct rtentry *);
@@ -214,7 +215,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct fddi_header *fh;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -279,7 +280,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
                 	memcpy(edst, fddibroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr,
-			    (caddr_t)edst);
+			    (char *)edst);
 		} else if (!arpresolve(ifp, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
@@ -304,7 +305,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		if (m->m_flags & M_BCAST)
                 	memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
-			caddr_t tha = ar_tha(ah);
+			void *tha = ar_tha(ah);
 
 			KASSERT(tha);
 			memcpy(edst, tha, sizeof(edst));
@@ -370,7 +371,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			memcpy(llc.llc_snap_org_code, at_org_code,
 			    sizeof(at_org_code));
 			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
-			memcpy(mtod(m, caddr_t), &llc, sizeof(struct llc));
+			memcpy(mtod(m, void *), &llc, sizeof(struct llc));
 			etype = 0;
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
@@ -382,11 +383,11 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
-		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
+		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			memcpy(edst, LLADDR(sdl), sizeof(edst));
+			memcpy(edst, CLLADDR(sdl), sizeof(edst));
 		} else if ((error =
 			    iso_snparesolve(ifp, (const struct sockaddr_iso *)dst,
 					    (char *)edst, &snpalen)) != 0)
@@ -400,7 +401,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			if (mcopy) {
 				fh = mtod(mcopy, struct fddi_header *);
 				memcpy(fh->fddi_dhost, edst, sizeof (edst));
-				memcpy(fh->fddi_shost, FDDIADDR(ifp),
+				memcpy(fh->fddi_shost, CFDDIADDR(ifp),
 				    sizeof (edst));
 			}
 		}
@@ -516,7 +517,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (hdrcmplt)
 		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else
-		memcpy(fh->fddi_shost, FDDIADDR(ifp), sizeof(fh->fddi_shost));
+		memcpy(fh->fddi_shost, CFDDIADDR(ifp), sizeof(fh->fddi_shost));
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
@@ -565,7 +566,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	} else if ((ifp->if_flags & IFF_PROMISC)
-	    && memcmp(FDDIADDR(ifp), (caddr_t)fh->fddi_dhost,
+	    && memcmp(CFDDIADDR(ifp), (void *)fh->fddi_dhost,
 		    sizeof(fh->fddi_dhost)) != 0) {
 		m_freem(m);
 		return;
@@ -651,6 +652,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+#ifdef GATEWAY  
+			if (ip6flow_fastforward(m))
+				return;
+#endif
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
 			break;
@@ -715,7 +720,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			l->llc_ssap = c;
 			eh = (struct ether_header *)sa.sa_data;
 			if (m->m_flags & (M_BCAST | M_MCAST))
-				memcpy(eh->ether_dhost, FDDIADDR(ifp), 6);
+				memcpy(eh->ether_dhost, CFDDIADDR(ifp), 6);
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
 			for (i = 0; i < 6; i++) {
@@ -758,7 +763,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
  * Perform common duties while attaching to interface list
  */
 void
-fddi_ifattach(struct ifnet *ifp, caddr_t lla)
+fddi_ifattach(struct ifnet *ifp, void *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
@@ -782,7 +787,8 @@ fddi_ifattach(struct ifnet *ifp, caddr_t lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
+	    ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0

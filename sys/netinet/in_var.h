@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.55.4.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.55.4.3 2007/09/03 14:42:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ struct in_multistep {
 struct ifaddr;
 
 int	in_ifinit(struct ifnet *,
-	    struct in_ifaddr *, struct sockaddr_in *, int);
+	    struct in_ifaddr *, const struct sockaddr_in *, int);
 void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);
@@ -302,7 +302,7 @@ void	in_delmulti(struct in_multi *);
 void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 void	in_setmaxmtu(void);
 const char *in_fmtaddr(struct in_addr);
-int	in_control(struct socket *, u_long, caddr_t, struct ifnet *,
+int	in_control(struct socket *, u_long, void *, struct ifnet *,
 	    struct lwp *);
 void	in_purgeaddr(struct ifaddr *, struct ifnet *);
 void	in_purgeif(struct ifnet *);

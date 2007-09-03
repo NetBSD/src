@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.31.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.31.2.2 2007/09/03 14:46:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.31.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.31.2.2 2007/09/03 14:46:53 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.31.2.1 2006/06/21 15:12:39 yamt Exp 
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>

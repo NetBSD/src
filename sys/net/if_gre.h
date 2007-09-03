@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14.4.3 2007/02/26 09:11:34 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.14.4.4 2007/09/03 14:42:07 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #define _NET_IF_GRE_H_
 
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #ifdef _KERNEL
 struct gre_soparm {
@@ -52,20 +54,27 @@ struct gre_soparm {
 
 struct gre_softc {
 	struct ifnet		sc_if;
-	volatile int		sc_waitchan;
-	volatile int		sc_thread;
+	kmutex_t		sc_mtx;
+	kcondvar_t		sc_soparm_cv;
+	kcondvar_t		sc_join_cv;
+	kcondvar_t		sc_work_cv;
+	int			sc_haswork;
+	int			sc_running;
+	int			sc_dying;
 	struct ifqueue		sc_snd;
 	struct gre_soparm	sc_soparm;
+	struct gre_soparm	sc_newsoparm;
 	LIST_ENTRY(gre_softc)	sc_list;
-	struct route route;	/* routing entry that determines, where a
+	struct route route;	/* routing entry that determines where a
 				   encapsulated packet should go */
 	int			sc_proto;	/* protocol of encapsulator */
+	struct uio		sc_uio;
 };
-#define	g_src		sc_soparm.sp_src
-#define	g_srcport	sc_soparm.sp_srcport
-#define	g_dst		sc_soparm.sp_dst
-#define	g_dstport	sc_soparm.sp_dstport
-#define	sc_fp		sc_soparm.sp_fp
+
+#define	sc_src		sc_newsoparm.sp_src
+#define	sc_srcport	sc_newsoparm.sp_srcport
+#define	sc_dst		sc_newsoparm.sp_dst
+#define	sc_dstport	sc_newsoparm.sp_dstport
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
@@ -163,8 +172,8 @@ LIST_HEAD(gre_softc_head, gre_softc);
 extern struct gre_softc_head gre_softc_list;
 
 u_int16_t gre_in_cksum(u_short *, u_int);
-int gre_input3(struct gre_softc *, struct mbuf *, int, u_char,
-    const struct gre_h *);
+int gre_input3(struct gre_softc *, struct mbuf *, int, const struct gre_h *,
+    int);
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_GRE_H_ */

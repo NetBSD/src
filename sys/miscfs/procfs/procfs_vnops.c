@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.123.2.3 2007/02/26 09:11:31 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.123.2.4 2007/09/03 14:41:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.123.2.3 2007/02/26 09:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.123.2.4 2007/09/03 14:41:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ static const struct proc_target {
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_LNK, N("emul"),	PFSemul,	NULL },
+	{ DT_REG, N("statm"),	PFSstatm,	procfs_validfile_linux },
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_DEFNS
 #endif
@@ -200,6 +201,8 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("uptime"),      PFSuptime,         procfs_validfile_linux },
 	{ DT_REG, N("mounts"),	    PFSmounts,	       procfs_validfile_linux },
 	{ DT_REG, N("devices"),     PFSdevices,        procfs_validfile_linux },
+	{ DT_REG, N("stat"),	    PFScpustat,        procfs_validfile_linux },
+	{ DT_REG, N("loadavg"),	    PFSloadavg,        procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
@@ -575,11 +578,22 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 		vp = target->p_cwdi->cwdi_rdir;
 		break;
 	case PFSexe:
-		rvp = rootvnode;
 		vp = target->p_textvp;
 		break;
 	default:
 		return (NULL);
+	}
+
+	/*
+	 * XXX: this horrible kludge avoids locking panics when
+	 * attempting to lookup links that point to within procfs
+	 */
+	if (vp != NULL && vp->v_tag == VT_PROCFS) {
+		if (bpp) {
+			*--bp = '/';
+			*bpp = bp;
+		}
+		return vp;
 	}
 
 	if (rvp == NULL)
@@ -589,8 +603,14 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 	    len / 2, 0, caller) != 0) {
 		vp = NULL;
 		if (bpp) {
-			bp = *bpp;
-			*--bp = '/';
+/* 
+			if (t == PFSexe) {
+				snprintf(path, len, "%s/%d/file"
+				    mp->mnt_stat.f_mntonname, pfs->pfs_pid);
+			} else */ {
+				bp = *bpp;
+				*--bp = '/';
+			}
 		}
 	}
 	mutex_enter(&target->p_mutex);	/* XXXSMP */
@@ -724,6 +744,7 @@ procfs_getattr(v)
 	case PFSmaps:
 	case PFScmdline:
 	case PFSemul:
+	case PFSstatm:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
@@ -733,6 +754,8 @@ procfs_getattr(v)
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
+	case PFScpustat:
+	case PFSloadavg:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
@@ -840,6 +863,9 @@ procfs_getattr(v)
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
+	case PFScpustat:
+	case PFSloadavg:
+	case PFSstatm:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSmap:
@@ -1209,9 +1235,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	    UIO_MX - offsetof(struct dirent, d_name), "%ld", (long)p->p_pid);
 	d.d_type = DT_DIR;
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	error = uiomove(&d, UIO_MX, uiop);
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (error) {
 		ctxp->error = error;
 		return -1;
@@ -1550,13 +1576,15 @@ procfs_readlink(v)
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
+
 		mutex_enter(&pown->p_mutex);
 		fp = fd_getfile(pown->p_fd, pfs->pfs_fd);
 		mutex_exit(&pown->p_mutex);
-		if (error != 0) {
+		if (fp == NULL) {
 			procfs_proc_unlock(pown);
-			return (EBADF);
+			return EBADF;
 		}
+
 		FILE_USE(fp);
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
@@ -1574,11 +1602,20 @@ procfs_readlink(v)
 			}
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
-			vp = curproc->p_cwdi->cwdi_rdir;	/* XXXSMP */
-			if (vp == NULL)
-				vp = rootvnode;
-			error = getcwd_common(vxp, vp, &bp, path,
-			    MAXPATHLEN / 2, 0, curlwp);
+
+			/*
+			 * XXX: kludge to avoid locking against ourselves
+			 * in getcwd()
+			 */
+			if (vxp->v_tag == VT_PROCFS) {
+				*--bp = '/';
+			} else {
+				vp = curproc->p_cwdi->cwdi_rdir; /* XXXSMP */
+				if (vp == NULL)
+					vp = rootvnode;
+				error = getcwd_common(vxp, vp, &bp, path,
+				    MAXPATHLEN / 2, 0, curlwp);
+			}
 			FILE_UNUSE(fp, curlwp);
 			if (error)
 				break;

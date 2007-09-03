@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.20.2.3 2007/02/26 09:11:54 yamt Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.20.2.4 2007/09/03 14:43:43 yamt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.20.2.3 2007/02/26 09:11:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.20.2.4 2007/09/03 14:43:43 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -109,11 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.20.2.3 2007/02/26 09:11:54 yamt Ex
  */
 
 int
-udp6_output(in6p, m, addr6, control, l)
-	struct in6pcb *in6p;
-	struct mbuf *m;
-	struct mbuf *addr6, *control;
-	struct lwp *l;
+udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6, 
+	struct mbuf *control, struct lwp *l)
 {
 	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
@@ -332,7 +329,7 @@ udp6_output(in6p, m, addr6, control, l)
 	/*
 	 * Stuff checksum and output datagram.
 	 */
-	udp6 = (struct udphdr *)(mtod(m, caddr_t) + hlen);
+	udp6 = (struct udphdr *)(mtod(m, char *) + hlen);
 	udp6->uh_sport = in6p->in6p_lport; /* lport is always set in the PCB */
 	udp6->uh_dport = fport;
 	if (plen <= 0xffff)

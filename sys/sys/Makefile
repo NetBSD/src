@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.73.2.3 2007/02/26 09:12:09 yamt Exp $
+#	$NetBSD: Makefile,v 1.73.2.4 2007/09/03 14:45:56 yamt Exp $
+
+.include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
-INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
+INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	bootblock.h bswap.h buf.h \
 	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
-	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
+	cpuio.h device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
 	disklabel_gpt.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h evcnt.h event.h exec.h exec_aout.h \
@@ -24,10 +26,11 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	protosw.h ptrace.h queue.h \
 	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
 	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
-	shm.h siginfo.h signal.h signalvar.h sigtypes.h sleepq.h socket.h \
+	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
+	sleepq.h socket.h \
 	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
 	syscall.h syscallargs.h sysctl.h systrace.h stdint.h swap.h \
-	syslimits.h syslog.h \
+	syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
@@ -49,5 +52,8 @@ INCSYMLINKS=\
 	sys/md5.h /usr/include/md5.h
 
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
+
+namei: namei.src gennameih.awk
+	${AWK} -f gennameih.awk < namei.src > namei.h
 
 .include <bsd.kinc.mk>

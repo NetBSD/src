@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.3.6.4 2007/02/26 09:12:11 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.3.6.5 2007/09/03 14:46:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -299,8 +299,12 @@ void kauth_cred_setsvgid(kauth_cred_t, gid_t);
 void kauth_cred_hold(kauth_cred_t);
 u_int kauth_cred_getrefcnt(kauth_cred_t);
 
-int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
-int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
+int kauth_cred_setgroups(kauth_cred_t, const gid_t *, size_t, uid_t,
+    unsigned int);
+int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t, unsigned int);
+
+/* This is for sys_setgroups() */
+int kauth_proc_setgroups(struct lwp *, kauth_cred_t);
 
 int kauth_register_key(const char *, kauth_key_t *);
 int kauth_deregister_key(kauth_key_t);

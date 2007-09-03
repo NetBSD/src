@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.100.2.3 2007/02/26 09:11:43 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.100.2.4 2007/09/03 14:42:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100.2.3 2007/02/26 09:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100.2.4 2007/09/03 14:42:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -158,7 +158,8 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL);
+POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
+    IPL_NET);
 
 void
 in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
@@ -190,7 +191,7 @@ in_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
-	bzero((caddr_t)inp, sizeof(*inp));
+	bzero((void *)inp, sizeof(*inp));
 	inp->inp_af = AF_INET;
 	inp->inp_table = table;
 	inp->inp_socket = so;
@@ -514,13 +515,9 @@ in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_port = inp->inp_lport;
-	sin->sin_addr = inp->inp_laddr;
+	sockaddr_in_init(sin, &inp->inp_laddr, inp->inp_lport);
+	nam->m_len = sin->sin_len;
 }
 
 void
@@ -531,13 +528,9 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_port = inp->inp_fport;
-	sin->sin_addr = inp->inp_faddr;
+	sockaddr_in_init(sin, &inp->inp_faddr, inp->inp_fport);
+	nam->m_len = sin->sin_len;
 }
 
 /*
@@ -680,7 +673,7 @@ in_losing(struct inpcb *inp)
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
-			(void) rtrequest(RTM_DELETE, rt_key(rt),
+			(void) rtrequest(RTM_DELETE, rt_getkey(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 				NULL);
 		/*
@@ -874,24 +867,18 @@ struct rtentry *
 in_pcbrtentry(struct inpcb *inp)
 {
 	struct route *ro;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	if (inp->inp_af != AF_INET)
 		return (NULL);
 
 	ro = &inp->inp_route;
 
-	if (!in_hosteq(satocsin(rtcache_getdst(ro))->sin_addr, inp->inp_faddr))
-		rtcache_free(ro);
-	else
-		rtcache_check(ro);
-	if (ro->ro_rt == NULL && !in_nullhost(inp->inp_faddr)) {
-		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
-		ro->ro_dst.sa_family = AF_INET;
-		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-		rtcache_init(ro);
-	}
-	return ro->ro_rt;
+	sockaddr_in_init(&u.dst4, &inp->inp_faddr, 0);
+	return rtcache_lookup(ro, &u.dst);
 }
 
 struct sockaddr_in *
@@ -901,25 +888,19 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	struct in_ifaddr *ia = NULL;
 
 	/*
-	 * If route is known or can be allocated now,
-	 * our src addr is taken from the i/f, else punt.
-	 * Note that we should check the address family of the cached
-	 * destination, in case of sharing the cache with IPv6.
+         * If route is known or can be allocated now, take the
+         * source address from the interface.  Otherwise, punt.
 	 */
-	if (rtcache_getdst(ro)->sa_family != AF_INET ||
-	    !in_hosteq(satocsin(rtcache_getdst(ro))->sin_addr, sin->sin_addr) ||
-	    (soopts & SO_DONTROUTE) != 0)
+	if ((soopts & SO_DONTROUTE) != 0)
 		rtcache_free(ro);
-	else
-		rtcache_check(ro);
-	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
-	    ro->ro_rt == NULL) {
-		/* No route yet, so try to acquire one */
-		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
-		ro->ro_dst.sa_family = AF_INET;
-		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
-		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
-		rtcache_init(ro);
+	else {
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in	dst4;
+		} u;
+
+		sockaddr_in_init(&u.dst4, &sin->sin_addr, 0);
+		(void)rtcache_lookup(ro, &u.dst);
 	}
 	/*
 	 * If we found a route, use the address
@@ -937,7 +918,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		sin->sin_port = 0;
 		ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
 		sin->sin_port = fport;
-		if (ia == 0) {
+		if (ia == NULL) {
 			/* Find 1st non-loopback AF_INET address */
 			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))

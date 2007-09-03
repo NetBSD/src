@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.1.8.3 2007/02/26 09:11:38 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.1.8.4 2007/09/03 14:42:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.1.8.3 2007/02/26 09:11:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.1.8.4 2007/09/03 14:42:26 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -73,9 +73,9 @@ static int agr_addport(struct ifnet *, struct ifnet *);
 static int agr_remport(struct ifnet *, struct ifnet *);
 static int agrreq_copyin(const void *, struct agrreq *);
 static int agrreq_copyout(void *, struct agrreq *);
-static int agr_ioctl(struct ifnet *, u_long, caddr_t);
+static int agr_ioctl(struct ifnet *, u_long, void *);
 static struct agr_port *agr_select_tx_port(struct agr_softc *, struct mbuf *);
-static int agr_ioctl_filter(struct ifnet *, u_long, caddr_t);
+static int agr_ioctl_filter(struct ifnet *, u_long, void *);
 static void agr_reset_iftype(struct ifnet *);
 static int agr_config_promisc(struct agr_softc *);
 static int agrport_config_promisc_callback(struct agr_port *, void *);
@@ -135,37 +135,32 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
  * EXPORTED AGR-INTERNAL FUNCTIONS
  */
 
-int
+void
 agr_lock(struct agr_softc *sc)
 {
-	int s;
 
-	s = splnet();
-	simple_lock(&sc->sc_lock);
-
-	return s;
+	mutex_enter(&sc->sc_lock);
 }
 
 void
-agr_unlock(struct agr_softc *sc, int savedipl)
+agr_unlock(struct agr_softc *sc)
 {
 
-	simple_unlock(&sc->sc_lock);
-	splx(savedipl);
+	mutex_exit(&sc->sc_lock);
 }
 
 void
 agr_ioctl_lock(struct agr_softc *sc)
 {
 
-	lockmgr(&sc->sc_ioctl_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_ioctl_lock);
 }
 
 void
 agr_ioctl_unlock(struct agr_softc *sc)
 {
 
-	lockmgr(&sc->sc_ioctl_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_ioctl_lock);
 }
 
 /*
@@ -204,7 +199,7 @@ agr_xmit_frame(struct ifnet *ifp_port, struct mbuf *m)
 }
 
 int
-agrport_ioctl(struct agr_port *port, u_long cmd, caddr_t arg)
+agrport_ioctl(struct agr_port *port, u_long cmd, void *arg)
 {
 	struct ifnet *ifp = port->port_ifp;
 
@@ -226,8 +221,8 @@ agr_clone_create(struct if_clone *ifc, int unit)
 
 	sc = agr_alloc_softc();
 	TAILQ_INIT(&sc->sc_ports);
-	lockinit(&sc->sc_ioctl_lock, PSOCK, "agrioctl", 0, 0);
-	simple_lock_init(&sc->sc_lock);
+	mutex_init(&sc->sc_ioctl_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NET);
 	agrtimer_init(sc);
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
@@ -261,22 +256,23 @@ agr_clone_destroy(struct ifnet *ifp)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	int error;
-	int s;
 
 	agr_ioctl_lock(sc);
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	if (sc->sc_nports > 0) {
 		error = EBUSY;
 	} else {
 		error = 0;
 	}
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	agr_ioctl_unlock(sc);
 
 	if (error == 0) {
 		if_detach(ifp);
+		mutex_destroy(&sc->sc_ioctl_lock);
+		mutex_destroy(&sc->sc_lock);
 		agr_free_softc(sc);
 	}
 
@@ -317,9 +313,8 @@ agr_start(struct ifnet *ifp)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int s;
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 
 	while (/* CONSTCOND */ 1) {
 		struct agr_port *port;
@@ -349,7 +344,7 @@ agr_start(struct ifnet *ifp)
 		}
 	}
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 }
@@ -472,7 +467,6 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
-	int s;
 
 	if (ifp_port->if_ioctl == NULL) {
 		error = EOPNOTSUPP;
@@ -528,7 +522,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 		}
 	}
 
-	memcpy(port->port_origlladdr, LLADDR(ifp_port->if_sadl),
+	memcpy(port->port_origlladdr, CLLADDR(ifp_port->if_sadl),
 	    ifp_port->if_addrlen);
 
 	/*
@@ -536,7 +530,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 */
 
 	error = (*ifp_port->if_ioctl)(ifp_port, SIOCSIFADDR,
-	    (caddr_t)TAILQ_FIRST(&ifp->if_addrlist));
+	    (void *)TAILQ_FIRST(&ifp->if_addrlist));
 
 	if (error) {
 		printf("%s: SIOCSIFADDR error %d\n", __func__, error);
@@ -545,7 +539,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	port->port_flags |= AGRPORT_LADDRCHANGED;
 
 	ifp->if_type = ifp_port->if_type;
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 
 	port->port_ifp = ifp_port;
 	ifp_port->if_agrprivate = port;
@@ -558,7 +552,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 
 	port->port_flags |= AGRPORT_ATTACHED;
 
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	error = (*sc->sc_iftop->iftop_portinit)(sc, port);
 	if (error) {
@@ -575,9 +569,9 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 		goto cleanup;
 	}
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	port->port_flags &= ~AGRPORT_LARVAL;
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 out:
 	if (error && port) {
 		free(port, M_DEVBUF);
@@ -610,7 +604,6 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port;
 	int error = 0;
-	int s;
 
 	if (ifp_port->if_agrprivate == NULL) {
 		error = ENOENT;
@@ -633,9 +626,9 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 #endif
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	port->port_flags |= AGRPORT_DETACHING;
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	error = (*sc->sc_iftop->iftop_portfini)(sc, port);
 	if (error) {
@@ -681,7 +674,6 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 	struct ifnet *ifp_port = port->port_ifp;
 	int error;
 	int result = 0;
-	int s;
 
 	error = agrport_config_promisc(port, false);
 	if (error) {
@@ -697,28 +689,19 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 			error = (*ifp_port->if_init)(ifp_port);
 		}
 #else
-		struct sockaddr_dl *sdl;
+		union {
+			struct sockaddr sa;
+			struct sockaddr_dl sdl;
+			struct sockaddr_storage ss;
+		} u;
 		struct ifaddr ifa;
-		int sdllen;
-		int addrlen;
 
-		addrlen = ifp_port->if_addrlen;
-		sdllen = sizeof(*sdl) - sizeof(sdl->sdl_data) + addrlen;
-		sdl = malloc(sdllen, M_TEMP, M_WAITOK);
-		if (sdl == NULL) {
-			error = ENOMEM;
-		} else {
-			memset(sdl, 0, sdllen);
-			sdl->sdl_len = sdllen;
-			sdl->sdl_family = AF_LINK;
-			sdl->sdl_type = ifp_port->if_type;
-			sdl->sdl_alen = addrlen;
-			memcpy(LLADDR(sdl), port->port_origlladdr, addrlen);
-			memset(&ifa, 0, sizeof(ifa));
-			ifa.ifa_addr = (struct sockaddr *)sdl;
-			error = agrport_ioctl(port, SIOCSIFADDR, (caddr_t)&ifa);
-			free(sdl, M_TEMP);
-		}
+		sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+		    0, ifp_port->if_type, NULL, 0,
+		    port->port_origlladdr, ifp_port->if_addrlen);
+		memset(&ifa, 0, sizeof(ifa));
+		ifa.ifa_addr = &u.sa;
+		error = agrport_ioctl(port, SIOCSIFADDR, &ifa);
 #endif
 		if (error) {
 			printf("%s: if_init error %d\n", __func__, error);
@@ -728,7 +711,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 		}
 	}
 
-	s = AGR_LOCK(sc);
+	AGR_LOCK(sc);
 	if ((port->port_flags & AGRPORT_ATTACHED)) {
 		ifp_port->if_agrprivate = NULL;
 
@@ -740,7 +723,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 
 		port->port_flags &= ~AGRPORT_ATTACHED;
 	}
-	AGR_UNLOCK(sc, s);
+	AGR_UNLOCK(sc);
 
 	return result;
 }
@@ -759,7 +742,7 @@ agr_ioctl_multi(struct ifnet *ifp, u_long cmd, struct ifreq *ifr)
 
 /* XXX an incomplete hack; can't filter ioctls handled ifioctl(). */
 static int
-agr_ioctl_filter(struct ifnet *ifp, u_long cmd, caddr_t arg)
+agr_ioctl_filter(struct ifnet *ifp, u_long cmd, void *arg)
 {
 	struct agr_port *port = ifp->if_agrprivate;
 	int error;
@@ -812,7 +795,7 @@ agrreq_copyout(void *ubuf, struct agrreq *ar)
 }
 
 static int
-agr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct agr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -847,7 +830,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGIFADDR:
 		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 #if 0 /* notyet */

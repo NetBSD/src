@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.15.12.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.15.12.2 2007/09/03 14:46:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 
 struct mfsnode {
 	struct	vnode *mfs_vnode;	/* vnode associated with this mfsnode */
-	caddr_t	mfs_baseoff;		/* base of file system in memory */
+	void *	mfs_baseoff;		/* base of file system in memory */
 	long	mfs_size;		/* size of memory file system */
 	struct	proc *mfs_proc;		/* supporting process */
 	int	mfs_shutdown;		/* shutdown this mfsnode */

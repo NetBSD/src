@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.16.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -70,15 +70,28 @@ struct sockaddr_dl {
 	u_char	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
 	u_char	    sdl_alen;	/* link level address length */
 	u_char	    sdl_slen;	/* link layer selector length */
-	char	    sdl_data[12]; /* minimum work area, can be larger;
-				     contains both if name and ll address */
+	/* minimum work area, can be larger; contains both if name
+	 * and ll address
+	 */
+	char	    sdl_data[12];
 };
+
+#define	satosdl(__sa)	((struct sockaddr_dl *)(__sa))
+#define	satocsdl(__sa)	((const struct sockaddr_dl *)(__sa))
 
 /* We do arithmetic directly with these, so keep them char instead of void */
 #define LLADDR(s) ((char *)((s)->sdl_data + (s)->sdl_nlen))
 #define CLLADDR(s) ((const char *)((s)->sdl_data + (s)->sdl_nlen))
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+uint8_t sockaddr_dl_measure(uint8_t, uint8_t);
+struct sockaddr *sockaddr_dl_alloc(uint16_t, uint8_t,
+    const void *, uint8_t, const void *, uint8_t, int);
+struct sockaddr_dl *sockaddr_dl_init(struct sockaddr_dl *, socklen_t, uint16_t,
+    uint8_t, const void *, uint8_t, const void *, uint8_t);
+struct sockaddr_dl *sockaddr_dl_setaddr(struct sockaddr_dl *, socklen_t,
+    const void *, uint8_t);
+#else
 
 #include <sys/cdefs.h>
 

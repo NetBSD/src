@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.71.12.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.71.12.3 2007/09/03 14:46:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.71.12.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.71.12.3 2007/09/03 14:46:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -83,7 +83,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	struct buf *bp;
 	struct inode *ip;
 	int error;
-	caddr_t cp;
+	void *cp;
 	int waitfor, flags;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -128,7 +128,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	else if (ip->i_ffs_effnlink != ip->i_nlink)
 		panic("ffs_update: bad link cnt");
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
-		cp = (caddr_t)bp->b_data +
+		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * DINODE1_SIZE);
 #ifdef FFS_EI
 		if (UFS_FSNEEDSWAP(fs))
@@ -138,7 +138,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 #endif
 			memcpy(cp, ip->i_din.ffs1_din, DINODE1_SIZE);
 	} else {
-		cp = (caddr_t)bp->b_data +
+		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * DINODE2_SIZE);
 #ifdef FFS_EI
 		if (UFS_FSNEEDSWAP(fs))
@@ -203,10 +203,6 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
-#ifdef QUOTA
-	if ((error = getinoquota(oip)) != 0)
-		return (error);
-#endif
 	fs = oip->i_fs;
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);
@@ -230,18 +226,19 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			off_t eob;
 
 			eob = blkroundup(fs, osize);
+			uvm_vnp_setwritesize(ovp, eob);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
 			    cred, aflag);
 			if (error)
 				return error;
 			if (ioflag & IO_SYNC) {
-				ovp->v_size = eob;
 				simple_lock(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 			}
 		}
+		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
 			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC,
@@ -588,7 +585,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		bap2 = (int64_t *)bp->b_data;
 	if (lastbn >= 0) {
 		copy = malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
-		memcpy((caddr_t)copy, bp->b_data, (u_int)fs->fs_bsize);
+		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
 		for (i = last + 1; i < NINDIR(fs); i++)
 			BAP_ASSIGN(ip, i, 0);
 		error = bwrite(bp);

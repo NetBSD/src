@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.14.4.2 2006/12/30 20:50:44 yamt Exp $
+ *	$Id: i4b_trace.c,v 1.14.4.3 2007/09/03 14:43:58 yamt Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.14.4.2 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.14.4.3 2007/09/03 14:43:58 yamt Exp $");
 
 #include "isdntrc.h"
 
@@ -85,7 +85,7 @@ void isdntrcattach __P((void));
 int isdntrcopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdntrcclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdntrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int isdntrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
+int isdntrcioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
 
 #ifdef __NetBSD__
 const struct cdevsw isdntrc_cdevsw = {
@@ -226,7 +226,7 @@ isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace
 	if(device_state[isdnif] & ST_WAITDATA)
 	{
 		device_state[isdnif] &= ~ST_WAITDATA;
-		wakeup((caddr_t) &trace_queue[isdnif]);
+		wakeup((void *) &trace_queue[isdnif]);
 	}
 
 	splx(x);
@@ -324,7 +324,7 @@ isdntrcread(dev_t dev, struct uio * uio, int ioflag)
 	{
 		device_state[unit] |= ST_WAITDATA;
 
-		if((error = tsleep((caddr_t) &trace_queue[unit],
+		if((error = tsleep((void *) &trace_queue[unit],
 					TTIPRI | PCATCH,
 					"bitrc", 0 )) != 0)
 		{
@@ -364,7 +364,7 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+isdntrcioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	int error = 0;

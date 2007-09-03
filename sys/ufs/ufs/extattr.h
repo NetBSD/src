@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.4.6.2 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: extattr.h,v 1.4.6.3 2007/09/03 14:46:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -114,6 +114,9 @@ int	ufs_deleteextattr(struct vop_deleteextattr_args *ap);
 int	ufs_setextattr(struct vop_setextattr_args *ap);
 int	ufs_listextattr(struct vop_listextattr_args *ap);
 void	ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l);
+
+void	ufs_extattr_init(void);
+void	ufs_extattr_done(void);
 
 #endif /* !_KERNEL */
 

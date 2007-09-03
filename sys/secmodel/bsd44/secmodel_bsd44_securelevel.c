@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.20.2.3 2007/02/26 09:12:08 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.20.2.4 2007/09/03 14:45:55 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.20.2.3 2007/02/26 09:12:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.20.2.4 2007/09/03 14:45:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -481,7 +481,8 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred,
 					if (blkdev != NODEV) {
 						vfinddev(blkdev, VBLK, &bvp);
 						if (bvp != NULL)
-							d_type = cdev->d_type;
+							d_type = (cdev->d_flag
+							    & D_TYPEMASK);
 					}
 				}
 
@@ -492,7 +493,7 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred,
 
 				bdev = bdevsw_lookup(dev);
 				if (bdev != NULL)
-					d_type = bdev->d_type;
+					d_type = (bdev->d_flag & D_TYPEMASK);
 
 				bvp = vp;
 

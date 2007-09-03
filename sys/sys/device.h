@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.75.2.3 2007/02/26 09:12:11 yamt Exp $ */
+/* $NetBSD: device.h,v 1.75.2.4 2007/09/03 14:46:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -118,7 +118,7 @@ struct device {
 	int		dv_unit;	/* device unit number */
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
-					   (NULL if pesudo- or root node) */
+					   (NULL if pseudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
@@ -227,14 +227,25 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_match		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
 }
 
 #define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
-    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, \
-		rescanfn, chdetfn \
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_match 		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
+	.ca_rescan		= rescanfn,				\
+	.ca_childdetached	= chdetfn,				\
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -254,7 +265,9 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-    { NULL, NULL }, { NULL }, NULL, ___STRING(name), class, 0, attrs	\
+	.cd_name		= ___STRING(name),			\
+	.cd_class		= class,				\
+	.cd_attrs		= attrs,				\
 }
 
 /*
@@ -307,6 +320,9 @@ extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
 
+struct vnode *opendisk(struct device *);
+int config_handle_wedges(struct device *, int);
+
 void	config_init(void);
 void	configure(void);
 
@@ -340,7 +356,6 @@ int	config_match(device_t, cfdata_t, void *);
 
 device_t config_attach_pseudo(cfdata_t);
 
-void	config_makeroom(int n, struct cfdriver *cd);
 int	config_detach(device_t, int);
 int	config_activate(device_t);
 int	config_deactivate(device_t);

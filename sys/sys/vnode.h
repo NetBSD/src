@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140.2.3 2007/02/26 09:12:17 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140.2.4 2007/09/03 14:46:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,9 +54,14 @@ struct uvm_ractx;
  */
 
 /*
- * Vnode types.  VNON means no type.
+ * Vnode types.  VNON means no type.  __VTYPE_DEFINED allows other
+ * sources to override this definition.  __VTYPE_DEFINED should be
+ * considered a temporary feature.
  */
+#ifndef __VTYPE_DEFINED
+#define __VTYPE_DEFINED
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
+#endif /* __VTYPE_DEFINED */
 
 #define	VNODE_TYPES \
     "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"
@@ -71,7 +76,7 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS
 };
 
 #define	VNODE_TAGS \
@@ -79,7 +84,7 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -98,6 +103,7 @@ struct vnode {
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
 	voff_t		v_size;			/* size of file */
+	voff_t		v_writesize;		/* new size after write */
 	int		v_flag;			/* flags */
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
@@ -271,12 +277,6 @@ extern const int	vttoif_tab[];
 #define	WRITECLOSE	0x0004		/* vflush: only close writable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
-					/* vn_start_write: */
-#define	V_WAIT		0x0001		/*  sleep for suspend */
-#define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
-#define	V_SLEEPONLY	0x0004		/*  just return after sleep */
-#define	V_PCATCH	0x0008		/*  sleep with PCATCH set */
-#define	V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
@@ -412,7 +412,7 @@ struct vnodeop_desc {
 	 * for each transport layer.  (Support to manage this list is not
 	 * yet part of BSD.)
 	 */
-	caddr_t		*vdesc_transports;
+	void *		*vdesc_transports;
 };
 
 #ifdef _KERNEL
@@ -495,14 +495,8 @@ struct vop_generic_args {
 #define	VDESC(OP) (& __CONCAT(OP,_desc))
 #define	VOFFSET(OP) (VDESC(OP)->vdesc_offset)
 
-/*
- * Functions to gate filesystem write operations. Declared static inline
- * here because they usually go into time critical code paths.
- */
+/* XXX This include should go away */
 #include <sys/mount.h>
-
-int vn_start_write(struct vnode *, struct mount **, int);
-void vn_finished_write(struct mount *, int);
 
 /*
  * Finally, include the default set of vnode operations.
@@ -544,6 +538,7 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
 void 	vrele(struct vnode *);
+void 	vrele2(struct vnode *, int);
 int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);
 
@@ -555,7 +550,7 @@ int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
-int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
+int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);

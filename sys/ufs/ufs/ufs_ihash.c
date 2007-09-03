@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.18.16.2 2007/02/26 09:12:24 yamt Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.18.16.3 2007/09/03 14:47:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.18.16.2 2007/02/26 09:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.18.16.3 2007/09/03 14:47:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,8 @@ void
 ufs_ihashdone(void)
 {
 	hashdone(ihashtbl, M_UFSMNT);
+	mutex_destroy(&ufs_hashlock);
+	mutex_destroy(&ufs_ihash_lock);
 }
 
 /*
@@ -143,10 +145,14 @@ ufs_ihashget(dev_t dev, ino_t inum, int flags)
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
-			mutex_exit(&ufs_ihash_lock);
-			if (vget(vp, flags | LK_INTERLOCK))
-				goto loop;
+			if (flags == 0) {
+				mutex_exit(&ufs_ihash_lock);
+			} else {
+				simple_lock(&vp->v_interlock);
+				mutex_exit(&ufs_ihash_lock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return (vp);
 		}
 	}

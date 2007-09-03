@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.20.12.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.20.12.2 2007/09/03 14:46:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
 #ifndef _UFS_MFS_MFS_EXTERN_H_
 #define _UFS_MFS_MFS_EXTERN_H_
 
+#include <sys/param.h>
+#include <sys/mount.h>
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_MFSNODE);
 
@@ -48,21 +50,14 @@ __BEGIN_DECLS
 #define	mfs_ioctl	genfs_enoioctl
 
 /* mfs_vfsops.c */
-int	mfs_mountroot(void);
-int	mfs_initminiroot(caddr_t);
-int	mfs_mount(struct mount *, const char *, void *,
-			     struct nameidata *, struct lwp *);
-int	mfs_start(struct mount *, int, struct lwp *);
-int	mfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+VFS_PROTOS(mfs);
 
-void	mfs_init(void);
-void	mfs_reinit(void);
-void	mfs_done(void);
+int	mfs_initminiroot(void *);
 
 /* mfs_vnops.c */
 int	mfs_open(void *);
 int	mfs_strategy(void *);
-void	mfs_doio(struct buf *, caddr_t);
+void	mfs_doio(struct buf *, void *);
 int	mfs_bmap(void *);
 int	mfs_close(void *);
 int	mfs_inactive(void *);
