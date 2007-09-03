@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62.14.2 2007/08/23 09:32:50 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.3 2007/09/03 16:48:16 jmcneill Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.2 2007/08/23 09:32:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.3 2007/09/03 16:48:16 jmcneill Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1863,10 +1863,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
 			error = 0;
 		}
@@ -2288,7 +2286,7 @@ iwi_config(struct iwi_softc *sc)
 	uint32_t data;
 	int error, nchan, i;
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	error = iwi_cmd(sc, IWI_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN, 0);

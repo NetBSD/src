@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.47.4.1 2007/08/09 02:37:24 jmcneill Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.47.4.2 2007/09/03 16:48:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.47.4.1 2007/08/09 02:37:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.47.4.2 2007/09/03 16:48:58 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -330,7 +330,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			}
 			bcopy((void *)edst, (void *)trh->token_dhost,
 			    sizeof (edst));
-			bcopy(LLADDR(ifp->if_sadl), (void *)trh->token_shost,
+			bcopy(CLLADDR(ifp->if_sadl), (void *)trh->token_shost,
 			    sizeof(trh->token_shost));
 			if (riflen != 0)
 				trh->token_shost[0] |= TOKEN_RI_PRESENT;
@@ -367,7 +367,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 				trh = mtod(mcopy, struct token_header *);
 				bcopy((void *)edst,
 				    (void *)trh->token_dhost, sizeof (edst));
-				bcopy(LLADDR(ifp->if_sadl),
+				bcopy(CLLADDR(ifp->if_sadl),
 				    (void *)trh->token_shost, sizeof (edst));
 			}
 		}
@@ -446,7 +446,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	trh->token_ac = TOKEN_AC;
 	trh->token_fc = TOKEN_FC;
 	bcopy((void *)edst, (void *)trh->token_dhost, sizeof (edst));
-	bcopy(LLADDR(ifp->if_sadl), (void *)trh->token_shost,
+	bcopy(CLLADDR(ifp->if_sadl), (void *)trh->token_shost,
 	    sizeof(trh->token_shost));
 
 	if (riflen != 0) {
@@ -462,7 +462,7 @@ send:
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
-		bcopy(LLADDR(ifp0->if_sadl), (void *)trh->token_shost,	    
+		bcopy(CLLADDR(ifp0->if_sadl), (void *)trh->token_shost,	    
 		    sizeof(trh->token_shost));
 	}
 #endif /* NCARP > 0 */
@@ -601,7 +601,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			l->llc_dsap = l->llc_ssap;
 			l->llc_ssap = c;
 			if (m->m_flags & (M_BCAST | M_MCAST))
-				bcopy(LLADDR(ifp->if_sadl),
+				bcopy(CLLADDR(ifp->if_sadl),
 				    (void *)trh->token_dhost,
 				    ISO88025_ADDR_LEN);
 			sa.sa_family = AF_UNSPEC;
@@ -665,7 +665,8 @@ token_ifattach(struct ifnet *ifp, void *lla)
 #endif
 
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
+	    ifp->if_addrlen);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));

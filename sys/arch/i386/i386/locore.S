@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 2007/05/17 14:51:21 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.48.8.1 2007/09/03 16:47:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -792,7 +792,8 @@ ENTRY(cpu_switchto)
 	addl	$8,%esp
 	cmpl	$-1,%eax
 	je	2b
-	movl	%eax,TF_EIP(%ebx)
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
 	jmp	2b
 
 /*
@@ -936,3 +937,65 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 #endif /* NNPX > 0 */
+
+/*
+ * void sse2_zero_page(void *pg)
+ *
+ * Zero a page without polluting the cache.
+ */
+ENTRY(sse2_zero_page)
+	pushl	%ebp
+	movl	%esp,%ebp
+	movl	8(%esp), %edx
+	movl	$PAGE_SIZE, %ecx
+	xorl	%eax, %eax
+	.align	16
+1:
+	movnti	%eax, 0(%edx)
+	movnti	%eax, 4(%edx)
+	movnti	%eax, 8(%edx)
+	movnti	%eax, 12(%edx)
+	movnti	%eax, 16(%edx)
+	movnti	%eax, 20(%edx)
+	movnti	%eax, 24(%edx)
+	movnti	%eax, 28(%edx)
+	subl	$32, %ecx
+	leal	32(%edx), %edx
+	jnz	1b
+	sfence
+	pop	%ebp
+	ret
+
+/*
+ * void sse2_copy_page(void *src, void *dst)
+ *
+ * Copy a page without polluting the cache.
+ */
+ENTRY(sse2_copy_page)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	20(%esp), %esi
+	movl	24(%esp), %edi
+	movl	$PAGE_SIZE, %ebp
+	.align	16
+1:
+	movl	0(%esi), %eax
+	movl	4(%esi), %ebx
+	movl	8(%esi), %ecx
+	movl	12(%esi), %edx
+	movnti	%eax, 0(%edi)
+	movnti	%ebx, 4(%edi)
+	movnti	%ecx, 8(%edi)
+	movnti	%edx, 12(%edi)
+	subl	$16, %ebp
+	leal	16(%esi), %esi
+	leal	16(%edi), %edi
+	jnz	1b
+	sfence
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	popl	%ebp
+	ret

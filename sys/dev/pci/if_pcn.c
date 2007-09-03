@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.39 2007/07/09 21:00:55 ad Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.39.6.1 2007/09/03 16:48:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39 2007/07/09 21:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39.6.1 2007/09/03 16:48:17 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1635,7 +1635,7 @@ pcn_init(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
 	struct pcn_rxsoft *rxs;
-	uint8_t *enaddr = LLADDR(ifp->if_sadl);
+	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	int i, error = 0;
 	uint32_t reg;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.47.4.1 2007/08/16 11:03:25 jmcneill Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.47.4.2 2007/09/03 16:48:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -85,7 +85,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	16
+#define PUFFSVERSION	17
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -125,10 +125,12 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
 #define PUFFS_KFLAG_MASK		0x3f
 
-#define PUFFS_FHFLAG_DYNAMIC	0x01
-#define PUFFS_FHFLAG_NFSV2	0x02
-#define PUFFS_FHFLAG_NFSV3	0x04
-#define PUFFS_FHFLAG_PROTOMASK	0x06
+#define PUFFS_FHFLAG_DYNAMIC		0x01
+#define PUFFS_FHFLAG_NFSV2		0x02
+#define PUFFS_FHFLAG_NFSV3		0x04
+#define PUFFS_FHFLAG_PROTOMASK		0x06
+#define PUFFS_FHFLAG_PASSTHROUGH	0x08
+#define PUFFS_FHFLAG_MASK		0x0f
 
 #define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
 
@@ -350,12 +352,12 @@ struct puffs_kcid {
 /* puffs struct componentname built by kernel */
 struct puffs_kcn {
 	/* args */
-	u_long			pkcn_nameiop;	/* namei operation	*/
-	u_long			pkcn_flags;	/* flags		*/
+	uint32_t		pkcn_nameiop;	/* namei operation	*/
+	uint32_t		pkcn_flags;	/* flags		*/
 
 	char pkcn_name[MAXPATHLEN];	/* nulterminated path component */
-	long pkcn_namelen;		/* current component length	*/
-	long pkcn_consume;		/* IN: extra chars server ate   */
+	size_t pkcn_namelen;		/* current component length	*/
+	size_t pkcn_consume;		/* IN: extra chars server ate   */
 };
 
 

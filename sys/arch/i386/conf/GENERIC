@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.839.4.1 2007/08/09 02:36:54 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.839.4.2 2007/09/03 16:47:21 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.839.4.1 $"
+#ident 		"GENERIC-$Revision: 1.839.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -437,8 +437,8 @@ elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -646,6 +646,11 @@ iic*	at piixpm?			# SMBus on PIIX4
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
 
+# Serial Presence Detect capable memory modules
+#spdmem* at iic? addr 0x50
+#spdmem* at iic? addr 0x51
+#spdmem* at iic? addr 0x52
+#spdmem* at iic? addr 0x53
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -1044,12 +1049,15 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers   
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at gcscehci?
 usb*	at ohci?
+usb*	at slhci?
 usb*	at uhci?
-#usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -1304,12 +1312,14 @@ radio* at bktr?
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.4 2007/02/05 23:38:15 jmcneill Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.4.18.1 2007/09/03 16:48:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _DEV_PCI_AMDPMVAR_H_
 #define _DEV_PCI_AMDPMVAR_H_
 
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 struct amdpm_softc {
 	struct device sc_dev;
@@ -54,7 +54,7 @@ struct amdpm_softc {
 
 	i2c_addr_t sc_smbus_slaveaddr;		/* address of smbus slave */
 	struct i2c_controller sc_i2c;		/* i2c controller info */
-	struct lock sc_lock;
+	krwlock_t sc_rwlock;
 
 	void *sc_ih;
 

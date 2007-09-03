@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89 2007/02/21 22:59:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.20.1 2007/09/03 16:47:25 jmcneill Exp $	*/
 
 /*
  *
@@ -47,6 +47,8 @@
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
+#include <machine/atomic.h>
+
 #include <uvm/uvm_object.h>
 
 /*
@@ -254,6 +256,8 @@ struct pmap {
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
+	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
+					 of pmap */
 };
 
 /* pm_flags */
@@ -272,6 +276,7 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
+	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };
 
 /*
@@ -322,7 +327,6 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_update(pmap)		/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
@@ -353,9 +357,8 @@ void		pmap_load(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
-void	pmap_tlb_shootnow(int32_t);
-void	pmap_do_tlb_shootdown(struct cpu_info *);
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
+void	pmap_tlb_shootwait(void);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -490,21 +493,37 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + x86_btop(va));
 }
 
+#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
+#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
+#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
-
-#if defined(USER_LDT)
 void	pmap_ldt_cleanup(struct lwp *);
-#define	PMAP_FORK
-#endif /* USER_LDT */
+void	pmap_cpu_init_early(struct cpu_info *);
+void	pmap_cpu_init_late(struct cpu_info *);
+void	sse2_zero_page(void *);
+void	sse2_copy_page(void *, void *);
 
 /*
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+/*
+ * TLB shootdown mailbox.
+ */
+
+struct pmap_mbox {
+	volatile void		*mb_pointer;
+	volatile uintptr_t	mb_addr1;
+	volatile uintptr_t	mb_addr2;
+	volatile uintptr_t	mb_head;
+	volatile uintptr_t	mb_tail;
+	volatile uintptr_t	mb_global;
+};
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */

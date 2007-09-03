@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.6 2007/06/26 13:20:19 tsutsui Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.6.8.1 2007/09/03 16:47:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.6 2007/06/26 13:20:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.6.8.1 2007/09/03 16:47:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			printf("INT4 (2)\n");
 		} else if (r & 0x00400000) {
 			printf("INT4 (3)\n");
-		} else {
+		} else if (r != 0) {
 			printf("not for INT4 %x\n", r);
 		}
 
@@ -285,7 +285,7 @@ tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 				ih->func(ih->arg);
 				ih->evcnt.ev_count++;
 			}
-		} else {
+		} else if (r != 0) {
 			printf("not for INT2 %x %x\n", r,
 			    *ASO_DMAINT_STATUS_REG);
 		}
@@ -317,7 +317,7 @@ tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			printf("INT0(2)\n");
 		} else if (r & 0x4) {
 			printf("INT0(3)\n");
-		} else {
+		} else if (r != 0) {
 			printf("not for INT0 %x\n", r);
 		}
 		tr2a_wbflush();

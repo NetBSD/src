@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.39 2007/03/06 00:46:00 he Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.39.18.1 2007/09/03 16:47:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.39 2007/03/06 00:46:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.39.18.1 2007/09/03 16:47:09 jmcneill Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -108,7 +108,7 @@ static int cl_getspritemax(struct grf_softc *, struct grf_position *);
 int	cl_blank(struct grf_softc *, int *);
 int	cl_setmonitor(struct grf_softc *, struct grfvideo_mode *);
 void	cl_writesprpos(volatile char *, short, short);
-void	writeshifted(volatile char *, char, char);
+void	writeshifted(volatile char *, signed char, signed char);
 
 static void	RegWakeup(volatile void *);
 static void	RegOnpass(volatile void *);
@@ -812,8 +812,8 @@ cl_writesprpos(ba, x, y)
 void
 writeshifted(to, shiftx, shifty)
 	volatile char *to;
-	char    shiftx;
-	char    shifty;
+	signed char shiftx;
+	signed char shifty;
 {
 	int y;
 	unsigned long long *tptr, *iptr, *mptr, line;

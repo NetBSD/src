@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.7 2007/07/09 21:11:01 ad Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.7.6.1 2007/09/03 16:49:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.7 2007/07/09 21:11:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.7.6.1 2007/09/03 16:49:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -178,7 +178,7 @@ lacp_fill_actorinfo(struct agr_port *port, struct lacp_peerinfo *info)
 
 	info->lip_systemid.lsi_prio = htobe16(LACP_SYSTEM_PRIO);
 	memcpy(&info->lip_systemid.lsi_mac,
-	    LLADDR(port->port_ifp->if_sadl), ETHER_ADDR_LEN);
+	    CLLADDR(port->port_ifp->if_sadl), ETHER_ADDR_LEN);
 	info->lip_portid.lpi_prio = htobe16(LACP_PORT_PRIO);
 	info->lip_portid.lpi_portno = htobe16(port->port_ifp->if_index);
 	info->lip_state = lp->lp_state;

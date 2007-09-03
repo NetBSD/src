@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.28 2007/03/04 06:00:36 christos Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.28.18.1 2007/09/03 16:47:37 jmcneill Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.28 2007/03/04 06:00:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.28.18.1 2007/09/03 16:47:37 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -721,7 +721,7 @@ emac_init(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	struct emac_rxsoft *rxs;
-	uint8_t *enaddr = LLADDR(ifp->if_sadl);
+	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	int error, i;
 
 	error = 0;

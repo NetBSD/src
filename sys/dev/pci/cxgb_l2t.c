@@ -75,8 +75,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy 
 #endif
 
 #define VLAN_NONE 0xfff
-#define SDL(s) ((struct sockaddr_dl *)s) 
-#define RT_ENADDR(rt)  ((char *)LLADDR(SDL((rt))))
+#define RT_ENADDR(rt)  ((char *)LLADDR(satosdl((rt))))
 #define rt_expire rt_rmx.rmx_expire 
 
 #ifdef __FreeBSD__

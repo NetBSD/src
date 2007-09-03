@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.21 2007/07/09 20:52:23 ad Exp $ */
+/* $NetBSD: if_aumac.c,v 1.21.8.1 2007/09/03 16:47:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.21 2007/07/09 20:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.21.8.1 2007/09/03 16:47:33 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -921,7 +921,7 @@ aumac_set_filter(struct aumac_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	const uint8_t *enaddr = LLADDR(ifp->if_sadl);
+	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	uint32_t mchash[2], crc;
 
 	sc->sc_control &= ~(CONTROL_PM | CONTROL_PR);

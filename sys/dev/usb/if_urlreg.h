@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.3 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.3.46.1 2007/09/03 16:48:42 jmcneill Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -172,7 +172,7 @@ struct url_softc {
 	/* Ethernet */
 	struct ethercom		sc_ec; /* ethernet common */
 	struct mii_data		sc_mii;
-	struct lock		sc_mii_lock;
+	krwlock_t		sc_mii_rwlock;
 	int			sc_link;
 #define	sc_media url_mii.mii_media
 #if NRND > 0

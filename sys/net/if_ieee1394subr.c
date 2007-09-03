@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.34 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.34.14.1 2007/09/03 16:48:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.34 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.34.14.1 2007/09/03 16:48:56 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -98,7 +98,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	int s, hdrlen, error = 0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = NULL;
-	struct ieee1394_hwaddr *hwdst, *myaddr, baddr;
+	struct ieee1394_hwaddr *hwdst, baddr;
+	const struct ieee1394_hwaddr *myaddr;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef INET
 	struct arphdr *ah;
@@ -215,7 +216,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	if (mcopy)
 		looutput(ifp, mcopy, dst, rt);
-	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
+	myaddr = (const struct ieee1394_hwaddr *)CLLADDR(ifp->if_sadl);
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		struct ieee1394_bpfhdr h;
@@ -395,7 +396,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
 	if (ifp->if_bpf) {
 		struct ieee1394_bpfhdr h;
 		struct m_tag *mtag;
-		struct ieee1394_hwaddr *myaddr;
+		const struct ieee1394_hwaddr *myaddr;
 
 		mtag = m_tag_locate(m,
 		    MTAG_FIREWIRE, MTAG_FIREWIRE_SENDER_EUID, 0);
@@ -408,7 +409,8 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
 			    ((const struct ieee1394_hwaddr *)
 			    ifp->if_broadcastaddr)->iha_uid, 8);
 		else {
-			myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
+			myaddr =
+			  (const struct ieee1394_hwaddr *)CLLADDR(ifp->if_sadl);
 			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
 		}
 		h.ibh_type = htons(etype);
@@ -692,7 +694,8 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 		ifp->if_baudrate = IF_Mbps(100);
 
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), hwaddr, ifp->if_addrlen);
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	    hwaddr, ifp->if_addrlen);
 
 	baddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
@@ -759,7 +762,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		    LLADDR(ifp->if_sadl), IEEE1394_ADDR_LEN);
+		    CLLADDR(ifp->if_sadl), IEEE1394_ADDR_LEN);
 		    break;
 
 	case SIOCSIFMTU:

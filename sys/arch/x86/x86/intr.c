@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2007/07/09 20:52:38 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.29.8.1 2007/09/03 16:47:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2007/07/09 20:52:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.8.1 2007/09/03 16:47:48 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -850,6 +850,16 @@ struct intrhand fake_ipi_intrhand;
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
+static inline int
+redzone_const_or_zero(int x)
+{
+#ifdef DIAGNOSTIC
+	return x;
+#else
+	return 0;
+#endif /* !DIAGNOSTIC */
+}
+
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
  * for each CPU.
@@ -862,7 +872,7 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 #endif
 #if defined(INTRSTACKSIZE)
-	char *cp;
+	vaddr_t istack;
 #endif /* defined(INTRSTACKSIZE) */
 
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
@@ -939,10 +949,24 @@ cpu_intr_init(struct cpu_info *ci)
 	intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
-	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
-	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
-	ci->ci_idepth = -1;
+	/*
+	 * If the red zone is activated, protect both the top and
+	 * the bottom of the stack with an unmapped page.
+	 */
+	istack = uvm_km_alloc(kernel_map,
+	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
+	    UVM_KMF_WIRED);
+	if (redzone_const_or_zero(1)) {
+		pmap_kremove(istack, PAGE_SIZE);
+		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
+		pmap_update(pmap_kernel());
+	}
+	ci->ci_intrstack =
+	    (char *)istack + redzone_const_or_zero(PAGE_SIZE) + INTRSTACKSIZE -
+	    sizeof(register_t);
 #endif /* defined(INTRSTACKSIZE) */
+
+	ci->ci_idepth = -1;
 }
 
 #ifdef MULTIPROCESSOR

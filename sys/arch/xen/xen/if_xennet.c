@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.50 2007/07/08 21:14:14 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.50.8.1 2007/09/03 16:47:49 jmcneill Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.50 2007/07/08 21:14:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.50.8.1 2007/09/03 16:47:49 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -765,7 +765,7 @@ xen_network_handler(void *arg)
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh = pktp;
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				xennet_rx_push_buffer(sc, rx->id);
 				m_freem(m);

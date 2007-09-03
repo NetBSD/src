@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.4 2007/09/02 12:50:36 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.5 2007/09/03 16:48:20 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.4 2007/09/02 12:50:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.5 2007/09/03 16:48:20 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -296,17 +296,10 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 		goto fail3;
 	}
 
-	error = wpi_alloc_tx_ring(sc, &sc->svcq, WPI_SVC_RING_COUNT, 5);
-	if (error != 0) {
-		aprint_error("%s: could not allocate service ring\n",
-			sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
 	if (wpi_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error("%s: could not allocate Rx ring\n",
 			sc->sc_dev.dv_xname);
-		goto fail5;
+		goto fail4;
 	}
 
 	ic->ic_ifp = ifp;
@@ -382,7 +375,6 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 
 	return;
 
-fail5:  wpi_free_tx_ring(sc, &sc->svcq);
 fail4:  wpi_free_tx_ring(sc, &sc->cmdq);
 fail3:  while (--ac >= 0)
 			wpi_free_tx_ring(sc, &sc->txq[ac]);
@@ -411,7 +403,6 @@ wpi_detach(struct device* self, int flags __unused)
 	for (ac = 0; ac < 4; ac++)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
 	wpi_free_tx_ring(sc, &sc->cmdq);
-	wpi_free_tx_ring(sc, &sc->svcq);
 	wpi_free_rx_ring(sc, &sc->rxq);
 	wpi_free_rpool(sc);
 	wpi_free_shared(sc);
@@ -2009,9 +2000,8 @@ wpi_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
+		IF_DEQUEUE(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
-			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
@@ -2123,7 +2113,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -2141,10 +2130,8 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec) :
-			ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
 			error = 0;
 		}
@@ -2903,7 +2890,7 @@ wpi_config(struct wpi_softc *sc)
 
 	/* configure adapter */
 	memset(&sc->config, 0, sizeof (struct wpi_config));
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	/*set default channel*/
 	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
@@ -3220,7 +3207,6 @@ wpi_stop(struct ifnet *ifp, int disable)
 	for (ac = 0; ac < 4; ac++)
 		wpi_reset_tx_ring(sc, &sc->txq[ac]);
 	wpi_reset_tx_ring(sc, &sc->cmdq);
-	wpi_reset_tx_ring(sc, &sc->svcq);
 
 	/* reset Rx ring */
 	wpi_reset_rx_ring(sc, &sc->rxq);
