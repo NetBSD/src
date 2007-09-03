@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.46.2.2 2006/12/30 20:45:44 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.46.2.3 2007/09/03 14:23:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.46.2.2 2006/12/30 20:45:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.46.2.3 2007/09/03 14:23:38 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -559,7 +559,7 @@ iteioctl(dev, cmd, addr, flag, l)
 	dev_t		dev;
 	u_long		cmd;
 	int		flag;
-	caddr_t		addr;
+	void *		addr;
 	struct lwp	*l;
 {
 	struct iterepeat	*irp;
@@ -685,7 +685,7 @@ itestart(tp)
 		if (rbp->c_cc <= tp->t_lowat) {
 			if (tp->t_state & TS_ASLEEP) {
 				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t) rbp);
+				wakeup((void *) rbp);
 			}
 			selwakeup(&tp->t_wsel);
 		}
@@ -919,7 +919,7 @@ enum caller	caller;
 static u_int last_char;
 static u_char tout_pending;
 
-static struct callout repeat_ch = CALLOUT_INITIALIZER;
+static callout_t repeat_ch;
 
 /*ARGSUSED*/
 static void
@@ -942,6 +942,13 @@ enum caller	caller;
 	u_char		code, *str, up, mask;
 	struct key	key;
 	int		s, i;
+	static bool	again;
+
+	if (!again) {
+		/* XXX */
+		callout_init(&repeat_ch, 0);
+		again = true;
+	}
 
 	if(kbd_ite == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.4 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: harmony.c,v 1.4.10.1 2007/09/03 14:25:36 yamt Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -76,7 +76,7 @@ int     harmony_getdev(void *, struct audio_device *);
 int     harmony_set_port(void *, mixer_ctrl_t *);
 int     harmony_get_port(void *, mixer_ctrl_t *);
 int     harmony_query_devinfo(void *, mixer_devinfo_t *);
-void *  harmony_allocm(void *, int, size_t, struct malloc_type *, int);
+void * harmony_allocm(void *, int, size_t, struct malloc_type *, int);
 void    harmony_freem(void *, void *, struct malloc_type *);
 size_t  harmony_round_buffersize(void *, int, size_t);
 int     harmony_get_props(void *);
@@ -200,7 +200,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_empty_seg, 1,
-	    sizeof(struct harmony_empty), (caddr_t *)&sc->sc_empty_kva,
+	    sizeof(struct harmony_empty), (void **)&sc->sc_empty_kva,
 	    BUS_DMA_NOWAIT) != 0) {
 		printf(": couldn't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
@@ -212,7 +212,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(struct harmony_empty), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_empty_map) != 0) {
 		printf(": can't create DMA map\n");
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_empty_kva,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
@@ -223,7 +223,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(struct harmony_empty), NULL, BUS_DMA_NOWAIT) != 0) {
 		printf(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_empty_map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_empty_kva,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
@@ -285,6 +285,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
 	    RND_TYPE_UNKNOWN, 0);
 
+	callout_init(&sc->sc_acc_tmo, 0);
 	callout_setfunc(&sc->sc_acc_tmo, harmony_acc_tmo, sc);
 	sc->sc_acc_num = 0xa5a5a5a5;
 #endif
@@ -1104,7 +1105,7 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	c->c_intrarg = intrarg;
 	c->c_blksz = blksize;
 	c->c_current = d;
-	c->c_segsz = (caddr_t)end - (caddr_t)start;
+	c->c_segsz = (char *)end - (char *)start;
 	c->c_cnt = 0;
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
 
@@ -1199,7 +1200,7 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	c->c_intrarg = intrarg;
 	c->c_blksz = blksize;
 	c->c_current = d;
-	c->c_segsz = (caddr_t)end - (caddr_t)start;
+	c->c_segsz = (char *)end - (char *)start;
 	c->c_cnt = 0;
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
 

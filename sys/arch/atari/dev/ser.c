@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.25.2.2 2006/12/30 20:45:44 yamt Exp $	*/
+/*	$NetBSD: ser.c,v 1.25.2.3 2007/09/03 14:23:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.25.2.2 2006/12/30 20:45:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.25.2.3 2007/09/03 14:23:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -323,7 +323,7 @@ void	*auxp;
 	MFP->mf_imrb &= ~(IB_SCTS|IB_SDCD);
 	MFP->mf_imra &= ~(IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
 
-	callout_init(&sc->sc_diag_ch);
+	callout_init(&sc->sc_diag_ch, 0);
 
 #if SERCONSOLE > 0
 	/*
@@ -570,7 +570,7 @@ int
 serioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

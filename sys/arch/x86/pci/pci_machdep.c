@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11.2.3 2007/02/26 09:08:50 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11.2.4 2007/09/03 14:31:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.3 2007/02/26 09:08:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.4 2007/09/03 14:31:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,17 +135,17 @@ struct pci_bridge_hook_arg {
 }; 
 
 
-struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
+__cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
 
 #define	PCI_CONF_LOCK(s)						\
 do {									\
 	(s) = splhigh();						\
-	simple_lock(&pci_conf_slock);					\
+	__cpu_simple_lock(&pci_conf_lock);				\
 } while (0)
 
 #define	PCI_CONF_UNLOCK(s)						\
 do {									\
-	simple_unlock(&pci_conf_slock);					\
+	__cpu_simple_unlock(&pci_conf_lock);				\
 	splx((s));							\
 } while (0)
 
@@ -247,7 +247,7 @@ pci_attach_hook(struct device *parent, struct device *self,
 {
 
 	if (pba->pba_bus == 0)
-		printf(": configuration mode %d", pci_mode);
+		aprint_normal(": configuration mode %d", pci_mode);
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
@@ -501,8 +501,7 @@ pci_mode_detect()
 	/*
 	 * catch some known buggy implementations of mode 1
 	 */
-	for (i = 0; i < sizeof(pcim1_quirk_tbl) / sizeof(pcim1_quirk_tbl[0]);
-	     i++) {
+	for (i = 0; i < __arraycount(pcim1_quirk_tbl); i++) {
 		pcitag_t t;
 
 		if (!pcim1_quirk_tbl[i].tag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6.4.3 2007/02/26 09:08:54 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.6.4.4 2007/09/03 14:31:33 yamt Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.3 2007/02/26 09:08:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.4 2007/09/03 14:31:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,7 @@ trap(frame)
 	struct trapframe *frame;
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : 0;
+	struct proc *p;
 	int type = frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusubail[], kcopy_fault[],
@@ -223,13 +223,22 @@ trap(frame)
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	int resume;
-	caddr_t onfault;
+	void *onfault;
 	int error;
 	uint32_t cr2;
 
 	uvmexp.traps++;
 
-	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
+	if (__predict_true(l != NULL)) {
+		pcb = &l->l_addr->u_pcb;
+		p = l->l_proc;
+	} else {
+		/*
+		 * this can happen eg. on break points in early on boot.
+		 */
+		pcb = NULL;
+		p = NULL;
+	}
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x/%x eflags %x cr2 %x cpl %x\n",
@@ -469,8 +478,10 @@ copyfault:
 			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) /* XXX CSE me? */
+		if (curcpu()->ci_want_resched) { /* XXX CSE me? */
+			curcpu()->ci_want_resched = 0;
 			preempt();
+		}
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -594,7 +605,7 @@ copyfault:
 		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
@@ -671,7 +682,7 @@ copyfault:
 		 * Don't go single-stepping into a RAS.
 		 */
 		if (LIST_EMPTY(&p->p_raslist) ||
-		    (ras_lookup(p, (caddr_t)frame->tf_eip) == (caddr_t)-1)) {
+		    (ras_lookup(p, (void *)frame->tf_eip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
@@ -756,7 +767,7 @@ trapwrite(addr)
 	if (uvm_fault(&vm->vm_map, va, VM_PROT_WRITE) != 0)
 		return 1;
 
-	if ((caddr_t)va >= vm->vm_maxsaddr)
+	if ((void *)va >= vm->vm_maxsaddr)
 		uvm_grow(p, va);
 
 	return 0;

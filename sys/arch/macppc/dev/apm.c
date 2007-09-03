@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.14.2.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: apm.c,v 1.14.2.2 2007/09/03 14:27:34 yamt Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.14.2.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.14.2.2 2007/09/03 14:27:34 yamt Exp $");
 
 #include "apm.h"
 
@@ -278,7 +278,7 @@ int
 apmioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.12.3 2007/02/26 09:05:43 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.12.4 2007/09/03 14:22:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,34 +53,34 @@
 #include <x86/cacheinfo.h>
 
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
+
+	/*
+	 * Will be accessed by other CPUs.
+	 */
 	struct cpu_info *ci_next;
-
 	struct lwp *ci_curlwp;
-	struct simplelock ci_slock;
-	u_int ci_cpuid;
-	u_int ci_apicid;
-
-	u_int64_t ci_scratch;
-
+	struct pmap_cpu *ci_pmap_cpu;
 	struct lwp *ci_fpcurlwp;
 	int ci_fpsaving;
+	u_int ci_cpuid;
+	int ci_cpumask;			/* (1 << CPU ID) */
+	u_int ci_apicid;
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
-	struct pcb *ci_curpcb;
-	struct pcb *ci_idle_pcb;
-	int ci_idle_tss_sel;
-
+	/*
+	 * Private members.
+	 */
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	u_int64_t ci_scratch;
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
@@ -101,13 +101,16 @@ struct cpu_info {
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
-	u_int32_t	ci_feature_flags;
-	u_int32_t	ci_signature;
+	int32_t		ci_cpuid_level;
+	uint32_t	ci_signature;
+	uint32_t	ci_feature_flags;
+	uint32_t	ci_feature2_flags;
+	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
 
-	struct cpu_functions *ci_func;
-	void (*cpu_setup) __P((struct cpu_info *));
-	void (*ci_info) __P((struct cpu_info *));
+	const struct cpu_functions *ci_func;
+	void (*cpu_setup)(struct cpu_info *);
+	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
 	int		ci_astpending;
@@ -161,8 +164,8 @@ extern struct cpu_info *cpu_info_list;
 
 extern struct cpu_info *cpu_info[X86_MAXPROCS];
 
-void cpu_boot_secondary_processors __P((void));
-void cpu_init_idle_pcbs __P((void));    
+void cpu_boot_secondary_processors(void);
+void cpu_init_idle_lwps(void);    
 
 
 #else /* !MULTIPROCESSOR */
@@ -182,18 +185,12 @@ extern struct cpu_info cpu_info_primary;
 
 #endif
 
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void cpu_need_resched(struct cpu_info *);
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curpcb		curcpu()->ci_curpcb
 #define curlwp		curcpu()->ci_curlwp
+#define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -206,7 +203,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
 #define CLKF_PC(frame)		((frame)->cf_if.if_rip)
-#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -229,7 +226,7 @@ extern void cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func) __P((int));
+extern void (*delay_func)(int);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -243,58 +240,55 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
+extern int cpu_feature2;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
 
 /* identcpu.c */
 
-void	identifycpu __P((struct cpu_info *));
-void cpu_probe_features __P((struct cpu_info *));
+void	identifycpu(struct cpu_info *);
+void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
-void	dumpconf __P((void));
-int	cpu_maxproc __P((void));
-void	cpu_reset __P((void));
-void	x86_64_proc0_tss_ldt_init __P((void));
-void	x86_64_init_pcb_tss_ldt __P((struct cpu_info *));
-void	cpu_proc_fork __P((struct proc *, struct proc *));
+void	dumpconf(void);
+int	cpu_maxproc(void);
+void	cpu_reset(void);
+void	x86_64_proc0_tss_ldt_init(void);
+void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
+void	lgdt(struct region_descriptor *);
+void	fillw(short, void *, size_t);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
-void	proc_trampoline __P((void));
-void	child_trampoline __P((void));
+void	savectx(struct pcb *);
+void	lwp_trampoline(void);
+void	child_trampoline(void);
 
 /* clock.c */
-void	initrtclock __P((u_long));
-void	startrtclock __P((void));
-void	i8254_delay __P((int));
-void	i8254_microtime __P((struct timeval *));
-void	i8254_initclocks __P((void));
+void	initrtclock(u_long);
+void	startrtclock(void);
+void	i8254_delay(int);
+void	i8254_microtime(struct timeval *);
+void	i8254_initclocks(void);
 
-void cpu_init_msrs __P((struct cpu_info *));
+void cpu_init_msrs(struct cpu_info *);
 
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int kvtop(void *);
 
 /* trap.c */
-void	child_return __P((void *));
+void	child_return(void *);
 
 /* consinit.c */
-void kgdb_port_init __P((void));
+void kgdb_port_init(void);
 
 /* bus_machdep.c */
-void x86_bus_space_init __P((void));
-void x86_bus_space_mallocok __P((void));
-
-/* powernow_k8.c */
-void k8_powernow_init(void);
+void x86_bus_space_init(void);
+void x86_bus_space_mallocok(void);
 
 #endif /* _KERNEL */
 

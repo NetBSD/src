@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.8.16.2 2006/12/30 20:46:33 yamt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.8.16.3 2007/09/03 14:28:05 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.8.16.2 2006/12/30 20:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.8.16.3 2007/09/03 14:28:05 yamt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -296,8 +296,8 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 	ch->ch_o_rts = ch->ch_o_rts_pin = 0 /* XXXCGD */;
 	ch->ch_o_mask = ch->ch_o_dtr | ch->ch_o_rts;
 
-	callout_init(&ch->ch_diag_callout);
-	callout_init(&ch->ch_callout);
+	callout_init(&ch->ch_diag_callout, 0);
+	callout_init(&ch->ch_callout, 0);
 
 	/* Disable interrupts before configuring the device. */
 	ch->ch_imr = 0;
@@ -676,7 +676,7 @@ sbjcntty(dev_t dev)
 }
 
 int
-sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sbjcnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];

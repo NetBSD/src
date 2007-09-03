@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.5.10.1 2006/06/21 14:54:48 yamt Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.5.10.2 2007/09/03 14:28:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.5.10.1 2006/06/21 14:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.5.10.2 2007/09/03 14:28:54 yamt Exp $");
 
 #include "locators.h"
 
@@ -70,7 +70,7 @@ struct dtkbd_softc {
 int	dtkbd_match(struct device *, struct cfdata *, void *);
 void	dtkbd_attach(struct device *, struct device *, void *);
 int	dtkbd_enable(void *, int);
-int	dtkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	dtkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 void	dtkbd_cngetc(void *, u_int *, int *);
 void	dtkbd_cnpollc(void *, int);
 int	dtkbd_process_msg(struct dt_msg *, u_int *, int *);
@@ -192,7 +192,7 @@ dtkbd_cnpollc(void *v, int on)
 }
 
 int
-dtkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dtkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dtkbd_softc *sc;
 

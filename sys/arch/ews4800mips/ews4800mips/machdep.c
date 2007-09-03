@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.12.3 2007/02/26 09:06:26 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.12.4 2007/09/03 14:24:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.12.3 2007/02/26 09:06:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.12.4 2007/09/03 14:24:49 yamt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -100,11 +101,25 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
-	caddr_t v;
+	void *v;
 	int i;
 
 	/* Clear BSS */
-	memset(edata, 0, end - edata);
+	if (bi == NULL || bi->bi_size != sizeof(struct bootinfo)) {
+		/*
+		 * No bootinfo, so assume we are loaded by
+		 * the firmware directly and have to clear BSS here.
+		 */
+		memset(edata, 0, end - edata);
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
+	}
 
 	/* Setup early-console with BIOS ROM routines */
 	rom_cons_init();
@@ -122,7 +137,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	/* Fill mem_clusters and mem_cluster_cnt */
 	(*platform.mem_init)(kernel_text,
-	    (bi && bi->bi_nsym) ? (caddr_t)bi->bi_esym : end);
+	    (bi && bi->bi_nsym) ? (void *)bi->bi_esym : end);
 
 	/*
 	 * make sure that we don't call BIOS console from now
@@ -165,11 +180,11 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	pmap_bootstrap();
 
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
+	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
 	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void

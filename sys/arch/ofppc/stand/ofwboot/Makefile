@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.17.16.1 2007/09/03 14:28:35 yamt Exp $
 
-S=	${.CURDIR}/../../../..
+S!=	cd ${.CURDIR}/../../../.. ; pwd
 
 PROG=		ofwboot
 SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
@@ -34,7 +34,7 @@ ENTRY=		_start
 
 CLEANFILES+=	vers.c
 
-CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I. -I${S} -I${S}/../common/include
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART

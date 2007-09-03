@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.3.16.1 2007/02/26 09:08:12 yamt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.3.16.2 2007/09/03 14:29:48 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -73,8 +73,6 @@
  *
  * Created      : 27/09/94
  */
-
-#include "opt_irqstats.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -216,12 +214,12 @@ Lfind_highest_ipl:
 	/* Update the IOMD irq masks */
 	bl	_C_LABEL(irq_setmasks)
 
-        mrs     r0, cpsr_all		/* Enable IRQ's */
+	mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
 	ldr	r7, Lirqhandlers
-        mov	r9, #0x00000001
+	mov	r9, #0x00000001
 
 irqloop:
 	/* This would benefit from a special ffs type routine */
@@ -243,11 +241,6 @@ irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame */
-	add	r3, r6, #IH_EV_COUNT	/* get address of ih's ev_count */
-	ldmia   r3, {r1-r2}		/* load ev_count */
-	adds	r1, r1, #0x00000001	/* 64bit incr (lo) */
-        adc     r2, r2, #0x00000000	/* 64bit incr (hi) */
-	stmia   r3, {r1-r2}		/* store ev_count */
 
 	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
@@ -258,8 +251,15 @@ irqchainloop:
 	ldr	r6, [r6, #(IH_NEXT)]
 	teq	r6, #0x00000000
 	bne	irqchainloop
+	b	nextirq
 
 irqdone:
+	add	r3, r6, #IH_EV_COUNT	/* get address of ih's ev_count */
+	ldmia   r3, {r1-r2}		/* load ev_count */
+	adds	r1, r1, #0x00000001	/* 64bit incr (lo) */
+	adc     r2, r2, #0x00000000	/* 64bit incr (hi) */
+	stmia   r3, {r1-r2}		/* store ev_count */
+
 nextirq:
 	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
@@ -279,9 +279,9 @@ nextirq:
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
+	mrs     r0, cpsr_all
+	orr     r0, r0, #(I32_bit)
+	msr     cpsr_all, r0
 
 	/* Decrement the nest count */
 	ldr	r0, Lcurrent_intr_depth
@@ -289,17 +289,18 @@ nextirq:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
+	LOCK_CAS_CHECK
+
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 
 	/* NOT REACHED */
 	b	. - 8
 
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
-
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
+
+LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -314,8 +315,10 @@ ENTRY(irq_setmasks)
 	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
 	ldrh	r1, [r1]		/* get hardware bits of mask */
 /*	.word	0xe0d110b0 */		/* hand-assembled ldrh r1, [r1] */
-	ldr	r2, Lspl_mask		/* Block due to current spl level */
+	ldr	r0, Lspl_masks
+	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2]
+	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]
@@ -335,23 +338,23 @@ ENTRY(irq_setmasks)
 	biceq	r1, r1, #(1 << IRQ_SLAVE)  /* no, so disable it */
 	orrne	r1, r1, #(1 << IRQ_SLAVE)  /* yes, so enable it */
 	/* eq => r1 = 0000.0000.0000.0000.0000.0000.MMMM.M0MM
-           ne => r1 = 0000.0000.0000.0000.MMMM.MMMM.MMMM.M1MM   */
+	   ne => r1 = 0000.0000.0000.0000.MMMM.MMMM.MMMM.M1MM   */
 
 	/* 8259 bit high => disable */
 	mvn	r1, r1
 	/* eq => r1 = 1111.1111.1111.1111.1111.1111.YYYY.Y1YY
-           ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY
-           (for each bit position Y = !M)                       */
+	   ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY
+	   (for each bit position Y = !M)                       */
 
 	orreq	r1, r2, r1, lsl #16
 	/* eq => r1 = 1111.1111.YYYY.Y1YY.ZZZZ.ZZZZ.ZZZZ.ZZZZ
-           ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY   */
+	   ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY   */
 	orreq	r1, r1, #0x000000FF
 	/* eq => r1 = 1111.1111.YYYY.Y1YY.ZZZZ.ZZZZ.1111.1111
-           ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY   */
+	   ne => r1 = 1111.1111.1111.1111.YYYY.YYYY.YYYY.Y0YY   */
 	and	r1, r1, r1, lsr #16
 	/* eq => r1 = 0000.0000.0000.0000.ZZZZ.ZZZZ.YYYY.Y1YY
-           ne => r1 = 0000.0000.0000.0000.YYYY.YYYY.YYYY.Y0YY   */
+	   ne => r1 = 0000.0000.0000.0000.YYYY.YYYY.YYYY.Y0YY   */
 
 	/* if old = new, don't bother to set again.
 	   fast path to exit, since 8259's are so slow anyway */

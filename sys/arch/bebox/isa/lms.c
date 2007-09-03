@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.11 2003/07/15 01:26:31 lukem Exp $	*/
+/*	$NetBSD: lms.c,v 1.11.16.1 2007/09/03 14:23:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.11 2003/07/15 01:26:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.11.16.1 2007/09/03 14:23:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -232,7 +232,7 @@ lmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= LMS_ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0);
+		error = tsleep((void *)sc, PZERO | PCATCH, "lmsrea", 0);
 		if (error) {
 			sc->sc_state &= ~LMS_ASLP;
 			splx(s);
@@ -263,7 +263,7 @@ int
 lmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct proc *p;
 {
@@ -366,7 +366,7 @@ lmsintr(arg)
 
 		if (sc->sc_state & LMS_ASLP) {
 			sc->sc_state &= ~LMS_ASLP;
-			wakeup((caddr_t)sc);
+			wakeup((void *)sc);
 		}
 		selnotify(&sc->sc_rsel, 0);
 	}

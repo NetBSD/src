@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6.12.1 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6.12.2 2007/09/03 14:26:27 yamt Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -41,7 +41,7 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRSTACK is the top (end) of the user stack.
+ * USRSTACK is the bottom (start) of the user stack.
  */
 #define	USRSTACK	0x70000000		/* Start of user stack */
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
@@ -62,10 +62,10 @@
 #define	MAXDSIZ		(USRSTACK-MAXTSIZ)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(256*1024*1024)	/* max stack size */
+#define	MAXSSIZ		(256*1024*1024)		/* max stack size */
 #endif
 
 #ifndef USRIOSIZE

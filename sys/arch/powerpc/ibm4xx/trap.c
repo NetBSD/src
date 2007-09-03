@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26.2.3 2007/02/26 09:07:52 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.26.2.4 2007/09/03 14:28:56 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26.2.3 2007/02/26 09:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26.2.4 2007/09/03 14:28:56 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26.2.3 2007/02/26 09:07:52 yamt Exp $");
 /* These definitions should probably be somewhere else			XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
+#define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
 static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 
@@ -467,10 +467,10 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
 	if (error) {
-		PRELE(l);
+		uvm_lwp_rele(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
@@ -478,7 +478,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	return 0;
 }
@@ -548,10 +548,10 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
 	if (error) {
-		PRELE(l);
+		uvm_lwp_rele(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
@@ -560,7 +560,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, udaddr, len);
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	return 0;
 }

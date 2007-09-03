@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.22.2.3 2007/02/26 09:07:54 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.22.2.4 2007/09/03 14:29:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.3 2007/02/26 09:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.4 2007/09/03 14:29:00 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -96,6 +96,7 @@ struct vm_map *phys_map = NULL;
  */
 extern struct user *proc0paddr;
 
+static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
 struct bat battable[512];
@@ -252,6 +253,12 @@ oea_init(void (*handler)(void))
 		exc += roundup(size, 32);
 #endif
 	}
+
+	/*
+	 * Install a branch absolute to trap0 to force a panic.
+	 */
+	*(uint32_t *) 0 = 0x7c6802a6;
+	*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
 
 	/*
 	 * Get the cache sizes because install_extint calls __syncicache.
@@ -660,7 +667,7 @@ void
 oea_startup(const char *model)
 {
 	uintptr_t sz;
-	caddr_t v;
+	void *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 	u_int i;
@@ -675,7 +682,7 @@ oea_startup(const char *model)
 	 * it via mapped pages.  [This prevents unneeded BAT switches.]
 	 */
         sz = round_page(MSGBUFSIZE);
-	v = (caddr_t) msgbuf_paddr;
+	v = (void *) msgbuf_paddr;
 	if (msgbuf_paddr + sz > SEGMENT_LENGTH) {
 		minaddr = 0;
 		if (uvm_map(kernel_map, &minaddr, sz,
@@ -683,7 +690,7 @@ oea_startup(const char *model)
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
 			panic("startup: cannot allocate VM for msgbuf");
-		v = (caddr_t)minaddr;
+		v = (void *)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
 			    VM_PROT_READ|VM_PROT_WRITE);
@@ -756,36 +763,18 @@ oea_dumpsys(void)
 	printf("dumpsys: TBD\n");
 }
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-/*
- * Soft networking interrupts.
- */
-void
-softnet(int pendisr)
-{
-#define DONETISR(bit, fn) do {		\
-	if (pendisr & (1 << bit))	\
-		(*fn)();		\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-#endif
-
 /*
  * Convert kernel VA to physical address
  */
 paddr_t
-kvtop(caddr_t addr)
+kvtop(void *addr)
 {
 	vaddr_t va;
 	paddr_t pa;
 	uintptr_t off;
 	extern char end[];
 
-	if (addr < end)
+	if (addr < (void *)end)
 		return (paddr_t)addr;
 
 	va = trunc_page((vaddr_t)addr);
@@ -840,4 +829,10 @@ unmapiodev(vaddr_t va, vsize_t len)
 	pmap_kremove(faddr, len);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, faddr, len, UVM_KMF_VAONLY);
+}
+
+void
+trap0(void *lr)
+{
+	panic("call to null-ptr from %p", lr);
 }

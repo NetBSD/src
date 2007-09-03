@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.11.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.11.4.3 2007/09/03 14:21:55 yamt Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.11.4.2 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.11.4.3 2007/09/03 14:21:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -474,7 +474,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	get_class_stats(&stats, cl);
 
-	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
+	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
 	*nbytes = sizeof(stats);
 	return (0);
@@ -879,7 +879,7 @@ cbq_getstats(struct cbq_getstats *gsp)
 		get_class_stats(&stats, cl);
 		stats.handle = cl->stats_.handle;
 
-		if ((error = copyout((caddr_t)&stats, (caddr_t)usp++,
+		if ((error = copyout((void *)&stats, (void *)usp++,
 		    sizeof(stats))) != 0)
 			return (error);
 	}
@@ -1000,7 +1000,7 @@ cbqclose(dev_t dev, int flag, int fmt,
 }
 
 int
-cbqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+cbqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	int	error = 0;

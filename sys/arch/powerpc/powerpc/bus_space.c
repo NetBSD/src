@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5.12.1 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5.12.2 2007/09/03 14:29:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.12.1 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.12.2 2007/09/03 14:29:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ static int extent_flags;
 
 int
 bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
-	caddr_t storage, size_t storage_size)
+	void *storage, size_t storage_size)
 {
 	if (t->pbs_extent == NULL) {
 		t->pbs_extent = extent_create(extent_name, t->pbs_base,
@@ -567,8 +567,8 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		 * Same as above, but via the MPC601's I/O segments
 		 */
 		register_t sr = iosrtable[pa >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, pa) &&
-		    SR601_PA_MATCH_P(sr, pa + size - 1)) {
+		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
+		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
 			*bshp = pa;
 			return (0);
 		}
@@ -629,8 +629,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		}
 	} else {
 		register_t sr = iosrtable[va >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, va) &&
-		    SR601_PA_MATCH_P(sr, va + size - 1)) {
+		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
+		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
 			pa = va;
 			va = 0;
 		} else {

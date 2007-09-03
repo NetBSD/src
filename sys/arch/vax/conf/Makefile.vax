@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.74.2.1 2006/06/21 14:57:17 yamt Exp $
+#	$NetBSD: Makefile.vax,v 1.74.2.2 2007/09/03 14:30:46 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -32,11 +32,8 @@ GENASSYM_CONF=	${VAX}/vax/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D_VAX_INLINE_
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-.if ${OBJECT_FMT} == "ELF"
-.else
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp -fno-pic
 CFLAGS+=	-fno-pic
-.endif
 
 ##
 ## (3) libkern and compat

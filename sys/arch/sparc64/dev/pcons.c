@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.18.16.2 2006/12/30 20:47:02 yamt Exp $	*/
+/*	$NetBSD: pcons.c,v 1.18.16.3 2007/09/03 14:30:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.18.16.2 2006/12/30 20:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.18.16.3 2007/09/03 14:30:16 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,7 +110,7 @@ pconsattach(struct device *parent, struct device *self, void *aux)
 
 	cn_init_magic(&pcons_cnm_state);
 	cn_set_magic("+++++");
-	callout_init(&sc->sc_poll_ch);
+	callout_init(&sc->sc_poll_ch, 0);
 }
 
 static void pconsstart(struct tty *);
@@ -201,7 +201,7 @@ pconspoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-pconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pconsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;

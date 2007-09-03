@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.1.4.2 2007/02/26 09:06:06 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.1.4.3 2007/09/03 14:23:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -135,9 +135,9 @@ struct dmac_dmover_state {
 #define DMAC_DMOVER_NSEGS	512		/* XXX: Only enough for 2MB */
 #endif
 	bus_dma_segment_t ds_zero_seg;		/* Used for zero-fill ops */
-	caddr_t ds_zero_va;
+	void *ds_zero_va;
 	bus_dma_segment_t ds_fill_seg;		/* Used for fill8 ops */
-	caddr_t ds_fill_va;
+	void *ds_fill_va;
 
 #define	ds_src_addr_hold	ds_xfer.dxs_desc[DMAC_DESC_SRC].xd_addr_hold
 #define	ds_dst_addr_hold	ds_xfer.dxs_desc[DMAC_DESC_DST].xd_addr_hold

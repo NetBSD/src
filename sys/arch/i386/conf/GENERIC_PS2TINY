@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.35.2.2 2006/12/30 20:46:05 yamt Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.35.2.3 2007/09/03 14:26:31 yamt Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -154,7 +154,6 @@ options 	INET6		# IPV6
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

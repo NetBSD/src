@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.13.12.2 2006/12/30 20:47:02 yamt Exp $	*/
+/*	$NetBSD: auxio.c,v 1.13.12.3 2007/09/03 14:30:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.13.12.2 2006/12/30 20:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.13.12.3 2007/09/03 14:30:13 yamt Exp $");
 
 #include "opt_auxio.h"
 
@@ -97,8 +97,7 @@ CFATTACH_DECL(auxio_sbus, sizeof(struct auxio_softc),
 extern struct cfdriver auxio_cd;
 
 #ifdef BLINK
-static struct callout blink_ch = CALLOUT_INITIALIZER;
-
+static callout_t blink_ch;
 static void auxio_blink(void *);
 
 /* let someone disable it if it's already turned on; XXX sysctl? */
@@ -147,6 +146,7 @@ auxio_attach_common(struct auxio_softc *sc)
 
 	/* only start one blinker */
 	if (do_once) {
+		callout_init(&blink_ch, 0);
 		auxio_blink(sc);
 		do_once = 0;
 	}

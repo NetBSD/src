@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.4.18.2 2007/02/26 09:08:43 yamt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.4.18.3 2007/09/03 14:31:00 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4.18.2 2007/02/26 09:08:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4.18.3 2007/09/03 14:31:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -183,7 +183,7 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	scf = l->l_addr->u_pcb.framep;
 	ucntx = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 
 	/* Compatibility mode? */
@@ -258,8 +258,8 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Point stack pointer at pc in trampoline.  */
 	sp =- 8;
 
-	error = (copyout(&tramp, (caddr_t)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
-	    copyout(&sigctx, (caddr_t)tramp.scp, sizeof(sigctx)) != 0);
+	error = copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
+	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0;
 
 	mutex_enter(&p->p_smutex);
 	if (error)
@@ -284,7 +284,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	scf = l->l_addr->u_pcb.framep;
 	ucntx = SCARG(uap, sigcntxp);
 
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 	/* Compatibility mode? */
 	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
@@ -422,7 +422,7 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Save register context.  */
 	uc.uc_flags = _UC_SIGMASK;
 	uc.uc_sigmask = *mask;
-	uc.uc_link = NULL;
+	uc.uc_link = l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 	sendsig_reset(l, ksi->ksi_signo);
 	mutex_exit(&p->p_smutex);

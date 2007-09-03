@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.7.12.2 2006/12/30 20:46:10 yamt Exp $	*/
+/*	$NetBSD: pmc.c,v 1.7.12.3 2007/09/03 14:26:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.7.12.2 2006/12/30 20:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.7.12.3 2007/09/03 14:26:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static int pmc_running;
 static void
 pmc_init(void)
 {
-	const char *cpu_vendor;
+	const char *cpu_vendorstr;
 	struct cpu_info *ci;
 
 	if (pmc_initialized)
@@ -81,11 +81,11 @@ pmc_init(void)
 #endif
 
 	ci = curcpu();
-	cpu_vendor = (char *)ci->ci_vendor;
+	cpu_vendorstr = (char *)ci->ci_vendor;
 
 	switch (cpu_class) {
 	case CPUCLASS_586:
-		if (strncmp(cpu_vendor, "GenuineIntel", 12) == 0) {
+		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
 			pmc_type = PMC_TYPE_I586;
 			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
@@ -94,7 +94,7 @@ pmc_init(void)
 		}
 
 	case CPUCLASS_686:
-		if (strncmp(cpu_vendor, "GenuineIntel", 12) == 0) {
+		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
 
 			/*
 			 * Figure out what we support; right now
@@ -108,7 +108,7 @@ pmc_init(void)
 			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
 			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
-		} else if (strncmp(cpu_vendor, "AuthenticAMD",
+		} else if (strncmp(cpu_vendorstr, "AuthenticAMD",
 			   12) == 0) {
 			pmc_type = PMC_TYPE_K7;
 			pmc_ncounters = 4;
@@ -130,10 +130,10 @@ done:
 }
 
 int
-pmc_info(struct lwp *l, struct i386_pmc_info_args *uargs,
+pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs,
     register_t *retval)
 {
-	struct i386_pmc_info_args rv;
+	struct x86_pmc_info_args rv;
 
 	memset(&rv, 0, sizeof(rv));
 
@@ -147,10 +147,10 @@ pmc_info(struct lwp *l, struct i386_pmc_info_args *uargs,
 }
 
 int
-pmc_startstop(struct lwp *l, struct i386_pmc_startstop_args *uargs,
+pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
     register_t *retval)
 {
-	struct i386_pmc_startstop_args args;
+	struct x86_pmc_startstop_args args;
 	int error, mask, start;
 
 	if (pmc_initialized == 0)
@@ -255,10 +255,10 @@ pmc_startstop(struct lwp *l, struct i386_pmc_startstop_args *uargs,
 }
 
 int
-pmc_read(struct lwp *l, struct i386_pmc_read_args *uargs,
+pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs,
     register_t *retval)
 {
-	struct i386_pmc_read_args args;
+	struct x86_pmc_read_args args;
 	int error;
 
 	if (pmc_initialized == 0)

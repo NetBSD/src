@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.26.16.3 2007/02/26 09:07:02 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.26.16.4 2007/09/03 14:26:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -65,7 +65,7 @@ struct mdproc {
 
 /* kernel stack params */
 #define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
-#define	KSTACK_LOWEST_ADDR(l)	((caddr_t)USER_TO_UAREA((l)->l_addr))
+#define	KSTACK_LOWEST_ADDR(l)	((void *)USER_TO_UAREA((l)->l_addr))
 #define	KSTACK_SIZE		UAREA_USER_OFFSET
 
 #endif /* _I386_PROC_H_ */

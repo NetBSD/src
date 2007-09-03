@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17.8.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.17.8.3 2007/09/03 14:28:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -168,8 +168,6 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	mtsprg0	tmp1;			/* save for later use */	\
 	addi	er,er,INTSTK;						\
 	stptr	er,CI_INTSTK(tmp1);					\
-	stptr	er,CI_IDLE_PCB(tmp1);					\
-	addi	er,er,USPACE;		/* space for idle_u */		\
 	lis	tmp2,_C_LABEL(emptyidlespin)@h;				\
 	ori	tmp2,tmp2,_C_LABEL(emptyidlespin)@l;			\
 	stptr	tmp2,CI_IDLESPIN(tmp1);					\

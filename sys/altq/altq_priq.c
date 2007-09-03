@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.8.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.8.4.3 2007/09/03 14:21:57 yamt Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.8.4.2 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.8.4.3 2007/09/03 14:21:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -221,7 +221,7 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	get_class_stats(&stats, cl);
 
-	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
+	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
 	*nbytes = sizeof(stats);
 	return (0);
@@ -706,7 +706,7 @@ priqclose(dev_t dev, int flag, int fmt,
 }
 
 int
-priqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+priqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct priq_if *pif;
@@ -968,7 +968,7 @@ priqcmd_class_stats(struct priq_class_stats *ap)
 			get_class_stats(&stats, cl);
 		else
 			memset(&stats, 0, sizeof(stats));
-		if ((error = copyout((caddr_t)&stats, (caddr_t)usp++,
+		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
 			return (error);
 	}

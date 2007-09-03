@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.13.4.1 2006/06/21 14:58:24 yamt Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.13.4.2 2007/09/03 14:31:47 yamt Exp $	*/
 
 /*
  *
@@ -46,8 +46,7 @@ struct cfid {
 struct mount;
 
 int coda_vfsopstats_init(void);
-int coda_mount(struct mount *, const char *, void *, struct nameidata *,
-		       struct lwp *);
+int coda_mount(struct mount *, const char *, void *, size_t *, struct lwp *);
 int coda_start(struct mount *, int, struct lwp *);
 int coda_unmount(struct mount *, int, struct lwp *);
 int coda_root(struct mount *, struct vnode **);

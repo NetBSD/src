@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40.6.2 2006/12/30 20:46:30 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.2 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.2 2006/12/30 20:46:30 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
@@ -222,52 +224,44 @@ cpu_spinup(self, ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	int i;
-	struct pcb *pcb;
 	struct pglist mlist;
 	int pvr, vers;
 	int error;
-	int size = 0;
 	char *cp;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
 
 	/*
-	 * Allocate some contiguous pages for the idle PCB and stack
+	 * Allocate some contiguous pages for the intteup PCB and stack
 	 * from the lowest 256MB (because bat0 always maps it va == pa).
 	 */
-	size += USPACE;
-	size += 8192;	/* INTSTK */
-	size += 4096;	/* SPILLSTK */
-
-	error = uvm_pglistalloc(size, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	error = uvm_pglistalloc(INTSTK, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
 	if (error) {
 		printf(": unable to allocate idle stack\n");
 		return -1;
 	}
 
+	KASSERT(ci == &cpu_info[1]);
+
 	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(cp, 0, size);
+	memset(cp, 0, INTSTK);
 
-	pcb = (struct pcb *)cp;
-	cp += USPACE;
-	cpu_info[1].ci_idle_pcb = pcb;
-
-	cpu_info[1].ci_intstk = cp + INTSTK;
-	cp += INTSTK;
+	cpu_info[1].ci_intstk = cp;
 
 	/*
-	 * Initialize the idle stack pointer, reserving space for an
-	 * (empty) trapframe (XXX is the trapframe really necessary?)
+	 * Initialize secondary cpu's initial lwp to it's idlelwp.
 	 */
-	pcb->pcb_sp = (paddr_t)pcb + USPACE - sizeof(struct trapframe);
+	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
+	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
+	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
 
 	cpu_hatch_data = h;
 	h->running = 0;
 	h->self = self;
 	h->ci = ci;
 	h->pir = 1;
-	cpu_hatch_stack = pcb->pcb_sp;
+	cpu_hatch_stack = ci->ci_curpcb->pcb_sp;
 	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
@@ -365,6 +359,7 @@ void
 cpu_hatch()
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	struct cpu_info * const ci = h->ci;
 	u_int msr;
 	int i;
 
@@ -373,7 +368,7 @@ cpu_hatch()
 
 	/* Set PIR (Processor Identification Register).  i.e. whoami */
 	__asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
-	__asm volatile ("mtsprg 0,%0" :: "r"(h->ci));
+	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
 
 	/* Initialize MMU. */
 	__asm ("mtibatu 0,%0" :: "r"(0));
@@ -444,8 +439,8 @@ cpu_hatch()
 	else
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
 
-	curcpu()->ci_ipending = 0;
-	curcpu()->ci_cpl = 0;
+	ci->ci_ipending = 0;
+	ci->ci_cpl = 0;
 }
 
 void

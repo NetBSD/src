@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.72.2.1 2006/06/21 14:56:40 yamt Exp $ */
+/*	$NetBSD: sbus.c,v 1.72.2.2 2007/09/03 14:30:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.72.2.1 2006/06/21 14:56:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.72.2.2 2007/09/03 14:30:16 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,8 +116,8 @@ int	sbus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
 void	sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
 int	sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
-		size_t size, caddr_t *kvap, int flags);
-void	sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
+		size_t size, void **kvap, int flags);
+void	sbus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size);
 
 /*
  * Child devices receive the Sbus interrupt level in their attach
@@ -747,7 +747,7 @@ sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
 
 int
 sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
-	size_t size, caddr_t *kvap, int flags)
+	size_t size, void **kvap, int flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
@@ -755,7 +755,7 @@ sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size)
+sbus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 

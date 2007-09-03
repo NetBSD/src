@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.12 2003/07/15 02:29:30 lukem Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.12.16.1 2007/09/03 14:26:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.12 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.12.16.1 2007/09/03 14:26:01 yamt Exp $");
 
 #include "opt_use_poll.h"
 
@@ -119,7 +119,7 @@ tc5165buf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tc = ca->ca_tc;
 	sc->sc_chip = &tc5165buf_chip;
 
-	callout_init(&sc->sc_chip->scc_soft_ch);
+	callout_init(&sc->sc_chip->scc_soft_ch, 0);
 
 	sc->sc_chip->scc_cst = ca->ca_csio.cstag;
 

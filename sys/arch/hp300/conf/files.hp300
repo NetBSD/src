@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.73.12.1 2006/12/30 20:45:56 yamt Exp $
+#	$NetBSD: files.hp300,v 1.73.12.2 2007/09/03 14:24:57 yamt Exp $
 #
 # hp300-specific configuration info
 
@@ -188,7 +188,6 @@ file	arch/hp300/hp300/intr.c
 file	arch/hp300/hp300/leds.c			useleds
 file	arch/hp300/hp300/mem.c
 file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file	arch/hp300/hp300/softintr.c
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c
@@ -196,6 +195,7 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
+file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

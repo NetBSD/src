@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4.16.2 2007/02/26 09:05:59 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.4.16.3 2007/09/03 14:23:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,16 @@
 #define	mb_memory	drain_writebuf		/* in cpufunc.h */
 #endif
 
+#if defined(_KERNEL)
+static __inline int
+__swp(int __val, volatile unsigned char *__ptr)
+{
+
+	__asm volatile("swpb %0, %1, [%2]"
+	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
+	return __val;
+}
+#else
 static __inline int
 __swp(int __val, volatile int *__ptr)
 {
@@ -64,6 +74,7 @@ __swp(int __val, volatile int *__ptr)
 	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }
+#endif /* _KERNEL */
 
 static __inline void __attribute__((__unused__))
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.12.2 2006/12/30 20:46:20 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.12.3 2007/09/03 14:26:56 yamt Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -76,3 +76,7 @@ VERSIONFILE= ${.CURDIR}/../pxeboot/version
 .endif
 
 .include "../Makefile.booters"
+
+release: check_RELEASEDIR
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
+		${RELEASEDIR}/${MACHINE}/installation/misc

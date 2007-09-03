@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.3.4.2 2006/12/30 20:46:30 yamt Exp $ */
+/* $NetBSD: au_timer.c,v 1.3.4.3 2007/09/03 14:27:52 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.2 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.3 2007/09/03 14:27:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>

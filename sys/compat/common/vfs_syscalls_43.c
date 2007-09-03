@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.3 2007/02/26 09:09:01 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.4 2007/09/03 14:31:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.3 2007/02/26 09:09:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.4 2007/09/03 14:31:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.3 2007/02/26 09:09:01 yam
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
@@ -114,18 +115,12 @@ compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat43 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
@@ -147,7 +142,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int ndflags;
 
-	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
+	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
 	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd))) {
@@ -196,7 +191,7 @@ again:
 		sb.st_blocks = sb1.st_blocks;
 	}
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
@@ -228,7 +223,7 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 
 	if (error == 0) {
 		cvtstat(&ub, &oub);
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 	}
 
@@ -361,7 +356,7 @@ compat_43_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
 	struct uio auio, kuio;
 	struct iovec aiov, kiov;
 	struct dirent *dp, *edp;
-	caddr_t dirbuf;
+	char *dirbuf;
 	size_t count = min(MAXBSIZE, (size_t)SCARG(uap, count));
 
 	int error, eofflag, readcnt;
@@ -477,7 +472,7 @@ unionread:
 				vrele(lvp);
 				goto out;
 			}
-			fp->f_data = (caddr_t) lvp;
+			fp->f_data = (void *) lvp;
 			fp->f_offset = 0;
 			error = vn_close(vp, FREAD, fp->f_cred, l);
 			if (error)
@@ -495,12 +490,12 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		fp->f_data = (caddr_t) vp;
+		fp->f_data = (void *) vp;
 		fp->f_offset = 0;
 		vrele(tvp);
 		goto unionread;
 	}
-	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
+	error = copyout((void *)&loff, (void *)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = count - auio.uio_resid;
  out:
@@ -533,7 +528,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 		return (EOPNOTSUPP);
 
 	vfc.vfc_vfsops = vfsp;
-	strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
+	strncpy(vfc.vfc_name, vfsp->vfs_name, sizeof(vfc.vfc_name));
 	vfc.vfc_typenum = vfsnum;
 	vfc.vfc_refcount = vfsp->vfs_refcount;
 	vfc.vfc_flags = 0;

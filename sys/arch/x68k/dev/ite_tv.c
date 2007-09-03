@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.12.2.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.12.2.2 2007/09/03 14:31:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.12.2.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.12.2.2 2007/09/03 14:31:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,7 +155,7 @@ ite_set_glyph(void)
 /*
  * Initialize
  */
-void 
+void
 tv_init(struct ite_softc *ip)
 {
 	short i;
@@ -209,7 +209,7 @@ tv_init(struct ite_softc *ip)
 /*
  * Deinitialize
  */
-void 
+void
 tv_deinit(struct ite_softc *ip)
 {
 	ip->flags &= ~ITE_INITED; /* XXX? */
@@ -248,7 +248,7 @@ static tv_putcfunc *putc_func[ATTR_ALL + 1] = {
 /*
  * simple put character function
  */
-void 
+void
 tv_putc(struct ite_softc *ip, int ch, int y, int x, int mode)
 {
 	char *p = CHADDR(y, x);
@@ -274,7 +274,7 @@ tv_putc(struct ite_softc *ip, int ch, int y, int x, int mode)
 	CRTC.r21 = 0;
 }
 
-void 
+void
 tv_putc_nm(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;

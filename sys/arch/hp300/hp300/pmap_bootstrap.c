@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.26 2005/04/01 11:59:26 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.26.2.1 2007/09/03 14:25:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26 2005/04/01 11:59:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.1 2007/09/03 14:25:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,8 +82,9 @@ void	pmap_bootstrap __P((paddr_t, paddr_t));
  *	ledbase:	SPU LEDs
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap, ledbase;
-extern caddr_t	msgbufaddr;
+void *CADDR1, *CADDR2, *ledbase;
+char *vmmap;
+void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
@@ -385,7 +386,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		(pt_entry_t *)(kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
-	 * Immediately follows `nptpages' of static kernel page table.
+	 * Allocated at the end of KVA space.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
 	    (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
@@ -508,15 +509,15 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 		RELOC(bootinfo_va, vaddr_t) = (vaddr_t)va;
 		va += PAGE_SIZE;
-		RELOC(CADDR1, caddr_t) = (caddr_t)va;
+		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(CADDR2, caddr_t) = (caddr_t)va;
+		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(vmmap, caddr_t) = (caddr_t)va;
+		RELOC(vmmap, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(ledbase, caddr_t) = (caddr_t)va;
+		RELOC(ledbase, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
+		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}

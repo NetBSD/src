@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.20.8.2 2006/12/30 20:45:29 yamt Exp $	*/
+/*	$NetBSD: necpb.c,v 1.20.8.3 2007/09/03 14:23:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20.8.2 2006/12/30 20:45:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20.8.3 2007/09/03 14:23:10 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -174,12 +174,12 @@ necpb_init(struct necpb_context *ncp)
 
 	arc_large_bus_space_init(&ncp->nc_memt, "necpcimem",
 	    RD94_P_PCI_MEM, 0, RD94_S_PCI_MEM);
-	arc_bus_space_init_extent(&ncp->nc_memt, (caddr_t)necpb_mem_ex_storage,
+	arc_bus_space_init_extent(&ncp->nc_memt, (void *)necpb_mem_ex_storage,
 	    sizeof(necpb_mem_ex_storage));
 
 	arc_bus_space_init(&ncp->nc_iot, "necpciio",
 	    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
-	arc_bus_space_init_extent(&ncp->nc_iot, (caddr_t)necpb_io_ex_storage,
+	arc_bus_space_init_extent(&ncp->nc_iot, (void *)necpb_io_ex_storage,
 	    sizeof(necpb_io_ex_storage));
 
 	jazz_bus_dma_tag_init(&ncp->nc_dmat);

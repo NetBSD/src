@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.9 2004/09/29 04:06:51 sekiya Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.9.12.1 2007/09/03 14:29:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.9 2004/09/29 04:06:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.9.12.1 2007/09/03 14:29:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ zs_kgdb_init()
 	zc = zs_get_chan_addr(unit, channel);
 
 	/* Attach KGDB comms functions to this device */
-	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
 }
 
 /*

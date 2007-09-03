@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.3.2.3 2007/02/26 09:06:39 yamt Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.3.2.4 2007/09/03 14:26:16 yamt Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -108,7 +108,7 @@ static void psh3tp_attach(struct device *, struct device *, void *);
 
 /* wsmouse accessops */
 static int psh3tp_wsmouse_enable(void *);
-static int psh3tp_wsmouse_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int psh3tp_wsmouse_ioctl(void *, u_long, void *, int, struct lwp *);
 static void psh3tp_wsmouse_disable(void *);
 
 /* internal driver routines */
@@ -190,10 +190,10 @@ psh3tp_attach(struct device *parent __unused, struct device *self,
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-	    (caddr_t)__UNCONST(&psh3tp_default_calib), 0, 0);
+	    (void *)__UNCONST(&psh3tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
-	callout_init(&sc->sc_touch_ch);
+	callout_init(&sc->sc_touch_ch, 0);
 
 	/* establish interrupt handler, but disable until opened */
 	intc_intr_establish(SH7709_INTEVT2_IRQ2,
@@ -486,7 +486,7 @@ psh3tp_get_raw_xy(int *rawxp, int *rawyp)
 
 
 static int
-psh3tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+psh3tp_wsmouse_ioctl(void *self, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
 	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;

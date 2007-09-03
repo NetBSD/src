@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.2.3 2007/02/26 09:07:50 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.2.4 2007/09/03 14:28:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2007/02/26 09:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.4 2007/09/03 14:28:53 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2007/02/26 09:07:50 yamt Exp $
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -166,7 +167,7 @@ static void	unimpl_cons_init __P((void));
 static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static void	unimpl_intr_establish __P((struct device *, void *, int,
 		    int (*)(void *), void *));
-static int	unimpl_memsize __P((caddr_t));
+static int	unimpl_memsize __P((void *));
 static unsigned	nullwork __P((void));
 
 struct platform platform = {
@@ -179,7 +180,7 @@ struct platform platform = {
 	(void *)nullwork,
 };
 
-extern caddr_t esym;			/* XXX */
+extern void *esym;			/* XXX */
 extern struct user *proc0paddr;		/* XXX */
 extern struct consdev promcd;		/* XXX */
 
@@ -200,9 +201,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	const char *bootinfo_msg;
 	u_long first, last;
 	int i;
-	caddr_t kernend;
+	char *kernend;
 #if NKSYMS || defined(DDB) || defined(LKM)
-	caddr_t ssym = 0;
+	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
@@ -230,9 +231,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
-		ssym = (caddr_t)bi_syms->ssym;
-		esym = (caddr_t)bi_syms->esym;
-		kernend = (caddr_t)mips_round_page(esym);
+		ssym = (void *)bi_syms->ssym;
+		esym = (void *)bi_syms->esym;
+		kernend = (void *)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	}
 	/* XXX: Backwards compatibility with old bootblocks - this should
@@ -244,13 +245,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 		ssym = end;
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
-		kernend = (caddr_t)mips_round_page(esym);
+		kernend = (void *)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
 #endif
 #endif
 	{
-		kernend = (caddr_t)mips_round_page(end);
+		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
 	}
 
@@ -332,7 +333,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
+		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -345,8 +346,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	lwp0.l_addr = proc0paddr = (struct user *)kernend;
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	memset(lwp0.l_addr, 0, USPACE);
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += USPACE;
 
@@ -567,7 +568,7 @@ haltsys:
  */
 int
 memsize_scan(first)
-	caddr_t first;
+	void *first;
 {
 	int i, mem;
 	char *cp;
@@ -613,7 +614,7 @@ memsize_scan(first)
  */
 int
 memsize_bitmap(first)
-	caddr_t first;
+	void *first;
 {
 	memmap *prom_memmap = (memmap *)first;
 	int i, mapbytes;
@@ -690,7 +691,7 @@ unimpl_intr_establish(dev, cookie, level, handler, arg)
 
 static int
 unimpl_memsize(first)
-caddr_t first;
+void *first;
 {
 
 	panic("sysconf.init didn't set memsize");

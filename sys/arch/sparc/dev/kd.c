@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.34.2.3 2007/02/26 09:08:15 yamt Exp $	*/
+/*	$NetBSD: kd.c,v 1.34.2.4 2007/09/03 14:29:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34.2.3 2007/02/26 09:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34.2.4 2007/09/03 14:29:57 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -303,7 +303,7 @@ kdpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-kdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -366,7 +366,7 @@ kdstart(struct tty *tp)
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup((void *)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -472,11 +472,17 @@ static struct cons_channel prom_cons_channel = {
 	NULL			/* will be set by kd driver */
 };
 
-static struct callout prom_cons_callout = CALLOUT_INITIALIZER;
+static struct callout prom_cons_callout;
 
 static int
 kd_rom_iopen(struct cons_channel *cc)
 {
+	static bool callo;
+
+	if (!callo) {
+		callout_init(&prom_cons_callout, 0);
+		callo = true;
+	}
 
 	/* Poll for ROM input 4 times per second */
 	callout_reset(&prom_cons_callout, hz / 4, kd_rom_intr, cc);

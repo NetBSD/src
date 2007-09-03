@@ -1,6 +1,6 @@
-#	$NetBSD: GUMSTIX,v 1.4.2.3 2007/02/26 09:06:17 yamt Exp $
+#	$NetBSD: GUMSTIX,v 1.4.2.4 2007/09/03 14:23:59 yamt Exp $
 #
-#	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
+#	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
 
 include 	"arch/evbarm/conf/std.gumstix"
@@ -27,7 +27,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # File systems
 
 file-system	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system client
@@ -47,6 +47,7 @@ file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -92,6 +93,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -164,13 +166,14 @@ pxaintc0 at pxaip?				# interrupt controller
 options 	PXAGPIO_HAS_GPION_INTRS
 
 pxagpio0 at pxaip?				# GPIO
+pxartc0	at pxaip?				# RTC
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
+com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (console-st)
 com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
-com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART(console-hw, -bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
 #options 	BTUARTCONSOLE
@@ -184,24 +187,36 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 #options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # AC97 Audio support
-pxaacu0 at pxaip? addr 0x40500000 intr 14
+pxaacu0	at pxaip? addr 0x40500000 intr 14
 
 # Audio support
 audio*	at audiobus?
 
 # LCD
-# 44000000-4400ffff : pxa2xx-fb
+#lcd0	at pxaip?
+#wsdisplay* at lcd? console ?
 
-# USB
-# 40600000-4060ffff : pxa2xx-udc
+# USB Controller and Devices
+pxaudc0	at pxaip?				# USB Device Controller
 
-# MMC card
-# 41100000-41100fff : pxa2xx-mci
-# 0xF0000000 by u-boot
+# integrated MMC/SD contoller
+#pxamci0	at pxaip? addr 0x41100000 size 0x48
+#sdmmc*	at pxamci?
+#options 	PXAMCI_DEBUG
+#options 	SDMMC_DEBUG
+#options 	SDMMC_DUMP_CSD
+
+# SCSI bus support
+#scsibus* at scsi?
+
+# SCSI devices
+#sd*	at scsibus? target ? lun ? # SCSI disk drives
+#uk*	at scsibus? target ? lun ? # SCSI unknown
 
 # gumstix device support
 gxio0	at pxaip?
 options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
+options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
 
 # gumstix expantion boards
 
@@ -209,16 +224,23 @@ options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
 sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
 
-# PCMCIA/CF card
-gxpcic* at gxio? addr 0x20000000 gpirq 11	# cfstix, netCF
-pcmcia*	at gxpcic?
+# Inter-Integrated Circuit controller
+gxiic0	at pxaip?
+iic*	at gxiic?
+#dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
+
+# integrated PCMCIA/CF controller
+pxapcic0 at pxaip?				# cfstix, netCF
+
+# PCMCIA bus support
+pcmcia*	at pxapcic?
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-# PCMCIA IDE controllers 
+# PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
-atabus*	at wdc? channel ? 
+atabus*	at wdc? channel ?
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
@@ -231,17 +253,13 @@ xi*	at xirc?
 acphy*	at mii? phy ?			# AMD/Altima AC101 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
-# USB Controller and Devices
-
-# ISA USB controllers
-#slhci* at pcmcia? function ?		# ScanLogic SL811HS
+# USB Devices
 
 # USB bus support
-#usb*	at slhci?
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?
@@ -258,7 +276,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -279,15 +297,15 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
-#umidi*	at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
-#uirda*	at uhub? port ? configuration ? interface ?
+#uirda* at uhub? port ? configuration ? interface ?
 #irframe* at uirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-#ustir*	at uhub? port ?
+#ustir* at uhub? port ?
 #irframe* at ustir?
 
 # USB Ethernet adapters
@@ -299,9 +317,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 #ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
@@ -319,10 +339,13 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 #ucom*	at umct? portno ?
 
-#uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 #ucom*	at uplcom? portno ?
 
-#uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+#uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+#ucom*	at uslsa? portno ?
+
+#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
@@ -342,8 +365,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
 
+# Topfield TF5000PVR range of DVB recorders
+#utoppy*	at uhub? port ?
+
 # Y@P firmware loader
-#uyap*	at uhub? port ?
+#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?
@@ -351,19 +377,23 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB Generic driver
 #ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+#options UGEN_BULK_RA_WB
 
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
 #bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
-#ubt*	at uhub? port ? configuration ? interface ?
+#ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub*	at bt3c?
-#bthub*	at ubt?
+#bthub*	at btbc?
 bthub*	at btuart?
+#bthub*	at ubt?
 
 # Bluetooth HID support
 #bthidev* at bthub?
@@ -381,9 +411,11 @@ bthub*	at btuart?
 
 # Pseudo-Devices
 
+pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
@@ -421,6 +453,7 @@ pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
@@ -456,7 +489,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #
 #options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384 
+#options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5

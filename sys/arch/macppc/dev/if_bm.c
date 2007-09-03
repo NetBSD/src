@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.25.6.2 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.25.6.3 2007/09/03 14:27:35 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25.6.2 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25.6.3 2007/09/03 14:27:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -86,8 +86,8 @@ struct bmac_softc {
 	dbdma_regmap_t *sc_rxdma;
 	dbdma_command_t *sc_txcmd;
 	dbdma_command_t *sc_rxcmd;
-	caddr_t sc_txbuf;
-	caddr_t sc_rxbuf;
+	void *sc_txbuf;
+	void *sc_rxbuf;
 	int sc_rxlast;
 	int sc_flags;
 	struct mii_data sc_mii;
@@ -115,10 +115,10 @@ void bmac_reset __P((struct bmac_softc *));
 void bmac_stop __P((struct bmac_softc *));
 void bmac_start __P((struct ifnet *));
 void bmac_transmit_packet __P((struct bmac_softc *, void *, int));
-int bmac_put __P((struct bmac_softc *, caddr_t, struct mbuf *));
-struct mbuf *bmac_get __P((struct bmac_softc *, caddr_t, int));
+int bmac_put __P((struct bmac_softc *, void *, struct mbuf *));
+struct mbuf *bmac_get __P((struct bmac_softc *, void *, int));
 void bmac_watchdog __P((struct ifnet *));
-int bmac_ioctl __P((struct ifnet *, u_long, caddr_t));
+int bmac_ioctl __P((struct ifnet *, u_long, void *));
 int bmac_mediachange __P((struct ifnet *));
 void bmac_mediastatus __P((struct ifnet *, struct ifmediareq *));
 void bmac_setladrf __P((struct bmac_softc *));
@@ -201,7 +201,7 @@ bmac_attach(parent, self, aux)
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sc->sc_flags =0;
 	if (strcmp(ca->ca_name, "ethernet") == 0) {
@@ -312,7 +312,7 @@ bmac_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
-	caddr_t data;
+	void *data;
 	int i, tb, bmcr;
 	u_short *p;
 
@@ -502,7 +502,7 @@ bmac_rint(v)
 			goto next;
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
-		data = sc->sc_rxbuf + BMAC_BUFLEN * i;
+		data = (char *)sc->sc_rxbuf + BMAC_BUFLEN * i;
 
 		/* XXX Sometimes bmac reads one extra byte. */
 		if (datalen == ETHER_MAX_LEN + 1)
@@ -646,7 +646,7 @@ bmac_transmit_packet(sc, buff, len)
 int
 bmac_put(sc, buff, m)
 	struct bmac_softc *sc;
-	caddr_t buff;
+	void *buff;
 	struct mbuf *m;
 {
 	struct mbuf *n;
@@ -658,8 +658,8 @@ bmac_put(sc, buff, m)
 			MFREE(m, n);
 			continue;
 		}
-		memcpy(buff, mtod(m, caddr_t), len);
-		buff += len;
+		memcpy(buff, mtod(m, void *), len);
+		buff = (char *)buff + len;
 		tlen += len;
 		MFREE(m, n);
 	}
@@ -672,7 +672,7 @@ bmac_put(sc, buff, m)
 struct mbuf *
 bmac_get(sc, pkt, totlen)
 	struct bmac_softc *sc;
-	caddr_t pkt;
+	void *pkt;
 	int totlen;
 {
 	struct mbuf *m;
@@ -707,8 +707,8 @@ bmac_get(sc, pkt, totlen)
 			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), pkt, len);
-		pkt += len;
+		memcpy(mtod(m, void *), pkt, len);
+		pkt = (char *)pkt + len;
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
@@ -736,7 +736,7 @@ int
 bmac_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct bmac_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -795,11 +795,7 @@ bmac_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

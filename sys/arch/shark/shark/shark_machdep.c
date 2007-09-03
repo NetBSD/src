@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.20.10.2 2006/12/30 20:46:57 yamt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.20.10.3 2007/09/03 14:29:52 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.2 2006/12/30 20:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.3 2007/09/03 14:29:52 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.2 2006/12/30 20:46:57 yamt
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
 #include <shark/shark/sequoia.h>
+
+#include "isadma.h"
 
 #include "wd.h"
 #include "cd.h"
@@ -241,7 +243,9 @@ initarm(void *arg)
 	process_kernel_args();
 
 	ofw_configisadma(&isadmaphysbufs);
+#if (NISADMA > 0)
 	isa_dma_init();
+#endif
 
 	/* allocate a cache clean space */
 	if ((pclean = ofw_getcleaninfo()) != -1) {

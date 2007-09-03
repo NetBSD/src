@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.11.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.11.4.3 2007/09/03 14:21:57 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.11.4.2 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.11.4.3 2007/09/03 14:21:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.11.4.2 2006/12/30 20:45:17 yamt Exp $
 #include <sys/sockio.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/kauth.h>
 #ifdef ALTQ_FLOWVALVE
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -547,8 +546,8 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)hdr >= m0->m_data) &&
-		    ((caddr_t)hdr < m0->m_data + m0->m_len))
+		if (((char *)hdr >= m0->m_data) &&
+		    ((char *)hdr < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 		/* ick, tag info is stale */
@@ -753,7 +752,7 @@ redclose(dev_t dev, int flag, int fmt,
 }
 
 int
-redioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+redioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	red_queue_t *rqp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.6.2.3 2007/02/26 09:05:40 yamt Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.6.2.4 2007/09/03 14:22:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,22 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6.2.3 2007/02/26 09:05:40 yamt Exp $");
-
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6.2.4 2007/09/03 14:22:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -79,7 +70,7 @@ void
 netbsd32_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -95,7 +86,7 @@ netbsd32_syscall_plain(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -121,7 +112,7 @@ netbsd32_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -167,7 +158,7 @@ void
 netbsd32_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -175,10 +166,8 @@ netbsd32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
-#if defined(KTRACE) || defined(SYSTRACE)
 	int i;
 	register_t args64[8];
-#endif
 
 	uvmexp.syscalls++;
 	l = curlwp;
@@ -187,7 +176,7 @@ netbsd32_syscall_fancy(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -213,38 +202,23 @@ netbsd32_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
 
 	KERNEL_LOCK(1, l);
 
-#if defined(KTRACE) || defined(SYSTRACE)
-	if (
-#ifdef KTRACE
-	    KTRPOINT(p, KTR_SYSCALL) ||
-#endif
-#ifdef SYSTRACE
-	    ISSET(p->p_flag, PK_SYSTRACE)
-#else
-	0
-#endif
-	) {
-		for (i = 0; i < (argsize >> 2); i++)
-			args64[i] = args[i];
-		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
-			goto out;
-	}
-#endif
+	for (i = 0; i < (argsize >> 2); i++)
+		args64[i] = args[i];
+	/* XXX we need to pass argsize << 1 here? */
+	if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-#if defined(KTRACE) || defined(SYSTRACE)
 out:
-#endif
 	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
@@ -270,9 +244,6 @@ out:
 		break;
 	}
 
-#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(l, code, args64, rval, error);
-#endif
-
 	userret(l);
 }

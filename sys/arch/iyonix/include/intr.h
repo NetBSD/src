@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.14.3 2007/02/26 09:07:08 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.14.4 2007/09/03 14:27:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -136,7 +136,7 @@ void	_setsoftintr(int);
 
 #define	splsoft()	_splraise(IPL_SOFT)
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

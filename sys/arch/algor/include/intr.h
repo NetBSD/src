@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.40.3 2007/02/26 09:05:30 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.40.4 2007/09/03 14:22:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -90,15 +90,9 @@
 
 #ifdef	_KERNEL
 
-extern const u_int32_t ipl_sr_bits[_IPL_N];
+#include <mips/locore.h>
 
-int _splraise(int);
-int _spllower(int);
-int _splset(int);
-int _splget(void);
-void _splnone(void);
-void _setsoftintr(int);
-void _clrsoftintr(int);
+extern const u_int32_t ipl_sr_bits[_IPL_N];
 
 #define	spl0()		(void) _spllower(0)
 #define	splx(s)		(void) _splset(s)

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.25.2.2 2006/12/30 20:46:03 yamt Exp $
+# $NetBSD: VR41XX,v 1.25.2.3 2007/09/03 14:25:55 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.25.2.2 $"
+#ident 		"GENERIC-$Revision: 1.25.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -417,7 +417,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # USB Hubs
 usb*	at ohci?
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

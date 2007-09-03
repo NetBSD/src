@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2005/01/17 04:37:20 atatat Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8.8.1 2007/09/03 14:26:26 yamt Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -132,10 +132,10 @@ do { if (pmap) { \
 #define pmap_release(pmap)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update(p)
-void	pmap_activate __P((struct lwp *));
+void	pmap_activate(struct lwp *);
 
 static __inline void
-pmap_deactivate(struct lwp *lwp)
+pmap_deactivate(struct lwp *l)
 {
 }
 

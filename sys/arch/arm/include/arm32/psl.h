@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6.18.2 2007/02/26 09:06:00 yamt Exp $	*/
+/*	$NetBSD: psl.h,v 1.6.18.3 2007/09/03 14:23:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
-#ifndef _LOCORE
+#if (! defined(_LOCORE)) && (! defined(hpcarm))
 #include <arm/softintr.h>
 #endif
 
@@ -75,7 +75,6 @@
 #define spl0()		splx(_SPL_0)
 #define splsoft()	raisespl(_SPL_SOFT)
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
-#define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)
@@ -104,9 +103,9 @@ extern int current_spl_level;
 
 extern u_int spl_masks[_SPL_LEVELS + 1];
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
-	int _spl;
+	uint8_t _spl;
 } ipl_cookie_t;
 
 int ipl_to_spl(ipl_t);
@@ -115,7 +114,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._spl = ipl_to_spl(ipl)};
+	return (ipl_cookie_t){._spl = (uint8_t)ipl_to_spl(ipl)};
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93.2.3 2007/02/26 09:08:04 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93.2.4 2007/09/03 14:29:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.3 2007/02/26 09:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.4 2007/09/03 14:29:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,7 +233,7 @@ struct platform platform = {
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern caddr_t esym;
+extern void *esym;
 extern u_int32_t ssir;
 extern struct user *proc0paddr;
 
@@ -255,12 +255,12 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	extern char kernel_text[], _end[];
 	paddr_t first, last;
 	int firstpfn, lastpfn;
-	caddr_t v;
+	void *v;
 	vsize_t size;
 	struct arcbios_mem *mem;
-	const char *cpufreq;
+	const char *cpufreq, *osload;
 	struct btinfo_symtab *bi_syms;
-	caddr_t ssym;
+	void *ssym;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv, nsym;
@@ -271,9 +271,16 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * try to init real arcbios, and if that fails (return value 1),
 	 * fall back to the emulator.  If the latter fails also we
 	 * don't have much to panic with.
+	 *
+	 * The third argument (magic) is the environment variable array if
+	 * there's no bootinfo.
 	 */
-	if (arcbios_init(ARCS_VECTOR) == 1)
-		arcemu_init((char **)magic);
+	if (arcbios_init(ARCS_VECTOR) == 1) {
+		if (magic == BOOTINFO_MAGIC)
+			arcemu_init(NULL);	/* XXX - need some prom env */
+		else
+			arcemu_init((const char **)magic);
+	}
 
 	strcpy(cpu_model, arcbios_system_identifier);
 
@@ -292,8 +299,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 		if (bi_syms != NULL) {
 			nsym = bi_syms->nsym;
-			ssym = (caddr_t) bi_syms->ssym;
-			esym = (caddr_t) bi_syms->esym;
+			ssym = (void *) bi_syms->ssym;
+			esym = (void *) bi_syms->esym;
 			kernend = round_page((vaddr_t) esym);
 		}
 	}
@@ -316,6 +323,9 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
 
 	/*
+	 * Try to get the boot device information from ARCBIOS. If we fail,
+	 * attempt to use the environment variables passed as follows:
+	 *
 	 * argv[0] can be either the bootloader loaded by the PROM, or a
 	 * kernel loaded directly by the PROM.
 	 *
@@ -325,14 +335,23 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * If argv[1] isn't an environment string, try to use it to set the
 	 * boot device.
 	 */
-	if (argc > 1 && strchr(argv[1], '=') != 0)
+	osload = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
+	if (osload != NULL)
+		makebootdev(osload);
+	else if (argc > 1 && strchr(argv[1], '=') != 0)
 		makebootdev(argv[1]);
 
 	boothowto = RB_SINGLE;
 
 	/*
 	 * Single- or multi-user ('auto' in SGI terms).
+	 *
+	 * Query ARCBIOS first, then default to environment variables.
 	 */
+	osload = ARCBIOS->GetEnvironmentVariable("OSLoadOptions");
+	if (osload != NULL && strcmp(osload, "auto") == 0)
+		boothowto &= ~RB_SINGLE;
+
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0)
 			boothowto &= ~RB_SINGLE;
@@ -356,6 +375,16 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 */
 
 	for (i = 0; i < argc; i++) {
+		/*
+		 * Unfortunately, it appears that IP12's prom passes a '-a'
+		 * flag when booting a kernel directly from a disk volume
+		 * header. This corresponds to RB_ASKNAME in NetBSD, but
+		 * appears to mean 'autoboot' in prehistoric SGI-speak.
+		 */
+		if (mach_type < MACH_SGI_IP20 && bootinfo == NULL &&
+		    strcmp(argv[i], "-a") == 0)
+			continue;
+
 		/*
 		 * Extract out any flags passed for the kernel in the
 		 * argument string.  Warn for unknown/invalid flags,
@@ -615,11 +644,11 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void

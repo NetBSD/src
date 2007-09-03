@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.6.10.1 2007/09/03 14:31:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -67,7 +67,7 @@
 struct vs_dma {
 	bus_dma_tag_t		vd_dmat;
 	bus_dmamap_t		vd_map;
-	caddr_t			vd_addr;
+	void *			vd_addr;
 	bus_dma_segment_t	vd_segs[1];
 	int			vd_nsegs;
 	size_t			vd_size;

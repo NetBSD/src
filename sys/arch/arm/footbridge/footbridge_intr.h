@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.5.18.2 2006/12/30 20:45:32 yamt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.5.18.3 2007/09/03 14:23:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -176,7 +176,7 @@ void	_setsoftintr(int);
 #define	spl0()		(void)_spllower(IPL_NONE)
 #define	spllowersoftclock() (void)_spllower(IPL_SOFTCLOCK)
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

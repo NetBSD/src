@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.27.2.1 2006/06/21 14:57:05 yamt Exp $	*/
+/*	$NetBSD: bw2.c,v 1.27.2.2 2007/09/03 14:30:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.27.2.1 2006/06/21 14:57:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.27.2.2 2007/09/03 14:30:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 		return (1);
 	default:
 #ifdef	DEBUG
-		printf("bwtwo at 0x%x match p4id=0x%x fails\n",
+		printf("bwtwo at 0x%lx match p4id=0x%x fails\n",
 			   ca->ca_paddr, p4id & 0xFF);
 #endif
 		break;
@@ -296,7 +296,7 @@ bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-bw2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 

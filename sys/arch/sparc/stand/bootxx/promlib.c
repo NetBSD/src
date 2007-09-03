@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.4.2.2 2006/12/30 20:47:01 yamt Exp $ */
+/*	$NetBSD: promlib.c,v 1.4.2.3 2007/09/03 14:30:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ prom_init(void)
 
 	if (CPU_ISSUN4) {
 		prom_init_oldmon();
-		romp = (caddr_t)PROM_LOADADDR;	/* Used in main() */
+		romp = (void *)PROM_LOADADDR;	/* Used in main() */
 	} else if (obpvec->pv_magic == OBP_MAGIC) {
 		prom_init_obp();
 	} else {

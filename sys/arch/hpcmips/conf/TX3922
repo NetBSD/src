@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.63.2.2 2006/12/30 20:46:03 yamt Exp $
+#	$NetBSD: TX3922,v 1.63.2.3 2007/09/03 14:25:55 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -180,7 +180,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

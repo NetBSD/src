@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.12.4.1 2006/06/21 14:49:07 yamt Exp $	*/
+/*	$NetBSD: opms.c,v 1.12.4.2 2007/09/03 14:23:06 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12.4.1 2006/06/21 14:49:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12.4.2 2007/09/03 14:23:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsrea", 0);
+		error = tsleep((void *)sc, PZERO | PCATCH, "pmsrea", 0);
 		if (error) {
 			sc->sc_state &= ~PMS_ASLP;
 			splx(s);
@@ -305,7 +305,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-opmsioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
@@ -416,7 +416,7 @@ opmsintr(void *arg)
 
 			if (sc->sc_state & PMS_ASLP) {
 				sc->sc_state &= ~PMS_ASLP;
-				wakeup((caddr_t)sc);
+				wakeup((void *)sc);
 			}
 			selnotify(&sc->sc_rsel, 0);
 		}

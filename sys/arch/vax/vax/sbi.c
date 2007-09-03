@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $ */
+/*	$NetBSD: sbi.c,v 1.30.16.1 2007/09/03 14:30:59 yamt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.30 2003/11/06 00:33:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.30.16.1 2007/09/03 14:30:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,7 @@ sbi_attach(struct device *parent, struct device *self, void *aux)
 
 		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
 		    sizeof(struct nexus) * nexnum, NEXPAGES);
-		if (badaddr((caddr_t)nexusP, 4)) {
+		if (badaddr((void *)nexusP, 4)) {
 			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
 		} else {
 			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */

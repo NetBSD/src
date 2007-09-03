@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.10 2004/08/28 21:31:07 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.10.12.1 2007/09/03 14:27:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -131,6 +131,7 @@ extern	int mmutype;		/* MMU on this host */
 
 #ifdef _KERNEL
 
+struct pcb;
 struct trapframe;
 
 /* copypage.s */
@@ -141,6 +142,10 @@ void	zeropage(void *addr);
 /* locore.s (XXX: move to support.s?) */
 int 	getdfc(void);
 int 	getsfc(void);
+
+/* switch_subr.s */
+void	lwp_trampoline(void);
+void	savectx(struct pcb *);
 
 /* w16copy.s */
 void	w16zero(void *, u_int);
@@ -155,6 +160,15 @@ extern	u_int mappedcopysize;
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);
+
+/* sys_machdep.c */
+int	cachectl1(u_long, vaddr_t, size_t, struct proc *);
+int	dma_cachectl(void *, int);
+
+/* vm_machdep.c */
+int	kvtop(void *);
+void	physaccess(void *, void *, int, int);
+void	physunaccess(void *, int);
 
 #endif /* _KERNEL */
 #endif /* _M68K_M68K_H_ */

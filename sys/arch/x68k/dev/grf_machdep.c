@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.23.2.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.23.2.2 2007/09/03 14:31:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.23.2.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.23.2.2 2007/09/03 14:31:05 yamt Exp $");
 
 #include "locators.h"
 
@@ -251,12 +251,12 @@ grfinit(void *dp, int cfaddr)
 {
 	struct grf_softc *gp = dp;
 	struct grfsw *gsw;
-	caddr_t addr;
+	void *addr;
 
 	if (cfaddr == 0)
-		addr = (caddr_t)__UNVOLATILE(IODEVbase->tvram);
+		addr = (void *)__UNVOLATILE(IODEVbase->tvram);
 	else
-		addr = (caddr_t)__UNVOLATILE(IODEVbase->gvram);
+		addr = (void *)__UNVOLATILE(IODEVbase->gvram);
 
 	gsw = &grfsw[cfaddr];
 	if (gsw < &grfsw[ngrfsw] && (*gsw->gd_init)(gp, addr)) {

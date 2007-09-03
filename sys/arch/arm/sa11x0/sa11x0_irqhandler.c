@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.5.16.2 2006/12/30 20:45:37 yamt Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.5.16.3 2007/09/03 14:23:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.5.16.2 2006/12/30 20:45:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.5.16.3 2007/09/03 14:23:25 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -101,7 +101,6 @@ u_int actual_mask;
 #define IPL_LEVELS (NIPL+1)
 u_int imask[NIPL];
 #else
-u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 #endif
 

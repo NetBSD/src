@@ -1,4 +1,4 @@
-/*	$NetBSD: sr_601.h,v 1.2 2004/06/06 21:23:53 kleink Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.2.12.1 2007/09/03 14:28:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
 	 (buid) << SR601_BUID_SHFT |				\
 	 (csi) << SR601_CSI_SHFT | (p1))
 
-#define	SR601_VALID_P(sr)					\
-	(((sr) & (SR601_T | SR601_BUID | SR601_CSI)) ==		\
-	 (SR601_T | (SR601_BUID_MEMFORCED << SR601_BUID_SHFT)))
+#define SR601_VALID_P(sr)					\
+	((sr) & SR601_T)
 
 #define	SR601_PA_MATCH_P(sr, pa) 				\
 	 (((sr) & SR601_PACKET1) == ((pa) >> ADDR_SR_SHFT))

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.2.2 2007/02/26 09:07:49 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.2.3 2007/09/03 14:28:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.2.2 2007/02/26 09:07:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.2.3 2007/09/03 14:28:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -99,14 +99,14 @@ mach_init()
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
-	caddr_t kernend, v;
+	void *kernend, *v;
 	paddr_t start;
 	size_t size;
 
 	/*
 	 * Clear the BSS segment.
 	 */
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, kernend - edata);
 
 	/* disable all interrupt */
@@ -162,13 +162,12 @@ mach_init()
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = PSL_LOWIPL;	/* SR */
+	proc0paddr->u_pcb.pcb_context[11] = PSL_LOWIPL;	/* SR */
 #ifdef IPL_ICU_MASK
-	curpcb->pcb_ppl = 0;
+	proc0paddr->u_pcb.pcb_ppl = 0;
 #endif
 }
 

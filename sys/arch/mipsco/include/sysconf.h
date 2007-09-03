@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2.42.1 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.42.2 2007/09/03 14:28:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@ struct platform {
 	 */
 	void	(*cons_init) __P((void));
 	void	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
-	int	(*memsize) __P((caddr_t));
+	int	(*memsize) __P((void *));
 	void	(*intr_establish) __P((int, int (*)__P((void *)), void *)); 
 	void	(*clkinit) __P((void));
 };

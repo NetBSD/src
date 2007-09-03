@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3.34.1 2006/06/21 14:52:44 yamt Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3.34.2 2007/09/03 14:26:55 yamt Exp $	*/
 
 /*
  * Polling driver for National Semiconductor DS8390/WD83C690 based
@@ -45,13 +45,13 @@ static u_short next_packet;
 extern u_char eth_myaddr[6];
 
 #ifndef _STANDALONE
-static caddr_t vmembase;
-extern caddr_t mapmem __P((int, int));
-extern void unmapmem __P((caddr_t, int));
+static void *vmembase;
+extern void *mapmem __P((int, int));
+extern void unmapmem __P((void *, int));
 extern int mapio __P((void));
 
 static void bbcopy(src, dst, len)
-caddr_t src, dst;
+void *src, dst;
 int len;
 {
 	char *s = (char *)src, *d = (char *)dst;

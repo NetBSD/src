@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.11.16.1 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: cfl.c,v 1.11.16.2 2007/09/03 14:30:51 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.11.16.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.11.16.2 2007/09/03 14:30:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ cflrw(dev, uio, flag)
 		while ((bp->b_flags & B_DONE) == 0)
 			(void) tsleep(bp, PRIBIO, "cflrw", 0);
 		splx(s);
-		if (bp->b_flags & B_ERROR) {
-			error = EIO;
+		if (bp->b_error != 0) {
+			error = bp->b_error;
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {
@@ -217,7 +217,7 @@ cflrw(dev, uio, flag)
 		}
 	}
 	cfltab.cfl_state = OPEN;
-	wakeup((caddr_t)&cfltab);
+	wakeup((void *)&cfltab);
 	return (error);
 }
 

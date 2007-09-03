@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.39.2.2 2007/02/26 09:08:40 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.39.2.3 2007/09/03 14:30:52 yamt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.2 2007/02/26 09:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.3 2007/09/03 14:30:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -255,7 +255,7 @@ db_read_bytes(addr, size, data)
 	register char	*data;
 {
 
-	memcpy(data, (caddr_t)addr, size);
+	memcpy(data, (void *)addr, size);
 }
 
 /*
@@ -268,7 +268,7 @@ db_write_bytes(addr, size, data)
 	register const char	*data;
 {
 
-	memcpy((caddr_t)addr, data, size);
+	memcpy((void *)addr, data, size);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39.2.3 2007/02/26 09:08:32 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39.2.4 2007/09/03 14:30:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39.2.3 2007/02/26 09:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39.2.4 2007/09/03 14:30:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,7 +246,7 @@ struct vm_map *phys_map = NULL;
 
 int	physmem;
 int	fputype;
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -287,7 +287,7 @@ static void initcpu(void);
 void 
 cpu_startup(void)
 {
-	caddr_t v;
+	void *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -300,16 +300,16 @@ cpu_startup(void)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (caddr_t) (PAGE_SIZE * 4);
-	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
+	v = (void *) (PAGE_SIZE * 4);
+	msgbufaddr = (void *)((char *)v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end[];
-		extern char *esym;
+		extern int nsym;
+		extern char *ssym, *esym;
 
-		ksyms_init(end[0], end + 1, (int*)esym);
+		ksyms_init(nsym, ssym, esym);
 	}
 #endif /* DDB */
 

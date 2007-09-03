@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.22.16.2 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: openprom.c,v 1.22.16.3 2007/09/03 14:30:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.22.16.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.22.16.3 2007/09/03 14:30:06 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -116,7 +116,7 @@ openpromgetstr(int len, char *user, char **cpp)
 }
 
 int
-openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+openpromioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct opiocdesc *op;
 	int node, optionsnode, len, ok, error, s;

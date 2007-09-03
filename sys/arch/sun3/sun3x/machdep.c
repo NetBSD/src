@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101.2.3 2007/02/26 09:08:37 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101.2.4 2007/09/03 14:30:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101.2.3 2007/02/26 09:08:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101.2.4 2007/09/03 14:30:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,7 +144,7 @@ struct vm_map *phys_map = NULL;
 
 int	physmem;
 int	fputype;
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -217,12 +217,9 @@ consinit(void)
 void 
 cpu_startup(void)
 {
-	caddr_t v;
+	char *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize message buffer (for kernel printf).
@@ -231,8 +228,8 @@ cpu_startup(void)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
+	v = (char *)KERNBASE;
+	msgbufaddr = v + MSGBUFOFF;
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*

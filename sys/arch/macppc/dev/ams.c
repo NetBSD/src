@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.17.2.3 2007/02/26 09:07:19 yamt Exp $	*/
+/*	$NetBSD: ams.c,v 1.17.2.4 2007/09/03 14:27:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.2.3 2007/02/26 09:07:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.2.4 2007/09/03 14:27:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,7 +69,7 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
     amsmatch, amsattach, NULL, NULL);
 
 int ams_enable(void *);
-int ams_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int ams_ioctl(void *, u_long, void *, int, struct lwp *);
 void ams_disable(void *);
 
 /*
@@ -118,7 +118,7 @@ amsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid[4] = 0;
 
 	adbinfo.siServiceRtPtr = (Ptr)ms_adbcomplete;
-	adbinfo.siDataAreaAddr = (caddr_t)sc;
+	adbinfo.siDataAreaAddr = (void *)sc;
 
 	ems_init(sc);
 
@@ -408,7 +408,7 @@ ems_init(struct ams_softc *sc)
  * an ADB event record.
  */
 void
-ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
+ms_adbcomplete(uint8_t *buffer, uint8_t *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *sc;
@@ -627,7 +627,7 @@ ams_enable(void *v)
 }
 
 int
-ams_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ams_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return EPASSTHROUGH;
 }

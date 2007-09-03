@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.4.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.4.3 2007/09/03 14:31:32 yamt Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.4.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.4.3 2007/09/03 14:31:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ mainbus_attach(parent, self, aux)
 
 #ifndef XEN3
 	memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
-	mba.mba_caa.caa_name = "cpu";
 	mba.mba_caa.cpu_number = 0;
 	mba.mba_caa.cpu_role = CPU_ROLE_SP;
 	mba.mba_caa.cpu_func = 0;
@@ -186,7 +185,6 @@ mainbus_attach(parent, self, aux)
 #endif
 			if (numcpus == 0) {
 				memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
-				mba.mba_caa.caa_name = "cpu";
 				mba.mba_caa.cpu_number = 0;
 				mba.mba_caa.cpu_role = CPU_ROLE_SP;
 				mba.mba_caa.cpu_func = 0;

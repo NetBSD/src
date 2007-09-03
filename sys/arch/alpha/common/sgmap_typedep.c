@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.29.12.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.29.12.2 2007/09/03 14:22:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.29.12.1 2006/06/21 14:48:15 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.29.12.2 2007/09/03 14:22:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -321,7 +321,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	bus_size_t minlen, resid;
 	struct vmspace *vm;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 	int i, seg, error;
 
 	/*
@@ -350,7 +350,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
 		    addr, minlen, vm, flags, seg, sgmap);

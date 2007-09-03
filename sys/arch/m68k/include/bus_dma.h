@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.5.4.1 2007/02/26 09:07:11 yamt Exp $ */
+/* $NetBSD: bus_dma.h,v 1.5.4.2 2007/09/03 14:27:09 yamt Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -119,6 +119,7 @@ typedef struct m68k_bus_dmamap *bus_dmamap_t;
 struct m68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	u_int		_ds_flags;	/* MD flags */
 };
 typedef struct m68k_bus_dma_segment	bus_dma_segment_t;
 
@@ -166,8 +167,8 @@ struct m68k_bus_dma_tag {
 	void	(*_dmamem_free)(bus_dma_tag_t,
 		    bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };
@@ -215,7 +216,7 @@ struct m68k_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
-	int		_dm_flags;	/* misc. flags */
+	u_int		_dm_flags;	/* misc. flags */
 
 	/* Machine dependant fields: */
 	bus_size_t  dm_xfer_len;	/* length of successful transfer */
@@ -254,8 +255,8 @@ int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs);
 int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags);
-void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    int nsegs, size_t size, void **kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.27.16.1 2007/09/03 14:27:25 yamt Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -92,8 +92,6 @@ define	USRSTACK		USRSTACK
 
 # lwp & proc fields and values
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -126,7 +124,7 @@ define	SPL3			(PSL_S | PSL_IPL3)
 define	SPL4			(PSL_S | PSL_IPL4)
 define	SPL5			(PSL_S | PSL_IPL5)
 define	SPL6			(PSL_S | PSL_IPL6)
-define	MAC68K_IPL_CLOCK	MAC68K_IPL_CLOCK
+define	IPL_CLOCK		IPL_CLOCK
 
 # magic
 define	FC_USERD		FC_USERD

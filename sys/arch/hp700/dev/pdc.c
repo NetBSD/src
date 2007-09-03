@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.13.10.2 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: pdc.c,v 1.13.10.3 2007/09/03 14:25:35 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.13.10.2 2006/12/30 20:45:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.13.10.3 2007/09/03 14:25:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ pdcattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&sc->sc_to);
+	callout_init(&sc->sc_to, 0);
 }
 
 int
@@ -283,7 +283,7 @@ pdcpoll(dev_t dev, int events, struct lwp *l)
 }  
 
 int
-pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pdcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	int error;
@@ -324,7 +324,7 @@ pdcstart(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

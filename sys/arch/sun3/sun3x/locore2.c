@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.30.8.1 2006/12/30 20:47:13 yamt Exp $	*/
+/*	$NetBSD: locore2.c,v 1.30.8.2 2007/09/03 14:30:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.30.8.1 2006/12/30 20:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.30.8.2 2007/09/03 14:30:42 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -178,7 +178,7 @@ _vm_init(void)
 	 */
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
-	memset((caddr_t)proc0paddr, 0, USPACE);
+	memset((void *)proc0paddr, 0, USPACE);
 	lwp0.l_addr = proc0paddr;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2.18.2 2007/02/26 09:07:57 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.18.3 2007/09/03 14:29:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2.18.2 2007/02/26 09:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2.18.3 2007/09/03 14:29:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -86,7 +86,7 @@ void
 softintr__init(void)
 {
 	pool_init(&softintr_pool, sizeof(struct softintr), 0, 0, 0,
-	   "sipl", &pool_allocator_nointr);
+	   "sipl", &pool_allocator_nointr, IPL_NONE);
 
 #define DONETISR(n, f) \
 	softnet_handlers[(n)] = \

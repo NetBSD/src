@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.7.16.2 2006/12/30 20:46:41 yamt Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.7.16.3 2007/09/03 14:28:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7.16.2 2006/12/30 20:46:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7.16.3 2007/09/03 14:28:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,17 +202,15 @@ do_pending_int(void)
 			cpl |= imask[IPL_SOFTCLOCK];
 			ipending &= ~B(IPL_SOFTCLOCK);
 			mtmsr(emsr);
-			softclock(NULL);
+			softintr__run(IPL_SOFTCLOCK);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFTNET)) != 0 &&
 		    (cpl & B(IPL_SOFTNET)) == 0) {
-			int pisr = netisr;
-			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
 			mtmsr(emsr);
-			softnet(pisr);
+			softintr__run(IPL_SOFTNET);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFT)) != 0 &&
@@ -323,17 +321,15 @@ intr_return(struct clockframe *frame, int level)
 			cpl |= imask[IPL_SOFTCLOCK];
 			ipending &= ~B(IPL_SOFTCLOCK);
 			mtmsr(emsr);
-			softclock(NULL);
+			softintr__run(IPL_SOFTCLOCK);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFTNET)) != 0 &&
 		    (cpl & B(IPL_SOFTNET)) == 0) {
-			int pisr = netisr;
-			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
 			mtmsr(emsr);
-			softnet(pisr);
+			softintr__run(IPL_SOFTNET);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFT)) != 0 &&

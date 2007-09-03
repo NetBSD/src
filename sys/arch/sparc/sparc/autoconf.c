@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.210.2.1 2006/06/21 14:56:12 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.210.2.2 2007/09/03 14:30:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210.2.1 2006/06/21 14:56:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210.2.2 2007/09/03 14:30:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -311,7 +311,7 @@ bootstrap(void)
 	 * bytes available for the buffer at this location (see the
 	 * comment in locore.s at the top of the .text segment).
 	 */
-	initmsgbuf((caddr_t)KERNBASE, 8192);
+	initmsgbuf((void *)KERNBASE, 8192);
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -913,7 +913,6 @@ st_crazymap(int n)
 void
 cpu_configure(void)
 {
-	extern struct user *proc0paddr;	/* XXX see below */
 
 	/* initialise the softintr system */
 	softintr_init();
@@ -973,7 +972,10 @@ cpu_configure(void)
 	 * XXX stack running into it during auto-configuration.
 	 * XXX - should fix stack usage.
 	 */
-	bzero(proc0paddr, sizeof(struct user));
+	{
+		extern struct user *proc0paddr;
+		bzero(proc0paddr, sizeof(struct user));
+	}
 
 	spl0();
 }

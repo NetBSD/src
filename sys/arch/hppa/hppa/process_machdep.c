@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:35 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6.2.1 2007/09/03 14:26:23 yamt Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2005/06/01 13:01:35 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.1 2007/09/03 14:26:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ process_sstep(struct lwp *l, int sstep)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	if (!USERMODE(addr))	/* XXX */
 		return EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.12 2005/05/31 00:45:02 chs Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.12.2.1 2007/09/03 14:23:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -65,6 +65,8 @@
 	.word	_C_LABEL(xscale_pmc_dispatch)
 #endif
 
+LOCK_CAS_CHECK_LOCALS
+
 AST_ALIGNMENT_FAULT_LOCALS
 
 ASENTRY_NP(irq_entry)
@@ -127,6 +129,8 @@ ASENTRY_NP(irq_entry)
 	ldr	r1, [r0]
 	sub	r1, r1, #1
 	str	r1, [r0]
+
+	LOCK_CAS_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.6.2 2007/02/26 09:07:40 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.6.3 2007/09/03 14:28:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,16 +82,9 @@
 #ifndef _LOCORE
 
 #include <sys/device.h>
+#include <mips/locore.h>
 
 extern const uint32_t ipl_sr_bits[_IPL_N];
-
-extern int _splraise(int);
-extern int _spllower(int);
-extern int _splset(int);
-extern int _splget(void);
-extern void _splnone(void);
-extern void _setsoftintr(int);
-extern void _clrsoftintr(int);
 
 #define spl0()		(void)_spllower(0)
 #define splx(s)		(void)_splset(s)

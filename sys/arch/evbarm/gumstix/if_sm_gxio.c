@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.1.8.3 2007/02/26 09:06:18 yamt Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.1.8.4 2007/09/03 14:24:04 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.1.8.3 2007/02/26 09:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.1.8.4 2007/09/03 14:24:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,6 +114,7 @@ CFATTACH_DECL(sm_gxio, sizeof(struct sm_gxio_softc),
     sm_gxio_match, sm_gxio_attach, NULL, NULL);
 
 
+/* ARGSUSED */
 static int
 sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -169,6 +170,7 @@ sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
 	return (rv);
 }
 
+/* ARGSUSED */
 void
 sm_gxio_attach(struct device *parent, struct device *self, void *aux)
 {

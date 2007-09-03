@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.30.6.3 2007/02/26 09:06:32 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.30.6.4 2007/09/03 14:25:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.30.6.3 2007/02/26 09:06:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.30.6.4 2007/09/03 14:25:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,8 @@ ppiattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_slave = ha->ha_slave;
 
-	callout_init(&sc->sc_timo_ch);
-	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_timo_ch, 0);
+	callout_init(&sc->sc_start_ch, 0);
 
 	/* Initialize the hpib queue entry. */
 	sc->sc_hq.hq_softc = sc;
@@ -447,7 +447,7 @@ again:
 }
 
 static int
-ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

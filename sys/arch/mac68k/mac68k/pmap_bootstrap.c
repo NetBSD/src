@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.63.2.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.63.2.2 2007/09/03 14:27:27 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63.2.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63.2.2 2007/09/03 14:27:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -53,8 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63.2.1 2006/12/30 20:46:25 yamt
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/autoconf.h>
-
-#include <ufs/mfs/mfs_extern.h>
+#include <machine/video.h>
 
 #include <mac68k/mac68k/macrom.h>
 
@@ -86,13 +85,9 @@ u_long	high[8];
 u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
-extern u_int32_t	mac68k_vidphys;
-extern u_int32_t	videoaddr;
-extern u_int32_t	videorowbytes;
-extern u_int32_t	videosize;
-static u_int32_t	newvideoaddr;
+static vaddr_t	newvideoaddr;
 
-extern caddr_t	ROMBase;
+extern void *	ROMBase;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -102,8 +97,9 @@ extern caddr_t	ROMBase;
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap;
-extern caddr_t	msgbufaddr;
+void *CADDR1, *CADDR2;
+char *vmmap;
+void *msgbufaddr;
 
 void	pmap_bootstrap(paddr_t, paddr_t);
 void	bootstrap_mac68k(int);
@@ -131,8 +127,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	pt_entry_t protopte, *pte, *epte;
 	extern char start[];
 
-	vidlen = m68k_round_page(((videosize >> 16) & 0xffff) * videorowbytes +
-	    m68k_page_offset(mac68k_vidphys));
+	vidlen = m68k_round_page(mac68k_video.mv_height *
+	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
 
 	/*
 	 * Calculate important physical addresses:
@@ -398,7 +394,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	protopte = (pt_entry_t)ROMBase | PG_RO | PG_V;
-	ROMBase = (caddr_t)PTE2VA(pte);
+	ROMBase = (void *)PTE2VA(pte);
 	epte = &pte[ROMMAPSIZE];
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -406,10 +402,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	if (vidlen) {
-		protopte = m68k_trunc_page(mac68k_vidphys) |
+		protopte = m68k_trunc_page(mac68k_video.mv_phys) |
 		    PG_RW | PG_V | PG_CI;
 		newvideoaddr = PTE2VA(pte)
-		    + m68k_page_offset(mac68k_vidphys);
+		    + m68k_page_offset(mac68k_video.mv_phys);
 		epte = &pte[VIDMAPSIZE];
 		while (pte < epte) {
 			*pte++ = protopte;
@@ -431,7 +427,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	Sysptmap = PA2VA(kptmpa, pt_entry_t *);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
-	 * Immediately follows `nptpages' of static kernel page table.
+	 * Allocated at the end of KVA space.
 	 */
 	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
 
@@ -544,13 +540,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	{
 		vaddr_t va = virtual_avail;
 
-		CADDR1 = (caddr_t)va;
+		CADDR1 = (void *)va;
 		va += PAGE_SIZE;
-		CADDR2 = (caddr_t)va;
+		CADDR2 = (void *)va;
 		va += PAGE_SIZE;
-		vmmap = (caddr_t)va;
+		vmmap = (void *)va;
 		va += PAGE_SIZE;
-		msgbufaddr = (caddr_t)va;
+		msgbufaddr = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		virtual_avail = va;
 	}
@@ -564,13 +560,13 @@ bootstrap_mac68k(int tc)
 #endif
 	extern int *esym;
 	paddr_t nextpa;
-	caddr_t oldROMBase;
+	void *oldROMBase;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");
 
 	oldROMBase = ROMBase;
-	mac68k_vidphys = videoaddr;
+	mac68k_video.mv_phys = mac68k_video.mv_kvaddr;
 
 	if (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
 	    ((tc & 0x8000) && (mmutype == MMU_68040))) {
@@ -606,8 +602,8 @@ bootstrap_mac68k(int tc)
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
-		printf("Video address 0x%lx -> 0x%lx.\n",
-		    (unsigned long)videoaddr, (unsigned long)newvideoaddr);
+		printf("Video address 0x%p -> 0x%p.\n",
+		    (void *)mac68k_video.mv_kvaddr, (void *)newvideoaddr);
 
 	mac68k_set_io_offsets(IOBase);
 
@@ -625,5 +621,5 @@ bootstrap_mac68k(int tc)
 		zs_init();
 #endif
 
-	videoaddr = newvideoaddr;
+	mac68k_video.mv_kvaddr = newvideoaddr;
 }

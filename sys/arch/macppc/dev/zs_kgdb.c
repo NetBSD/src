@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.3 2003/07/15 02:43:31 lukem Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.3.16.1 2007/09/03 14:27:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.3 2003/07/15 02:43:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.3.16.1 2007/09/03 14:27:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ zs_kgdb_init()
 		channel, kgdb_rate);
 
 	/* Setup temporary chanstate. */
-	bzero((caddr_t)&cs, sizeof(cs));
+	bzero((void *)&cs, sizeof(cs));
 	cs.cs_channel = channel;
 	cs.cs_brg_clk = PCLK / 16;
 	cs.cs_reg_csr  = &zc->zc_csr;
@@ -180,7 +180,7 @@ zs_kgdb_init()
 	zs_setparam(&cs, 0, kgdb_rate);
 
 	/* Store the getc/putc functions and arg. */
-	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
 }
 
 /*

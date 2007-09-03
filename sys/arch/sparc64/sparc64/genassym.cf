@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37.12.2 2006/12/30 20:47:05 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.37.12.3 2007/09/03 14:30:21 yamt Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,8 +119,6 @@ define	USRSTACK	USRSTACK
 define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -146,9 +144,6 @@ define	USIZ		sizeof(struct user)
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
-# UVM structure fields
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
-
 # pmap structure fields
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
 define	PM_SEGS		offsetof(struct pmap, pm_segs)
@@ -173,16 +168,14 @@ define	CI_FPLWP	offsetof(struct cpu_info, ci_fplwp)
 define	CI_NUMBER	offsetof(struct cpu_info, ci_number)
 define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
-define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_IDLE_U	offsetof(struct cpu_info, ci_idle_u)
 define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
+define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 
 # CPU boot arguments structure
 define	CBA_NODE	offsetof(struct cpu_bootargs, cb_node)
-define	CBA_INITSTACK	offsetof(struct cpu_bootargs, cb_initstack)
 define	CBA_KTEXT	offsetof(struct cpu_bootargs, cb_ktext)
 define	CBA_KTEXTP	offsetof(struct cpu_bootargs, cb_ktextp)
 define	CBA_EKTEXT	offsetof(struct cpu_bootargs, cb_ektext)
@@ -222,7 +215,6 @@ define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_PC		offsetof(struct pcb, pcb_pc)
 define  PCB_LASTCALL	offsetof(struct pcb, lastcall)
 define	PCB_SIZE	sizeof(struct pcb)
-
 
 # trapframe64 fields
 define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2.2.3 2007/02/26 09:05:39 yamt Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.2.2.4 2007/09/03 14:22:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.3 2007/02/26 09:05:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.4 2007/09/03 14:22:31 yamt Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -85,7 +85,7 @@ linux_syscall_intern(struct proc *p)
 static void
 linux_syscall_plain(struct trapframe *frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -127,8 +127,8 @@ linux_syscall_plain(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (caddr_t)&args[6],
+			params = (char *)frame->tf_rsp + sizeof(register_t);
+			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
 				goto bad;
@@ -159,7 +159,8 @@ linux_syscall_plain(struct trapframe *frame)
 		break;
 	default:
 	bad:
-		frame->tf_rax = native_to_linux_errno[error];
+		error = native_to_linux_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
@@ -170,7 +171,7 @@ linux_syscall_plain(struct trapframe *frame)
 static void
 linux_syscall_fancy(struct trapframe *frame)
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -212,8 +213,8 @@ linux_syscall_fancy(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (caddr_t)&args[6],
+			params = (char *)frame->tf_rsp + sizeof(register_t);
+			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
 				goto bad;
@@ -247,7 +248,8 @@ out:
 		break;
 	default:
 	bad:
-		frame->tf_rax = native_to_linux_errno[error];
+		error = native_to_linux_errno[error];
+		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}

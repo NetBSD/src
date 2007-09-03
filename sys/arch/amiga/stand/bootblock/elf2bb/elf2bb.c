@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.10.12.1 2006/06/21 14:48:53 yamt Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.10.12.2 2007/09/03 14:23:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 {
 	int ifd, ofd;
 	u_int mid, flags, magic;
-	caddr_t image;
+	void *image;
 	Elf32_Ehdr *eh;
 	Elf32_Shdr *sh;
 	char *shstrtab;

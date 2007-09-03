@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.67.6.2 2006/12/30 20:45:56 yamt Exp $	*/
+/*	$NetBSD: rd.c,v 1.67.6.3 2007/09/03 14:25:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.67.6.2 2006/12/30 20:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.67.6.3 2007/09/03 14:25:16 yamt Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -388,7 +388,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 
 	/* Initialize the hpib job queue entry */
 	sc->sc_hq.hq_softc = sc;
@@ -576,7 +576,7 @@ rdgetinfo(dev_t dev)
 	 * Set some default values to use while reading the label
 	 * or to use if there isn't a label.
 	 */
-	memset((caddr_t)lp, 0, sizeof *lp);
+	memset((void *)lp, 0, sizeof *lp);
 	rdgetdefaultlabel(rs, lp);
 
 	/*
@@ -624,7 +624,7 @@ rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		rs->sc_flags |= RDF_OPENING;
 		error = rdgetinfo(dev);
 		rs->sc_flags &= ~RDF_OPENING;
-		wakeup((caddr_t)rs);
+		wakeup((void *)rs);
 		if (error)
 			return error;
 	}
@@ -683,7 +683,7 @@ rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 		splx(s);
 		rs->sc_flags &= ~(RDF_CLOSING|RDF_WLABEL);
-		wakeup((caddr_t)rs);
+		wakeup((void *)rs);
 	}
 	return 0;
 }
@@ -725,7 +725,7 @@ rdstrategy(struct buf *bp)
 			}
 			if (sz < 0) {
 				bp->b_error = EINVAL;
-				goto bad;
+				goto done;
 			}
 			bp->b_bcount = dbtob(sz);
 		}
@@ -738,7 +738,7 @@ rdstrategy(struct buf *bp)
 #endif
 		    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
 			bp->b_error = EROFS;
-			goto bad;
+			goto done;
 		}
 	}
 	bp->b_rawblkno = bn + offset;
@@ -750,8 +750,6 @@ rdstrategy(struct buf *bp)
 	}
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	biodone(bp);
 }
@@ -793,7 +791,7 @@ rdfinish(struct rd_softc *rs, struct buf *bp)
 	rs->sc_active = 0;
 	if (rs->sc_flags & RDF_WANTED) {
 		rs->sc_flags &= ~RDF_WANTED;
-		wakeup((caddr_t)&rs->sc_tab);
+		wakeup((void *)&rs->sc_tab);
 	}
 	return NULL;
 }
@@ -865,7 +863,6 @@ again:
 	printf("%s: rdstart err: cmd 0x%x sect %ld blk %" PRId64 " len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
-	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
 	bp = rdfinish(rs, bp);
 	if (bp) {
@@ -960,7 +957,6 @@ rdintr(void *arg)
 				rdstart(rs);
 			return;
 		}
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 	}
 	if (rdfinish(rs, bp))
@@ -983,7 +979,7 @@ rdstatus(struct rd_softc *rs)
 	rs->sc_rsc.c_sram = C_SRAM;
 	rs->sc_rsc.c_ram = C_RAM;
 	rs->sc_rsc.c_cmd = C_STATUS;
-	memset((caddr_t)&rs->sc_stat, 0, sizeof(rs->sc_stat));
+	memset((void *)&rs->sc_stat, 0, sizeof(rs->sc_stat));
 	rv = hpibsend(c, s, C_CMD, &rs->sc_rsc, sizeof(rs->sc_rsc));
 	if (rv != sizeof(rs->sc_rsc)) {
 #ifdef DEBUG
@@ -1147,7 +1143,7 @@ rdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-rdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *sc = rd_cd.cd_devs[unit];
@@ -1207,7 +1203,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 {
 	int type = sc->sc_type;
 
-	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+	memset((void *)lp, 0, sizeof(struct disklabel));
 
 	lp->d_type = DTYPE_HPIB;
 	lp->d_secsize = DEV_BSIZE;
@@ -1288,7 +1284,7 @@ static int rddoingadump;	/* simple mutex */
  * Non-interrupt driven, non-DMA dump routine.
  */
 static int
-rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	int sectorsize;		/* size of a disk sector */
 	int nsects;		/* number of sectors in partition */
@@ -1377,7 +1373,7 @@ rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va += sectorsize * nwrt;
+		va = (char *)va + sectorsize * nwrt;
 	}
 	rddoingadump = 0;
 	return 0;

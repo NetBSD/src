@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.8.6.2 2007/02/26 09:08:14 yamt Exp $	*/
+/*	$NetBSD: profile.c,v 1.8.6.3 2007/09/03 14:29:51 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.8.6.2 2007/02/26 09:08:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.8.6.3 2007/09/03 14:29:51 yamt Exp $");
 
 #include "profiler.h"
 
@@ -288,7 +288,7 @@ int
 profioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {

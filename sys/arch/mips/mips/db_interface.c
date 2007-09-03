@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53.2.3 2007/02/26 09:07:28 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.53.2.4 2007/09/03 14:27:59 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53.2.3 2007/02/26 09:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53.2.4 2007/09/03 14:27:59 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -721,7 +721,7 @@ next_instr_address(db_addr_t pc, bool bd)
 {
 	unsigned ins;
 
-	if (bd == FALSE)
+	if (bd == false)
 		return (pc + 4);
 	
 	if (pc < MIPS_KSEG0_START)

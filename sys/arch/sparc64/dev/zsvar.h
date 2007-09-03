@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.3 2003/08/07 16:29:48 agc Exp $ */
+/*	$NetBSD: zsvar.h,v 1.3.16.1 2007/09/03 14:30:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ struct zs_chanstate {
 	 */
 	int	cs_tbc;			/* transmit byte count */
 	int	cs_heldtbc;		/* held tbc while xmission stopped */
-	caddr_t	cs_tba;			/* transmit buffer address */
+	void *	cs_tba;			/* transmit buffer address */
 
 	/*
 	 * Printing an overrun error message often takes long enough to

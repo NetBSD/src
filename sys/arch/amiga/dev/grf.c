@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.48.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: grf.c,v 1.48.16.2 2007/09/03 14:22:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.48.16.2 2007/09/03 14:22:48 yamt Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -236,7 +236,7 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 /*ARGSUSED*/
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct grf_softc *gp;
 	int error;
@@ -247,10 +247,10 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo)-4);
+	  	bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
+		bcopy((void *)&gp->g_display, data, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
 		error = grfon(dev);

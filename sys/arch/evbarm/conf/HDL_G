@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.1.14.3 2006/12/30 20:45:48 yamt Exp $
+# $NetBSD: HDL_G,v 1.1.14.4 2007/09/03 14:24:00 yamt Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -269,7 +269,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

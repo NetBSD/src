@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.21 2005/06/03 15:04:21 tsutsui Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21.2.1 2007/09/03 14:30:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2005/06/03 15:04:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21.2.1 2007/09/03 14:30:39 yamt Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -88,7 +88,8 @@ initfpu(void)
 	if (fputype == FPU_NONE) {
 		/* Might as well turn the enable bit back off. */
 		enable_fpu(0);
-	}
+	} else
+		m68k_make_fpu_idle_frame();
 }
 
 static int 

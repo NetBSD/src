@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD	*/
+/*	$NetBSD: via_padlock.c,v 1.1.4.3 2007/09/03 14:31:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.2 2007/02/26 09:08:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.3 2007/09/03 14:31:29 yamt Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.2 2007/02/26 09:08:52 yamt Exp
 int	via_padlock_crypto_newsession(void *, u_int32_t *, struct cryptoini *);
 int	via_padlock_crypto_process(void *, struct cryptop *, int);
 int	via_padlock_crypto_swauth(struct cryptop *, struct cryptodesc *,
-	    struct swcr_data *, caddr_t);
+	    struct swcr_data *, void *);
 int	via_padlock_crypto_encdec(struct cryptop *, struct cryptodesc *,
-	    struct via_padlock_session *, struct via_padlock_softc *, caddr_t);
+	    struct via_padlock_session *, struct via_padlock_softc *, void *);
 int	via_padlock_crypto_freesession(void *, u_int64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
@@ -57,7 +57,8 @@ static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 void
 via_padlock_attach(void)
 {
-	if (!(cpu_feature_padlock & CPUID_FEAT_VACE))
+#define VIA_ACE (CPUID_VIA_HAS_ACE|CPUID_VIA_DO_ACE)
+	if ((cpu_feature_padlock & VIA_ACE) != VIA_ACE)
 		return;
 
 	struct via_padlock_softc *vp_sc;
@@ -314,7 +315,7 @@ via_padlock_cbc(void *cw, void *src, void *dst, void *key, int rep,
 
 int
 via_padlock_crypto_swauth(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, caddr_t buf)
+    struct swcr_data *sw, void *buf)
 {
 	int	type;
 
@@ -328,7 +329,7 @@ via_padlock_crypto_swauth(struct cryptop *crp, struct cryptodesc *crd,
 
 int
 via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
-    struct via_padlock_session *ses, struct via_padlock_softc *sc, caddr_t buf)
+    struct via_padlock_session *ses, struct via_padlock_softc *sc, void *buf)
 {
 	u_int32_t *key;
 	int err = 0;
@@ -360,7 +361,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv);
 			else
-				memcpy(crp->crp_buf + crd->crd_inject,
+				memcpy((char *)crp->crp_buf + crd->crd_inject,
 				    sc->op_iv, 16);
 		}
 	} else {
@@ -376,7 +377,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv);
 			else
-				memcpy(sc->op_iv, crp->crp_buf +
+				memcpy(sc->op_iv, (char *)crp->crp_buf +
 				    crd->crd_inject, 16);
 		}
 	}
@@ -388,7 +389,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		cuio_copydata((struct uio *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		memcpy(sc->op_buf, crp->crp_buf + crd->crd_skip,
+		memcpy(sc->op_buf, (char *)crp->crp_buf + crd->crd_skip,
 		    crd->crd_len);
 
 	sc->op_cw[1] = sc->op_cw[2] = sc->op_cw[3] = 0;
@@ -402,7 +403,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		cuio_copyback((struct uio *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		memcpy(crp->crp_buf + crd->crd_skip, sc->op_buf,
+		memcpy((char *)crp->crp_buf + crd->crd_skip, sc->op_buf,
 		    crd->crd_len);
 
 	/* copy out last block for use as next session IV */
@@ -416,8 +417,8 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			    crd->crd_skip + crd->crd_len - 16, 16,
 			    ses->ses_iv);
 		else
-			memcpy(ses->ses_iv, crp->crp_buf + crd->crd_skip +
-			    crd->crd_len - 16, 16);
+			memcpy(ses->ses_iv, (char *)crp->crp_buf +
+			    crd->crd_skip + crd->crd_len - 16, 16);
 	}
 
 	if (sc->op_buf != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.18.3 2007/09/03 14:24:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.3 2007/09/03 14:24:47 yamt Exp $");
 
 #include "opt_sbd.h"
 
@@ -56,7 +56,7 @@ cpu_configure(void)
 	splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
-	spl0();
+	_splnone();
 }
 
 void

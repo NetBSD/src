@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.2.3 2007/02/26 09:08:43 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.96.2.4 2007/09/03 14:31:00 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,10 +33,9 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.3 2007/02/26 09:08:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.4 2007/09/03 14:31:00 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -64,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.3 2007/02/26 09:08:43 yamt Exp $");
 #include <machine/db_machdep.h>
 #endif
 #include <kern/syscalls.c>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #ifdef TRAPDEBUG
 volatile int faultdebug = 0;
@@ -241,7 +238,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			}
 		} else {
 			trapsig = 0;
-			if (map != kernel_map && (caddr_t)addr >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
 		if (umode)

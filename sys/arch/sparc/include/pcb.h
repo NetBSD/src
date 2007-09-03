@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2003/08/07 16:29:40 agc Exp $ */
+/*	$NetBSD: pcb.h,v 1.6.16.1 2007/09/03 14:30:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ struct pcb {
 	int	pcb_pc;		/* pc (%o7) when switch() was called */
 	int	pcb_psr;	/* %psr when switch() was called */
 
-	caddr_t	pcb_onfault;	/* for copyin/out */
+	void *	pcb_onfault;	/* for copyin/out */
 
 	int	pcb_uw;		/* user windows inside CPU */
 	int	pcb_wim;	/* log2(%wim) */

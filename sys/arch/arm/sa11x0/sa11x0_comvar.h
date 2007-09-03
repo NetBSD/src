@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_comvar.h,v 1.1.42.1 2006/06/21 14:49:40 yamt Exp $        */
+/*      $NetBSD: sa11x0_comvar.h,v 1.1.42.2 2007/09/03 14:23:25 yamt Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -58,9 +58,7 @@ struct sacom_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t 	sc_ioh;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*sc_si;
-#endif
 	struct tty		*sc_tty;
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.37.4.2 2007/02/26 09:08:29 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.37.4.3 2007/09/03 14:30:26 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37.4.2 2007/02/26 09:08:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37.4.3 2007/09/03 14:30:26 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.37.4.2 2007/02/26 09:08:29 yamt E
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
 
 void
 svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
@@ -351,7 +351,7 @@ svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
  * map the trap code into the svr4 siginfo as best we can
  */
 static void
-svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, caddr_t addr)
+svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, void *addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -511,7 +511,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+		fp = (struct svr4_sigframe *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
@@ -531,7 +531,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
-	    (caddr_t)(u_long)tf->tf_pc);
+	    (void *)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
