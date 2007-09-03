@@ -1,3 +1,7 @@
+2007-09-03  Matthew Grooms <mgrooms@shrew.net>
+	* src/racoon/racoon.conf.5: Correct wins4 and nbns4 modecfg option syntax.
+	* src/racoon/cftoken.l: Add nbns4 as an alias for wins4.
+
 ---------------------------------------------
 
 	0.7 released
