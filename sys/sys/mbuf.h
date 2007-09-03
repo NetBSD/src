@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.11 2007/09/03 14:46:28 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.12 2007/09/03 14:58:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -919,7 +919,7 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);
-caddr_t	m_mapin(struct mbuf *);
+char *	m_mapin(struct mbuf *);
 void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
