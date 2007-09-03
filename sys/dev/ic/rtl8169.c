@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.86 2007/07/09 21:00:38 ad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.86.6.1 2007/09/03 16:48:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1600,10 +1600,10 @@ re_start(struct ifnet *ifp)
 		}
 
 		nsegs = map->dm_nsegs;
-		pad = FALSE;
+		pad = false;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
 		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
-			pad = TRUE;
+			pad = true;
 			nsegs++;
 		}
 
@@ -1767,7 +1767,7 @@ static int
 re_init(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
-	uint8_t			*enaddr;
+	const uint8_t		*enaddr;
 	uint32_t		rxcfg = 0;
 	uint32_t		reg;
 	int error;
@@ -1826,7 +1826,7 @@ re_init(struct ifnet *ifp)
 	 * register write enable" mode to modify the ID registers.
 	 */
 	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_WRITECFG);
-	enaddr = LLADDR(ifp->if_sadl);
+	enaddr = CLLADDR(ifp->if_sadl);
 	reg = enaddr[0] | (enaddr[1] << 8) |
 	    (enaddr[2] << 16) | (enaddr[3] << 24);
 	CSR_WRITE_4(sc, RTK_IDR0, reg);

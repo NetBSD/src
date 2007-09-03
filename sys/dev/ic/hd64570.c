@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.36 2007/03/04 06:01:55 christos Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.36.14.1 2007/09/03 16:48:01 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.36 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.36.14.1 2007/09/03 16:48:01 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -981,7 +981,7 @@ sca_ioctl(ifp, cmd, addr)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 		case AF_INET:
 			break;

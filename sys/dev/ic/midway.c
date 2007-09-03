@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.75 2007/03/04 06:01:58 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.75.14.1 2007/09/03 16:48:05 jmcneill Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.75 2007/03/04 06:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.75.14.1 2007/09/03 16:48:05 jmcneill Exp $");
 
 #include "opt_natm.h"
 
@@ -1275,7 +1275,7 @@ void *data;
 			error = EAFNOSUPPORT;	/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 		case AF_INET:
 			break;

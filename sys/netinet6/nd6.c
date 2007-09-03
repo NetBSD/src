@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.117.4.1 2007/08/09 02:37:24 jmcneill Exp $	*/
+/*	$NetBSD: nd6.c,v 1.117.4.2 2007/09/03 16:49:08 jmcneill Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117.4.1 2007/08/09 02:37:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117.4.2 2007/09/03 16:49:08 jmcneill Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1116,11 +1116,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	static const struct sockaddr_dl null_sdl = {
-		.sdl_len = sizeof(null_sdl),
-		.sdl_family = AF_LINK,
-	};
 	struct ifnet *ifp = rt->rt_ifp;
+	uint8_t namelen = strlen(ifp->if_xname), addrlen = ifp->if_addrlen;
 	struct ifaddr *ifa;
 
 	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
@@ -1178,18 +1175,24 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
 		    ((rt->rt_flags & RTF_LLINFO) && !ln)) {
+			union {
+				struct sockaddr sa;
+				struct sockaddr_dl sdl;
+				struct sockaddr_storage ss;
+			} u;
 			/*
 			 * Case 1: This route should come from a route to
 			 * interface (RTF_CLONING case) or the route should be
 			 * treated as on-link but is currently not
 			 * (RTF_LLINFO && !ln case).
 			 */
-			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
+			sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+			    ifp->if_index, ifp->if_type,
+			    NULL, namelen, NULL, addrlen);
+			rt_setgate(rt, &u.sa);
+			gate = rt->rt_gateway;
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
-			gate = rt->rt_gateway;
-			satosdl(gate)->sdl_type = ifp->if_type;
-			satosdl(gate)->sdl_index = ifp->if_index;
 			if (ln)
 				nd6_llinfo_settimer(ln, 0);
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
@@ -1236,7 +1239,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * point link, so we can skip this test for a p2p link.
 			 */
 			if (gate->sa_family != AF_LINK ||
-			    gate->sa_len < sizeof(null_sdl)) {
+			    gate->sa_len <
+			    sockaddr_dl_measure(namelen, addrlen)) {
 				log(LOG_DEBUG,
 				    "nd6_rtrequest: bad gateway value: %s\n",
 				    if_name(ifp));
@@ -1301,22 +1305,22 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * check if rt_getkey(rt) is an address assigned
 		 * to the interface.
 		 */
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(rt->rt_ifp,
+		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp,
 		    &satocsin6(rt_getkey(rt))->sin6_addr);
 		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 		    __LINE__, (void *)rt->_rt_key);
 		if (ifa) {
-			void *macp = nd6_ifptomac(ifp);
+			const void *mac;
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			if (macp) {
+			if ((mac = nd6_ifptomac(ifp)) != NULL) {
 				/* XXX check for error */
-				(void)sockaddr_dl_setaddr(satosdl(gate), macp,
-				    ifp->if_addrlen);
+				(void)sockaddr_dl_setaddr(satosdl(gate),
+				    gate->sa_len, mac, ifp->if_addrlen);
 			}
 			if (nd6_useloopback) {
-				rt->rt_ifp = lo0ifp;	/* XXX */
+				ifp = rt->rt_ifp = lo0ifp;	/* XXX */
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.
@@ -1737,7 +1741,8 @@ fail:
 		 * XXX is it dependent to ifp->if_type?
 		 */
 		/* XXX check for error */
-		(void)sockaddr_dl_setaddr(sdl, lladdr, ifp->if_addrlen);
+		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
+		    ifp->if_addrlen);
 	}
 
 	if (!is_newentry) {

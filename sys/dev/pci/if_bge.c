@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.4 2007/08/23 09:32:50 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.5 2007/09/03 16:48:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.4 2007/08/23 09:32:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.5 2007/09/03 16:48:14 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1659,9 +1659,9 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Set random backoff seed for TX */
 	CSR_WRITE_4(sc, BGE_TX_RANDOM_BACKOFF,
-	    LLADDR(ifp->if_sadl)[0] + LLADDR(ifp->if_sadl)[1] +
-	    LLADDR(ifp->if_sadl)[2] + LLADDR(ifp->if_sadl)[3] +
-	    LLADDR(ifp->if_sadl)[4] + LLADDR(ifp->if_sadl)[5] +
+	    CLLADDR(ifp->if_sadl)[0] + CLLADDR(ifp->if_sadl)[1] +
+	    CLLADDR(ifp->if_sadl)[2] + CLLADDR(ifp->if_sadl)[3] +
+	    CLLADDR(ifp->if_sadl)[4] + CLLADDR(ifp->if_sadl)[5] +
 	    BGE_TX_BACKOFF_SEED_MASK);
 
 	/* Set inter-packet gap */
@@ -3928,7 +3928,7 @@ static int
 bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
-	u_int16_t *m;
+	const u_int16_t *m;
 	int s, error;
 
 	s = splnet();
@@ -3959,7 +3959,7 @@ bge_init(struct ifnet *ifp)
 	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
-	m = (u_int16_t *)&(LLADDR(ifp->if_sadl)[0]);
+	m = (const u_int16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 

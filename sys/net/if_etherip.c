@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.9 2007/07/14 21:02:39 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.9.6.1 2007/09/03 16:48:54 jmcneill Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -678,11 +678,12 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	int error;
 	size_t len;
 	char addr[3 * ETHER_ADDR_LEN];
+	char enaddr[ETHER_ADDR_LEN];
 
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), CLLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -693,7 +694,9 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
+	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	                        enaddr, ETHER_ADDR_LEN) == NULL)
 		return EINVAL;
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.4 2007/08/21 06:51:57 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.5 2007/09/03 16:48:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.4 2007/08/21 06:51:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.5 2007/09/03 16:48:19 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -252,6 +252,7 @@ typedef enum {
 	WM_T_82573,			/* i82573 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
+	WM_T_ICH9,			/* ICH9 LAN */
 } wm_chip_type;
 
 /*
@@ -567,6 +568,7 @@ static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
 static int	wm_match(struct device *, struct cfdata *, void *);
 static void	wm_attach(struct device *, struct device *, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
+static void	wm_get_auto_rd_done(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
@@ -830,7 +832,21 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_G,
 	  "Intel i82801H IFE (G) LAN Controller",
 	  WM_T_ICH8,		WMP_F_1000T },
-
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_AMT,
+	  "82801I (AMT) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE,
+	  "82801I LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_G,
+	  "82801I (G) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_GT,
+	  "82801I (GT) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
+	  "82801I (C) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1068,7 +1084,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if (sc->sc_type != WM_T_ICH8)
+		if ((sc->sc_type != WM_T_ICH8) || (sc->sc_type != WM_T_ICH9))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose("%s: PCI-Express bus\n", sc->sc_dev.dv_xname);
 	} else {
@@ -1238,7 +1254,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if (sc->sc_type == WM_T_ICH8) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
 		uint32_t flash_size;
 		sc->sc_flags |= WM_F_SWFWHW_SYNC | WM_F_EEPROM_FLASH;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
@@ -1454,7 +1470,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Determine if we're TBI or GMII mode, and initialize the
 	 * media structures accordingly.
 	 */
-	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_82573) {
+	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
+	    || sc->sc_type == WM_T_82573) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
@@ -2876,7 +2893,7 @@ wm_tick(void *arg)
 static void
 wm_reset(struct wm_softc *sc)
 {
-	int i;
+	uint32_t reg;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -2906,12 +2923,31 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_8K;
 		CSR_WRITE(sc, WMREG_PBS, PBA_16K);
 		break;
+	case WM_T_ICH9:
+		sc->sc_pba = PBA_10K;
+		break;
 	default:
 		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
 		    PBA_40K : PBA_48K;
 		break;
 	}
 	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
+
+	if (sc->sc_flags & WM_F_PCIE) {
+		int timeout = 800;
+
+		sc->sc_ctrl |= CTRL_GIO_M_DIS;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
+		while (timeout) {
+			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA) == 0)
+				break;
+			delay(100);
+		}
+	}
+
+	/* clear interrupt */
+	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 
 	/*
 	 * 82541 Errata 29? & 82547 Errata 28?
@@ -2955,8 +2991,10 @@ wm_reset(struct wm_softc *sc)
 		break;
 
 	case WM_T_ICH8:
+	case WM_T_ICH9:
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST | CTRL_PHY_RESET);
+		delay(10000);
 
 	default:
 		/* Everything else can safely use the documented method. */
@@ -2965,27 +3003,47 @@ wm_reset(struct wm_softc *sc)
 	}
 	delay(10000);
 
+	/* reload EEPROM */
+	switch(sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+	case WM_T_82544:
+		delay(10);
+		reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		delay(2000);
+		break;
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+		delay(20000);
+		break;
+	case WM_T_82573:
+		if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+			delay(10);
+			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		}
+		/* FALLTHROUGH */
+	default:
+		/* check EECD_EE_AUTORD */
+		wm_get_auto_rd_done(sc);
+	}
+
+#if 0
 	for (i = 0; i < 1000; i++) {
-		if ((CSR_READ(sc, WMREG_CTRL) & CTRL_RST) == 0)
+		if ((CSR_READ(sc, WMREG_CTRL) & CTRL_RST) == 0) {
 			return;
+		}
 		delay(20);
 	}
 
 	if (CSR_READ(sc, WMREG_CTRL) & CTRL_RST)
 		log(LOG_ERR, "%s: reset failed to complete\n",
 		    sc->sc_dev.dv_xname);
-
-	if (sc->sc_type >= WM_T_80003) {
-		/* wait for eeprom to reload */
-		for (i = 1000; i > 0; i--) {
-			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
-				break;
-		}
-		if (i == 0) {
-			log(LOG_ERR, "%s: auto read from eeprom failed to "
-			    "complete\n", sc->sc_dev.dv_xname);
-		}
-	}
+#endif
 }
 
 /*
@@ -3367,6 +3425,39 @@ wm_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
+void
+wm_get_auto_rd_done(struct wm_softc *sc)
+{
+	int i;
+
+	/* wait for eeprom to reload */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		for (i = 10; i > 0; i--) {
+			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
+				break;
+			delay(1000);
+		}
+		if (i == 0) {
+			log(LOG_ERR, "%s: auto read from eeprom failed to "
+			    "complete\n", sc->sc_dev.dv_xname);
+		}
+		break;
+	default:
+		delay(5000);
+		break;
+	}
+
+	/* Phy configuration starts after EECD_AUTO_RD is set */
+	if (sc->sc_type == WM_T_82573)
+		delay(25000);
+}
+
 /*
  * wm_acquire_eeprom:
  *
@@ -3663,7 +3754,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return 1;
 
-	if (sc->sc_type == WM_T_ICH8)
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -3857,11 +3948,11 @@ wm_set_filter(struct wm_softc *sc)
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
-	wm_set_ral(sc, LLADDR(ifp->if_sadl), 0);
+	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
 	for (i = 1; i < size; i++)
 		wm_set_ral(sc, NULL, i);
 
-	if (sc->sc_type == WM_T_ICH8)
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -3886,7 +3977,7 @@ wm_set_filter(struct wm_softc *sc)
 		hash = wm_mchash(sc, enm->enm_addrlo);
 
 		reg = (hash >> 5);
-		if (sc->sc_type == WM_T_ICH8)
+		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -4188,7 +4279,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	uint32_t reg;
 	int func = 0; /* XXX gcc */
 
-	if (sc->sc_type == WM_T_ICH8) {
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)) {
 		if (wm_get_swfwhw_semaphore(sc))
 			return;
 	}
@@ -4232,7 +4323,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
 	}
-	if (sc->sc_type == WM_T_ICH8)
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9))
 		wm_put_swfwhw_semaphore(sc);
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
@@ -5065,7 +5156,7 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
 static int32_t
 wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 {
-    int32_t status = 0;
+    int32_t status;
     uint16_t word = 0;
 
     status = wm_read_ich8_data(sc, index, 1, &word);
@@ -5087,7 +5178,8 @@ wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 static int32_t
 wm_read_ich8_word(struct wm_softc *sc, uint32_t index, uint16_t *data)
 {
-    int32_t status = 0;
+    int32_t status;
+
     status = wm_read_ich8_data(sc, index, 2, data);
     return status;
 }

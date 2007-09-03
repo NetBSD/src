@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.5.42.1 2007/08/03 22:17:10 jmcneill Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.5.42.2 2007/09/03 16:47:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,12 +79,18 @@ extern void Xintrspurious(void);
 #define LAPIC_SPURIOUS_VECTOR		0xef
 
 /*
- * Vector used for inter-processor interrupts.
+ * Vectors used for inter-processor interrupts.
  */
 extern void Xintr_lapic_ipi(void);
 extern void Xrecurse_lapic_ipi(void);
 extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_VECTOR			0xe0
+
+extern void Xintr_lapic_tlb_bcast(void);
+#define LAPIC_TLB_BCAST_VECTOR			0xe1
+
+extern void Xintr_lapic_tlb_mcast(void);
+#define LAPIC_TLB_MCAST_VECTOR			0xe2
 
 /*
  * Vector used for local apic timer interrupts.

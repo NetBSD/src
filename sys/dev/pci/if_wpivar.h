@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6.6.2 2007/09/02 12:50:36 jmcneill Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.6.3 2007/09/03 16:48:21 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -144,7 +144,6 @@ struct wpi_softc {
 
 	struct wpi_tx_ring	txq[4];
 	struct wpi_tx_ring	cmdq;
-	struct wpi_tx_ring	svcq;
 	struct wpi_rx_ring	rxq;
 
 	bus_space_tag_t		sc_st;

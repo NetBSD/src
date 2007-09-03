@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.127 2007/07/09 21:00:34 ad Exp $  */
+/*	$NetBSD: atw.c,v 1.127.6.1 2007/09/03 16:47:58 jmcneill Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127 2007/07/09 21:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127.6.1 2007/09/03 16:47:58 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -3851,7 +3851,6 @@ int
 atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct atw_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	/* XXX monkey see, monkey do. comes from wi_ioctl. */
@@ -3877,10 +3876,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				atw_filter_setup(sc); /* do not rescan */
 			error = 0;

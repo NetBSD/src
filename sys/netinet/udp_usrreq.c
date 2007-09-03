@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.160 2007/06/27 20:38:32 degroote Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.160.6.1 2007/09/03 16:49:07 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.160 2007/06/27 20:38:32 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.160.6.1 2007/09/03 16:49:07 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -617,14 +617,14 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		ipsecstat.in_polvio++;
-		if ((n = m_copy(m, 0, M_COPYALL)) != NULL)
+		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
 			    0, 0);
 		return;
 	}
 #endif /*IPSEC*/
 
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (inp && (inp->inp_flags & INP_CONTROLOPTS
 			 || so->so_options & SO_TIMESTAMP)) {
 			struct ip *ip = mtod(n, struct ip *);
@@ -664,14 +664,14 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		ipsec6stat.in_polvio++;
-		if ((n = m_copy(m, 0, M_COPYALL)) != NULL)
+		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_ADMIN, 0);
 		return;
 	}
 #endif /*IPSEC*/
 
-	if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
 			  || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);

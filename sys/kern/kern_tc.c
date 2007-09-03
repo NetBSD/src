@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.19 2007/03/04 06:03:07 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.19.14.1 2007/09/03 16:48:48 jmcneill Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.19 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.19.14.1 2007/09/03 16:48:48 jmcneill Exp $");
 
 #include "opt_ntp.h"
 
@@ -280,8 +280,10 @@ binuptime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		*bt = th->th_offset;
 		bintime_addx(bt, th->th_scale * tc_delta(th));
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -344,7 +346,9 @@ getbinuptime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		*bt = th->th_offset;
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -358,7 +362,9 @@ getnanouptime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		bintime2timespec(&th->th_offset, tsp);
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -372,7 +378,9 @@ getmicrouptime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		bintime2timeval(&th->th_offset, tvp);
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -386,7 +394,9 @@ getbintime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		*bt = th->th_offset;
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 	bintime_add(bt, &timebasebin);
 }
@@ -401,7 +411,9 @@ getnanotime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		*tsp = th->th_nanotime;
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -415,7 +427,9 @@ getmicrotime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		mb_read();
 		*tvp = th->th_microtime;
+		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -522,15 +536,18 @@ tc_windup(void)
 	time_t t;
 
 	s_update = 0;
+
 	/*
 	 * Make the next timehands a copy of the current one, but do not
 	 * overwrite the generation or next pointer.  While we update
-	 * the contents, the generation must be zero.
+	 * the contents, the generation must be zero.  Ensure global
+	 * visibility of the generation before proceeding.
 	 */
 	tho = timehands;
 	th = tho->th_next;
 	ogen = th->th_generation;
 	th->th_generation = 0;
+	mb_write();
 	bcopy(tho, th, offsetof(struct timehands, th_generation));
 
 	/*
@@ -625,15 +642,21 @@ tc_windup(void)
 	}
 	/*
 	 * Now that the struct timehands is again consistent, set the new
-	 * generation number, making sure to not make it zero.
+	 * generation number, making sure to not make it zero.  Ensure
+	 * changes are globally visible before changing.
 	 */
 	if (++ogen == 0)
 		ogen = 1;
+	mb_write();
 	th->th_generation = ogen;
 
-	/* Go live with the new struct timehands. */
+	/*
+	 * Go live with the new struct timehands.  Ensure changes are
+	 * globally visible before changing.
+	 */
 	time_second = th->th_microtime.tv_sec;
 	time_uptime = th->th_offset.sec;
+	mb_write();
 	timehands = th;
 }
 

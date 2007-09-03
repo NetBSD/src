@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.40.8.1 2007/08/09 02:36:49 jmcneill Exp $
+#	$NetBSD: files.amd64,v 1.40.8.2 2007/09/03 16:47:02 jmcneill Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -94,7 +94,7 @@ file	arch/amd64/amd64/mainbus.c		mainbus
 
 device cpu
 attach cpu at cpubus
-file	arch/amd64/amd64/cpu.c		cpu
+file	arch/x86/x86/cpu.c		cpu
 
 include "dev/wsfb/files.wsfb"
 
@@ -118,7 +118,7 @@ file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib | amdpcib
+file	arch/amd64/pci/pcib.c			pcib | amdpcib | ichlpcib
 
 device 	amdpcib {} : isabus
 attach 	amdpcib at pci
@@ -126,6 +126,10 @@ file 	arch/amd64/pci/amdpcib.c		amdpcib
 
 attach 	hpet at amdpcib with amdpcib_hpet
 file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
+
+device  ichlpcib: acpipmtimer, isabus, sysmon_wdog
+attach  ichlpcib at pci
+file    arch/x86/pci/ichlpcib.c 		ichlpcib
 
 device 	aapic
 attach 	aapic at pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190.8.1 2007/08/16 11:02:34 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190.8.2 2007/09/03 16:47:43 jmcneill Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190.8.1 2007/08/16 11:02:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190.8.2 2007/09/03 16:47:43 jmcneill Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -407,8 +407,6 @@ static void pmap_alloc_bootargs(void)
 	memset(v, 0, 2*PAGE_SIZE);
 
 	cpu_args = (struct cpu_bootargs*)v;
-
-	cpu_args->cb_initstack = v + 2*PAGE_SIZE;
 }
 
 #if defined(MULTIPROCESSOR)
@@ -1098,12 +1096,11 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
 		cpus->ci_cpcb = (struct pcb *)u0va;
-		cpus->ci_initstack = (void *)INITSTACK_VA;
 		proc0paddr = cpus->ci_cpcb;
 
 		lwp0.l_addr = (struct user*)u0va;
-		lwp0.l_md.md_tf = (struct trapframe*)(u0va + USPACE
-		    - sizeof(struct trapframe));
+		lwp0.l_md.md_tf = (struct trapframe64*)(u0va + USPACE
+		    - sizeof(struct trapframe64));
 
 		cpu0paddr += 128 * KB;
 

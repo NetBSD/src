@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.124 2007/05/29 21:32:29 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.124.6.1 2007/09/03 16:48:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -565,6 +565,19 @@ struct	ifreq {
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
 };
 
+#ifdef _KERNEL
+#define	ifreq_setdstaddr	ifreq_setaddr
+#define	ifreq_setbroadaddr	ifreq_setaddr
+#define	ifreq_getdstaddr	ifreq_getaddr
+#define	ifreq_getbroadaddr	ifreq_getaddr
+
+static inline const struct sockaddr *
+ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
+{
+	return &ifr->ifr_addr;
+}
+#endif /* _KERNEL */
+
 struct ifcapreq {
 	char		ifcr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	uint64_t	ifcr_capabilities;	/* supported capabiliites */
@@ -796,6 +809,8 @@ extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
 
 void    ether_input(struct ifnet *, struct mbuf *);
+
+int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

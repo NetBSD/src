@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87.8.1 2007/08/09 02:37:02 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.87.8.2 2007/09/03 16:47:41 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87.8.1 $"
+#ident 		"GENERIC-$Revision: 1.87.8.2 $"
 
 maxusers	64
 
@@ -535,6 +535,9 @@ ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
@@ -783,12 +786,14 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## Bluetooth PCMCIA Controllers
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 ## Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 ## Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbc?
 #bthub* at btuart?
 bthub* at ubt?
 

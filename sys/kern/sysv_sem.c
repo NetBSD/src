@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.70.6.1 2007/08/04 12:33:16 jmcneill Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.70.6.2 2007/09/03 16:48:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.70.6.1 2007/08/04 12:33:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.70.6.2 2007/09/03 16:48:50 jmcneill Exp $");
 
 #define SYSVSEM
 
@@ -77,11 +77,6 @@ struct sem_undo *semu_alloc(struct proc *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
 void semundo_clear(int, int);
 
-/*
- * XXXSMP Once we go MP, there needs to be a lock for the semaphore system.
- * Until then, we're saved by being a non-preemptive kernel.
- */
-
 void
 seminit(void)
 {
@@ -101,8 +96,8 @@ seminit(void)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
 	sem = (void *)(sema + seminfo.semmni);
-	semu = (void *)(sem + seminfo.semmns);
-	semcv = (void *)(semu + seminfo.semmnu);
+	semcv = (void *)(sem + seminfo.semmns);
+	semu = (void *)(semcv + seminfo.semmni);
 
 	for (i = 0; i < seminfo.semmni; i++) {
 		sema[i]._sem_base = 0;

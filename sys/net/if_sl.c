@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.106 2007/07/14 21:02:41 ad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.106.6.1 2007/09/03 16:48:57 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.106 2007/07/14 21:02:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.106.6.1 2007/09/03 16:48:57 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1017,7 +1017,7 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 
 #ifdef INET
 		case AF_INET:

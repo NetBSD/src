@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.102 2007/07/12 20:39:56 rmind Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.102.6.1 2007/09/03 16:48:40 jmcneill Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102 2007/07/12 20:39:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102.6.1 2007/09/03 16:48:40 jmcneill Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1394,7 +1394,7 @@ aue_init(void *xsc)
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mii_data		*mii = GET_MII(sc);
 	int			i, s;
-	u_char			*eaddr;
+	const u_char		*eaddr;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __func__));
 
@@ -1414,7 +1414,7 @@ aue_init(void *xsc)
 #if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 #endif /* defined(__NetBSD__) */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
@@ -1613,10 +1613,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->aue_ec) :
-			ether_delmulti(ifr, &sc->aue_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
 				workqueue_enqueue(sc->wqp,&sc->wk, NULL);

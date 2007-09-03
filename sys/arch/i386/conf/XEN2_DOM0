@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.29 2007/06/28 20:07:00 alc Exp $
+# $NetBSD: XEN2_DOM0,v 1.29.8.1 2007/09/03 16:47:22 jmcneill Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -210,8 +210,8 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -653,13 +653,15 @@ midi*	at midibus?
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-# bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
+#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbh?
 bthub* at ubt?
 
 # Bluetooth HID support

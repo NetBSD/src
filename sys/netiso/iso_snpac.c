@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.44.4.1 2007/08/16 11:03:48 jmcneill Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.44.4.2 2007/09/03 16:49:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.44.4.1 2007/08/16 11:03:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.44.4.2 2007/09/03 16:49:10 jmcneill Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -133,13 +133,7 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static const struct sockaddr_dl blank_dl = {
-	.sdl_len = sizeof(blank_dl),
-	.sdl_family = AF_LINK,
-};
 static struct sockaddr_dl gte_dl;
-#define zap_linkaddr(a, b, c, i) \
-	(*a = blank_dl, memcpy(a->sdl_data, b, a->sdl_alen = c), a->sdl_index = i)
 
 static void snpac_fixdstandmask (int);
 
@@ -207,9 +201,18 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * or from a default route.
 			 */
 			if (rt->rt_flags & RTF_CLONING) {
+				union {
+					struct sockaddr sa;
+					struct sockaddr_dl sdl;
+					struct sockaddr_storage ss;
+				} u;
+
 				iso_setmcasts(ifp, req);
-				rt_setgate(rt,
-				    (const struct sockaddr *)&blank_dl);
+				sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+				    ifp->if_index, ifp->if_type,
+				    NULL, strlen(ifp->if_xname),
+				    NULL, ifp->if_addrlen);
+				rt_setgate(rt, &u.sa);
 				return;
 			}
 			if (lc != 0)
@@ -450,8 +453,9 @@ add:
 			flags = RTF_UP | RTF_HOST;
 		}
 		new_entry = 1;
-		zap_linkaddr((&gte_dl), snpa, snpalen, index);
-		gte_dl.sdl_type = iftype;
+		sockaddr_dl_init(&gte_dl, sizeof(gte_dl), index, iftype,
+		    NULL, 0, snpa, snpalen);
+		 
 		if (rtrequest(RTM_ADD, sisotosa(&dst), S(gte_dl), netmask,
 			      flags, &mrt) || mrt == 0)
 			return (0);
@@ -485,9 +489,8 @@ add:
 				log(LOG_DEBUG, "snpac_add: cant make room for lladdr\n");
 				return (0);
 			}
-			zap_linkaddr(sdl, snpa, snpalen, index);
-			sdl->sdl_len = old_sdl_len;
-			sdl->sdl_type = iftype;
+			sockaddr_dl_init(sdl, sdl->sdl_len, index, iftype,
+			    NULL, 0, snpa, snpalen);
 			new_entry = 1;
 		}
 	}

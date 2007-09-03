@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.254.6.1 2007/08/16 11:03:32 jmcneill Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.254.6.2 2007/09/03 16:48:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.1 2007/08/16 11:03:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.2 2007/09/03 16:48:47 jmcneill Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -739,8 +739,6 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * The (unsupplied) definition of the `current execution stack'
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
-	 *
-	 * XXXLWP this is borken for multiple LWPs.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = (void *)USRSTACK;
@@ -2060,7 +2058,7 @@ proc_stop(struct proc *p, int notify, int signo)
  * information to the parent could be delayed indefinitely.
  *
  * To handle this race, proc_stop_callout() runs once per tick while there
- * are stopping processes it the system.  It sets LWPs that are sleeping
+ * are stopping processes in the system.  It sets LWPs that are sleeping
  * interruptably into the LSSTOP state.
  *
  * Note that we are not concerned about keeping all LWPs stopped while the

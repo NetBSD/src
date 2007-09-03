@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.14 2007/07/12 02:37:47 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.14.8.1 2007/09/03 16:47:16 jmcneill Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -216,12 +216,18 @@ pxaudc0	at pxaip?				# USB Device Controller
 # gumstix device support
 gxio0	at pxaip?
 options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
+options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
 
 # gumstix expantion boards
 
 # SMC 91C111
 sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
+
+# Inter-Integrated Circuit controller
+gxiic0	at pxaip?
+iic*	at gxiic?
+#dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
 
 # integrated PCMCIA/CF controller
 pxapcic0 at pxaip?				# cfstix, netCF
@@ -232,9 +238,9 @@ pcmcia*	at pxapcic?
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-# PCMCIA IDE controllers 
+# PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
-atabus*	at wdc? channel ? 
+atabus*	at wdc? channel ?
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
@@ -378,12 +384,14 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # Bluetooth PCMCIA Controllers
 #bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 #ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub*	at bt3c?
+#bthub*	at btbc?
 bthub*	at btuart?
 #bthub*	at ubt?
 
@@ -481,7 +489,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #
 #options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384 
+#options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5

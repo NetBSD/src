@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.46 2007/05/06 02:48:38 dyoung Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.46.6.1 2007/09/03 16:49:03 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.46 2007/05/06 02:48:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.46.6.1 2007/09/03 16:49:03 jmcneill Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -257,8 +257,8 @@ gre_lookup(struct mbuf *m, u_int8_t proto)
 	struct gre_softc *sc;
 
 	LIST_FOREACH(sc, &gre_softc_list, sc_list) {
-		if (sc->g_dst.s_addr == ip->ip_src.s_addr &&
-		    sc->g_src.s_addr == ip->ip_dst.s_addr &&
+		if (sc->sc_dst.s_addr == ip->ip_src.s_addr &&
+		    sc->sc_src.s_addr == ip->ip_dst.s_addr &&
 		    sc->sc_proto == proto &&
 		    (sc->sc_if.if_flags & IFF_UP) != 0)
 			return sc;

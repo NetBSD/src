@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp $ */
+/*	$NetBSD: if_gre.c,v 1.98.6.2 2007/09/03 16:48:55 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.2 2007/09/03 16:48:55 jmcneill Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp
 
 #include <net/if_gre.h>
 
+#include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -118,9 +119,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp
 #define GREMTU 1476
 
 #ifdef GRE_DEBUG
+int gre_debug = 0;
 #define	GRE_DPRINTF(__sc, __fmt, ...)				\
 	do {							\
-		if (((__sc)->sc_if.if_flags & IFF_DEBUG) != 0)	\
+		if (gre_debug || ((__sc)->sc_if.if_flags & IFF_DEBUG) != 0)\
 			printf(__fmt, __VA_ARGS__);		\
 	} while (/*CONSTCOND*/0)
 #else
@@ -140,6 +142,7 @@ static int	gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, struct rtentry *);
 static int	gre_ioctl(struct ifnet *, u_long, void *);
 
+static void gre_thread(void *);
 static int	gre_compute_route(struct gre_softc *sc);
 
 static void gre_closef(struct file **, struct lwp *);
@@ -147,14 +150,6 @@ static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getnames(struct socket *, struct lwp *, struct sockaddr_in *,
     struct sockaddr_in *);
-
-/* Calling thread must hold sc->sc_mtx. */
-static void
-gre_stop(struct gre_softc *sc)
-{
-	sc->sc_running = 0;
-	cv_signal(&sc->sc_join_cv);
-}
 
 /* Calling thread must hold sc->sc_mtx. */
 static void
@@ -196,8 +191,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
-	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
-	sc->g_dstport = sc->g_srcport = 0;
+	sc->sc_dst.s_addr = sc->sc_src.s_addr = INADDR_ANY;
+	sc->sc_dstport = sc->sc_srcport = 0;
 	sc->sc_proto = IPPROTO_GRE;
 	sc->sc_snd.ifq_maxlen = 256;
 	sc->sc_if.if_flags |= IFF_LINK0;
@@ -206,6 +201,10 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif
+	sc->sc_running = 1;
+	if (kthread_create(PRI_NONE, 0, NULL, gre_thread, sc,
+	    NULL, sc->sc_if.if_xname) != 0)
+		sc->sc_running = 0;
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
 	return 0;
 }
@@ -221,6 +220,7 @@ gre_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 	mutex_enter(&sc->sc_mtx);
+	sc->sc_dying = 1;
 	gre_wakeup(sc);
 	gre_join(sc);
 	mutex_exit(&sc->sc_mtx);
@@ -249,6 +249,7 @@ static void
 gre_upcall_add(struct socket *so, void *arg)
 {
 	/* XXX What if the kernel already set an upcall? */
+	KASSERT((so->so_rcv.sb_flags & SB_UPCALL) == 0);
 	so->so_upcallarg = arg;
 	so->so_upcall = gre_receive;
 	so->so_rcv.sb_flags |= SB_UPCALL;
@@ -284,8 +285,7 @@ gre_getsockmbuf(struct socket *so)
 }
 
 static int
-gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
-    struct socket **sop)
+gre_socreate1(struct gre_softc *sc, struct lwp *l, struct socket **sop)
 {
 	int rc;
 	struct mbuf *m;
@@ -307,10 +307,8 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 		goto out;
 	}
 	sin = mtod(m, struct sockaddr_in *);
-	sin->sin_len = m->m_len = sizeof(struct sockaddr_in);
-	sin->sin_family = AF_INET;
-	sin->sin_addr = sc->g_src;
-	sin->sin_port = sc->g_srcport;
+	sockaddr_in_init(sin, &sc->sc_src, sc->sc_srcport);
+	m->m_len = sin->sin_len;
 
 	GRE_DPRINTF(sc, "%s: bind 0x%08" PRIx32 " port %d\n", __func__,
 	    sin->sin_addr.s_addr, ntohs(sin->sin_port));
@@ -319,17 +317,16 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 		goto out;
 	}
 
-	if (sc->g_srcport == 0) {
+	if (sc->sc_srcport == 0) {
 		if ((rc = gre_getsockname(so, m, l)) != 0) {
-			GRE_DPRINTF(sc, "%s: gre_getsockname failed\n",
-			    __func__);
+			GRE_DPRINTF(sc, "%s: gre_getsockname\n", __func__);
 			goto out;
 		}
-		sc->g_srcport = sin->sin_port;
+		sc->sc_srcport = sin->sin_port;
 	}
 
-	sin->sin_addr = sc->g_dst;
-	sin->sin_port = sc->g_dstport;
+	sockaddr_in_init(sin, &sc->sc_dst, sc->sc_dstport);
+	m->m_len = sin->sin_len;
 
 	if ((rc = soconnect(so, m, l)) != 0) {
 		GRE_DPRINTF(sc, "%s: soconnect failed\n", __func__);
@@ -343,7 +340,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 	    &m);
 	m = NULL;
 	if (rc != 0) {
-		printf("%s: setopt ttl failed\n", __func__);
+		GRE_DPRINTF(sc, "%s: setopt ttl failed\n", __func__);
 		rc = 0;
 	}
 out:
@@ -351,141 +348,150 @@ out:
 
 	if (rc != 0)
 		gre_sodestroy(sop);
-	else
-		*sp = sc->sc_soparm;
+	else {
+		sc->sc_if.if_flags |= IFF_RUNNING;
+		sc->sc_soparm = sc->sc_newsoparm;
+	}
 
 	return rc;
 }
 
 static void
-gre_thread1(struct gre_softc *sc, struct lwp *l)
+gre_do_recv(struct gre_softc *sc, struct socket *so, lwp_t *l)
 {
-	int flags, rc;
-	const struct gre_h *gh;
+	for (;;) {
+		int flags, rc;
+		const struct gre_h *gh;
+		struct mbuf *m;
+
+		flags = MSG_DONTWAIT;
+		sc->sc_uio.uio_resid = 1000000;
+		rc = (*so->so_receive)(so, NULL, &sc->sc_uio, &m, NULL, &flags);
+		/* TBD Back off if ECONNREFUSED (indicates
+		 * ICMP Port Unreachable)?
+		 */
+		if (rc == EWOULDBLOCK) {
+			GRE_DPRINTF(sc, "%s: so_receive EWOULDBLOCK\n",
+			    __func__);
+			break;
+		} else if (rc != 0 || m == NULL) {
+			GRE_DPRINTF(sc, "%s: rc %d m %p\n",
+			    sc->sc_if.if_xname, rc, (void *)m);
+			continue;
+		} else
+			GRE_DPRINTF(sc, "%s: so_receive ok\n", __func__);
+		if (m->m_len < sizeof(*gh) &&
+		    (m = m_pullup(m, sizeof(*gh))) == NULL) {
+			GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
+			continue;
+		}
+		gh = mtod(m, const struct gre_h *);
+
+		if (gre_input3(sc, m, 0, gh, 0) == 0) {
+			GRE_DPRINTF(sc, "%s: dropping unsupported\n", __func__);
+			m_freem(m);
+		}
+	}
+}
+
+static void
+gre_do_send(struct gre_softc *sc, struct socket *so, lwp_t *l)
+{
+	for (;;) {
+		int rc;
+		struct mbuf *m;
+
+		mutex_enter(&sc->sc_mtx);
+		IF_DEQUEUE(&sc->sc_snd, m);
+		mutex_exit(&sc->sc_mtx);
+		if (m == NULL)
+			break;
+		GRE_DPRINTF(sc, "%s: dequeue\n", __func__);
+		if ((so->so_state & SS_ISCONNECTED) == 0) {
+			GRE_DPRINTF(sc, "%s: not connected\n", __func__);
+			m_freem(m);
+			continue;
+		}
+		rc = (*so->so_send)(so, NULL, NULL, m, NULL, 0, l);
+		/* XXX handle ENOBUFS? */
+		if (rc != 0)
+			GRE_DPRINTF(sc, "%s: so_send failed\n",
+			    __func__);
+	}
+}
+
+static struct socket *
+gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l)
+{
 	struct ifnet *ifp = &sc->sc_if;
-	struct mbuf *m;
-	struct socket *so = NULL;
-	struct uio uio;
-	struct gre_soparm sp;
-	struct file *fp = NULL;
 
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	mutex_enter(&sc->sc_mtx);
 
-	sc->sc_haswork = 1;
+shutdown:
+	if (sc->sc_soparm.sp_fp != NULL) {
+		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+		gre_upcall_remove(so);
+		gre_closef(&sc->sc_soparm.sp_fp, curlwp);
+		so = NULL;
+	} else if (so != NULL)
+		gre_sodestroy(&so);
 
-	memset(&sp, 0, sizeof(sp));
-	memset(&uio, 0, sizeof(uio));
+	if (sc->sc_dying)
+		GRE_DPRINTF(sc, "%s: dying\n", __func__);
+	else if ((ifp->if_flags & IFF_UP) != IFF_UP)
+		GRE_DPRINTF(sc, "%s: down\n", __func__);
+	else if (sc->sc_proto != IPPROTO_UDP)
+		GRE_DPRINTF(sc, "%s: not UDP\n", __func__);
+	else if (sc->sc_newsoparm.sp_fp != NULL) {
+		sc->sc_soparm = sc->sc_newsoparm;
+		sc->sc_newsoparm.sp_fp = NULL;
+		so = (struct socket *)sc->sc_soparm.sp_fp->f_data;
+		gre_upcall_add(so, sc);
+	} else if (gre_socreate1(sc, l, &so) != 0) {
+		sc->sc_dying = 1;
+		goto shutdown;
+	}
+	cv_signal(&sc->sc_soparm_cv);
+	if (so != NULL)
+		sc->sc_if.if_flags |= IFF_RUNNING;
+	else if (sc->sc_proto == IPPROTO_UDP)
+		sc->sc_if.if_flags &= ~IFF_RUNNING;
+	return so;
+}
 
-	ifp->if_flags |= IFF_RUNNING;
+static void
+gre_thread1(struct gre_softc *sc, struct lwp *l)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct socket *so = NULL;
 
-	for (;;) {
+	GRE_DPRINTF(sc, "%s: enter\n", __func__);
+
+	while (!sc->sc_dying) {
 		while (sc->sc_haswork == 0) {
 			GRE_DPRINTF(sc, "%s: sleeping\n", __func__);
 			cv_wait(&sc->sc_work_cv, &sc->sc_mtx);
 		}
 		sc->sc_haswork = 0;
+
 		GRE_DPRINTF(sc, "%s: awake\n", __func__);
-		if ((ifp->if_flags & IFF_UP) != IFF_UP) {
-			GRE_DPRINTF(sc, "%s: not up & running; exiting\n",
-			    __func__);
-			break;
-		}
-		if (sc->sc_proto != IPPROTO_UDP) {
-			GRE_DPRINTF(sc, "%s: not udp; exiting\n", __func__);
-			break;
-		}
+
 		/* XXX optimize */ 
-		if (so == NULL || sc->sc_fp != NULL ||
-		    memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0) {
-			GRE_DPRINTF(sc, "%s: parameters changed\n", __func__);
-
-			if (fp != NULL) {
-				gre_closef(&fp, curlwp);
-				so = NULL;
-			} else if (so != NULL)
-				gre_sodestroy(&so);
-
-			if (sc->sc_fp != NULL) {
-				fp = sc->sc_fp;
-				sc->sc_fp = NULL;
-				so = (struct socket *)fp->f_data;
-				gre_upcall_add(so, sc);
-				sp = sc->sc_soparm;
-			} else if (gre_socreate1(sc, l, &sp, &so) != 0)
-				goto out;
+		if ((ifp->if_flags & IFF_UP) != IFF_UP ||
+		    sc->sc_proto != IPPROTO_UDP || so == NULL ||
+		    sc->sc_newsoparm.sp_fp != NULL ||
+		    memcmp(&sc->sc_soparm, &sc->sc_newsoparm,
+		           offsetof(struct gre_soparm, sp_fp)) != 0)
+			so = gre_reconf(sc, so, l);
+		mutex_exit(&sc->sc_mtx);
+		if (so != NULL) {
+			gre_do_recv(sc, so, l);
+			gre_do_send(sc, so, l);
 		}
-		cv_signal(&sc->sc_soparm_cv);
-		for (;;) {
-			flags = MSG_DONTWAIT;
-			uio.uio_resid = 1000000;
-			rc = (*so->so_receive)(so, NULL, &uio, &m, NULL,
-			    &flags);
-			/* TBD Back off if ECONNREFUSED (indicates
-			 * ICMP Port Unreachable)?
-			 */
-			if (rc == EWOULDBLOCK) {
-				GRE_DPRINTF(sc, "%s: so_receive EWOULDBLOCK\n",
-				    __func__);
-				break;
-			} else if (rc != 0 || m == NULL) {
-				GRE_DPRINTF(sc, "%s: rc %d m %p\n",
-				    ifp->if_xname, rc, (void *)m);
-				continue;
-			} else
-				GRE_DPRINTF(sc, "%s: so_receive ok\n",
-				    __func__);
-			if (m->m_len < sizeof(*gh) &&
-			    (m = m_pullup(m, sizeof(*gh))) == NULL) {
-				GRE_DPRINTF(sc, "%s: m_pullup failed\n",
-				    __func__);
-				continue;
-			}
-			gh = mtod(m, const struct gre_h *);
-
-			if (gre_input3(sc, m, 0, gh, 1) == 0) {
-				GRE_DPRINTF(sc, "%s: dropping unsupported\n",
-				    __func__);
-				m_freem(m);
-			}
-		}
-		for (;;) {
-			IF_DEQUEUE(&sc->sc_snd, m);
-			if (m == NULL)
-				break;
-			GRE_DPRINTF(sc, "%s: dequeue\n", __func__);
-			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				GRE_DPRINTF(sc, "%s: not connected\n",
-				    __func__);
-				m_freem(m);
-				continue;
-			}
-			rc = (*so->so_send)(so, NULL, NULL, m, NULL, 0, l);
-			/* XXX handle ENOBUFS? */
-			if (rc != 0)
-				GRE_DPRINTF(sc, "%s: so_send failed\n",
-				    __func__);
-		}
+		mutex_enter(&sc->sc_mtx);
 	}
-	if (fp != NULL) {
-		GRE_DPRINTF(sc, "%s: removing upcall\n", __func__);
-		gre_upcall_remove(so);
-	} else if (so != NULL)
-		gre_sodestroy(&so);
-out:
-	GRE_DPRINTF(sc, "%s: stopping\n", __func__);
-	if (fp != NULL)
-		gre_closef(&fp, curlwp);
-	if (sc->sc_proto == IPPROTO_UDP)
-		ifp->if_flags &= ~IFF_RUNNING;
-	while (!IF_IS_EMPTY(&sc->sc_snd)) {
-		IF_DEQUEUE(&sc->sc_snd, m);
-		m_freem(m);
-	}
-	gre_stop(sc);
-	/* must not touch sc after this! */
-	GRE_DPRINTF(sc, "%s: restore ipl\n", __func__);
-	mutex_exit(&sc->sc_mtx);
+	sc->sc_running = 0;
+	cv_signal(&sc->sc_join_cv);
 }
 
 static void
@@ -493,7 +499,10 @@ gre_thread(void *arg)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 
+	mutex_enter(&sc->sc_mtx);
 	gre_thread1(sc, curlwp);
+	mutex_exit(&sc->sc_mtx);
+
 	/* must not touch sc after this! */
 	kthread_exit(0);
 }
@@ -611,7 +620,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 	    (IFF_UP | IFF_RUNNING) ||
-	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
+	    sc->sc_src.s_addr == INADDR_ANY ||
+	    sc->sc_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
@@ -646,19 +656,19 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		memset(&mob_h, 0, MOB_H_SIZ_L);
 		mob_h.proto = (ip->ip_p) << 8;
 		mob_h.odst = ip->ip_dst.s_addr;
-		ip->ip_dst.s_addr = sc->g_dst.s_addr;
+		ip->ip_dst.s_addr = sc->sc_dst.s_addr;
 
 		/*
 		 * If the packet comes from our host, we only change
 		 * the destination address in the IP header.
 		 * Else we also need to save and change the source
 		 */
-		if (in_hosteq(ip->ip_src, sc->g_src)) {
+		if (in_hosteq(ip->ip_src, sc->sc_src))
 			msiz = MOB_H_SIZ_S;
-		} else {
+		else {
 			mob_h.proto |= MOB_H_SBIT;
 			mob_h.osrc = ip->ip_src.s_addr;
-			ip->ip_src.s_addr = sc->g_src.s_addr;
+			ip->ip_src.s_addr = sc->sc_src.s_addr;
 			msiz = MOB_H_SIZ_L;
 		}
 		HTONS(mob_h.proto);
@@ -746,8 +756,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		/* we don't have any GRE flags for now */
 		memset(gh, 0, sizeof(*gh));
 		gh->ptype = htons(etype);
-		eip->ip_src = sc->g_src;
-		eip->ip_dst = sc->g_dst;
+		eip->ip_src = sc->sc_src;
+		eip->ip_dst = sc->sc_dst;
 		eip->ip_hl = (sizeof(struct ip)) >> 2;
 		eip->ip_ttl = ip_gre_ttl;
 		eip->ip_tos = ip_tos;
@@ -803,21 +813,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 static int
 gre_kick(struct gre_softc *sc)
 {
-	int rc;
-	struct ifnet *ifp = &sc->sc_if;
-
-	if (sc->sc_proto == IPPROTO_UDP && (ifp->if_flags & IFF_UP) == IFF_UP &&
-	    !sc->sc_running) {
-		sc->sc_running = 1;
-		rc = kthread_create(PRI_NONE, 0, NULL, gre_thread, sc,
-		    NULL, ifp->if_xname);
-		if (rc != 0)
-			gre_stop(sc);
-		return rc;
-	} else {
-		gre_wakeup(sc);
-		return 0;
-	}
+	if (!sc->sc_running)
+		return EBUSY;
+	gre_wakeup(sc);
+	return 0;
 }
 
 /* Calling thread must hold sc->sc_mtx. */
@@ -888,7 +887,7 @@ gre_closef(struct file **fpp, struct lwp *l)
 }
 
 static int
-gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
 	u_char oproto;
 	struct file *fp;
@@ -900,22 +899,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	struct sockaddr_in si;
-	struct sockaddr *sa = NULL;
+	const struct sockaddr *sa;
 	int error = 0;
-#ifdef COMPAT_OIFREQ
-	u_long ocmd = cmd;
-	struct oifreq *oifr = NULL;
-	struct ifreq ifrb;
 
-	cmd = cvtcmd(cmd);
-	if (cmd != ocmd) {
-		oifr = data;
-		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
-	} else
-#endif
-		ifr = data;
-	
+	ifr = data;
+
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSIFMTU:
@@ -975,11 +963,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifr == 0) {
+		if (ifr == NULL) {
 			error = EAFNOSUPPORT;
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 		case AF_INET:
 			break;
@@ -1026,25 +1014,29 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 		sa = &ifr->ifr_addr;
 		if (cmd == GRESADDRS) {
-			sc->g_src = (satosin(sa))->sin_addr;
-			sc->g_srcport = satosin(sa)->sin_port;
+			sc->sc_src = satocsin(sa)->sin_addr;
+			sc->sc_srcport = satocsin(sa)->sin_port;
 		}
 		if (cmd == GRESADDRD) {
 			if (sc->sc_proto == IPPROTO_UDP &&
-			    satosin(sa)->sin_port == 0) {
+			    satocsin(sa)->sin_port == 0) {
 				error = EINVAL;
 				break;
 			}
-			sc->g_dst = (satosin(sa))->sin_addr;
-			sc->g_dstport = satosin(sa)->sin_port;
+			sc->sc_dst = satocsin(sa)->sin_addr;
+			sc->sc_dstport = satocsin(sa)->sin_port;
 		}
 	recompute:
 		if (sc->sc_proto == IPPROTO_UDP ||
-		    (sc->g_src.s_addr != INADDR_ANY &&
-		     sc->g_dst.s_addr != INADDR_ANY)) {
+		    (sc->sc_src.s_addr != INADDR_ANY &&
+		     sc->sc_dst.s_addr != INADDR_ANY)) {
 			rtcache_free(&sc->route);
-			if (sc->sc_proto == IPPROTO_UDP)
-				error = gre_kick(sc);
+			if (sc->sc_proto == IPPROTO_UDP) {
+				if ((error = gre_kick(sc)) == 0)
+					ifp->if_flags |= IFF_RUNNING;
+				else
+					ifp->if_flags &= ~IFF_RUNNING;
+			}
 			else if (gre_compute_route(sc) == 0)
 				ifp->if_flags |= IFF_RUNNING;
 			else
@@ -1052,20 +1044,14 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	case GREGADDRS:
-		memset(&si, 0, sizeof(si));
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
-		si.sin_addr.s_addr = sc->g_src.s_addr;
-		sa = sintosa(&si);
-		ifr->ifr_addr = *sa;
+		sockaddr_in_init(&si, &sc->sc_src,
+		    (sc->sc_proto == IPPROTO_UDP) ? sc->sc_srcport : 0);
+		ifr->ifr_addr = *sintosa(&si);
 		break;
 	case GREGADDRD:
-		memset(&si, 0, sizeof(si));
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
-		si.sin_addr.s_addr = sc->g_dst.s_addr;
-		sa = sintosa(&si);
-		ifr->ifr_addr = *sa;
+		sockaddr_in_init(&si, &sc->sc_dst,
+		    (sc->sc_proto == IPPROTO_UDP) ? sc->sc_dstport : 0);
+		ifr->ifr_addr = *sintosa(&si);
 		break;
 	case GREDSOCK:
 		if (sc->sc_proto != IPPROTO_UDP) {
@@ -1077,20 +1063,26 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case GRESSOCK:
 		if (sc->sc_proto != IPPROTO_UDP) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			error = EINVAL;
 			break;
 		}
 		/* getsock() will FILE_USE() and unlock the descriptor for us */
-		if ((error = getsock(p->p_fd, (int)ifr->ifr_value, &fp)) != 0)
+		if ((error = getsock(p->p_fd, (int)ifr->ifr_value, &fp)) != 0) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+			error = EINVAL;
 			break;
+		}
 		so = (struct socket *)fp->f_data;
 		if (so->so_type != SOCK_DGRAM) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			FILE_UNUSE(fp, NULL);
 			error = EINVAL;
 			break;
 		}
 		/* check address */
 		if ((error = gre_getnames(so, curlwp, &src, &dst)) != 0) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			FILE_UNUSE(fp, NULL);
 			break;
 		}
@@ -1106,26 +1098,35 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 
 		fp->f_count++;
+		GRE_DPRINTF(sc, "%s: l.%d f_count %d\n", __func__, __LINE__,
+		    fp->f_count);
 		FILE_UNUSE(fp, NULL);
 
-		while (sc->sc_fp != NULL && error == 0) {
+		while (sc->sc_newsoparm.sp_fp != NULL && error == 0) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			error = cv_timedwait_sig(&sc->sc_soparm_cv, &sc->sc_mtx,
 					         MAX(1, hz / 2));
 		}
 		if (error == 0) {
-			sc->sc_fp = fp;
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+			sc->sc_newsoparm.sp_fp = fp;
 			ifp->if_flags |= IFF_UP;
 		}
 
 		if (error != 0 || (error = gre_kick(sc)) != 0) {
+			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			gre_closef(&fp, l);
 			break;
 		}
 		/* fp does not any longer belong to this thread. */
-		sc->g_src = src.sin_addr;
-		sc->g_srcport = src.sin_port;
-		sc->g_dst = dst.sin_addr;
-		sc->g_dstport = dst.sin_port;
+		sc->sc_src = src.sin_addr;
+		sc->sc_srcport = src.sin_port;
+		sc->sc_dst = dst.sin_addr;
+		sc->sc_dstport = dst.sin_port;
+		GRE_DPRINTF(sc, "%s: sock 0x%08" PRIx32 " port %d -> "
+		    "0x%08" PRIx32 " port %d\n", __func__,
+		    src.sin_addr.s_addr, ntohs(src.sin_port),
+		    dst.sin_addr.s_addr, ntohs(dst.sin_port));
 		break;
 	case SIOCSLIFPHYADDR:
 		if (lifr->addr.ss_family != AF_INET ||
@@ -1138,43 +1139,32 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		sc->g_src = satosin(&lifr->addr)->sin_addr;
-		sc->g_dst = satosin(&lifr->dstaddr)->sin_addr;
-		sc->g_srcport = satosin(&lifr->addr)->sin_port;
-		sc->g_dstport = satosin(&lifr->dstaddr)->sin_port;
+		sc->sc_src = satocsin(&lifr->addr)->sin_addr;
+		sc->sc_dst = satocsin(&lifr->dstaddr)->sin_addr;
+		sc->sc_srcport = satocsin(&lifr->addr)->sin_port;
+		sc->sc_dstport = satocsin(&lifr->dstaddr)->sin_port;
 		goto recompute;
 	case SIOCDIFPHYADDR:
-		sc->g_src.s_addr = INADDR_ANY;
-		sc->g_dst.s_addr = INADDR_ANY;
-		sc->g_srcport = 0;
-		sc->g_dstport = 0;
+		sc->sc_src.s_addr = INADDR_ANY;
+		sc->sc_dst.s_addr = INADDR_ANY;
+		sc->sc_srcport = 0;
+		sc->sc_dstport = 0;
 		goto recompute;
 	case SIOCGLIFPHYADDR:
-		if (sc->g_src.s_addr == INADDR_ANY ||
-		    sc->g_dst.s_addr == INADDR_ANY) {
+		if (sc->sc_src.s_addr == INADDR_ANY ||
+		    sc->sc_dst.s_addr == INADDR_ANY) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		memset(&si, 0, sizeof(si));
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
-		si.sin_addr = sc->g_src;
-		if (sc->sc_proto == IPPROTO_UDP)
-			si.sin_port = sc->g_srcport;
-		memcpy(&lifr->addr, &si, sizeof(si));
-		si.sin_addr = sc->g_dst;
-		if (sc->sc_proto == IPPROTO_UDP)
-			si.sin_port = sc->g_dstport;
-		memcpy(&lifr->dstaddr, &si, sizeof(si));
+		sockaddr_in_init(satosin(&lifr->addr), &sc->sc_src,
+		    (sc->sc_proto == IPPROTO_UDP) ? sc->sc_srcport : 0);
+		sockaddr_in_init(satosin(&lifr->dstaddr), &sc->sc_dst,
+		    (sc->sc_proto == IPPROTO_UDP) ? sc->sc_dstport : 0);
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-#ifdef COMPAT_OIFREQ
-	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
-#endif
 	mutex_exit(&sc->sc_mtx);
 	return error;
 }
@@ -1194,7 +1184,7 @@ gre_compute_route(struct gre_softc *sc)
 	ro = &sc->route;
 
 	memset(ro, 0, sizeof(*ro));
-	sockaddr_in_init(&u.dst4, &sc->g_dst, 0);
+	sockaddr_in_init(&u.dst4, &sc->sc_dst, 0);
 	rtcache_setdst(ro, &u.dst);
 
 	rtcache_init(ro);

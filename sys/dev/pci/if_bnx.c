@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.7.6.1 2007/08/16 11:03:10 jmcneill Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.7.6.2 2007/09/03 16:48:15 jmcneill Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.7.6.1 2007/08/16 11:03:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.7.6.2 2007/09/03 16:48:15 jmcneill Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2700,7 +2700,7 @@ void
 bnx_set_mac_addr(struct bnx_softc *sc)
 {
 	u_int32_t		val;
-	u_int8_t		*mac_addr = LLADDR(sc->ethercom.ec_if.if_sadl);
+	const u_int8_t		*mac_addr = CLLADDR(sc->ethercom.ec_if.if_sadl);
 
 	DBPRINT(sc, BNX_INFO, "Setting Ethernet address = "
 	    "%s\n", ether_sprintf(sc->eaddr));

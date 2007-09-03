@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2007/06/04 08:55:24 martin Exp $
+# $NetBSD: GENERIC,v 1.135.8.1 2007/09/03 16:47:38 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.135 $"
+#ident		"GENERIC-$Revision: 1.135.8.1 $"
 
 maxusers	32
 
@@ -407,9 +407,13 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 #ohci*	at pci? dev ? function ?	# Open Host Controller
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 #usb*	at uhci?
 #usb*	at ohci?
+#usb*	at slhci?
 
 # USB Hubs
 #uhub*	at usb?

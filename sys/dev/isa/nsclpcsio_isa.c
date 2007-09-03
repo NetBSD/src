@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.17 2007/07/01 07:37:20 xtraeme Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.17.6.1 2007/09/03 16:48:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17 2007/07/01 07:37:20 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.6.1 2007/09/03 16:48:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,11 +321,6 @@ tms_update(sc, chan)
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
-
-	/* enable monitoring */
-	sc->sc_data[chan].monitor = true;
-	sc->sc_data[chan].flags = 
-	    (ENVSYS_FMONWARNUNDER|ENVSYS_FMONWARNOVER|ENVSYS_FMONCRITOVER);
 
 	/*
 	 * If the channel is enabled, it is considered valid.

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.41 2007/03/27 00:04:04 garbled Exp $	*/
+/*	$NetBSD: viaide.c,v 1.41.8.1 2007/09/03 16:48:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.41 2007/03/27 00:04:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.41.8.1 2007/09/03 16:48:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,31 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA MCP65 Serial ATA Controller",
 	  via_sata_chip_map_6
 	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_IDE,
+	  0,
+	  "NVIDIA MCP67 IDE Controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA2,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA3,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA4,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -259,6 +284,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  via_chip_map,
 	 },
 	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
+	  0,
+	  NULL,
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_CX700_IDE,
 	  0,
 	  NULL,
 	  via_chip_map,
@@ -422,6 +452,10 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("VT8237A ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
+		case PCI_PRODUCT_VIATECH_CX700_IDE:
+			aprint_normal("CX700 ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
 		default:
 unknown:
 			aprint_normal("unknown VIA ATA controller\n");
@@ -458,6 +492,7 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_MCP55_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP61_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP65_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP67_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}

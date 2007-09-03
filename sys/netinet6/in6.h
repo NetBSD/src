@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.61 2007/06/28 21:03:47 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.61.6.1 2007/09/03 16:49:07 jmcneill Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -738,7 +738,8 @@ sockaddr_in6_alloc(const struct in6_addr *addr, in_port_t port,
 {
 	struct sockaddr *sa;
 
-	if ((sa = sockaddr_alloc(AF_INET6, flags)) == NULL)
+	if ((sa = sockaddr_alloc(AF_INET6, sizeof(struct sockaddr_in6),
+	    flags)) == NULL)
 		return NULL;
 
 	sockaddr_in6_init1(satosin6(sa), addr, port, flowinfo, scope_id);

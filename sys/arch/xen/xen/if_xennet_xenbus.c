@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.17 2007/07/22 20:36:13 he Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.17.4.1 2007/09/03 16:47:50 jmcneill Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17 2007/07/22 20:36:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.1 2007/09/03 16:47:50 jmcneill Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -793,7 +793,7 @@ again:
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh = pktp;
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				DPRINTFN(XEDB_EVENT,
 				    ("xennet_handler bad dest\n"));

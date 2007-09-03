@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.74 2007/03/04 06:02:23 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.74.14.1 2007/09/03 16:48:18 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.74 2007/03/04 06:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.74.14.1 2007/09/03 16:48:18 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2533,7 +2533,7 @@ static void ti_init2(sc)
 {
 	struct ti_cmd_desc	cmd;
 	struct ifnet		*ifp;
-	u_int8_t		*m;
+	const u_int8_t		*m;
 	struct ifmedia		*ifm;
 	int			tmp;
 
@@ -2550,7 +2550,7 @@ static void ti_init2(sc)
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
-	m = (u_int8_t *)LLADDR(ifp->if_sadl);
+	m = (const u_int8_t *)CLLADDR(ifp->if_sadl);
 	CSR_WRITE_4(sc, TI_GCR_PAR0, (m[0] << 8) | m[1]);
 	CSR_WRITE_4(sc, TI_GCR_PAR1, (m[2] << 24) | (m[3] << 16)
 		    | (m[4] << 8) | m[5]);
@@ -2835,10 +2835,7 @@ static int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->ethercom) :
-		    ether_delmulti(ifr, &sc->ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ti_setmulti(sc);
 			error = 0;

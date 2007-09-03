@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.12 2007/07/29 15:44:24 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.12.4.1 2007/09/03 16:47:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,12 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.12 2007/07/29 15:44:24 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.12.4.1 2007/09/03 16:47:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/rwlock.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -66,6 +67,7 @@ struct aiboost_softc {
 	struct aiboost_comp *sc_aitemp, *sc_aivolt, *sc_aifan;
 	struct sysmon_envsys sc_sme;
 	struct envsys_data sc_data[AIBOOST_MAX_SENSORS];
+	krwlock_t sc_rwlock;
 };
 
 static ACPI_STATUS aiboost_getcomp(ACPI_HANDLE *,
@@ -132,6 +134,7 @@ aiboost_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (ACPI_FAILURE(aiboost_getcomp(handl, "FSIF", &sc->sc_aifan)))
 		return;
 
+	rw_init(&sc->sc_rwlock);
 	/* Initialize sensors */
 	maxsens = sc->sc_aivolt->num + sc->sc_aitemp->num + sc->sc_aifan->num;
 	DPRINTF(("%s: maxsens=%d\n", __func__, maxsens));
@@ -205,6 +208,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	ACPI_HANDLE *h = sc->sc_node->ad_handle;
 	int i, j, val;
 
+	rw_enter(&sc->sc_rwlock, RW_READER);
 	j = 0;
 	i = edata->sensor; /* sensor number */
 
@@ -212,7 +216,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	do {								\
 		if (val == -1 || val == 0) {				\
 			edata->state = ENVSYS_SINVALID;			\
-			return;						\
+			goto out;					\
 		}							\
 	} while (/* CONSTCOND */ 0)
 
@@ -248,6 +252,8 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	}
 
 	edata->state = ENVSYS_SVALID;
+out:
+	rw_exit(&sc->sc_rwlock);
 }
 
 static int

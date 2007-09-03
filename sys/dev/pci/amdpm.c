@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.26 2007/07/09 21:00:52 ad Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.26.6.1 2007/09/03 16:48:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.26 2007/07/09 21:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.26.6.1 2007/09/03 16:48:13 jmcneill Exp $");
 
 #include "opt_amdpm.h"
 
@@ -48,10 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.26 2007/07/09 21:00:52 ad Exp $");
 #include <sys/callout.h>
 #include <sys/rnd.h>
 
-#ifdef __HAVE_TIMECOUNTER
 #include <machine/bus.h>
 #include <dev/ic/acpipmtimer.h>
-#endif
 
 #include <dev/i2c/i2cvar.h>
 
@@ -159,14 +157,12 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-#ifdef __HAVE_TIMECOUNTER
 	/* don't attach a timecounter on nforce boards */
 	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0 &&
 	    !sc->sc_nforce) {
 		acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
 		  AMDPM_TMR, ((confreg & AMDPM_TMR32) ? ACPIPMT_32BIT : 0));
 	}
-#endif
 
 	/* try to attach devices on the smbus */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||

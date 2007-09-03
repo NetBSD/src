@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.129 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.129.12.1 2007/09/03 16:48:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.129 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.129.12.1 2007/09/03 16:48:49 jmcneill Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1624,6 +1624,8 @@ pool_reclaim(struct pool *pp)
  * Drain pools, one at a time.
  *
  * Note, we must never be called from an interrupt context.
+ *
+ * XXX Pool can disappear while draining.
  */
 void
 pool_drain(void *arg)
@@ -2184,26 +2186,43 @@ pool_cache_destruct_object(struct pool_cache *pc, void *object)
 	pool_put(pc->pc_pool, object);
 }
 
+/*
+ * pool_do_cache_invalidate_grouplist:
+ *
+ *	Invalidate a single grouplist and destruct all objects.
+ *	XXX This is too expensive.  We should swap the list then
+ *	unlock.
+ */
 static void
 pool_do_cache_invalidate_grouplist(struct pool_cache_grouplist *pcgsl,
     struct pool_cache *pc, struct pool_pagelist *pq,
     struct pool_cache_grouplist *pcgdl)
 {
-	struct pool_cache_group *pcg, *npcg;
+	struct pool_cache_group *pcg;
 	void *object;
 
-	for (pcg = LIST_FIRST(pcgsl); pcg != NULL; pcg = npcg) {
-		npcg = LIST_NEXT(pcg, pcg_list);
-		while (pcg->pcg_avail != 0) {
-			pc->pc_nitems--;
-			object = pcg_get(pcg, NULL);
-			if (pc->pc_dtor != NULL)
-				(*pc->pc_dtor)(pc->pc_arg, object);
-			pool_do_put(pc->pc_pool, object, pq);
-		}
+	LOCK_ASSERT(simple_lock_held(&pc->pc_slock));
+	LOCK_ASSERT(simple_lock_held(&pc->pc_pool->pr_slock));
+
+	while ((pcg = LIST_FIRST(pcgsl)) != NULL) {
 		pc->pc_ngroups--;
 		LIST_REMOVE(pcg, pcg_list);
 		LIST_INSERT_HEAD(pcgdl, pcg, pcg_list);
+		pc->pc_nitems -= pcg->pcg_avail;
+		simple_unlock(&pc->pc_pool->pr_slock);
+		simple_unlock(&pc->pc_slock);
+
+		while (pcg->pcg_avail != 0) {
+			object = pcg_get(pcg, NULL);
+			if (pc->pc_dtor != NULL)
+				(*pc->pc_dtor)(pc->pc_arg, object);
+			simple_lock(&pc->pc_pool->pr_slock);
+			pool_do_put(pc->pc_pool, object, pq);
+			simple_unlock(&pc->pc_pool->pr_slock);
+		}
+
+		simple_lock(&pc->pc_slock);
+		simple_lock(&pc->pc_pool->pr_slock);
 	}
 }
 
