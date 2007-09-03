@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.34.2.3 2007/02/26 09:12:27 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.34.2.4 2007/09/03 14:47:04 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.34.2.3 2007/02/26 09:12:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.34.2.4 2007/09/03 14:47:04 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.34.2.3 2007/02/26 09:12:27 yamt Exp $
 #include <uvm/uvm_pdpolicy.h>
 
 static POOL_INIT(uvm_anon_pool, sizeof(struct vm_anon), 0, 0, 0, "anonpl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 static struct pool_cache uvm_anon_pool_cache;
 
 static int uvm_anon_ctor(void *, void *, int);
@@ -195,10 +195,10 @@ uvm_anfree(struct vm_anon *anon)
 #if defined(VMSWAP)
 	if (pg == NULL && anon->an_swslot > 0) {
 		/* this page is no longer only in swap. */
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
 		uvmexp.swpgonly--;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 #endif /* defined(VMSWAP) */
 

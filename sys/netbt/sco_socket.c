@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.1.2.4 2007/09/03 14:42:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.1.2.4 2007/09/03 14:42:44 yamt Exp $");
+
+/* load symbolic names */
+#ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
+#define PRCOREQUESTS
+#endif
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -56,6 +62,7 @@ static void sco_connected(void *);
 static void sco_disconnected(void *, int);
 static void *sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void sco_complete(void *, int);
+static void sco_linkmode(void *, int);
 static void sco_input(void *, struct mbuf *);
 
 static const struct btproto sco_proto = {
@@ -64,6 +71,7 @@ static const struct btproto sco_proto = {
 	sco_disconnected,
 	sco_newconn,
 	sco_complete,
+	sco_linkmode,
 	sco_input,
 };
 
@@ -135,7 +143,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_detach((struct sco_pcb **)&up->so_pcb);
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -147,7 +155,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_bind(pcb, sa);
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -160,13 +168,13 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_connect(pcb, sa);
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_peeraddr(pcb, sa);
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_sockaddr(pcb, sa);
@@ -176,7 +184,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		break;
 
 	case PRU_SEND:
-		KASSERT(m);
+		KASSERT(m != NULL);
 		if (m->m_pkthdr.len == 0)
 			break;
 
@@ -208,7 +216,7 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_listen(pcb);
 
 	case PRU_ACCEPT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return sco_peeraddr(pcb, sa);
@@ -251,7 +259,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		return EINVAL;
 
 	if (level != BTPROTO_SCO)
-		return 0;
+		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
@@ -260,7 +268,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		if (m->m_len == 0) {
 			m_freem(m);
 			m = NULL;
-			err = EINVAL;
+			err = ENOPROTOOPT;
 		}
 		*opt = m;
 		break;
@@ -273,7 +281,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 
@@ -338,6 +346,11 @@ sco_complete(void *arg, int num)
 		sbdroprecord(&so->so_snd);
 
 	sowwakeup(so);
+}
+
+static void
+sco_linkmode(void *arg, int mode)
+{
 }
 
 static void

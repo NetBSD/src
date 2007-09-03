@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.230.2.3 2007/02/26 09:11:45 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.230.2.4 2007/09/03 14:43:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230.2.3 2007/02/26 09:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230.2.4 2007/09/03 14:43:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -241,6 +241,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.230.2.3 2007/02/26 09:11:45 yamt Exp
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
+
+int	tcp_do_autorcvbuf = 0;
+int	tcp_autorcvbuf_inc = 16 * 1024;
+int	tcp_autorcvbuf_max = 256 * 1024;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
@@ -377,7 +381,7 @@ extern struct evcnt tcp_reass_fragdup;
 static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
     int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
-    const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
+    struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
 #ifdef INET
 static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
@@ -393,7 +397,7 @@ struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
 #endif /* defined(MBUFTRACE) */
 
 static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
-    NULL);
+    NULL, IPL_VM);
 
 struct ipqent *
 tcpipqent_alloc()
@@ -804,7 +808,7 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR,
-		    (caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		    (char *)&ip6->ip6_dst - (char *)ip6);
 		return IPPROTO_DONE;
 	}
 
@@ -1372,7 +1376,7 @@ findpcb:
 				MCLAIM(m, &tcp_mowner);
 				tcp_saveti->m_len = iphlen;
 				m_copydata(m, 0, iphlen,
-				    mtod(tcp_saveti, caddr_t));
+				    mtod(tcp_saveti, void *));
 			}
 
 			if (M_TRAILINGSPACE(tcp_saveti) < sizeof(struct tcphdr)) {
@@ -1380,7 +1384,7 @@ findpcb:
 				tcp_saveti = NULL;
 			} else {
 				tcp_saveti->m_len += sizeof(struct tcphdr);
-				bcopy(th, mtod(tcp_saveti, caddr_t) + iphlen,
+				memcpy(mtod(tcp_saveti, char *) + iphlen, th,
 				    sizeof(struct tcphdr));
 			}
 	nosave:;
@@ -1606,7 +1610,7 @@ after_listen:
 	 */
 	tp->t_rcvtime = tcp_now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 	/*
 	 * Process options.
@@ -1771,6 +1775,8 @@ after_listen:
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tlen <= sbspace(&so->so_rcv)) {
+			int newsize = 0;	/* automatic sockbuf scaling */
+
 			/*
 			 * this is a pure, in-sequence data packet
 			 * with nothing on the reassembly queue and
@@ -1781,6 +1787,59 @@ after_listen:
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
+
+		/*
+		 * Automatic sizing enables the performance of large buffers
+		 * and most of the efficiency of small ones by only allocating
+		 * space when it is needed.
+		 *
+		 * On the receive side the socket buffer memory is only rarely
+		 * used to any significant extent.  This allows us to be much
+		 * more aggressive in scaling the receive socket buffer.  For
+		 * the case that the buffer space is actually used to a large
+		 * extent and we run out of kernel memory we can simply drop
+		 * the new segments; TCP on the sender will just retransmit it
+		 * later.  Setting the buffer size too big may only consume too
+		 * much kernel memory if the application doesn't read() from
+		 * the socket or packet loss or reordering makes use of the
+		 * reassembly queue.
+		 *
+		 * The criteria to step up the receive buffer one notch are:
+		 *  1. the number of bytes received during the time it takes
+		 *     one timestamp to be reflected back to us (the RTT);
+		 *  2. received bytes per RTT is within seven eighth of the
+		 *     current socket buffer size;
+		 *  3. receive buffer size has not hit maximal automatic size;
+		 *
+		 * This algorithm does one step per RTT at most and only if
+		 * we receive a bulk stream w/o packet losses or reorderings.
+		 * Shrinking the buffer during idle times is not necessary as
+		 * it doesn't consume any memory when idle.
+		 *
+		 * TODO: Only step up if the application is actually serving
+		 * the buffer to better manage the socket buffer resources.
+		 */
+			if (tcp_do_autorcvbuf &&
+			    opti.ts_ecr &&
+			    (so->so_rcv.sb_flags & SB_AUTOSIZE)) {
+				if (opti.ts_ecr > tp->rfbuf_ts &&
+				    opti.ts_ecr - tp->rfbuf_ts < PR_SLOWHZ) {
+					if (tp->rfbuf_cnt >
+					    (so->so_rcv.sb_hiwat / 8 * 7) &&
+					    so->so_rcv.sb_hiwat <
+					    tcp_autorcvbuf_max) {
+						newsize =
+						    min(so->so_rcv.sb_hiwat +
+						    tcp_autorcvbuf_inc,
+						    tcp_autorcvbuf_max);
+					}
+					/* Start over with next RTT. */
+					tp->rfbuf_ts = 0;
+					tp->rfbuf_cnt = 0;
+				} else
+					tp->rfbuf_cnt += tlen;	/* add up */
+			}
+
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
@@ -1788,6 +1847,14 @@ after_listen:
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
+				/*
+				 * Set new socket buffer size.
+				 * Give up when limit is reached.
+				 */
+				if (newsize)
+					if (!sbreserve(&so->so_rcv,
+					    newsize, so))
+						so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
 				m_adj(m, toff + off);
 				sbappendstream(&so->so_rcv, m);
 			}
@@ -1819,6 +1886,10 @@ after_listen:
 		win = 0;
 	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
+
+	/* Reset receive buffer auto scaling when not in bulk receive mode. */
+	tp->rfbuf_ts = 0;
+	tp->rfbuf_cnt = 0;
 
 	switch (tp->t_state) {
 	/*
@@ -2366,9 +2437,9 @@ after_listen:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					if (tcp_maxidle > 0)
+					if (tp->t_maxidle > 0)
 						TCP_TIMER_ARM(tp, TCPT_2MSL,
-						    tcp_maxidle);
+						    tp->t_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -2727,7 +2798,7 @@ drop:
 
 #ifdef TCP_SIGNATURE
 int
-tcp_signature_apply(void *fstate, caddr_t data, u_int len)
+tcp_signature_apply(void *fstate, void *data, u_int len)
 {
 
 	MD5Update(fstate, (u_char *)data, len);
@@ -2777,12 +2848,12 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
 #else
 	if (ip)
-		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
-		    (caddr_t)&ip->ip_dst, IPPROTO_TCP,
+		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
+		    (void *)&ip->ip_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 	else
-		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
-		    (caddr_t)&ip6->ip6_dst, IPPROTO_TCP,
+		sav = key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
+		    (void *)&ip6->ip6_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 #endif
 
@@ -2861,13 +2932,13 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
-    const struct tcphdr *th,
+    struct tcphdr *th,
     struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
 	int opt, optlen = 0;
 #ifdef TCP_SIGNATURE
-	caddr_t sigp = NULL;
+	void *sigp = NULL;
 	char sigbuf[TCP_SIGLEN];
 	struct secasvar *sav = NULL;
 #endif
@@ -2983,7 +3054,6 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 
 			sigp = sigbuf;
 			memcpy(sigbuf, cp + 2, TCP_SIGLEN);
-			memset(cp + 2, 0, TCP_SIGLEN);
 			tp->t_flags |= TF_SIGNATURE;
 			break;
 #endif
@@ -3066,7 +3136,7 @@ tcp_pulloutofband(struct socket *so, struct tcphdr *th,
 
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
-			char *cp = mtod(m, caddr_t) + cnt;
+			char *cp = mtod(m, char *) + cnt;
 			struct tcpcb *tp = sototcpcb(so);
 
 			tp->t_iobc = *cp;
@@ -3214,14 +3284,17 @@ do {									\
 do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
-	rtcache_free(&(sc)->sc_route4);					\
+	rtcache_free(&(sc)->sc_route);					\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
-	else								\
+	else {								\
+		callout_destroy(&sc->sc_timer);				\
 		pool_put(&syn_cache_pool, (sc));			\
+	}								\
 } while (/*CONSTCOND*/0)
 
-POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL);
+POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
+    IPL_SOFTNET);
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default
@@ -3361,6 +3434,7 @@ syn_cache_timer(void *arg)
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
 		tcpstat.tcps_sc_delayed_free++;
+		callout_destroy(&sc->sc_timer);
 		pool_put(&syn_cache_pool, sc);
 		splx(s);
 		return;
@@ -3377,7 +3451,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= TCPTV_KEEP_INIT)
+	if (sc->sc_rxttot >= tcp_keepinit)
 		goto dropit;
 
 	tcpstat.tcps_sc_retransmitted++;
@@ -3630,14 +3704,13 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * Give the new socket our cached route reference.
 	 */
 	if (inp) {
-		rtcache_copy(&inp->inp_route, &sc->sc_route4, sizeof(inp->inp_route));
-		rtcache_free(&sc->sc_route4);
+		rtcache_copy(&inp->inp_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #ifdef INET6
 	else {
-		rtcache_copy((struct route *)&in6p->in6p_route,
-		    (struct route *)&sc->sc_route6, sizeof(in6p->in6p_route));
-		rtcache_free((struct route *)&sc->sc_route6);
+		rtcache_copy(&in6p->in6p_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #endif
 
@@ -3646,7 +3719,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		goto resetandabort;
 	MCLAIM(am, &tcp_mowner);
 	am->m_len = src->sa_len;
-	bcopy(src, mtod(am, caddr_t), src->sa_len);
+	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
 		if (in_pcbconnect(inp, am, NULL)) {
 			(void) m_free(am);
@@ -3714,7 +3787,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	tcp_sendseqinit(tp);
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 	tcpstat.tcps_accepts++;
 
 	if ((sc->sc_flags & SCF_SACK_PERMIT) && tcp_do_sack)
@@ -3966,7 +4039,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * options into the reply.
 	 */
 	bzero(sc, sizeof(struct syn_cache));
-	callout_init(&sc->sc_timer);
+	callout_init(&sc->sc_timer, 0);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_flags = 0;
@@ -4012,9 +4085,18 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 		sc->sc_requested_s_scale = tb.requested_s_scale;
 		sc->sc_request_r_scale = 0;
+		/*
+		 * Compute proper scaling value from buffer space.
+		 * Leave enough room for the socket buffer to grow
+		 * with auto sizing.  This allows us to scale the
+		 * receive buffer over a wide range while not losing
+		 * any efficiency or fine granularity.
+		 *
+		 * RFC1323: The Window field in a SYN (i.e., a <SYN>
+		 * or <SYN,ACK>) segment itself is never scaled.
+		 */
 		while (sc->sc_request_r_scale < TCP_MAX_WINSHIFT &&
-		    TCP_MAXWIN << sc->sc_request_r_scale <
-		    so->so_rcv.sb_hiwat)
+		    (0x1 << sc->sc_request_r_scale) < tcp_minmss)
 			sc->sc_request_r_scale++;
 	} else {
 		sc->sc_requested_s_scale = 15;
@@ -4063,15 +4145,14 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	u_int hlen;
 	struct socket *so;
 
+	ro = &sc->sc_route;
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:
@@ -4335,8 +4416,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		ip6->ip6_hlim = in6_selecthlim(NULL,
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;
 #endif
 	default:

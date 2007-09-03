@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.153.2.3 2007/02/26 09:11:45 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.153.2.4 2007/09/03 14:42:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.3 2007/02/26 09:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.4 2007/09/03 14:42:59 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -155,7 +155,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.3 2007/02/26 09:11:45 yamt Exp
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
-static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+static void ip_mloopback(struct ifnet *, struct mbuf *,
+    const struct sockaddr_in *);
 static int ip_getoptval(struct mbuf *, u_int8_t *, u_int);
 
 #ifdef PFIL_HOOKS
@@ -185,7 +186,7 @@ ip_output(struct mbuf *m0, ...)
 	int hlen = sizeof (struct ip);
 	int len, error = 0;
 	struct route iproute;
-	struct sockaddr_in *dst;
+	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
 	struct ifaddr *xifa;
 	struct mbuf *opt;
@@ -210,6 +211,13 @@ ip_output(struct mbuf *m0, ...)
 	int s;
 #endif
 	u_int16_t ip_len;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
+	struct sockaddr *rdst = &u.dst;	/* real IP destination, as opposed
+					 * to the nexthop
+					 */
 
 	len = 0;
 	va_start(ap, m0);
@@ -290,7 +298,8 @@ ip_output(struct mbuf *m0, ...)
 	memset(&iproute, 0, sizeof(iproute));
 	if (ro == NULL)
 		ro = &iproute;
-	dst = satosin(&ro->ro_dst);
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	dst = satocsin(rtcache_getdst(ro));
 	/*
 	 * If there is a cached route,
 	 * check that it is to the same destination
@@ -298,22 +307,23 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (dst->sin_family != AF_INET || !in_hosteq(dst->sin_addr, ip->ip_dst))
+	if (dst == NULL)
+		;
+	else if (dst->sin_family != AF_INET ||
+		 !in_hosteq(dst->sin_addr, ip->ip_dst))
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
 	if (ro->ro_rt == NULL) {
-		memset(dst, 0, sizeof(*dst));
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = ip->ip_dst;
+		dst = &u.dst4;
+		rtcache_setdst(ro, &u.dst);
 	}
 	/*
 	 * If routing to interface only,
 	 * short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		if ((ia = ifatoia(ifa_ifwithladdr(sintosa(dst)))) == 0) {
+		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
@@ -349,12 +359,6 @@ ip_output(struct mbuf *m0, ...)
 
 		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
 			M_BCAST : M_MCAST;
-		/*
-		 * IP destination address is multicast.  Make sure "dst"
-		 * still points to the address in "ro".  (It may have been
-		 * changed to point to a gateway address, above.)
-		 */
-		dst = satosin(&ro->ro_dst);
 		/*
 		 * See if the caller provided any multicast options
 		 */
@@ -399,8 +403,7 @@ ip_output(struct mbuf *m0, ...)
 			}
 			xifa = &xia->ia_ifa;
 			if (xifa->ifa_getifa != NULL) {
-				xia = ifatoia((*xifa->ifa_getifa)(xifa,
-				    rtcache_getdst(ro)));
+				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 			}
 			ip->ip_src = xia->ia_addr.sin_addr;
 		}
@@ -413,7 +416,7 @@ ip_output(struct mbuf *m0, ...)
 			 * on the outgoing interface, and the caller did not
 			 * forbid loopback, loop back a copy.
 			 */
-			ip_mloopback(ifp, m, dst);
+			ip_mloopback(ifp, m, &u.dst4);
 		}
 #ifdef MROUTING
 		else {
@@ -461,7 +464,7 @@ ip_output(struct mbuf *m0, ...)
 	if (in_nullhost(ip->ip_src)) {
 		xifa = &ia->ia_ifa;
 		if (xifa->ifa_getifa != NULL)
-			ia = ifatoia((*xifa->ifa_getifa)(xifa, rtcache_getdst(ro)));
+			ia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 		ip->ip_src = ia->ia_addr.sin_addr;
 	}
 
@@ -587,7 +590,7 @@ sendit:
 		memset(&iproute, 0, sizeof(iproute));
 	} else
 		state.ro = ro;
-	state.dst = (struct sockaddr *)dst;
+	state.dst = sintocsa(dst);
 
 	/*
 	 * We can't defer the checksum of payload data if
@@ -617,7 +620,7 @@ sendit:
 		}
 	} else
 		ro = state.ro;
-	dst = (struct sockaddr_in *)state.dst;
+	dst = satocsin(state.dst);
 	if (error) {
 		/* mbuf is already reclaimed in ipsec4_output. */
 		m0 = NULL;
@@ -884,10 +887,16 @@ spd_done:
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
 			error =
-			    (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+			    (*ifp->if_output)(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		} else {
 			error =
-			    ip_tso_output(ifp, m, sintosa(dst), ro->ro_rt);
+			    ip_tso_output(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		}
 		goto done;
 	}
@@ -953,7 +962,9 @@ spd_done:
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-				error = (*ifp->if_output)(ifp, m, sintosa(dst),
+				error = (*ifp->if_output)(ifp, m,
+				    (m->m_flags & M_MCAST) ?
+					sintocsa(rdst) : sintocsa(dst),
 				    ro->ro_rt);
 			}
 		} else
@@ -1046,7 +1057,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			mhip->ip_off |= IP_MF;
 		HTONS(mhip->ip_off);
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
-		m->m_next = m_copy(m0, off, len);
+		m->m_next = m_copym(m0, off, len, M_DONTWAIT);
 		if (m->m_next == 0) {
 			error = ENOBUFS;	/* ??? */
 			ipstat.ips_odropped++;
@@ -1130,9 +1141,9 @@ in_delayed_cksum(struct mbuf *m)
 		printf("in_delayed_cksum: pullup len %d off %d proto %d\n",
 		    m->m_len, offset, ip->ip_p);
 		 */
-		m_copyback(m, offset, sizeof(csum), (caddr_t) &csum);
+		m_copyback(m, offset, sizeof(csum), (void *) &csum);
 	} else
-		*(u_int16_t *)(mtod(m, caddr_t) + offset) = csum;
+		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
 }
 
 /*
@@ -1182,15 +1193,15 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m = n;
 		m->m_len = optlen + sizeof(struct ip);
 		m->m_data += max_linkhdr;
-		bcopy((caddr_t)ip, mtod(m, caddr_t), sizeof(struct ip));
+		bcopy((void *)ip, mtod(m, void *), sizeof(struct ip));
 	} else {
 		m->m_data -= optlen;
 		m->m_len += optlen;
-		memmove(mtod(m, caddr_t), ip, sizeof(struct ip));
+		memmove(mtod(m, void *), ip, sizeof(struct ip));
 	}
 	m->m_pkthdr.len += optlen;
 	ip = mtod(m, struct ip *);
-	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), (unsigned)optlen);
+	bcopy((void *)p->ipopt_list, (void *)(ip + 1), (unsigned)optlen);
 	*phlen = sizeof(struct ip) + optlen;
 	ip->ip_len = htons(ntohs(ip->ip_len) + optlen);
 	return (m);
@@ -1232,7 +1243,7 @@ ip_optcopy(struct ip *ip, struct ip *jp)
 		if (optlen > cnt)
 			optlen = cnt;
 		if (IPOPT_COPIED(opt)) {
-			bcopy((caddr_t)cp, (caddr_t)dp, (unsigned)optlen);
+			bcopy((void *)cp, (void *)dp, (unsigned)optlen);
 			dp += optlen;
 		}
 	}
@@ -1352,7 +1363,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		{
-			caddr_t req = NULL;
+			void *req = NULL;
 			size_t len = 0;
 			int priv = 0;
 
@@ -1366,7 +1377,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
 			if (m) {
-				req = mtod(m, caddr_t);
+				req = mtod(m, void *);
 				len = m->m_len;
 			}
 			error = ipsec4_set_policy(inp, optname, req, len, priv);
@@ -1390,8 +1401,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			MCLAIM(m, so->so_mowner);
 			if (inp->inp_options) {
 				m->m_len = inp->inp_options->m_len;
-				bcopy(mtod(inp->inp_options, caddr_t),
-				    mtod(m, caddr_t), (unsigned)m->m_len);
+				bcopy(mtod(inp->inp_options, void *),
+				    mtod(m, void *), (unsigned)m->m_len);
 			} else
 				m->m_len = 0;
 			break;
@@ -1445,11 +1456,11 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		/* XXX: code broken */
 		case IP_IPSEC_POLICY:
 		{
-			caddr_t req = NULL;
+			void *req = NULL;
 			size_t len = 0;
 
 			if (m) {
-				req = mtod(m, caddr_t);
+				req = mtod(m, void *);
 				len = m->m_len;
 			}
 			error = ipsec4_get_policy(inp, req, len, mp);
@@ -1532,8 +1543,8 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	cnt = m->m_len;
 	m->m_len += sizeof(struct in_addr);
 	cp = mtod(m, u_char *) + sizeof(struct in_addr);
-	memmove(cp, mtod(m, caddr_t), (unsigned)cnt);
-	bzero(mtod(m, caddr_t), sizeof(struct in_addr));
+	memmove(cp, mtod(m, void *), (unsigned)cnt);
+	bzero(mtod(m, void *), sizeof(struct in_addr));
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];
@@ -1572,7 +1583,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			/*
 			 * Move first hop before start of options.
 			 */
-			bcopy((caddr_t)&cp[IPOPT_OFFSET+1], mtod(m, caddr_t),
+			bcopy((void *)&cp[IPOPT_OFFSET+1], mtod(m, void *),
 			    sizeof(struct in_addr));
 			/*
 			 * Then copy rest of options back
@@ -1665,8 +1676,6 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 	struct ip_mreq *mreq;
 	struct ifnet *ifp;
 	struct ip_moptions *imo = *imop;
-	struct route ro;
-	struct sockaddr_in *dst;
 	int ifindex;
 
 	if (imo == NULL) {
@@ -1758,11 +1767,16 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
+			union {
+				struct sockaddr		dst;
+				struct sockaddr_in	dst4;
+			} u;
+			struct route ro;
+
 			memset(&ro, 0, sizeof(ro));
-			dst = satosin(&ro.ro_dst);
-			dst->sin_len = sizeof(*dst);
-			dst->sin_family = AF_INET;
-			dst->sin_addr = mreq->imr_multiaddr;
+
+			sockaddr_in_init(&u.dst4, &mreq->imr_multiaddr, 0);
+			rtcache_setdst(&ro, &u.dst);
 			rtcache_init(&ro);
 			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free(&ro);
@@ -1950,30 +1964,30 @@ ip_freemoptions(struct ip_moptions *imo)
  * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 static void
-ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
+ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 {
 	struct ip *ip;
 	struct mbuf *copym;
 
-	copym = m_copy(m, 0, M_COPYALL);
+	copym = m_copypacket(m, M_DONTWAIT);
 	if (copym != NULL
 	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
 		copym = m_pullup(copym, sizeof(struct ip));
-	if (copym != NULL) {
-		/*
-		 * We don't bother to fragment if the IP length is greater
-		 * than the interface's MTU.  Can this possibly matter?
-		 */
-		ip = mtod(copym, struct ip *);
+	if (copym == NULL)
+		return;
+	/*
+	 * We don't bother to fragment if the IP length is greater
+	 * than the interface's MTU.  Can this possibly matter?
+	 */
+	ip = mtod(copym, struct ip *);
 
-		if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(copym);
-			copym->m_pkthdr.csum_flags &=
-			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-		}
-
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
-		(void) looutput(ifp, copym, sintosa(dst), NULL);
+	if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		in_delayed_cksum(copym);
+		copym->m_pkthdr.csum_flags &=
+		    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
+
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
+	(void)looutput(ifp, copym, sintocsa(dst), NULL);
 }

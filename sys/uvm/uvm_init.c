@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.23.2.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.23.2.3 2007/09/03 14:47:06 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.2 2006/12/30 20:51:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.3 2007/09/03 14:47:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,16 +55,19 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.2 2006/12/30 20:51:05 yamt Exp $
 #include <uvm/uvm_pdpolicy.h>
 
 /*
- * struct uvm: we store all global vars in this structure to make them
+ * struct uvm: we store most global vars in this structure to make them
  * easier to spot...
  */
 
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
+struct uvm_object *uvm_kernel_object;
 
-/*
- * local prototypes
- */
+kmutex_t uvm_fpageqlock;
+kmutex_t uvm_pagedaemon_lock;
+kmutex_t uvm_kentry_lock;
+kmutex_t uvm_swap_data_lock;
+kmutex_t uvm_scheduler_mutex;
 
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.
@@ -89,6 +92,7 @@ uvm_init(void)
 
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
+	uvm_amap_init();
 
 	/*
 	 * step 2: init the page sub-system.  this includes allocating the

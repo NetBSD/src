@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.128.4.3 2007/02/26 09:12:05 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.128.4.4 2007/09/03 14:44:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128.4.3 2007/02/26 09:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128.4.4 2007/09/03 14:44:16 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -87,7 +87,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct buf *bp = NULL, *rabp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
-	caddr_t baddr;
+	void *baddr;
 	int got_buf = 0, error = 0, n = 0, on = 0, en, enn;
 	int enough = 0;
 	struct dirent *dp, *pdp, *edp, *ep;
@@ -143,7 +143,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
 		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
-	    baddr = (caddr_t)0;
+	    baddr = (void *)0;
 	    switch (vp->v_type) {
 	    case VREG:
 		nfsstats.biocache_reads++;
@@ -151,8 +151,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		advice = IO_ADV_DECODE(ioflag);
 		error = 0;
 		while (uio->uio_resid > 0) {
-			void *win;
-			int flags;
 			vsize_t bytelen;
 
 			nfs_delayedtruncate(vp);
@@ -161,11 +159,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			}
 			bytelen =
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+			    advice, UBC_READ | UBC_PARTIALOK |
+			    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 			if (error) {
 				/*
 				 * XXXkludge
@@ -281,7 +277,7 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = (struct dirent *)(void *)(bp->b_data + bp->b_bcount -
+		edp = (struct dirent *)(void *)((char *)bp->b_data + bp->b_bcount -
 		    bp->b_resid);
 		enn = 0;
 		while (enn < en && dp < edp) {
@@ -312,7 +308,7 @@ diragain:
 			goto diragain;
 		}
 
-		on = (caddr_t)dp - bp->b_data;
+		on = (char *)dp - (char *)bp->b_data;
 
 		/*
 		 * Cache all entries that may be exported to the
@@ -332,7 +328,7 @@ diragain:
 		} else
 			n = bp->b_bcount - bp->b_resid - on;
 
-		ep = (struct dirent *)(void *)(bp->b_data + on + n);
+		ep = (struct dirent *)(void *)((char *)bp->b_data + on + n);
 
 		/*
 		 * Find last complete entry to copy, caching entries
@@ -386,7 +382,7 @@ diragain:
 			}
 		}
 
-		n = (char *)_DIRENT_NEXT(pdp) - (bp->b_data + on);
+		n = (char *)_DIRENT_NEXT(pdp) - ((char *)bp->b_data + on);
 
 		/*
 		 * If not eof and read aheads are enabled, start one.
@@ -420,7 +416,7 @@ diragain:
 	    if (n > 0) {
 		if (!baddr)
 			baddr = bp->b_data;
-		error = uiomove(baddr + on, (int)n, uio);
+		error = uiomove((char *)baddr + on, (int)n, uio);
 	    }
 	    switch (vp->v_type) {
 	    case VREG:
@@ -460,12 +456,10 @@ nfs_write(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	kauth_cred_t cred = ap->a_cred;
-	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	void *win;
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
-	int flags, error = 0;
+	int error = 0;
 	int ioflag = ap->a_ioflag;
 	int extended = 0, wrotedata = 0;
 
@@ -484,20 +478,13 @@ nfs_write(v)
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, l);
 #endif
-	if (ioflag & (IO_APPEND | IO_SYNC)) {
-		if (np->n_flag & NMODIFIED) {
-			NFS_INVALIDATE_ATTRCACHE(np);
-			error = nfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-			if (error)
-				return (error);
-		}
-		if (ioflag & IO_APPEND) {
-			NFS_INVALIDATE_ATTRCACHE(np);
-			error = VOP_GETATTR(vp, &vattr, cred, l);
-			if (error)
-				return (error);
-			uio->uio_offset = np->n_size;
-		}
+	if (ioflag & IO_APPEND) {
+		NFS_INVALIDATE_ATTRCACHE(np);
+		error = nfs_flushstalebuf(vp, cred, l,
+		    NFS_FLUSHSTALEBUF_MYWRITE);
+		if (error)
+			return (error);
+		uio->uio_offset = np->n_size;
 	}
 	if (uio->uio_offset < 0)
 		return (EINVAL);
@@ -511,13 +498,15 @@ nfs_write(v)
 	 */
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 
 	origoff = uio->uio_offset;
 	do {
-		bool extending; /* if we are extending whole pages */
+		bool overwrite; /* if we are overwriting whole pages */
 		u_quad_t oldsize;
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
@@ -529,17 +518,27 @@ nfs_write(v)
 		if (np->n_size < uio->uio_offset + bytelen) {
 			np->n_size = uio->uio_offset + bytelen;
 		}
-		extending = ((uio->uio_offset & PAGE_MASK) == 0 &&
-		    (bytelen & PAGE_MASK) == 0 &&
-		    uio->uio_offset >= vp->v_size);
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    UVM_ADV_NORMAL,
-		    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
-		error = uiomove(win, bytelen, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		overwrite = false;
+		if ((uio->uio_offset & PAGE_MASK) == 0) {
+			if ((vp->v_flag & VMAPPED) == 0 &&
+			    bytelen > PAGE_SIZE) {
+				bytelen = trunc_page(bytelen);
+				overwrite = true;
+			} else if ((bytelen & PAGE_MASK) == 0 &&
+			    uio->uio_offset >= vp->v_size) {
+				overwrite = true;
+			}
+		}
+		if (vp->v_size < uio->uio_offset + bytelen) {
+			uvm_vnp_setwritesize(vp, uio->uio_offset + bytelen);
+		}
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+		    UVM_ADV_RANDOM, UBC_WRITE | UBC_PARTIALOK |
+		    (overwrite ? UBC_FAULTBUSY : 0) |
+		    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 		if (error) {
-			if (extending) {
+			uvm_vnp_setwritesize(vp, vp->v_size);
+			if (overwrite && np->n_size != oldsize) {
 				/*
 				 * backout size and free pages past eof.
 				 */
@@ -573,7 +572,7 @@ nfs_write(v)
 	} while (uio->uio_resid > 0);
 	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (ioflag & IO_SYNC) {
+	if (error == 0 && (ioflag & IO_SYNC) != 0) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
@@ -738,9 +737,10 @@ int
 nfs_asyncio(bp)
 	struct buf *bp;
 {
-	int i;
+	struct nfs_iod *iod;
 	struct nfsmount *nmp;
-	int gotiod, slpflag = 0, slptimeo = 0, error;
+	int slptimeo = 0, error;
+	bool catch = false;
 
 	if (nfs_numasync == 0)
 		return (EIO);
@@ -748,46 +748,37 @@ nfs_asyncio(bp)
 	nmp = VFSTONFS(bp->b_vp->v_mount);
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
-		slpflag = PCATCH;
-	gotiod = false;
+		catch = true;
 
 	/*
 	 * Find a free iod to process this request.
 	 */
 
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		struct nfs_iod *iod = &nfs_asyncdaemon[i];
-
-		simple_lock(&iod->nid_slock);
-		if (iod->nid_want) {
-			/*
-			 * Found one, so wake it up and tell it which
-			 * mount to process.
-			 */
-			iod->nid_want = NULL;
-			iod->nid_mount = nmp;
-			wakeup(&iod->nid_want);
-			simple_lock(&nmp->nm_slock);
-			simple_unlock(&iod->nid_slock);
-			nmp->nm_bufqiods++;
-			gotiod = true;
-			break;
+	mutex_enter(&nfs_iodlist_lock);
+	iod = LIST_FIRST(&nfs_iodlist_idle);
+	if (iod) {
+		/*
+		 * Found one, so wake it up and tell it which
+		 * mount to process.
+		 */
+		LIST_REMOVE(iod, nid_idle);
+		mutex_enter(&iod->nid_lock);
+		mutex_exit(&nfs_iodlist_lock);
+		KASSERT(iod->nid_mount == NULL);
+		iod->nid_mount = nmp;
+		cv_signal(&iod->nid_cv);
+		mutex_enter(&nmp->nm_lock);
+		mutex_exit(&iod->nid_lock);
+		nmp->nm_bufqiods++;
+		if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
+			cv_broadcast(&nmp->nm_aiocv);
 		}
-		simple_unlock(&iod->nid_slock);
+	} else {
+		mutex_exit(&nfs_iodlist_lock);
+		mutex_enter(&nmp->nm_lock);
 	}
 
-	/*
-	 * If none are free, we may already have an iod working on this mount
-	 * point.  If so, it will process our request.
-	 */
-
-	if (!gotiod) {
-		simple_lock(&nmp->nm_slock);
-		if (nmp->nm_bufqiods > 0)
-			gotiod = true;
-	}
-
-	LOCK_ASSERT(simple_lock_held(&nmp->nm_slock));
+	KASSERT(mutex_owned(&nmp->nm_lock));
 
 	/*
 	 * If we have an iod which can process the request, then queue
@@ -800,44 +791,48 @@ again:
 	 * XXX: start non-loopback mounts straight away?  If "lots free",
 	 * let pagedaemon start loopback writes anyway?
 	 */
-	if (gotiod) {
+	if (nmp->nm_bufqiods > 0) {
 
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
-		if (curproc == uvm.pagedaemon_proc) {
+		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
-			  (void) 0;
-		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
-			nmp->nm_bufqwant = true;
-			error = ltsleep(&nmp->nm_bufq,
-			    slpflag | PRIBIO | PNORELOCK,
-			    "nfsaio", slptimeo, &nmp->nm_slock);
+		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
+			if (catch) {
+				error = cv_timedwait_sig(&nmp->nm_aiocv, 
+				    &nmp->nm_lock, slptimeo);
+			} else {
+				error = cv_timedwait(&nmp->nm_aiocv,
+				    &nmp->nm_lock, slptimeo);
+			}
 			if (error) {
-				if (nfs_sigintr(nmp, NULL, curlwp))
+				if (nfs_sigintr(nmp, NULL, curlwp)) {
+					mutex_exit(&nmp->nm_lock);
 					return (EINTR);
-				if (slpflag == PCATCH) {
-					slpflag = 0;
+				}
+				if (catch) {
+					catch = false;
 					slptimeo = 2 * hz;
 				}
 			}
 
 			/*
 			 * We might have lost our iod while sleeping,
-			 * so check and loop if nescessary.
+			 * so check and loop if necessary.
 			 */
 
-			if (nmp->nm_bufqiods == 0)
+			if (nmp->nm_bufqiods == 0) {
+				mutex_exit(&nmp->nm_lock);
 				goto again;
-
-			simple_lock(&nmp->nm_slock);
+			}
 		}
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 		return (0);
 	}
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 
 	/*
 	 * All the iods are busy on other mounts, so return EIO to
@@ -926,7 +921,6 @@ nfs_doio_read(bp, uiop)
 		break;
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;
@@ -1068,7 +1062,6 @@ again:
 			goto again;
 		}
 		if (error) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
@@ -1132,7 +1125,6 @@ again:
 		/*
 		 * we got an error.
 		 */
-		bp->b_flags |= B_ERROR;
 		bp->b_error = np->n_error = error;
 		np->n_flag |= NWRITEERR;
 	}
@@ -1176,7 +1168,6 @@ nfs_doio_phys(bp, uiop)
 		}
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;
@@ -1313,8 +1304,7 @@ nfs_getpages(v)
 		if (!locked) {
 			mutex_enter(&np->n_commitlock);
 		} else {
-			error = mutex_tryenter(&np->n_commitlock);
-			if (error) {
+			if (!mutex_tryenter(&np->n_commitlock)) {
 
 				/*
 				 * Since PGO_LOCKED is set, we need to unbusy
@@ -1329,7 +1319,7 @@ nfs_getpages(v)
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
-				return (error);
+				return EBUSY;
 			}
 		}
 		nfs_del_committed_range(vp, origoffset, len);

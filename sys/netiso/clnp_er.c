@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.16.4.1 2006/12/30 20:50:44 yamt Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.16.4.2 2007/09/03 14:43:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16.4.1 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16.4.2 2007/09/03 14:43:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -246,12 +246,12 @@ clnp_emit_er(m, reason)
 {
 	struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
 	struct clnp_fixed *er;
-	struct route_iso route;
+	struct route route;
 	struct ifnet   *ifp;
-	struct sockaddr *first_hop;
+	const struct sockaddr *first_hop;
 	struct iso_addr src, dst, *our_addr;
-	caddr_t         hoff, hend;
-	int             total_len;	/* total len of dg */
+	char *hoff, *hend;
+	int total_len;	/* total len of dg */
 	struct iso_ifaddr *ia = 0;
 
 #ifdef ARGO_DEBUG
@@ -261,7 +261,7 @@ clnp_emit_er(m, reason)
 	}
 #endif
 
-	bzero((caddr_t) & route, sizeof(route));
+	memset(&route, 0, sizeof(route));
 
 	/*
 	 * If header length is incorrect, or entire header is not contained
@@ -273,14 +273,14 @@ clnp_emit_er(m, reason)
 		goto bad;
 
 	/* extract src, dest address */
-	hend = (caddr_t) clnp + clnp->cnf_hdr_len;
-	hoff = (caddr_t) clnp + sizeof(struct clnp_fixed);
+	hend = (char *)clnp + clnp->cnf_hdr_len;
+	hoff = (char *)clnp + sizeof(struct clnp_fixed);
 	CLNP_EXTRACT_ADDR(dst, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == (void *) 0) {
 		goto bad;
 	}
 	CLNP_EXTRACT_ADDR(src, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == (void *) 0) {
 		goto bad;
 	}
 	/*
@@ -321,7 +321,7 @@ clnp_emit_er(m, reason)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
 		printf("clnp_emit_er: packet routed to %s\n",
-		    clnp_iso_addrp(&satosiso(first_hop)->siso_addr));
+		    clnp_iso_addrp(&satocsiso(first_hop)->siso_addr));
 	}
 #endif
 
@@ -341,7 +341,7 @@ clnp_emit_er(m, reason)
 
 	/* setup src/dst on er pdu */
 	/* NOTE REVERSAL OF SRC/DST */
-	hoff = (caddr_t) er + sizeof(struct clnp_fixed);
+	hoff = (char *)er + sizeof(struct clnp_fixed);
 	CLNP_INSERT_ADDR(hoff, src);
 	CLNP_INSERT_ADDR(hoff, *our_addr);
 
@@ -357,7 +357,7 @@ clnp_emit_er(m, reason)
 	*hoff++ = 0;		/* error localization = not specified */
 
 	/* set length */
-	er->cnf_hdr_len = (u_char) (hoff - (caddr_t) er);
+	er->cnf_hdr_len = (u_char) (hoff - (char *)er);
 	total_len = m->m_pkthdr.len;
 	HTOC(er->cnf_seglen_msb, er->cnf_seglen_lsb, total_len);
 
@@ -378,7 +378,7 @@ bad:
 
 done:
 	/* free route if it is a temp */
-	rtcache_free((struct route *)&route);
+	rtcache_free(&route);
 }
 
 int

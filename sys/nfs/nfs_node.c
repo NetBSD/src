@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.80.2.3 2007/02/26 09:12:05 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.80.2.4 2007/09/03 14:44:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.3 2007/02/26 09:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.4 2007/09/03 14:44:17 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -64,9 +64,9 @@ u_long nfsnodehash;
 struct lock nfs_hashlock;
 
 POOL_INIT(nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
@@ -243,7 +243,8 @@ nfs_inactive(v)
 	if (sp != NULL)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
 	removed = (np->n_flag & NREMOVED) != 0;
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NEOFVALID);
+	np->n_flag &=
+	    (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NEOFVALID | NTRUNCDELAYED);
 
 	if (vp->v_type == VDIR && np->n_dircache)
 		nfs_invaldircache(vp,
@@ -268,9 +269,11 @@ nfs_inactive(v)
 		error = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_CANRECURSE);
 		if (error || sp->s_dvp->v_data == NULL) {
 			/* XXX should recover */
-			panic("%s: vp=%p error=%d", __func__, sp->s_dvp, error);
+			printf("%s: vp=%p error=%d\n",
+			    __func__, sp->s_dvp, error);
+		} else {
+			nfs_removeit(sp);
 		}
-		nfs_removeit(sp);
 		kauth_cred_free(sp->s_cred);
 		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);

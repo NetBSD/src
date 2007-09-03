@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.16.2.3 2007/02/26 09:11:41 yamt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.16.2.4 2007/09/03 14:42:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.3 2007/02/26 09:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.4 2007/09/03 14:42:30 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -134,8 +134,7 @@ at_ifawithnet(sat, ifp)
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
 
-	for (ifa = ifp->if_addrlist.tqh_first; ifa;
-	    ifa = ifa->ifa_list.tqe_next) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 
@@ -180,7 +179,7 @@ aarpwhohas(ifp, sat)
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_REQUEST);
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	/*
          * We need to check whether the output ethernet type should
@@ -329,6 +328,7 @@ at_aarpinput(ifp, m)
 {
 	struct ether_aarp *ea;
 	struct at_ifaddr *aa;
+	struct ifaddr *ia;
 	struct aarptab *aat;
 	struct ether_header *eh;
 	struct llc     *llc;
@@ -341,7 +341,7 @@ at_aarpinput(ifp, m)
 	ea = mtod(m, struct ether_aarp *);
 
 	/* Check to see if from my hardware address */
-	if (!bcmp(ea->aarp_sha, LLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
+	if (!bcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
 		m_freem(m);
 		return;
 	}
@@ -364,13 +364,13 @@ at_aarpinput(ifp, m)
 		 * Since we don't know the net, we just look for the first
 		 * phase 1 address on the interface.
 		 */
-		for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
-		    aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
+		TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+			aa = (struct at_ifaddr *)ia;
 			if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)
 				break;
 		}
-		if (aa == NULL) {
+		if (ia == NULL) {
 			m_freem(m);
 			return;
 		}
@@ -449,7 +449,7 @@ at_aarpinput(ifp, m)
 		return;
 	}
 	bcopy(ea->aarp_sha, ea->aarp_tha, sizeof(ea->aarp_sha));
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	/* XXX */
 	eh = (struct ether_header *) sa.sa_data;
@@ -506,7 +506,7 @@ aarptnew(const struct at_addr *addr)
 
 	if (first) {
 		first = 0;
-		callout_init(&aarptimer_callout);
+		callout_init(&aarptimer_callout, 0);
 		callout_reset(&aarptimer_callout, hz, aarptimer, NULL);
 		MOWNER_ATTACH(&aarp_mowner);
 	}
@@ -539,6 +539,7 @@ aarpprobe(arp)
 	struct mbuf    *m;
 	struct ether_header *eh;
 	struct ether_aarp *ea;
+	struct ifaddr *ia;
 	struct at_ifaddr *aa;
 	struct llc     *llc;
 	struct sockaddr sa;
@@ -551,13 +552,13 @@ aarpprobe(arp)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
-	for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
-	     aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
+	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+		aa = (struct at_ifaddr *)ia;
 		if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 		    (aa->aa_flags & AFA_PROBING))
 			break;
 	}
-	if (aa == NULL) {	/* serious error XXX */
+	if (ia == NULL) {	/* serious error XXX */
 		printf("aarpprobe why did this happen?!\n");
 		return;
 	}
@@ -585,7 +586,7 @@ aarpprobe(arp)
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_PROBE);
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	eh = (struct ether_header *) sa.sa_data;
 

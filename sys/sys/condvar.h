@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.2.4.2 2007/02/26 09:12:10 yamt Exp $	*/
+/*	$NetBSD: condvar.h,v 1.2.4.3 2007/09/03 14:46:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,9 +65,13 @@ int	cv_timedwait_sig(kcondvar_t *, kmutex_t *, int);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);
+
 void	cv_wakeup(kcondvar_t *);
 
-int	cv_has_waiters(kcondvar_t *);
+bool	cv_has_waiters(kcondvar_t *);
+
+/* The "lightning bolt", awoken once per second by the clock interrupt. */
+kcondvar_t	lbolt;
 
 #endif	/* _KERNEL */
 

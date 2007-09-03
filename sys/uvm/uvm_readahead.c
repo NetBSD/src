@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.2.20.2 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.2.20.3 2007/09/03 14:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2.20.2 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.2.20.3 2007/09/03 14:47:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -66,6 +66,12 @@ struct uvm_ractx {
 	off_t ra_next;		/* next offset to read-ahead */
 };
 
+#if defined(sun2) || (defined(sun3) && defined(_SUN3_))
+/* XXX: on sun2 and sun3 (but not sun3x) MAXPHYS is 0xe000 */
+#undef MAXPHYS	
+#define MAXPHYS		0x8000	/* XXX */
+#endif
+
 #define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
 #define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */
 #define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX	/* fixed window size used for
@@ -78,7 +84,7 @@ static struct uvm_ractx *ra_allocctx(void);
 static void ra_freectx(struct uvm_ractx *);
 
 static POOL_INIT(ractx_pool, sizeof(struct uvm_ractx), 0, 0, 0, "ractx",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 static struct uvm_ractx *
 ra_allocctx(void)

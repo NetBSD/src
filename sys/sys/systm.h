@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.3 2007/02/26 09:12:16 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.4 2007/09/03 14:46:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -134,7 +134,7 @@ extern void (*v_putc)(int); /* Virtual console putc routine */
 extern	void	_insque(void *, void *);
 extern	void	_remque(void *);
 
-/* casts to keep lint happy, but it should be happy with void * */
+/* casts to keep lint happy, but it should be happy with void **/
 #define	insque(q,p)	_insque(q, p)
 #define	remque(q)	_remque(q)
 
@@ -304,6 +304,13 @@ void	dopowerhooks(int);
 #define PWR_SOFTRESUME	3
 #define PWR_SOFTSUSPEND	4
 #define PWR_SOFTSTANDBY	5
+#define PWR_NAMES \
+	"resume",	/* 0 */ \
+	"suspend",	/* 1 */ \
+	"standby",	/* 2 */ \
+	"softresume",	/* 3 */ \
+	"softsuspend",	/* 4 */ \
+	"softstandby"	/* 5 */
 
 /*
  * Mountroot hooks (and mountroot declaration).  Device drivers establish

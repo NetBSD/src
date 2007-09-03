@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.11.12.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.11.12.2 2007/09/03 14:44:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.11.12.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.11.12.2 2007/09/03 14:44:06 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -108,7 +108,7 @@ Tpmeas(u_int ref, u_int kind, struct timeval *timev, u_int seq, u_int win,
 	tpm->tpm_tseq = mseq++;
 	tpm->tpm_ref = ref;
 	if (kind == TPtime_from_ll)
-		bcopy((caddr_t) timev, (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
+		bcopy((void *) timev, (void *) & tpm->tpm_time, sizeof(struct timeval));
 	else
 		getmicrotime(& tpm->tpm_time);
 	tpm->tpm_seq = seq;

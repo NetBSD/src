@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.14.4.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.14.4.3 2007/09/03 14:46:49 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.14.4.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.14.4.3 2007/09/03 14:46:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -151,8 +151,8 @@ softdep_setup_directory_add(struct buf *bp, struct inode *dp,
 
 void
 softdep_change_directoryentry_offset(struct inode *dp,
-    caddr_t base, caddr_t oldloc,
-    caddr_t newloc, int entrysize)
+    void *base, void *oldloc,
+    void *newloc, int entrysize)
 {
 
 	panic("softdep_change_directoryentry_offset called");

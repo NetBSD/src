@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.1.8.2 2007/02/26 09:11:39 yamt Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.1.8.3 2007/09/03 14:42:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.1.8.2 2007/02/26 09:11:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.1.8.3 2007/09/03 14:42:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -99,7 +99,7 @@ agrether_ctor(struct agr_softc *sc, struct ifnet *ifp_port)
 
 	sc->sc_iftprivate = priv;
 
-	ether_ifattach(ifp, LLADDR(ifp_port->if_sadl));
+	ether_ifattach(ifp, CLLADDR(ifp_port->if_sadl));
 	ec->ec_capabilities =
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
 
@@ -169,7 +169,7 @@ agrether_portinit(struct agr_softc *sc, struct agr_port *port)
 	memcpy(&ifr.ifr_addr.sa_data,
 	    &ethermulticastaddr_slowprotocols, 
 	    sizeof(ethermulticastaddr_slowprotocols));
-	error = agrport_ioctl(port, SIOCADDMULTI, (caddr_t)&ifr);
+	error = agrport_ioctl(port, SIOCADDMULTI, (void *)&ifr);
 	if (error) {
 		free(port->port_iftprivate, M_DEVBUF);
 		port->port_iftprivate = NULL;
@@ -199,7 +199,7 @@ agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 	memcpy(&ifr.ifr_addr.sa_data,
 	    &ethermulticastaddr_slowprotocols, 
 	    sizeof(ethermulticastaddr_slowprotocols));
-	error = agrport_ioctl(port, SIOCDELMULTI, (caddr_t)&ifr);
+	error = agrport_ioctl(port, SIOCDELMULTI, (void *)&ifr);
 	if (error) {
 		return error;
 	}

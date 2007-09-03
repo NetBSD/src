@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.106.2.2 2006/12/30 20:50:34 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.106.2.3 2007/09/03 14:43:04 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.2 2006/12/30 20:50:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.3 2007/09/03 14:43:04 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.2 2006/12/30 20:50:34 yamt Ex
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -192,12 +193,12 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			return (in_control(so, (long)m, (caddr_t)nam,
+			return (in_control(so, (long)m, (void *)nam,
 			    (struct ifnet *)control, l));
 #endif
 #ifdef INET6
 		case PF_INET6:
-			return (in6_control(so, (long)m, (caddr_t)nam,
+			return (in6_control(so, (long)m, (void *)nam,
 			    (struct ifnet *)control, l));
 #endif
 		default:
@@ -429,14 +430,18 @@ tcp_usrreq(struct socket *so, int req,
 			error = ENOBUFS;
 			break;
 		}
-		/* Compute window scaling to request.  */
+		/*
+		 * Compute window scaling to request:
+		 * XXX: This should be moved to tcp_output(),
+		 * and should be based on the actual MSS.
+		 */
 		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
+		    (0x1 << tp->request_r_scale) < tcp_minmss)
 			tp->request_r_scale++;
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 		tp->iss = tcp_new_iss(tp, 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
@@ -553,7 +558,7 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 		}
 		m->m_len = 1;
-		*mtod(m, caddr_t) = tp->t_iobc;
+		*mtod(m, char *) = tp->t_iobc;
 		if (((long)nam & MSG_PEEK) == 0)
 			tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		break;
@@ -614,6 +619,28 @@ release:
 	return (error);
 }
 
+static void
+change_keepalive(struct socket *so, struct tcpcb *tp)
+{
+	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
+	TCP_TIMER_DISARM(tp, TCPT_KEEP);
+	TCP_TIMER_DISARM(tp, TCPT_2MSL);
+
+	if (tp->t_state == TCPS_SYN_RECEIVED ||
+	    tp->t_state == TCPS_SYN_SENT) {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
+	} else if (so->so_options & SO_KEEPALIVE && 
+	    tp->t_state <= TCPS_CLOSE_WAIT) {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
+	} else {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
+	}
+
+	if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
+		TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
+}
+
+
 int
 tcp_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
@@ -626,6 +653,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 	struct tcpcb *tp;
 	struct mbuf *m;
 	int i;
+	u_int ui;
 	int family;	/* family of the socket */
 
 	family = so->so_proto->pr_domain->dom_family;
@@ -715,7 +743,8 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_MAXSEG:
-			if (m && (i = *mtod(m, int *)) > 0 &&
+			if (m && m->m_len >= sizeof(int) &&
+			    (i = *mtod(m, int *)) > 0 &&
 			    i <= tp->t_peermss)
 				tp->t_peermss = i;  /* limit on send size */
 			else
@@ -727,6 +756,42 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 				error = EINVAL;
 			error = tcp_congctl_select(tp, mtod(m, char *));
 #endif
+			break;
+
+		case TCP_KEEPIDLE:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepidle = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPINTVL:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepintvl = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPCNT:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepcnt = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPINIT:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepinit = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
 			break;
 
 		default:
@@ -805,6 +870,10 @@ tcp_attach(struct socket *so)
 		if (error)
 			return (error);
 	}
+
+	so->so_rcv.sb_flags |= SB_AUTOSIZE;
+	so->so_snd.sb_flags |= SB_AUTOSIZE;
+
 	switch (family) {
 #ifdef INET
 	case PF_INET:
@@ -944,8 +1013,8 @@ tcp_usrclosed(struct tcpcb *tp)
 		 * a full close, we start a timer to make sure sockets are
 		 * not left in FIN_WAIT_2 forever.
 		 */
-		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tcp_maxidle > 0))
-			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
+		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
 	}
 	return (tp);
 }
@@ -1085,6 +1154,111 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 }
 
 /*
+ * The superuser can drop any connection.  Normal users can only drop
+ * their own connections.
+ */
+static inline int
+check_sockuid(struct socket *sockp, kauth_cred_t cred)
+{
+	uid_t sockuid;
+
+	sockuid = sockp->so_uidinfo->ui_uid;
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
+	    sockuid == kauth_cred_getuid(cred) ||
+	    sockuid == kauth_cred_geteuid(cred))
+		return 0;
+	return EACCES;
+}
+
+static inline int
+copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
+{
+	size_t sz;
+	int error;
+	uid_t uid;
+
+	uid = sockp->so_uidinfo->ui_uid;
+	if (oldp) {
+		sz = MIN(sizeof(uid), *oldlenp);
+		error = copyout(&uid, oldp, sz);
+		if (error)
+			return error;
+	}
+	*oldlenp = sizeof(uid);
+	return 0;
+}
+
+static inline int
+inet4_ident_core(struct in_addr raddr, u_int rport,
+    struct in_addr laddr, u_int lport,
+    void *oldp, size_t *oldlenp,
+    struct lwp *l, int dodrop)
+{
+	struct inpcb *inp;
+	struct socket *sockp;
+
+	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport);
+	
+	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
+		return ESRCH;
+
+	if (dodrop) {
+		struct tcpcb *tp;
+		
+		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
+		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
+			return ESRCH;
+		
+		if (check_sockuid(inp->inp_socket, l->l_cred) != 0)
+			return EACCES;
+		
+		(void)tcp_drop(tp, ECONNABORTED);
+		return 0;
+	}
+	else
+		return copyout_uid(sockp, oldp, oldlenp);
+}
+
+#ifdef INET6
+static inline int
+inet6_ident_core(struct in6_addr *raddr, u_int rport,
+    struct in6_addr *laddr, u_int lport,
+    void *oldp, size_t *oldlenp,
+    struct lwp *l, int dodrop)
+{
+	struct in6pcb *in6p;
+	struct socket *sockp;
+
+	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
+
+	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
+		return ESRCH;
+	
+	if (dodrop) {
+		struct tcpcb *tp;
+		
+		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
+		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
+			return ESRCH;
+
+		if (check_sockuid(in6p->in6p_socket, l->l_cred) != 0)
+			return EACCES;
+
+		(void)tcp_drop(tp, ECONNABORTED);
+		return 0;
+	}
+	else
+		return copyout_uid(sockp, oldp, oldlenp);
+}
+#endif
+
+/*
+ * sysctl helper routine for the net.inet.tcp.drop and
+ * net.inet6.tcp6.drop nodes.
+ */
+#define sysctl_net_inet_tcp_drop sysctl_net_inet_tcp_ident
+
+/*
  * sysctl helper routine for the net.inet.tcp.ident and
  * net.inet6.tcp6.ident nodes.  contains backwards compat code for the
  * old way of looking up the ident information for ipv4 which involves
@@ -1094,23 +1268,27 @@ static int
 sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 {
 #ifdef INET
-	struct inpcb *inb;
 	struct sockaddr_in *si4[2];
 #endif /* INET */
 #ifdef INET6
-	struct in6pcb *in6b;
 	struct sockaddr_in6 *si6[2];
 #endif /* INET6 */
 	struct sockaddr_storage sa[2];
-	struct socket *sockp;
-	size_t sz;
-	uid_t uid;
-	int error, pf;
+	int error, pf, dodrop, s;
 
+	dodrop = name[-1] == TCPCTL_DROP;
+	if (dodrop) {
+		if (oldp != NULL || *oldlenp != 0)
+			return EINVAL;
+		if (newp == NULL)
+			return EPERM;
+		if (newlen < sizeof(sa))
+			return ENOMEM;
+	}
 	if (namelen != 4 && namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 	if (name[-2] != IPPROTO_TCP)
-		return (EINVAL);
+		return EINVAL;
 	pf = name[-3];
 
 	/* old style lookup, ipv4 only */
@@ -1120,85 +1298,86 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		u_int lport, rport;
 
 		if (pf != PF_INET)
-			return (EPROTONOSUPPORT);
+			return EPROTONOSUPPORT;
 		raddr.s_addr = (uint32_t)name[0];
 		rport = (u_int)name[1];
 		laddr.s_addr = (uint32_t)name[2];
 		lport = (u_int)name[3];
-		inb = in_pcblookup_connect(&tcbtable, raddr, rport,
-					   laddr, lport);
-		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
-			return (ESRCH);
-		uid = sockp->so_uidinfo->ui_uid;
-		if (oldp) {
-			sz = MIN(sizeof(uid), *oldlenp);
-			error = copyout(&uid, oldp, sz);
-			if (error)
-				return (error);
-		}
-		*oldlenp = sizeof(uid);
-		return (0);
+		
+		s = splsoftnet();
+		error = inet4_ident_core(raddr, rport, laddr, lport,
+		    oldp, oldlenp, l, dodrop);
+		splx(s);
+		return error;
 #else /* INET */
-		return (EINVAL);
+		return EINVAL;
 #endif /* INET */
 	}
 
 	if (newp == NULL || newlen != sizeof(sa))
-		return (EINVAL);
+		return EINVAL;
 	error = copyin(newp, &sa, newlen);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * requested families must match
 	 */
 	if (pf != sa[0].ss_family || sa[0].ss_family != sa[1].ss_family)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (pf) {
-#ifdef INET
-	    case PF_INET:
-		si4[0] = (struct sockaddr_in*)&sa[0];
-		si4[1] = (struct sockaddr_in*)&sa[1];
-		if (si4[0]->sin_len != sizeof(*si4[0]) ||
-		    si4[0]->sin_len != si4[1]->sin_len)
-			return (EINVAL);
-		inb = in_pcblookup_connect(&tcbtable,
-		    si4[0]->sin_addr, si4[0]->sin_port,
-		    si4[1]->sin_addr, si4[1]->sin_port);
-		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
-			return (ESRCH);
-		break;
-#endif /* INET */
 #ifdef INET6
-	    case PF_INET6:
+	case PF_INET6:
 		si6[0] = (struct sockaddr_in6*)&sa[0];
 		si6[1] = (struct sockaddr_in6*)&sa[1];
 		if (si6[0]->sin6_len != sizeof(*si6[0]) ||
-		    si6[0]->sin6_len != si6[1]->sin6_len)
-			return (EINVAL);
-		in6b = in6_pcblookup_connect(&tcbtable,
-		    &si6[0]->sin6_addr, si6[0]->sin6_port,
-		    &si6[1]->sin6_addr, si6[1]->sin6_port, 0);
-		if (in6b == NULL || (sockp = in6b->in6p_socket) == NULL)
-			return (ESRCH);
-		break;
+		    si6[1]->sin6_len != sizeof(*si6[1]))
+			return EINVAL;
+
+		if (!IN6_IS_ADDR_V4MAPPED(&si6[0]->sin6_addr) &&
+		    !IN6_IS_ADDR_V4MAPPED(&si6[1]->sin6_addr)) {
+			error = sa6_embedscope(si6[0], ip6_use_defzone);
+			if (error)
+				return error;
+			error = sa6_embedscope(si6[1], ip6_use_defzone);
+			if (error)
+				return error;
+
+			s = splsoftnet();
+			error = inet6_ident_core(&si6[0]->sin6_addr,
+			    si6[0]->sin6_port, &si6[1]->sin6_addr,
+			    si6[1]->sin6_port, oldp, oldlenp, l, dodrop);
+			splx(s);
+			return error;
+		}
+
+		if (IN6_IS_ADDR_V4MAPPED(&si6[0]->sin6_addr) !=
+		    IN6_IS_ADDR_V4MAPPED(&si6[1]->sin6_addr))
+			return EINVAL;
+
+		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[0]);
+		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[1]);
+		/*FALLTHROUGH*/
 #endif /* INET6 */
-	    default:
-		return (EPROTONOSUPPORT);
+#ifdef INET
+	case PF_INET:
+		si4[0] = (struct sockaddr_in*)&sa[0];
+		si4[1] = (struct sockaddr_in*)&sa[1];
+		if (si4[0]->sin_len != sizeof(*si4[0]) ||
+		    si4[0]->sin_len != sizeof(*si4[1]))
+			return EINVAL;
+	
+		s = splsoftnet();
+		error = inet4_ident_core(si4[0]->sin_addr, si4[0]->sin_port,
+		    si4[1]->sin_addr, si4[1]->sin_port,
+		    oldp, oldlenp, l, dodrop);
+		splx(s);
+		return error;
+#endif /* INET */
+	default:
+		return EPROTONOSUPPORT;
 	}
-	*oldlenp = sizeof(uid);
-
-	uid = sockp->so_uidinfo->ui_uid;
-	if (oldp) {
-		sz = MIN(sizeof(uid), *oldlenp);
-		error = copyout(&uid, oldp, sz);
-		if (error)
-			return (error);
-	}
-	*oldlenp = sizeof(uid);
-
-	return (0);
 }
 
 /*
@@ -1418,6 +1597,27 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 	return error;
 }
 
+static int
+sysctl_tcp_keep(SYSCTLFN_ARGS)
+{  
+	int error;
+	u_int tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = *(u_int *)rnode->sysctl_data;
+	node.sysctl_data = &tmp;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	*(u_int *)rnode->sysctl_data = tmp;
+	tcp_tcpcb_template();	/* update the template */
+	return 0;
+}
+
+
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
  * (which is currently used for ipv4 and ipv6)
@@ -1476,6 +1676,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Default maximum segment size"),
 		       sysctl_net_inet_tcp_mssdflt, 0, &tcp_mssdflt, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSSDFLT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "minmss",
+		       SYSCTL_DESCR("Lower limit for TCP maximum segment size"),
+		       NULL, 0, &tcp_minmss, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "syn_cache_limit",
@@ -1585,19 +1791,19 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLTYPE_INT, "keepidle",
 		       SYSCTL_DESCR("Allowed connection idle ticks before a "
 				    "keepalive probe is sent"),
-		       NULL, 0, &tcp_keepidle, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepidle, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPIDLE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepintvl",
 		       SYSCTL_DESCR("Ticks before next keepalive probe is sent"),
-		       NULL, 0, &tcp_keepintvl, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepintvl, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPINTVL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepcnt",
 		       SYSCTL_DESCR("Number of keepalive probes to send"),
-		       NULL, 0, &tcp_keepcnt, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepcnt, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPCNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -1658,6 +1864,55 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "keepinit",
+		       SYSCTL_DESCR("Ticks before initial tcp connection times out"),
+		       sysctl_tcp_keep, 0, &tcp_keepinit, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+
+	/* TCP socket buffers auto-sizing nodes */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_auto",
+		       SYSCTL_DESCR("Enable automatic receive "
+		           "buffer sizing (experimental)"),
+		       NULL, 0, &tcp_do_autorcvbuf, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_inc",
+		       SYSCTL_DESCR("Incrementor step size of "
+		           "automatic receive buffer"),
+		       NULL, 0, &tcp_autorcvbuf_inc, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_max",
+		       SYSCTL_DESCR("Max size of automatic receive buffer"),
+		       NULL, 0, &tcp_autorcvbuf_max, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_auto",
+		       SYSCTL_DESCR("Enable automatic send "
+		           "buffer sizing (experimental)"),
+		       NULL, 0, &tcp_do_autosndbuf, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_inc",
+		       SYSCTL_DESCR("Incrementor step size of "
+		           "automatic send buffer"),
+		       NULL, 0, &tcp_autosndbuf_inc, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_max",
+		       SYSCTL_DESCR("Max size of automatic send buffer"),
+		       NULL, 0, &tcp_autosndbuf_max, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 
 	/* ECN subtree */
 	sysctl_createv(clog, 0, NULL, &ecn_node,
@@ -1728,6 +1983,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
 		       CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "drop",
+		       SYSCTL_DESCR("TCP drop connection"),
+		       sysctl_net_inet_tcp_drop, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DROP, CTL_EOL);
 #if NRND > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

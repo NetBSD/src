@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.45.2.3 2007/02/26 09:12:28 yamt Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.45.2.4 2007/09/03 14:47:05 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.45.2.3 2007/02/26 09:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.45.2.4 2007/09/03 14:47:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -141,7 +141,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 	 * Negative offsets on the object are not allowed.
 	 */
 
-	if (off < 0)
+	if (off != UVM_UNKNOWN_OFFSET && off < 0)
 		return(NULL);
 
 	/*

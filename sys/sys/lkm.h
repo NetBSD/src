@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.37.6.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: lkm.h,v 1.37.6.3 2007/09/03 14:46:22 yamt Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -398,7 +398,7 @@ struct lmc_loadbuf {
  * Load a module (assumes it's been mmapped to address before call)
  */
 struct lmc_load {
-	caddr_t	address;	/* IN: user space mmap address */
+	void *	address;	/* IN: user space mmap address */
 	int	status;		/* OUT: status of operation */
 	int	id;		/* OUT: module ID if loaded */
 };

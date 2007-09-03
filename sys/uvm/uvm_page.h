@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.40.2.3 2007/02/26 09:12:32 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.40.2.4 2007/09/03 14:47:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -141,6 +141,7 @@ struct vm_page {
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
 	pid_t			owner;		/* proc that set PG_BUSY */
+	lwpid_t			lowner;		/* lwp that set PG_BUSY */
 	const char		*owner_tag;	/* why it was set busy */
 #endif
 };
@@ -260,9 +261,6 @@ bool uvm_page_physget(paddr_t *);
 void uvm_page_rehash(void);
 void uvm_page_recolor(int);
 void uvm_pageidlezero(void);
-
-int uvm_lock_fpageq(void);
-void uvm_unlock_fpageq(int);
 
 void uvm_pageactivate(struct vm_page *);
 vaddr_t uvm_pageboot_alloc(vsize_t);

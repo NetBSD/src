@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.35.2.3 2007/02/26 09:12:31 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.35.2.4 2007/09/03 14:47:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.35.2.3 2007/02/26 09:12:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.35.2.4 2007/09/03 14:47:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -378,7 +378,7 @@ uvm_total(struct vmtotal *totalp)
 		case LSSLEEP:
 		case LSSTOP:
 			if (l->l_flag & LW_INMEM) {
-				if (l->l_priority <= PZERO)
+				if (lwp_eprio(l) <= PZERO)
 					totalp->t_dw++;
 				else if (l->l_slptime < maxslp)
 					totalp->t_sl++;

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.48.2.3 2007/02/26 09:11:36 yamt Exp $	*/
-/*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.48.2.4 2007/09/03 14:42:12 yamt Exp $	*/
+/*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.3 2007/02/26 09:11:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.4 2007/09/03 14:42:12 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -135,11 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.3 2007/02/26 09:11:36 yamt Exp $")
 
 struct stf_softc {
 	struct ifnet	sc_if;	   /* common area */
-	union {
-		struct route  __sc_ro4;
-		struct route_in6 __sc_ro6; /* just for safety */
-	} __sc_ro46;
-#define sc_ro	__sc_ro46.__sc_ro4
+	struct route	sc_ro;
 	const struct encaptab *encap_cookie;
 	LIST_ENTRY(stf_softc) sc_list;
 };
@@ -178,7 +174,7 @@ static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
 static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
-static int stf_ioctl(struct ifnet *, u_long, caddr_t);
+static int stf_ioctl(struct ifnet *, u_long, void *);
 
 /* ARGSUSED */
 void
@@ -239,6 +235,7 @@ stf_clone_destroy(struct ifnet *ifp)
 	bpfdetach(ifp);
 #endif
 	if_detach(ifp);
+	rtcache_free(&sc->sc_ro);
 	free(sc, M_DEVBUF);
 
 	return (0);
@@ -266,7 +263,7 @@ stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (proto != IPPROTO_IPV6)
 		return 0;
 
-	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 
 	if (ip.ip_v != 4)
 		return 0;
@@ -338,11 +335,14 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct stf_softc *sc;
 	const struct sockaddr_in6 *dst6;
 	const struct in_addr *in4;
-	struct sockaddr_in *dst4;
 	u_int8_t tos;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	struct in6_ifaddr *ia6;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	sc = (struct stf_softc*)ifp;
 	dst6 = (const struct sockaddr_in6 *)dst;
@@ -416,22 +416,11 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	else
 		ip_ecn_ingress(ECN_NOCARE, &ip->ip_tos, &tos);
 
-	dst4 = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
-	if (dst4->sin_family != AF_INET ||
-	    bcmp(&dst4->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst)) != 0)
-		rtcache_free(&sc->sc_ro);
-	else
-		rtcache_check(&sc->sc_ro);
-	if (sc->sc_ro.ro_rt == NULL) {
-		dst4->sin_family = AF_INET;
-		dst4->sin_len = sizeof(struct sockaddr_in);
-		bcopy(&ip->ip_dst, &dst4->sin_addr, sizeof(dst4->sin_addr));
-		rtcache_init(&sc->sc_ro);
-		if (sc->sc_ro.ro_rt == NULL) {
-			m_freem(m);
-			ifp->if_oerrors++;
-			return ENETUNREACH;
-		}
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+		m_freem(m);
+		ifp->if_oerrors++;
+		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
@@ -443,8 +432,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	ifp->if_opackets++;
-	return ip_output(m, NULL, &sc->sc_ro, 0,
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	return ip_output(m, NULL, &sc->sc_ro, 0, NULL, NULL);
 }
 
 static int
@@ -686,7 +674,7 @@ stf_rtrequest(int cmd, struct rtentry *rt,
 }
 
 static int
-stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp		*l = curlwp;	/* XXX */
 	struct ifaddr		*ifa;
@@ -715,7 +703,8 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
-		if (ifr != NULL && ifr->ifr_addr.sa_family == AF_INET6)
+		if (ifr != NULL &&
+		    ifreq_getaddr(cmd, ifr)->sa_family == AF_INET6)
 			;
 		else
 			error = EAFNOSUPPORT;
@@ -723,7 +712,7 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFMTU:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			break;
 		ifr = (struct ifreq *)data;
 		mtu = ifr->ifr_mtu;

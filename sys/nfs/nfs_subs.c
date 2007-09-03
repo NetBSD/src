@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149.2.4 2007/02/26 09:12:06 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.5 2007/09/03 14:44:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.4 2007/02/26 09:12:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.5 2007/09/03 14:44:19 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -577,17 +577,17 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
+nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, char **bposp)
 {
 	struct mbuf *mb;
-	caddr_t bpos;
+	char *bpos;
 
 	mb = m_get(M_WAIT, MT_DATA);
 	MCLAIM(mb, &nfs_mowner);
 	if (hsiz >= MINCLSIZE)
 		m_clget(mb, M_WAIT);
 	mb->m_len = 0;
-	bpos = mtod(mb, caddr_t);
+	bpos = mtod(mb, void *);
 
 	/* Finally, return values */
 	*bposp = bpos;
@@ -618,7 +618,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 {
 	struct mbuf *mb;
 	u_int32_t *tl;
-	caddr_t bpos;
+	char *bpos;
 	int i;
 	struct mbuf *mreq;
 	int siz, grpsiz, authsiz;
@@ -635,7 +635,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	}
 	mb->m_len = 0;
 	mreq = mb;
-	bpos = mtod(mb, caddr_t);
+	bpos = mtod(mb, void *);
 
 	/*
 	 * First the RPC header.
@@ -684,7 +684,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 				mb->m_next = mb2;
 				mb = mb2;
 				mb->m_len = 0;
-				bpos = mtod(mb, caddr_t);
+				bpos = mtod(mb, void *);
 			}
 			i = min(siz, M_TRAILINGSPACE(mb));
 			memcpy(bpos, auth_str, i);
@@ -719,7 +719,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 				mb->m_next = mb2;
 				mb = mb2;
 				mb->m_len = 0;
-				bpos = mtod(mb, caddr_t);
+				bpos = mtod(mb, void *);
 			}
 			i = min(siz, M_TRAILINGSPACE(mb));
 			memcpy(bpos, verf_str, i);
@@ -752,7 +752,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 	struct mbuf **mrep;
 	struct uio *uiop;
 	int siz;
-	caddr_t *dpos;
+	char **dpos;
 {
 	char *mbufcp, *uiocp;
 	int xfer, left, len;
@@ -762,7 +762,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 
 	mp = *mrep;
 	mbufcp = *dpos;
-	len = mtod(mp, caddr_t)+mp->m_len-mbufcp;
+	len = mtod(mp, char *) + mp->m_len - mbufcp;
 	rem = nfsm_rndup(siz)-siz;
 	while (siz > 0) {
 		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
@@ -777,7 +777,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 				mp = mp->m_next;
 				if (mp == NULL)
 					return (EBADRPC);
-				mbufcp = mtod(mp, caddr_t);
+				mbufcp = mtod(mp, void *);
 				len = mp->m_len;
 			}
 			xfer = (left > len) ? len : left;
@@ -798,7 +798,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			uiop->uio_iov++;
 		} else {
 			uiop->uio_iov->iov_base =
-			    (caddr_t)uiop->uio_iov->iov_base + uiosiz;
+			    (char *)uiop->uio_iov->iov_base + uiosiz;
 			uiop->uio_iov->iov_len -= uiosiz;
 		}
 		siz -= uiosiz;
@@ -823,7 +823,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	struct uio *uiop;
 	struct mbuf **mq;
 	int siz;
-	caddr_t *bpos;
+	char **bpos;
 {
 	char *uiocp;
 	struct mbuf *mp, *mp2;
@@ -862,7 +862,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 				mlen = M_TRAILINGSPACE(mp);
 			}
 			xfer = (left > mlen) ? mlen : left;
-			cp = mtod(mp, caddr_t) + mp->m_len;
+			cp = mtod(mp, char *) + mp->m_len;
 			error = copyin_vmspace(uiop->uio_vmspace, uiocp, cp,
 			    xfer);
 			if (error) {
@@ -874,7 +874,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			uiop->uio_offset += xfer;
 			uiop->uio_resid -= xfer;
 		}
-		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		uiop->uio_iov->iov_base = (char *)uiop->uio_iov->iov_base +
 		    uiosiz;
 		uiop->uio_iov->iov_len -= uiosiz;
 		siz -= uiosiz;
@@ -886,13 +886,13 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			mp->m_len = 0;
 			mp2->m_next = mp;
 		}
-		cp = mtod(mp, caddr_t) + mp->m_len;
+		cp = mtod(mp, char *) + mp->m_len;
 		for (left = 0; left < rem; left++)
 			*cp++ = '\0';
 		mp->m_len += rem;
 		*bpos = cp;
 	} else
-		*bpos = mtod(mp, caddr_t)+mp->m_len;
+		*bpos = mtod(mp, char *) + mp->m_len;
 	*mq = mp;
 	return (0);
 }
@@ -908,15 +908,15 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 int
 nfsm_disct(mdp, dposp, siz, left, cp2)
 	struct mbuf **mdp;
-	caddr_t *dposp;
+	char **dposp;
 	int siz;
 	int left;
-	caddr_t *cp2;
+	char **cp2;
 {
 	struct mbuf *m1, *m2;
 	struct mbuf *havebuf = NULL;
-	caddr_t src = *dposp;
-	caddr_t dst;
+	char *src = *dposp;
+	char *dst;
 	int len;
 
 #ifdef DEBUG
@@ -934,7 +934,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 		*mdp = m1 = m1->m_next;
 		if (m1 == NULL)
 			return (EBADRPC);
-		src = mtod(m1, caddr_t);
+		src = mtod(m1, void *);
 		left = m1->m_len;
 		/*
 		 * If we start a new mbuf and it is big enough
@@ -1053,7 +1053,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 int
 nfs_adv(mdp, dposp, offs, left)
 	struct mbuf **mdp;
-	caddr_t *dposp;
+	char **dposp;
 	int offs;
 	int left;
 {
@@ -1070,7 +1070,7 @@ nfs_adv(mdp, dposp, offs, left)
 		s = m->m_len;
 	}
 	*mdp = m;
-	*dposp = mtod(m, caddr_t)+offs;
+	*dposp = mtod(m, char *) + offs;
 	return (0);
 }
 
@@ -1099,7 +1099,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 		left -= NFSX_UNSIGNED;
 		m2->m_len += NFSX_UNSIGNED;
 		if (left > 0) {
-			memcpy((caddr_t) tl, cp, left);
+			memcpy((void *) tl, cp, left);
 			siz -= left;
 			cp += left;
 			m2->m_len += left;
@@ -1131,13 +1131,13 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 		} else {
 			xfer = len = m1->m_len;
 		}
-		memcpy((caddr_t) tl, cp, xfer);
+		memcpy((void *) tl, cp, xfer);
 		m1->m_len = len+tlen;
 		siz -= xfer;
 		cp += xfer;
 	}
 	*mb = m1;
-	*bpos = mtod(m1, caddr_t)+m1->m_len;
+	*bpos = mtod(m1, char *) + m1->m_len;
 	return (0);
 }
 
@@ -1520,6 +1520,7 @@ nfs_invaldircache(vp, flags)
 static int
 nfs_init0(void)
 {
+
 	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
 	rpc_call = txdr_unsigned(RPC_CALL);
@@ -1540,19 +1541,21 @@ nfs_init0(void)
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+	{
+		extern krwlock_t netexport_lock;	/* XXX */
+		rw_init(&netexport_lock);
+	}
 #endif /* NFSSERVER */
 
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 	nfsdreq_init();
 #endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
 
-	exithook_establish(nfs_exit, NULL);
-
 	/*
 	 * Initialize reply list and start timer
 	 */
 	TAILQ_INIT(&nfs_reqq);
-	nfs_timer(NULL);
+	nfs_timer_init();
 	MOWNER_ATTACH(&nfs_mowner);
 
 #ifdef NFS
@@ -1616,18 +1619,18 @@ int
 nfsm_loadattrcache(vpp, mdp, dposp, vaper, flags)
 	struct vnode **vpp;
 	struct mbuf **mdp;
-	caddr_t *dposp;
+	char **dposp;
 	struct vattr *vaper;
 	int flags;
 {
 	int32_t t1;
-	caddr_t cp2;
+	char *cp2;
 	int error = 0;
 	struct mbuf *md;
 	int v3 = NFS_ISV3(*vpp);
 
 	md = *mdp;
-	t1 = (mtod(md, caddr_t) + md->m_len) - *dposp;
+	t1 = (mtod(md, char *) + md->m_len) - *dposp;
 	error = nfsm_disct(mdp, dposp, NFSX_FATTR(v3), t1, &cp2);
 	if (error)
 		return (error);
@@ -1810,7 +1813,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	}
 	np->n_attrstamp = time_second;
 	if (vaper != NULL) {
-		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
+		memcpy((void *)vaper, (void *)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
 			if (np->n_flag & NACC)
 				vaper->va_atime = np->n_atim;
@@ -1844,20 +1847,19 @@ nfs_getattrcache(vp, vaper)
 	vap = np->n_vattr;
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
-			if (np->n_flag & NMODIFIED) {
-				if (vap->va_size < np->n_size)
-					vap->va_size = np->n_size;
-				else
-					np->n_size = vap->va_size;
-			} else
+			if ((np->n_flag & NMODIFIED) != 0 &&
+			    vap->va_size < np->n_size) {
+				vap->va_size = np->n_size;
+			} else {
 				np->n_size = vap->va_size;
+			}
 			genfs_node_wrlock(vp);
 			uvm_vnp_setsize(vp, np->n_size);
 			genfs_node_unlock(vp);
 		} else
 			np->n_size = vap->va_size;
 	}
-	memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(struct vattr));
+	memcpy((void *)vaper, (void *)vap, sizeof(struct vattr));
 	if (np->n_flag & NCHG) {
 		if (np->n_flag & NACC)
 			vaper->va_atime = np->n_atim;
@@ -1908,19 +1910,20 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		struct vnode *vp = NFSTOV(np);
 		struct nfsmount *nmp;
 		long now = time_second;
+		const struct timespec *omtime = &np->n_vattr->va_mtime;
+		const struct timespec *octime = &np->n_vattr->va_ctime;
 #if defined(DEBUG)
 		const char *reason = NULL; /* XXX: gcc */
 #endif
 
-		if (timespeccmp(&np->n_vattr->va_mtime, mtime, <=)) {
+		if (timespeccmp(omtime, mtime, <=)) {
 #if defined(DEBUG)
 			reason = "mtime";
 #endif
 			error = EINVAL;
 		}
 
-		if (vp->v_type == VDIR &&
-		    timespeccmp(&np->n_vattr->va_ctime, ctime, <=)) {
+		if (vp->v_type == VDIR && timespeccmp(octime, ctime, <=)) {
 #if defined(DEBUG)
 			reason = "ctime";
 #endif
@@ -1944,22 +1947,32 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 * caching.  it's a compromise.
 			 */
 
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 #if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
-				    " disabling wcc\n",
+				    " disabling wcc"
+				    " (ctime %u.%09u %u.%09u,"
+				    " mtime %u.%09u %u.%09u)\n",
 				    vp->v_mount->mnt_stat.f_mntfromname,
-				    reason);
+				    reason,
+				    (unsigned int)octime->tv_sec,
+				    (unsigned int)octime->tv_nsec,
+				    (unsigned int)ctime->tv_sec,
+				    (unsigned int)ctime->tv_nsec,
+				    (unsigned int)omtime->tv_sec,
+				    (unsigned int)omtime->tv_nsec,
+				    (unsigned int)mtime->tv_sec,
+				    (unsigned int)mtime->tv_nsec);
 			}
 #endif
 			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
 			nmp->nm_wcckludgetime = now;
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		} else if (NFS_WCCKLUDGE(nmp, now)) {
 			error = EPERM; /* XXX */
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-			simple_lock(&nmp->nm_slock);
+			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 #if defined(DEBUG)
 				printf("%s: re-enabling wcc\n",
@@ -1967,7 +1980,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 #endif
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
-			simple_unlock(&nmp->nm_slock);
+			mutex_exit(&nmp->nm_lock);
 		}
 	}
 
@@ -1995,12 +2008,12 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 {
 	struct uio auio;
 	struct iovec aiov;
-	caddr_t tbuf, cp;
+	char *tbuf, *cp;
 	struct dirent *dp;
 	off_t *cookies = NULL, *cop;
 	int error, eof, nc, len;
 
-	MALLOC(tbuf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
+	MALLOC(tbuf, void *, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
 
 	aiov.iov_base = tbuf;
 	aiov.iov_len = NFS_DIRFRAGSIZ;
@@ -2063,7 +2076,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	struct mbuf **mdp;
-	caddr_t *dposp;
+	char **dposp;
 	struct vnode **retdirp;
 	struct lwp *l;
 	int kerbflag, pubflag;
@@ -2092,7 +2105,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	fromcp = *dposp;
 	tocp = cnp->cn_pnbuf;
 	md = *mdp;
-	rem = mtod(md, caddr_t) + md->m_len - fromcp;
+	rem = mtod(md, char *) + md->m_len - fromcp;
 	for (i = 0; i < len; i++) {
 		while (rem == 0) {
 			md = md->m_next;
@@ -2100,7 +2113,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 				error = EBADRPC;
 				goto out;
 			}
-			fromcp = mtod(md, caddr_t);
+			fromcp = mtod(md, void *);
 			rem = md->m_len;
 		}
 		if (*fromcp == '\0' || (!pubflag && *fromcp == '/')) {
@@ -2194,6 +2207,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
 	ndp->ni_segflg = UIO_SYSSPACE;
 	ndp->ni_rootdir = rootvnode;
+	ndp->ni_erootdir = NULL;
 
 	if (pubflag) {
 		ndp->ni_loopcnt = 0;
@@ -2385,9 +2399,9 @@ nfs_zeropad(mp, len, nul)
 			n->m_len = nul;
 			n->m_next = NULL;
 			m->m_next = n;
-			cp = mtod(n, caddr_t);
+			cp = mtod(n, void *);
 		} else {
-			cp = mtod(m, caddr_t) + m->m_len;
+			cp = mtod(m, char *) + m->m_len;
 			m->m_len += nul;
 		}
 		for (i = 0; i < nul; i++)
@@ -2685,9 +2699,9 @@ nfs_clearcommit(mp)
 		}
 		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	rw_exit(&nmp->nm_writeverflock);
 }
 

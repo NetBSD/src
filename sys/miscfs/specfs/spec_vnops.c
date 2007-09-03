@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.81.2.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.81.2.3 2007/09/03 14:41:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81.2.3 2007/09/03 14:41:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -130,8 +130,7 @@ const struct vnodeopv_desc spec_vnodeop_opv_desc =
  * Trivial lookup routine that always fails.
  */
 int
-spec_lookup(v)
-	void *v;
+spec_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
@@ -161,8 +160,7 @@ iskmemdev(dev_t dev)
  */
 /* ARGSUSED */
 int
-spec_open(v)
-	void *v;
+spec_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -172,12 +170,9 @@ spec_open(v)
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
-	const struct bdevsw *bdev;
-	const struct cdevsw *cdev;
 	dev_t dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
-	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 	enum kauth_device_req req;
 
 	/*
@@ -194,39 +189,26 @@ spec_open(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		cdev = cdevsw_lookup(dev);
-		if (cdev == NULL)
-			return (ENXIO);
-
 		req = M2K(ap->a_mode);
-
 		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
 		if (error)
 			return (error);
 
-		if (cdev->d_type == D_TTY)
+		if (cdev_type(dev) == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
-		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, l);
+		error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		if (cdev->d_type != D_DISK)
+		if (cdev_type(dev) != D_DISK)
 			return error;
-		d_ioctl = cdev->d_ioctl;
 		break;
 
 	case VBLK:
-		bdev = bdevsw_lookup(dev);
-		if (bdev == NULL)
-			return (ENXIO);
-
 		req = M2K(ap->a_mode);
-
 		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
 		if (error)
 			return (error);
-
-		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
-		d_ioctl = bdev->d_ioctl;
+		error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
 		break;
 
 	case VNON:
@@ -244,8 +226,13 @@ spec_open(v)
 
 	if (error)
 		return error;
-	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&pi, FREAD, curlwp))
-		vp->v_size = (voff_t)pi.disklab->d_secsize * pi.part->p_size;
+	if (vp->v_type == VCHR)
+		error = cdev_ioctl(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
+	else
+		error = bdev_ioctl(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
+	if (error == 0)
+		uvm_vnp_setsize(vp,
+		    (voff_t)pi.disklab->d_secsize * pi.part->p_size);
 	return 0;
 }
 
@@ -254,8 +241,7 @@ spec_open(v)
  */
 /* ARGSUSED */
 int
-spec_read(v)
-	void *v;
+spec_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -267,8 +253,6 @@ spec_read(v)
 	struct uio *uio = ap->a_uio;
  	struct lwp *l = curlwp;
 	struct buf *bp;
-	const struct bdevsw *bdev;
-	const struct cdevsw *cdev;
 	daddr_t bn;
 	int bsize, bscale;
 	struct partinfo dpart;
@@ -289,11 +273,7 @@ spec_read(v)
 
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
-		cdev = cdevsw_lookup(vp->v_rdev);
-		if (cdev != NULL)
-			error = (*cdev->d_read)(vp->v_rdev, uio, ap->a_ioflag);
-		else
-			error = ENXIO;
+		error = cdev_read(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
@@ -301,10 +281,7 @@ spec_read(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		bdev = bdevsw_lookup(vp->v_rdev);
-		if (bdev != NULL &&
-		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
-				     FREAD, l) == 0) {
+		if (bdev_ioctl(vp->v_rdev, DIOCGPART, &dpart, FREAD, l) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -337,8 +314,7 @@ spec_read(v)
  */
 /* ARGSUSED */
 int
-spec_write(v)
-	void *v;
+spec_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -350,8 +326,6 @@ spec_write(v)
 	struct uio *uio = ap->a_uio;
 	struct lwp *l = curlwp;
 	struct buf *bp;
-	const struct bdevsw *bdev;
-	const struct cdevsw *cdev;
 	daddr_t bn;
 	int bsize, bscale;
 	struct partinfo dpart;
@@ -370,11 +344,7 @@ spec_write(v)
 
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
-		cdev = cdevsw_lookup(vp->v_rdev);
-		if (cdev != NULL)
-			error = (*cdev->d_write)(vp->v_rdev, uio, ap->a_ioflag);
-		else
-			error = ENXIO;
+		error = cdev_write(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -384,10 +354,7 @@ spec_write(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		bdev = bdevsw_lookup(vp->v_rdev);
-		if (bdev != NULL &&
-		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
-				    FREAD, l) == 0) {
+		if (bdev_ioctl(vp->v_rdev, DIOCGPART, &dpart, FREAD, l) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -415,7 +382,7 @@ spec_write(v)
 					bawrite(bp);
 				else
 					bdwrite(bp);
-				if (bp->b_flags & B_ERROR)
+				if (bp->b_error != 0)
 					error = bp->b_error;
 			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -432,8 +399,7 @@ spec_write(v)
  */
 /* ARGSUSED */
 int
-spec_ioctl(v)
-	void *v;
+spec_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -443,8 +409,6 @@ spec_ioctl(v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
-	const struct bdevsw *bdev;
-	const struct cdevsw *cdev;
 	struct vnode *vp;
 	dev_t dev;
 
@@ -467,24 +431,18 @@ spec_ioctl(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		cdev = cdevsw_lookup(dev);
-		if (cdev == NULL)
-			return (ENXIO);
-		return ((*cdev->d_ioctl)(dev, ap->a_command, ap->a_data,
-		    ap->a_fflag, ap->a_l));
+		return cdev_ioctl(dev, ap->a_command, ap->a_data,
+		    ap->a_fflag, ap->a_l);
 
 	case VBLK:
-		bdev = bdevsw_lookup(dev);
-		if (bdev == NULL)
-			return (ENXIO);
 		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
-			if (bdev->d_type == D_TAPE)
+			if (bdev_type(dev) == D_TAPE)
 				return (0);
 			else
 				return (1);
 		}
-		return ((*bdev->d_ioctl)(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, ap->a_l));
+		return bdev_ioctl(dev, ap->a_command, ap->a_data,
+		   ap->a_fflag, ap->a_l);
 
 	default:
 		panic("spec_ioctl");
@@ -494,15 +452,13 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_poll(v)
-	void *v;
+spec_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
 		struct lwp *a_l;
 	} */ *ap = v;
-	const struct cdevsw *cdev;
 	struct vnode *vp;
 	dev_t dev;
 
@@ -525,10 +481,7 @@ spec_poll(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		cdev = cdevsw_lookup(dev);
-		if (cdev == NULL)
-			return (POLLERR);
-		return (*cdev->d_poll)(dev, ap->a_events, ap->a_l);
+		return cdev_poll(dev, ap->a_events, ap->a_l);
 
 	default:
 		return (genfs_poll(v));
@@ -537,24 +490,19 @@ spec_poll(v)
 
 /* ARGSUSED */
 int
-spec_kqfilter(v)
-	void *v;
+spec_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
 		struct vnode	*a_vp;
 		struct proc	*a_kn;
 	} */ *ap = v;
-	const struct cdevsw *cdev;
 	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
-		cdev = cdevsw_lookup(dev);
-		if (cdev == NULL)
-			return (ENXIO);
-		return (*cdev->d_kqfilter)(dev, ap->a_kn);
+		return cdev_kqfilter(dev, ap->a_kn);
 	default:
 		/*
 		 * Block devices don't support kqfilter, and refuse it
@@ -565,12 +513,32 @@ spec_kqfilter(v)
 }
 
 /*
+ * Allow mapping of only D_DISK.  This is called only for VBLK.
+ */
+int
+spec_mmap(void *v)
+{
+	struct vop_mmap_args /* {
+		struct vnode *a_vp;
+		vm_prot_t a_prot;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_type == VBLK);
+	if (bdev_type(vp->v_rdev) != D_DISK)
+		return EINVAL;
+
+	return 0;
+}
+
+/*
  * Synch buffers associated with a block device
  */
 /* ARGSUSED */
 int
-spec_fsync(v)
-	void *v;
+spec_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -591,8 +559,7 @@ spec_fsync(v)
  * Just call the device strategy routine
  */
 int
-spec_strategy(v)
-	void *v;
+spec_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -606,8 +573,8 @@ spec_strategy(v)
 	error = 0;
 	bp->b_dev = vp->v_rdev;
 	if (!(bp->b_flags & B_READ) &&
-	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
-		(*bioops.io_start)(bp);
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioopsp)
+		bioopsp->io_start(bp);
 
 	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
 		SPEC_COW_LOCK(vp->v_specinfo, s);
@@ -631,19 +598,17 @@ spec_strategy(v)
 
 	if (error) {
 		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return (error);
 	}
 
-	DEV_STRATEGY(bp);
+	bdev_strategy(bp);
 
 	return (0);
 }
 
 int
-spec_inactive(v)
-	void *v;
+spec_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -658,8 +623,7 @@ spec_inactive(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-spec_bmap(v)
-	void *v;
+spec_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -683,8 +647,7 @@ spec_bmap(v)
  */
 /* ARGSUSED */
 int
-spec_close(v)
-	void *v;
+spec_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -693,11 +656,8 @@ spec_close(v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	const struct bdevsw *bdev;
-	const struct cdevsw *cdev;
 	struct session *sess;
 	dev_t dev = vp->v_rdev;
-	int (*devclose)(dev_t, int, int, struct lwp *);
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
@@ -719,18 +679,25 @@ spec_close(v)
 		 * guarantee that the vrele() will do the final close on the
 		 * actual tty device.
 		 */
+		mutex_enter(&proclist_lock);
 		if (count == 2 && ap->a_l &&
 		    vp == (sess = ap->a_l->l_proc->p_session)->s_ttyvp) {
 			sess->s_ttyvp = NULL;
 			if (sess->s_ttyp->t_session != NULL) {
 				sess->s_ttyp->t_pgrp = NULL;
 				sess->s_ttyp->t_session = NULL;
+				mutex_exit(&proclist_lock);
 				SESSRELE(sess);
-			} else if (sess->s_ttyp->t_pgrp != NULL)
-				panic("spec_close: spurious pgrp ref");
+			} else {
+				if (sess->s_ttyp->t_pgrp != NULL)
+					panic("spec_close: spurious pgrp ref");
+				mutex_exit(&proclist_lock);
+			}
 			vrele(vp);
 			count--;
-		}
+		} else
+			mutex_exit(&proclist_lock);
+
 		/*
 		 * If the vnode is locked, then we are in the midst
 		 * of forcably closing the device, otherwise we only
@@ -738,11 +705,6 @@ spec_close(v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		cdev = cdevsw_lookup(dev);
-		if (cdev != NULL)
-			devclose = cdev->d_close;
-		else
-			devclose = NULL;
 		mode = S_IFCHR;
 		break;
 
@@ -766,11 +728,6 @@ spec_close(v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		bdev = bdevsw_lookup(dev);
-		if (bdev != NULL)
-			devclose = bdev->d_close;
-		else
-			devclose = NULL;
 		mode = S_IFBLK;
 		break;
 
@@ -790,16 +747,16 @@ spec_close(v)
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
 	 * might end up sleeping for someone else who wants our queues. They
-	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
-	 * don't release the lock as we won't be able to regain it.
+	 * won't get them if we hold the vnode locked. Also, if VXLOCK is
+	 * set, don't release the lock as we won't be able to regain it.
 	 */
 	if (!(flags1 & FNONBLOCK))
 		VOP_UNLOCK(vp, 0);
 
-	if (devclose != NULL)
-		error = (*devclose)(dev, flags1, mode, ap->a_l);
+	if (vp->v_type == VBLK)
+		error = bdev_close(dev, flags1, mode, ap->a_l);
 	else
-		error = ENXIO;
+		error = cdev_close(dev, flags1, mode, ap->a_l);
 
 	if (!(flags1 & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -811,8 +768,7 @@ spec_close(v)
  * Print out the contents of a special device vnode.
  */
 int
-spec_print(v)
-	void *v;
+spec_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -827,8 +783,7 @@ spec_print(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-spec_pathconf(v)
-	void *v;
+spec_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -868,8 +823,7 @@ spec_pathconf(v)
  * Advisory record locking support.
  */
 int
-spec_advlock(v)
-	void *v;
+spec_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;

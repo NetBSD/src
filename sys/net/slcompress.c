@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.26.12.1 2006/06/21 15:10:28 yamt Exp $   */
+/*	$NetBSD: slcompress.c,v 1.26.12.2 2007/09/03 14:42:25 yamt Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26.12.1 2006/06/21 15:10:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.26.12.2 2007/09/03 14:42:25 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -453,7 +453,7 @@ sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 	 */
 	if ((long)cp & 3) {
 		if (len > 0)
-			memmove((caddr_t)((long)cp &~ 3), cp, len);
+			memmove((void *)((long)cp &~ 3), cp, len);
 		cp = (u_char *)((long)cp &~ 3);
 	}
 	cp -= hlen;

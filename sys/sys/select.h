@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.24.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: select.h,v 1.24.2.2 2007/09/03 14:46:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,15 +50,8 @@ int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
 	    fd_set *, struct timeval *, sigset_t *);
 void	selrecord(struct lwp *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
-
-static __inline void
-selnotify(struct selinfo *sip, long knhint)
-{
-
-	if (sip->sel_pid != 0)
-		selwakeup(sip);
-	KNOTE(&sip->sel_klist, knhint);
-}
+void	selnotify(struct selinfo *sip, long knhint);
+void	selsysinit(void);
 
 #else /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.19.2.1 2006/06/21 15:11:01 yamt Exp $	*/
+/*	$NetBSD: ip6.h,v 1.19.2.2 2007/09/03 14:42:49 yamt Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -283,13 +283,13 @@ do {									\
 	struct mbuf *_t;						\
 	int _tmp;							\
 	if ((m)->m_len >= (off) + (len))				\
-		(val) = (typ)(mtod((m), caddr_t) + (off));		\
+		(val) = (typ)(mtod((m), char *) + (off));		\
 	else {								\
 		_t = m_pulldown((m), (off), (len), &_tmp);		\
 		if (_t) {						\
 			if (_t->m_len < _tmp + (len))			\
 				panic("m_pulldown malfunction");	\
-			(val) = (typ)(mtod(_t, caddr_t) + _tmp);	\
+			(val) = (typ)(mtod(_t, char *) + _tmp);	\
 		} else {						\
 			(val) = (typ)NULL;				\
 			(m) = NULL;					\
@@ -301,13 +301,13 @@ do {									\
 do {									\
 	struct mbuf *_t;						\
 	if ((off) == 0 && (m)->m_len >= len)				\
-		(val) = (typ)mtod((m), caddr_t);			\
+		(val) = (typ)mtod((m), void *);			\
 	else {								\
 		_t = m_pulldown((m), (off), (len), NULL);		\
 		if (_t) {						\
 			if (_t->m_len < (len))				\
 				panic("m_pulldown malfunction");	\
-			(val) = (typ)mtod(_t, caddr_t);			\
+			(val) = (typ)mtod(_t, void *);			\
 		} else {						\
 			(val) = (typ)NULL;				\
 			(m) = NULL;					\
