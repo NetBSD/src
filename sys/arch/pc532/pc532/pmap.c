@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.2 2007/02/26 09:07:45 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.3 2007/09/03 14:28:39 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.2 2007/02/26 09:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.3 2007/09/03 14:28:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,8 +333,8 @@ int	pmap_pdp_ctor(void *, void *, int);
  */
 
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static caddr_t csrcp, cdstp, zerop, ptpp;
-caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
+static void *csrcp, cdstp, zerop, ptpp;
+void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t msgbuf_vaddr;
 extern paddr_t msgbuf_paddr;
@@ -616,16 +616,16 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	pte = PTE_BASE + ns532_btop(virtual_avail);
 
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
+	csrcp = (void *) virtual_avail;  csrc_pte = pte;	/* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			/* advance */
 
-	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
+	cdstp = (void *) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
+	zerop = (void *) virtual_avail;  zero_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
+	ptpp = (void *) virtual_avail;  ptp_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
@@ -660,16 +660,16 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	/*
 	 * initialize the PDE pool and cache.
 	 */
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, NULL, NULL);
+	    pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * we must call uvm_page_physload() after we are done playing with

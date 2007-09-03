@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.74.2.2 2006/12/30 20:47:05 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.74.2.3 2007/09/03 14:30:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74.2.2 2006/12/30 20:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74.2.3 2007/09/03 14:30:20 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -435,8 +435,6 @@ clockintr(void *cap)
 	return (1);
 }
 
-int poll_console = 0;
-
 /*
  * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
  * console input, we need to check for that here as well, and generate
@@ -450,14 +448,7 @@ tickintr(void *cap)
 {
 	int s;
 
-#if	NKBD	> 0
-	extern int cnrom(void);
-	extern int rom_console_input;
-#endif
-
 	hardclock((struct clockframe *)cap);
-	if (poll_console)
-		setsoftint();
 
 	s = splhigh();
 	/* Reset the interrupt */
@@ -511,7 +502,7 @@ statintr(cap)
 int
 schedintr(void *arg)
 {
-	if (curlwp)
-		schedclock(curlwp);
+
+	schedclock(curlwp);
 	return (1);
 }

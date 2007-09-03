@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.29.2.2 2007/02/26 09:08:37 yamt Exp $	*/
+/*	$NetBSD: dvma.c,v 1.29.2.3 2007/09/03 14:30:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29.2.2 2007/02/26 09:08:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29.2.3 2007/09/03 14:30:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ dvma_kvtopa(void *kva, int bustype)
 void *
 dvma_mapin(void *kmem_va, int len, int canwait)
 {
-	void * dvma_addr;
+	void *dvma_addr;
 	vaddr_t kva, tva;
 	int npf, s, error;
 	paddr_t pa;

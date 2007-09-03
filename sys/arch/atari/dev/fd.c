@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50.2.1 2006/06/21 14:49:56 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.50.2.2 2007/09/03 14:23:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50.2.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50.2.2 2007/09/03 14:23:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ struct fd_softc {
 	short		flags;		/* misc flags			*/
 	short		part;		/* Current open partition	*/
 	int		sector;		/* logical sector for I/O	*/
-	caddr_t		io_data;	/* KVA for data transfer	*/
+	char		*io_data;	/* KVA for data transfer	*/
 	int		io_bytes;	/* bytes left for I/O		*/
 	int		io_dir;		/* B_READ/B_WRITE		*/
 	int		errcnt;		/* current error count		*/
@@ -389,7 +389,7 @@ void		*auxp;
 
 	sc = (struct fd_softc *)dp;
 
-	callout_init(&sc->sc_motor_ch);
+	callout_init(&sc->sc_motor_ch, 0);
 
 	/*
 	 * Find out if an Ajax chip might be installed. Set the default
@@ -416,7 +416,7 @@ fdioctl(dev, cmd, addr, flag, l)
 dev_t		dev;
 u_long		cmd;
 int		flag;
-caddr_t		addr;
+void *		addr;
 struct lwp	*l;
 {
 	struct fd_softc *sc;
@@ -500,7 +500,7 @@ struct lwp	*l;
 	 */
 	sps = splbio();
 	while(sc->flags & FLPF_INOPEN)
-		tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
+		tsleep((void *)sc, PRIBIO, "fdopen", 0);
 	splx(sps);
 
 	if(!(sc->flags & FLPF_ISOPEN)) {
@@ -534,9 +534,9 @@ struct lwp	*l;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
 								&lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
-			tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
+			tsleep((void *)sc, PRIBIO, "fdopen", 0);
 		splx(sps);
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 
 		if((sc->flags & FLPF_WRTPROT) && (flags & FWRITE)) {
 			sc->flags = 0;
@@ -603,11 +603,11 @@ struct buf	*bp;
 	lp = sc->dkdev.dk_label;
 	if ((sc->flags & FLPF_HAVELAB) == 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	if (bp->b_blkno < 0 || (bp->b_bcount % SECTOR_SIZE)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	if (bp->b_bcount == 0)
 		goto done;
@@ -620,7 +620,7 @@ struct buf	*bp;
 			goto done;
 		if (sz < 0) { /* Past EndOfDisk */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Trucate it */
 		if (bp->b_flags & B_RAW)
@@ -646,8 +646,6 @@ struct buf	*bp;
 	splx(sps);
 
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -934,7 +932,7 @@ struct fd_softc	*sc;
 			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
-	st_dmaaddr_set((caddr_t)phys_addr);	/* DMA address setup */
+	st_dmaaddr_set((void *)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
 	printf("fd_xfer:Start io (io_addr:%lx)\n", (u_long)kvtop(sc->io_data));
@@ -1001,7 +999,7 @@ struct fd_softc	*sc;
 			if(fd_state == FLP_STAT) {
 				sc->flags |= FLPF_EMPTY;
 				sc->flags &= ~FLPF_GETSTAT;
-				wakeup((caddr_t)sc);
+				wakeup((void *)sc);
 				fddone(sc);
 				return;
 			}
@@ -1009,7 +1007,6 @@ struct fd_softc	*sc;
 			bp = BUFQ_PEEK(sc->bufq);
 
 			bp->b_error  = EIO;
-			bp->b_flags |= B_ERROR;
 			fd_state     = FLP_MON;
 
 			break;
@@ -1028,7 +1025,7 @@ struct fd_softc	*sc;
 
 			if(fd_state == FLP_STAT) {
 				sc->flags &= ~FLPF_GETSTAT;
-				wakeup((caddr_t)sc);
+				wakeup((void *)sc);
 				fddone(sc);
 				return;
 			}

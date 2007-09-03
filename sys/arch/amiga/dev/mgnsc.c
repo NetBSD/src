@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.38.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.38.16.2 2007/09/03 14:22:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.38.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.38.16.2 2007/09/03 14:22:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ mgnscattach(struct device *pdp, struct device *dp, void *auxp)
 	printf("\n");
 	zap = auxp;
 
-	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x8000);
+	sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va + 0x8000);
 
 	/*
 	 * CTEST7 = TT1

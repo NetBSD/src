@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.8 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.8.8.1 2007/09/03 14:31:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -59,7 +59,7 @@ struct dmac {
 			unsigned char csr;
 			unsigned char cer;
 	char pad0[2];	unsigned char dcr;
-  			unsigned char ocr;
+			unsigned char ocr;
 			unsigned char scr;
 			unsigned char ccr;
 	char pad1[2];	unsigned short mtc;
@@ -371,9 +371,9 @@ extern volatile struct IODEVICE *IODEVbase;
 #endif
 
 #if 0
-/* 
+/*
  * devices that need to configure before console use this
- * *and know it* (i.e. everything is really tight certain params won't be 
+ * *and know it* (i.e. everything is really tight certain params won't be
  * passed in some cases and the devices will deal with it)
  */
 #include <sys/device.h>

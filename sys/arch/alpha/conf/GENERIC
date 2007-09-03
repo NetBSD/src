@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.266.2.3 2007/02/26 09:05:36 yamt Exp $
+# $NetBSD: GENERIC,v 1.266.2.4 2007/09/03 14:22:21 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.266.2.3 $"
+ident		"GENERIC-$Revision: 1.266.2.4 $"
 
 maxusers 32
 
@@ -109,8 +109,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -535,14 +535,18 @@ fd*	at	fdc? drive ?
 ld*	at	cac? unit ?
 ld*	at	mlx? unit ?
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?			# ScanLogic SL811HS
+
 # USB bus support
-usb*	at uhci?
-usb*	at ohci?
 usb*	at ehci?
+usb*	at ohci?
+usb*	at slhci?
+usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -629,12 +633,15 @@ ugen*	at uhub? port ?
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
+bthub* at btuart?
 bthub* at ubt?
 
 # Bluetooth HID support
@@ -709,6 +716,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
@@ -723,6 +731,9 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec
 
 # Veriexec
 #

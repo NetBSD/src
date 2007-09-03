@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cl.c,v 1.7 2004/10/14 04:14:26 mhitch Exp $ */
+/*	$NetBSD: ite_cl.c,v 1.7.12.1 2007/09/03 14:22:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.7 2004/10/14 04:14:26 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.7.12.1 2007/09/03 14:22:53 yamt Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -150,7 +150,7 @@ void
 cl_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	volatile unsigned char *ba = ip->grf->g_regkva;
-	unsigned char *fb = ip->grf->g_fbkva;
+	volatile unsigned char *fb = ip->grf->g_fbkva;
 	unsigned char attr;
 	volatile unsigned char *cp;
 
@@ -183,7 +183,8 @@ cl_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	if (ip->flags & ITE_INGRF)
 		return;
 
-    	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
+    	dst = (unsigned char*)__UNVOLATILE(ip->grf->g_fbkva) +
+		(sy * ip->cols) + sx;
     	src = dst + (ip->rows*ip->cols);
     	len = w*h;
 
@@ -202,7 +203,7 @@ cl_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 	if (ip->flags & ITE_INGRF)
 		return;
 
-    	fb = ip->grf->g_fbkva + sy * ip->cols;
+    	fb = (unsigned char*)__UNVOLATILE(ip->grf->g_fbkva) + sy * ip->cols;
     	SetTextPlane(ba, 0x00);
 
     	switch (dir) {

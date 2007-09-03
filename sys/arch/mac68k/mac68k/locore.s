@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144.16.1 2007/02/26 09:07:17 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.144.16.2 2007/09/03 14:27:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -340,7 +340,8 @@ Lloaddone:
 /* set kernel stack, user SP, lwp0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
+	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
 	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
@@ -879,7 +880,7 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(rtclock_intr)
 	movl	%d2,%sp@-		| save %d2
 	movw	%sr,%d2			| save SPL
-	movw	_C_LABEL(mac68k_ipls)+MAC68K_IPL_CLOCK*2,%sr
+	movw	_C_LABEL(mac68k_ipls)+IPL_CLOCK*2,%sr
 					| raise SPL to splclock()
 	movl	%a6@,%a1		| unwind to frame in intr_dispatch
 	lea	%a1@(28),%a1		| push pointer to interrupt frame
@@ -910,8 +911,6 @@ ENTRY_NOPROFILE(rtclock_intr)
  * necessitating a stack cleanup.
  */
 
-BSS(ssir,1)
-
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
 	jeq	Lchksir			| no, go check for SIR
@@ -927,8 +926,9 @@ Lrei2:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
+	pea	%sp@(12)		| fp == address of trap frame
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore %USP
 	movl	%a0,%usp		|   from save area
 	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
@@ -967,8 +967,9 @@ Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
+	pea	%sp@(12)		| fp == address of trap frame
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   %USP
 	moveml	%sp@+,#0x7FFF		| and all remaining registers
@@ -998,11 +999,6 @@ Ldorte:
  * Use common m68k support routines.
  */
 #include <m68k/m68k/support.s>
-
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.
@@ -1221,7 +1217,7 @@ Ldoboot1:
 Lebootcode:
 
 /*
- * u_long ptest040(caddr_t addr, u_int fc);
+ * u_long ptest040(void *addr, u_int fc);
  *
  * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
  * translation is enabled.  This allows us to find the physical address
@@ -1515,9 +1511,6 @@ GLOBAL(fputype)
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
-
-GLOBAL(want_resched)
-	.long	0
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of lwp0 u-area

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.14.6.3 2007/02/26 09:08:14 yamt Exp $	*/
+/*	$NetBSD: scr.c,v 1.14.6.4 2007/09/03 14:29:52 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.14.6.3 2007/02/26 09:08:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.14.6.4 2007/09/03 14:29:52 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1037,7 +1037,7 @@ int
 scrioctl(dev, cmd, data, flag, l)
     dev_t        dev;
     u_long       cmd;
-    caddr_t      data;
+    void *     data;
     int          flag;
 struct lwp  *l;
 {

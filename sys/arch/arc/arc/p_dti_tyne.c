@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.9.2.2 2007/02/26 09:05:50 yamt Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.9.2.3 2007/09/03 14:23:04 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.9.2.2 2007/02/26 09:05:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.9.2.3 2007/09/03 14:23:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,53 +139,47 @@ struct platform platform_desktech_tyne = {
  */
 /* XXX see comments in p_dti_tyne_init() */
 static const uint32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* XXX IPL_{CLOCK,HIGH} */
+	[IPL_NONE] =0,
+	[IPL_SOFT] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
+	[IPL_NET] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
+	[IPL_TTY] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
+	[IPL_CLOCK] =	/* XXX */
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3|
+	    MIPS_INT_MASK_4|
+	    MIPS_INT_MASK_5,
 };
 
 #if NPC_ISA > 0 || NOPMS_ISA > 0
@@ -257,6 +251,18 @@ btl_dti_tyne_phystokv(uint32_t p)
 void
 p_dti_tyne_init(void)
 {
+
+	/*
+	 * Initialize interrupt priority
+	 */
+	/*
+	 * XXX
+	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
+	 * or
+	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
+	 */
+	ipl_sr_bits = dti_tyne_ipl_sr_bits;
+
 	/*
 	 * XXX - should be enabled, if tested.
 	 *
@@ -276,6 +282,7 @@ p_dti_tyne_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	arc_wired_enter_page(TYNE_V_BOUNCE, TYNE_P_BOUNCE,
 	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_256K));
 
@@ -284,17 +291,6 @@ p_dti_tyne_init(void)
 
 	arc_wired_enter_page(0xe3000000, 0xfff00000,
 	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_4K));
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	/*
-	 * XXX
-	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
-	 * or
-	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
-	 */
-	ipl_sr_bits = dti_tyne_ipl_sr_bits;
 
 	/*
 	 * common configuration for DTI platforms

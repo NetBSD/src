@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.15.16.2 2007/02/26 09:09:01 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.15.16.3 2007/09/03 14:31:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.2 2007/02/26 09:09:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.3 2007/09/03 14:31:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,20 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.2 2007/02/26 09:09:01 ya
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
+#include <sys/vfs_syscalls.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>
-
-static void cvtstat __P((struct stat *, struct stat12 *));
+#include <compat/common/compat_file.h>
 
 /*
  * Convert from a new to an old stat structure.
  */
-static void
-cvtstat(st, ost)
-	struct stat *st;
-	struct stat12 *ost;
+void
+compat_12_stat_conv(const struct stat *st, struct stat12 *ost)
 {
 
 	ost->st_dev = st->st_dev;
@@ -139,17 +137,11 @@ compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat12 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
-	cvtstat(&sb, &osb);
+	compat_12_stat_conv(&sb, &osb);
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -169,17 +161,11 @@ compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat12 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return (error);
-	cvtstat(&sb, &osb);
+	compat_12_stat_conv(&sb, &osb);
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -211,7 +197,7 @@ compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
 	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
-		cvtstat(&ub, &oub);
+		compat_12_stat_conv(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));
 	}
 	return (error);

@@ -198,7 +198,7 @@ opcic_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 		/* schedule kthread creation */
-		kthread_create(sapcic_kthread_create, &sc->sc_socket[i].ss);
+		sapcic_kthread_create(&sc->sc_socket[i].ss);
 	}
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.10 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.10.8.1 2007/09/03 14:30:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.10 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.10.8.1 2007/09/03 14:30:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -138,7 +138,7 @@ struct ec_softc {
 int ec_intr(void *);
 void ec_reset(struct ifnet *);
 int ec_init(struct ifnet *);
-int ec_ioctl(struct ifnet *, u_long, caddr_t);
+int ec_ioctl(struct ifnet *, u_long, void *);
 void ec_watchdog(struct ifnet *);
 void ec_start(struct ifnet *);
 
@@ -577,7 +577,7 @@ ec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
 int 
-ec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.14 2005/02/26 23:04:16 perry Exp $	*/
+/*	$NetBSD: cnode.h,v 1.14.4.1 2007/09/03 14:31:45 yamt Exp $	*/
 
 /*
  *
@@ -189,7 +189,7 @@ enum dc_status {
 };
 
 /* cfs_psdev.h */
-extern int coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize, caddr_t buffer);
+extern int coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize, void *buffer);
 extern int coda_kernel_version;
 
 /* cfs_subr.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.9.16.1 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: crx.c,v 1.9.16.2 2007/09/03 14:30:52 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.9.16.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.9.16.2 2007/09/03 14:30:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -236,7 +236,7 @@ crxrw(dev, uio, flags)
 #endif
 	rs->rs_flags &= ~RS_BUSY;
 	if (rs->rs_flags & RS_WANT)
-		wakeup((caddr_t) rs);
+		wakeup((void *) rs);
 
 	return (error);
 }
@@ -266,5 +266,5 @@ crxintr(arg)
 		rs->rs_flags |= RS_ERROR;
 	}
 	rs->rs_flags |= RS_DONE;
-	wakeup((caddr_t) &rs->rs_blkno);
+	wakeup((void *) &rs->rs_blkno);
 }

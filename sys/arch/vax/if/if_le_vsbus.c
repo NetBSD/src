@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.19 2003/08/07 16:30:07 agc Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.19.16.1 2007/09/03 14:30:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.19 2003/08/07 16:30:07 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.19.16.1 2007/09/03 14:30:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -243,7 +243,7 @@ le_vsbus_attach(parent, self, aux)
                 return;
         }
         err = bus_dmamem_map(va->va_dmat, &seg, rseg, ALLOCSIZ, 
-            (caddr_t *)&sc->sc_am7990.lsc.sc_mem,
+            (void **)&sc->sc_am7990.lsc.sc_mem,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
         if (err) {
                 printf(": unable to map buffer block: err %d\n", err);

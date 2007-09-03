@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2.18.1 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.18.2 2007/09/03 14:23:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000-2004
@@ -41,6 +41,7 @@ struct btinfo_common {
 #define BTINFO_BOOTPATH 2
 #define BTINFO_SYMTAB	3
 #define BTINFO_FLAGS	4
+#define BTINFO_HOWTO	5
 
 struct btinfo_magic {
 	struct btinfo_common common;
@@ -65,6 +66,12 @@ struct btinfo_flags {
 
 #define	BI_SERIAL_CONSOLE	0x1
 	uint32_t bi_flags;
+};
+
+struct btinfo_howto {
+	struct btinfo_common common;
+
+	uint32_t bi_howto;
 };
 
 #ifdef _KERNEL

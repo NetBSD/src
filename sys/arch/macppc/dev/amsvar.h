@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.4.52.2 2007/02/26 09:07:19 yamt Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.4.52.3 2007/09/03 14:27:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -71,7 +71,7 @@ struct ams_softc {
 #define MSCLASS_TRACKBALL	2
 #define MSCLASS_TRACKPAD	3
 
-void ms_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void ms_adbcomplete __P((uint8_t *buffer, uint8_t *data_area, int adb_command));
 void ms_handoff __P((adb_event_t *event, struct ams_softc *));
 
 #endif /* _MACPPC_AMSVAR_H_ */

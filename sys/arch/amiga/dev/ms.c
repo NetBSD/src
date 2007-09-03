@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.28.16.2 2006/12/30 20:45:26 yamt Exp $ */
+/*	$NetBSD: ms.c,v 1.28.16.3 2007/09/03 14:22:55 yamt Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28.16.2 2006/12/30 20:45:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28.16.3 2007/09/03 14:22:55 yamt Exp $");
 
 /*
  * Mouse driver.
@@ -151,7 +151,7 @@ const struct cdevsw ms_cdevsw = {
  * Callbacks for wscons.
  */
 static int ms_wscons_enable(void *);
-static int ms_wscons_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int ms_wscons_ioctl(void *, u_long, void *, int, struct lwp *);
 static void ms_wscons_disable(void *);
 
 static struct wsmouse_accessops ms_wscons_accessops = {
@@ -186,7 +186,7 @@ msattach(struct device *pdp, struct device *dp, void *auxp)
 	printf("\n");
 	for (i = 0; i < MS_NPORTS; i++) {
 		sc->sc_ports[i].ms_portno = i;
-		callout_init(&sc->sc_ports[i].ms_intr_ch);
+		callout_init(&sc->sc_ports[i].ms_intr_ch, 0);
 #if NWSMOUSE > 0
 		waa.accessops = &ms_wscons_accessops;
 		waa.accesscookie = &sc->sc_ports[i];
@@ -479,7 +479,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-msioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
+msioctl(dev_t dev, u_long cmd, register void *data, int flag,
         struct lwp *l)
 {
 	struct ms_port *ms;
@@ -537,7 +537,7 @@ mskqfilter(dev, kn)
 #if NWSMOUSE > 0
 
 static int
-ms_wscons_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, 
+ms_wscons_ioctl(void *cookie, u_long cmd, void *data, int flag, 
 		struct lwp *l)
 {
 	switch(cmd) {

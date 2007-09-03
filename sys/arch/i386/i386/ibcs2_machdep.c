@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.27.16.2 2007/02/26 09:06:55 yamt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.27.16.3 2007/09/03 14:26:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.27.16.2 2007/02/26 09:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.27.16.3 2007/09/03 14:26:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -197,7 +197,7 @@ ibcs2_sys_sysmachine(struct lwp *l, void *v, register_t *retval)
 #else
 		val = IBCS2_FP_387;		/* a real coprocessor */
 #endif
-		if ((error = copyout((caddr_t)&val, (caddr_t)SCARG(uap, arg),
+		if ((error = copyout((void *)&val, (void *)SCARG(uap, arg),
 				     sizeof(val))))
 			return error;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.21.12.1 2006/06/21 14:57:33 yamt Exp $ */
+/*	$NetBSD: ctu.c,v 1.21.12.2 2007/09/03 14:30:52 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.21.12.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.21.12.2 2007/09/03 14:30:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,11 +110,13 @@ const struct cdevsw ctu_cdevsw = {
 };
 #endif
 
-static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
+static callout_t ctu_watch_ch;
 
 void
 ctuattach()
 {
+
+	callout_init(&ctu_watch_ch, 0);
 	bufq_alloc(&tu_sc.sc_bufq, "fcfs", 0);
 
 	tu_recv = idsptch;
@@ -161,7 +163,7 @@ ctuopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	tu_sc.sc_step = 0;
 	mtpr(0100, PR_CSRS);	/* Enable receive interrupt */
 	mtpr(0101, PR_CSTS);	/* Enable transmit interrupt + send break */
-	if ((error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH, "reset", 0)))
+	if ((error = tsleep((void *)&tu_sc, (PZERO + 10)|PCATCH, "reset", 0)))
 		return error;
 	
 #ifdef TUDEBUG
@@ -269,8 +271,10 @@ cturintr(void *arg)
 	struct	buf *bp;
 	int i, c, tck;
 	unsigned short ck = 0;
+	char *buf;
 
 	bp = BUFQ_PEEK(tu_sc.sc_bufq);
+	buf = bp->b_data;
 	switch (tu_sc.sc_state) {
 	case TU_RESET:
 		if (status != RSP_TYP_CONTINUE)
@@ -280,7 +284,7 @@ cturintr(void *arg)
 
 	case TU_READING:
 		if (status != RSP_TYP_DATA)
-			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
 		tu_sc.sc_wto = 0;
 		for (i = 0; i < 131; i++) {
 			if ((c = readchr()) < 0) {
@@ -290,13 +294,13 @@ cturintr(void *arg)
 				goto bad;
 			}
 			if ((i > 0) && (i < 129))
-				bp->b_data[tu_sc.sc_xbytes++] = c;
+				buf[tu_sc.sc_xbytes++] = c;
 			if (i == 129)
 				ck = (c & 0xff);
 			if (i == 130)
 				ck |= ((c & 0xff) << 8);
 		}
-		tck = ctu_cksum((void *)&bp->b_data[tu_sc.sc_xbytes-128], 64);
+		tck = ctu_cksum((void *)&buf[tu_sc.sc_xbytes-128], 64);
 		tck += 0x8001; if (tck > 0xffff) tck -= 0xffff;
 		if (tck != ck) {
 #ifdef TUDEBUG
@@ -334,7 +338,7 @@ cturintr(void *arg)
 			    tu_sc.sc_state, tu_sc.sc_xbytes, status);
 #endif
 			
-			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
 		}
 		tu_sc.sc_wto = 0;
 		for (i = 0; i < 13; i++) {
@@ -349,7 +353,7 @@ cturintr(void *arg)
 #ifdef TUDEBUG
 				printf("end packet status bad: %d\n", c);
 #endif
-				bp->b_flags |= B_ERROR;
+				bp->b_error = EIO;
 			}
 		}
 		break;
@@ -366,9 +370,9 @@ cturintr(void *arg)
 		WAIT; mtpr(128, PR_CSTD);
 		for (i = 0; i < 128; i++) {
 			WAIT;
-			mtpr(bp->b_data[tu_sc.sc_xbytes++], PR_CSTD);
+			mtpr(buf[tu_sc.sc_xbytes++], PR_CSTD);
 		}
-		tck = ctu_cksum((void *)&bp->b_data[tu_sc.sc_xbytes-128], 64);
+		tck = ctu_cksum((void *)&buf[tu_sc.sc_xbytes-128], 64);
 		tck += 0x8001; if (tck > 0xffff) tck -= 0xffff;
 		WAIT; mtpr(tck & 0xff, PR_CSTD);
 		WAIT; mtpr((tck >> 8) & 0xff, PR_CSTD);
@@ -388,7 +392,7 @@ cturintr(void *arg)
 		printf("bad rx state %d char %d\n", tu_sc.sc_state, status);
 		return;
 	}
-	if ((bp->b_flags & B_ERROR) == 0) {
+	if (bp->b_error == 0) {
 		(void)BUFQ_GET(tu_sc.sc_bufq);
 		biodone(bp);
 #ifdef TUDEBUG
@@ -401,7 +405,7 @@ cturintr(void *arg)
 		    tu_sc.sc_state, tu_sc.sc_xbytes, status);
 	}
 #endif
-	bp->b_flags &= ~B_ERROR;
+	bp->b_error = 0;
 	tu_sc.sc_state = TU_IDLE;
 	ctustart();
 	return;

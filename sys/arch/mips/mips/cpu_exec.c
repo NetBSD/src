@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.46.12.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.46.12.3 2007/09/03 14:27:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.46.12.2 2006/12/30 20:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.46.12.3 2007/09/03 14:27:59 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -208,7 +208,7 @@ mips_elf_makecmds (l, epp)
 #ifdef DEBUG
 		/*printf("obsolete elf: mapping %x %x %x\n", resid);*/
 #endif
-		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
+		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (void *)&ph,
 				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
 				    l->l_cred, &resid, NULL))

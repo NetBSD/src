@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.18.2.2 2006/12/30 20:45:18 yamt Exp $	*/
+/*	$NetBSD: hydra.c,v 1.18.2.3 2007/09/03 14:22:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.18.2.2 2006/12/30 20:45:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.18.2.3 2007/09/03 14:22:04 yamt Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -228,7 +228,7 @@ hydra_probe_slave(struct hydra_softc *sc, int slave)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, ret;
 
-	memcpy((caddr_t)sc->sc_bootpage_va, hydra_probecode,
+	memcpy((void *)sc->sc_bootpage_va, hydra_probecode,
 	    hydra_eprobecode - hydra_probecode);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_SET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
@@ -353,6 +353,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	int slave = ha->ha_slave;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int error;
 	int i;
 	struct hydraboot_vars *hb;
 
@@ -361,13 +362,16 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
 	cpu->sc_cpuinfo.ci_cpuid = slave | HYDRA_ID_ISSLAVE;
 
-	if (cpu_alloc_idlepcb(&cpu->sc_cpuinfo) != 0) {
-		printf(": couldn't allocate idle PCB.\n");
-		return;
+	error = mi_cpu_attach(&cpu->sc_cpuinfo);
+	if (error != 0) {
+		aprint_normal("\n");
+		aprint_error("%s: mi_cpu_attach failed with %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return;
 	}
 
 	/* Copy hatch code to boot page, and set up arguments */
-	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
+	memcpy((void *)sc->sc_bootpage_va, hydra_hatchcode,
 	    hydra_ehatchcode - hydra_hatchcode);
 	KASSERT(hydra_ehatchcode - hydra_hatchcode <= HYDRABOOT_VARS);
 	hb = (struct hydraboot_vars *)(sc->sc_bootpage_va + HYDRABOOT_VARS);
@@ -487,7 +491,7 @@ cpu_boot_secondary_processors(void)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
-	callout_init(&sc->sc_prod);
+	callout_init(&sc->sc_prod, 0);
 	hydra_prod(sc);
 }
 

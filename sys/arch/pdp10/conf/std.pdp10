@@ -1,9 +1,0 @@
-#	$NetBSD: std.pdp10,v 1.1.18.1 2006/06/21 14:54:41 yamt Exp $
-#
-# Std pdp10files
-#
-machine	pdp10
-include		"conf/std"	# MI standard options
-
-options 	EXEC_SCRIPT	# execve(2) support for scripts
-options 	EXEC_ELF36	# execve(2) support for ELF36 binaries

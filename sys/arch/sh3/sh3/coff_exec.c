@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.22.12.2 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.22.12.3 2007/09/03 14:29:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22.12.2 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22.12.3 2007/09/03 14:29:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
-		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
+		error = vn_rdwr(UIO_READ, vp, (void *) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
 		if (error) {
@@ -332,7 +332,7 @@ exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
 		DPRINTF(("COFF shlib size %d offset %d\n",
 		    sh.s_size, sh.s_scnptr));
 
-		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
+		error = vn_rdwr(UIO_READ, epp->ep_vp, (void *) buf,
 		    len, sh.s_scnptr,
 		    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
@@ -378,17 +378,13 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p, 0);
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-#ifdef TODO
-	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
-#endif
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
@@ -396,7 +392,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	}
 
 	siz = sizeof(struct coff_filehdr);
-	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
+	error = vn_rdwr(UIO_READ, nd.ni_vp, (void *) fhp, siz, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, NULL);
 	if (error) {
 		DPRINTF(("filehdr read error %d\n", error));

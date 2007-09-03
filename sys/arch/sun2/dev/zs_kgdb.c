@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.5 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.5.8.1 2007/09/03 14:30:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5.8.1 2007/09/03 14:30:28 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -150,7 +150,7 @@ zs_kgdb_init(void)
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
-	memset((caddr_t)&cs, 0, sizeof(cs));
+	memset((void *)&cs, 0, sizeof(cs));
 	zsd = zs_find_prom(promzs_unit);
 	if (zsd == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");
@@ -167,7 +167,7 @@ zs_kgdb_init(void)
 	zs_setparam(&cs, 0, kgdb_rate);
 
 	/* Store the getc/putc functions and arg. */
-	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
 }
 
 /*

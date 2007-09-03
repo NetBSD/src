@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.1 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.2 2007/09/03 14:28:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.1 2006/12/30 20:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.2 2007/09/03 14:28:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ readdisklabel(dev, strat, lp, clp)
 		return "error reading disklabel";
 
 	/* Check for NetBSD label in second sector */
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
 			memcpy(lp, dlp, LABELSIZE(dlp));

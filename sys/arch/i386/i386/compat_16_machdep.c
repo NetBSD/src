@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6.18.2 2007/02/26 09:06:53 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.6.18.3 2007/09/03 14:26:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.18.2 2007/02/26 09:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.18.3 2007/09/03 14:26:37 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -95,7 +95,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/* Restore register context. */
@@ -289,7 +289,7 @@ struct compat_16_vm86_struct {
 };
 
 int
-compat_16_i386_vm86(struct lwp *l, char *args, register_t *retval)
+compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;

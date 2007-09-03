@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201.2.3 2007/02/26 09:07:18 yamt Exp $
+# $NetBSD: GENERIC,v 1.201.2.4 2007/09/03 14:27:31 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201.2.3 $"
+#ident 		"GENERIC-$Revision: 1.201.2.4 $"
 
 maxusers	32
 
@@ -110,6 +110,7 @@ file-system	SMBFS		# CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -454,10 +455,13 @@ ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
 ohci*	at cardbus? function ?	# USB Open Host Controller
 ehci*	at cardbus? function ?	# USB Enhanced Host Controller
 
-usb*	at ohci?					# USB bus support
+slhci*	at pcmcia? function ?	# ScanLogic SL811HS
+
 usb*	at ehci?					# USB bus support
+usb*	at ohci?					# USB bus support
+usb*	at slhci?					# USB bus support
 uhub*	at usb?						# USB Hubs
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
@@ -502,6 +506,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -574,6 +579,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm

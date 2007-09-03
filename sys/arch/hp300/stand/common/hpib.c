@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.5.4.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: hpib.c,v 1.5.4.2 2007/09/03 14:25:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -67,7 +67,7 @@ hpibinit(void)
 				continue;
 		if (howto & RB_ASKNAME)
 			printf("hpib%d at sc%d\n", i, hw->hw_sc);
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_pa = (void *) i;	/* XXX for autoconfig */
 		hs->sc_alive = 1;
 		i++;
 	}

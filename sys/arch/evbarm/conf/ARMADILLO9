@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.12.6.3 2006/12/30 20:45:48 yamt Exp $
+#	$NetBSD: ARMADILLO9,v 1.12.6.4 2007/09/03 14:23:59 yamt Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -209,7 +209,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

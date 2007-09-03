@@ -1,4 +1,4 @@
-/*	$NetBSD: scoopvar.h,v 1.2.4.2 2006/12/30 20:47:28 yamt Exp $	*/
+/*	$NetBSD: scoopvar.h,v 1.2.4.3 2007/09/03 14:31:41 yamt Exp $	*/
 /*	$OpenBSD: zaurus_scoopvar.h,v 1.10 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -29,7 +29,7 @@ void	scoop_led_set(int, int);
 void	scoop_battery_temp_adc(int);
 void	scoop_charge_battery(int, int);
 void	scoop_discharge_battery(int);
-void	scoop_set_sd_power(int);
+void	scoop_set_sdmmc_power(int);
 void	scoop_check_mcr(void);
 void	scoop_set_headphone(int);
 void	scoop_akin_pullup(int);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft.c,v 1.1.4.2 2006/12/30 20:45:54 yamt Exp $ */
+/* 	$NetBSD: tft.c,v 1.1.4.3 2007/09/03 14:24:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.1.4.2 2006/12/30 20:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.1.4.3 2007/09/03 14:24:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ tft_mode(device_t dev)
 }
 
 int
-tft_ioctl(void *arg, void *scr, u_long cmd, caddr_t data, int flag,
+tft_ioctl(void *arg, void *scr, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct vcons_data 	*vd = arg;

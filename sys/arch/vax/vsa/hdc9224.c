@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.31.12.1 2006/06/21 14:57:48 yamt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.31.12.2 2007/09/03 14:31:01 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.31.12.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.31.12.2 2007/09/03 14:31:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,9 @@ struct	hdcsoftc {
 	struct buf *sc_active;
 	struct hdc9224_UDCreg sc_creg;	/* (command) registers to be written */
 	struct hdc9224_UDCreg sc_sreg;	/* (status) registers being read */
-	caddr_t	sc_dmabase;		/* */
+	void *	sc_dmabase;		/* */
 	int	sc_dmasize;
-	caddr_t sc_bufaddr;		/* Current in-core address */
+	void *sc_bufaddr;		/* Current in-core address */
 	int sc_diskblk;			/* Current block on disk */
 	int sc_bytecnt;			/* How much left to transfer */
 	int sc_xfer;			/* Current transfer size */
@@ -284,7 +284,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	    self->dv_xname, "intr");
 
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
-	sc->sc_dmabase = (caddr_t)va->va_dmaaddr;
+	sc->sc_dmabase = (void *)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
 	sc->sc_intbit = va->va_maskno;
 	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
@@ -405,7 +405,6 @@ hdcintr(void *arg)
 		hdc_readregs(sc);
 		for (i = 0; i < 10; i++)
 			printf("%i: %x\n", i, g[i]);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -419,7 +418,7 @@ hdcintr(void *arg)
 	}
 	sc->sc_diskblk += (sc->sc_xfer/DEV_BSIZE);
 	sc->sc_bytecnt -= sc->sc_xfer;
-	sc->sc_bufaddr += sc->sc_xfer;
+	sc->sc_bufaddr = (char *)sc->sc_bufaddr + sc->sc_xfer;
 
 	if (sc->sc_bytecnt == 0) { /* Finished transfer */
 		biodone(bp);
@@ -442,7 +441,6 @@ rdstrategy(struct buf *bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rd_cd.cd_ndevs || (rd = rd_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	sc = (void *)device_parent(&rd->sc_dev);
@@ -689,7 +687,7 @@ rdclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *
  */
 int
-rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rdsoftc *rd = rd_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rd->sc_disk.dk_label;

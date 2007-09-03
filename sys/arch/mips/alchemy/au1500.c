@@ -1,4 +1,4 @@
-/* $NetBSD: au1500.c,v 1.5.8.4 2007/02/26 09:07:24 yamt Exp $ */
+/* $NetBSD: au1500.c,v 1.5.8.5 2007/09/03 14:27:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.5.8.4 2007/02/26 09:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1500.c,v 1.5.8.5 2007/09/03 14:27:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -204,7 +204,7 @@ au1500_match(struct au_chipdep **cpp)
 
 	if (MIPS_PRID_COPTS(cpu_id) == MIPS_AU1500) {
 		*cpp = &au1500_chipdep;
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }

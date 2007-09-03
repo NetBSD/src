@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.4.4.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.4.4.2 2007/09/03 14:25:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -156,7 +156,7 @@ iteconfig(void)
 			continue;
 		gr = (struct grfreg *) hw->hw_kva;
 		/* XXX: redundent but safe */
-		if (badaddr((caddr_t)gr) || gr->gr_id != GRFHWID)
+		if (badaddr((void *)gr) || gr->gr_id != GRFHWID)
 			continue;
 		for (dtype = 0; dtype < nitesw; dtype++)
 			if (itesw[dtype].ite_hwid == gr->gr_id2)
@@ -168,12 +168,12 @@ iteconfig(void)
 		ite_scode[i] = hw->hw_sc;
 		ip = &ite_data[i];
 		ip->isw = &itesw[dtype];
-		ip->regbase = (caddr_t) gr;
+		ip->regbase = (void *) gr;
 		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
-		ip->fbbase = (caddr_t)(*((u_char *)ip->regbase + fboff) << 16);
+		ip->fbbase = (void *)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
-		if (ip->regbase >= (caddr_t)DIOIIBASE)
-			ip->fbbase += (int)ip->regbase;
+		if (ip->regbase >= (void *)DIOIIBASE)
+			ip->fbbase = (char*)ip->fbbase + (int)ip->regbase;
 		ip->fbwidth  = gr->gr_fbwidth_h << 8 | gr->gr_fbwidth_l;
 		ip->fbheight = gr->gr_fbheight_h << 8 | gr->gr_fbheight_l;
 		ip->dwidth   = gr->gr_dwidth_h << 8 | gr->gr_dwidth_l;

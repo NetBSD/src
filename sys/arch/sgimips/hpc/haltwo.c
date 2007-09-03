@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.8.4.1 2006/12/30 20:46:53 yamt Exp $ */
+/* $NetBSD: haltwo.c,v 1.8.4.2 2007/09/03 14:29:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8.4.1 2006/12/30 20:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8.4.2 2007/09/03 14:29:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ haltwo_init_codec(struct haltwo_softc *sc, struct haltwo_codec *codec)
 		goto out;
 
 	err = bus_dmamem_map(sc->sc_dma_tag, &codec->dma_seg, rseg, allocsz,
-	    (caddr_t *)&codec->dma_descs, BUS_DMA_NOWAIT);
+	    (void **)&codec->dma_descs, BUS_DMA_NOWAIT);
 	if (err)
 		goto out_free;
 
@@ -267,12 +267,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(haa->ha_name, cf->cf_name))
 		return 0;
 
-	if ( platform.badaddr((void *)(haa->ha_sh + haa->ha_devoff),
+	if ( platform.badaddr((void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff),
 	    sizeof(u_int32_t)) )
 		return 0;
 
 	if ( platform.badaddr(
-	    (void *)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
+	    (void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
 	    sizeof(u_int32_t)) )
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.28.12.2 2007/02/26 09:07:13 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.28.12.3 2007/09/03 14:27:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28.12.2 2007/02/26 09:07:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28.12.3 2007/09/03 14:27:15 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -200,7 +200,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.sf_si._info = ksi->ksi_info;
 	kf.sf_uc.uc_flags = _UC_SIGMASK;
 	kf.sf_uc.uc_sigmask = *mask;
-	kf.sf_uc.uc_link = NULL;
+	kf.sf_uc.uc_link = l->l_ctxlink;
 	kf.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&kf.sf_uc.uc_stack, 0, sizeof(kf.sf_uc.uc_stack));
@@ -267,7 +267,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 	gr[_REG_PC] = frame->f_pc;
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;

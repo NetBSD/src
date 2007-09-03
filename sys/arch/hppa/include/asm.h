@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4.12.1 2006/06/21 14:52:09 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.4.12.2 2007/09/03 14:26:25 yamt Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -63,8 +63,8 @@
 	.callinfo frame=n,calls, save_rp, save_sp	!\
 	.entry
 
-#define ALTENTRY(x) ! .export x, entry ! .label  x
-#define EXIT(x) ! .exit ! .procend
+#define ALTENTRY(x) ! .export x, entry ! .label x
+#define EXIT(x) ! .exit ! .procend ! .size x, .-x
 
 #define RCSID(x)	.text				!\
 			.asciz x			!\
@@ -102,9 +102,17 @@
 	CALL(func,%r1)
 #endif
 
-/* XXX unimplemented */
-#define WARN_REFERENCES(sym, msg)
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg ## ,30,0,0,0 ;					\
+	.stabs __STRING(sym) ## ,1,0,0,0
+#else
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs __STRING(sym),1,0,0,0
+#endif
 
+#define	BSS(n,s)	! .data ! .label n ! .comm s
 #define	SZREG	4
 
 #endif /* _HPPA_ASM_H_ */

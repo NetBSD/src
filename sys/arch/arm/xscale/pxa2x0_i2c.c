@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.1.4.2 2006/12/30 20:45:38 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.1.4.3 2007/09/03 14:23:28 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.1.4.2 2006/12/30 20:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.1.4.3 2007/09/03 14:23:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,13 +44,6 @@ pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *sc)
 	}
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-
-	/*
-	 * Configure the alternate functions.  The _IN is arbitrary, as the
-	 * direction is managed by the I2C unit when comms are in progress.
-	 */
-	pxa2x0_gpio_set_function(117, GPIO_ALT_FN_1_IN);	/* SCL */
-	pxa2x0_gpio_set_function(118, GPIO_ALT_FN_1_IN);	/* SDA */
 
 	pxa2x0_i2c_init(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.11.2.2 2006/12/30 20:47:14 yamt Exp $	*/
+/*	$NetBSD: ka680.c,v 1.11.2.3 2007/09/03 14:30:56 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.11.2.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.11.2.3 2007/09/03 14:30:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static void	ka680_softmem __P((void *));
 static void	ka680_hardmem __P((void *));
 static void	ka680_steal_pages __P((void));
 static void	ka680_memerr __P((void));
-static int	ka680_mchk __P((caddr_t));
+static int	ka680_mchk __P((void *));
  
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches
@@ -286,7 +286,7 @@ ka680_memerr()
 }
 
 int
-ka680_mchk(caddr_t addr)
+ka680_mchk(void *addr)
 {
 	panic("Machine check");
 	return 0;

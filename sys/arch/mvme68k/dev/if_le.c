@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.30 2003/08/07 16:28:40 agc Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30.16.1 2007/09/03 14:28:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.30 2003/08/07 16:28:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.30.16.1 2007/09/03 14:28:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,7 +201,7 @@ le_pcc_attach(parent, self, aux)
 		return;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
-	    (caddr_t *) & sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+	    (void **) & sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
 		printf("%s: Failed to map ether buffer\n", self->dv_xname);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;

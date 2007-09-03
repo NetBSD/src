@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.36.16.1 2006/06/21 14:48:27 yamt Exp $ */
+/*	$NetBSD: zssc.c,v 1.36.16.2 2007/09/03 14:22:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.36.16.1 2006/06/21 14:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.36.16.2 2007/09/03 14:22:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x4000);
+	sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va + 0x4000);
 
 	/*
 	 * CTEST7 = 00

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46.2.2 2007/02/26 09:06:09 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.2.3 2007/09/03 14:23:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -98,8 +98,10 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-        int	ci_mtx_count;
-        int	ci_mtx_oldspl;
+	cpuid_t	ci_cpuid;
+	int	ci_want_resched;
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -143,7 +145,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci)	{want_resched = 1; setsoftast();}
+#define	cpu_need_resched(ci,flags)	{ci->ci_want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -162,10 +164,6 @@ struct clockframe {
 #define setsoftast()	(astpending = 1)
 
 extern int	astpending;	/* need trap before returning to user mode */
-extern int	want_resched;	/* resched() was called */
-
-/* include support for software interrupts */
-#include <machine/mtpr.h>
 
 /*
  * The rest of this should probably be moved to ../atari/ataricpu.h,
@@ -214,7 +212,7 @@ extern int machineid;
 /*
  * Prototypes from atari_init.c
  */
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
 int	cpu_dumpsize __P((void));
 
 /*
@@ -234,22 +232,10 @@ const char *fpu_describe __P((int));
 int	fpu_probe __P((void));
 
 /*
- * Prototypes from vm_machdep.c
- */
-int	badbaddr __P((caddr_t, int));
-void	consinit __P((void));
-void	dumpconf __P((void));
-int	kvtop __P((caddr_t));
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-void	setredzone __P((u_int *, caddr_t));
-
-/*
  * Prototypes from locore.s
  */
 struct fpframe;
 struct user;
-struct pcb;
 
 void	clearseg __P((paddr_t));
 void	doboot __P((void));
@@ -258,21 +244,19 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 void	physcopyseg __P((paddr_t, paddr_t));
 u_int	probeva __P((u_int, u_int));
-void	proc_trampoline __P((void));
-void	savectx __P((struct pcb *));
-int	suline __P((caddr_t, caddr_t));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
+int	suline __P((void *, void *));
 
 /*
  * Prototypes from machdep.c:
  */
+int	badbaddr __P((void *, int));
+void	consinit __P((void));
 typedef void (*si_farg)(void *, void *);	/* XXX */
+void	init_sicallback __P((void));		/* XXX */
 void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
 void	dumpsys __P((void));
 vaddr_t reserve_dumppages __P((vaddr_t));
-void	softint __P((void));
 
 
 /*
@@ -280,12 +264,6 @@ void	softint __P((void));
  */
 struct uio;
 int	nvram_uio __P((struct uio *));
-
-/*
- * Prototypes from sys_machdep.c:
- */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
 
 /*
  * Prototypes from pci_machdep.c

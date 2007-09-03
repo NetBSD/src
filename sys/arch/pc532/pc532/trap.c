@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67.2.3 2007/02/26 09:07:45 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.67.2.4 2007/09/03 14:28:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.3 2007/02/26 09:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.4 2007/09/03 14:28:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 #include "opt_ns381.h"
 
 #include <sys/param.h>
@@ -93,9 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.3 2007/02/26 09:07:45 yamt Exp $");
 #include <sys/signal.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -406,7 +403,7 @@ trap(struct trapframe frame)
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, ftype);
 		if (rv == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_ABT)
@@ -486,10 +483,7 @@ child_return(void *arg)
 	l->l_md.md_regs->r_psr &= ~PSL_C;
 
 	userret(l, l->l_md.md_regs->r_pc, 0);
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

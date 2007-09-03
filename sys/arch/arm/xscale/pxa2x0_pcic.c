@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.1.4.2 2006/12/30 20:45:38 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.1.4.3 2007/09/03 14:23:29 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.1.4.2 2006/12/30 20:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.1.4.3 2007/09/03 14:23:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,7 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 	struct pcmciabus_attach_args paa;
 	struct pxapcic_socket *so;
 	int s[PXAPCIC_NSLOT];
+	u_int cs;
 	int i;
 
 	printf(": %d slot%s\n", sc->sc_nslots, sc->sc_nslots < 2 ? "" : "s");
@@ -391,7 +392,17 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 		/* GPIO pin for interrupt */
 		so->irqpin = sc->sc_irqpin[s[i]];
 
-		kthread_create(pxapcic_create_event_thread, so);
+		/* If there's a card there, attach it. */
+		cs = (*so->pcictag->read)(so, PXAPCIC_CARD_STATUS);
+		if (cs == PXAPCIC_CARD_VALID)
+			pxapcic_attach_card(so);
+
+		if (kthread_create(PRI_NONE, 0, NULL, pxapcic_event_thread,
+		    so, &so->event_thread, "%s,%d", sc->sc_dev.dv_xname,
+		    so->socket)) {
+			printf("%s: unable to create event thread for %d\n",
+			     sc->sc_dev.dv_xname, so->socket);
+		}
 	}
 }
 
@@ -409,28 +420,6 @@ pxapcic_intr(void *arg)
         return 1;
 }
 
-/*
- * Event management
- */
-void
-pxapcic_create_event_thread(void *arg)
-{
-	struct pxapcic_socket *so = (struct pxapcic_socket *)arg;
-	struct pxapcic_softc *sc = so->sc;
-	u_int cs;
-
-	/* If there's a card there, attach it. */
-	cs = (*so->pcictag->read)(so, PXAPCIC_CARD_STATUS);
-	if (cs == PXAPCIC_CARD_VALID)
-		pxapcic_attach_card(so);
-
-	if (kthread_create1(pxapcic_event_thread, so, &so->event_thread,
-	     "%s,%d", sc->sc_dev.dv_xname, so->socket)) {
-		printf("%s: unable to create event thread for %d\n",
-		     sc->sc_dev.dv_xname, so->socket);
-	}
-}
-
 static void   
 pxapcic_event_thread(void *arg)
 {
@@ -442,7 +431,7 @@ pxapcic_event_thread(void *arg)
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
 
 		/* sleep .25s to avoid chattering interrupts */
-		(void) tsleep((caddr_t)sock, PWAIT, "pxapcicss", hz/4);
+		(void) tsleep((void *)sock, PWAIT, "pxapcicss", hz/4);
 
 		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
 		present = sock->flags & PXAPCIC_FLAG_CARDP;

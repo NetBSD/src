@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18.2.2 2007/02/26 09:06:43 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18.2.3 2007/09/03 14:26:24 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.2 2007/02/26 09:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.3 2007/09/03 14:26:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ cpu_swapin(struct lwp *l)
 	 * Stash the physical for the pcb of U for later perusal
 	 */
 	l->l_addr->u_pcb.pcb_uva = (vaddr_t)l->l_addr;
-	tf->tf_cr30 = kvtop((caddr_t)l->l_addr);
+	tf->tf_cr30 = kvtop((void *)l->l_addr);
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sizeof(l->l_addr->u_pcb));
 
 #ifdef HPPA_REDZONE
@@ -121,6 +121,9 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
+	struct proc *p = l2->l_proc;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pa_space_t space = pmap->pmap_space;
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -129,6 +132,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (round_page(sizeof(struct user)) > PAGE_SIZE)
 		panic("USPACE too small for user");
 #endif
+
+	l2->l_md.md_flags = 0;
 
 	/* Flush the parent LWP out of the FPU. */
 	hppa_fpu_flush(l1);
@@ -147,6 +152,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sp = (register_t)l2->l_addr + PAGE_SIZE;
 	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
+
+	/* copy the l1's trapframe to l2 */
 	bcopy(l1->l_md.md_regs, tf, sizeof(*tf));
 
 	/*
@@ -155,8 +162,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	cpu_swapin(l2);
 
-	/* Activate this process' pmap. */
-	pmap_activate(l2);
+	/* Load all of the user's space registers. */
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+
+	/* Load the protection registers */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
 	/*
 	 * theoretically these could be inherited from the father,
@@ -181,42 +193,26 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build a stack frame for the cpu_switch & co.
+	 * Build stack frames for the cpu_switchto & co.
 	 */
 	osp = sp;
 
-	/* std frame + callee-save registers */
+	/* lwp_trampoline's frame */
+	sp += HPPA_FRAME_SIZE;
+
+	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
+
+	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
+
+	/*
+	 * cpu_switchto's frame
+	 * 	stack usage is std frame + callee-save registers
+	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
 	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcbp;
-	struct trapframe *tf;
-	register_t sp, osp;
-
-	pcbp = &l->l_addr->u_pcb;
-	sp = (register_t)pcbp + PAGE_SIZE;
-	l->l_md.md_regs = tf = (struct trapframe *)sp;
-	sp += sizeof(struct trapframe);
-
-	cpu_swapin(l);
-
-	osp = sp;
-	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
@@ -236,13 +232,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	(void)l;
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-	(void) splsched();
-	switch_exit(l, lwp_exit2);
 }
 
 /*
@@ -268,7 +257,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
 	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 	npf = btoc(size);
 	while (npf--) {
 		if (pmap_extract(upmap, uva, &pa) == false)

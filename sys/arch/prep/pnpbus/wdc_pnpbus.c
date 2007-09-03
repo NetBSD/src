@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.5.2.2 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.5.2.3 2007/09/03 14:29:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.5.2.2 2006/06/21 14:55:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.5.2.3 2007/09/03 14:29:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,6 +83,14 @@ wdc_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 	 * while the siop is builtin on 14L.  No idea how this works at all.
 	 */
 	if (strcmp(res->VitalProductData.PrintableModel, "(e1)") == 0)
+		return ret;
+
+	/* XXX special case the MTX604/mcp750.  The onboard IDE is actually
+	 * a PCIIDE chip.
+	 */
+
+	if (strcmp(res->VitalProductData.PrintableModel,
+	    "000000000000000000000000000(e2)") == 0)
 		return ret;
 
 	if (strcmp(pna->pna_devid, "PNP0600") == 0)

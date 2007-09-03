@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.55 2005/06/13 21:34:17 jmc Exp $ */
+/*	$NetBSD: zbus.c,v 1.55.2.1 2007/09/03 14:22:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.55 2005/06/13 21:34:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.55.2.1 2007/09/03 14:22:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ struct aconfdata {
 struct preconfdata {
 	int manid;
 	int prodid;
-	caddr_t vaddr;
+	void *vaddr;
 };
 
 vaddr_t		ZTWOROMADDR;
@@ -174,7 +174,7 @@ static struct aconfdata aconftab[] = {
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
 	/* Individual Computers Jens Schoenfeld */
 	{ "buddha",	4626,	0 },
-	{ "X-serve",	4626,	23 },	/* X-serve Ethernet */
+	{ "xsurf",	4626,	23 },	/* X-Surf Ethernet */
 	/* VMC Harald Frank */
 	{ "blst",	5001,	1},	/* ISDN Blaster */
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
@@ -223,7 +223,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 void zbusattach(struct device *, struct device *, void *);
 int zbusprint(void *, const char *);
 int zbusmatch(struct device *, struct cfdata *, void *);
-caddr_t zbusmap(caddr_t, u_int);
+void *zbusmap(void *, u_int);
 static const char *aconflookup(int, int);
 
 /*
@@ -356,9 +356,10 @@ zbusprint(void *auxp, const char *pnp)
  * Zorro devices) to have enough kva-space available, so there is no extra
  * range check done here.
  */
-caddr_t
-zbusmap(caddr_t pa, u_int size)
+void *
+zbusmap(void *pa, u_int size)
 {
+#if defined(__m68k__)
 	static vaddr_t nextkva = 0;
 	vaddr_t kva;
 
@@ -373,15 +374,12 @@ zbusmap(caddr_t pa, u_int size)
 	nextkva += size;
 	if (nextkva > ZBUSADDR + ZBUSAVAIL)
 		panic("allocating too much Zorro I/O address space");
-#if defined(__powerpc__)
-/*
- * XXX we use direct constant mapping, so no need for:
- * physaccess((caddr_t)kva, (caddr_t)pa, size, PTE_RW|PTE_I);
- */
-#elif defined(__m68k__)
-	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
+	physaccess((void *)kva, (void *)pa, size, PG_RW|PG_CI);
+	return((void *)kva);
 #else
-ERROR no support for this target CPU yet.
+/*
+ * XXX we use direct constant mapping
+ */
+	return(pa);
 #endif
-	return((caddr_t)kva);
 }

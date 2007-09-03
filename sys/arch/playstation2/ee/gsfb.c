@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.10.12.1 2006/06/21 14:54:42 yamt Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.10.12.2 2007/09/03 14:28:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.10.12.1 2006/06/21 14:54:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.10.12.2 2007/09/03 14:28:48 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -208,7 +208,7 @@ STATIC void _gsfb_eraserows(void *, int, int, long);
 STATIC int _gsfb_allocattr(void *, int, int, int, long *);
 
 /* access ops */
-STATIC int _gsfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+STATIC int _gsfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 STATIC paddr_t _gsfb_mmap(void *, void *, off_t, int);
 STATIC int _gsfb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -529,7 +529,7 @@ _gsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 }
 
 int
-_gsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+_gsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: au_wired_space.c,v 1.3.10.3 2007/02/26 09:07:24 yamt Exp $ */
+/* $NetBSD: au_wired_space.c,v 1.3.10.4 2007/09/03 14:27:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.3.10.3 2007/02/26 09:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.3.10.4 2007/09/03 14:27:52 yamt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -649,7 +649,7 @@ au_wired_space_init(bus_space_tag_t bst, const char *name,
 
 	/* allocate extent manager */
 	c->c_extent = extent_create(name, start, start + size, M_DEVBUF,
-	    (caddr_t)c->c_exstore, sizeof (c->c_exstore), EX_NOWAIT);
+	    (void *)c->c_exstore, sizeof (c->c_exstore), EX_NOWAIT);
 	if (c->c_extent == NULL)
 		panic("au_wired_space_init: %s: cannot create extent", name);
 

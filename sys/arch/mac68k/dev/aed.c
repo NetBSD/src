@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.20.2.1 2006/06/21 14:53:02 yamt Exp $	*/
+/*	$NetBSD: aed.c,v 1.20.2.2 2007/09/03 14:27:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.20.2.1 2006/06/21 14:53:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.20.2.2 2007/09/03 14:27:19 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -109,7 +109,7 @@ aedattach(struct device *parent, struct device *self, void *aux)
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
 
-	callout_init(&sc->sc_repeat_ch);
+	callout_init(&sc->sc_repeat_ch, 0);
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -470,7 +470,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 	firstmove = (aed_sc->sc_evq_tail + total > AED_MAX_EVENTS)
 	    ? (AED_MAX_EVENTS - aed_sc->sc_evq_tail) : total;
 
-	error = uiomove((caddr_t) & aed_sc->sc_evq[aed_sc->sc_evq_tail],
+	error = uiomove((void *) & aed_sc->sc_evq[aed_sc->sc_evq_tail],
 	    firstmove * sizeof(adb_event_t), uio);
 	if (error) {
 		splx(s);
@@ -479,7 +479,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 	moremove = total - firstmove;
 
 	if (moremove > 0) {
-		error = uiomove((caddr_t) & aed_sc->sc_evq[0],
+		error = uiomove((void *) & aed_sc->sc_evq[0],
 		    moremove * sizeof(adb_event_t), uio);
 		if (error) {
 			splx(s);
@@ -493,7 +493,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 }
 
 int 
-aedioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case ADBIOC_DEVSINFO: {

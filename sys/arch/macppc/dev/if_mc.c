@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.9.16.2 2007/09/03 14:27:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.9.16.2 2007/09/03 14:27:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -318,7 +318,7 @@ mc_reset_rxdma(sc)
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, kvtop((caddr_t)sc->sc_rxdmacmd));
+	dbdma_st32(&cmd->d_cmddep, kvtop((void *)sc->sc_rxdmacmd));
 	cmd++;
 
 	dbdma_start(dmareg, sc->sc_rxdmacmd);
@@ -350,7 +350,7 @@ mc_reset_txdma(sc)
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	out32rb(&dmareg->d_cmdptrhi, 0);
-	out32rb(&dmareg->d_cmdptrlo, kvtop((caddr_t)sc->sc_txdmacmd));
+	out32rb(&dmareg->d_cmdptrlo, kvtop((void *)sc->sc_txdmacmd));
 
 	/* restore old value */
 	NIC_PUT(sc, MACE_MACCC, maccc);

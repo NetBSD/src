@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2005/01/19 01:58:21 chs Exp $ */
+/*	$NetBSD: mem.c,v 1.22.8.1 2007/09/03 14:28:31 yamt Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22.8.1 2007/09/03 14:28:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2005/01/19 01:58:21 chs Exp $");
 #include <uvm/uvm_extern.h>
 
 extern u_int lowram;
-static caddr_t devzeropage;
+static void *devzeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -158,7 +158,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove(vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -167,10 +167,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (!uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			continue;
 
 		case DEV_NULL:
@@ -191,7 +191,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {
-				extern caddr_t Segtabzero;
+				extern void *Segtabzero;
 				devzeropage = Segtabzero;
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
@@ -203,7 +203,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (caddr_t)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
@@ -213,7 +213,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 unlock:
 #endif
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup((void *)&physlock);
 		physlock = 0;
 	}
 	return (error);

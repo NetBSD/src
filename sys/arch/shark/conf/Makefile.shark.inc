@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.5.12.1 2006/06/21 14:55:47 yamt Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.5.12.2 2007/09/03 14:29:46 yamt Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -12,7 +12,7 @@ LINKFLAGS=	-T ldscript
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
-	  OBJDUMP=${OBJDUMP} ${HOST_SH} ${ARM}/conf/mkldscript.sh \
+	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
@@ -20,4 +20,7 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	echo \
 	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout
+
+KERNIMAGES=	netbsd netbsd.aout
+
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10.16.2 2007/02/26 09:06:56 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10.16.3 2007/09/03 14:26:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.2 2007/02/26 09:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.3 2007/09/03 14:26:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.2 2007/02/26 09:06:56 yamt Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include <x86/cpu_msr.h>
 #include <machine/intr.h>
 #include <machine/atomic.h>
 #include <machine/cpuvar.h>
@@ -93,18 +94,16 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 #endif
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
-	pmap_do_tlb_shootdown,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
+	msr_write_ipi
 };
 
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
-	simple_lock(&ci->ci_slock);
 	disable_intr();
-	ci->ci_flags &= ~CPUF_RUNNING;
-	simple_unlock(&ci->ci_slock);
+	x86_atomic_clearbits_l(&ci->ci_flags, CPUF_RUNNING);
 
 	for(;;) {
 		__asm volatile("hlt");

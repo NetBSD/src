@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.20.2.2 2007/02/26 09:08:29 yamt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.20.2.3 2007/09/03 14:30:26 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.2 2007/02/26 09:08:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.3 2007/09/03 14:30:26 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.2 2007/02/26 09:08:29 yam
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, caddr_t);
+static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, void *);
 
 void
 svr4_32_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
@@ -334,11 +334,11 @@ svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
  */
 static void
 svr4_32_getsiginfo(union svr4_32_siginfo *si, int sig, u_long code,
-	caddr_t addr)
+	void *addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
-	si->si_addr  = (netbsd32_caddr_t)(u_long)addr;
+	NETBSD32PTR32(si->si_addr, addr);
 	/*
 	 * we can do this direct map as they are the same as all sparc
 	 * architectures.
@@ -483,7 +483,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_32_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+		fp = (struct svr4_32_sigframe *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_32_sigframe *)oldsp;
@@ -503,12 +503,12 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_32_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
-	    (caddr_t)(u_long)tf->tf_pc);
+	    (void *)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
-	frame.sf_sip = (netbsd32_caddr_t)(u_long)&fp->sf_si;
-	frame.sf_ucp = (netbsd32_caddr_t)(u_long)&fp->sf_uc;
+	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
+	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
 	frame.sf_handler = catcher;
 
 	DPRINTF(("svr4_32_sendsig signum=%d si = %p uc = %p handler = %p\n",

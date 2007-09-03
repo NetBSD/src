@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.13.16.1 2006/06/21 14:55:31 yamt Exp $ */
+/* $NetBSD: wdog.c,v 1.13.16.2 2007/09/03 14:29:25 yamt Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13.16.1 2006/06/21 14:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13.16.2 2007/09/03 14:29:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -146,7 +146,7 @@ extern unsigned int maxwdog;
 
 /*ARGSUSED*/
 int
-wdogioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wdogioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
 	int request;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11.12.1 2006/06/21 14:48:17 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.12.2 2007/09/03 14:22:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.12.1 2006/06/21 14:48:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.12.2 2007/09/03 14:22:29 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -103,7 +103,7 @@ cpu_configure()
 #endif
 
 #ifdef MULTIPROCESSOR
-	cpu_init_idle_pcbs();
+	cpu_init_idle_lwps();
 #endif
 
 	init_TSC_tc();

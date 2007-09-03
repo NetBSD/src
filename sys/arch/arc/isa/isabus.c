@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.28.8.2 2006/12/30 20:45:29 yamt Exp $	*/
+/*	$NetBSD: isabus.c,v 1.28.8.3 2007/09/03 14:23:08 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28.8.2 2006/12/30 20:45:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28.8.3 2007/09/03 14:23:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28.8.2 2006/12/30 20:45:29 yamt Exp $")
 #include <arc/arc/timervar.h>
 
 static int beeping;
-static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
+static callout_t sysbeep_ch;
 
 static long isa_mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 static long isa_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
@@ -183,6 +183,8 @@ isabrattach(struct isabr_softc *sc)
 {
 	struct isabus_attach_args iba;
 
+	callout_init(&sysbeep_ch, 0);
+
 	if (isabr_conf == NULL)
 		panic("isabr_conf isn't initialized");
 
@@ -196,9 +198,9 @@ isabrattach(struct isabr_softc *sc)
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
-	arc_bus_space_init_extent(&arc_bus_mem, (caddr_t)isa_mem_ex_storage,
+	arc_bus_space_init_extent(&arc_bus_mem, (void *)isa_mem_ex_storage,
 	    sizeof(isa_mem_ex_storage));
-	arc_bus_space_init_extent(&arc_bus_io, (caddr_t)isa_io_ex_storage,
+	arc_bus_space_init_extent(&arc_bus_io, (void *)isa_io_ex_storage,
 	    sizeof(isa_io_ex_storage));
 
 	iba.iba_iot = &arc_bus_io;

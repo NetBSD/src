@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.8.2.3 2007/02/26 09:05:28 yamt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.8.2.4 2007/09/03 14:22:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8.2.3 2007/02/26 09:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8.2.4 2007/09/03 14:22:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,7 +113,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	char *stacktop;
 
 #if 0
-	printf("cpu_fork: %p -> %p\n", p1, p2);
+	printf("cpu_lwp_fork: %p -> %p\n", p1, p2);
 #endif
 	pcb = &l2->l_addr->u_pcb;
 	/* Copy the pcb */
@@ -137,24 +137,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Fabricate a new switchframe */
 	bzero(sf, sizeof(*sf));
 	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
-	sf->sf_r14 = (register_t)proc_trampoline | R15_MODE_SVC;
-
-	pcb->pcb_tf = tf;
-	pcb->pcb_sf = sf;
-	pcb->pcb_onfault = NULL;
-	sf->sf_r4 = (register_t)func;
-	sf->sf_r5 = (register_t)arg;
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = pcb->pcb_tf;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
-	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
-	sf->sf_r14 = (register_t)proc_trampoline | R15_MODE_SVC;
+	sf->sf_r14 = (register_t)lwp_trampoline | R15_MODE_SVC;
 
 	pcb->pcb_tf = tf;
 	pcb->pcb_sf = sf;
@@ -175,14 +158,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do here? */
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-
-	mutex_enter(&sched_mutex);		/* expected by cpu_switch */
-	cpu_switch(NULL, NULL);
 }
 
 void
@@ -221,7 +196,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	len = atop(len);
 	prot = bp->b_flags & B_READ ? VM_PROT_READ | VM_PROT_WRITE :
 				      VM_PROT_READ;

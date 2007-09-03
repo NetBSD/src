@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2005/01/23 17:27:03 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.7.8.1 2007/09/03 14:30:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -106,7 +106,7 @@
 #define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 
-#define	MAXBSIZE	0x2000		/* max FS block size */
+#define	MAXBSIZE	0x4000		/* max FS block size */
 #define	MAXPHYS		0xe000
 
 /*

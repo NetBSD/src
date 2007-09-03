@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48.2.4 2007/09/03 14:29:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.4 2007/09/03 14:29:31 yamt Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
+#include <sys/syscall.h>
+#include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,30 +106,87 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp
 #include <sh3/reg.h>
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
+#include <sh3/userret.h>
 
-extern void proc_trampoline(void);
+extern void lwp_trampoline(void);
+extern void lwp_setfunc_trampoline(void);
+
+static void sh3_setup_uarea(struct lwp *);
+
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * Finish a fork operation, with lwp l2 nearly set up.  Copy and
+ * update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * lwp_trampoline() and call child_return() with l2 as an argument.
+ * This causes the newly-created lwp to go directly to user level with
+ * an apparent return value of 0 from fork(), while the parent lwp
+ * returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
+ * l1 is the lwp being forked; if l1 == &lwp0, we are creating a
+ * kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * in both the stack and stacksize args), set up the user stack
+ * pointer accordingly.
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
+{
+	struct switchframe *sf;
+
+#if 0 /* FIXME: probably wrong for yamt-idlelwp */
+	KDASSERT(l1 == curlwp || l1 == &lwp0);
+#endif
+
+	sh3_setup_uarea(l2);
+
+	l2->l_md.md_flags = l1->l_md.md_flags;
+	l2->l_md.md_astpending = 0;
+
+	/* Copy user context, may be give a different stack */
+	memcpy(l2->l_md.md_regs, l1->l_md.md_regs, sizeof(struct trapframe));
+	if (stack != NULL)
+		l2->l_md.md_regs->tf_r15 = (u_int)stack + stacksize;
+
+	/* When l2 is switched to, jump to the trampoline */
+	sf = &l2->l_md.md_pcb->pcb_sf;
+	sf->sf_pr  = (int)lwp_trampoline;
+	sf->sf_r10 = (int)l2;	/* "new" lwp for lwp_startup() */
+	sf->sf_r11 = (int)arg;	/* hook function/argument */
+	sf->sf_r12 = (int)func;
+}
+
+
+/*
+ * Reset the stack pointer for the lwp and arrange for it to call the
+ * specified function with the specified argument on next switch.
+ *
+ * XXX: Scheduler activations relics!  Not used anymore but keep
+ * around for reference in case we gonna revive SA.
+ */
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct switchframe *sf;
+
+	sh3_setup_uarea(l);
+
+	l->l_md.md_regs->tf_ssr = PSL_USERSET;
+
+	/* When lwp is switched to, jump to the trampoline */
+	sf = &l->l_md.md_pcb->pcb_sf;
+	sf->sf_pr  = (int)lwp_setfunc_trampoline;
+	sf->sf_r11 = (int)arg;	/* hook function/argument */
+	sf->sf_r12 = (int)func;
+}
+
+
+static void
+sh3_setup_uarea(struct lwp *l)
 {
 	struct pcb *pcb;
 	struct trapframe *tf;
@@ -135,130 +194,27 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	KDASSERT(l1 == curlwp || l1 == &lwp0);
-
-	/* Copy flags */
-	l2->l_md.md_flags = l1->l_md.md_flags;
-
-	pcb = NULL;		/* XXXGCC: -Wuninitialized */
+	pcb = &l->l_addr->u_pcb;
 #ifdef SH3
 	/*
-	 * Convert frame pointer top to P1. because SH3 can't make
-	 * wired TLB entry, context store space accessing must not cause
-	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
-	 * cause virtual-aliasing.
+	 * Accessing context store space must not cause exceptions.
+	 * SH4 can make wired TLB entries so P3 address for PCB is ok.
+	 * SH3 cannot, so we need to convert to P1.  P3/P1 conversion
+	 * doesn't cause virtual-aliasing.
 	 */
 	if (CPU_IS_SH3)
-		pcb = (struct pcb *)P1ADDR((vaddr_t)&l2->l_addr->u_pcb);
+		pcb = (struct pcb *)P1ADDR((vaddr_t)pcb);
 #endif /* SH3 */
-#ifdef SH4
-	/* SH4 can make wired entry, no need to convert to P1. */
-	if (CPU_IS_SH4)
-		pcb = &l2->l_addr->u_pcb;
-#endif /* SH4 */
-
-	l2->l_md.md_pcb = pcb;
-	fptop = (vaddr_t)pcb + PAGE_SIZE;
-
-	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)l2->l_addr + PAGE_SIZE;
-#ifdef P1_STACK
-	/* Convert to P1 from P3 */
-	/*
-	 * wbinv u-area to avoid cache-aliasing, since kernel stack
-	 * is accessed from P1 instead of P3.
-	 */
-	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_dcache_wbinv_range((vaddr_t)l2->l_addr, USPACE);
-	spbase = P1ADDR(spbase);
-#else /* !P1_STACK */
-	/* Prepare u-area PTEs */
-#ifdef SH3
-	if (CPU_IS_SH3)
-		sh3_switch_setup(l2);
-#endif
-#ifdef SH4
-	if (CPU_IS_SH4)
-		sh4_switch_setup(l2);
-#endif
-#endif /* !P1_STACK */
-
-#ifdef KSTACK_DEBUG
-	/* Fill magic number for tracking */
-	memset((char *)fptop - PAGE_SIZE + sizeof(struct user), 0x5a,
-	    PAGE_SIZE - sizeof(struct user));
-	memset((char *)spbase, 0xa5, (USPACE - PAGE_SIZE));
-	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
-#endif /* KSTACK_DEBUG */
-
-	/*
-	 * Copy the user context.
-	 */
-	l2->l_md.md_regs = tf = (struct trapframe *)fptop - 1;
-	memcpy(tf, l1->l_md.md_regs, sizeof(struct trapframe));
-
-	/*
-	 * If specified, give the child a different stack.
-	 */
-	if (stack != NULL)
-		tf->tf_r15 = (u_int)stack + stacksize;
-
-	/* Setup switch frame */
-	sf = &pcb->pcb_sf;
-	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
-	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
-	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
-	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
-	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
-	/* when switch to me, jump to proc_trampoline */
-	sf->sf_pr  = (int)proc_trampoline;
-	/*
-	 * Enable interrupt when switch frame is restored, since
-	 * kernel thread begin to run without restoring trapframe.
-	 */
-	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
-}
-
-/*
- * void cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg):
- *	+ Reset the stack pointer for the process.
- *	+ Arrange to the process to call the specified func
- *	  with argument via the proc_trampoline.
- *
- *	XXX There is a lot of duplicated code here (with cpu_lwp_fork()).
- */
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb;
-	struct trapframe *tf;
-	struct switchframe *sf;
-	vaddr_t fptop, spbase;
-
-	pcb = NULL;		/* XXXGCC: -Wuninitialized */
-#ifdef SH3
-	/*
-	 * Convert frame pointer top to P1. because SH3 can't make
-	 * wired TLB entry, context store space accessing must not cause
-	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
-	 * cause virtual-aliasing.
-	 */
-	if (CPU_IS_SH3)
-		pcb = (struct pcb *)P1ADDR((vaddr_t)&l->l_addr->u_pcb);
-#endif /* SH3 */
-#ifdef SH4
-	/* SH4 can make wired entry, no need to convert to P1. */
-	if (CPU_IS_SH4)
-		pcb = &l->l_addr->u_pcb;
-#endif /* SH4 */
-
-	fptop = (vaddr_t)pcb + PAGE_SIZE;
 	l->l_md.md_pcb = pcb;
+
+	/* stack for trapframes */
+	fptop = (vaddr_t)pcb + PAGE_SIZE;
+	tf = (struct trapframe *)fptop - 1;
+	l->l_md.md_regs = tf;
 
 	/* set up the kernel stack pointer */
 	spbase = (vaddr_t)l->l_addr + PAGE_SIZE;
 #ifdef P1_STACK
-	/* Convert to P1 from P3 */
 	/*
 	 * wbinv u-area to avoid cache-aliasing, since kernel stack
 	 * is accessed from P1 instead of P3.
@@ -286,25 +242,64 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */
 
-	l->l_md.md_regs = tf = (struct trapframe *)fptop - 1;
-	tf->tf_ssr = PSL_USERSET;
-
-	/* Setup switch frame */
+	/* Setup kernel stack and trapframe stack */
 	sf = &pcb->pcb_sf;
-	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
-	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
-	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
-	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
-	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
-	/* when switch to me, jump to proc_trampoline */
-	sf->sf_pr  = (int)proc_trampoline;
+	sf->sf_r6_bank = (vaddr_t)tf;
+	sf->sf_r7_bank = spbase + USPACE - PAGE_SIZE;
+	sf->sf_r15 = sf->sf_r7_bank;
+
 	/*
-	 * Enable interrupt when switch frame is restored, since
-	 * kernel thread begin to run without restoring trapframe.
+	 * Enable interrupts when switch frame is restored, since
+	 * kernel thread begins to run without restoring trapframe.
 	 */
-	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
+	sf->sf_sr = PSL_MD;	/* kernel mode, interrupt enable */
 }
 
+
+/*
+ * fork &co pass this routine to newlwp to finish off child creation
+ * (see cpu_lwp_fork above and lwp_trampoline for details).
+ *
+ * When this function returns, new lwp returns to user mode.
+ */
+void
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
+	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */
+
+	userret(l);
+	ktrsysret(SYS_fork, 0, 0);
+}
+
+
+/*
+ * struct emul e_startlwp (for _lwp_create(2))
+ */
+void
+startlwp(void *arg)
+{
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+	int error;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#ifdef DIAGNOSTIC
+	if (error)
+		printf("startlwp: error %d from cpu_setmcontext()", error);
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+
+/*
+ * Exit hook
+ */
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
@@ -312,12 +307,17 @@ cpu_lwp_free(struct lwp *l, int proc)
 	/* Nothing to do */
 }
 
+
+/*
+ * lwp_free() hook
+ */
 void
 cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
 }
+
 
 #ifdef COREDUMP
 /*
@@ -395,7 +395,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.

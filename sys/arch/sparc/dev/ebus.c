@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.18.12.3 2007/02/26 09:08:15 yamt Exp $ */
+/*	$NetBSD: ebus.c,v 1.18.12.4 2007/09/03 14:29:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18.12.3 2007/02/26 09:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18.12.4 2007/09/03 14:29:56 yamt Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -79,8 +79,7 @@ int ebus_debug = 0;
 volatile uint32_t *ebus_LED = NULL;
 
 #ifdef BLINK
-static struct callout ebus_blink_ch = CALLOUT_INITIALIZER;
-
+static callout_t ebus_blink_ch;
 static void ebus_blink(void *);
 #endif
 
@@ -253,6 +252,10 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	int node, error;
 	char devinfo[256];
 
+#ifdef BLINK
+	callout_init(&ebus_blink_ch, 0);
+#endif
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s, revision 0x%02x\n",
 	       devinfo, PCI_REVISION(pa->pa_class));
@@ -269,7 +272,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(pa->pa_memt, base14 + 0x726000, 4, 0, &hLED) == 0) {
 		ebus_LED = bus_space_vaddr(pa->pa_memt, hLED);
 #ifdef BLINK
-		ebus_blink((caddr_t)0);
+		ebus_blink((void *)0);
 #endif
 	} else {
 		printf("unable to map the LED register\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.11.8.1 2006/12/30 20:47:13 yamt Exp $	*/
+/*	$NetBSD: idprom.c,v 1.11.8.2 2007/09/03 14:30:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.11.8.1 2006/12/30 20:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.11.8.2 2007/09/03 14:30:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ idprom_get(u_char *dst)
 
 	/* First, probe for a separate IDPROM (3/470). */
 	find_prom_map(OBIO_IDPROM1, PMAP_OBIO, IDPROM_SIZE, &va);
-	if (peek_byte((caddr_t)va) == -1) {
+	if (peek_byte((void *)va) == -1) {
 		/* IDPROM is in the EEPROM */
 		find_prom_map(OBIO_IDPROM2, PMAP_OBIO, IDPROM_SIZE, &va);
 	}

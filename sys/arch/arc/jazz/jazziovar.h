@@ -1,4 +1,4 @@
-/*	$NetBSD: jazziovar.h,v 1.4.2.1 2006/12/30 20:45:29 yamt Exp $	*/
+/*	$NetBSD: jazziovar.h,v 1.4.2.2 2007/09/03 14:23:10 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -42,7 +42,7 @@ struct jazzio_attach_args {
 
 struct pica_dev {
 	struct confargs	ps_ca;
-	caddr_t		ps_base;
+	void *		ps_base;
 };
 
 struct jazzio_config {

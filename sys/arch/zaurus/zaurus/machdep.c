@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.3 2007/02/26 09:08:58 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.4 2007/09/03 14:31:45 yamt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.2.3 2007/02/26 09:08:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.2.4 2007/09/03 14:31:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -245,12 +245,73 @@ struct user *proc0paddr;
 const char *console = "glass";
 int glass_console = 0;
 
-char	bootargs[MAX_BOOT_STRING];
-void	process_kernel_args(char *);
+char bootargs[MAX_BOOT_STRING];
 
+/* Prototypes */
 void	consinit(void);
-void	kgdb_port_init(void);
 void	dumpsys(void);
+void	process_kernel_args(char *);
+#ifdef KGDB
+void	kgdb_port_init(void);
+#endif
+
+#if defined(CPU_XSCALE_PXA250)
+static struct pxa2x0_gpioconf pxa25x_boarddep_gpioconf[] = {
+	{  34, GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  35, GPIO_ALT_FN_1_IN },	/* FFCTS */
+	{  39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
+	{  40, GPIO_ALT_FN_2_OUT },	/* FFDTR */
+	{  41, GPIO_ALT_FN_2_OUT },	/* FFRTS */
+
+	{  44, GPIO_ALT_FN_1_IN },	/* BTCST */
+	{  45, GPIO_ALT_FN_2_OUT },	/* BTRST */
+
+	{ -1 }
+};
+static struct pxa2x0_gpioconf *pxa25x_zaurus_gpioconf[] = {
+	pxa25x_com_btuart_gpioconf,
+	pxa25x_com_ffuart_gpioconf,
+	pxa25x_com_stuart_gpioconf,
+	pxa25x_boarddep_gpioconf,
+	NULL
+};
+#else
+static struct pxa2x0_gpioconf *pxa25x_zaurus_gpioconf[] = {
+	NULL
+};
+#endif
+#if defined(CPU_XSCALE_PXA270)
+static struct pxa2x0_gpioconf pxa27x_boarddep_gpioconf[] = {
+	{  34, GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  35, GPIO_ALT_FN_1_IN },	/* FFCTS */
+	{  39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
+	{  40, GPIO_ALT_FN_2_OUT },	/* FFDTR */
+	{  41, GPIO_ALT_FN_2_OUT },	/* FFRTS */
+
+	{  44, GPIO_ALT_FN_1_IN },	/* BTCST */
+	{  45, GPIO_ALT_FN_2_OUT },	/* BTRST */
+
+	{ 109, GPIO_ALT_FN_1_IN },	/* MMDAT<1> */
+	{ 110, GPIO_ALT_FN_1_IN },	/* MMDAT<2>/MMCCS<0> */
+	{ 111, GPIO_ALT_FN_1_IN },	/* MMDAT<3>/MMCCS<1> */
+
+	{ -1 }
+};
+static struct pxa2x0_gpioconf *pxa27x_zaurus_gpioconf[] = {
+	pxa27x_com_btuart_gpioconf,
+	pxa27x_com_ffuart_gpioconf,
+	pxa27x_com_stuart_gpioconf,
+	pxa27x_i2c_gpioconf,
+	pxa27x_i2s_gpioconf,
+	pxa27x_pxamci_gpioconf,
+	pxa27x_boarddep_gpioconf,
+	NULL
+};
+#else
+static struct pxa2x0_gpioconf *pxa27x_zaurus_gpioconf[] = {
+	NULL
+};
+#endif
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -268,19 +329,11 @@ cpu_reboot(int howto, char *bootstr)
 	 * and crash to earth fast
 	 */
 	if (cold) {
-		doshutdownhooks();
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cngetc();
-
-		printf("rebooting...\n");
-		delay(6 * 1000 * 1000);	/* wait 6s */
-		zaurus_restart();
-		printf("REBOOT FAILED: spinning\n");
-		for (;;)
-			continue;
-		/*NOTREACHED*/
+		howto |= RB_HALT;
+		goto haltsys;
 	}
+
+	boothowto = howto;
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -289,8 +342,17 @@ cpu_reboot(int howto, char *bootstr)
 	 * that it cannot page part of the binary in as the filesystem has
 	 * been unmounted.
 	 */
-	if (!(howto & RB_NOSYNC))
+	if (!(howto & RB_NOSYNC)) {
 		bootsync();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+	}
+
+	/* Wait 3s */
+	delay(3 * 1000 * 1000);
 
 	/* Say NO to interrupts */
 	splhigh();
@@ -298,7 +360,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
+haltsys:
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -309,7 +372,6 @@ cpu_reboot(int howto, char *bootstr)
 #if NAPM > 0
 		if (howto & RB_POWERDOWN) {
 			printf("\nAttempting to power down...\n");
-			delay(1 * 1000 * 1000);
 			zapm_poweroff();
 		}
 #endif
@@ -321,6 +383,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rebooting...\n");
 	delay(1 * 1000 * 1000);
 	zaurus_restart();
+
 	printf("REBOOT FAILED!!!\n");
 	for (;;)
 		continue;
@@ -347,7 +410,7 @@ zaurus_restart(void)
 	delay(1 * 1000* 1000);	/* wait 1s */
 }
 
-static __inline pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
 	u_long ttb;
@@ -496,6 +559,7 @@ initarm(void *arg)
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
+	struct pxa2x0_gpioconf **zaurus_gpioconf;
 
 	/* Get ready for zaurus_restart() */
 	pxa2x0_memctl_bootstrap(PXA2X0_MEMCTL_BASE);
@@ -535,13 +599,17 @@ initarm(void *arg)
 	 * This test will work for now but has to be revised when support
 	 * for other models is added.
 	 */
-	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
 		zaurusmod = ZAURUS_C3000;
-	else
+		zaurus_gpioconf = pxa27x_zaurus_gpioconf;
+	} else {
 		zaurusmod = ZAURUS_C860;
+		zaurus_gpioconf = pxa25x_zaurus_gpioconf;
+	}
 
 	/* setup a serial console for very early boot */
 	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);
+	pxa2x0_gpio_config(zaurus_gpioconf);
 	pxa2x0_clkman_bootstrap(ZAURUS_CLKMAN_VBASE);
 	if (strcmp(console, "glass") != 0)
 		consinit();
@@ -1071,23 +1139,12 @@ consinit(void)
 	if (strcmp(console, "ffuart") == 0) {
 		paddr = PXA2X0_FFUART_BASE;
 		cken = CKEN_FFUART;
-		pxa2x0_gpio_set_function(34, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(39, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(35, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(40, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_OUT);
 	} else if (strcmp(console, "btuart") == 0) {
 		paddr = PXA2X0_BTUART_BASE;
 		cken = CKEN_BTUART;
-		pxa2x0_gpio_set_function(42, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(43, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(44, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(45, GPIO_ALT_FN_2_OUT);
 	} else if (strcmp(console, "stuart") == 0) {
 		paddr = PXA2X0_STUART_BASE;
 		cken = CKEN_STUART;
-		pxa2x0_gpio_set_function(46, GPIO_ALT_FN_2_IN);
-		pxa2x0_gpio_set_function(47, GPIO_ALT_FN_1_OUT);
 		irda_on(0);
 	} else
 #endif
@@ -1119,28 +1176,17 @@ kgdb_port_init(void)
 	if (strcmp(kgdb_devname, "ffuart") == 0) {
 		paddr = PXA2X0_FFUART_BASE;
 		cken = CKEN_FFUART;
-		pxa2x0_gpio_set_function(34, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(39, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(35, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(40, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_OUT);
 	} else if (strcmp(kgdb_devname, "btuart") == 0) {
 		paddr = PXA2X0_BTUART_BASE;
 		cken = CKEN_BTUART;
-		pxa2x0_gpio_set_function(42, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(43, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(44, GPIO_ALT_FN_1_IN);
-		pxa2x0_gpio_set_function(45, GPIO_ALT_FN_2_OUT);
 	} else if (strcmp(kgdb_devname, "stuart") == 0) {
 		paddr = PXA2X0_STUART_BASE;
 		cken = CKEN_STUART;
-		pxa2x0_gpio_set_function(46, GPIO_ALT_FN_2_IN);
-		pxa2x0_gpio_set_function(47, GPIO_ALT_FN_1_OUT);
 		irda_on(0);
 	} else
 		return;
 
-	if (com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
+	if (com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 	    kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode) == 0) {
 		pxa2x0_clkman_config(cken, 1);
 	}

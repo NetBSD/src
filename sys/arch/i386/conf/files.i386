@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.269.2.3 2007/02/26 09:06:52 yamt Exp $
+#	$NetBSD: files.i386,v 1.269.2.4 2007/09/03 14:26:36 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -58,9 +58,6 @@ defparam opt_beep.h		BEEP_ONHALT_COUNT=3
 defparam opt_beep.h		BEEP_ONHALT_PITCH=1500
 defparam opt_beep.h		BEEP_ONHALT_PERIOD=250
 
-# Enhanced SpeedStep
-defflag			ENHANCED_SPEEDSTEP
-
 # Multiboot support
 defflag opt_multiboot.h		MULTIBOOT
 obsolete defparam		MULTIBOOT_SYMTAB_SPACE
@@ -77,20 +74,18 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
+file	arch/x86/x86/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
-file	arch/i386/i386/lock_stubs.S
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
@@ -148,7 +143,7 @@ define vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -157,6 +152,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
 # XXX devices to 'pci'.
 #
+include "dev/wsfb/files.wsfb"
 
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
@@ -192,6 +188,16 @@ device	elansc: sysmon_wdog, gpiobus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
 
+# AMD Geode CS5535 Companion IDE controller
+device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	gcscide at pci
+file	arch/i386/pci/gcscide.c 	gcscide
+
+# AMD Geode CS5536 Companion EHCI
+device	gcscehci: usbus
+attach	gcscehci at pci
+file	arch/i386/pci/gcscehci.c	gcscehci
+
 # AMD Geode SC1100 GCB area
 device  geodegcb {}
 attach	geodegcb at pci
@@ -218,9 +224,9 @@ attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib
 
 # PCI-LPC bridges
-device	ichlpcib: isabus, sysmon_wdog
+device	ichlpcib: acpipmtimer, isabus, sysmon_wdog
 attach	ichlpcib at pci
-file	arch/i386/pci/ichlpcib.c	ichlpcib
+file 	arch/x86/pci/ichlpcib.c 	ichlpcib
 
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
@@ -350,7 +356,7 @@ file	arch/i386/i386/apmcall.S	apmbios
 
 device cpu
 attach cpu at cpubus
-file	arch/i386/i386/cpu.c		cpu
+file	arch/x86/x86/cpu.c		cpu
 
 # XBox LED & system support
 file	arch/i386/xbox/xbox.c			xbox
@@ -534,11 +540,12 @@ device vesatext
 attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
 
-# Enhanced SpeedStep
-file	arch/i386/i386/est.c		enhanced_speedstep
-defflag	opt_est.h	EST_FREQ_USERWRITE
-
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
+
+# AMD Geode LX Security Block
+device	glxsb: opencrypto
+attach	glxsb at pci    
+file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"

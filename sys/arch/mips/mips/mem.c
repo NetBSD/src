@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 2005/03/26 09:51:02 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.30.2.1 2007/09/03 14:28:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2005/03/26 09:51:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30.2.1 2007/09/03 14:28:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2005/03/26 09:51:02 tsutsui Exp $");
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
+#include <sys/event.h>
 
 #include <machine/cpu.h>
 
@@ -194,7 +195,7 @@ mmrw(dev, uio, flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (caddr_t)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;

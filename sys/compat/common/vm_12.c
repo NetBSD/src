@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.13.2.1 2007/02/26 09:09:01 yamt Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.13.2.2 2007/09/03 14:31:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.13.2.1 2007/02/26 09:09:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.13.2.2 2007/09/03 14:31:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ compat_12_sys_msync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___msync13_args ua;
 	struct compat_12_sys_msync_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 

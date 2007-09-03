@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20.2.2 2007/02/26 09:05:30 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.20.2.3 2007/09/03 14:22:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20.2.2 2007/02/26 09:05:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20.2.3 2007/09/03 14:22:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -399,8 +399,8 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch); 
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0); 
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
@@ -499,8 +499,8 @@ fdattach(parent, self, aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -580,7 +580,7 @@ fdstrategy(bp)
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -598,7 +598,7 @@ fdstrategy(bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -630,8 +630,6 @@ fdstrategy(bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -1315,7 +1313,6 @@ fdcretry(fdc)
 			       fdc->sc_status[5]);
 		}
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
@@ -1326,7 +1323,7 @@ int
 fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {
@@ -1532,7 +1529,7 @@ fdformat(dev, finfo, l)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
 	printf("fdformat: blkno %llx count %lx\n",
@@ -1545,7 +1542,7 @@ fdformat(dev, finfo, l)
 	/* ...and wait for it to complete */
 	s = splbio();
 	while(!(bp->b_flags & B_DONE)) {
-		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
+		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
@@ -1555,10 +1552,8 @@ fdformat(dev, finfo, l)
 		/* timed out */
 		rv = EIO;
 		biodone(bp);
-	}
-	if(bp->b_flags & B_ERROR) {
+	} else if (bp->b_error != 0)
 		rv = bp->b_error;
-	}
 	free(bp, M_TEMP);
 	return rv;
 }
@@ -1631,8 +1626,8 @@ load_memory_disc_from_floppy(md, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image");
                                                  
-		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
-		    * DEV_BSIZE, (caddr_t)bp->b_data,
+		memcpy((void *)md->md_addr + loop * fd_types[type].sectrac
+		    * DEV_BSIZE, (void *)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.18.2 2007/02/26 09:05:43 yamt Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.18.3 2007/09/03 14:22:36 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -76,7 +76,7 @@ x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
 
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void

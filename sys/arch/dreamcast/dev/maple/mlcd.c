@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.4.6.1 2006/06/21 14:50:32 yamt Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.4.6.2 2007/09/03 14:23:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.4.6.1 2006/06/21 14:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.4.6.2 2007/09/03 14:23:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -724,7 +724,7 @@ mlcdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mlcdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit, part;
 	struct mlcd_softc *sc;

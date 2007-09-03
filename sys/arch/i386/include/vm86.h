@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.12 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: vm86.h,v 1.12.16.1 2007/09/03 14:26:50 yamt Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -76,9 +76,9 @@ struct vm86_struct {
 #define VCPU_586		5
 
 #ifdef _KERNEL
-int i386_vm86(struct lwp *, char *, register_t *);
+int x86_vm86(struct lwp *, char *, register_t *);
 #ifdef COMPAT_16
-int compat_16_i386_vm86(struct lwp *, char *, register_t *);
+int compat_16_x86_vm86(struct lwp *, char *, register_t *);
 #endif
 void vm86_gpfault(struct lwp *, int);
 void vm86_return(struct lwp *, int);

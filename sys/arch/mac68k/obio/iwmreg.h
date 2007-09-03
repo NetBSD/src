@@ -1,4 +1,4 @@
-/*	$NetBSD: iwmreg.h,v 1.6 2005/02/05 23:48:49 chs Exp $	*/
+/*	$NetBSD: iwmreg.h,v 1.6.6.1 2007/09/03 14:27:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -131,7 +131,7 @@ typedef struct cylCacheSlot cylCacheSlot_t;
 /*
  * Parameter (a6) offsets from <mac68k/obio/iwm_fdvar.h>
  *
- * int iwmReadSector(sectorHdr_t *hdr, cylCacheSlot_t *r_slots, caddr_t buf)
+ * int iwmReadSector(sectorHdr_t *hdr, cylCacheSlot_t *r_slots, void *buf)
  * int iwmWriteSector(sectorHdr_t *hdr, cylCacheSlot_t *w_slots)
  */
 	.equ	o_hdr,		 8

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.12.2.3 2007/02/26 09:08:51 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.12.2.4 2007/09/03 14:31:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.12.2.3 2007/02/26 09:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.12.2.4 2007/09/03 14:31:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -211,6 +211,10 @@ lapic_boot_init(lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
+	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
@@ -576,10 +580,13 @@ x86_ipi(vec,target,dl)
 	i82489_writereg(LAPIC_ICRLO,
 	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
+#ifdef DIAGNOSTIC
 	i82489_icr_wait();
-
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
-
+#else
+	/* Don't wait - if it doesn't go, we're in big trouble anyway. */
+        result = 0;
+#endif
 	splx(s);
 
 	return result;

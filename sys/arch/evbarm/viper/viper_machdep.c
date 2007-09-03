@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.1.2.2 2006/12/30 20:45:51 yamt Exp $	*/
+/*	$NetBSD: viper_machdep.c,v 1.1.2.3 2007/09/03 14:24:08 yamt Exp $	*/
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.1.2.2 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.1.2.3 2007/09/03 14:24:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -264,6 +264,20 @@ bs_protos(bs_notimpl);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+
+static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
+	{ 44, GPIO_ALT_FN_1_IN },	/* BTCST */
+	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRST */
+
+	{ -1 } 
+};
+static struct pxa2x0_gpioconf *viper_gpioconf[] = {
+	pxa25x_com_btuart_gpioconf,
+	pxa25x_com_ffuart_gpioconf,
+	pxa25x_com_stuart_gpioconf,
+	boarddep_gpioconf,
+	NULL
+};
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -429,10 +443,7 @@ initarm(void *arg)
 
 	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
 	pxa2x0_gpio_bootstrap(VIPER_GPIO_VBASE);
-	pxa2x0_gpio_set_function(42, GPIO_ALT_FN_1_IN);
-	pxa2x0_gpio_set_function(43, GPIO_ALT_FN_2_OUT);
-	pxa2x0_gpio_set_function(44, GPIO_ALT_FN_1_IN);
-	pxa2x0_gpio_set_function(45, GPIO_ALT_FN_2_OUT);
+	pxa2x0_gpio_config(viper_gpioconf);
 
 	/* turn on clock to UART block.
 	   XXX: this should not be done here. */

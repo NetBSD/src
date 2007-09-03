@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.1.4.3 2007/02/26 09:06:06 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.1.4.4 2007/09/03 14:23:28 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.4.3 2007/02/26 09:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.4.4 2007/09/03 14:23:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.4.3 2007/02/26 09:06:06 yamt Exp 
 
 struct pxa2x0_i2s_dma {
 	struct pxa2x0_i2s_dma *next;
-	caddr_t addr;
+	void *addr;
 	size_t size;
 	bus_dmamap_t map;
 #define	I2S_N_SEGS	1
@@ -81,12 +81,6 @@ pxa2x0_i2s_attach_sub(struct pxa2x0_i2s_softc *sc)
 
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-
-	pxa2x0_gpio_set_function(28, GPIO_ALT_FN_1_OUT);  /* I2S_BITCLK */
-	pxa2x0_gpio_set_function(113, GPIO_ALT_FN_1_OUT); /* I2S_SYSCLK */
-	pxa2x0_gpio_set_function(31, GPIO_ALT_FN_1_OUT);  /* I2S_SYNC */
-	pxa2x0_gpio_set_function(30, GPIO_ALT_FN_1_OUT);  /* I2S_SDATA_OUT */
-	pxa2x0_gpio_set_function(29, GPIO_ALT_FN_2_IN);   /* I2S_SDATA_IN */
 
 	pxa2x0_i2s_init(sc);
 
@@ -162,7 +156,7 @@ pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int *argp)
 		{44100,	SADIV_2_836MHz},
 		{48000,	SADIV_3_058MHz},
 	};
-	const const int n = (int)__arraycount(speed_table);
+	const int n = (int)__arraycount(speed_table);
 	u_int arg = (u_int)*argp;
 	int selected = -1;
 	int i;
@@ -371,8 +365,8 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	sc->sc_txarg = tx_arg;
 
 	/* Find mapping which contains block completely */
-	for (p = sc->sc_dmas; p && (((caddr_t)block < p->addr) ||
-	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
+	for (p = sc->sc_dmas; p != NULL && (((char *)block < (char *)p->addr) ||
+	    ((char *)block + bsize > (char *)p->addr + p->size)); p = p->next)
 		continue;	/* Nothing */
 
 	if (p == NULL) {
@@ -383,7 +377,7 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	sc->sc_txdma = p;
 
 	p->segs[0].ds_addr = p->map->dm_segs[0].ds_addr
-	                         + ((caddr_t)block - p->addr);
+	                         + ((char *)block - (char *)p->addr);
 	p->segs[0].ds_len = bsize;
 
 	dx = p->dx;
@@ -420,8 +414,8 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 	sc->sc_rxarg = rx_arg;
 
 	/* Find mapping which contains block completely */
-	for (p = sc->sc_dmas; p != NULL && (((caddr_t)block < p->addr) ||
-	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
+	for (p = sc->sc_dmas; p != NULL && (((char *)block < (char *)p->addr) ||
+	    ((char *)block + bsize > (char *)p->addr + p->size)); p = p->next)
 		continue;	/* Nothing */
 
 	if (p == NULL) {
@@ -432,7 +426,7 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 
 	sc->sc_rxdma = p;
 	p->segs[0].ds_addr = p->map->dm_segs[0].ds_addr
-	                         + ((caddr_t)block - p->addr);
+	                         + ((char *)block - (char *)p->addr);
 	p->segs[0].ds_len = bsize;
 
 	dx = p->dx;

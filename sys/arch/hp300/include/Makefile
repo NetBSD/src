@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.2 2007/02/26 09:06:33 yamt Exp $
+#	$NetBSD: Makefile,v 1.20.12.3 2007/09/03 14:25:24 yamt Exp $
 
 INCSDIR= /usr/include/hp300
 
@@ -11,7 +11,6 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	hp300spu.h hpux_machdep.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \

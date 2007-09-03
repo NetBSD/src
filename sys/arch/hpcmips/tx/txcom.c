@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.24.12.3 2007/02/26 09:06:38 yamt Exp $ */
+/*	$NetBSD: txcom.c,v 1.24.12.4 2007/09/03 14:26:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.24.12.3 2007/02/26 09:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.24.12.4 2007/09/03 14:26:10 yamt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -938,7 +938,7 @@ txcomtty(dev_t dev)
 }
 
 int
-txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+txcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;

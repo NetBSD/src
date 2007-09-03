@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.23.16.1 2006/06/21 14:49:56 yamt Exp $ */
+/*	$NetBSD: lpt.c,v 1.23.16.2 2007/09/03 14:23:39 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23.16.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23.16.2 2007/09/03 14:23:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ void	*auxp;
 
 	printf("\n");
 
-	callout_init(&sc->sc_wakeup_ch);
+	callout_init(&sc->sc_wakeup_ch, 0);
 }
 
 /*
@@ -218,7 +218,7 @@ lpopen(dev, flag, mode, l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
+		if ((error = tsleep((void *)sc, LPTPRI | PCATCH, "lptopen",
 		     STEP)) != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
@@ -308,7 +308,7 @@ pushbytes(sc)
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
 						tic = TIMEOUT;
-					error = tsleep((caddr_t)sc,
+					error = tsleep((void *)sc,
 					    LPTPRI | PCATCH, "lptpsh", tic);
 					if (error != EWOULDBLOCK)
 						return error;
@@ -333,7 +333,7 @@ pushbytes(sc)
 				    sc->sc_count);
 				(void) lptpseudointr(sc);
 			}
-			if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
+			if ((error = tsleep((void *)sc, LPTPRI | PCATCH,
 			     "lptwrite2", 0)) != 0)
 				return error;
 		}
@@ -397,7 +397,7 @@ struct lpt_softc *sc;
 
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 	}
 
 	return 1;
@@ -429,7 +429,7 @@ int
 lpioctl(dev, cmd, data, flag, l)
 	dev_t		dev;
 	u_long		cmd;
-	caddr_t		data;
+	void *		data;
 	int		flag;
 	struct lwp	*l;
 {

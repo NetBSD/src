@@ -1,4 +1,4 @@
-/* $NetBSD: mkclock_pnpbus.c,v 1.1.4.3 2006/12/30 20:46:50 yamt Exp $ */
+/* $NetBSD: mkclock_pnpbus.c,v 1.1.4.4 2007/09/03 14:29:08 yamt Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,11 +45,11 @@
  * fail to attach.  Instead, we note that we have an mk48txx device, and in
  * the nvram driver, we will attach the clock goop there.
  *
- * Therefore the probe will allways fail.
+ * Therefore the probe will always fail.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.1.4.3 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.1.4.4 2007/09/03 14:29:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

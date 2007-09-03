@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.2.4.2 2006/12/30 20:47:28 yamt Exp $	*/
+/*	$NetBSD: zrc.c,v 1.2.4.3 2007/09/03 14:31:42 yamt Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.2.4.2 2006/12/30 20:47:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.2.4.3 2007/09/03 14:31:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ static void	zrc_input(struct zrc_softc *, int, int);
 
 static int	zrc_enable(void *, int);
 static void	zrc_set_leds(void *, int);
-static int	zrc_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	zrc_ioctl(void *, u_long, void *, int, struct lwp *);
 
 struct wskbd_accessops zrc_accessops = {
 	zrc_enable,
@@ -172,7 +172,7 @@ zrc_attach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 
 	/* Configure remote control interrupt handling. */
-	callout_init(&sc->sc_to);
+	callout_init(&sc->sc_to, 0);
 	callout_setfunc(&sc->sc_to, zrc_timeout, sc);
 	pxa2x0_gpio_set_function(C3000_RC_IRQ_PIN, GPIO_IN);
 	sc->sc_ih = pxa2x0_gpio_intr_establish(C3000_RC_IRQ_PIN,
@@ -356,7 +356,7 @@ zrc_set_leds(void *v, int on)
 }
 
 static int
-zrc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+zrc_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct zrc_softc *sc = v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.8 2003/08/07 16:26:59 agc Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.8.16.1 2007/09/03 14:23:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@ struct	grf_softc {
 	dev_t		g_itedev;	/* ite device number		*/
 	dev_t		g_grfdev;	/* grf device number		*/
 	dev_t		g_viewdev;	/* view device number		*/
-	caddr_t		g_data;		/* device dependent data	*/
+	void *		g_data;		/* device dependent data	*/
 	int		(*g_mode) __P((struct grf_softc *, int, void *,
 								int, int));
 	int		g_conpri;	/* priority of ite as console	*/

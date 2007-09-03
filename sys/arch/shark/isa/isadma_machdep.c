@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.7 2003/08/01 22:43:27 kristerw Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7.16.1 2007/09/03 14:29:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7 2003/08/01 22:43:27 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7.16.1 2007/09/03 14:29:48 yamt Exp $");
 
 #define ISA_DMA_STATS
 
@@ -564,7 +564,7 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, caddr_t) + moff,
+				memcpy(mtod(m, char *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
@@ -641,7 +641,7 @@ _isa_dma_alloc_bouncebuf(t, map, size, flags)
 		goto out;
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
-	    (caddr_t *)&cookie->id_bouncebuf, flags);
+	    (void **)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {

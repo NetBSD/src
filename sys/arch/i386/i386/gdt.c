@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.34.2.2 2007/02/26 09:06:55 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.34.2.3 2007/09/03 14:26:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.34.2.2 2007/02/26 09:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.34.2.3 2007/09/03 14:26:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -136,6 +136,7 @@ gdt_init()
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
+	pmap_update(pmap_kernel());
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 	ci->ci_gdt = gdt;
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
@@ -166,6 +167,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
+	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdt, gdt_count * sizeof(gdt[0]));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
@@ -231,6 +233,8 @@ gdt_grow()
 			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
+
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -305,22 +309,23 @@ tss_free(int sel)
 /*
  * Caller must have pmap locked for both of these functions.
  */
-void
-ldt_alloc(struct pmap *pmap, union descriptor *ldtp, size_t len)
+int
+ldt_alloc(union descriptor *ldtp, size_t len)
 {
 	int slot;
 
 	slot = gdt_get_slot();
 	setgdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
-	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+
+	return GSEL(slot, SEL_KPL);
 }
 
 void
-ldt_free(struct pmap *pmap)
+ldt_free(int sel)
 {
 	int slot;
 
-	slot = IDXSEL(pmap->pm_ldt_sel);
+	slot = IDXSEL(sel);
 
 	gdt_put_slot(slot);
 }

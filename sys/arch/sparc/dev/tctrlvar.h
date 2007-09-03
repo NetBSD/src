@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrlvar.h,v 1.3.44.1 2006/06/21 14:55:54 yamt Exp $ */
+/*	$NetBSD: tctrlvar.h,v 1.3.44.2 2007/09/03 14:29:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 struct tctlrdriver {
         int     (*tctrld_open)(dev_t, int, int, struct proc *);
         int     (*tctrld_close)(dev_t, int, int, struct proc *);
-        int     (*tctrld_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+        int     (*tctrld_ioctl)(dev_t, u_long, void *, int, struct proc *);
 	int	(*tctrld_poll)(dev_t, int, struct proc *);
 };
 
@@ -52,7 +52,6 @@ struct envsys_sensor {
 
 extern void tadpole_powerdown(void);
 extern void tadpole_set_video(int);
-extern int  tadpole_request(struct tctrl_req *, int);
 extern void tadpole_set_lcd(int, unsigned short);
 extern void tadpole_register_callback(void (*)(void *, int), void *);
 

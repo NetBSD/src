@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.11.16.1 2007/02/26 09:05:48 yamt Exp $ */
+/*      $NetBSD: cpu.h,v 1.11.16.2 2007/09/03 14:23:01 yamt Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -46,7 +46,7 @@
 #ifdef _KERNEL
 
 u_long	clkread	__P((void));
-void	physaccess	__P((caddr_t, caddr_t, int, int));
+void	physaccess	__P((void *, void *, int, int));
 
 #endif /* _KERNEL */
 

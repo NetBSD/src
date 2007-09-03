@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.30.16.2 2007/02/26 09:05:47 yamt Exp $ */
+/*	$NetBSD: par.c,v 1.30.16.3 2007/09/03 14:22:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30.16.2 2007/02/26 09:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30.16.3 2007/09/03 14:22:56 yamt Exp $");
 
 /*
  * parallel port interface
@@ -142,8 +142,8 @@ parattach(struct device *pdp, struct device *dp, void *auxp)
 		par_softcp->sc_flags = PARF_ALIVE;
 	printf("\n");
 
-	callout_init(&par_softcp->sc_timo_ch);
-	callout_init(&par_softcp->sc_start_ch);
+	callout_init(&par_softcp->sc_timo_ch, 0);
+	callout_init(&par_softcp->sc_start_ch, 0);
 }
 
 int
@@ -431,7 +431,7 @@ again:
 }
 
 int
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
   struct par_softc *sc = getparsp(UNIT(dev));
   struct parparam *pp, *upp;

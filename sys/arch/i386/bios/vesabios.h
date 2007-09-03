@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.h,v 1.4.2.1 2006/06/21 14:52:09 yamt Exp $ */
+/* $NetBSD: vesabios.h,v 1.4.2.2 2007/09/03 14:26:28 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005
@@ -32,4 +32,5 @@ struct vesabiosdev_attach_args {
 	const char *vbaa_type;
 	int *vbaa_modes;
 	int vbaa_nmodes;
+	int vbaa_vbeversion;
 };

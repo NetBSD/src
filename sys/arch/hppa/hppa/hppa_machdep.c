@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.4.12.2 2007/02/26 09:06:41 yamt Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.4.12.3 2007/09/03 14:26:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.4.12.2 2007/02/26 09:06:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.4.12.3 2007/09/03 14:26:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.4.12.2 2007/02/26 09:06:41 yamt E
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/cpu.h>
 
 #include <sys/kernel.h>
 
@@ -116,7 +117,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 #endif
 
 	ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t)(gr[_REG_PCOQH] & ~HPPA_PC_PRIV_MASK));
+	    (void *)(gr[_REG_PCOQH] & ~HPPA_PC_PRIV_MASK));
 	if (ras_pc != -1) {
 		ras_pc |= HPPA_PC_PRIV_USER;
 		gr[_REG_PCOQH] = ras_pc;
@@ -269,10 +270,25 @@ hppa_ras(struct lwp *l)
 
 	p = l->l_proc;
 	tf = l->l_md.md_regs;
-	rasaddr = (intptr_t)ras_lookup(p, (caddr_t)tf->tf_iioq_head);
+	rasaddr = (intptr_t)ras_lookup(p, (void *)tf->tf_iioq_head);
 	if (rasaddr != -1) {
 		rasaddr |= HPPA_PC_PRIV_USER;
 		tf->tf_iioq_head = rasaddr;
 		tf->tf_iioq_tail = rasaddr + 4;
+	}
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+	want_resched = 1;
+
+        if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		/* aston(ci->ci_curlwp); */
+		setsoftast();
 	}
 }

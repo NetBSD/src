@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.97.2.3 2007/02/26 09:05:35 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.97.2.4 2007/09/03 14:22:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.3 2007/02/26 09:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.4 2007/09/03 14:22:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,10 +214,9 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 	    framep->tf_regs[FRAME_RA]);
 	printf("CPU %lu    pv         = 0x%lx\n", cpu_id,
 	    framep->tf_regs[FRAME_T12]);
-	printf("CPU %lu    curlwp    = %p\n", cpu_id, curlwp);
-	if (curlwp != NULL)
-		printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
-		    curproc->p_pid, curproc->p_comm);
+	printf("CPU %lu    curlwp     = %p\n", cpu_id, curlwp);
+	printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
+	    curproc->p_pid, curproc->p_comm);
 	printf("\n");
 }
 
@@ -505,7 +504,7 @@ do_fault:
 			 * we need to reflect that as an access error.
 			 */
 			if (map != kernel_map &&
-			    (caddr_t)va >= vm->vm_maxsaddr &&
+			    (void *)va >= vm->vm_maxsaddr &&
 			    va < USRSTACK) {
 				if (rv == 0)
 					uvm_grow(l->l_proc, va);
@@ -724,7 +723,7 @@ static const int reg_to_framereg[32] = {
 		fpusave_proc(l, 1)
 
 #define	unaligned_load(storage, ptrf, mod)				\
-	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\
+	if (copyin((void *)va, &(storage), sizeof (storage)) != 0)	\
 		break;							\
 	signo = 0;							\
 	if ((regptr = ptrf(l, reg)) != NULL)				\
@@ -735,7 +734,7 @@ static const int reg_to_framereg[32] = {
 		(storage) = mod (*regptr);				\
 	else								\
 		(storage) = 0;						\
-	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) != 0)	\
+	if (copyout(&(storage), (void *)va, sizeof (storage)) != 0)	\
 		break;							\
 	signo = 0;
 
@@ -1077,7 +1076,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 	l->l_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 
 	inst_pc = memaddr = l->l_md.md_tf->tf_regs[FRAME_PC] - 4;
-	if (copyin((caddr_t)inst_pc, &inst, sizeof (inst)) != 0) {
+	if (copyin((void *)inst_pc, &inst, sizeof (inst)) != 0) {
 		/*
 		 * really, this should never happen, but in case it
 		 * does we handle it.
@@ -1116,7 +1115,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			u_int8_t b;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			if (copyin((caddr_t)memaddr, &b, sizeof (b)) != 0)
+			if (copyin((void *)memaddr, &b, sizeof (b)) != 0)
 				goto sigsegv;
 			if (regptr != NULL)
 				*regptr = b;
@@ -1124,7 +1123,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			u_int16_t w;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			if (copyin((caddr_t)memaddr, &w, sizeof (w)) != 0)
+			if (copyin((void *)memaddr, &w, sizeof (w)) != 0)
 				goto sigsegv;
 			if (regptr != NULL)
 				*regptr = w;
@@ -1133,14 +1132,14 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			w = (regptr != NULL) ? *regptr : 0;
-			if (copyout(&w, (caddr_t)memaddr, sizeof (w)) != 0)
+			if (copyout(&w, (void *)memaddr, sizeof (w)) != 0)
 				goto sigsegv;
 		} else if (inst.mem_format.opcode == op_stb) {
 			u_int8_t b;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			b = (regptr != NULL) ? *regptr : 0;
-			if (copyout(&b, (caddr_t)memaddr, sizeof (b)) != 0)
+			if (copyout(&b, (void *)memaddr, sizeof (b)) != 0)
 				goto sigsegv;
 		}
 		break;

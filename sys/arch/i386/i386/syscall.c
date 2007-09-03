@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.30.2.3 2007/02/26 09:06:59 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.30.2.4 2007/09/03 14:26:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,22 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.3 2007/02/26 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.4 2007/09/03 14:26:45 yamt Exp $");
 
 #include "opt_vm86.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 #include <sys/syscall_stats.h>
-
 
 #include <uvm/uvm_extern.h>
 
@@ -62,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.3 2007/02/26 09:06:59 yamt Exp $"
 
 void syscall_plain(struct trapframe *);
 void syscall_fancy(struct trapframe *);
+int x86_copyargs(void *, void *, size_t);
 #ifdef VM86
 void syscall_vm86(struct trapframe *);
 #endif
@@ -86,10 +83,10 @@ void
 syscall_plain(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct lwp *l;
-	register struct proc *p;
+	char *params;
+	const struct sysent *callp;
+	struct lwp *l;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -101,7 +98,7 @@ syscall_plain(frame)
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -131,7 +128,7 @@ syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = x86_copyargs(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -187,10 +184,10 @@ void
 syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct lwp *l;
-	register struct proc *p;
+	char *params;
+	const struct sysent *callp;
+	struct lwp *l;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -202,7 +199,7 @@ syscall_fancy(frame)
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -230,16 +227,13 @@ syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = x86_copyargs(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto out;
-	}
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -247,9 +241,9 @@ syscall_fancy(frame)
 	KASSERT(l->l_holdcnt == 0);
 
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
 		error = (*callp->sy_call)(l, args, rval);
 	} else {
+		KERNEL_LOCK(1, l);
 		error = (*callp->sy_call)(l, args, rval);
 		KERNEL_UNLOCK_LAST(l);
 	}
@@ -320,9 +314,6 @@ child_return(arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
@@ -330,11 +321,5 @@ child_return(arg)
 	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }

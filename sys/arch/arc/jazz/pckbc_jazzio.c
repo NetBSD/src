@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.13 2005/01/22 07:44:08 tsutsui Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.13.8.1 2007/09/03 14:23:10 yamt Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13 2005/01/22 07:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13.8.1 2007/09/03 14:23:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ pckbc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 		t->t_ioh_c = ioh_c;
 		t->t_addr = addr;
 		t->t_cmdbyte = KC8_CPU; /* Enable ports */
-		callout_init(&t->t_cleanup);
+		callout_init(&t->t_cleanup, 0);
 	}
 
 	t->t_sc = sc;

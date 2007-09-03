@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.9.16.1 2006/06/21 14:49:56 yamt Exp $	*/
+/*	$NetBSD: event.c,v 1.9.16.2 2007/09/03 14:23:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9.16.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9.16.2 2007/09/03 14:23:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -72,7 +72,7 @@ ev_init(ev)
 	ev->ev_get = ev->ev_put = 0;
 	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
 	    M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)ev->ev_q, EV_QSIZE * sizeof(struct firm_event));
+	bzero((void *)ev->ev_q, EV_QSIZE * sizeof(struct firm_event));
 }
 
 /*
@@ -110,7 +110,7 @@ ev_read(ev, uio, flags)
 			return (EWOULDBLOCK);
 		}
 		ev->ev_wanted = 1;
-		error = tsleep((caddr_t)ev, PEVENT | PCATCH, "firm_event", 0);
+		error = tsleep((void *)ev, PEVENT | PCATCH, "firm_event", 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -128,7 +128,7 @@ ev_read(ev, uio, flags)
 	n = howmany(uio->uio_resid, sizeof(struct firm_event));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->ev_q[ev->ev_get],
+	error = uiomove((void *)&ev->ev_q[ev->ev_get],
 	    cnt * sizeof(struct firm_event), uio);
 	n -= cnt;
 	/*
@@ -141,7 +141,7 @@ ev_read(ev, uio, flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->ev_q[0],
+	error = uiomove((void *)&ev->ev_q[0],
 	    cnt * sizeof(struct firm_event), uio);
 	ev->ev_get = cnt;
 	return (error);

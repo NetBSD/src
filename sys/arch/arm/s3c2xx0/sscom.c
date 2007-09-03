@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.12.2.2 2006/12/30 20:45:37 yamt Exp $ */
+/*	$NetBSD: sscom.c,v 1.12.2.3 2007/09/03 14:23:24 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12.2.2 2006/12/30 20:45:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.12.2.3 2007/09/03 14:23:24 yamt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -409,7 +409,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 
-	callout_init(&sc->sc_diag_callout);
+	callout_init(&sc->sc_diag_callout, 0);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
 #endif
@@ -812,7 +812,7 @@ sscomtty(dev_t dev)
 }
 
 int
-sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sscomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1520,7 +1520,6 @@ sscom_stsoft(struct sscom_softc *sc, struct tty *tp)
 		sscomstatus(sc, "sscom_stsoft");
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 sscomsoft(void *arg)
 {
@@ -1549,9 +1548,6 @@ sscomsoft(void *arg)
 		}
 	}
 }
-#else
-#error sscom needs GENERIC_SOFT_INERRUPTS
-#endif
 
 
 int

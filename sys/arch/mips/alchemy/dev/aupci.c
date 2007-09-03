@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.5.14.4 2007/02/26 09:07:24 yamt Exp $ */
+/* $NetBSD: aupci.c,v 1.5.14.5 2007/09/03 14:27:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.4 2007/02/26 09:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.5 2007/09/03 14:27:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -345,17 +345,17 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 		addr = 0x80000000 | tag;
 	} else if (d > 19) {
 		/* device num too big for bus 0 */
-		return FALSE;
+		return false;
 	} else {
 		addr = (0x800 << d) | (f << 8);
 	}
 
 	/* probing illegal target is OK, return an error indication */
 	if (addr == 0)
-		return FALSE;
+		return false;
 
 	if (bus_space_map(sc->sc_cfgt, addr, 256, 0, &h) != 0)
-		return FALSE;
+		return false;
 
 	s = splhigh();
 
@@ -377,9 +377,9 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	
 	/* if we got a PCI master abort, fail it */
 	if (status & AUPCI_CONFIG_EF)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 pcireg_t
@@ -387,7 +387,7 @@ aupci_conf_read(void *v, pcitag_t tag, int reg)
 {
 	pcireg_t		data;
 
-	if (aupci_conf_access(v, PCI_CFG_READ, tag, reg, &data) == FALSE)
+	if (aupci_conf_access(v, PCI_CFG_READ, tag, reg, &data) == false)
 		return 0xffffffff;
 
 	return (data);

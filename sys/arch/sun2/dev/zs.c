@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10.8.2 2006/12/30 20:47:06 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.8.3 2007/09/03 14:30:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.2 2006/12/30 20:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.3 2007/09/03 14:30:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,7 +164,8 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		return;
 	}
 
-	printf(" softpri %d\n", softpri);
+	/* we should use ipl2si(softpri) but it isn't exported */
+	printf(" softpri %d\n", _IPL_SOFT_LEVEL3);
 
 	/*
 	 * Initialize software state for each channel.

@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.4.16.1 2007/09/03 14:27:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.4.16.1 2007/09/03 14:27:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ spc_mainbus_match(parent, cf, aux)
 	if (strcmp(ma->ma_name, spc_cd.cd_name))
 		return 0;
 #if 0
-	if (badaddr((caddr_t)ma->ma_addr, 4)) 
+	if (badaddr((void *)ma->ma_addr, 4)) 
 		return 0;
 	/* Experiments proved 2nd SPC address does NOT make a buserror. */
 #endif

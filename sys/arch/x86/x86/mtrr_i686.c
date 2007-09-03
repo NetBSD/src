@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.3.16.2 2006/12/30 20:47:22 yamt Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.3.16.3 2007/09/03 14:31:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3.16.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3.16.3 2007/09/03 14:31:28 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -598,7 +598,8 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 		curhigh = curlow + mtrr_var[i].len;
 		if (low == curlow && high == curhigh &&
 		    (!(mtrr_var[i].flags & MTRR_PRIVATE) ||
-		     mtrr_var[i].owner == p->p_pid)) {
+		     ((mtrrp->flags & MTRR_PRIVATE) && (p != NULL) &&
+		      (mtrr_var[i].owner == p->p_pid)))) {
 			freep = &mtrr_var[i];
 			break;
 		}
@@ -606,7 +607,8 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 		    (low >= curlow && low < curhigh)) &&
 	 	    ((mtrr_var[i].type != mtrrp->type) ||
 		     ((mtrr_var[i].flags & MTRR_PRIVATE) &&
-		      mtrr_var[i].owner != p->p_pid))) {
+ 		      (!(mtrrp->flags & MTRR_PRIVATE) || (p == NULL) ||
+		       (mtrr_var[i].owner != p->p_pid))))) {
 			return EBUSY;
 		}
 	}
@@ -614,7 +616,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 		return EBUSY;
 	mtrrp->flags &= ~MTRR_CANTSET;
 	*freep = *mtrrp;
-	freep->owner = mtrrp->flags & MTRR_PRIVATE ? p->p_pid : 0;
+	freep->owner = (mtrrp->flags & MTRR_PRIVATE) ? p->p_pid : 0;
 
 	return 0;
 }

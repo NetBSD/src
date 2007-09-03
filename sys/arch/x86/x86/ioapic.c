@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10.2.3 2007/02/26 09:08:51 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10.2.4 2007/09/03 14:31:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.3 2007/02/26 09:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.4 2007/09/03 14:31:26 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,10 +134,6 @@ ioapic_lock(struct ioapic_softc *sc)
 
 	flags = read_psl();
 	disable_intr();
-	if (sc->sc_pic.pic_lock == __SIMPLELOCK_LOCKED) {
-		enable_intr();
-		panic("huh?");
-	}
 	__cpu_simple_lock(&sc->sc_pic.pic_lock);
 	return flags;
 }
@@ -264,11 +260,8 @@ CFATTACH_DECL(ioapic, sizeof(struct ioapic_softc),
 int
 ioapic_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct apic_attach_args *aaa = (struct apic_attach_args *) aux;
 
-	if (strcmp(aaa->aaa_name, match->cf_name) == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 /*
@@ -286,7 +279,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
 
-	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
+	printf("\n");
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
 		printf("%s: duplicate apic id (ignored)\n",

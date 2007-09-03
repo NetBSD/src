@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.4.22.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.4.22.2 2007/09/03 14:22:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.4.22.1 2006/06/21 14:48:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.4.22.2 2007/09/03 14:22:25 yamt Exp $");
 
 #include <sys/types.h> 
 #include <sys/param.h> 
@@ -167,8 +167,11 @@ int
 jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
 
-	if (*ihp >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_map: bogus IRQ %d", *ihp);
+	if (eirq >= JENSEN_MAX_IRQ) {
+		printf("jensenio_eisa_intr_map: bogus IRQ %d", eirq);
+		*ihp = -1;
+		return (1);
+	}
 
 	if (jensenio_intr_deftype[eirq] == IST_UNUSABLE) {
 		printf("jensenio_eisa_intr_map: unusable irq %d\n",

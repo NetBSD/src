@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12.16.2 2007/02/26 09:05:55 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.12.16.3 2007/09/03 14:23:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.16.2 2007/02/26 09:05:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.16.3 2007/09/03 14:23:15 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.16.2 2007/02/26 09:05:55 yamt Exp $");
 #include <arm/arm32/machdep.h>
  
 extern int current_spl_level;
-
-extern unsigned spl_mask;
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 /* Prototypes */
@@ -204,12 +202,17 @@ static const int ipl_to_spl_map[] = {
 };
 
 int
-ipl_to_spl(int ipl)
+ipl_to_spl(ipl_t ipl)
 {
+	int spl;
+
 	KASSERT(ipl < __arraycount(ipl_to_spl_map));
 	KASSERT(ipl_to_spl_map[ipl]);
 
-	return ipl_to_spl_map[ipl] - 1;
+	spl = ipl_to_spl_map[ipl] - 1;
+	KASSERT(spl < 0x100);
+
+	return spl;
 }
 
 #ifdef DIAGNOSTIC
@@ -219,7 +222,7 @@ dump_spl_masks(void)
 	int loop;
 
 	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
-		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		printf("spl_masks[%d]=%08x splsmask[%d]=%08x\n", loop,
 		    spl_masks[loop], loop, spl_smasks[loop]);
 	}
 }

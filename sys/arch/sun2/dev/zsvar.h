@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.4 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.4.8.1 2007/09/03 14:30:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
 void  zs_write_csr(struct zs_chanstate *, u_char);
 void  zs_write_data(struct zs_chanstate *, u_char);
 
-/* Everyone has splzs() in psl.h */
+/* Everyone has splzs() in <machine/intr.h> */
 
 /* We want to call it "zs" instead of "zsc" (sigh). */
 #ifndef ZSCCF_CHANNEL

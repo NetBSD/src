@@ -1,4 +1,4 @@
-#	$NetBSD: files.landisk,v 1.2.10.2 2006/12/30 20:46:21 yamt Exp $
+#	$NetBSD: files.landisk,v 1.2.10.3 2007/09/03 14:27:02 yamt Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -62,6 +62,7 @@ include "dev/i2o/files.i2o"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI bus

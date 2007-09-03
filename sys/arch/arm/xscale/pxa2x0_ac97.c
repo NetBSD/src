@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.1.4.2 2007/02/26 09:06:06 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.1.4.3 2007/09/03 14:23:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -53,6 +53,7 @@
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -62,7 +63,7 @@
 
 struct acu_dma {
 	bus_dmamap_t ad_map;
-	caddr_t ad_addr;
+	void *ad_addr;
 #define	ACU_N_SEGS	1	/* XXX: We don't support > 1 */
 	bus_dma_segment_t ad_segs[ACU_N_SEGS];
 	int ad_nsegs;
@@ -232,10 +233,22 @@ static int
 pxaacu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
+	struct pxa2x0_gpioconf *gpioconf;
+	u_int gpio;
+	int i;
 
 	if (pxa->pxa_addr != PXA2X0_AC97_BASE ||
 	    pxa->pxa_intr != PXA2X0_INT_AC97)
 		return (0);
+
+	gpioconf = CPU_IS_PXA250 ? pxa25x_pxaacu_gpioconf :
+	    pxa27x_pxaacu_gpioconf;
+	for (i = 0; gpioconf[i].pin != -1; i++) {
+		gpio = pxa2x0_gpio_get_function(gpioconf[i].pin);
+		if (GPIO_FN(gpio) != GPIO_FN(gpioconf[i].value) ||
+		    GPIO_FN_IS_OUT(gpio) != GPIO_FN_IS_OUT(gpioconf[i].value))
+			return (0);
+	}
 
 	pxa->pxa_size = PXA2X0_AC97_SIZE;
 
@@ -266,11 +279,6 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Make sure the AC97 clock is enabled */
 	pxa2x0_clkman_config(CKEN_AC97, true);
-	delay(100);
-	pxa2x0_gpio_set_function(31, GPIO_CLR | GPIO_ALT_FN_2_OUT);
-	pxa2x0_gpio_set_function(30, GPIO_CLR | GPIO_ALT_FN_2_OUT);
-	pxa2x0_gpio_set_function(28, GPIO_CLR | GPIO_ALT_FN_1_IN);
-	pxa2x0_gpio_set_function(29, GPIO_CLR | GPIO_ALT_FN_1_IN);
 	delay(100);
 
 	/* Do a cold reset */

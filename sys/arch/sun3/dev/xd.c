@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.49.2.3 2007/02/26 09:08:34 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.49.2.4 2007/09/03 14:30:37 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.3 2007/02/26 09:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.4 2007/09/03 14:30:37 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -231,7 +231,7 @@ int	xdc_piodriver(struct xdc_softc *, int, int);
 int	xdc_remove_iorq(struct xdc_softc *);
 int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
 inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *, struct xd_softc *,
-	    int, u_long, int, caddr_t, struct buf *);
+	    int, u_long, int, void *, struct buf *);
 void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
 void	xdc_start(struct xdc_softc *, int);
 int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
@@ -448,7 +448,7 @@ xdcattach(struct device *parent, struct device *self, void *aux)
 	/* init queue of waiting bufs */
 
 	bufq_alloc(&xdc->sc_wq, "fcfs", 0);
-	callout_init(&xdc->sc_tick_ch);
+	callout_init(&xdc->sc_tick_ch, 0);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -764,7 +764,7 @@ xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
  * xddump: crash dump system
  */
 int 
-xddump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
+xddump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -799,7 +799,7 @@ xddump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xdioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
+xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 {
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
@@ -1009,19 +1009,19 @@ xdstrategy(struct buf *bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* There should always be an open first. */
 	if (xd->state == XD_DRIVE_UNKNOWN) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	if (xd->state != XD_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	/* short circuit zero length request */
 
@@ -1073,8 +1073,6 @@ xdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
-	bp->b_flags |= B_ERROR;
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
@@ -1124,7 +1122,7 @@ xdcintr(void *v)
 
 inline void 
 xdc_rqinit(struct xd_iorq *rq, struct xdc_softc *xdc, struct xd_softc *xd,
-    int md, u_long blk, int cnt, caddr_t db, struct buf *bp)
+    int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xdc = xdc;
 	rq->xd = xd;
@@ -1317,7 +1315,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	u_long  block;
-	caddr_t dbuf;
+	void *dbuf;
 
 	if (!xdcsc->nfree)
 		panic("xdc_startbuf free");
@@ -1645,7 +1643,6 @@ xdc_reset(struct xdc_softc *xdcsc, int quiet, int blastmode, int error,
 			switch (XD_STATE(iorq->mode)) {
 			case XD_SUB_NORM:
 			    iorq->buf->b_error = EIO;
-			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XDFM_BPS;
 				/* Sun3: map/unmap regardless of B_PHYS */
@@ -1844,7 +1841,6 @@ xdc_remove_iorq(struct xdc_softc *xdcsc)
 			bp = iorq->buf;
 			if (errs) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = iorq->sectcnt * XDFM_BPS;
 			} else {
 				bp->b_resid = 0;	/* done */
@@ -2079,7 +2075,7 @@ xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 
 {
 	int     s, err, rqno;
-	caddr_t dvmabuf = NULL;
+	void *dvmabuf = NULL;
 	struct xdc_softc *xdcsc;
 
 	/* check sanity of requested command */

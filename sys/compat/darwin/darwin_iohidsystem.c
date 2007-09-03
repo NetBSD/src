@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.29.2.2 2006/12/30 20:47:32 yamt Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.29.2.3 2007/09/03 14:31:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29.2.2 2006/12/30 20:47:32 yamt Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29.2.3 2007/09/03 14:31:54 yamt Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -77,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.29.2.2 2006/12/30 20:47:32 
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iohidsystem.h>
-
-/* Redefined from sys/dev/wscons/wsmux.c */
-extern const struct cdevsw wsmux_cdevsw;
 
 static struct uvm_object *darwin_iohidsystem_shmem = NULL;
 static void darwin_iohidsystem_shmeminit(vaddr_t);
@@ -196,8 +191,6 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 		/* If it has not been used yet, initialize it */
 		if (darwin_iohidsystem_shmem == NULL) {
-			struct proc *dita_p;
-
 			darwin_iohidsystem_shmem = uao_create(memsize, 0);
 
 			error = uvm_map(kernel_map, &kvaddr, memsize,
@@ -227,10 +220,10 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_shmem = kvaddr;
 			dita->dita_done = 0;
 
-			kthread_create1(darwin_iohidsystem_thread,
-			    (void *)dita, &dita_p, "iohidsystem");
-
-			dita->dita_l = LIST_FIRST(&dita_p->p_lwps);
+			kthread_create(PRI_NONE, 0, NULL,
+			    darwin_iohidsystem_thread,
+			    (void *)dita, &dita->dita_l,
+			    "iohidsystem");
 
 			/*
 			 * Make sure the thread got the informations
@@ -328,7 +321,6 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	case DARWIN_IOHIDSETMOUSELOCATION: {
 		struct wscons_event wsevt;
 		dev_t dev;
-		const struct cdevsw *wsmux;
 		darwin_iogpoint *pt = (darwin_iogpoint *)&req->req_in[0];
 
 #ifdef DEBUG_DARWIN
@@ -341,19 +333,16 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		if (error != 0)
 			return mach_msg_error(args, error);
 
-		if ((wsmux = cdevsw_lookup(dev)) == NULL)
-			return mach_msg_error(args, ENXIO);
-
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
-		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
+		if ((error = cdev_ioctl(dev,
+		    WSMUXIO_INJECTEVENT, (void *)&wsevt, 0,  l)) != 0)
 			return mach_msg_error(args, error);
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
-		if ((error = (wsmux->d_ioctl)(dev,
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
+		if ((error = cdev_ioctl(dev,
+		    WSMUXIO_INJECTEVENT, (void *)&wsevt, 0, l)) != 0)
 			return mach_msg_error(args, error);
 
 		rep->rep_outcount = 0;
@@ -430,7 +419,6 @@ darwin_iohidsystem_thread(args)
 	darwin_iohidsystem_event_item *diei = NULL; /* XXX: gcc */
 	darwin_iohidsystem_event *die;
 	dev_t dev;
-	const struct cdevsw *wsmux;
 	struct uio auio;
 	struct iovec aiov;
 	struct wscons_event wsevt;
@@ -465,12 +453,7 @@ darwin_iohidsystem_thread(args)
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
 		goto out2;
 
-	if ((wsmux = cdevsw_lookup(dev)) == NULL) {
-		error = ENXIO;
-		goto out2;
-	}
-
-	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, l)) != 0)
+	if ((error = cdev_open(dev, FREAD|FWRITE, 0, l)) != 0)
 		goto out2;
 
 	while(!finished) {
@@ -483,7 +466,7 @@ darwin_iohidsystem_thread(args)
 		auio.uio_rw = UIO_READ;
 		UIO_SETUP_SYSSPACE(&auio);
 
-		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
+		if ((error = cdev_read(dev, &auio, 0)) != 0) {
 #ifdef DEBUG_DARWIN
 			printf("iohidsystem: read error %d\n", error);
 #endif
@@ -534,7 +517,7 @@ darwin_iohidsystem_thread(args)
 	}
 
 out1:
-	(wsmux->d_close)(dev, FREAD|FWRITE, 0, l);
+	cdev_close(dev, FREAD|FWRITE, 0, l);
 
 out2:
 	while (!finished)
@@ -576,6 +559,7 @@ darwin_findwsmux(dev, mux)
 	dev_t *dev;
 	int mux;
 {
+	extern struct cdevsw wsmux_cdevsw;
 	struct wsmux_softc *wsm_sc;
 	int minor, major;
 
@@ -721,10 +705,7 @@ mach_notify_iohidsystem(struct lwp *l, struct mach_right *mr)
 
 	mach_set_trailer(req, sizeof(*req));
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		(void)ktruser(l, "notify_iohidsystem", NULL, 0, 0);
-#endif
+	ktruser("notify_iohidsystem", NULL, 0, 0);
 
 	mr->mr_refcount++;
 
@@ -748,7 +729,6 @@ void
 darwin_iohidsystem_postfake(l)
 	struct lwp *l;
 {
-	const struct cdevsw *wsmux;
 	dev_t dev;
 	int error;
 	struct wscons_event wsevt;
@@ -759,12 +739,9 @@ darwin_iohidsystem_postfake(l)
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
 		return;
 
-	if ((wsmux = cdevsw_lookup(dev)) == NULL)
-		return;
-
 	wsevt.type = 0;
 	wsevt.value = 0;
-	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l);
+	cdev_ioctl(dev, WSMUXIO_INJECTEVENT, (void *)&wsevt, 0,  l);
 
 	return;
 }

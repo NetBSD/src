@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.9.12.1 2006/12/30 20:46:43 yamt Exp $
+#	$NetBSD: files.pmppc,v 1.9.12.2 2007/09/03 14:28:54 yamt Exp $
 #
 #
 maxpartitions 16
@@ -57,6 +57,9 @@ file	arch/pmppc/dev/flash.c			flash
 
 attach	cpc at mainbus with cpc_mainbus
 file	arch/pmppc/dev/cpc_mainbus.c		cpc_mainbus
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"

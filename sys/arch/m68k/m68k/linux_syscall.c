@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.9.2.1 2006/06/21 14:53:01 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.9.2.2 2007/09/03 14:27:13 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.2.1 2006/06/21 14:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.2.2 2007/09/03 14:27:13 yamt Exp $");
 
 #include "opt_execfmt.h"
 
@@ -147,7 +147,7 @@ static void
 linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -155,7 +155,7 @@ linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;		/* illegal */
@@ -224,7 +224,7 @@ static void
 linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -232,7 +232,7 @@ linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;		/* illegal */

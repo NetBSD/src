@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.14.2 2007/09/03 14:27:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.14.2 2007/09/03 14:27:01 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -104,7 +104,7 @@ cpu_configure(void)
 #define SETPROP(x, y)							\
 	do {								\
 		if (prop_dictionary_set(device_properties(dev),		\
-						x, y) == FALSE) {	\
+						x, y) == false) {	\
 			printf("WARNING: unable to set " x " "		\
 			   "property for %s\n", dev->dv_xname);		\
 		}							\

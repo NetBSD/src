@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.10.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.10.4.3 2007/09/03 14:21:56 yamt Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.10.4.2 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.10.4.3 2007/09/03 14:21:56 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -315,7 +315,7 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	get_class_stats(&stats, cl);
 
-	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
+	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
 	*nbytes = sizeof(stats);
 	return (0);
@@ -1898,7 +1898,7 @@ hfscclose(dev_t dev, int flag, int fmt,
 }
 
 int
-hfscioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+hfscioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct hfsc_if *hif;
@@ -2177,7 +2177,7 @@ hfsccmd_class_stats(struct hfsc_class_stats *ap)
 
 		get_class_stats(&stats, cl);
 
-		if ((error = copyout((caddr_t)&stats, (caddr_t)usp++,
+		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
 			return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.8.10.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.8.10.2 2007/09/03 14:27:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -54,11 +54,11 @@
 #define	MC_NPAGES	((MC_RXDMABUFS * 0x800 + PAGE_SIZE - 1) / PAGE_SIZE)
 
 struct mc_rxframe {
-	u_int8_t	rx_rcvcnt;
-	u_int8_t	rx_rcvsts;
-	u_int8_t	rx_rntpc;
-	u_int8_t	rx_rcvcc;
-	u_char		*rx_frame;
+	uint8_t		rx_rcvcnt;
+	uint8_t		rx_rcvsts;
+	uint8_t		rx_rntpc;
+	uint8_t		rx_rcvcc;
+	uint8_t		*rx_frame;
 };
 
 struct mc_softc {

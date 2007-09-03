@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: maccons.c,v 1.5.10.1 2007/09/03 14:27:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.5.10.1 2007/09/03 14:27:21 yamt Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <machine/video.h>
 #include <dev/cons.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -53,9 +54,6 @@ void maccnputc(dev_t, int);
 void maccnpollc(dev_t, int);
 
 static int	maccons_initted = (-1);
-
-/* From Booter via locore */
-extern u_int32_t	mac68k_vidphys;
 
 void
 maccnprobe(struct consdev *cp)
@@ -86,7 +84,7 @@ maccninit(struct consdev *cp)
 	 * note:  maccons_initted is initialized to (-1).
 	 */
 	if (++maccons_initted > 0) {
-		macfb_cnattach(mac68k_vidphys);
+		macfb_cnattach(mac68k_video.mv_phys);
 		akbd_cnattach();
 	}
 }

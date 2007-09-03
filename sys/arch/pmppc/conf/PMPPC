@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.26.2.2 2006/12/30 20:46:43 yamt Exp $
+#	$NetBSD: PMPPC,v 1.26.2.3 2007/09/03 14:28:54 yamt Exp $
 #
 #	PMPPC
 #
@@ -313,7 +313,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

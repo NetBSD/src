@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148.2.2 2007/02/26 09:08:36 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148.2.3 2007/09/03 14:30:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.2 2007/02/26 09:08:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.3 2007/09/03 14:30:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -434,13 +434,9 @@ current_pmap(void)
 	struct vm_map *map;
 	pmap_t	pmap;
 
-	if (curlwp == NULL)
-		pmap = kernel_pmap;
-	else {
-		vm = curproc->p_vmspace;
-		map = &vm->vm_map;
-		pmap = vm_map_pmap(map);
-	}
+	vm = curproc->p_vmspace;
+	map = &vm->vm_map;
+	pmap = vm_map_pmap(map);
 
 	return (pmap);
 }
@@ -1837,7 +1833,7 @@ pmap_init(void)
 
 	/* Initialize the pmap pool. */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+		  &pool_allocator_nointr, IPL_NONE);
 }
 
 /*
@@ -2799,7 +2795,7 @@ pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
-	if (curlwp && l->l_proc == curproc) {
+	if (l->l_proc == curproc) {
 		_pmap_switch(pmap);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.17.2.3 2007/02/26 09:06:55 yamt Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.17.2.4 2007/09/03 14:26:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.17.2.3 2007/02/26 09:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.17.2.4 2007/09/03 14:26:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,10 @@ void
 freebsd_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
+	char *params;
+	const struct sysent *callp;
 	struct lwp *l;
-	register struct proc *p;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -94,7 +94,7 @@ freebsd_syscall_plain(frame)
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -120,7 +120,7 @@ freebsd_syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -163,10 +163,10 @@ void
 freebsd_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
+	char *params;
+	const struct sysent *callp;
 	struct lwp *l;
-	register struct proc *p;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
@@ -178,7 +178,7 @@ freebsd_syscall_fancy(frame)
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_esp + sizeof(int);
+	params = (char *)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -204,7 +204,7 @@ freebsd_syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.9.18.1 2006/06/21 14:48:00 yamt Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.9.18.2 2007/09/03 14:22:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.9.18.1 2006/06/21 14:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.9.18.2 2007/09/03 14:22:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ dec_2000_300_cons_init(void)
 	jcp = &jensenio_configuration;
 	jensenio_init(jcp, 0);
 
-	ctb = (struct ctb_tt *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb_tt *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	/*
 	 * The Jensen uses an older (pre-Type 4) CTB format.  The
@@ -229,7 +229,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		isadev = dev;
 
 	if (scsiboot && (scsidev == NULL)) {
-		if (parent != eisadev)
+		if (eisadev == NULL || parent != eisadev)
 			return;
 		else {
 			struct eisa_attach_args *ea = aux;
@@ -286,7 +286,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		/*
 		 * XXX WHAT ABOUT ISA NETWORK CARDS?
 		 */
-		if (parent != eisadev)
+		if (eisadev == NULL || parent != eisadev)
 			return;
 		else {
 			struct eisa_attach_args *ea = aux;

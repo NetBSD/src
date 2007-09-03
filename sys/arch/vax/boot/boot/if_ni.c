@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.2.42.1 2006/12/30 20:47:13 yamt Exp $ */
+/*	$NetBSD: if_ni.c,v 1.2.42.2 2007/09/03 14:30:45 yamt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -84,7 +84,7 @@
 #define SPTSIZ	16384	/* 8MB */
 #define roundpg(x)	(((int)x + VAX_PGOFSET) & ~VAX_PGOFSET)
 #define ALLOC(x) \
-	allocbase;xbzero((caddr_t)allocbase,x);allocbase+=roundpg(x);
+	allocbase;xbzero((void *)allocbase,x);allocbase+=roundpg(x);
 #define nipqb	(&gvppqb->nc_pqb)
 #define gvp	gvppqb
 #define NI_WREG(csr, val) *(volatile long *)(niaddr + (csr)) = (val)
@@ -469,7 +469,7 @@ loop:	while ((data = REMQHI(&gvp->nc_forwr)) == 0 && (nsec > getsecs()))
 		len = data->bufs[0]._len;
 		if (len > maxlen)
 			len = maxlen;
-		bcopy((caddr_t)data->nd_cmdref, pkt, len);
+		bcopy((void *)data->nd_cmdref, pkt, len);
 		bd->nb_pte = (int)&syspte[data->nd_cmdref>>9];
 		data->bufs[0]._len = bd->nb_len = 2048;
 		data->bufs[0]._offset = 0;
@@ -510,7 +510,7 @@ ni_put(struct iodesc *desc, void *pkt, size_t len)
 	bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 	bdp->nb_status = NIBD_VALID;
 	bdp->nb_len = (len < 64 ? 64 : len);
-	bcopy(pkt, (caddr_t)data->nd_cmdref, len);
+	bcopy(pkt, (void *)data->nd_cmdref, len);
 	data->bufs[0]._offset = 0;
 	data->bufs[0]._len = bdp->nb_len;
 	data->nd_opcode = BVP_DGRAM;

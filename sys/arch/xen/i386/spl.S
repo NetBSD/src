@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4.4.3 2007/02/26 09:08:54 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.4.4.4 2007/09/03 14:31:33 yamt Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -144,10 +144,8 @@ IDTVEC(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
-	IDEPTH_DECR
-	popl	%ebx			# get previous priority
-	movl	$.Ldoreti_resume,%esi	# address to resume loop at
 .Ldoreti_resume:
+	movl	$.Ldoreti_resume,%esi	# address to resume loop at
 	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax
@@ -158,7 +156,6 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:
 	testb   $CHK_UPL,TF_CS(%esp)
 	jnz	doreti_checkast
 #ifdef VM86

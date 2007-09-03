@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 2004/02/13 11:36:17 wiz Exp $ */
+/* $NetBSD: cpu.c,v 1.13.16.1 2007/09/03 14:29:11 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.16.1 2007/09/03 14:29:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2004/02/13 11:36:17 wiz Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
 #include <mips/cache.h>

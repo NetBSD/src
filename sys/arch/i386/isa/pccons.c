@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.172.2.2 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.172.2.3 2007/09/03 14:26:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.172.2.2 2006/12/30 20:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.172.2.3 2007/09/03 14:26:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -201,7 +201,7 @@ struct pc_softc {
 	struct	tty *sc_tty;
 };
 
-static struct callout async_update_ch = CALLOUT_INITIALIZER;
+static callout_t async_update_ch;
 
 int pcprobe(struct device *, struct cfdata *, void *);
 void pcattach(struct device *, struct device *, void *);
@@ -961,7 +961,7 @@ pcintr(void *arg)
 #endif
 
 int
-pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -1227,6 +1227,8 @@ pcinit(void)
 	u_short *cp;
 	u_short was;
 	unsigned cursorat;
+
+	callout_init(&async_update_ch, 0);
 
 	cptest = cp = ISA_HOLE_VADDR(CGA_BUF);
 	was = *cptest;

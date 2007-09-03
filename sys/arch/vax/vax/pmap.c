@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134.16.3 2007/02/26 09:08:42 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.134.16.4 2007/09/03 14:30:59 yamt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.16.3 2007/02/26 09:08:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.16.4 2007/09/03 14:30:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -106,7 +106,7 @@ struct	extent *ptemap;
 #define PTMAPSZ EXTENT_FIXED_STORAGE_SIZE(100)
 char	ptmapstorage[PTMAPSZ];
 
-extern	caddr_t msgbufaddr;
+extern	void *msgbufaddr;
 
 #define IOSPACE(p)	(((u_long)(p)) & 0xe0000000)
 #define NPTEPROCSPC	0x1000	/* # of virtual PTEs per process space */
@@ -324,7 +324,7 @@ pmap_bootstrap()
 	scratch = istack + ISTACK_SIZE;
 
 	/* Physical-to-virtual translation table */
-	pv_table = (struct pv_entry *)(scratch + 4 * VAX_NBPG);
+	pv_table = (struct pv_entry *)(scratch + 3 * VAX_NBPG);
 
 	avail_start = (vaddr_t)pv_table + (round_page(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -349,7 +349,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	*(struct rpb *) 0 = *(struct rpb *) ((caddr_t)proc0paddr + REDZONEADDR);
+	*(struct rpb *) 0 = *(struct rpb *) ((char *)proc0paddr + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -396,12 +396,13 @@ pmap_bootstrap()
 	mtpr(pcb->P0LR, PR_P0LR);
 
 	/* cpu_info struct */
-	pcb->SSP = scratch + VAX_NBPG;
+	pcb->SSP = scratch;
 	mtpr(pcb->SSP, PR_SSP);
-	bzero((caddr_t)pcb->SSP,
+	memset((void *)pcb->SSP, 0,
 	    sizeof(struct cpu_info) + sizeof(struct device));
-	curcpu()->ci_exit = scratch;
-	curcpu()->ci_mtx_count = 1;
+#ifdef MUTEX_COUNT_BIAS
+	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
+#endif
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
@@ -465,7 +466,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
-	bzero((caddr_t)v, size);
+	bzero((void *)v, size);
 	return v;
 }
 
@@ -689,7 +690,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!swappable(l, pm))
 			continue;
@@ -716,7 +717,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;
@@ -1436,19 +1437,20 @@ pmap_clear_reference_long(struct pv_entry *pv)
 	if (pv->pv_pmap != NULL) {
 		pte = vaddrtopte(pv);
 		if (pte->pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v = pte[2].pg_v = 
-			pte[3].pg_v = pte[4].pg_v = pte[5].pg_v =
-			pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 
 	while ((pv = pv->pv_next)) {
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v =
-			    pte[2].pg_v = pte[3].pg_v = 
-			    pte[4].pg_v = pte[5].pg_v = 
-			    pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 	PVTABLE_UNLOCK;
@@ -1597,14 +1599,15 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
 		splx(s);
 	} else { /* read-only */
 		do {
+			int pr;
 			pt = vaddrtopte(pv);
 			if (pt == 0)
 				continue;
-			pt[0].pg_prot = pt[1].pg_prot = 
-			    pt[2].pg_prot = pt[3].pg_prot = 
-			    pt[4].pg_prot = pt[5].pg_prot = 
-			    pt[6].pg_prot = pt[7].pg_prot = 
-			    ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pr = ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pt[0].pg_prot = pr; pt[1].pg_prot = pr;
+			pt[2].pg_prot = pr; pt[3].pg_prot = pr;
+			pt[4].pg_prot = pr; pt[5].pg_prot = pr;
+			pt[6].pg_prot = pr; pt[7].pg_prot = pr;
 		} while ((pv = pv->pv_next));
 	}
 	PVTABLE_UNLOCK;

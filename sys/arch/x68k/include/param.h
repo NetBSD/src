@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.20.8.1 2007/09/03 14:31:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,11 +85,6 @@
 #define	_MACHINE	x68k
 #define	MACHINE		"x68k"
 
-/*
- * Interrupt glue.
- */
-#include <machine/intr.h>
-
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
@@ -122,6 +117,8 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+#include <machine/intr.h>
+
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
 

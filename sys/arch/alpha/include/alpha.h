@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.19 2003/08/07 16:26:32 agc Exp $ */
+/* $NetBSD: alpha.h,v 1.19.16.1 2007/09/03 14:22:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -139,8 +139,7 @@ void	hwrpb_restart_setup(void);
 void	regdump(struct trapframe *);
 void	regtoframe(const struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
-void    switch_exit(struct lwp *, void (*)(struct lwp *));	/* MAGIC */
-void	proc_trampoline(void);					/* MAGIC */
+void	lwp_trampoline(void);					/* MAGIC */
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	trap_init(void);

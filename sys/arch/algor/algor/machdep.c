@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.2.2 2007/02/26 09:05:30 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.3 2007/09/03 14:22:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2007/02/26 09:05:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.3 2007/09/03 14:22:08 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -221,7 +221,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	vsize_t size;
 	const char *cp;
 	char *cp0;
-	caddr_t v;
+	void *v;
 	int i;
 
 	/* Disable interrupts. */
@@ -572,11 +572,11 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * Init mapping for u page(s) for lwp0.
 	 */
 	led_display('u', 's', 'p', 'c');
-	v = (caddr_t) uvm_pageboot_alloc(USPACE);
+	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

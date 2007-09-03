@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.29 2005/06/13 00:12:21 he Exp $	*/
+/*	$NetBSD: vs.c,v 1.29.2.1 2007/09/03 14:31:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.29 2005/06/13 00:12:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.29.2.1 2007/09/03 14:31:11 yamt Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -228,7 +228,7 @@ vs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_hw_if = &vs_hw_if;
-	sc->sc_addr = (caddr_t) ia->ia_addr;
+	sc->sc_addr = (void *) ia->ia_addr;
 	sc->sc_dmas = NULL;
 
 	/* XXX */
@@ -509,7 +509,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	sc->sc_pintr = intr;
 	sc->sc_parg  = arg;
 	sc->sc_current.blksize = bsize;
-	sc->sc_current.bufsize = (char*)end - (char*)start;
+	sc->sc_current.bufsize = (char *)end - (char *)start;
 	sc->sc_current.dmap = 0;
 
 	/* Find DMA buffer. */
@@ -558,7 +558,7 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	sc->sc_rintr = intr;
 	sc->sc_rarg  = arg;
 	sc->sc_current.blksize = bsize;
-	sc->sc_current.bufsize = (char*)end - (char*)start;
+	sc->sc_current.bufsize = (char *)end - (char *)start;
 	sc->sc_current.dmap = 0;
 
 	/* Find DMA buffer. */

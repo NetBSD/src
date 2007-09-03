@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.25.2.3 2007/02/26 09:08:51 yamt Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.25.2.4 2007/09/03 14:31:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.25.2.3 2007/02/26 09:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.25.2.4 2007/09/03 14:31:27 yamt Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -150,6 +150,8 @@ int mpbios_nioapic;
 #include <dev/pci/pcireg.h>
 #endif
 
+#include "locators.h"
+
 static struct mpbios_ioapic default_ioapic = {
     2,0,1,IOAPICENTRY_FLAG_EN,(uint32_t)IOAPIC_BASE_DEFAULT
 };
@@ -177,8 +179,8 @@ struct mp_map
 	int		psize;
 };
 
-int mp_print(void *, const char *);
-int mp_submatch(struct device *, struct cfdata *, const int *, void *);
+int mp_cpuprint(void *, const char *);
+int mp_ioapicprint(void *, const char *);
 static const void *mpbios_search(struct device *, paddr_t, int,
     struct mp_map *);
 static inline int mpbios_cksum(const void *,int);
@@ -218,23 +220,25 @@ const struct mpbios_fps	*mp_fps;
 int mpbios_scanned;
 
 int
-mp_print(void *aux, const char *pnp)
+mp_cpuprint(void *aux, const char *pnp)
 {
-	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
+	struct cpu_attach_args *caa = aux;
+
 	if (pnp)
-		aprint_normal("%s at %s:",caa->caa_name, pnp);
+		aprint_normal("cpu at %s", pnp);
+	printf(" apid %d", caa->cpu_number);
 	return (UNCONF);
 }
 
 int
-mp_submatch(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+mp_ioapicprint(void *aux, const char *pnp)
 {
-	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
-	if (strcmp(caa->caa_name, cf->cf_name))
-		return 0;
+	struct apic_attach_args *aaa = aux;
 
-	return (config_match(parent, cf, aux));
+	if (pnp)
+		aprint_normal("ioapic at %s", pnp);
+	printf(" apid %d", aaa->apic_id);
+	return (UNCONF);
 }
 
 /*
@@ -257,10 +261,11 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 	handle->vsize = endpa-pgpa;
 
 	do {
-		pmap_kenter_pa (va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
 		va += PAGE_SIZE;
 		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);
+	pmap_update(pmap_kernel());
 
 	return (const void *)retva;
 }
@@ -268,8 +273,9 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 inline static void
 mpbios_unmap(struct mp_map *handle)
 {
-	pmap_kremove (handle->baseva, handle->vsize);
-	uvm_km_free (kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
+	pmap_kremove(handle->baseva, handle->vsize);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
 }
 
 /*
@@ -700,6 +706,7 @@ mpbios_cpu(const uint8_t *ent, struct device *self)
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
 	struct cpu_attach_args caa;
+	int locs[CPUBUSCF_NLOCS];
 
 	/* XXX move this into the CPU attachment goo. */
 	/* check for usability */
@@ -714,11 +721,12 @@ mpbios_cpu(const uint8_t *ent, struct device *self)
 	else
 		caa.cpu_role = CPU_ROLE_AP;
 
-	caa.caa_name   = "cpu";
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mp_cpu_funcs;
+	locs[CPUBUSCF_APID] = caa.cpu_number;
 
-	config_found_sm_loc(self, "cpubus", NULL, &caa, mp_print, mp_submatch);
+	config_found_sm_loc(self, "cpubus", locs, &caa, mp_cpuprint,
+			    config_stdsubmatch);
 }
 
 static void
@@ -1014,15 +1022,18 @@ mpbios_ioapic(const uint8_t *ent, struct device *self)
 
 #if NIOAPIC > 0
 	{
+	int locs[IOAPICBUSCF_NLOCS];
 	struct apic_attach_args aaa;
-	aaa.aaa_name   = "ioapic";
+
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
 	aaa.apic_address = (paddr_t)entry->apic_address;
 	aaa.apic_vecbase = -1;
 	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
+	locs[IOAPICBUSCF_APID] = aaa.apic_id;
 
-	config_found_sm_loc(self, "cpubus", NULL, &aaa, mp_print, mp_submatch);
+	config_found_sm_loc(self, "ioapicbus", locs, &aaa, mp_ioapicprint,
+			    config_stdsubmatch);
 	}
 #endif
 }

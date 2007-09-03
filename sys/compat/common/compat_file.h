@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.h,v 1.4.12.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: compat_file.h,v 1.4.12.2 2007/09/03 14:31:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,5 +84,7 @@ int bsd_sys___lstat30(struct lwp *, void *, register_t *);
 int bsd_sys___posix_chown(struct lwp *, void *, register_t *);
 int bsd_sys___posix_lchown(struct lwp *, void *, register_t *);
 int bsd_sys_lchflags(struct lwp *, void *, register_t *);
+
+void compat_12_stat_conv(const struct stat *, struct stat12 *);
 
 #endif /* _COMPAT_FILE_H_ */

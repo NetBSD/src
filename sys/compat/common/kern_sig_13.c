@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.9.18.2 2007/02/26 09:09:00 yamt Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.9.18.3 2007/09/03 14:31:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.9.18.2 2007/02/26 09:09:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.9.18.3 2007/09/03 14:31:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.9.18.2 2007/02/26 09:09:00 yamt Ex
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_sigaltstack.h>
 
 void
 native_sigset13_to_sigset(oss, ss)
@@ -97,28 +98,6 @@ native_sigaction_to_sigaction13(sa, osa)
 	osa->osa_flags = sa->sa_flags;
 }
 
-void
-native_sigaltstack13_to_sigaltstack(osa, sa)
-	const struct sigaltstack13 *osa;
-	struct sigaltstack *sa;
-{
-
-	sa->ss_sp = osa->ss_sp;
-	sa->ss_size = osa->ss_size;
-	sa->ss_flags = osa->ss_flags;
-}
-
-void
-native_sigaltstack_to_sigaltstack13(sa, osa)
-	const struct sigaltstack *sa;
-	struct sigaltstack13 *osa;
-{
-
-	osa->ss_sp = sa->ss_sp;
-	osa->ss_size = sa->ss_size;
-	osa->ss_flags = sa->ss_flags;
-}
-
 int
 compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
@@ -126,27 +105,7 @@ compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct sigaltstack13 *) nss;
 		syscallarg(struct sigaltstack13 *) oss;
 	} */ *uap = v;
-	struct sigaltstack13 ness, oess;
-	struct sigaltstack nbss, obss;
-	int error;
-
-	if (SCARG(uap, nss)) {
-		error = copyin(SCARG(uap, nss), &ness, sizeof(ness));
-		if (error)
-			return (error);
-		native_sigaltstack13_to_sigaltstack(&ness, &nbss);
-	}
-	error = sigaltstack1(l,
-	    SCARG(uap, nss) ? &nbss : 0, SCARG(uap, oss) ? &obss : 0);
-	if (error)
-		return (error);
-	if (SCARG(uap, oss)) {
-		native_sigaltstack_to_sigaltstack13(&obss, &oess);
-		error = copyout(&oess, SCARG(uap, oss), sizeof(oess));
-		if (error)
-			return (error);
-	}
-	return (0);
+	compat_sigaltstack(uap, sigaltstack13, SS_ONSTACK, SS_DISABLE);
 }
 
 int

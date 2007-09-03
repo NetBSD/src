@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.31.12.1 2006/12/30 20:45:45 yamt Exp $
+#	$NetBSD: files.cats,v 1.31.12.2 2007/09/03 14:23:46 yamt Exp $
 #
 # CATS-specific configuration info
 #
@@ -70,6 +70,9 @@ file	arch/arm/footbridge/isa/dsrtc.c			ds1687rtc
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 # PCI devices
 

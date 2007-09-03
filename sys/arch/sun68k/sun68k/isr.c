@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6.8.3 2007/02/26 09:08:38 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.6.8.4 2007/09/03 14:30:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.8.3 2007/02/26 09:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.8.4 2007/09/03 14:30:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ struct isr {
 struct softintr_head soft_level_heads[_IPL_NSOFT];
 void *softnet_cookie;
 static int softintr_handler(void *);
+static void netintr(void);
 
 void set_vector_entry(int, void *);
 void *get_vector_entry(int);
@@ -91,7 +92,6 @@ void *get_vector_entry(int);
  */
 void isr_autovec (struct clockframe);
 void isr_vectored(struct clockframe);
-
 
 void 
 isr_add_custom(int level, void *handler)
@@ -141,8 +141,10 @@ isr_autovec(struct clockframe cf)
 	int n, ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
+#ifdef DIAGNOSTIC
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE + NUM_LEVELS)))
 		panic("isr_autovec: bad vec");
+#endif
 	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
@@ -153,7 +155,7 @@ isr_autovec(struct clockframe cf)
 	if (isr == NULL) {
 		if (n == 0)
 			printf("isr_autovec: ipl %d unexpected\n", ipl);
-		return;
+		goto out;
 	}
 
 	/* Give all the handlers a chance. */
@@ -164,6 +166,9 @@ isr_autovec(struct clockframe cf)
 	}
 	if (n == 0)
 		printf("isr_autovec: ipl %d not claimed\n", ipl);
+
+ out:
+	LOCK_CAS_CHECK(&cf);
 }
 
 /*
@@ -211,20 +216,25 @@ isr_vectored(struct clockframe cf)
 	intrcnt[ipl]++;
 	uvmexp.intrs++;
 
+#ifdef DIAGNOSTIC
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
-		return;
+		goto out;
 	}
+#endif
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
 		set_vector_entry(vec, (void *)badtrap);
-		return;
+		goto out;
 	}
 
 	/* OK, call the isr function. */
 	if ((*vh->func)(vh->arg) == 0)
 		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
+
+ out:
+	LOCK_CAS_CHECK(&cf);
 }
 
 /*

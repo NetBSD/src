@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.13 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: spifi.c,v 1.13.6.1 2007/09/03 14:28:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.13 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.13.6.1 2007/09/03 14:28:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -727,7 +727,7 @@ spifi_done(struct spifi_softc *sc)
 	sc->sc_nexus = NULL;
 	spifi_sched(sc);
 
-	return FALSE;
+	return false;
 }
 
 void

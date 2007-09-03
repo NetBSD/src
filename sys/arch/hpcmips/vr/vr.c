@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.45 2005/01/16 03:21:21 hamajima Exp $	*/
+/*	$NetBSD: vr.c,v 1.45.10.1 2007/09/03 14:26:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.45 2005/01/16 03:21:21 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.45.10.1 2007/09/03 14:26:11 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -166,7 +166,7 @@ void vr_init(void);
 void VR_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void vr_idle(void);
 STATIC void vr_cons_init(void);
-STATIC void vr_fb_init(caddr_t *);
+STATIC void vr_fb_init(void **);
 STATIC void vr_mem_init(paddr_t);
 STATIC void vr_find_dram(paddr_t, paddr_t);
 STATIC void vr_reboot(int, char *);
@@ -343,7 +343,7 @@ void
 vr_find_dram(paddr_t addr, paddr_t end)
 {
 	int n;
-	caddr_t page;
+	char *page;
 #ifdef NARLY_MEMORY_PROBE
 	int x, i;
 #endif
@@ -355,7 +355,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 	n = mem_cluster_cnt;
 	for (; addr < end; addr += PAGE_SIZE) {
 
-		page = (void *)MIPS_PHYS_TO_KSEG1(addr);
+		page = (char *)MIPS_PHYS_TO_KSEG1(addr);
 		if (badaddr(page, 4))
 			goto bad;
 
@@ -409,7 +409,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 }
 
 void
-vr_fb_init(caddr_t *kernend)
+vr_fb_init(void **kernend)
 {
 	/* Nothing to do */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.5.4.3 2007/02/26 09:09:03 yamt Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.5.4.4 2007/09/03 14:31:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.3 2007/02/26 09:09:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.4 2007/09/03 14:31:55 yamt Exp $");
 
 #include "opt_ptrace.h"
 
@@ -73,7 +73,7 @@ darwin_sys_ptrace(l, v, retval)
 	struct darwin_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
 	int req = SCARG(uap, req);

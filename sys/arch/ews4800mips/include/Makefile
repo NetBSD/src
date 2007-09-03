@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.18.4 2007/02/26 09:06:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.18.5 2007/09/03 14:24:51 yamt Exp $
 
 INCSDIR= /usr/include/ews4800mips
 
@@ -10,7 +10,6 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	float.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
 	math.h mcontext.h mips_opcode.h mutex.h \

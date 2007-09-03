@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2004/12/15 17:22:11 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.18.10.1 2007/09/03 14:28:19 yamt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -105,8 +105,6 @@ define	USRSTACK		USRSTACK
 
 # lwp & proc fields and values
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)

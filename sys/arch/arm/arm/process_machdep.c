@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15.2.1 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15.2.2 2007/09/03 14:23:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.1 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.2 2007/09/03 14:23:13 yamt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -156,7 +156,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	bcopy((caddr_t)&tf->tf_r0, (caddr_t)regs->r, sizeof(regs->r));
+	bcopy((void *)&tf->tf_r0, (void *)regs->r, sizeof(regs->r));
 	regs->r_sp = tf->tf_usr_sp;
 	regs->r_lr = tf->tf_usr_lr;
 	regs->r_pc = tf->tf_pc;
@@ -233,7 +233,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 

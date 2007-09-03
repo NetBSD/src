@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.65.2.2 2007/02/26 09:08:19 yamt Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.65.2.3 2007/09/03 14:30:03 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct module_info {
 
 	void (*get_syncflt)(void);
 	int  (*get_asyncflt)(u_int *, u_int *);
-	void (*cache_flush)(caddr_t, u_int);
+	void (*cache_flush)(void *, u_int);
 	void (*sp_vcache_flush_page)(int, int);
 	void (*ft_vcache_flush_page)(int, int);
 	void (*sp_vcache_flush_segment)(int, int, int);
@@ -144,8 +144,8 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/* Scheduler flags */
-	int	want_ast;
-	int	want_resched;
+	int	ci_want_ast;
+	int	ci_want_resched;
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
@@ -211,7 +211,6 @@ struct cpu_info {
 	 */
 	void		*eintstack;		/* End of interrupt stack */
 #define INT_STACK_SIZE	(128 * 128)		/* 128 128-byte stack frames */
-	struct	pcb	*idle_u;
 	void		*redzone;		/* DEBUG: stack red zone */
 #define REDSIZE		(8*96)			/* some room for bouncing */
 
@@ -235,7 +234,7 @@ struct cpu_info {
 	 * all processor modules.
 	 * The `ft_' versions are fast trap cache flush handlers.
 	 */
-	void	(*cache_flush)(caddr_t, u_int);
+	void	(*cache_flush)(void *, u_int);
 	void	(*vcache_flush_page)(int, int);
 	void	(*sp_vcache_flush_page)(int, int);
 	void	(*ft_vcache_flush_page)(int, int);
@@ -262,7 +261,7 @@ struct cpu_info {
 	void	(*copy_page)(paddr_t, paddr_t);
 
 	/* Virtual addresses for use in pmap copy_page/zero_page */
-	caddr_t	vpage[2];
+	void *	vpage[2];
 	int	*vpage_pte[2];		/* pte location of vpage[] */
 
 	void	(*cache_enable)(void);

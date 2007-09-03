@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12.2.2 2007/02/26 09:08:54 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12.2.3 2007/09/03 14:31:32 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.2.2 2007/02/26 09:08:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.2.3 2007/09/03 14:31:32 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -459,7 +459,7 @@ struct pool pmap_pmap_pool;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static caddr_t csrcp, cdstp, zerop, ptpp;
+static void *csrcp, *cdstp, *zerop, *ptpp;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -472,7 +472,7 @@ u_int pmap_pdp_cache_generation;
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
 
-caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
+void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
@@ -1182,27 +1182,27 @@ pmap_bootstrap(kva_start)
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.
 	 */
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;
+	csrcp = (char *) virtual_avail;  csrc_pte = pte;
 
-	cdstp = (caddr_t) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
+	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
 
-	zerop = (caddr_t) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
+	zerop = (char *) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
 
-	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
+	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
 	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
 	pte += X86_MAXPROCS * NPTECL;
 #else
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
+	csrcp = (void *) virtual_avail;  csrc_pte = pte;  /* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			     /* advance */
 
-	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
+	cdstp = (void *) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
+	zerop = (void *) virtual_avail;  zero_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
-	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
+	ptpp = (void *) virtual_avail;  ptp_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
@@ -1252,7 +1252,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -1269,9 +1269,9 @@ pmap_bootstrap(kva_start)
 	 * initialize the PDE pool and cache.
 	 */
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-			pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1954,7 +1954,7 @@ pmap_destroy(pmap)
 		 * No need to lock the pmap for ldt_free (or anything else),
 		 * we're the last one to use it.
 		 */
-		ldt_free(pmap);
+		ldt_free(pmap->pm_ldt_sel);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
 		    pmap->pm_ldt_len * sizeof(union descriptor), UVM_KMF_WIRED);
 	}
@@ -1986,28 +1986,56 @@ void
 pmap_fork(pmap1, pmap2)
 	struct pmap *pmap1, *pmap2;
 {
+#ifdef USER_LDT
+	union descriptor *new_ldt;
+	size_t len;
+	int sel;
+
+ retry:
+	if (pmap1->pm_flags & PMF_USER_LDT) {
+		len = pmap1->pm_ldt_len * sizeof(union descriptor);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
+		    len, 0, UVM_KMF_WIRED);
+		sel = ldt_alloc(new_ldt, len);
+	} else {
+		len = -1;
+		new_ldt = NULL;
+		sel = -1;
+	}
+
 	simple_lock(&pmap1->pm_obj.vmobjlock);
 	simple_lock(&pmap2->pm_obj.vmobjlock);
 
-#ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
 	if (pmap1->pm_flags & PMF_USER_LDT) {
-		union descriptor *new_ldt;
-		size_t len;
+		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
+			simple_unlock(&pmap2->pm_obj.vmobjlock);
+			simple_unlock(&pmap1->pm_obj.vmobjlock);
+			if (len != -1) {
+				ldt_free(sel);
+				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
+				    len, UVM_KMF_WIRED);
+			}
+			goto retry;
+		}
 
-		len = pmap1->pm_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
-		    UVM_KMF_WIRED);
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
 		pmap2->pm_flags |= PMF_USER_LDT;
-		ldt_alloc(pmap2, new_ldt, len);
+		pmap2->pm_ldt_sel = sel;
+		len = -1;
 	}
-#endif /* USER_LDT */
 
 	simple_unlock(&pmap2->pm_obj.vmobjlock);
 	simple_unlock(&pmap1->pm_obj.vmobjlock);
+
+	if (len != -1) {
+		ldt_free(sel);
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
+		    UVM_KMF_WIRED);
+	}
+#endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
 
@@ -2025,14 +2053,15 @@ pmap_ldt_cleanup(l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
+	int sel = -1;
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
-		ldt_free(pmap);
+		sel = pmap->pm_ldt_sel;
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
+		if (l == curlwp)
 			lldt(pcb->pcb_ldt_sel);
 		old_ldt = pmap->pm_ldt;
 		len = pmap->pm_ldt_len * sizeof(union descriptor);
@@ -2045,6 +2074,8 @@ pmap_ldt_cleanup(l)
 
 	if (old_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, len, UVM_KMF_WIRED);
+	if (sel != -1)
+		ldt_free(sel);
 }
 #endif /* USER_LDT */
 
@@ -2163,8 +2194,7 @@ pmap_load()
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
 
-	pcb = ci->ci_curpcb;
-	KASSERT(pcb == &l->l_addr->u_pcb);
+	pcb = &l->l_addr->u_pcb;
 	/* loaded by pmap_activate */
 	KASSERT(pcb->pcb_ldt_sel == pmap->pm_ldt_sel);
 
@@ -2240,22 +2270,12 @@ void
 pmap_deactivate(l)
 	struct lwp *l;
 {
-
-	if (l == curlwp)
-		pmap_deactivate2(l);
-}
-
-/*
- * pmap_deactivate2: context switch version of pmap_deactivate.
- * always treat l as curlwp.
- */
-
-void
-pmap_deactivate2(l)
-	struct lwp *l;
-{
 	struct pmap *pmap;
 	struct cpu_info *ci = curcpu();
+
+	if (l != curlwp) {
+		return;
+	}
 
 	if (ci->ci_want_pmapload) {
 		KASSERT(vm_map_pmap(&l->l_proc->p_vmspace->vm_map)
@@ -2432,7 +2452,7 @@ pmap_zero_page(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	pt_entry_t *maptp;
-	caddr_t zerova = VASLEW(zerop, id);
+	void *zerova = VASLEW(zerop, id);
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
@@ -2463,7 +2483,7 @@ pmap_pageidlezero(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	pt_entry_t *maptp;
-	caddr_t zerova = VASLEW(zerop, id);
+	void *zerova = VASLEW(zerop, id);
 	bool rv = true;
 	int *ptr;
 	int *ep;
@@ -2481,7 +2501,7 @@ pmap_pageidlezero(pa)
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
 	    ptr < ep; ptr++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 
 			/*
 			 * A process has become ready.  Abort now,
@@ -2524,8 +2544,8 @@ pmap_copy_page(srcpa, dstpa)
 #endif
 	pt_entry_t *spte = PTESLEW(csrc_pte,id), *maspte;
 	pt_entry_t *dpte = PTESLEW(cdst_pte,id), *madpte;
-	caddr_t csrcva = VASLEW(csrcp, id);
-	caddr_t cdstva = VASLEW(cdstp, id);
+	void *csrcva = VASLEW(csrcp, id);
+	void *cdstva = VASLEW(cdstp, id);
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(spte) || PTE_GET(dpte))

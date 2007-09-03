@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.16.2.4 2007/09/03 14:26:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.4 2007/09/03 14:26:27 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -78,8 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Ex
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#include "lapic.h"
 #include "ioapic.h"
 
+#if NLAPIC > 0
+#include <machine/i82489var.h>
+#endif
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
@@ -100,8 +104,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Ex
 static paddr_t phys_wakeup = 0;
 static int acpi_md_node = CTL_EOL;
 static int acpi_md_vbios_reset = 1;
+static int acpi_md_beep_on_reset = 1;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
+static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
 uint32_t
 acpi_md_get_npages_of_wakecode(void)
@@ -112,7 +118,7 @@ acpi_md_get_npages_of_wakecode(void)
 void
 acpi_md_install_wakecode(paddr_t pa)
 {
-	bcopy(wakecode, (caddr_t)pa, sizeof(wakecode));
+	bcopy(wakecode, (void *)pa, sizeof(wakecode));
 	phys_wakeup = pa;
 	aprint_verbose("acpi: wakecode is installed at 0x%lX, size=%u\n",
 	       pa, sizeof(wakecode));
@@ -366,6 +372,7 @@ acpi_md_sleep(int state)
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
 		WAKECODE_FIXUP(vbios_reset, uint8_t, acpi_md_vbios_reset);
+		WAKECODE_FIXUP(beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
 		WAKECODE_FIXUP(previous_cr0, uint32_t, r_cr0);
 		WAKECODE_FIXUP(previous_cr2, uint32_t, r_cr2);
@@ -436,9 +443,10 @@ acpi_md_sleep(int state)
 #if NIOAPIC > 0
 		ioapic_enable();
 #endif
-		/*
-		 * XXX must the local APIC be re-inited?
-		 */
+#if NLAPIC > 0
+		lapic_enable();
+		lapic_initclocks();
+#endif
 
 		initrtclock(TIMER_FREQ);
 		inittodr(time_second);
@@ -484,6 +492,10 @@ SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi i386 sysctl setup")
 	    CTLTYPE_INT, "acpi_vbios_reset", NULL, sysctl_md_acpi_vbios_reset,
 	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "acpi_beep_on_reset", NULL, sysctl_md_acpi_beep_on_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
 
 	acpi_md_node = node->sysctl_num;
 }
@@ -505,6 +517,27 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	acpi_md_vbios_reset = t;
+
+	return 0;
+}
+
+static int
+sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_md_beep_on_reset;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 1)
+		return EINVAL;
+
+	acpi_md_beep_on_reset = t;
 
 	return 0;
 }

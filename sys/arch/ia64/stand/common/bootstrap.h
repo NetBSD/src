@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.3.8.3 2006/12/30 20:46:20 yamt Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.3.8.4 2007/09/03 14:26:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -78,7 +78,7 @@ int	getrootmount(char *rootdev);
 
 /* misc.c */
 char	*unargv(int argc, char *argv[]);
-void	hexdump(caddr_t region, size_t len);
+void	hexdump(void *region, size_t len);
 size_t	strlenout(vaddr_t str);
 char	*strdupout(vaddr_t str);
 void	kern_bzero(vaddr_t dest, size_t len);

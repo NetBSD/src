@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.11.12.2 2007/02/26 09:05:27 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.11.12.3 2007/09/03 14:22:00 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11.12.2 2007/02/26 09:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11.12.3 2007/09/03 14:22:00 yamt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -203,7 +203,7 @@ static void pv_release(pmap_t pmap, int ppn, int lpn);
 
 static int pmap_enter1(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, int);
 
-static caddr_t pmap_find(paddr_t);
+static void *pmap_find(paddr_t);
 
 static void pmap_update_page(int);
 
@@ -300,7 +300,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	for (i = 0; i < vm_nphysseg; i++) {
 		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {
 			addr = (vaddr_t)
-			    (MEMC_PHYS_BASE + ptoa(vm_physmem[i].avail_start));
+			    ((char*)MEMC_PHYS_BASE +
+				ptoa(vm_physmem[i].avail_start));
 			vm_physmem[i].avail_start++;
 			break;
 		}
@@ -361,7 +362,7 @@ pmap_init2()
 
 	/* Create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
-	    "pmappool", NULL);
+	    "pmappool", NULL, IPL_NONE);
 	pmap_initialised = 1;
 }
 
@@ -981,7 +982,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 
 paddr_t
 pmap_phys_address(ppn)
-	int ppn;
+	paddr_t ppn;
 {
 	panic("pmap_phys_address not implemented");
 }
@@ -1048,7 +1049,7 @@ pmap_update(struct pmap *pmap)
  * physical space.  This means that we can safely write here without
  * flushing the cache.  Only necessary on ARM3.
  */
-static caddr_t
+static void *
 pmap_find(paddr_t pa)
 {
 #ifdef CPU_ARM3
@@ -1060,9 +1061,9 @@ pmap_find(paddr_t pa)
 #ifdef CPU_ARM3
 	for (pv = &pv_table[atop(pa)]; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap != NULL && (pv->pv_pmap->pm_flags & PM_ACTIVE))
-			return (caddr_t)ptoa(pv->pv_lpn);
+			return (void *)ptoa(pv->pv_lpn);
 #endif
-	return MEMC_PHYS_BASE + pa;
+	return (char*)MEMC_PHYS_BASE + pa;
 }
 
 void

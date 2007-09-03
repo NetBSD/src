@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.11.4.3 2006/12/30 20:45:51 yamt Exp $
+#	$NetBSD: ALCHEMY,v 1.11.4.4 2007/09/03 14:24:13 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.11.4.3 $"
+#ident 		"ALCHEMY-$Revision: 1.11.4.4 $"
 
 maxusers	32
 
@@ -48,7 +48,7 @@ options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000	# size for embedded symbol table
+options 	SYMTAB_SPACE=340000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -167,7 +167,7 @@ usb*		at ohci?
 
 # USB Hubs
 uhub*		at usb?
-uhub*		at uhub? port ? configuration ? interface ?
+uhub*		at uhub? port ?
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?

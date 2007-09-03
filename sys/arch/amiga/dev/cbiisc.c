@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.18.2.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: cbiisc.c,v 1.18.2.2 2007/09/03 14:22:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.18.2.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.18.2.2 2007/09/03 14:22:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.18.2.1 2006/06/21 14:48:26 yamt Exp $")
 #include <amiga/dev/cbiiscvar.h>
 #include <amiga/dev/zbusvar.h>
 
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
+
 void	cbiiscattach(struct device *, struct device *, void *);
 int	cbiiscmatch(struct device *, struct cfdata *, void *);
 
@@ -82,7 +86,7 @@ void	cbiisc_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	cbiisc_dma_isintr(struct ncr53c9x_softc *);
 void	cbiisc_dma_reset(struct ncr53c9x_softc *);
 int	cbiisc_dma_intr(struct ncr53c9x_softc *);
-int	cbiisc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+int	cbiisc_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 void	cbiisc_dma_go(struct ncr53c9x_softc *);
 void	cbiisc_dma_stop(struct ncr53c9x_softc *);
@@ -135,7 +139,7 @@ cbiiscmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (zap->manid != 0x2140 || zap->prodid != 25)
 		return(0);
 	regs = &((volatile u_char *)zap->va)[0x1ff03];
-	if (badaddr((caddr_t)__UNVOLATILE(regs)))
+	if (badaddr((void *)__UNVOLATILE(regs)))
 		return(0);
 	regs[NCR_CFG1 * 4] = 0;
 	regs[NCR_CFG1 * 4] = NCRCFG1_PARENB | 7;
@@ -329,7 +333,7 @@ cbiisc_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-cbiisc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+cbiisc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
                  int datain, size_t *dmasize)
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
@@ -337,7 +341,7 @@ cbiisc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	csc->sc_dmaaddr = addr;
+	csc->sc_dmaaddr = (char **)addr;
 	csc->sc_pdmalen = len;
 	csc->sc_datain = datain;
 	csc->sc_dmasize = *dmasize;
@@ -368,7 +372,7 @@ cbiisc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 1) {
-		pa = kvtop((caddr_t)&csc->sc_alignbuf);
+		pa = kvtop((void *)&csc->sc_alignbuf);
 		xfer = csc->sc_dmasize = min(xfer, sizeof (csc->sc_alignbuf));
 		NCR_DMA(("cbiisc_dma_setup: align read by %d bytes\n", xfer));
 		csc->sc_xfr_align = 1;
@@ -376,7 +380,7 @@ cbiisc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 ++cbiisc_cnt_dma;		/* number of DMA operations */
 
 	while (xfer < csc->sc_dmasize) {
-		if ((pa + xfer) != kvtop(*addr + xfer))
+		if ((pa + xfer) != kvtop((char*)*addr + xfer))
 			break;
 		if ((csc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = csc->sc_dmasize;

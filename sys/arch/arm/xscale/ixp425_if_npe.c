@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.2.4.2 2006/12/30 20:45:37 yamt Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.2.4.3 2007/09/03 14:23:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.2.4.2 2006/12/30 20:45:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.2.4.3 2007/09/03 14:23:27 yamt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -202,7 +202,7 @@ static int	npeinit(struct ifnet *);
 static void	npestart(struct ifnet *);
 static void	npestop(struct ifnet *, int);
 static void	npewatchdog(struct ifnet *);
-static int	npeioctl(struct ifnet * ifp, u_long, caddr_t);
+static int	npeioctl(struct ifnet * ifp, u_long, void *);
 
 static int	npe_setrxqosentry(struct npe_softc *, int classix,
 			int trafclass, int qid);
@@ -269,7 +269,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	memset(&sc->sc_ethercom, 0, sizeof(sc->sc_ethercom));
 	memset(&sc->sc_mii, 0, sizeof(sc->sc_mii));
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	if (npe_activate(sc)) {
 		aprint_error("%s: Failed to activate NPE (missing "
@@ -385,7 +385,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 {
 	bus_dma_segment_t seg;
 	int rseg, error, i;
-	caddr_t hwbuf;
+	void *hwbuf;
 	size_t size;
 
 	memset(dma, 0, sizeof(dma));
@@ -484,7 +484,7 @@ npe_dma_destroy(struct npe_softc *sc, struct npedma *dma)
 			bus_dmamap_destroy(sc->sc_dt, npe->ix_map);
 		}
 		bus_dmamap_unload(sc->sc_dt, dma->buf_map);
-		bus_dmamem_free(sc->sc_dt, (caddr_t)dma->hwbuf, dma->buf_map);
+		bus_dmamem_free(sc->sc_dt, (void *)dma->hwbuf, dma->buf_map);
 		bus_dmamap_destroy(sc->sc_dt, dma->buf_map);
 	}
 	if (dma->buf != NULL)
@@ -499,7 +499,7 @@ npe_activate(struct npe_softc *sc)
 	bus_dma_segment_t seg;
 	int unit = sc->sc_unit;
 	int error, i, rseg;
-	caddr_t statbuf;
+	void *statbuf;
 
 	/* load NPE firmware and start it running */
 	error = ixpnpe_init(sc->sc_npe, "npe_fw", npeconfig[unit].imageid);
@@ -1078,7 +1078,7 @@ npe_defrag(struct mbuf *m0)
 		}
 	}
 
-	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 	m_freem(m0);
 
 	return (m);
@@ -1258,7 +1258,7 @@ npewatchdog(struct ifnet *ifp)
 }
 
 static int
-npeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct npe_softc *sc = ifp->if_softc;
  	struct ifreq *ifr = (struct ifreq *)data;	

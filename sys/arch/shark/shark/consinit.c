@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3.2.1 2006/12/30 20:46:57 yamt Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3.2.2 2007/09/03 14:29:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.2.1 2006/12/30 20:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.2.2 2007/09/03 14:29:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,13 @@ consinit()
 		return;
 	initted = 1;
 	cp = NULL;
+
+#if (NVGA > 0)
+	/* The font built into the VGA ROM is broken: all the characters
+	 * above the 127th do not match the standard set expected by the
+	 * console.  E.g. boxes drawn using the ACS are incorrect. */
+	vga_no_builtinfont = 1;
+#endif
 
 	if (!comconsole) {
 #if (NPC > 0) || (NVGA > 0) || (NIGSFB_OFBUS > 0)

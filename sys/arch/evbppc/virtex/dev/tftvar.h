@@ -1,4 +1,4 @@
-/* 	$NetBSD: tftvar.h,v 1.1.4.2 2006/12/30 20:45:54 yamt Exp $ */
+/* 	$NetBSD: tftvar.h,v 1.1.4.3 2007/09/03 14:24:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -35,7 +35,7 @@
 struct tft_softc {
 	struct device 		sc_dev;
 
-	caddr_t 		sc_image;
+	void *		sc_image;
 	size_t 			sc_size;
 
 	bus_space_tag_t 	sc_iot;
@@ -66,7 +66,7 @@ struct tft_softc {
 
 void 		tft_attach(device_t, struct wsdisplay_accessops *);
 void 		tft_shutdown(void *);
-int 		tft_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int 		tft_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 int 		tft_mode(device_t);
 
 #endif	/*_VIRTEX_DEV_TFTVAR_H_*/

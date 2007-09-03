@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.51.12.2 2006/12/30 20:45:29 yamt Exp $
+#	$NetBSD: files.arc,v 1.51.12.3 2007/09/03 14:23:05 yamt Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -89,6 +89,7 @@ include "dev/ata/files.ata"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 #
 # "Workstation Console" glue.
@@ -283,6 +284,5 @@ include "dev/usb/files.usb"
 file	dev/cons.c
 #file	dev/cninit.c
 #file	netinet/in_cksum.c
-#file	netns/ns_cksum.c			ns
 
 include "arch/arc/conf/majors.arc"

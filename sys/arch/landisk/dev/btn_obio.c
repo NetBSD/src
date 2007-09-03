@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.1.12.2 2006/12/30 20:46:21 yamt Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.1.12.3 2007/09/03 14:27:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,7 +29,7 @@
 #include "pwrsw_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.1.12.2 2006/12/30 20:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.1.12.3 2007/09/03 14:27:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ btn_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	btn_softc = sc;
 
-	callout_init(&sc->sc_guard_ch);
+	callout_init(&sc->sc_guard_ch, 0);
 	callout_setfunc(&sc->sc_guard_ch, btn_guard_timeout, sc);
 
 	sc->sc_ih = extintr_establish(LANDISK_INTR_BTN, IPL_TTY, btn_intr, sc);

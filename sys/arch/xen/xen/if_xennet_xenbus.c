@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.4 2006/12/31 02:20:49 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.5 2007/09/03 14:31:37 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.4 2006/12/31 02:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.5 2007/09/03 14:31:37 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.4 2006/12/31 02:20:49 ya
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -192,7 +193,7 @@ static int  xennet_xenbus_resume(void *);
 static void xennet_alloc_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_free_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_tx_complete(struct xennet_xenbus_softc *);
-static void xennet_rx_mbuf_free(struct mbuf *, caddr_t, size_t, void *);
+static void xennet_rx_mbuf_free(struct mbuf *, void *, size_t, void *);
 static int  xennet_handler(void *);
 #ifdef XENNET_DEBUG_DUMP
 static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
@@ -203,7 +204,7 @@ static void xennet_stop(struct ifnet *, int);
 static void xennet_reset(struct xennet_xenbus_softc *);
 static void xennet_softstart(void *);
 static void xennet_start(struct ifnet *);
-static int  xennet_ioctl(struct ifnet *, u_long, caddr_t);
+static int  xennet_ioctl(struct ifnet *, u_long, void *);
 static void xennet_watchdog(struct ifnet *);
 
 CFATTACH_DECL(xennet_xenbus, sizeof(struct xennet_xenbus_softc),
@@ -649,7 +650,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 }
 
 static void
-xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct xennet_rxreq *req = arg;
 	struct xennet_xenbus_softc *sc = req->rxreq_sc;
@@ -792,7 +793,7 @@ again:
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh = pktp;
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				DPRINTFN(XEDB_EVENT,
 				    ("xennet_handler bad dest\n"));
@@ -979,7 +980,7 @@ xennet_softstart(void *arg)
 				}
 			}
 
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(new_m, caddr_t));
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(new_m, void *));
 			new_m->m_len = new_m->m_pkthdr.len = m->m_pkthdr.len;
 
 			if ((new_m->m_flags & M_EXT) != 0) {
@@ -1080,7 +1081,7 @@ xennet_softstart(void *arg)
 }
 
 int
-xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 #ifdef XENNET_DEBUG
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
@@ -1172,14 +1173,16 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	nd->nd_mask.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[3]);
 
 	sin = (struct sockaddr_in *) &nd->nd_root.ndm_saddr;
-	memset((caddr_t)sin, 0, sizeof(*sin));
+	memset((void *)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
-
-	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-	    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

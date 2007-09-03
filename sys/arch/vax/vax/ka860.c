@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.26.2.2 2006/12/30 20:47:14 yamt Exp $	*/
+/*	$NetBSD: ka860.c,v 1.26.2.3 2007/09/03 14:30:57 yamt Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26.2.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26.2.3 2007/09/03 14:30:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26.2.2 2006/12/30 20:47:14 yamt Exp $");
 #include <vax/vax/gencons.h>
 
 static	void	ka86_memerr(void);
-static	int	ka86_mchk(caddr_t);
+static	int	ka86_mchk(void *);
 static	void	ka86_reboot(int);
 static	void	ka86_clrf(void);
 static	void	ka860_init(void);
@@ -223,7 +223,7 @@ struct mc8600frame {
 
 /* machine check */
 int
-ka86_mchk(caddr_t cmcf)
+ka86_mchk(void *cmcf)
 {
 	register struct mc8600frame *mcf = (struct mc8600frame *)cmcf;
 	register int type;

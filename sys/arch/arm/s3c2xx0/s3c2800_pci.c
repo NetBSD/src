@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.10.2.1 2006/06/21 14:49:34 yamt Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.10.2.2 2007/09/03 14:23:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.10.2.1 2006/06/21 14:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.10.2.2 2007/09/03 14:23:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ void	s3c2800_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 int	s3c2800_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
-void * s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
+void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
 				  int (*) (void *), void *);
 void	s3c2800_pci_intr_disestablish(void *, void *);
 

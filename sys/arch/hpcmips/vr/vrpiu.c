@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.34.2.2 2006/12/30 20:46:03 yamt Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.34.2.3 2007/09/03 14:26:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.34.2.2 2006/12/30 20:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.34.2.3 2007/09/03 14:26:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void	vrpiu_dump_cntreg(unsigned int);
 #endif
 
 static int	vrpiu_tp_enable(void *);
-static int	vrpiu_tp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	vrpiu_tp_ioctl(void *, u_long, void *, int, struct lwp *);
 static void	vrpiu_tp_disable(void *);
 static void	vrpiu_tp_up(struct vrpiu_softc *);
 static void	vrpiu_tp_timeout(void *);
@@ -245,7 +245,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
 	/* initialize touch panel timeout structure	*/
-	callout_init(&sc->sc_tptimeout);
+	callout_init(&sc->sc_tptimeout, 0);
 
 	/* initialize calibration context	*/
 	tpcalib_init(&sc->sc_tpcalib);
@@ -302,7 +302,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 				break;
 		}
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		    (caddr_t)__UNCONST(&calibrations[i].coords), 0, 0);
+		    (void *)__UNCONST(&calibrations[i].coords), 0, 0);
 	}
 #endif
 
@@ -344,7 +344,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	sc->sc_battery.value[1] = -1;
 	sc->sc_battery.value[2] = -1;
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
-	callout_init(&sc->sc_adpoll);
+	callout_init(&sc->sc_adpoll, 0);
 	callout_reset(&sc->sc_adpoll, hz, vrpiu_start_powerstate, sc);
 }
 
@@ -515,7 +515,7 @@ vrpiu_tp_disable(void *v)
 }
 
 int
-vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vrpiu_tp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vrpiu_softc *sc = v;
 

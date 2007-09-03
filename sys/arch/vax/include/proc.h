@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6.16.1 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.16.2 2007/09/03 14:30:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -56,7 +56,7 @@ struct mdproc {
 
 /* kernel stack params */
 #define	KSTACK_LOWEST_ADDR(l)	\
-	((caddr_t)(l)->l_addr + (REDZONEADDR + VAX_NBPG))
+	((void *)(l)->l_addr + (REDZONEADDR + VAX_NBPG))
 #define	KSTACK_SIZE	\
 	(USPACE - (REDZONEADDR + VAX_NBPG))
 

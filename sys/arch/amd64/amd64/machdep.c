@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34.2.3 2007/02/26 09:05:40 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34.2.4 2007/09/03 14:22:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.3 2007/02/26 09:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.4 2007/09/03 14:22:31 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -92,18 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.3 2007/02/26 09:05:40 yamt Exp $"
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -127,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.3 2007/02/26 09:05:40 yamt Exp $"
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -135,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.3 2007/02/26 09:05:40 yamt Exp $"
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+#include <x86/cpu_msr.h>
 #include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
@@ -231,6 +230,7 @@ int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
+void	dodumpsys(void);
 void	init_x86_64(paddr_t);
 
 /*
@@ -267,7 +267,7 @@ cpu_startup(void)
 			  
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(sz));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
 
 	printf("%s%s", copyright, version);
 
@@ -306,6 +306,9 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+	gdt_init();
+	x86_64_proc0_tss_ldt_init();
 }
 
 /*
@@ -314,56 +317,34 @@ cpu_startup(void)
 void
 x86_64_proc0_tss_ldt_init(void)
 {
+	struct lwp *l;
 	struct pcb *pcb;
 	int x;
 
-	gdt_init();
-
-	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
-
+	l = &lwp0;
+	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
+	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
+	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l->l_addr + PAGE_SIZE;
 	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
 	    + PAGE_SIZE - 16;
-	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	l->l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(lwp0.l_md.md_tss_sel);
+	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 }
-
-/*       
- * Set up TSS and LDT for a new PCB.
- */         
-         
-void    
-x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
-{        
-	int x;      
-	struct pcb *pcb = ci->ci_idle_pcb;
- 
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
-	/* XXXfvdl pmap_kernel not needed */ 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
-        
-        ci->ci_idle_tss_sel = tss_alloc(pcb);
-}       
-
 
 /*  
  * machine dependent system variables.
@@ -464,9 +445,9 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
-		sp = (caddr_t)tf->tf_rsp - 128;
+		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/*
@@ -498,7 +479,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -638,7 +619,7 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -678,7 +659,7 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -744,18 +725,15 @@ reserve_dumppages(vaddr_t p)
 }
 
 void
-dumpsys(void)
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
 		return;
@@ -809,7 +787,7 @@ dumpsys(void)
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 			    VM_PROT_READ);
 
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -879,6 +857,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
@@ -1029,7 +1009,6 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary);
 
 	lwp0.l_addr = proc0paddr;
-	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
 	x86_bus_space_init();
 
@@ -1398,13 +1377,13 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
-
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
 	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
@@ -1527,9 +1506,13 @@ init_x86_64(paddr_t first_avail)
 	splraise(IPL_IPI);
 	enable_intr();
 
+	x86_init();
+
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
+
+	curlwp = &lwp0;
 }
 
 void
@@ -1556,7 +1539,7 @@ cpu_reset(void)
 	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
-	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
+	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
@@ -1564,7 +1547,7 @@ cpu_reset(void)
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	memset((caddr_t)PTD, 0, PAGE_SIZE);
+	memset((void *)PTD, 0, PAGE_SIZE);
 	tlbflush(); 
 #endif
 
@@ -1608,7 +1591,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	memcpy(mcp->__gregs, tf, sizeof *tf);
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) mcp->__gregs[_REG_RIP])) != -1)
+	    (void *) mcp->__gregs[_REG_RIP])) != -1)
 		mcp->__gregs[_REG_RIP] = ras_rip;
 
 	*flags |= _UC_CPU;
@@ -1745,15 +1728,28 @@ cpu_initclocks(void)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
 	ci->ci_want_resched = 1;
-	if (ci->ci_curlwp != NULL)
+
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
 		aston(ci->ci_curlwp);
 #ifdef MULTIPROCESSOR
-	if (ci != curcpu())
-		x86_send_ipi(ci, 0);
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
 #endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
+		    ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
 }
 
 void

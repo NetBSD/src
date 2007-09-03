@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.36.8.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: spr.h,v 1.36.8.3 2007/09/03 14:28:59 yamt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -97,6 +97,7 @@
 #define	  MPC7410		  0x800c
 #define	  MPC5200		  0x8011
 #define	  MPC8245		  0x8081
+#define   MPCG2			  0x8082
 #define	  IBM970		  0x0039
 #define   IBM970FX		  0x003c
 

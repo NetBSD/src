@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4.14.2 2007/02/26 09:07:54 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4.14.3 2007/09/03 14:29:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.14.2 2007/02/26 09:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.14.3 2007/09/03 14:29:01 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -75,7 +75,7 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigcontext *)((caddr_t)l->l_sigstk.ss_sp +
+		fp = (struct sigcontext *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct sigcontext *)tf->fixreg[1];

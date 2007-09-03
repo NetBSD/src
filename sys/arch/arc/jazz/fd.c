@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.21.2.1 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.21.2.2 2007/09/03 14:23:09 yamt Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.21.2.1 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.21.2.2 2007/09/03 14:23:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,8 @@ fdcattach(struct fdc_softc *fdc)
 
 	iot = fdc->sc_iot;
 	ioh = fdc->sc_ioh;
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
@@ -335,8 +335,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	const struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -424,7 +424,7 @@ fdstrategy(struct buf *bp)
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -442,7 +442,7 @@ fdstrategy(struct buf *bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -476,8 +476,6 @@ fdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -862,7 +860,7 @@ loop:
 		}
 #endif
 		read = (bp->b_flags & B_READ) != 0;
-		FDCDMA_START(fdc, bp->b_data + fd->sc_skip,
+		FDCDMA_START(fdc, (char *)bp->b_data + fd->sc_skip,
 		    fd->sc_nbytes, read);
 		bus_space_write_1(iot, ioh, FDCTL, type->rate);
 #ifdef FD_DEBUG
@@ -1056,7 +1054,6 @@ fdcretry(struct fdc_softc *fdc)
 		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
@@ -1064,7 +1061,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;

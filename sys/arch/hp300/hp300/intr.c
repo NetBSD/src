@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25.12.2 2006/12/30 20:45:56 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.25.12.3 2007/09/03 14:25:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25.12.2 2006/12/30 20:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25.12.3 2007/09/03 14:25:19 yamt Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -285,8 +285,10 @@ intr_dispatch(int evec /* format | vector offset */)
 	static int straycount, unexpected;
 
 	vec = (evec & 0xfff) >> 2;
+#ifdef DIAGNOSTIC
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
 		panic("intr_dispatch: bad vec 0x%x", vec);
+#endif
 	ipl = vec - ISRLOC;
 
 	hp300_intr_list[ipl].hi_evcnt.ev_count++;

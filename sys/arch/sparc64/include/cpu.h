@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47.2.3 2007/02/26 09:08:24 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.47.2.4 2007/09/03 14:30:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,14 +114,12 @@ struct cpu_info {
 	struct lwp		*ci_fplwp;
 
 	void			*ci_eintstack;
-	struct pcb		*ci_idle_u;
 
 	int			ci_mtx_count;
 	int			ci_mtx_oldspl;
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup)(void);
-	void			*ci_initstack;
 	paddr_t			ci_paddr;
 
 	int			ci_number;
@@ -158,8 +156,6 @@ struct cpu_bootargs {
 	vaddr_t cb_ekdata;
 
 	paddr_t	cb_cpuinfo;
-
-	void	*cb_initstack;
 };
 
 extern struct cpu_bootargs *cpu_args;
@@ -252,12 +248,6 @@ void setsoftint(void);
 void setsoftnet(void);
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-#define	cpu_need_resched(ci)	(want_resched = 1, want_ast = 1)
-
-/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
@@ -296,7 +286,7 @@ void	intr_establish(int level, struct intrhand *);
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-caddr_t	reserve_dumppages(caddr_t);
+void *	reserve_dumppages(void *);
 /* clock.c */
 struct timeval;
 int	tickintr(void *);	/* level 10 (tick) interrupt code */
@@ -313,7 +303,7 @@ int	probeset(paddr_t, int, int, uint64_t);
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
 
-void 	proc_trampoline(void);
+void 	lwp_trampoline(void);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);

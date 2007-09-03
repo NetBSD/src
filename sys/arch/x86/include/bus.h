@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9.2.2 2007/02/26 09:08:46 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.3 2007/09/03 14:31:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1105,8 +1105,8 @@ struct x86_bus_dma_tag {
 		    bus_size_t, bus_dma_segment_t *, int, int *, int);
 	void	(*_dmamem_free)(bus_dma_tag_t, bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 	int 	(*_dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43.2.3 2007/02/26 09:07:22 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43.2.4 2007/09/03 14:27:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.2.3 2007/02/26 09:07:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.2.4 2007/09/03 14:27:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.2.3 2007/02/26 09:07:22 yamt Exp $
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/wsfb/genfbvar.h>
 
 void canonicalize_bootpath __P((void));
 void ofw_stack __P((void));
@@ -63,6 +64,9 @@ char cbootpath[256];
 int    console_node = 0, console_instance = 0;
 
 u_int *heathrow_FCR = NULL;
+
+struct genfb_colormap_callback gfb_cb;
+static void of_set_palette(void *, int, int, int, int);
 
 static void add_model_specifics(prop_dictionary_t);
 static void copyprops(int, prop_dictionary_t);
@@ -280,15 +284,22 @@ device_register(dev, aux)
 				sub = OF_peer(sub);
 			}
 			if (sub == console_node) {
-				console = TRUE;
+				console = true;
 			}
 		}
 
 		if (console) {
+			uint64_t cmap_cb;
 
 			prop_dictionary_set_uint32(dict, "instance_handle",
 			    console_instance);
 			copyprops(console_node, dict);
+
+			gfb_cb.gcc_cookie = (void *)console_instance;
+			gfb_cb.gcc_set_mapreg = of_set_palette;
+			cmap_cb = (uint64_t)&gfb_cb;
+			prop_dictionary_set_uint64(dict, "cmap_callback",
+			    cmap_cb);
 		}
 	}
 
@@ -543,7 +554,14 @@ copyprops(int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
 	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
-	OF_to_intprop(dict, console_node, "depth", "depth");
+	if (!OF_to_intprop(dict, console_node, "depth", "depth")) {
+		/*
+		 * XXX we should check linebytes vs. width but those
+		 * FBs that don't have a depth property ( /chaos/control... )
+		 * won't have linebytes either
+		 */
+		prop_dictionary_set_uint32(dict, "depth", 8);
+	}
 	if (!OF_to_intprop(dict, console_node, "address", "address")) {
 		uint32_t fbaddr = 0;
 			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
@@ -552,4 +570,22 @@ copyprops(int node, prop_dictionary_t dict)
 	}
 	OF_to_dataprop(dict, console_node, "EDID", "EDID");
 	add_model_specifics(dict);
+
+	temp = 0;
+	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+
+		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		    sizeof(temp));
+	}
+	if (temp != 0)
+		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
 }
+
+static void
+of_set_palette(void *cookie, int index, int r, int g, int b)
+{
+	int ih = (int)cookie;
+
+	OF_call_method_1("color!", ih, 4, r, g, b, index);
+}
+

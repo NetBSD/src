@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.2.3 2007/02/26 09:08:28 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.4 2007/09/03 14:30:24 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.3 2007/02/26 09:08:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.4 2007/09/03 14:30:24 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -407,8 +407,6 @@ static void pmap_alloc_bootargs(void)
 	memset(v, 0, 2*PAGE_SIZE);
 
 	cpu_args = (struct cpu_bootargs*)v;
-
-	cpu_args->cb_initstack = v + 2*PAGE_SIZE;
 }
 
 #if defined(MULTIPROCESSOR)
@@ -663,7 +661,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			(void *)msgbufp));
 	}
 	msgbufmapped = 1;	/* enable message buffer */
-	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
+	initmsgbuf((void *)msgbufp, msgbufsiz);
 
 	/*
 	 * Find out how much RAM we have installed.
@@ -1097,10 +1095,12 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
-		cpus->ci_idle_u = (struct pcb *)IDLE_U_VA;
 		cpus->ci_cpcb = (struct pcb *)u0va;
-		cpus->ci_initstack = (void *)INITSTACK_VA;
 		proc0paddr = cpus->ci_cpcb;
+
+		lwp0.l_addr = (struct user*)u0va;
+		lwp0.l_md.md_tf = (struct trapframe64*)(u0va + USPACE
+		    - sizeof(struct trapframe64));
 
 		cpu0paddr += 128 * KB;
 
@@ -1112,7 +1112,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			 ("Done inserting cpu_info into pmap_kernel()\n"));
 	}
 
-	vmmap = (vaddr_t)reserve_dumppages((caddr_t)(u_long)vmmap);
+	vmmap = (vaddr_t)reserve_dumppages((void *)(u_long)vmmap);
 
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
@@ -1173,9 +1173,9 @@ pmap_init()
 	 * initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry",
-	    &pool_allocator_nointr);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
@@ -1436,7 +1436,7 @@ pmap_activate_pmap(struct pmap *pmap)
 	if (pmap->pm_ctx == 0) {
 		(void) ctx_alloc(pmap);
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, pmap->pm_ctx);
+	dmmu_set_secondary_context(pmap->pm_ctx);
 }
 
 /*
@@ -1485,6 +1485,8 @@ pmap_kenter_pa(va, pa, prot)
 	/* We don't track mod/ref here. */
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W|TLB_W;
+	if (prot & VM_PROT_EXECUTE)
+		tte.data |= TLB_EXEC;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
 	ptp = 0;
 
@@ -1846,9 +1848,10 @@ pmap_remove_all(pm)
 	if (pm == pmap_kernel()) {
 		return;
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, 0);
+	write_user_windows();
 	pm->pm_refs = 0;
 	ctx_free(pm);
+	REMOVE_STAT(flushes);
 	blast_dcache();
 }
 
@@ -2170,7 +2173,7 @@ pmap_dumpsize()
  *	phys_ram_seg_t[phys_installed_size]  physical memory segments
  */
 int
-pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
+pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 {
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;
@@ -2187,7 +2190,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 		*bp++ = *sp++;						\
 		if (bp >= ep) {						\
 			error = (*dump)(dumpdev, blkno,			\
-					(caddr_t)buffer, dbtob(1));	\
+					(void *)buffer, dbtob(1));	\
 			if (error != 0)					\
 				return (error);				\
 			++blkno;					\
@@ -2240,7 +2243,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 	}
 
 	if (bp != buffer)
-		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
+		error = (*dump)(dumpdev, blkno++, (void *)buffer, dbtob(1));
 
 	return (error);
 }

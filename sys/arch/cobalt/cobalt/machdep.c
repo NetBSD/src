@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.3 2007/02/26 09:06:13 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.4 2007/09/03 14:23:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.3 2007/02/26 09:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.4 2007/09/03 14:23:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,8 +118,8 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
 
-char *	nfsroot_bstr = NULL;
-char *	root_bstr = NULL;
+char	*nfsroot_bstr = NULL;
+char	*root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
@@ -143,7 +143,7 @@ int mem_cluster_cnt;
 
 void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
-static char *	strtok_light(char *, const char);
+static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
 
 /*
@@ -152,7 +152,7 @@ static u_int read_board_id(void);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern caddr_t esym;
+extern char *esym;
 extern struct user *proc0paddr;
 
 
@@ -163,31 +163,52 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	caddr_t kernend, v;
+	char *kernend, *v;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	caddr_t ssym = 0;
+	char *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
+	struct btinfo_howto *bi_howto;
 
 	/*
-	 * Clear the BSS segment.
+	 * Clear the BSS segment (if needed).
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
+#if NKSYMS || defined(DDB) || defined(LKM)
 		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (caddr_t)mips_round_page(esym);
-		memset(edata, 0, end - edata);
-	} else
 #endif
-	{
-		kernend = (caddr_t)mips_round_page(end);
+		kernend = (char *)mips_round_page(esym);
+		/*
+		 * We don't have to clear BSS here
+		 * since our bootloader already does it.
+		 */
+#if 0
+		memset(edata, 0, end - edata);
+#endif
+	} else {
+		kernend = (void *)mips_round_page(end);
+		/*
+		 * No symbol table, so assume we are loaded by
+		 * the firmware directly with "bfd" command.
+		 * The firmware loader doesn't clear BSS of
+		 * a loaded kernel, so do it here.
+		 */
 		memset(edata, 0, kernend - edata);
+
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
 	}
 
 	/* Check for valid bootinfo passed from bootstrap */
@@ -209,11 +230,15 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* Load symbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (caddr_t)bi_syms->ssym;
-		esym = (caddr_t)bi_syms->esym;
-		kernend = (caddr_t)mips_round_page(esym);
+		ssym = (void *)bi_syms->ssym;
+		esym = (void *)bi_syms->esym;
+		kernend = (void *)mips_round_page(esym);
 	}
 #endif
+
+	bi_howto = lookup_bootinfo(BTINFO_HOWTO);
+	if (bi_howto != NULL)
+		boothowto = bi_howto->bi_howto;
 
 	cobalt_id = read_board_id();
 	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
@@ -309,11 +334,11 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 /*
@@ -669,7 +694,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		/* call the common MIPS3 clock interrupt handler */ 
+		/* call the common MIPS3 clock interrupt handler */
 		cf.pc = pc;
 		cf.sr = status;
 		mips3_clockintr(&cf);
@@ -755,7 +780,7 @@ decode_bootstring(void)
 	char *equ;
 	int i;
 
-	/* break apart bootstring on ' ' boundries  and itterate*/
+	/* break apart bootstring on ' ' boundries and itterate */
 	work = strtok_light(bootstring, ' ');
 	while (work != '\0') {
 		/* if starts with '-', we got options, walk its decode */
@@ -768,12 +793,12 @@ decode_bootstring(void)
 		} else
 
 		/* if it has a '=' its an assignment, switch and set */
-		if ((equ = strchr(work,'=')) != '\0') {
-			if(0 == memcmp("nfsroot=", work, 8)) {
-				nfsroot_bstr = (equ +1);
+		if ((equ = strchr(work, '=')) != '\0') {
+			if (memcmp("nfsroot=", work, 8) == 0) {
+				nfsroot_bstr = (equ + 1);
 			} else
-			if(0 == memcmp("root=", work, 5)) {
-				root_bstr = (equ +1);
+			if (memcmp("root=", work, 5) == 0) {
+				root_bstr = (equ + 1);
 			}
 		} else
 
@@ -792,7 +817,7 @@ decode_bootstring(void)
 	if (root_bstr != NULL) {
 		/* this should be of the form "/dev/hda1" */
 		/* [abcd][1234]    drive partition  linux probe order */
-		if ((memcmp("/dev/hd",root_bstr,7) == 0) &&
+		if ((memcmp("/dev/hd", root_bstr, 7) == 0) &&
 		    (strlen(root_bstr) == 9) ){
 			bootunit = root_bstr[7] - 'a';
 			bootpart = root_bstr[8] - '1';
@@ -810,16 +835,16 @@ strtok_light(char *str, const char sep)
 
 	if (str != NULL)
 		proc = str;
-	if (proc == NULL)  /* end of string return NULL */
+	if (proc == NULL)	/* end of string return NULL */
 		return proc;
 
 	head = proc;
 
-	work = strchr (proc, sep);
-	if (work == NULL) {  /* we hit the end */
+	work = strchr(proc, sep);
+	if (work == NULL) {	/* we hit the end */
 		proc = work;
 	} else {
-		proc = (work +1 );
+		proc = (work + 1);
 		*work = '\0';
 	}
 
@@ -855,7 +880,7 @@ lookup_bootinfo(int type)
 
 /*
  * Get board ID of cobalt models.
- * 
+ *
  * The board ID info is stored at the PCI config register
  * on the PCI-ISA bridge part of the VIA VT82C586 chipset.
  * We can't use pci_conf_read(9) yet here, so read it directly.
@@ -881,7 +906,7 @@ read_board_id(void)
 	reg = *pcicfg_data;
 	*pcicfg_addr = 0;
 
-	return COBALT_BOARD_ID(reg); 
+	return COBALT_BOARD_ID(reg);
 }
 
 static const int ipl2spl_table[] = {

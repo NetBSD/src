@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.3 2007/02/26 09:06:35 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.4 2007/09/03 14:25:43 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -186,8 +186,8 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
 #define	cpu_signotify(l)	(setsoftast())
-#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_did_resched()	do { want_resched = 0; } while(0)
 
 #include <sys/cpu_data.h>
 struct cpu_info {
@@ -229,7 +229,7 @@ extern int want_resched;
 #define DELAY(x) delay(x)
 
 static __inline paddr_t
-kvtop(const caddr_t va)
+kvtop(const void *va)
 {
 	paddr_t pa;
 
@@ -247,8 +247,7 @@ int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
 		 size_t *);
 int	copy_on_fault(void);
-void	switch_trampoline(void);
-void	switch_exit(struct lwp *, void (*)(struct lwp *));
+void	lwp_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
 #endif

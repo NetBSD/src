@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.11 2005/06/22 06:06:34 junyoung Exp $	*/
+/*	$NetBSD: boot2.c,v 1.11.2.1 2007/09/03 14:26:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -335,7 +335,7 @@ command_dev(char *arg)
 		return;
 	}
 
-	if (strchr(arg, ':') != NULL ||
+	if (strchr(arg, ':') == NULL ||
 	    parsebootfile(arg, &fsname, &devname, &default_unit,
 			  &default_partition, &file)) {
 		command_help(NULL);

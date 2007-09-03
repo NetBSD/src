@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2.14.4 2007/02/26 09:07:06 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.2.14.5 2007/09/03 14:26:57 yamt Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.4 2007/02/26 09:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.5 2007/09/03 14:26:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 #endif
 
 	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
-		if (uvm.page_init_done == TRUE)
+		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
 #if 0
@@ -382,7 +382,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 		va = IA64_PHYS_TO_RR7(pa);
-		memset((caddr_t)va, 0, size);
+		memset((void *)va, 0, size);
 		pmap_pages_stolen += npgs;
 		return (va);
 	}
@@ -419,7 +419,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 #endif
 
 	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
-		if (uvm.page_init_done == TRUE)
+		if (uvm.page_init_done == true)
 			panic("pmap_vhpt_steal_memory: called _after_ bootstrap");
 
 #if 1
@@ -515,7 +515,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 	 */
 	pa = ptoa(vhpt_start);
 	va = IA64_PHYS_TO_RR7(pa);
-	memset((caddr_t)va, 0, size);
+	memset((void *)va, 0, size);
 	pmap_pages_stolen += npgs;
 	return (va);
 }
@@ -646,9 +646,8 @@ pmap_bootstrap()
 	 * Initialize the pmap pools and list.
 	 */
 	pmap_ncpuids = pmap_ridmax;
-	pool_init(&pmap_pmap_pool,
-		  sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr); /* This may block. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr, IPL_NONE); /* This may block. */
 
 	/* XXX: Need to convert ia64_kptdir[][] to a pool. ????*/
 
@@ -656,11 +655,11 @@ pmap_bootstrap()
 	 * XXX: We should be using regular vm_alloced mem for regular, non-kernel ptesl
 	 */
 
-	pool_init(&pmap_ia64_lpte_pool, sizeof (struct ia64_lpte), sizeof(void *), 0, 0, "ptpl",
-		  NULL); 
+	pool_init(&pmap_ia64_lpte_pool, sizeof (struct ia64_lpte),
+	    sizeof(void *), 0, 0, "ptpl", NULL, IPL_NONE); 
 
-	pool_init(&pmap_pv_pool, sizeof (struct pv_entry), sizeof(void *), 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
+	pool_init(&pmap_pv_pool, sizeof (struct pv_entry), sizeof(void *),
+	    0, 0, "pvpl", &pmap_pv_page_allocator, IPL_NONE);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 
@@ -812,7 +811,7 @@ pmap_init(void)
 	/*
 	 * Now it is safe to enable pv entry recording.
 	 */
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 
 }
 
@@ -828,7 +827,7 @@ vtophys(va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == true)
 		return (pa);
 	return (0);
 }
@@ -936,7 +935,7 @@ void
 pmap_zero_page(paddr_t phys)
 {
 	vaddr_t va = IA64_PHYS_TO_RR7(phys);
-	bzero((caddr_t) va, PAGE_SIZE);
+	bzero((void *) va, PAGE_SIZE);
 }
 
 /*
@@ -953,7 +952,7 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 {
 	vaddr_t vsrc = IA64_PHYS_TO_RR7(psrc);
 	vaddr_t vdst = IA64_PHYS_TO_RR7(pdst);
-	bcopy((caddr_t) vsrc, (caddr_t) vdst, PAGE_SIZE);
+	bcopy((void *) vsrc, (void *) vdst, PAGE_SIZE);
 }
 
 
@@ -1057,7 +1056,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
         else
                 pmap_enter_vhpt(pte, va);
         pmap_pte_prot(pmap_kernel(), pte, prot);
-        pmap_set_pte(pte, va, pa, FALSE, FALSE);
+        pmap_set_pte(pte, va, pa, false, false);
 
 }
 
@@ -1260,10 +1259,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
         if (pte != NULL && pmap_present(pte))
                 pap = (paddr_t *) pmap_ppn(pte);
 	else
-		return FALSE;	
+		return false;	
         pmap_install(oldpmap);
         simple_unlock(pmap->pm_slock);
-        return TRUE;
+        return true;
 
 }
 
@@ -1275,7 +1274,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	bool rv = FALSE;
+	bool rv = false;
 	struct ia64_lpte *pte;
 	pmap_t oldpmap;
 	pv_entry_t pv;
@@ -1289,7 +1288,7 @@ pmap_clear_modify(struct vm_page *pg)
 		pte = pmap_find_vhpt(pv->pv_va);
 		KASSERT(pte != NULL);
 		if (pmap_dirty(pte)) {
-			rv = TRUE;
+			rv = true;
 			pmap_clear_dirty(pte);
 			pmap_invalidate_page(pv->pv_pmap, pv->pv_va);
 		}
@@ -1363,7 +1362,7 @@ pmap_reference(pmap_t pmap)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -1376,7 +1375,7 @@ pmap_clear_reference(struct vm_page *pg)
  *	Note: no locking is necessary in this function.
  */
 paddr_t
-pmap_phys_address(int ppn)
+pmap_phys_address(paddr_t ppn)
 {
 
 	return (ia64_ptob(ppn));
@@ -1416,7 +1415,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
                         
         va &= ~PAGE_MASK;
 
-        managed = FALSE;
+        managed = false;
 
 	wired = (flags & PMAP_WIRED) !=0;
 
@@ -1463,7 +1462,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
                 else if (!wired && pmap_wired(&origpte))
                         pmap->pm_stats.wired_count--;
 
-                managed = (pmap_managed(&origpte)) ? TRUE : FALSE;
+                managed = (pmap_managed(&origpte)) ? true : false;
 
 
                 /*
@@ -1492,7 +1491,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
         if ((flags & (PG_FAKE)) == 0) {
                 pmap_insert_entry(pmap, va, pg);
-                managed = TRUE;
+                managed = true;
         }
 
         /*
@@ -2145,9 +2144,9 @@ pmap_poolpage_alloc(paddr_t *pap)
 		simple_unlock(&pg->mdpage.pv_slock);
 #endif
 		*pap = pa;
-		return (TRUE);
+		return (true);
 	}
-	return (FALSE);
+	return (false);
 }
 
 /*

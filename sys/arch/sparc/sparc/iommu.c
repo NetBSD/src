@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.81.2.2 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: iommu.c,v 1.81.2.3 2007/09/03 14:30:04 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.2.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.2.3 2007/09/03 14:30:04 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -106,8 +106,8 @@ void	iommu_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 			bus_size_t, int);
 
 int	iommu_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-			int, size_t, caddr_t *, int);
-void	iommu_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+			int, size_t, void **, int);
+void	iommu_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 paddr_t	iommu_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *,
 			int, off_t, int, int);
 int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
@@ -362,7 +362,7 @@ iommu_copy_prom_entries(struct iommu_softc *sc)
 		mmupcr_save = lda(SRMMU_PCR, ASI_SRMMU);
 		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save | VIKING_PCR_AC);
 	} else
-		mmupcr_save = 0; /* XXX - avoid GCC `unintialized' warning */
+		mmupcr_save = 0; /* XXX - avoid GCC `uninitialized' warning */
 
 	/* Flush entire IOMMU TLB before messing with the in-memory tables */
 	IOMMU_FLUSHALL(sc);
@@ -579,7 +579,8 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 					&dva, &sgsize)) != 0)
 		return (error);
 
-	if (sc->sc_cachecoherent == 0)
+	if ((sc->sc_cachecoherent == 0) || 
+	    (curcpu()->cacheinfo.ec_totalsize == 0))
 		cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
@@ -740,7 +741,7 @@ iommu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
  */
 int
 iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-		 size_t size, caddr_t *kvap, int flags)
+		 size_t size, void **kvap, int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
@@ -770,7 +771,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	/*
 	 * Map the pages allocated in _bus_dmamem_alloc() to the
@@ -797,7 +798,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-iommu_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+iommu_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.12.22.1 2006/06/21 14:56:40 yamt Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.12.22.2 2007/09/03 14:30:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -84,8 +84,8 @@ int	iommu_dvmamem_alloc(bus_dma_tag_t, struct strbuf_ctl *, bus_size_t,
 void	iommu_dvmamem_free(bus_dma_tag_t, struct strbuf_ctl *,
 		bus_dma_segment_t *, int);
 int	iommu_dvmamem_map(bus_dma_tag_t, struct strbuf_ctl *,
-		bus_dma_segment_t *, int, size_t, caddr_t *, int);
-void	iommu_dvmamem_unmap(bus_dma_tag_t, struct strbuf_ctl *, caddr_t,
+		bus_dma_segment_t *, int, size_t, void **, int);
+void	iommu_dvmamem_unmap(bus_dma_tag_t, struct strbuf_ctl *, void *,
 		size_t);
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */

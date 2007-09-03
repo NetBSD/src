@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.3.44.1 2006/12/30 20:47:13 yamt Exp $ */
+/*	$NetBSD: if_qe.c,v 1.3.44.2 2007/09/03 14:30:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -123,12 +123,12 @@ qe_init(u_char *eaddr)
 		eaddr[i] = QE_RCSR(i * 2);
 	}
 
-	bzero((caddr_t)sc->rring, sizeof(struct qe_ring));
+	bzero((void *)sc->rring, sizeof(struct qe_ring));
 	sc->rring->qe_buf_len = -64;
 	sc->rring->qe_addr_lo = (short)((int)sc->setup_pkt);
 	sc->rring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);
 
-	bzero((caddr_t)sc->tring, sizeof(struct qe_ring));
+	bzero((void *)sc->tring, sizeof(struct qe_ring));
 	sc->tring->qe_buf_len = -64;
 	sc->tring->qe_addr_lo = (short)((int)sc->setup_pkt);
 	sc->tring->qe_addr_hi = (short)((int)sc->setup_pkt >> 16);

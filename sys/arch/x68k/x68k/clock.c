@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.20.2.3 2007/09/03 14:31:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20.2.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20.2.3 2007/09/03 14:31:15 yamt Exp $");
 
 #include "clock.h"
 
@@ -230,7 +230,7 @@ DELAY(mic)
 	 */
 
 	/*
-	 * this function uses HSync pulses as base units. The custom chips 
+	 * this function uses HSync pulses as base units. The custom chips
 	 * display only deals with 31.6kHz/2 refresh, this gives us a
 	 * resolution of 1/15800 s, which is ~63us (add some fuzz so we really
 	 * wait awhile, even if using small timeouts)
@@ -318,18 +318,18 @@ clockclose(dev_t dev, int flags)
 
 /*ARGSUSED*/
 int
-clockioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+clockioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 {
 	int error = 0;
 	
 	switch (cmd) {
 
 	case CLOCKMAP:
-		error = clockmmap(dev, (caddr_t *)data, p);
+		error = clockmmap(dev, (void **)data, p);
 		break;
 
 	case CLOCKUNMAP:
-		error = clockunmmap(dev, *(caddr_t *)data, p);
+		error = clockunmmap(dev, *(void **)data, p);
 		break;
 
 	case CLOCKGETRES:
@@ -351,7 +351,7 @@ clockmap(dev_t dev, off_t off, int prot)
 }
 
 int
-clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
+clockmmap(dev_t dev, void **addrp, struct proc *p)
 {
 	int error;
 	struct vnode vn;
@@ -362,17 +362,17 @@ clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
-		*addrp = (caddr_t)0x1000000;	/* XXX */
+		*addrp = (void *)0x1000000;	/* XXX */
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+			PAGE_SIZE, VM_PROT_ALL, flags, (void *)&vn, 0);
 	return(error);
 }
 
 int
-clockunmmap(dev_t dev, caddr_t addr, struct proc *p)
+clockunmmap(dev_t dev, void *addr, struct proc *p)
 {
 	int rv;
 
@@ -422,7 +422,7 @@ stopclock(void)
  * locore has been changed to turn the profile clock on/off when switching
  * into/out of a process that is profiling (startprofclock/stopprofclock).
  * This reduces the impact of the profiling clock on other users, and might
- * possibly increase the accuracy of the profiling. 
+ * possibly increase the accuracy of the profiling.
  */
 int  profint   = PRF_INTERVAL;	/* Clock ticks between interrupts */
 int  profscale = 0;		/* Scale factor from sys clock to prof clock */
@@ -487,7 +487,7 @@ stopprofclock(void)
  * Assumes it is called with clock interrupts blocked.
  */
 void
-profclock(caddr_t pc, int ps)
+profclock(void *pc, int ps)
 {
 
 	/*

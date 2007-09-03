@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.12.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.12.4.3 2007/09/03 14:21:58 yamt Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.12.4.2 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.12.4.3 2007/09/03 14:21:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.12.4.2 2006/12/30 20:45:17 yamt Exp 
 static void	tbr_timeout(void *);
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
-static struct callout tbr_callout = CALLOUT_INITIALIZER;
+static struct callout tbr_callout;
 
 #ifdef ALTQ3_CLFIER_COMPAT
 static int 	extract_ports4(struct mbuf *, struct ip *, struct flowinfo_in *);
@@ -663,8 +663,8 @@ read_dsfield(struct mbuf *m, struct altq_pktattr *pktattr)
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+		if (((char *)pktattr->pattr_hdr >= m0->m_data) &&
+		    ((char *)pktattr->pattr_hdr < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 		/* ick, pattr_hdr is stale */
@@ -707,8 +707,8 @@ write_dsfield(struct mbuf *m, struct altq_pktattr *pktattr, u_int8_t dsfield)
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+		if (((char *)pktattr->pattr_hdr >= m0->m_data) &&
+		    ((char *)pktattr->pattr_hdr < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 		/* ick, pattr_hdr is stale */
@@ -856,6 +856,8 @@ init_machclk(void)
 	}
 
 	machclk_per_tick = machclk_freq / hz;
+
+	callout_init(&tbr_callout, 0);
 
 #ifdef ALTQ_DEBUG
 	printf("altq: CPU clock: %uHz\n", machclk_freq);
@@ -1044,8 +1046,8 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 
 	/* locate the mbuf containing the protocol header */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)ip >= m0->m_data) &&
-		    ((caddr_t)ip < m0->m_data + m0->m_len))
+		if (((char *)ip >= m0->m_data) &&
+		    ((char *)ip < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 #ifdef ALTQ_DEBUG
@@ -1053,7 +1055,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 #endif
 		return (0);
 	}
-	off = ((caddr_t)ip - m0->m_data) + (ip->ip_hl << 2);
+	off = ((char *)ip - m0->m_data) + (ip->ip_hl << 2);
 	proto = ip->ip_p;
 
 #ifdef ALTQ_IPSEC
@@ -1073,7 +1075,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 	case IPPROTO_UDP: {
 		struct udphdr *udp;
 
-		udp = (struct udphdr *)(mtod(m0, caddr_t) + off);
+		udp = (struct udphdr *)(mtod(m0, char *) + off);
 		fin->fi_sport = udp->uh_sport;
 		fin->fi_dport = udp->uh_dport;
 		fin->fi_proto = proto;
@@ -1085,7 +1087,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 		if (fin->fi_gpi == 0){
 			u_int32_t *gpi;
 
-			gpi = (u_int32_t *)(mtod(m0, caddr_t) + off);
+			gpi = (u_int32_t *)(mtod(m0, char *) + off);
 			fin->fi_gpi   = *gpi;
 		}
 		fin->fi_proto = proto;
@@ -1095,7 +1097,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 			/* get next header and header length */
 			struct _opt6 *opt6;
 
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
+			opt6 = (struct _opt6 *)(mtod(m0, char *) + off);
 			proto = opt6->opt6_nxt;
 			off += 8 + (opt6->opt6_hlen * 4);
 			if (fin->fi_gpi == 0 && m0->m_len >= off + 8)
@@ -1131,8 +1133,8 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 
 	/* locate the mbuf containing the protocol header */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)ip6 >= m0->m_data) &&
-		    ((caddr_t)ip6 < m0->m_data + m0->m_len))
+		if (((char *)ip6 >= m0->m_data) &&
+		    ((char *)ip6 < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 #ifdef ALTQ_DEBUG
@@ -1140,7 +1142,7 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 #endif
 		return (0);
 	}
-	off = ((caddr_t)ip6 - m0->m_data) + sizeof(struct ip6_hdr);
+	off = ((char *)ip6 - m0->m_data) + sizeof(struct ip6_hdr);
 
 	proto = ip6->ip6_nxt;
 	do {
@@ -1158,7 +1160,7 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 		case IPPROTO_UDP: {
 			struct udphdr *udp;
 
-			udp = (struct udphdr *)(mtod(m0, caddr_t) + off);
+			udp = (struct udphdr *)(mtod(m0, char *) + off);
 			fin6->fi6_sport = udp->uh_sport;
 			fin6->fi6_dport = udp->uh_dport;
 			fin6->fi6_proto = proto;
@@ -1169,7 +1171,7 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 			if (fin6->fi6_gpi == 0) {
 				u_int32_t *gpi;
 
-				gpi = (u_int32_t *)(mtod(m0, caddr_t) + off);
+				gpi = (u_int32_t *)(mtod(m0, char *) + off);
 				fin6->fi6_gpi   = *gpi;
 			}
 			fin6->fi6_proto = proto;
@@ -1179,7 +1181,7 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 			/* get next header and header length */
 			struct _opt6 *opt6;
 
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
+			opt6 = (struct _opt6 *)(mtod(m0, char *) + off);
 			if (fin6->fi6_gpi == 0 && m0->m_len >= off + 8)
 				fin6->fi6_gpi = opt6->ah_spi;
 			proto = opt6->opt6_nxt;
@@ -1194,7 +1196,7 @@ extract_ports6(struct mbuf *m, struct ip6_hdr *ip6, struct flowinfo_in6 *fin6)
 			/* get next header and header length */
 			struct _opt6 *opt6;
 
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
+			opt6 = (struct _opt6 *)(mtod(m0, char *) + off);
 			proto = opt6->opt6_nxt;
 			off += (opt6->opt6_hlen + 1) * 8;
 			/* goto the next header */

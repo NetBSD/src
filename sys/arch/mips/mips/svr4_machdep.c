@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.7.16.1 2007/02/26 09:07:30 yamt Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.7.16.2 2007/09/03 14:28:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.7.16.1 2007/02/26 09:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.7.16.2 2007/09/03 14:28:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ svr4_setmcontext(l, mc, flags)
 	return 0;
 }
 
-void *  
+void * 
 svr4_getmcontext(l, mc, flags)
 	struct lwp *l;
 	svr4_mcontext_t *mc;

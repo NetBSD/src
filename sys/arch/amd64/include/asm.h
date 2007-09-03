@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3.16.3 2007/02/26 09:05:42 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.3.16.4 2007/09/03 14:22:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,11 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-#define _ALIGN_TEXT .align 4
+# ifdef _STANDALONE
+#  define _ALIGN_TEXT .align 4
+# else
+#  define _ALIGN_TEXT .align 32
+# endif
 #endif
 
 #define _ENTRY(x) \

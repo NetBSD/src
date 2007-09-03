@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3.12.2 2007/02/26 09:05:40 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.3.12.3 2007/09/03 14:22:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -83,30 +83,33 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
 
-#if 0
-#if defined(PROF) || defined(GPROF)
 /*
- * XXXX TODO
+ * int splraise(int s);
  */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
+	.align	32
 
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	CPUVAR(ILEVEL), %eax
-	movl	$IPL_HIGH, CPUVAR(ILEVEL)
+ENTRY(splraise)
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edi,%eax
+	cmoval	%eax,%edi
+	movl	%edi,CPUVAR(ILEVEL)
 	ret
 
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movq	%rdi, %rcx
-	SPLLOWER(_C_LABEL(Xspllower))
+/*
+ * void softintr(int sir);
+ *
+ * Software interrupt registration.
+ */
+	.align	32
+
+ENTRY(softintr)
+	movl	%edi,%ecx
+	movl	$1,%eax
+	shll	%cl,%eax
+	orl	%eax,CPUVAR(IPENDING)
 	ret
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * void spllower(int s);
@@ -151,6 +154,7 @@ ENTRY(amd64_spllower)
 	cmpl	%edx,%edi			/* new level is lower? */
 	pushq	%rbx
 	jae,pn	1f
+0:
 	movl	CPUVAR(IPENDING),%eax
 	movl	%edi,%ecx
 	testl	%eax,CPUVAR(IUNMASK)(,%rcx,4)/* deferred interrupts? */
@@ -161,7 +165,7 @@ ENTRY(amd64_spllower)
 	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popq	%rbx
 	ret

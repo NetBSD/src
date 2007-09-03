@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.35.10.1 2006/06/21 14:51:50 yamt Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.35.10.2 2007/09/03 14:26:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.35.10.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.35.10.2 2007/09/03 14:26:01 yamt Exp $");
 
 #undef PLUMVIDEODEBUG
 
@@ -121,7 +121,7 @@ struct plumvideo_softc {
 int	plumvideo_match(struct device*, struct cfdata*, void*);
 void	plumvideo_attach(struct device*, struct device*, void*);
 
-int	plumvideo_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	plumvideo_ioctl(void *, u_long, void *, int, struct lwp *);
 paddr_t	plumvideo_mmap(void *, off_t, int);
 
 CFATTACH_DECL(plumvideo, sizeof(struct plumvideo_softc),
@@ -430,7 +430,7 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 }
 
 int
-plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+plumvideo_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct plumvideo_softc *sc = (struct plumvideo_softc *)v;
 	struct hpcfb_fbconf *fbconf;

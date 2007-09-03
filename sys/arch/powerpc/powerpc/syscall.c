@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.2.3 2007/02/26 09:07:57 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.4 2007/09/03 14:29:04 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,6 @@
  */
 
 #include "opt_altivec.h"
-#include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
@@ -43,9 +42,7 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -55,7 +52,7 @@
 
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
+#define	MOREARGS(sp)	((void *)((uintptr_t)(sp) + 8)) /* more args go here */
 
 #ifndef EMULNAME
 #include <sys/syscall.h>
@@ -63,15 +60,12 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.3 2007/02/26 09:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.4 2007/09/03 14:29:04 yamt Exp $");
 
 void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
-#ifdef KTRACE
-	struct proc * const p = l->l_proc;
-#endif
 	struct trapframe * const tf = trapframe(l);
 
 	KERNEL_UNLOCK_LAST(l);
@@ -82,13 +76,7 @@ child_return(void *arg)
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
 					   be them. */
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 	/* Profiling?							XXX */
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.19.2.2 2006/12/30 20:47:14 yamt Exp $ */
+/*	$NetBSD: ka46.c,v 1.19.2.3 2007/09/03 14:30:54 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19.2.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19.2.3 2007/09/03 14:30:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19.2.2 2006/12/30 20:47:14 yamt Exp $");
 static	void	ka46_conf(void);
 static	void	ka46_steal_pages(void);
 static	void	ka46_memerr(void);
-static	int	ka46_mchk(caddr_t);
+static	int	ka46_mchk(void *);
 static	void	ka46_halt(void);
 static	void	ka46_reboot(int);
 static	void	ka46_cache_enable(void);
@@ -144,7 +144,7 @@ ka46_memerr()
 }
 
 int
-ka46_mchk(caddr_t addr)
+ka46_mchk(void *addr)
 {
 	panic("Machine check");
 	return 0;

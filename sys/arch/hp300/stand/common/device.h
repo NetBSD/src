@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.2.16.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: device.h,v 1.2.16.2 2007/09/03 14:25:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -32,9 +32,9 @@
  */
 
 struct hp_hw {
-	caddr_t	hw_pa;		/* physical address of control space */
+	void *	hw_pa;		/* physical address of control space */
 	int	hw_size;	/* size of control space */
-	caddr_t	hw_kva;		/* kernel virtual address of control space */
+	void *	hw_kva;		/* kernel virtual address of control space */
 	short	hw_id;		/* HW returned id */
 	short	hw_secid;	/* secondary HW id (displays) */
 	short	hw_type;	/* type (defined below) */

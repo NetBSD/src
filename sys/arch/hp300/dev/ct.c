@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.42.2.2 2006/12/30 20:45:56 yamt Exp $	*/
+/*	$NetBSD: ct.c,v 1.42.2.3 2007/09/03 14:24:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42.2.2 2006/12/30 20:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.42.2.3 2007/09/03 14:24:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,6 @@ cteof(struct ct_softc *sc, struct buf *bp)
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_resid = bp->b_bcount;
-		bp->b_flags |= B_ERROR;
 		bp->b_error = ENOSPC;
 		sc->sc_flags |= CTF_EOT;
 		return;
@@ -812,7 +811,6 @@ ctintr(void *arg)
 		} else
 			printf("%s: request status failed\n",
 			    sc->sc_dev.dv_xname);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		goto done;
 	} else
@@ -893,7 +891,7 @@ ctwrite(dev_t dev, struct uio *uio, int flags)
 
 /*ARGSUSED*/
 static int
-ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ctioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.4.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.4.2.3 2007/09/03 14:31:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.4.2.3 2007/09/03 14:31:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,113 +65,14 @@ __KERNEL_RCSID(0, "$NetBSD");
 struct disklist *x86_alldisks;
 int x86_ndisks;
 
-static struct vnode *
-opendisk(struct device *dv)
-{
-	int bmajor, bminor;
-	struct vnode *tmpvn;
-	int error;
-	dev_t dev;
-	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-	if (bmajor == -1)
-		return NULL;
-	
-	bminor = minor(device_unit(dv));
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * and hash the sectors.
-	 */
-	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
-	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
-	if (bdevvp(dev, &tmpvn))
-		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("%s: can't open dev %s (%d)\n",
-			    __func__, dv->dv_xname, error);
-		vput(tmpvn);
-		return NULL;
-	}
-
-	return tmpvn;
-}
-
 static void
 handle_wedges(struct device *dv, int par)
 {
-	struct dkwedge_list wl;
-	struct dkwedge_info *wi;
-	struct vnode *vn;
-	char diskname[16];
-	int i, error;
-
-	if ((vn = opendisk(dv)) == NULL)
-		goto out;
-
-	wl.dkwl_bufsize = sizeof(*wi) * 16;
-	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
-
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
-	VOP_CLOSE(vn, FREAD, NOCRED, 0);
-	vput(vn);
-	if (error) {
-#ifdef DEBUG_WEDGE
-		printf("%s: List wedges returned %d\n", dv->dv_xname, error);
-#endif
-		free(wi, M_TEMP);
-		goto out;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Returned %u(%u) wedges\n", dv->dv_xname,
-	    wl.dkwl_nwedges, wl.dkwl_ncopied);
-#endif
-	snprintf(diskname, sizeof(diskname), "%s%c", dv->dv_xname,
-	    par + 'a');
-
-	for (i = 0; i < wl.dkwl_ncopied; i++) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Looking for %s in %s\n", 
-		    dv->dv_xname, diskname, wi[i].dkw_wname);
-#endif
-		if (strcmp(wi[i].dkw_wname, diskname) == 0)
-			break;
-	}
-
-	if (i == wl.dkwl_ncopied) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Cannot find wedge with parent %s\n",
-		    dv->dv_xname, diskname);
-#endif
-		free(wi, M_TEMP);
-		goto out;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
-		dv->dv_xname, wi[i].dkw_devname, wi[i].dkw_wname,
-		(unsigned long long)wi[i].dkw_offset,
-		(unsigned long long)wi[i].dkw_size);
-#endif
-	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
-	free(wi, M_TEMP);
-	return;
-out:
+	if (config_handle_wedges(dv, par) == 0)
+		return;
 	booted_device = dv;
 	booted_partition = par;
 }
-
 
 static int
 is_valid_disk(struct device *dv)
@@ -208,8 +109,7 @@ matchbiosdisks(void)
 	numbig = big ? big->num : 0;
 
 	/* First, count all native disks. */
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (is_valid_disk(dv))
 			x86_ndisks++;
 	}
@@ -242,8 +142,7 @@ matchbiosdisks(void)
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
@@ -328,7 +227,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
 	     nblks != 0; nblks--, blk++) {
-		error = vn_rdwr(UIO_READ, tmpvn, (caddr_t) bf,
+		error = vn_rdwr(UIO_READ, tmpvn, (void *) bf,
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
@@ -440,8 +339,7 @@ findroot(void)
 	}
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			struct cfdata *cd;
 			size_t len;
 
@@ -467,8 +365,7 @@ findroot(void)
 		 * because lower devices numbers are more likely to be the
 		 * boot device.
 		 */
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -507,8 +404,7 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -570,8 +466,7 @@ findroot(void)
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
 	snprintf(bf, sizeof(bf), "%s%d", name, unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(bf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.17.18.1 2006/06/21 14:50:33 yamt Exp $
+#	$NetBSD: files.evbarm,v 1.17.18.2 2007/09/03 14:24:01 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -13,6 +13,7 @@ defflag			IRQSTATS
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 #
 # Machine-independent ATA drivers

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33.4.1 2006/06/21 14:56:47 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33.4.2 2007/09/03 14:30:19 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -184,7 +184,7 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 
 /* SPARC specific? */
 int             pmap_dumpsize(void);
-int             pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t),
+int             pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t),
                                  daddr_t);
 int		pmap_pa_exists(paddr_t);
 void		switchexit(struct lwp *, int);

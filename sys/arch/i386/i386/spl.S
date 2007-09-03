@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.11.12.3 2007/02/26 09:06:59 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.11.12.4 2007/09/03 14:26:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
+
 #include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
@@ -45,30 +46,31 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
 
-#if 0
-#if defined(PROF) || defined(GPROF)
 /*
- * XXXX TODO
+ * int splraise(int s);
  */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
-	xchgl	%eax,CPUVAR(ILEVEL)
+ENTRY(splraise)
+	movl	4(%esp),%edx
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edx,%eax
+	ja	1f
+	movl	%edx,CPUVAR(ILEVEL)
+1:
 	ret
 
-	ALIGN_TEXT
-_C_LABEL(splx):
+/*
+ * void softintr(int sir);
+ *
+ * Software interrupt registration.
+ */
+ENTRY(softintr)
 	movl	4(%esp),%ecx
-	SPLLOWER(_C_LABEL(Xspllower))
-	/* ret */
-#endif /* PROF || GPROF */
-#endif
+	movl	$1,%eax
+	shll	%cl,%eax
+	orl	%eax,CPUVAR(IPENDING)
+	ret
 
 /*
  * void spllower(int s);
@@ -77,26 +79,23 @@ _C_LABEL(splx):
  * i686_spllower().  This must use pushf/cli/popf as it is used
  * early in boot where interrupts are disabled via eflags/IE.
  */
-	.align 64
-
 ENTRY(spllower)
-	movl	CPUVAR(SELF150), %eax
 	movl	4(%esp), %ecx
-	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	cmpl	CPUVAR(ILEVEL), %ecx
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	movl	CPUVAR(IUNMASK)(,%ecx,4), %edx
 	pushf
 	cli
-	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	testl	CPUVAR(IPENDING), %edx
 	jnz	2f
-	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	movl	%ecx, CPUVAR(ILEVEL)
 	popf
 1:
 	ret
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(spllower_end)
 
 /*
@@ -112,14 +111,13 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-	.align	64
-
 ENTRY(i686_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%ecx			/* new level is lower? */
 	pushl	%ebx
 	jae,pn	1f
+0:
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
@@ -129,7 +127,7 @@ ENTRY(i686_spllower)
 	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popl	%ebx
 	ret
@@ -137,7 +135,7 @@ ENTRY(i686_spllower)
 	popl	%ebx
 LABEL(i686_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(i686_spllower_end)
 
 /*
@@ -158,8 +156,7 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop
-	.align	4	/* Don't get confused with i686_spllower_end */
+	nop	/* Don't get confused with i686_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)

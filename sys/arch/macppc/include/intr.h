@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21.16.2 2007/02/26 09:07:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.16.3 2007/09/03 14:27:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,9 +69,7 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <powerpc/softintr.h>
-#endif
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into

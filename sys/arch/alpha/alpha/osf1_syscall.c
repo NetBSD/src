@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.16.2.3 2007/02/26 09:05:33 yamt Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.16.2.4 2007/09/03 14:22:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.3 2007/02/26 09:05:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.4 2007/09/03 14:22:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
+		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error)
 			goto bad;
@@ -266,7 +266,7 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
+		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error) {
 			args = copyargs;

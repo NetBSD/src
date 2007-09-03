@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.8.2.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.8.2.2 2007/09/03 14:27:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.8.2.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.8.2.2 2007/09/03 14:27:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,7 +146,7 @@ void	netdock_intr(void *);
 static void	netdock_watchdog(struct ifnet *);
 static int	netdock_init(struct netdock_softc *);
 static int	netdock_stop(struct netdock_softc *);
-static int	netdock_ioctl(struct ifnet *, u_long, caddr_t);
+static int	netdock_ioctl(struct ifnet *, u_long, void *);
 static void	netdock_start(struct ifnet *);
 static void	netdock_reset(struct netdock_softc *);
 static void	netdock_txint(struct netdock_softc *);
@@ -374,10 +374,9 @@ netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 }
 
 static int
-netdock_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	struct netdock_softc *sc = ifp->if_softc;
 	int s = splnet();
 	int err = 0;
@@ -418,13 +417,7 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		if (cmd == SIOCADDMULTI)
-			err = ether_addmulti(ifr, &sc->sc_ethercom);
-		else
-			err = ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (err == ENETRESET) {
+		if ((err = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				temp = ifp->if_flags & IFF_UP;
 				netdock_reset(sc);
@@ -822,7 +815,7 @@ netdock_get(struct netdock_softc *sc, int datalen)
 		}
 
 		if (mp == &top) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;

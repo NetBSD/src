@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7.2.3 2007/02/26 09:08:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.7.2.4 2007/09/03 14:31:34 yamt Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -220,11 +220,11 @@ tlbflushg(void)
 #endif
 
 #ifdef notyet
-void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
+void	setidt(int idx, /*XXX*/void *func, int typ, int dpl);
 #endif
 
 /* debug register */
-void dr0(caddr_t, u_int32_t, u_int32_t, u_int32_t);
+void dr0(void *, u_int32_t, u_int32_t, u_int32_t);
 
 #if 0
 static __inline u_int
