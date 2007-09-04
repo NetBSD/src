@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.2 2007/09/03 16:47:46 jmcneill Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.3 2007/09/04 15:54:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.2 2007/09/03 16:47:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.3 2007/09/04 15:54:04 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,7 @@ struct lpcib_softc {
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
+	struct pci_attach_args	sc_pa;
 
 	/* Watchdog variables. */
 	struct sysmon_wdog	sc_smw;
@@ -86,9 +87,9 @@ static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
 static void lpcib_powerhook(int, void *);
 
-static void pmtimer_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void pmtimer_configure(struct lpcib_softc *);
 
-static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void tcotimer_configure(struct lpcib_softc *);
 static int tcotimer_setmode(struct sysmon_wdog *);
 static int tcotimer_tickle(struct sysmon_wdog *);
 static void tcotimer_stop(struct lpcib_softc *);
@@ -97,7 +98,7 @@ static void tcotimer_status_reset(struct lpcib_softc *);
 static int  tcotimer_disable_noreboot(struct lpcib_softc *, bus_space_tag_t,
 				      bus_space_handle_t);
 
-static void speedstep_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void speedstep_configure(struct lpcib_softc *);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
 struct lpcib_softc *speedstep_cookie;	/* XXX */
@@ -163,6 +164,7 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_pa = *pa;
 
 	pcibattach(parent, self, aux);
 
@@ -179,13 +181,13 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Set up the power management timer. */
-	pmtimer_configure(sc, pa);
+	pmtimer_configure(sc);
 
 	/* Set up the TCO (watchdog). */
-	tcotimer_configure(sc, pa);
+	tcotimer_configure(sc);
 
 	/* Set up SpeedStep. */
-	speedstep_configure(sc, pa);
+	speedstep_configure(sc);
 
 	/* Install powerhook */
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
@@ -243,7 +245,7 @@ lpcib_powerhook(int why, void *opaque)
  * Initialize the power management timer.
  */
 static void
-pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+pmtimer_configure(struct lpcib_softc *sc)
 {
 	pcireg_t control;
 
@@ -251,10 +253,10 @@ pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	 * Check if power management I/O space is enabled and enable the ACPI_EN
 	 * bit if it's disabled.
 	 */
-	control = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL);
+	control = pci_conf_read(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_ACPI_CNTL);
 	if ((control & LPCIB_PCI_ACPI_CNTL_EN) == 0) {
 		control |= LPCIB_PCI_ACPI_CNTL_EN;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL,
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_ACPI_CNTL,
 		    control);
 	}
 
@@ -267,7 +269,7 @@ pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
  * Initialize the watchdog timer.
  */
 static void
-tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+tcotimer_configure(struct lpcib_softc *sc)
 {
 	bus_space_handle_t gcs_memh;
 	pcireg_t pcireg;
@@ -280,9 +282,9 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	 * lives on ICH6 and newer.
 	 */
 	if (lpcib_ich6) {
-		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_RCBA);
+		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, LPCIB_RCBA);
 		pcireg &= 0xffffc000;
-		if (bus_space_map(pa->pa_memt, pcireg + LPCIB_GCS_OFFSET,
+		if (bus_space_map(sc->sc_pa.pa_memt, pcireg + LPCIB_GCS_OFFSET,
 		    		  LPCIB_GCS_SIZE, 0, &gcs_memh)) {
 			aprint_error("%s: can't map GCS memory space; "
 			    "TCO timer disabled\n", sc->sc_dev.dv_xname);
@@ -294,7 +296,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
-	if (tcotimer_disable_noreboot(sc, pa->pa_memt, gcs_memh)) {
+	if (tcotimer_disable_noreboot(sc, sc->sc_pa.pa_memt, gcs_memh)) {
 		ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 		ioreg |= LPCIB_SMI_EN_TCO_EN;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
@@ -496,23 +498,23 @@ speedstep_bad_hb_check(struct pci_attach_args *pa)
 }
 
 static void
-speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+speedstep_configure(struct lpcib_softc *sc)
 {
 	const struct sysctlnode	*node, *ssnode;
 	int rv;
 
 	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
-	     pci_find_device(pa, speedstep_bad_hb_check) == 0)) {
+	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
+	    PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
+	    (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
+	     pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
 		uint8_t pmcon;
 
 		/* Enable SpeedStep if it isn't already enabled. */
-		pmcon = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		pmcon = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 				      LPCIB_PCI_GEN_PMCON_1);
 		if ((pmcon & LPCIB_PCI_GEN_PMCON_1_SS_EN) == 0)
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 				       LPCIB_PCI_GEN_PMCON_1,
 				       pmcon | LPCIB_PCI_GEN_PMCON_1_SS_EN);
 
