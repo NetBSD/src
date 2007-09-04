@@ -1,4 +1,4 @@
-#	$NetBSD: files.sysmon,v 1.9 2007/09/02 00:28:28 xtraeme Exp $
+#	$NetBSD: files.sysmon,v 1.10 2007/09/04 16:54:02 xtraeme Exp $
 
 define	sysmon_taskq
 file	dev/sysmon/sysmon_taskq.c	sysmon_taskq 		needs-flag
@@ -9,6 +9,7 @@ file	dev/sysmon/sysmon_power.c	sysmon_power		needs-flag
 define	sysmon_envsys: sysmon_power, sysmon_taskq
 file	dev/sysmon/sysmon_envsys.c		sysmon_envsys	needs-flag
 file	dev/sysmon/sysmon_envsys_events.c	sysmon_envsys
+file	dev/sysmon/sysmon_envsys_tables.c	sysmon_envsys
 file	dev/sysmon/sysmon_envsys_util.c 	sysmon_envsys
 
 define	sysmon_wdog
