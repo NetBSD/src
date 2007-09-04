@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.106 2007/09/04 00:34:58 tls Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.106 2007/09/04 00:34:58 tls Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -113,6 +113,10 @@ static char lbuf[LBUF];
 #if HAVE_LONG_LONG
 #define PRId64 "lld"
 #endif
+#endif
+
+#ifndef PRId32
+#define PRId32 "ld"
 #endif
 
 #ifndef _PATH_DEFDISK
