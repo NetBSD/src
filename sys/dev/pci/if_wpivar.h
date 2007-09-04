@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6.6.3 2007/09/03 16:48:21 jmcneill Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.6.4 2007/09/04 20:49:35 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -152,6 +152,8 @@ struct wpi_softc {
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
+
+	struct pci_conf_state sc_pciconf;
 
 	struct callout		calib_to;
 	int			calib_cnt;	
