@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.220.6.1 2007/09/03 16:48:10 jmcneill Exp $	*/
+/*	$NetBSD: wi.c,v 1.220.6.2 2007/09/04 15:05:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.220.6.1 2007/09/03 16:48:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.220.6.2 2007/09/04 15:05:47 joerg Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -630,42 +630,7 @@ wi_activate(struct device *self, enum devact act)
 	splx(s);
 	return rv;
 }
-
-void
-wi_power(struct wi_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		wi_stop(ifp, 1);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			wi_init(ifp);
-			(void)wi_intr(sc);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
 #endif /* __NetBSD__ */
-
-void
-wi_shutdown(struct wi_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	if (sc->sc_attached)
-		wi_stop(ifp, 1);
-}
 
 int
 wi_intr(void *arg)
