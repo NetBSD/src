@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.32 2006/02/23 03:18:42 gdamore Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.32.38.1 2007/09/04 15:05:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -335,3 +335,8 @@ void	pcmcia_free_pf(struct pcmcia_function_head *);
 void	*pcmcia_intr_establish(struct pcmcia_function *, int,
 	    int (*) (void *), void *);
 void 	pcmcia_intr_disestablish(struct pcmcia_function *, void *);
+
+struct ifnet;
+
+pnp_status_t	pcmcia_net_generic_power(device_t, pnp_request_t, void *, 
+					 pnp_state_t *, struct ifnet *);
