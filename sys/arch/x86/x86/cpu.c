@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.4 2007/09/03 18:06:26 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.5 2007/09/04 01:43:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.4 2007/09/03 18:06:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.5 2007/09/04 01:43:53 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -427,9 +427,6 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 	pnp_capabilities_t *pcaps;
 	pnp_state_t *pstate;
 	int err;
-#ifdef MULTIPROCESSOR
-	int s;
-#endif
 
 	sc = (struct cpu_softc *)dv;
 	ci = sc->sc_info;
@@ -455,9 +452,10 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			return PNP_STATUS_SUCCESS;
 
-		mutex_enter(&cpu_lock);
 #ifdef MULTIPROCESSOR
 		if (*pstate == PNP_STATE_D0 && sc->sc_pmstate != PNP_STATE_D0) {
+			int s;
+
 			s = splhigh();
 			cpu_start_secondary(ci);
 			cpu_init_idle_lwp(ci);
@@ -470,6 +468,7 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 		}
 #endif
 
+		mutex_enter(&cpu_lock);
 		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
 		mutex_exit(&cpu_lock);
 		if (err)
