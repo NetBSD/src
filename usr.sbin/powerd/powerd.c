@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.8 2007/07/01 07:39:47 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.9 2007/09/04 16:54:37 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -318,7 +318,7 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	obj = prop_dictionary_get(dict, "sensor-name");
 	argv[3] = prop_string_cstring_nocopy(obj);
 
-	obj = prop_dictionary_get(dict, "drive-state-desc");
+	obj = prop_dictionary_get(dict, "state-description");
 	argv[4] = prop_string_cstring_nocopy(obj);
 
 	argv[5] = NULL;

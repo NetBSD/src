@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.13 2007/07/16 17:49:56 xtraeme Exp $
+.\"	$NetBSD: powerd.8,v 1.14 2007/09/04 16:54:37 xtraeme Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 16, 2007
+.Dd September 4, 2007
 .Dt POWERD 8
 .Os
 .Sh NAME
@@ -129,18 +129,20 @@ when a power button is pressed by the operator:
 .Ed
 .Ss ENVSYS SCRIPTS
 .Xr envsys 4
-scripts are called when a critical condition was triggered in
-a sensor.
+scripts are called when a condition was triggered in a sensor.
 These scripts are called with three arguments: the
 device associated, the event type, and sensor's name.
 The
 .Sy sensor_drive
-sensor uses a fourth argument: state description.
+and the
+.Sy sensor_battery
+scripts uses a fourth argument: state description.
 .Pp
 The following envsys script names are defined:
 .Bl -tag -width "sensor_temperature"
 .It sensor_battery
-This script is called when an event occurs on a battery sensor (Wh/Ah).
+This script is called when an event occurs on a battery sensor
+(Wh/Ah/Battery state).
 .It sensor_drive
 This script is called when an event occurs on a drive sensor.
 .It sensor_fan
@@ -179,16 +181,16 @@ A warning under condition was triggered.
 A warning over condition was triggered.
 .El
 .Pp
-The following events are defined for battery sensors:
+The following event is defined only for battery sensors:
 .Bl -tag -width "sensor_temperature"
 .It user-capacity
-A capacity limit set by the user was triggered.
+Capacity dropped below the limit set by the user.
 .El
 .Pp
-The following events are defined for drive sensors:
+The following events are defined for drive and battery sensors:
 .Bl -tag -width "sensor_temperature"
 .It state-changed
-The state on the sensor changed and it's not in a valid state.
+The state on the sensor has been changed and it's not in normal state.
 .El
 .Pp
 The following is an example of how a temperature sensor script might be
@@ -203,7 +205,6 @@ invoked when a critical over condition is triggered:
 .Xr acpilid 4 ,
 .Xr envsys 4 ,
 .Xr i386/apm 4
-.\" .Xr sysmon 4
 .Sh HISTORY
 .Nm
 first appeared in
