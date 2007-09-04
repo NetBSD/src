@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.3 2007/08/21 06:55:31 joerg Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.4 2007/09/04 15:11:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.3 2007/08/21 06:55:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.4 2007/09/04 15:11:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,13 +73,22 @@ ppbmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-ich6_disable_sci(struct device *self, pci_chipset_tag_t pc, pcitag_t tag)
+ich_disable_sci(struct device *self, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	pcireg_t val;
 
 	/*
 	 * Intel I/O Controller Hub 6 Family Datasheet
 	 * Section 19.1.44
+	 *
+	 * Intel I/O Controller Hub 7 Family Datasheet
+	 * Section 18.1.44
+	 *
+	 * Intel I/O Controller Hub 8 Family Datasheet
+	 * Section 20.1.45
+	 *
+	 * Intel I/O Controller Hub 9 Family Datasheet
+	 * Section 20.1.46
 	 *
 	 * Address Offset: D8
 	 *
@@ -116,9 +125,27 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0))
-		ich6_disable_sci(self, pc, pa->pa_tag);
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_1 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_1 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_3 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_4 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_5 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801G_EXP_6 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_1 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_3 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_4 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_5 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801H_EXP_6 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_1 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_3 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_4 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_5 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801I_EXP_6))
+		ich_disable_sci(self, pc, pa->pa_tag);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
