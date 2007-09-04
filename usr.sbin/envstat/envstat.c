@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.45 2007/09/02 21:25:25 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.46 2007/09/04 16:54:37 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct envsys_sensor {
 	char	desc[ENVSYS_DESCLEN];
 	char	type[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
-	char	genstr[ENVSYS_DESCLEN];
+	char	battstate[ENVSYS_DESCLEN];
 };
 
 static int interval, flags, width;
@@ -668,12 +668,12 @@ find_sensors(prop_array_t array)
 			    prop_string_cstring_nocopy(obj1),
 			    sizeof(gesen[gnelems].drvstate));
 
-		/* get current generic state string */
-		obj1 = prop_dictionary_get(obj, "generic-state-string");
+		/* get current battery state string */
+		obj1 = prop_dictionary_get(obj, "battery-state");
 		if (obj1 != NULL)
-			(void)strlcpy(gesen[gnelems].genstr,
+			(void)strlcpy(gesen[gnelems].battstate,
 			    prop_string_cstring_nocopy(obj1),
-			    sizeof(gesen[gnelems].genstr));
+			    sizeof(gesen[gnelems].battstate));
 
 		/* get current value */
 		obj1 = prop_dictionary_get(obj, "cur-value");
@@ -842,11 +842,7 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 			continue;
 		}
 
-		if (strcmp(es[i].type, "Generic string") == 0) {
-
-			(void)printf(": %10s", es[i].genstr);
-
-		} else if (strcmp(es[i].type, "Indicator") == 0) {
+		if (strcmp(es[i].type, "Indicator") == 0) {
 
 			(void)printf(": %10s", es[i].cur_value ? "ON" : "OFF");
 
@@ -903,10 +899,15 @@ do {								\
 
 			(void)printf(": %10d", es[i].cur_value);
 
-		/* drives */
+		/* drives  */
 		} else if (strcmp(es[i].type, "Drive") == 0) {
 
 			(void)printf(": %10s", es[i].drvstate);
+
+		/* Battery state */
+		} else if (strcmp(es[i].type, "Battery state") == 0) {
+
+			(void)printf(": %10s", es[i].battstate);
 
 		/* everything else */
 		} else {
