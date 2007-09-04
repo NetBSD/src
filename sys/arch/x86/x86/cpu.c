@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.5 2007/09/04 01:43:53 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.6 2007/09/04 20:32:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.5 2007/09/04 01:43:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.6 2007/09/04 20:32:49 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -184,6 +184,7 @@ extern char x86_64_doubleflt_stack[];
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
+bool x86_mp_online;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -426,7 +427,9 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 	struct cpu_info *ci;
 	pnp_capabilities_t *pcaps;
 	pnp_state_t *pstate;
+#ifdef MULTIPROCESSOR
 	int err;
+#endif
 
 	sc = (struct cpu_softc *)dv;
 	ci = sc->sc_info;
@@ -445,34 +448,52 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 		if (*pstate != PNP_STATE_D0 && *pstate != PNP_STATE_D3)
 			return PNP_STATUS_UNSUPPORTED;
 
-		if (ci->ci_flags & CPUF_PRIMARY)
+		if (ci->ci_flags & CPUF_PRIMARY) {
+#ifdef MULTIPROCESSOR
+			struct cpu_info *sci;
+			CPU_INFO_ITERATOR cii;
+			int s;
+
+			switch (*pstate) {
+			case PNP_STATE_D3:
+				x86_mp_online = false;
+				break;
+			case PNP_STATE_D0:
+				s = splhigh();
+				for (CPU_INFO_FOREACH(cii, sci)) {
+					if (sci->ci_flags & CPUF_PRIMARY)
+						continue;
+					cpu_start_secondary(sci);
+					cpu_init_idle_lwp(sci);
+				}
+				splx(s);
+				cpu_boot_secondary_processors();
+				break;
+			default:
+				break;	/* not possible */
+			}
+#endif
+
 			return PNP_STATUS_SUCCESS;
+		}
+
 		if (ci->ci_data.cpu_idlelwp == NULL)
 			return PNP_STATUS_SUCCESS;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			return PNP_STATUS_SUCCESS;
 
 #ifdef MULTIPROCESSOR
-		if (*pstate == PNP_STATE_D0 && sc->sc_pmstate != PNP_STATE_D0) {
-			int s;
-
-			s = splhigh();
-			cpu_start_secondary(ci);
-			cpu_init_idle_lwp(ci);
-			splx(s);
-
-			cpu_boot_secondary(ci);
-		} else {
+		if (*pstate == PNP_STATE_D3) {
 			ci->ci_flags &= ~CPUF_GO;
 			ci->ci_flags &= ~CPUF_RUNNING;
 		}
-#endif
 
 		mutex_enter(&cpu_lock);
 		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
 		mutex_exit(&cpu_lock);
 		if (err)
 			return PNP_STATUS_BUSY;
+#endif
 		sc->sc_pmstate = *pstate;
 		break;
 	default:
@@ -557,8 +578,6 @@ cpu_init(ci)
 	cpus_running |= ci->ci_cpumask;
 #endif
 }
-
-bool x86_mp_online;
 
 #ifdef MULTIPROCESSOR
 void
@@ -893,11 +912,8 @@ mp_cpu_start(struct cpu_info *ci)
 	pmap_kenter_pa(kva, 0, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memcpy((uint8_t *)(kva + 0x467), dwordptr, 4);
-#if 0
-	/* XXXjmcneill pmap_kremove causes a hang on resume -- FIXME */
-	pmap_kremove(0, PAGE_SIZE);
+	pmap_kremove(kva, PAGE_SIZE);
 	pmap_update(pmap_kernel());
-#endif
 	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
 
 #if NLAPIC > 0
