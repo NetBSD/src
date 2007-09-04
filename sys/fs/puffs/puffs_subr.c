@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.44 2007/08/01 14:20:45 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.45 2007/09/04 00:11:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.44 2007/08/01 14:20:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.45 2007/09/04 00:11:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,6 +86,8 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	int error;
 
 	if (type <= VNON || type >= VBAD)
+		return EINVAL;
+	if (vsize == VSIZENOTSET)
 		return EINVAL;
 
 	pmp = MPTOPUFFSMP(mp);
