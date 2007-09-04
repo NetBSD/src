@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.1.16.1 2007/08/03 22:17:16 jmcneill Exp $ */
+/* $NetBSD: hpet.c,v 1.1.16.2 2007/09/04 19:14:17 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.1 2007/08/03 22:17:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.2 2007/09/04 19:14:17 joerg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -62,12 +62,6 @@ hpet_attach_subr(struct hpet_softc *sc) {
 	tc->tc_get_timecount = hpet_get_timecount;
 	tc->tc_quality = 2000;
 
-	/* XXX Only 32-bits supported for now */
-	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_INFO);
-	if ((val & HPET_INFO_64BITS) != 0) {
-		aprint_normal("%s: Found 64-bits HPET, will only use lowest"
-		    " 32-bits\n", sc->sc_dev.dv_xname);
-	}
 	tc->tc_counter_mask = 0xffffffff;
 
 	/* Get frequency */
@@ -94,7 +88,7 @@ static u_int
 hpet_get_timecount(struct timecounter *tc) {
 	struct hpet_softc *sc = tc->tc_priv;
 
-	return bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT);
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 }
 
 static pnp_status_t
