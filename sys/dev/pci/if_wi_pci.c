@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.41 2006/11/16 01:33:09 christos Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.41.22.1 2007/09/04 15:05:48 joerg Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41.22.1 2007/09/04 15:05:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,9 @@ struct wi_pci_softc {
 	/* PCI-specific goo */
 	pci_intr_handle_t psc_ih;
 	pci_chipset_tag_t psc_pc;
+	pcitag_t psc_pcitag;
 
-	void *sc_powerhook;		/* power hook descriptor */
+	struct pci_conf_state psc_pciconf;
 };
 
 static int	wi_pci_match(struct device *, struct cfdata *, void *);
@@ -101,7 +102,8 @@ static void	wi_pci_attach(struct device *, struct device *, void *);
 static int	wi_pci_enable(struct wi_softc *);
 static void	wi_pci_disable(struct wi_softc *);
 static void	wi_pci_reset(struct wi_softc *);
-static void	wi_pci_powerhook(int, void *);
+static pnp_status_t
+		wi_pci_power(device_t, pnp_request_t, void *);
 
 static const struct wi_pci_product
 	*wi_pci_lookup(struct pci_attach_args *);
@@ -236,6 +238,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t memh, ioh, plxh, tmdh;
 
 	psc->psc_pc = pc;
+	psc->psc_pcitag = pa->pa_tag;
 
 	wpp = wi_pci_lookup(pa);
 #ifdef DIAGNOSTIC
@@ -383,19 +386,16 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!wpp->wpp_chip)
 		sc->sc_reset = wi_pci_reset;
 
-	/* Add a suspend hook to restore PCI config state */
-	psc->sc_powerhook = powerhook_establish(self->dv_xname,
-	    wi_pci_powerhook, psc);
-	if (psc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish pci power hook\n",
-		    self->dv_xname);
+	if (pnp_register(self, wi_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 }
 
-static void
-wi_pci_powerhook(int why, void *arg)
+static pnp_status_t
+wi_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct wi_pci_softc *psc = arg;
-	struct wi_softc *sc = &psc->psc_wi;
+	struct wi_pci_softc *psc = (struct wi_pci_softc *)dv;
 
-	wi_power(sc, why);
+	return pci_net_generic_power(dv, req, opaque, psc->psc_pc, psc->psc_pcitag,
+	    &psc->psc_pciconf, &psc->psc_wi.sc_if);
 }
