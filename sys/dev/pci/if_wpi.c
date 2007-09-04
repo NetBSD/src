@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.5 2007/09/03 16:48:20 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.6 2007/09/04 20:49:34 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.5 2007/09/03 16:48:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.6 2007/09/04 20:49:34 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -421,55 +421,9 @@ static pnp_status_t
 wpi_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)dv;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	struct ifnet *ifp;
-	pcireg_t data;
-	int s;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			/* clear device specific PCI conf reg 0x41 */
-			data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-			data &= ~0x0000ff00;
-			pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-			pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0xe8,
-			    sc->sc_pmstate_e8);
-	
-			s = splnet();
-			ifp = sc->sc_ic.ic_ifp;
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_init(ifp);
-				if (ifp->if_flags & IFF_RUNNING)
-					ifp->if_start(ifp);
-			}
-			splx(s);
-			break;
-		case PNP_STATE_D3:
-			sc->sc_pmstate_e8 = pci_conf_read(
-			    sc->sc_pct, sc->sc_pcitag, 0xe8);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	return pci_net_generic_power(dv, req, opaque, sc->sc_pct, sc->sc_pcitag,
+								 &sc->sc_pciconf, sc->sc_ic.ic_ifp);
 }
 
 static int
