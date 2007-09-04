@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.14 2007/03/04 06:01:49 christos Exp $	*/
+/*	$NetBSD: anvar.h,v 1.14.14.1 2007/09/04 15:10:14 joerg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -165,8 +165,6 @@ struct an_softc	{
 int	an_attach(struct an_softc *);
 int	an_detach(struct an_softc *);
 int	an_activate(struct device *, enum devact);
-void	an_power(int, void *);
-void	an_shutdown(struct an_softc *);
 int	an_intr(void *);
 
 #endif	/* _DEV_IC_ANVAR_H */

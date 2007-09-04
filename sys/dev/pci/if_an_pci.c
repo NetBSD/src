@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.22 2007/04/06 18:16:29 rumble Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.22.8.1 2007/09/04 15:10:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22 2007/04/06 18:16:29 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.8.1 2007/09/04 15:10:14 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22 2007/04/06 18:16:29 rumble Exp $"
 
 struct an_pci_softc {
 	struct an_softc sc_an;		/* real "an" softc */
+	pci_chipset_tag_t sc_pct;
+	pcitag_t sc_pcitag;
+	struct pci_conf_state sc_pciconf;
 
 	/* PCI-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
@@ -102,6 +105,15 @@ static const struct an_pci_product {
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PCI350 },
 	{ 0,				0			   }
 };
+
+static pnp_status_t
+an_pci_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct an_pci_softc *sc = device_private(dv);
+
+	return pci_net_generic_power(dv, req, opaque, sc->sc_pct, sc->sc_pcitag,
+	    &sc->sc_pciconf, &sc->sc_an.sc_if);
+}
 
 static int
 an_pci_match(struct device *parent, struct cfdata *match,
@@ -129,6 +141,9 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
 	u_int32_t csr;
+
+	psc->sc_pct = pa->pa_pc;
+	psc->sc_pcitag = pa->pa_tag;
 
 	aprint_naive(": 802.11 controller\n");
 
@@ -171,4 +186,8 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}
+
+	if (pnp_register(self, an_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 }
