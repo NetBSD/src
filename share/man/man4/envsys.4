@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.31 2007/09/02 20:35:03 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.32 2007/09/04 16:55:02 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 2, 2007
+.Dd September 4, 2007
 .Dt ENVSYS 4
 .Os
 .Sh NAME
@@ -120,6 +120,8 @@ and all available properties set on it:
 		\&<true\&/\&>
 		\&<key\&>monitoring-state-critunder\&<\&/key\&>
 		\&<true\&/\&>
+		\&<key\&>monitoring-state-state-changed\&<\&/key\&>
+		\&<true\&/\&>
 		\&<key\&>monitoring-state-warnover\&<\&/key\&>
 		\&<true\&/\&>
 		\&<key\&>monitoring-state-warnunder\&<\&/key\&>
@@ -176,6 +178,9 @@ If true, the driver has enabled the flag to monitor a critical state.
 If true, the driver has enabled the flag to monitor a critical over state.
 .It Fa monitoring-state-critical-under
 If true, the driver has enabled the flag to monitor a critical under state.
+.It Fa monitoring-state-state-changed
+If true, the driver has enabled the flag to monitor for state changes in
+a drive or Battery state sensor.
 .It Fa monitoring-state-warning-over
 If true, the driver has enabled the flag to monitor a warning over state.
 .It Fa monitoring-state-warning-under
