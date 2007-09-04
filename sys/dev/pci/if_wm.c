@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.5 2007/09/03 16:48:19 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.6 2007/09/04 15:10:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.5 2007/09/03 16:48:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.6 2007/09/04 15:10:52 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1615,7 +1615,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 #endif /* WM_EVENT_COUNTERS */
 
 	/* register device power management hooks */
-	pnp_register(self, wm_pci_power);
 	if (pnp_register(self, wm_pci_power) != PNP_STATUS_SUCCESS)
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
