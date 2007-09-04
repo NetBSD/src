@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.31.22.1 2007/09/04 15:10:14 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31.22.1 2007/09/04 15:10:14 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,13 +78,13 @@ static void an_pcmcia_disable(struct an_softc *);
 
 struct an_pcmcia_softc {
 	struct an_softc sc_an;			/* real "an" softc */
+	pnp_state_t sc_power_state;
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
-	void *sc_powerhook;			/* power hook descriptor */
 
 	int sc_state;
 #define	AN_PCMCIA_ATTACHED	3
@@ -126,6 +126,15 @@ an_pcmcia_validate_config(cfe)
 	return (0);
 }
 
+static pnp_status_t
+an_pcmcia_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct an_pcmcia_softc *sc = device_private(dv);
+
+	return pcmcia_net_generic_power(dv, req, opaque, &sc->sc_power_state,
+	    &sc->sc_an.sc_if);
+}
+
 static void
 an_pcmcia_attach(struct device  *parent, struct device *self,
     void *aux)
@@ -137,6 +146,7 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 	int error;
 
 	psc->sc_pf = pa->pf;
+	psc->sc_power_state = PNP_STATE_D0;
 
 	error = pcmcia_function_configure(pa->pf, an_pcmcia_validate_config);
 	if (error) {
@@ -164,7 +174,9 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 		goto fail2;
 	}
 
-	psc->sc_powerhook = powerhook_establish(self->dv_xname, an_power, sc);
+	if (pnp_register(self, an_pcmcia_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	an_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
@@ -188,8 +200,7 @@ an_pcmcia_detach(struct device *self, int flags)
 	if (psc->sc_state != AN_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook)
-		powerhook_disestablish(psc->sc_powerhook);
+	pnp_deregister(self);
 
 	error = an_detach(&psc->sc_an);
 	if (error)
