@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.27 2007/09/01 12:46:04 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.28 2007/09/04 16:54:02 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27 2007/09/01 12:46:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.28 2007/09/04 16:54:02 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,28 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27 2007/09/01 12:46:04 xt
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 
-struct sme_sensor_state {
-	int		type;
-	const char 	*desc;
-};
-
 struct sme_sensor_event {
 	int		state;
 	int		event;
-};
-
-static const struct sme_sensor_state sme_sensor_drive_state[] = {
-	{ ENVSYS_DRIVE_EMPTY, 		"drive state is unknown" },
-	{ ENVSYS_DRIVE_READY, 		"drive is ready" },
-	{ ENVSYS_DRIVE_POWERUP,		"drive is powering up" },
-	{ ENVSYS_DRIVE_ONLINE, 		"drive is online" },
-	{ ENVSYS_DRIVE_IDLE, 		"drive is idle" },
-	{ ENVSYS_DRIVE_ACTIVE, 		"drive is active" },
-	{ ENVSYS_DRIVE_REBUILD, 	"drive is rebuilding" },
-	{ ENVSYS_DRIVE_POWERDOWN,	"drive is powering down" },
-	{ ENVSYS_DRIVE_FAIL, 		"drive failed" },
-	{ ENVSYS_DRIVE_PFAIL,		"drive degraded" },
-	{ -1, 				"unknown" }
 };
 
 static const struct sme_sensor_event sme_sensor_event[] = {
@@ -427,9 +408,9 @@ do {									\
 		     PENVSYS_EVENT_WARNOVER,
 		     "warnover");
 
-	SEE_REGEVENT(ENVSYS_FMONDRVSTATE,
-		     PENVSYS_EVENT_DRIVE_STCHANGED,
-		     "drvstchanged");
+	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
+		     PENVSYS_EVENT_STATE_CHANGED,
+		     "state-changed");
 
 	/* we are done, free memory now */
 	kmem_free(sed_t, sizeof(*sed_t));
@@ -512,14 +493,16 @@ sme_events_check(void *arg)
 void
 sme_events_worker(struct work *wk, void *arg)
 {
-	const struct sme_sensor_state *esds = sme_sensor_drive_state;
+	const struct sme_description_table *sdt = NULL;
 	const struct sme_sensor_event *sse = sme_sensor_event;
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	int i, error = 0;
+	int i, state, error;
 
 	KASSERT(wk == &see->see_wk);
+
+	state = error = 0;
 
 	mutex_enter(&sme_event_mtx);
 	see->see_flags |= SME_EVENT_WORKING;
@@ -610,27 +593,40 @@ do {									\
 
 		break;
 	/*
-	 * if value_cur is not ENVSYS_DRIVE_ONLINE, send the event...
+	 * if value_cur is not normal (battery) or online (drive),
+	 * send the event...
 	 */
-	case PENVSYS_EVENT_DRIVE_STCHANGED:
+	case PENVSYS_EVENT_STATE_CHANGED:
 		/* the state has not been changed, just ignore the event */
 		if (edata->value_cur == see->evsent)
 			break;
 
-		for (i = 0; esds[i].type != -1; i++)
-			if (esds[i].type == edata->value_cur)
+		switch (edata->units) {
+		case ENVSYS_DRIVE:
+			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+			state = ENVSYS_DRIVE_ONLINE;
+			break;
+		case ENVSYS_BATTERY_STATE:
+			sdt =
+			    sme_get_description_table(SME_DESC_BATTERY_STATES);
+			state = ENVSYS_BATTERY_STATE_NORMAL;
+			break;
+		}
+
+		for (i = 0; sdt[i].type != -1; i++)
+			if (sdt[i].type == edata->value_cur)
 				break;
 
 		/* copy current state description  */
-		(void)strlcpy(see->pes.pes_statedesc, esds[i].desc,
+		(void)strlcpy(see->pes.pes_statedesc, sdt[i].desc,
 		    sizeof(see->pes.pes_statedesc));
 
 		/* state is ok again... send a normal event */
-		if (see->evsent && edata->value_cur == ENVSYS_DRIVE_ONLINE)
+		if (see->evsent && edata->value_cur == state)
 			SME_SEND_NORMALEVENT();
 
-		/* something bad happened to the drive... send the event */
-		if (see->evsent || edata->value_cur != ENVSYS_DRIVE_ONLINE) {
+		/* state has been changed... send event */
+		if (see->evsent || edata->value_cur != state) {
 			/* save current drive state */
 			see->evsent = edata->value_cur;
 			sysmon_penvsys_event(&see->pes, see->type);

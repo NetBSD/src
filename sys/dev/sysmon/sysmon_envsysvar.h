@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.16 2007/08/31 22:44:39 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.17 2007/09/04 16:54:02 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,13 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
+enum sme_description_types {
+	SME_DESC_UNITS = 1,
+	SME_DESC_STATES,
+	SME_DESC_DRIVE_STATES,
+	SME_DESC_BATTERY_STATES
+};
+
 #ifdef ENVSYS_DEBUG
 #define DPRINTF(x)	printf x
 #else
@@ -91,6 +98,12 @@ typedef struct sme_event_drv {
 	int			powertype;
 } sme_event_drv_t;
 
+struct sme_description_table {
+	int 		type;
+	int 		crittype;
+	const char 	*desc;
+};
+
 /* common */
 extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
 extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
@@ -130,5 +143,7 @@ int	sme_sensor_upbool(prop_dictionary_t, const char *, bool);
 int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
 int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
 int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
+
+const struct	sme_description_table *sme_get_description_table(int);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */
