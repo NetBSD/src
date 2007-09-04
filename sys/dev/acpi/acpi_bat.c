@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.55 2007/09/02 19:38:32 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.56 2007/09/04 16:56:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.55 2007/09/02 19:38:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.56 2007/09/04 16:56:30 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,6 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
-	const char *chargestate = "NORMAL";
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (ACPI_FAILURE(rv)) {
@@ -466,6 +465,9 @@ acpibat_get_status(struct acpibat_softc *sc)
 		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SINVALID;
 	}
 
+	sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
+	    ENVSYS_BATTERY_STATE_NORMAL;
+
 	sc->sc_data[ACPIBAT_CAPACITY].value_cur = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].flags |=
@@ -476,23 +478,23 @@ acpibat_get_status(struct acpibat_softc *sc)
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
 	    sc->sc_data[ACPIBAT_WCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SWARNUNDER;
-		chargestate = "WARNING";
+		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
+		    ENVSYS_BATTERY_STATE_WARNING;
 	}
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
 	    sc->sc_data[ACPIBAT_LCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITUNDER;
-		chargestate = "LOW";
+		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
+		    ENVSYS_BATTERY_STATE_LOW;
 	}
 
 	if (status & ACPIBAT_ST_CRITICAL) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITICAL;
-		chargestate = "CRITICAL";
+		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
+		    ENVSYS_BATTERY_STATE_CRITICAL;
 	}
 
-	(void)strlcpy(sc->sc_data[ACPIBAT_CHARGE_STATE].genstr, chargestate,
-		      sizeof(sc->sc_data->genstr));
-	
 	mutex_exit(&sc->sc_mtx);
 
 	rv = AE_OK;
@@ -669,7 +671,6 @@ static void
 acpibat_init_envsys(struct acpibat_softc *sc)
 {
 	int capunit, rateunit;
-	const char *chargestate = "UNKNOWN";
 
 	if (sc->sc_flags & ABAT_F_PWRUNIT_MA) {
 		capunit = ENVSYS_SAMPHOUR;
@@ -698,18 +699,13 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
 	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
-	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_GSTRING, "charge state");
+	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_BATTERY_STATE, "charge state");
 
 #undef INITDATA
 
-	/* We don't know yet at which state is the battery... */
-	(void)strlcpy(sc->sc_data[ACPIBAT_CHARGE_STATE].genstr, chargestate,
-		      sizeof(sc->sc_data->genstr));
-
-	/* Enable monitoring for the charge sensor */
-	sc->sc_data[ACPIBAT_CAPACITY].monitor = true;
-	sc->sc_data[ACPIBAT_CAPACITY].flags =
-	    (ENVSYS_FMONCRITICAL|ENVSYS_FMONCRITUNDER|ENVSYS_FMONWARNUNDER);
+	/* Enable monitoring for the charge state sensor */
+	sc->sc_data[ACPIBAT_CHARGE_STATE].monitor = true;
+	sc->sc_data[ACPIBAT_CHARGE_STATE].flags |= ENVSYS_FMONSTCHANGED;
 
 	/* Disable userland monitoring on these sensors */
 	sc->sc_data[ACPIBAT_VOLTAGE].flags = ENVSYS_FMONNOTSUPP;
