@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.82.22.1 2007/09/04 15:05:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,13 +48,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82.22.1 2007/09/04 15:05:21 joerg Exp $");
 
 #include "opt_pcmciaverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <net/if.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -945,4 +947,60 @@ pcmcia_function_unconfigure(pf)
 
 	pcmcia_config_unmap(pf);
 	pcmcia_config_free(pf);
+}
+
+pnp_status_t
+pcmcia_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
+    pnp_state_t *device_state, struct ifnet *ifp)
+{
+	pnp_status_t status;
+	pnp_state_t *cur_state;
+	pnp_capabilities_t *caps;
+	int s;
+
+	status = PNP_STATUS_UNSUPPORTED;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+		caps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		status = PNP_STATUS_SUCCESS;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		cur_state = opaque;
+		switch (*cur_state) {
+		case PNP_STATE_D0:
+			s = splnet();
+
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				(*ifp->if_init)(ifp);
+				(*ifp->if_start)(ifp);
+			}
+
+			splx(s);
+			break;
+		case PNP_STATE_D3:
+			s = splnet();
+			(*ifp->if_stop)(ifp, 1);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		*device_state = *cur_state;
+		status = PNP_STATUS_SUCCESS;
+
+		break;
+	case PNP_REQUEST_GET_STATE:
+		cur_state = opaque;
+
+		*cur_state = *device_state;
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
+	}
+
+	return status;
 }
