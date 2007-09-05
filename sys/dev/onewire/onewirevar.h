@@ -1,4 +1,4 @@
-/* $NetBSD: onewirevar.h,v 1.4 2007/09/05 15:24:07 xtraeme Exp $ */
+/* $NetBSD: onewirevar.h,v 1.5 2007/09/05 15:39:22 xtraeme Exp $ */
 /*	$OpenBSD: onewirevar.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -46,8 +46,6 @@ int		onewire_triplet(void *, int);
 void		onewire_read_block(void *, void *, int);
 void		onewire_write_block(void *, const void *, int);
 void		onewire_matchrom(void *, u_int64_t);
-
-#define ONEWIRE_NOWAIT		0x0001
 
 /* Bus attachment */
 struct onewirebus_attach_args {
