@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.7 2007/09/05 02:19:00 jmcneill Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.8 2007/09/05 20:13:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.7 2007/09/05 02:19:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.8 2007/09/05 20:13:24 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -831,6 +831,6 @@ lpcib_hpet_configure(struct lpcib_softc *sc)
 	arg.hpet_mem_t = sc->sc_pa.pa_memt;
 	arg.hpet_reg = hpet_reg;
 
-	config_found_ia((struct device *)sc, "isabus", &arg, NULL);
+	config_found_ia((struct device *)sc, "hpetichbus", &arg, NULL);
 }
 #endif
