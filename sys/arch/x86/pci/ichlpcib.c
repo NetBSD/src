@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.10 2007/09/05 21:04:54 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.11 2007/09/05 21:17:56 cube Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.10 2007/09/05 21:04:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.11 2007/09/05 21:17:56 cube Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -748,7 +748,7 @@ struct lpcib_hpet_attach_arg {
 };
 
 static int
-lpcib_hpet_match(struct device *self, struct cfdata *match, void *aux)
+lpcib_hpet_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct lpcib_hpet_attach_arg *arg = aux;
 	bus_space_tag_t tag;
@@ -767,7 +767,7 @@ lpcib_hpet_match(struct device *self, struct cfdata *match, void *aux)
 }
 
 static void
-lpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
+lpcib_hpet_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpet_softc *sc = device_private(self);
 	struct lpcib_hpet_attach_arg *arg = aux;
