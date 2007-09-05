@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.9 2007/09/05 20:16:12 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.10 2007/09/05 21:04:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.9 2007/09/05 20:16:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.10 2007/09/05 21:04:54 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -750,6 +750,19 @@ struct lpcib_hpet_attach_arg {
 static int
 lpcib_hpet_match(struct device *self, struct cfdata *match, void *aux)
 {
+	struct lpcib_hpet_attach_arg *arg = aux;
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+
+	tag = arg->hpet_mem_t;
+
+	if (bus_space_map(tag, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &handle)) {
+		aprint_verbose("%s: HPET window not mapped, skipping\n",
+		    self->dv_xname);
+		return 0;
+	}
+	bus_space_unmap(tag, handle, HPET_WINDOW_SIZE);
+
 	return 1;
 }
 
