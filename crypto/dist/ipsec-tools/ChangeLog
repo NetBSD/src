@@ -1,4 +1,7 @@
 2007-09-03  Matthew Grooms <mgrooms@shrew.net>
+	* src/racoon/sainfo.c: Sort sainfos on insert and improve matching logic.
+
+2007-09-03  Matthew Grooms <mgrooms@shrew.net>
 	* src/racoon/racoon.conf.5: Correct wins4 and nbns4 modecfg option syntax.
 	* src/racoon/cftoken.l: Add nbns4 as an alias for wins4.
 
@@ -188,7 +191,8 @@
 	* configure.ac src/libipsec/{libpfkey.h|pfkey.c}
 	  src/racoon/{Makefile.am|backupsa.c|backupsa.h|cftoken.l|ipsec_doi.c}
 	  src/racoon/{ipsec_doi.h|isakmp_inf.c|isakmp_quick.c|pfkey.c|policy.c}
-	  src/racoon/{policy.h|proposal.c|proposal.h|remoteconf.c}: Add 		  support for SELinux security contexts. Also cleanup the libipsec
+	  src/racoon/{policy.h|proposal.c|proposal.h|remoteconf.c}: Add
+ 		  support for SELinux security contexts. Also cleanup the libipsec
 	  interface for adding and updating security associations.
 
 	From Simon Chang <simonychang@gmail.com>

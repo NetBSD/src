@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.8 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.9 2007/09/05 06:55:44 mgrooms Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -81,11 +81,6 @@ getsainfo(loc, rmt, peer, remoteid)
 	int remoteid;
 {
 	struct sainfo *s = NULL;
-	struct sainfo *anonymous = NULL;
-	int pass = 1;
-
-	if (peer == NULL)
-		pass = 2;
 
 	/* debug level output */
 	if(loglevel >= LLV_DEBUG) {
@@ -115,36 +110,21 @@ getsainfo(loc, rmt, peer, remoteid)
                 racoon_free(dpeer);
 	}
 
-    again:
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"getsainfo pass #%i\n", pass);
- 
 	LIST_FOREACH(s, &sitree, chain) {
 		const char *sainfostr = sainfo2str(s);
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"evaluating sainfo: %s\n", sainfostr);
 
-		if(s->remoteid != remoteid)
-			continue;
-
-		if (s->id_i != NULL) {
-			if (pass == 2)
+		if(s->remoteid != remoteid) {
+			plog(LLV_DEBUG, LOCATION, NULL,
+				"remoteid mismatch: %i != %i\n",
+				s->remoteid, remoteid);
 				continue;
+		}
+
+		if (s->id_i != NULL)
 			if (ipsecdoi_chkcmpids(peer, s->id_i, 0))
 				continue;
-		} else if (pass == 1)
-			continue;
-		if (s->idsrc == NULL && s->iddst == NULL) {
-			anonymous = s;
-			continue;
-		}
-
-		/* anonymous ? */
-		if (loc == NULL) {
-			if (anonymous != NULL)
-				break;
-			continue;
-		}
 
 		/* compare the ids */
 		if (!ipsecdoi_chkcmpids(loc, s->idsrc, 0) &&
@@ -152,12 +132,7 @@ getsainfo(loc, rmt, peer, remoteid)
 			return s;
 	}
 
-	if ((anonymous == NULL) && (pass == 1)) {
-		pass++;
-		goto again;
-	}
-
-	return anonymous;
+	return NULL;
 }
 
 struct sainfo *
@@ -197,11 +172,75 @@ delsainfo(si)
 	racoon_free(si);
 }
 
+int prisainfo(s)
+	struct sainfo *s;
+{
+	/*
+	 * determine the matching priority
+	 * of an sainfo section
+	 */
+
+	int pri = 0;
+
+	if(s->remoteid)
+		pri += 3;
+
+	if(s->id_i)
+		pri += 3;
+
+	if(s->idsrc)
+		pri++;
+
+	if(s->iddst)
+		pri++;
+
+	return pri;
+}
+
 void
 inssainfo(new)
 	struct sainfo *new;
 {
-	LIST_INSERT_HEAD(&sitree, new, chain);
+	if(LIST_EMPTY(&sitree)) {
+
+		/* first in list */
+		LIST_INSERT_HEAD(&sitree, new, chain);
+	}
+	else {
+		int npri, spri;
+		struct sainfo *s, *n;
+
+		/*
+		 * insert our new sainfo section
+		 * into our list which is sorted
+		 * based on the match priority
+		 */
+
+		npri = prisainfo(new);
+
+		s = LIST_FIRST(&sitree);
+		while (1) {
+
+			spri = prisainfo(s);
+			n = LIST_NEXT(s, chain);
+
+			if(npri > spri)
+			{
+				/* higher priority */
+				LIST_INSERT_BEFORE(s, new, chain);
+				return;
+			}
+
+			if(n == NULL)
+			{
+				/* last in list */
+				LIST_INSERT_AFTER(s, new, chain);
+				return;
+			}
+
+			s = n;
+		}
+	}
 }
 
 void
