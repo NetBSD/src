@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.55 2007/09/04 00:11:38 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.56 2007/09/05 22:34:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.55 2007/09/04 00:11:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.56 2007/09/05 22:34:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -86,9 +86,6 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	/* update is not supported currently */
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
-
-	/* some checks depend on this */
-	KASSERT(VNOVAL == VSIZENOTSET);
 
 	/*
 	 * We need the file system name
@@ -677,6 +674,9 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 void
 puffs_init()
 {
+
+	/* some checks depend on this */
+	KASSERT(VNOVAL == VSIZENOTSET);
 
 	malloc_type_attach(M_PUFFS);
 
