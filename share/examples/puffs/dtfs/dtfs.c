@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.33 2007/08/09 21:54:27 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.34 2007/09/05 17:15:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,9 +62,9 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: %s detrempe [-bsdft] [-c hashbuckets] "
-	    "[-m maxreqsize]\n       [-n typename] [-o mntopt] [-o puffsopt] "
-	    "[-p prot] [-r rootnodetype]\n       mountpath\n", getprogname());
+	fprintf(stderr, "usage: %s [-bsdft] [-c hashbuckets] [-m maxreqsize] "
+	    "[-n typename]\n        [-o mntopt] [-o puffsopt] [-p prot] "
+	    "[-r rootnodetype]\n       detrempe mountpath\n", getprogname());
 	exit(1);
 }
 
