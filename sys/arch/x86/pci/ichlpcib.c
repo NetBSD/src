@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.8 2007/09/05 20:13:24 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.9 2007/09/05 20:16:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.8 2007/09/05 20:13:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.9 2007/09/05 20:16:12 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -575,10 +575,10 @@ tcotimer_status_reset(struct lpcib_softc *sc)
 static int
 tcotimer_disable_noreboot(struct lpcib_softc *sc)
 {
-	pcireg_t pcireg;
-	uint16_t status = 0;
 
 	if (sc->sc_has_rcba) {
+		uint32_t status;
+
 		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_GCS_OFFSET);
 		status &= ~LPCIB_GCS_NO_REBOOT;
 		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_GCS_OFFSET, status);
@@ -586,6 +586,8 @@ tcotimer_disable_noreboot(struct lpcib_softc *sc)
 		if (status & LPCIB_GCS_NO_REBOOT)
 			goto error;
 	} else {
+		pcireg_t pcireg;
+
 		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, 
 				       LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
