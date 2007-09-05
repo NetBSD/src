@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.5 2007/09/04 20:05:11 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.6 2007/09/05 00:32:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.5 2007/09/04 20:05:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.6 2007/09/05 00:32:53 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -742,7 +742,7 @@ out:
 #if NHPET > 0
 struct lpcib_hpet_attach_arg {
 	bus_space_tag_t hpet_mem_t;
-	bus_space_handle_t hpet_mem_h;
+	uint32_t hpet_reg;
 };
 
 static int
@@ -761,7 +761,13 @@ lpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_memt = arg->hpet_mem_t;
-	sc->sc_memh = arg->hpet_mem_h;
+
+	if (bus_space_map(sc->sc_memt, arg->hpet_reg, HPET_WINDOW_SIZE, 0,
+			  &sc->sc_memh)) {
+		aprint_error("%s: HPET memory window could not be mapped",
+		    sc->sc_dev.dv_xname);		
+		return;
+	}
 
 	hpet_attach_subr(sc);
 }
@@ -823,14 +829,8 @@ lpcib_hpet_configure(struct lpcib_softc *sc)
 	}
 
 	arg.hpet_mem_t = sc->sc_pa.pa_memt;
+	arg.hpet_reg = hpet_reg;
 
-	if (bus_space_map(arg.hpet_mem_t, hpet_reg, HPET_WINDOW_SIZE, 0,
-			  &arg.hpet_mem_h)) {
-		aprint_error("%s: HPET memory window could not be mapped",
-		    sc->sc_dev.dv_xname);		
-		return;
-	}
-	
 	config_found_ia((struct device *)sc, "isabus", &arg, NULL);
 }
 #endif
