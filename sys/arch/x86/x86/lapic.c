@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.3 2007/09/03 16:47:48 jmcneill Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.4 2007/09/05 22:31:33 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.3 2007/09/03 16:47:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.4 2007/09/05 22:31:33 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.3 2007/09/03 16:47:48 jmcneill Exp
 
 void		lapic_delay(int);
 void		lapic_microtime(struct timeval *);
-static u_int32_t lapic_gettick(void);
+static uint32_t lapic_gettick(void);
 void		lapic_clockintr(void *, struct intrframe *);
 static void 	lapic_map(paddr_t);
 
@@ -108,8 +108,7 @@ struct pic local_pic = {
 };
 
 static void
-lapic_map(lapic_base)
-	paddr_t lapic_base;
+lapic_map(paddr_t lapic_base)
 {
 	int s;
 	pt_entry_t *pte;
@@ -143,18 +142,18 @@ lapic_map(lapic_base)
  * enable local apic
  */
 void
-lapic_enable()
+lapic_enable(void)
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
 void
-lapic_suspend()
+lapic_suspend(void)
 {
 }
 
 void
-lapic_set_lvt()
+lapic_set_lvt(void)
 {
 	struct cpu_info *ci = curcpu();
 	int i;
@@ -216,8 +215,7 @@ lapic_set_lvt()
  * Initialize fixed idt vectors for use by local apic.
  */
 void
-lapic_boot_init(lapic_base)
-	paddr_t lapic_base;
+lapic_boot_init(paddr_t lapic_base)
 {
 	lapic_map(lapic_base);
 
@@ -236,7 +234,8 @@ lapic_boot_init(lapic_base)
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
-static inline u_int32_t lapic_gettick()
+static uint32_t
+lapic_gettick(void)
 {
 	return i82489_readreg(LAPIC_CCR_TIMER);
 }
@@ -244,15 +243,17 @@ static inline u_int32_t lapic_gettick()
 #include <sys/kernel.h>		/* for hz */
 
 int lapic_timer = 0;
-u_int32_t lapic_tval;
+uint32_t lapic_tval;
 
 /*
  * this gets us up to a 4GHz busclock....
  */
-u_int32_t lapic_per_second;
-u_int32_t lapic_frac_usec_per_cycle;
-u_int64_t lapic_frac_cycle_per_usec;
-u_int32_t lapic_delaytab[26];
+uint32_t lapic_per_second;
+uint32_t lapic_frac_usec_per_cycle;
+uint64_t lapic_frac_cycle_per_usec;
+uint32_t lapic_delaytab[26];
+
+extern u_int i8254_get_timecount(struct timecounter *);
 
 void
 lapic_clockintr(void *arg, struct intrframe *frame)
@@ -275,7 +276,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 #if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
 	{
 		int cid = ci->ci_cpuid;
-		extern u_int i8254_get_timecount(struct timecounter *);
 		u_int c_count = i8254_get_timecount(NULL);
 		u_int c_tsc = cpu_counter32();
 		u_int delta, ddelta, tsc_delta, factor = 0;
@@ -358,7 +358,7 @@ extern int fixtick;
 #endif /* !__HAVE_TIMECOUNTER && NTP */
 
 void
-lapic_initclocks()
+lapic_initclocks(void)
 {
 
 #if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
@@ -398,12 +398,11 @@ extern void (*initclock_func)(void); /* XXX put in header file */
  * We're actually using the IRQ0 timer.  Hmm.
  */
 void
-lapic_calibrate_timer(ci)
-	struct cpu_info *ci;
+lapic_calibrate_timer(struct cpu_info *ci)
 {
 	unsigned int starttick, tick1, tick2, endtick;
 	unsigned int startapic, apic1, apic2, endapic;
-	u_int64_t dtick, dapic, tmp;
+	uint64_t dtick, dapic, tmp;
 	int i;
 	char tbuf[9];
 
@@ -503,8 +502,8 @@ lapic_calibrate_timer(ci)
  * delay for N usec.
  */
 
-void lapic_delay(usec)
-	int usec;
+void
+lapic_delay(int usec)
 {
 	int32_t xtick, otick;
 	int64_t deltat;		/* XXX may want to be 64bit */
@@ -534,10 +533,8 @@ void lapic_delay(usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
-static inline void i82489_icr_wait(void);
-
-static inline void
-i82489_icr_wait()
+static void
+i82489_icr_wait(void)
 {
 #ifdef DIAGNOSTIC
 	unsigned j = 100000;
@@ -554,8 +551,7 @@ i82489_icr_wait()
 }
 
 int
-x86_ipi_init(target)
-	int target;
+x86_ipi_init(int target)
 {
 
 	if ((target&LAPIC_DEST_MASK)==0) {
@@ -578,8 +574,7 @@ x86_ipi_init(target)
 }
 
 int
-x86_ipi(vec,target,dl)
-	int vec,target,dl;
+x86_ipi(int vec, int target, int dl)
 {
 	int result, s;
 
