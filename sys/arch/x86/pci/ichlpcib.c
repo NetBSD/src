@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.6 2007/09/05 00:32:53 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.7 2007/09/05 02:19:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.6 2007/09/05 00:32:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.7 2007/09/05 02:19:00 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,8 +75,9 @@ struct lpcib_softc {
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
-	struct pci_attach_args	sc_pa;
+	struct pci_conf_state	sc_pciconf;
 
+	struct pci_attach_args	sc_pa;
 	int			sc_has_rcba;
 	int			sc_has_ich5_hpet;
 
@@ -96,7 +97,6 @@ struct lpcib_softc {
 #endif
 
 	/* Power management */
-	struct pci_conf_state	sc_pciconf;
 	pcireg_t		sc_pirq[8];
 	pcireg_t		sc_pmcon;
 	pcireg_t		sc_fwhsel2;

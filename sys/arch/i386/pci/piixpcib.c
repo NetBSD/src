@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.10 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: piixpcib.c,v 1.10.26.1 2007/09/05 02:19:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.10.26.1 2007/09/05 02:19:00 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ struct piixpcib_softc {
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t	sc_pcitag;
+	struct pci_conf_state sc_pciconf;
 
 	int		sc_smi_cmd;
 	int		sc_smi_data;
@@ -78,7 +79,6 @@ struct piixpcib_softc {
 	bus_space_handle_t sc_ioh;
 
 	void		*sc_powerhook;
-	struct pci_conf_state sc_pciconf;
 
 	pcireg_t	sc_pirqrc;
 	uint8_t		sc_elcr[2];
