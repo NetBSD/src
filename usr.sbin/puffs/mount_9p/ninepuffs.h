@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.10 2007/07/17 10:06:04 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.11 2007/09/06 16:09:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -124,7 +124,7 @@ void			p9pbuf_recycleout(struct puffs_framebuf *);
 int	p9pbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
 int	p9pbuf_write(struct puffs_usermount *, struct puffs_framebuf*,int,int*);
 int	p9pbuf_cmp(struct puffs_usermount *,
-		   struct puffs_framebuf *, struct puffs_framebuf *);
+		   struct puffs_framebuf *, struct puffs_framebuf *, int *);
 
 void	p9pbuf_put_1(struct puffs_framebuf *, uint8_t);
 void	p9pbuf_put_2(struct puffs_framebuf *, uint16_t);
