@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 2007/08/25 19:16:10 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.61 2007/09/06 20:22:51 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2007/08/25 19:16:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2007/09/06 20:22:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ alloc_cpuinfo(u_int cpu_node)
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
-	vsize_t sz = 16 * PAGE_SIZE;
+	vsize_t sz = 8 * PAGE_SIZE;
 	int portid;
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
