@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.5 2007/09/06 00:55:03 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.6 2007/09/06 17:07:15 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.5 2007/09/06 00:55:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.6 2007/09/06 17:07:15 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -522,14 +522,14 @@ x86_ipi_init(int target)
 	}
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	    LAPIC_DLMODE_INIT | LAPIC_LVL_ASSERT );
+	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
 
 	i82489_icr_wait();
 
 	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
+	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
 
 	i82489_icr_wait();
 
@@ -549,7 +549,7 @@ x86_ipi(int vec, int target, int dl)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
 
 	i82489_writereg(LAPIC_ICRLO,
-	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
+	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LEVEL_ASSERT);
 
 #ifdef DIAGNOSTIC
 	i82489_icr_wait();
