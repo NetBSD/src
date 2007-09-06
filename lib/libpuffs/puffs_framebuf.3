@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.11 2007/09/01 16:42:42 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.12 2007/09/06 16:08:56 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 1, 2007
+.Dd September 6, 2007
 .Dt PUFFS_FRAMEBUF 3
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@
 .Ft int
 .Fo puffs_framev_cmpframe_fn
 .Fa "struct puffs_usermount *pu"
-.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2"
+.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2" "int *notresp"
 .Fc
 .Ft int
 .Fo puffs_framev_gotframe_fn
@@ -465,7 +465,7 @@ with the flag
 .Dv MSG_NOSIGNAL
 instead of using
 .Fn write .
-.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2
+.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2 notresp
 Compare the file system internal request tags in
 .Ar pufbuf_cmp1
 and
@@ -475,6 +475,15 @@ greater than the second and \-1 if it is smaller.
 The definitions "greater" and "smaller" are used transparently by
 the library, e.g. like
 .Xr qsort 3 .
+If it can be determined from
+.Ar pufbuf_cmp1
+that it is not a response to any outstanding request,
+.Ar notresp
+should be set to non-zero.
+This will cause
+.Nm
+to skip the test of the buffer against the rest of the outstanding
+request.
 May not block.
 .It Fn puffs_framev_gotframe_fn pu pufbuf
 Called when no outstanding request matches an incoming frame.
