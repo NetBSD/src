@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.29 2007/08/17 17:59:15 pavel Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.30 2007/09/06 03:01:55 xtraeme Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -194,6 +194,7 @@ print_entry(prop_dictionary_t entry)
 	file = escape(dict_gets(entry, "file"));
 	printf("%s %s %s %s\n", file, dict_gets(entry, "fp-type"), fp, flags);
 	free(file);
+	free(fp);
 }
 
 int
