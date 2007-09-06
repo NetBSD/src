@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.4 2007/09/05 22:31:33 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.5 2007/09/06 00:55:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.4 2007/09/05 22:31:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.5 2007/09/06 00:55:03 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -67,9 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.4 2007/09/05 22:31:33 joerg Exp $"
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
-#ifdef _HAVE_TIMECOUNTER
 #include <x86/x86/tsc.h>
-#endif
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -259,21 +257,18 @@ void
 lapic_clockintr(void *arg, struct intrframe *frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
-#ifndef __HAVE_TIMECOUNTER
-	static int microset_iter; /* call cc_microset once/sec */
-#endif /* __HAVE_TIMECOUNTER */
-#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+#if defined(TIMECOUNTER_DEBUG)
 	static u_int last_count[X86_MAXPROCS],
 		     last_delta[X86_MAXPROCS],
 		     last_tsc[X86_MAXPROCS],
 		     last_tscdelta[X86_MAXPROCS],
 	             last_factor[X86_MAXPROCS];
-#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
+#endif /* TIMECOUNTER_DEBUG */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
-#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+#if defined(TIMECOUNTER_DEBUG)
 	{
 		int cid = ci->ci_cpuid;
 		u_int c_count = i8254_get_timecount(NULL);
@@ -331,43 +326,15 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		last_tsc[cid]      = c_tsc;
 		last_tscdelta[cid] = tsc_delta;
 	}
-#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
-
-#ifndef __HAVE_TIMECOUNTER
-	/*
-	 * If we have a cycle counter, do the microset thing.
-	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (CPU_IS_PRIMARY(ci) && (microset_iter--) == 0) {
-			microset_iter = hz - 1;
-			cc_microset_time = time;
-#if defined(MULTIPROCESSOR)
-			x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-			cc_microset(ci);
-		}
-	}
-#endif /* !__HAVE_TIMECOUNTER */
+#endif /* TIMECOUNTER_DEBUG */
 #endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)frame);
 }
 
-#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
-extern int fixtick;
-#endif /* !__HAVE_TIMECOUNTER && NTP */
-
 void
 lapic_initclocks(void)
 {
-
-#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
-	/*
-	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
-	 */
-	fixtick = 1000000 -
-	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
-#endif /* !__HAVE_TIMECOUNTER && NTP */
 
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
@@ -490,11 +457,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 */
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
-#ifdef __HAVE_TIMECOUNTER
 		initrtclock(0);
-#else
-		initrtclock();
-#endif
 	}
 }
 
