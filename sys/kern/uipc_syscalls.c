@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.118 2007/09/01 17:04:58 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.119 2007/09/06 01:21:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.118 2007/09/01 17:04:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.119 2007/09/06 01:21:00 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -459,7 +459,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	struct socket	*so;
 	struct iovec	*tiov;
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 
 	ktrkuser("msghdr", mp, sizeof *mp);
 
@@ -540,7 +540,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 	}
 
-	ktriov = NULL;
 	if (ktrpoint(KTR_GENIO)) {
 		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
@@ -577,13 +576,13 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	if (error == 0)
 		*retsize = len - auio.uio_resid;
 
+bad:
 	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
 		free(ktriov, M_TEMP);
 	}
 
- bad:
-	if (iov != aiov)
+ 	if (iov != aiov)
 		free(iov, M_IOV);
 	if (to)
 		m_freem(to);
