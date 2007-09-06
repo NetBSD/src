@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.4 2007/08/05 19:01:05 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.5 2007/09/06 02:40:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.4 2007/08/05 19:01:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.5 2007/09/06 02:40:04 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,74 +135,85 @@ pnp_displaypowername(pnp_display_power_t power)
 static void
 pnp_print(device_t dv, pnp_capabilities_t *caps)
 {
+	const char *class_string;
 
 	KASSERT(dv != NULL);
 	KASSERT(caps != NULL);
 
-	aprint_normal("%s: ", device_xname(dv));
 	switch (device_class(dv)) {
 	case DV_DULL:
-		aprint_normal("generic");
+		class_string = "generic";
 		break;
 	case DV_CPU:
-		aprint_normal("processor");
+		class_string = "processor";
 		break;
 	case DV_DISK:
-		aprint_normal("disk");
+		class_string = "disk";
 		break;
 	case DV_IFNET:
-		aprint_normal("network");
+		class_string = "network";
 		break;
 	case DV_TAPE:
-		aprint_normal("tape");
+		class_string = "tape";
 		break;
 	case DV_TTY:
-		aprint_normal("communications");
+		class_string = "communications";
 		break;
 	case DV_AUDIODEV:
-		aprint_normal("audio");
+		class_string = "audio";
 		break;
 	case DV_DISPLAYDEV:
-		aprint_normal("display");
+		class_string = "display";
 		break;
 	case DV_BUS:
-		aprint_normal("bus");
+		class_string = "bus";
 		break;
 	default:
-		aprint_normal("unknown");
+		class_string = "unknown";
 		break;
 	}
 
-	aprint_normal(" device class power management enabled\n");
+	aprint_verbose("%s: using %s power management",
+	    device_xname(dv), class_string);
 
 	if (caps->state != 0) {
-		aprint_normal("%s: supported states:", device_xname(dv));
-		if (caps->state & PNP_STATE_D0)
-			aprint_normal(" D0");
-		if (caps->state & PNP_STATE_D1)
-			aprint_normal(" D1");
-		if (caps->state & PNP_STATE_D2)
-			aprint_normal(" D2");
-		if (caps->state & PNP_STATE_D3)
-			aprint_normal(" D3");
-		aprint_normal("\n");
-	}
+		const char *state_prefix = "";
+		aprint_verbose(" <");
+		if (caps->state & PNP_STATE_D0) {
+			aprint_verbose("%sD0", state_prefix);
+			state_prefix = ",";
+		}
+		if (caps->state & PNP_STATE_D1) {
+			aprint_verbose("%sD1", state_prefix);
+			state_prefix = ",";
+		}
+		if (caps->state & PNP_STATE_D2) {
+			aprint_verbose("%sD2", state_prefix);
+			state_prefix = ",";
+		}
+		if (caps->state & PNP_STATE_D3) {
+			aprint_verbose("%sD3", state_prefix);
+			state_prefix = ",";
+		}
+		aprint_verbose(">\n");
+	} else
+		aprint_verbose("\n");
 
 	if (caps->display_power != 0) {
 		KASSERT(device_class(dv) == DV_DISPLAYDEV);
 
-		aprint_normal("%s: display states:", device_xname(dv));
+		aprint_verbose("%s: display states:", device_xname(dv));
 		if (caps->display_power & PNP_DISPLAY_POWER_ON)
-			aprint_normal(" on");
+			aprint_verbose(" on");
 		if (caps->display_power & PNP_DISPLAY_POWER_REDUCED)
-			aprint_normal(" reduced");
+			aprint_verbose(" reduced");
 		if (caps->display_power & PNP_DISPLAY_POWER_STANDBY)
-			aprint_normal(" standby");
+			aprint_verbose(" standby");
 		if (caps->display_power & PNP_DISPLAY_POWER_SUSPEND)
-			aprint_normal(" suspend");
+			aprint_verbose(" suspend");
 		if (caps->display_power & PNP_DISPLAY_POWER_OFF)
-			aprint_normal(" off");
-		aprint_normal("\n");
+			aprint_verbose(" off");
+		aprint_verbose("\n");
 	}
 
 	return;
