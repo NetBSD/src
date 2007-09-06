@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.23 2007/08/23 15:19:40 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.24 2007/09/06 16:09:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -160,7 +160,7 @@ int	psshfs_domount(struct puffs_usermount *);
 int	psbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
 int	psbuf_write(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
 int	psbuf_cmp(struct puffs_usermount *,
-		  struct puffs_framebuf *, struct puffs_framebuf *);
+		  struct puffs_framebuf *, struct puffs_framebuf *, int *);
 
 struct puffs_framebuf	*psbuf_makeout(void);
 void			psbuf_recycleout(struct puffs_framebuf *);
