@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.114 2007/08/10 21:50:48 dyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.115 2007/09/06 23:58:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114 2007/08/10 21:50:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.115 2007/09/06 23:58:57 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -370,7 +370,8 @@ proc0_init(void)
 	SLIST_INIT(&l->l_pi_lenders);
 	l->l_name = __UNCONST("swapper");
 
-	callout_init(&l->l_tsleep_ch, 0);
+	callout_init(&l->l_timeout_ch, 0);
+	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
 	cv_init(&l->l_sigcv, "sigwait");
 
 	/* Create credentials. */

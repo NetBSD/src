@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.70 2007/09/06 23:58:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.70 2007/09/06 23:58:56 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -599,7 +599,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	}
 
 	lwp_update_creds(l2);
-	callout_init(&l2->l_tsleep_ch, CALLOUT_MPSAFE);
+	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
 	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
@@ -723,7 +724,7 @@ lwp_exit(struct lwp *l)
 	 * Release our cached credentials.
 	 */
 	kauth_cred_free(l->l_cred);
-	callout_destroy(&l->l_tsleep_ch);
+	callout_destroy(&l->l_timeout_ch);
 
 	/*
 	 * While we can still block, mark the LWP as unswappable to
