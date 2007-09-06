@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.847 2007/09/06 10:24:18 martti Exp $
+# $NetBSD: GENERIC,v 1.848 2007/09/06 18:09:00 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.847 $"
+#ident 		"GENERIC-$Revision: 1.848 $"
 
 maxusers	32		# estimated number of users
 
@@ -519,7 +519,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
-#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -804,7 +804,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -988,6 +988,7 @@ atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
+re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?	# DECchip 21143
@@ -1106,6 +1107,9 @@ umidi* at uhub? port ? configuration ?
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
 
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
+
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?
 irframe* at ustir?
@@ -1185,6 +1189,9 @@ ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options UGEN_BULK_RA_WB
 
+# USB generic serial port (e.g., data over cellular)
+ugensa*	at uhub? port ?
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 
