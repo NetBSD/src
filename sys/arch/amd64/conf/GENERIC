@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.3 2007/09/06 00:06:15 joerg Exp $
+# $NetBSD: GENERIC,v 1.153.8.4 2007/09/06 11:01:31 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.3 $"
+#ident 		"GENERIC-$Revision: 1.153.8.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -252,26 +252,26 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
-#acpiacad* 	at acpi?		# ACPI AC Adapter
-#acpibat* 	at acpi?		# ACPI Battery
-#acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
-#acpilid* 	at acpi?		# ACPI Lid Switch
-#acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-#aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
-#com* 		at acpi?		# Serial communications interface
-#fdc* 		at acpi?		# Floppy disk controller
-#hpet*		at acpi?		# High Precision Event Timer
-#joy*		at acpi?		# Joystick/Game port
-#lpt* 		at acpi?		# Parallel port
-#mpu*		at acpi?		# Roland MPU-401 MIDI UART
-#pckbc*  	at acpi?		# PC keyboard controller
-#attimer*	at acpi?		# AT Timer
-#pcppi*  	at acpi?                # AT-style speaker sound
-#ug* 		at acpi?		# Abit uGuru Hardware monitor
-#wss* 		at acpi?		# NeoMagic 256AV in wss mode
+aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
+com* 		at acpi?		# Serial communications interface
+fdc* 		at acpi?		# Floppy disk controller
+hpet*		at acpi?		# High Precision Event Timer
+joy*		at acpi?		# Joystick/Game port
+lpt* 		at acpi?		# Parallel port
+mpu*		at acpi?		# Roland MPU-401 MIDI UART
+pckbc*  	at acpi?		# PC keyboard controller
+attimer*	at acpi?		# AT Timer
+pcppi*  	at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
+wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 cpu* 		at mainbus?
 ioapic* 	at mainbus? apid ?
@@ -308,7 +308,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
-#agp* 	at pchb?
+agp* 	at pchb?
 
 # ISA bus support
 isa0	at mainbus?
@@ -317,12 +317,12 @@ isa0	at pcib?
 #isa0 	at ichlpcib?
 
 # CardBus bridge support
-#cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
 
 # CardBus bus support
-#cardbus*	at cardslot?
-#pcmcia* 	at cardslot?
+cardbus*	at cardslot?
+pcmcia* 	at cardslot?
 
 # Coprocessor Support
 
@@ -357,13 +357,13 @@ cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 # PCMCIA serial interfaces
-#com*	at pcmcia? function ?		# Modems and serial cards
+com*	at pcmcia? function ?		# Modems and serial cards
 
-#pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
-#com*	at pcmcom? slave ?		# ...and the slave devices
+pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? function ?	# Modems and serial cards
+com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -441,13 +441,13 @@ esiop*	at pci? dev ? function ?	# Symbios 53c875 and newer SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # PCMCIA SCSI controllers
-#aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
-#esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
-#spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
+aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # CardBus SCSI cards
-#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? function ?	# Adaptec ADP-1480
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
 
 # SCSI bus support
 scsibus* at scsi?
@@ -510,7 +510,7 @@ svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
-#wdc*	at pcmcia? function ?
+wdc*	at pcmcia? function ?
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -607,32 +607,33 @@ wpi* 	at pci? dev ? function ? 	# Intel PRO/Wireless 3945ABG
 xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # PCMCIA network interfaces
-#an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
-#awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
-#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
-#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-#mbe*	at pcmcia? function ?		# MB8696x based Ethernet
-#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-#ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
-#sm*	at pcmcia? function ?		# Megahertz Ethernet
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
-#wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-#com*	at xirc?
-#xi*	at xirc?
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 
-#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
-#com*	at mhzc?
-#sm*	at mhzc?
+mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
 
 # CardBus network cards
-#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
-#ex*	at cardbus? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? function ?	# Intel i8255x
-#rtk*	at cardbus? function ?	# Realtek 8129/8139
-#rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
-#tlp*	at cardbus? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+ex*	at cardbus? function ?	# 3Com 3C575TX
+fxp*	at cardbus? function ?	# Intel i8255x
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp*	at cardbus? function ?	# DECchip 21143
+ral* 	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
@@ -672,8 +673,8 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? function ?	# Open Host Controller
+ehci*	at cardbus? function ?	# Enhanced Host Controller
+ohci*	at cardbus? function ?	# Open Host Controller
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -808,7 +809,7 @@ options	UGEN_BULK_RA_WB
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
  
 # CardBus IEEE1394 controllers 
-#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
@@ -881,8 +882,8 @@ radio* at bktr?
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
-#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
+bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
