@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.885.6.5 2007/09/03 16:48:21 jmcneill Exp $
+$NetBSD: pcidevs,v 1.885.6.6 2007/09/06 21:56:54 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2388,6 +2388,10 @@ product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
 product INTEL 82965Q_IGD_1	0x2993  82965Q Integrated Graphics Device
+product	INTEL 82G33_HB		0x29c0	82G33/P35 Host Bridge
+product	INTEL 82G33_EXP		0x29c1	82G33 PCI Express Port
+product	INTEL 82G33_IGD		0x29c2	82G33 Integrated Graphics Device
+product	INTEL 82G33_IGD_1	0x29c3	82G33 Integrated Graphics Device
 product INTEL 82801I_LAN	0x29c4	82801I LAN Controller
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
 product	INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
