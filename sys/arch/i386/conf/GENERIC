@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.845 2007/09/03 17:57:36 tshiozak Exp $
+# $NetBSD: GENERIC,v 1.846 2007/09/06 00:31:08 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.845 $"
+#ident 		"GENERIC-$Revision: 1.846 $"
 
 maxusers	32		# estimated number of users
 
@@ -1400,7 +1400,7 @@ pseudo-device	swcrypto	# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
