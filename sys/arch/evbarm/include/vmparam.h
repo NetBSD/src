@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23.50.1 2007/09/06 19:29:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,11 @@
  * The line between user space and kernel space
  * Mappings >= KERNEL_BASE are constant across all processes
  */
-#define	KERNEL_BASE		0xc0000000
+#ifdef KERNEL_BASE_EXT
+#define	KERNEL_BASE		KERNEL_BASE_EXT
+#else
+#define	KERNEL_BASE		0x80000000
+#endif
 
 /*
  * Override the default pager_map size, there's not enough KVA.
