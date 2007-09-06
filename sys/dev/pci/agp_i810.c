@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.5 2007/08/27 03:15:52 jmcneill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.6 2007/09/06 22:12:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.5 2007/08/27 03:15:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.6 2007/09/06 22:12:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.5 2007/08/27 03:15:52 jmcneill E
 #define WRITE4(off,v)	bus_space_write_4(isc->bst, isc->bsh, off, v)
 #define WRITEGTT(off, v)						\
 	do {								\
-		if (isc->chiptype == CHIP_I915) {			\
+		if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) { \
 			bus_space_write_4(isc->gtt_bst, isc->gtt_bsh,	\
 			    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,	\
 			    (v));					\
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.5 2007/08/27 03:15:52 jmcneill E
 #define CHIP_I855 2	/* 852GM/855GM/865G */
 #define CHIP_I915 3	/* 915G/915GM/945G/945GM */
 #define CHIP_I965 4	/* 965Q/965PM */
+#define CHIP_G33  5	/* G33/Q33/Q35 */
 
 struct agp_i810_softc {
 	u_int32_t initial_aperture;	/* aperture size at startup */
@@ -152,6 +153,8 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82965Q_IGD_1:
 	case PCI_PRODUCT_INTEL_82965PM_IGD:
 	case PCI_PRODUCT_INTEL_82965PM_IGD_1:
+	case PCI_PRODUCT_INTEL_82G33_IGD:
+	case PCI_PRODUCT_INTEL_82G33_IGD_1:
 		return (1);
 	}
 
@@ -240,9 +243,21 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_82965PM_IGD_1:
 		isc->chiptype = CHIP_I965;
 		break;
+	case PCI_PRODUCT_INTEL_82G33_IGD:
+	case PCI_PRODUCT_INTEL_82G33_IGD_1:
+		isc->chiptype = CHIP_G33;
+		break;
 	}
 
-	apbase = isc->chiptype == CHIP_I915 ? AGP_I915_GMADR : AGP_I810_GMADR;
+	switch (isc->chiptype) {
+	case CHIP_I915:
+	case CHIP_G33:
+		apbase = AGP_I915_GMADR;
+		break;
+	default:
+		apbase = AGP_I810_GMADR;
+		break;
+	}
 	if (isc->chiptype == CHIP_I965) {
 		error = agp_i965_map_aperture(&isc->vga_pa, sc, AGP_I965_GMADR);
 	} else {
@@ -254,7 +269,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		return error;
 	}
 
-	if (isc->chiptype == CHIP_I915) {
+	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
 		    NULL, &mmadrsize);
@@ -381,10 +396,13 @@ static int agp_i810_init(struct agp_softc *sc)
 
 		gatt->ag_physical = pgtblctl & ~1;
 	} else if (isc->chiptype == CHIP_I855 || isc->chiptype == CHIP_I915 ||
-		   isc->chiptype == CHIP_I965) {
+		   isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G33) {
 		pcireg_t reg;
 		u_int32_t pgtblctl, stolen;
 		u_int16_t gcc1;
+
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I855_GCC1);
+		gcc1 = (u_int16_t)(reg >> 16);
 
 		/* Stolen memory is set up at the beginning of the aperture by
                  * the BIOS, consisting of the GATT followed by 4kb for the
@@ -400,14 +418,26 @@ static int agp_i810_init(struct agp_softc *sc)
 		case CHIP_I965:
 			stolen = 512 + 4;
 			break;
+		case CHIP_G33:
+			switch (gcc1 & AGP_G33_PGTBL_SIZE_MASK) {
+			case AGP_G33_PGTBL_SIZE_1M:
+				stolen = 1024 + 4;
+				break;
+			case AGP_G33_PGTBL_SIZE_2M:
+				stolen = 2048 + 4;
+				break;
+			default:
+				aprint_error(": bad gtt size\n");
+				agp_generic_detach(sc);
+				return EINVAL;
+			}
+			break;
 		default:
 			aprint_error(": bad chiptype\n");
 			agp_generic_detach(sc);
 			return EINVAL;
                }
 
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I855_GCC1);
-		gcc1 = (u_int16_t)(reg >> 16);
 		switch (gcc1 & AGP_I855_GCC1_GMS) {
 		case AGP_I855_GCC1_GMS_STOLEN_1M:
 			isc->stolen = (1024 - stolen) * 1024 / 4096;
@@ -526,6 +556,7 @@ agp_i810_get_aperture(struct agp_softc *sc)
 	case CHIP_I855:
 		return 128 * 1024 * 1024;
 	case CHIP_I915:
+	case CHIP_G33:
 		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I915_MSAC);
 		msac = (u_int16_t)(reg >> 16);
 		if (msac & AGP_I915_MSAC_APER_128M)
