@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.256 2007/08/25 19:16:10 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.257 2007/09/06 20:22:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4970,29 +4970,16 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l1, %l4, %l1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=0|G=0
+	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
 	!!
 	set	TLB_TAG_ACCESS, %l5
-	set	1f, %o5
-	sethi	%hi(INTSTACK), %l0
+	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync				! We may need more membar #Sync in here
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync				! We may need more membar #Sync in here
-	flush	%o5
-1:
-	!!
-	!! Map in idle u area and kernel stack
-	!!
-	sethi	%hi(KSTACK_VA), %l0
-	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync
-	flush	%o5
 
 	!! Setup kernel stack (we rely on curlwp on this cpu
 	!! being lwp0 here and it's uarea is mapped special
@@ -5047,12 +5034,14 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l0, %l3, %l0			! Mask off size and split bits
 	or	%l0, %l2, %l0			! Make a TSB pointer
 	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
-	membar	#Sync
 
 	andn	%l1, %l3, %l1			! Mask off size and split bits
 	or	%l1, %l2, %l1			! Make a TSB pointer
 	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
+	set	1f, %l1
+	flush	%l1
+1:
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
@@ -5117,8 +5106,9 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 */
 ENTRY(cpu_mp_startup)
 	wrpr    %g0, 0, %cleanwin
-!	wrpr	%g0, 0, %pstate
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
+	wrpr	%g0, WSTATE_KERN, %wstate
+	wrpr	%g0, PSTATE_KERN, %pstate
 	flushw
 
 	/*
@@ -5132,42 +5122,22 @@ ENTRY(cpu_mp_startup)
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number
 	or	%l2, %l1, %l1			! Now take care of the high bits
-#ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
-#else
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
-#endif
+	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	/*
 	 *  Now, map in the interrupt stack & cpu_info as context==0
 	 */
 	set	TLB_TAG_ACCESS, %l5
-	set	1f, %o5
 	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync
-	flush	%o5
-	flush	%l0
-1:
-	/*
-	 * Map in idle u area and kernel stack
-	 */
-	set	KSTACK_VA, %l0
-	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync
-	flush	%o5
-	flush	%l0
 
 	/*
 	 * Set 0 as primary context XXX
 	 */
 	mov	CTX_PRIMARY, %o0
 	stxa	%g0, [%o0] ASI_DMMU
-	flush	%o5
+	membar	#Sync
 
 	/*
 	 * Temporarily use the interrupt stack
@@ -5203,6 +5173,9 @@ ENTRY(cpu_mp_startup)
 	or	%l1, %l2, %l1			! Make a TSB pointer
 	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
+	set	1f, %o0
+	flush	%o0
+1:
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
@@ -5223,6 +5196,7 @@ ENTRY(cpu_mp_startup)
 	sub	%l0, BIAS, %l0			! and biased
 #endif
 	mov	%l0, %sp
+	flushw
 
 	/*
 	 * Switch to the kernel mode and run away.
@@ -5230,7 +5204,6 @@ ENTRY(cpu_mp_startup)
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 	wr	%g0, FPRS_FEF, %fprs			! Turn on FPU
-	wrpr	%g0, WSTATE_KERN, %wstate
 
 	call	_C_LABEL(cpu_hatch)
 	 clr %g4
