@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2007/08/25 19:16:11 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.194 2007/09/06 19:36:33 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2007/08/25 19:16:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2007/09/06 19:36:33 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3430,10 +3430,6 @@ pmap_testout()
 void
 pmap_update(struct pmap *pmap)
 {
-
-#ifdef MULTIPROCESSOR
-	smp_tlb_flush_all();	/* XXX */
-#endif
 
 	if (pmap->pm_refs > 0) {
 		return;
