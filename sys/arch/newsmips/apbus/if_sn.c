@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.25 2007/09/01 07:32:24 dyoung Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.26 2007/09/06 08:54:00 he Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.25 2007/09/01 07:32:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.26 2007/09/06 08:54:00 he Exp $");
 
 #include "opt_inet.h"
 
@@ -244,7 +244,6 @@ static int
 snioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	struct sn_softc *sc = ifp->if_softc;
 	int	s = splnet(), err = 0;
 	int	temp;
