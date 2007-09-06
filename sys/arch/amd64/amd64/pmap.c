@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37.8.1 2007/09/03 16:47:01 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37.8.2 2007/09/06 02:19:39 jmcneill Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37.8.1 2007/09/03 16:47:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37.8.2 2007/09/06 02:19:39 jmcneill Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -486,7 +486,7 @@ extern paddr_t idt_paddr;
 
 #ifdef _LP64
 extern vaddr_t lo32_vaddr;
-extern vaddr_t lo32_paddr;
+extern paddr_t lo32_paddr;
 #endif
 
 extern int end;
