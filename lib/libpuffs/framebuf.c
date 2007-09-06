@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.22 2007/09/06 16:08:55 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.23 2007/09/06 18:01:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.22 2007/09/06 16:08:55 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.23 2007/09/06 18:01:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -472,9 +472,6 @@ puffs_framev_enqueue_directsend(struct puffs_cc *pcc, int fd,
 	return 0;
 }
 
-/*
- * this beauty shall remain undocumented for now
- */
 int
 puffs_framev_framebuf_ccpromote(struct puffs_framebuf *pufbuf,
 	struct puffs_cc *pcc)

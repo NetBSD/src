@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.12 2007/09/06 16:08:56 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.13 2007/09/06 18:01:34 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -101,6 +101,10 @@
 .Fo puffs_framev_enqueue_directreceive
 .Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
 .Fa "int flags"
+.Fc
+.Ft int
+.Fo puffs_framev_framebuf_ccpromote
+.Fa "struct puffs_framebuf *pufbuf" "struct puffs_cc *pcc"
 .Fc
 .Ft int
 .Fn puffs_framev_enqueue_waitevent "struct puffs_cc *pcc" "int fd" "int *what"
@@ -396,6 +400,22 @@ See
 .Fn puffs_framev_enqueue_cc
 for
 .Ar flags .
+.It Fn puffs_framev_framebuf_ccpromote pufbuf pcc
+Promote the framebuffer
+.Ar pufbuf
+sent with
+.Fn puffs_framev_enqueue_cb
+or
+.Fn puffs_framev_enqueue_justsend
+to a wait using
+.Ar pcc
+and yield until the result arrives.
+The response from the file server for
+.Ar pufbuf
+must not yet have arrived.
+If sent with
+.Fn puffs_framev_enqueue_justsend ,
+the call must be expecting a response.
 .It Fn puffs_framev_enqueue_waitevent pcc fd what
 Waits for an event in
 .Ar what
