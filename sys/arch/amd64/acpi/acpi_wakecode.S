@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakecode.S,v 1.1.2.1 2007/09/06 22:59:43 jmcneill Exp $ */
+/* $NetBSD: acpi_wakecode.S,v 1.1.2.2 2007/09/06 23:09:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -262,11 +262,15 @@ wakeup_64:
 	movl	%eax, %ss
 	movl	%eax, %fs
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + '7', (0xb800e)
+#endif
 
 	movq	previous_rsp(%rsi), %rsp
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + '8', (0xb8010)
+#endif
 
 #if 1	/* XXXAD ?? */
 	/* Fixup TSS type field; 386 busy TSS (11) -> 386 available TSS (9) */
@@ -277,7 +281,9 @@ wakeup_64:
 	andb	$TSS_TYPEFIX_MASK, 5(%rax)
 #endif
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + '9', (0xb8012)
+#endif
 
         /* Restore registers */
 	lgdt	previous_gdt(%rsi)
@@ -287,7 +293,9 @@ wakeup_64:
         ltr     previous_tr(%rsi)
 #endif
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + 'a', (0xb8014)
+#endif
 
 	movq	previous_cr2(%rsi), %rax
 	movq	%rax, %cr2
@@ -295,7 +303,9 @@ wakeup_64:
 	movq	previous_cr4(%rsi), %rax
 	movq	%rax, %cr4
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + 'b', (0xb8016)
+#endif
 
         movw	previous_es(%rsi), %ax
         movw	%ax, %es
@@ -308,7 +318,9 @@ wakeup_64:
         movq	where_to_recover(%rsi), %rbx
         movw	previous_ds(%rsi), %ax
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + 'c', (0xb8018)
+#endif
 
 	/* Re-enable paging, %rdx loaded above */
 	movq	%rdx, %cr3
