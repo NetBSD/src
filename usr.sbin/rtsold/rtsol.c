@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.13 2006/10/16 03:39:42 christos Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.14 2007/09/06 09:26:21 jnemeth Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ rtsol_input(int s)
 
 	if ((ifi = find_ifinfo(pi->ipi6_ifindex)) == NULL) {
 		warnmsg(LOG_NOTICE, __func__,
-		    "received RA from %s on an unexpeced IF(%s)",
+		    "received RA from %s on an unexpected IF(%s)",
 		    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 		    INET6_ADDRSTRLEN),
 		    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
