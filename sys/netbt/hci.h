@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.11 2007/09/07 18:14:33 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.12 2007/09/07 18:37:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.11 2007/09/07 18:14:33 plunky Exp $
+ * $Id: hci.h,v 1.12 2007/09/07 18:37:30 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2090,7 +2090,10 @@ struct hci_link {
  */
 struct hci_memo {
 	struct timeval		time;		/* time of last response */
-	hci_inquiry_response	response;	/* inquiry response */
+	bdaddr_t		bdaddr;
+	uint8_t			page_scan_rep_mode;
+	uint8_t			page_scan_mode;
+	uint16_t		clock_offset;
 	LIST_ENTRY(hci_memo)	next;
 };
 
