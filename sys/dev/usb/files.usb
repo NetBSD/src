@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.80 2007/09/03 17:57:36 tshiozak Exp $
+#	$NetBSD: files.usb,v 1.81 2007/09/07 20:17:38 plunky Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -59,10 +59,6 @@ file	dev/usb/ugen.c			ugen			needs-flag
 # HID
 # HID "bus"
 define	uhidbus {[ reportid = -1 ]}
-
-# HID processing
-define	hid
-file	dev/usb/hid.c			hid
 
 # HID root device for multiple report IDs
 device	uhidev: hid, uhidbus
