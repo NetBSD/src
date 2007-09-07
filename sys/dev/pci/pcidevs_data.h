@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.896 2007/09/02 21:03:57 ober Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.897 2007/09/07 13:51:14 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.897 2007/09/02 21:02:52 ober Exp
+ *	NetBSD: pcidevs,v 1.898 2007/09/07 13:50:43 cube Exp
  */
 
 /*
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Attansic Technologies",
 	},
 	{
+	    PCI_VENDOR_EVE,
+	    "EVE",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs (2nd PCI Vendor ID)",
 	},
@@ -2384,7 +2388,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 586;
+const int pci_nvendors = 587;
 
 static const struct pci_product pci_products[] = {
 	{
