@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.2 2007/08/16 11:03:02 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.3 2007/09/07 23:55:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.2 2007/08/16 11:03:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.3 2007/09/07 23:55:29 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -428,11 +428,6 @@ audioattach(struct device *parent, struct device *self, void *aux)
 			if (strcmp(mi.label.name, AudioNselect) == 0)
 				au_setup_ports(sc, &sc->sc_outports, &mi,
 				    otable);
-
-			/* XXX jmcneill: azalia hack */
-			if (strcmp(mi.label.name, "mix0c") == 0)
-				sc->sc_outports.master = mi.index;
-
 		} else if (mi.mixer_class == rclass) {
 			/*
 			 * These are the preferred mixers for the audio record
