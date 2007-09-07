@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.897 2007/09/02 21:02:52 ober Exp $
+$NetBSD: pcidevs,v 1.898 2007/09/07 13:50:43 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor ATTANSIC		0x1969	Attansic Technologies
+vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
