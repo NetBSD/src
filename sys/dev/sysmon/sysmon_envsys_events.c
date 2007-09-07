@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.28 2007/09/04 16:54:02 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.29 2007/09/07 23:28:33 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.28 2007/09/04 16:54:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.29 2007/09/07 23:28:33 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -285,7 +285,8 @@ sme_event_unregister_all(const char *sme_name)
 	if (LIST_EMPTY(&sme_events_list)) {
 		mutex_enter(&sme_event_init_mtx);
 		mutex_exit(&sme_event_mtx);
-		sme_events_destroy();
+		if (sme_events_initialized)
+			sme_events_destroy();
 		mutex_exit(&sme_event_init_mtx);
 		return;
 	}
@@ -516,8 +517,8 @@ sme_events_worker(struct work *wk, void *arg)
 		if (strcmp(sme->sme_name, see->pes.pes_dvname) == 0)
 			break;
 	mutex_exit(&sme_list_mtx);
-
-	KASSERT(sme != NULL);
+	if (sme == NULL)
+		return;
 
 	/* get the sensor with the index specified in see->snum */
 	edata = &sme->sme_sensor_data[see->snum];
