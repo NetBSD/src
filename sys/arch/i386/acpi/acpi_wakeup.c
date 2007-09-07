@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.1 2007/08/03 22:17:06 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.2 2007/09/07 15:12:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.1 2007/08/03 22:17:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.2 2007/09/07 15:12:55 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -367,16 +367,16 @@ acpi_md_sleep(int state)
 		/* load proc 0 PTD */
 		__asm( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
 
-		p_gdt = (struct region_descriptor *)(phys_wakeup+physical_gdt);
+		p_gdt = (struct region_descriptor *)(phys_wakeup+WAKEUP_physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
-		WAKECODE_FIXUP(vbios_reset, uint8_t, acpi_md_vbios_reset);
-		WAKECODE_FIXUP(beep_on_reset, uint8_t, acpi_md_beep_on_reset);
+		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
+		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
-		WAKECODE_FIXUP(previous_cr0, uint32_t, r_cr0);
-		WAKECODE_FIXUP(previous_cr2, uint32_t, r_cr2);
-		WAKECODE_FIXUP(previous_cr4, uint32_t, r_cr4);
+		WAKECODE_FIXUP(WAKEUP_previous_cr0, uint32_t, r_cr0);
+		WAKECODE_FIXUP(WAKEUP_previous_cr2, uint32_t, r_cr2);
+		WAKECODE_FIXUP(WAKEUP_previous_cr4, uint32_t, r_cr4);
 
 		/*
 		 * Make sure the wake code to temporarily use the proc 0 PTD.
@@ -385,20 +385,20 @@ acpi_md_sleep(int state)
 		 * entering to protect mode.  The current PTD will be restored
 		 * in acpi_restorecpu().
 		 */
-		WAKECODE_FIXUP(previous_cr3, uint32_t, PDPpaddr);
+		WAKECODE_FIXUP(WAKEUP_previous_cr3, uint32_t, PDPpaddr);
 
-		WAKECODE_FIXUP(previous_tr,  uint16_t, r_tr);
-		WAKECODE_BCOPY(previous_gdt, struct region_descriptor, r_gdt);
-		WAKECODE_FIXUP(previous_ldt, uint16_t, r_ldt);
-		WAKECODE_BCOPY(previous_idt, struct region_descriptor, r_idt);
+		WAKECODE_FIXUP(WAKEUP_previous_tr,  uint16_t, r_tr);
+		WAKECODE_BCOPY(WAKEUP_previous_gdt, struct region_descriptor, r_gdt);
+		WAKECODE_FIXUP(WAKEUP_previous_ldt, uint16_t, r_ldt);
+		WAKECODE_BCOPY(WAKEUP_previous_idt, struct region_descriptor, r_idt);
 
-		WAKECODE_FIXUP(where_to_recover, void *, acpi_restorecpu);
+		WAKECODE_FIXUP(WAKEUP_where_to_recover, void *, acpi_restorecpu);
 
-		WAKECODE_FIXUP(previous_ds,  uint16_t, r_ds);
-		WAKECODE_FIXUP(previous_es,  uint16_t, r_es);
-		WAKECODE_FIXUP(previous_fs,  uint16_t, r_fs);
-		WAKECODE_FIXUP(previous_gs,  uint16_t, r_gs);
-		WAKECODE_FIXUP(previous_ss,  uint16_t, r_ss);
+		WAKECODE_FIXUP(WAKEUP_previous_ds,  uint16_t, r_ds);
+		WAKECODE_FIXUP(WAKEUP_previous_es,  uint16_t, r_es);
+		WAKECODE_FIXUP(WAKEUP_previous_fs,  uint16_t, r_fs);
+		WAKECODE_FIXUP(WAKEUP_previous_gs,  uint16_t, r_gs);
+		WAKECODE_FIXUP(WAKEUP_previous_ss,  uint16_t, r_ss);
 
 		/*
 		 * XXX: restore curproc's PTD here -
