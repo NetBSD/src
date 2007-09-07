@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.159 2007/07/09 21:10:51 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.160 2007/09/07 18:56:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.159 2007/07/09 21:10:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.160 2007/09/07 18:56:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1991,7 +1991,41 @@ fnullop_kqfilter(struct file *fp, struct knote *kn)
 
 /* ARGSUSED */
 int
+fbadop_read(struct file *fp, off_t *offset, struct uio *uio,
+    kauth_cred_t cred, int flags)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_write(struct file *fp, off_t *offset, struct uio *uio,
+    kauth_cred_t cred, int flags)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
 fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_close(struct file *fp, struct lwp *l)
 {
 
 	return EOPNOTSUPP;

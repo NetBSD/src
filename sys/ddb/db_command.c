@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.96 2007/04/30 14:44:30 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.97 2007/09/07 18:56:06 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96 2007/04/30 14:44:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.97 2007/09/07 18:56:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,6 +153,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
 	{ "mbuf",	db_mbuf_print_cmd,	0,	NULL },
+	{ "mqueue",	db_show_mqueue_cmd,	0,	NULL },
 	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
