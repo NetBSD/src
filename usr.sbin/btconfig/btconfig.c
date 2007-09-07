@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.5 2007/03/30 21:23:18 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.6 2007/09/07 18:40:01 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.5 2007/03/30 21:23:18 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.6 2007/09/07 18:40:01 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,15 @@ __RCSID("$NetBSD: btconfig.c,v 1.5 2007/03/30 21:23:18 plunky Exp $");
 #include <err.h>
 #include <bluetooth.h>
 
+/* inquiry results storage */
+struct result {
+	bdaddr_t	bdaddr;
+	uint8_t		page_scan_rep_mode;
+	uint8_t		uclass[HCI_CLASS_SIZE];
+	uint16_t	clock_offset;
+	int8_t		rssi;
+};
+
 int main(int, char *[]);
 void badarg(const char *);
 void badparam(const char *);
@@ -66,7 +75,7 @@ void print_voice(int);
 void tag(const char *);
 void print_features(const char *, uint8_t *);
 void do_inquiry(void);
-void print_result(int, hci_inquiry_response *);
+void print_result(int, struct result *, int);
 
 void hci_req(uint16_t, uint8_t , void *, size_t, void *, size_t);
 #define save_value(opcode, cbuf, clen)	hci_req(opcode, 0, cbuf, clen, NULL, 0)
@@ -133,6 +142,7 @@ char name[MAX_STR_SIZE];
 int opt_pin = 0;
 
 /* Inquiry */
+int opt_rssi = 0;			/* inquiry_with_rssi (flag) */
 int opt_inquiry = 0;
 #define INQUIRY_LENGTH		10	/* about 12 seconds */
 #define INQUIRY_MAX_RESPONSES	10
@@ -182,6 +192,8 @@ struct parameter {
 	{ "variable",	P_CLR,	&opt_pin,	NULL	},
 	{ "inq",	P_SET,	&opt_inquiry,	NULL	},
 	{ "inquiry",	P_SET,	&opt_inquiry,	NULL	},
+	{ "rssi",	P_SET,	&opt_rssi,	NULL	},
+	{ "-rssi",	P_CLR,	&opt_rssi,	NULL	},
 	{ "reset",	P_SET,	&opt_reset,	NULL	},
 	{ "voice",	P_HEX,	&opt_voice,	&voice	},
 	{ "pto",	P_NUM,	&opt_pto,	&pto	},
@@ -588,6 +600,12 @@ config_unit(void)
 				warn("SIOCSBTSCOMTU");
 		}
 	}
+
+	if (opt_rssi) {
+		uint8_t val = (opt_rssi > 0 ? 1 : 0);
+
+		save_value(HCI_CMD_WRITE_INQUIRY_MODE, &val, sizeof(val));
+	}
 }
 
 /*
@@ -665,6 +683,10 @@ print_info(int level)
 	else if (level > 0)				tag("-sniff");
 	if (val & HCI_LINK_POLICY_ENABLE_PARK_MODE)	tag("park");
 	else if (level > 0)				tag("-park");
+
+	load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+	if (val)				tag("rssi");
+	else if (level > 0)			tag("-rssi");
 
 	tag(NULL);
 
@@ -967,7 +989,7 @@ print_voice(int level)
 }
 
 void
-print_result(int num, hci_inquiry_response *r)
+print_result(int num, struct result *r, int rssi)
 {
 	hci_remote_name_req_cp ncp;
 	hci_remote_name_req_compl_ep nep;
@@ -987,9 +1009,9 @@ print_result(int num, hci_inquiry_response *r)
 
 	printf("\n");
 
+	memset(&ncp, 0, sizeof(ncp));
 	bdaddr_copy(&ncp.bdaddr, &r->bdaddr);
 	ncp.page_scan_rep_mode = r->page_scan_rep_mode;
-	ncp.page_scan_mode = r->page_scan_mode;
 	ncp.clock_offset = r->clock_offset;
 
 	hci_req(HCI_CMD_REMOTE_NAME_REQ,
@@ -1012,9 +1034,10 @@ print_result(int num, hci_inquiry_response *r)
 #endif
 
 	printf("   : page scan rep mode 0x%02x\n", r->page_scan_rep_mode);
-	printf("   : page scan period mode 0x%02x\n", r->page_scan_period_mode);
-	printf("   : page scan mode 0x%02x\n", r->page_scan_mode);
 	printf("   : clock offset %d\n", le16toh(r->clock_offset));
+
+	if (rssi)
+		printf("   : rssi %d\n", r->rssi);
 
 	printf("\n");
 }
@@ -1023,13 +1046,11 @@ void
 do_inquiry(void)
 {
 	uint8_t buf[HCI_EVENT_PKT_SIZE];
-	hci_inquiry_response result[INQUIRY_MAX_RESPONSES];
+	struct result result[INQUIRY_MAX_RESPONSES];
 	hci_inquiry_cp inq;
 	struct hci_filter f;
 	hci_event_hdr_t *hh;
-	hci_inquiry_result_ep *ep;
-	hci_inquiry_response *ir;
-	int i, j, num;
+	int i, j, num, rssi;
 
 	if (opt_inquiry == 0)
 		return;
@@ -1041,6 +1062,7 @@ do_inquiry(void)
 	hci_filter_set(HCI_EVENT_COMMAND_STATUS, &f);
 	hci_filter_set(HCI_EVENT_COMMAND_COMPL, &f);
 	hci_filter_set(HCI_EVENT_INQUIRY_RESULT, &f);
+	hci_filter_set(HCI_EVENT_RSSI_RESULT, &f);
 	hci_filter_set(HCI_EVENT_INQUIRY_COMPL, &f);
 	hci_filter_set(HCI_EVENT_REMOTE_NAME_REQ_COMPL, &f);
 	hci_filter_set(HCI_EVENT_READ_REMOTE_FEATURES_COMPL, &f);
@@ -1057,9 +1079,8 @@ do_inquiry(void)
 	hci_cmd(HCI_CMD_INQUIRY, &inq, sizeof(inq));
 
 	num = 0;
+	rssi = 0;
 	hh = (hci_event_hdr_t *)buf;
-	ep = (hci_inquiry_result_ep *)(hh + 1);
-	ir = (hci_inquiry_response *)(ep + 1);
 
 	for (;;) {
 		if (recv(hci, buf, sizeof(buf), 0) <= 0)
@@ -1069,6 +1090,9 @@ do_inquiry(void)
 			break;
 
 		if (hh->event == HCI_EVENT_INQUIRY_RESULT) {
+			hci_inquiry_result_ep *ep = (hci_inquiry_result_ep *)(hh + 1);
+			hci_inquiry_response *ir = (hci_inquiry_response *)(ep + 1);
+
 			for (i = 0 ; i < ep->num_responses ; i++) {
 				if (num == INQUIRY_MAX_RESPONSES)
 					break;
@@ -1081,10 +1105,43 @@ do_inquiry(void)
 				if (j < num)
 					continue;
 
-				memcpy(&result[num++], &ir[i], sizeof(hci_inquiry_response));
+				bdaddr_copy(&result[num].bdaddr, &ir[i].bdaddr);
+				memcpy(&result[num].uclass, &ir[i].uclass, HCI_CLASS_SIZE);
+				result[num].page_scan_rep_mode = ir[i].page_scan_rep_mode;
+				result[num].clock_offset = ir[i].clock_offset;
+				result[num].rssi = 0;
+				num++;
 				printf(".");
 				fflush(stdout);
+			}
+			continue;
+		}
 
+		if (hh->event == HCI_EVENT_RSSI_RESULT) {
+			hci_rssi_result_ep *ep = (hci_rssi_result_ep *)(hh + 1);
+			hci_rssi_response *rr = (hci_rssi_response *)(ep + 1);
+
+			for (i = 0 ; i < ep->num_responses ; i++) {
+				if (num == INQUIRY_MAX_RESPONSES)
+					break;
+
+				/* some devices keep responding, ignore dupes */
+				for (j = 0 ; j < num ; j++)
+					if (bdaddr_same(&result[j].bdaddr, &rr[i].bdaddr))
+						break;
+
+				if (j < num)
+					continue;
+
+				bdaddr_copy(&result[num].bdaddr, &rr[i].bdaddr);
+				memcpy(&result[num].uclass, &rr[i].uclass, HCI_CLASS_SIZE);
+				result[num].page_scan_rep_mode = rr[i].page_scan_rep_mode;
+				result[num].clock_offset = rr[i].clock_offset;
+				result[num].rssi = rr[i].rssi;
+				rssi = 1;
+				num++;
+				printf(".");
+				fflush(stdout);
 			}
 			continue;
 		}
@@ -1093,5 +1150,5 @@ do_inquiry(void)
 	printf(" %d response%s\n", num, (num == 1 ? "" : "s"));
 
 	for (i = 0 ; i < num ; i++)
-		print_result(i + 1, &result[i]);
+		print_result(i + 1, &result[i], rssi);
 }
