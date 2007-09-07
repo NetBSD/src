@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.248 2007/08/30 05:30:02 jnemeth Exp $
+#	$NetBSD: Makefile,v 1.249 2007/09/07 04:20:44 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -79,9 +79,9 @@
 #   do-tools-compat: builds the "libnbcompat" library; needed for some
 #                    random host tool programs in the source tree.
 #   do-lib-csu:      builds and installs prerequisites from lib/csu.
-#   do-gnu-lib-crtstuff3: builds and installs prerequisites from
-#			  gnu/lib/crtstuff3
-#   do-gnu-lib-libgcc3: builds and installs prerequisites from gnu/lib/libgcc3
+#   do-libgcc:       builds and installs prerequisites from
+#                    gnu/lib/crtstuff${LIBGCC_EXT} (if necessary) and
+#                    gnu/lib/libgcc${LIBGCC_EXT}.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
@@ -200,10 +200,7 @@ BUILDTARGETS+=	includes
 BUILDTARGETS+=	do-tools-compat
 BUILDTARGETS+=	do-lib-csu
 .if ${MKGCC} != "no"
-.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
-BUILDTARGETS+=	do-gnu-lib-crtstuff${LIBGCC_EXT}
-.endif
-BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
+BUILDTARGETS+=	do-libgcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib do-gnu-lib
@@ -362,6 +359,14 @@ do-${dir:S/\//-/g}: .PHONY .MAKE
 	${MAKEDIRTARGET} ${dir} ${targ}
 .endfor
 .endfor
+
+do-libgcc: .PHONY .MAKE
+.if ${MKGCC} != "no"
+.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
+	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
+.endif
+	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
+.endif
 
 do-ld.so: .PHONY .MAKE
 .for targ in dependall install
