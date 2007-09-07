@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2007/09/07 10:08:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2007/09/07 12:53:40 lukem Exp $
 
 #
-# Use this file to regenerate AMIGA, DRACO, GENERIC, INSTALL
+# Use this file to regenerate DRACO, GENERIC, INSTALL
 # out of the GENERIC.in template.
 #
 
-all: AMIGA DRACO GENERIC INSTALL
-
-AMIGA: __generate_config
+all: DRACO GENERIC INSTALL
 
 DRACO: __generate_config
 
