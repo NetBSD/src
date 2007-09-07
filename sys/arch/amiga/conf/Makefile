@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2002/06/18 17:39:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2007/09/07 10:08:35 lukem Exp $
 
 #
-# Use this file to regenerate AMIGA, DRACO, GENERIC, INSTALL and WSCONS
+# Use this file to regenerate AMIGA, DRACO, GENERIC, INSTALL
 # out of the GENERIC.in template.
 #
 
-all: AMIGA DRACO GENERIC INSTALL WSCONS
+all: AMIGA DRACO GENERIC INSTALL
 
 AMIGA: __generate_config
 
@@ -14,8 +14,6 @@ DRACO: __generate_config
 GENERIC: __generate_config
 
 INSTALL: __generate_config
-
-WSCONS: __generate_config
 
 __generate_config: .USE GENERIC.in Makefile
 	@echo Generating ${.TARGET}...
