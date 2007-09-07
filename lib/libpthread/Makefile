@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2007/08/16 13:54:16 ad Exp $
+#	$NetBSD: Makefile,v 1.43 2007/09/07 14:09:27 ad Exp $
 #
 
 WARNS=	4
@@ -54,7 +54,9 @@ SRCS+=	pthread_cond.c
 SRCS+=	pthread_lock.c 
 SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
+SRCS+=	pthread_mutex2.c
 SRCS+=	pthread_rwlock.c
+SRCS+=	pthread_rwlock2.c
 SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
