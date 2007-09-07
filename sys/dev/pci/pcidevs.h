@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.897 2007/09/02 21:03:56 ober Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.898 2007/09/07 13:51:14 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.897 2007/09/02 21:02:52 ober Exp
+ *	NetBSD: pcidevs,v 1.898 2007/09/07 13:50:43 cube Exp
  */
 
 /*
@@ -608,6 +608,7 @@
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
+#define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
