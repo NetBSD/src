@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.17 2007/05/10 15:43:36 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.18 2007/09/07 04:47:11 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.17 2007/05/10 15:43:36 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.18 2007/09/07 04:47:11 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -203,8 +203,6 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	fakehand.ih_fun = fakeintr;
 	*p = &fakehand;
 
-	intr_calculatemasks();
-
 	/*
 	 * Poke the real handler in now.
 	 */
@@ -218,6 +216,13 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	if (pic->pic_establish_irq != NULL)
 		pic->pic_establish_irq(pic, hwirq - pic->pic_intrbase,
 		    is->is_type, maxlevel);
+
+	/*
+	 * now that the handler is established we're actually ready to
+	 * calculate the masks
+	 */
+	intr_calculatemasks();
+
 
 	return ih;
 }
