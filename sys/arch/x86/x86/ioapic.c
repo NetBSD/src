@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.3 2007/08/05 19:00:59 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.4 2007/09/07 23:53:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.3 2007/08/05 19:00:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.4 2007/09/07 23:53:56 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -460,7 +460,6 @@ ioapic_enable(void)
 	if (ioapics == NULL)
 		return;
 
-	printf("ioapic0: APICBASE 0x%" PRIx64 "\n", rdmsr(0x1b));
 	ci = &cpu_info_primary;
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
