@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.57 2007/06/16 20:48:04 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.58 2007/09/07 18:56:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,6 +67,7 @@ struct file {
 #define	DTYPE_KQUEUE	4		/* event queue */
 #define	DTYPE_MISC	5		/* misc file descriptor type */
 #define	DTYPE_CRYPTO	6		/* crypto */
+#define	DTYPE_MQUEUE	7		/* message queue */
 #define DTYPE_NAMES \
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto"
 	int		f_type;		/* descriptor type */
@@ -179,6 +180,10 @@ int	fdclone(struct lwp *, struct file *, int, int, const struct fileops *,
 int	fnullop_fcntl(struct file *, u_int, void *, struct lwp *);
 int	fnullop_poll(struct file *, int, struct lwp *);
 int	fnullop_kqfilter(struct file *, struct knote *);
+int	fbadop_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	fbadop_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	fbadop_ioctl(struct file *, u_long, void *, struct lwp *);
+int	fbadop_close(struct file *, struct lwp *);
 int	fbadop_stat(struct file *, struct stat *, struct lwp *);
 
 #endif /* _KERNEL */

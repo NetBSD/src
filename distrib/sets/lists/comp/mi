@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1064 2007/08/20 16:01:28 drochner Exp $
+#	$NetBSD: mi,v 1.1065 2007/09/07 18:56:02 rmind Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1282,6 +1282,7 @@
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
 ./usr/include/mpool.h				comp-c-include
+./usr/include/mqueue.h				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
 ./usr/include/msdosfs/bpb.h			comp-c-include
 ./usr/include/msdosfs/denode.h			comp-c-include
@@ -1842,6 +1843,7 @@
 ./usr/include/sys/midiio.h			comp-c-include
 ./usr/include/sys/mman.h			comp-c-include
 ./usr/include/sys/mount.h			comp-c-include
+./usr/include/sys/mqueue.h			comp-c-include
 ./usr/include/sys/msg.h				comp-c-include
 ./usr/include/sys/msgbuf.h			comp-c-include
 ./usr/include/sys/mtio.h			comp-c-include
