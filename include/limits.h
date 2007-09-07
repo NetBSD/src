@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.24 2007/05/01 01:01:25 rmind Exp $	*/
+/*	$NetBSD: limits.h,v 1.25 2007/09/07 18:56:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,6 +46,8 @@
 #define	_POSIX_LOGIN_NAME_MAX	9
 #define	_POSIX_MAX_CANON	255
 #define	_POSIX_MAX_INPUT	255
+#define	_POSIX_MQ_OPEN_MAX	8
+#define	_POSIX_MQ_PRIO_MAX	32
 #define	_POSIX_NAME_MAX		14
 #define	_POSIX_NGROUPS_MAX	8
 #define	_POSIX_OPEN_MAX		20

@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.27 2007/05/01 01:01:37 rmind Exp $	*/
+/*	$NetBSD: getconf.c,v 1.28 2007/09/07 18:56:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.27 2007/05/01 01:01:37 rmind Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.28 2007/09/07 18:56:14 rmind Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -85,6 +85,8 @@ static const struct conf_variable conf_table[] =
   { "_POSIX_LINK_MAX",		CONSTANT,	_POSIX_LINK_MAX		},
   { "_POSIX_MAX_CANON",		CONSTANT,	_POSIX_MAX_CANON	},
   { "_POSIX_MAX_INPUT",		CONSTANT,	_POSIX_MAX_INPUT	},
+  { "_POSIX_MQ_OPEN_MAX",	CONSTANT,	_POSIX_MQ_OPEN_MAX	},
+  { "_POSIX_MQ_PRIO_MAX",	CONSTANT,	_POSIX_MQ_PRIO_MAX	},
   { "_POSIX_NAME_MAX",		CONSTANT,	_POSIX_NAME_MAX		},
   { "_POSIX_NGROUPS_MAX",	CONSTANT,	_POSIX_NGROUPS_MAX	},
   { "_POSIX_OPEN_MAX",		CONSTANT,	_POSIX_OPEN_MAX		},
@@ -116,10 +118,12 @@ static const struct conf_variable conf_table[] =
 
   /* POSIX.1 Configurable System Variables */
   { "AIO_LISTIO_MAX",		SYSCONF,	_SC_AIO_LISTIO_MAX	},
-  { "AIO_MAX",			SYSCONF,        _SC_AIO_MAX		},
+  { "AIO_MAX",			SYSCONF,	_SC_AIO_MAX		},
   { "ARG_MAX",			SYSCONF,	_SC_ARG_MAX 		},
   { "CHILD_MAX",		SYSCONF,	_SC_CHILD_MAX		},
   { "CLK_TCK",			SYSCONF,	_SC_CLK_TCK		},
+  { "MQ_OPEN_MAX",		SYSCONF,	_SC_MQ_OPEN_MAX		},
+  { "MQ_PRIO_MAX",		SYSCONF,	_SC_MQ_PRIO_MAX		},
   { "NGROUPS_MAX",		SYSCONF,	_SC_NGROUPS_MAX		},
   { "OPEN_MAX",			SYSCONF,	_SC_OPEN_MAX		},
   { "STREAM_MAX",		SYSCONF,	_SC_STREAM_MAX		},
@@ -146,6 +150,7 @@ static const struct conf_variable conf_table[] =
   { "_POSIX_MEMLOCK",		SYSCONF,	_SC_MEMLOCK		},
   { "_POSIX_MEMLOCK_RANGE",	SYSCONF,	_SC_MEMLOCK_RANGE	},
   { "_POSIX_MEMORY_PROTECTION",	SYSCONF,	_SC_MEMORY_PROTECTION	},
+  { "_POSIX_MESSAGE_PASSING",	SYSCONF,	_POSIX_MESSAGE_PASSING	},
   { "_POSIX_MONOTONIC_CLOCK",	SYSCONF,	_SC_MONOTONIC_CLOCK	},
   { "_POSIX_SEMAPHORES",	SYSCONF,	_SC_SEMAPHORES		},
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},

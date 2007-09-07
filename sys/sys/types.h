@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.76 2007/07/09 21:11:34 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.77 2007/09/07 18:56:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -195,6 +195,8 @@ typedef	__uid_t		uid_t;		/* user id */
 #endif
 
 typedef	int32_t		dtime_t;	/* on-disk time_t */
+
+typedef int		mqd_t;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 /*
