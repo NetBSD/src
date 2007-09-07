@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.1 2007/08/03 22:17:05 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.2 2007/09/07 15:12:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,8 +75,10 @@
 #include <machine/param.h>
 #include <machine/segments.h>
 
+	.text
 	.code16
 	.org 0	/* ACPI spec says: cs==(phys>>8), ip==(phys&0x000F) */
+	.globl wakeup_16
 wakeup_16:
 	nop
 	cli
@@ -243,23 +245,57 @@ tmp_gdtable:
 	.byte	0, 0x93, 0xcf, 0
 
 	.align	16, 0
+	.global WAKEUP_physical_gdt
+WAKEUP_physical_gdt:
 physical_gdt:		.word 0
 			.long 0
+	.global WAKEUP_previous_cr2
+WAKEUP_previous_cr2:
 previous_cr2:		.long 0
+	.global WAKEUP_previous_cr3
+WAKEUP_previous_cr3:
 previous_cr3:		.long 0
+	.global WAKEUP_previous_cr4
+WAKEUP_previous_cr4:
 previous_cr4:		.long 0
+	.global WAKEUP_previous_cr0
+WAKEUP_previous_cr0:
 previous_cr0:		.long 0
+	.global WAKEUP_previous_tr
+WAKEUP_previous_tr:
 previous_tr:		.word 0
+	.global WAKEUP_previous_gdt
+WAKEUP_previous_gdt:
 previous_gdt:		.word 0
 			.long 0
+	.global WAKEUP_previous_ldt
+WAKEUP_previous_ldt:
 previous_ldt:		.word 0
+	.global WAKEUP_previous_idt
+WAKEUP_previous_idt:
 previous_idt:		.word 0
 			.long 0
+	.global WAKEUP_previous_ds
+WAKEUP_previous_ds:
 previous_ds:		.word 0
+	.global WAKEUP_previous_es
+WAKEUP_previous_es:
 previous_es:		.word 0
+	.global WAKEUP_previous_fs
+WAKEUP_previous_fs:
 previous_fs:		.word 0
+	.global WAKEUP_previous_gs
+WAKEUP_previous_gs:
 previous_gs:		.word 0
+	.global WAKEUP_previous_ss
+WAKEUP_previous_ss:
 previous_ss:		.word 0
+	.global WAKEUP_where_to_recover
+WAKEUP_where_to_recover:
 where_to_recover:	.long 0
+	.global WAKEUP_vbios_reset
+WAKEUP_vbios_reset:
 vbios_reset:		.byte 0
+	.global WAKEUP_beep_on_reset
+WAKEUP_beep_on_reset:
 beep_on_reset:		.byte 0
