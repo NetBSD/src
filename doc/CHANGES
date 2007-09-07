@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.923 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.924 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -221,3 +221,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	uchcom(4): Add support for WinChipHead CH341/340 USB-Serial adapter.
 		[tshiozak 20070903]
 	amd64, i386: cgd(4) is part of GENERIC [joerg 20070906]
+	libpthread: scalability and performance enhancements. The MySQL
+		sysbench benchmark in read-only mode now scales to 900
+		simultaneous client threads on a 4xCPU i386 system before
+		serious performance drop-off occurs. [ad 20070907]
