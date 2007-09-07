@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.8 2007/08/23 09:25:29 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.9 2007/09/07 14:36:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.8 2007/08/23 09:25:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.9 2007/09/07 14:36:13 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1108,7 +1108,7 @@ is_available_state(struct acpi_softc *sc, int state)
 ACPI_STATUS
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
-	int s, err;
+	int err;
 	ACPI_STATUS ret = AE_OK;
 
 	if (state == acpi_sleepstate)
@@ -1146,11 +1146,9 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
 		} else {
-			s = splhigh();
 			err = acpi_md_sleep(state);
 			if (err == 0 && state == ACPI_STATE_S3)
 				AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
-			splx(s);
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 		}
