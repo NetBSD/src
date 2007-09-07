@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2007/09/07 00:24:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,3 +99,30 @@ ENTRY(_swapcontext_u_xmm)
 	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
 	movl	8(%esp), %ecx
 	SETC
+
+ENTRY(pthread__atomic_cas_ptr)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax
+	movl	12(%esp), %edx
+	movl	(%eax), %eax
+	lock
+	cmpxchgl %edx, (%ecx)
+	jnz	1f
+	mov	$1, %eax
+	ret
+1:
+	mov	8(%esp), %edx
+	mov	%eax, (%edx)
+	mov	$0, %eax
+	ret
+
+ENTRY(pthread__atomic_swap_ptr)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax
+	xchgl	%eax, (%ecx)
+	ret
+
+ENTRY(pthread__membar_full)
+	lock
+	addl	$0, -4(%esp)
+	ret
