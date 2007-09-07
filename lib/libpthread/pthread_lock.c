@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.25 2007/09/07 00:07:54 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.26 2007/09/07 14:09:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.25 2007/09/07 00:07:54 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.26 2007/09/07 14:09:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.25 2007/09/07 00:07:54 ad Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -156,7 +155,6 @@ __attribute ((noinline))
 static void 
 pthread_spinlock_slow(pthread_spin_t *lock)
 {
-	struct timespec ts;
 	int count;
 #ifdef PTHREAD_SPIN_DEBUG
 	pthread_t thread = pthread__self();
@@ -177,14 +175,12 @@ pthread_spinlock_slow(pthread_spin_t *lock)
 		    "(count %d)\n", thread, lock,
 		    thread->pt_spinlocks));
 		thread->pt_spinlocks--;
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1;
-		nanosleep(&ts, NULL);
+		/* XXXLWP far from ideal */
+		sched_yield();
 		thread->pt_spinlocks++;
 #else
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1;
-		nanosleep(&ts, NULL);
+		/* XXXLWP far from ideal */
+		sched_yield();
 #endif
 	} while (/*CONSTCOND*/ 1);
 }
