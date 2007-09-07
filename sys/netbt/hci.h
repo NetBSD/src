@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.11 2007/09/07 18:14:33 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $
+ * $Id: hci.h,v 1.11 2007/09/07 18:14:33 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1850,7 +1850,7 @@ typedef struct {
 	uint8_t		uclass[HCI_CLASS_SIZE];	/* unit class */
 	uint16_t	clock_offset;		/* clock offset */
 	int8_t		rssi;			/* rssi */
-} __attribute__ ((__packed__)) hci_rssi_response_ep;
+} __attribute__ ((__packed__)) hci_rssi_response;
 
 #define HCI_EVENT_READ_REMOTE_EXTENDED_FEATURES	0x23
 typedef struct {
