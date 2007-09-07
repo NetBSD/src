@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.49 2007/08/16 13:54:16 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.50 2007/09/07 00:24:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -240,10 +240,11 @@ void	pthread__assertfunc(const char *file, int line, const char *function,
 void	pthread__errorfunc(const char *file, int line, const char *function,
 		const char *msg);
 
-#if defined(i386) || defined(__x86_64__)
-#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-#define	PTHREAD__CHEAP_UNLOCK
-#else
+int	pthread__atomic_cas_ptr(volatile void *, void **, void *);
+void	*pthread__atomic_swap_ptr(volatile void *, void *);
+void	pthread__membar_full(void);
+
+#ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
 #endif
 
