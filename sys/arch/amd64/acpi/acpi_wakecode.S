@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakecode.S,v 1.1.2.2 2007/09/06 23:09:08 jmcneill Exp $ */
+/* $NetBSD: acpi_wakecode.S,v 1.1.2.3 2007/09/07 21:01:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #define _LOCORE
 
-/* #define WAKECODE_VERBOSE */
+#define WAKECODE_VERBOSE
 
 #include <machine/asm.h>
 #include <machine/specialreg.h>
@@ -78,19 +78,11 @@
 #include <machine/segments.h>
 #include <machine/psl.h>
 
-/*
- * Should not be needed, but...  Note that we rely on the below code
- * being copied to a 16-byte aligned address.
- */
-#define	RELOC(x)	x - wakeup_16
-
 	.text
-	.org	0
-
-	.align	16
 	.code16
+	.org	0
+	.globl wakeup_16
 wakeup_16:
-
 	nop
 	cli
 	cld
@@ -108,14 +100,14 @@ wakeup_16:
 	popfl
 
 	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1, RELOC(beep_on_reset)
+	cmpb	$1, beep_on_reset
 	jne	nobeepon
 	call	beepon
 
 nobeepon:
 
 	/* Only reset the VBIOS if machdep.acpi_vbios_reset=1 */
-	cmpb	$1, RELOC(vbios_reset)
+	cmpb	$1, vbios_reset
 	jne	novbiosreset
 
 	/* Kick the VBIOS. */
@@ -129,7 +121,7 @@ nobeepon:
 novbiosreset:
 
 	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1, RELOC(beep_on_reset)
+	cmpb	$1, beep_on_reset
 	jne	nobeepoff
 	call	beepoff
 
@@ -147,10 +139,10 @@ nobeepoff:
 	shll	$4, %esi
 
 	/* Fill 16->32 address */
-	addl	%esi, RELOC(wakeup_sw32)+2	/* 1b opcode, 1b prefix */
-	addl	%esi, RELOC(wakeup_sw64)+1	/* 1b opcode */
-	addl	%esi, RELOC(tmp_gdt)+2
-	addl	%esi, RELOC(tmp_gdt64)+2
+	addl	%esi, wakeup_sw32+2	/* 1b opcode, 1b prefix */
+	addl	%esi, wakeup_sw64+1	/* 1b opcode */
+	addl	%esi, tmp_gdt+2
+	addl	%esi, tmp_gdt64+2
 	wbinvd					/* flush uop/trace cache */
 	jmp	1f
 1:	jmp	1f
@@ -164,20 +156,23 @@ nobeepoff:
 #endif
 
 	/* Load GDT, enable protected mode */
-	lgdtl	RELOC(tmp_gdt)
+	lgdt	tmp_gdt
+
+	/* Enable protected mode */
 	movl	%eax, %cr0
-	orb	$CR0_PE, %al
+	orb	$(CR0_PE), %al
 	movl	%eax, %cr0
 
 wakeup_sw32:
 
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $(RELOC(wakeup_32))
+	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $wakeup_32
 
 	.align	16
 	.code32
 wakeup_32:
 
+	nop
 	movl	$GSEL(GDATA_SEL,SEL_KPL), %eax
 	movw	%ax, %ds
 	movw	%ax, %ss
@@ -209,7 +204,7 @@ wakeup_32:
 	movw	$0x0200 + '3', (0xb8006)
 #endif
 
-	movl	(RELOC(tmp_pml4))(%esi), %ecx
+	movl	tmp_pml4(%esi), %ecx
 	movl	%ecx, %cr3
 
 #ifdef WAKECODE_VERBOSE
@@ -222,14 +217,6 @@ wakeup_32:
 	jmp	compat
 compat:
 
-	movb	$0xc0, %al
-	outb	%al, $0x42
-	movb	$0x04, %al
-	outb	%al, $0x42
-	inb	$0x61, %al
-	orb	$0x3, %al
-	outb	%al, $0x61
-
 	movl	$GSEL(GDATA_SEL,SEL_KPL), %eax
 	movl	%eax, %ds
 	movl	%eax, %es
@@ -238,14 +225,14 @@ compat:
 	movw	$0x0200 + '5', (0xb800a)
 
 	/* Load 64-bit GDT. */
-	lgdt	(RELOC(tmp_gdt64))(%esi)
+	lgdt	tmp_gdt64(%esi)
 
 	movw	$0x0200 + '6', (0xb800c)
 
 wakeup_sw64:
 
 	/* Jump to long mode segment. */
-	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $(RELOC(wakeup_64))
+	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $wakeup_64
 
 	.align	16
 	.code64
@@ -352,7 +339,7 @@ beepoff:
 
 tmp_gdt:
 	.word	0xffff
-	.long	RELOC(tmp_gdtable)
+	.long	tmp_gdtable
 
 tmp_gdtable:
 	/* null */
@@ -367,7 +354,7 @@ tmp_gdtable:
 
 tmp_gdt64:
 	.word	0xffff
-	.long	RELOC(tmp_gdtable64)
+	.long	tmp_gdtable64
 
 tmp_gdtable64:
 	/* null */
@@ -381,25 +368,63 @@ tmp_gdtable64:
 	.byte	0, 0x92, 0xcf, 0
 	
 	.align	16, 0
+	.global	WAKEUP_physical_gdt
+WAKEUP_physical_gdt:
 physical_gdt:		.word 0
 			.quad 0
+	.global WAKEUP_previous_cr2
+WAKEUP_previous_cr2:
 previous_cr2:		.quad 0
+	.global	WAKEUP_previous_cr3
+WAKEUP_previous_cr3:
 previous_cr3:		.quad 0
+	.global	WAKEUP_previous_cr4
+WAKEUP_previous_cr4:
 previous_cr4:		.quad 0
+	.global	WAKEUP_previous_cr0
+WAKEUP_previous_cr0:
 previous_cr0:		.quad 0
+	.global	WAKEUP_previous_tr
+WAKEUP_previous_tr:
 previous_tr:		.word 0
+	.global	WAKEUP_previous_gdt
+WAKEUP_previous_gdt:
 previous_gdt:		.word 0
 			.quad 0
+	.global	WAKEUP_previous_ldt
+WAKEUP_previous_ldt:
 previous_ldt:		.word 0
+	.global WAKEUP_previous_idt
+WAKEUP_previous_idt:
 previous_idt:		.word 0
 			.quad 0
+	.global WAKEUP_previous_ds
+WAKEUP_previous_ds:
 previous_ds:		.word 0
+	.global	WAKEUP_previous_es
+WAKEUP_previous_es:
 previous_es:		.word 0
+	.global	WAKEUP_previous_fs
+WAKEUP_previous_fs:
 previous_fs:		.word 0
+	.global	WAKEUP_previous_gs
+WAKEUP_previous_gs:
 previous_gs:		.word 0
+	.global	WAKEUP_previous_ss
+WAKEUP_previous_ss:
 previous_ss:		.word 0
+	.global	WAKEUP_previous_rsp
+WAKEUP_previous_rsp:
 previous_rsp:		.quad 0
+	.global WAKEUP_where_to_recover
+WAKEUP_where_to_recover:
 where_to_recover:	.quad 0
+	.global WAKEUP_tmp_pml4
+WAKEUP_tmp_pml4:
 tmp_pml4:		.quad 0
+	.global WAKEUP_vbios_reset
+WAKEUP_vbios_reset:
 vbios_reset:		.byte 0
+	.global	WAKEUP_beep_on_reset
+WAKEUP_beep_on_reset:
 beep_on_reset:		.byte 0
