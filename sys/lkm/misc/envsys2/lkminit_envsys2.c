@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.3 2007/07/22 18:24:48 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.4 2007/09/07 19:58:06 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.3 2007/07/22 18:24:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.4 2007/09/07 19:58:06 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ envsys2_initsensors(struct envsys2_softc *sc)
 	 * that we know if it's not online or in normal operation.
 	 */
 	sc->sc_sensor[11].monitor = true;
-	sc->sc_sensor[11].flags = ENVSYS_FMONDRVSTATE;
+	sc->sc_sensor[11].flags = ENVSYS_FMONSTCHANGED;
 
 	/*
 	 * Let's add two sensors with duplicate descriptions
