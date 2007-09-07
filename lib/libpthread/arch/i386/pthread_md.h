@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.7 2006/03/29 22:55:15 cube Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.8 2007/09/07 00:24:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -180,5 +180,9 @@ pthread__sp(void)
 	sizeof(struct xmmregs));					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FXSAVE) & ~_UC_USER;	\
 	} while (/*CONSTCOND*/0)
+
+#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	PTHREAD__CHEAP_UNLOCK
+#define	PTHREAD__HAVE_ATOMIC
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
