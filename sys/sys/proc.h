@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.253 2007/08/07 19:00:42 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.254 2007/09/07 18:56:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/aio.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
+#include <sys/mqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/lwp.h>
@@ -232,6 +233,8 @@ struct proc {
 	struct vmspace	*p_vmspace;	/*    Address space */
 	struct sigacts	*p_sigacts;	/*    Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
+
+	u_int		p_mqueue_cnt;	/* (: Count of open mqueues */
 
 	specificdata_reference
 			p_specdataref;	/* subsystem proc-specific data */

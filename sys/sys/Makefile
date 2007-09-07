@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2007/08/15 14:08:11 pooka Exp $
+#	$NetBSD: Makefile,v 1.97 2007/09/07 18:56:10 rmind Exp $
 
 .include <bsd.sys.mk>
 
@@ -20,7 +20,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h mutex.h \
+	md5.h midiio.h mman.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h ptrace.h queue.h \
