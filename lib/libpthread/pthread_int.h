@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.50 2007/09/07 00:24:56 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.51 2007/09/07 14:09:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,9 @@
 #include <lwp.h>
 #include <signal.h>
 
-#define PTHREAD_KEYS_MAX 256
+#define PTHREAD_KEYS_MAX 	256
+#define	PTHREAD__UNPARK_MAX	32
+
 /*
  * The size of this structure needs to be no larger than struct
  * __pthread_cleanup_store, defined in pthread.h.
@@ -87,6 +89,10 @@ struct	__pthread_st {
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	void		*pt_unparkhint;	/* Hint for the above */
 
+	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
+	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
+	size_t		pt_nwaiters;
+
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
 
@@ -104,10 +110,12 @@ struct	__pthread_st {
 	 * on other CPUs will access this data frequently.
 	 */
 	int		pt_dummy1 __aligned(128);
-	int		pt_sleeponq;	/* on a sleep queue */
-	int		pt_signalled;	/* Received pthread_cond_signal() */
-	void		*pt_sleepobj;	/* object slept on */
-	PTQ_ENTRY(__pthread_st)	pt_sleep;
+	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
+	volatile int	pt_sleeponq;	/* On a sleep queue */
+	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
+	void * volatile	pt_sleepobj;	/* Object slept on */
+	PTQ_ENTRY(__pthread_st) pt_sleep;
+	void		(*pt_early)(void *);
 	int		pt_dummy2 __aligned(128);
 
 	/* Thread-specific data.  Large so it sits close to the end. */
@@ -148,6 +156,7 @@ extern vaddr_t	pthread__stackmask;
 extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
+extern int 	pthread__unpark_max;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
@@ -243,6 +252,8 @@ void	pthread__errorfunc(const char *file, int line, const char *function,
 int	pthread__atomic_cas_ptr(volatile void *, void **, void *);
 void	*pthread__atomic_swap_ptr(volatile void *, void *);
 void	pthread__membar_full(void);
+void	pthread__membar_producer(void);
+void	pthread__membar_consumer(void);
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.80 2007/08/23 19:13:23 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.81 2007/09/07 14:09:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.80 2007/08/23 19:13:23 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.81 2007/09/07 14:09:27 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -65,9 +65,6 @@ __RCSID("$NetBSD: pthread.c,v 1.80 2007/08/23 19:13:23 ad Exp $");
 #else
 #define SDPRINTF(x)
 #endif
-
-/* Maximum number of LWPs to unpark in one operation. */
-#define	PTHREAD__UNPARK_MAX	128
 
 static void	pthread__create_tramp(void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
@@ -260,9 +257,11 @@ pthread__initthread(pthread_t t)
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
 	t->pt_sleeponq = 0;
+	t->pt_nwaiters = 0;
 	t->pt_sleepobj = NULL;
 	t->pt_signalled = 0;
 	t->pt_havespecific = 0;
+	t->pt_early = NULL;
 
 	pthread_lockinit(&t->pt_lock);
 	PTQ_INIT(&t->pt_cleanup_stack);
@@ -593,9 +592,6 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_detach(pthread_t thread)
 {
-	pthread_t self;
-
-	self = pthread__self();
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -946,6 +942,7 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	      int cancelpt, const void *hint)
 {
 	int rv, error;
+	void *obj;
 
 	SDPRINTF(("(pthread__park %p) queue %p enter\n", self, queue));
 
@@ -1028,15 +1025,19 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * then remove ourself.  Again, it's safe to do the test
 	 * without holding any locks.
 	 */
-	if (self->pt_sleeponq) {
+	if (__predict_false(self->pt_sleeponq)) {
 		pthread_spinlock(lock);
 		if (self->pt_sleeponq) {
 			PTQ_REMOVE(queue, self, pt_sleep);
+			obj = self->pt_sleepobj;
 			self->pt_sleepobj = NULL;
 			self->pt_sleeponq = 0;
+			if (obj != NULL && self->pt_early != NULL)
+				(*self->pt_early)(obj);
 		}
 		pthread_spinunlock(lock);
 	}
+	self->pt_early = NULL;
 
 	SDPRINTF(("(pthread__park %p) queue %p exit\n", self, queue));
 
@@ -1093,29 +1094,25 @@ void
 pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 		    pthread_queue_t *queue)
 {
-	lwpid_t waiters[PTHREAD__UNPARK_MAX];
 	ssize_t n, rv;
 	pthread_t thread, next;
+	void *wakeobj;
 
-	if (PTQ_EMPTY(queue)) {
+	if (PTQ_EMPTY(queue) && self->pt_nwaiters == 0) {
 		pthread_spinunlock(lock);
 		return;
 	}
 
-	/*
-	 * First, clear all sleepobj pointers, since we can release the
-	 * spin lock before awkening everybody, and must synchronise with
-	 * pthread__park().
-	 */
-	PTQ_FOREACH(thread, queue, pt_sleep) {	
-		thread->pt_sleepobj = NULL;
-		if (thread == PTQ_NEXT(thread, pt_sleep))
-			OOPS("unpark: thread linked to self");
-	}
+	wakeobj = queue;
 
-	for (;;) {
+	for (;; n = 0) {
+		/*
+		 * Pull waiters from the queue and add to this
+		 * thread's waiters list.
+		 */
 		thread = PTQ_FIRST(queue);
-		for (n = 0; n < pthread__unpark_max && thread != NULL;
+		for (n = self->pt_nwaiters, self->pt_nwaiters = 0;
+		    n < pthread__unpark_max && thread != NULL;
 		    thread = next) {
 			/*
 			 * If the sleepobj pointer is non-NULL, it
@@ -1133,10 +1130,11 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * thread from the queue.
 			 */
 			next = PTQ_NEXT(thread, pt_sleep);
-			if (thread->pt_sleepobj != NULL)
-			    	continue;
+			if (thread->pt_sleepobj != wakeobj)
+				continue;
+			thread->pt_sleepobj = NULL;
 			thread->pt_sleeponq = 0;
-			waiters[n++] = thread->pt_lid;
+			self->pt_waiters[n++] = thread->pt_lid;
 			PTQ_REMOVE(queue, thread, pt_sleep);
 			SDPRINTF(("(pthread__unpark_all %p) queue %p "
 			    "unpark %p\n", self, queue, thread));
@@ -1148,9 +1146,9 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 		 * to the thread in pthread__park() before the unpark
 		 * operation is set in motion.
 		 */
-		pthread_spinunlock(lock);
 		switch (n) {
 		case 0:
+			pthread_spinunlock(lock);
 			return;
 		case 1:
 			/*
@@ -1158,12 +1156,13 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * defer unparking the target until _lwp_park()
 			 * is called.
 			 */
+			pthread_spinunlock(lock);
 			if (self->pt_willpark && self->pt_unpark == 0) {
-				self->pt_unpark = waiters[0];
+				self->pt_unpark = self->pt_waiters[0];
 				self->pt_unparkhint = queue;
 				return;
 			}
-			rv = (ssize_t)_lwp_unpark(waiters[0], queue);
+			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], queue);
 			if (rv != 0 && errno != EALREADY && errno != EINTR) {
 				OOPS("_lwp_unpark failed");
 				SDPRINTF(("(pthread__unpark_all %p) "
@@ -1171,7 +1170,24 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			}
 			return;
 		default:
-			rv = _lwp_unpark_all(waiters, (size_t)n, queue);
+			/*
+			 * Clear all sleepobj pointers, since we
+			 * release the spin lock before awkening
+			 * everybody, and must synchronise with
+			 * pthread__park().
+			 */
+			while (thread != NULL) {
+				thread->pt_sleepobj = NULL;
+				thread = PTQ_NEXT(thread, pt_sleep);
+			}
+			/* 
+			 * Now only interested in waking threads
+			 * marked to be woken (sleepobj == NULL).
+			 */
+			wakeobj = NULL;
+			pthread_spinunlock(lock);
+			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
+			    queue);
 			if (rv != 0 && errno != EINTR) {
 				OOPS("_lwp_unpark_all failed");
 				SDPRINTF(("(pthread__unpark_all %p) "

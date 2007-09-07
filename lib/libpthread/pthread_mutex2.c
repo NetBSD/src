@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.32 2007/09/07 14:09:28 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.1 2007/09/07 14:09:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,19 +37,34 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.32 2007/09/07 14:09:28 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.1 2007/09/07 14:09:28 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
-#ifndef	PTHREAD__HAVE_ATOMIC
+#ifdef	PTHREAD__HAVE_ATOMIC
 
-static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
+/*
+ * Note that it's important to use the address of ptm_waiters as
+ * the list head in order for the hint arguments to _lwp_park /
+ * _lwp_unpark_all to match.
+ */
+#define	pt_nextwaiter		pt_sleep.ptqe_next
+#define	ptm_waiters		ptm_blocked.ptqh_first
+
+#define	MUTEX_WAITERS_BIT	(1UL)
+
+#define	MUTEX_HAS_WAITERS(x)	((uintptr_t)(x) & MUTEX_WAITERS_BIT)
+#define	MUTEX_OWNER(x)		((uintptr_t)(x) & ~MUTEX_WAITERS_BIT)
+
+static int	pthread__mutex_lock2(pthread_t, pthread_mutex_t *);
+static void	pthread__mutex_wakeup(pthread_t, pthread_mutex_t *);
 
 __strong_alias(__libc_mutex_init,pthread_mutex_init)
 __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
@@ -63,6 +78,13 @@ __strong_alias(__libc_mutexattr_settype,pthread_mutexattr_settype)
 
 __strong_alias(__libc_thr_once,pthread_once)
 
+static inline int
+mutex_cas(volatile void *ptr, void **old, void *new)
+{
+
+	return pthread__atomic_cas_ptr(ptr, old, new);
+}
+	
 struct mutex_private {
 	int	type;
 	int	recursecount;
@@ -82,7 +104,7 @@ static const struct mutexattr_private mutexattr_private_default = {
 };
 
 int
-pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
+pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 {
 	struct mutexattr_private *map;
 	struct mutex_private *mp;
@@ -103,30 +125,28 @@ pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 		mp = (struct mutex_private *) &mutex_private_default;
 	}
 
-	mutex->ptm_magic = _PT_MUTEX_MAGIC;
-	mutex->ptm_owner = NULL;
-	pthread_lockinit(&mutex->ptm_lock);
-	pthread_lockinit(&mutex->ptm_interlock);
-	PTQ_INIT(&mutex->ptm_blocked);
-	mutex->ptm_private = mp;
+	ptm->ptm_magic = _PT_MUTEX_MAGIC;
+	ptm->ptm_owner = NULL;
+	pthread_lockinit(&ptm->ptm_lock);
+	ptm->ptm_private = mp;
 
 	return 0;
 }
 
 
 int
-pthread_mutex_destroy(pthread_mutex_t *mutex)
+pthread_mutex_destroy(pthread_mutex_t *ptm)
 {
 
 	pthread__error(EINVAL, "Invalid mutex",
-	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EBUSY, "Destroying locked mutex",
-	    mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
+	    ptm->ptm_owner == NULL);
 
-	mutex->ptm_magic = _PT_MUTEX_DEAD;
-	if (mutex->ptm_private != NULL &&
-	    mutex->ptm_private != (const void *)&mutex_private_default)
-		free(mutex->ptm_private);
+	ptm->ptm_magic = _PT_MUTEX_DEAD;
+	if (ptm->ptm_private != NULL &&
+	    ptm->ptm_private != (const void *)&mutex_private_default)
+		free(ptm->ptm_private);
 
 	return 0;
 }
@@ -139,156 +159,168 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
  * same mutex.
  * 
  * A memory barrier after a lock and before an unlock will provide
- * this behavior. This code relies on pthread__simple_lock_try() to issue
- * a barrier after obtaining a lock, and on pthread__simple_unlock() to
- * issue a barrier before releasing a lock.
+ * this behavior. This code relies on mutex_cas() to issue a barrier
+ * after obtaining a lock, and on pthread__simple_unlock() to issue
+ * a barrier before releasing a lock.
  */
 
 int
-pthread_mutex_lock(pthread_mutex_t *mutex)
+pthread_mutex_lock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
+	void *value;
 	int error;
 
 	self = pthread__self();
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
 
-	/*
-	 * Note that if we get the lock, we don't have to deal with any
-	 * non-default lock type handling.
-	 */
-	if (__predict_false(pthread__simple_lock_try(&mutex->ptm_lock) == 0)) {
-		error = pthread_mutex_lock_slow(self, mutex);
+	value = NULL;
+	if (!mutex_cas(&ptm->ptm_owner, &value, self)) {
+		error = pthread__mutex_lock2(self, ptm);
 		if (error)
 			return error;
 	}
 
-	/*
-	 * We have the lock!
-	 */
-	self->pt_mutexhint = mutex;
-	mutex->ptm_owner = self;
+	/* We have the lock! */
+	self->pt_mutexhint = ptm;
 
 	return 0;
 }
 
 
 static int
-pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
+pthread__mutex_lock2(pthread_t self, pthread_mutex_t *ptm)
 {
 	extern int pthread__started;
 	struct mutex_private *mp;
+	void *owner, *waiters, *new;
 	sigset_t ss;
 	int count;
 
 	pthread__error(EINVAL, "Invalid mutex",
-	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
 
-	for (;;) {
-		/* Spin for a while. */
-		count = pthread__nspins;
-		while (mutex->ptm_lock == __SIMPLELOCK_LOCKED && --count > 0)
-			pthread__smt_pause();
-		if (count > 0) {
-			if (pthread__simple_lock_try(&mutex->ptm_lock) != 0)
-				break;
-			continue;
+	if (pthread__started == 0) {
+		/* The spec says we must deadlock, so... */
+		mp = ptm->ptm_private;
+		pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
+		(void) sigprocmask(SIG_SETMASK, NULL, &ss);
+		for (;;) {
+			sigsuspend(&ss);
 		}
-
-		/* Okay, didn't look free. Get the interlock... */
-		pthread_spinlock(&mutex->ptm_interlock);
-
-		/*
-		 * The mutex_unlock routine will get the interlock
-		 * before looking at the list of sleepers, so if the
-		 * lock is held we can safely put ourselves on the
-		 * sleep queue. If it's not held, we can try taking it
-		 * again.
-		 */
-		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
-		if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
-			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-			pthread_spinunlock(&mutex->ptm_interlock);
-			continue;
-		}
-
-		mp = mutex->ptm_private;
-		if (mutex->ptm_owner == self && mp != NULL) {
-			switch (mp->type) {
-			case PTHREAD_MUTEX_ERRORCHECK:
-				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(&mutex->ptm_interlock);
-				return EDEADLK;
-
-			case PTHREAD_MUTEX_RECURSIVE:
-				/*
-				 * It's safe to do this without
-				 * holding the interlock, because
-				 * we only modify it if we know we
-				 * own the mutex.
-				 */
-				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(&mutex->ptm_interlock);
-				if (mp->recursecount == INT_MAX)
-					return EAGAIN;
-				mp->recursecount++;
-				return 0;
-			}
-		}
-
-		if (pthread__started == 0) {
-			/* The spec says we must deadlock, so... */
-			pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
-			(void) sigprocmask(SIG_SETMASK, NULL, &ss);
-			for (;;) {
-				sigsuspend(&ss);
-			}
-			/*NOTREACHED*/
-		}
-
-		/*
-		 * Locking a mutex is not a cancellation
-		 * point, so we don't need to do the
-		 * test-cancellation dance. We may get woken
-		 * up spuriously by pthread_cancel or signals,
-		 * but it's okay since we're just going to
-		 * retry.
-		 */
-		self->pt_sleeponq = 1;
-		self->pt_sleepobj = &mutex->ptm_blocked;
-		pthread_spinunlock(&mutex->ptm_interlock);
-		(void)pthread__park(self, &mutex->ptm_interlock,
-		    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
+		/*NOTREACHED*/
 	}
 
-	return 0;
+	/* Recursive or errorcheck? */
+	mp = ptm->ptm_private;
+	owner = ptm->ptm_owner;
+	if (MUTEX_OWNER(owner) == (uintptr_t)self && mp != NULL) {
+		switch (mp->type) {
+		case PTHREAD_MUTEX_ERRORCHECK:
+			return EDEADLK;
+		case PTHREAD_MUTEX_RECURSIVE:
+			if (mp->recursecount == INT_MAX)
+				return EAGAIN;
+			mp->recursecount++;
+			return 0;
+		}
+	}
+
+	/* Spin for a while. */
+	count = pthread__nspins;
+	while (owner != NULL && --count > 0) {
+		pthread__smt_pause();
+		owner = ptm->ptm_owner;
+	}
+
+	for (;; owner = ptm->ptm_owner) {
+		/* If it has become free, try to acquire it again. */
+		while (owner == NULL) {
+			if (mutex_cas(&ptm->ptm_owner, &owner, self))
+				return 0;
+		}
+
+		/*
+		 * Nope: still held.  Add us to the list of waiters.
+		 * Issue memory barrier to ensure sleeponq/nextwaiter
+		 * are visible before we enter the waiters list.
+		 */
+		self->pt_sleeponq = 1;
+		for (waiters = ptm->ptm_waiters;;) {
+			self->pt_nextwaiter = waiters;
+			pthread__membar_producer();
+			if (mutex_cas(&ptm->ptm_waiters, &waiters, self))
+			    	break;
+		}
+
+		/*
+		 * Set the waiters bit and block.
+		 *
+		 * If we race with mutex_unlock() the waiters bit can have
+		 * been reset.  If that happens it's not safe to sleep as
+		 * we may never be awoken: we must remove the current
+		 * thread from the waiters list and try again.
+		 *
+		 * Because we are doing this atomically, we can't remove
+		 * one waiter: we must remove all waiters and awken them,
+		 * then sleep in _lwp_park() until we have been awoken. 
+		 *
+		 * Issue a memory barrier to ensure that we are reading
+		 * the value of ptm_owner/pt_sleeponq after we have entered
+		 * the waiters list.
+		 */
+		pthread__membar_consumer();
+		for (owner = ptm->ptm_owner;;) {
+			if (MUTEX_HAS_WAITERS(owner))
+				break;
+			if (owner == NULL) {
+				pthread__mutex_wakeup(self, ptm);
+				break;
+			}
+			new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
+			if (mutex_cas(&ptm->ptm_owner, &owner, new))
+				break;
+		}
+
+		/*
+		 * We may be awoken by this thread, or some other thread.
+		 * The key requirement is that we must not proceed until
+		 * told that we are no longer waiting (via pt_sleeponq
+		 * being set to zero),  Otherwise it is unsafe to re-enter
+		 * the thread onto the waiters list.
+		 */
+		while (self->pt_sleeponq) {
+			(void)_lwp_park(NULL, 0, &ptm->ptm_waiters, NULL);
+		}
+	}
 }
 
-
 int
-pthread_mutex_trylock(pthread_mutex_t *mutex)
+pthread_mutex_trylock(pthread_mutex_t *ptm)
 {
 	struct mutex_private *mp;
 	pthread_t self;
+	void *value;
 
 	pthread__error(EINVAL, "Invalid mutex",
-	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	self = pthread__self();
 
 	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
-	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
+	value = NULL;
+	if (!mutex_cas(&ptm->ptm_owner, &value, self)) {
 		/*
 		 * These tests can be performed without holding the
 		 * interlock because these fields are only modified
 		 * if we know we own the mutex.
 		 */
-		mp = mutex->ptm_private;
+		mp = ptm->ptm_private;
 		if (mp != NULL && mp->type == PTHREAD_MUTEX_RECURSIVE &&
-		    mutex->ptm_owner == self) {
+		    ptm->ptm_owner == self) {
 			if (mp->recursecount == INT_MAX)
 				return EAGAIN;
 			mp->recursecount++;
@@ -298,22 +330,21 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EBUSY;
 	}
 
-	mutex->ptm_owner = self;
-	self->pt_mutexhint = mutex;
+	self->pt_mutexhint = ptm;
 
 	return 0;
 }
 
 
 int
-pthread_mutex_unlock(pthread_mutex_t *mutex)
+pthread_mutex_unlock(pthread_mutex_t *ptm)
 {
 	struct mutex_private *mp;
-	pthread_t self;
+	pthread_t self, owner;
 	int weown;
 
 	pthread__error(EINVAL, "Invalid mutex",
-	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
@@ -323,13 +354,13 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * if we know we own the mutex.
 	 */
 	self = pthread_self();
-	weown = (mutex->ptm_owner == self);
-	mp = mutex->ptm_private;
+	weown = (MUTEX_OWNER(ptm->ptm_owner) == (uintptr_t)self);
+	mp = ptm->ptm_private;
 
 	if (mp == NULL) {
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
-			    (mutex->ptm_owner != 0));
+			    (ptm->ptm_owner != 0));
 			pthread__error(EPERM,
 			    "Unlocking mutex owned by another thread", weown);
 		}
@@ -338,6 +369,15 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 			return EPERM;
 		if (mp->recursecount != 0) {
 			mp->recursecount--;
+			/*
+			 * Wake any threads we deferred waking until
+			 * mutex unlock.
+			 */
+			if (self->pt_nwaiters != 0) {
+				(void)_lwp_unpark_all(self->pt_waiters,
+				    self->pt_nwaiters, &ptm->ptm_waiters);
+				self->pt_nwaiters = 0;
+			}
 			return 0;
 		}
 	} else if (mp->type == PTHREAD_MUTEX_ERRORCHECK) {
@@ -345,34 +385,99 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 			return EPERM;
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
-			    (mutex->ptm_owner != 0));
+			    (ptm->ptm_owner != 0));
 			pthread__error(EPERM,
 			    "Unlocking mutex owned by another thread", weown);
 		}
 	}
 
-	mutex->ptm_owner = NULL;
-	pthread__simple_unlock(&mutex->ptm_lock);
-
-	/*
-	 * Do a double-checked locking dance to see if there are any
-	 * waiters.  If we don't see any waiters, we can exit, because
-	 * we've already released the lock. If we do see waiters, they
-	 * were probably waiting on us... there's a slight chance that
-	 * they are waiting on a different thread's ownership of the
-	 * lock that happened between the unlock above and this
-	 * examination of the queue; if so, no harm is done, as the
-	 * waiter will loop and see that the mutex is still locked.
-	 *
-	 * Note that waiters may have been transferred here from a
-	 * condition variable.
-	 */
-	if (self->pt_mutexhint == mutex)
+	if (self->pt_mutexhint == ptm)
 		self->pt_mutexhint = NULL;
 
-	pthread_spinlock(&mutex->ptm_interlock);
-	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
+	/*
+	 * Release the mutex.  If there appear to be waiters, then
+	 * wake them up.
+	 */
+	owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, NULL);
+	if (MUTEX_HAS_WAITERS(owner) != 0) {
+		pthread__mutex_wakeup(self, ptm);
+		return 0;
+	}
+
+	/*
+	 * There were no waiters, but we may have deferred waking
+	 * other threads until mutex unlock - we must wake them now.
+	 */
+	if (self->pt_nwaiters != 0) {
+		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
+		    &ptm->ptm_waiters);
+		self->pt_nwaiters = 0;
+	}
+
 	return 0;
+}
+
+static void
+pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
+{
+	pthread_t thread, next;
+	ssize_t n, rv;
+
+	/*
+	 * Take ownership of the current set of waiters.  No
+	 * need for a memory barrier following this, all loads
+	 * are dependent upon 'thread'.
+	 */
+	thread = pthread__atomic_swap_ptr(&ptm->ptm_waiters, NULL);
+
+	for (;; n = 0) {
+		/*
+		 * Pull waiters from the queue and add to our list.
+		 * Use a memory barrier to ensure that we safely
+		 * read the value of pt_nextwaiter before 'thread'
+		 * sees pt_sleeponq being cleared.
+		 */
+		for (n = self->pt_nwaiters, self->pt_nwaiters = 0;
+		    n < pthread__unpark_max && thread != NULL;
+		    thread = next) {
+		    	next = thread->pt_nextwaiter;
+			self->pt_waiters[n++] = thread->pt_lid;
+			pthread__membar_full();
+			thread->pt_sleeponq = 0;
+			/* No longer safe to touch 'thread' */
+		}
+
+		switch (n) {
+		case 0:
+			return;
+		case 1:
+			/*
+			 * If the calling thread is about to block,
+			 * defer unparking the target until _lwp_park()
+			 * is called.
+			 */
+			if (self->pt_willpark && self->pt_unpark == 0) {
+				self->pt_unpark = self->pt_waiters[0];
+				self->pt_unparkhint = &ptm->ptm_waiters;
+				return;
+			}
+			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0],
+			    &ptm->ptm_waiters);
+			if (rv != 0 && errno != EALREADY && errno != EINTR) {
+				pthread__errorfunc(__FILE__, __LINE__,
+				    __func__, "_lwp_unpark failed");
+			}
+			return;
+		default:
+			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
+			    &ptm->ptm_waiters);
+			if (rv != 0 && errno != EINTR) {
+				pthread__errorfunc(__FILE__, __LINE__,
+				    __func__, "_lwp_unpark_all failed");
+			}
+			break;
+		}
+	}
 }
 
 int
@@ -474,4 +579,4 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 	return 0;
 }
 
-#endif	/* !PTHREAD__HAVE_ATOMIC */
+#endif	/* PTHREAD__HAVE_ATOMIC */
