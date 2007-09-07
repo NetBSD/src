@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_misc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: hci_misc.c,v 1.2 2007/09/07 18:37:31 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.2 2007/09/07 18:37:31 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ hci_memo_find(struct hci_unit *unit, bdaddr_t *bdaddr)
 			continue;
 		}
 
-		if (bdaddr_same(bdaddr, &memo->response.bdaddr)) {
+		if (bdaddr_same(bdaddr, &memo->bdaddr)) {
 			DPRINTF("memo %p found\n", memo);
 			return memo;
 		}
