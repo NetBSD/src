@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.4 2007/09/08 21:14:39 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.5 2007/09/08 22:09:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.4 2007/09/08 21:14:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.5 2007/09/08 22:09:33 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -991,6 +991,86 @@ extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
+static void
+init_x86_64_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	struct vm_physseg *vps;
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	int x;
+		
+ search_again:
+	vps = NULL;
+
+	for (x = 0; x < vm_nphysseg; x++) {
+		vps = &vm_physmem[x];
+		if (ptoa(vps->avail_end) == avail_end)
+			break;
+	}
+	if (x == vm_nphysseg)
+		panic("init_x86_64: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if ((vps->avail_end - vps->avail_start) < atop(sz))
+		sz = ptoa(vps->avail_end - vps->avail_start);
+
+	vps->avail_end -= atop(sz);
+	vps->end -= atop(sz);
+            msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+
+	/* Remove the last segment if it now has no pages. */
+	if (vps->start == vps->end) {
+		for (vm_nphysseg--; x < vm_nphysseg; x++)
+			vm_physmem[x] = vm_physmem[x + 1];
+	}
+
+	/* Now find where the new avail_end is. */
+	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
+		if (vm_physmem[x].avail_end > avail_end)
+			avail_end = vm_physmem[x].avail_end;
+	avail_end = ptoa(avail_end);
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
+
+static void
+init_x86_64_ksyms(void)
+{
+#if NKSYMS || defined(DDB) || defined(LKM)
+	extern int end;
+	extern int *esym;
+	struct btinfo_symtab *symtab;
+	vaddr_t tssym, tesym;
+
+#ifdef DDB
+	db_machine_init();
+#endif
+
+	symtab = lookup_bootinfo(BTINFO_SYMTAB);
+	if (symtab) {
+		tssym = (vaddr_t)symtab->ssym + KERNBASE;
+		tesym = (vaddr_t)symtab->esym + KERNBASE;
+		ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
+	} else
+		ksyms_init(*(long *)(void *)&end,
+		    ((long *)(void *)&end) + 1, esym);
+#endif
+}
+
 void
 init_x86_64(paddr_t first_avail)
 {
@@ -1004,9 +1084,6 @@ init_x86_64(paddr_t first_avail)
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
 	u_int64_t addr, size, io_end;
-#endif
-#if NACPI > 0
-	paddr_t acpi_avail_start;
 #endif
 
 	cpu_init_msrs(&cpu_info_primary);
@@ -1024,16 +1101,18 @@ init_x86_64(paddr_t first_avail)
 
 	uvmexp.ncolors = 2;
 
-	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
-				 /* and VM system doesn't work with phys 0 */
-#ifdef MULTIPROCESSOR
-	if (avail_start < MP_TRAMPOLINE + PAGE_SIZE)
-		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
-#endif
-#if NACPI > 0
-	acpi_avail_start = avail_start;
-	avail_start += PAGE_SIZE;
-#endif
+	/*
+	 * Low memory reservations:
+	 * Page 0:	BIOS data
+	 * Page 1:	BIOS callback (not used yet, for symmetry with i386)
+	 * Page 2:	MP bootstrap
+	 * Page 3:	ACPI wakeup code
+	 * Page 4:	Temporary page table for 0MB-4MB
+	 * Page 5:	Temporary page directory
+	 * Page 6:	Temporary page map level 3
+	 * Page 7:	Temporary page map level 4
+	 */
+	avail_start = 8 * PAGE_SIZE;
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -1324,62 +1403,7 @@ init_x86_64(paddr_t first_avail)
 		}
 	}
 
-	/*
-	 * Steal memory for the message buffer (at end of core).
-	 */
-	{
-		struct vm_physseg *vps = NULL;
-		psize_t sz = round_page(MSGBUFSIZE);
-		psize_t reqsz = sz;
-		
-	search_again:
-
-		for (x = 0; x < vm_nphysseg; x++) {
-			vps = &vm_physmem[x];
-			if (ptoa(vps->avail_end) == avail_end)
-				break;
-		}
-		if (x == vm_nphysseg)
-			panic("init_x86_64: can't find end of memory");
-
-		/* Shrink so it'll fit in the last segment. */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
-
-		vps->avail_end -= atop(sz);
-		vps->end -= atop(sz);
-                msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-                msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end) {
-			for (vm_nphysseg--; x < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
-		}
-
-		/* Now find where the new avail_end is. */
-		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-			if (vm_physmem[x].avail_end > avail_end)
-				avail_end = vm_physmem[x].avail_end;
-		avail_end = ptoa(avail_end);
-
-		if (sz != reqsz) {
-			reqsz -= sz;
-			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
-		/* if still segments available, get memory from next one ... */
-				sz = reqsz;
-				goto search_again;
-			}
-		/* Warn if the message buffer had to be shrunk. */
-			printf("WARNING: %ld bytes not available for msgbuf "
-			       "in last cluster (%ld used)\n", reqsz, sz);
-		}
-
-	}
-
-#if NACPI > 0
-	acpi_wakeup_paddr = acpi_avail_start;
-#endif
+	init_x86_64_msgbuf();
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
@@ -1474,27 +1498,8 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_idt();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	{
-		extern int end;
-		extern int *esym;
-		struct btinfo_symtab *symtab;
-		vaddr_t tssym, tesym;
+	init_x86_64_ksyms();
 
-#ifdef DDB
-		db_machine_init();
-#endif
-
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-		if (symtab) {
-			tssym = (vaddr_t)symtab->ssym + KERNBASE;
-			tesym = (vaddr_t)symtab->esym + KERNBASE;
-			ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
-		} else
-			ksyms_init(*(long *)(void *)&end,
-			    ((long *)(void *)&end) + 1, esym);
-	}
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
