@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.4 2007/09/07 19:58:06 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.5 2007/09/08 00:23:46 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.4 2007/09/07 19:58:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.5 2007/09/08 00:23:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,12 +338,10 @@ envsys2_mod_handle(struct lkm_table *lkmtp, int cmd)
 		sc->sc_sysmon.sme_gtredata = envsys2_gtredata;
 		sc->sc_sysmon.sme_nsensors = MAXSENSORS;
 
-		if (sysmon_envsys_register(&sc->sc_sysmon)) {
-			printf("%s: unable to register with sysmon\n",
-			    __func__);
-			return ENODEV;
-		}
-
+		err = sysmon_envsys_register(&sc->sc_sysmon);
+		if (err)
+			printf("%s: unable to register with sysmon (%d)\n",
+		    	    __func__, err);
 		break;
 
 	case LKM_E_UNLOAD:
