@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.2 2007/09/02 14:39:19 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.3 2007/09/08 00:31:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.2 2007/09/02 14:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.3 2007/09/08 00:31:35 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1553,8 +1553,7 @@ init386(paddr_t first_avail)
 #endif								 /* XXX */
 #if NACPI > 0
 	/* trampoline code for wake handler */
-	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
-	needs_earlier_install_pte0 = 1;
+	realmode_reserved_size += PAGE_SIZE;
 #endif
 	if (needs_earlier_install_pte0) {
 		/* page table for directory entry 0 */
@@ -1929,38 +1928,10 @@ init386(paddr_t first_avail)
 	/*
 	 * Steal memory for the acpi wake code
 	 */
-	{
-		paddr_t paddr, p;
-		psize_t sz;
-		int npg;
-
-#ifdef MULTIPROCESSOR
-		paddr = realmode_reserved_start + PAGE_SIZE; /* XXX */
-#else
-		paddr = realmode_reserved_start;
-#endif
-		npg = acpi_md_get_npages_of_wakecode();
-		sz = ptoa(npg);
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < sz) {
-			panic("cannot steal memory for ACPI wake code.");
-		}
-#endif
-
-		/* identical mapping */
-		p = paddr;
-		for (x=0; x<npg; x++) {
-			printf("ACPI: kenter: 0x%08x\n", (unsigned)p);
-			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
-			p += PAGE_SIZE;
-		}
-		pmap_update(pmap_kernel());
-
-		acpi_md_install_wakecode(paddr);
-
-		realmode_reserved_size  -= sz;
-		realmode_reserved_start += sz;
-	}
+	KASSERT(realmode_reserved_size >= PAGE_SIZE);
+	acpi_wakeup_paddr = realmode_reserved_start;
+	realmode_reserved_size  -= PAGE_SIZE;
+	realmode_reserved_start += PAGE_SIZE;
 #endif
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.312.8.3 2007/09/04 16:13:43 joerg Exp $
+#	$NetBSD: files.i386,v 1.312.8.4 2007/09/08 00:31:35 joerg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -496,7 +496,8 @@ include	"dev/ieee1394/files.ieee1394"
 include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
-file	arch/i386/acpi/acpi_wakeup.c	acpi
+file	arch/i386/acpi/acpi_wakeup.c		acpi
+file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 
 # Toshiba VALD 
 device	vald

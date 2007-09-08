@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.2 2007/09/06 22:59:44 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.3 2007/09/08 00:31:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.2 2007/09/06 22:59:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.3 2007/09/08 00:31:34 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1033,7 +1033,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 #if NACPI > 0
 	acpi_avail_start = avail_start;
-	avail_start += ptoa(acpi_md_get_npages_of_wakecode() + 1);
+	avail_start += PAGE_SIZE;
 #endif
 
 	/*
@@ -1379,18 +1379,7 @@ init_x86_64(paddr_t first_avail)
 	}
 
 #if NACPI > 0
-	npg = acpi_md_get_npages_of_wakecode();
-	p = acpi_avail_start;
-	for (x = 0; x < npg; x++) {
-		aprint_normal("ACPI: kenter: %p\n", (void *)p);
-		pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
-		p += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
-	acpi_md_install_wakecode(acpi_avail_start);
-
-	DELAY(1000000);
+	acpi_wakeup_paddr = acpi_avail_start;
 #endif
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
