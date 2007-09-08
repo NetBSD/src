@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.4 2007/09/08 02:48:47 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.5 2007/09/08 13:56:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.4 2007/09/08 02:48:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.5 2007/09/08 13:56:57 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.4 2007/09/08 02:48:47 joerg E
 #include "acpi_wakecode.h"
 
 paddr_t acpi_wakeup_paddr;
+vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
 static int acpi_md_vbios_reset = 1;
@@ -186,13 +187,13 @@ acpi_md_sleep(int state)
 {
 #define WAKECODE_FIXUP(offset, type, val) do	{		\
 	type	*addr;						\
-	addr = (type *)(acpi_wakeup_paddr + offset);		\
+	addr = (type *)(acpi_wakeup_vaddr + offset);		\
 	*addr = val;						\
 } while (0)
 
 #define WAKECODE_BCOPY(offset, type, val) do	{		\
 	void	**addr;						\
-	addr = (void **)(acpi_wakeup_paddr + offset);		\
+	addr = (void **)(acpi_wakeup_vaddr + offset);		\
 	bcopy(&(val), addr, sizeof(type));			\
 } while (0)
 
@@ -202,14 +203,19 @@ acpi_md_sleep(int state)
 	struct pmap			*pm;
 	paddr_t				oldphys = 0;
 
-	if (!acpi_wakeup_paddr) {
-		printf("acpi: can't sleep since wakecode is not installed.\n");
-		return (-1);
-	}
+	KASSERT(acpi_wakeup_paddr != 0);
+	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
 
-	if (sizeof(wakecode) > PAGE_SIZE) {
-		printf("acpi: wakecode large than a single page, aborting.\n");
-		return -1;
+	if (acpi_wakeup_vaddr == 0) {
+		/* Map ACPI wakecode */
+		acpi_wakeup_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
+		if (acpi_wakeup_vaddr == 0) {
+			printf("acpi: can't allocate address for wakecode.\n");
+			return -1;
+		}
+		pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
+		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 
 	if (!CPU_IS_PRIMARY(curcpu())) {
@@ -241,7 +247,7 @@ acpi_md_sleep(int state)
 	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
-		bcopy(wakecode, (void *)acpi_wakeup_paddr, sizeof(wakecode));
+		bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
