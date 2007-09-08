@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.6 2007/09/04 20:32:49 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.7 2007/09/08 14:41:51 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.6 2007/09/04 20:32:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.7 2007/09/08 14:41:51 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -185,6 +185,7 @@ struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
 bool x86_mp_online;
+paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -799,13 +800,23 @@ cpu_copy_trampoline()
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
-	    (paddr_t)MP_TRAMPOLINE,	/* physical */
-	    VM_PROT_ALL);		/* protection */
+	
+	vaddr_t mp_trampoline_vaddr;
+
+	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY);
+
+	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
+	    VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa((vaddr_t)mp_trampoline_paddr, mp_trampoline_paddr,
+	    VM_PROT_ALL);
 	pmap_update(pmap_kernel());
-	memcpy((void *)MP_TRAMPOLINE,
+	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
+
+	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
+	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
 #endif
@@ -904,7 +915,7 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	dwordptr[0] = 0;
-	dwordptr[1] = MP_TRAMPOLINE >> 4;
+	dwordptr[1] = mp_trampoline_paddr >> 4;
 
 	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if ((void *)kva == NULL)
@@ -929,13 +940,13 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(mp_trampoline_paddr / PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(mp_trampoline_paddr / PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
