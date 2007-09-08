@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.17 2007/09/02 00:41:25 xtraeme Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.18 2007/09/08 00:21:43 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,9 +36,6 @@
 #ifndef _DEV_SYSMON_SYSMONVAR_H_
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
-#ifndef _LKM
-#include "opt_compat_netbsd.h"
-#endif
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/power.h>
@@ -86,10 +83,8 @@ struct sysmon_envsys {
 	/* Function callback to recieve data from device */
 	int (*sme_gtredata)(struct sysmon_envsys *, envsys_data_t *);
 
-#ifdef COMPAT_40
-	u_int sme_fsensor;		/* sensor index base, from sysmon */
+	uint32_t sme_fsensor;		/* sensor index base, from sysmon */
 #define SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
-#endif
 };
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
