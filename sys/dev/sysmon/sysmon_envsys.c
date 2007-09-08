@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.60 2007/09/08 03:41:28 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.61 2007/09/08 15:25:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.60 2007/09/08 03:41:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.61 2007/09/08 15:25:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,12 +93,27 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.60 2007/09/08 03:41:28 xtraeme E
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
-static prop_dictionary_t sme_propd;
-static kcondvar_t sme_list_cv;
+/*
+ * Notes about locking:
+ *
+ * There's a global lock 'sme_mtx' to protect access to 'sysmon_envsys_list'
+ * (devices linked list), 'struct sysmon_envsys' (device), 'sme_events_list'
+ * (events linked list), 'sme_event_t' (event) and the global counter
+ * 'sysmon_envsys_next_sensor_index'.
+ *
+ * Another lock 'sme_init_mtx' is used to protect initialization and
+ * finalization of the events framework (the callout(9) and workqueue(9)
+ * that is used to check for conditions and sending events to powerd(8)).
+ *
+ * The global 'sme_cv' condition variable is used to wait for state changes
+ * on the 'sysmon_envsys_list' and 'sme_events_list' linked lists.
+ *
+ */
 
 kmutex_t sme_mtx, sme_event_init_mtx;
-kcondvar_t sme_event_cv;
+kcondvar_t sme_cv;
 
+static prop_dictionary_t sme_propd;
 static uint32_t sysmon_envsys_next_sensor_index = 0;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 
@@ -118,8 +133,7 @@ sysmon_envsys_init(void)
 	LIST_INIT(&sme_events_list);
 	mutex_init(&sme_mtx, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&sme_event_init_mtx, MUTEX_DRIVER, IPL_NONE);
-	cv_init(&sme_list_cv, "smefind");
-	cv_init(&sme_event_cv, "smeevent");
+	cv_init(&sme_cv, "smework");
 	sme_propd = prop_dictionary_create();
 }
 
@@ -577,7 +591,7 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	mutex_enter(&sme_mtx);
 	while (sme->sme_flags & SME_FLAG_BUSY) {
 		sme->sme_flags |= SME_FLAG_WANTED;
-		cv_wait(&sme_list_cv, &sme_mtx);
+		cv_wait(&sme_cv, &sme_mtx);
 	}
 	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
 	/*
@@ -621,7 +635,7 @@ again:
 			if (strcmp(sme->sme_name, name) == 0) {
 				if (sme->sme_flags & SME_FLAG_BUSY) {
 					sme->sme_flags |= SME_FLAG_WANTED;
-					cv_wait(&sme_list_cv, &sme_mtx);
+					cv_wait(&sme_cv, &sme_mtx);
 					goto again;
 				}
 				sme->sme_flags |= SME_FLAG_BUSY;
@@ -642,7 +656,7 @@ sysmon_envsys_release(struct sysmon_envsys *sme)
 {
 	mutex_enter(&sme_mtx);
 	if (sme->sme_flags & SME_FLAG_WANTED)
-		cv_broadcast(&sme_list_cv);
+		cv_broadcast(&sme_cv);
 	sme->sme_flags &= ~(SME_FLAG_BUSY | SME_FLAG_WANTED);
 	mutex_exit(&sme_mtx);
 }
