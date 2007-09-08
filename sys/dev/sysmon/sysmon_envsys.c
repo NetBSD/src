@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.65 2007/09/08 23:21:02 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.66 2007/09/08 23:59:38 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.65 2007/09/08 23:21:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.66 2007/09/08 23:59:38 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -511,6 +511,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
 out:
 	sme->sme_uniqsensors = 0;
+	sme->sme_flags &= ~SME_FLAG_BUSY;
 	mutex_exit(&sme_mtx);
 
 	if (error == 0) {
