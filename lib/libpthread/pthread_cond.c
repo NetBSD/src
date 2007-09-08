@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.35 2007/09/07 14:09:27 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.36 2007/09/08 22:49:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.35 2007/09/07 14:09:27 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.36 2007/09/08 22:49:50 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -119,15 +119,17 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	 * as short a time as possible - that means no system calls.
 	 */ 
 	pthread_spinlock(&cond->ptc_lock);
+#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else {
-#ifdef ERRORCHECK
 		pthread__error(EINVAL,
 		    "Multiple mutexes used for condition wait", 
 		    cond->ptc_mutex == mutex);
-#endif
 	}
+#else
+	cond->ptc_mutex = mutex;
+#endif
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
@@ -208,15 +210,17 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * as short a time as possible - that means no system calls.
 	 */ 
 	pthread_spinlock(&cond->ptc_lock);
+#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else {
-#ifdef ERRORCHECK
 		pthread__error(EINVAL,
 		    "Multiple mutexes used for condition wait",
 		    cond->ptc_mutex == mutex);
-#endif
 	}
+#else
+	cond->ptc_mutex = mutex;
+#endif
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
@@ -320,7 +324,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	 * deferred wakeup list.  The waiter will be set running when the
 	 * caller (this thread) releases the mutex.
 	 */
-	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex &&
+	if (mutex != NULL && pthread__mutex_owned(self, mutex) &&
 	    self->pt_nwaiters < pthread__unpark_max) {
 		signaled->pt_sleepobj = NULL;
 		signaled->pt_sleeponq = 0;
@@ -359,7 +363,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	 * Try to defer waking threads (see pthread_cond_signal()).
 	 * Only transfer waiters for which there is no pending wakeup.
 	 */
-	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex) {
+	if (mutex != NULL && pthread__mutex_owned(self, mutex)) {
 		for (signaled = PTQ_FIRST(&cond->ptc_waiters);
 		    signaled != NULL;
 		    signaled = next) {	

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.51 2007/09/07 14:09:27 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.52 2007/09/08 22:49:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,11 +76,10 @@ struct	__pthread_st {
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_num;		/* ID XXX should die */
 	int		pt_state;	/* running, blocked, etc. */
-	pthread_spin_t	pt_lock;	/* lock on state */
+	pthread_mutex_t	pt_lock;	/* lock on state */
 	int		pt_flags;	/* see PT_FLAG_* below */
 	int		pt_cancel;	/* Deferred cancellation */
 	int		pt_spinlocks;	/* Number of spinlocks held. */
-	void		*pt_mutexhint;	/* Last mutex held. */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	void		*pt_exitval;	/* Read by pthread_join() */
@@ -153,6 +152,7 @@ struct	__pthread_st {
 extern int	pthread__stacksize_lg;
 extern size_t	pthread__stacksize;
 extern vaddr_t	pthread__stackmask;
+extern vaddr_t	pthread__threadmask;
 extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
@@ -221,7 +221,7 @@ int	pthread__find(pthread_t);
 #else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
-	((pthread_t) (((vaddr_t)(sp)) & ~pthread__stackmask))
+	((pthread_t) (((vaddr_t)(sp)) & pthread__threadmask))
 
 #define pthread__id_reg() pthread__sp()
 #endif
@@ -255,8 +255,31 @@ void	pthread__membar_full(void);
 void	pthread__membar_producer(void);
 void	pthread__membar_consumer(void);
 
+int	pthread__mutex_owned(pthread_t, pthread_mutex_t *);
+
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
 #endif
+
+/*
+ * Bits in the owner field of the lock that indicate lock state.  If the
+ * WRITE_LOCKED bit is clear, then the owner field is actually a count of
+ * the number of readers.
+ */
+#define	RW_HAS_WAITERS		0x01	/* lock has waiters */
+#define	RW_WRITE_WANTED		0x02	/* >= 1 waiter is a writer */
+#define	RW_WRITE_LOCKED		0x04	/* lock is currently write locked */
+#define	RW_UNUSED		0x08	/* currently unused */
+
+#define	RW_FLAGMASK		0x0f
+
+#define	RW_READ_COUNT_SHIFT	4
+#define	RW_READ_INCR		(1 << RW_READ_COUNT_SHIFT)
+#define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
+#define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
+#define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
+#define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
+
+#define	ptr_owner		ptr_writer
 
 #endif /* _LIB_PTHREAD_INT_H */
