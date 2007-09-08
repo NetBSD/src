@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.61 2007/09/08 15:25:18 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.62 2007/09/08 15:47:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.61 2007/09/08 15:25:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.62 2007/09/08 15:47:37 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -523,16 +523,19 @@ out:
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors));
-		return 0;
 	}
+
 out2:
-	DPRINTF(("%s: failed to register '%s' (%d)\n", __func__,
-	    sme->sme_name, error));
 	while (!SLIST_EMPTY(&sme_evdrv_list)) {
 		sme_evdrv = SLIST_FIRST(&sme_evdrv_list);
 		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
 		kmem_free(sme_evdrv, sizeof(*sme_evdrv));
 	}
+	if (error == 0)
+		return 0;
+
+	DPRINTF(("%s: failed to register '%s' (%d)\n", __func__,
+	    sme->sme_name, error));
 	if (error != EEXIST) {
 		mutex_enter(&sme_mtx);
 		sme_event_unregister_all(sme->sme_name);
