@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.3 2007/09/08 00:31:34 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.4 2007/09/08 02:48:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.3 2007/09/08 00:31:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.4 2007/09/08 02:48:47 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -209,6 +209,11 @@ acpi_md_sleep(int state)
 
 	if (sizeof(wakecode) > PAGE_SIZE) {
 		printf("acpi: wakecode large than a single page, aborting.\n");
+		return -1;
+	}
+
+	if (!CPU_IS_PRIMARY(curcpu())) {
+		printf("acpi: apci_md_sleep called from secondary CPU ignored\n");
 		return -1;
 	}
 
