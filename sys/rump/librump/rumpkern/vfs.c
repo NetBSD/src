@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.12 2007/09/01 21:39:46 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.13 2007/09/08 15:40:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -297,6 +297,8 @@ namei(struct nameidata *ndp)
 	}
 
 	vp = makevnode(&sb_node, cnp->cn_pnbuf);
+	if (cnp->cn_flags & LOCKLEAF)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	ndp->ni_vp = vp;
 
 	return 0;
