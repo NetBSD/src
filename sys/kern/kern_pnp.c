@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.5 2007/09/06 02:40:04 joerg Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.6 2007/09/08 17:45:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.5 2007/09/06 02:40:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.6 2007/09/08 17:45:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -705,7 +705,6 @@ pnp_global_transition(pnp_state_t newstate)
 		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
 			/* find root nodes */
 			if (device_parent(curdev) == NULL) {
-				printf(" %s", device_xname(curdev));
 				(void)pnp_set_state(curdev, newstate);
 				(void)pnp_set_child_state(curdev, newstate);
 			}
