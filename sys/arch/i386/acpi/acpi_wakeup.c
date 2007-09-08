@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.5 2007/09/08 13:56:57 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.6 2007/09/08 16:21:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.5 2007/09/08 13:56:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.6 2007/09/08 16:21:32 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -239,7 +239,7 @@ acpi_md_sleep(int state)
 		pmap_update(pm);
 	}
 
-#ifdef notyet
+#ifdef MULTIPROCESSOR
 	/* Shutdown all other CPUs */
 	x86_broadcast_ipi(X86_IPI_HALT);
 #endif
