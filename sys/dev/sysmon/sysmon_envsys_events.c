@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.32 2007/09/08 03:41:28 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.33 2007/09/08 15:25:18 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.32 2007/09/08 03:41:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.33 2007/09/08 15:25:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,7 +78,7 @@ static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
 kmutex_t sme_mtx, sme_event_init_mtx;
-kcondvar_t sme_event_cv;
+kcondvar_t sme_cv;
 
 /* 10 seconds of timeout for the callout */
 static int sme_events_timeout = 10;
@@ -275,7 +275,7 @@ sme_event_unregister_all(const char *sme_name)
 			    see->pes.pes_sensname, see->type, sme_name));
 
 			while (see->see_flags & SME_EVENT_WORKING)
-				cv_wait(&sme_event_cv, &sme_mtx);
+				cv_wait(&sme_cv, &sme_mtx);
 
 			LIST_REMOVE(see, see_list);
 			kmem_free(see, sizeof(*see));
@@ -320,7 +320,7 @@ sme_event_unregister(const char *sensor, int type)
 	}
 
 	while (see->see_flags & SME_EVENT_WORKING)
-		cv_wait(&sme_event_cv, &sme_mtx);
+		cv_wait(&sme_cv, &sme_mtx);
 
 	DPRINTF(("%s: removing dev=%s sensor=%s type=%d\n",
 	    __func__, see->pes.pes_dvname, sensor, type));
@@ -632,6 +632,6 @@ do {									\
 	}
 out:
 	see->see_flags &= ~SME_EVENT_WORKING;
-	cv_broadcast(&sme_event_cv);
+	cv_broadcast(&sme_cv);
 	mutex_exit(&sme_mtx);
 }
