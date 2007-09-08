@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.109 2007/09/02 07:03:22 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.110 2007/09/08 04:34:02 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.109 2007/09/02 07:03:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.110 2007/09/08 04:34:02 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -285,7 +285,7 @@ gre_getsockmbuf(struct socket *so)
 }
 
 static int
-gre_socreate1(struct gre_softc *sc, struct lwp *l, struct socket **sop)
+gre_socreate(struct gre_softc *sc, struct lwp *l, struct socket **sop)
 {
 	int rc;
 	struct mbuf *m;
@@ -447,7 +447,7 @@ shutdown:
 		sc->sc_newsoparm.sp_fp = NULL;
 		so = (struct socket *)sc->sc_soparm.sp_fp->f_data;
 		gre_upcall_add(so, sc);
-	} else if (gre_socreate1(sc, l, &so) != 0) {
+	} else if (gre_socreate(sc, l, &so) != 0) {
 		sc->sc_dying = 1;
 		goto shutdown;
 	}
