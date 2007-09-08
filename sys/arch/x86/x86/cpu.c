@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.9 2007/09/08 15:44:57 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.10 2007/09/08 19:05:54 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.9 2007/09/08 15:44:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.10 2007/09/08 19:05:54 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -176,6 +176,9 @@ uint32_t cpus_attached = 0;
 
 extern char x86_64_doubleflt_stack[];
 
+bool x86_mp_online;
+paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
+
 #ifdef MULTIPROCESSOR
 /*
  * Array of CPU info structures.  Must be statically-allocated because
@@ -184,8 +187,6 @@ extern char x86_64_doubleflt_stack[];
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
-bool x86_mp_online;
-paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
