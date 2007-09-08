@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.55 2007/09/04 16:54:02 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.56 2007/09/08 00:21:43 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.55 2007/09/04 16:54:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.56 2007/09/08 00:21:43 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,18 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.55 2007/09/04 16:54:02 xtraeme E
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
-#include "opt_compat_netbsd.h"
-
 static prop_dictionary_t sme_propd;
 static kcondvar_t sme_list_cv;
 
 kmutex_t sme_list_mtx, sme_event_mtx, sme_event_init_mtx;
 kcondvar_t sme_event_cv;
 
-#ifdef COMPAT_40
-static u_int sysmon_envsys_next_sensor_index = 0;
+static kmutex_t sme_count_mtx;
+static uint32_t sysmon_envsys_next_sensor_index = 0;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
-#endif
 
 static void sysmon_envsys_release(struct sysmon_envsys *);
 static void sysmon_envsys_destroy_plist(prop_array_t);
@@ -122,6 +119,7 @@ sysmon_envsys_init(void)
 	mutex_init(&sme_list_mtx, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&sme_event_mtx, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&sme_event_init_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sme_count_mtx, MUTEX_DRIVER, IPL_NONE);
 	cv_init(&sme_list_cv, "smefind");
 	cv_init(&sme_event_cv, "smeevent");
 	sme_propd = prop_dictionary_create();
@@ -168,7 +166,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ENVSYS_GETDICTIONARY:
 	    {
 		struct plistref *plist = (struct plistref *)data;
-	
+
 		/*
 		 * Update all sysmon envsys devices dictionaries with
 		 * new data if it's different than we have currently
@@ -262,7 +260,6 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	     * implemented ENVSYS_GTREDATA and ENVSYS_GTREINFO; enough
 	     * to make old applications work.
 	     */
-#ifdef COMPAT_40
 	case ENVSYS_GTREDATA:
 	    {
 		struct envsys_tre_data *tred = (void *)data;
@@ -367,7 +364,6 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		break;
 	    }
-#endif /* COMPAT_40 */
 	default:
 		error = ENOTTY;
 		break;
@@ -410,6 +406,20 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 			return EINVAL;
 	}
 
+	/*
+	 * Check if requested sysmon_envsys device is valid
+	 * and does not exist already in the list.
+	 */
+	mutex_enter(&sme_list_mtx);
+	sme->sme_flags |= SME_FLAG_BUSY;
+	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
+	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
+		       mutex_exit(&sme_list_mtx);
+		       return EEXIST;
+	       }
+	}
+	mutex_exit(&sme_list_mtx);
+
 	/* create the sysmon envsys device array. */
 	array = prop_array_create();
 	if (array == NULL)
@@ -424,19 +434,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * checking firstly if sensor description is unique.
 	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
-		/*
-		 * XXX:
-		 *
-		 * workaround for LKMs. First sensor used in a LKM
-		 * gets the index sensor from all edata structs
-		 * allocated in kernel. It is unknown to me why this
-		 * value is not 0 when using a LKM.
-		 *
-		 * For now overwrite its index to 0.
-		 */
-		if (i == 0)
-			sme->sme_sensor_data[0].sensor = 0;
-
 		edata = &sme->sme_sensor_data[i];
 		/*
 		 * Check if sensor description is unique.
@@ -456,18 +453,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		sme_add_sensor_dictionary(sme, array, dict, edata);
 	}
 
-	/*
-	 * Check if requested sysmon_envsys device is valid
-	 * and does not exist already in the list.
-	 */
-	mutex_enter(&sme_list_mtx);
-	sme->sme_flags |= SME_FLAG_BUSY;
-	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
-	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
-		       error = EEXIST;
-		       goto out;
-	       }
-	}
 	/* 
 	 * If the array does not contain any object (sensor), there's
 	 * no need to attach the driver.
@@ -486,6 +471,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * 	<array>
 	 * 		...
 	 */
+	mutex_enter(&sme_list_mtx);
 	if (!prop_dictionary_set(sme_propd, sme->sme_name, array)) {
 		error = EINVAL;
 		DPRINTF(("%s: prop_dictionary_set for '%s'\n", __func__,
@@ -495,23 +481,25 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	/*
 	 * Add the device into the list.
 	 */
-#ifdef COMPAT_40
-	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
-	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
-#endif
 	LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
-
 out:
-	sme->sme_flags &= ~SME_FLAG_BUSY;
 	sme->sme_uniqsensors = 0;
+	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
+	mutex_enter(&sme_count_mtx);
 	mutex_exit(&sme_list_mtx);
-	if (error == 0)
+	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
+	mutex_exit(&sme_count_mtx);
+
+	if (error == 0) {
+		DPRINTF(("%s: driver '%s' registered (nsens=%d)\n",
+		    __func__, sme->sme_name, sme->sme_nsensors));
 		return 0;
+	}
 out2:
 	DPRINTF(("%s: failed to register '%s' (%d)\n", __func__,
 	    sme->sme_name, error));
+	sme_event_unregister_all(sme->sme_name);
 	sysmon_envsys_destroy_plist(array);
-	prop_object_release(array);
 	return error;
 }
 
@@ -567,7 +555,10 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 		cv_wait(&sme_list_cv, &sme_list_mtx);
 	}
 	LIST_REMOVE(sme, sme_list);
+	mutex_enter(&sme_count_mtx);
 	mutex_exit(&sme_list_mtx);
+	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
+	mutex_exit(&sme_count_mtx);
 	/*
 	 * Remove all sensor descriptions from the singly linked list.
 	 */
@@ -634,7 +625,6 @@ sysmon_envsys_release(struct sysmon_envsys *sme)
 }
 
 /* compatibility function */
-#ifdef COMPAT_40
 struct sysmon_envsys *
 sysmon_envsys_find_40(u_int idx)
 {
@@ -650,7 +640,6 @@ sysmon_envsys_find_40(u_int idx)
 	mutex_exit(&sme_list_mtx);
 	return sme;
 }
-#endif
 
 /*
  * sme_register_sensorname:
@@ -672,8 +661,8 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 		    strcmp(snames2->desc, edata->desc) == 0)
 			if (snames2->assigned) {
 				edata->flags |= ENVSYS_FNOTVALID;
-				DPRINTF(("%s: duplicate name "
-				    "(%s)\n", __func__, edata->desc));
+				DPRINTF(("%s: wrong sensor name='%s'\n",
+				    sme->sme_name, edata->desc));
 				return EEXIST;
 			}
 	}
@@ -684,7 +673,8 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	snames->assigned = true;
 	(void)strlcpy(snames->desc, edata->desc, sizeof(snames->desc));
-	DPRINTF(("%s: registering sensor name=%s\n", __func__, edata->desc));
+	DPRINTF(("%s: registering sensor name='%s'\n",
+	    sme->sme_name, edata->desc));
 	SLIST_INSERT_HEAD(&sme->sme_names_list, snames, sme_names);
 	sme->sme_uniqsensors++;
 
@@ -958,10 +948,15 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 * - check if data in dictionary is different than new data.
 	 * - update dictionary if there were changes.
 	 */
+	DPRINTF(("%s: updating '%s' with nsensors=%d\n", __func__,
+	    sme->sme_name, sme->sme_nsensors));
+
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
 		/* skip invalid sensors */
 		if (edata->flags & ENVSYS_FNOTVALID) {
+			DPRINTF(("%s: invalid sensor=%s idx=%d\n",
+			    __func__, edata->desc, edata->sensor));
 			invalid++;
 			continue;
 		}
