@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.18 2007/09/08 03:17:38 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.19 2007/09/08 15:25:19 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -105,13 +105,9 @@ struct sme_description_table {
 };
 
 /* common */
-extern	kmutex_t sme_mtx;	/* mutex for the sysmon envsys devices/events */
-
-/* mutex to intialize/destroy the sysmon envsys events framework */
-extern kmutex_t sme_event_init_mtx;
-
-/* condition variable to wait for the worker thread to finish */
-extern	kcondvar_t sme_event_cv;
+extern	kmutex_t sme_mtx; 		/* mutex for devices/events */
+extern 	kmutex_t sme_event_init_mtx;	/* init/destroy the events framework */
+extern 	kcondvar_t sme_cv;		/* to wait for devices/events working */
 
 /* linked list for the sysmon envsys devices */
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
