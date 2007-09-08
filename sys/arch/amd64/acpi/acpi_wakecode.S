@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakecode.S,v 1.1.2.3 2007/09/07 21:01:03 jmcneill Exp $ */
+/* $NetBSD: acpi_wakecode.S,v 1.1.2.4 2007/09/08 02:43:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -222,12 +222,16 @@ compat:
 	movl	%eax, %es
 	movl	%eax, %ss
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + '5', (0xb800a)
+#endif
 
 	/* Load 64-bit GDT. */
 	lgdt	tmp_gdt64(%esi)
 
+#ifdef WAKECODE_VERBOSE
 	movw	$0x0200 + '6', (0xb800c)
+#endif
 
 wakeup_sw64:
 
