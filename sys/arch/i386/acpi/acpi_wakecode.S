@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.2 2007/09/07 15:12:54 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.3 2007/09/08 00:31:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,9 +70,7 @@
 
 #define _LOCORE
 
-#include <machine/asm.h>
 #include <machine/specialreg.h>
-#include <machine/param.h>
 #include <machine/segments.h>
 
 	.text
@@ -97,14 +95,20 @@ wakeup_16:
 	popfl
 
 	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1,beep_on_reset
-	jne	nobeepon
-	call	beepon
-nobeepon:
+	cmpb	$1,WAKEUP_beep_on_reset
+	jne	1f
+	movb	$0xc0,%al
+	outb	%al,$0x42
+	movb	$0x04,%al
+	outb	%al,$0x42
+	inb	$0x61,%al
+	orb	$0x3,%al
+	outb	%al,$0x61
+1:
 
 	/* Only reset the VBIOS if machdep.acpi_vbios_reset=1 */
-	cmpb	$1,vbios_reset
-	jne	novbiosreset
+	cmpb	$1,WAKEUP_vbios_reset
+	jne	1f
 
 	/* Kick the VBIOS. */
 	lcall	$0xc000,$3
@@ -112,13 +116,16 @@ nobeepon:
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
-novbiosreset:
+1:
 
 	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1,beep_on_reset
-	jne	nobeepoff
-	call beepoff
-nobeepoff:
+	cmpb	$1,WAKEUP_beep_on_reset
+	jne	1
+	inb	$0x61,%al
+	andb	$0xfc,%al
+	outb	%al,$0x61
+
+1:
 
 	/* Get physical address of the code */
 	xorl	%esi,%esi
@@ -160,22 +167,11 @@ wakeup_32:
 	/* Set up segment registers for protected mode */
 	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
 	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%gs
-	movw	%ax,%ss
-	movw	%ax,%fs
-
-	/* Fixup TSS type field; 386 busy TSS (11) -> 386 available TSS (9) */
-#define TSS_TYPEFIX_MASK	0xf9
-	movl	physical_gdt+2(%esi),%ebx
-	movzxw	previous_tr(%esi),%ecx
-	leal	(%ebx,%ecx),%eax	/* get TSS segment descriptor */
-	andb	$TSS_TYPEFIX_MASK,5(%eax)
 
 	/* Enable paging (assumes identical mapping) */
-        movl	previous_cr3(%esi),%eax
+	movl	WAKEUP_r_cr3(%esi),%eax
 	movl	%eax,%cr3
-	movl	previous_cr0(%esi),%eax
+	movl	WAKEUP_r_cr0(%esi),%eax
 	movl	%eax,%cr0
 
 	/* Flush the prefetch queue */
@@ -185,47 +181,13 @@ wakeup_32:
 
 	nop
 
-        /* Restore registers */
-	lgdt	previous_gdt(%esi)
-	lidt	previous_idt(%esi)
-        lldt	previous_ldt(%esi)
-#if 0
-        ltr     previous_tr(%esi)
-#endif
+	/* Restore registers */
+	lgdt	WAKEUP_r_gdt(%esi)
 
-	mov	previous_cr2(%esi),%eax
-	mov	%eax,%cr2
-	mov	previous_cr4(%esi),%eax
-	mov	%eax,%cr4
-
-        movw	previous_es(%esi),%ax
-        movw	%ax,%es
-        movw	previous_fs(%esi),%ax
-        movw	%ax,%fs
-        movw	previous_gs(%esi),%ax
-        movw	%ax,%gs
-        movw	previous_ss(%esi),%ax
-        movw	%ax,%ss
-        movl	where_to_recover(%esi),%ebx
-        movw	previous_ds(%esi),%ax
-        movw	%ax,%ds
-        jmp	*%ebx
-
-beepon:
-	movb	$0xc0,%al
-	outb	%al,$0x42
-	movb	$0x04,%al
-	outb	%al,$0x42
-	inb	$0x61,%al
-	orb	$0x3,%al
-	outb	%al,$0x61
-	ret
-
-beepoff:
-	inb	$0x61,%al
-	andb	$0xfc,%al
-	outb	%al,$0x61
-	ret
+	movl	WAKEUP_restorecpu(%esi),%ebx
+	movw	WAKEUP_r_ds(%esi),%ax
+	movw	%ax,%ds
+	jmp	*%ebx
 
 	.align	8
 tmp_gdt:
@@ -245,57 +207,20 @@ tmp_gdtable:
 	.byte	0, 0x93, 0xcf, 0
 
 	.align	16, 0
-	.global WAKEUP_physical_gdt
-WAKEUP_physical_gdt:
-physical_gdt:		.word 0
+	.global WAKEUP_r_cr0
+WAKEUP_r_cr0:		.long 0
+	.global WAKEUP_r_cr3
+WAKEUP_r_cr3:		.long 0
+
+	.global WAKEUP_r_gdt
+WAKEUP_r_gdt:		.word 0
 			.long 0
-	.global WAKEUP_previous_cr2
-WAKEUP_previous_cr2:
-previous_cr2:		.long 0
-	.global WAKEUP_previous_cr3
-WAKEUP_previous_cr3:
-previous_cr3:		.long 0
-	.global WAKEUP_previous_cr4
-WAKEUP_previous_cr4:
-previous_cr4:		.long 0
-	.global WAKEUP_previous_cr0
-WAKEUP_previous_cr0:
-previous_cr0:		.long 0
-	.global WAKEUP_previous_tr
-WAKEUP_previous_tr:
-previous_tr:		.word 0
-	.global WAKEUP_previous_gdt
-WAKEUP_previous_gdt:
-previous_gdt:		.word 0
-			.long 0
-	.global WAKEUP_previous_ldt
-WAKEUP_previous_ldt:
-previous_ldt:		.word 0
-	.global WAKEUP_previous_idt
-WAKEUP_previous_idt:
-previous_idt:		.word 0
-			.long 0
-	.global WAKEUP_previous_ds
-WAKEUP_previous_ds:
-previous_ds:		.word 0
-	.global WAKEUP_previous_es
-WAKEUP_previous_es:
-previous_es:		.word 0
-	.global WAKEUP_previous_fs
-WAKEUP_previous_fs:
-previous_fs:		.word 0
-	.global WAKEUP_previous_gs
-WAKEUP_previous_gs:
-previous_gs:		.word 0
-	.global WAKEUP_previous_ss
-WAKEUP_previous_ss:
-previous_ss:		.word 0
-	.global WAKEUP_where_to_recover
-WAKEUP_where_to_recover:
-where_to_recover:	.long 0
+	.global WAKEUP_r_ds
+WAKEUP_r_ds:		.word 0
+	.global WAKEUP_restorecpu
+WAKEUP_restorecpu:	.long 0
+
 	.global WAKEUP_vbios_reset
-WAKEUP_vbios_reset:
-vbios_reset:		.byte 0
+WAKEUP_vbios_reset:	.byte 0
 	.global WAKEUP_beep_on_reset
-WAKEUP_beep_on_reset:
-beep_on_reset:		.byte 0
+WAKEUP_beep_on_reset:	.byte 0

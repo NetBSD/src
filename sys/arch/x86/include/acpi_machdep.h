@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.2.56.1 2007/08/23 09:25:29 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.2.56.2 2007/09/08 00:31:36 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -71,6 +71,5 @@ int		acpi_md_sleep(int);
 void		acpi_md_callback(void);
 
 #ifdef ACPI_MACHDEP_PRIVATE
-u_int32_t	acpi_md_get_npages_of_wakecode(void);
-void		acpi_md_install_wakecode(paddr_t);
+extern paddr_t acpi_wakeup_paddr;
 #endif
