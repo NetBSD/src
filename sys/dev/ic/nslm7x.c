@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.41 2007/09/08 03:38:35 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.42 2007/09/08 03:42:20 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.41 2007/09/08 03:38:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.42 2007/09/08 03:42:20 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1683,7 +1683,7 @@ lm_attach(struct lm_softc *lmsc)
 	}
 
 	/*
-	 * Setup the callout to refresh sensor data every 1.5 sec.
+	 * Setup the callout to refresh sensor data every 2 seconds.
 	 */
 	callout_init(&lmsc->sc_callout, 0);
 	callout_setfunc(&lmsc->sc_callout, lm_refresh, lmsc);
