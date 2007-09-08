@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.3 2007/09/08 00:31:34 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.4 2007/09/08 01:22:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ wakeup_16:
 	movw	%ax,%ss
 1:
 
-	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
+	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
 	cmpb	$1,WAKEUP_beep_on_reset
 	jne	1
 	inb	$0x61,%al
