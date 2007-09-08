@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.31 2007/09/08 03:17:38 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.32 2007/09/08 03:41:28 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.31 2007/09/08 03:17:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.32 2007/09/08 03:41:28 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.31 2007/09/08 03:17:38 xt
 #include <sys/kmem.h>
 #include <sys/callout.h>
 
+/* #define ENVSYS_DEBUG */
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 
