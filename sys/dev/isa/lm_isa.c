@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.16 2007/03/07 17:32:47 xtraeme Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.17 2007/09/08 00:39:48 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.16 2007/03/07 17:32:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.17 2007/09/08 00:39:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.16 2007/03/07 17:32:47 xtraeme Exp $");
 
 int lm_isa_match(struct device *, struct cfdata *, void *);
 void lm_isa_attach(struct device *, struct device *, void *);
+int lm_isa_detach(struct device *, int);
 uint8_t lm_isa_readreg(struct lm_softc *, int);
 void lm_isa_writereg(struct lm_softc *, int, int);
 
 CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
-    lm_isa_match, lm_isa_attach, NULL, NULL);
-
+    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
 
 int
 lm_isa_match(struct device *parent, struct cfdata *match, void *aux)
@@ -144,4 +144,14 @@ lm_isa_writereg(struct lm_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
+}
+
+int
+lm_isa_detach(struct device *self, int flags)
+{
+	struct lm_softc *lmsc = device_private(self);
+
+	lm_detach(lmsc);
+	bus_space_unmap(lmsc->lm_iot, lmsc->lm_ioh, 8);
+	return 0;
 }
