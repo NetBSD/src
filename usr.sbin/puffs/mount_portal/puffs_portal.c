@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.10 2007/09/01 16:43:10 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.11 2007/09/08 15:49:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.10 2007/09/01 16:43:10 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.11 2007/09/08 15:49:33 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -320,16 +320,14 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 
 	data = PUFBUF_FD;
 	if (puffs_framebuf_putdata(pufbuf, &data, sizeof(int)) == -1)
-		return errno;
+		goto bad;
 
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1) {
-		puffs_framebuf_destroy(pufbuf);
-		return errno;
-	}
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
+		goto bad;
 
 	switch (fork()) {
 	case -1:
-		return errno;
+		goto bad;
 	case 0:
 		error = activate_argv(portc, portn->path, v, &fd);
 		sendfd(s[1], fd, error);
@@ -341,8 +339,8 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 		close(s[0]);
 		close(s[1]);
 		if (puffs_framebuf_tellsize(pufbuf) != 2*sizeof(int)) {
-			puffs_framebuf_destroy(pufbuf);
-			return EIO;
+			errno = EIO;
+			goto bad;
 		}
 
 		puffs_framebuf_getdata_atoff(pufbuf, 0, &error, sizeof(int));
@@ -363,6 +361,10 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 		portn->fd = fd;
 		return 0;
 	}
+
+ bad:
+	puffs_framebuf_destroy(pufbuf);
+	return errno;
 }
 
 int
