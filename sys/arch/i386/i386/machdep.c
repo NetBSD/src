@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.3 2007/09/08 00:31:35 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.4 2007/09/08 00:56:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.3 2007/09/08 00:31:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.4 2007/09/08 00:56:48 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1547,8 +1547,12 @@ init386(paddr_t first_avail)
 #endif
 #ifdef MULTIPROCESSOR						 /* XXX */
 	KASSERT(avail_start == PAGE_SIZE);			 /* XXX */
-	if (realmode_reserved_size < MP_TRAMPOLINE)		 /* XXX */
-		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
+{
+	extern u_char cpu_spinup_trampoline[];
+	extern u_char cpu_spinup_trampoline_end[];
+	KASSERT(cpu_spinup_trampoline_end - cpu_spinup_trampoline <= PAGE_SIZE);
+}
+	realmode_reserved_size += PAGE_SIZE;		 	/* XXX */
 	needs_earlier_install_pte0 = 1;				 /* XXX */
 #endif								 /* XXX */
 #if NACPI > 0
@@ -1567,6 +1571,10 @@ init386(paddr_t first_avail)
 #ifdef DEBUG_MEMLOAD
 	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
 #endif
+
+#ifdef MULTIPROCESSOR						 /* XXX */
+	realmode_reserved_start += PAGE_SIZE;		 	/* XXX */
+#endif								 /* XXX */
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
