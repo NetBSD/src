@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.3 2007/09/08 00:31:34 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.4 2007/09/08 21:14:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.3 2007/09/08 00:31:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.4 2007/09/08 21:14:39 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1006,8 +1006,7 @@ init_x86_64(paddr_t first_avail)
 	u_int64_t addr, size, io_end;
 #endif
 #if NACPI > 0
-	paddr_t acpi_avail_start, p;
-	int npg;
+	paddr_t acpi_avail_start;
 #endif
 
 	cpu_init_msrs(&cpu_info_primary);
