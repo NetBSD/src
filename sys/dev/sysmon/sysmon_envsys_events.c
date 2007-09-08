@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.34 2007/09/08 22:58:56 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.35 2007/09/08 23:16:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.34 2007/09/08 22:58:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.35 2007/09/08 23:16:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -608,7 +608,8 @@ do {									\
 			state = ENVSYS_BATTERY_STATE_NORMAL;
 			break;
 		default:
-			goto out;
+			panic("%s: invalid units for ENVSYS_FMONSTCHANGED",
+			    __func__);
 		}
 
 		for (i = 0; sdt[i].type != -1; i++)
