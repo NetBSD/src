@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.5 2007/09/08 02:11:36 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.6 2007/09/08 13:56:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.5 2007/09/08 02:11:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.6 2007/09/08 13:56:57 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1451,6 +1451,103 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 }
 
+static void
+init386_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	struct vm_physseg *vps;
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	unsigned int x;
+
+ search_again:
+	vps = NULL;
+	for (x = 0; x < vm_nphysseg; ++x) {
+		vps = &vm_physmem[x];
+		if (ptoa(vps->avail_end) == avail_end) {
+			break;
+		}
+	}
+	if (x == vm_nphysseg)
+		panic("init386: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if (vps->avail_end - vps->avail_start < atop(sz))
+		sz = ptoa(vps->avail_end - vps->avail_start);
+
+	vps->avail_end -= atop(sz);
+	vps->end -= atop(sz);
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+
+	/* Remove the last segment if it now has no pages. */
+	if (vps->start == vps->end) {
+		for (--vm_nphysseg; x < vm_nphysseg; x++)
+			vm_physmem[x] = vm_physmem[x + 1];
+	}
+
+	/* Now find where the new avail_end is. */
+	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
+		if (vm_physmem[x].avail_end > avail_end)
+			avail_end = vm_physmem[x].avail_end;
+	avail_end = ptoa(avail_end);
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
+
+static void
+init386_pte0(void)
+{
+	paddr_t paddr;
+	vaddr_t vaddr;
+
+	paddr = 5 * PAGE_SIZE;
+	vaddr = (vaddr_t)vtopte(0);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+	/* make sure it is clean before using */
+	memset((void *)vaddr, 0, PAGE_SIZE);
+}
+
+static void
+init386_ksyms(void)
+{
+#if NKSYMS || defined(DDB) || defined(LKM)
+	extern int end;
+	struct btinfo_symtab *symtab;
+
+#ifdef DDB
+	db_machine_init();
+#endif
+
+#if defined(MULTIBOOT)
+	if (multiboot_ksyms_init())
+		return;
+#endif
+
+	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
+		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		return;
+	}
+
+	symtab->ssym += KERNBASE;
+	symtab->esym += KERNBASE;
+	ksyms_init(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
+#endif
+}
+
 void
 init386(paddr_t first_avail)
 {
@@ -1462,9 +1559,6 @@ init386(paddr_t first_avail)
 	int x, first16q;
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
-	paddr_t realmode_reserved_start;
-	psize_t realmode_reserved_size;
-	int needs_earlier_install_pte0;
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -1525,44 +1619,15 @@ init386(paddr_t first_avail)
 	uvmexp.ncolors = 2;
 
 	/*
-	 * BIOS leaves data in physical page 0
-	 * Even if it didn't, our VM system doesn't like using zero as a
-	 * physical page number.
-	 * We may also need pages in low memory (one each) for secondary CPU
-	 * startup, for BIOS calls, and for ACPI, plus a page table page to map
-	 * them into the first few pages of the kernel's pmap.
+	 * Low memory reservations:
+	 * Page 0:	BIOS data
+	 * Page 1:	BIOS callback
+	 * Page 2:	MP bootstrap
+	 * Page 3:	ACPI wakeup code
+	 * Page 4:	Temporary page directory
+	 * Page 5:	Temporary page table for 0MB-4MB
 	 */
-	avail_start = PAGE_SIZE;
-
-	/*
-	 * reserve memory for real-mode call
-	 */
-	needs_earlier_install_pte0 = 0;
-	realmode_reserved_start = 0;
-	realmode_reserved_size = 0;
-#if NBIOSCALL > 0
-	/* save us a page for trampoline code */
-	realmode_reserved_size += PAGE_SIZE;
-	needs_earlier_install_pte0 = 1;
-#endif
-#ifdef MULTIPROCESSOR						 /* XXX */
-	KASSERT(avail_start == PAGE_SIZE);			 /* XXX */
-	if (realmode_reserved_size < MP_TRAMPOLINE)		 /* XXX */
-		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
-	needs_earlier_install_pte0 = 1;				 /* XXX */
-#endif								 /* XXX */
-#if NACPI > 0
-	/* trampoline code for wake handler */
-	realmode_reserved_size += PAGE_SIZE;
-#endif
-	if (needs_earlier_install_pte0) {
-		/* page table for directory entry 0 */
-		realmode_reserved_size += PAGE_SIZE;
-	}
-	if (realmode_reserved_size>0) {
-		realmode_reserved_start = avail_start;
-		avail_start += realmode_reserved_size;
-	}
+	avail_start = 6 * PAGE_SIZE;
 
 #ifdef DEBUG_MEMLOAD
 	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
@@ -1827,111 +1892,32 @@ init386(paddr_t first_avail)
 		}
 	}
 
+	init386_msgbuf();
 	/*
-	 * Steal memory for the message buffer (at end of core).
+	 * XXX Remove this
+	 *
+	 * Setup a temporary Page Table Entry to allow identity mappings of
+	 * the real mode address. This is required by:
+	 * - bioscall
+	 * - MP bootstrap
+	 * - ACPI wakecode
 	 */
-	{
-		struct vm_physseg *vps;
-		psize_t sz = round_page(MSGBUFSIZE);
-		psize_t reqsz = sz;
-
-	search_again:
-		for (x = 0; x < vm_nphysseg; x++) {
-			vps = &vm_physmem[x];
-			if (ptoa(vps->avail_end) == avail_end)
-				goto found;
-		}
-		panic("init386: can't find end of memory");
-
-	found:
-		/* Shrink so it'll fit in the last segment. */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
-
-		vps->avail_end -= atop(sz);
-		vps->end -= atop(sz);
-		msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-		msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end) {
-			for (vm_nphysseg--; x < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
-		}
-
-		/* Now find where the new avail_end is. */
-		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-			if (vm_physmem[x].avail_end > avail_end)
-				avail_end = vm_physmem[x].avail_end;
-		avail_end = ptoa(avail_end);
-
-		if (sz != reqsz) {
-			reqsz -= sz;
-			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
-		/* if still segments available, get memory from next one ... */
-				sz = reqsz;
-				goto search_again;
-			}
-		/* Warn if the message buffer had to be shrunk. */
-			printf("WARNING: %ld bytes not available for msgbuf "
-			       "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
-		}
-	}
-
-	/*
-	 * install PT page for the first 4M if needed.
-	 */
-	if (needs_earlier_install_pte0) {
-		paddr_t paddr;
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < PAGE_SIZE) {
-			panic("cannot steal memory for first 4M PT page.");
-		}
-#endif
-		paddr=realmode_reserved_start+realmode_reserved_size-PAGE_SIZE;
-		pmap_kenter_pa((vaddr_t)vtopte(0), paddr,
-			   VM_PROT_READ|VM_PROT_WRITE);
-		pmap_update(pmap_kernel());
-		/* make sure it is clean before using */
-		memset(vtopte(0), 0, PAGE_SIZE);
-		realmode_reserved_size -= PAGE_SIZE;
-	}
+	init386_pte0();
 
 #if NBIOSCALL > 0
-	/*
-	 * this should be caught at kernel build time, but put it here
-	 * in case someone tries to fake it out...
-	 */
-#ifdef DIAGNOSTIC
-	if (realmode_reserved_start > BIOSTRAMP_BASE ||
-	    (realmode_reserved_start+realmode_reserved_size) < (BIOSTRAMP_BASE+
-							       PAGE_SIZE)) {
-	    panic("cannot steal memory for PT page of bioscall.");
-	}
-	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x",
-		  biostramp_image_size, PAGE_SIZE);
-#endif
+	KASSERT(biostramp_image_size <= PAGE_SIZE);
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
-#ifdef DEBUG_BIOSCALL
-	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
-#endif
-	realmode_reserved_size  -= PAGE_SIZE;
-	realmode_reserved_start += PAGE_SIZE;
 #endif
 
 #if NACPI > 0
 	/*
 	 * Steal memory for the acpi wake code
 	 */
-	KASSERT(realmode_reserved_size >= PAGE_SIZE);
-	acpi_wakeup_paddr = realmode_reserved_start;
-	realmode_reserved_size  -= PAGE_SIZE;
-	realmode_reserved_start += PAGE_SIZE;
+	acpi_wakeup_paddr = 3 * PAGE_SIZE;
 #endif
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
@@ -1988,33 +1974,8 @@ init386(paddr_t first_avail)
 	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	{
-		extern int end;
-		bool loaded;
-		struct btinfo_symtab *symtab;
+	init386_ksyms();
 
-#ifdef DDB
-		db_machine_init();
-#endif
-
-#if defined(MULTIBOOT)
-		loaded = multiboot_ksyms_init();
-#else
-		loaded = false;
-#endif
-		if (!loaded) {
-		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
-		    if (symtab) {
-			    symtab->ssym += KERNBASE;
-			    symtab->esym += KERNBASE;
-			    ksyms_init(symtab->nsym, (int *)symtab->ssym,
-				(int *)symtab->esym);
-		    } else
-			    ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
-		}
-	}
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
