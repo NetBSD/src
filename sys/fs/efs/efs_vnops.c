@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.7 2007/09/08 16:21:27 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.7 2007/09/08 16:21:27 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ efs_lookup(void *v)
 				cache_enter(ap->a_dvp, NULL, cnp);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
-				err = VOP_ACCESS(vp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				err = VOP_ACCESS(ap->a_dvp, VWRITE,
+				    cnp->cn_cred, cnp->cn_lwp);
 				if (err)
 					return (err);
 				cnp->cn_flags |= SAVENAME;
