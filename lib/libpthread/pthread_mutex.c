@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.32 2007/09/07 14:09:28 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.33 2007/09/08 22:49:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.32 2007/09/07 14:09:28 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.33 2007/09/08 22:49:50 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -167,7 +167,6 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 	/*
 	 * We have the lock!
 	 */
-	self->pt_mutexhint = mutex;
 	mutex->ptm_owner = self;
 
 	return 0;
@@ -299,7 +298,6 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 	}
 
 	mutex->ptm_owner = self;
-	self->pt_mutexhint = mutex;
 
 	return 0;
 }
@@ -363,13 +361,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * lock that happened between the unlock above and this
 	 * examination of the queue; if so, no harm is done, as the
 	 * waiter will loop and see that the mutex is still locked.
-	 *
-	 * Note that waiters may have been transferred here from a
-	 * condition variable.
 	 */
-	if (self->pt_mutexhint == mutex)
-		self->pt_mutexhint = NULL;
-
 	pthread_spinlock(&mutex->ptm_interlock);
 	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
 	return 0;
@@ -472,6 +464,13 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 	}
 
 	return 0;
+}
+
+int
+pthread__mutex_owned(pthread_t thread, pthread_mutex_t *mutex)
+{
+
+	return mutex->ptm_owner == thread;
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */
