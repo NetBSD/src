@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.8 2004/03/28 20:49:22 pooka Exp $ 
+ *	$Id: trace.c,v 1.9 2007/09/08 15:34:23 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -393,13 +393,20 @@ main(int argc, char *argv[])
 	{
 		if (Popt == 0)
 		{
+			char buffer[80];
 			n = read(f, buf, BSIZE);
+			if (n == -1)
+			{
+				snprintf(buffer, sizeof(buffer),
+				    "Error reading trace device");
+				perror(buffer);
+				exit(1);
+			}
 
 			if (Bopt)
 			{
 				if ((fwrite(buf, 1, n, BP)) != n)
 				{
-					char buffer[80];
 					snprintf(buffer, sizeof(buffer),
 					    "Error writing file [%s]",
 					    rBPfilename);
