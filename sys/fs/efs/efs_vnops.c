@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.7 2007/09/08 16:21:27 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.8 2007/09/08 18:17:59 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.7 2007/09/08 16:21:27 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.8 2007/09/08 18:17:59 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,11 +296,11 @@ efs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
+	struct dirent d;
 	struct efs_dinode edi;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
 	struct buf *bp;
-	struct dirent *dp;
 	struct efs_dirent *de;
 	struct efs_dirblk *db;
 	struct uio *uio = ap->a_uio;
@@ -352,7 +352,7 @@ efs_readdir(void *v)
 				}
 
 				de = EFS_DIRBLK_TO_DIRENT(db, slot);
-				s = _DIRENT_RECLEN(dp, de->de_namelen);
+				s = _DIRENT_RECLEN(&d, de->de_namelen);
 
 				if (offset < uio->uio_offset) {
 					offset += s;
@@ -366,53 +366,52 @@ efs_readdir(void *v)
 					goto exit_ok;
 				}
 
-				dp = malloc(s, M_EFSTMP, M_ZERO | M_WAITOK);
-				dp->d_fileno = be32toh(de->de_inumber);
-				dp->d_reclen = s;
-				dp->d_namlen = de->de_namelen;
-				memcpy(dp->d_name, de->de_name,
+				/* de_namelen is uint8_t, d.d_name is 512b */
+				KASSERT(sizeof(d.d_name) - de->de_namelen > 0);
+				d.d_fileno = be32toh(de->de_inumber);
+				d.d_reclen = s;
+				d.d_namlen = de->de_namelen;
+				memcpy(d.d_name, de->de_name,
 				    de->de_namelen);
-				dp->d_name[de->de_namelen] = '\0';
+				d.d_name[de->de_namelen] = '\0';
 
 				/* look up inode to get type */
 				err = efs_read_inode(
 				    VFSTOEFS(ap->a_vp->v_mount),
-				    dp->d_fileno, NULL, &edi);
+				    d.d_fileno, NULL, &edi);
 				if (err) {
 					brelse(bp);
-					free(dp, M_EFSTMP);
 					goto exit_err;
 				}
 
 				switch (be16toh(edi.di_mode) & EFS_IFMT) {
 				case EFS_IFIFO:
-					dp->d_type = DT_FIFO;
+					d.d_type = DT_FIFO;
 					break;
 				case EFS_IFCHR:
-					dp->d_type = DT_CHR;
+					d.d_type = DT_CHR;
 					break;
 				case EFS_IFDIR:
-					dp->d_type = DT_DIR;
+					d.d_type = DT_DIR;
 					break;
 				case EFS_IFBLK:
-					dp->d_type = DT_BLK;
+					d.d_type = DT_BLK;
 					break;
 				case EFS_IFREG:
-					dp->d_type = DT_REG;
+					d.d_type = DT_REG;
 					break;
 				case EFS_IFLNK:
-					dp->d_type = DT_LNK;
+					d.d_type = DT_LNK;
 					break;
 				case EFS_IFSOCK:
-					dp->d_type = DT_SOCK;
+					d.d_type = DT_SOCK;
 					break;
 				default:
-					dp->d_type = DT_UNKNOWN;
+					d.d_type = DT_UNKNOWN;
 					break;
 				}
 
-				err = uiomove(dp, s, uio);
-				free(dp, M_EFSTMP);
+				err = uiomove(&d, s, uio);
 				if (err) {
 					brelse(bp);
 					goto exit_err;
