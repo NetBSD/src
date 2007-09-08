@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.3 2007/09/08 00:31:33 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.4 2007/09/08 21:14:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.3 2007/09/08 00:31:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.4 2007/09/08 21:14:39 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -113,22 +113,6 @@ static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
 extern paddr_t	lo32_paddr;
 
-uint32_t
-acpi_md_get_npages_of_wakecode(void)
-{
-	return (atop(round_page(sizeof(wakecode))));
-}
-
-void
-acpi_md_install_wakecode(paddr_t pa)
-{
-	bcopy(wakecode, (void *)pa, sizeof(wakecode));
-	phys_wakeup = pa;
-	aprint_normal("ACPI: wakecode is installed at %p, size=%lu\n",
-	    (void *)pa, sizeof(wakecode));
-}
-
-
 /*
  * S4 sleep using S4BIOS support, from FreeBSD.
  *
@@ -192,9 +176,14 @@ enter_s4_with_bios(void)
 	return (AE_OK);
 }
 
-static uint16_t	r_ldt;
+static uint16_t	r_ldt __used;
 static uint16_t	r_cs __used;
-static uint16_t	r_ds, r_es, r_fs, r_gs, r_ss, r_tr;
+static uint16_t	r_ds __used;
+static uint16_t r_es __used;
+static uint16_t r_fs __used;
+static uint16_t r_gs __used;
+static uint16_t r_ss __used;
+static uint16_t r_tr __used;
 static uint64_t	r_eax __used;
 static uint64_t	r_ebx __used;
 static uint64_t	r_ecx __used;
@@ -208,8 +197,8 @@ static uint64_t	r_cr2 __used;
 static uint64_t	r_cr3 __used;
 static uint64_t	r_cr4 __used;
 static uint64_t	r_esp __used;
-static uint64_t	ret_addr;
-static struct region_descriptor	r_idt, r_gdt;
+static uint64_t	ret_addr __used;
+static struct region_descriptor	r_idt __used, r_gdt __used;
 
 /* XXX shut gcc up */
 extern int		acpi_savecpu(void);
