@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.28 2007/08/25 09:22:39 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.29 2007/09/08 22:05:32 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.28 2007/08/25 09:22:39 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.29 2007/09/08 22:05:32 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -275,7 +275,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	uint32_t count, dhandlen;
 	char *dhand = NULL;
 	size_t nent;
-	char *longname;
+	char *longname = NULL;
 	int idx, rv;
 
 	assert(pn->pn_va.va_type == VDIR);
@@ -338,18 +338,17 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			if ((rv = psbuf_get_str(pb,
 			    &psn->dir[idx].entryname, NULL)))
 				goto out;
-			if ((rv = psbuf_get_str(pb, &longname, NULL)))
+			if ((rv = psbuf_get_str(pb, &longname, NULL)) != 0)
 				goto out;
-			if ((rv = psbuf_get_vattr(pb, &psn->dir[idx].va))) {
-				free(longname);
+			if ((rv = psbuf_get_vattr(pb, &psn->dir[idx].va)) != 0)
 				goto out;
-			}
 			if (sscanf(longname, "%*s%d",
 			    &psn->dir[idx].va.va_nlink) != 1) {
 				rv = EPROTO;
 				goto out;
 			}
 			free(longname);
+			longname = NULL;
 
 			testd = lookup(olddir, nent, psn->dir[idx].entryname);
 			if (testd) {
@@ -384,6 +383,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
 	puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb, 1, 0);
 	free(dhand);
+	free(longname);
 
 	return rv;
 
