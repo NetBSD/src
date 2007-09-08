@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.29 2007/09/07 23:28:33 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.30 2007/09/08 00:30:54 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.29 2007/09/07 23:28:33 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.30 2007/09/08 00:30:54 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -518,7 +518,7 @@ sme_events_worker(struct work *wk, void *arg)
 			break;
 	mutex_exit(&sme_list_mtx);
 	if (sme == NULL)
-		return;
+		goto out;
 
 	/* get the sensor with the index specified in see->snum */
 	edata = &sme->sme_sensor_data[see->snum];
@@ -530,7 +530,7 @@ sme_events_worker(struct work *wk, void *arg)
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
 		error = (*sme->sme_gtredata)(sme, edata);
 		if (error)
-			return;
+			goto out;
 	}
 
 	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
@@ -635,6 +635,7 @@ do {									\
 
 		break;
 	}
+out:
 	see->see_flags &= ~SME_EVENT_WORKING;
 	cv_broadcast(&sme_event_cv);
 	mutex_exit(&sme_event_mtx);
