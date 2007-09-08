@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.1 2007/09/07 14:09:28 ad Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.2 2007/09/08 22:49:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.1 2007/09/07 14:09:28 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.2 2007/09/08 22:49:50 ad Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -51,27 +51,6 @@ __RCSID("$NetBSD: pthread_rwlock2.c,v 1.1 2007/09/07 14:09:28 ad Exp $");
 #define	_RW_LOCKED		0
 #define	_RW_WANT_WRITE		1
 #define	_RW_WANT_READ		2
-
-/*
- * Bits in the owner field of the lock that indicate lock state.  If the
- * WRITE_LOCKED bit is clear, then the owner field is actually a count of
- * the number of readers.
- */
-#define	RW_HAS_WAITERS		0x01	/* lock has waiters */
-#define	RW_WRITE_WANTED		0x02	/* >= 1 waiter is a writer */
-#define	RW_WRITE_LOCKED		0x04	/* lock is currently write locked */
-#define	RW_UNUSED		0x08	/* currently unused */
-
-#define	RW_FLAGMASK		0x0f
-
-#define	RW_READ_COUNT_SHIFT	4
-#define	RW_READ_INCR		(1 << RW_READ_COUNT_SHIFT)
-#define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
-#define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
-#define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
-#define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
-
-#define	ptr_owner		ptr_writer
 
 static int pthread__rwlock_wrlock(pthread_rwlock_t *, const struct timespec *);
 static int pthread__rwlock_rdlock(pthread_rwlock_t *, const struct timespec *);
@@ -340,11 +319,6 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 
 	self = pthread__self();
 
-	/*
-	 * Don't get a readlock if there is a writer or if there are waiting
-	 * writers; i.e. prefer writers to readers. This strategy is dictated
-	 * by SUSv3.
-	 */
 	for (owner = (uintptr_t)ptr->ptr_owner;;) {
 		if ((owner & RW_THREAD) != 0)
 			return EBUSY;
@@ -468,7 +442,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 
 			/*
 			 * Set in the new value.  The lock becomes owned
-			 * by the write that we are about to wake.
+			 * by the writer that we are about to wake.
 			 */
 			while (!rw_cas(ptr, &owner, new))
 				;
@@ -512,8 +486,8 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 
 /*
  * Called when a timedlock awakens early to adjust the waiter bits.
- * The rwlock is locked on entry, and the caller has been removed
- * from the waiters lists.
+ * The rwlock's interlock is held on entry, and the caller has been
+ * removed from the waiters lists.
  */
 static void
 pthread__rwlock_early(void *obj)
@@ -551,7 +525,7 @@ pthread__rwlock_early(void *obj)
 
 	if (!PTQ_EMPTY(&ptr->ptr_wblocked))
 		set = RW_HAS_WAITERS | RW_WRITE_WANTED;
-	else if (!PTQ_EMPTY(&ptr->ptr_rblocked))
+	else if (ptr->ptr_nreaders != 0)
 		set = RW_HAS_WAITERS;
 	else
 		set = 0;

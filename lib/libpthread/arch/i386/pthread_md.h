@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_md.h,v 1.8 2007/09/07 00:24:57 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.9 2007/09/08 22:49:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
