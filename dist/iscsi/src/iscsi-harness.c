@@ -95,7 +95,7 @@ main(int argc, char **argv)
 	port = ISCSI_PORT;
 	mutual_auth = 0;
 
-	while ((i = getopt(argc, argv, "46a:d:h:l:n:t:u:V")) != -1) {
+	while ((i = getopt(argc, argv, "46a:d:h:l:n:p:t:u:V")) != -1) {
 		switch(i) {
 		case '4':
 			address_family = ISCSI_IPv4;
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 		tgthi = target + 1;
 	}
 	if (argc == 1) {
-		(void) fprintf(stderr, "usage: %s [-4] [-6] [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-t target] [-u user]\n", *argv);
+		(void) fprintf(stderr, "usage: %s [-4] [-6] [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-p port] [-t target] [-u user]\n", *argv);
 		exit(EXIT_FAILURE);
 	}
 	for (j = 0; j < iterations; j++) {
