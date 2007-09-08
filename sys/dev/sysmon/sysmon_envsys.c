@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.62 2007/09/08 15:47:37 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.63 2007/09/08 22:42:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.62 2007/09/08 15:47:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.63 2007/09/08 22:42:37 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -554,28 +554,42 @@ out2:
 static void
 sysmon_envsys_destroy_plist(prop_array_t array)
 {
-	prop_dictionary_t dict;
 	prop_object_iterator_t iter, iter2;
+	prop_dictionary_t dict;
 	prop_object_t obj;
+	int i = 0;
 
 	KASSERT(array != NULL);
+
+	DPRINTF(("%s: objects in array=%d\n", __func__,
+	    prop_array_count(array)));
 
 	iter = prop_array_iterator(array);
 	if (iter == NULL)
 		return;
 
 	while ((dict = prop_object_iterator_next(iter)) != NULL) {
+		KASSERT(prop_object_type(dict) == PROP_TYPE_DICTIONARY);
 		iter2 = prop_dictionary_iterator(dict);
-		if (iter2) {
-			while ((obj = prop_object_iterator_next(iter2)) != NULL)
-				prop_object_release(obj);
-
-			prop_object_iterator_release(iter2);
+		if (iter2 == NULL)
+			goto out;
+		DPRINTF(("%s: iterating over dictionary %d\n", __func__, i++));
+		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
+			printf("%s: obj=%s\n", __func__,
+			    prop_dictionary_keysym_cstring_nocopy(obj));
+			prop_dictionary_remove(dict,
+			    prop_dictionary_keysym_cstring_nocopy(obj));
+			prop_object_iterator_reset(iter2);
 		}
+		prop_object_iterator_release(iter2);
+		DPRINTF(("%s: objects in dictionary:%d\n",
+		    __func__, prop_dictionary_count(dict)));
 		prop_object_release(dict);
 	}
 
+out:
 	prop_object_iterator_release(iter);
+	prop_object_release(array);
 }
 
 /*
@@ -615,9 +629,9 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	 * Remove the device (and all its objects) from the global dictionary.
 	 */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
-	if (array) {
-		sysmon_envsys_destroy_plist(array);
+	if (array && prop_object_type(array) == PROP_TYPE_ARRAY) {
 		prop_dictionary_remove(sme_propd, sme->sme_name);
+		sysmon_envsys_destroy_plist(array);
 	}
 }
 
