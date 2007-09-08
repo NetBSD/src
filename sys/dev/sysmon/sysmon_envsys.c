@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.58 2007/09/08 03:17:38 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.59 2007/09/08 03:37:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.58 2007/09/08 03:17:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.59 2007/09/08 03:37:51 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.58 2007/09/08 03:17:38 xtraeme E
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 
+#define ENVSYS_DEBUG
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
@@ -518,7 +519,11 @@ out2:
 		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
 		kmem_free(sme_evdrv, sizeof(*sme_evdrv));
 	}
-	sme_event_unregister_all(sme->sme_name);
+	if (error != EEXIST) {
+		mutex_enter(&sme_mtx);
+		sme_event_unregister_all(sme->sme_name);
+		mutex_exit(&sme_mtx);
+	}
 	sysmon_envsys_destroy_plist(array);
 	return error;
 }
