@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.7 2007/09/08 21:40:10 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.8 2007/09/08 22:03:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.7 2007/09/08 21:40:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.8 2007/09/08 22:03:17 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1911,13 +1911,6 @@ init386(paddr_t first_avail)
 		       VM_PROT_ALL);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
-#endif
-
-#if NACPI > 0
-	/*
-	 * Steal memory for the acpi wake code
-	 */
-	acpi_wakeup_paddr = 3 * PAGE_SIZE;
 #endif
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
