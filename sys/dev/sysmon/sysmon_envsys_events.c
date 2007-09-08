@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.33 2007/09/08 15:25:18 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.34 2007/09/08 22:58:56 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.33 2007/09/08 15:25:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.34 2007/09/08 22:58:56 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -607,6 +607,8 @@ do {									\
 			    sme_get_description_table(SME_DESC_BATTERY_STATES);
 			state = ENVSYS_BATTERY_STATE_NORMAL;
 			break;
+		default:
+			goto out;
 		}
 
 		for (i = 0; sdt[i].type != -1; i++)
