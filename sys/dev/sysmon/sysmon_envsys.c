@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.64 2007/09/08 23:14:13 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.65 2007/09/08 23:21:02 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.64 2007/09/08 23:14:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.65 2007/09/08 23:21:02 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -574,8 +574,8 @@ sysmon_envsys_destroy_plist(prop_array_t array)
 			goto out;
 		DPRINTF(("%s: iterating over dictionary\n", __func__));
 		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
-			printf("%s: obj=%s\n", __func__,
-			    prop_dictionary_keysym_cstring_nocopy(obj));
+			DPRINTF(("%s: obj=%s\n", __func__,
+			    prop_dictionary_keysym_cstring_nocopy(obj)));
 			prop_dictionary_remove(dict,
 			    prop_dictionary_keysym_cstring_nocopy(obj));
 			prop_object_iterator_reset(iter2);
