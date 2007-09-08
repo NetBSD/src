@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.6 2007/09/08 13:56:57 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.7 2007/09/08 21:40:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.6 2007/09/08 13:56:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.7 2007/09/08 21:40:10 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1513,7 +1513,7 @@ init386_pte0(void)
 	paddr_t paddr;
 	vaddr_t vaddr;
 
-	paddr = 5 * PAGE_SIZE;
+	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
 	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
@@ -1624,8 +1624,8 @@ init386(paddr_t first_avail)
 	 * Page 1:	BIOS callback
 	 * Page 2:	MP bootstrap
 	 * Page 3:	ACPI wakeup code
-	 * Page 4:	Temporary page directory
-	 * Page 5:	Temporary page table for 0MB-4MB
+	 * Page 4:	Temporary page table for 0MB-4MB
+	 * Page 5:	Temporary page directory
 	 */
 	avail_start = 6 * PAGE_SIZE;
 
