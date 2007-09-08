@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.56 2007/09/08 00:21:43 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.57 2007/09/08 00:58:32 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.56 2007/09/08 00:21:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.57 2007/09/08 00:58:32 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -158,9 +158,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sysmon_envsys *sme = NULL;
 	int error = 0;
-#ifdef COMPAT_40
 	u_int oidx;
-#endif
 
 	switch (cmd) {
 	case ENVSYS_GETDICTIONARY:
