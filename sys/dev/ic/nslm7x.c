@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.40 2007/09/08 00:42:11 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.41 2007/09/08 03:38:35 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.40 2007/09/08 00:42:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.41 2007/09/08 03:38:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.40 2007/09/08 00:42:11 xtraeme Exp $");
 #define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
 #define NRFACT(x, y)	(-RFACT_NONE * (x) / (y))
 
-#define LM_REFRESH_TIMO	(1.5 * hz)	/* 1.5 seconds */
+#define LM_REFRESH_TIMO	(2 * hz)	/* 2 seconds */
 
 static int lm_match(struct lm_softc *);
 static int wb_match(struct lm_softc *);
