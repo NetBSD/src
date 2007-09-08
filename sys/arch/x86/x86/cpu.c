@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.10 2007/09/08 19:05:54 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.11 2007/09/08 19:18:09 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.10 2007/09/08 19:05:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.11 2007/09/08 19:18:09 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -851,6 +851,7 @@ cpu_copy_trampoline(void)
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
 
 	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
