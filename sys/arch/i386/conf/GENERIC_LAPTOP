@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.244 2007/09/06 10:24:18 martti Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.245 2007/09/08 12:11:58 gdt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.244 $"
+#ident 		"GENERIC-$Revision: 1.245 $"
 
 maxusers	32		# estimated number of users
 
@@ -976,7 +976,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
