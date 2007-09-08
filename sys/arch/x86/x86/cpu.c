@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.7 2007/09/08 14:41:51 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.8 2007/09/08 15:40:31 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.7 2007/09/08 14:41:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.8 2007/09/08 15:40:31 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -421,6 +421,55 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+#ifdef MULTIPROCESSOR
+static void
+cpu_power_resume(void)
+{
+	struct cpu_info *sci;
+	CPU_INFO_ITERATOR cii;
+	struct proc *p;
+	struct pmap *pm;
+	paddr_t oldphys = 0;
+	int s;
+
+	/* Create identity mapping */
+	if ((p = curproc) == NULL)
+		p = &proc0;
+
+	pm = vm_map_pmap(&p->p_vmspace->vm_map);
+	if (pm != pmap_kernel()) {
+		if (!pmap_extract(pm, mp_trampoline_paddr, &oldphys))
+			oldphys = 0;
+		pmap_enter(pm, mp_trampoline_paddr, mp_trampoline_paddr,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		pmap_update(pm);
+	}
+
+	s = splhigh();
+	for (CPU_INFO_FOREACH(cii, sci)) {
+		if (sci->ci_flags & CPUF_PRIMARY)
+			continue;
+		cpu_start_secondary(sci);
+		cpu_init_idle_lwp(sci);
+	}
+	splx(s);
+	cpu_boot_secondary_processors();
+
+	if (pm != pmap_kernel()) {
+		/* Clean up identity mapping. */
+		pmap_remove(pm, mp_trampoline_paddr,
+		    mp_trampoline_paddr + PAGE_SIZE);
+		if (oldphys) {
+			pmap_enter(pm, mp_trampoline_paddr, oldphys,
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		}
+		pmap_update(pm);
+	}
+}
+#endif
+
 static pnp_status_t
 cpu_power(device_t dv, pnp_request_t req, void *opaque)
 {
@@ -451,24 +500,12 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 
 		if (ci->ci_flags & CPUF_PRIMARY) {
 #ifdef MULTIPROCESSOR
-			struct cpu_info *sci;
-			CPU_INFO_ITERATOR cii;
-			int s;
-
 			switch (*pstate) {
 			case PNP_STATE_D3:
 				x86_mp_online = false;
 				break;
 			case PNP_STATE_D0:
-				s = splhigh();
-				for (CPU_INFO_FOREACH(cii, sci)) {
-					if (sci->ci_flags & CPUF_PRIMARY)
-						continue;
-					cpu_start_secondary(sci);
-					cpu_init_idle_lwp(sci);
-				}
-				splx(s);
-				cpu_boot_secondary_processors();
+				cpu_power_resume();
 				break;
 			default:
 				break;	/* not possible */
