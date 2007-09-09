@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.1 2007/08/18 11:26:36 tnn Exp $ */
+/* $NetBSD: spdmem.c,v 1.2 2007/09/09 13:48:14 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1 2007/08/18 11:26:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.2 2007/09/09 13:48:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1 2007/08/18 11:26:36 tnn Exp $");
 
 static int spdmem_match(struct device *, struct cfdata *, void *);
 static void spdmem_attach(struct device *, struct device *, void *);
+SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 
