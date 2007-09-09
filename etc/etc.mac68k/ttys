@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.17 2004/06/20 21:30:27 christos Exp $
+#	$NetBSD: ttys,v 1.17.2.1 2007/09/09 21:25:57 bouyer Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
@@ -11,13 +11,6 @@ console	"/usr/libexec/getty Pc"		vt220	off secure
 # Define the console that we actually run getty on.
 ttyE0	"/usr/libexec/getty Pc"		vt220	on secure
 
-# Hardwired lines are marked off, by default, so getty(8)
-# is quiet when they don't exist.
-tty00	"/usr/libexec/getty std.9600"	unknown off secure
-tty01	"/usr/libexec/getty std.9600"	unknown off secure
-tty02	"/usr/libexec/getty std.9600"	unknown off secure
-tty03	"/usr/libexec/getty std.9600"	unknown off secure
-tty04	"/usr/libexec/getty std.9600"	unknown off secure
-tty05	"/usr/libexec/getty std.9600"	unknown off secure
-tty06	"/usr/libexec/getty std.9600"	unknown off secure
-tty07	"/usr/libexec/getty std.9600"	unknown off secure
+# Mac Build-in serial ports
+ttyZ0	"/usr/libexec/getty std.9600"	unknown off secure
+ttyZ1	"/usr/libexec/getty std.9600"	unknown off secure
