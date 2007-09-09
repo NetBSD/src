@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2007/09/09 13:28:03 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.5 2007/09/09 13:52:23 xtraeme Exp $
 
 .include "../Makefile.inc"
 
@@ -12,6 +12,7 @@ LKM_ISA_IOSIZE?=	0
 LKM_ISA_IRQ?=		-1
 LKM_ISA_DRQ?=		-1
 LKM_ISA_DRQ2?=		-1
+LKM_ISA_DRVNAME_CA?=	${LKM_ISA_DRVNAME}
 
 CLEANFILES+=	${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
 
