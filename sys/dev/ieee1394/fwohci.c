@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.84 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.84.6.1 2007/09/09 21:34:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.84 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.84.6.1 2007/09/09 21:34:24 bouyer Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2440,7 +2440,6 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen,
 		    OHCI_DESC_MAX - 2, pkt->fp_dlen, 0, BUS_DMA_WAITOK,
 		    &fb->fb_dmamap)) != 0) {
-			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
 			return error;
 		}
@@ -2454,7 +2453,6 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		if (error != 0) {
 			DPRINTFN(1, ("Can't load DMA map: %d\n", error));
 			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
 			return error;
 		}
