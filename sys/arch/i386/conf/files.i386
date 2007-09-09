@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.312.8.4 2007/09/08 00:31:35 joerg Exp $
+#	$NetBSD: files.i386,v 1.312.8.5 2007/09/09 20:52:14 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -509,7 +509,7 @@ attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Sony Misc (brightness etc.)
-device	sony: wskbddev
+device	sony: displaydev, wskbddev
 attach	sony at acpinodebus with sony_acpi
 file	arch/i386/acpi/sony_acpi.c		sony_acpi
 

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.6 2007/09/08 17:45:59 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.7 2007/09/09 20:52:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.6 2007/09/08 17:45:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.7 2007/09/09 20:52:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -555,6 +555,8 @@ pnp_power_input(device_t dv, pnp_action_t act)
 
 	switch (act) {
 	case PNP_ACTION_KEYBOARD:
+	case PNP_ACTION_BRIGHTNESS_UP:
+	case PNP_ACTION_BRIGHTNESS_DOWN:
 		status = pnp_power_display(NULL, act);
 		break;
 	default:
@@ -579,12 +581,24 @@ pnp_power_display(device_t dv, pnp_action_t act)
 	pnp_device_t *pnp;
 	pnp_status_t status;
 	pnp_display_power_t power;
+	pnp_display_brightness_t pdb;
 	struct pnp_displaydev *pdisplay;
 	struct callout *c;
 	int timeo;
 
 	status = PNP_STATUS_UNSUPPORTED;
 	switch (act) {
+	case PNP_ACTION_BRIGHTNESS_UP:
+	case PNP_ACTION_BRIGHTNESS_DOWN:
+		if (act == PNP_ACTION_BRIGHTNESS_UP)
+			pdb = PNP_DISPLAY_BRIGHTNESS_UP;
+		else
+			pdb = PNP_DISPLAY_BRIGHTNESS_DOWN;
+		LIST_FOREACH(pdisplay, &displaydevhead, next) {
+			pnp_power(pdisplay->dv,
+			    PNP_REQUEST_SET_DISPLAY_BRIGHTNESS, &pdb);
+		}
+		break;
 	case PNP_ACTION_LID_CLOSE:
 		LIST_FOREACH(pdisplay, &displaydevhead, next) {
 			pnp = device_pnp(pdisplay->dv);
