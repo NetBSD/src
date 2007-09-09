@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.75 2006/05/11 11:56:38 yamt Exp $	*/
+/*	$NetBSD: fstat.c,v 1.76 2007/09/09 01:26:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.75 2006/05/11 11:56:38 yamt Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.76 2007/09/09 01:26:55 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,16 +348,12 @@ dofiles(struct kinfo_proc2 *p)
 	 */
 #define FPSIZE	(sizeof (struct file *))
 	ALLOC_OFILES(filed.fd_lastfile+1);
-	if (filed.fd_nfiles > NDFILE) {
-		if (!KVM_READ(filed.fd_ofiles, ofiles,
-		    (filed.fd_lastfile+1) * FPSIZE)) {
-			dprintf("can't read file structures at %p for pid %d",
-			    filed.fd_ofiles, Pid);
-			return;
-		}
-	} else
-		(void)memmove(ofiles, filed0.fd_dfiles,
-		    (filed.fd_lastfile+1) * FPSIZE);
+	if (!KVM_READ(filed.fd_ofiles, ofiles,
+	    (filed.fd_lastfile+1) * FPSIZE)) {
+		dprintf("can't read file structures at %p for pid %d",
+		    filed.fd_ofiles, Pid);
+		return;
+	}
 	for (i = 0; i <= filed.fd_lastfile; i++) {
 		if (ofiles[i] == NULL)
 			continue;
