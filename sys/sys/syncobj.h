@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.3 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.3.4.1 2007/09/09 23:12:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct lwp *syncobj_noowner(wchan_t);
 
 #define	SOBJ_SLEEPQ_SORTED	0x01
 #define	SOBJ_SLEEPQ_FIFO	0x02
+#define	SOBJ_SLEEPQ_LIFO	0x04
 
 extern syncobj_t	sched_syncobj;
 extern syncobj_t	mutex_syncobj;

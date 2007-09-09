@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.11 2007/08/30 12:59:52 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.12 2007/09/09 23:12:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.11 2007/08/30 12:59:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.12 2007/09/09 23:12:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -107,7 +107,6 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
-	pri_t pri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(sq->sq_waiters > 0);
@@ -162,11 +161,9 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l, false);
-		pri = lwp_eprio(l);
-		if (pri > spc->spc_curpriority) {
-			cpu_need_resched(ci,
-			    (pri >= PRI_KERNEL ? RESCHED_IMMED : 0));
-		}
+		if (lwp_eprio(l) >= PRI_KERNEL ||
+		    ci->ci_curlwp == ci->ci_data.cpu_idlelwp)
+			cpu_need_resched(ci, RESCHED_IMMED);
 		spc_unlock(ci);
 		return 0;
 	}
@@ -185,16 +182,22 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	lwp_t *l2;
 	const int pri = lwp_eprio(l);
 
-	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
+	switch (sobj->sobj_flag) {
+	case SOBJ_SLEEPQ_SORTED:
 		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
 		}
+		/* FALLTHROUGH */
+	case SOBJ_SLEEPQ_FIFO:
+		TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
+		break;
+	case SOBJ_SLEEPQ_LIFO:
+		TAILQ_INSERT_HEAD(&sq->sq_queue, l, l_sleepchain);
+		break;
 	}
-
-	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
 }
 
 /*
@@ -442,9 +445,19 @@ sleepq_abort(kmutex_t *mtx, int unlock)
 void
 sleepq_changepri(lwp_t *l, pri_t pri)
 {
+	sleepq_t *sq = l->l_sleepq;
+	pri_t opri;
 
-	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(lwp_locked(l, sq->sq_mutex));
+
+	opri = lwp_eprio(l);
 	l->l_usrpri = pri;
+	l->l_priority = sched_kpri(l);
+
+	if (lwp_eprio(l) != opri) {
+		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		sleepq_insert(sq, l, l->l_syncobj);
+	}
 }
 
 void
