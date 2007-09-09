@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.24 2007/09/09 23:10:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.25 2007/09/09 23:23:52 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.24 2007/09/09 23:10:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.25 2007/09/09 23:23:52 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1508,6 +1508,10 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa = 0;	/* XXX: GCC */
+	u_int npde;
+
+	/* ensure value is consistent */
+	npde = nkpde;
 
 	/*
 	 * NOTE: `pmaps_lock' is held when the PDP is allocated.
@@ -1524,11 +1528,11 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 	/* put in kernel VM PDEs */
 	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	    nkpde * sizeof(pd_entry_t));
+	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDSLOT_KERN + nkpde], 0,
-	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+	memset(&pdir[PDSLOT_KERN + npde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + npde) * sizeof(pd_entry_t)));
 
 	return (0);
 }
@@ -3343,7 +3347,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	s = splvm();	/* to be safe */
 	mutex_enter(&kpm->pm_obj.vmobjlock);
 
-	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
+	while (nkpde < needed_kpde) {
 
 		if (uvm.page_init_done == false) {
 
@@ -3364,7 +3368,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
-
+		
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
 		 * pmap_initialized == false CASE!  WE MAY BE
@@ -3385,6 +3389,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
+		nkpde++;
 		mutex_exit(&pmaps_lock);
 
 		/* Invalidate the PDP cache. */
