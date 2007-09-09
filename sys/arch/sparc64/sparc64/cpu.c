@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.61 2007/09/06 20:22:51 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.62 2007/09/09 22:37:39 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2007/09/06 20:22:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2007/09/09 22:37:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,8 +240,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		clk = prom_getpropint(findroot(), "clock-frequency", 0);
 	}
 	if (clk) {
-		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
-		cpu_clockrate[1] = clk / 1000000;
+		/* Tell OS what frequency we run on */
+		ci->ci_cpu_clockrate[0] = clk;
+		ci->ci_cpu_clockrate[1] = clk / 1000000;
 	}
 
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
@@ -387,6 +388,7 @@ cpu_boot_secondary_processors()
 void
 cpu_hatch()
 {
+	extern void tickintr_establish(void);
 	char *v = (char*)CPUINFO_VA;
 	int i;
 
@@ -398,5 +400,9 @@ cpu_hatch()
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
 	spl0();
+
+#if 0
+	tickintr_establish();
+#endif
 }
 #endif /* MULTIPROCESSOR */
