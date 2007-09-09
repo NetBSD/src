@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.30 2006/05/02 22:26:46 christos Exp $   */
+/*      $NetBSD: whois.c,v 1.31 2007/09/09 18:31:45 christos Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.30 2006/05/02 22:26:46 christos Exp $");
+__RCSID("$NetBSD: whois.c,v 1.31 2007/09/09 18:31:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,20 +60,21 @@ __RCSID("$NetBSD: whois.c,v 1.30 2006/05/02 22:26:46 christos Exp $");
 #include <unistd.h>
 #include <errno.h>
 
-#define	NICHOST		"whois.crsnic.net"
-#define	INICHOST	"whois.networksolutions.com"
+#define	ANICHOST	"whois.arin.net"
+#define	BNICHOST	"whois.registro.br"
 #define	CNICHOST	"whois.corenic.net"
 #define	DNICHOST	"whois.nic.mil"
+#define	FNICHOST	"whois.afrinic.net"
 #define	GNICHOST	"whois.nic.gov"
-#define	ANICHOST	"whois.arin.net"
-#define	RNICHOST	"whois.ripe.net"
-#define	PNICHOST	"whois.apnic.net"
-#define	RUNICHOST	"whois.ripn.net"
+#define	INICHOST	"whois.networksolutions.com"
+#define	LNICHOST	"whois.lacnic.net"
 #define	MNICHOST	"whois.ra.net"
-#define LNICHOST	"whois.lacnic.net"
-#define SNICHOST	"whois.6bone.net"
-#define BNICHOST	"whois.registro.br"
+#define	NICHOST		"whois.crsnic.net"
+#define	PNICHOST	"whois.apnic.net"
 #define	QNICHOST_TAIL	".whois-servers.net"
+#define	RNICHOST	"whois.ripe.net"
+#define	RUNICHOST	"whois.ripn.net"
+#define	SNICHOST	"whois.6bone.net"
 
 #define	WHOIS_PORT	"whois"
 #define	WHOIS_SERVER_ID	"Whois Server:"
@@ -83,7 +84,7 @@ __RCSID("$NetBSD: whois.c,v 1.30 2006/05/02 22:26:46 christos Exp $");
 
 static const char *port_whois = WHOIS_PORT;
 static const char *ip_whois[] =
-    { LNICHOST, RNICHOST, PNICHOST, BNICHOST, NULL };
+    { LNICHOST, RNICHOST, PNICHOST, FNICHOST, BNICHOST, NULL };
 
 static void usage(void) __attribute__((__noreturn__));
 static int whois(const char *, const char *, const char *, int);
@@ -100,7 +101,7 @@ main(int argc, char *argv[])
 #endif
 	country = host = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "6Aac:dgh:ilmp:qQRr")) != -1)
+	while ((ch = getopt(argc, argv, "6Aac:dfgh:ilmp:qQRr")) != -1)
 		switch(ch) {
 		case 'a':
 			host = ANICHOST;
@@ -113,6 +114,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			host = DNICHOST;
+			break;
+		case 'f':
+			host = FNICHOST;
 			break;
 		case 'g':
 			host = GNICHOST;

@@ -1,4 +1,4 @@
-.\"     $NetBSD: whois.1,v 1.23 2003/10/21 09:03:25 wiz Exp $
+.\"     $NetBSD: whois.1,v 1.24 2007/09/09 18:31:45 christos Exp $
 .\"	$OpenBSD: whois.1,v 1.22 2003/09/02 18:50:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd January 6, 2003
+.Dd September 9, 2007
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl 6AadgilmQRr
+.Op Fl 6AadfgilmQRr
 .Oo
 .Fl c Ar country-code | Fl h Ar host
 .Oc
@@ -69,9 +69,11 @@ Use the American Registry for Internet Numbers
 .Pq Tn ARIN
 database.
 It contains network numbers used in those parts of the world
-covered neither by
-.Tn APNIC
-nor by
+not covered by
+.Tn AfriNIC,
+.Tn APNIC,
+.Tn LACNIC
+or by
 .Tn RIPE .
 .Pp
 (Hint: All point of contact handles in the
@@ -87,6 +89,11 @@ option with an argument of
 Use the US Department of Defense database.
 It contains points of contact for subdomains of
 .Tn \&.MIL .
+.It Fl f
+Use the African Network Information Center
+.Pq Tn AfriNIC
+database.
+It contains network numbers used in Africa
 .It Fl g
 Use the US non-military federal government database, which contains points of
 contact for subdomains of
@@ -113,7 +120,7 @@ Registry for Internet Numbers
 If a query to
 .Tn ARIN
 references
-.Tn APNIC , LACNIC ,
+.Tn AfriNIC, APNIC , LACNIC ,
 or
 .Tn RIPE ,
 that server will be queried also, provided that the
