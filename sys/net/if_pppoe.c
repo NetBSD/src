@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.80 2007/09/09 09:58:55 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.80 2007/09/09 09:58:55 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -485,6 +485,23 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		case PPPOE_TAG_SNAME:
 			break;	/* ignored */
 		case PPPOE_TAG_ACNAME:
+			error = NULL;
+			if (sc != NULL && len > 0) {
+				error = malloc(len+1, M_TEMP, M_NOWAIT);
+				if (error) {
+					n = m_pulldown(m, off + sizeof(*pt),
+					    len, &noff);
+					if (n) {
+						strncpy(error,
+						    mtod(n, char*) + noff,
+						    len);
+						error[len] = '\0';
+					}
+					printf("%s: connected to %s\n",
+					    devname, error);
+					free(error, M_TEMP);
+				}
+			}
 			break;	/* ignored */
 		case PPPOE_TAG_HUNIQUE:
 			if (sc != NULL)
