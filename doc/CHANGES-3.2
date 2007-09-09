@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.94 2007/09/09 21:33:44 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.95 2007/09/09 21:36:07 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3523,8 +3523,8 @@ etc/etc.mac68k/ttys				1.18
 	don't exist (and symlinks aren't acceptable in many instances).
 	[hauke, ticket #1834]
 
-Apply patch (requested by christos in ticket #1835):
 sys/dev/ieee1394/fwohci.c:			patch
+
 	PR kern/36945 by Ross Philipson: Remove call to fwohci_desc_put() in
 	an error path where fwohci_desc_get() has not been called yet.
 	[christos, ticket #1835]
