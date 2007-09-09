@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.7 2007/08/28 13:54:21 ghen Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.8 2007/09/09 21:35:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -92,4 +92,16 @@ sys/arch/sparc64/conf/GENERIC			1.88 via patch
 
 	Remove iso(4) from GENERIC kernels.
 	[adrianp, ticket #1826]
+
+etc/etc.mac68k/ttys				1.18
+
+	Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends
+	don't exist (and symlinks aren't acceptable in many instances).
+	[hauke, ticket #1834]
+
+sys/dev/ieee1394/fwohci.c:			patch
+
+	PR kern/36945 by Ross Philipson: Remove call to fwohci_desc_put() in
+	an error path where fwohci_desc_get() has not been called yet.
+	[christos, ticket #1835]
 
