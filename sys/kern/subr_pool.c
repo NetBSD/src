@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.7 2007/09/01 12:55:15 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.8 2007/09/09 23:17:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.7 2007/09/01 12:55:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.8 2007/09/09 23:17:14 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2097,7 +2097,6 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 	cc->cc_misses = 0;
 	cc->cc_current = NULL;
 	cc->cc_previous = NULL;
-	cc->cc_busy = NULL;
 
 	pc->pc_cpus[ci->ci_index] = cc;
 }
@@ -2138,42 +2137,6 @@ pool_cache_reclaim(pool_cache_t pc)
 	return pool_reclaim(&pc->pc_pool);
 }
 
-static inline void *
-pcg_get(pcg_t *pcg, paddr_t *pap)
-{
-	void *object;
-	u_int idx;
-
-	KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
-	KASSERT(pcg->pcg_avail != 0);
-
-	idx = --pcg->pcg_avail;
-	object = pcg->pcg_objects[idx].pcgo_va;
-	if (pap != NULL)
-		*pap = pcg->pcg_objects[idx].pcgo_pa;
-
-#ifdef DIAGNOSTIC
-	pcg->pcg_objects[idx].pcgo_va = NULL;
-	KASSERT(object != NULL);
-#endif
-
-	return (object);
-}
-
-static inline void
-pcg_put(pcg_t *pcg, void *object, paddr_t pa)
-{
-	u_int idx;
-
-	idx = pcg->pcg_avail++;
-
-	KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
-	KASSERT(pcg->pcg_objects[idx].pcgo_va == NULL);
-
-	pcg->pcg_objects[idx].pcgo_va = object;
-	pcg->pcg_objects[idx].pcgo_pa = pa;
-}
-
 /*
  * pool_cache_destruct_object:
  *
@@ -2206,9 +2169,7 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 
 		for (i = 0; i < pcg->pcg_avail; i++) {
 			object = pcg->pcg_objects[i].pcgo_va;
-			if (pc->pc_dtor != NULL)
-				(*pc->pc_dtor)(pc->pc_arg, object);
-			pool_put(&pc->pc_pool, object);
+			pool_cache_destruct_object(pc, object);
 		}
 
 		pool_put(&pcgpool, pcg);
@@ -2279,7 +2240,9 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	 * pull the neccessary information from CPU local data.
 	 */
 	ci = curcpu();
+	KASSERT(ci->ci_data.cpu_index < MAXCPUS);
 	cc = pc->pc_cpus[ci->ci_data.cpu_index];
+	KASSERT(cc->cc_cache == pc);
 	if (cc->cc_ipl == IPL_NONE) {
 		crit_enter();
 	} else {
@@ -2293,10 +2256,8 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	}
 
 #ifdef DIAGNOSTIC
-	KASSERT(cc->cc_busy == NULL);
 	KASSERT(cc->cc_cpu == ci);
 	KASSERT(((uintptr_t)cc & (CACHE_LINE_SIZE - 1)) == 0);
-	cc->cc_busy = curlwp;
 #endif
 
 	return cc;
@@ -2305,11 +2266,6 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 static inline void
 pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 {
-
-#ifdef DIAGNOSTIC
-	KASSERT(cc->cc_busy == curlwp);
-	cc->cc_busy = NULL;
-#endif
 
 	/* No longer need exclusive access to the per-CPU data. */
 	if (cc->cc_ipl == IPL_NONE) {
@@ -2437,7 +2393,12 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 		/* Try and allocate an object from the current group. */
 	 	pcg = cc->cc_current;
 		if (pcg != NULL && pcg->pcg_avail > 0) {
-			object = pcg_get(pcg, pap);
+			object = pcg->pcg_objects[--pcg->pcg_avail].pcgo_va;
+			if (pap != NULL)
+				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
+			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
+			KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
+			KASSERT(object != NULL);
 			cc->cc_hits++;
 			pool_cache_cpu_exit(cc, &s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
@@ -2535,11 +2496,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	 * If we can't allocate a new group, just throw the
 	 * object away.
 	 */
-#ifdef XXXAD	/* Disable the cache layer for now. */
 	pcg = pool_get(&pcgpool, PR_NOWAIT);
-#else
-	pcg = NULL;
-#endif
 	if (pcg == NULL) {
 		pool_cache_destruct_object(pc, object);
 		return NULL;
@@ -2582,7 +2539,11 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		/* If the current group isn't full, release it there. */
 	 	pcg = cc->cc_current;
 		if (pcg != NULL && pcg->pcg_avail < PCG_NOBJECTS) {
-			pcg_put(pcg, object, pa);
+			KASSERT(pcg->pcg_objects[pcg->pcg_avail].pcgo_va
+			    == NULL);
+			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = object;
+			pcg->pcg_objects[pcg->pcg_avail].pcgo_pa = pa;
+			pcg->pcg_avail++;
 			cc->cc_hits++;
 			pool_cache_cpu_exit(cc, &s);
 			return;
