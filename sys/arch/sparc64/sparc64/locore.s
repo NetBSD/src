@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.257 2007/09/06 20:22:51 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.258 2007/09/09 16:29:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3628,8 +3628,6 @@ interrupt_vector:
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 	membar	#Sync
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
-	membar	#Sync			! Should not be needed due to retry
 
 #if KTR_COMPILE & KTR_INTR
 	CATR(KTR_TRAP, "interrupt_vector: tl %d ASI_IRSR %p ASI_IRDR %p",
@@ -3653,10 +3651,17 @@ interrupt_vector:
 	brz,pn  %g1, ret_from_intr_vector
 	 mov	IRDR_2H, %g2
 
+	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
+
 	jmpl	%g1, %g0
-	 ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+	 nop
 
 Lsoftint_regular:
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	bgeu,pn	%xcc, 3f
 	 or	%g3, %lo(_C_LABEL(intrlev)), %g3
