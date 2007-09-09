@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.8 2007/07/09 21:00:39 ad Exp $	*/
+/*	$NetBSD: spic.c,v 1.8.6.1 2007/09/09 20:52:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8 2007/07/09 21:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.1 2007/09/09 20:52:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8 2007/07/09 21:00:39 ad Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+#define	SPIC_EVENT_BRIGHTNESS_DOWN	0x15
+#define	SPIC_EVENT_BRIGHTNESS_UP	0x16
 
 #define POLLRATE (hz/30)
 
@@ -204,6 +207,12 @@ spic_intr(void *v) {
 	case 0x1e:
 	case 0x1d:
 		dz -= 0x20;
+		break;
+	case SPIC_EVENT_BRIGHTNESS_UP:
+		pnp_power_input(NULL, PNP_ACTION_BRIGHTNESS_UP);
+		break;
+	case SPIC_EVENT_BRIGHTNESS_DOWN:
+		pnp_power_input(NULL, PNP_ACTION_BRIGHTNESS_DOWN);
 		break;
 	default:
 		printf("spic0: v1=0x%02x v2=0x%02x\n", v1, v2);
