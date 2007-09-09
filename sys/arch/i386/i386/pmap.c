@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.23 2007/09/01 12:56:44 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.24 2007/09/09 23:10:28 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.23 2007/09/01 12:56:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.24 2007/09/09 23:10:28 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -416,7 +416,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  */
 
 struct pool_cache pmap_pdp_cache;
-u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 
@@ -1511,7 +1510,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	paddr_t pdirpa = 0;	/* XXX: GCC */
 
 	/*
-	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
+	 * NOTE: `pmaps_lock' is held when the PDP is allocated.
 	 */
 
 	/* fetch the physical address of the page directory. */
@@ -1545,7 +1544,6 @@ struct pmap *
 pmap_create(void)
 {
 	struct pmap *pmap;
-	u_int gen;
 
 	pmap = pool_cache_get(&pmap_cache, PR_WAITOK);
 
@@ -1575,18 +1573,14 @@ pmap_create(void)
 	 * us.  note that there is no need to splvm to protect us from
 	 * malloc since malloc allocates out of a submap and we should
 	 * have already allocated kernel PTPs to cover the range...
-	 *
-	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock', nor
-	 * must we call pmap_growkernel() while holding it!
 	 */
 
  try_again:
-	gen = pmap_pdp_cache_generation;
 	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	mutex_enter(&pmaps_lock);
 
-	if (gen != pmap_pdp_cache_generation) {
+	if (pmap->pm_pdir[PDSLOT_KERN + nkpde - 1] == 0) {
 		mutex_exit(&pmaps_lock);
 		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
@@ -3391,12 +3385,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
+		mutex_exit(&pmaps_lock);
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
-		pmap_pdp_cache_generation++;
-
-		mutex_exit(&pmaps_lock);
 	}
 
 	mutex_exit(&kpm->pm_obj.vmobjlock);
