@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2007/09/09 04:24:24 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.2 2007/09/09 04:38:16 xtraeme Exp $
 
 .include "../Makefile.inc"
 
@@ -19,7 +19,6 @@ DPSRCS+=	${TEMPL_FILE:S/templ/c/}
 
 ${TEMPL_FILE:S/templ/c/}:
 	sed 	-e "s|@LKM_ISA_IO_PORT@|${LKM_ISA_IO_PORT}|g" \
-		-e "s|@LKM_ISA_IO_PORT@|${LKM_ISA_IO_PORT}|g" \
 		-e "s|@LKM_ISA_SIZE@|${LKM_ISA_SIZE}|g" \
 		-e "s|@LKM_ISA_IOMEM@|${LKM_ISA_IOMEM}|g" \
 		-e "s|@LKM_ISA_IOSIZE@|${LKM_ISA_IOSIZE}|g" \
