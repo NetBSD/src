@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.2 2007/08/29 03:05:04 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.3 2007/09/09 00:39:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -235,10 +235,13 @@ struct cpu_info {
 	int ci_astpending;		/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
+	struct pcb *ci_curpcb;		/* current pcb */
 #if !defined(PROCESS_ID_IS_CURLWP)
 	struct lwp *ci_curlwp;		/* current lwp */
 #endif
-	struct pcb *ci_curpcb;		/* current pcb */
+#ifdef _ARM_ARCH_6
+	uint32_t ci_ccnt_freq;		/* cycle count frequency */
+#endif
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
@@ -277,6 +280,13 @@ curcpu(void)
 }
 #else
 #define	curcpu()	(&cpu_info_store)
+static inline void
+_curlwp_set(struct lwp *l)
+{
+	KASSERT(l);
+	curcpu()->ci_curlwp = l;
+}
+#define curlwp_set(l)	_curlwp_set(l)
 #endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
 #ifndef curpcb
 #define	curpcb		(curcpu()->ci_curpcb)
