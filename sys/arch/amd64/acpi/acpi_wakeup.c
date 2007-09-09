@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.4 2007/09/08 21:14:39 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.5 2007/09/09 18:57:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.4 2007/09/08 21:14:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.5 2007/09/09 18:57:55 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -101,9 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.4 2007/09/08 21:14:39 joerg E
 
 #include "acpi_wakecode.h"
 
-paddr_t acpi_wakeup_paddr;
+static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
+static vaddr_t acpi_wakeup_vaddr;
 
-static paddr_t phys_wakeup = 0;
 static int acpi_md_node = CTL_EOL;
 static int acpi_md_vbios_reset = 1;
 static int acpi_md_beep_on_reset = 1;
@@ -309,13 +309,13 @@ acpi_md_sleep(int state)
 {
 #define WAKECODE_FIXUP(offset, type, val) do	{		\
 	type	*addr;						\
-	addr = (type *)(phys_wakeup + offset);			\
+	addr = (type *)(acpi_wakeup_vaddr + offset);		\
 	*addr = val;						\
 } while (0)
 
 #define WAKECODE_BCOPY(offset, type, val) do	{		\
 	void	**addr;						\
-	addr = (void **)(phys_wakeup + offset);			\
+	addr = (void **)(acpi_wakeup_vaddr + offset);		\
 	bcopy(&(val), addr, sizeof(type));			\
 } while (0)
 
@@ -328,12 +328,29 @@ acpi_md_sleep(int state)
 	uint64_t			cr3;
 	paddr_t				oldphys = 0;
 
-	if (!phys_wakeup) {
-		printf("acpi: can't sleep since wakecode is not installed.\n");
-		return (-1);
+	KASSERT(acpi_wakeup_paddr != 0);
+	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
+
+	if (acpi_wakeup_vaddr == 0) {
+		/* Map ACPI wakecode */
+		acpi_wakeup_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
+		if (acpi_wakeup_vaddr == 0) {
+			printf("acpi0: WARNING: couldn't install wakecode\n");
+			return -1;
+		}
+		pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
+		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 
-	AcpiSetFirmwareWakingVector(phys_wakeup);
+#ifdef DIAGNOSTIC
+	if (!CPU_IS_PRIMARY(curcpu()) {
+		printf("acpi0: WARNING: ignoring sleep from secondary CPU\n");
+		return -1;
+	}
+#endif
+
+	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
 	rf = read_rflags();
 
@@ -343,9 +360,9 @@ acpi_md_sleep(int state)
 
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
 	if (pm != pmap_kernel()) {
-		if (!pmap_extract(pm, phys_wakeup, &oldphys))
+		if (!pmap_extract(pm, acpi_wakeup_paddr, &oldphys))
 			oldphys = 0;
-		pmap_enter(pm, phys_wakeup, phys_wakeup,
+		pmap_enter(pm, acpi_wakeup_paddr, acpi_wakeup_paddr,
 		    VM_PROT_READ | VM_PROT_WRITE,
 		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		pmap_update(pm);
@@ -356,11 +373,12 @@ acpi_md_sleep(int state)
 	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
+		bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
 
 		/* load proc 0 PTD */
 		__asm( "movq %0,%%cr3;" : : "a" (PTDpaddr) );
 
-		p_gdt = (struct region_descriptor *)(phys_wakeup+WAKEUP_physical_gdt);
+		p_gdt = (struct region_descriptor *)(acpi_wakeup_vaddr+WAKEUP_physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
@@ -458,9 +476,10 @@ out:
 	lcr3(cr3);
 	if (pm != pmap_kernel()) {
 		/* Clean up identity mapping. */
-		pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
+		pmap_remove(pm, acpi_wakeup_paddr,
+		    acpi_wakeup_paddr + PAGE_SIZE);
 		if (oldphys) {
-			pmap_enter(pm, phys_wakeup, oldphys,
+			pmap_enter(pm, acpi_wakeup_paddr, oldphys,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
