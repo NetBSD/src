@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.2 2007/08/05 19:01:06 jmcneill Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.3 2007/09/09 20:52:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,6 +51,7 @@ typedef enum {
 	PNP_REQUEST_GET_STATE,
 	PNP_REQUEST_NOTIFY,
 	PNP_REQUEST_SET_DISPLAY_POWER,
+	PNP_REQUEST_SET_DISPLAY_BRIGHTNESS,
 	PNP_REQUEST_SET_VOLUME,
 } pnp_request_t;
 
@@ -71,6 +72,12 @@ typedef enum {
 } pnp_display_power_t;
 
 typedef enum {
+	PNP_DISPLAY_BRIGHTNESS_UNKNOWN = -1,
+	PNP_DISPLAY_BRIGHTNESS_UP,
+	PNP_DISPLAY_BRIGHTNESS_DOWN
+} pnp_display_brightness_t;
+
+typedef enum {
 	PNP_AUDIO_VOLUME_UNKNOWN = -1,
 	PNP_AUDIO_VOLUME_UP,
 	PNP_AUDIO_VOLUME_DOWN,
@@ -87,7 +94,9 @@ typedef enum {
 	PNP_ACTION_LID_OPEN,
 	PNP_ACTION_VOLUME_UP,
 	PNP_ACTION_VOLUME_DOWN,
-	PNP_ACTION_VOLUME_MUTE
+	PNP_ACTION_VOLUME_MUTE,
+	PNP_ACTION_BRIGHTNESS_UP,
+	PNP_ACTION_BRIGHTNESS_DOWN
 } pnp_action_t;
 
 typedef struct pnp_capabilities {

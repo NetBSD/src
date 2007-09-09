@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.4 2007/08/10 21:35:54 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.5 2007/09/09 20:52:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.4 2007/08/10 21:35:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.5 2007/09/09 20:52:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,8 @@ static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
 static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	sony_acpi_brightness_down(struct sony_acpi_softc *);
+static void	sony_acpi_brightness_up(struct sony_acpi_softc *);
 
 CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
@@ -375,18 +377,10 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	s = spltty();
 	switch (notify) {
 	case SONY_NOTIFY_BrightnessDownPressed:
-		rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
-		if (ACPI_FAILURE(rv) || arg == 0)
-			break;
-		arg--;
-		sony_acpi_eval_set_integer(hdl, "SBRT", arg, NULL);
+		sony_acpi_brightness_down(sc);
 		break;
 	case SONY_NOTIFY_BrightnessUpPressed:
-		rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
-		if (ACPI_FAILURE(rv) || arg > 8)
-			break;
-		arg++;
-		sony_acpi_eval_set_integer(hdl, "SBRT", arg, NULL);
+		sony_acpi_brightness_up(sc);
 		break;
 	case SONY_NOTIFY_BrightnessDownReleased:
 	case SONY_NOTIFY_BrightnessUpReleased:
@@ -424,10 +418,24 @@ sony_acpi_power(device_t dv, pnp_request_t req, void *opaque)
 	struct sony_acpi_softc *sc;
 	pnp_capabilities_t *pcaps;
 	pnp_state_t *pstate;
+	pnp_display_brightness_t *pdisplaybrt;
 
 	sc = (struct sony_acpi_softc *)dv;
 
 	switch (req) {
+	case PNP_REQUEST_SET_DISPLAY_BRIGHTNESS:
+		pdisplaybrt = opaque;
+		switch (*pdisplaybrt) {
+		case PNP_DISPLAY_BRIGHTNESS_UP:
+			sony_acpi_brightness_up(sc);
+			break;
+		case PNP_DISPLAY_BRIGHTNESS_DOWN:
+			sony_acpi_brightness_down(sc);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
 	case PNP_REQUEST_GET_CAPABILITIES:
 		pcaps = opaque;
 		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
@@ -487,4 +495,34 @@ sony_acpi_wskbd_ioctl(void *opaque, u_long cmd, void *data, int flags,
 	}
 
 	return EPASSTHROUGH;
+}
+
+static void
+sony_acpi_brightness_up(struct sony_acpi_softc *sc)
+{
+	ACPI_INTEGER arg;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
+	if (ACPI_FAILURE(rv) || arg > 8)
+		return;
+	arg++;
+	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
+
+	return;
+}
+
+static void
+sony_acpi_brightness_down(struct sony_acpi_softc *sc)
+{
+	ACPI_INTEGER arg;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
+	if (ACPI_FAILURE(rv) || arg == 0)
+		return;
+	arg--;
+	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
+
+	return;
 }
