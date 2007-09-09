@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.2 2007/09/08 22:49:50 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.3 2007/09/09 20:13:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.2 2007/09/08 22:49:50 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.3 2007/09/09 20:13:23 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -194,17 +194,6 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, void *owner)
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
-	if (pthread__started == 0) {
-		/* The spec says we must deadlock, so... */
-		mp = ptm->ptm_private;
-		pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
-		(void) sigprocmask(SIG_SETMASK, NULL, &ss);
-		for (;;) {
-			sigsuspend(&ss);
-		}
-		/*NOTREACHED*/
-	}
-
 	/* Recursive or errorcheck? */
 	mp = ptm->ptm_private;
 	self = pthread__self();
@@ -234,10 +223,22 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, void *owner)
 				return 0;
 		}
 
+		/* Nope, still held. */
+		if (pthread__started == 0) {
+			/* The spec says we must deadlock, so... */
+			mp = ptm->ptm_private;
+			pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
+			(void) sigprocmask(SIG_SETMASK, NULL, &ss);
+			for (;;) {
+				sigsuspend(&ss);
+			}
+			/*NOTREACHED*/
+		}
+
 		/*
-		 * Nope: still held.  Add us to the list of waiters.
-		 * Issue memory barrier to ensure sleeponq/nextwaiter
-		 * are visible before we enter the waiters list.
+		 * Add thread to the list of waiters.  Issue a memory
+		 * barrier to ensure sleeponq/nextwaiter are visible
+		 * before we enter the waiters list.
 		 */
 		self->pt_sleeponq = 1;
 		for (waiters = ptm->ptm_waiters;;) {
