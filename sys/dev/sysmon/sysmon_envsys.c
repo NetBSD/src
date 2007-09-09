@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.66 2007/09/08 23:59:38 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.67 2007/09/09 12:28:08 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.66 2007/09/08 23:59:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.67 2007/09/09 12:28:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -561,7 +561,7 @@ sysmon_envsys_destroy_plist(prop_array_t array)
 
 	KASSERT(array != NULL);
 
-	DPRINTF(("%s: objects in array=%d\n", __func__,
+	DPRINTFOBJ(("%s: objects in array=%d\n", __func__,
 	    prop_array_count(array)));
 
 	iter = prop_array_iterator(array);
@@ -573,16 +573,16 @@ sysmon_envsys_destroy_plist(prop_array_t array)
 		iter2 = prop_dictionary_iterator(dict);
 		if (iter2 == NULL)
 			goto out;
-		DPRINTF(("%s: iterating over dictionary\n", __func__));
+		DPRINTFOBJ(("%s: iterating over dictionary\n", __func__));
 		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
-			DPRINTF(("%s: obj=%s\n", __func__,
+			DPRINTFOBJ(("%s: obj=%s\n", __func__,
 			    prop_dictionary_keysym_cstring_nocopy(obj)));
 			prop_dictionary_remove(dict,
 			    prop_dictionary_keysym_cstring_nocopy(obj));
 			prop_object_iterator_reset(iter2);
 		}
 		prop_object_iterator_release(iter2);
-		DPRINTF(("%s: objects in dictionary:%d\n",
+		DPRINTFOBJ(("%s: objects in dictionary:%d\n",
 		    __func__, prop_dictionary_count(dict)));
 		prop_object_release(dict);
 	}
