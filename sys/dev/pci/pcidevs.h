@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.899 2007/09/08 16:39:27 ober Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.900 2007/09/09 01:09:19 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.899 2007/09/08 16:38:28 ober Exp
+ *	NetBSD: pcidevs,v 1.900 2007/09/09 01:09:02 xtraeme Exp
  */
 
 /*
@@ -2346,6 +2346,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_SATA_RAID	0x2822		/* 82801H RAID SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_AHCI4	0x2824		/* 82801H AHCI SATA Controller with 4 ports */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_2	0x2825		/* 82801H SATA Controller */
+#define	PCI_PRODUCT_INTEL_82801HEM_SATA	0x2828		/* 82801HEM SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801HBM_SATA_1	0x2829		/* 82801HBM SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801HBM_SATA_2	0x282a		/* 82081HBM SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801H_USB_1	0x2830		/* 82801H USB UHCI Controller */

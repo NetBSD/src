@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.898 2007/09/08 16:39:28 ober Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.899 2007/09/09 01:09:19 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.899 2007/09/08 16:38:28 ober Exp
+ *	NetBSD: pcidevs,v 1.900 2007/09/09 01:09:02 xtraeme Exp
  */
 
 /*
@@ -8236,6 +8236,10 @@ static const struct pci_product pci_products[] = {
 	    "82801H SATA Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_SATA,
+	    "82801HEM SATA Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1,
 	    "82801HBM SATA Controller",
 	},
@@ -13440,4 +13444,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2762;
+const int pci_nproducts = 2763;
