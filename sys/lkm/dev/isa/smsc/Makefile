@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2007/09/09 05:18:20 xtraeme Exp $
+# $NetBSD: Makefile,v 1.2 2007/09/09 05:46:28 xtraeme Exp $
 
 S=		${.CURDIR}/../../../..
 .PATH:		$S/dev/isa
@@ -11,7 +11,6 @@ LKM_ISA_IO_PORT=	0x02e
 LKM_ISA_DRVNAME=	smsc
 LKM_ISA_DRVNAME_CA=	smsc
 
-#CPPFLAGS+=	-DMULTIPROCESSOR -DDEBUG -DDIAGNOSTIC -DLOCKDEBUG
 CLEANFILES+=	*~ ${KMOD}
 WARNS=		2
 
