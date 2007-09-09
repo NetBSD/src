@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.3 2007/09/09 13:24:02 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.4 2007/09/09 13:28:03 xtraeme Exp $
 
 .include "../Makefile.inc"
 
 TEMPL_DIR?=	${.CURDIR}/../common
-TEMPL_FILE?=	lkm_isa.c.templ
+TEMPL_FILE?=	lkm_isa.c.tmpl
 
 LKM_ISA_IO_PORT?=	0x290
 LKM_ISA_SIZE?=		0
@@ -13,11 +13,11 @@ LKM_ISA_IRQ?=		-1
 LKM_ISA_DRQ?=		-1
 LKM_ISA_DRQ2?=		-1
 
-CLEANFILES+=	${.CURDIR}/${TEMPL_FILE:S/.templ//}
+CLEANFILES+=	${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
 
-DPSRCS+=	${TEMPL_FILE:S/.templ//}
+DPSRCS+=	${TEMPL_FILE:S/.tmpl//}
 
-${TEMPL_FILE:S/.templ//}:
+${TEMPL_FILE:S/.tmpl//}:
 	sed 	-e "s|@LKM_ISA_IO_PORT@|${LKM_ISA_IO_PORT}|g" \
 		-e "s|@LKM_ISA_SIZE@|${LKM_ISA_SIZE}|g" \
 		-e "s|@LKM_ISA_IOMEM@|${LKM_ISA_IOMEM}|g" \
@@ -27,4 +27,4 @@ ${TEMPL_FILE:S/.templ//}:
 		-e "s|@LKM_ISA_DRQ2@|${LKM_ISA_DRQ2}|g" \
 		-e "s|@LKM_ISA_DRVNAME@|${LKM_ISA_DRVNAME}|g" \
 		-e "s|@LKM_ISA_DRVNAME_CA@|${LKM_ISA_DRVNAME_CA}|g" \
-		${TEMPL_DIR}/${TEMPL_FILE} > ${.CURDIR}/${TEMPL_FILE:S/.templ//}
+		${TEMPL_DIR}/${TEMPL_FILE} > ${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
