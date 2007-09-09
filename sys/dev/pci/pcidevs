@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.899 2007/09/08 16:38:28 ober Exp $
+$NetBSD: pcidevs,v 1.900 2007/09/09 01:09:02 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2339,6 +2339,7 @@ product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller with 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
+product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
 product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
