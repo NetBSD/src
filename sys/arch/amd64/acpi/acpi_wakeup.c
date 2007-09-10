@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.5 2007/09/09 18:57:55 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.6 2007/09/10 20:39:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.5 2007/09/09 18:57:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.6 2007/09/10 20:39:00 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -99,210 +99,27 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.5 2007/09/09 18:57:55 jmcneil
 #include <machine/cpu.h>
 #include <machine/fpu.h>
 
+#include <x86/cpuvar.h>
+
 #include "acpi_wakecode.h"
 
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
-static int acpi_md_vbios_reset = 1;
+static int acpi_md_vbios_reset = 0;
 static int acpi_md_beep_on_reset = 1;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
-extern paddr_t	lo32_paddr;
-
-/*
- * S4 sleep using S4BIOS support, from FreeBSD.
- *
- * FreeBSD: src/sys/dev/acpica/acpica_support.c,v 1.4 2002/03/12 09:45:17 dfr Exp
- */
-
-static ACPI_STATUS
-enter_s4_with_bios(void)
-{
-	ACPI_OBJECT_LIST	ArgList;
-	ACPI_OBJECT		Arg;
-	uint64_t		rf;
-	UINT32			ret;
-	ACPI_STATUS		status;
-
-	/* run the _PTS and _GTS methods */
-
-	ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
-	ArgList.Count = 1;
-	ArgList.Pointer = &Arg;
-
-	ACPI_MEMSET(&Arg, 0, sizeof(Arg));
-	Arg.Type = ACPI_TYPE_INTEGER;
-	Arg.Integer.Value = ACPI_STATE_S4;
-
-	AcpiEvaluateObject(NULL, "\\_PTS", &ArgList, NULL);
-	AcpiEvaluateObject(NULL, "\\_GTS", &ArgList, NULL);
-
-	/* clear wake status */
-
-	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
-
-	rf = read_rflags();
-	disable_intr();
-
-	AcpiHwDisableAllGpes();
-	AcpiHwEnableAllWakeupGpes();
-
-	/* flush caches */
-
-	ACPI_FLUSH_CPU_CACHE();
-
-	/*
-	 * write the value to command port and wait until we enter sleep state
-	 */
-	do {
-		AcpiOsStall(1000000);
-		AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
-				AcpiGbl_FADT->S4BiosReq, 8);
-		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS,
-					&ret, ACPI_MTX_LOCK);
-		if (ACPI_FAILURE(status))
-			break;
-	} while (!ret);
-
-	AcpiHwDisableAllGpes();
-	AcpiHwEnableAllRuntimeGpes();
-
-	write_rflags(rf);
-
-	return (AE_OK);
-}
-
-static uint16_t	r_ldt __used;
-static uint16_t	r_cs __used;
-static uint16_t	r_ds __used;
-static uint16_t r_es __used;
-static uint16_t r_fs __used;
-static uint16_t r_gs __used;
-static uint16_t r_ss __used;
-static uint16_t r_tr __used;
-static uint64_t	r_eax __used;
-static uint64_t	r_ebx __used;
-static uint64_t	r_ecx __used;
-static uint64_t	r_edx __used;
-static uint64_t	r_ebp __used;
-static uint64_t	r_esi __used;
-static uint64_t	r_edi __used;
-static uint64_t	r_efl __used;
-static uint64_t	r_cr0 __used;
-static uint64_t	r_cr2 __used;
-static uint64_t	r_cr3 __used;
-static uint64_t	r_cr4 __used;
-static uint64_t	r_esp __used;
-static uint64_t	ret_addr __used;
-static struct region_descriptor	r_idt __used, r_gdt __used;
-
+extern uint8_t acpi_wakeup_gdt[10];
+extern uint64_t acpi_wakeup_ds;
+extern uint64_t acpi_wakeup_cr0;
+extern uint64_t acpi_wakeup_cr3;
 /* XXX shut gcc up */
 extern int		acpi_savecpu(void);
 extern int		acpi_restorecpu(void);
-
-static inline void
-clear_reg(void)
-{
-	r_ldt = 0;
-	r_cs = r_ds = r_es = r_fs = r_gs = r_ss = r_tr = 0;
-	r_eax = r_ebx = r_ecx = r_edx = r_ebp = r_esi = r_edi = 0;
-	r_efl = r_cr0 = r_cr2 = r_cr3 = r_cr4 = r_esp = 0;
-	memset(&r_idt, 0, sizeof(r_idt));
-	memset(&r_gdt, 0, sizeof(r_gdt));
-}
-
-__asm("							\
-	.text;							\
-	.p2align 2, 0x90;					\
-	.type acpi_restorecpu, @function;			\
-acpi_restorecpu:						\
-	.align 4;						\
-	movq	r_cr3,%rax;					\
-	movq	%rax,%cr3;					\
-	movq	r_eax,%rax;					\
-	movq	r_ebx,%rbx;					\
-	movq	r_ecx,%rcx;					\
-	movq	r_edx,%rdx;					\
-	movq	r_ebp,%rbp;					\
-	movq	r_esi,%rsi;					\
-	movq	r_edi,%rdi;					\
-	movq	r_esp,%rsp;					\
-								\
-	pushq	r_efl;						\
-	popfq;							\
-								\
-	movq	ret_addr,%rax;					\
-	movq	%rax,(%rsp);					\
-	xorq	%rax,%rax;					\
-	ret;							\
-								\
-	.text;							\
-	.p2align 2, 0x90;					\
-	.type acpi_savecpu, @function;				\
-acpi_savecpu:							\
-	movw	%cs,r_cs;					\
-	movw	%ds,r_ds;					\
-	movw	%es,r_es;					\
-	movw	%fs,r_fs;					\
-	movw	%gs,r_gs;					\
-	movw	%ss,r_ss;					\
-								\
-	movq	%rax,r_eax;					\
-	movq	%rbx,r_ebx;					\
-	movq	%rcx,r_ecx;					\
-	movq	%rdx,r_edx;					\
-	movq	%rbp,r_ebp;					\
-	movq	%rsi,r_esi;					\
-	movq	%rdi,r_edi;					\
-								\
-	movq	%cr0,%rax;					\
-	movq	%rax,r_cr0;					\
-	movq	%cr2,%rax;					\
-	movq	%rax,r_cr2;					\
-	movq	%cr3,%rax;					\
-	movq	%rax,r_cr3;					\
-	movq	%cr4,%rax;					\
-	movq	%rax,r_cr4;					\
-								\
-	pushfq;							\
-	popq	r_efl;						\
-								\
-	movq	%rsp,r_esp;					\
-								\
-	sgdt	r_gdt;						\
-	sidt	r_idt;						\
-	sldt	r_ldt;						\
-	str	r_tr;						\
-								\
-	movq	(%rsp),%rax;					\
-	movq	%rax,ret_addr;					\
-	movq	$1,%rax;					\
-	ret;							\
-");
-
-#ifdef ACPI_PRINT_REG
-static void
-acpi_printcpu(void)
-{
-
-	printf("======== acpi_printcpu() debug dump ========\n");
-	printf("gdt[%04x:%08x] idt[%04x:%08x] ldt[%04x] tr[%04x] efl[%08x]\n",
-		r_gdt.rd_limit, r_gdt.rd_base, r_idt.rd_limit, r_idt.rd_base,
-		r_ldt, r_tr, r_efl);
-	printf("eax[%08x] ebx[%08x] ecx[%08x] edx[%08x]\n",
-		r_eax, r_ebx, r_ecx, r_edx);
-	printf("esi[%08x] edi[%08x] ebp[%08x] esp[%08x]\n",
-		r_esi, r_edi, r_ebp, r_esp);
-	printf("cr0[%08x] cr2[%08x] cr3[%08x] cr4[%08x]\n",
-		r_cr0, r_cr2, r_cr3, r_cr4);
-	printf("cs[%04x] ds[%04x] es[%04x] fs[%04x] gs[%04x] ss[%04x]\n",
-		r_cs, r_ds, r_es, r_fs, r_gs, r_ss);
-}
-#endif
 
 int
 acpi_md_sleep(int state)
@@ -321,12 +138,7 @@ acpi_md_sleep(int state)
 
 	ACPI_STATUS			status;
 	int				ret = 0;
-	uint64_t			rf;
-	struct region_descriptor	*p_gdt;
-	struct proc 			*p;
-	struct pmap			*pm;
-	uint64_t			cr3;
-	paddr_t				oldphys = 0;
+	paddr_t				tmp_pdir;
 
 	KASSERT(acpi_wakeup_paddr != 0);
 	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
@@ -336,11 +148,16 @@ acpi_md_sleep(int state)
 		acpi_wakeup_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_VAONLY);
 		if (acpi_wakeup_vaddr == 0) {
-			printf("acpi0: WARNING: couldn't install wakecode\n");
+			printf("acpi: can't allocate address for wakecode.\n");
 			return -1;
 		}
 		pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
 		    VM_PROT_READ | VM_PROT_WRITE);
+	}
+
+	if (!CPU_IS_PRIMARY(curcpu())) {
+		printf("acpi: apci_md_sleep called from secondary CPU ignored\n");
+		return -1;
 	}
 
 #ifdef DIAGNOSTIC
@@ -352,92 +169,33 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
-	rf = read_rflags();
+#ifdef MULTIPROCESSOR
+	/* Shutdown all other CPUs */
+	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
 
-	/* Create identity mapping */
-	if ((p = curproc) == NULL)
-		p = &proc0;
+	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
-	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	if (pm != pmap_kernel()) {
-		if (!pmap_extract(pm, acpi_wakeup_paddr, &oldphys))
-			oldphys = 0;
-		pmap_enter(pm, acpi_wakeup_paddr, acpi_wakeup_paddr,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		pmap_update(pm);
-	}
-	cr3 = rcr3();
-
-	ret_addr = 0;
 	disable_intr();
+
 	if (acpi_savecpu()) {
+
 		/* Execute Sleep */
 		bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
-
-		/* load proc 0 PTD */
-		__asm( "movq %0,%%cr3;" : : "a" (PTDpaddr) );
-
-		p_gdt = (struct region_descriptor *)(acpi_wakeup_vaddr+WAKEUP_physical_gdt);
-		p_gdt->rd_limit = r_gdt.rd_limit;
-		p_gdt->rd_base = vtophys(r_gdt.rd_base);
 
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
-		WAKECODE_FIXUP(WAKEUP_previous_cr0, uint64_t, r_cr0);
-		WAKECODE_FIXUP(WAKEUP_previous_cr2, uint64_t, r_cr2);
-		WAKECODE_FIXUP(WAKEUP_previous_cr4, uint64_t, r_cr4);
-		WAKECODE_FIXUP(WAKEUP_tmp_pml4, uint64_t, lo32_paddr);
+		WAKECODE_FIXUP(WAKEUP_r_cr0, uint64_t, acpi_wakeup_cr0);
+		WAKECODE_FIXUP(WAKEUP_r_cr3, uint64_t, tmp_pdir);
 
-		/*
-		 * Make sure the wake code to temporarily use the proc 0 PTD.
-		 * The PTD keeps the identical mapping for the page of
-		 * the trampoline code, which is required just after
-		 * entering to protect mode.  The current PTD will be restored
-		 * in acpi_restorecpu().
-		 */
-		WAKECODE_FIXUP(WAKEUP_previous_cr3, uint64_t, PTDpaddr);
+		WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
 
-		WAKECODE_FIXUP(WAKEUP_previous_tr,  uint16_t, r_tr);
-		WAKECODE_BCOPY(WAKEUP_previous_gdt, struct region_descriptor, r_gdt);
-		WAKECODE_FIXUP(WAKEUP_previous_ldt, uint16_t, r_ldt);
-		WAKECODE_BCOPY(WAKEUP_previous_idt, struct region_descriptor, r_idt);
-
-		WAKECODE_FIXUP(WAKEUP_where_to_recover, void *, acpi_restorecpu);
-
-		WAKECODE_FIXUP(WAKEUP_previous_ds,  uint16_t, r_ds);
-		WAKECODE_FIXUP(WAKEUP_previous_es,  uint16_t, r_es);
-		WAKECODE_FIXUP(WAKEUP_previous_fs,  uint16_t, r_fs);
-		WAKECODE_FIXUP(WAKEUP_previous_gs,  uint16_t, r_gs);
-		WAKECODE_FIXUP(WAKEUP_previous_ss,  uint16_t, r_ss);
-		WAKECODE_FIXUP(WAKEUP_previous_rsp, uint64_t, r_esp);
-
-		/*
-		 * XXX: restore curproc's PTD here -
-		 *
-		 * AcpiEnterSleepState() may switch the context.
-		 * (ltsleep() may probably be called from Osd.)
-		 * Such context switching may causes the kernel
-		 * to crash under the inconsistent PTD.
-		 * Curproc's PTD must be restored to prevent the crash.
-		 * Anyway, leaving the inconsistent PTD is unpreferable,
-		 * although the context switching during sleep
-		 * process is also unpreferable.
-		 */
-		__asm( "movq %0,%%cr3;" : : "a" (r_cr3) );
-
-#ifdef ACPI_PRINT_REG
-		acpi_printcpu();
-#endif
+		WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_restorecpu);
 
 		ACPI_FLUSH_CPU_CACHE();
 
-		if (state == ACPI_STATE_S4 && AcpiGbl_FACS->S4Bios_f) {
-			status = enter_s4_with_bios();
-		} else {
-			status = AcpiEnterSleepState(state);
-		}
+		status = AcpiEnterSleepState(state);
 
 		if (ACPI_FAILURE(status)) {
 			printf("acpi: AcpiEnterSleepState failed: %s\n",
@@ -463,30 +221,10 @@ acpi_md_sleep(int state)
 
 		initrtclock(TIMER_FREQ);
 		inittodr(time_second);
-
-#ifdef ACPI_PRINT_REG
-		acpi_savecpu();
-		acpi_printcpu();
-#endif
 	}
 
 out:
 	enable_intr();
-
-	lcr3(cr3);
-	if (pm != pmap_kernel()) {
-		/* Clean up identity mapping. */
-		pmap_remove(pm, acpi_wakeup_paddr,
-		    acpi_wakeup_paddr + PAGE_SIZE);
-		if (oldphys) {
-			pmap_enter(pm, acpi_wakeup_paddr, oldphys,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		}
-		pmap_update(pm);
-	}
-
-	write_rflags(rf);
 
 	return (ret);
 #undef WAKECODE_FIXUP
