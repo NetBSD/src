@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.47 2007/09/10 13:58:50 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.48 2007/09/10 14:15:11 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -202,23 +202,29 @@ int main(int argc, char **argv)
 		rval = send_dictionary(fd);
 		goto out;
 
+#define MISSING_FLAG() 						\
+do {								\
+	if (sensors && !mydevname) {				\
+		(void)fprintf(stderr, "%s: -s cannot be used "	\
+		    "without -d\n", getprogname());		\
+		rval = EINVAL;					\
+		goto out;					\
+	}							\
+} while (/* CONSTCOND */ 0)
+
 	} else if (interval) {
 		for (;;) {
-			if (sensors && !mydevname) {
-				(void)fprintf(stderr, "%s: -s cannot "
-				    "be used without -d\n",
-				    getprogname());
-				rval = EINVAL;
-				goto out;
-			}
+			MISSING_FLAG();
 			rval = parse_dictionary(fd);
 			if (rval)
 				goto out;
 			(void)fflush(stdout);
 			(void)sleep(interval);
 		}
-	} else
+	} else {
+		MISSING_FLAG();
 		rval = parse_dictionary(fd);
+	}
 
 out:
 	if (sensors)
