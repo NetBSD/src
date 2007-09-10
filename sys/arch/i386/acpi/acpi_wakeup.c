@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.7 2007/09/08 22:03:17 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.8 2007/09/10 15:00:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.7 2007/09/08 22:03:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.8 2007/09/10 15:00:09 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -199,9 +199,7 @@ acpi_md_sleep(int state)
 
 	ACPI_STATUS			status;
 	int				ret = 0;
-	struct proc 			*p;
-	struct pmap			*pm;
-	paddr_t				oldphys = 0;
+	paddr_t				tmp_pdir;
 
 	KASSERT(acpi_wakeup_paddr != 0);
 	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
@@ -225,24 +223,12 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
-	/* Create identity mapping */
-	if ((p = curproc) == NULL)
-		p = &proc0;
-
-	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	if (pm != pmap_kernel()) {
-		if (!pmap_extract(pm, acpi_wakeup_paddr, &oldphys))
-			oldphys = 0;
-		pmap_enter(pm, acpi_wakeup_paddr, acpi_wakeup_paddr,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		pmap_update(pm);
-	}
-
 #ifdef MULTIPROCESSOR
 	/* Shutdown all other CPUs */
 	x86_broadcast_ipi(X86_IPI_HALT);
 #endif
+
+	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
 	disable_intr();
 	if (acpi_savecpu()) {
@@ -252,7 +238,7 @@ acpi_md_sleep(int state)
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
 		WAKECODE_FIXUP(WAKEUP_r_cr0, uint32_t, acpi_wakeup_cr0);
-		WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, acpi_wakeup_cr3);
+		WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
 
 		WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
 
@@ -296,18 +282,6 @@ acpi_md_sleep(int state)
 
 out:
 	enable_intr();
-
-	if (pm != pmap_kernel()) {
-		/* Clean up identity mapping. */
-		pmap_remove(pm, acpi_wakeup_paddr,
-		    acpi_wakeup_paddr + PAGE_SIZE);
-		if (oldphys) {
-			pmap_enter(pm, acpi_wakeup_paddr, oldphys,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		}
-		pmap_update(pm);
-	}
 
 	return (ret);
 #undef WAKECODE_FIXUP

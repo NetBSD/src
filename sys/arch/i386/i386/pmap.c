@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207.8.1 2007/09/03 16:47:23 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207.8.2 2007/09/10 15:00:09 joerg Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.8.1 2007/09/03 16:47:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.8.2 2007/09/10 15:00:09 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3676,4 +3676,48 @@ pmap_update(struct pmap *pm)
 	crit_enter();
 	pmap_tlb_shootwait();
 	crit_exit();
+}
+
+paddr_t
+pmap_init_tmp_pgtbl(paddr_t pg)
+{
+	static paddr_t x86_tmp_pdir_paddr = 5 * PAGE_SIZE;
+	static vaddr_t x86_tmp_pdir_vaddr = 0;
+	static paddr_t x86_tmp_ptable_paddr = 4 * PAGE_SIZE;
+	static vaddr_t x86_tmp_ptable_vaddr = 0;
+
+	pd_entry_t *tmp_pdir;
+	pt_entry_t *tmp_ptable;
+
+	if (x86_tmp_pdir_vaddr == 0) {
+		x86_tmp_pdir_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
+
+		if (x86_tmp_pdir_vaddr == 0)
+			panic("mapping of real mode page table failed\n");
+		pmap_kenter_pa(x86_tmp_pdir_vaddr, x86_tmp_pdir_paddr,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		pmap_update(pmap_kernel());
+	}
+
+	if (x86_tmp_ptable_vaddr == 0) {
+		x86_tmp_ptable_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
+
+		if (x86_tmp_ptable_vaddr == 0)
+			panic("mapping of real mode page table failed\n");
+		pmap_kenter_pa(x86_tmp_ptable_vaddr, x86_tmp_ptable_paddr,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		pmap_update(pmap_kernel());
+	}
+
+	tmp_pdir = (void *)x86_tmp_pdir_vaddr;
+	tmp_ptable = (void *)x86_tmp_ptable_vaddr;
+
+	memcpy(tmp_pdir, pmap_kernel()->pm_pdir, PAGE_SIZE);
+
+	tmp_pdir[pdei(pg)] = x86_tmp_ptable_paddr | PG_RW | PG_V;
+	tmp_ptable[ptei(pg)] = pg | PG_RW | PG_V;
+
+	return x86_tmp_pdir_paddr;
 }
