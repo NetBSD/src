@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.26 2007/09/07 14:09:27 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.27 2007/09/10 11:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.26 2007/09/07 14:09:27 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.27 2007/09/10 11:34:05 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -71,6 +71,12 @@ static int pthread__atomic;
 RAS_DECL(pthread__lock);
 RAS_DECL(pthread__lock2);
 
+int
+pthread__simple_locked_p(__cpu_simple_lock_t *alp)
+{
+	return __SIMPLELOCK_LOCKED_P(alp);
+}
+
 void
 pthread__simple_lock_init(__cpu_simple_lock_t *alp)
 {
@@ -80,23 +86,23 @@ pthread__simple_lock_init(__cpu_simple_lock_t *alp)
 		return;
 	}
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(alp);
 }
 
 int
 pthread__simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	__cpu_simple_lock_t old;
+	int unlocked;
 
 	if (pthread__atomic)
 		return __cpu_simple_lock_try(alp);
 
 	RAS_START(pthread__lock);
-	old = *alp;
-	*alp = __SIMPLELOCK_LOCKED;
+	unlocked = __SIMPLELOCK_UNLOCKED_P(alp);
+	__cpu_simple_lock_set(alp);
 	RAS_END(pthread__lock);
 
-	return old == __SIMPLELOCK_UNLOCKED;
+	return unlocked;
 }
 
 inline void
@@ -110,7 +116,8 @@ pthread__simple_unlock(__cpu_simple_lock_t *alp)
 		__cpu_simple_unlock(alp);
 		return;
 	}
-	*alp = __SIMPLELOCK_UNLOCKED;
+
+	__cpu_simple_lock_clear(alp);
 #endif
 }
 
@@ -131,14 +138,14 @@ pthread_spinlock(pthread_spin_t *lock)
 		if (__predict_true(__cpu_simple_lock_try(lock)))
 			return;
 	} else {
-		__cpu_simple_lock_t old;
+		int unlocked;
 
 		RAS_START(pthread__lock2);
-		old = *lock;
-		*lock = __SIMPLELOCK_LOCKED;
+		unlocked = __SIMPLELOCK_UNLOCKED_P(lock);
+		__cpu_simple_lock_set(lock);
 		RAS_END(pthread__lock2);
 
-		if (__predict_true(old == __SIMPLELOCK_UNLOCKED))
+		if (__predict_true(unlocked))
 			return;
 	}
 
@@ -162,7 +169,7 @@ pthread_spinlock_slow(pthread_spin_t *lock)
 
 	do {
 		count = pthread__nspins;
-		while (*lock == __SIMPLELOCK_LOCKED && --count > 0)
+		while (pthread__simple_locked_p(lock) && --count > 0)
 			pthread__smt_pause();
 		if (count > 0) {
 			if (pthread__simple_lock_try(lock))
