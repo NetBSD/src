@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.51 2007/09/10 17:40:44 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.52 2007/09/10 17:41:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ send_dictionary(int fd)
 	/* 
 	 * part 2: userland dictionary.
 	 *
-	 * This parts consists in setting the values provided
+	 * This part consists in setting the values provided
 	 * by the user and convert when necesssary to send
 	 * them to the kernel again.
 	 */
