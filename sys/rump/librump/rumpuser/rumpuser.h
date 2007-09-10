@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.4 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.5 2007/09/10 19:11:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,12 +45,12 @@ void rumpuser_free(void *);
 
 int rumpuser_open(const char *, int, int *);
 int rumpuser_ioctl(int, u_long, void *, int *);
-void rumpuser_close(int);
+int rumpuser_close(int, int *);
 
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
 
-int rumpuser_gettimeofday(struct timeval *);
+int rumpuser_gettimeofday(struct timeval *, int *);
 
 uint16_t rumpuser_bswap16(uint16_t);
 uint32_t rumpuser_bswap32(uint32_t);
