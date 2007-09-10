@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.10.2.2 2007/09/03 10:23:00 skrll Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.10.2.3 2007/09/10 10:56:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.10.2.2 2007/09/03 10:23:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.10.2.3 2007/09/10 10:56:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -107,6 +107,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
+	pri_t pri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(sq->sq_waiters > 0);
@@ -161,8 +162,16 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l, false);
-		if (lwp_eprio(l) < spc->spc_curpriority)
-			cpu_need_resched(ci, 0);
+		pri = lwp_eprio(l);
+		/* XXX This test is not good enough! */
+		if ((pri < spc->spc_curpriority && pri < PUSER) ||
+#ifdef MULTIPROCESSOR
+		   ci->ci_curlwp == ci->ci_data.cpu_idlelwp) {
+#else
+		   curlwp == ci->ci_data.cpu_idlelwp) {
+#endif
+			cpu_need_resched(ci, RESCHED_IMMED);
+		}
 		spc_unlock(ci);
 		return 0;
 	}
@@ -190,7 +199,10 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 		}
 	}
 
-	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
+	if ((sobj->sobj_flag & SOBJ_SLEEPQ_LIFO) != 0)
+		TAILQ_INSERT_HEAD(&sq->sq_queue, l, l_sleepchain);
+	else
+		TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
 }
 
 /*
@@ -246,13 +258,12 @@ sleepq_block(int timo, bool catch)
 	 */
 	if (catch) {
 		l->l_flag |= LW_SINTR;
-		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
-			early = true;
-		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
+			error = EINTR;
 			early = true;
-		}
+		} else if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))
+			early = true;
 	}
 
 	if (early) {
@@ -260,7 +271,7 @@ sleepq_block(int timo, bool catch)
 		lwp_unsleep(l);
 	} else {
 		if (timo)
-			callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
+			callout_schedule(&l->l_timeout_ch, timo);
 		mi_switch(l);
 
 		/* The LWP and sleep queue are now unlocked. */
@@ -269,7 +280,7 @@ sleepq_block(int timo, bool catch)
 			 * Even if the callout appears to have fired, we need to
 			 * stop it in order to synchronise with other CPUs.
 			 */
-			if (callout_stop(&l->l_tsleep_ch))
+			if (callout_stop(&l->l_timeout_ch))
 				error = EWOULDBLOCK;
 		}
 	}

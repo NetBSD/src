@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.340.2.1 2007/08/15 13:48:15 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.340.2.2 2007/09/10 10:54:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.340.2.1 2007/08/15 13:48:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.340.2.2 2007/09/10 10:54:49 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -1175,14 +1175,14 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		struct disk_badsecinfo dbsi;
 		struct disk_badsectors *dbs;
 		size_t available;
-		void *laddr;
+		uint8_t *laddr;
 
 		dbsi = *(struct disk_badsecinfo *)addr;
 		missing = wd->sc_bscount;
 		count = 0;
 		available = dbsi.dbsi_bufsize;
 		skip = dbsi.dbsi_skip;
-		laddr = dbsi.dbsi_buffer;
+		laddr = (uint8_t *)dbsi.dbsi_buffer;
 
 		/*
 		 * We start this loop with the expectation that all of the

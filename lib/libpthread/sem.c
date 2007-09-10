@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.14.2.2 2007/09/03 10:14:17 skrll Exp $	*/
+/*	$NetBSD: sem.c,v 1.14.2.3 2007/09/10 10:54:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.14.2.2 2007/09/03 10:14:17 skrll Exp $");
+__RCSID("$NetBSD: sem.c,v 1.14.2.3 2007/09/10 10:54:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -90,9 +90,8 @@ struct _sem_st {
 	sem_t		*usem_identity;
 
 	/* Protects data below. */
-	pthread_spin_t	usem_interlock;
-
-	pthread_queue_t usem_waiters;
+	pthread_mutex_t	usem_interlock;
+	pthread_cond_t	usem_cv;
 	unsigned int	usem_count;
 };
 
@@ -106,6 +105,10 @@ static void
 sem_free(sem_t sem)
 {
 
+	if (sem->usem_semid == USEM_USER) {
+		pthread_cond_destroy(&sem->usem_cv);
+		pthread_mutex_destroy(&sem->usem_interlock);
+	}
 	sem->usem_magic = 0;
 	free(sem);
 }
@@ -122,8 +125,8 @@ sem_alloc(unsigned int value, semid_t semid, sem_t *semp)
 		return (ENOSPC);
 
 	sem->usem_magic = USEM_MAGIC;
-	pthread_lockinit(&sem->usem_interlock);
-	PTQ_INIT(&sem->usem_waiters);
+	pthread_mutex_init(&sem->usem_interlock, NULL);
+	pthread_cond_init(&sem->usem_cv, NULL);
 	sem->usem_count = value;
 	sem->usem_semid = semid;
 
@@ -167,13 +170,13 @@ sem_destroy(sem_t *sem)
 		if (_ksem_destroy((*sem)->usem_semid))
 			return (-1);
 	} else {
-		pthread_spinlock(&(*sem)->usem_interlock);
-		if (!PTQ_EMPTY(&(*sem)->usem_waiters)) {
-			pthread_spinunlock(&(*sem)->usem_interlock);
+		pthread_mutex_lock(&(*sem)->usem_interlock);
+		if (!PTQ_EMPTY(&(*sem)->usem_cv.ptc_waiters)) {
+			pthread_mutex_unlock(&(*sem)->usem_interlock);
 			errno = EBUSY;
 			return (-1);
 		}
-		pthread_spinunlock(&(*sem)->usem_interlock);
+		pthread_mutex_unlock(&(*sem)->usem_interlock);
 	}
 
 	sem_free(*sem);
@@ -285,7 +288,6 @@ sem_wait(sem_t *sem)
 {
 	pthread_t self;
 	extern int pthread__started;
-	pthread_queue_t *queue;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -317,27 +319,19 @@ sem_wait(sem_t *sem)
 		return 0;
 	}
 
-	queue = &(*sem)->usem_waiters;
-	pthread_spinlock(&(*sem)->usem_interlock);
+	pthread_mutex_lock(&(*sem)->usem_interlock);
 	for (;;) {
 		if (self->pt_cancel) {
-			pthread_spinunlock(&(*sem)->usem_interlock);
+			pthread_mutex_unlock(&(*sem)->usem_interlock);
 			pthread_exit(PTHREAD_CANCELED);
 		}
-
 		if ((*sem)->usem_count > 0)
 			break;
-
-		PTQ_INSERT_TAIL(queue, self, pt_sleep);
-		self->pt_sleeponq = 1;
-		self->pt_sleepobj = queue,
-		pthread_spinunlock(&(*sem)->usem_interlock);
-		(void)pthread__park(self, &(*sem)->usem_interlock,
-		    queue, NULL, 1, queue);
-		pthread_spinlock(&(*sem)->usem_interlock);
+		(void)pthread_cond_wait(&(*sem)->usem_cv,
+		    &(*sem)->usem_interlock);
 	}
 	(*sem)->usem_count--;
-	pthread_spinunlock(&(*sem)->usem_interlock);
+	pthread_mutex_unlock(&(*sem)->usem_interlock);
 
 	return (0);
 }
@@ -373,17 +367,14 @@ sem_trywait(sem_t *sem)
 		return rv;
 	}
 
-	pthread_spinlock(&(*sem)->usem_interlock);
-
+	pthread_mutex_lock(&(*sem)->usem_interlock);
 	if ((*sem)->usem_count == 0) {
-		pthread_spinunlock(&(*sem)->usem_interlock);
+		pthread_mutex_unlock(&(*sem)->usem_interlock);
 		errno = EAGAIN;
 		return (-1);
 	}
-
 	(*sem)->usem_count--;
-
-	pthread_spinunlock(&(*sem)->usem_interlock);
+	pthread_mutex_unlock(&(*sem)->usem_interlock);
 
 	return (0);
 }
@@ -391,7 +382,7 @@ sem_trywait(sem_t *sem)
 int
 sem_post(sem_t *sem)
 {
-	pthread_t self, blocked;
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -405,16 +396,10 @@ sem_post(sem_t *sem)
 
 	self = pthread__self();
 
-	pthread_spinlock(&(*sem)->usem_interlock);
+	pthread_mutex_lock(&(*sem)->usem_interlock);
 	(*sem)->usem_count++;
-	blocked = PTQ_FIRST(&(*sem)->usem_waiters);
-	if (blocked) {
-		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
-		/* Give the head of the blocked queue another try. */
-		pthread__unpark(self, &(*sem)->usem_interlock,
-		    &(*sem)->usem_waiters, blocked);
-	} else
-		pthread_spinunlock(&(*sem)->usem_interlock);
+	pthread_cond_signal(&(*sem)->usem_cv);
+	pthread_mutex_unlock(&(*sem)->usem_interlock);
 
 	return (0);
 }
@@ -432,9 +417,9 @@ sem_getvalue(sem_t * __restrict sem, int * __restrict sval)
 	if ((*sem)->usem_semid != USEM_USER)
 		return (_ksem_getvalue((*sem)->usem_semid, sval));
 
-	pthread_spinlock(&(*sem)->usem_interlock);
+	pthread_mutex_lock(&(*sem)->usem_interlock);
 	*sval = (int) (*sem)->usem_count;
-	pthread_spinunlock(&(*sem)->usem_interlock);
+	pthread_mutex_unlock(&(*sem)->usem_interlock);
 
 	return (0);
 }

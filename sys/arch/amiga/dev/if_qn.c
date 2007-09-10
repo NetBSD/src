@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.27.14.1 2007/09/03 10:18:21 skrll Exp $ */
+/*	$NetBSD: if_qn.c,v 1.27.14.2 2007/09/10 10:54:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27.14.1 2007/09/03 10:18:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27.14.2 2007/09/10 10:54:17 skrll Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -817,7 +817,7 @@ qnintr(void *arg)
  * I somehow think that this is quite a common excuse... ;-)
  */
 int
-qnioctl(register struct ifnet *ifp, u_long command, void *data)
+qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qn_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
@@ -828,7 +828,7 @@ qnioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;

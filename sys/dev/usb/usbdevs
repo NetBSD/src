@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.480.2.1 2007/09/03 10:22:04 skrll Exp $
+$NetBSD: usbdevs,v 1.480.2.2 2007/09/10 10:55:27 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -492,6 +492,7 @@ vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
+vendor WINCHIPHEAD	0x4348	WinChipHead
 vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
@@ -2243,6 +2244,9 @@ product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
+
+/* WinChipHead products */
+product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB UR055G	0x0711	UR055G

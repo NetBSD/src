@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.30.2.1 2007/09/03 10:20:26 skrll Exp $ */
+/*      $NetBSD: sgec.c,v 1.30.2.2 2007/09/10 10:54:53 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.2.1 2007/09/03 10:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.2.2 2007/09/10 10:54:53 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -539,7 +539,6 @@ zeioctl(ifp, cmd, data)
 	void *data;
 {
 	struct ze_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 

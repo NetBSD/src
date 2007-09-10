@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.885.2.2 2007/09/03 10:21:05 skrll Exp $
+$NetBSD: pcidevs,v 1.885.2.3 2007/09/10 10:55:17 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor ATTANSIC		0x1969	Attansic Technologies
+vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
@@ -2338,6 +2339,7 @@ product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller with 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
+product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
 product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
@@ -2417,6 +2419,8 @@ product INTEL PRO_WL_3945ABG_1	0x4222	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
 product INTEL PRO_WL_2915ABG_1	0x4223	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL PRO_WL_2915ABG_2	0x4224	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL PRO_WL_3945ABG_2	0x4227	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
+product INTEL PRO_WL_4965AGN_1	0x4229  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
+product INTEL PRO_WL_4965AGN_2	0x4230  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
 product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
