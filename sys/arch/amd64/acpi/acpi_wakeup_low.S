@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.1 2007/09/10 20:39:00 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.2 2007/09/10 23:11:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -41,12 +41,17 @@ acpi_restorecpu:
 	movw	r_gs,%ax
 	movw	%ax,%gs
 
-	movq	r_cr2,%rax
-	movq	%rax,%cr2
+	movq	r_cr8,%rax
+	movq	%rax,%cr8
 	movq	r_cr4,%rax
 	movq	%rax,%cr4
 	movq	r_cr3,%rax
 	movq	%rax,%cr3
+	movq	r_cr2,%rax
+	movq	%rax,%cr2
+	movq	r_cr0,%rax
+	movq	%rax,%cr0
+
 
 	jmp 1f
 1:
@@ -114,6 +119,8 @@ acpi_savecpu:
 	movq	%rax,r_cr3
 	movq	%cr4,%rax
 	movq	%rax,r_cr4
+	movq	%cr8,%rax
+	movq	%rax,r_cr8
 
 	pushfq
 	popq	r_rfl
@@ -164,6 +171,7 @@ r_cr2:		.quad	0
 acpi_wakeup_cr3:
 r_cr3:		.quad	0
 r_cr4:		.quad	0
+r_cr8:		.quad	0
 
 	.globl acpi_wakeup_gdt
 acpi_wakeup_gdt:
