@@ -1,11 +1,8 @@
-/*	$NetBSD: lint.c,v 1.4 2007/01/10 15:17:43 cube Exp $	*/
+/*	$NetBSD: lint.c,v 1.5 2007/09/10 10:54:21 cube Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
  *  All rights reserved.
- *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
