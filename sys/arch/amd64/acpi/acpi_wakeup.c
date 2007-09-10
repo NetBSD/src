@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.7 2007/09/10 21:00:23 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.8 2007/09/10 21:26:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.7 2007/09/10 21:00:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.8 2007/09/10 21:26:59 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -116,9 +116,8 @@ static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 extern uint8_t acpi_wakeup_gdt[10];
 extern uint64_t acpi_wakeup_ds;
 extern uint64_t acpi_wakeup_cr0;
-extern uint64_t acpi_wakeup_cr3;
 /* XXX shut gcc up */
-extern int		acpi_savecpu(void);
+extern int		acpi_savecpu(void) __attribute__((__returns_twice__));
 extern int		acpi_restorecpu(void);
 
 int
