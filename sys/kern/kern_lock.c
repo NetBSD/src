@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.116.2.2 2007/08/15 13:49:08 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.116.2.3 2007/09/10 10:40:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116.2.2 2007/08/15 13:49:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116.2.3 2007/09/10 10:40:09 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1551,7 +1551,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	s = splsched();	/* XXX splvm() */
 
 	if (ci->ci_biglock_count != 0) {
-		_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
+		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(&kernel_lock));
 		ci->ci_biglock_count += nlocks;
 		splx(s);
 		return;
@@ -1584,7 +1584,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 #endif
 
 	do {
-		while (kernel_lock == __SIMPLELOCK_LOCKED) {
+		while (__SIMPLELOCK_LOCKED_P(&kernel_lock)) {
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
 				_KERNEL_LOCK_ABORT("spinout");
@@ -1637,7 +1637,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 		return;
 	}
 
-	_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
+	_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(&kernel_lock));
 
 	if (nlocks == 0)
 		nlocks = olocks;
@@ -1666,7 +1666,7 @@ void
 _kernel_lock_assert_locked(void)
 {
 
-	if (kernel_lock != __SIMPLELOCK_LOCKED ||
+	if (!__SIMPLELOCK_LOCKED_P(&kernel_lock) ||
 	    curcpu()->ci_biglock_count == 0)
 		_KERNEL_LOCK_ABORT("not locked");
 }
