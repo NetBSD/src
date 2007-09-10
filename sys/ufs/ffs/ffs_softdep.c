@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.24 2007/08/30 21:34:20 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.25 2007/09/10 00:06:29 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.24 2007/08/30 21:34:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.25 2007/09/10 00:06:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3816,6 +3816,11 @@ softdep_disk_write_complete(bp)
 	struct indirdep *indirdep;
 	struct inodedep *inodedep;
 	struct bmsafemap *bmsafemap;
+
+	if ((bp->b_flags & B_READ) != 0) {
+		KASSERT(LIST_EMPTY(&bp->b_dep));
+		return;
+	}
 
 	if (bp->b_vp == NULL || bp->b_vp->v_mount == NULL ||
 	    !DOINGSOFTDEP(bp->b_vp))
