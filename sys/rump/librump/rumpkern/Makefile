@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/08/26 23:49:42 pooka Exp $
+#	$NetBSD: Makefile,v 1.16 2007/09/10 16:11:43 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ LIB=	rump
 	${NETBSDSRCDIR}/sys/miscfs/syncfs
 
 # implements something
-SRCS=	rump.c auth.c emul.c lock.c genfs.c pool.c specfs.c vfs.c vm.c 
+SRCS=	rump.c auth.c emul.c lock.c genfs.c pool.c specfs.c vfs.c vm.c
 
 # just stubs
 SRCS+=	fstrans_stub.c lock_stub.c misc_stub.c		\
@@ -21,7 +21,7 @@ SRCS+=	fstrans_stub.c lock_stub.c misc_stub.c		\
 SRCS+=	clock_subr.c kern_stub.c param.c subr_hash.c subr_prf2.c	\
 	subr_specificdata.c subr_time.c sync_subr.c			\
 	vfs_bio.c vfs_cache.c vfs_vnops.c vfs_init.c vfs_subr2.c	\
-	vnode_if.c param.c
+	vnode_if.c
 
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
