@@ -1,11 +1,11 @@
-/* $NetBSD: acpi_wakecode.S,v 1.1.2.4 2007/09/08 02:43:24 jmcneill Exp $ */
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.5 2007/09/10 20:38:59 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI, and by Andrew Doran.
+ * by Takuya SHIOZAKI.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,17 +70,13 @@
 
 #define _LOCORE
 
-#define WAKECODE_VERBOSE
-
-#include <machine/asm.h>
-#include <machine/specialreg.h>
-#include <machine/param.h>
-#include <machine/segments.h>
 #include <machine/psl.h>
+#include <machine/specialreg.h>
+#include <machine/segments.h>
 
 	.text
 	.code16
-	.org	0
+	.org 0	/* ACPI spec says: cs==(phys>>8), ip==(phys&0x000F) */
 	.globl wakeup_16
 wakeup_16:
 	nop
@@ -88,263 +84,157 @@ wakeup_16:
 	cld
 
 	/* Set up segment registers for real mode */
-	movw	%cs, %ax
-	movw	%ax, %ds
-	movw	%ax, %ss
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
 
-	/* Small call stack XXXAD Where is this? Is it in the ACPI spec? */
-	mov	$0x1000, %sp
+	/* Small call stack */
+	mov	$0x1000,%sp
 
 	/* Clear flags */
 	pushl	$0
 	popfl
 
 	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1, beep_on_reset
-	jne	nobeepon
-	call	beepon
-
-nobeepon:
+	cmpb	$1,WAKEUP_beep_on_reset
+	jne	1f
+	movb	$0xc0,%al
+	outb	%al,$0x42
+	movb	$0x04,%al
+	outb	%al,$0x42
+	inb	$0x61,%al
+	orb	$0x3,%al
+	outb	%al,$0x61
+1:
 
 	/* Only reset the VBIOS if machdep.acpi_vbios_reset=1 */
-	cmpb	$1, vbios_reset
-	jne	novbiosreset
+	cmpb	$1,WAKEUP_vbios_reset
+	jne	1f
 
 	/* Kick the VBIOS. */
-	lcall	$0xc000, $3
+	lcall	$0xc000,$3
 
-	/* Paranoid, restore segment registers. */
-	movw	%cs, %ax
-	movw	%ax, %ds
-	movw	%ax, %ss
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
+1:
 
-novbiosreset:
-
-	/* Only beep on reset if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1, beep_on_reset
-	jne	nobeepoff
-	call	beepoff
-
-nobeepoff:
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0xb800, %ax
-	movw	%ax, %fs
-	movw	$0x0200 + '0', %fs:(0x00)
-#endif
+	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
+	cmpb	$1,WAKEUP_beep_on_reset
+	jne	1f
+	inb	$0x61,%al
+	andb	$0xfc,%al
+	outb	%al,$0x61
+1:
 
 	/* Get physical address of the code */
-	mov	%cs, %ax
-	movzx	%ax, %esi
-	shll	$4, %esi
+	xorl	%esi,%esi
+	movw	%cs,%si
+	shll	$4,%esi
 
-	/* Fill 16->32 address */
-	addl	%esi, wakeup_sw32+2	/* 1b opcode, 1b prefix */
-	addl	%esi, wakeup_sw64+1	/* 1b opcode */
-	addl	%esi, tmp_gdt+2
-	addl	%esi, tmp_gdt64+2
-	wbinvd					/* flush uop/trace cache */
+	/* Prepare ljmpl into 32bit mode */
+	movl	%esi,%eax
+	addl	$wakeup_32,%eax
+	movl	%eax,wakeup_sw32+2
+
+	/* Flush prefetch queue
 	jmp	1f
 1:	jmp	1f
 1:
 
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0xb800, %ax
-	movw	%ax, %fs
-	movw	$0x0200 + '1', %fs:(0x02)
-#endif
-
-	/* Load GDT, enable protected mode */
-	lgdt	tmp_gdt
+	/* Prepare ljmpl into 64bit mode */
+	addl	%esi,wakeup_64_ptr
+	/* Prepare GDT64 */
+	movl	%esi,%eax
+	addl	$tmp_gdtable64,%eax
+	movl	%eax,tmp_gdt64+2
+	/* Prepare GDT */
+	movl	%esi,%eax
+	addl	$tmp_gdtable,%eax
+	movl	%eax,tmp_gdt+2
+	/* Load 32bit GDT */
+	data32 addr32 lgdt	tmp_gdt
 
 	/* Enable protected mode */
-	movl	%eax, %cr0
-	orb	$(CR0_PE), %al
-	movl	%eax, %cr0
+	mov	%cr0,%eax
+	orl	$(CR0_PE),%eax
+	mov	%eax,%cr0
+
 
 wakeup_sw32:
-
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $wakeup_32
+	ljmpl	$0x8,$0x12345678	/* Code location, to be replaced */
 
-	.align	16
+
 	.code32
+	.align	16
 wakeup_32:
+	/*
+	 * Switched to protected mode w/o paging
+	 */
 
 	nop
-	movl	$GSEL(GDATA_SEL,SEL_KPL), %eax
-	movw	%ax, %ds
-	movw	%ax, %ss
-	movw	%ax, %es
-	movw	%ax, %fs
-	movw	%ax, %gs
+	/* Set up segment registers for protected mode */
+	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
+	movw	%ax,%ds
 
-	movl	$0x1000, %esp	/* XXXJDM is this needed? */
+	movl	%esi,%esp
+	addl	4096,%esp
 
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '2', (0xb8004)
-#endif
-
+	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
 
-	movl	%cr4, %eax
-	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT), %eax
-	movl	%eax, %cr4
+	movl	%cr4,%eax
+	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
+	movl	%eax,%cr4
 
-	/* Set long mode enable in EFER and enable syscall extensions */
-	movl	$MSR_EFER, %ecx
+	movl	$MSR_EFER,%ecx
 	rdmsr
-	xorl	%eax, %eax
-	orl	$(EFER_LME|EFER_SCE), %eax
+	xorl	%eax,%eax
+	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '3', (0xb8006)
-#endif
+	movl	%esi,%edx
+	addl	$wakeup_64_ptr,%edx
+	movl	%esi,%ecx
+	addl	$tmp_gdt64,%ecx
+	movl	WAKEUP_r_cr3(%esi),%eax
+	movl	%eax,%cr3
 
-	movl	tmp_pml4(%esi), %ecx
-	movl	%ecx, %cr3
+	movl	WAKEUP_r_cr0(%esi),%eax
+        movl	%eax,%cr0
+	jmp	1f
+1:
+	lgdt	(%ecx)
 
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '4', (0xb8008)
-#endif
+	ljmp	*(%edx)
 
-	movl	%cr0, %eax
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP), %eax
-	movl	%eax, %cr0
-	jmp	compat
-compat:
+wakeup_64_ptr:
+	.long   wakeup_64
+	.word   GSEL(GCODE_SEL, SEL_KPL)
 
-	movl	$GSEL(GDATA_SEL,SEL_KPL), %eax
-	movl	%eax, %ds
-	movl	%eax, %es
-	movl	%eax, %ss
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '5', (0xb800a)
-#endif
-
-	/* Load 64-bit GDT. */
-	lgdt	tmp_gdt64(%esi)
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '6', (0xb800c)
-#endif
-
-wakeup_sw64:
-
-	/* Jump to long mode segment. */
-	ljmpl	$GSEL(GCODE_SEL,SEL_KPL), $wakeup_64
-
-	.align	16
 	.code64
 wakeup_64:
 
-	nop
-	nop
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax 	#switch to new segment
+	movw	%ax,%ds
 
-	/* Re-initialize segment regsisters to be on the safe side. */
-	movl	$GSEL(GDATA_SEL,SEL_KPL), %eax
-	movl	%eax, %ds
-	movl	%eax, %es
-	movl	%eax, %gs
-	movl	%eax, %ss
-	movl	%eax, %fs
+	xorq	%rdi,%rdi
+	movl	%esi,%edi
 
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '7', (0xb800e)
-#endif
+	movq	WAKEUP_restorecpu(%rdi),%rbx
 
-	movq	previous_rsp(%rsi), %rsp
+	lgdt	WAKEUP_r_gdt(%rdi)
 
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '8', (0xb8010)
-#endif
+	jmp	*%rbx
 
-#if 1	/* XXXAD ?? */
-	/* Fixup TSS type field; 386 busy TSS (11) -> 386 available TSS (9) */
-#define TSS_TYPEFIX_MASK	0xf9
-	movq	physical_gdt+2(%rsi), %rbx
-	movzxw	previous_tr(%rsi), %rcx
-	leaq	(%rbx,%rcx),%rax	/* get TSS segment descriptor */
-	andb	$TSS_TYPEFIX_MASK, 5(%rax)
-#endif
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + '9', (0xb8012)
-#endif
-
-        /* Restore registers */
-	lgdt	previous_gdt(%rsi)
-	lidt	previous_idt(%rsi)
-        lldt	previous_ldt(%rsi)
-#if 0
-        ltr     previous_tr(%rsi)
-#endif
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + 'a', (0xb8014)
-#endif
-
-	movq	previous_cr2(%rsi), %rax
-	movq	%rax, %cr2
-	movq	previous_cr3(%rsi), %rdx
-	movq	previous_cr4(%rsi), %rax
-	movq	%rax, %cr4
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + 'b', (0xb8016)
-#endif
-
-        movw	previous_es(%rsi), %ax
-        movw	%ax, %es
-        movw	previous_fs(%rsi), %ax
-        movw	%ax, %fs
-        movw	previous_gs(%rsi), %ax
-        movw	%ax, %gs
-        movw	previous_ss(%rsi), %ax
-        movw	%ax, %ss
-        movq	where_to_recover(%rsi), %rbx
-        movw	previous_ds(%rsi), %ax
-
-#ifdef WAKECODE_VERBOSE
-	movw	$0x0200 + 'c', (0xb8018)
-#endif
-
-	/* Re-enable paging, %rdx loaded above */
-	movq	%rdx, %cr3
-	movq	previous_cr0(%rsi), %rcx
-	movq	%rcx, %cr0
-	jmp	1f
-1:	jmp	1f
-1:
-
-	/* New address space active - reload %ds */
-        movw	%ax, %ds
-        jmp	*%rbx
-
-beepon:
-	movb	$0xc0, %al
-	outb	%al, $0x42
-	movb	$0x04, %al
-	outb	%al, $0x42
-	inb	$0x61, %al
-	orb	$0x3, %al
-	outb	%al, $0x61
-	ret
-
-beepoff:
-	inb	$0x61, %al
-	andb	$0xfc, %al
-	outb	%al, $0x61
-	ret
-
+	.align	8
 tmp_gdt:
 	.word	0xffff
-	.long	tmp_gdtable
+	.long	0
 
+	.align	8, 0
 tmp_gdtable:
 	/* null */
 	.word	0, 0
@@ -357,78 +247,27 @@ tmp_gdtable:
 	.byte	0, 0x93, 0xcf, 0
 
 tmp_gdt64:
-	.word	0xffff
-	.long	tmp_gdtable64
+	.word 0xffff
+	.long 0
 
 tmp_gdtable64:
-	/* null */
-	.word	0, 0
-	.byte	0, 0, 0, 0
-	/* code */
-	.word	0xffff, 0
-	.byte	0, 0x9a, 0xaf, 0
-	/* data */
-	.word	0xffff, 0
-	.byte	0, 0x92, 0xcf, 0
-	
+	.quad 0x0000000000000000
+	.quad 0x00af9a000000ffff
+	.quad 0x00cf92000000ffff
+
 	.align	16, 0
-	.global	WAKEUP_physical_gdt
-WAKEUP_physical_gdt:
-physical_gdt:		.word 0
+	.global WAKEUP_r_cr0
+WAKEUP_r_cr0:		.quad 0
+	.global WAKEUP_r_cr3
+WAKEUP_r_cr3:		.quad 0
+
+	.global WAKEUP_r_gdt
+WAKEUP_r_gdt:		.word 0
 			.quad 0
-	.global WAKEUP_previous_cr2
-WAKEUP_previous_cr2:
-previous_cr2:		.quad 0
-	.global	WAKEUP_previous_cr3
-WAKEUP_previous_cr3:
-previous_cr3:		.quad 0
-	.global	WAKEUP_previous_cr4
-WAKEUP_previous_cr4:
-previous_cr4:		.quad 0
-	.global	WAKEUP_previous_cr0
-WAKEUP_previous_cr0:
-previous_cr0:		.quad 0
-	.global	WAKEUP_previous_tr
-WAKEUP_previous_tr:
-previous_tr:		.word 0
-	.global	WAKEUP_previous_gdt
-WAKEUP_previous_gdt:
-previous_gdt:		.word 0
-			.quad 0
-	.global	WAKEUP_previous_ldt
-WAKEUP_previous_ldt:
-previous_ldt:		.word 0
-	.global WAKEUP_previous_idt
-WAKEUP_previous_idt:
-previous_idt:		.word 0
-			.quad 0
-	.global WAKEUP_previous_ds
-WAKEUP_previous_ds:
-previous_ds:		.word 0
-	.global	WAKEUP_previous_es
-WAKEUP_previous_es:
-previous_es:		.word 0
-	.global	WAKEUP_previous_fs
-WAKEUP_previous_fs:
-previous_fs:		.word 0
-	.global	WAKEUP_previous_gs
-WAKEUP_previous_gs:
-previous_gs:		.word 0
-	.global	WAKEUP_previous_ss
-WAKEUP_previous_ss:
-previous_ss:		.word 0
-	.global	WAKEUP_previous_rsp
-WAKEUP_previous_rsp:
-previous_rsp:		.quad 0
-	.global WAKEUP_where_to_recover
-WAKEUP_where_to_recover:
-where_to_recover:	.quad 0
-	.global WAKEUP_tmp_pml4
-WAKEUP_tmp_pml4:
-tmp_pml4:		.quad 0
+	.global WAKEUP_restorecpu
+WAKEUP_restorecpu:	.quad 0
+
 	.global WAKEUP_vbios_reset
-WAKEUP_vbios_reset:
-vbios_reset:		.byte 0
-	.global	WAKEUP_beep_on_reset
-WAKEUP_beep_on_reset:
-beep_on_reset:		.byte 0
+WAKEUP_vbios_reset:	.byte 0
+	.global WAKEUP_beep_on_reset
+WAKEUP_beep_on_reset:	.byte 0
