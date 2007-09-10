@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2007/06/28 20:50:30 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.4.1 2007/09/10 10:54:42 skrll Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -682,6 +682,15 @@ switch_skipsave:
 
 	movl	$0,CPUVAR(RESCHED)
 
+	STIC(%ebx)
+	jz 1f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz 1f
+	pushl  CPUVAR(ILEVEL)
+	call	_C_LABEL(Xspllower) # process pending interrupts
+1:
+
 	/*
 	 *  Check for restartable atomic sequences (RAS)
 	 */
@@ -691,14 +700,6 @@ switch_skipsave:
 	jne	check_ras
 
 switch_return:
-	STIC(%ebx)
-	jz 1f
-	call	_C_LABEL(stipending)
-	testl	%eax,%eax
-	jz 1f
-	pushl  CPUVAR(ILEVEL)
-	call	_C_LABEL(Xspllower) # process pending interrupts
-1:
 	movl	%esi,%eax	# return 'oldlwp'
 	popl	%edi
 	popl	%esi

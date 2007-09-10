@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.103.2.1 2007/09/03 10:23:03 skrll Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.103.2.2 2007/09/10 10:56:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.2.1 2007/09/03 10:23:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.2.2 2007/09/10 10:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,8 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 
 	aiov.iov_base = (void *)buf;
@@ -246,6 +247,12 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 
 	FILE_USE(fp);
 
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		FILE_UNUSE(fp, l);
+		return error;
+	}
+
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
@@ -263,10 +270,6 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		if (error != 0)
 			goto out;
 	}
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
 
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)
@@ -390,7 +393,8 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
@@ -478,6 +482,12 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 
 	FILE_USE(fp);
 
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		FILE_UNUSE(fp, l);
+		return error;
+	}
+
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
@@ -495,10 +505,6 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		if (error != 0)
 			goto out;
 	}
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
 
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200 2007/07/09 20:52:32 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.200.4.1 2007/09/10 10:54:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2007/07/09 20:52:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.4.1 2007/09/10 10:54:40 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1513,7 +1513,6 @@ static int	sparc_bus_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 static void	sparc_bus_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
 
 /*
@@ -1575,8 +1574,6 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 	vm_prot_t pm_prot = VM_PROT_READ;
 	int err, map_little = 0;
 
-	if (iobase == 0UL)
-		iobase = IODEV_BASE;
 	if (io_space == NULL)
 		/*
 		 * And set up IOSPACE extents.

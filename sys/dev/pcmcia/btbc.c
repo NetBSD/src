@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.1.6.2 2007/09/03 10:21:55 skrll Exp $	*/
+/*	$NetBSD: btbc.c,v 1.1.6.3 2007/09/10 10:55:20 skrll Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.6.2 2007/09/03 10:21:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.6.3 2007/09/10 10:55:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -361,8 +361,6 @@ btbc_set_baudrate(struct btbc_softc *sc, int baud)
 	uint8_t param;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 
 	switch (baud) {
 	case 460800:

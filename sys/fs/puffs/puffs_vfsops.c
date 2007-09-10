@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.51.2.2 2007/09/03 10:22:56 skrll Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.51.2.3 2007/09/10 10:55:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.51.2.2 2007/09/03 10:22:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.51.2.3 2007/09/10 10:55:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -674,6 +674,9 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 void
 puffs_init()
 {
+
+	/* some checks depend on this */
+	KASSERT(VNOVAL == VSIZENOTSET);
 
 	malloc_type_attach(M_PUFFS);
 

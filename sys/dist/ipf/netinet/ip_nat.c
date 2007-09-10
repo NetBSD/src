@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.30 2007/06/16 10:52:28 martin Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.30.2.1 2007/09/10 10:55:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1669,8 +1669,6 @@ int logtype;
 	if (logtype != 0 && nat_logging != 0)
 		nat_log(nat, logtype);
 
-	MUTEX_ENTER(&ipf_nat_new);
-
 	/*
 	 * Take it as a general indication that all the pointers are set if
 	 * nat_pnext is set.
@@ -1715,15 +1713,18 @@ int logtype;
 	if (logtype == NL_EXPIRE)
 		nat_stats.ns_expire++;
 
-	nat->nat_ref--;
-	if (nat->nat_ref > 0) {
-		MUTEX_EXIT(&ipf_nat_new);
+	MUTEX_ENTER(&nat->nat_lock);
+	if (nat->nat_ref > 1) {
+		nat->nat_ref--;
+		MUTEX_EXIT(&nat->nat_lock);
 		return;
 	}
+	MUTEX_EXIT(&nat->nat_lock);
 
 	/*
-	 * At this point, nat_ref can be either 0 or -1
+	 * At this point, nat_ref is 1, doing "--" would make it 0..
 	 */
+	nat->nat_ref = 0;
 
 #ifdef	IPFILTER_SYNC
 	if (nat->nat_sync)
@@ -1750,7 +1751,6 @@ int logtype;
 
 	aps_free(nat->nat_aps);
 	nat_stats.ns_inuse--;
-	MUTEX_EXIT(&ipf_nat_new);
 
 	/*
 	 * If there's a fragment table entry too for this nat entry, then
@@ -4677,6 +4677,14 @@ ipnat_t **inp;
 /*                                                                          */
 /* Decrement the reference counter for this NAT table entry and free it if  */
 /* there are no more things using it.                                       */
+/*                                                                          */
+/* IF nat_ref == 1 when this function is called, then we have an orphan nat */
+/* structure *because* it only gets called on paths _after_ nat_ref has been*/
+/* incremented.  If nat_ref == 1 then we shouldn't decrement it here        */
+/* because nat_delete() will do that and send nat_ref to -1.                */
+/*                                                                          */
+/* Holding the lock on nat_lock is required to serialise nat_delete() being */
+/* called from a NAT flush ioctl with a deref happening because of a packet.*/
 /* ------------------------------------------------------------------------ */
 void fr_natderef(natp)
 nat_t **natp;
@@ -4685,10 +4693,17 @@ nat_t **natp;
 
 	nat = *natp;
 	*natp = NULL;
+
+	MUTEX_ENTER(&nat->nat_lock);
+	if (nat->nat_ref > 1) {
+		nat->nat_ref--;
+		MUTEX_EXIT(&nat->nat_lock);
+		return;
+	}
+	MUTEX_EXIT(&nat->nat_lock);
+
 	WRITE_ENTER(&ipf_nat);
-	nat->nat_ref--;
-	if (nat->nat_ref == 0)
-		nat_delete(nat, NL_EXPIRE);
+	nat_delete(nat, NL_EXPIRE);
 	RWLOCK_EXIT(&ipf_nat);
 }
 

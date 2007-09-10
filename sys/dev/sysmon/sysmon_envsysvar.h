@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.3.6.2 2007/09/03 10:22:00 skrll Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.3.6.3 2007/09/10 10:55:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,13 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
+enum sme_description_types {
+	SME_DESC_UNITS = 1,
+	SME_DESC_STATES,
+	SME_DESC_DRIVE_STATES,
+	SME_DESC_BATTERY_STATES
+};
+
 #ifdef ENVSYS_DEBUG
 #define DPRINTF(x)	printf x
 #else
@@ -91,15 +98,16 @@ typedef struct sme_event_drv {
 	int			powertype;
 } sme_event_drv_t;
 
+struct sme_description_table {
+	int 		type;
+	int 		crittype;
+	const char 	*desc;
+};
+
 /* common */
-extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
-extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
-
-/* mutex to intialize/destroy the sysmon envsys events framework */
-extern kmutex_t sme_event_init_mtx;
-
-/* condition variable to wait for the worker thread to finish */
-extern	kcondvar_t sme_event_cv;
+extern	kmutex_t sme_mtx; 		/* mutex for devices/events */
+extern 	kmutex_t sme_event_init_mtx;	/* init/destroy the events framework */
+extern 	kcondvar_t sme_cv;		/* to wait for devices/events working */
 
 /* linked list for the sysmon envsys devices */
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
@@ -108,8 +116,10 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
 LIST_HEAD(, sme_event) sme_events_list;
 
 /* functions to handle sysmon envsys devices */
-void	sme_add_sensor_dictionary(struct sysmon_envsys *, prop_array_t,
-			    	  prop_dictionary_t, envsys_data_t *);
+sme_event_drv_t *sme_add_sensor_dictionary(struct sysmon_envsys *,
+					   prop_array_t,
+			    	  	   prop_dictionary_t,
+					   envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
@@ -130,5 +140,7 @@ int	sme_sensor_upbool(prop_dictionary_t, const char *, bool);
 int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
 int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
 int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
+
+const struct	sme_description_table *sme_get_description_table(int);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */

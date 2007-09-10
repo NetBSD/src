@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.118.2.1 2007/08/15 13:49:09 skrll Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.118.2.2 2007/09/10 10:55:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.118.2.1 2007/08/15 13:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.118.2.2 2007/09/10 10:55:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -985,8 +985,8 @@ again:
 		if (uip->ui_uid == uid) {
 			mutex_exit(&uihashtbl_lock);
 			if (newuip) {
-				free(newuip, M_PROC);
 				mutex_destroy(&newuip->ui_lock);
+				free(newuip, M_PROC);
 			}
 			return uip;
 		}

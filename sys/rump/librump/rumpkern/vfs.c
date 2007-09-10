@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.10.2.3 2007/09/03 10:23:56 skrll Exp $	*/
+/*	$NetBSD: vfs.c,v 1.10.2.4 2007/09/10 10:56:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -297,6 +297,8 @@ namei(struct nameidata *ndp)
 	}
 
 	vp = makevnode(&sb_node, cnp->cn_pnbuf);
+	if (cnp->cn_flags & LOCKLEAF)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	ndp->ni_vp = vp;
 
 	return 0;

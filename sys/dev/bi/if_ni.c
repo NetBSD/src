@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.30.10.1 2007/09/03 10:20:13 skrll Exp $ */
+/*	$NetBSD: if_ni.c,v 1.30.10.2 2007/09/10 10:54:49 skrll Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.30.10.1 2007/09/03 10:20:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.30.10.2 2007/09/10 10:54:49 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -701,7 +701,6 @@ niioctl(ifp, cmd, data)
 	void *data;
 {
 	struct ni_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 

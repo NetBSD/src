@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.113.4.2 2007/09/03 10:19:00 skrll Exp $
+# $NetBSD: ALL,v 1.113.4.3 2007/09/10 10:54:19 skrll Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.113.4.2 $"
+#ident 		"ALL-$Revision: 1.113.4.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -174,17 +174,17 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	SYSVBFS		# System V boot file system
-file-system	PTYFS		# /dev/ptm support
-file-system	TMPFS		# Efficient memory file-system
-file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	PUFFS		# experimental - Userspace file system support
-file-system	HFS		# experimental - Apple HFS+ file system
-file-system	EFS		# Silicon Graphics Extent File System
-file-system	FILECORE	# Acorn filecore file system
-file-system	ADOSFS		# AmigaDOS file system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	SYSVBFS		# System V boot file system
+file-system 	PTYFS		# /dev/ptm support
+file-system 	TMPFS		# Efficient memory file-system
+file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	PUFFS		# experimental - Userspace file system support
+file-system 	HFS		# experimental - Apple HFS+ file system
+file-system 	EFS		# Silicon Graphics Extent File System
+file-system 	FILECORE	# Acorn filecore file system
+file-system 	ADOSFS		# AmigaDOS file system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -1134,6 +1134,9 @@ upl*	at uhub? port ?
 # Serial adapters
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?

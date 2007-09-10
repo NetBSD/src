@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.6.2.1 2007/08/15 13:49:43 skrll Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.6.2.2 2007/09/10 10:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.6.2.1 2007/08/15 13:49:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.6.2.2 2007/09/10 10:56:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.6.2.1 2007/08/15 13:49:43 skrll Exp 
 #include <netbt/sco.h>
 
 static void hci_event_inquiry_result(struct hci_unit *, struct mbuf *);
+static void hci_event_rssi_result(struct hci_unit *, struct mbuf *);
 static void hci_event_command_status(struct hci_unit *, struct mbuf *);
 static void hci_event_command_compl(struct hci_unit *, struct mbuf *);
 static void hci_event_con_compl(struct hci_unit *, struct mbuf *);
@@ -165,6 +166,10 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 		hci_event_inquiry_result(unit, m);
 		break;
 
+	case HCI_EVENT_RSSI_RESULT:
+		hci_event_rssi_result(unit, m);
+		break;
+
 	case HCI_EVENT_CON_COMPL:
 		hci_event_con_compl(unit, m);
 		break;
@@ -213,7 +218,6 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 	case HCI_EVENT_PAGE_SCAN_MODE_CHANGE:
 	case HCI_EVENT_PAGE_SCAN_REP_MODE_CHANGE:
 	case HCI_EVENT_FLOW_SPECIFICATION_COMPL:
-	case HCI_EVENT_RSSI_RESULT:
 	case HCI_EVENT_READ_REMOTE_EXTENDED_FEATURES:
 	case HCI_EVENT_SCO_CON_CHANGED:
 	case HCI_EVENT_BT_LOGO:
@@ -402,6 +406,7 @@ static void
 hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_inquiry_result_ep ep;
+	hci_inquiry_response ir;
 	struct hci_memo *memo;
 	bdaddr_t bdaddr;
 
@@ -413,7 +418,8 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		m_copydata(m, 0, sizeof(bdaddr_t), &bdaddr);
+		KASSERT(m->m_pkthdr.len >= sizeof(bdaddr));
+		m_copydata(m, 0, sizeof(bdaddr), &bdaddr);
 
 		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
 			bdaddr.b[5], bdaddr.b[4], bdaddr.b[3],
@@ -428,15 +434,70 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 				break;
 			}
 
+			bdaddr_copy(&memo->bdaddr, &bdaddr);
 			LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
 		}
 
-		microtime(&memo->time);
-		m_copydata(m, 0, sizeof(hci_inquiry_response), &memo->response);
-		m_adj(m, sizeof(hci_inquiry_response));
+		KASSERT(m->m_pkthdr.len >= sizeof(ir));
+		m_copydata(m, 0, sizeof(ir), &ir);
+		m_adj(m, sizeof(ir));
 
-		memo->response.clock_offset =
-		    le16toh(memo->response.clock_offset);
+		microtime(&memo->time);
+		memo->page_scan_rep_mode = ir.page_scan_rep_mode;
+		memo->page_scan_mode = ir.page_scan_mode;
+		memo->clock_offset = ir.clock_offset;
+	}
+}
+
+/*
+ * Inquiry Result with RSSI
+ *
+ * as above but different packet when RSSI result is enabled
+ */
+static void
+hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_rssi_result_ep ep;
+	hci_rssi_response rr;
+	struct hci_memo *memo;
+	bdaddr_t bdaddr;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	DPRINTFN(1, "%d response%s\n", ep.num_responses,
+				(ep.num_responses == 1 ? "" : "s"));
+
+	while(ep.num_responses--) {
+		KASSERT(m->m_pkthdr.len >= sizeof(bdaddr));
+		m_copydata(m, 0, sizeof(bdaddr), &bdaddr);
+
+		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
+			bdaddr.b[5], bdaddr.b[4], bdaddr.b[3],
+			bdaddr.b[2], bdaddr.b[1], bdaddr.b[0]);
+
+		memo = hci_memo_find(unit, &bdaddr);
+		if (memo == NULL) {
+			memo = malloc(sizeof(struct hci_memo),
+				M_BLUETOOTH, M_NOWAIT | M_ZERO);
+			if (memo == NULL) {
+				DPRINTFN(0, "out of memo memory!\n");
+				break;
+			}
+
+			bdaddr_copy(&memo->bdaddr, &bdaddr);
+			LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
+		}
+
+		KASSERT(m->m_pkthdr.len >= sizeof(rr));
+		m_copydata(m, 0, sizeof(rr), &rr);
+		m_adj(m, sizeof(rr));
+
+		microtime(&memo->time);
+		memo->page_scan_rep_mode = rr.page_scan_rep_mode;
+		memo->page_scan_mode = 0;
+		memo->clock_offset = rr.clock_offset;
 	}
 }
 

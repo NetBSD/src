@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20.2.2 2007/09/03 10:22:00 skrll Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.2.3 2007/09/10 10:55:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.2.2 2007/09/03 10:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.2.3 2007/09/10 10:55:24 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_USER_CRITMAX,	"critical-over" },
 	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
 	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
-	{ PENVSYS_EVENT_DRIVE_STCHANGED,"state-changed" },
+	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
 	{ -1, NULL }
 };
 
@@ -304,7 +304,7 @@ sysmon_power_daemon_task(void *pev_data, int event)
 	case PENVSYS_EVENT_USER_CRITMAX:
 	case PENVSYS_EVENT_USER_CRITMIN:
 	case PENVSYS_EVENT_BATT_USERCAP:
-	case PENVSYS_EVENT_DRIVE_STCHANGED:
+	case PENVSYS_EVENT_STATE_CHANGED:
 	    {
 		struct penvsys_state *penvsys =
 		    (struct penvsys_state *)pev_data;
@@ -623,7 +623,7 @@ do {									\
 
 		SETPROP("driver-name", pes->pes_dvname);
 		SETPROP("sensor-name", pes->pes_sensname);
-		SETPROP("drive-state-desc", pes->pes_statedesc);
+		SETPROP("state-description", pes->pes_statedesc);
 
 		for (i = 0; peevent[i].type != -1; i++)
 			if (peevent[i].type == event)
@@ -690,21 +690,17 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 	switch (pes->pes_type) {
 	case PENVSYS_TYPE_BATTERY:
 		switch (event) {
-		case PENVSYS_EVENT_WARNUNDER:
-			mystr = "warning capacity";
-			PENVSYS_SHOWSTATE(mystr);
+		case PENVSYS_EVENT_STATE_CHANGED:
+			printf("%s: state changed on '%s' to '%s'\n",
+			    pes->pes_dvname, pes->pes_sensname,
+			    pes->pes_statedesc);
 			break;
-		case PENVSYS_EVENT_CRITUNDER:
-			mystr = "low capacity";
-			PENVSYS_SHOWSTATE(mystr);
-			break;
-		case PENVSYS_EVENT_CRITICAL:
 		case PENVSYS_EVENT_BATT_USERCAP:
 			mystr = "critical capacity";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_NORMAL:
-			printf("%s: acceptable capacity on '%s'\n",
+			printf("%s: normal capacity on '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname);
 			break;
 		}
@@ -748,7 +744,7 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 		break;
 	case PENVSYS_TYPE_DRIVE:
 		switch (event) {
-		case PENVSYS_EVENT_DRIVE_STCHANGED:
+		case PENVSYS_EVENT_STATE_CHANGED:
 			printf("%s: state changed on '%s' to '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname,
 			    pes->pes_statedesc);

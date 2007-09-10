@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.18.2.2 2007/09/03 10:14:16 skrll Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.18.2.3 2007/09/10 10:54:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,12 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.18.2.2 2007/09/03 10:14:16 skrll Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.18.2.3 2007/09/10 10:54:07 skrll Exp $");
 
 #include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+#ifndef	PTHREAD__HAVE_ATOMIC
 
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
 __strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
@@ -430,3 +432,5 @@ pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
 
 	return 0;
 }
+
+#endif	/* !PTHREAD__HAVE_ATOMIC */
