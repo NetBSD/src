@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11 2007/08/26 23:51:08 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.12 2007/09/10 19:11:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -212,8 +212,9 @@ device_class(device_t dev)
 void
 getmicrouptime(struct timeval *tvp)
 {
+	int error;
 
-	rumpuser_gettimeofday(tvp);
+	rumpuser_gettimeofday(tvp, &error);
 }
 
 int
@@ -261,8 +262,9 @@ void
 nanotime(struct timespec *ts)
 {
 	struct timeval tv;
+	int error;
 
-	rumpuser_gettimeofday(&tv);
+	rumpuser_gettimeofday(&tv, &error);
 	TIMEVAL_TO_TIMESPEC(&tv, ts);
 }
 
@@ -277,15 +279,17 @@ getnanotime(struct timespec *ts)
 void
 microtime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void
 getmicrotime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void

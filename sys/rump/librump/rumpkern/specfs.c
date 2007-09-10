@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.6 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.7 2007/09/10 19:11:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -89,7 +89,9 @@ rump_specopen(void *v)
 		memset(&sp->rsp_dl, 0, sizeof(sp->rsp_dl));
 
 		if (rumpuser_stat(sp->rsp_path, &sb, &error) == -1) {
-			rumpuser_close(fd);
+			int dummy;
+
+			rumpuser_close(fd, &dummy);
 			return error;
 		}
 		sp->rsp_pi.p_size = sb.st_size >> DEV_BSHIFT;
@@ -145,8 +147,9 @@ rump_specclose(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rump_specpriv *sp = vp->v_data;
+	int error;
 
-	rumpuser_close(sp->rsp_fd);
+	rumpuser_close(sp->rsp_fd, &error);
 	return 0;
 }
 
