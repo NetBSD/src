@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.49 2007/09/10 14:25:17 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.50 2007/09/10 17:39:14 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -174,11 +174,11 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
-		err(EXIT_FAILURE, "open");
-
 	if (argc > 0)
 		usage();
+
+	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
+		err(EXIT_FAILURE, "open");
 
 	if (flags & ENVSYS_XFLAG) {
 		rval = prop_dictionary_recv_ioctl(fd,
@@ -197,7 +197,8 @@ int main(int argc, char **argv)
 		if (!sensors || !mydevname) {
 			(void)fprintf(stderr, "%s: -m cannot be used "
 			    "without -s and -d\n", getprogname());
-			return EINVAL;
+			rval = EINVAL;
+			goto out;
 		}
 		rval = send_dictionary(fd);
 		goto out;
