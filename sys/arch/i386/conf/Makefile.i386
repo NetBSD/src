@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.150.8.2 2007/09/09 20:11:42 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.150.8.3 2007/09/10 20:36:28 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -88,7 +88,6 @@ apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 acpi_wakeup_low.o: assym.h
 kvm86call.o: assym.h
-acpi_wakeup_low.o: assym.h
 clock.o: config_time.h
 
 ##
