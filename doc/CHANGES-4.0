@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.255 2007/09/01 09:35:35 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.256 2007/09/10 19:25:30 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9441,3 +9441,8 @@ sys/sys/param.h					patch
 
 	Welcome to NetBSD 4.0_RC1.
 	[liamjfoy]
+
+usr.sbin/rtsold/rtsol.c				1.14
+
+	Fix typo from Wouter Schoot. PR#36931
+	[jnemeth, ticket #867]
