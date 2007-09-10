@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.8 2007/09/09 23:17:14 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.9 2007/09/10 11:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.8 2007/09/09 23:17:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.9 2007/09/10 11:13:17 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1578,17 +1578,15 @@ pool_reclaim(struct pool *pp)
 		(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, PR_NOWAIT);
 	}
 
+	/* Reclaim items from the pool's cache (if any). */
+	if (pp->pr_cache != NULL)
+		pool_cache_invalidate(pp->pr_cache);
+
 	if (mutex_tryenter(&pp->pr_lock) == 0)
 		return (0);
 	pr_enter(pp, file, line);
 
 	LIST_INIT(&pq);
-
-	/*
-	 * Reclaim items from the pool's caches.
-	 */
-	if (pp->pr_cache != NULL)
-		pool_cache_invalidate(pp->pr_cache);
 
 	getmicrotime(&curtime);
 
