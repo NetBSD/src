@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.50 2007/09/10 17:39:14 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.51 2007/09/10 17:40:44 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -252,10 +252,10 @@ send_dictionary(int fd)
 	/* 
 	 * part 1: kernel dictionary.
 	 *
-	 * This parts consists in parsing the kernel dictionary
-	 * to check for unknown device or sensor and we must
-	 * know what type of sensor are we trying to set
-	 * a critical condition.
+	 * This part consists in parsing the kernel dictionary
+	 * to check for unknown devices or sensors. This is to 
+	 * know what type of sensor are we trying to set a
+	 * a critical limit.
 	 */
 	error = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
 	if (error)
