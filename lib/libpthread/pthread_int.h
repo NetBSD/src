@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34 2006/10/03 09:37:07 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.4.1 2007/09/10 05:24:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -351,6 +351,12 @@ int	pthread__find(pthread_t self, pthread_t target);
 	       return (err);						\
 	} 								\
         } while (/*CONSTCOND*/0)
+
+/*
+ * You must hold t->pt_statelock when making this check.
+ */
+#define pthread_check_defsig(t) 					\
+	__predict_false((t)->pt_flags & PT_FLAG_SIGDEFERRED)
 
 
 

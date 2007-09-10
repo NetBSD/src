@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.37.6.1 2007/09/10 05:24:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.1 2007/09/10 05:24:54 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -229,7 +229,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__abort();
 	}
 	next = pthread__next(self);
+	pthread_spinlock(self, &next->pt_statelock);
 	next->pt_state = PT_STATE_RUNNING;
+	next->pt_vpid = self->pt_vpid;
+	pthread_spinunlock(self, &next->pt_statelock);
 	SDPRINTF(("(up %p) switching to %p (uc: %c %p pc: %lx)\n", 
 		     self, next, PUC(next), pthread__uc_pc(UC(next))));
 	pthread__upcall_switch(self, next);
