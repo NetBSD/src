@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.46 2007/09/04 16:54:37 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.47 2007/09/10 13:58:50 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -177,63 +177,48 @@ int main(int argc, char **argv)
 	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "open");
 
-	if (!interval && (flags & ENVSYS_XFLAG)) {
+	if (argc > 0)
+		usage();
+
+	if (flags & ENVSYS_XFLAG) {
 		rval = prop_dictionary_recv_ioctl(fd,
-		    			          ENVSYS_GETDICTIONARY,
-					          &dict);
+						  ENVSYS_GETDICTIONARY,
+						  &dict);
 		if (rval) {
 			(void)printf("%s: %s\n", getprogname(),
 			    strerror(rval));
 			goto out;
 		}
-	}
-
-	if (argc == 1) {
-		rval = parse_dictionary(fd);
+		buf = prop_dictionary_externalize(dict);
+		(void)printf("%s", buf);
+		free(buf);
 
 	} else if (userreq) {
 		if (!sensors || !mydevname) {
-			(void)fprintf(stderr, "%s: -m cannot be used without "
-			    "-s and -d\n", getprogname());
+			(void)fprintf(stderr, "%s: -m cannot be used "
+			    "without -s and -d\n", getprogname());
 			return EINVAL;
 		}
-			
 		rval = send_dictionary(fd);
 		goto out;
 
 	} else if (interval) {
 		for (;;) {
 			if (sensors && !mydevname) {
-				(void)fprintf(stderr, "%s: -s cannot be used "
-				    "without -d\n", getprogname());
+				(void)fprintf(stderr, "%s: -s cannot "
+				    "be used without -d\n",
+				    getprogname());
 				rval = EINVAL;
 				goto out;
 			}
-
 			rval = parse_dictionary(fd);
 			if (rval)
 				goto out;
 			(void)fflush(stdout);
 			(void)sleep(interval);
 		}
-
-	} else if (!interval) {
-		if (flags & ENVSYS_XFLAG) {
-			buf = prop_dictionary_externalize(dict);
-			(void)printf("%s", buf);
-			free(buf);
-		} else {
-			if (sensors && !mydevname) {
-				(void)fprintf(stderr, "%s: -s cannot be used "
-				    "without -d\n", getprogname());
-				rval = EINVAL;
-				goto out;
-			}
-			rval = parse_dictionary(fd);
-		}
-
 	} else
-		usage();
+		rval = parse_dictionary(fd);
 
 out:
 	if (sensors)
@@ -242,8 +227,6 @@ out:
 		free(userreq);
 	if (mydevname)
 		free(mydevname);
-	if (gesen)
-		free(gesen);
 	(void)close(fd);
 	return rval;
 }
