@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.48 2007/09/10 14:15:11 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.49 2007/09/10 14:25:17 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -598,10 +598,8 @@ find_sensors(prop_array_t array)
 	prop_string_t state, desc = NULL;
 	struct envsys_sensor *esen = NULL;
 	int rval = 0;
-	size_t oldsize;
 	char *str = NULL;
 
-	oldsize = newsize;
 	newsize += prop_array_count(array) * sizeof(*gesen);
 	esen = realloc(gesen, newsize);
 	if (esen == NULL) {
