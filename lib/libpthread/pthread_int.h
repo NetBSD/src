@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.52 2007/09/08 22:49:50 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.53 2007/09/10 11:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@ void	pthread_spinunlock(pthread_spin_t *);
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
+int	pthread__simple_locked_p(__cpu_simple_lock_t *);
 void	pthread__simple_lock_init(__cpu_simple_lock_t *);
 int	pthread__simple_lock_try(__cpu_simple_lock_t *);
 void	pthread__simple_unlock(__cpu_simple_lock_t *);

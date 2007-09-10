@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.3 2007/09/09 20:13:23 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.4 2007/09/10 11:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.3 2007/09/09 20:13:23 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.4 2007/09/10 11:34:05 skrll Exp $");
 
 #include <errno.h>
 #include <limits.h>
