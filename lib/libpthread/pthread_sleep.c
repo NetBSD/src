@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.7.6.1 2007/09/10 05:24:54 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.7.6.1 2007/09/10 05:24:54 wrstuden Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -116,6 +116,13 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 			pthread_spinunlock(self, &self->pt_statelock);
 			pthread_spinunlock(self, &pt_nanosleep_lock);
 			pthread_exit(PTHREAD_CANCELED);
+		}
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &pt_nanosleep_lock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &pt_nanosleep_lock);
+			pthread_spinlock(self, &self->pt_statelock);
 		}
 		pthread__alarm_add(self, &alarm, &sleeptime,
 		    pthread__nanosleep_callback, self);

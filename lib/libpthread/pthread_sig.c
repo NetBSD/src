@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.1 2007/09/10 05:24:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47 2006/11/24 19:46:58 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.1 2007/09/10 05:24:54 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -266,6 +266,9 @@ __sigsuspend14(const sigset_t *sigmask)
 		pthread_spinunlock(self, &pt_sigsuspended_lock);
 		pthread_exit(PTHREAD_CANCELED);
 	}
+	if (pthread_check_defsig(self)) {
+		/* WRS Hmmm... how to handle... */
+	}
 	pthread_sigmask(SIG_SETMASK, sigmask, &oldmask);
 
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
@@ -399,6 +402,9 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 
  block:
 		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			/* WRS Hmmm... how to handle... */
+		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = &pt_sigwaiting_cond;
 		self->pt_sleepq = &pt_sigwaiting;
@@ -842,6 +848,9 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * make the target runnable but do not deliver the signal.
 		 * Otherwise record the signal for later delivery.
 		 * XXX not MPsafe.
+		 * WRS - how is it not MP safe?
+		 * Hmm... We probably should hold the target's pt_statelock,
+		 * not our own.
 		 */
 		pthread_spinlock(self, &self->pt_statelock);
 		if (target->pt_state == PT_STATE_BLOCKED_QUEUE &&
@@ -894,6 +903,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 */
 		__sigaddset14(&target->pt_sigblocked, si->si_signo);
 		__sigaddset14(&target->pt_sigmask, si->si_signo);
+
 		pthread_spinlock(self, &target->pt_flaglock);
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
 		pthread_spinunlock(self, &target->pt_flaglock);
@@ -1019,9 +1029,14 @@ pthread__signal_deferred(pthread_t self, pthread_t t)
 	while ((i = firstsig(&t->pt_sigblocked)) != 0) {
 		__sigdelset14(&t->pt_sigblocked, i);
 		si.si_signo = i;
-		pthread__deliver_signal(self, t, &si);
+		if (self == t)
+			pthread__kill_self(self, &si);
+		else
+			pthread__deliver_signal(self, t, &si);
 	}
+	pthread_spinlock(self, &t->pt_flaglock);
 	t->pt_flags &= ~PT_FLAG_SIGDEFERRED;
+	pthread_spinunlock(self, &t->pt_flaglock);
 
 	pthread_spinunlock(self, &t->pt_siglock);
 }

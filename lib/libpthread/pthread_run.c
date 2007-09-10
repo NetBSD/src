@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -73,7 +73,16 @@ sched_yield(void)
 		self = pthread__self();
 		SDPRINTF(("(sched_yield %p) yielding\n", self));
 		pthread_spinlock(self, &pthread__runqueue_lock);
+		pthread_spinlock(self, &self->pt_statelock);
+		while (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &pthread__runqueue_lock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &pthread__runqueue_lock);
+			pthread_spinlock(self, &self->pt_statelock);
+		}
 		self->pt_state = PT_STATE_RUNNABLE;
+		pthread_spinunlock(self, &self->pt_statelock);
 		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
 		/*
 		 * There will always be at least one thread on the runqueue,
@@ -81,13 +90,17 @@ sched_yield(void)
 		 */
 	        next = PTQ_FIRST(&pthread__runqueue);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
+		pthread_spinlock(self, &next->pt_statelock);
 		next->pt_state = PT_STATE_RUNNING;
 		if (next != self) {
 			next->pt_vpid = self->pt_vpid;
+			pthread_spinunlock(self, &next->pt_statelock);
 			pthread__locked_switch(self, next,
 			    &pthread__runqueue_lock);
-		} else
+		} else {
+			pthread_spinunlock(self, &next->pt_statelock);
 			pthread_spinunlock(self, &pthread__runqueue_lock);
+		}
 	}
 
 	return 0;
@@ -101,7 +114,10 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 	pthread_t next;
 
 	next = pthread__next(self);
+	pthread_spinlock(self, &next->pt_statelock);
 	next->pt_state = PT_STATE_RUNNING;
+	next->pt_vpid = self->pt_vpid;
+	pthread_spinunlock(self, &next->pt_statelock);
 	SDPRINTF(("(calling locked_switch %p, %p) spinlock %d, %d\n",
  		self, next, self->pt_spinlocks, next->pt_spinlocks));
 	pthread__locked_switch(self, next, queuelock);
@@ -132,7 +148,6 @@ pthread__next(pthread_t self)
 		pthread__assert(next->pt_type == PT_THREAD_IDLE);
 		SDPRINTF(("(next %p) returning idle thread %p\n", self, next));
 	}
-	next->pt_vpid = self->pt_vpid;
 	pthread_spinunlock(self, &pthread__runqueue_lock);
 
 	return next;

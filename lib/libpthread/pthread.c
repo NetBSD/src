@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.48 2006/04/24 18:39:36 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.48.6.1 2007/09/10 05:24:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.48 2006/04/24 18:39:36 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.48.6.1 2007/09/10 05:24:51 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -690,6 +690,14 @@ pthread_join(pthread_t thread, void **valptr)
 			pthread_spinunlock(self, &self->pt_statelock);
 			pthread_spinunlock(self, &thread->pt_join_lock);
 			pthread_exit(PTHREAD_CANCELED);
+		}
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &thread->pt_join_lock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &thread->pt_flaglock);
+			pthread_spinlock(self, &thread->pt_join_lock);
+			continue;
 		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = thread;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9 2005/10/19 02:15:03 chs Exp $	*/
+/*	$NetBSD: sem.c,v 1.9.6.1 2007/09/10 05:24:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.9 2005/10/19 02:15:03 chs Exp $");
+__RCSID("$NetBSD: sem.c,v 1.9.6.1 2007/09/10 05:24:54 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -330,6 +330,13 @@ sem_wait(sem_t *sem)
 		if ((*sem)->usem_count > 0) {
 			pthread_spinunlock(self, &self->pt_statelock);
 			break;
+		}
+
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &(*sem)->usem_interlock);
+			pthread__signal_deferred(self, self);
+			continue;
 		}
 
 		PTQ_INSERT_TAIL(&(*sem)->usem_waiters, self, pt_sleep);
