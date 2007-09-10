@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.38.14.1 2007/09/03 10:18:21 skrll Exp $ */
+/*	$NetBSD: if_es.c,v 1.38.14.2 2007/09/10 10:54:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.38.14.1 2007/09/03 10:18:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.38.14.2 2007/09/10 10:54:17 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -961,7 +961,7 @@ esstart(struct ifnet *ifp)
 }
 
 int
-esioctl(register struct ifnet *ifp, u_long command, void *data)
+esioctl(register struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct es_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
@@ -970,7 +970,7 @@ esioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1055,7 +1055,7 @@ esioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

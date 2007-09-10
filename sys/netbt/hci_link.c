@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.12 2007/07/09 21:11:10 ad Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.12.2.1 2007/09/10 10:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.12 2007/07/09 21:11:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.12.2.1 2007/09/10 10:56:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,9 +96,9 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 		memo = hci_memo_find(unit, bdaddr);
 		if (memo != NULL) {
-			cp.page_scan_rep_mode = memo->response.page_scan_rep_mode;
-			cp.page_scan_mode = memo->response.page_scan_mode;
-			cp.clock_offset = htole16(memo->response.clock_offset);
+			cp.page_scan_rep_mode = memo->page_scan_rep_mode;
+			cp.page_scan_mode = memo->page_scan_mode;
+			cp.clock_offset = memo->clock_offset;
 		}
 
 		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)

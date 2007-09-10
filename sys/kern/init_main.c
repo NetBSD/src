@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.307.2.2 2007/09/03 10:22:57 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.307.2.3 2007/09/10 10:55:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307.2.2 2007/09/03 10:22:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307.2.3 2007/09/10 10:55:55 skrll Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307.2.2 2007/09/03 10:22:57 skrll Ex
 #include <sys/uuid.h>
 #include <sys/extent.h>
 #include <sys/disk.h>
+#include <sys/mqueue.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -379,6 +380,9 @@ main(void)
 
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
+
+	/* Initialize message queues. */
+	mqueue_sysinit();
 
 	/* Initialize the system monitor subsystems. */
 #if NSYSMON_TASKQ > 0

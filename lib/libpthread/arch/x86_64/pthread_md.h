@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4.8.1 2007/09/10 10:54:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,5 +102,9 @@ pthread__sp(void)
 	/*LINTED precision loss */					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;	\
 	} while (/*CONSTCOND*/0)
+
+#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	PTHREAD__CHEAP_UNLOCK
+#define	PTHREAD__HAVE_ATOMIC
 
 #endif /* _LIB_PTHREAD_X86_64_MD_H */

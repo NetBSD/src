@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.22 2007/07/09 21:10:45 ad Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.22.2.1 2007/09/10 10:54:11 skrll Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.22 2007/07/09 21:10:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.22.2.1 2007/09/10 10:54:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -783,6 +783,9 @@ extern u_int64_t cycles_per_usec;	/* alpha cpu clock frequency */
 void
 init_machclk(void)
 {
+
+	callout_init(&tbr_callout, 0);
+
 	machclk_usepcc = 1;
 
 #if (!defined(__i386__) && !defined(__alpha__)) || defined(ALTQ_NOPCC)
@@ -856,8 +859,6 @@ init_machclk(void)
 	}
 
 	machclk_per_tick = machclk_freq / hz;
-
-	callout_init(&tbr_callout, 0);
 
 #ifdef ALTQ_DEBUG
 	printf("altq: CPU clock: %uHz\n", machclk_freq);

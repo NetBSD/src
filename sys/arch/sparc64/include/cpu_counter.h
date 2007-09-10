@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.3 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.3.38.1 2007/09/10 10:54:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 
-	return (cpu_clockrate[0]);
+	return (curcpu()->ci_cpu_clockrate[0]);
 }
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.37 2007/05/01 01:01:36 rmind Exp $	*/
+/*	$NetBSD: unistd.h,v 1.37.2.1 2007/09/10 10:56:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,6 +83,8 @@
 #define	_POSIX_MEMLOCK_RANGE	1
 				/* memory access protections */
 #define	_POSIX_MEMORY_PROTECTION 1
+				/* message passing is available */
+#define	_POSIX_MESSAGE_PASSING	200112L
 				/* monotonic clock */
 #define	_POSIX_MONOTONIC_CLOCK	200112L
 				/* threads */
@@ -201,6 +203,9 @@
 #define	_SC_ASYNCHRONOUS_IO	50
 #define	_SC_AIO_LISTIO_MAX	51
 #define	_SC_AIO_MAX		52
+#define	_SC_MESSAGE_PASSING	53
+#define	_SC_MQ_OPEN_MAX		54
+#define	_SC_MQ_PRIO_MAX		55
 
 /* configurable system strings */
 #define	_CS_PATH		 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.46.14.1 2007/09/03 10:19:39 skrll Exp $ */
+/*	$NetBSD: if_ie.c,v 1.46.14.2 2007/09/10 10:54:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46.14.1 2007/09/03 10:19:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46.14.2 2007/09/10 10:54:41 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1515,7 +1515,6 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();

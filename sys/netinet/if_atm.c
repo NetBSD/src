@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.23.10.2 2007/09/03 10:23:42 skrll Exp $       */
+/*      $NetBSD: if_atm.c,v 1.23.10.3 2007/09/10 10:56:15 skrll Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.23.10.2 2007/09/03 10:23:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.23.10.3 2007/09/10 10:56:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -112,12 +112,16 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			struct sockaddr *sa;
+			union {
+				struct sockaddr sa;
+				struct sockaddr_dl sdl;
+				struct sockaddr_storage ss;
+			} u;
 
-			sa = sockaddr_dl_alloc(ifp->if_index, ifp->if_type,
-			    NULL, namelen, NULL, addrlen, M_WAITOK);
-			rt_setgate(rt, sa);
-			sockaddr_free(sa);
+			sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+			    ifp->if_index, ifp->if_type,
+			    NULL, namelen, NULL, addrlen);
+			rt_setgate(rt, &u.sa);
 			gate = rt->rt_gateway;
 			break;
 		}
