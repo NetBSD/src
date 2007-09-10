@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.551 2007/09/07 15:43:44 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.552 2007/09/10 19:09:28 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -357,7 +357,7 @@ for import.
 
 Package:	heimdal
 Version:	0.6.2
-Current Vers:	0.7.2
+Current Vers:	1.0.1
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Home Page:	http://www.pdc.kth.se/heimdal/
@@ -845,7 +845,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.7
-Current Vers:	4.9
+Current Vers:	4.11
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
