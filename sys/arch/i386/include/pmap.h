@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.20.1 2007/09/03 16:47:25 jmcneill Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.20.2 2007/09/10 15:00:10 joerg Exp $	*/
 
 /*
  *
@@ -354,6 +354,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
 void		pmap_load(void);
+paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 

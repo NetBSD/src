@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.11 2007/09/08 19:18:09 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.12 2007/09/10 15:00:11 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.11 2007/09/08 19:18:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.12 2007/09/10 15:00:11 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -428,24 +428,7 @@ cpu_power_resume(void)
 {
 	struct cpu_info *sci;
 	CPU_INFO_ITERATOR cii;
-	struct proc *p;
-	struct pmap *pm;
-	paddr_t oldphys = 0;
 	int s;
-
-	/* Create identity mapping */
-	if ((p = curproc) == NULL)
-		p = &proc0;
-
-	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	if (pm != pmap_kernel()) {
-		if (!pmap_extract(pm, mp_trampoline_paddr, &oldphys))
-			oldphys = 0;
-		pmap_enter(pm, mp_trampoline_paddr, mp_trampoline_paddr,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		pmap_update(pm);
-	}
 
 	s = splhigh();
 	for (CPU_INFO_FOREACH(cii, sci)) {
@@ -456,18 +439,6 @@ cpu_power_resume(void)
 	}
 	splx(s);
 	cpu_boot_secondary_processors();
-
-	if (pm != pmap_kernel()) {
-		/* Clean up identity mapping. */
-		pmap_remove(pm, mp_trampoline_paddr,
-		    mp_trampoline_paddr + PAGE_SIZE);
-		if (oldphys) {
-			pmap_enter(pm, mp_trampoline_paddr, oldphys,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-		}
-		pmap_update(pm);
-	}
 }
 #endif
 
@@ -671,24 +642,9 @@ void
 cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
-	struct pmap *kpm = pmap_kernel();
 	extern paddr_t mp_pdirpa;
 
-#ifdef __x86_64__
-	/*
-	 * The initial PML4 pointer must be below 4G, so if the
-	 * current one isn't, use a "bounce buffer"
-	 *
-	 * XXX move elsewhere, not per CPU.
-	 */
-	if (kpm->pm_pdirpa > 0xffffffff) {
-		extern vaddr_t lo32_vaddr;
-		extern paddr_t lo32_paddr;
-		memcpy((void *)lo32_vaddr, kpm->pm_pdir, PAGE_SIZE);
-		mp_pdirpa = lo32_paddr;
-	} else
-#endif
-		mp_pdirpa = kpm->pm_pdirpa;
+	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
 
 	ci->ci_flags |= CPUF_AP;
 
@@ -772,6 +728,8 @@ cpu_hatch(void *v)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
 #endif
 
+	lcr3(pmap_kernel()->pm_pdirpa);
+	curlwp->l_addr->u_pcb.pcb_cr3 = pmap_kernel()->pm_pdirpa;
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
 	lapic_set_lvt();
@@ -843,8 +801,6 @@ cpu_copy_trampoline(void)
 
 	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
 	    VM_PROT_READ | VM_PROT_WRITE);
-	pmap_kenter_pa((vaddr_t)mp_trampoline_paddr, mp_trampoline_paddr,
-	    VM_PROT_ALL);
 	pmap_update(pmap_kernel());
 	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,
