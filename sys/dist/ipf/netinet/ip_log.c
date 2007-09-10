@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.8 2007/09/10 06:12:02 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.9 2007/09/10 06:28:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.8 2007/09/10 06:12:02 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.9 2007/09/10 06:28:38 martti Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -274,10 +274,7 @@ u_int flags;
 
 	ipfl.fl_nattag.ipt_num[0] = 0;
 	ifp = fin->fin_ifp;
-	if (fin->fin_exthdr != NULL)
-		hlen = (char *)fin->fin_dp - (char *)fin->fin_ip;
-	else
-		hlen = fin->fin_hlen;
+	hlen = fin->fin_hlen;
 	/*
 	 * calculate header size.
 	 */
