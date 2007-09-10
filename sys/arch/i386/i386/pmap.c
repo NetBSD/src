@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.25 2007/09/09 23:23:52 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.26 2007/09/10 00:07:08 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.25 2007/09/09 23:23:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.26 2007/09/10 00:07:08 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3366,6 +3366,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
+			nkpde++;
 			continue;
 		}
 		
