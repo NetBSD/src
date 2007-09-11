@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2007/09/10 16:11:43 pooka Exp $
+#	$NetBSD: Makefile,v 1.17 2007/09/11 00:41:46 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -66,6 +66,8 @@ rumpvnode_if.c: vnode_if.c
 	printf "#endif /* EJUSTRETURN */\n" >> rumpdefs.h
 
 CLEANFILES+=	rumpvnode_if.c rumpvnode_if.h rumpdefs.h
+
+beforedepend: rumpvnode_if.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
