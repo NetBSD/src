@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31var.h,v 1.1.2.1 2007/09/11 02:32:28 matt Exp $	*/
+/*	$NetBSD: imx31var.h,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $	*/
 
 #ifndef _ARM_IMX_IMX31VAR_H
 #define _ARM_IMX_IMX31VAR_H
@@ -6,6 +6,7 @@
 extern struct bus_space imx31_bs_tag;
 
 struct aips_attach_args {
+	const char	*aipsa_name;
 	bus_space_tag_t	aipsa_memt;
 	bus_addr_t	aipsa_addr;
 	bus_size_t	aipsa_size;
@@ -13,6 +14,7 @@ struct aips_attach_args {
 };
 
 struct ahb_attach_args {
+	const char	*ahba_name;
 	bus_space_tag_t	ahba_memt;
 	bus_dma_tag_t	ahba_dmat;
 	bus_addr_t	ahba_addr;
