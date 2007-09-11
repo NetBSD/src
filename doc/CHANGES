@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.925 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.926 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -226,3 +226,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		simultaneous client threads on a 4xCPU i386 system before
 		serious performance drop-off occurs. [ad 20070907]
 	kernel: Added support for POSIX message queues. [rmind 20070907]
+	aps(4): driver for IBM Thinkpad Active Protection System, 
+		provides support for some sensors exported through
+		the envsys(4) framework. Ported by Pierre Pronchery
+		from OpenBSD. [xtraeme 20070911]
