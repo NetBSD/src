@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.9 2007/09/02 13:54:21 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.10 2007/09/11 00:42:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -578,7 +578,7 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 	return 0;
 }
 
-int
+ssize_t
 ukfs_readlink(struct ukfs *ukfs, const char *filename,
 	char *linkbuf, size_t buflen)
 {
