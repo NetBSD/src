@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2007/09/09 22:37:39 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.66 2007/09/11 16:00:05 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,8 +122,6 @@ struct cpu_info {
 	void			(*ci_spinup)(void);
 	paddr_t			ci_paddr;
 
-	int			ci_number;
-	int			ci_upaid;
 	int			ci_cpuid;
 
 	/* CPU PROM information. */
@@ -168,7 +166,7 @@ extern int sparc_ncpus;
 extern struct cpu_info *cpus;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
-#define	cpu_number()	(curcpu()->ci_number)
+#define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 #define CPU_INFO_ITERATOR		int
