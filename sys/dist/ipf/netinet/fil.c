@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.28.2.7 2007/07/21 12:56:45 liamjfoy Exp $	*/
+/*	$NetBSD: fil.c,v 1.28.2.8 2007/09/11 09:01:24 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.7 2007/07/21 12:56:45 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.8 2007/09/11 09:01:24 xtraeme Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
@@ -2566,11 +2566,15 @@ int out;
 	if (!out)
 		(void) fr_acctpkt(fin, NULL);
 
-	if (fr == NULL)
-		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG)
+	if (fr == NULL) {
+		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG) {
 			fr = fr_knownfrag(fin, &pass);
-	if (fr == NULL)
-		fr = fr_checkstate(fin, &pass);
+			if (fr != NULL)
+				pass &= ~FR_KEEPSTATE;
+		}
+		if (fr == NULL)
+			fr = fr_checkstate(fin, &pass);
+	}
 
 	if ((pass & FR_NOMATCH) || (fr == NULL))
 		fr = fr_firewall(fin, &pass);
