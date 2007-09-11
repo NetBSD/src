@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.245 2007/09/08 12:11:58 gdt Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.246 2007/09/11 21:59:10 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.245 $"
+#ident 		"GENERIC-$Revision: 1.246 $"
 
 maxusers	32		# estimated number of users
 
@@ -507,6 +507,9 @@ lpt2	at isa? port 0x3bc
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
+
+# IBM Thinkpad Active Protection System
+#aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
 #it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
