@@ -22,6 +22,9 @@ void	pic_dispatch(struct intrsource *is, void *frame);
 #ifndef PIC_MAXSOURCES
 #define	PIC_MAXSOURCES	64
 #endif
+#ifndef PIC_MAXMAXSOURCES
+#define	PIC_MAXMAXSOURCES	128
+#endif
 
 struct intrsource {
 	int (*is_func)(void *);
@@ -30,6 +33,7 @@ struct intrsource {
 	uint8_t is_type;			/* IST_xxx */
 	uint8_t is_ipl;				/* IPL_xxx */
 	uint8_t is_irq;				/* local to pic */
+	uint8_t is_iplidx;
 	struct evcnt is_ev;
 	char is_source[16];
 };
@@ -41,7 +45,7 @@ struct pic_softc {
 	uint32_t pic_pending_ipls;
 	size_t pic_maxsources;
 	uint8_t pic_id;
-	uint16_t pic_irqbase;
+	int16_t pic_irqbase;
 	char pic_name[14];
 };
 
@@ -55,14 +59,10 @@ struct pic_ops {
 };
 
 
-bool	pic_add(struct pic_softc *, int);
+void	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
 
 extern struct pic_softc * pic_list[PIC_MAXPICS];
-extern volatile uint32_t pic_pending_pics[(PIC_MAXPICS + 31) / 32];
-extern volatile uint32_t pic_pending_ipls;
-extern int pic_pending_ipl_refcnt[NIPL];
-
 #endif /* _INTR_PRIVATE */
 
 #endif /* _ARM_PIC_PICVAR_H_ */

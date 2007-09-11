@@ -34,11 +34,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.2 2007/08/30 07:05:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.3 2007/09/11 02:31:12 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/malloc.h>
+#include <sys/mallocvar.h>
 
 #include <arm/armreg.h>
 #include <arm/cpu.h>
@@ -46,33 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.2 2007/08/30 07:05:23 matt Exp $");
 
 #include <arm/pic/picvar.h>
 
-uint32_t atomic_cas_32(volatile_uint32_t *, uint32_t, uint32_t);
-
+/* should be in atomic.h */
 uint32_t atomic_or_32(volatile uint32_t *, uint32_t);
 uint32_t atomic_and_32(volatile uint32_t *, uint32_t);
 uint32_t atomic_nand_32(volatile uint32_t *, uint32_t);
+uint32_t atomic_or_32_nv(volatile uint32_t *, uint32_t);
+uint32_t atomic_and_32_nv(volatile uint32_t *, uint32_t);
+uint32_t atomic_nand_32_nv(volatile uint32_t *, uint32_t);
 uint32_t atomic_inc_32_nv(volatile uint32_t *);
 uint32_t atomic_dec_32_nv(volatile uint32_t *);
 
-static inline uint32_t
-atomic_cas_32(volatile uint32_t *p, uint32_t old, uint32_t new)
-{
-	uint32_t rv, tmp;
-
-	__asm(
-	"1:	ldrex	%0, [%2]\n" 
-	"	teq	%0, %3\n"
-	"	bxne	lr\n"
-	"	strex	%1, %4, [%2]\n"
-	"	cmp	%1, #0\n"
-	"	bne	1b\n"
-	"	bx	lr"
-		: "=&r"(rv), "=&r"(tmp)
-		: "r"(p), "r"(old), "r"(new)
-		: "memory");
-
-	return rv;
-}
+MALLOC_DEFINE(M_INTRSOURCE, "intrsource", "interrupt source");
 
 static uint32_t
 	pic_find_pending_irqs_by_ipl(struct pic_softc *, uint32_t, int);
@@ -86,8 +72,14 @@ static void
 struct pic_softc *pic_list[PIC_MAXPICS];
 volatile uint32_t pic_pending_pics[(PIC_MAXPICS + 31) / 32];
 volatile uint32_t pic_pending_ipls;
-uint32_t pic_pending_ipl_refcnt[NIPL];
-struct intrsources *pic_sources[PIC_MAXMAXSOURCES];
+volatile uint32_t pic_pending_ipl_refcnt[NIPL];
+struct intrsource *pic_sources[PIC_MAXMAXSOURCES];
+struct intrsource *pic__iplsources[PIC_MAXMAXSOURCES];
+struct intrsource **pic_iplsource[NIPL] = {
+	[0 ... NIPL-1] = pic__iplsources,
+};
+size_t pic_ipl_offset[NIPL+1];
+size_t pic_sourcebase;
 
 
 
@@ -105,15 +97,16 @@ pic_handle_intr(void *arg)
 void
 pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 {
-	atomic_or_32(&pic->pic_pending_irqs[is->is_irq >> 5],
-	    __BIT(is->is_irq & 0x1f);
+	const uint32_t ipl_mask = __BIT(is->is_ipl);
 
-	atomic_or_32(&pic_pending_ipls, 
-	    atomic_or_32_nv(&pic->pic_pending_ipls,
-		__BIT(is->is_ipl)));
+	atomic_or_32(&pic->pic_pending_irqs[is->is_iplidx >> 5],
+	    __BIT(is->is_iplidx & 0x1f));
 
-	atomic_or_32(&pic_pending_pics[pic->pic_id >> 5],
-	    __BIT(pic->pic_id));
+	if ((atomic_or_32(&pic->pic_pending_ipls, ipl_mask) & ipl_mask) == 0)
+		if ((atomic_or_32(&pic_pending_ipls, ipl_mask) & ipl_mask) == 0)
+			atomic_inc_32_nv(&pic_pending_ipl_refcnt[is->is_ipl]);
+
+	atomic_or_32(&pic_pending_pics[pic->pic_id >> 5], __BIT(pic->pic_id));
 }
 
 void
@@ -148,6 +141,19 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, uint32_t pending, int ipl)
 }
 
 void
+pic_dispatch(struct intrsource *is, void *frame)
+{
+	int rv;
+
+	if (__predict_false(frame != NULL && is->is_arg == NULL)) {
+		rv = (*is->is_func)(frame);
+	} else {
+		rv = (*is->is_func)(is->is_arg);
+	}
+	is->is_ev.ev_count++;
+}
+
+void
 pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 {
 	const uint32_t ipl_mask = __BIT(ipl);
@@ -158,7 +164,6 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 	uint32_t pending_irqs;
 	uint32_t blocked_irqs;
 	int irq;
-	int rv;
 	
 	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
@@ -190,16 +195,10 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 			atomic_nand_32(ipending, __BIT(irq));
 			is = pic->pic_sources[irq_base + irq];
 			if (is != NULL) {
-				if (__predict_false(frame != NULL
-				    && is->is_arg == NULL)) {
-					rv = (*is->is_func)(frame);
-				} else {
-					if ((psw & I32_bit) == 0)
-						cpsie(I32_bit);
-					rv = (*is->is_func)(frame);
-					cpsid(I32_bit);
-				}
-				is->is_ev.ev_count++;
+				if ((psw & I32_bit) == 0)
+					cpsie(I32_bit);
+				pic_dispatch(is, frame);
+				cpsid(I32_bit);
 			} else {
 				blocked_irqs &= ~__BIT(irq);
 			}
@@ -219,7 +218,7 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 		atomic_nand_32(&pic_pending_pics[pic->pic_id >> 5],
 		    __BIT(pic->pic_id & 0x1f));
 	if (atomic_dec_32_nv(&pic_pending_ipl_refcnt[ipl]) == 0)
-		atomic_nand(pic_pending_ipls, ipl_mask);
+		atomic_nand_32(&pic_pending_ipls, ipl_mask);
 }
 
 struct pic_softc *
@@ -286,57 +285,175 @@ pic_do_pending_ints(register_t psw, int newipl)
 	ci->ci_cpl = newipl;
 }
 
-int
+void
 pic_add(struct pic_softc *pic, int irqbase)
 {
-	int idx, maybe_idx = -1;
-	int irqbase = -1;
-	for (idx = 0; idx < PIC_MAXPICS; idx++) {
-		if (maybe_idx == -1 && (xpic = pic_list[idx]) == NULL) {
-			maybe_idx = idx;
-			if (maybe_irq_base < xpic->pic_irqbase + xpic->pic_maxsoruces)
-				maybe_irqbase = xpic->pic_irqbase + xpic->pic_maxsoruces;
+	int slot, maybe_slot = -1;
+
+	for (slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const xpic = pic_list[slot];
+		if (xpic == NULL) {
+			if (maybe_slot < 0)
+				maybe_slot = slot;
 			if (irqbase < 0)
 				break;
-			continues;
+			continue;
 		}
+		if (irqbase < 0 || xpic->pic_irqbase < 0)
+			continue;
 		if (irqbase >= xpic->pic_irqbase + xpic->pic_maxsources)
 			continue;
 		if (irqbase + pic->pic_maxsources <= xpic->pic_irqbase)
 			continue;
-		printf("pic_add: pic %s (%u sources @ irq %u) conflicts"
-		    " with pic %s (%u sources @ irq %u)\n",
+		panic("pic_add: pic %s (%zu sources @ irq %u) conflicts"
+		    " with pic %s (%zu sources @ irq %u)",
 		    pic->pic_name, pic->pic_maxsources, irqbase,
-		return -1;
+		    xpic->pic_name, xpic->pic_maxsources, xpic->pic_irqbase);
 	}
-	if (irqbase < 0)
-		irqbase = maybe_irqbase;
-	idx = maybe_idx;
-	KASSERT(idx + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
+	slot = maybe_slot;
+	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 
-	pic->pic_sources = &pic_sources[irqbase];
+	pic->pic_sources = &pic_sources[pic_sourcebase];
 	pic->pic_irqbase = irqbase;
-	pic_list[idx] = pic;
+	pic_sourcebase += pic->pic_maxsources;
+	pic_list[slot] = pic;
 }
 
 int
 pic_alloc_irq(struct pic_softc *pic)
 {
+	int irq;
+
+	for (irq = 0; irq < pic->pic_maxsources; irq++) {
+		if (pic->pic_sources[irq] == NULL)
+			return irq;
+	}
+
+	return -1;
 }
 
 void *
-pic_establish(struct pic_softc *pic, int irq, int ipl, int level,
+pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	int (*func)(void *), void *arg)
 {
+	struct intrsource *is;
+	int off, nipl;
+
+	if (pic->pic_sources[irq]) {
+		printf("pic_establish_intr: pic %s irq %d already present\n",
+		    pic->pic_name, irq);
+		return NULL;
+	}
+
+	is = malloc(sizeof(*is), M_INTRSOURCE, M_ZERO);
+	if (is == NULL)
+		return NULL;
+
+	is->is_pic = pic;
+	is->is_irq = irq;
+	is->is_ipl = ipl;
+	is->is_type = type;
+	is->is_func = func;
+	is->is_arg = arg;
+	
+	if (pic->pic_ops->pic_source_name)
+		(*pic->pic_ops->pic_source_name)(pic, irq, is->is_source,
+		    sizeof(is->is_source));
+	else
+		snprintf(is->is_source, sizeof(is->is_source), "irq %d", irq);
+
+	evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
+	    pic->pic_name, is->is_source);
+
+	pic->pic_sources[irq] = is;
+
+	/*
+	 * First try to use an existing slot which is empty.
+	 */
+	for (off = pic_ipl_offset[ipl]; off < pic_ipl_offset[ipl+1]; off++) {
+		if (pic__iplsources[off] == NULL) {
+			is->is_iplidx = off - pic_ipl_offset[ipl];
+			pic__iplsources[off] = is;
+			return is;
+		}
+	}
+
+	/*
+	 * Move up all the sources by one.
+ 	 */
+	if (ipl < NIPL) {
+		off = pic_ipl_offset[ipl+1];
+		memmove(&pic__iplsources[off+1], &pic__iplsources[off],
+		    sizeof(pic__iplsources[0]) * (pic_ipl_offset[NIPL] - off));
+	}
+
+	/*
+	 * Advance the offset of all IPLs higher than this.  Include an
+	 * extra one as well.  Thus the number of sources per ipl is
+	 * pic_ipl_offset[ipl+1] - pic_ipl_offset[ipl].
+	 */
+	for (nipl = ipl + 1; nipl <= NIPL; nipl++)
+		pic_ipl_offset[nipl]++;
+
+	/*
+	 * Insert into the previously made position at the end of this IPL's
+	 * sources.
+	 */
+	off = pic_ipl_offset[ipl + 1] - 1;
+	is->is_iplidx = off - pic_ipl_offset[ipl];
+	pic__iplsources[off] = is;
+	
+	/* We're done. */
+	return is;
 }
 
-void *
-pic_disestablish(void *arg)
+void
+pic_disestablish_source(struct intrsource *is)
 {
-	struct intrsource * const is = arg;
 	struct pic_softc * const pic = is->is_pic;
 	const int irq = is->is_irq;
 
 	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~31, __BIT(irq));
 	pic->pic_sources[irq] = NULL;
+	pic__iplsources[pic_ipl_offset[is->is_ipl] + is->is_iplidx] = NULL;
+	evcnt_detach(&is->is_ev);
+
+	free(is, M_INTRSOURCE);
+}
+
+int
+_splraise(int newipl)
+{
+	struct cpu_info * const ci = curcpu();
+	const int oldipl = ci->ci_cpl;
+	KASSERT(newipl < NIPL);
+	if (newipl > ci->ci_cpl)
+		ci->ci_cpl = newipl;
+	return oldipl;
+}
+int
+_spllower(int newipl)
+{
+	struct cpu_info * const ci = curcpu();
+	const int oldipl = ci->ci_cpl;
+	KASSERT(panicstr || newipl <= ci->ci_cpl);
+	if (newipl < ci->ci_cpl) {
+		register_t psw = disable_interrupts(I32_bit);
+		pic_do_pending_ints(psw, newipl);
+		restore_interrupts(psw);
+	}
+	return oldipl;
+}
+
+void
+splx(int savedipl)
+{
+	struct cpu_info * const ci = curcpu();
+	KASSERT(savedipl < NIPL);
+	if (savedipl < ci->ci_cpl) {
+		register_t psw = disable_interrupts(I32_bit);
+		pic_do_pending_ints(psw, savedipl);
+		restore_interrupts(psw);
+	}
+	ci->ci_cpl = savedipl;
 }
