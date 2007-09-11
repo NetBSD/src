@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.201 2007/09/06 20:22:52 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.202 2007/09/11 16:00:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2007/09/06 20:22:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2007/09/11 16:00:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1953,7 +1953,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 
 #if defined(MULTIPROCESSOR)
 	/* Just interrupt the target CPU, so it can notice its AST */
-	if ((flags & RESCHED_IMMED) || ci->ci_cpuid != cpu_number())
-		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_nop);
+	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop);
 #endif
 }

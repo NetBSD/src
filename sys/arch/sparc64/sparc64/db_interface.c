@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.97 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.98 2007/09/11 16:00:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97 2007/05/17 14:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.98 2007/09/11 16:00:06 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -1185,7 +1185,7 @@ cpu_debug_dump(void)
 
 	for (ci = cpus; ci; ci = ci->ci_next) {
 		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
-			  ci->ci_number, (u_long)ci->ci_self,
+			  ci->ci_index, (u_long)ci->ci_self,
 			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
 	}
 }
@@ -1207,14 +1207,14 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		return;
 	}
 	for (ci = cpus; ci != NULL; ci = ci->ci_next)
-		if (ci->ci_number == addr)
+		if (ci->ci_index == addr)
 			break;
 	if (ci == NULL) {
 		db_printf("CPU %ld not configured\n", addr);
 		return;
 	}
 	if (ci != curcpu()) {
-		if (!mp_cpu_is_paused(ci->ci_number)) {
+		if (!mp_cpu_is_paused(ci->ci_index)) {
 			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.47 2007/09/09 22:37:39 martin Exp $
+#	$NetBSD: genassym.cf,v 1.48 2007/09/11 16:00:06 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,9 +164,9 @@ define	CI_SELF		offsetof(struct cpu_info, ci_self)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
 define	CI_NEXT		offsetof(struct cpu_info, ci_next)
+define	CI_NUMBER	offsetof(struct cpu_info, ci_data.cpu_index)
 define	CI_FPLWP	offsetof(struct cpu_info, ci_fplwp)
-define	CI_NUMBER	offsetof(struct cpu_info, ci_number)
-define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
+define	CI_UPAID	offsetof(struct cpu_info, ci_cpuid)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
