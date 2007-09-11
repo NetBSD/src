@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.261 2007/09/11 08:25:27 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.262 2007/09/11 08:33:58 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9490,4 +9490,10 @@ sys/dev/pci/if_wm.c				1.146
 	Fix typo.
 	Bump date for previous (ICH9 support).
 	[msaitoh, ticket #865]
+
+crypto/dist/openssl/crypto/rand/rand_unix.c	1.2
+
+	Use poll(2) to wait for rnd(4). The initialisation of OpenSSL's RNG
+	now works reliably if the first FD_SETSIZE file descriptors are in use.
+	[tron, ticket #870]
 
