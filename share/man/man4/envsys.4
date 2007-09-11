@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.33 2007/09/04 17:19:51 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.34 2007/09/11 22:31:35 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 .Sh SYNOPSIS
 .In sys/envsys.h
 .Sh DESCRIPTION
-.Pp
 The
 .Nm
 framework provides support to handle hardware monitor sensors.
@@ -59,7 +58,7 @@ framework consists of two parts:
 .It
 the userland part, to receive the current sensor data and
 to set some properties on sensors:
-.Xr envsys 4 .
+.Nm .
 .It
 the kernel part that is able to talk to the drivers providing sensor
 data:
@@ -93,49 +92,49 @@ with one sensor
 and all available properties set on it:
 .Pp
 .Bd -literal
-\&<key\&>device0\&<\&/key\&>
-\&<array\&>
-	\&<dict\&>
-		\&<key\&>avg-value\&<\&/key\&>
-		\&<integer\&>36400\&<\&/integer\&>
-		\&<key\&>critical-capacity\&<\&/key\&>
-		\&<integer\&>21417\&<\&/integer\&>
-		\&<key\&>critical-max-limit\&<\&/key\&>
-		\&<integer\&>343150000\&<\&/integer\&>
-		\&<key\&>critical-min-limit\&<\&/key\&>
-		\&<integer\&>288150000\&<\&/integer\&>
-		\&<key\&>cur-value\&<\&/key\&>
-		\&<integer\&>406000\&<\&/integer\&>
-		\&<key\&>description\&<\&/key\&>
-		\&<string\&>sensor0\&<\&/string\&>
-		\&<key\&>generic-state-string\&<\&/key\&>
-		\&<string\&>NORMAL\&<\&/string\&>
-		\&<key\&>max-value\&<\&/key\&>
-		\&<integer\&>3894000\&<\&/integer\&>
-		\&<key\&>min-value\&<\&/key\&>
-		\&<integer\&>2894000\&<\&/integer\&>
-		\&<key\&>monitoring-state-critical\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-state-critover\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-state-critunder\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-state-state-changed\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-state-warnover\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-state-warnunder\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>monitoring-supported\&<\&/key\&>
-		\&<true\&/\&>
-		\&<key\&>state\&<\&/key\&>
-		\&<string\&>valid\&<\&/string\&>
-		\&<key\&>type\&<\&/key\&>
-		\&<string\&>Ampere hour\&<\&/string\&>
-		\&<key\&>want-percentage\&<\&/key\&>
-		\&<true\&/\&>
-	\&<\&/dict\&>
-\&<\&/array\&>
+\&\*[Lt]key\&\*[Gt]device0\&\*[Lt]\&/key\&\*[Gt]
+\&\*[Lt]array\&\*[Gt]
+	\&\*[Lt]dict\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]avg-value\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]36400\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]critical-capacity\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]21417\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]critical-max-limit\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]343150000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]critical-min-limit\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]288150000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]cur-value\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]406000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]description\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]string\&\*[Gt]sensor0\&\*[Lt]\&/string\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]generic-state-string\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]string\&\*[Gt]NORMAL\&\*[Lt]\&/string\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]max-value\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]3894000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]min-value\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]2894000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-critical\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-critover\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-critunder\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-state-changed\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-warnover\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-state-warnunder\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]monitoring-supported\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]state\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]string\&\*[Gt]valid\&\*[Lt]\&/string\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]type\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]string\&\*[Gt]Ampere hour\&\*[Lt]\&/string\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]want-percentage\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]true\&/\&\*[Gt]
+	\&\*[Lt]\&/dict\&\*[Gt]
+\&\*[Lt]\&/array\&\*[Gt]
 .Ed
 .Pp
 Let's explain some more about those objects:
@@ -214,28 +213,28 @@ framework. Only a set of predefined keywords are recognized by
 the kernel part. The following is the property list representation
 of a dictionary with all recognized and required keywords:
 .Bd -literal
-\&<dict\&>
-	\&<key\&>driver-name\&<\&/key\&>
-	\&<string\&>driver0\&<\&/string\&>
-	\&<key\&>sensor-name\&<\&/key\&>
-	\&<string\&>sensor0\&<\&/string\&>
-	\&<key\&>new-description\&<\&/key\&>
-	\&<string\&>mysensor0\&<\&/string\&>
-	\&<key\&>new-rfact\&<\&/key\&>
-	\&<integer\&>56000\&<\&/integer\&>
-	\&<key\&>critical-capacity\&<\&/key\&>
-	\&<integer\&>10\&<\&/integer\&>
-	\&<key\&>critical-max-limit\&<\&/key\&>
-	\&<integer\&>3400\&<\&/integer\&>
-	\&<key\&>critical-min-limit\&<\&/key\&>
-	\&<integer\&>2800\&<\&/integer\&>
-	\&<key\&>remove-critical-cap\&<\&/key\&>
-	\&<true\&/\&>
-	\&<key\&>remove-cmax-limit\&<\&/key\&>
-	\&<true\&/\&>
-	\&<key\&>remove-cmin-limit\&<\&/key\&>
-	\&<true\&/\&>
-\&<\&/dict\&>
+\&\*[Lt]dict\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]driver-name\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]string\&\*[Gt]driver0\&\*[Lt]\&/string\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]sensor-name\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]string\&\*[Gt]sensor0\&\*[Lt]\&/string\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]new-description\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]string\&\*[Gt]mysensor0\&\*[Lt]\&/string\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]new-rfact\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]56000\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]critical-capacity\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]10\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]critical-max-limit\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]3400\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]critical-min-limit\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]2800\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]remove-critical-cap\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]true\&/\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]remove-cmax-limit\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]true\&/\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]remove-cmin-limit\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]true\&/\&\*[Gt]
+\&\*[Lt]\&/dict\&\*[Gt]
 .Ed
 .Pp
 A dictionary sent to the kernel with this
@@ -252,7 +251,7 @@ and the
 .Sy sensor
 that we want to set a property for.
 .Pp
-.Em NOTE:
+.Em NOTE :
 Only one of the following objects must be added into the dictionary
 at a time:
 .Ar new-description ,
@@ -294,7 +293,6 @@ rfact (voltage sensors) or critical/capacity limits,
 .Er ENOTSUP
 will be returned.
 .El
-.Pp
 .Sh NOTES
 When setting a critical max or min limit with the
 .Em ENVSYS_SETDICTIONARY
@@ -312,7 +310,6 @@ proper value to
 is the following:
 .Em value = (value / 100) * max value .
 The max value is available in the sensor's dictionary.
-.Pp
 .Sh EXAMPLES
 The following example illustrates how to receive the dictionary
 and to print it in raw XML/plist format:
@@ -328,7 +325,7 @@ int main(void)
 	if ((fd = open(_DEV_SYSMON, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "open")
 
-	if (prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict)) {
+	if (prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, \*[Am]dict)) {
 		(void)close(fd);
 		err(EINVAL, "prop_dictionary_recv_ioctl");
 	}
@@ -387,10 +384,14 @@ main(void)
 					   fd,
 					   ENVSYS_SETDICTIONARY);
 	prop_object_release(dict);
-	(void)close(fd);	
+	(void)close(fd);
 	return error;
-}	
+}
 .Ed
+.Sh SEE ALSO
+.Xr envstat 8 ,
+.Xr powerd 8 ,
+.Xr sysmon_envsys 9
 .Sh AUTHORS
 The
 .Nm
@@ -401,7 +402,3 @@ for
 Many useful comments for this framework were from
 Jason R. Thorpe, Tim Rightnour and Michael Lorenz. Previous
 framework was implemented by Tim Rightnour and Bill Squier.
-.Sh SEE ALSO
-.Xr envstat 8 ,
-.Xr powerd 8 ,
-.Xr sysmon_envsys 9
