@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2007/08/13 02:04:50 tsutsui Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.2.1 2007/09/11 18:44:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -45,17 +45,17 @@
 	.text
 	.align	0
 
-.Lcurrent_spl_level:
-	.word	_C_LABEL(current_spl_level)
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
 
 ENTRY(raisespl)
 	mov	r3, r0			/* Save the new value */
-	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
-	ldr	r0, [r1]
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
+	ldr	r0, [r1, #CI_CPL]
 	cmp	r3, r0
 	movle	pc, lr
 
-	str	r3, [r1]		/* Store the new spl level */
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
 					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
@@ -64,12 +64,12 @@ ENTRY(raisespl)
 
 ENTRY(lowerspl)
 	mov	r3, r0			/* Save the new value */
-	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
-	ldr	r0, [r1]
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
+	ldr	r0, [r1, #CI_CPL]
 	cmp	r3, r0
 	movge	pc, lr
 
-	str	r3, [r1]		/* Store the new spl level */
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
 					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
@@ -78,13 +78,13 @@ ENTRY(lowerspl)
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(splx)
-	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
 	mov	r3, r0			/* Save the new value */
-	ldr	r0, [r1]
+	ldr	r0, [r1, #CI_CPL]
 	cmp	r3, r0
 	moveq	pc, lr
 
-	str	r3, [r1]		/* Store the new spl level */
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
 					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
