@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $	*/
+/*	$Id: imx31_aips.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $");
 
 #include "locators.h"
 
@@ -143,7 +143,7 @@ imxaips_match(device_t parent, cfdata_t match, void *aux)
 static void
 imxaips_attach(device_t parent, device_t self, void *aux)
 {
-	struct imxaips_softc *sc = (struct imxaips_softc *)self;
+	struct imxaips_softc * const sc = (struct imxaips_softc *)self;
 	struct ahb_attach_args * const ahba = aux;
 
 	sc->sc_bust = ahba->ahba_memt;
@@ -159,9 +159,10 @@ imxaips_attach(device_t parent, device_t self, void *aux)
 static int
 imxaips_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct imxaips_softc *sc = aux;
+	struct imxaips_softc * const sc = aux;
 	struct aips_attach_args aipsa;
 
+	aipsa.aipsa_name = "aisp";
 	aipsa.aipsa_memt = sc->sc_bust;
 	aipsa.aipsa_addr = cf->cf_loc[AIPSCF_ADDR];
 	aipsa.aipsa_size = cf->cf_loc[AIPSCF_SIZE];
