@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.263 2007/09/11 08:38:53 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.264 2007/09/11 08:41:36 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9537,3 +9537,15 @@ sys/netbt/hci.h					1.11
 	hci_rssi_response is only a packet segment it should not be in _ep
 	namespace.
 	[plunky, ticket #871]
+
+sys/arch/xen/include/granttables.h		1.2
+sys/arch/xen/include/xen3-public/grant_table.h	1.4
+sys/arch/xen/xen/xengnt.c			1.3
+
+	Switch to dynamically-sized grant tables, available since Xen-3.1.0.
+	This removes a hard limit that would prevent a guest from running with
+	more than 7 virtual network interfaces.
+	If running on a hypervisor that doesn't support GNTTABOP_query_size,
+	fall back to a 4-pages grant table, so this change is backward-compatible.
+	[bouyer, ticket #875]
+
