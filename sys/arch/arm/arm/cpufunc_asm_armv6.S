@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.2.1 2007/08/28 18:30:40 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.2.2 2007/09/11 23:07:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -33,6 +33,7 @@
  * range operations.
  */
  
+#include "assym.h"
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
@@ -43,8 +44,10 @@
  * addresses that are about to change.
  */
 ENTRY(armv6_setttb)
+#ifdef PMAP_CACHE_VIVT
 	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
+#endif
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
@@ -111,7 +114,7 @@ ENTRY(armv6_idcache_wbinv_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	mcrr	p15, 0, r1, r0, c5	/* invaliate I cache range */
-	mcrr	p15, 0, r1, r0, c6	/* invaliate D cache range */
+	mcrr	p15, 0, r1, r0, c14	/* clean & invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
@@ -127,6 +130,6 @@ ENTRY_NP(armv6_idcache_wbinv_all)
 
 /* LINTSTUB: void armv6_dcache_wbinv_all(void); */
 ENTRY(armv6_dcache_wbinv_all)
-	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
+	mcr	p15, 0, r0, c7, c14, 0	/* clean & invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
