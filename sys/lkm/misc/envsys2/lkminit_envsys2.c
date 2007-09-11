@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.6 2007/09/09 16:09:37 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.7 2007/09/11 07:36:22 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,15 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.6 2007/09/09 16:09:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.7 2007/09/11 07:36:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lkm.h>
 #include <sys/errno.h>
 #include <dev/sysmon/sysmonvar.h>
-
-#define MAXSENSORS	18
 
 /*
  * The list of sensors.
@@ -74,12 +72,13 @@ enum sensors {
 	SENSOR_DUP_CPUTEMP,
 	SENSOR_DUP_TECHNOLOGY,
 	SENSOR_EMPTY_DESC,
-	SENSOR_INVALID_STATE
+	SENSOR_INVALID_STATE,
+	SENSOR_MAXSENSORS		/* must be last */
 };
 
 struct envsys2_softc {
 	struct sysmon_envsys sc_sysmon;
-	envsys_data_t sc_sensor[MAXSENSORS];
+	envsys_data_t sc_sensor[SENSOR_MAXSENSORS];
 };
 
 /* 
@@ -344,7 +343,7 @@ envsys2_mod_handle(struct lkm_table *lkmtp, int cmd)
 		sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
 		sc->sc_sysmon.sme_cookie = sc;
 		sc->sc_sysmon.sme_gtredata = envsys2_gtredata;
-		sc->sc_sysmon.sme_nsensors = MAXSENSORS;
+		sc->sc_sysmon.sme_nsensors = SENSOR_MAXSENSORS;
 
 		err = sysmon_envsys_register(&sc->sc_sysmon);
 		if (err)
