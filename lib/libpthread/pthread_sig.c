@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.1 2007/09/10 05:24:54 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.2 2007/09/11 21:20:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.1 2007/09/10 05:24:54 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.2 2007/09/11 21:20:06 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -852,17 +852,17 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * Hmm... We probably should hold the target's pt_statelock,
 		 * not our own.
 		 */
-		pthread_spinlock(self, &self->pt_statelock);
+		pthread_spinlock(self, &target->pt_statelock);
 		if (target->pt_state == PT_STATE_BLOCKED_QUEUE &&
 		    target->pt_sleepq == &pt_sigwaiting &&
 		    __sigismember14(target->pt_sigwait, si->si_signo)) {
 			SDPRINTF(("(pthread__kill %p) stw\n", target));
 			target->pt_wsig->si_signo = si->si_signo;
-			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &target->pt_statelock);
 			deliver = 0;
 		} else {
 			SDPRINTF(("(pthread__kill %p) deferring\n", target));
-			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &target->pt_statelock);
 			__sigaddset14(&target->pt_siglist, si->si_signo);
 			return;
 		}
