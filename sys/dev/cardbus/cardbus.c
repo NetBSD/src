@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75.16.1 2007/08/23 14:22:37 joerg Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.2 2007/09/11 11:51:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.1 2007/08/23 14:22:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.2 2007/09/11 11:51:22 jmcneill Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1122,6 +1122,7 @@ cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 			}
 			splx(s);
 		}
+		break;
 	case PNP_REQUEST_GET_STATE:
 		state = opaque;
 		if (cardbus_get_powerstate(cc, tag, &val) != 0)
