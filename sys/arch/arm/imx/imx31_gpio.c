@@ -34,9 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.1 2007/08/29 05:24:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.2 2007/09/11 02:32:26 matt Exp $");
 
 #define _INTR_PRIVATE
+
+#include "locators.h"
+#include "gpio.h"
  
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -53,6 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.1 2007/08/29 05:24:23 matt Exp 
 #include <machine/bus.h>
 
 #include <arm/imx/imx31reg.h>
+#include <arm/imx/imx31var.h>
+#include <arm/pic/picvar.h>
+
+#if NGPIO > 0
+#include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
+#endif
 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
@@ -62,186 +72,298 @@ static void gpio_pic_establish_irq(struct pic_softc *, int, int, int);
 const struct pic_ops gpio_pic_ops = {
 	.pic_block_irqs = gpio_pic_block_irqs,
 	.pic_unblock_irqs = gpio_pic_unblock_irqs,
-	.pic_find_pending_irqs = gpio_find_pending_irqs,
-	.pic_establish_irq = establish_irq,
+	.pic_find_pending_irqs = gpio_pic_find_pending_irqs,
+	.pic_establish_irq = gpio_pic_establish_irq,
 };
 
-struct gpio_pic_softc {
-	struct pic_softc gpic_pic;
-	bus_space_tag_t gpic_memt;
-	bus_space_handle_t gpic_memh;
+struct gpio_softc {
+	struct device gpio_dev;
+	struct pic_softc gpio_pic;
+	bus_space_tag_t gpio_memt;
+	bus_space_handle_t gpio_memh;
 	uint32_t gpio_enable_mask;
 	uint32_t gpio_edge_mask;
 	uint32_t gpio_level_mask;
+#if NGPIO > 0
+	struct gpio_chipset_tag gpio_chipset;
+	gpio_pin_t gpio_pins[32];
+#endif
 };
+
+#define	PIC_TO_SOFTC(pic) \
+	((struct gpio_softc *)((char *)(pic) - \
+		offsetof(struct gpio_softc, gpio_pic)))
+
+#define	GPIO_READ(gpio, reg) \
+	bus_space_read_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg))
+#define	GPIO_WRITE(gpio, reg, val) \
+	bus_space_write_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg), (val))
 
 void
 gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
-	struct gpic_softc * const gpic = pic
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
-	gpic->gpic_enable_mask |= irq_mask;
+
+	gpio->gpio_enable_mask |= irq_mask;
 	/*
 	 * If this a level source, ack it now.  If it's still asserted
 	 * it'll come back.
 	 */
-	if (irq_mask & gpic->gpic_level_mask)
-		GPIO_WRITE(gpic, GPIO_ISR, irq_mask);
-	GPIO_WRITE(gpic, GPIO_IMR, gpic->gpic_enable_mask);
+	if (irq_mask & gpio->gpio_level_mask)
+		GPIO_WRITE(gpio, GPIO_ISR, irq_mask);
+	GPIO_WRITE(gpio, GPIO_IMR, gpio->gpio_enable_mask);
 }
 
 void
 gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
-	gpic->gpic_enable_mask &= ~irq_mask;
-	GPIO_WRITE(gpic, GPIO_IMR, gpic->gpic_enable_mask);
+
+	gpio->gpio_enable_mask &= ~irq_mask;
+	GPIO_WRITE(gpio, GPIO_IMR, gpio->gpio_enable_mask);
 }
 
 int
 gpio_pic_find_pending_irqs(struct pic_softc *pic)
 {
-	struct gpio_pic_softc * const gpic = pic;
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	uint32_t v;
 	uint32_t pending;
 
-	v = GPIO_READ(gpic, GPIO_ISR);
-	pending = (v & gpic->gpic_enabled);
+	v = GPIO_READ(gpio, GPIO_ISR);
+	pending = (v & gpio->gpio_enable_mask);
 	if (pending == 0)
 		return 0;
 
 	/*
 	 * Disable the pending interrupts.
 	 */
-	gpic->gpic_enable_mask &= ~pending;
-	GPIO_WRITE(gpic, GPIO_IMR, gpic->gpic_enable_mask);
+	gpio->gpio_enable_mask &= ~pending;
+	GPIO_WRITE(gpio, GPIO_IMR, gpio->gpio_enable_mask);
 
 	/*
 	 * If any of the sources are edge triggered, ack them now so
 	 * we won't lose them.
 	 */
-	if (v & gpic->gpic_edge_mask)
-		GPIO_WRITE(gpic, GPIO_ISR, v & gpic->gpic_edge_mask);
+	if (v & gpio->gpio_edge_mask)
+		GPIO_WRITE(gpio, GPIO_ISR, v & gpio->gpio_edge_mask);
 
 	/*
 	 * Now find all the pending bits and mark them as pending.
 	 */
 	do {
-		KASSERT(pending != 0)
+		int irq;
+		KASSERT(pending != 0);
 		irq = 31 - __builtin_clz(pending);
-		pending &= ~(1 << irq);
-		pic_mark_pending(gpic->gpic_pic, irq)
+		pending &= ~__BIT(irq);
+		pic_mark_pending(&gpio->gpio_pic, irq);
 	} while (pending != 0);
 
 	return 1;
 }
 
 #define GPIO_TYPEMAP \
-	((GPIO_TYPE_LEVEL_LOW << (2*IST_LEVEL_LOW)) | \
-	 (GPIO_TYPE_LEVEL_HIGH << (2*IST_LEVEL_HIGH)) | \
-	 (GPIO_TYPE_EDGE_RISING << (2*IST_EDGE_RISING)) | \
-	 (GPIO_TYPE_EDGE_FAILING << (2*IST_EDGE_FAILING)))
+	((GPIO_ICR_LEVEL_LOW << (2*IST_LEVEL_LOW)) | \
+	 (GPIO_ICR_LEVEL_HIGH << (2*IST_LEVEL_HIGH)) | \
+	 (GPIO_ICR_EDGE_RISING << (2*IST_EDGE_RISING)) | \
+	 (GPIO_ICR_EDGE_FALLING << (2*IST_EDGE_FALLING)))
 
 void
 gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
 {
-	struct gpio_pic_softc * const gpic = pic;
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq < 32);
-	uint32_t irq_mask = BIT(irq);
+	uint32_t irq_mask = __BIT(irq);
+	uint32_t v;
+	unsigned int icr_shift, icr_reg;
+	unsigned int gtype;
 
 	/*
 	 * Make sure the irq isn't enabled and not asserting.
 	 */
-	gpic->gpic_enable_mask &= ~irq_mask;
-	GPIO_WRITE(gpic, GPIO_IMR, gpic->gpic_enable_mask);
-	GPIO_WRITE(gpic, GPIO_ISR, irq_mask);
+	gpio->gpio_enable_mask &= ~irq_mask;
+	GPIO_WRITE(gpio, GPIO_IMR, gpio->gpio_enable_mask);
+	GPIO_WRITE(gpio, GPIO_ISR, irq_mask);
 
 	/*
 	 * Convert the type to a gpio type and figure out which bits in what 
 	 * register we have to tweak.
 	 */
-	gtype = (GPIO_TYPEMASK >> (2 * type)) & 3;
+	gtype = (GPIO_TYPEMAP >> (2 * type)) & 3;
 	icr_shift = (irq & 0x0f) << 1;
-	icr_reg = GPIO_ICR + ((irq & 0x10) >> 2);
+	icr_reg = GPIO_ICR1 + ((irq & 0x10) >> 2);
 
 	/*
 	 * Set the interrupt type.
 	 */
-	v = GPIO_READ(gpic, icr_reg);
+	v = GPIO_READ(gpio, icr_reg);
 	v &= ~(3 << icr_shift);
 	v |= gtype << icr_shift;
-	GPIO_WRITE(gpic, icr_reg, v);
+	GPIO_WRITE(gpio, icr_reg, v);
 
 	/*
 	 * Mark it as input.
 	 */
-	v = GPIO_READ(gpic, GPIO_DIR);
+	v = GPIO_READ(gpio, GPIO_DIR);
 	v &= ~irq_mask;
-	GPIO_WRITE(gpic, GPIO_DIR, v); 
+	GPIO_WRITE(gpio, GPIO_DIR, v); 
 
 	/*
 	 * Now record the type of interrupt.
 	 */
-	if (gtype == GPIO_TYPE_EDGE_RISING || gtype == GPIO_TYPE_EDGE_FAILING) {
-		gpic->gpic_edge_mask |= irq_mask;
-		gpic->gpic_level_mask &= ~irq_mask;
+	if (gtype == GPIO_ICR_EDGE_RISING || gtype == GPIO_ICR_EDGE_FALLING) {
+		gpio->gpio_edge_mask |= irq_mask;
+		gpio->gpio_level_mask &= ~irq_mask;
 	} else {
-		gpic->gpic_edge_mask &= ~irq_mask;
-		gpic->gpic_level_mask |= irq_mask;
+		gpio->gpio_edge_mask &= ~irq_mask;
+		gpio->gpio_level_mask |= irq_mask;
 	}
 }
 
-static int gpio_match(struct device *, struct cfdata *, void *);
-static int gpio_attach(struct device *, struct device *, void *);
+static int gpio_match(device_t, cfdata_t, void *);
+static void gpio_attach(device_t, device_t, void *);
+
+CFATTACH_DECL(imxgpio,
+	sizeof(struct gpio_softc),
+	gpio_match, gpio_attach,
+	NULL, NULL);
+
+#if NGPIO > 0
+
+static int
+imxgpio_pin_read(void *arg, int pin)
+{
+	struct gpio_softc * const gpio = arg;
+
+	return (GPIO_READ(gpio, GPIO_DR) >> pin) & 1;
+}
+
+static void
+imxgpio_pin_write(void *arg, int pin, int value)
+{
+	struct gpio_softc * const gpio = arg;
+	uint32_t mask = 1 << pin;
+	uint32_t old, new;
+
+	old = GPIO_READ(gpio, GPIO_DR);
+	if (value)
+		new = old | mask; 
+	else
+		new = old & ~mask;
+
+	if (old != new)
+		GPIO_WRITE(gpio, GPIO_DR, new);
+}
+
+static void
+imxgpio_pin_ctl(void *arg, int pin, int flags)
+{
+	struct gpio_softc * const gpio = arg;
+	uint32_t mask = 1 << pin;
+	uint32_t old, new;
+
+	old = GPIO_READ(gpio, GPIO_DIR);
+	new = old;
+	switch (flags & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
+	case GPIO_PIN_INPUT:	new |= mask; break;
+	case GPIO_PIN_OUTPUT:	new &= ~mask; break;
+	default:		return;
+	}
+	if (old != new)
+		GPIO_WRITE(gpio, GPIO_DIR, new);
+}
+
+static void
+gpio_defer(device_t self)
+{
+	struct gpio_softc * const gpio = (void *) self;
+	struct gpio_chipset_tag * const gp = &gpio->gpio_chipset;
+	struct gpiobus_attach_args gba;
+	gpio_pin_t *pins;
+	uint32_t mask, dir, value;
+	int pin;
+
+	gp->gp_cookie = gpio;
+	gp->gp_pin_read = imxgpio_pin_read;
+	gp->gp_pin_write = imxgpio_pin_write;
+	gp->gp_pin_ctl = imxgpio_pin_ctl;
+
+	gba.gba_gc = gp;
+	gba.gba_pins = gpio->gpio_pins;
+	gba.gba_npins = __arraycount(gpio->gpio_pins);
+
+	dir = GPIO_READ(gpio, GPIO_DIR);
+	value = GPIO_READ(gpio, GPIO_DR);
+	for (pin = 0, mask = 1, pins = gpio->gpio_pins;
+	     pin < 32; pin++, mask <<= 1, pins++) {
+		pins->pin_num = pin;
+		if ((gpio->gpio_edge_mask|gpio->gpio_level_mask) & mask)
+			pins->pin_caps = GPIO_PIN_INPUT;
+		else
+			pins->pin_caps = GPIO_PIN_INPUT|GPIO_PIN_OUTPUT;
+		pins->pin_flags =
+		    (dir & mask) ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT;
+		pins->pin_state =
+		    (value & mask) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+	}
+
+	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+}
+#endif /* NGPIO > 0 */
 
 int
-gpio_match(struct device *parent, struct cfdata *cfdata, void *aux)
+gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 {
-	struct mainbus_attach_args *mba = aux;
+	struct ahb_attach_args *ahba = aux;
 	bus_space_handle_t memh;
+	bus_size_t size;
 	int error;
 
-	if (mba->mba_addr != GPIO1_BASE
-	    && mba->mba_addr != GPIO2_BASE
-	    && mba->mba_addr != GPIO3_BASE)
+	if (ahba->ahba_addr != GPIO1_BASE
+	    && ahba->ahba_addr != GPIO2_BASE
+	    && ahba->ahba_addr != GPIO3_BASE)
 		return 0;
 
-	if (mba->mba_size == MAINBUSCF_SIZE_DEFAULT)
-		return 0;
+	size = (ahba->ahba_size == AHBCF_SIZE_DEFAULT) ? GPIO_SIZE : ahba->ahba_size;
 
-	error = bus_space_map(mba->mba_memt, mba->mba_addr, mba->mba_size,
-	    0, &memh);
+	error = bus_space_map(ahba->ahba_memt, ahba->ahba_addr, size, 0, &memh);
 	if (error)
 		return 0;
 
-	bus_space_unmap(mba->mba_memt, memh);
+	bus_space_unmap(ahba->ahba_memt, memh, size);
 	return 1;
 }
 
-int
-gpio_attach(struct device *parent, struct device *self, void *aux)
+void
+gpio_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_attach_args * const mba = aux;
-	struct gpio_softc * const gsc = (void *) self;
-	struct gpio_pic * const gpic = &gsc->gsc_gpic;
+	struct ahb_attach_args * const ahba = aux;
+	struct gpio_softc * const gpio = (void *) self;
+	bus_size_t size;
 	int error;
 
-	gsc->gsc_memt = mba->mba_memt;
-	error = bus_space_map(mba->mba_memt, mba->mba_addr, mba->mba_size,
-	    0, &gsc->gsc_memh);
+	size = (ahba->ahba_size == AHBCF_SIZE_DEFAULT) ? GPIO_SIZE : ahba->ahba_size;
+
+	gpio->gpio_memt = ahba->ahba_memt;
+	error = bus_space_map(ahba->ahba_memt, ahba->ahba_addr, ahba->ahba_size,
+	    0, &gpio->gpio_memh);
 
 	if (error) {
-		aprint_error(": failed to map register %#x@%#x: %d\n",
-		    mba->mba_size, mba->mba_addr, error);
+		aprint_error(": failed to map register %#lx@%#lx: %d\n",
+		    ahba->ahba_size, ahba->ahba_addr, error);
 		return;
 	}
 
-	if (mba->mba_irqbase != MAINBUSCF_IRQBASE_DEFAULT) {
-		gpic->gpic_pic.pic_ops = &gpio_pic_ops;
-		strlcpy(gpic->gpic_pic.pic_name, self->dv_xname,
-		    sizeof(gpic->gpic_pic.pic_name));
-		gpic->gpic_pic.pic_maxsources = 32;
-		pic_add(&gpic->gpic_pic, mba->mba_irqbase);
+	if (ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT) {
+		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
+		strlcpy(gpio->gpio_pic.pic_name, self->dv_xname,
+		    sizeof(gpio->gpio_pic.pic_name));
+		gpio->gpio_pic.pic_maxsources = 32;
+		pic_add(&gpio->gpio_pic, ahba->ahba_irqbase);
 	}
-
+#if NGPIO > 0
+	config_interrupts(self, gpio_defer);
+#endif
 }
