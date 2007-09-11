@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126.8.1 2007/06/18 09:31:05 liamjfoy Exp $	*/
+/*	$NetBSD: trap.c,v 1.126.8.2 2007/09/11 08:01:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.8.1 2007/06/18 09:31:05 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.8.2 2007/09/11 08:01:38 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -195,7 +195,8 @@ short	exframesize[] = {
 };
 
 #define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define WRFAULT(c)	(((c) & SSW_DF) != 0 && \
+			  ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0)))
 
 /* #define	DEBUG XXX */
 
