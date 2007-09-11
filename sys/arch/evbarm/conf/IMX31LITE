@@ -1,6 +1,6 @@
-#	$NetBSD: IMX31LITE,v 1.1.2.2 2007/09/06 19:32:10 matt Exp $
+#	$NetBSD: IMX31LITE,v 1.1.2.3 2007/09/11 02:36:54 matt Exp $
 #
-#	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
+#	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
 
 include	"arch/evbarm/conf/std.imx31"
@@ -20,8 +20,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_ARM1136	# Support the SA110 core
-makeoptions	CPUFLAGS="-mcpu=arm1136jf-s"
-options		KERNEL_BASE_EXT=0x80000000	# start kernel at 2GB
 
 # Architecture options
 
@@ -129,13 +127,14 @@ options 	USERCONF	# userconf(4) support
 
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
+options 	LOCKDEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=250000
+options 	SYMTAB_SPACE=280000
 
 config		netbsd		root on ? type ?
 
@@ -144,6 +143,28 @@ mainbus0	at root
 
 # The boot cpu
 cpu0		at mainbus?
+#l2cc0		at mainbus?
+
+# Specify the memory size in bytes.
+options		MEMSIZE=0x8000000
+
+# Devices
+
+ahb0		at mainbus?
+avic0		at ahb? addr 0x68000000 irqbase 0
+aips*		at ahb0
+imxuart*	at aips? addr 0x43f90000
+imxgpio0	at ahb? addr 0x53fcc000 irqbase 64
+imxgpio1	at ahb? addr 0x53fd0000 irqbase 96
+imxgpio2	at ahb? addr 0x53fa4000 irqbase 128
+gpio*		at imxgpio?
+
+# pcic
+imx31lk_pcic0	at aips? addr 0xb8004000
+pcmcia*		at imx31lk_pcic0
+wdc*		at pcmcia? function ?
+atabus*		at wdc? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 # Pseudo-Devices
 
@@ -157,5 +178,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	clockctl		# NTP clockctl
