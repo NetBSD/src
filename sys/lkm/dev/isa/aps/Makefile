@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2007/09/11 21:46:53 xtraeme Exp $
+# $NetBSD: Makefile,v 1.2 2007/09/11 22:02:09 xtraeme Exp $
 
 S=		${.CURDIR}/../../../..
 .PATH:		$S/dev/isa $S/dev/ic
@@ -12,7 +12,5 @@ LKM_ISA_DRVNAME=	aps
 
 CLEANFILES+=	*~ ${KMOD}
 WARNS=		2
-
-CPPFLAGS+=	-DAPSDEBUG -DMULTIPROCESSOR -DDIAGNOSTIC -DDEBUG -DLOCKDEBUG
 
 .include <bsd.kmod.mk>
