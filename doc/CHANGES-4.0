@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.260 2007/09/11 08:14:22 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.261 2007/09/11 08:25:27 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9476,7 +9476,18 @@ distrib/common/Makefile.mdset			1.30
 
 etc/etc.mac68k/ttys				1.18
 
-Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends don't
-exist (and symlinks aren't acceptable in many instances).
+	Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends don't
+	exist (and symlinks aren't acceptable in many instances).
 	[hauke, ticket #861]
+
+share/man/man4/wm.4				1.19
+sys/dev/pci/if_wm.c				1.145
+sys/dev/pci/if_wm.c				1.146
+
+	EECD_EE_AUTORD is only for 8257{123},80003,ICH{89}.
+	Will fix "auto read from eeprom failed to complete" problem.
+	Add more work for the EEPROM reaload sequence.
+	Fix typo.
+	Bump date for previous (ICH9 support).
+	[msaitoh, ticket #865]
 
