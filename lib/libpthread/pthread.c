@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.82 2007/09/08 22:49:50 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.83 2007/09/11 18:08:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.82 2007/09/08 22:49:50 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.83 2007/09/11 18:08:10 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -370,7 +370,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 		/* Add to list of all threads. */
 		pthread_rwlock_wrlock(&pthread__allqueue_lock);
-		PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
+		PTQ_INSERT_TAIL(&pthread__allqueue, newthread, pt_allq);
 		pthread_rwlock_unlock(&pthread__allqueue_lock);
 
 		/* Will be reset by the thread upon exit. */
