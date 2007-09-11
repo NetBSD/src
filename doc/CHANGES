@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.23 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.24 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -620,13 +620,10 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	i386, amd64: switch bootable iso images to native boot format, and add
 		different bootable kenrels on the iso images. Enable ACPI
 		in default INSTALL and GENERIC kernels. [bouyer 20070306]
-	openssl: Import OpenSSL 0.9.8e. [mjf 20070307]
 	ataraid(4): Add support for Via V-RAID. [garbled 20070326]
 	bind: import 9.4.0 [ghen 20070330]
-	sh5, evbsh5: Port deleted [scw 20070408]
 	coda: overhaul kernel module (vnode locking rules, uvm_fault
 		handling, general cleanup) [gdt 20070415]
-	bluetooth(4): add 'service level' security [plunky 20070421]
 	wm(4): Added support for the Intel i82801H (ICH8) gigabit ethernet
 		controller.  [bouyer 20070429]
 	ipf(8): Updated to version 4.1.20. [martti 20070501]
@@ -643,14 +640,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
 		PCIe to SATA II/PATA controllers. [bouyer 20070515]
 	postfix(1): Updated to 2.4.1 [heas 20070519]
-	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many
-		emulated OSS functions. [joerg 20070611]
-	i386:   Import AMD Geode LX Security Block driver glxsb(4) from
-		OpenBSD. [jmcneill 20070615]
-	ipf:    Updated to v4.1.23 [martin 20070616]
-	i386: Imported gcscide(4), a driver for the AMD CS5535 Companion
-		IDE Controller for systems with an AMD Geode GX2 CPU
-		(for example the decTOP). [xtraeme 20070627]
-	bind: import 9.4.1-P1 [christos 20070724]
 	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
 	postfix(1): Updated to 2.4.5 [heas 20070802]
