@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.262 2007/09/11 08:33:58 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.263 2007/09/11 08:38:53 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9476,8 +9476,8 @@ distrib/common/Makefile.mdset			1.30
 
 etc/etc.mac68k/ttys				1.18
 
-	Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends don't
-	exist (and symlinks aren't acceptable in many instances).
+	Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends
+	don't exist (and symlinks aren't acceptable in many instances).
 	[hauke, ticket #861]
 
 share/man/man4/wm.4				1.19
@@ -9497,3 +9497,43 @@ crypto/dist/openssl/crypto/rand/rand_unix.c	1.2
 	now works reliably if the first FD_SETSIZE file descriptors are in use.
 	[tron, ticket #870]
 
+sys/arch/amiga/amiga/trap.c			1.116
+sys/arch/atari/atari/trap.c			1.92
+sys/arch/cesfic/cesfic/trap.c			1.36
+sys/arch/hp300/hp300/trap.c			1.132
+sys/arch/luna68k/luna68k/trap.c			1.47
+sys/arch/mac68k/mac68k/trap.c			1.129
+sys/arch/mvme68k/mvme68k/trap.c			1.91
+sys/arch/news68k/news68k/trap.c			1.54
+sys/arch/next68k/next68k/trap.c			1.68
+sys/arch/sun3/sun3/trap.c			1.131
+sys/arch/x68k/x68k/trap.c			1.90
+
+	68030 and 68040 processors consider the read portion of a
+	read-modify-write transfer as a write to ensure the memory is writable
+	before starting any transfer.  The fault status information does not
+	reflect this in the 'read' status bit (i.e. it shows up as a read
+	access), so faults with a RMW access to non-writable memory was not
+	getting the correct protection.  The page would be read-only and the
+	instruction would fault over and over.
+
+	A specific example is when a process forks, and the child process
+	attempts to execute a RMW access to a data page, which is read-only
+	because it's CoP Copy-On-Write.
+
+	When checking if the page needs to be writablek, also check the locked
+	transfer and treat any locked transfer as a write.
+
+	68060 already handled this correctly, since it has separate read and
+	write fault bits, and both are set on a RMW access and the trap code
+	was checking the write status bit.
+
+	Fixes PR#36848.
+	[mhitch, ticket #866]
+
+sys/netbt/hci.h					1.11
+
+	adjust typedef name for consistency with other parts, since
+	hci_rssi_response is only a packet segment it should not be in _ep
+	namespace.
+	[plunky, ticket #871]
