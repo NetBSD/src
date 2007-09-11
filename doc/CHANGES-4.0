@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.259 2007/09/11 07:10:58 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.260 2007/09/11 08:14:22 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9473,3 +9473,10 @@ distrib/common/Makefile.mdset			1.30
 	Fix bug which causes cats builds to not produce an a.out install
 	kernels, which are needed to boot from Cyclone firmware. PR#36948
 	[chris, ticket #872]
+
+etc/etc.mac68k/ttys				1.18
+
+Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends don't
+exist (and symlinks aren't acceptable in many instances).
+	[hauke, ticket #861]
+
