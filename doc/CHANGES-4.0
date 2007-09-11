@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.258 2007/09/11 06:20:43 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.259 2007/09/11 07:10:58 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9460,3 +9460,16 @@ lib/libc/sys/socket.2				1.34-1.36
 	Add PF_BLUETOOTH to list of supported protocol families
 	ARPA IPv6 -> IPv6 reported from Robert Elz (PR/36933)
 	[jnemeth, ticket #868]
+
+sys/dev/wscons/wsdisplay.c			1.108
+
+	It was probably not a good idea to put that scroll stuff to accessops.
+	But now that it is there, keep it from crashing the box if there is
+	no valid focus screen.
+	[mlelstv, ticket #858]
+
+distrib/common/Makefile.mdset			1.30
+
+	Fix bug which causes cats builds to not produce an a.out install
+	kernels, which are needed to boot from Cyclone firmware. PR#36948
+	[chris, ticket #872]
