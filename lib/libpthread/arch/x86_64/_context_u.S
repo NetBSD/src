@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.6 2007/09/07 14:09:29 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.7 2007/09/11 16:07:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,15 +155,15 @@ ENTRY(pthread__atomic_swap_ptr)
 
 ENTRY(pthread__membar_full)
 	lock
-	addq	$0, -4(%rsp)
+	addq	$0, -8(%rsp)
 	ret
 
 ENTRY(pthread__membar_producer)
 	/* A store is enough */
-	movq	$0, -4(%rsp)
+	movq	$0, -8(%rsp)
 	ret
 
 ENTRY(pthread__membar_consumer)
 	lock
-	addq	$0, -4(%rsp)
+	addq	$0, -8(%rsp)
 	ret
