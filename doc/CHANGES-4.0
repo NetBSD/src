@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.256 2007/09/10 19:25:30 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.257 2007/09/11 05:49:28 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9446,3 +9446,11 @@ usr.sbin/rtsold/rtsol.c				1.14
 
 	Fix typo from Wouter Schoot. PR#36931
 	[jnemeth, ticket #867]
+
+sys/arch/i386/pci/gcscide.c			1.5
+
+	Always use PIO Format 1, which allows independent control of command
+	and data (PIO Format 0 selects the speed of the slowest drive).
+	Set correctly Ultra DMA and Multi-word DMA modes.
+	Update comments to be more correct after reading again the datasheet.
+	[xtraeme, ticket #862]
