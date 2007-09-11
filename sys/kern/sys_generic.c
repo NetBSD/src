@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.97 2006/11/20 15:16:22 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.97.2.1 2007/09/11 09:58:24 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.97 2006/11/20 15:16:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.97.2.1 2007/09/11 09:58:24 xtraeme Exp $");
 
 #include "opt_ktrace.h"
 
@@ -121,7 +121,8 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 
 	aiov.iov_base = (caddr_t)buf;
@@ -220,7 +221,8 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 
 #ifdef KTRACE
@@ -349,7 +351,8 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
@@ -450,7 +453,8 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 #ifdef KTRACE
 	ktriov = NULL;
