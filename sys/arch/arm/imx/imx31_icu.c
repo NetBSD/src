@@ -34,12 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.2 2007/08/30 07:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.3 2007/09/11 02:32:27 matt Exp $");
 
 #define _INTR_PRIVATE
  
+#include "locators.h"
+
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/device.h>
  
 #include <uvm/uvm_extern.h>
   
@@ -49,10 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.2 2007/08/30 07:08:15 matt Exp $
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
+#include <machine/autoconf.h>
 #include <machine/atomic.h>
 #include <machine/bus.h>
 
-#include <arm/imx/imx31_intrreg.h>
+#include <arm/imx/imx31reg.h>
+#include <arm/imx/imx31var.h>
 
 static void avic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void avic_block_irqs(struct pic_softc *, size_t, uint32_t);
@@ -67,16 +72,13 @@ const struct pic_ops avic_pic_ops = {
 };
 
 struct avic_softc {
+	struct device avic_dv;
 	struct pic_softc avic_pic;
 	bus_space_tag_t avic_memt;
 	bus_space_handle_t avic_memh;
-} pic_avic = {
-	.avic_pic = {
-		.pic_ops = &avic_pic_ops,
-		.pic_maxsources = 64,
-		.pic_name = "avic",
-	},
 };
+
+extern struct cfdriver avic_cd;
 
 #define	INTC_READ(avic, reg) \
 	bus_space_read_4((avic)->avic_memt, (avic)->avic_memh, (reg))
@@ -157,7 +159,7 @@ avic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 void
 imx31_irq_handler(void *frame)
 {
-	struct avic_softc * const avic = &pic_avic;
+	struct avic_softc * const avic = avic_cd.cd_devs[0];
 	struct pic_softc * const pic = &avic->avic_pic;
 	int32_t saved_nimask;
 	int32_t irq;
@@ -205,9 +207,49 @@ imx31_irq_handler(void *frame)
 	}
 }
 
-void
-imx31_icu_init(void)
+static int avic_match(device_t, cfdata_t, void *);
+static void avic_attach(device_t, device_t, void *);
+
+CFATTACH_DECL(avic,
+	sizeof(struct avic_softc),
+	avic_match, avic_attach,
+	NULL, NULL);
+
+int
+avic_match(device_t parent, cfdata_t self, void *aux)
 {
-	pic_add(&pic_avic.avic_pic, 0);
+	struct ahb_attach_args * const ahba = aux;
+
+	if (ahba->ahba_addr != INTC_BASE)
+		return 0;
+
+	return 1;
+}
+
+void
+avic_attach(device_t parent, device_t self, void *aux)
+{
+	struct avic_softc * const avic = (void *) self;
+	struct ahb_attach_args * const ahba = aux;
+	int error;
+
+	KASSERT(ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT);
+	KASSERT(self->dv_unit != 0);
+
+	avic->avic_memt = ahba->ahba_memt;
+	error = bus_space_map(avic->avic_memt, ahba->ahba_addr, ahba->ahba_size,
+	    0, &avic->avic_memh);
+	if (error)
+		panic("avic_attach: failed to map register %#lx-%#lx: %d",
+		    ahba->ahba_addr, ahba->ahba_addr + ahba->ahba_size - 1,
+		    error);
+
+	avic->avic_pic.pic_ops = &avic_pic_ops;
+	avic->avic_pic.pic_maxsources = 64;
+	strlcpy(avic->avic_pic.pic_name, self->dv_xname,
+	    sizeof(avic->avic_pic.pic_name));
+
+	pic_add(&avic->avic_pic, 0);
+
 	softintr_init();
 }
