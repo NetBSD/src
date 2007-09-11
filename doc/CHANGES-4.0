@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.264 2007/09/11 08:41:36 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.265 2007/09/11 08:46:59 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9548,4 +9548,9 @@ sys/arch/xen/xen/xengnt.c			1.3
 	If running on a hypervisor that doesn't support GNTTABOP_query_size,
 	fall back to a 4-pages grant table, so this change is backward-compatible.
 	[bouyer, ticket #875]
+
+sbin/bioctl/bioctl.8				1.3
+
+	Fix typo.
+	[bouyer, ticket #874]
 
