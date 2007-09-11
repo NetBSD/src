@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.267 2007/09/11 09:20:00 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.268 2007/09/11 09:58:49 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9571,4 +9571,13 @@ sys/net/if_pppoe.c				1.80 via patch
 	This seems to be usefull to identify peers with known broken firmware
 	(e.g. that can only do IPv4 reliably).
 	[martin, ticket #873]
+
+sys/kern/sys_generic.c				1.106 via patch
+
+	Fix various possible dereferences via uvmspace_free() of non-initialized *vm.
+	Also, error case might happen before proc_vmspace_getref() (hi <ad>!).
+	Thanks CID 4551 and 4552. This is serious, pullup will be requested.
+
+	OK by <wrstuden>.
+	[rmind, ticket #869]
 
