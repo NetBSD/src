@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1023 2007/09/03 18:02:17 tshiozak Exp $
+# $NetBSD: mi,v 1.1024 2007/09/11 21:54:54 xtraeme Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -688,6 +688,7 @@
 ./usr/share/man/cat4/arm32/ptsc.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm32/quadmouse.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm32/wd.0			man-obsolete		obsolete
+./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/artsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ast.0			man-sys-catman		.cat
@@ -3173,6 +3174,7 @@
 ./usr/share/man/man4/arm32/ptsc.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm32/quadmouse.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm32/wd.4			man-obsolete		obsolete
+./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/arp.4			man-sys-man		.man
 ./usr/share/man/man4/artsata.4			man-sys-man		.man
 ./usr/share/man/man4/ast.4			man-sys-man		.man
