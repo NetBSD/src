@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110.8.1 2007/07/26 12:57:43 pavel Exp $	*/
+/*	$NetBSD: trap.c,v 1.110.8.2 2007/09/11 08:01:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110.8.1 2007/07/26 12:57:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110.8.2 2007/09/11 08:01:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,9 +414,9 @@ trapmmufault(type, code, v, fp, l, sticks)
 #ifdef M68060
 	    machineid & AMIGA_68060 ? code & FSLW_RW_W :
 #endif
-	    mmutype == MMU_68040 ? (code & SSW_RW040) == 0 :
-	    (code & (SSW_DF|SSW_RW)) == SSW_DF)
-							/* what about RMW? */
+	    mmutype == MMU_68040 ? (code & (SSW_LK|SSW_RW040)) != SSW_RW040 :
+	    ((code & SSW_DF) != 0 &&
+	    ((code & SSW_RW) == 0 || (code & SSW_RM) != 0)))
 		ftype = VM_PROT_WRITE;
 	else
 		ftype = VM_PROT_READ;
