@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.266 2007/09/11 09:01:57 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.267 2007/09/11 09:20:00 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9564,4 +9564,11 @@ sys/dist/ipf/netinet/ip_state.c			1.27
 	  fr_natderef causes lock contention and performance slowdown
 	Patches fetched from the SourceForge bug report.
 	[martti, ticket #876]
+
+sys/net/if_pppoe.c				1.80 via patch
+
+	Print the access concentrator name when a session is established.
+	This seems to be usefull to identify peers with known broken firmware
+	(e.g. that can only do IPv4 reliably).
+	[martin, ticket #873]
 
