@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.848 2007/09/06 18:09:00 joerg Exp $
+# $NetBSD: GENERIC,v 1.849 2007/09/11 21:46:53 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.848 $"
+#ident 		"GENERIC-$Revision: 1.849 $"
 
 maxusers	32		# estimated number of users
 
@@ -626,6 +626,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# IBM Thinkpad Active Protection System
+#aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
 #it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
