@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.5 2007/09/09 13:52:23 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.6 2007/09/11 07:41:26 xtraeme Exp $
 
 .include "../Makefile.inc"
 
 TEMPL_DIR?=	${.CURDIR}/../common
 TEMPL_FILE?=	lkm_isa.c.tmpl
 
-LKM_ISA_IO_PORT?=	0x290
+LKM_ISA_IO_PORT?=	-1
 LKM_ISA_SIZE?=		0
 LKM_ISA_IOMEM?=		-1
 LKM_ISA_IOSIZE?=	0
