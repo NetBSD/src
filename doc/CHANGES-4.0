@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.257 2007/09/11 05:49:28 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.258 2007/09/11 06:20:43 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9454,3 +9454,9 @@ sys/arch/i386/pci/gcscide.c			1.5
 	Set correctly Ultra DMA and Multi-word DMA modes.
 	Update comments to be more correct after reading again the datasheet.
 	[xtraeme, ticket #862]
+
+lib/libc/sys/socket.2				1.34-1.36
+
+	Add PF_BLUETOOTH to list of supported protocol families
+	ARPA IPv6 -> IPv6 reported from Robert Elz (PR/36933)
+	[jnemeth, ticket #868]
