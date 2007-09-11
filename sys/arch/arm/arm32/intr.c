@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2007/08/13 02:04:50 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.2.1 2007/09/11 18:42:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2007/08/13 02:04:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.1 2007/09/11 18:42:04 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2007/08/13 02:04:50 tsutsui Exp $");
 
 #include <arm/arm32/machdep.h>
  
-extern int current_spl_level;
-
 /* Generate soft interrupt counts if IRQSTATS is defined */
 /* Prototypes */
 static void clearsoftintr(u_int); 
@@ -89,7 +87,7 @@ dosoftints(void)
 	u_int softints;
 	int s;
 
-	softints = soft_interrupts & spl_smasks[current_spl_level];
+	softints = soft_interrupts & spl_smasks[curcpu()->ci_cpl];
 	if (softints == 0) return;
 
 	/*
@@ -133,7 +131,6 @@ dosoftints(void)
 	}
 }
 
-int current_spl_level = _SPL_SERIAL;
 u_int spl_masks[_SPL_LEVELS + 1];
 int safepri = _SPL_0;
 
