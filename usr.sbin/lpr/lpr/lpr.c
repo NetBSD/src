@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.35 2006/01/29 18:55:46 christos Exp $	*/
+/*	$NetBSD: lpr.c,v 1.36 2007/09/11 15:46:56 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.35 2006/01/29 18:55:46 christos Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.36 2007/09/11 15:46:56 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -455,7 +455,7 @@ copy(int f, const char *n)
 		}
 	}
 	(void)close(fd);
-	if (nc==0 && nr==0) 
+	if (nc == 0 && nr == 0) 
 		printf("%s: %s: empty input file\n", getprogname(),
 		    f ? n : "stdin");
 	else
@@ -696,7 +696,7 @@ mktemps(void)
 	(void)snprintf(buf, sizeof(buf), "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0)
-		err(1, "cannot create %s\n", buf);
+		err(1, "cannot create %s", buf);
 	if (flock(fd, LOCK_EX))
 		err(1, "cannot lock %s", buf);
 	seteuid(uid);
