@@ -1,7 +1,7 @@
-/*	$Id: imx31_ahb.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $	*/
+/*	$Id: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_ahb.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $ */
+/*	$NetBSD: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.1.2.1 2007/09/11 02:32:26 matt Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -171,6 +171,7 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all other devices
 	 */
+	ahba.ahba_name = "ahb";
 	ahba.ahba_memt = sc->sc_memt;
 	ahba.ahba_dmat = sc->sc_dmat;
 	config_search_ia(ahb_search, self, "ahb", &ahba);
@@ -197,11 +198,13 @@ ahb_attach_critical(struct ahb_softc *sc)
 {
 	struct ahb_attach_args ahba;
 
+	ahba.ahba_name = "ahb";
+	ahba.ahba_memt = sc->sc_memt;
+	ahba.ahba_dmat = sc->sc_dmat;
+
 #if NAVIC == 0
 #error no avic present in config file
 #endif
-	ahba.ahba_memt = sc->sc_memt;
-	ahba.ahba_dmat = sc->sc_dmat;
 	ahba.ahba_addr = INTC_BASE;
 	ahba.ahba_size = INTC_SIZE;
 	ahba.ahba_intr = AHBCF_INTR_DEFAULT;
@@ -213,8 +216,6 @@ ahb_attach_critical(struct ahb_softc *sc)
 #error no imxgpio present in config file
 #endif
 #if NIMXGPIO > 0
-	ahba.ahba_memt = sc->sc_memt;
-	ahba.ahba_dmat = sc->sc_dmat;
 	ahba.ahba_addr = GPIO1_BASE;
 	ahba.ahba_size = GPIO_SIZE;
 	ahba.ahba_intr = IRQ_GPIO1;
@@ -224,8 +225,6 @@ ahb_attach_critical(struct ahb_softc *sc)
 #endif
 
 #if NIMXDMAC > 0
-	ahba.ahba_memt = sc->sc_memt;
-	ahba.ahba_dmat = sc->sc_dmat;
 	ahba.ahba_addr = IMX31_DMAC_BASE;
 	ahba.ahba_size = IMX31_DMAC_SIZE;
 	ahba.ahba_intr = IMX31_INT_DMA;
