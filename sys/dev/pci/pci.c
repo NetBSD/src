@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.5 2007/08/23 09:32:51 joerg Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.6 2007/09/11 11:59:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.5 2007/08/23 09:32:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.6 2007/09/11 11:59:59 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -947,6 +947,7 @@ pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 			}
 			splx(s);
 		}
+		break;
 	case PNP_REQUEST_GET_STATE:
 		state = opaque;
 		if (pci_get_powerstate(pc, tag, &val) != 0)
