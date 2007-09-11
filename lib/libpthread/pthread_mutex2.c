@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.4 2007/09/10 11:34:05 skrll Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.5 2007/09/11 11:30:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.4 2007/09/10 11:34:05 skrll Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.5 2007/09/11 11:30:15 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -313,7 +313,7 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 	 */
 	mp = ptm->ptm_private;
 	if (mp != NULL && mp->type == PTHREAD_MUTEX_RECURSIVE &&
-	    ptm->ptm_owner == self) {
+	    MUTEX_OWNER(value) == (uintptr_t)self) {
 		if (mp->recursecount == INT_MAX)
 			return EAGAIN;
 		mp->recursecount++;
@@ -339,13 +339,14 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 	 * if we know we own the mutex.
 	 */
 	self = pthread_self();
-	weown = (MUTEX_OWNER(ptm->ptm_owner) == (uintptr_t)self);
+	owner = ptm->ptm_owner;
+	weown = (MUTEX_OWNER(owner) == (uintptr_t)self);
 	mp = ptm->ptm_private;
 
 	if (mp == NULL) {
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
-			    (ptm->ptm_owner != 0));
+			    (owner != NULL));
 			pthread__error(EPERM,
 			    "Unlocking mutex owned by another thread", weown);
 		}
@@ -370,7 +371,7 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 			return EPERM;
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
-			    (ptm->ptm_owner != 0));
+			    (owner != NULL));
 			pthread__error(EPERM,
 			    "Unlocking mutex owned by another thread", weown);
 		}
