@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.48.12.1 2007/08/29 04:17:02 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.48.12.2 2007/09/11 19:23:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -174,8 +174,16 @@
 ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
 
+#ifdef DIAGNOSTIC
+	cmp	r1, #0
+	bne	1f	
+	adr	r0, .Lnewlwp_panicstr
+	bl	_C_LABEL(panic)
+.Lnewlwp_panicstr:
+	.asciz	"cpu_switchto: new lwp is NULL!"
+#endif
+1:	mov	r4, r0		/* save old lwp, it's the return value */
 	mov	r6, r1		/* save new lwp */
-	mov	r4, r0		/* save old lwp, it's the return value */
 
 	IRQdisable
 
@@ -322,6 +330,7 @@ ENTRY(cpu_switchto)
 
 	ldr	r3, .Lblock_userspace_access
 	mov	r12, #0
+#ifdef PMAP_CACHE_VIVT
 	cmp	r5, #0				/* No last vm? (switch_exit) */
 	beq	.Lcs_cache_purge_skipped	/* No, we can skip cache flsh */
 
@@ -341,6 +350,7 @@ ENTRY(cpu_switchto)
 	 */
 	tst	r12, #0xff			/* Test cs_cache_id */
 	beq	.Lcs_cache_purge_skipped	/* VM space is not in cache */
+#endif /* PMAP_CACHE_VIVT */
 
 	/*
 	 * Definately need to flush the cache.
@@ -352,6 +362,7 @@ ENTRY(cpu_switchto)
 	strb	r2, [r5, #(CS_CACHE_D)]
 
 .Lcs_cache_purge:
+#ifdef PMAP_CACHE_VIVT
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
@@ -364,6 +375,7 @@ ENTRY(cpu_switchto)
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 	ldmfd	sp!, {r0-r3}
 
+#endif /* PMAP_CACHE_VIVT */
 .Lcs_cache_purge_skipped:
 	/* rem: r1 = new DACR */
 	/* rem: r3 = &block_userspace_access */
