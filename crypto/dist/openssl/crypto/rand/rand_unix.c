@@ -125,7 +125,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
-#if defined(OPENSSL_SYS_LINUX) /* should actually be available virtually everywhere */
+#if defined(OPENSSL_SYS_LINUX) || defined(__NetBSD__) /* should actually be available virtually everywhere */
 # include <poll.h>
 #endif
 #include <limits.h>
@@ -211,7 +211,7 @@ int RAND_poll(void)
 				{
 				int try_read = 0;
 
-#if defined(OPENSSL_SYS_LINUX)
+#if defined(OPENSSL_SYS_LINUX) || defined(__NetBSD__)
 				/* use poll() */
 				struct pollfd pset;
 				
