@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.151 2007/09/12 11:07:38 xtraeme Exp $
+#	$NetBSD: files.isa,v 1.152 2007/09/12 11:45:39 xtraeme Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -471,8 +471,8 @@ file	dev/isa/ug_isa.c		ug_isa
 
 # IBM ThinkPad Active Protection System
 device	aps: sysmon_envsys
-attach	aps at isa with aps_isa
-file	dev/isa/aps.c 			aps_isa
+attach	aps at isa with aps
+file	dev/isa/aps.c 			aps
 
 # ISDN devices
 attach	isic at isa with isic_isa
