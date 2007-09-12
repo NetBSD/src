@@ -1,7 +1,4 @@
-/*	$Id: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $	*/
-
-/* derived from:	*/
-/*	$NetBSD: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $ */
+/*	$NetBSD: imx31_ahb.c,v 1.1.2.3 2007/09/12 06:17:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -97,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.1.2.2 2007/09/11 16:39:20 matt Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.1.2.3 2007/09/12 06:17:11 matt Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -193,45 +190,82 @@ ahb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return 0;
 }
 
-static void
-ahb_attach_critical(struct ahb_softc *sc)
+static int
+ahb_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct ahb_attach_args ahba;
+	struct ahb_attach_args * const ahba = aux;
+	struct ahb_attach_args ahba0;
 
-	ahba.ahba_name = "ahb";
-	ahba.ahba_memt = sc->sc_memt;
-	ahba.ahba_dmat = sc->sc_dmat;
+	if (strcmp(ahba->ahba_name, "ahb"))
+		return 0;
+	if (ahba->ahba_addr != AHBCF_ADDR_DEFAULT
+	    && ahba->ahba_addr != cf->cf_loc[AHBCF_ADDR])
+		return 0;
+	if (ahba->ahba_size != AHBCF_SIZE_DEFAULT
+	    && ahba->ahba_size != cf->cf_loc[AHBCF_SIZE])
+		return 0;
+	if (ahba->ahba_intr != AHBCF_INTR_DEFAULT
+	    && ahba->ahba_intr != cf->cf_loc[AHBCF_INTR])
+		return 0;
+	if (ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT
+	    && ahba->ahba_irqbase != cf->cf_loc[AHBCF_IRQBASE])
+		return 0;
+
+	ahba0 = *ahba;
+	ahba0.ahba_addr = cf->cf_loc[AHBCF_ADDR];
+	ahba0.ahba_size = cf->cf_loc[AHBCF_SIZE];
+	ahba0.ahba_intr = cf->cf_loc[AHBCF_INTR];
+	ahba0.ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
+
+	return config_match(parent, cf, &ahba0);
+}
 
 #if NAVIC == 0
 #error no avic present in config file
 #endif
-	ahba.ahba_addr = INTC_BASE;
-	ahba.ahba_size = INTC_SIZE;
-	ahba.ahba_intr = AHBCF_INTR_DEFAULT;
-	ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
-	if (config_found(&sc->sc_dev, &ahba, ahbbus_print) == NULL)
-		panic("ahb_attach_critical: failed to attach INTC!");
 
-#if NIMXGPIO == 0
-#error no imxgpio present in config file
+static const struct {
+	const char *name;
+	bus_addr_t addr;
+	bool required;
+} critical_devs[] = {
+	{ .name = "avic", .addr = INTC_BASE, .required = true },
+	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
+	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
+	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
+#if 0
+	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
-#if NIMXGPIO > 0
-	ahba.ahba_addr = GPIO1_BASE;
-	ahba.ahba_size = GPIO_SIZE;
-	ahba.ahba_intr = IRQ_GPIO1;
-	ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
-	if (config_found(&sc->sc_dev, &ahba, ahbbus_print) == NULL)
-		panic("ahb_attach_critical: failed to attach GPIO0!");
-#endif
+};
 
-#if NIMXDMAC > 0
-	ahba.ahba_addr = IMX31_DMAC_BASE;
-	ahba.ahba_size = IMX31_DMAC_SIZE;
-	ahba.ahba_intr = IMX31_INT_DMA;
-	ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
-	if (config_found(&sc->sc_dev, &ahba, ahbbus_print) == NULL)
-		panic("ahb_attach_critical: failed to attach DMAC!");
-#endif
+static void
+ahb_attach_critical(struct ahb_softc *sc)
+{
+	struct ahb_attach_args ahba;
+	cfdata_t cf;
+	size_t i;
+
+	for (i = 0; i < __arraycount(critical_devs); i++) {
+		ahba.ahba_name = "ahb";
+		ahba.ahba_memt = sc->sc_memt;
+		ahba.ahba_dmat = sc->sc_dmat;
+
+		ahba.ahba_addr = critical_devs[i].addr;
+		ahba.ahba_size = AHBCF_SIZE_DEFAULT;
+		ahba.ahba_intr = AHBCF_INTR_DEFAULT;
+		ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
+
+		cf = config_search_ia(ahb_find, &sc->sc_dev, "ahb", &ahba);
+		if (cf == NULL && critical_devs[i].required)
+			panic("ahb_attach_critical: failed to find %s!",
+			    critical_devs[i].name);
+
+		ahba.ahba_addr = cf->cf_loc[AHBCF_ADDR];
+		ahba.ahba_size = cf->cf_loc[AHBCF_SIZE];
+		ahba.ahba_intr = cf->cf_loc[AHBCF_INTR];
+		ahba.ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
+		config_attach(&sc->sc_dev, cf, &ahba, ahbbus_print);
+	}
 }
 
 static int
@@ -247,7 +281,7 @@ ahbbus_print(void *aux, const char *name)
 	}
 	if (ahba->ahba_intr != AHBCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", ahba->ahba_intr);
-	if (ahba->ahba_intr != AHBCF_IRQBASE_DEFAULT)
+	if (ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT)
 		aprint_normal(" irqbase %d", ahba->ahba_irqbase);
 
 	return (UNCONF);
