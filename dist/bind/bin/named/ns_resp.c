@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_resp.c,v 1.12 2003/11/26 01:35:32 itojun Exp $	*/
+/*	$NetBSD: ns_resp.c,v 1.12.6.1 2007/09/12 20:53:52 bouyer Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
@@ -1509,7 +1509,7 @@ tcp_retry:
 		hp->rd = 0;
 	} else
 		hp = (HEADER *) qp->q_msg;
-	hp->id = qp->q_nsid = htons(nsid_next());
+	hp->id = qp->q_nsid = nsid_next();
 	hp->rd = (qp->q_addr[0].forwarder ? 1 : 0);
 	unsched(qp);
 	schedretry(qp, retrytime(qp));
@@ -2442,7 +2442,7 @@ sysquery(const char *dname, int class, int type,
 	}
 	qp->q_msglen = n;
 	hp = (HEADER *) qp->q_msg;
-	hp->id = qp->q_nsid = htons(nsid_next());
+	hp->id = qp->q_nsid = nsid_next();
 	hp->rd = (qp->q_addr[qp->q_curaddr].forwarder ? 1 : 0);
 	hp->aa = (opcode == NS_NOTIFY_OP);
 
