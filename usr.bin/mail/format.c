@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.7 2007/07/07 18:04:17 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.8 2007/09/12 13:09:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.7 2007/07/07 18:04:17 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.8 2007/09/12 13:09:46 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -495,6 +495,55 @@ mk_gmtoff(struct tm *tm)
 	return gmtoff;
 }
 
+
+/*
+ * Convert a possible obs_zone (see RFC 2822, sec 4.3) to a valid
+ * gmtoff string.
+ */
+static const char *
+convert_obs_zone(const char *obs_zone)
+{
+	static const struct obs_zone_tbl_s {
+		const char *zone;
+		const char *gmtoff;
+	} obs_zone_tbl[] = {
+		{"UT",	"+0000"},
+		{"GMT",	"+0000"},
+		{"EST",	"-0500"},
+		{"EDT",	"-0400"},
+		{"CST",	"-0600"},
+		{"CDT",	"-0500"},
+		{"MST",	"-0700"},
+		{"MDT",	"-0600"},
+		{"PST",	"-0800"},
+		{"PDT",	"-0700"},
+		{NULL,	NULL},
+	};
+	const struct obs_zone_tbl_s *zp;
+
+	if (obs_zone[0] == '+' || obs_zone[0] == '-')
+		return obs_zone;
+
+	if (obs_zone[1] == 0) { /* possible military zones */
+		switch((unsigned char)obs_zone[0]) {
+		case 'A' ... 'I':
+		case 'K' ... 'Z':
+		case 'a' ... 'i':
+		case 'k' ... 'z':
+			return "-0000";	/* See RFC2822, sec 4.3 */
+		default:
+			return obs_zone;
+		}
+	}
+	for (zp = obs_zone_tbl;
+	     zp->zone;
+	     zp++) {
+		if (strcmp(obs_zone, zp->zone) == 0)
+			return zp->gmtoff;
+	}
+	return obs_zone;
+}
+
 /*
  * Get the date and time info from the "Date:" line, parse it into a
  * tm structure as much as possible.
@@ -507,7 +556,7 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 {
 	static int tzinit = 0;
 	char *tail;
-	char *gmtoff;
+	const char *gmtoff;
 	const char *date;
 
 	(void)memset(tm, 0, sizeof(*tm));
@@ -562,6 +611,7 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		else
 			tm->tm_zone = NULL;
 		gmtoff = skin(tail);
+		gmtoff = convert_obs_zone(gmtoff);
 
 		/*
 		 * Scan the gmtoff and use it to convert the time to a
