@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.23 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.24 2007/09/12 23:39:49 mgrooms Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -211,7 +211,7 @@ static int fix_lifebyte __P((u_long));
 	/* sainfo */
 %token SAINFO FROM
 	/* remote */
-%token REMOTE ANONYMOUS INHERIT
+%token REMOTE ANONYMOUS CLIENTADDR INHERIT
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
 %token CERTIFICATE_TYPE CERTTYPE PEERS_CERTFILE CA_TYPE
 %token VERIFY_CERT SEND_CERT SEND_CR
@@ -1161,12 +1161,16 @@ sainfo_statement
 			check = getsainfo(cur_sainfo->idsrc,
 					  cur_sainfo->iddst,
 					  cur_sainfo->id_i,
+					  NULL,
 					  cur_sainfo->remoteid);
-			if (check && (!check->idsrc && !cur_sainfo->idsrc)) {
+
+			if (check && ((check->idsrc != SAINFO_ANONYMOUS) &&
+				      (cur_sainfo->idsrc != SAINFO_ANONYMOUS))) {
 				yyerror("duplicated sainfo: %s",
 					sainfo2str(cur_sainfo));
 				return -1;
 			}
+
 			inssainfo(cur_sainfo);
 		}
 		EOC
@@ -1174,18 +1178,28 @@ sainfo_statement
 sainfo_name
 	:	ANONYMOUS
 		{
-			cur_sainfo->idsrc = NULL;
-			cur_sainfo->iddst = NULL;
+			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
+			cur_sainfo->iddst = SAINFO_ANONYMOUS;
+		}
+	|	ANONYMOUS CLIENTADDR
+		{
+			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
+			cur_sainfo->iddst = SAINFO_CLIENTADDR;
 		}
 	|	ANONYMOUS sainfo_id
 		{
-			cur_sainfo->idsrc = NULL;
+			cur_sainfo->idsrc = SAINFO_ANONYMOUS;
 			cur_sainfo->iddst = $2;
 		}
 	|	sainfo_id ANONYMOUS
 		{
 			cur_sainfo->idsrc = $1;
-			cur_sainfo->iddst = NULL;
+			cur_sainfo->iddst = SAINFO_ANONYMOUS;
+		}
+	|	sainfo_id CLIENTADDR
+		{
+			cur_sainfo->idsrc = $1;
+			cur_sainfo->iddst = SAINFO_CLIENTADDR;
 		}
 	|	sainfo_id sainfo_id
 		{
