@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.5 2006/08/08 16:34:34 cube Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.5.6.1 2007/09/12 10:05:03 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _X86_CPUVAR_H_
+#define _X86_CPUVAR_H_
+
 struct cpu_functions {
 	int (*start)(struct cpu_info *);
 	int (*stop)(struct cpu_info *);
@@ -94,6 +97,9 @@ struct cpu_attach_args {
 #ifdef _KERNEL
 
 #include "opt_multiprocessor.h"
+#ifndef XEN
+#include "opt_enhanced_speedstep.h"
+#endif
 
 #ifdef MULTIPROCESSOR
 extern u_int32_t cpus_running;
@@ -107,4 +113,13 @@ void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
 
+#ifdef ENHANCED_SPEEDSTEP
+void	est_init(int);
+int	via_get_bus_clock(struct cpu_info *);
+int	p3_get_bus_clock(struct cpu_info *);
+int	p4_get_bus_clock(struct cpu_info *);
 #endif
+
+#endif
+
+#endif /* !_X86_CPUVAR_H_ */
