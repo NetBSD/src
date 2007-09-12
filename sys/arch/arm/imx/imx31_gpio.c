@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.2 2007/09/11 02:32:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.3 2007/09/12 06:17:49 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -341,10 +341,10 @@ gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct ahb_attach_args * const ahba = aux;
 	struct gpio_softc * const gpio = (void *) self;
-	bus_size_t size;
 	int error;
 
-	size = (ahba->ahba_size == AHBCF_SIZE_DEFAULT) ? GPIO_SIZE : ahba->ahba_size;
+	if (ahba->ahba_size == AHBCF_SIZE_DEFAULT)
+		ahba->ahba_size = GPIO_SIZE;
 
 	gpio->gpio_memt = ahba->ahba_memt;
 	error = bus_space_map(ahba->ahba_memt, ahba->ahba_addr, ahba->ahba_size,
@@ -362,7 +362,10 @@ gpio_attach(device_t parent, device_t self, void *aux)
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 		pic_add(&gpio->gpio_pic, ahba->ahba_irqbase);
+		aprint_normal(": interrupts %d..%d",
+		    ahba->ahba_irqbase, ahba->ahba_irqbase + 31);
 	}
+	aprint_normal("\n");
 #if NGPIO > 0
 	config_interrupts(self, gpio_defer);
 #endif
