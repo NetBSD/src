@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.13 2007/09/03 18:08:43 mgrooms Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.14 2007/09/12 23:39:50 mgrooms Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -277,6 +277,7 @@ hexstring	0x{hexdigit}+
 	/* sainfo */
 <S_INI>sainfo		{ BEGIN S_SAINF; YYDB; return(SAINFO); }
 <S_SAINF>anonymous	{ YYD; return(ANONYMOUS); }
+<S_SAINF>clientaddr	{ YYD; return(CLIENTADDR); }
 <S_SAINF>{blcl}any{elcl}	{ YYD; return(PORTANY); }
 <S_SAINF>any		{ YYD; return(ANY); }
 <S_SAINF>from		{ YYD; return(FROM); }

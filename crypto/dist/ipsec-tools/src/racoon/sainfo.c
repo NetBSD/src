@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.9 2007/09/05 06:55:44 mgrooms Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.10 2007/09/12 23:39:51 mgrooms Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -76,8 +76,8 @@ static LIST_HEAD(_sitree, sainfo) sitree, sitree_save, sitree_tmp;
  * First pass is for sainfo from a specified peer, second for others.
  */
 struct sainfo *
-getsainfo(loc, rmt, peer, remoteid)
-	const vchar_t *loc, *rmt, *peer;
+getsainfo(loc, rmt, peer, client, remoteid)
+	const vchar_t *loc, *rmt, *peer, *client;
 	int remoteid;
 {
 	struct sainfo *s = NULL;
@@ -85,25 +85,32 @@ getsainfo(loc, rmt, peer, remoteid)
 	/* debug level output */
 	if(loglevel >= LLV_DEBUG) {
 		char *dloc, *drmt, *dpeer, *dclient;
- 
+
 		if (loc == NULL)
 			dloc = strdup("ANONYMOUS");
 		else
 			dloc = ipsecdoi_id2str(loc);
- 
-		if (rmt == NULL)
+
+		if (rmt == SAINFO_ANONYMOUS)
 			drmt = strdup("ANONYMOUS");
+		else if (rmt == SAINFO_CLIENTADDR)
+			drmt = strdup("CLIENTADDR");
 		else
 			drmt = ipsecdoi_id2str(rmt);
- 
+
 		if (peer == NULL)
 			dpeer = strdup("NULL");
 		else
 			dpeer = ipsecdoi_id2str(peer);
- 
+
+		if (client == NULL)
+			dclient = strdup("NULL");
+		else
+			dclient = ipsecdoi_id2str(client);
+
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"getsainfo params: loc=\'%s\', rmt=\'%s\', peer=\'%s\', id=%i\n",
-			dloc, drmt, dpeer, remoteid );
+			"getsainfo params: loc=\'%s\' rmt=\'%s\' peer=\'%s\' client=\'%s\' id=%i\n",
+			dloc, drmt, dpeer, dclient, remoteid );
  
                 racoon_free(dloc);
                 racoon_free(drmt);
@@ -122,11 +129,52 @@ getsainfo(loc, rmt, peer, remoteid)
 				continue;
 		}
 
+		/* compare 'from' id value */
 		if (s->id_i != NULL)
 			if (ipsecdoi_chkcmpids(peer, s->id_i, 0))
 				continue;
 
-		/* compare the ids */
+		/* compare ids - client */
+		if( s->iddst == SAINFO_CLIENTADDR ) {
+			/*
+			 * This sainfo section enforces client address
+			 * checking. Prevent match if the client value
+			 * ( modecfg or tunnel address ) is NULL.
+			 */
+
+			if (client == NULL)
+				continue;
+
+			if( rmt == SAINFO_CLIENTADDR ) {
+				/*
+				 * In the case where a supplied rmt value is
+				 * also SAINFO_CLIENTADDR, we are comparing
+				 * with another sainfo to check for duplicate.
+				 * Only compare the local values to determine
+				 * a match.
+				 */
+
+				 if (!ipsecdoi_chkcmpids(loc, s->idsrc, 0))
+					return s;
+			}
+			else {
+				/*
+				 * In the case where a supplied rmt value is
+				 * not SAINFO_CLIENTADDR, do a standard match
+				 * for local values and enforce that the rmt
+				 * id matches the client address value.
+				 */
+
+				if (!ipsecdoi_chkcmpids(loc, s->idsrc, 0) &&
+				    !ipsecdoi_chkcmpids(rmt, client, 0))
+					return s;
+			}
+
+			continue;
+		}
+
+
+		/* compare ids - standard */
 		if (!ipsecdoi_chkcmpids(loc, s->idsrc, 0) &&
 		    !ipsecdoi_chkcmpids(rmt, s->iddst, 0))
 			return s;
@@ -315,13 +363,15 @@ sainfo2str(si)
 
         char *idloc = NULL, *idrmt = NULL, *id_i;
  
-        if (si->idsrc == NULL)
+        if (si->idsrc == SAINFO_ANONYMOUS)
                 idloc = strdup("ANONYMOUS");
         else
                 idloc = ipsecdoi_id2str(si->idsrc);
  
-        if (si->iddst == NULL)
+        if (si->iddst == SAINFO_ANONYMOUS)
                 idrmt = strdup("ANONYMOUS");
+	else if (si->iddst == SAINFO_CLIENTADDR)
+                idrmt = strdup("CLIENTADDR");
         else
                 idrmt = ipsecdoi_id2str(si->iddst);
  

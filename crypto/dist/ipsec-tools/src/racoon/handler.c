@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.15 2007/06/06 09:18:16 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.16 2007/09/12 23:39:50 mgrooms Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1080,7 +1080,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	if (iph2->sainfo != NULL) {
 		iph2->sainfo = getsainfo(iph2->sainfo->idsrc, 
 					  iph2->sainfo->iddst, iph2->sainfo->id_i,
-					  iph2->sainfo->remoteid);
+					  NULL, iph2->sainfo->remoteid);
 	}
 	approval = iph2->approval;
 	sainfo = iph2->sainfo;
