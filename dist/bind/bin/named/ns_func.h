@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.9 2003/08/07 09:20:44 agc Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.9.2.1 2007/09/12 20:54:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -278,7 +278,6 @@ void			dq_remove_all(void);
 void			sq_done(struct qstream *);
 void			ns_setproctitle(char *, int);
 void			getnetconf(int);
-void			nsid_init(void);
 void			ns_setoption(int option);
 void			writestream(struct qstream *, const u_char *, int);
 void			ns_need_unsafe(enum need);
