@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.7 2007/08/08 06:13:09 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.8 2007/09/12 00:41:13 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.7 2007/08/08 06:13:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.8 2007/09/12 00:41:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,15 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.7 2007/08/08 06:13:09 macallan 
  * XXX This code currently doesn't even try to allow 32-bit data port use.
  */
 
-u_int8_t bsr1_s(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
+	bus_space_handle_t sc_dmaregh;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
@@ -99,6 +96,13 @@ static void ata4_adjust_timing __P((struct ata_channel *));
 CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_probe, wdc_obio_attach, wdc_obio_detach, wdcactivate);
 
+static const char *ata_names[] = {
+    "heathrow-ata",
+    "keylargo-ata",
+    "ohare-ata",
+    NULL
+};
+
 int
 wdc_obio_probe(parent, match, aux)
 	struct device *parent;
@@ -106,7 +110,6 @@ wdc_obio_probe(parent, match, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	char compat[32];
 
 	/* XXX should not use name */
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
@@ -115,10 +118,7 @@ wdc_obio_probe(parent, match, aux)
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
-	memset(compat, 0, sizeof(compat));
-	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
-	if (strcmp(compat, "heathrow-ata") == 0 ||
-	    strcmp(compat, "keylargo-ata") == 0)
+	if (of_compatible(ca->ca_node, ata_names) >= 0)
 		return 1;
 
 	return 0;
@@ -135,9 +135,7 @@ wdc_obio_attach(parent, self, aux)
 	struct ata_channel *chp = &sc->sc_channel;
 	int intr, i, type = IST_EDGE;
 	int use_dma = 0;
-	char path[80], compat[32];
-
-	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	char path[80];
 
 	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    WDC_OPTIONS_DMA) {
@@ -167,10 +165,6 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-#if 0
-	wdr->cmd_iot = wdr->ctl_iot =
-		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
-#endif
 	wdr->cmd_iot = wdr->ctl_iot = ca->ca_tag;
 
 	if (bus_space_map(wdr->cmd_iot, ca->ca_baseaddr + ca->ca_reg[0],
@@ -201,8 +195,26 @@ wdc_obio_attach(parent, self, aux)
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
-		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
-					 ca->ca_reg[3]);
+		/*
+		 * XXX
+		 * we don't use ca->ca_reg[3] for size here because at least
+		 * on the PB3400c it says 0x200 for both IDE channels ( the
+		 * one on the mainboard and the other on the mediabay ) but
+		 * their start addresses are only 0x100 apart. Since those
+		 * DMA registers are always 0x100 or less we don't really 
+		 * have to care though
+		 */
+		if (bus_space_map(wdr->cmd_iot, ca->ca_baseaddr + ca->ca_reg[2],
+		    0x100, BUS_SPACE_MAP_LINEAR, &sc->sc_dmaregh)) {
+
+			aprint_error("%s: unable to map DMA registers (%08x)\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    ca->ca_reg[2]);
+			/* should unmap stuff here */
+			return;
+		}
+		sc->sc_dmareg = bus_space_vaddr(wdr->cmd_iot, sc->sc_dmaregh);
+
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
@@ -293,7 +305,7 @@ static struct ide_timings udma_timing[5] = {
 
 #define ATA4_TIME_TO_TICK(time)  howmany((time), 15) /* 15 ns clock */
 
-#define CONFIG_REG (0x200 >> 4)		/* IDE access timing register */
+#define CONFIG_REG (0x200)		/* IDE access timing register */
 
 void
 wdc_obio_select(chp, drive)
