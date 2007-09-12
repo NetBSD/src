@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_forw.c,v 1.7 2003/08/07 09:20:44 agc Exp $	*/
+/*	$NetBSD: ns_forw.c,v 1.7.6.1 2007/09/12 20:53:51 bouyer Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
@@ -190,7 +190,7 @@ ns_forw(struct databuf *nsp[], u_char *msg, int msglen,
 				      in_tsig->siglen);
 	if (use_tcp)
 		qp->q_flags |= Q_USEVC;
-	hp->id = qp->q_nsid = htons(nsid_next());
+	hp->id = qp->q_nsid = nsid_next();
 	hp->ancount = htons(0);
 	hp->nscount = htons(0);
 	hp->arcount = htons(0);
