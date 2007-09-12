@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.116 2007/08/12 17:15:24 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.117 2007/09/12 20:56:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1302,4 +1302,12 @@ sys/sys/param.h					patch
 	Bump kernel version as LKM's depending on UFS internals will have to be
 	recompiled after this change (discussed and approved on tech-kern).
 	[hannken, ticket #11334]
+
+dist/bind/bin/named/ns_forw.c:			patch
+dist/bind/bin/named/ns_func.h:			patch
+dist/bind/bin/named/ns_main.c:			patch
+dist/bind/bin/named/ns_resp.c:			patch
+	Address security issue in named(8) documented in CVE-2007-2930 and
+	VU#927905: use arc4 rather than LC NSID for QID RNG.
+	[adrianp, ticket #11365]
 
