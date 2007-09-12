@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.3 2007/09/11 02:32:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.4 2007/09/12 06:19:45 matt Exp $");
 
 #define _INTR_PRIVATE
  
@@ -234,7 +234,10 @@ avic_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	KASSERT(ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT);
-	KASSERT(self->dv_unit != 0);
+	KASSERT(self->dv_unit == 0);
+
+	if (ahba->ahba_size == AHBCF_SIZE_DEFAULT)
+		ahba->ahba_size = INTC_SIZE;
 
 	avic->avic_memt = ahba->ahba_memt;
 	error = bus_space_map(avic->avic_memt, ahba->ahba_addr, ahba->ahba_size,
@@ -249,7 +252,10 @@ avic_attach(device_t parent, device_t self, void *aux)
 	strlcpy(avic->avic_pic.pic_name, self->dv_xname,
 	    sizeof(avic->avic_pic.pic_name));
 
-	pic_add(&avic->avic_pic, 0);
-
+	pic_add(&avic->avic_pic, ahba->ahba_irqbase);
+	aprint_normal(": interrupts %d..%d\n",
+	    ahba->ahba_irqbase, ahba->ahba_irqbase + 63);
+#if 0
 	softintr_init();
+#endif
 }
