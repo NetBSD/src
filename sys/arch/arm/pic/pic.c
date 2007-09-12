@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.3 2007/09/11 02:31:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.4 2007/09/12 06:20:23 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -311,6 +311,10 @@ pic_add(struct pic_softc *pic, int irqbase)
 		    xpic->pic_name, xpic->pic_maxsources, xpic->pic_irqbase);
 	}
 	slot = maybe_slot;
+#if 0
+	printf("%s: pic_sourcebase=%zu pic_maxsources=%zu\n",
+	    pic->pic_name, pic_sourcebase, pic->pic_maxsources);
+#endif
 	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 
 	pic->pic_sources = &pic_sources[pic_sourcebase];
