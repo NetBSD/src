@@ -1,4 +1,4 @@
-/* $NetBSD: imx31_intr.h,v 1.1.2.2 2007/08/30 07:07:45 matt Exp $ */
+/* $NetBSD: imx31_intr.h,v 1.1.2.3 2007/09/12 06:19:28 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,6 +125,8 @@
 	"gpio #1",	"ccm",		"pcmcia",	"wdog",		\
 	"gpio #3",	"reserved 57",	"ext pwrmgt",	"ext temp",	\
 	"ext sens #2",	"ext sens #1",	"ext wdog",	"ext tv", }
+
+#define	PIC_MAXMAXSOURCES	(64+3*32+128)
 
 #include <arm/pic/picvar.h>
 #include <arm/pic/softintr.h>
