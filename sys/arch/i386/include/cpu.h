@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.129.6.1 2007/04/20 20:31:26 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.129.6.2 2007/09/12 10:05:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -351,10 +351,6 @@ void	cpu_reset(void);
 void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
 
-/* identcpu.c */
-#ifdef ENHANCED_SPEEDSTEP
-extern int bus_clock;
-#endif
 extern int tmx86_has_longrun;
 extern u_int crusoe_longrun;
 extern u_int crusoe_frequency;
