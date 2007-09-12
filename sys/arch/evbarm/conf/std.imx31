@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.1.2.2 2007/09/11 02:36:55 matt Exp $
+#	$NetBSD: std.imx31,v 1.1.2.3 2007/09/12 06:21:10 matt Exp $
 #
 # standard NetBSD/evbar options for FreeScale I.MX31 
 
@@ -10,7 +10,7 @@ include "arch/evbarm/conf/files.imx31"
 
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
-options 	KERNEL_BASE_EXT=0x8000000
+options 	KERNEL_BASE_EXT=0x80000000
 makeoptions	CPUFLAGS="-mcpu=arm1136j-s"
 
 
