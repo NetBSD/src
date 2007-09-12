@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.75 2007/08/12 19:55:11 bouyer Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.76 2007/09/12 20:57:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -727,4 +727,12 @@ sys/dev/rasops/rasops.c				1.56 via patch
 	the possibility of a local user panic.
 	Set the 'ri' pointer before use.
 	[mjf, ticket #11348]
+
+dist/bind/bin/named/ns_forw.c:			patch
+dist/bind/bin/named/ns_func.h:			patch
+dist/bind/bin/named/ns_main.c:			patch
+dist/bind/bin/named/ns_resp.c:			patch
+	Address security issue in named(8) documented in CVE-2007-2930 and
+	VU#927905: use arc4 rather than LC NSID for QID RNG.
+	[adrianp, ticket #11365]
 
