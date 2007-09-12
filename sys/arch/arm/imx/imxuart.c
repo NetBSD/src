@@ -1,4 +1,4 @@
-/* $Id: imxuart.c,v 1.1.2.1 2007/09/11 02:32:29 matt Exp $ */
+/* $Id: imxuart.c,v 1.1.2.2 2007/09/12 06:18:26 matt Exp $ */
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -287,7 +287,7 @@ static int
 imxuart_snapshot(imxuart_softc_t *sc, uint32_t *p)
 {
 	int i;
-	uint r[] = {	IMX_URXD, IMX_UTXD, IMX_UCR1, IMX_UCR2,
+	const uint r[] = {	IMX_URXD, IMX_UTXD, IMX_UCR1, IMX_UCR2,
 			IMX_UCR3, IMX_UCR4, IMX_UFCR, IMX_USR1,
 			IMX_USR2, IMX_UESC, IMX_UTIM, IMX_UBIR,
 			IMX_UBMR, IMX_UBRC, IMX_ONEMS, IMX_UTS };
@@ -345,13 +345,16 @@ imxuart_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct aips_attach_args * const aipsa = aux;
 
-	printf("%s:\n", __FUNCTION__);
-	printf(" imx_iot %p\n", aipsa->aipsa_memt);
-	printf(" imx_addr %lx\n", aipsa->aipsa_addr);
-	printf(" imx_size %lx\n", aipsa->aipsa_size);
-	printf(" imx_intr %d\n", aipsa->aipsa_intr);
-
-	return 1;
+	switch (aipsa->aipsa_addr) {
+	case IMX_UART1_BASE:
+	case IMX_UART2_BASE:
+	case IMX_UART3_BASE:
+	case IMX_UART4_BASE:
+	case IMX_UART5_BASE:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static void
@@ -365,8 +368,6 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = aipsa->aipsa_addr;
 	sc->sc_size = aipsa->aipsa_size;
 	sc->sc_intr = aipsa->aipsa_intr;
-
-	printf(" addr %lx intr %d", sc->sc_addr, sc->sc_intr);
 
 	sc->sc_tty = tp = ttymalloc();
 	tp->t_oproc = imxuart_start;
