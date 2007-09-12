@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.268 2007/09/11 09:58:49 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.269 2007/09/12 12:35:09 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9581,3 +9581,20 @@ sys/kern/sys_generic.c				1.106 via patch
 	OK by <wrstuden>.
 	[rmind, ticket #869]
 
+share/man/man4/options.4			patch
+sys/arch/i386/conf/files.i386			patch
+sys/arch/i386/i386/est.c			delete
+sys/arch/i386/i386/identcpu.c			patch
+sys/arch/i386/include/cpu.h			patch
+sys/arch/x86/conf/files.x86			patch
+sys/arch/x86/include/cpuvar.h			patch
+sys/arch/x86/x86/est.c				patch
+sys/arch/x86/x86/intel_busclock.c		patch
+sys/arch/amd64/amd64/identcpu.c			patch
+sys/arch/amd64/conf/GENERIC			patch
+
+	Add support for the VIA C7-M and Eden processors in the Enhanced
+	Speedstep driver.
+	amd64: The Enhanced Speedstep driver is now able to work on EM64T
+	CPUs running in 64bit mode.
+	[xtraeme, ticket #809]
