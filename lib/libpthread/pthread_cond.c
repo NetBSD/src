@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.36 2007/09/08 22:49:50 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.37 2007/09/13 23:51:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.36 2007/09/08 22:49:50 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.37 2007/09/13 23:51:47 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -324,8 +324,8 @@ pthread_cond_signal(pthread_cond_t *cond)
 	 * deferred wakeup list.  The waiter will be set running when the
 	 * caller (this thread) releases the mutex.
 	 */
-	if (mutex != NULL && pthread__mutex_owned(self, mutex) &&
-	    self->pt_nwaiters < pthread__unpark_max) {
+	if (mutex != NULL && self->pt_nwaiters < pthread__unpark_max &&
+	    pthread__mutex_deferwake(self, mutex)) {
 		signaled->pt_sleepobj = NULL;
 		signaled->pt_sleeponq = 0;
 		pthread_spinunlock(&cond->ptc_lock);
@@ -363,7 +363,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	 * Try to defer waking threads (see pthread_cond_signal()).
 	 * Only transfer waiters for which there is no pending wakeup.
 	 */
-	if (mutex != NULL && pthread__mutex_owned(self, mutex)) {
+	if (mutex != NULL && pthread__mutex_deferwake(self, mutex)) {
 		for (signaled = PTQ_FIRST(&cond->ptc_waiters);
 		    signaled != NULL;
 		    signaled = next) {	

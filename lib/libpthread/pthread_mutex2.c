@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.6 2007/09/11 18:11:29 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.7 2007/09/13 23:51:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.6 2007/09/11 18:11:29 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.7 2007/09/13 23:51:47 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -62,6 +62,8 @@ __RCSID("$NetBSD: pthread_mutex2.c,v 1.6 2007/09/11 18:11:29 ad Exp $");
 #define	MUTEX_WAITERS_BIT		(0x01UL)
 #define	MUTEX_RECURSIVE_BIT		(0x02UL)
 #define	MUTEX_THREAD			(-16L)
+
+#define	MUTEX_DEFERRED(x)		(*(char *)&(x)->ptm_lock)
 
 #define	MUTEX_HAS_WAITERS(x)		((uintptr_t)(x) & MUTEX_WAITERS_BIT)
 #define	MUTEX_RECURSIVE(x)		((uintptr_t)(x) & MUTEX_RECURSIVE_BIT)
@@ -128,6 +130,7 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 	ptm->ptm_magic = _PT_MUTEX_MAGIC;
 	ptm->ptm_waiters = NULL;
 	ptm->ptm_private = NULL;
+	MUTEX_DEFERRED(ptm) = 0;
 
 	return 0;
 }
@@ -332,9 +335,12 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 {
 	void *owner;
 	pthread_t self;
+	char deferred;
 
 	self = pthread__self();
 	owner = self;
+	deferred = MUTEX_DEFERRED(ptm);
+	MUTEX_DEFERRED(ptm) = 0;
 
 	if (__predict_false(!mutex_cas(&ptm->ptm_owner, &owner, NULL)))
 		return pthread__mutex_unlock_slow(ptm);
@@ -343,7 +349,7 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 	 * There were no waiters, but we may have deferred waking
 	 * other threads until mutex unlock - we must wake them now.
 	 */
-	if (self->pt_nwaiters != 0)
+	if (deferred)
 		return pthread__mutex_catchup(ptm);
 
 	return 0;
@@ -353,6 +359,7 @@ NOINLINE static int
 pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 {
 	pthread_t self, owner, new;
+	char deferred;
 	int weown;
 
 	pthread__error(EINVAL, "Invalid mutex",
@@ -386,19 +393,22 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	 * Release the mutex.  If there appear to be waiters, then
 	 * wake them up.
 	 */
-	if (new != owner) {
-		owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, new);
-		if (MUTEX_HAS_WAITERS(owner) != 0) {
-			pthread__mutex_wakeup(self, ptm);
-			return 0;
-		}
+	if (new == owner)
+		return 0;
+
+	deferred = MUTEX_DEFERRED(ptm);
+	MUTEX_DEFERRED(ptm) = 0;
+	owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, new);
+	if (MUTEX_HAS_WAITERS(owner) != 0) {
+		pthread__mutex_wakeup(self, ptm);
+		return 0;
 	}
 
 	/*
 	 * There were no waiters, but we may have deferred waking
 	 * other threads until mutex unlock - we must wake them now.
 	 */
-	if (self->pt_nwaiters != 0)
+	if (deferred)
 		return pthread__mutex_catchup(ptm);
 
 	return 0;
@@ -543,10 +553,13 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 }
 
 int
-pthread__mutex_owned(pthread_t thread, pthread_mutex_t *ptm)
+pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *ptm)
 {
 
-	return MUTEX_OWNER(ptm->ptm_owner) == (uintptr_t)thread;
+	if (MUTEX_OWNER(ptm->ptm_owner) != (uintptr_t)thread)
+		return 0;
+	MUTEX_DEFERRED(ptm) = 1;
+	return 1;	
 }
 
 #endif	/* PTHREAD__HAVE_ATOMIC */
