@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.9 2007/05/31 02:58:10 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.10 2007/09/13 11:56:41 gdt Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -196,6 +196,14 @@ void discover_interfaces (state)
 
 	/* If the SIOCGIFCONF resulted in more data than would fit in
 	   a buffer, allocate a bigger buffer. */
+	/*
+	 * XXX This code is broken on NetBSD; the return value is the
+	 * amount of data returned, not the amount that would be
+	 * needed.  We need to e.g. double the buffer and try again.
+	 * The proper test is hairier: we can be sure that we got
+	 * everything only if there is an entire struct ifreq worth of
+	 * space left.
+	 */
 	if ((ic.ifc_ifcu.ifcu_buf == buf 
 #ifdef SIOCGIFCONF_ZERO_PROBE
 	     || ic.ifc_ifcu.ifcu_buf == 0
@@ -235,10 +243,23 @@ void discover_interfaces (state)
 
 		memcpy(&ifcpy, (caddr_t)ic.ifc_req + i, sizeof(struct ifreq));
 #ifdef HAVE_SA_LEN
-		if (ifp -> ifr_addr.sa_len > sizeof (struct sockaddr)) {
+		/*
+		 * Classically, struct ifreq used with SIOCGIFCONF had
+		 * a union where struct sockaddr was the largest
+		 * member.  If the address fit in the union, the next
+		 * ifreq followed immediately.  If not, the next ifreq
+		 * followed the end of the actual sockaddr.  In
+		 * NetBSD-current after ~2007-05, ifreq has a
+		 * sockaddr_storage member, and the next ifreq follows
+		 * the current ifreq always, because no sockaddr can
+		 * be bigger than sockaddr_storage.  Thus, compare the
+		 * length to the union's size, not struct sockaddr.
+		 */
+		if (ifp -> ifr_addr.sa_len > sizeof (ifp->ifr_ifru)) {
 			if (sizeof(struct ifreq) + ifp->ifr_addr.sa_len >
 			    sizeof(ifcpy))
 				break;
+			/* XXX This copies IFNAMSIZ bytes too many. */ 
 			memcpy(&ifcpy, (caddr_t)ic.ifc_req + i, 
 			    sizeof(struct ifreq) + ifp->ifr_addr.sa_len);
 			i += offsetof(struct ifreq, ifr_ifru) +
