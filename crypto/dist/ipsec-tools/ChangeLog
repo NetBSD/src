@@ -1,4 +1,8 @@
 2007-09-12  Matthew Grooms <mgrooms@shrew.net>
+	From Joy Latten <latten@austin.ibm.com>
+	* configure.ac: Fix autoconf check for selinux support.
+
+2007-09-12  Matthew Grooms <mgrooms@shrew.net>
 	* src/racoon/cfparse.y
 	src/racoon/cftoken.l
 	src/racoon/handler.c
