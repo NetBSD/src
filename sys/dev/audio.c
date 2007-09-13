@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.3 2007/09/07 23:55:29 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.4 2007/09/13 04:45:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.3 2007/09/07 23:55:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.4 2007/09/13 04:45:12 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -419,6 +419,9 @@ audioattach(struct device *parent, struct device *self, void *aux)
 				au_setup_ports(sc, &sc->sc_inports, &mi,
 				    itable);
 			}
+			if (strcmp(mi.label.name, AudioNdac) == 0 &&
+			    sc->sc_outports.master == -1)
+				sc->sc_outports.master = mi.index;
 		} else if (mi.mixer_class == mclass) {
 			if (strcmp(mi.label.name, AudioNmonitor) == 0)
 				sc->sc_monitor_port = mi.index;
