@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.42 2007/05/13 03:28:19 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.43 2007/09/13 03:54:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42 2007/05/13 03:28:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.43 2007/09/13 03:54:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,6 +124,8 @@ static int	alc885_init_dacgroup(codec_t *);
 static int	alc888_init_dacgroup(codec_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1981hd_mixer_init(codec_t *);
+static int	ad1984_init_widget(const codec_t *, widget_t *, nid_t);
+static int	ad1984_mixer_init(codec_t *);
 static int	ad1988_init_dacgroup(codec_t *);
 static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
@@ -207,6 +209,12 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
+		break;
+	case 0x11d41984:
+		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
+		this->name = "Analog Devices AD1984";
+		this->init_widget = ad1984_init_widget;
+		this->mixer_init = ad1984_mixer_init;
 		break;
 	case 0x11d41988:
 		/* http://www.analog.com/en/prod/0,2877,AD1988A,00.html */
@@ -2716,6 +2724,45 @@ ad1981hd_mixer_init(codec_t *this)
 		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 1;
 		generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
+	}
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Analog Devices AD1984
+ * ---------------------------------------------------------------- */
+
+#define AD1984_THINKPAD	0x20ac17aa
+
+static int
+ad1984_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+	int err;
+
+	err = generic_mixer_init(this);
+	if (err)
+		return err;
+
+	if (this->subid == AD1984_THINKPAD) {
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		mc.un.ord = 1;
+		generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
+	}
+
+	return 0;
+}
+
+static int
+ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	if (this->subid == AD1984_THINKPAD) {
+		switch (nid) {
+		case 0x04:
+			strlcpy(w->name, AudioNdac, sizeof(w->name));
+			break;
+		}
 	}
 	return 0;
 }
