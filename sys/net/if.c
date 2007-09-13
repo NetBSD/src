@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.200 2007/09/11 19:31:22 gdt Exp $	*/
+/*	$NetBSD: if.c,v 1.201 2007/09/13 18:54:57 gdt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.200 2007/09/11 19:31:22 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.201 2007/09/13 18:54:57 gdt Exp $");
 
 #include "opt_inet.h"
 
@@ -1669,7 +1669,7 @@ ifconf(u_long cmd, void *data)
 
 			if (ifrp != NULL)
 			{
-				ifr.ifr_addr = *sa;
+				memcpy(&ifr.ifr_space, sa, sa->sa_len);
 				if (space >= sz) {
 					error = copyout(&ifr, ifrp, sz);
 					if (error != 0)
