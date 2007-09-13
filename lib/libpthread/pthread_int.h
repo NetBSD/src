@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.54 2007/09/11 18:11:29 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.55 2007/09/13 23:51:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -256,7 +256,7 @@ void	pthread__membar_full(void);
 void	pthread__membar_producer(void);
 void	pthread__membar_consumer(void);
 
-int	pthread__mutex_owned(pthread_t, pthread_mutex_t *);
+int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *);
 int	pthread__mutex_catchup(pthread_mutex_t *);
 
 #ifndef pthread__smt_pause

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.35 2007/09/11 10:27:44 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.36 2007/09/13 23:51:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.35 2007/09/11 10:27:44 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.36 2007/09/13 23:51:47 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -469,7 +469,7 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 }
 
 int
-pthread__mutex_owned(pthread_t thread, pthread_mutex_t *mutex)
+pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *mutex)
 {
 
 	return mutex->ptm_owner == thread;
