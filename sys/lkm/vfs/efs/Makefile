@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/06/29 23:30:31 rumble Exp $
+#	$NetBSD: Makefile,v 1.2 2007/09/13 21:46:54 rumble Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,6 @@
 KMOD=	efs
 
 SRCS=	lkminit_vfs.c
-SRCS+=	efs_subr.c efs_vfsops.c efs_vnops.c
+SRCS+=	efs_genfs.c efs_ihash.c	efs_subr.c efs_vfsops.c efs_vnops.c
 
 .include <bsd.kmod.mk>
