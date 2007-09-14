@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.31 2007/09/10 06:07:01 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.32 2007/09/14 11:28:45 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -2562,6 +2562,8 @@ static int nat_finalise(
 	nat->nat_ptr = np;
 	nat->nat_p = fin->fin_p;
 	nat->nat_mssclamp = np->in_mssclamp;
+	if (nat->nat_p == IPPROTO_TCP)
+		nat->nat_seqnext[0] = ntohl(tcp->th_seq);
 
 	if ((np->in_apr != NULL) && ((ni->nai_flags & NAT_SLAVE) == 0))
 		if (appr_new(fin, nat) == -1)
@@ -3639,7 +3641,29 @@ ipnat_t *np;
 		ifq2 = NULL;
 
 	if (nat->nat_p == IPPROTO_TCP && ifq2 == NULL) {
-		(void) fr_tcp_age(&nat->nat_tqe, fin, nat_tqb, 0);
+		u_32_t end, ack;
+		tcphdr_t *tcp;
+		int dsize, ok;
+		u_char tcpflags;
+
+		tcp = fin->fin_dp;
+		tcpflags = tcp->th_flags;
+		dsize = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
+			((tcpflags & TH_SYN) ? 1 : 0) +
+			((tcpflags & TH_FIN) ? 1 : 0);
+
+		ack = ntohl(tcp->th_ack);
+		end = ntohl(tcp->th_seq) + dsize;
+
+		if (SEQ_GT(ack, nat->nat_seqnext[1 - fin->fin_rev]))
+			nat->nat_seqnext[1 - fin->fin_rev] = ack;
+
+		if (nat->nat_seqnext[fin->fin_rev] == 0)
+			nat->nat_seqnext[fin->fin_rev] = end;
+
+		ok = (nat->nat_seqnext[fin->fin_rev] == end);
+
+		(void) fr_tcp_age(&nat->nat_tqe, fin, nat_tqb, 0, ok);
 	} else {
 		if (ifq2 == NULL) {
 			if (nat->nat_p == IPPROTO_UDP)
@@ -4772,7 +4796,7 @@ nat_t *nat;
 	 */
 	if (clone->nat_p == IPPROTO_TCP) {
 		(void) fr_tcp_age(&clone->nat_tqe, fin, nat_tqb,
-				  clone->nat_flags);
+				  clone->nat_flags, 1);
 	}
 #ifdef	IPFILTER_SYNC
 	clone->nat_sync = ipfsync_new(SMC_NAT, fin, clone);
