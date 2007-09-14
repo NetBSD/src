@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.13 2007/09/14 09:19:39 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.14 2007/09/14 09:26:46 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -197,7 +197,7 @@ int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 #ifdef SPARC_BOOT_UFS
 static struct fs_ops file_system_ufs = FS_OPS(ufs);
 #endif
-#ifdef SPARC_BOOT_HSFS
+#ifdef SPARC_BOOT_CD9660
 static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 #endif
 #ifdef NETBOOT
@@ -499,7 +499,7 @@ devopen(struct open_file *of, const char *name, char **file)
 #ifdef SPARC_BOOT_UFS
 		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
 #endif
-#ifdef SPARC_BOOT_HSFS
+#ifdef SPARC_BOOT_CD9660
 		bcopy(&file_system_cd9660, &file_system[nfsys++],
 		    sizeof file_system[0]);
 #endif
