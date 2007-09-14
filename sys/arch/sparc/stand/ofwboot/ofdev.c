@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.12 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.13 2007/09/14 09:19:39 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -379,7 +379,10 @@ devopen(struct open_file *of, const char *name, char **file)
 	char *cp;
 	char partition;
 	char fname[256];
-	char buf[DEV_BSIZE];
+	union {
+		char buf[DEV_BSIZE];
+		struct disklabel label;
+	} b;
 	struct disklabel label;
 	int handle, part;
 	size_t read;
@@ -396,11 +399,11 @@ devopen(struct open_file *of, const char *name, char **file)
 	strcpy(fname, name);
 	cp = filename(fname, &partition);
 	if (cp) {
-		strcpy(buf, cp);
+		strcpy(b.buf, cp);
 		*cp = 0;
 	}
-	if (!cp || !*buf)
-		strcpy(buf, DEFAULT_KERNEL);
+	if (!cp || !b.buf[0])
+		strcpy(b.buf, DEFAULT_KERNEL);
 	if (!*fname)
 		strcpy(fname, bootdev);
 	strcpy(opened_name, fname);
@@ -411,9 +414,9 @@ devopen(struct open_file *of, const char *name, char **file)
 		*cp = 0;
 	}
 	*file = opened_name + strlen(opened_name);
-	if (*buf != '/')
+	if (b.buf[0] != '/')
 		strcat(opened_name, "/");
-	strcat(opened_name, buf);
+	strcat(opened_name, b.buf);
 #ifdef NOTDEF_DEBUG
 	printf("devopen: trying %s\n", fname);
 #endif
@@ -422,16 +425,16 @@ devopen(struct open_file *of, const char *name, char **file)
 #ifdef NOTDEF_DEBUG
 	printf("devopen: found %s\n", fname);
 #endif
-	if (_prom_getprop(handle, "name", buf, sizeof buf) < 0)
+	if (_prom_getprop(handle, "name", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
 #ifdef NOTDEF_DEBUG
-	printf("devopen: %s is called %s\n", fname, buf);
+	printf("devopen: %s is called %s\n", fname, b.buf);
 #endif
-	floppyboot = !strcmp(buf, "floppy");
-	if (_prom_getprop(handle, "device_type", buf, sizeof buf) < 0)
+	floppyboot = !strcmp(b.buf, "floppy");
+	if (_prom_getprop(handle, "device_type", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
 #ifdef NOTDEF_DEBUG
-	printf("devopen: %s is a %s device\n", fname, buf);
+	printf("devopen: %s is a %s device\n", fname, b.buf);
 #endif
 #ifdef NOTDEF_DEBUG
 	printf("devopen: opening %s\n", fname);
@@ -447,7 +450,7 @@ devopen(struct open_file *of, const char *name, char **file)
 #endif
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
-	if (!strcmp(buf, "block")) {
+	if (!strcmp(b.buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
@@ -455,12 +458,12 @@ devopen(struct open_file *of, const char *name, char **file)
 		printf("devopen: trying to read disklabel\n");
 #endif
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
+			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
 		    || read != DEV_BSIZE
-		    || (errmsg = getdisklabel(buf, &label))) {
+		    || (errmsg = getdisklabel(b.buf, &label))) {
 			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
 			/* Else try MBR partitions */
-			errmsg = search_label(&ofdev, 0, buf, &label, 0);
+			errmsg = search_label(&ofdev, 0, b.buf, &label, 0);
 			if (errmsg) {
 				printf("devopen: search_label returned %s\n", errmsg);
 				error = ERDLAB;
@@ -506,7 +509,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		return 0;
 	}
 #ifdef NETBOOT
-	if (!strcmp(buf, "network")) {
+	if (!strcmp(b.buf, "network")) {
 		ofdev.type = OFDEV_NET;
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
