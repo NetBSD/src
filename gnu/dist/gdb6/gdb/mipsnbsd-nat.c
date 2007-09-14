@@ -28,6 +28,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#include "nbsd-nat.h"
 #include "mips-tdep.h"
 #include "mipsnbsd-tdep.h"
 #include "inf-ptrace.h"
@@ -116,5 +117,7 @@ _initialize_mipsnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = mipsnbsd_fetch_inferior_registers;
   t->to_store_registers = mipsnbsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+
   add_target (t);
 }
