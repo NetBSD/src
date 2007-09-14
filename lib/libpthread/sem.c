@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.17 2007/09/08 22:49:50 ad Exp $	*/
+/*	$NetBSD: sem.c,v 1.18 2007/09/14 09:15:41 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.17 2007/09/08 22:49:50 ad Exp $");
+__RCSID("$NetBSD: sem.c,v 1.18 2007/09/14 09:15:41 tnn Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -382,7 +382,6 @@ sem_trywait(sem_t *sem)
 int
 sem_post(sem_t *sem)
 {
-	pthread_t self;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -393,8 +392,6 @@ sem_post(sem_t *sem)
 
 	if ((*sem)->usem_semid != USEM_USER)
 		return (_ksem_post((*sem)->usem_semid));
-
-	self = pthread__self();
 
 	pthread_mutex_lock(&(*sem)->usem_interlock);
 	(*sem)->usem_count++;
