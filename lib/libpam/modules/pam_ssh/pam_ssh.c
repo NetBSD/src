@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.13 2006/09/29 04:56:04 dogcow Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.14 2007/09/15 14:30:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.13 2006/09/29 04:56:04 dogcow Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.14 2007/09/15 14:30:56 ragge Exp $");
 #endif
 
 #include <sys/param.h>
@@ -299,18 +299,18 @@ pam_ssh_start_agent(pam_handle_t *pamh, struct passwd *pwd)
 		/* child: drop privs, close fds and start agent */
 		if (setgid(pwd->pw_gid) == -1) {
 			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%m)",
-			    __FUNCTION__, (int)pwd->pw_gid);
+			    __func__, (int)pwd->pw_gid);
 			goto done;
 		}
 		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
 			openpam_log(PAM_LOG_DEBUG,
 			    "%s: Cannot initgroups for %s (%m)",
-			    __FUNCTION__, pwd->pw_name);
+			    __func__, pwd->pw_name);
 			goto done;
 		}
 		if (setuid(pwd->pw_uid) == -1) {
 			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%m)",
-			    __FUNCTION__, (int)pwd->pw_uid);
+			    __func__, (int)pwd->pw_uid);
 			goto done;
 		}
 		(void)close(STDIN_FILENO);
@@ -356,7 +356,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 	envlist = environ;
 	if ((environ = pam_getenvlist(pamh)) == NULL) {
 		openpam_log(PAM_LOG_DEBUG, "%s: cannot get envlist",
-		    __FUNCTION__);
+		    __func__);
 		environ = envlist;
 		return (PAM_SYSTEM_ERR);
 	}
@@ -365,7 +365,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 	if ((ac = ssh_get_authentication_connection()) == NULL) {
 		openpam_log(PAM_LOG_DEBUG,
 		    "%s: cannot get authentication connection",
-		    __FUNCTION__);
+		    __func__);
 		pam_err = PAM_SYSTEM_ERR;
 		goto end;
 	}
