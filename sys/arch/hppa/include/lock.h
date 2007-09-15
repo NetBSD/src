@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.12 2007/09/10 11:34:08 skrll Exp $	*/
+/* 	$NetBSD: lock.h,v 1.13 2007/09/15 08:05:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
+
+#include <sys/stdint.h>
 
 #define HPPA_LDCW_ALIGN	16
 
