@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.271 2007/03/18 09:08:45 tsutsui Exp $
+#	$NetBSD: bsd.lib.mk,v 1.272 2007/09/15 14:36:14 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -175,6 +175,7 @@ MKSHLIBOBJS= no
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,lib${LIB}.so.${SHLIB_SOVERSION}
+SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
 SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
 .endif
