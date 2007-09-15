@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.12 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.13 2007/09/15 14:35:33 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -42,7 +42,7 @@ void perr(const char *, ...)
 void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 void vmsg(int, const char *, va_list)
-     __attribute((__format__(__printf__,2,0)));
+     __attribute__((__format__(__printf__,2,0)));
 const char *rawname(const char *);
 const char *unrawname(const char *);
 const char *blockcheck(const char *);
