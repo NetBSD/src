@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.2.14.1 2007/09/15 10:43:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.2.14.1 2007/09/15 10:43:39 bouyer Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -533,10 +533,10 @@ mpt_print_request(void *vreq)
 	}
 }
 
-char *
+const char *
 mpt_req_state(enum mpt_req_state state)
 {
-	char *text;
+	const char *text;
 
 	switch (state) {
 	case REQ_FREE:         text = "Free";         break;
