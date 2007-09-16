@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.52.2.4 2007/08/20 21:27:22 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.52.2.5 2007/09/16 19:04:26 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.4 2007/08/20 21:27:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.5 2007/09/16 19:04:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,7 +833,6 @@ coda_inactive(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __attribute__((unused)) = NULL;
-    struct lwp *l __attribute__((unused)) = ap->a_l;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -880,7 +879,7 @@ coda_inactive(void *v)
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
 	VOP_UNLOCK(vp, 0);
-	vgone(vp);
+	*ap->a_recycle = true;
     }
 
     MARK_INT_SAT(CODA_INACTIVE_STATS);

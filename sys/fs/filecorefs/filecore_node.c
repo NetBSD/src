@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.8.4.3 2007/08/20 21:26:05 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.8.4.4 2007/09/16 19:04:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.8.4.3 2007/08/20 21:26:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.8.4.4 2007/09/16 19:04:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,11 +223,10 @@ filecore_inactive(v)
 	void *v;
 {
 	struct vop_inactive_args /* {
-		struct vnode *a_vp;
 		struct lwp *a_l;
+		bool *recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct lwp *l = ap->a_l;
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -240,8 +239,7 @@ filecore_inactive(v)
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (filecore_staleinode(ip))
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (filecore_staleinode(ip) != 0);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37.6.5 2007/08/20 21:27:49 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.6.6 2007/09/16 19:04:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.5 2007/08/20 21:27:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.6 2007/09/16 19:04:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,11 +220,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	vprint("alias root of lower", overlay_rootvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(overlay_rootvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(overlay_rootvp);
 	/*

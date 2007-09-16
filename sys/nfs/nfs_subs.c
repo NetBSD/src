@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.184.2.7 2007/08/20 21:28:12 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.184.2.8 2007/09/16 19:04:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.7 2007/08/20 21:28:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.8 2007/09/16 19:04:38 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1689,7 +1689,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				vp->v_data = NULL;
 				VOP_UNLOCK(vp, 0);
 				vp->v_op = spec_vnodeop_p;
-				vrele(vp);
 				vgone(vp);
 				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
 				    &nvp->v_interlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.29.6.3 2007/07/15 15:52:58 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.29.6.4 2007/09/16 19:04:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29.6.3 2007/07/15 15:52:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.29.6.4 2007/09/16 19:04:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -738,7 +738,7 @@ layer_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -760,9 +760,8 @@ layer_inactive(v)
 	 * ..., but don't cache the device node. Also, if we did a
 	 * remove, don't cache the node.
 	 */
-	if (vp->v_type == VBLK || vp->v_type == VCHR
-	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED))
-		vgone(vp);
+	*ap->a_recycle = (vp->v_type == VBLK || vp->v_type == VCHR
+	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED));
 	return (0);
 }
 

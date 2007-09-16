@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26.2.3 2007/08/20 21:26:04 ad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.26.2.4 2007/09/16 19:04:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.3 2007/08/20 21:26:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.4 2007/09/16 19:04:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	 * checked to see if it is an alias of an existing entry
 	 * in the inode cache.
 	 */
-	vput(vp);
+	VOP_UNLOCK(vp, 0);
 	vp->v_type = VNON;
 	vgone(vp);
 	return (0);

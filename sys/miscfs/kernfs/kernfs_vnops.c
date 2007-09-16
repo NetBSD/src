@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.132 2006/12/28 09:12:38 elad Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.132.6.1 2007/09/16 19:04:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.132 2006/12/28 09:12:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.132.6.1 2007/09/16 19:04:35 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1413,7 +1413,7 @@ kernfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	const struct kernfs_node *kfs = VTOKERN(ap->a_vp);
@@ -1421,6 +1421,8 @@ kernfs_inactive(v)
 	struct mbuf *m;
 	struct secpolicy *sp;
 #endif
+
+	*ap->a_recycle = false;
 
 	VOP_UNLOCK(vp, 0);
 	switch (kfs->kfs_type) {
@@ -1430,15 +1432,14 @@ kernfs_inactive(v)
 		if (m)
 			m_freem(m);
 		else
-			vgone(vp);
+			*ap->a_recycle = true;
 		break;
 	case KFSipsecsp:
 		sp = key_getspbyid(kfs->kfs_value);
 		if (sp)
 			key_freesp(sp);
 		else {
-			/* should never happen as we hold a refcnt */
-			vgone(vp);
+			*ap->a_recycle = true;
 		}
 		break;
 #endif

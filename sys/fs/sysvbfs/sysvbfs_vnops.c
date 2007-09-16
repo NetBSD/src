@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.11.4.3 2007/08/19 19:24:52 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.11.4.4 2007/09/16 19:04:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11.4.3 2007/08/19 19:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11.4.4 2007/09/16 19:04:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -573,14 +573,13 @@ sysvbfs_inactive(void *arg)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
-	struct lwp *l = a->a_l;
 
 	DPRINTF("%s:\n", __FUNCTION__);
 	VOP_UNLOCK(v, 0);
-	vrecycle(v, NULL, l);
+	*a->a_recycle = true;
 
 	return 0;
 }

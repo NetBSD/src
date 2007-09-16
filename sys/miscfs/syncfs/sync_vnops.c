@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.16.8.3 2007/06/23 18:06:04 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.16.8.4 2007/09/16 19:04:37 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.16.8.3 2007/06/23 18:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.16.8.4 2007/09/16 19:04:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,7 +119,6 @@ vfs_deallocate_syncvnode(mp)
 	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
 	mutex_exit(&vp->v_interlock);
-	vrele(vp);
 	vgone(vp);
 }
 

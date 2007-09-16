@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.19.6.4 2007/08/20 21:26:13 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.19.6.5 2007/09/16 19:04:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.19.6.4 2007/08/20 21:26:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.19.6.5 2007/09/16 19:04:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1102,7 +1102,7 @@ union_revoke(v)
 		VOP_REVOKE(UPPERVP(vp), ap->a_flags);
 	if (LOWERVP(vp))
 		VOP_REVOKE(LOWERVP(vp), ap->a_flags);
-	vgone(vp);
+	vgone(vp);	/* XXXAD?? */
 	return (0);
 }
 
@@ -1633,7 +1633,7 @@ union_inactive(v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);
@@ -1661,8 +1661,7 @@ union_inactive(v)
 
 	VOP_UNLOCK(vp, 0);
 
-	if ((un->un_flags & UN_CACHED) == 0)
-		vgone(vp);
+	*ap->a_recycle = ((un->un_flags & UN_CACHED) == 0);
 
 	return (0);
 }

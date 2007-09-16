@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.9 2007/08/20 21:26:10 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.10 2007/09/16 19:04:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.9 2007/08/20 21:26:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.10 2007/09/16 19:04:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -865,7 +865,7 @@ puffs_inactive(void *v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
 	struct puffs_node *pnode;
@@ -881,7 +881,7 @@ puffs_inactive(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	puffs_cidcvt(&inactive_arg.pvnr_cid, ap->a_l);
+	puffs_cidcvt(&inactive_arg.pvnr_cid, curlwp);
 
 	if (EXISTSOP(pmp, INACTIVE))
 		if (pmp->pmp_flags & PUFFS_KFLAG_IAONDEMAND)
@@ -907,10 +907,7 @@ puffs_inactive(void *v)
 	 * file server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (pnode->pn_stat & PNODE_NOREFS) {
-		pnode->pn_stat |= PNODE_DYING;
-		vrecycle(ap->a_vp, NULL, ap->a_l);
-	}
+	*ap->a_recycle = ((pnode->pn_stat & PNODE_NOREFS) != 0);
 
 	return 0;
 }
@@ -1156,8 +1153,7 @@ puffs_fsync(void *v)
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	/* flush out information from our metacache, see vop_setattr */
-	if (pn->pn_stat & PNODE_METACACHE_MASK
-	    && (pn->pn_stat & PNODE_DYING) == 0) {
+	if (pn->pn_stat & PNODE_METACACHE_MASK) {
 		vattr_null(&va);
 		error = VOP_SETATTR(vp, &va, FSCRED, NULL); 
 		if (error)
@@ -1182,7 +1178,7 @@ puffs_fsync(void *v)
 	 * has references neither in the kernel or the fs server.
 	 * Otherwise we continue to issue fsync() forward.
 	 */
-	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_DYING))
+	if (!EXISTSOP(pmp, FSYNC))
 		return 0;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
@@ -1981,16 +1977,6 @@ puffs_strategy(void *v)
 	if ((BIOREAD(bp) && !EXISTSOP(pmp, READ))
 	    || (BIOWRITE(bp) && !EXISTSOP(pmp, WRITE)))
 		ERROUT(EOPNOTSUPP);
-
-	/*
-	 * Short-circuit optimization: don't flush buffer in between
-	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
-	 */
-	if (pn->pn_stat & PNODE_DYING) {
-		KASSERT(BIOWRITE(bp));
-		bp->b_resid = 0;
-		goto out;
-	}
 
 #ifdef DIAGNOSTIC
 	if (bp->b_bcount > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)

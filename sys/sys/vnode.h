@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.11 2007/08/24 23:28:42 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.12 2007/09/16 19:04:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -82,7 +82,11 @@ enum vtagtype	{
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
     "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS"
 
+struct vnode;
+struct buf;
+
 LIST_HEAD(buflists, buf);
+TAILQ_HEAD(vnodelst, vnode);
 
 /*
  * Reading or writing any of these items requires holding the appropriate
@@ -116,6 +120,7 @@ struct vnode {
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
+	struct vnodelst	*v_freelisthd;		/* f: which freelist? */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
@@ -144,6 +149,9 @@ struct vnode {
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
 #define	v_ractx		v_un.vu_ractx
+
+typedef struct vnodelst vnodelst_t;
+typedef struct vnode vnode_t;
 
 /*
  * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
@@ -178,13 +186,14 @@ struct vnode {
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
-#define	VI_XLOCK	0x00002000	/* vnode is locked to change type */
-#define	VI_ALIASED	0x00004000	/* vnode has an alias */
-#define	VI_ONWORKLST	0x00008000	/* On syncer work-list */
-#define	VI_FREEING	0x00010000	/* vnode is being freed */
-#define	VI_LOCKSWORK	0x00020000	/* FS supports locking discipline */
-#define	VI_LAYER	0x00040000	/* vnode is on a layer filesystem */
-#define	VI_MAPPED	0x00080000	/* duplicate of VV_MAPPED */
+#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
+#define	VI_ALIASED	0x00002000	/* vnode has an alias */
+#define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
+#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
+#define	VI_LOCKSWORK	0x00010000	/* FS supports locking discipline */
+#define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
+#define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
+#define	VI_CLEAN	0x00080000	/* has been reclaimed */
 
 /*
  * The third set are locked by the underlying file system.
@@ -192,9 +201,9 @@ struct vnode {
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
 
 #define	VNODE_FLAGBITS \
-    "\20\1ROOT\2SYSTEM\3ISTTY\4LAYER\5MAPPED\6LOCKSWORK\2TEXT\10EXECMAP" \
-    "\11WRMAP\12WRMAPDIRTY\14XLOCK\15ALIASED" \
-    "\16ONWORKLST\17FREEING\25DIROP"
+    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\11TEXT\12EXECMAP\13WRMAP" \
+    "\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER\21LOCKSWORK" \
+    "\22LAYER\23MAPPED\24CLEAN\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -301,9 +310,6 @@ extern const int	vttoif_tab[];
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
 #define	VREF(vp)	vref(vp)
-TAILQ_HEAD(freelst, vnode);
-extern struct freelst	vnode_hold_list; /* free vnodes referencing buffers */
-extern struct freelst	vnode_free_list; /* vnode free list */
 extern kmutex_t	vnode_free_list_lock;
 
 void holdrelel(struct vnode *);
@@ -543,11 +549,15 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
-void 	vrele2(struct vnode *, int);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
-void	vunwait(struct vnode *, int);
+void	vclean(struct vnode *, int);
+void	vrelel(struct vnode *, int, int);
+struct	vnode *valloc(struct mount *);
+void	vfree(struct vnode *);
+void	vmark(struct vnode *, struct vnode *);
+struct	vnode *vunmark(struct vnode *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);

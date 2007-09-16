@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.6 2007/08/20 21:28:13 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.7 2007/09/16 19:04:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.6 2007/08/20 21:28:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.7 2007/09/16 19:04:39 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -893,7 +893,6 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * There are two reference counts to get rid of here
 	 * (see comment in mountnfs()).
 	 */
-	vrele(vp);
 	vput(vp);
 	vgone(vp);
 	nfs_disconnect(nmp);

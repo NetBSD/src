@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.63.6.5 2007/08/20 21:27:52 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.63.6.6 2007/09/16 19:04:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.5 2007/08/20 21:27:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.6 2007/09/16 19:04:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,11 +255,7 @@ umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	vprint("alias root of lower", rtvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
