@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.7.12.3 2007/07/16 11:05:47 liamjfoy Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.7.12.4 2007/09/16 15:46:49 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -124,6 +124,7 @@ typedef	struct	nat	{
 	char		nat_ifnames[2][LIFNAMSIZ];
 	int		nat_rev;		/* 0 = forward, 1 = reverse */
 	int		nat_redir;		/* copy of in_redir */
+	u_32_t		nat_seqnext[2];
 } nat_t;
 
 #define	nat_inip	nat_inip6.in4
