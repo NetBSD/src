@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.132 2007/09/11 19:54:51 gdt Exp $	*/
+/*	$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.132 2007/09/11 19:54:51 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1382,23 +1382,22 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 		}
 	}
 
-	if (!LIST_EMPTY(&oia->ia6_multiaddrs)) {
-		/*
-		 * XXX thorpej@NetBSD.org -- if the interface is going
-		 * XXX away, don't save the multicast entries, delete them!
-		 */
-		if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
-			struct in6_multi *in6m, *next;
+	/*
+	 * XXX thorpej@NetBSD.org -- if the interface is going
+	 * XXX away, don't save the multicast entries, delete them!
+	 */
+	if (LIST_EMPTY(&oia->ia6_multiaddrs))
+		;
+	else if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
+		struct in6_multi *in6m, *next;
 
-			for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-			       in6m != NULL;
-			       in6m = next) {
-				next = LIST_NEXT(in6m, in6m_entry);
-				in6_delmulti(in6m);
-			}
-		} else
-			in6_savemkludge(oia);
-	}
+		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs); in6m != NULL;
+		     in6m = next) {
+			next = LIST_NEXT(in6m, in6m_entry);
+			in6_delmulti(in6m);
+		}
+	} else
+		in6_savemkludge(oia);
 
 	/*
 	 * Release the reference to the base prefix.  There should be a
