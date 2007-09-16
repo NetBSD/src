@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.4.5 2007/09/01 12:23:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.4.6 2007/09/16 19:01:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.5 2007/09/01 12:23:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.6 2007/09/16 19:01:19 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,6 +152,11 @@ long numvnodes;
 void
 vntblinit(void)
 {
+	extern pool_cache_t vnode_cache;
+
+	vnode_cache = pool_cache_init(sizeof(struct vnode), 0, 0, 0, "vnodepl",
+	    NULL, IPL_NONE, NULL, NULL, NULL);
+	KASSERT(vnode_cache != NULL);
 
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -619,19 +624,22 @@ void
 vprint(const char *label, struct vnode *vp)
 {
 	char bf[96];
+	int flag;
+
+	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
+	bitmask_snprintf(flag, vnode_flagbits, bf, sizeof(bf));
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("tag %s(%d) type %s(%d), usecount %d, writecount %ld, "
-	    "refcount %ld,", ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
+	    "usecount %d, writecount %ld, holdcount %ld\n"
+	    "\tfreelisthd %p, mount %p, data %p\n", vp, bf,
+	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
-	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	printf(" flags (%s)", bitmask_snprintf(vp->v_iflag | vp->v_vflag |
-	    vp->v_uflag, vnode_flagbits, bf, sizeof(bf)));
-	if (vp->v_data == NULL) {
-		printf("\n");
-	} else {
-		printf("\n\t");
+	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
+	    vp->v_freelisthd, vp->v_mount, vp->v_data);
+	if (vp->v_data != NULL) {
+		printf("\t");
 		VOP_PRINT(vp);
 	}
 }
@@ -964,13 +972,11 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(vp->v_iflag | vp->v_vflag | vp->v_uflag,
 	    vnode_flagbits, bf, sizeof(bf));
 	(*pr)("\nVNODE flags %s\n", bf);
-	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx waitcnt %d\n",
-	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize,
-	      vp->v_waitcnt);
+	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx\n",
+	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize);
 
-	(*pr)("data %p usecount %d writecount %ld holdcnt %ld\n",
-	      vp->v_data, vp->v_usecount, vp->v_writecount,
-	      vp->v_holdcnt);
+	(*pr)("data %p writecount %ld holdcnt %ld\n",
+	      vp->v_data, vp->v_writecount, vp->v_holdcnt);
 
 	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
 	      ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
