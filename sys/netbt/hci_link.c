@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.13 2007/09/07 18:37:31 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.14 2007/09/16 19:59:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.13 2007/09/07 18:37:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.14 2007/09/16 19:59:30 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -989,6 +989,18 @@ hci_link_free(struct hci_link *link, int err)
 	callout_stop(&link->hl_expire);
 	if (callout_invoking(&link->hl_expire))
 		return;
+
+	/*
+	 * If we made a note of clock offset, keep it in a memo
+	 * to facilitate reconnections to this device
+	 */
+	if (link->hl_clock != 0) {
+		struct hci_memo *memo;
+
+		memo = hci_memo_new(link->hl_unit, &link->hl_bdaddr);
+		if (memo != NULL)
+			memo->clock_offset = link->hl_clock;
+	}
 
 	TAILQ_REMOVE(&link->hl_unit->hci_links, link, hl_next);
 	free(link, M_BLUETOOTH);
