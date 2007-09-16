@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.272 2007/09/16 15:41:50 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.273 2007/09/16 15:47:10 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9629,4 +9629,14 @@ sys/dist/ipf/netinet/fil.c			1.41
 
 	keep frags does not work with IPv6
 	[martti, ticket #879]
+
+sys/dist/ipf/netinet/ip_nat.c			1.32
+sys/dist/ipf/netinet/ip_nat.h			1.12
+sys/dist/ipf/netinet/ip_state.c			1.28
+sys/dist/ipf/netinet/ip_state.h			1.10
+
+	Fixed IPF bug #1774745
+
+	retransmitted ACK may initiate connection state transition
+	[martti, ticket #880]
 
