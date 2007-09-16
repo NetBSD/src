@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.21.2.1 2007/08/20 22:59:47 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.21.2.2 2007/09/16 19:02:47 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.21.2.1 2007/08/20 22:59:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.21.2.2 2007/09/16 19:02:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -204,7 +204,7 @@ softdep_fsync_mountdev(struct vnode *vp)
 }
 
 int
-softdep_sync_metadata(void *v)
+softdep_sync_metadata(struct vnode *vp)
 {
 	return (0);
 }

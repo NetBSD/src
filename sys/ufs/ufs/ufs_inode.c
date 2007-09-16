@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64.6.5 2007/07/15 13:28:20 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.6.6 2007/09/16 19:02:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.5 2007/07/15 13:28:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.6 2007/09/16 19:02:49 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -76,16 +76,16 @@ ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct bool *recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct mount *transmp;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	mode_t mode;
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
@@ -117,14 +117,11 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
+		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-		UFS_VFREE(vp, ip->i_number, mode);
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
@@ -136,9 +133,7 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-
-	if (ip->i_mode == 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->i_mode == 0);
 	fstrans_done(transmp);
 	return (error);
 }
@@ -151,15 +146,19 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_reclaim: pushing active", vp);
 
-	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-
 	/*
-	 * Remove the inode from its hash chain.
+	 * Remove the inode from its hash chain.  Only then can
+	 * we free the on disk inode.
 	 */
 	ufs_ihashrem(ip);
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		UFS_VFREE(vp, ip->i_number, ip->i_omode);
+	}
+	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+
 	/*
 	 * Purge old data structures associated with the inode.
 	 */

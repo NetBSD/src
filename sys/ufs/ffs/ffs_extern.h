@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.55.6.4 2007/08/20 21:28:24 ad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.55.6.5 2007/09/16 19:02:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -131,6 +131,7 @@ int	ffs_deleteextattr(void *);
 int	ffs_lock(void *);
 int	ffs_unlock(void *);
 int	ffs_islocked(void *);
+int	ffs_full_fsync(struct vnode *, int);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
@@ -172,7 +173,7 @@ void	softdep_setup_allocindir_page(struct inode *, daddr_t,
 				      struct buf *, int, daddr_t, daddr_t,
 				      struct buf *);
 void	softdep_fsync_mountdev(struct vnode *);
-int	softdep_sync_metadata(void *);
+int	softdep_sync_metadata(struct vnode *);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.44.6.4 2007/08/24 23:28:43 ad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.44.6.5 2007/09/16 19:02:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.44.6.4 2007/08/24 23:28:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.44.6.5 2007/09/16 19:02:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -475,6 +475,11 @@ fail:
 				brelse(bp, BC_INVAL);
 			}
 		}
+
+		/* Now flush all dependencies to disk. */
+		/* XXXAD pages locked */
+		(void)softdep_sync_metadata(vp);
+
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -524,6 +529,12 @@ fail:
 		ip->i_ffs1_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+	/*
+	 * Flush all dependencies again so that the soft updates code
+	 * doesn't find any untracked changes.
+	 */
+	/* XXXAD pages locked */
+	(void)softdep_sync_metadata(vp);
 	return (error);
 }
 
@@ -1028,6 +1039,11 @@ fail:
 				brelse(bp, BC_INVAL);
 			}
 		}
+
+		/* Now flush the dependencies to disk. */
+		/* XXXAD pages locked */
+		(void)softdep_sync_metadata(vp);
+
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -1077,5 +1093,12 @@ fail:
 		ip->i_ffs2_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
+	/*
+	 * Flush all dependencies again so that the soft updates code
+	 * doesn't find any untracked changes.
+	 */
+	/* XXXAD pages locked */
+	(void)softdep_sync_metadata(vp);
 	return (error);
 }

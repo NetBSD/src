@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.57.2.4 2007/08/24 23:28:43 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.57.2.5 2007/09/16 19:02:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.4 2007/08/24 23:28:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.5 2007/09/16 19:02:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,11 +141,10 @@ ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_reclaim;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct lwp *l = ap->a_l;
 	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -172,8 +171,7 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
 	return (error);
 }
 

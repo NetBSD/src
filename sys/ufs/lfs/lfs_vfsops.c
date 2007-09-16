@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.12 2007/08/24 23:28:48 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.13 2007/09/16 19:02:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.12 2007/08/24 23:28:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.13 2007/09/16 19:02:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -962,7 +962,6 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	mutex_exit(&fs->lfs_interlock);
 
 	/* Finish with the Ifile, now that we're done with it */
-	vrele(fs->lfs_ivnode);
 	vgone(fs->lfs_ivnode);
 
 	ronly = !fs->lfs_ronly;
