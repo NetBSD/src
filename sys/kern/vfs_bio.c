@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.177 2007/09/01 23:40:22 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.178 2007/09/16 15:17:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,11 +77,11 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.178 2007/09/16 15:17:36 dsl Exp $");
+
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.177 2007/09/01 23:40:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
