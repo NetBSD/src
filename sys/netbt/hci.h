@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.12 2007/09/07 18:37:30 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.13 2007/09/16 19:59:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.12 2007/09/07 18:37:30 plunky Exp $
+ * $Id: hci.h,v 1.13 2007/09/16 19:59:30 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2054,6 +2054,7 @@ struct hci_link {
 	uint16_t		 hl_refcnt;	/* reference count */
 	uint16_t		 hl_mtu;	/* signalling mtu for link */
 	uint16_t		 hl_flush;	/* flush timeout */
+	uint16_t		 hl_clock;	/* remote clock offset */
 
 	TAILQ_HEAD(,l2cap_pdu)	 hl_txq;	/* queue of outgoing PDUs */
 	int			 hl_txqlen;	/* number of fragments */
@@ -2199,6 +2200,7 @@ struct hci_link *hci_link_lookup_handle(struct hci_unit *, uint16_t);
 /* hci_misc.c */
 int hci_route_lookup(bdaddr_t *, bdaddr_t *);
 struct hci_memo *hci_memo_find(struct hci_unit *, bdaddr_t *);
+struct hci_memo *hci_memo_new(struct hci_unit *, bdaddr_t *);
 void hci_memo_free(struct hci_memo *);
 
 /* hci_socket.c */

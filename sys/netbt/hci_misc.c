@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_misc.c,v 1.2 2007/09/07 18:37:31 plunky Exp $	*/
+/*	$NetBSD: hci_misc.c,v 1.3 2007/09/16 19:59:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.2 2007/09/07 18:37:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.3 2007/09/16 19:59:30 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,6 +137,41 @@ hci_memo_find(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 	DPRINTF("no memo found\n");
 	return NULL;
+}
+
+/*
+ * Make a new memo on unit for bdaddr. If a memo exists, just
+ * update the timestamp.
+ */
+struct hci_memo *
+hci_memo_new(struct hci_unit *unit, bdaddr_t *bdaddr)
+{
+	struct hci_memo *memo;
+
+	memo = hci_memo_find(unit, bdaddr);
+	if (memo == NULL) {
+		memo = malloc(sizeof(struct hci_memo),
+			M_BLUETOOTH, M_NOWAIT | M_ZERO);
+
+		if (memo == NULL) {
+			DPRINTFN(0, "no memory for memo!\n");
+			return NULL;
+		}
+
+		DPRINTF("memo created for %02x:%02x:%02x:%02x:%02x:%02x\n",
+			bdaddr->b[5], bdaddr->b[4], bdaddr->b[3],
+			bdaddr->b[2], bdaddr->b[1], bdaddr->b[0]);
+
+		bdaddr_copy(&memo->bdaddr, bdaddr);
+		LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
+	}
+	else
+		DPRINTF("memo updated for %02x:%02x:%02x:%02x:%02x:%02x\n",
+			bdaddr->b[5], bdaddr->b[4], bdaddr->b[3],
+			bdaddr->b[2], bdaddr->b[1], bdaddr->b[0]);
+
+	microtime(&memo->time);
+	return memo;
 }
 
 void
