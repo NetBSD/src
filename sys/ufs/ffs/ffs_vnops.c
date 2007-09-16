@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.11 2007/08/30 09:55:15 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.12 2007/09/16 19:02:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.11 2007/08/30 09:55:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.12 2007/09/16 19:02:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.11 2007/08/30 09:55:15 ad Exp $
 #include <ufs/ffs/ffs_extern.h>
 
 #include <uvm/uvm.h>
-
-static int ffs_full_fsync(void *);
 
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p)(void *);
@@ -260,7 +258,7 @@ ffs_fsync(void *v)
 	 */
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
 	    (vp->v_type != VREG)) {
-		error = ffs_full_fsync(v);
+		error = ffs_full_fsync(vp, ap->a_flags);
 		goto out;
 	}
 
@@ -331,18 +329,9 @@ out:
  * Synch an open file.
  */
 /* ARGSUSED */
-static int
-ffs_full_fsync(void *v)
+int
+ffs_full_fsync(struct vnode *vp, int flags)
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flags;
-		off_t a_offlo;
-		off_t a_offhi;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int error, passes, skipmeta, inodedeps_only, waitfor;
 
@@ -353,7 +342,7 @@ ffs_full_fsync(void *v)
 
 	mutex_enter(&vp->v_interlock);
 
-	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
+	inodedeps_only = DOINGSOFTDEP(vp) && (flags & FSYNC_RECLAIM)
 	    && UVM_OBJ_IS_CLEAN(&vp->v_uobj) && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/*
@@ -362,7 +351,7 @@ ffs_full_fsync(void *v)
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
-		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
+		    ((flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
 		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
 			PGO_FREE : 0));
 		if (error) {
@@ -373,7 +362,7 @@ ffs_full_fsync(void *v)
 
 	passes = NIADDR + 1;
 	skipmeta = 0;
-	if (ap->a_flags & FSYNC_WAIT)
+	if (flags & FSYNC_WAIT)
 		skipmeta = 1;
 
 loop:
@@ -396,7 +385,7 @@ loop:
 		 * so that we can find out if our flush is failing
 		 * because of write errors.
 		 */
-		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
+		if (passes > 0 || !(flags & FSYNC_WAIT))
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
@@ -413,7 +402,7 @@ loop:
 		goto loop;
 	}
 
-	if (ap->a_flags & FSYNC_WAIT) {
+	if (flags & FSYNC_WAIT) {
 		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
 			cv_wait(&vp->v_cv, &vp->v_interlock);
@@ -424,7 +413,7 @@ loop:
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
-		if ((error = softdep_sync_metadata(ap)) != 0)
+		if ((error = softdep_sync_metadata(vp)) != 0)
 			return (error);
 
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
@@ -450,13 +439,13 @@ loop:
 	if (inodedeps_only)
 		waitfor = 0;
 	else
-		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 	error = ffs_update(vp, NULL, NULL, waitfor);
 
-	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+	if (error == 0 && flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_l->l_cred, ap->a_l);
+			curlwp->l_cred, curlwp);
 	}
 
 	return error;

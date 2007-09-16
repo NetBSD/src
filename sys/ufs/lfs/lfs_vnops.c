@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201.2.11 2007/08/20 21:28:28 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.12 2007/09/16 19:02:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.11 2007/08/20 21:28:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.12 2007/09/16 19:02:49 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -673,7 +673,7 @@ lfs_mknod(void *v)
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
 	VOP_UNLOCK(*vpp, 0);
-	lfs_vunref(*vpp);
+	lfs_vunref(*vpp);	/* XXXAD */
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -1315,7 +1315,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * make sure that we don't clear IN_MODIFIED
 		 * unnecessarily.
 		 */
-		if (vp->v_iflag & (VI_XLOCK | VI_FREEING)) {
+		if (vp->v_iflag & VI_XLOCK) {
 			mutex_enter(&fs->lfs_interlock);
 			continue;
 		}
