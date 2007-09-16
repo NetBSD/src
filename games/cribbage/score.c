@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.11 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: score.c,v 1.12 2007/09/16 18:39:54 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.11 2005/07/02 08:32:32 jmc Exp $");
+__RCSID("$NetBSD: score.c,v 1.12 2007/09/16 18:39:54 ragge Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ pegscore(CARD crd, const CARD tbl[], int n, int sum)
  * points such a crib will get.
  */
 int
-adjust(const CARD cb[], CARD tnv __attribute((__unused__)))
+adjust(const CARD cb[], CARD tnv __attribute__((__unused__)))
 {
 	long scr;
 	int i, c0, c1;
