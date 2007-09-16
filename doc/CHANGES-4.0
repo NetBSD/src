@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.269 2007/09/12 12:35:09 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.270 2007/09/16 15:29:28 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9598,3 +9598,20 @@ sys/arch/amd64/conf/GENERIC			patch
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 	CPUs running in 64bit mode.
 	[xtraeme, ticket #809]
+
+sys/dev/ic/ahcisata_core.c			1.5
+sys/dev/ic/ahcisatareg.h			1.2
+
+	Fix various error handling bugs:
+	 - the value of the ATA error register would be computed
+	   wrongly, leading to bogus error values reported to wd(4).
+	 - the channel would not always be restarted after an error,
+	   so the next command would not be hanlded by the controller.
+	 - a timeout condition would not be properly reported to wd(4),
+	   leading to a short transfer instead of a reset/retry.
+
+	these bugs would cause a AHCI SATA channel to be stalled (no more
+	command processed) after a "ID not found" or "Aborted command" error
+	reported by the drive.
+	[bouyer, ticket #882]
+
