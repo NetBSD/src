@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.344 2007/09/05 05:36:19 jnemeth Exp $ */
+/*	$NetBSD: wd.c,v 1.345 2007/09/16 18:41:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.344 2007/09/05 05:36:19 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.345 2007/09/16 18:41:47 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -764,6 +764,7 @@ wddone(void *v)
 	int do_perror = 0;
 	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
+	int nblks;
 
 	if (bp == NULL)
 		return;
@@ -788,13 +789,33 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
+		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
+			nblks = wd->sc_wdc_bio.bcount /
+			    wd->sc_dk.dk_label->d_secsize;
+			/*
+			 * If we get a "id not found" when crossing the
+			 * LBA48_THRESHOLD, and the drive is larger than
+			 * 128GB, then we can assume the drive has the
+			 * LBA48 bug and we switch to LBA48.
+			 */
+			if (wd->sc_wdc_bio.blkno <= LBA48_THRESHOLD &&
+			    wd->sc_wdc_bio.blkno + nblks > LBA48_THRESHOLD &&
+			    wd->sc_capacity > LBA48_THRESHOLD + 1) {
+				errmsg = "LBA48 bug";
+				wd->sc_quirks |= WD_QUIRK_FORCE_LBA48;
+				do_perror = 0;
+				goto retry2;
+			}
+		}
 retry:		/* Just reset and retry. Can we do more ? */
 		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries < WDIORETRIES)
-			printf(", retrying\n");
+			printf(", retrying");
+		printf("\n");
 		if (do_perror)
 			wdperror(wd);
 		if (wd->retries < WDIORETRIES) {
@@ -803,7 +824,6 @@ retry2:
 			    wdrestart, wd);
 			return;
 		}
-		printf("\n");
 
 #ifdef WD_SOFTBADSECT
 		/*
