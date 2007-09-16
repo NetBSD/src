@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.5 2007/08/22 20:24:52 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.6 2007/09/16 18:32:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.5 2007/08/22 20:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.6 2007/09/16 18:32:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -236,45 +236,32 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
 	size_t pages;
 
-	switch (node->tn_type) {
-	case VNON:
-		/* Do not do anything.  VNON is provided to let the
-		 * allocation routine clean itself easily by avoiding
-		 * duplicating code in it. */
-		/* FALLTHROUGH */
-	case VBLK:
-		/* FALLTHROUGH */
-	case VCHR:
-		/* FALLTHROUGH */
-	case VDIR:
-		/* FALLTHROUGH */
-	case VFIFO:
-		/* FALLTHROUGH */
-	case VSOCK:
+	if (node->tn_type == VREG)
+		pages = node->tn_spec.tn_reg.tn_aobj_pages;
+	else
 		pages = 0;
-		break;
 
+	mutex_enter(&tmp->tm_lock);
+	tmp->tm_pages_used -= pages;
+	LIST_REMOVE(node, tn_entries);
+	mutex_exit(&tmp->tm_lock);
+
+	switch (node->tn_type) {
 	case VLNK:
 		tmpfs_str_pool_put(&tmp->tm_str_pool,
 		    node->tn_spec.tn_lnk.tn_link, node->tn_size);
-		pages = 0;
 		break;
 
 	case VREG:
 		if (node->tn_spec.tn_reg.tn_aobj != NULL)
 			uao_detach(node->tn_spec.tn_reg.tn_aobj);
-		pages = node->tn_spec.tn_reg.tn_aobj_pages;
 		break;
 
 	default:
-		KASSERT(0);
-		pages = 0; /* Shut up gcc when !DIAGNOSTIC. */
 		break;
 	}
 
 	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used -= pages;
-	LIST_REMOVE(node, tn_entries);
 	node->tn_type = VNON;
 	LIST_INSERT_HEAD(&tmp->tm_nodes_avail, node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
@@ -416,7 +403,6 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 			mutex_enter(&vp->v_interlock);
 			vp->v_iflag &= ~VI_LOCKSWORK;
 			mutex_exit(&vp->v_interlock);
-			vrele(vp);
 			vgone(vp);
 
 			/* Reinitialize aliased node. */
@@ -908,11 +894,15 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
+	mutex_enter(&tmp->tm_lock);
 	if (newpages > oldpages &&
 	    newpages - oldpages > TMPFS_PAGES_AVAIL(tmp)) {
 		error = ENOSPC;
+		mutex_exit(&tmp->tm_lock);
 		goto out;
 	}
+	tmp->tm_pages_used += (newpages - oldpages);
+	mutex_exit(&tmp->tm_lock);
 
 	if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
@@ -941,10 +931,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
 	node->tn_size = newsize;
 	uvm_vnp_setsize(vp, newsize);
-
-	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used += (newpages - oldpages);
-	mutex_exit(&tmp->tm_lock);
 
 	error = 0;
 
