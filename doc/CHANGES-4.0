@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.271 2007/09/16 15:35:18 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.272 2007/09/16 15:41:50 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9622,4 +9622,11 @@ sys/netinet6/ip6_input.c			1.110
 
 	Spotted by Wolfgang Stukenbrock in pr/36800
 	[degroote, ticket #881]
+
+sys/dist/ipf/netinet/fil.c			1.41
+
+	Fixed IPF bug #1794544
+
+	keep frags does not work with IPv6
+	[martti, ticket #879]
 
