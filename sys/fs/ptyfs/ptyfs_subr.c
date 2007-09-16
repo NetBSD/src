@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.7.18.3 2007/06/17 21:31:10 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.7.18.4 2007/09/16 19:04:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.3 2007/06/17 21:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.4 2007/09/16 19:04:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,6 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 			mutex_enter(&vp->v_interlock);
 			vp->v_iflag &= ~VI_LOCKSWORK;
 			mutex_exit(&vp->v_interlock);
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*

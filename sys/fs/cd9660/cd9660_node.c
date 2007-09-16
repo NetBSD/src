@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14.4.4 2007/07/15 13:27:28 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.14.4.5 2007/09/16 19:04:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.4 2007/07/15 13:27:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.5 2007/09/16 19:04:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,10 +285,9 @@ cd9660_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct lwp *l = ap->a_l;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -301,8 +300,7 @@ cd9660_inactive(v)
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->inode.iso_mode == 0);
 	return error;
 }
 

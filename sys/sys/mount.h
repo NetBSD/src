@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.155.2.7 2007/08/20 21:28:18 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.155.2.8 2007/09/16 19:04:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
+#include <sys/vnode.h>
 #include <sys/specificdata.h>
 
 /*
@@ -92,8 +93,6 @@
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-TAILQ_HEAD(vnodelst, vnode);
-
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.7 2007/08/24 23:28:38 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.8 2007/09/16 19:04:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.7 2007/08/24 23:28:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.8 2007/09/16 19:04:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -886,7 +886,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			vp->v_data = NULL;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*

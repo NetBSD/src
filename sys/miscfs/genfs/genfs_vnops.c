@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.13 2007/09/01 15:34:15 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.14 2007/09/16 19:04:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.13 2007/09/01 15:34:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.14 2007/09/16 19:04:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,55 +230,46 @@ genfs_revoke(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp, *vq;
-	struct lwp *l = curlwp;		/* XXX */
+	struct vnode *vp, *vq, **vpp;
+	enum vtype type;
+	dev_t dev;
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
 		panic("genfs_revoke: not revokeall");
 #endif
-
 	vp = ap->a_vp;
-	mutex_enter(&vp->v_interlock);
 
-	if (vp->v_iflag & VI_ALIASED) {
-		/*
-		 * If a vgone (or vclean) is already in progress,
-		 * wait until it is done and return.
-		 */
-		if (vp->v_iflag & VI_XLOCK) {
-			vwait(vp, VI_XLOCK);
-			mutex_exit(&vp->v_interlock);
-			return (0);
-		}
-		/*
-		 * Ensure that vp will not be vgone'd while we
-		 * are eliminating its aliases.
-		 */
-		vp->v_iflag |= VI_XLOCK;
+	mutex_enter(&vp->v_interlock);
+	if ((vp->v_iflag & VI_CLEAN) != 0) {
 		mutex_exit(&vp->v_interlock);
-		while (vp->v_iflag & VI_ALIASED) {
-			mutex_enter(&spechash_lock);
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_rdev != vp->v_rdev ||
-				    vq->v_type != vp->v_type || vp == vq)
-					continue;
-				mutex_exit(&spechash_lock);
-				vgone(vq);
-				break;
-			}
-			if (vq == NULLVP)
-				mutex_exit(&spechash_lock);
-		}
-		/*
-		 * Remove the lock so that vgone below will
-		 * really eliminate the vnode after which time
-		 * vgone will awaken any sleepers.
-		 */
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag &= ~VI_XLOCK;
+		return (0);
+	} else {
+		dev = vp->v_rdev;
+		type = vp->v_type;
+		mutex_exit(&vp->v_interlock);
 	}
-	vgonel(vp, l);
+
+	if (type != VBLK && type != VCHR)
+		return (0);
+
+	vpp = &speclisth[SPECHASH(dev)];
+	mutex_enter(&spechash_lock);
+	for (vq = *vpp; vq != NULL;) {
+		if (vq->v_rdev != dev || vq->v_type != type) {
+			vq = vq->v_specnext;
+			continue;
+		}
+		mutex_enter(&vq->v_interlock);
+		mutex_exit(&spechash_lock);
+		vq->v_usecount++;
+		vclean(vq, DOCLOSE);
+		vrelel(vq, 1, 0);
+		mutex_enter(&spechash_lock);
+		vq = *vpp;
+	}
+	mutex_exit(&spechash_lock);
+
 	return (0);
 }
 
