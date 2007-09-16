@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.270 2007/09/16 15:29:28 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.271 2007/09/16 15:35:18 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9614,4 +9614,12 @@ sys/dev/ic/ahcisatareg.h			1.2
 	command processed) after a "ID not found" or "Aborted command" error
 	reported by the drive.
 	[bouyer, ticket #882]
+
+sys/netinet/ip_input.c				1.253
+sys/netinet6/ip6_input.c			1.110
+
+	In some FAST_IPSEC, spl level is not restored correctly. Fix that.
+
+	Spotted by Wolfgang Stukenbrock in pr/36800
+	[degroote, ticket #881]
 
