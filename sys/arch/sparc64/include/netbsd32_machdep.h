@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.22 2007/03/16 22:24:49 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.23 2007/09/16 22:35:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,6 +38,9 @@ struct proc;
 /* sparc64 uses an unsigned 32bit integer for 32bit pointers */
 #define NETBSD32_POINTER_TYPE uint32_t
 typedef struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
+
+/* sparc32 has 32bit aligned 64bit integers */
+#define NETBSD32_INT64_ALIGN __attribute__((__aligned__(4)))
 
 /* from <arch/sparc/include/signal.h> */
 typedef uint32_t netbsd32_sigcontextp_t;
