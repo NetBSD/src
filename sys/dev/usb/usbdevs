@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.482 2007/09/03 17:41:41 tshiozak Exp $
+$NetBSD: usbdevs,v 1.483 2007/09/16 10:51:14 mlelstv Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1190,6 +1190,7 @@ product HP2 C500		0x6002	PhotoSmart C500
 
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
+product HUAWEI E220  		0x1003	Huawei E220
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
