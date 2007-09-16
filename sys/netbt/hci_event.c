@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.8 2007/09/07 18:37:31 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.9 2007/09/16 19:59:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.8 2007/09/07 18:37:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.9 2007/09/16 19:59:30 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +55,7 @@ static void hci_event_num_compl_pkts(struct hci_unit *, struct mbuf *);
 static void hci_event_auth_compl(struct hci_unit *, struct mbuf *);
 static void hci_event_encryption_change(struct hci_unit *, struct mbuf *);
 static void hci_event_change_con_link_key_compl(struct hci_unit *, struct mbuf *);
+static void hci_event_read_clock_offset_compl(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_bdaddr(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_buffer_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
@@ -194,6 +195,10 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 		hci_event_change_con_link_key_compl(unit, m);
 		break;
 
+	case HCI_EVENT_READ_CLOCK_OFFSET_COMPL:
+		hci_event_read_clock_offset_compl(unit, m);
+		break;
+
 	case HCI_EVENT_SCO_CON_COMPL:
 	case HCI_EVENT_INQUIRY_COMPL:
 	case HCI_EVENT_REMOTE_NAME_REQ_COMPL:
@@ -212,7 +217,6 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 	case HCI_EVENT_LOOPBACK_COMMAND:
 	case HCI_EVENT_DATA_BUFFER_OVERFLOW:
 	case HCI_EVENT_MAX_SLOT_CHANGE:
-	case HCI_EVENT_READ_CLOCK_OFFSET_COMPL:
 	case HCI_EVENT_CON_PKT_TYPE_CHANGED:
 	case HCI_EVENT_QOS_VIOLATION:
 	case HCI_EVENT_PAGE_SCAN_MODE_CHANGE:
@@ -408,7 +412,6 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 	hci_inquiry_result_ep ep;
 	hci_inquiry_response ir;
 	struct hci_memo *memo;
-	bdaddr_t bdaddr;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(ep));
 	m_copydata(m, 0, sizeof(ep), &ep);
@@ -418,34 +421,20 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		KASSERT(m->m_pkthdr.len >= sizeof(bdaddr));
-		m_copydata(m, 0, sizeof(bdaddr), &bdaddr);
-
-		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
-			bdaddr.b[5], bdaddr.b[4], bdaddr.b[3],
-			bdaddr.b[2], bdaddr.b[1], bdaddr.b[0]);
-
-		memo = hci_memo_find(unit, &bdaddr);
-		if (memo == NULL) {
-			memo = malloc(sizeof(struct hci_memo),
-				M_BLUETOOTH, M_NOWAIT | M_ZERO);
-			if (memo == NULL) {
-				DPRINTFN(0, "out of memo memory!\n");
-				break;
-			}
-
-			bdaddr_copy(&memo->bdaddr, &bdaddr);
-			LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
-		}
-
 		KASSERT(m->m_pkthdr.len >= sizeof(ir));
 		m_copydata(m, 0, sizeof(ir), &ir);
 		m_adj(m, sizeof(ir));
 
-		microtime(&memo->time);
-		memo->page_scan_rep_mode = ir.page_scan_rep_mode;
-		memo->page_scan_mode = ir.page_scan_mode;
-		memo->clock_offset = ir.clock_offset;
+		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
+			ir.bdaddr.b[5], ir.bdaddr.b[4], ir.bdaddr.b[3],
+			ir.bdaddr.b[2], ir.bdaddr.b[1], ir.bdaddr.b[0]);
+
+		memo = hci_memo_new(unit, &ir.bdaddr);
+		if (memo != NULL) {
+			memo->page_scan_rep_mode = ir.page_scan_rep_mode;
+			memo->page_scan_mode = ir.page_scan_mode;
+			memo->clock_offset = ir.clock_offset;
+		}
 	}
 }
 
@@ -460,7 +449,6 @@ hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
 	hci_rssi_result_ep ep;
 	hci_rssi_response rr;
 	struct hci_memo *memo;
-	bdaddr_t bdaddr;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(ep));
 	m_copydata(m, 0, sizeof(ep), &ep);
@@ -470,34 +458,20 @@ hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		KASSERT(m->m_pkthdr.len >= sizeof(bdaddr));
-		m_copydata(m, 0, sizeof(bdaddr), &bdaddr);
-
-		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
-			bdaddr.b[5], bdaddr.b[4], bdaddr.b[3],
-			bdaddr.b[2], bdaddr.b[1], bdaddr.b[0]);
-
-		memo = hci_memo_find(unit, &bdaddr);
-		if (memo == NULL) {
-			memo = malloc(sizeof(struct hci_memo),
-				M_BLUETOOTH, M_NOWAIT | M_ZERO);
-			if (memo == NULL) {
-				DPRINTFN(0, "out of memo memory!\n");
-				break;
-			}
-
-			bdaddr_copy(&memo->bdaddr, &bdaddr);
-			LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
-		}
-
 		KASSERT(m->m_pkthdr.len >= sizeof(rr));
 		m_copydata(m, 0, sizeof(rr), &rr);
 		m_adj(m, sizeof(rr));
 
-		microtime(&memo->time);
-		memo->page_scan_rep_mode = rr.page_scan_rep_mode;
-		memo->page_scan_mode = 0;
-		memo->clock_offset = rr.clock_offset;
+		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
+			rr.bdaddr.b[5], rr.bdaddr.b[4], rr.bdaddr.b[3],
+			rr.bdaddr.b[2], rr.bdaddr.b[1], rr.bdaddr.b[0]);
+
+		memo = hci_memo_new(unit, &rr.bdaddr);
+		if (memo != NULL) {
+			memo->page_scan_rep_mode = rr.page_scan_rep_mode;
+			memo->page_scan_mode = 0;
+			memo->clock_offset = rr.clock_offset;
+		}
 	}
 }
 
@@ -581,6 +555,12 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 						&cp, sizeof(cp));
 		if (err)
 			printf("%s: Warning, could not write link policy\n",
+				unit->hci_devname);
+
+		err = hci_send_cmd(unit, HCI_CMD_READ_CLOCK_OFFSET,
+				    &cp.con_handle, sizeof(cp.con_handle));
+		if (err)
+			printf("%s: Warning, could not read clock offset\n",
 				unit->hci_devname);
 
 		err = hci_acl_setmode(link);
@@ -791,6 +771,34 @@ hci_event_change_con_link_key_compl(struct hci_unit *unit, struct mbuf *m)
 	}
 
 	hci_acl_linkmode(link);
+}
+
+/*
+ * Read Clock Offset Complete
+ *
+ * We keep a note of the clock offset of remote devices when a
+ * link is made, in order to facilitate reconnections to the device
+ */
+static void
+hci_event_read_clock_offset_compl(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_clock_offset_compl_ep ep;
+	struct hci_link *link;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	DPRINTFN(1, "handle #%d, offset=%u, status=0x%x\n",
+		le16toh(ep.con_handle), le16toh(ep.clock_offset), ep.status);
+
+	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
+	link = hci_link_lookup_handle(unit, ep.con_handle);
+
+	if (ep.status != 0 || link == NULL)
+		return;
+
+	link->hl_clock = ep.clock_offset;
 }
 
 /*
