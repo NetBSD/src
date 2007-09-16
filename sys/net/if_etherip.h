@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.4 2007/07/14 21:02:39 ad Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.5 2007/09/16 02:15:54 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -40,23 +40,18 @@
 
 #include <netinet/in.h>
 
-LIST_HEAD(, etherip_softc) etherip_softc_list;
-
 struct etherip_softc {
         struct device   sc_dev;
         struct ifmedia  sc_im;
         struct ethercom sc_ec;
         struct sockaddr *sc_src;                /* tunnel source address      */
         struct sockaddr *sc_dst;                /* tunnel destination address */
-        union {
-#ifdef INET
-                struct route     scr_ro;        /* cached inet route          */
-#endif
-        } sc_scr;
+	struct route     sc_ro;			/* cached inet route          */
         void *sc_si;                            /* softintr handle            */
         LIST_ENTRY(etherip_softc) etherip_list; /* list of etherip tunnels    */
 };
-#define sc_ro  sc_scr.scr_ro
+
+LIST_HEAD(, etherip_softc) etherip_softc_list;
 
 struct etherip_header {
         u_int8_t eip_ver;       /* version/reserved */
