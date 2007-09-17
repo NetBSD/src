@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.96 2007/09/13 19:47:33 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.97 2007/09/17 20:05:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3545,4 +3545,12 @@ sys/dev/pci/pcidevs_data.h			regen
 	These enhancements were developed by Garrett D'Amore and contributed
 	to NetBSD by the TELES AG.
 	[tron, ticket #1822]
+
+etc/defaults/security.conf			1.20
+etc/security					1.104
+
+	The location of the pkg_info binary can now be specified in
+	/etc/security.conf.
+	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
+	[adrianp, ticket #1841]
 
