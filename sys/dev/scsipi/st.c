@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.178.2.1 2005/04/06 11:57:03 tron Exp $ */
+/*	$NetBSD: st.c,v 1.178.2.2 2007/09/17 20:39:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.178.2.1 2005/04/06 11:57:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.178.2.2 2007/09/17 20:39:43 msaitoh Exp $");
 
 #include "opt_scsi.h"
 
@@ -2068,9 +2068,8 @@ st_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
-	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
-	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
+	if (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	    SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED)
 		return (retval);
 
 	if (sense->response_code & SSD_RCODE_VALID)
