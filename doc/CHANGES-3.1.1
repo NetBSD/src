@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.52 2007/06/28 18:40:58 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.53 2007/09/17 20:17:09 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -392,4 +392,18 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.1.1.
+
+etc/defaults/security.conf			1.20
+etc/security					1.104
+
+	The location of the pkg_info binary can now be specified in
+	/etc/security.conf.
+	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
+	[adrianp, ticket #1841]
+
+sys/netinet/ip_input.c				1.253
+
+	Fix PR kern/36800: in FAST_IPSEC, spl level may not be restored
+	properly.
+	[degroote, ticket #1840]
 
