@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.8 2007/09/09 21:37:22 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.9 2007/09/17 20:16:09 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -98,4 +98,18 @@ sys/dev/ieee1394/fwohci.c:			patch
 	PR kern/36945 by Ross Philipson: Remove call to fwohci_desc_put() in
 	an error path where fwohci_desc_get() has not been called yet.
 	[christos, ticket #1835]
+
+etc/defaults/security.conf			1.20
+etc/security					1.104
+
+	The location of the pkg_info binary can now be specified in
+	/etc/security.conf.
+	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
+	[adrianp, ticket #1841]
+
+sys/netinet/ip_input.c				1.253
+
+	Fix PR kern/36800: in FAST_IPSEC, spl level may not be restored
+	properly.
+	[degroote, ticket #1840]
 
