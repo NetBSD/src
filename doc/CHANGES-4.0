@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.274 2007/09/17 18:34:15 msaitoh Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.275 2007/09/17 18:42:39 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9644,3 +9644,10 @@ distrib/hpcmips/Makefile			1.28
 
 	NetBSD/hpcmips couldn't make iso-image.
 	[jun, ticket #878]
+
+distrib/notes/sparc64/install			1.27
+
+	Add a warning that booting the install kernel from a Solaris root
+	partition may fail for non obvious reasons. Fixes for the bootloader
+	will not be available in-time for 4.0, unfortunately.
+	[martin, ticket #884]
