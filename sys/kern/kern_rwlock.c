@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.8 2007/05/17 14:51:40 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.9 2007/09/17 21:33:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8 2007/05/17 14:51:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.9 2007/09/17 21:33:34 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8 2007/05/17 14:51:40 yamt Exp $")
 #include <dev/lockstat.h>
 
 #define RW_ABORT(rw, msg)						\
-    LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, __FUNCTION__, msg)
+    LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, __func__, msg)
 
 /*
  * LOCKDEBUG
