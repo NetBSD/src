@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.41 2007/09/14 09:57:07 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.42 2007/09/17 06:25:21 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.41 2007/09/14 09:57:07 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.42 2007/09/17 06:25:21 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
@@ -757,14 +757,14 @@ fr_info_t *fin;
 		case ICMP6_TIME_EXCEEDED :
 		case ICMP6_PARAM_PROB :
 			fin->fin_flx |= FI_ICMPERR;
-			if ((fin->fin_m != NULL) &&
-			    (M_LEN(fin->fin_m) < fin->fin_plen)) {
+			minicmpsz = ICMP6ERR_IPICMPHLEN - sizeof(ip6_t);
+			if (fin->fin_plen < ICMP6ERR_IPICMPHLEN)
+				break;
+
+			if (M_LEN(fin->fin_m) < fin->fin_plen) {
 				if (fr_coalesce(fin) != 1)
 					return;
 			}
-
-			if (frpr_pullup(fin, ICMP6ERR_MINPKTLEN) == -1)
-				return;
 
 			/*
 			 * If the destination of this packet doesn't match the
@@ -777,7 +777,6 @@ fr_info_t *fin;
 				    &ip6->ip6_src))
 				fin->fin_flx |= FI_BAD;
 
-			minicmpsz = ICMP6ERR_IPICMPHLEN - sizeof(ip6_t);
 			break;
 		default :
 			break;
@@ -918,6 +917,14 @@ fr_info_t *fin;
 /* Short inline function to cut down on code duplication to perform a call  */
 /* to fr_pullup to ensure there is the required amount of data,             */
 /* consecutively in the packet buffer.                                      */
+/*                                                                          */
+/* This function pulls up 'extra' data at the location of fin_dp.  fin_dp   */
+/* points to the first byte after the complete layer 3 header, which will   */
+/* include all of the known extension headers for IPv6 or options for IPv4. */
+/*                                                                          */
+/* Since fr_pullup() expects the total length of bytes to be pulled up, it  */
+/* is necessary to add those we can already assume to be pulled up (fin_dp  */
+/* - fin_ip) to what is passed through.                                     */
 /* ------------------------------------------------------------------------ */
 static INLINE int frpr_pullup(fin, plen)
 fr_info_t *fin;
