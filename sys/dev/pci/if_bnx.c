@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.1.6.4 2007/04/25 09:09:36 ghen Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.1.6.5 2007/09/17 20:34:57 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.6.4 2007/04/25 09:09:36 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.6.5 2007/09/17 20:34:57 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -3850,7 +3850,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				m_copyback(m, 0, sizeof(vh), &vh);
 #else
 				VLAN_INPUT_TAG(ifp, m,
-				    l2fhdr->l2_fhdr_vlan_tag >> 16,
+				    l2fhdr->l2_fhdr_vlan_tag,
 				    continue);
 #endif
 			}
