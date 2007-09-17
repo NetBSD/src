@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.27 2007/09/10 11:34:05 skrll Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.28 2007/09/17 13:25:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.27 2007/09/10 11:34:05 skrll Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.28 2007/09/17 13:25:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -92,17 +92,17 @@ pthread__simple_lock_init(__cpu_simple_lock_t *alp)
 int
 pthread__simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	int unlocked;
+	int locked;
 
 	if (pthread__atomic)
 		return __cpu_simple_lock_try(alp);
 
 	RAS_START(pthread__lock);
-	unlocked = __SIMPLELOCK_UNLOCKED_P(alp);
+	locked = __SIMPLELOCK_LOCKED_P(alp);
 	__cpu_simple_lock_set(alp);
 	RAS_END(pthread__lock);
 
-	return unlocked;
+	return !locked;
 }
 
 inline void
@@ -138,14 +138,14 @@ pthread_spinlock(pthread_spin_t *lock)
 		if (__predict_true(__cpu_simple_lock_try(lock)))
 			return;
 	} else {
-		int unlocked;
+		int locked;
 
 		RAS_START(pthread__lock2);
-		unlocked = __SIMPLELOCK_UNLOCKED_P(lock);
+		locked = __SIMPLELOCK_LOCKED_P(lock);
 		__cpu_simple_lock_set(lock);
 		RAS_END(pthread__lock2);
 
-		if (__predict_true(unlocked))
+		if (__predict_true(!locked))
 			return;
 	}
 
