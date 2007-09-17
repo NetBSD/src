@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.97 2007/09/17 20:05:58 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.98 2007/09/17 20:14:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3553,4 +3553,10 @@ etc/security					1.104
 	/etc/security.conf.
 	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
 	[adrianp, ticket #1841]
+
+sys/netinet/ip_input.c				1.253
+
+	Fix PR kern/36800: in FAST_IPSEC, spl level may not be restored
+	properly.
+	[degroote, ticket #1840]
 
