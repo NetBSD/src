@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.98 2007/09/17 20:14:44 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.99 2007/09/17 20:41:09 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3560,3 +3560,15 @@ sys/netinet/ip_input.c				1.253
 	properly.
 	[degroote, ticket #1840]
 
+sys/dev/pci/if_bnx.c				1.8
+
+	Pass the right value to VLAN_INPUT_TAG(), this makes vlan(4) on bnx(4)
+	work.
+	[bouyer, ticket #1827]
+
+sys/dev/scsipi/st.c				1.180
+
+	revert the only part of rev. 1.177 which made a functional
+	change -- it broke error reporting because st->asc(q) are not set
+	(actually, I believe that SSD_RCODE_VALID is misnamed)
+	[bouyer, ticket #1837]
