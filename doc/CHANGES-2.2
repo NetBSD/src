@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.117 2007/09/12 20:56:40 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.118 2007/09/17 19:57:52 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1307,7 +1307,16 @@ dist/bind/bin/named/ns_forw.c:			patch
 dist/bind/bin/named/ns_func.h:			patch
 dist/bind/bin/named/ns_main.c:			patch
 dist/bind/bin/named/ns_resp.c:			patch
+
 	Address security issue in named(8) documented in CVE-2007-2930 and
 	VU#927905: use arc4 rather than LC NSID for QID RNG.
 	[adrianp, ticket #11365]
+
+etc/defaults/security.conf			1.20
+etc/security					1.104
+
+	The location of the pkg_info binary can now be specified in
+	/etc/security.conf.
+	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
+	[adrianp, ticket #11367]
 
