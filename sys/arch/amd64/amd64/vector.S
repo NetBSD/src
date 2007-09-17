@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.11 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.12 2007/09/17 21:41:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -460,7 +460,8 @@ IDTVEC(intr_lapic_tlb_bcast)
 	 * we arrive here.
 	 */
 	movq	%cr4, %rax
-	leaq	-CR4_PGE(%rax), %rdx
+	movq	%rax, %rdx
+	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
 	jmp	2b
