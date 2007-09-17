@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.16 2007/09/10 11:34:10 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.17 2007/09/17 21:33:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.16 2007/09/10 11:34:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.17 2007/09/17 21:33:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.16 2007/09/10 11:34:10 skrll Exp $"
     LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    mutex_abort(mtx, __FUNCTION__, msg)
+    mutex_abort(mtx, __func__, msg)
 
 #if defined(LOCKDEBUG)
 

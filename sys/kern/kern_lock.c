@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.119 2007/09/10 11:34:10 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.120 2007/09/17 21:33:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.119 2007/09/10 11:34:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.120 2007/09/17 21:33:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1481,7 +1481,7 @@ __cpu_simple_lock_t kernel_lock;
 
 #define	_KERNEL_LOCK_ABORT(msg)						\
     LOCKDEBUG_ABORT(kernel_lock_id, &kernel_lock, &_kernel_lock_ops,	\
-        __FUNCTION__, msg)
+        __func__, msg)
 
 #ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\
