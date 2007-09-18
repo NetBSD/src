@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.15 2005/02/09 18:02:53 drochner Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.16 2007/09/18 22:57:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 #define SNDCTL_DSP_SETSYNCRO		_IO  ('P', 21)
 #define SNDCTL_DSP_SETDUPLEX		_IO  ('P', 22)
 #define SNDCTL_DSP_PROFILE		_IOW ('P', 23, int)
+#define SNDCTL_DSP_GETODELAY		_IOR ('P', 23, int)
 #define	  APF_NORMAL			0
 #define	  APF_NETWORK			1
 #define   APF_CPUINTENS			2
