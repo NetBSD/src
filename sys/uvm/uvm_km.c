@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.93.4.4 2007/09/18 15:28:13 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.93.4.5 2007/09/18 15:42:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93.4.4 2007/09/18 15:28:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.93.4.5 2007/09/18 15:42:18 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -186,7 +186,8 @@ km_vacache_alloc(struct pool *pp, int flags)
 	if (uvm_map(map, &va, size, NULL, UVM_UNKNOWN_OFFSET, size,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_QUANTUM |
-	    ((flags & PR_WAITOK) ? UVM_FLAG_WAITVA : UVM_FLAG_NOWAIT))))
+	    ((flags & PR_WAITOK) ? UVM_FLAG_WAITVA :
+	    UVM_FLAG_TRYLOCK | UVM_FLAG_NOWAIT))))
 		return NULL;
 
 	return (void *)va;
@@ -733,7 +734,7 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 	vaddr_t va;
 
 	va = uvm_km_alloc(map, PAGE_SIZE, 0,
-	    (waitok ? 0 : UVM_KMF_NOWAIT) | UVM_KMF_WIRED);
+	    (waitok ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK) | UVM_KMF_WIRED);
 	return (va);
 #endif /* PMAP_MAP_POOLPAGE */
 }
