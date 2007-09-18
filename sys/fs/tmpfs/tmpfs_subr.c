@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.6 2007/09/16 18:32:36 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.7 2007/09/18 16:06:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.6 2007/09/16 18:32:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.7 2007/09/18 16:06:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -118,8 +118,8 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		ino = tmp->tm_nodes_last++;
 		mutex_exit(&tmp->tm_lock);
 
-		nnode =
-		    (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
+		nnode = (struct tmpfs_node *)
+		    TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
 		if (nnode == NULL) {
 			mutex_enter(&tmp->tm_lock);
 			if (ino == tmp->tm_nodes_last - 1)
@@ -360,13 +360,21 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	struct vnode *nvp;
 	struct vnode *vp;
 
-	mutex_enter(&node->tn_vlock);
-	if ((vp = node->tn_vnode) != NULL) {
-		mutex_enter(&vp->v_interlock);
-		mutex_exit(&node->tn_vlock);
-		vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
-		*vpp = vp;
-		return 0;
+	/* If there is already a vnode, then lock it. */
+	for (;;) {
+		mutex_enter(&node->tn_vlock);
+		if ((vp = node->tn_vnode) != NULL) {
+			mutex_enter(&vp->v_interlock);
+			mutex_exit(&node->tn_vlock);
+			error = vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+			if (error == ENOENT) {
+				/* vnode was reclaimed. */
+				continue;
+			}
+			*vpp = vp;
+			return error;
+		}
+		break;
 	}
 
 	/* Get a new vnode and associate it with our node. */
