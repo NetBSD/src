@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.32 2005/03/05 17:31:03 tnozaki Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.33 2007/09/18 15:12:07 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -202,6 +202,7 @@ _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
 	_DIAGASSERT(psenc != NULL);
 
 	if (s == NULL) {
+		_FUNCNAME(init_state)(ei, psenc);
 		*nresult = _ENCODING_IS_STATE_DEPENDENT;
 		return (0);
 	}

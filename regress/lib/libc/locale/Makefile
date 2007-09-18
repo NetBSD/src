@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2004/09/26 03:45:10 yamt Exp $
+#	$NetBSD: Makefile,v 1.3 2007/09/18 15:12:08 tnozaki Exp $
 
-SUBDIR+= ctype1 ctype2 ctype3 wctomb
+SUBDIR+= ctype1 ctype2 ctype3 mbtowc wctomb
 
 .include <bsd.subdir.mk>
