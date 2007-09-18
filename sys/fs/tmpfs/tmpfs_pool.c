@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.6.8.2 2007/08/21 20:01:31 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.6.8.3 2007/09/18 16:05:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.6.8.2 2007/08/21 20:01:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.6.8.3 2007/09/18 16:05:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -167,9 +167,18 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 	}
 	tmp->tm_pages_used += 1;
 	mutex_exit(&tmp->tm_lock);
-
-	page = pool_page_alloc_nointr(pp, flags);
-	KASSERT(page != NULL);
+	/*
+	 * tmpfs never specifies PR_WAITOK as we enforce local limits
+	 * on memory allocation.  However, we should wait for memory
+	 * to become available if under our limit.  XXX The result of
+	 * the TMPFS_PAGES_MAX() check is stale.
+	 */
+	page = pool_page_alloc_nointr(pp, flags | PR_WAITOK);
+	if (page == NULL) {
+		mutex_enter(&tmp->tm_lock);
+		tmp->tm_pages_used -= 1;
+		mutex_exit(&tmp->tm_lock);
+	}
 
 	return page;
 }
