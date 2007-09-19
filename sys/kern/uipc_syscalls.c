@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.120 2007/09/19 04:33:43 dyoung Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.121 2007/09/19 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.120 2007/09/19 04:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.121 2007/09/19 19:28:25 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -403,7 +403,7 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = 0;
+	msg.msg_control = NULL;
 	msg.msg_flags = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, buf)); /* XXXUNCONST kills const */
 	aiov.iov_len = SCARG(uap, len);
@@ -567,7 +567,7 @@ bad:
 		free(iov, M_IOV);
 	if (to)
 		m_freem(to);
-	if (control != NULL)
+	if (control)
 		m_freem(control);
 
 	return (error);
@@ -589,7 +589,7 @@ sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 	int		error;
 	struct mbuf	*from;
 
-	msg.msg_name = NULL;;
+	msg.msg_name = NULL;
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	aiov.iov_base = SCARG(uap, buf);
