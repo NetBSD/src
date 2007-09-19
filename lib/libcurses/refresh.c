@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $	*/
+/*	$NetBSD: refresh.c,v 1.68 2007/09/19 22:00:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.68 2007/09/19 22:00:43 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -905,17 +905,10 @@ makech(int wy)
 				off &= __mask_se;
 			}
 
-#ifndef HAVE_WCHAR
 			if (off & __ALTCHARSET && __tc_ae != NULL) {
 				tputs(__tc_ae, 0, __cputchar);
 				curscr->wattr &= ~__ALTCHARSET;
 			}
-#else
-			if (off & WA_ALTCHARSET && __tc_ae != NULL) {
-				tputs(__tc_ae, 0, __cputchar);
-				curscr->wattr &= ~WA_ALTCHARSET;
-			}
-#endif /* HAVE_WCHAR */
 
 			/* Set/change colour as appropriate. */
 			if (__using_color)
@@ -1000,19 +993,11 @@ makech(int wy)
 			}
 
 			/* Enter/exit altcharset mode as appropriate. */
-#ifndef HAVE_WCHAR
 			if (on & __ALTCHARSET && __tc_as != NULL &&
 			    __tc_ae != NULL) {
 				tputs(__tc_as, 0, __cputchar);
 				curscr->wattr |= __ALTCHARSET;
 			}
-#else
-			if (on & WA_ALTCHARSET && __tc_as != NULL &&
-			    __tc_ae != NULL) {
-				tputs(__tc_as, 0, __cputchar);
-				curscr->wattr |= WA_ALTCHARSET;
-			}
-#endif /* HAVE_WCHAR */
 
 			wx++;
 			if (wx >= win->maxx &&
@@ -1723,17 +1708,10 @@ __unsetattr(int checkms)
 		curscr->wattr &= __mask_me;
 	}
 	/* Don't leave the screen with altcharset set (don't check ms). */
-#ifndef HAVE_WCHAR
 	if (curscr->wattr & __ALTCHARSET) {
 		tputs(__tc_ae, 0, __cputchar);
 		curscr->wattr &= ~__ALTCHARSET;
 	}
-#else
-	if (curscr->wattr & WA_ALTCHARSET) {
-		tputs(__tc_ae, 0, __cputchar);
-		curscr->wattr &= ~WA_ALTCHARSET;
-	}
-#endif /* HAVE_WCHAR */
 	/* Don't leave the screen with colour set (check against ms). */
 	if (__using_color && isms)
 		__unset_color(curscr);
