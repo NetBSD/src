@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.26 2007/08/14 18:52:48 agc Exp $ */
+/* $NetBSD: disk.c,v 1.27 2007/09/19 19:54:09 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -929,7 +929,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t			*data;
 	uint8_t			*cdb = args->cdb;
 	uint8_t			lun = (uint8_t) (args->lun >> 32);
-	int			mode_data_len;
+	size_t			mode_data_len;
 
 #if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
 	static int      initialized = 0;
@@ -1087,6 +1087,13 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		}
 		break;
 
+	case MODE_SELECT_6:
+	case MODE_SELECT_10:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_6 | MODE_SELECT_10\n");
+		args->status = SCSI_SUCCESS;
+		args->length = 0;
+		break;
+
 	case STOP_START_UNIT:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "STOP_START_UNIT\n");
 		args->status = SCSI_SUCCESS;
@@ -1131,12 +1138,13 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SENSE_6:
+	case MODE_SENSE_10:
 		cp = data = args->send_data;
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6(len %u blocks)\n", len);
-		(void) memset(cp, 0x0, (size_t) mode_data_len);
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6 | MODE_SENSE_10 (len %u blocks)\n", len);
+		(void) memset(cp, 0x0, mode_data_len);
 		/* magic constants courtesy of some values in the Lunix UNH iSCSI target */
 		cp[0] = mode_data_len;
 		cp[1] = 0;
