@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.16 2005/12/26 19:48:12 perry Exp $
+.\"	$NetBSD: ethersubr.9,v 1.17 2007/09/19 05:26:21 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@
 .Ft void
 .Fn ether_ifattach "struct ifnet *ifp" "uint8_t *lla"
 .Ft int
-.Fn ether_addmulti "struct ifrequest *ifr" "struct ethercom *ec"
+.Fn ether_addmulti "const struct sockaddr *sa" "struct ethercom *ec"
 .Ft int
-.Fn ether_delmulti "struct ifrequest *ifr" "struct ethercom *ec"
+.Fn ether_delmulti "const struct sockaddr *sa" "struct ethercom *ec"
 .Ft void
 .Fn ETHER_FIRST_MULTI "struct ether_multistep step" "struct ethercom *ec" "struct ether_multi *enm"
 .Ft void
@@ -67,9 +67,9 @@
 .Ft void
 .Fn fddi_ifattach "struct ifnet *ifp" "uint8_t *lla"
 .Ft int
-.Fn fddi_addmulti "struct ifrequest *ifr" "struct ethercom *ec"
+.Fn fddi_addmulti "const struct sockaddr *sa" "struct ethercom *ec"
 .Ft int
-.Fn fddi_delmulti "struct ifrequest *ifr" "struct ethercom *ec"
+.Fn fddi_delmulti "const struct sockaddr *sa" "struct ethercom *ec"
 .Sh DESCRIPTION
 The
 .Nm
@@ -112,7 +112,7 @@ Add
 or delete
 .Pq Fn ether_delmulti
 the address described by the
-.Fa ifr
+.Fa sa
 pointer to the Ethernet multicast list belonging to
 .Fa ec .
 .Pp
