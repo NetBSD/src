@@ -55,6 +55,13 @@
   )
   "NetBSD KNF Style")
 
+(defun knf-write-contents-hook ()
+  (if (and (string-equal c-indentation-style "netbsd knf")
+	   (require 'whitespace nil t))
+      (whitespace-cleanup))
+  nil	;; XXX - make sure we return nil or the file will not be written.
+)
+
 (defun knf-c-mode-hook ()
   ;; Add style and set it for current buffer
   (c-add-style "NetBSD KNF" netbsd-knf-style t)
@@ -67,10 +74,8 @@
   (setq c-toggle-hungry-state 1)
   ;; auto-indent new lines
   (define-key c-mode-base-map "\C-m" 'newline-and-indent)
+  ;; cleanup whitespace when saving
+  (add-hook 'write-contents-hooks 'knf-write-contents-hook)
 )
 
 (add-hook 'c-mode-hook 'knf-c-mode-hook)
-
-;; breaks saving -- writes "/path/to/file clean" and marks buffer dirty
-;;(require 'whitespace)
-;;(add-hook 'write-file-hooks 'whitespace-cleanup)
