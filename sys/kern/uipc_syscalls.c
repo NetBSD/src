@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.119 2007/09/06 01:21:00 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.120 2007/09/19 04:33:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.119 2007/09/06 01:21:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.120 2007/09/19 04:33:43 dyoung Exp $");
 
 #include "opt_pipe.h"
 
@@ -70,32 +70,13 @@ sys___socket30(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */ *uap = v;
-
-	struct filedesc	*fdp;
-	struct socket	*so;
-	struct file	*fp;
 	int		fd, error;
 
-	fdp = l->l_proc->p_fd;
-	/* falloc() will use the desciptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0)
-		return (error);
-	fp->f_flag = FREAD|FWRITE;
-	fp->f_type = DTYPE_SOCKET;
-	fp->f_ops = &socketops;
-	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
-			 SCARG(uap, protocol), l);
-	if (error) {
-		FILE_UNUSE(fp, l);
-		fdremove(fdp, fd);
-		ffree(fp);
-	} else {
-		fp->f_data = so;
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
+			 SCARG(uap, protocol), l, &fd);
+	if (error == 0)
 		*retval = fd;
-	}
-	return (error);
+	return error;
 }
 
 /* ARGSUSED */
