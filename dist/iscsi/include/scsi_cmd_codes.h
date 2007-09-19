@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.11 2007/06/16 23:13:25 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.12 2007/09/19 23:28:15 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -37,6 +37,7 @@ enum {
 	READ_6 = 0x08,
 	WRITE_6 = 0x0a,
 	INQUIRY = 0x12,
+	MODE_SELECT_6 = 0x15,
 	RESERVE_6 = 0x16,
 	RELEASE_6 = 0x17,
 	MODE_SENSE_6 = 0x1a,
@@ -47,6 +48,7 @@ enum {
 	VERIFY = 0x2f,
 	SYNC_CACHE = 0x35,
 	LOG_SENSE = 0x4d,
+	MODE_SELECT_10 = 0x55,
 	RESERVE_10 = 0x56,
 	RELEASE_10 = 0x57,
 	MODE_SENSE_10 = 0x5a,
