@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.136 2007/08/10 22:44:05 dyoung Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.137 2007/09/19 04:33:44 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.136 2007/08/10 22:44:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.137 2007/09/19 04:33:44 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2590,11 +2590,8 @@ icmp6_ctloutput(int op, struct socket *so, int level,
 
 	optlen = m ? m->m_len : 0;
 
-	if (level != IPPROTO_ICMPV6) {
-		if (op == PRCO_SETOPT && m)
-			(void)m_free(m);
-		return EINVAL;
-	}
+	if (level != IPPROTO_ICMPV6)
+		return rip6_ctloutput(op, so, level, optname, mp);
 
 	switch (op) {
 	case PRCO_SETOPT:

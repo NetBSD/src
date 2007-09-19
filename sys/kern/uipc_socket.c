@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.141 2007/08/06 11:41:52 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.142 2007/09/19 04:33:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.141 2007/08/06 11:41:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.142 2007/09/19 04:33:43 dyoung Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.141 2007/08/06 11:41:52 yamt Exp $
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -102,6 +103,8 @@ POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
+
+extern const struct fileops socketops;
 
 extern int	somaxconn;			/* patchable (XXX sysctl) */
 int		somaxconn = SOMAXCONN;
@@ -427,6 +430,27 @@ sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 	return CALLBACK_CHAIN_CONTINUE;
 }
 
+struct mbuf *
+getsombuf(struct socket *so)
+{
+	struct mbuf *m;
+
+	m = m_get(M_WAIT, MT_SONAME);
+	MCLAIM(m, so->so_mowner);
+	return m;
+}
+
+struct mbuf *
+m_intopt(struct socket *so, int val)
+{
+	struct mbuf *m;
+
+	m = getsombuf(so);
+	m->m_len = sizeof(int);
+	*mtod(m, int *) = val;
+	return m;
+}
+
 void
 soinit(void)
 {
@@ -508,6 +532,41 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	splx(s);
 	*aso = so;
 	return 0;
+}
+
+/* On success, write file descriptor to fdout and return zero.  On
+ * failure, return non-zero; *fdout will be undefined.
+ */
+int
+fsocreate(int domain, struct socket **sop, int type, int protocol,
+    struct lwp *l, int *fdout)
+{
+	struct filedesc	*fdp;
+	struct socket	*so;
+	struct file	*fp;
+	int		fd, error;
+
+	fdp = l->l_proc->p_fd;
+	/* falloc() will use the desciptor for us */
+	if ((error = falloc(l, &fp, &fd)) != 0)
+		return (error);
+	fp->f_flag = FREAD|FWRITE;
+	fp->f_type = DTYPE_SOCKET;
+	fp->f_ops = &socketops;
+	error = socreate(domain, &so, type, protocol, l);
+	if (error != 0) {
+		FILE_UNUSE(fp, l);
+		fdremove(fdp, fd);
+		ffree(fp);
+	} else {
+		if (sop != NULL)
+			*sop = so;
+		fp->f_data = so;
+		FILE_SET_MATURE(fp);
+		FILE_UNUSE(fp, l);
+		*fdout = fd;
+	}
+	return error;
 }
 
 int
@@ -1397,159 +1456,140 @@ sorflush(struct socket *so)
 	sbrelease(&asb, so);
 }
 
-int
-sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
+static int
+sosetopt1(struct socket *so, int level, int optname, struct mbuf *m)
 {
-	int		error;
-	struct mbuf	*m;
+	int optval, val;
 	struct linger	*l;
 	struct sockbuf	*sb;
+	struct timeval *tv;
 
-	error = 0;
-	m = m0;
-	if (level != SOL_SOCKET) {
-		if (so->so_proto && so->so_proto->pr_ctloutput)
-			return ((*so->so_proto->pr_ctloutput)
-				  (PRCO_SETOPT, so, level, optname, &m0));
-		error = ENOPROTOOPT;
-	} else {
+	switch (optname) {
+
+	case SO_LINGER:
+		if (m == NULL || m->m_len != sizeof(struct linger))
+			return EINVAL;
+		l = mtod(m, struct linger *);
+		if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
+		    l->l_linger > (INT_MAX / hz))
+			return EDOM;
+		so->so_linger = l->l_linger;
+		if (l->l_onoff)
+			so->so_options |= SO_LINGER;
+		else
+			so->so_options &= ~SO_LINGER;
+		break;
+
+	case SO_DEBUG:
+	case SO_KEEPALIVE:
+	case SO_DONTROUTE:
+	case SO_USELOOPBACK:
+	case SO_BROADCAST:
+	case SO_REUSEADDR:
+	case SO_REUSEPORT:
+	case SO_OOBINLINE:
+	case SO_TIMESTAMP:
+		if (m == NULL || m->m_len < sizeof(int))
+			return EINVAL;
+		if (*mtod(m, int *))
+			so->so_options |= optname;
+		else
+			so->so_options &= ~optname;
+		break;
+
+	case SO_SNDBUF:
+	case SO_RCVBUF:
+	case SO_SNDLOWAT:
+	case SO_RCVLOWAT:
+		if (m == NULL || m->m_len < sizeof(int))
+			return EINVAL;
+
+		/*
+		 * Values < 1 make no sense for any of these
+		 * options, so disallow them.
+		 */
+		optval = *mtod(m, int *);
+		if (optval < 1)
+			return EINVAL;
+
 		switch (optname) {
-
-		case SO_LINGER:
-			if (m == NULL || m->m_len != sizeof(struct linger)) {
-				error = EINVAL;
-				goto bad;
-			}
-			l = mtod(m, struct linger *);
-			if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
-			    l->l_linger > (INT_MAX / hz)) {
-				error = EDOM;
-				goto bad;
-			}
-			so->so_linger = l->l_linger;
-			if (l->l_onoff)
-				so->so_options |= SO_LINGER;
-			else
-				so->so_options &= ~SO_LINGER;
-			break;
-
-		case SO_DEBUG:
-		case SO_KEEPALIVE:
-		case SO_DONTROUTE:
-		case SO_USELOOPBACK:
-		case SO_BROADCAST:
-		case SO_REUSEADDR:
-		case SO_REUSEPORT:
-		case SO_OOBINLINE:
-		case SO_TIMESTAMP:
-			if (m == NULL || m->m_len < sizeof(int)) {
-				error = EINVAL;
-				goto bad;
-			}
-			if (*mtod(m, int *))
-				so->so_options |= optname;
-			else
-				so->so_options &= ~optname;
-			break;
 
 		case SO_SNDBUF:
 		case SO_RCVBUF:
-		case SO_SNDLOWAT:
-		case SO_RCVLOWAT:
-		    {
-			int optval;
-
-			if (m == NULL || m->m_len < sizeof(int)) {
-				error = EINVAL;
-				goto bad;
-			}
-
-			/*
-			 * Values < 1 make no sense for any of these
-			 * options, so disallow them.
-			 */
-			optval = *mtod(m, int *);
-			if (optval < 1) {
-				error = EINVAL;
-				goto bad;
-			}
-
-			switch (optname) {
-
-			case SO_SNDBUF:
-			case SO_RCVBUF:
-				sb = (optname == SO_SNDBUF) ?
-				    &so->so_snd : &so->so_rcv;
-				if (sbreserve(sb, (u_long)optval, so) == 0) {
-					error = ENOBUFS;
-					goto bad;
-				}
-				sb->sb_flags &= ~SB_AUTOSIZE;
-				break;
-
-			/*
-			 * Make sure the low-water is never greater than
-			 * the high-water.
-			 */
-			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat =
-				    (optval > so->so_snd.sb_hiwat) ?
-				    so->so_snd.sb_hiwat : optval;
-				break;
-			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat =
-				    (optval > so->so_rcv.sb_hiwat) ?
-				    so->so_rcv.sb_hiwat : optval;
-				break;
-			}
+			sb = (optname == SO_SNDBUF) ?
+			    &so->so_snd : &so->so_rcv;
+			if (sbreserve(sb, (u_long)optval, so) == 0)
+				return ENOBUFS;
+			sb->sb_flags &= ~SB_AUTOSIZE;
 			break;
-		    }
+
+		/*
+		 * Make sure the low-water is never greater than
+		 * the high-water.
+		 */
+		case SO_SNDLOWAT:
+			so->so_snd.sb_lowat =
+			    (optval > so->so_snd.sb_hiwat) ?
+			    so->so_snd.sb_hiwat : optval;
+			break;
+		case SO_RCVLOWAT:
+			so->so_rcv.sb_lowat =
+			    (optval > so->so_rcv.sb_hiwat) ?
+			    so->so_rcv.sb_hiwat : optval;
+			break;
+		}
+		break;
+
+	case SO_SNDTIMEO:
+	case SO_RCVTIMEO:
+		if (m == NULL || m->m_len < sizeof(*tv))
+			return EINVAL;
+		tv = mtod(m, struct timeval *);
+		if (tv->tv_sec > (INT_MAX - tv->tv_usec / tick) / hz)
+			return EDOM;
+		val = tv->tv_sec * hz + tv->tv_usec / tick;
+		if (val == 0 && tv->tv_usec != 0)
+			val = 1;
+
+		switch (optname) {
 
 		case SO_SNDTIMEO:
+			so->so_snd.sb_timeo = val;
+			break;
 		case SO_RCVTIMEO:
-		    {
-			struct timeval *tv;
-			int val;
-
-			if (m == NULL || m->m_len < sizeof(*tv)) {
-				error = EINVAL;
-				goto bad;
-			}
-			tv = mtod(m, struct timeval *);
-			if (tv->tv_sec > (INT_MAX - tv->tv_usec / tick) / hz) {
-				error = EDOM;
-				goto bad;
-			}
-			val = tv->tv_sec * hz + tv->tv_usec / tick;
-			if (val == 0 && tv->tv_usec != 0)
-				val = 1;
-
-			switch (optname) {
-
-			case SO_SNDTIMEO:
-				so->so_snd.sb_timeo = val;
-				break;
-			case SO_RCVTIMEO:
-				so->so_rcv.sb_timeo = val;
-				break;
-			}
-			break;
-		    }
-
-		default:
-			error = ENOPROTOOPT;
+			so->so_rcv.sb_timeo = val;
 			break;
 		}
-		if (error == 0 && so->so_proto && so->so_proto->pr_ctloutput) {
-			(void) ((*so->so_proto->pr_ctloutput)
-				  (PRCO_SETOPT, so, level, optname, &m0));
-			m = NULL;	/* freed by protocol */
-		}
+		break;
+
+	default:
+		return ENOPROTOOPT;
 	}
- bad:
-	if (m)
-		(void) m_free(m);
-	return (error);
+	return 0;
+}
+
+int
+sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
+{
+	int error, prerr;
+
+	if (level == SOL_SOCKET)
+		error = sosetopt1(so, level, optname, m);
+	else
+		error = ENOPROTOOPT;
+
+	if ((error == 0 || error == ENOPROTOOPT) &&
+	    so->so_proto != NULL && so->so_proto->pr_ctloutput != NULL) {
+		/* give the protocol stack a shot */
+		prerr = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, level,
+		    optname, &m);
+		if (prerr == 0)
+			error = 0;
+		else if (prerr != ENOPROTOOPT)
+			error = prerr;
+	} else if (m != NULL)
+		(void)m_free(m);
+	return error;
 }
 
 int
