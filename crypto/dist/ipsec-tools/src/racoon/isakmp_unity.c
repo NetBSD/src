@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.7 2006/10/09 06:17:20 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.8 2007/09/19 19:20:25 mgrooms Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
@@ -305,32 +305,41 @@ int  splitnet_list_add(list, network, count)
 	struct unity_network * network;
 	int *count;
 {
-	struct unity_netentry * newentry;
+	struct unity_netentry * nentry;
+
+	/*
+	 * search for network in current list
+	 * to avoid adding duplicates
+	 */
+	for (nentry = *list; nentry != NULL; nentry = nentry->next)
+		if (memcmp(&nentry->network, network,
+			   sizeof(struct unity_network)) == 0)
+			return 0;	/* it's a dupe */
 
 	/*
 	 * allocate new netentry and copy
-         * new splitnet network data
+	 * new splitnet network data
 	 */
-	newentry = (struct unity_netentry *)
+	nentry = (struct unity_netentry *)
 		racoon_malloc(sizeof(struct unity_netentry));
-	if (newentry == NULL)
+	if (nentry == NULL)
 		return -1;
 
-	memcpy(&newentry->network,network,
+	memcpy(&nentry->network,network,
 		sizeof(struct unity_network));
-	newentry->next = NULL;
+	nentry->next = NULL;
 
 	/*
 	 * locate the last netentry in our
 	 * splitnet list and add our entry
 	 */
 	if (*list == NULL)
-		*list = newentry;
+		*list = nentry;
 	else {
 		struct unity_netentry * tmpentry = *list;
 		while (tmpentry->next != NULL)
 			tmpentry = tmpentry->next;
-		tmpentry->next = newentry;
+		tmpentry->next = nentry;
 	}
 
 	(*count)++;

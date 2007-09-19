@@ -1,3 +1,7 @@
+2007-09-19  Matthew Grooms <mgrooms@shrew.net>
+	From Gabriel Somlo <somlo@cmu.edu>
+	* src/racoon/isakmp_unity.c: Prevent duplicate entries in splitnet list.
+
 2007-09-12  Matthew Grooms <mgrooms@shrew.net>
 	From Joy Latten <latten@austin.ibm.com>
 	* configure.ac: Fix autoconf check for selinux support.
