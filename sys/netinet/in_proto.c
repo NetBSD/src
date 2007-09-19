@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.89 2007/09/19 04:33:43 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.90 2007/09/19 18:52:55 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.89 2007/09/19 04:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.90 2007/09/19 18:52:55 dyoung Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -408,7 +408,7 @@ const struct sockaddr_in in_any = {
 	  .sin_len = sizeof(struct sockaddr_in)
 	, .sin_family = AF_INET
 	, .sin_port = 0
-	, .sin_addr = {.s_addr = INADDR_ANY}
+	, .sin_addr = {.s_addr = 0 /* INADDR_ANY */}
 };
 
 struct domain inetdomain = {
