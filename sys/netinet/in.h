@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.80 2007/08/30 02:17:37 dyoung Exp $	*/
+/*	$NetBSD: in.h,v 1.81 2007/09/19 04:33:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -537,6 +537,7 @@ in_cksum_addword(u_int16_t a, u_int16_t b)
 
 extern	struct in_addr zeroin_addr;
 extern	u_char	ip_protox[];
+extern const struct sockaddr_in in_any;
 
 int	in_broadcast(struct in_addr, struct ifnet *);
 int	in_canforward(struct in_addr);
@@ -556,6 +557,8 @@ void	in_socktrim(struct sockaddr_in *);
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 
 int sockaddr_in_cmp(const struct sockaddr *, const struct sockaddr *);
+const void *sockaddr_in_const_addr(const struct sockaddr *, socklen_t *);
+void *sockaddr_in_addr(struct sockaddr *, socklen_t *);
 
 static inline void
 sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,

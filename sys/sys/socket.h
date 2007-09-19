@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.88 2007/08/30 02:17:39 dyoung Exp $	*/
+/*	$NetBSD: socket.h,v 1.89 2007/09/19 04:33:45 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -136,6 +136,10 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_OVERFLOWED	0x1009		/* datagrams: return packets dropped */
 
+#define	SO_NOHEADER	0x100a		/* user supplies no header to kernel;
+					 * kernel removes header and supplies
+					 * payload
+					 */
 /*
  * Structure used for manipulating linger option.
  */
@@ -238,6 +242,8 @@ struct sockaddr_storage {
 	__int64_t     __ss_align;/* force desired structure storage alignment */
 	char		__ss_pad2[_SS_PAD2SIZE];
 };
+#define	sstosa(__ss)	((struct sockaddr *)(__ss))
+#define	sstocsa(__ss)	((const struct sockaddr *)(__ss))
 #endif /* _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 #endif /* 1 */
 
@@ -545,10 +551,20 @@ int	__cmsg_alignbytes(void);
 __END_DECLS
 
 #ifdef	_KERNEL
+static inline socklen_t
+sockaddr_getlen(const struct sockaddr *sa)
+{
+	return sa->sa_len;
+}
+
 __BEGIN_DECLS
 struct sockaddr *sockaddr_copy(struct sockaddr *, socklen_t,
     const struct sockaddr *);
 struct sockaddr *sockaddr_alloc(sa_family_t, socklen_t, int);
+const void *sockaddr_const_addr(const struct sockaddr *, socklen_t *);
+void *sockaddr_addr(struct sockaddr *, socklen_t *);
+const struct sockaddr *sockaddr_any(const struct sockaddr *);
+const void *sockaddr_anyaddr(const struct sockaddr *, socklen_t *);
 int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
 void sockaddr_free(struct sockaddr *);

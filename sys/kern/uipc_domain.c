@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.70 2007/09/01 06:50:44 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.71 2007/09/19 04:33:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.70 2007/09/01 06:50:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.71 2007/09/19 04:33:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -183,6 +183,52 @@ pffindproto(int family, int protocol, int type)
 			maybe = pr;
 	}
 	return (maybe);
+}
+
+void *
+sockaddr_addr(struct sockaddr *sa, socklen_t *slenp)
+{
+	const struct domain *dom;
+
+	if ((dom = pffinddomain(sa->sa_family)) == NULL ||
+	    dom->dom_sockaddr_addr == NULL)
+		return NULL;
+
+	return (*dom->dom_sockaddr_addr)(sa, slenp);
+}
+
+const void *
+sockaddr_const_addr(const struct sockaddr *sa, socklen_t *slenp)
+{
+	const struct domain *dom;
+	
+	if ((dom = pffinddomain(sa->sa_family)) == NULL ||
+	    dom->dom_sockaddr_const_addr == NULL)
+		return NULL;
+
+	return (*dom->dom_sockaddr_const_addr)(sa, slenp);
+}
+
+const struct sockaddr *
+sockaddr_any(const struct sockaddr *sa)
+{
+	const struct domain *dom;
+	
+	if ((dom = pffinddomain(sa->sa_family)) == NULL)
+		return NULL;
+
+	return dom->dom_sa_any;
+}
+
+const void *
+sockaddr_anyaddr(const struct sockaddr *sa, socklen_t *slenp)
+{
+	const struct sockaddr *any;
+
+	if ((any = sockaddr_any(sa)) == NULL)
+		return NULL;
+
+	return sockaddr_const_addr(any, slenp);
 }
 
 struct sockaddr *
