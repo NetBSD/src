@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.15 2007/09/16 23:12:32 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.16 2007/09/19 17:26:02 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -365,7 +365,7 @@ devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
-	char fname[256];
+	char fname[256], devname[256];
 	union {
 		char buf[DEV_BSIZE];
 		struct disklabel label;
@@ -419,6 +419,17 @@ devopen(struct open_file *of, const char *name, char **file)
 			savedpart = pp[1];
 		} else {
 			savedpart = 'a';
+			handle = prom_open(fname);
+			if (handle != -1) {
+				OF_instance_to_path(handle, devname,
+				    sizeof(devname));
+				DPRINTF(("real path: %s\n", devname));
+				prom_close(handle);
+				pp = devname + strlen(devname);
+				if (pp > devname + 3) pp -= 2;
+				if (pp[0] == ':')
+					savedpart = pp[1];
+			}
 			pp = fname + strlen(fname);
 			pp[0] = ':';
 			pp[2] = '\0';
@@ -426,6 +437,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		pp[1] = 'c';
 		DPRINTF(("devopen: replacing by whole disk device %s\n",
 		    fname));
+		if (savedpart)
+			partition = savedpart;
 	}
 
 open_again:
