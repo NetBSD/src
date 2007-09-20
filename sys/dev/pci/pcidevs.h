@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.902 2007/09/17 17:50:49 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.903 2007/09/20 20:25:48 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.902 2007/09/17 17:49:54 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp
  */
 
 /*
@@ -1271,6 +1271,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
+#define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
+#define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
