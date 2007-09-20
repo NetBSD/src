@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.35 2007/09/20 14:14:25 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $");
+__RCSID("$NetBSD: paths.c,v 1.35 2007/09/20 14:14:25 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -171,13 +171,14 @@ _rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
 
 static Search_Path **
 _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
-    const char *argv0, const char *bp, const char *ep)
+    const char *execname, const char *bp, const char *ep)
 {
 	Search_Path *path;
 	char epath[MAXPATHLEN];
 	size_t len;
 
-	if ((len = _rtld_expand_path(epath, sizeof(epath), argv0, bp, ep)) == 0)
+	len = _rtld_expand_path(epath, sizeof(epath), execname, bp, ep);
+	if (len == 0)
 		return path_p;
 
 	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
@@ -195,7 +196,7 @@ _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
 }
 
 void
-_rtld_add_paths(const char *argv0, Search_Path **path_p, const char *pathstr)
+_rtld_add_paths(const char *execname, Search_Path **path_p, const char *pathstr)
 {
 	Search_Path **head_p = path_p;
 
@@ -217,7 +218,7 @@ _rtld_add_paths(const char *argv0, Search_Path **path_p, const char *pathstr)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, argv0, bp, ep);
+		path_p = _rtld_append_path(head_p, path_p, execname, bp, ep);
 
 		if (ep[0] == '\0')
 			break;
@@ -332,7 +333,7 @@ cleanup:
 }
 
 void
-_rtld_process_hints(const char *argv0, Search_Path **path_p,
+_rtld_process_hints(const char *execname, Search_Path **path_p,
     Library_Xform **lib_p, const char *fname)
 {
 	int fd;
@@ -379,7 +380,7 @@ _rtld_process_hints(const char *argv0, Search_Path **path_p,
 			 */
 			while (b[-1] == ' ' || b[-1] == '\t')
 				b--;
-			path_p = _rtld_append_path(head_p, path_p, argv0,
+			path_p = _rtld_append_path(head_p, path_p, execname,
 			    ptr, b);
 		} else
 			_rtld_process_mapping(lib_p, ptr, b);
