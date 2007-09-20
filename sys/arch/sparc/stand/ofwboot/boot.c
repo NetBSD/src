@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2007/09/19 13:52:02 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2007/09/20 09:25:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -116,7 +116,7 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 	int v = 0;
 	const char *start1 = NULL, *end1 = NULL, *start2 = NULL, *end2 = NULL;
 	const char *path;
-	char partition;
+	char partition, *pp;
 
 	*kernel  = '\0';
 	*options = '\0';
@@ -171,6 +171,12 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 			/* copy device part */
 			memcpy(loaddev, kernel, path-kernel);
 			loaddev[path-kernel] = '\0';
+			if (partition) {
+				pp = loaddev + strlen(loaddev);
+				pp[0] = ':';
+				pp[1] = partition;
+				pp[2] = '\0';
+			}
 			/* and kernel path */
 			strcpy(kernel, path);
 		}
