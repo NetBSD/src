@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.16 2007/09/19 17:26:02 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.17 2007/09/20 09:23:54 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@ filename(char *str, char *ppart)
 
 	lp = str;
 	devtype[0] = 0;
-	*ppart = 0;
+	*ppart = '\0';
 	for (cp = str; *cp; lp = cp) {
 		/* For each component of the path name... */
 		while (*++cp && *cp != '/');
@@ -93,7 +93,7 @@ filename(char *str, char *ppart)
 			if (!strcmp(devtype, "block")) {
 				/* search for arguments */
 				DPRINTF(("filename: hunting for arguments "
-				       "in %s\n", str));
+				       "in %s\n", lp));
 				for (cp = lp; ; ) {
 					cp--;
 					if (cp < str ||
@@ -103,16 +103,22 @@ filename(char *str, char *ppart)
 						break;
 				}
 				if (cp >= str && *cp == '-')
-					*cp = 0;	/* found arguments, make firmware ignore them */
-				for (cp = lp; *--cp && *cp != ',' && *cp != ':';);
-				if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS) {
-					*ppart = *cp;
-					*--cp = '\0';
+					/* found arguments, make firmware
+					   ignore them */
+					*cp = 0;
+				for (cp = lp; *--cp && *cp != ',' 
+					&& *cp != ':';)
+						;
+				if (cp[0] == ':' && cp[1] >= 'a' &&
+				    cp[1] <= 'a' + MAXPARTITIONS) {
+					*ppart = cp[1];
+					cp[0] = '\0';
 				}
 			}
 			DPRINTF(("filename: found %s\n",lp));
 			return lp;
-		} else if (_prom_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
+		} else if (_prom_getprop(dhandle, "device_type", devtype,
+				sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
 	DPRINTF(("filename: not found\n",lp));
