@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.902 2007/09/17 17:49:54 msaitoh Exp $
+$NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1264,6 +1264,8 @@ product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
+product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
+product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
