@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $
+#	$Id: Makefile.in,v 1.2 2007/09/20 14:21:39 abs Exp $
 #
 # Makefile.in for the cc part of pcc.
 #
@@ -18,7 +18,7 @@ LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
-OBJS=cc.o compat.o
+OBJS=cc.o # compat.o
 DEST=pcc
 
 MIPDIR=../../mip

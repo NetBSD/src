@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $
+#	$Id: Makefile.in,v 1.2 2007/09/20 14:21:39 abs Exp $
 #
 # Makefile.in for ccom
 #
@@ -30,7 +30,7 @@ OBJS1=optim.o pftn.o scan.o trees.o cgram.o inline.o symtabs.o \
 
 OBJS2=match.o reader.o optim2.o regs.o local2.o order.o table.o
 
-OBJS=$(OBJS1) $(OBJS2) compat.o common.o main.o external.o
+OBJS=$(OBJS1) $(OBJS2) common.o main.o external.o # compat.o
 
 DEST=ccom
 
