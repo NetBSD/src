@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.52 2007/09/10 17:41:26 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.53 2007/09/20 18:38:49 plunky Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -116,13 +116,10 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "DId:fi:lm:rs:w:x")) != -1) {
+	while ((c = getopt(argc, argv, "Dd:fIi:lm:rs:w:x")) != -1) {
 		switch (c) {
 		case 'D':	/* list registered devices */
 			flags |= ENVSYS_DFLAG;
-			break;
-		case 'I':	/* Skips invalid sensors */
-			flags |= ENVSYS_IFLAG;
 			break;
 		case 'd':	/* show sensors of a specific device */
 			mydevname = strdup(optarg);
@@ -131,6 +128,9 @@ int main(int argc, char **argv)
 			break;
 		case 'f':	/* display temperature in Farenheit */
 			flags |= ENVSYS_FFLAG;
+			break;
+		case 'I':	/* Skips invalid sensors */
+			flags |= ENVSYS_IFLAG;
 			break;
 		case 'i':	/* wait time between intervals */
 			interval = strtoul(optarg, &endptr, 10);
@@ -953,9 +953,9 @@ do {								\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-DIflrx] ", getprogname());
-	(void)fprintf(stderr, "[-m ...] [-s s1,s2 ] [-w num] ");
-	(void)fprintf(stderr, "[-i num] [-d ...]\n");
+	(void)fprintf(stderr, "Usage: %s [-DfIlrx] ", getprogname());
+	(void)fprintf(stderr, "[-d ...] [-i num] ");
+	(void)fprintf(stderr, "[-m ...] [-s s1,s2 ] [-w num]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
