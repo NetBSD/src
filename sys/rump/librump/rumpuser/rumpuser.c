@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.7 2007/09/10 19:11:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.8 2007/09/20 23:43:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -143,6 +143,13 @@ rumpuser_close(int fd, int *error)
 {
 
 	DOCALL(int, close(fd));
+}
+
+int
+rumpuser_fsync(int fd, int *error)
+{
+
+	DOCALL(int, fsync(fd));
 }
 
 ssize_t
