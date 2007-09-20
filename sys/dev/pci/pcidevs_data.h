@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.901 2007/09/17 17:50:49 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.902 2007/09/20 20:25:48 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.902 2007/09/17 17:49:54 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp
  */
 
 /*
@@ -4642,6 +4642,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7835,
 	    "Radeon 9200 IGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT,
+	    "Radeon HD2600 XT GDDR3",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HD,
+	    "Radeon HD2600 HD Audio Controller",
 	},
 	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
@@ -13460,4 +13468,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2767;
+const int pci_nproducts = 2769;
