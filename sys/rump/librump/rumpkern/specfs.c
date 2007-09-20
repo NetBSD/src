@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.7 2007/09/10 19:11:44 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.8 2007/09/20 23:43:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -203,9 +203,13 @@ rump_specstrategy(void *v)
 	if (bp->b_flags & B_READ)
 		rv = rumpuser_pread(sp->rsp_fd, bp->b_data, bp->b_bcount,
 		    off, &error);
-	else
+	else {
+		int dummy;
 		rv = rumpuser_pwrite(sp->rsp_fd, bp->b_data, bp->b_bcount,
 		    off, &error);
+		if ((bp->b_flags & B_ASYNC) == 0)
+			rumpuser_fsync(sp->rsp_fd, &dummy);
+	}
 
 	bp->b_error = 0;
 	if (rv == -1)
