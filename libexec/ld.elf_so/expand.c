@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.3 2007/09/20 14:14:25 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.4 2007/09/20 19:42:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.3 2007/09/20 14:14:25 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.4 2007/09/20 19:42:53 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: expand.c,v 1.3 2007/09/20 14:14:25 christos Exp $");
 #include <stdio.h>
 #include <err.h>
 #define xwarn warn
+#define xerr err
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,
     const char *);
 #else
@@ -88,7 +89,6 @@ expand(char *buf, const char *execname, int what, size_t bl)
 		return 0;
 
 	case 2:	/* ORIGIN */
-		xprintf("execname %p\n", execname);
 		if (execname == NULL)
 			xerr(1, "execname not specified in AUX vector");
 		if ((ep = strrchr(p = execname, '/')) == NULL)
