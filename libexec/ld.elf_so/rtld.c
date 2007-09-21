@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.114 2007/09/20 14:14:26 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.115 2007/09/21 13:57:09 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.114 2007/09/20 14:14:26 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.115 2007/09/21 13:57:09 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -355,6 +355,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		_rtld_add_paths(execname, &_rtld_paths,
 		    getenv("LD_LIBRARY_PATH"));
 	} else {
+		execname = NULL;
 		unsetenv("LD_DEBUG");
 		unsetenv("LD_LIBRARY_PATH");
 	}
