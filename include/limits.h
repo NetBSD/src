@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.25 2007/09/07 18:56:04 rmind Exp $	*/
+/*	$NetBSD: limits.h,v 1.26 2007/09/21 01:41:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #define	_POSIX_AIO_LISTIO_MAX	2
 #define	_POSIX_AIO_MAX		1
 #define	_POSIX_ARG_MAX		4096
-#define	_POSIX_CHILD_MAX	6
+#define	_POSIX_CHILD_MAX	25
 #define	_POSIX_LINK_MAX		8
 #define	_POSIX_LOGIN_NAME_MAX	9
 #define	_POSIX_MAX_CANON	255
@@ -56,7 +56,7 @@
 #define	_POSIX_RE_DUP_MAX	255
 #define	_POSIX_SSIZE_MAX	32767
 #define	_POSIX_STREAM_MAX	8
-#define	_POSIX_SYMLINK_MAX	256
+#define	_POSIX_SYMLINK_MAX	255
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
 #define	_POSIX_THREAD_KEYS_MAX	128
 #define	_POSIX_THREAD_THREADS_MAX		64
