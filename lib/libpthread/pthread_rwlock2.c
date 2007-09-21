@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.4 2007/09/21 16:21:54 ad Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.5 2007/09/21 16:24:45 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.4 2007/09/21 16:21:54 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.5 2007/09/21 16:24:45 ad Exp $");
 
 #include <errno.h>
 #include <stddef.h>
@@ -390,15 +390,16 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 	 * the read-release and write-release path similar.
 	 */
 	owner = (uintptr_t)ptr->ptr_owner;
-	if (owner == 0) {
-		return EPERM;
-	}
 	if ((owner & RW_WRITE_LOCKED) != 0) {
 		decr = (uintptr_t)self | RW_WRITE_LOCKED;
-		pthread__error(EPERM, "releasing rwlock held by another thread",
-		    (owner & RW_THREAD) == (uintptr_t)self);
+		if ((owner & RW_THREAD) != (uintptr_t)self) {
+			return EPERM;
+		}
 	} else {
 		decr = RW_READ_INCR;
+		if (owner == 0) {
+			return EPERM;
+		}
 	}
 
 	for (;;) {
