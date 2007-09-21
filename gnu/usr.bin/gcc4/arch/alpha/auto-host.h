@@ -34,7 +34,7 @@
    fully standards-compliant handling of destructors, but requires
    __cxa_atexit in libc. */
 #ifndef USED_FOR_TARGET
-/* #undef DEFAULT_USE_CXA_ATEXIT */
+#define DEFAULT_USE_CXA_ATEXIT 1
 #endif
 
 
