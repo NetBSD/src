@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.142 2007/08/15 12:07:33 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.143 2007/09/21 19:19:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.142 2007/08/15 12:07:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.143 2007/09/21 19:19:20 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -357,14 +357,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD) {
+	if (p1->p_limit->pl_flags & PL_SHAREMOD) {
 		mutex_enter(&p1->p_mutex);
 		p2->p_limit = limcopy(p1);
 		mutex_exit(&p1->p_mutex);
 	} else {
-		mutex_enter(&p1->p_limit->p_lock);
-		p1->p_limit->p_refcnt++;
-		mutex_exit(&p1->p_limit->p_lock);
+		mutex_enter(&p1->p_limit->pl_lock);
+		p1->p_limit->pl_refcnt++;
+		mutex_exit(&p1->p_limit->pl_lock);
 		p2->p_limit = p1->p_limit;
 	}
 

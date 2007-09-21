@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.38 2007/07/12 11:05:42 he Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.39 2007/09/21 19:19:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -72,9 +72,9 @@ struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
 	char	*pl_corename;
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
-	int	p_lflags;
-	int	p_refcnt;		/* number of references */
-	kmutex_t p_lock;		/* mutex for p_refcnt */
+	int	pl_flags;
+	int	pl_refcnt;		/* number of references */
+	kmutex_t pl_lock;		/* mutex for pl_refcnt */
 };
 
 /* add user profiling from AST XXXSMP */
