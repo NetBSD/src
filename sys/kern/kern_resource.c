@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.120 2007/09/06 02:03:06 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.121 2007/09/21 19:19:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.120 2007/09/06 02:03:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.121 2007/09/21 19:19:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,8 +284,8 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 			return (error);
 
 	mutex_enter(&p->p_mutex);
-	if (p->p_limit->p_refcnt > 1 &&
-	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+	if (p->p_limit->pl_refcnt > 1 &&
+	    (p->p_limit->pl_flags & PL_SHAREMOD) == 0) {
 	    	oldplim = p->p_limit;
 		p->p_limit = limcopy(p);
 		limfree(oldplim);
@@ -544,25 +544,25 @@ limcopy(struct proc *p)
 
 	mutex_exit(&p->p_mutex);
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	mutex_init(&newlim->p_lock, MUTEX_DEFAULT, IPL_NONE);
-	newlim->p_lflags = 0;
-	newlim->p_refcnt = 1;
+	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
+	newlim->pl_flags = 0;
+	newlim->pl_refcnt = 1;
 	mutex_enter(&p->p_mutex);
 
 	for (;;) {
 		lim = p->p_limit;
-		mutex_enter(&lim->p_lock);
+		mutex_enter(&lim->pl_lock);
 		if (lim->pl_corename != defcorename) {
 			l = strlen(lim->pl_corename) + 1;
 
-			mutex_exit(&lim->p_lock);
+			mutex_exit(&lim->pl_lock);
 			mutex_exit(&p->p_mutex);
 			corename = malloc(l, M_TEMP, M_WAITOK);
 			mutex_enter(&p->p_mutex);
-			mutex_enter(&lim->p_lock);
+			mutex_enter(&lim->pl_lock);
 
 			if (l != strlen(lim->pl_corename) + 1) {
-				mutex_exit(&lim->p_lock);
+				mutex_exit(&lim->pl_lock);
 				mutex_exit(&p->p_mutex);
 				free(corename, M_TEMP);
 				mutex_enter(&p->p_mutex);
@@ -577,7 +577,7 @@ limcopy(struct proc *p)
 			strlcpy(newlim->pl_corename, lim->pl_corename, l);
 		else
 			newlim->pl_corename = defcorename;
-		mutex_exit(&lim->p_lock);
+		mutex_exit(&lim->pl_lock);
 		break;
 	}
 
@@ -589,9 +589,9 @@ limfree(struct plimit *lim)
 {
 	int n;
 
-	mutex_enter(&lim->p_lock);
-	n = --lim->p_refcnt;
-	mutex_exit(&lim->p_lock);
+	mutex_enter(&lim->pl_lock);
+	n = --lim->pl_refcnt;
+	mutex_exit(&lim->pl_lock);
 	if (n > 0)
 		return;
 #ifdef DIAGNOSTIC
@@ -600,7 +600,7 @@ limfree(struct plimit *lim)
 #endif
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
-	mutex_destroy(&lim->p_lock);
+	mutex_destroy(&lim->pl_lock);
 	pool_put(&plimit_pool, lim);
 }
 
@@ -741,7 +741,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 
 	mutex_enter(&ptmp->p_mutex);
 	lim = ptmp->p_limit;
-	if (lim->p_refcnt > 1 && (lim->p_lflags & PL_SHAREMOD) == 0) {
+	if (lim->pl_refcnt > 1 && (lim->pl_flags & PL_SHAREMOD) == 0) {
 		ptmp->p_limit = limcopy(ptmp);
 		limfree(lim);
 		lim = ptmp->p_limit;
