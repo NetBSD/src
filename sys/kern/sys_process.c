@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.127 2007/07/21 19:21:53 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.128 2007/09/21 19:14:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -88,12 +88,12 @@
  * in this file.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.128 2007/09/21 19:14:13 dsl Exp $");
+
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.127 2007/07/21 19:21:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
