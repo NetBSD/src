@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.1 2007/09/07 18:56:09 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.2 2007/09/21 01:40:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.1 2007/09/07 18:56:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.2 2007/09/21 01:40:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -456,7 +456,7 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 	}
 
 	/* Check if queue is empty */
-	if (TAILQ_EMPTY(&mq->mq_head)) {
+	while (TAILQ_EMPTY(&mq->mq_head)) {
 		if (mq->mq_attrib.mq_flags & O_NONBLOCK) {
 			error = EAGAIN;
 			goto error;
@@ -477,7 +477,6 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 				error = ETIMEDOUT;
 			goto error;
 		}
-		KASSERT(!TAILQ_EMPTY(&mq->mq_head));
 	}
 
 	/* Remove the message from the queue */
@@ -610,7 +609,7 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 	}
 
 	/* Check if queue is full */
-	if (mq->mq_attrib.mq_curmsgs == mq->mq_attrib.mq_maxmsg) {
+	while (mq->mq_attrib.mq_curmsgs >= mq->mq_attrib.mq_maxmsg) {
 		if (mq->mq_attrib.mq_flags & O_NONBLOCK) {
 			error = EAGAIN;
 			goto error;
@@ -620,9 +619,7 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 			goto error;
 		}
 		/* Block until queue becomes available */
-		mq->mq_attrib.mq_flags |= MQ_SEND;
 		error = cv_timedwait_sig(&mq->mq_recv_cv, &mq->mq_mtx, t);
-		mq->mq_attrib.mq_flags &= ~MQ_SEND;
 		if (error || (mq->mq_attrib.mq_flags & MQ_UNLINK)) {
 			error = (error == EWOULDBLOCK) ? ETIMEDOUT : error;
 			goto error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.1 2007/09/07 18:56:11 rmind Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.2 2007/09/21 01:40:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -56,8 +56,6 @@ struct mq_attr {
 
 /* Message queue is unlinking */
 #define	MQ_UNLINK		0x10000000
-/* There are send-waiters */
-#define	MQ_SEND			0x20000000
 /* There are receive-waiters */
 #define	MQ_RECEIVE		0x40000000
 
