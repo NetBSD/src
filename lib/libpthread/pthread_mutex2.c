@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.7 2007/09/13 23:51:47 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.8 2007/09/21 21:09:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.7 2007/09/13 23:51:47 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.8 2007/09/21 21:09:25 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -359,8 +359,7 @@ NOINLINE static int
 pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 {
 	pthread_t self, owner, new;
-	char deferred;
-	int weown;
+	int weown, error;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
@@ -368,14 +367,19 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	self = pthread_self();
 	owner = ptm->ptm_owner;
 	weown = (MUTEX_OWNER(owner) == (uintptr_t)self);
+	error = 0;
 
 	if (ptm->ptm_errorcheck) {
-		if (!weown)
-			return EPERM;
+		if (!weown) {
+			error = EPERM;
+			goto out;
+		}
 		new = NULL;
 	} else if (MUTEX_RECURSIVE(owner)) {
-		if (!weown)
-			return EPERM;
+		if (!weown) {
+			error = EPERM;
+			goto out;
+		}
 		if (MUTEX_GET_RECURSE(ptm) != 0) {
 			MUTEX_SET_RECURSE(ptm, -1);
 			new = owner;
@@ -394,10 +398,8 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	 * wake them up.
 	 */
 	if (new == owner)
-		return 0;
+		goto out;
 
-	deferred = MUTEX_DEFERRED(ptm);
-	MUTEX_DEFERRED(ptm) = 0;
 	owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, new);
 	if (MUTEX_HAS_WAITERS(owner) != 0) {
 		pthread__mutex_wakeup(self, ptm);
@@ -408,10 +410,10 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	 * There were no waiters, but we may have deferred waking
 	 * other threads until mutex unlock - we must wake them now.
 	 */
-	if (deferred)
+ out:
+	if (self->pt_nwaiters != 0)
 		return pthread__mutex_catchup(ptm);
-
-	return 0;
+	return error;
 }
 
 static void
