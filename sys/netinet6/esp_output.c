@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.28 2007/05/23 17:32:46 christos Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.29 2007/09/21 21:23:59 degroote Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.28 2007/05/23 17:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.29 2007/09/21 21:23:59 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -683,6 +683,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	}
     }
 
+noantireplay:
 #ifdef IPSEC_NAT_T
 	if (sav->natt_type != 0) {
 		struct ip *ip;
@@ -697,7 +698,6 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	}
 #endif /* IPSEC_NAT_T */
 
-noantireplay:
 	if (!m) {
 		ipseclog((LOG_ERR,
 		    "NULL mbuf after encryption in esp%d_output", afnumber));
