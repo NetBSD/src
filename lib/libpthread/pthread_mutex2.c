@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.8 2007/09/21 21:09:25 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.9 2007/09/21 21:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.8 2007/09/21 21:09:25 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.9 2007/09/21 21:28:11 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -372,19 +372,20 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	if (ptm->ptm_errorcheck) {
 		if (!weown) {
 			error = EPERM;
-			goto out;
+			new = owner;
+		} else {
+			new = NULL;
 		}
-		new = NULL;
 	} else if (MUTEX_RECURSIVE(owner)) {
 		if (!weown) {
 			error = EPERM;
-			goto out;
-		}
-		if (MUTEX_GET_RECURSE(ptm) != 0) {
+			new = owner;
+		} else if (MUTEX_GET_RECURSE(ptm) != 0) {
 			MUTEX_SET_RECURSE(ptm, -1);
 			new = owner;
-		} else
+		} else {
 			new = (pthread_t)MUTEX_RECURSIVE_BIT;
+		}
 	} else {
 		pthread__error(EPERM,
 		    "Unlocking unlocked mutex", (owner != NULL));
@@ -397,20 +398,18 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	 * Release the mutex.  If there appear to be waiters, then
 	 * wake them up.
 	 */
-	if (new == owner)
-		goto out;
-
-	owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, new);
-	if (MUTEX_HAS_WAITERS(owner) != 0) {
-		pthread__mutex_wakeup(self, ptm);
-		return 0;
+	if (new != owner) {
+		owner = pthread__atomic_swap_ptr(&ptm->ptm_owner, new);
+		if (MUTEX_HAS_WAITERS(owner) != 0) {
+			pthread__mutex_wakeup(self, ptm);
+			return 0;
+		}
 	}
 
 	/*
 	 * There were no waiters, but we may have deferred waking
 	 * other threads until mutex unlock - we must wake them now.
 	 */
- out:
 	if (self->pt_nwaiters != 0)
 		return pthread__mutex_catchup(ptm);
 	return error;
