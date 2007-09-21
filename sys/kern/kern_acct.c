@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.75 2007/07/09 21:10:51 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.76 2007/09/21 19:19:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75 2007/07/09 21:10:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.76 2007/09/21 19:19:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ acct_process(struct lwp *l)
 	 * XXX We should think about the CPU limit, too.
 	 */
 	mutex_enter(&p->p_mutex);
-	if (p->p_limit->p_refcnt > 1) {
+	if (p->p_limit->pl_refcnt > 1) {
 		oplim = p->p_limit;
 		p->p_limit = limcopy(p);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.127 2007/09/21 19:19:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.127 2007/09/21 19:19:21 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2298,8 +2298,8 @@ netbsd32_adjust_limits(struct proc *p)
 		return;
 	}
 
-	if (p->p_limit->p_refcnt > 1 &&
-	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+	if (p->p_limit->pl_refcnt > 1 &&
+	    (p->p_limit->pl_flags & PL_SHAREMOD) == 0) {
 		struct plimit *oldplim;
 		oldplim = p->p_limit;
 		p->p_limit = limcopy(p);

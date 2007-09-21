@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.37 2007/03/06 12:43:09 tsutsui Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.38 2007/09/21 19:19:21 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.37 2007/03/06 12:43:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.38 2007/09/21 19:19:21 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -498,9 +498,9 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SULIMIT) {
 		pl = p2->p_limit;
-		parent->p_limit->p_refcnt++;
+		parent->p_limit->pl_refcnt++;
 		p2->p_limit = parent->p_limit;
-		if(--pl->p_refcnt == 0)
+		if(--pl->pl_refcnt == 0)
 			limfree(pl);
 	}
 
