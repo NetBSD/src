@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.99 2007/09/22 18:40:25 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.100 2007/09/22 23:30:55 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2007/09/22 18:40:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.100 2007/09/22 23:30:55 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2007/09/22 18:40:25 martin Exp
 #include <machine/intr.h>
 
 #include "fb.h"
-#include "esp_sbus.h"
 
 /* pointer to the saved DDB registers */
 db_regs_t *ddb_regp;
@@ -1252,19 +1251,12 @@ db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	uvmhist_dump(LIST_FIRST(&uvm_histories));
 }
 
-#if NESP_SBUS
-extern void db_esp(db_expr_t, bool, db_expr_t, const char*);
-#endif
-
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("dtlb",	db_dump_dtlb,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("itlb",	db_dump_itlb,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("dtsb",	db_dump_dtsb,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("itsb",	db_dump_itsb,	0,	NULL,NULL,NULL) },
-#if NESP_SBUS
-	{ DDB_ADD_CMD("esp",	db_esp,		0,	NULL,NULL,NULL) },
-#endif
 	{ DDB_ADD_CMD("extract",	db_pm_extract,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("fpstate",	db_dump_fpstate,0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("kmap",	db_pmap_kernel,	0,	NULL,NULL,NULL) },
