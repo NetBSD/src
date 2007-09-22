@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.44 2007/09/22 05:55:59 xtraeme Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.45 2007/09/22 15:14:33 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.44 2007/09/22 05:55:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.45 2007/09/22 15:14:33 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2589,7 +2589,7 @@ alc883_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = __arraycount(alc883_mixer_items);
+	this->nmixers = sizeof(alc883_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
