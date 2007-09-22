@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.483 2007/09/16 10:51:14 mlelstv Exp $
+$NetBSD: usbdevs,v 1.484 2007/09/22 07:41:29 mlelstv Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1674,6 +1674,7 @@ product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
 product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
+product OPTIONNV HSDPA   	0x6701	GlobeTrotter HSDPA Modem
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
