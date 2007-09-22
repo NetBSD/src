@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.98 2007/09/11 16:00:06 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.99 2007/09/22 18:40:25 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.98 2007/09/11 16:00:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2007/09/22 18:40:25 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -1257,37 +1257,37 @@ extern void db_esp(db_expr_t, bool, db_expr_t, const char*);
 #endif
 
 const struct db_command db_machine_command_table[] = {
-	{ "ctx",	db_ctx_cmd,	0,	0 },
-	{ "dtlb",	db_dump_dtlb,	0,	0 },
-	{ "itlb",	db_dump_itlb,	0,	0 },
-	{ "dtsb",	db_dump_dtsb,	0,	0 },
-	{ "itsb",	db_dump_itsb,	0,	0 },
+	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("dtlb",	db_dump_dtlb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("itlb",	db_dump_itlb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("dtsb",	db_dump_dtsb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("itsb",	db_dump_itsb,	0,	NULL,NULL,NULL) },
 #if NESP_SBUS
-	{ "esp",	db_esp,		0,	0 },
+	{ DDB_ADD_CMD("esp",	db_esp,		0,	NULL,NULL,NULL) },
 #endif
-	{ "extract",	db_pm_extract,	0,	0 },
-	{ "fpstate",	db_dump_fpstate,0,	0 },
-	{ "kmap",	db_pmap_kernel,	0,	0 },
-	{ "lock",	db_lock_cmd,	0,	0 },
-	{ "lwp",	db_lwp_cmd,	0,	0 },
-	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "pctx",	db_setpcb,	0,	0 },
-	{ "page",	db_page_cmd,	0,	0 },
-	{ "phys",	db_pload_cmd,	0,	0 },
-	{ "pmap",	db_pmap_cmd,	0,	0 },
-	{ "proc",	db_proc_cmd,	0,	0 },
-	{ "prom",	db_prom_cmd,	0,	0 },
-	{ "pv",		db_dump_pv,	0,	0 },
-	{ "stack",	db_dump_stack,	0,	0 },
-	{ "tf",		db_dump_trap,	0,	0 },
-	{ "ts",		db_dump_ts,	0,	0 },
-	{ "traptrace",	db_traptrace,	0,	0 },
-	{ "uvmdump",	db_uvmhistdump,	0,	0 },
-	{ "watch",	db_watch,	0,	0 },
-	{ "window",	db_dump_window,	0,	0 },
-	{ "cpu",	db_cpu_cmd,	0,	0 },
-	{ "sir",	db_sir_cmd,	0,	0 },
-	{ .name = NULL, }
+	{ DDB_ADD_CMD("extract",	db_pm_extract,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("fpstate",	db_dump_fpstate,0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("kmap",	db_pmap_kernel,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lwp",	db_lwp_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pctx",	db_setpcb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("phys",	db_pload_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pmap",	db_pmap_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pv",		db_dump_pv,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("stack",		db_dump_stack,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("tf",		db_dump_trap,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("ts",		db_dump_ts,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("traptrace",	db_traptrace,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("watch",	db_watch,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("window",	db_dump_window,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("sir",	db_sir_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };
 
 #endif	/* DDB */
