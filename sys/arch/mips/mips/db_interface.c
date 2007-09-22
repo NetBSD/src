@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61 2007/02/28 04:21:53 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.62 2007/09/22 18:40:23 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2007/02/28 04:21:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2007/09/22 18:40:23 martin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -542,10 +542,10 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
-	{ "tlb",	db_tlbdump_cmd,		0,	0 },
-	{ "cp0",	db_cp0dump_cmd,		0,	0 },
-	{ NULL, }
+	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 #endif	/* !KGDB */
 
