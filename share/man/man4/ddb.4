@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.103 2007/03/28 14:45:35 uwe Exp $
+.\"	$NetBSD: ddb.4,v 1.104 2007/09/22 19:47:51 martin Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,9 @@ To specify commands which will be executed on each entry to
 .Ic ddb :
 .Cd options DDB_COMMANDONENTER="trace;show registers"
 In this case, "trace" and then "show registers" will be executed automatically.
+.Pp
+To enable extended online help:
+.Cd options DDB_VERBOSE_HELP .
 .Sh DESCRIPTION
 .Nm
 is the in-kernel debugger.
