@@ -55,9 +55,27 @@
   )
   "NetBSD KNF Style")
 
+;; NOTE: whitespace-cleanup has the following control knobs.  By
+;; default these are all true.
+;(setq whitespace-check-leading-whitespace nil)
+;(setq whitespace-check-trailing-whitespace nil)
+;(setq whitespace-check-spacetab-whitespace nil)
+;(setq whitespace-check-indent-whitespace nil)
+;(setq whitespace-check-ateol-whitespace nil)
+
+;; XXX - whitespace.el is badly behaved on blank buffers, so we handle
+;; those buffers ourselves.
+(defun knf-nonblank-buffer-p ()
+  (if (whitespace-buffer-search "[^ \t\n]")
+      t
+    (progn
+      (delete-region (point-min) (point-max))
+      nil)))
+
 (defun knf-write-contents-hook ()
   (if (and (string-equal c-indentation-style "netbsd knf")
-	   (require 'whitespace nil t))
+	   (require 'whitespace nil t)
+	   (knf-nonblank-buffer-p))
       (whitespace-cleanup))
   nil	;; XXX - make sure we return nil or the file will not be written.
 )
