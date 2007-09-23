@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.101 2007/09/23 14:01:15 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.102 2007/09/23 18:55:12 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.101 2007/09/23 14:01:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.102 2007/09/23 18:55:12 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -561,32 +561,7 @@ db_dump_dtlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	extern void print_dtlb(void);
 
-	if (have_addr) {
-		int i;
-		int64_t* p = (int64_t*)addr;
-		static int64_t buf[128];
-		extern void dump_dtlb(int64_t *);
-		
-		dump_dtlb(buf);
-		p = buf;
-		for (i=0; i<64;) {
-#ifdef __arch64__
-			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
-			p += 2;
-#else
-			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
-			p += 2;
-#endif
-		}
-	} else {
-#ifdef DEBUG
-		print_dtlb();
-#endif
-	}
+	print_dtlb();
 }
 
 void
@@ -594,32 +569,7 @@ db_dump_itlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	extern void print_itlb(void);
 
-	if (have_addr) {
-		int i;
-		int64_t* p = (int64_t*)addr;
-		static int64_t buf[128];
-		extern void dump_itlb(int64_t *);
-		
-		dump_itlb(buf);
-		p = buf;
-		for (i=0; i<64;) {
-#ifdef __arch64__
-			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
-			p += 2;
-#else
-			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
-			p += 2;
-#endif
-		}
-	} else {
-#ifdef DEBUG
-		print_itlb();
-#endif
-	}
+	print_itlb();
 }
 
 void
