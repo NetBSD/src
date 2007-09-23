@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1065 2007/09/07 18:56:02 rmind Exp $
+#	$NetBSD: mi,v 1.1066 2007/09/23 21:27:34 agc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1812,6 +1812,7 @@
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
 ./usr/include/sys/fstypes.h			comp-c-include
+./usr/include/sys/gcq.h				comp-c-include
 ./usr/include/sys/gmon.h			comp-c-include
 ./usr/include/sys/gpio.h			comp-c-include
 ./usr/include/sys/hash.h			comp-c-include
