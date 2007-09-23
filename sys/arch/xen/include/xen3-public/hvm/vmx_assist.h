@@ -1,3 +1,4 @@
+/* $NetBSD: vmx_assist.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
 /*
  * vmx_assist.h: Context definitions for the VMXASSIST world switch.
  *
