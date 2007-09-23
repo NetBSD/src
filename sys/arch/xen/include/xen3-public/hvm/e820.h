@@ -1,8 +1,5 @@
-/******************************************************************************
- * hvm/hvm_info_table.h
- * 
- * HVM parameter and information table, written into guest memory map.
- *
+
+/*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -22,20 +19,29 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
-#define __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
+#ifndef __XEN_PUBLIC_HVM_E820_H__
+#define __XEN_PUBLIC_HVM_E820_H__
 
-#define HVM_INFO_PFN         0x09F
-#define HVM_INFO_OFFSET      0x800
-#define HVM_INFO_PADDR       ((HVM_INFO_PFN << 12) + HVM_INFO_OFFSET)
+/* PC BIOS standard E820 types. */
+#define E820_RAM          1
+#define E820_RESERVED     2
+#define E820_ACPI         3
+#define E820_NVS          4
 
-struct hvm_info_table {
-    char        signature[8]; /* "HVM INFO" */
-    uint32_t    length;
-    uint8_t     checksum;
-    uint8_t     acpi_enabled;
-    uint8_t     apic_mode;
-    uint32_t    nr_vcpus;
-};
+/* E820 location in HVM virtual address space. */
+#define E820_MAP_PAGE        0x00090000
+#define E820_MAP_NR_OFFSET   0x000001E8
+#define E820_MAP_OFFSET      0x000002D0
 
-#endif /* __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__ */
+struct e820entry {
+    uint64_t addr;
+    uint64_t size;
+    uint32_t type;
+} __attribute__((packed));
+
+#define HVM_BELOW_4G_RAM_END        0xF0000000
+
+#define HVM_BELOW_4G_MMIO_START     HVM_BELOW_4G_RAM_END
+#define HVM_BELOW_4G_MMIO_LENGTH    ((1ULL << 32) - HVM_BELOW_4G_MMIO_START)
+
+#endif /* __XEN_PUBLIC_HVM_E820_H__ */
