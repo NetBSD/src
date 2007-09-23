@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.24 2003/09/07 15:59:36 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.24.14.1 2007/09/23 18:54:13 bouyer Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.24 2003/09/07 15:59:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.24.14.1 2007/09/23 18:54:13 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -168,8 +168,8 @@ ah4_output(m, isr)
 			(u_int32_t)ntohl(ip->ip_dst.s_addr),
 			(u_int32_t)ntohl(sav->spi)));
 		ipsecstat.out_inval++;
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 
 	algo = ah_algorithm_lookup(sav->alg_auth);
@@ -177,8 +177,8 @@ ah4_output(m, isr)
 		ipseclog((LOG_ERR, "ah4_output: unsupported algorithm: "
 		    "SPI=%u\n", (u_int32_t)ntohl(sav->spi)));
 		ipsecstat.out_inval++;
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 	spi = sav->spi;
 
@@ -209,8 +209,8 @@ ah4_output(m, isr)
 		if (!n) {
 			ipseclog((LOG_DEBUG, "ENOBUFS in ah4_output %d\n",
 			    __LINE__));
-			m_freem(m);
-			return ENOBUFS;
+			error = ENOBUFS;
+			goto fail;
 		}
 		n->m_len = ahlen;
 		n->m_next = m->m_next;
@@ -255,8 +255,8 @@ ah4_output(m, isr)
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
 				ipsecstat.out_inval++;
-				m_freem(m);
-				return EINVAL;
+				error = EINVAL;
+				goto fail;
 			}
 		}
 		sav->replay->count++;
@@ -277,8 +277,8 @@ ah4_output(m, isr)
 	else {
 		ipseclog((LOG_ERR, "IPv4 AH output: size exceeds limit\n"));
 		ipsecstat.out_inval++;
-		m_freem(m);
-		return EMSGSIZE;
+		error = EMSGSIZE;
+		goto fail;
 	}
 
 	/*
@@ -302,10 +302,8 @@ ah4_output(m, isr)
 	if (error) {
 		ipseclog((LOG_ERR,
 		    "error after ah4_calccksum, called from ah4_output"));
-		m_freem(m);
-		m = NULL;
 		ipsecstat.out_inval++;
-		return error;
+		goto fail;
 	}
 
 	if (finaldst) {
@@ -317,6 +315,10 @@ ah4_output(m, isr)
 	key_sa_recordxfer(sav, m);
 
 	return 0;
+
+fail:
+	m_freem(m);
+	return error;
 }
 #endif
 
@@ -368,8 +370,8 @@ ah6_output(m, nexthdrp, md, isr)
 
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		ipseclog((LOG_DEBUG, "ah6_output: first mbuf too short\n"));
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 
 	ahlen = ah_hdrlen(sav);
@@ -380,21 +382,21 @@ ah6_output(m, nexthdrp, md, isr)
 		;
 	if (!mprev || mprev->m_next != md) {
 		ipseclog((LOG_DEBUG, "ah6_output: md is not in chain\n"));
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 
 	MGET(mah, M_DONTWAIT, MT_DATA);
 	if (!mah) {
-		m_freem(m);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto fail;
 	}
 	if (ahlen > MLEN) {
 		MCLGET(mah, M_DONTWAIT);
 		if ((mah->m_flags & M_EXT) == 0) {
 			m_free(mah);
-			m_freem(m);
-			return ENOBUFS;
+			error = ENOBUFS;
+			goto fail;
 		}
 	}
 	mah->m_len = ahlen;
@@ -406,8 +408,8 @@ ah6_output(m, nexthdrp, md, isr)
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) > IPV6_MAXPACKET) {
 		ipseclog((LOG_ERR,
 		    "ah6_output: AH with IPv6 jumbogram is not supported\n"));
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
@@ -417,8 +419,8 @@ ah6_output(m, nexthdrp, md, isr)
 			"sav->replay is null: SPI=%u\n",
 			(u_int32_t)ntohl(sav->spi)));
 		ipsec6stat.out_inval++;
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 
 	algo = ah_algorithm_lookup(sav->alg_auth);
@@ -426,8 +428,8 @@ ah6_output(m, nexthdrp, md, isr)
 		ipseclog((LOG_ERR, "ah6_output: unsupported algorithm: "
 		    "SPI=%u\n", (u_int32_t)ntohl(sav->spi)));
 		ipsec6stat.out_inval++;
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail;
 	}
 	spi = sav->spi;
 
@@ -462,8 +464,8 @@ ah6_output(m, nexthdrp, md, isr)
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
 				ipsec6stat.out_inval++;
-				m_freem(m);
-				return EINVAL;
+				error = EINVAL;
+				goto fail;
 			}
 		}
 		sav->replay->count++;
@@ -482,14 +484,19 @@ ah6_output(m, nexthdrp, md, isr)
 	error = ah6_calccksum(m, ahsumpos, plen, algo, sav);
 	if (error) {
 		ipsec6stat.out_inval++;
-		m_freem(m);
+		goto fail;
 	} else {
 		ipsec6stat.out_success++;
 		key_sa_recordxfer(sav, m);
 	}
 	ipsec6stat.out_ahhist[sav->alg_auth]++;
 
-	return (error);
+	return 0;
+
+fail:
+	m_freem(m);
+	return error;
+	
 }
 #endif
 
