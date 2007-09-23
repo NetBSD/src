@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.104 2007/09/22 19:47:51 martin Exp $
+.\"	$NetBSD: ddb.4,v 1.105 2007/09/23 00:26:03 martin Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1084,10 +1084,10 @@ Exit to the Sun PROM monitor.
 .El
 .Ss SPARC64
 .Bl -tag -width "intrchain" -compact
-.It Ic buf
-Print buffer information.
 .It Ic ctx
 Print process context information.
+.It Ic cpu
+Switch to another cpu.
 .It Ic dtlb
 Print data translation look-aside buffer context information.
 .It Ic dtsb
@@ -1097,6 +1097,20 @@ Display information about the listed mapping in the kernel pmap.
 Use the
 .Dq f
 modifier to get a full listing.
+.It Ic extract
+Extract the physical address for a given virtual address from the kernel pmap.
+.It Ic fpstate
+Dump the FPU state.
+.It Ic itlb
+Print instruction translation look-aside buffer context information.
+.It Ic itsb
+Display instruction translation storage buffer information.
+.It Ic lock
+Print information about a lock.
+.It Ic lwp
+Display a struct lwp
+.It Ic sir
+Reset the machine and enter prom (do a Software Initiated Reset).
 .It Ic pcb
 Display information about the
 .Dq struct pcb
