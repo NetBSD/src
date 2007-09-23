@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.16 2003/03/19 22:26:47 nathanw Exp $	*/
+/*	$NetBSD: atexit.c,v 1.16.6.1 2007/09/23 18:48:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ atexit_handler_alloc(void *dso)
 	if (dso == NULL) {
 		for (i = 0; i < NSTATIC_HANDLERS; i++) {
 			ah = &atexit_handler0[i];
-			if (ah->ah_atexit == NULL) {
+			if (ah->ah_atexit == NULL && ah->ah_next == NULL) {
 				/* Slot is free. */
 				return (ah);
 			}
@@ -186,9 +186,11 @@ __cxa_finalize(void *dso)
 	 * When the depth 1 caller sees those, it will simply unlink them
 	 * for us.
 	 */
+again:
 	for (prevp = &atexit_handler_stack; (ah = (*prevp)) != NULL;) {
 		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL) {
 			if (ah->ah_atexit != NULL) {
+				void *p = atexit_handler_stack;
 				if (ah->ah_dso != NULL) {
 					cxa_func = ah->ah_cxa_atexit;
 					ah->ah_cxa_atexit = NULL;
@@ -198,11 +200,16 @@ __cxa_finalize(void *dso)
 					ah->ah_atexit = NULL;
 					(*atexit_func)();
 				}
+				/* Restart if new atexit handler was added. */
+				if (p != atexit_handler_stack)
+					goto again;
 			}
 
 			if (call_depth == 1) {
 				*prevp = ah->ah_next;
-				if (! STATIC_HANDLER_P(ah)) {
+				if (STATIC_HANDLER_P(ah))
+					ah->ah_next = NULL;
+				else {
 					ah->ah_next = dead_handlers;
 					dead_handlers = ah;
 				}
