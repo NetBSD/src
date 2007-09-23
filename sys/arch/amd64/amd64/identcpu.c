@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.7.4.1 2007/09/03 07:03:04 wrstuden Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7.4.2 2007/09/23 21:36:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.4.1 2007/09/03 07:03:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7.4.2 2007/09/23 21:36:12 wrstuden Exp $");
 
+#include "opt_enhanced_speedstep.h"
 #include "opt_powernow_k8.h"
 
 #include <sys/types.h>
@@ -138,6 +139,17 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	x86_print_cacheinfo(ci);
+
+#ifdef ENHANCED_SPEEDSTEP
+        if ((vendor == CPUVENDOR_INTEL) &&
+	    (ci->ci_feature2_flags & CPUID2_EST)) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+		    est_init(CPUVENDOR_INTEL);
+		else
+		    aprint_normal("%s: Enhanced SpeedStep disabled by "
+			"BIOS\n", device_xname(ci->ci_dev));
+	}
+#endif
 
 #ifdef POWERNOW_K8
 	if (CPUID2FAMILY(ci->ci_signature) == 15 &&

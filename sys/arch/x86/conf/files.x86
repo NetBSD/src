@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.20.2.1 2007/04/20 20:31:26 bouyer Exp $
+#	$NetBSD: files.x86,v 1.20.2.1.2.1 2007/09/23 21:36:27 wrstuden Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -9,6 +9,10 @@ defflag                 MTRR
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+
+# Intel Enhanced Speedstep
+defflag			ENHANCED_SPEEDSTEP
+defflag opt_est.h	EST_FREQ_USERWRITE
 
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
@@ -56,6 +60,10 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 # Powernow common functions
 file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
+
+# Intel Enhanced Speedstep
+file	arch/x86/x86/est.c              enhanced_speedstep
+file	arch/x86/x86/intel_busclock.c   enhanced_speedstep
 
 #IPMI device
 device ipmi : sysmon_envsys, sysmon_wdog

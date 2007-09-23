@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121.10.1 2007/09/03 07:03:40 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.121.10.2 2007/09/23 21:36:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.10.1 2007/09/03 07:03:40 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.10.2 2007/09/23 21:36:21 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -167,11 +167,13 @@ short	exframesize[] = {
 			  ((c) & SSW4_TMMASK) == SSW4_TMKD : 	\
 			  ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
 #define WRFAULT(c)	(mmutype == MMU_68040 ?		\
-			  ((c) & SSW4_RW) == 0 : 	\
-			  ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+			  ((c) & (SSW4_LK|SSW4_RW)) != SSW4_RW : 	\
+			 (((c) & SSW_DF) != 0 && \
+			 ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0))))
 #else
 #define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define WRFAULT(c)	(((c) & SSW_DF) != 0 && \
+			    ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0)))
 #endif
 
 #ifdef DEBUG
