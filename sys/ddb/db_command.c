@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.100 2007/09/23 18:59:23 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.101 2007/09/23 19:51:20 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.100 2007/09/23 18:59:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.101 2007/09/23 19:51:20 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,23 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.100 2007/09/23 18:59:23 martin Exp 
 #define	CMD_FOUND	1
 #define	CMD_NONE	2
 #define	CMD_AMBIGUOUS	3
-
-#define CMD_SWITCH(result) do {          	\
-        switch (result) {                	\
-        case CMD_NONE:                   	\
-		 db_printf("No such command\n");\
-		 db_flush_lex();                \
-		 return;                        \
-        case CMD_AMBIGUOUS:              	\
-		 db_printf("Ambiguous\n");      \
-		 db_flush_lex();                \
-		 return;                        \
-        default:                         	\
-		 break;                         \
-        }                                	\
-        } while(/* CONSTCOND */ 0)
-
-
 
 /*
  * Exported global variables
@@ -418,22 +401,10 @@ db_execute_commandlist(const char *cmdlist)
 static void
 db_init_commands(void)
 {
-	struct db_cmd_tbl_en *list_ent;
+	static bool done = false;
 
-	/*check if list is not already initialized*/
-	TAILQ_FOREACH(list_ent,&db_base_cmd_list,db_cmd_next)
-	    if (list_ent->db_cmd == db_command_table)
-		    return;
-
-	TAILQ_FOREACH(list_ent,&db_show_cmd_list,db_cmd_next)
-	    if (list_ent->db_cmd == db_show_cmds)
-		    return;
-
-#ifdef DB_MACHINE_COMMANDS
-	TAILQ_FOREACH(list_ent,&db_mach_cmd_list,db_cmd_next)
-	    if (list_ent->db_cmd == db_machine_command_table)
-		    return;
-#endif
+	if (done) return;
+	done = true;
 
 	/*register command tables*/
 	(void)db_register_tbl(DDB_BASE_CMD,db_command_table);
@@ -442,8 +413,6 @@ db_init_commands(void)
 	(void)db_register_tbl(DDB_MACH_CMD,db_machine_command_table);
 #endif
 	(void)db_register_tbl(DDB_SHOW_CMD,db_show_cmds);
-
-	return;
 }
 
 
@@ -579,14 +548,14 @@ db_command_loop(void)
 
 	db_cmd_loop_done = 0;
 
+	/*Init default command tables add machine, base,
+	  show command tables to the list*/
+	(void) db_init_commands();
+
 	/*save context for return from ddb*/
 	savejmp = db_recover;
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
-
-	/*Init default command tables add machine, base,
-	  show command tables to the list*/
-	(void) db_init_commands();
 
 	/*Execute default ddb start commands*/
 	db_execute_commandlist(db_cmd_on_enter);
@@ -871,9 +840,9 @@ db_command(const struct db_command **last_cmdp)
 				break;
 
 		}
-	
+
                 /*check compatibility flag*/
-		if (command->flag & CS_COMPAT){
+		if (command && command->flag & CS_COMPAT){
 			t = db_read_token();
 			if (t != tIDENT) {
 					db_cmd_list(list);
@@ -883,9 +852,14 @@ db_command(const struct db_command **last_cmdp)
 
 			/* support only level 2 commands here */
 			goto COMPAT_RET;
-		}		
+		}
 
-		
+		if (!command) {
+			db_printf("No such command\n");
+			db_flush_lex();
+			return;
+		}
+
 		if ((command->flag & CS_OWN) == 0) {
 
 			/*
