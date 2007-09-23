@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.28 2007/09/22 18:40:27 martin Exp $	*/
+/*	$NetBSD: db_command.h,v 1.29 2007/09/23 23:55:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 #define _DDB_COMMAND_
 
 void	db_skip_to_eol(void);
+void	db_init_commands(void);
 void	db_command_loop(void);
 void	db_error(const char *) __attribute__((__noreturn__));
 

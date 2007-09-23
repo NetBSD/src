@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.101 2007/09/23 19:51:20 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.102 2007/09/23 23:55:54 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.101 2007/09/23 19:51:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.102 2007/09/23 23:55:54 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,7 +174,6 @@ static void	db_event_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_fncall(db_expr_t, bool, db_expr_t, const char *);
 static int      db_get_list_type(const char *);
 static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void     db_init_commands(void);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -398,7 +397,7 @@ db_execute_commandlist(const char *cmdlist)
 }
 
 /*Initialize ddb command tables*/
-static void
+void
 db_init_commands(void)
 {
 	static bool done = false;
@@ -546,11 +545,11 @@ db_command_loop(void)
 	db_prev = db_dot;
 	db_next = db_dot;
 
-	db_cmd_loop_done = 0;
+	db_cmd_loop_done = false;
 
 	/*Init default command tables add machine, base,
 	  show command tables to the list*/
-	(void) db_init_commands();
+	db_init_commands();
 
 	/*save context for return from ddb*/
 	savejmp = db_recover;
@@ -728,7 +727,7 @@ db_get_list_type(const char *name)
 				ret=DDB_BASE_CMD;
 		}
 	}
-  
+
 	return(ret);
 }
 
