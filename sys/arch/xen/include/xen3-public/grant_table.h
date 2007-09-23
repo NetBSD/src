@@ -1,4 +1,4 @@
-/* $NetBSD: grant_table.h,v 1.5 2007/09/23 16:19:37 bouyer Exp $ */
+/* $NetBSD: grant_table.h,v 1.6 2007/09/23 16:54:08 bouyer Exp $ */
 /******************************************************************************
  * grant_table.h
  * 
@@ -328,26 +328,6 @@ struct gnttab_query_size {
 };
 typedef struct gnttab_query_size gnttab_query_size_t;
 DEFINE_XEN_GUEST_HANDLE(gnttab_query_size_t);
-
-
-/*
- * GNTTABOP_query_size: Query the current and maximum sizes of the shared
- * grant table.
- * NOTES:
- *  1. <dom> may be specified as DOMID_SELF.
- *  2. Only a sufficiently-privileged domain may specify <dom> != DOMID_SELF.
- */
-#define GNTTABOP_query_size		6
-typedef struct gnttab_query_size {
-	/* IN parameters. */
-	domid_t  dom;
-	/* OUT parameters. */
-	uint32_t nr_frames;
-	uint32_t max_nr_frames;
-	int16_t  status;		/* GNTST_* */
-} gnttab_query_size_t;
-
-DEFINE_GUEST_HANDLE(gnttab_query_size_t);
 
 
 /*
