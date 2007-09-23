@@ -1,3 +1,4 @@
+/* $NetBSD: hvm_op.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
