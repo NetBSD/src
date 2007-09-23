@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.5 2007/09/23 16:19:38 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.6 2007/09/23 16:54:08 bouyer Exp $ */
 /******************************************************************************
  * xen.h
  * 
@@ -413,10 +413,6 @@ struct vcpu_info {
 #ifndef __XEN__
 typedef struct vcpu_info vcpu_info_t;
 #endif
-
-/* Xen2 compat */
-#define vcpu_data vcpu_info
-#define evtchn_pending_sel vcpu_info[0].evtchn_pending_sel /* XXX smp */
 
 /*
  * Xen/kernel shared data -- pointer provided in start_info.
