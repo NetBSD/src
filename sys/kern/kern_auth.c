@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.51 2007/07/06 17:33:31 dsl Exp $ */
+/* $NetBSD: kern_auth.c,v 1.52 2007/09/23 16:00:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51 2007/07/06 17:33:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.52 2007/09/23 16:00:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -393,7 +393,7 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 /* XXX elad: gmuid is unused for now. */
 int
 kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
-    uid_t gmuid, unsigned int flags)
+    uid_t gmuid, enum uio_seg seg)
 {
 	int error = 0;
 
@@ -404,10 +404,10 @@ kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
 		return EINVAL;
 
 	if (len) {
-		if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_SYSSPACE)
+		if (seg == UIO_SYSSPACE) {
 			memcpy(cred->cr_groups, grbuf,
 			    len * sizeof(cred->cr_groups[0]));
-		else {
+		} else {
 			error = copyin(grbuf, cred->cr_groups,
 			    len * sizeof(cred->cr_groups[0]));
 			if (error != 0)
@@ -454,14 +454,14 @@ kauth_proc_setgroups(struct lwp *l, kauth_cred_t ncred)
 
 int
 kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
-    unsigned int flags)
+    enum uio_seg seg)
 {
 	KASSERT(cred != NULL);
 
 	if (len > cred->cr_ngroups)
 		return EINVAL;
 
-	if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_USERSPACE)
+	if (seg == UIO_USERSPACE)
 		return copyout(cred->cr_groups, grbuf, sizeof(*grbuf) * len);
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 
