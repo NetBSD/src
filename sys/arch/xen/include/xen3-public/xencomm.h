@@ -1,8 +1,4 @@
-/******************************************************************************
- * hvm/hvm_info_table.h
- * 
- * HVM parameter and information table, written into guest memory map.
- *
+/*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -20,22 +16,26 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ * Copyright (C) IBM Corp. 2006
  */
 
-#ifndef __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
-#define __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
+#ifndef _XEN_XENCOMM_H_
+#define _XEN_XENCOMM_H_
 
-#define HVM_INFO_PFN         0x09F
-#define HVM_INFO_OFFSET      0x800
-#define HVM_INFO_PADDR       ((HVM_INFO_PFN << 12) + HVM_INFO_OFFSET)
+/* A xencomm descriptor is a scatter/gather list containing physical
+ * addresses corresponding to a virtually contiguous memory area. The
+ * hypervisor translates these physical addresses to machine addresses to copy
+ * to and from the virtually contiguous area.
+ */
 
-struct hvm_info_table {
-    char        signature[8]; /* "HVM INFO" */
-    uint32_t    length;
-    uint8_t     checksum;
-    uint8_t     acpi_enabled;
-    uint8_t     apic_mode;
-    uint32_t    nr_vcpus;
+#define XENCOMM_MAGIC 0x58434F4D /* 'XCOM' */
+#define XENCOMM_INVALID (~0UL)
+
+struct xencomm_desc {
+    uint32_t magic;
+    uint32_t nr_addrs; /* the number of entries in address[] */
+    uint64_t address[0];
 };
 
-#endif /* __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__ */
+#endif /* _XEN_XENCOMM_H_ */

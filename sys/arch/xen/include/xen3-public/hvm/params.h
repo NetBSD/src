@@ -1,8 +1,4 @@
-/******************************************************************************
- * hvm/hvm_info_table.h
- * 
- * HVM parameter and information table, written into guest memory map.
- *
+/*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -22,20 +18,38 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
-#define __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__
+#ifndef __XEN_PUBLIC_HVM_PARAMS_H__
+#define __XEN_PUBLIC_HVM_PARAMS_H__
 
-#define HVM_INFO_PFN         0x09F
-#define HVM_INFO_OFFSET      0x800
-#define HVM_INFO_PADDR       ((HVM_INFO_PFN << 12) + HVM_INFO_OFFSET)
+#include "hvm_op.h"
 
-struct hvm_info_table {
-    char        signature[8]; /* "HVM INFO" */
-    uint32_t    length;
-    uint8_t     checksum;
-    uint8_t     acpi_enabled;
-    uint8_t     apic_mode;
-    uint32_t    nr_vcpus;
-};
+/*
+ * Parameter space for HVMOP_{set,get}_param.
+ */
 
-#endif /* __XEN_PUBLIC_HVM_HVM_INFO_TABLE_H__ */
+/*
+ * How should CPU0 event-channel notifications be delivered?
+ * val[63:56] == 0: val[55:0] is a delivery GSI (Global System Interrupt).
+ * val[63:56] == 1: val[55:0] is a delivery PCI INTx line, as follows:
+ *                  Domain = val[47:32], Bus  = val[31:16],
+ *                  DevFn  = val[15: 8], IntX = val[ 1: 0]
+ * If val == 0 then CPU0 event-channel notifications are not delivered.
+ */
+#define HVM_PARAM_CALLBACK_IRQ 0
+
+/*
+ * These are not used by Xen. They are here for convenience of HVM-guest
+ * xenbus implementations.
+ */
+#define HVM_PARAM_STORE_PFN    1
+#define HVM_PARAM_STORE_EVTCHN 2
+
+#define HVM_PARAM_PAE_ENABLED  4
+
+#define HVM_PARAM_IOREQ_PFN    5
+
+#define HVM_PARAM_BUFIOREQ_PFN 6
+
+#define HVM_NR_PARAMS          7
+
+#endif /* __XEN_PUBLIC_HVM_PARAMS_H__ */
