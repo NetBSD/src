@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.99 2007/09/23 10:26:06 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.100 2007/09/23 18:59:23 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.99 2007/09/23 10:26:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.100 2007/09/23 18:59:23 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -489,9 +489,11 @@ db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 			list=&db_show_cmd_list;
 			break;
 
+#ifdef DB_MACHINE_COMMANDS
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			break;
+#endif
 
 		default:
 			return (ENOENT);
@@ -537,9 +539,11 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 		list=&db_show_cmd_list;
 		break;
 		
+#ifdef DB_MACHINE_COMMANDS
 	case DDB_MACH_CMD:
 		list=&db_mach_cmd_list;
 		break;
+#endif
 			
 	default:
 		return (EINVAL);
@@ -834,6 +838,7 @@ db_command(const struct db_command **last_cmdp)
 				return;
 			}
 			break;
+#ifdef DB_MACHINE_COMMANDS
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* need to read machine subcommand if
@@ -848,6 +853,7 @@ db_command(const struct db_command **last_cmdp)
 				return;
 			}	
 			break;
+#endif
 		default:
 			db_printf("No such command\n");
 			db_flush_lex();                 
@@ -996,6 +1002,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			}	
 			
 			break;
+#ifdef DB_MACHINE_COMMANDS
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* read machine subcommand */
@@ -1008,6 +1015,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 				return;
 			}
 			break;
+#endif
 		default:
 			db_printf("No such command\n");
 			db_flush_lex();
