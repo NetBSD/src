@@ -1,6 +1,24 @@
 /*
  * acm.h: Xen access control module interface defintions
  *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Reiner Sailer <sailer@watson.ibm.com>
  * Copyright (c) 2005, International Business Machines Corporation.
  */
@@ -9,7 +27,6 @@
 #define _XEN_PUBLIC_ACM_H
 
 #include "xen.h"
-#include "sched_ctl.h"
 
 /* if ACM_DEBUG defined, all hooks should
  * print a short trace message (comment it out
@@ -39,6 +56,19 @@
 #define ACM_ACCESS_DENIED           -111
 #define ACM_NULL_POINTER_ERROR      -200
 
+/*
+   Error codes reported in when trying to test for a new policy
+   These error codes are reported in an array of tuples where
+   each error code is followed by a parameter describing the error
+   more closely, such as a domain id.
+*/
+#define ACM_EVTCHN_SHARING_VIOLATION       0x100
+#define ACM_GNTTAB_SHARING_VIOLATION       0x101
+#define ACM_DOMAIN_LOOKUP                  0x102
+#define ACM_CHWALL_CONFLICT                0x103
+#define ACM_SSIDREF_IN_USE                 0x104
+
+
 /* primary policy in lower 4 bits */
 #define ACM_NULL_POLICY 0
 #define ACM_CHINESE_WALL_POLICY 1
@@ -51,17 +81,17 @@
 
 /* policy: */
 #define ACM_POLICY_NAME(X) \
- ((X) == (ACM_NULL_POLICY)) ? "NULL policy" :                        \
-    ((X) == (ACM_CHINESE_WALL_POLICY)) ? "CHINESE WALL policy" :        \
-    ((X) == (ACM_SIMPLE_TYPE_ENFORCEMENT_POLICY)) ? "SIMPLE TYPE ENFORCEMENT policy" : \
-    ((X) == (ACM_CHINESE_WALL_AND_SIMPLE_TYPE_ENFORCEMENT_POLICY)) ? "CHINESE WALL AND SIMPLE TYPE ENFORCEMENT policy" : \
-     "UNDEFINED policy"
+ ((X) == (ACM_NULL_POLICY)) ? "NULL" :                        \
+    ((X) == (ACM_CHINESE_WALL_POLICY)) ? "CHINESE WALL" :        \
+    ((X) == (ACM_SIMPLE_TYPE_ENFORCEMENT_POLICY)) ? "SIMPLE TYPE ENFORCEMENT" : \
+    ((X) == (ACM_CHINESE_WALL_AND_SIMPLE_TYPE_ENFORCEMENT_POLICY)) ? "CHINESE WALL AND SIMPLE TYPE ENFORCEMENT" : \
+     "UNDEFINED"
 
 /* the following policy versions must be increased
  * whenever the interpretation of the related
  * policy's data structure changes
  */
-#define ACM_POLICY_VERSION 1
+#define ACM_POLICY_VERSION 3
 #define ACM_CHWALL_VERSION 1
 #define ACM_STE_VERSION  1
 
@@ -69,7 +99,8 @@
 typedef uint32_t ssidref_t;
 
 /* hooks that are known to domains */
-enum acm_hook_type {NONE=0, SHARING};
+#define ACMHOOK_none    0
+#define ACMHOOK_sharing 1
 
 /* -------security policy relevant type definitions-------- */
 
@@ -101,6 +132,14 @@ typedef uint16_t domaintype_t;
 /* each offset in bytes from start of the struct they
  * are part of */
 
+/* V3 of the policy buffer aded a version structure */
+struct acm_policy_version
+{
+    uint32_t major;
+    uint32_t minor;
+};
+
+
 /* each buffer consists of all policy information for
  * the respective policy given in the policy code
  *
@@ -113,10 +152,17 @@ struct acm_policy_buffer {
     uint32_t policy_version; /* ACM_POLICY_VERSION */
     uint32_t magic;
     uint32_t len;
+    uint32_t policy_reference_offset;
     uint32_t primary_policy_code;
     uint32_t primary_buffer_offset;
     uint32_t secondary_policy_code;
     uint32_t secondary_buffer_offset;
+    struct acm_policy_version xml_pol_version; /* add in V3 */
+};
+
+
+struct acm_policy_reference_buffer {
+    uint32_t len;
 };
 
 struct acm_chwall_policy_buffer {
@@ -160,6 +206,7 @@ struct acm_ste_stats_buffer {
 struct acm_ssid_buffer {
     uint32_t len;
     ssidref_t ssidref;
+    uint32_t policy_reference_offset;
     uint32_t primary_policy_code;
     uint32_t primary_max_types;
     uint32_t primary_types_offset;
