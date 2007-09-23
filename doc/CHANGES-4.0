@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.3 2007/09/03 06:57:45 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.4 2007/09/23 21:36:10 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9441,3 +9441,202 @@ sys/sys/param.h					patch
 
 	Welcome to NetBSD 4.0_RC1.
 	[liamjfoy]
+
+usr.sbin/rtsold/rtsol.c				1.14
+
+	Fix typo from Wouter Schoot. PR#36931
+	[jnemeth, ticket #867]
+
+sys/arch/i386/pci/gcscide.c			1.5
+
+	Always use PIO Format 1, which allows independent control of command
+	and data (PIO Format 0 selects the speed of the slowest drive).
+	Set correctly Ultra DMA and Multi-word DMA modes.
+	Update comments to be more correct after reading again the datasheet.
+	[xtraeme, ticket #862]
+
+lib/libc/sys/socket.2				1.34-1.36
+
+	Add PF_BLUETOOTH to list of supported protocol families
+	ARPA IPv6 -> IPv6 reported from Robert Elz (PR/36933)
+	[jnemeth, ticket #868]
+
+sys/dev/wscons/wsdisplay.c			1.108
+
+	It was probably not a good idea to put that scroll stuff to accessops.
+	But now that it is there, keep it from crashing the box if there is
+	no valid focus screen.
+	[mlelstv, ticket #858]
+
+distrib/common/Makefile.mdset			1.30
+
+	Fix bug which causes cats builds to not produce an a.out install
+	kernels, which are needed to boot from Cyclone firmware. PR#36948
+	[chris, ticket #872]
+
+etc/etc.mac68k/ttys				1.18
+
+	Replaced tty00 - tty07 with ttyZ0 - ttyZ1 because tty00 and friends
+	don't exist (and symlinks aren't acceptable in many instances).
+	[hauke, ticket #861]
+
+share/man/man4/wm.4				1.19
+sys/dev/pci/if_wm.c				1.145
+sys/dev/pci/if_wm.c				1.146
+
+	EECD_EE_AUTORD is only for 8257{123},80003,ICH{89}.
+	Will fix "auto read from eeprom failed to complete" problem.
+	Add more work for the EEPROM reaload sequence.
+	Fix typo.
+	Bump date for previous (ICH9 support).
+	[msaitoh, ticket #865]
+
+crypto/dist/openssl/crypto/rand/rand_unix.c	1.2
+
+	Use poll(2) to wait for rnd(4). The initialisation of OpenSSL's RNG
+	now works reliably if the first FD_SETSIZE file descriptors are in use.
+	[tron, ticket #870]
+
+sys/arch/amiga/amiga/trap.c			1.116
+sys/arch/atari/atari/trap.c			1.92
+sys/arch/cesfic/cesfic/trap.c			1.36
+sys/arch/hp300/hp300/trap.c			1.132
+sys/arch/luna68k/luna68k/trap.c			1.47
+sys/arch/mac68k/mac68k/trap.c			1.129
+sys/arch/mvme68k/mvme68k/trap.c			1.91
+sys/arch/news68k/news68k/trap.c			1.54
+sys/arch/next68k/next68k/trap.c			1.68
+sys/arch/sun3/sun3/trap.c			1.131
+sys/arch/x68k/x68k/trap.c			1.90
+
+	68030 and 68040 processors consider the read portion of a
+	read-modify-write transfer as a write to ensure the memory is writable
+	before starting any transfer.  The fault status information does not
+	reflect this in the 'read' status bit (i.e. it shows up as a read
+	access), so faults with a RMW access to non-writable memory was not
+	getting the correct protection.  The page would be read-only and the
+	instruction would fault over and over.
+
+	A specific example is when a process forks, and the child process
+	attempts to execute a RMW access to a data page, which is read-only
+	because it's CoP Copy-On-Write.
+
+	When checking if the page needs to be writablek, also check the locked
+	transfer and treat any locked transfer as a write.
+
+	68060 already handled this correctly, since it has separate read and
+	write fault bits, and both are set on a RMW access and the trap code
+	was checking the write status bit.
+
+	Fixes PR#36848.
+	[mhitch, ticket #866]
+
+sys/netbt/hci.h					1.11
+
+	adjust typedef name for consistency with other parts, since
+	hci_rssi_response is only a packet segment it should not be in _ep
+	namespace.
+	[plunky, ticket #871]
+
+sys/arch/xen/include/granttables.h		1.2
+sys/arch/xen/include/xen3-public/grant_table.h	1.4
+sys/arch/xen/xen/xengnt.c			1.3
+
+	Switch to dynamically-sized grant tables, available since Xen-3.1.0.
+	This removes a hard limit that would prevent a guest from running with
+	more than 7 virtual network interfaces.
+	If running on a hypervisor that doesn't support GNTTABOP_query_size,
+	fall back to a 4-pages grant table, so this change is backward-compatible.
+	[bouyer, ticket #875]
+
+sbin/bioctl/bioctl.8				1.3
+
+	Fix typo.
+	[bouyer, ticket #874]
+
+sys/dist/ipf/netinet/fil.c			1.40
+sys/dist/ipf/netinet/ip_nat.c			1.31
+sys/dist/ipf/netinet/ip_state.c			1.27
+
+	Fixed IPF bug #1791241
+   	  ("keep frag does not work with keep state for fragments")
+	Fixed IPF bug #1785199
+	  fr_natderef causes lock contention and performance slowdown
+	Patches fetched from the SourceForge bug report.
+	[martti, ticket #876]
+
+sys/net/if_pppoe.c				1.80 via patch
+
+	Print the access concentrator name when a session is established.
+	This seems to be usefull to identify peers with known broken firmware
+	(e.g. that can only do IPv4 reliably).
+	[martin, ticket #873]
+
+sys/kern/sys_generic.c				1.106 via patch
+
+	Fix various possible dereferences via uvmspace_free() of non-initialized *vm.
+	Also, error case might happen before proc_vmspace_getref() (hi <ad>!).
+	Thanks CID 4551 and 4552. This is serious, pullup will be requested.
+
+	OK by <wrstuden>.
+	[rmind, ticket #869]
+
+share/man/man4/options.4			patch
+sys/arch/i386/conf/files.i386			patch
+sys/arch/i386/i386/est.c			delete
+sys/arch/i386/i386/identcpu.c			patch
+sys/arch/i386/include/cpu.h			patch
+sys/arch/x86/conf/files.x86			patch
+sys/arch/x86/include/cpuvar.h			patch
+sys/arch/x86/x86/est.c				patch
+sys/arch/x86/x86/intel_busclock.c		patch
+sys/arch/amd64/amd64/identcpu.c			patch
+sys/arch/amd64/conf/GENERIC			patch
+
+	Add support for the VIA C7-M and Eden processors in the Enhanced
+	Speedstep driver.
+	amd64: The Enhanced Speedstep driver is now able to work on EM64T
+	CPUs running in 64bit mode.
+	[xtraeme, ticket #809]
+
+sys/dev/ic/ahcisata_core.c			1.5
+sys/dev/ic/ahcisatareg.h			1.2
+
+	Fix various error handling bugs:
+	 - the value of the ATA error register would be computed
+	   wrongly, leading to bogus error values reported to wd(4).
+	 - the channel would not always be restarted after an error,
+	   so the next command would not be hanlded by the controller.
+	 - a timeout condition would not be properly reported to wd(4),
+	   leading to a short transfer instead of a reset/retry.
+
+	these bugs would cause a AHCI SATA channel to be stalled (no more
+	command processed) after a "ID not found" or "Aborted command" error
+	reported by the drive.
+	[bouyer, ticket #882]
+
+sys/netinet/ip_input.c				1.253
+sys/netinet6/ip6_input.c			1.110
+
+	In some FAST_IPSEC, spl level is not restored correctly. Fix that.
+
+	Spotted by Wolfgang Stukenbrock in pr/36800
+	[degroote, ticket #881]
+
+sys/dist/ipf/netinet/fil.c			1.41
+
+	Fixed IPF bug #1794544
+
+	keep frags does not work with IPv6
+	[martti, ticket #879]
+
+sys/dist/ipf/netinet/ip_nat.c			1.32
+sys/dist/ipf/netinet/ip_nat.h			1.12
+sys/dist/ipf/netinet/ip_state.c			1.28
+sys/dist/ipf/netinet/ip_state.h			1.10
+
+	Fixed IPF bug #1774745
+
+	retransmitted ACK may initiate connection state transition
+	[martti, ticket #880]
+
