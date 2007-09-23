@@ -1,3 +1,4 @@
+/* $NetBSD: elfstructs.h,v 1.2 2007/09/23 16:25:29 bouyer Exp $ */
 #ifndef __XEN_PUBLIC_ELFSTRUCTS_H__
 #define __XEN_PUBLIC_ELFSTRUCTS_H__ 1
 /*
