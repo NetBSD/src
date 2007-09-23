@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.99 2007/09/17 20:41:09 msaitoh Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.100 2007/09/23 18:54:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3572,3 +3572,37 @@ sys/dev/scsipi/st.c				1.180
 	change -- it broke error reporting because st->asc(q) are not set
 	(actually, I believe that SSD_RCODE_VALID is misnamed)
 	[bouyer, ticket #1837]
+
+sys/dev/mii/miidevs                             1.69,1.71
+sys/dev/mii/miidevs.h                           regen
+sys/dev/mii/miidevs_data.h                      regen
+sys/dev/mii/brgphy.c                            1.31-34
+
+	Add support for BCM5752, BCM5754 and BCM5755.
+	Fix the problem "ifconfig bge0 media auto" negotiates to 100Mbps
+	on 1000BaseT HUB.
+	[msaitoh, ticket #1842]
+
+lib/libc/stdlib/atexit.c			1.18, 1.19
+
+	Ensure that the struct atexit_handler has been removed from the list
+	of pending atexit handlers before the structure is reused.  This
+	prevents libc from going into an infinite loop, or to fail
+	to call registered atexit-handlers in some cases.
+	[kristerw, ticket #1843]
+
+sys/netinet6/esp_output.c			1.29
+
+	In the IPSEC_NAT_T case, we must set the udp length even if the ESP
+	entry doesn't have an integrity algorithm.
+	Reported by Wolfgang Stukenbrock in pr/36781 . Thanks you a lot.
+	[degroote, ticket #1845]
+
+sys/netinet6/ah_output.c			1.30
+sys/netinet6/esp_output.c			1.30
+sys/netinet6/ipcomp_output.c			1.22
+
+	Fix some possible mbuf leak in kame ipsec code.
+	Problem was reported by Wolfgang Stukenbrock in pr/36768.
+	[degroote, ticket #1846]
+
