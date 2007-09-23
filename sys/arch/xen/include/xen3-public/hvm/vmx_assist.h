@@ -1,6 +1,24 @@
 /*
  * vmx_assist.h: Context definitions for the VMXASSIST world switch.
  *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Leendert van Doorn, leendert@watson.ibm.com
  * Copyright (c) 2005, International Business Machines Corporation.
  */
@@ -37,7 +55,7 @@ union vmcs_arbytes {
 /*
  * World switch state
  */
-typedef struct vmx_assist_context {
+struct vmx_assist_context {
     uint32_t  eip;        /* execution pointer */
     uint32_t  esp;        /* stack pointer */
     uint32_t  eflags;     /* flags register */
@@ -80,7 +98,8 @@ typedef struct vmx_assist_context {
     uint32_t  ldtr_limit;
     uint32_t  ldtr_base;
     union vmcs_arbytes ldtr_arbytes;
-} vmx_assist_context_t;
+};
+typedef struct vmx_assist_context vmx_assist_context_t;
 
 #endif /* __ASSEMBLY__ */
 
