@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2004/05/13 19:17:12 christos Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2007/09/23 21:36:11 wrstuden Exp $
 
 NOMAN=		# defined
 
 PROG=		resolv
+
+CFLAGS+=	-g
 
 # Note: this test relies on being dynamically linked.  You will get a
 # spurious PASS for a statically linked test.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.28.4.1 2007/09/03 06:57:22 wrstuden Exp $
+#	$NetBSD: Makefile.mdset,v 1.28.4.2 2007/09/23 21:36:09 wrstuden Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -111,8 +111,10 @@ ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 KERNELSYMS+=	${_KERNEL.${_K}.${_F}}.symbols.gz
 .endif
 
-.if defined(MDSET_POST.${_FILENAME}) || defined(MDSET_POST)
-_POST.${_KERNEL.${_K}.${_F}}:= ${${MDSET_POST.${_FILENAME}}:U${MDSET_POST}}
+.if defined(MDSET_POST.${_FILENAME})
+_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
+.elif defined(MDSET_POST)
+_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST}
 .endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.28.2.1.2.3 2007/09/03 07:04:47 wrstuden Exp $	*/
+/*	$NetBSD: fil.c,v 1.28.2.1.2.4 2007/09/23 21:36:31 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.1.2.3 2007/09/03 07:04:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.1.2.4 2007/09/23 21:36:31 wrstuden Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
@@ -364,7 +364,7 @@ static	INLINE int	frpr_hopopts6 __P((fr_info_t *));
 static	INLINE int	frpr_mobility6 __P((fr_info_t *));
 static	INLINE int	frpr_routing6 __P((fr_info_t *));
 static	INLINE int	frpr_dstopts6 __P((fr_info_t *));
-static	INLINE void	frpr_fragment6 __P((fr_info_t *));
+static	INLINE int	frpr_fragment6 __P((fr_info_t *));
 static	INLINE int	frpr_ipv6exthdr __P((fr_info_t *, int, int));
 
 
@@ -482,8 +482,9 @@ fr_info_t *fin;
 			break;
 
 		case IPPROTO_FRAGMENT :
-			frpr_fragment6(fin);
-			go = 0;
+			p = frpr_fragment6(fin);
+			if (fin->fin_off != 0)
+				go = 0;
 			break;
 
 		default :
@@ -654,7 +655,7 @@ fr_info_t *fin;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    frpr_fragment6                                              */
-/* Returns:     void                                                        */
+/* Returns:     int    - value of the next header or IPPROTO_NONE if error  */
 /* Parameters:  fin(I) - pointer to packet information                      */
 /*                                                                          */
 /* IPv6 Only                                                                */
@@ -666,7 +667,7 @@ fr_info_t *fin;
 /* upper layer header has been seen (or where it ends) and thus we are not  */
 /* able to continue processing beyond this header with any confidence.      */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_fragment6(fin)
+static INLINE int frpr_fragment6(fin)
 fr_info_t *fin;
 {
 	struct ip6_frag *frag;
@@ -675,12 +676,12 @@ fr_info_t *fin;
 	fin->fin_flx |= FI_FRAG;
 
 	if (frpr_ipv6exthdr(fin, 0, IPPROTO_FRAGMENT) == IPPROTO_NONE)
-		return;
+		return IPPROTO_NONE;
 
 	extoff = (char *)fin->fin_exthdr - (char *)fin->fin_dp;
 
 	if (frpr_pullup(fin, sizeof(*frag)) == -1)
-		return;
+		return IPPROTO_NONE;
 
 	fin->fin_exthdr = (char *)fin->fin_dp + extoff;
 	frag = fin->fin_exthdr;
@@ -689,16 +690,18 @@ fr_info_t *fin;
 	 */
 	if (frag->ip6f_offlg == 0) {
 		fin->fin_flx |= FI_BAD;
-		return;
+		return IPPROTO_NONE;
 	}
 
-	fin->fin_off = frag->ip6f_offlg & IP6F_OFF_MASK;
+	fin->fin_off = ntohs(frag->ip6f_offlg & IP6F_OFF_MASK);
 	fin->fin_off <<= 3;
 	if (fin->fin_off != 0)
 		fin->fin_flx |= FI_FRAGBODY;
 
 	fin->fin_dp = (char *)fin->fin_dp + sizeof(*frag);
 	fin->fin_dlen -= sizeof(*frag);
+
+	return frag->ip6f_nxt;
 }
 
 
@@ -2566,11 +2569,15 @@ int out;
 	if (!out)
 		(void) fr_acctpkt(fin, NULL);
 
-	if (fr == NULL)
-		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG)
+	if (fr == NULL) {
+		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG) {
 			fr = fr_knownfrag(fin, &pass);
-	if (fr == NULL)
-		fr = fr_checkstate(fin, &pass);
+			if (fr != NULL)
+				pass &= ~FR_KEEPSTATE;
+		}
+		if (fr == NULL)
+			fr = fr_checkstate(fin, &pass);
+	}
 
 	if ((pass & FR_NOMATCH) || (fr == NULL))
 		fr = fr_firewall(fin, &pass);
