@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.98 2007/09/22 18:40:26 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.99 2007/09/23 10:26:06 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.98 2007/09/22 18:40:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.99 2007/09/23 10:26:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -304,7 +304,7 @@ static const struct db_command db_command_table[] = {
 	    "   pid:\t\t\tthe process id (may need 0t prefix for decimal)\n"
 	    "   signal_number:\tthe signal to send") },
 #ifdef KGDB
-	{ DDB_ADD_CMD("kgdb",	db_kgdb_cmd,	0,	NULL,NULL) },
+	{ DDB_ADD_CMD("kgdb",	db_kgdb_cmd,	0,	NULL,NULL,NULL) },
 #endif
 #ifdef DB_MACHINE_COMMANDS
 	{ DDB_ADD_CMD("machine",NULL,CS_MACH,
