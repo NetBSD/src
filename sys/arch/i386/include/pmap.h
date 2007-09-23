@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90 2007/08/29 23:38:05 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.1 2007/09/23 18:28:18 yamt Exp $	*/
 
 /*
  *
@@ -30,6 +30,41 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -145,12 +180,27 @@
 /* XXX MP should we allocate one APDP_PDE per processor?? */
 
 /*
+ * Mask to get rid of the sign-extended part of addresses.
+ */
+#define VA_SIGN_MASK		0
+#define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
+/*
+ * XXXfvdl this one's not right.
+ */
+#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
+
+/*
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 767: for recursive PDP map */
-#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 768: start of kernel space */
-#define PDSLOT_APTE	((unsigned)1023) /* 1023: alternative recursive slot */
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1)	/* 767: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)	/* 768: start of kernel space */
+#define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#define L2_SLOT_APTE	1023		/* 1023: alternative recursive slot */
+
+#define PDIR_SLOT_KERN	L2_SLOT_KERN
+#define PDIR_SLOT_PTE	L2_SLOT_PTE
+#define PDIR_SLOT_APTE	L2_SLOT_APTE
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -160,47 +210,79 @@
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
-#define PTE_BASE	((pt_entry_t *)  (PDSLOT_PTE * NBPD) )
-#define APTE_BASE	((pt_entry_t *)  (PDSLOT_APTE * NBPD) )
-#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * PAGE_SIZE)))
-#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * PAGE_SIZE)))
-#define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
-#define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
+#define PTE_BASE  ((pt_entry_t *) (L2_SLOT_PTE * NBPD_L2))
+#define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L2_SLOT_APTE * NBPD_L2))))
+
+#define L1_BASE		PTE_BASE
+#define AL1_BASE	APTE_BASE
+
+#define L2_BASE ((pd_entry_t *)((char *)L1_BASE + L2_SLOT_PTE * NBPD_L1))
+
+#define AL2_BASE ((pd_entry_t *)((char *)AL1_BASE + L2_SLOT_PTE * NBPD_L1))
+
+#define PDP_PDE		(L2_BASE + PDIR_SLOT_PTE)
+#define APDP_PDE	(L2_BASE + PDIR_SLOT_APTE)
+
+#define PDP_BASE	L2_BASE
+#define APDP_BASE	AL2_BASE
+
+/* largest value (-1 for APTP space) */
+#define NKL2_MAX_ENTRIES	(NTOPLEVEL_PDES - (KERNBASE/NBPD_L2) - 1)
+#define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * NPDPG)
+
+/* XXX */
+#define NKL2_KIMG_ENTRIES	4
 
 /*
- * the follow define determines how many PTPs should be set up for the
- * kernel by locore.S at boot time.  this should be large enough to
- * get the VM system running.  once the VM system is running, the
- * pmap module can add more PTPs to the kernel area on demand.
+ * Since kva space is below the kernel in its entirety, we start off
+ * with zero entries on each level.
  */
+#define NKL2_START_ENTRIES	0
+#define NKL1_START_ENTRIES	0	/* XXX */
 
-#ifndef NKPTP
-#define NKPTP		0	/* 16MB to start */
-#endif
-#define NKPTP_MIN	2	/* smallest value we allow */
-#define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
-				/* largest value (-1 for APTP space) */
+#define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
+
+#define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
+
+#define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
 
 /*
- * pdei/ptei: generate index into PDP/PTP from a VA
+ * pl*_pi: index in the ptp page for a pde mapping a VA.
+ * (pl*_i below is the index in the virtual array of all pdes per level)
  */
-#define	pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
-#define	ptei(VA)	(((VA) & PT_MASK) >> PGSHIFT)
+#define pl1_pi(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
+#define pl2_pi(VA)	(((VA_SIGN_POS(VA)) & L2_MASK) >> L2_SHIFT)
+#define pl3_pi(VA)	(((VA_SIGN_POS(VA)) & L3_MASK) >> L3_SHIFT)
+#define pl4_pi(VA)	(((VA_SIGN_POS(VA)) & L4_MASK) >> L4_SHIFT)
+
+/*
+ * pl*_i: generate index into pde/pte arrays in virtual space
+ */
+#define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
+#define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
+#define pl3_i(VA)	(((VA_SIGN_POS(VA)) & L3_FRAME) >> L3_SHIFT)
+#define pl4_i(VA)	(((VA_SIGN_POS(VA)) & L4_FRAME) >> L4_SHIFT)
+#define pl_i(va, lvl) \
+        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
+
+#define PTP_MASK_INITIALIZER	{ L1_FRAME, L2_FRAME }
+#define PTP_SHIFT_INITIALIZER	{ L1_SHIFT, L2_SHIFT }
+#define NKPTP_INITIALIZER	{ NKL1_START_ENTRIES, NKL2_START_ENTRIES }
+#define NKPTPMAX_INITIALIZER	{ NKL1_MAX_ENTRIES, NKL2_MAX_ENTRIES }
+#define NBPD_INITIALIZER	{ NBPD_L1, NBPD_L2 }
+#define PDES_INITIALIZER	{ L2_BASE }
+#define APDES_INITIALIZER	{ AL2_BASE }
 
 /*
  * PTP macros:
  *   a PTP's index is the PD index of the PDE that points to it
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
- *
- * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
  */
 
-#define ptp_i2o(I)	((I) * PAGE_SIZE)	/* index => offset */
-#define ptp_o2i(O)	((O) / PAGE_SIZE)	/* offset => index */
-#define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
-#define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
+#define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
+
+#define PTP_LEVELS	2
 
 /*
  * PG_AVAIL usage: we make use of the ignored bits of the PTE
@@ -214,7 +296,7 @@
  * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
  * Used to avoid false sharing of cache lines.
  */
-#define NPTECL			8
+#define NPTECL		8
 
 #ifdef _KERNEL
 /*
@@ -241,12 +323,16 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  */
 
 struct pmap {
-	struct uvm_object pm_obj;	/* object (lck by object lock) */
-#define	pm_lock	pm_obj.vmobjlock
+	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
+#define	pm_lock	pm_obj[0].vmobjlock
+#define pm_obj_l1 pm_obj[0]
+#define pm_obj_l2 pm_obj[1]
+#define pm_obj_l3 pm_obj[2]
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	uint32_t pm_pdirpa;		/* PA of PD (read-only after create) */
-	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
+	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
+	struct vm_page *pm_ptphint[PTP_LEVELS-1];
+					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
 	vaddr_t pm_hiexec;		/* highest executable mapping */
@@ -344,12 +430,11 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 void		pmap_activate(struct lwp *);
 void		pmap_bootstrap(vaddr_t);
-bool		pmap_clear_attrs(struct vm_page *, int);
+bool		pmap_clear_attrs(struct vm_page *, unsigned);
 void		pmap_deactivate(struct lwp *);
-void		pmap_deactivate2(struct lwp *);
 void		pmap_page_remove (struct vm_page *);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-bool		pmap_test_attrs(struct vm_page *, int);
+bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
@@ -469,28 +554,28 @@ static __inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
-	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
+	KASSERT(va < (L2_SLOT_KERN * NBPD_L2));
 
-	return (PTE_BASE + x86_btop(va));
+	return (PTE_BASE + pl1_i(va));
 }
 
 static __inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
 
-	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+	KASSERT(va >= (L2_SLOT_KERN * NBPD_L2));
 
 #ifdef LARGEPAGES
 	{
 		pd_entry_t *pde;
 
-		pde = PDP_BASE + pdei(va);
+		pde = L2_BASE + pl2_i(va);
 		if (*pde & PG_PS)
 			return ((pt_entry_t *)pde);
 	}
 #endif
 
-	return (PTE_BASE + x86_btop(va));
+	return (PTE_BASE + pl1_i(va));
 }
 
 #define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)

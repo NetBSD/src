@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2007/08/29 23:38:04 ad Exp $
+#	$NetBSD: genassym.cf,v 1.50.2.1 2007/09/23 18:28:16 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,22 +162,17 @@ define	KSTACK_SIZE		KSTACK_SIZE
 define	KERNBASE		KERNBASE
 define	KERNTEXTOFF		KERNTEXTOFF
 
-define	PGSHIFT			PGSHIFT
-define	PGOFSET			PGOFSET
-define	PDSHIFT			PDSHIFT
-define	PDOFSET			PDOFSET
-define	NBPD			NBPD
-
 define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
 define	PG_KR			PG_KR
 
-define	PDSLOT_PTE		PDSLOT_PTE
-define	PDSLOT_APTE		PDSLOT_APTE
-define	PDSLOT_KERN		PDSLOT_KERN
-define	NKPTP_MIN		NKPTP_MIN
-define	NKPTP_MAX		NKPTP_MAX
+define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
+define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
+
+define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
+define	PTE_BASE		PTE_BASE
+define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
@@ -402,3 +397,7 @@ define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
 define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
+
+define	L1_SHIFT		L1_SHIFT
+define	PGOFSET			PGOFSET
+define	PGSHIFT			PGSHIFT

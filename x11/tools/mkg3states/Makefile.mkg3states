@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.mkg3states,v 1.1 2004/02/09 04:30:05 lukem Exp $
-
-MKG3STATESDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkg3states && ${PRINTOBJDIR}
-MKG3STATES=	${MKG3STATESDIR}/mkg3states
-
-${MKG3STATES}:
-	(cd ${NETBSDSRCDIR}/x11/tools/mkg3states && ${MAKE})
