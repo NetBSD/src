@@ -1,3 +1,0 @@
-struct main {};
-
-int main () {}

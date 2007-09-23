@@ -1,8 +1,0 @@
-aaa@domain.tld -> aaa
-aaa+xxx@domain.tld -> aaa
-bbb@domain.tld -> bbb
-bbb+yyy@domain.tld -> bbb
-ccc@domain.tld -> catchall
-ccc+zzz@domain.tld -> catchall
-aaa@domain.ttt -> (none)
-aaa+bbb@domain.ttt -> (none)
