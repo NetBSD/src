@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2007/05/17 14:51:35 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.13 2007/09/23 16:54:07 bouyer Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -345,11 +345,11 @@ endif
 define SIF_INITDOMAIN		SIF_INITDOMAIN
 
 ifdef XEN3
-define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_pending)
-define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_mask)
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_mask)
 else
-define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_pending)
-define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_mask)
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_mask)
 endif
 
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
