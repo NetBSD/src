@@ -1,3 +1,4 @@
+/* $NetBSD: fbif.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
 /*
  * fbif.h -- Xen virtual frame buffer device
  *

@@ -1,3 +1,4 @@
+/* $NetBSD: ioreq.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
 /*
  * ioreq.h: I/O request definitions for device models
  * Copyright (c) 2004, Intel Corporation.

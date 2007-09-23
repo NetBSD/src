@@ -1,3 +1,4 @@
+/* $NetBSD: protocols.h,v 1.2 2007/09/23 16:25:31 bouyer Exp $ */
 #ifndef __XEN_PROTOCOLS_H__
 #define __XEN_PROTOCOLS_H__
 
