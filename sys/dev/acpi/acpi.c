@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.12 2007/09/24 16:37:27 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.13 2007/09/24 19:31:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.12 2007/09/24 16:37:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.13 2007/09/24 19:31:11 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1114,7 +1114,7 @@ is_available_state(struct acpi_softc *sc, int state)
 ACPI_STATUS
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
-	int err, s;
+	int err;
 	ACPI_STATUS ret = AE_OK;
 
 	if (state == acpi_sleepstate)
@@ -1135,10 +1135,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		s = splhigh();
 		if (state != ACPI_STATE_S1)
 			pnp_global_transition(PNP_STATE_D3);
-		splx(s);
 
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
@@ -1160,10 +1158,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 		}
-		s = splhigh();
 		if (state != ACPI_STATE_S1)
 			pnp_global_transition(PNP_STATE_D0);
-		splx(s);
 		AcpiLeaveSleepState((UINT8)state);
 
 		break;
