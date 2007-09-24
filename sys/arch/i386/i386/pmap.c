@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214.2.1 2007/09/23 18:28:17 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214.2.2 2007/09/24 10:56:49 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.2.1 2007/09/23 18:28:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.2.2 2007/09/24 10:56:49 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3588,6 +3588,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	int s, i;
 	unsigned newpdes;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
+	vaddr_t va;
 
 	if (maxkvaddr <= pmap_maxkvaddr)
 		return pmap_maxkvaddr;
@@ -3598,6 +3599,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * This loop could be optimized more, but pmap_growkernel()
 	 * is called infrequently.
 	 */
+	va = VM_MIN_KERNEL_ADDRESS;
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
 		target_nptp = pl_i(maxkvaddr, i + 1) -
 		    pl_i(VM_MIN_KERNEL_ADDRESS, i + 1);
@@ -3606,14 +3608,14 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
+		va += nkptp[i] * nbpd[i];
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
-	KASSERT(needed_kptp[1] > 0);
+	KASSERT(va >= pmap_maxkvaddr);
 
 	s = splhigh();	/* to be safe */
 	mutex_enter(&kpm->pm_lock);
-	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS,
-	    needed_kptp);
+	pmap_alloc_level(normal_pdes, va, PTP_LEVELS, needed_kptp);
 
 	/*
 	 * If the number of top level entries changed, update all
