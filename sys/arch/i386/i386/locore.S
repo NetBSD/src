@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.1 2007/09/23 18:28:16 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.2 2007/09/24 10:56:48 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -179,6 +179,7 @@ _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
+_C_LABEL(tablesize):	.long	0
 
 	.space 512
 tmpstk:
@@ -424,15 +425,13 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack
+ * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp
  *			      0          1       2      3
  */
 
 #define	PROC0_PDIR_OFF	0
 #define	PROC0_STK_OFF	(PROC0_PDIR_OFF + PAGE_SIZE)
 #define	PROC0_PTP1_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
-
-#define	TABLESIZE	((NKL2_KIMG_ENTRIES + 1 + UPAGES) * PAGE_SIZE)
 
 /*
  * fillkpt
@@ -460,15 +459,25 @@ try586:	/* Use the `cpuid' instruction. */
 1:
 #endif
 
- 	/* Clear tables */
+	/* Compute sizes */
 	movl	%edi,%esi			# edi = esym ? esym : end
 	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 
+	movl	%esi,%eax
+	addl	$-L2_FRAME,%eax
+	shrl	$L2_SHIFT,%eax
+	movl	%eax,RELOC(nkptp)+1*4
+
+	addl	$(1+UPAGES),%eax
+	shll	$PGSHIFT,%eax
+	movl	%eax,RELOC(tablesize)
+
+ 	/* Clear tables */
  	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
- 	movl	$TABLESIZE,%ecx
+ 	movl	RELOC(tablesize),%ecx
  	shrl	$2,%ecx
 	rep
 	stosl
@@ -504,7 +513,7 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
-	movl	$TABLESIZE,%ecx
+	movl	RELOC(tablesize),%ecx
 	addl	%esi,%ecx				# end of tables
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
@@ -522,14 +531,14 @@ try586:	/* Use the `cpuid' instruction. */
  	leal    (PROC0_PDIR_OFF)(%esi),%ebx
  	leal	(PROC0_PTP1_OFF)(%esi),%eax
  	orl	$(PG_V|PG_KW), %eax
- 	movl	$NKL2_KIMG_ENTRIES,%ecx
+ 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
  	/* Set up top level entries for actual kernel mapping */
  	leal    (PROC0_PDIR_OFF + L2_SLOT_KERNBASE*4)(%esi),%ebx
  	leal	(PROC0_PTP1_OFF)(%esi),%eax
  	orl	$(PG_V|PG_KW), %eax
- 	movl	$NKL2_KIMG_ENTRIES,%ecx
+ 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
@@ -566,7 +575,7 @@ begin:
  	 * There's no need anymore for the identity mapping in low
  	 * memory, remove it.
  	 */
- 	movl	$NKL2_KIMG_ENTRIES,%ecx
+ 	movl	_C_LABEL(nkptp)+1*4,%ecx
  	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys  address of PDIR
  	addl	$(KERNBASE), %ebx	# new, virtual address of PDIR
 1:	movl	$0,(%ebx)
@@ -574,7 +583,8 @@ begin:
 	loop	1b
 
 	/* Relocate atdevbase. */
-	movl	$(TABLESIZE+KERNBASE),%edx
+	movl	$KERNBASE,%edx
+	addl	_C_LABEL(tablesize),%edx
 	addl	%esi,%edx
 	movl	%edx,_C_LABEL(atdevbase)
 
@@ -598,7 +608,7 @@ begin:
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
- 	movl	$TABLESIZE,%eax
+ 	movl	_C_LABEL(tablesize),%eax
 	addl	%esi,%eax		# skip past stack and page tables
 
 	pushl	%eax
