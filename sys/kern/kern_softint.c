@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.14 2007/09/01 15:23:58 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.15 2007/09/24 13:05:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -86,10 +86,9 @@
  *	higher priority than most other LWPs in the system, all
  *	block-and-resume activity by a software interrupt must be kept
  *	short to allow futher processing at that level to continue.  By
- *	extension, code running in the bottom half of the kernel must
- *	take care to ensure that any lock that may be taken from a
- *	software interrupt can not be held for more than a short period
- *	of time.
+ *	extension, code running with process context must take care to
+ *	ensure that any lock that may be taken from a software interrupt
+ *	can not be held for more than a short period of time.
  *
  *	The kernel does not allow software interrupts to use facilities
  *	or perform actions that may block for a significant amount of
@@ -111,8 +110,7 @@
  *	used to manage the soft interrupts, and lines occupied by data
  *	items being passed down to the soft interrupt.  As a positive
  *	side effect, this also means that the soft interrupt dispatch
- *	code does not need to to use spinlocks to synchronize with the
- *	upper half.
+ *	code does not need to to use spinlocks to synchronize.
  *
  * Generic implementation
  *
@@ -185,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.14 2007/09/01 15:23:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.15 2007/09/24 13:05:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
