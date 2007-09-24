@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.10 2007/09/24 15:33:43 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.11 2007/09/24 15:40:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.10 2007/09/24 15:33:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.11 2007/09/24 15:40:33 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.10 2007/09/24 15:33:43 joerg 
 
 #include "acpi_wakecode.h"
 
+/* Address is also hard-coded in acpi_wakecode.S */
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
