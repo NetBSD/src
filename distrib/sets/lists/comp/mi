@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1066 2007/09/23 21:27:34 agc Exp $
+#	$NetBSD: mi,v 1.1067 2007/09/24 20:44:24 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6801,11 +6801,21 @@
 ./usr/share/man/cat9/allocbuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/altq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_debug.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_debug_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_debug_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_error.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_error_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_error_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_get_error_count.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_naive.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_naive_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_naive_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_normal.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_normal_dev.0	comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_normal_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_verbose.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_verbose_dev.0	comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_verbose_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/arc4random.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
@@ -11367,11 +11377,21 @@
 ./usr/share/man/man9/allocbuf.9			comp-sys-man		.man
 ./usr/share/man/man9/altq.9			comp-sys-man		.man
 ./usr/share/man/man9/aprint_debug.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_debug_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_debug_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_error.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_error_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_error_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_get_error_count.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_naive.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_naive_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_naive_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_normal.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_normal_dev.9	comp-sys-man		.man
+./usr/share/man/man9/aprint_normal_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
+./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
