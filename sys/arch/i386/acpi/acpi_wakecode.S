@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.6 2007/09/24 21:30:56 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.7 2007/09/24 22:46:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,13 +126,7 @@ wakeup_16:
 	inb	$0x61,%al
 	andb	$0xfc,%al
 	outb	%al,$0x61
-
 1:
-
-	/* Get physical address of the code */
-	xorl	%esi,%esi
-	movw	%cs,%si
-	shll	$4,%esi
 
 	/* Load GDT while non-paging */
 	lgdt	tmp_gdt
