@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.10 2007/04/29 20:23:36 msaitoh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.11 2007/09/24 00:42:15 rumble Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.10 2007/04/29 20:23:36 msaitoh Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.11 2007/09/24 00:42:15 rumble Exp $");
 #endif /* not lint */
 
 
@@ -349,7 +349,7 @@ udf_readdir(void *v)
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	struct fileid_desc *fid;
-	struct dirent dirent;
+	struct dirent *dirent;
 	uint64_t file_size, diroffset, transoffset;
 	uint32_t lb_size;
 	int error;
@@ -370,19 +370,20 @@ udf_readdir(void *v)
 		file_size = udf_rw64(efe->inf_len);
 	}
 
+	dirent = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK | M_ZERO);
+
 	/*
 	 * Add `.' pseudo entry if at offset zero since its not in the fid
 	 * stream
 	 */
 	if (uio->uio_offset == 0) {
 		DPRINTF(READDIR, ("\t'.' inserted\n"));
-		memset(&dirent, 0, sizeof(struct dirent));
-		strcpy(dirent.d_name, ".");
-		dirent.d_fileno = udf_calchash(&udf_node->loc);
-		dirent.d_type = DT_DIR;
-		dirent.d_namlen = strlen(dirent.d_name);
-		dirent.d_reclen = _DIRENT_SIZE(&dirent);
-		uiomove(&dirent, _DIRENT_SIZE(&dirent), uio);
+		strcpy(dirent->d_name, ".");
+		dirent->d_fileno = udf_calchash(&udf_node->loc);
+		dirent->d_type = DT_DIR;
+		dirent->d_namlen = strlen(dirent->d_name);
+		dirent->d_reclen = _DIRENT_SIZE(dirent);
+		uiomove(dirent, _DIRENT_SIZE(dirent), uio);
 
 		/* mark with magic value that we have done the dummy */
 		uio->uio_offset = UDF_DIRCOOKIE_DOT;
@@ -394,7 +395,7 @@ udf_readdir(void *v)
 	    (uio->uio_resid >= sizeof(struct dirent))) {
 		/* allocate temporary space for fid */
 		lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
-		fid = malloc(lb_size, M_TEMP, M_WAITOK);
+		fid = malloc(lb_size, M_UDFTEMP, M_WAITOK);
 
 		if (uio->uio_offset == UDF_DIRCOOKIE_DOT)
 			uio->uio_offset = 0;
@@ -405,7 +406,7 @@ udf_readdir(void *v)
 			DPRINTF(READDIR, ("\tread in fid stream\n"));
 			/* transfer a new fid/dirent */
 			error = udf_read_fid_stream(vp, &diroffset,
-				    fid, &dirent);
+				    fid, dirent);
 			DPRINTFIF(READDIR, error, ("read error in read fid "
 			    "stream : %d\n", error));
 			if (error)
@@ -415,7 +416,7 @@ udf_readdir(void *v)
 			 * If there isn't enough space in the uio to return a
 			 * whole dirent, break off read
 			 */
-			if (uio->uio_resid < _DIRENT_SIZE(&dirent))
+			if (uio->uio_resid < _DIRENT_SIZE(dirent))
 				break;
 
 			/* remember the last entry we transfered */
@@ -431,13 +432,13 @@ udf_readdir(void *v)
 
 			/* copy dirent to the caller */
 			DPRINTF(READDIR, ("\tread dirent `%s', type %d\n",
-			    dirent.d_name, dirent.d_type));
-			uiomove(&dirent, _DIRENT_SIZE(&dirent), uio);
+			    dirent->d_name, dirent->d_type));
+			uiomove(dirent, _DIRENT_SIZE(dirent), uio);
 		}
 
 		/* pass on last transfered offset */
 		uio->uio_offset = transoffset;
-		free(fid, M_TEMP);
+		free(fid, M_UDFTEMP);
 	}
 
 	if (ap->a_eofflag)
@@ -453,6 +454,7 @@ udf_readdir(void *v)
 	}
 #endif
 
+	free(dirent, M_UDFTEMP);
 	return error;
 }
 
