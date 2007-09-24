@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.28 2007/09/17 13:25:59 skrll Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.29 2007/09/24 12:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.28 2007/09/17 13:25:59 skrll Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.29 2007/09/24 12:19:39 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -66,10 +66,7 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.28 2007/09/17 13:25:59 skrll Exp $");
 
 static void pthread_spinlock_slow(pthread_spin_t *);
 
-static int pthread__atomic;
-
 RAS_DECL(pthread__lock);
-RAS_DECL(pthread__lock2);
 
 int
 pthread__simple_locked_p(__cpu_simple_lock_t *alp)
@@ -77,25 +74,25 @@ pthread__simple_locked_p(__cpu_simple_lock_t *alp)
 	return __SIMPLELOCK_LOCKED_P(alp);
 }
 
-void
-pthread__simple_lock_init(__cpu_simple_lock_t *alp)
-{
+#ifdef PTHREAD__ASM_RASOPS
 
-	if (pthread__atomic) {
-		__cpu_simple_lock_init(alp);
-		return;
-	}
+void pthread__ras_simple_lock_init(__cpu_simple_lock_t *);
+int pthread__ras_simple_lock_try(__cpu_simple_lock_t *);
+void pthread__ras_simple_unlock(__cpu_simple_lock_t *);
+
+#else
+
+static void
+pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
+{
 
 	__cpu_simple_lock_clear(alp);
 }
 
-int
-pthread__simple_lock_try(__cpu_simple_lock_t *alp)
+static int
+pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int locked;
-
-	if (pthread__atomic)
-		return __cpu_simple_lock_try(alp);
 
 	RAS_START(pthread__lock);
 	locked = __SIMPLELOCK_LOCKED_P(alp);
@@ -105,21 +102,55 @@ pthread__simple_lock_try(__cpu_simple_lock_t *alp)
 	return !locked;
 }
 
-inline void
-pthread__simple_unlock(__cpu_simple_lock_t *alp)
+static void
+pthread__ras_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
-#ifdef PTHREAD__CHEAP_UNLOCK
-	__cpu_simple_unlock(alp);
-#else
-	if (pthread__atomic) {
-		__cpu_simple_unlock(alp);
-		return;
-	}
-
 	__cpu_simple_lock_clear(alp);
-#endif
 }
+
+#endif /* PTHREAD__ASM_RASOPS */
+
+static const struct pthread_lock_ops pthread__lock_ops_ras = {
+	pthread__ras_simple_lock_init,
+	pthread__ras_simple_lock_try,
+	pthread__ras_simple_unlock,
+};
+
+static void
+pthread__atomic_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_lock_init(alp);
+}
+
+static int
+pthread__atomic_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+
+	return (__cpu_simple_lock_try(alp));
+}
+
+static void
+pthread__atomic_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_unlock(alp);
+}
+
+static const struct pthread_lock_ops pthread__lock_ops_atomic = {
+	pthread__atomic_simple_lock_init,
+	pthread__atomic_simple_lock_try,
+	pthread__atomic_simple_unlock,
+};
+
+/*
+ * We default to pointing to the RAS primitives; we might need to use
+ * locks early, but before main() starts.  This is safe, since no other
+ * threads will be active for the process, so atomicity will not be
+ * required.
+ */
+const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 
 void
 pthread_spinlock(pthread_spin_t *lock)
@@ -134,20 +165,8 @@ pthread_spinlock(pthread_spin_t *lock)
 	PTHREADD_ADD(PTHREADD_SPINLOCKS);
 #endif
 
-	if (pthread__atomic) {
-		if (__predict_true(__cpu_simple_lock_try(lock)))
-			return;
-	} else {
-		int locked;
-
-		RAS_START(pthread__lock2);
-		locked = __SIMPLELOCK_LOCKED_P(lock);
-		__cpu_simple_lock_set(lock);
-		RAS_END(pthread__lock2);
-
-		if (__predict_true(!locked))
-			return;
-	}
+	if (__predict_true(pthread__simple_lock_try(lock)))
+		return;
 
 	pthread_spinlock_slow(lock);
 }
@@ -247,20 +266,14 @@ pthread__lockprim_init(void)
 		pthread__nspins = 1;
 
 	if (pthread__concurrency != 1) {
-		pthread__atomic = 1;
+		pthread__lock_ops = &pthread__lock_ops_atomic;
 		return;
 	}
 
 	if (rasctl(RAS_ADDR(pthread__lock), RAS_SIZE(pthread__lock),
 	    RAS_INSTALL) != 0) {
-	    	pthread__atomic = 1;
-	    	return;
-	}
-
-	if (rasctl(RAS_ADDR(pthread__lock2), RAS_SIZE(pthread__lock2),
-	    RAS_INSTALL) != 0) {
-	    	pthread__atomic = 1;
-	    	return;
+		pthread__lock_ops = &pthread__lock_ops_atomic;
+		return;
 	}
 }
 

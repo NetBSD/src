@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.55 2007/09/13 23:51:47 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.56 2007/09/24 12:19:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -128,6 +128,12 @@ struct	__pthread_st {
 	ucontext_t	pt_uc;
 };
 
+struct pthread_lock_ops {
+	void	(*plo_init)(__cpu_simple_lock_t *);
+	int	(*plo_try)(__cpu_simple_lock_t *);
+	void	(*plo_unlock)(__cpu_simple_lock_t *);
+};
+
 /* Thread states */
 #define PT_STATE_RUNNING	1
 #define PT_STATE_ZOMBIE		5
@@ -187,9 +193,9 @@ void	pthread_spinunlock(pthread_spin_t *);
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
 int	pthread__simple_locked_p(__cpu_simple_lock_t *);
-void	pthread__simple_lock_init(__cpu_simple_lock_t *);
-int	pthread__simple_lock_try(__cpu_simple_lock_t *);
-void	pthread__simple_unlock(__cpu_simple_lock_t *);
+#define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
+#define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
+#define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
 
 #ifndef _getcontext_u
 int	_getcontext_u(ucontext_t *);
