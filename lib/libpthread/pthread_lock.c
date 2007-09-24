@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.29 2007/09/24 12:19:39 skrll Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.30 2007/09/24 13:56:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.29 2007/09/24 12:19:39 skrll Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.30 2007/09/24 13:56:42 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -57,12 +57,6 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.29 2007/09/24 12:19:39 skrll Exp $");
 
 /* How many times to try acquiring spin locks on MP systems. */
 #define	PTHREAD__NSPINS		1024
-
-#ifdef PTHREAD_SPIN_DEBUG_PRINT
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
 
 static void pthread_spinlock_slow(pthread_spin_t *);
 
@@ -155,16 +149,6 @@ const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 void
 pthread_spinlock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-
-	SDPRINTF(("(pthread_spinlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-	pthread__assert(thread->pt_spinlocks >= 0);
-	thread->pt_spinlocks++;
-	PTHREADD_ADD(PTHREADD_SPINLOCKS);
-#endif
-
 	if (__predict_true(pthread__simple_lock_try(lock)))
 		return;
 
@@ -182,9 +166,6 @@ static void
 pthread_spinlock_slow(pthread_spin_t *lock)
 {
 	int count;
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-#endif
 
 	do {
 		count = pthread__nspins;
@@ -195,57 +176,20 @@ pthread_spinlock_slow(pthread_spin_t *lock)
 				break;
 			continue;
 		}
-
-#ifdef PTHREAD_SPIN_DEBUG
-		SDPRINTF(("(pthread_spinlock %p) retrying spinlock %p "
-		    "(count %d)\n", thread, lock,
-		    thread->pt_spinlocks));
-		thread->pt_spinlocks--;
-		/* XXXLWP far from ideal */
 		sched_yield();
-		thread->pt_spinlocks++;
-#else
-		/* XXXLWP far from ideal */
-		sched_yield();
-#endif
 	} while (/*CONSTCOND*/ 1);
 }
 
 int
 pthread_spintrylock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-	int ret;
-
-	SDPRINTF(("(pthread_spintrylock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-	thread->pt_spinlocks++;
-	ret = pthread__simple_lock_try(lock);
-	if (!ret)
-		thread->pt_spinlocks--;
-	return ret;
-#else
 	return pthread__simple_lock_try(lock);
-#endif
 }
 
 void
 pthread_spinunlock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-
-	SDPRINTF(("(pthread_spinunlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-
 	pthread__simple_unlock(lock);
-	thread->pt_spinlocks--;
-	pthread__assert(thread->pt_spinlocks >= 0);
-	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
-#else
-	pthread__simple_unlock(lock);
-#endif
 }
 
 /*
