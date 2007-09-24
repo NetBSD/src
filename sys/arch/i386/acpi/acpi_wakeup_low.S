@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.1 2007/09/08 00:31:35 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.2 2007/09/24 15:33:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -35,14 +35,14 @@
 	.p2align 2, 0x90
 	.globl acpi_restorecpu
 acpi_restorecpu:
-	mov	r_es,%ax
-	mov	%ax,%es
-	mov	r_fs,%ax
-	mov	%ax,%fs
-	mov	r_gs,%ax
-	mov	%ax,%gs
-	mov	r_ss,%ax
-	mov	%ax,%ss
+	movw	r_es,%ax
+	movw	%ax,%es
+	movw	r_fs,%ax
+	movw	%ax,%fs
+	movw	r_gs,%ax
+	movw	%ax,%gs
+	movw	r_ss,%ax
+	movw	%ax,%ss
 
 	movl	r_cr2,%eax
 	movl	%eax,%cr2
