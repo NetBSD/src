@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.100.2.1.2.1 2007/09/03 06:57:48 wrstuden Exp $
+#	$NetBSD: security,v 1.100.2.1.2.2 2007/09/24 05:12:42 wrstuden Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -28,6 +28,7 @@ backup_dir=${backup_dir:-/var/backups}
 pkgdb_dir=${pkgdb_dir:-/var/db/pkg}
 max_loginlen=${max_loginlen:-8}
 max_grouplen=${max_grouplen:-8}
+pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 # Other configurable variables
 #
@@ -888,7 +889,7 @@ if checkyesno check_pkgs && [ -d $pkgdb_dir ]; then
 	pkgs=$work_dir/pkgs
 	migrate_file "$backup_dir/pkgs" "$pkgs"
 	(	cd $pkgdb_dir
-		pkg_info | sort
+		$pkg_info | sort
 		echo ""
 		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
 			xargs -0 ls -ldgTq | sort -t. +1 | sed -e 's, \./, ,'

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: install,v 1.26.4.1 2007/09/24 05:12:41 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,6 +163,12 @@ installation kernel (kernel with a RAM disk installer) on your
 partition and telling Open Firmware to boot the
 .Nx
 kernel.
+.Pp
+CAVEAT: this method is a bit fragile.  Depending on physical partition layout,
+partition size, and parameters used to create the filesystem of your
+.Tn Solaris
+root partition, bugs in the bootloader might be triggered and cause this
+method to fail.
 .Pp
 First, copy the 
 .Pa netbsd-INSTALL.gz
