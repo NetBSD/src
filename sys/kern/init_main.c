@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.314 2007/09/07 18:56:08 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.315 2007/09/24 00:00:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.314 2007/09/07 18:56:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.315 2007/09/24 00:00:52 martin Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -174,6 +174,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.314 2007/09/07 18:56:08 rmind Exp $"
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 #include <ufs/ufs/quota.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+#endif
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -405,6 +410,10 @@ main(void)
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
+
+#ifdef DDB
+	db_init_commands();
+#endif
 
 	/* Initialize the device switch tables. */
 	devsw_init();
