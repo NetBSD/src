@@ -1,3 +1,0 @@
-# $NetBSD: Makefile.wakecode,v 1.1.2.3 2007/09/07 21:01:03 jmcneill Exp $
-
-.include "../../x86/acpi/Makefile.wakecode.inc"
