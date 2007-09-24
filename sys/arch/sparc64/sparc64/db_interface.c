@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.102 2007/09/23 18:55:12 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.103 2007/09/24 08:20:16 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.102 2007/09/23 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.103 2007/09/24 08:20:16 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -1228,7 +1228,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Dump the FPU state." ,NULL,NULL) },
 	{ DDB_ADD_CMD("kmap",	db_pmap_kernel,	0,
 	  "Display information about mappings in the kernel pmap.",
-	  "[address] [/f]",
+	  "[/f] [address]",
 	  "   address:\tdisplay the mapping for this virtual address\n"
 	  "   /f:\tif no address is given, display a full dump of the pmap") },
 #if 0
@@ -1253,7 +1253,7 @@ const struct db_command db_machine_command_table[] = {
 	   "   adddress:\tphysical address to start (8 byte aligned)\n"
 	   "   count:\tnumber of bytes to display") },
 	{ DDB_ADD_CMD("pmap",	db_pmap_cmd,	0,
-	   "Display the pmap", "[pm_addr][/f]",
+	   "Display the pmap", "[/f] [pm_addr]",
 	   "   pm_addr:\tAddress of struct pmap to display\n"
 	   "   /f:\tdo a full dump of the pmap") },
 	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,
@@ -1267,19 +1267,19 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("sir",	db_sir_cmd,	0,
 	  "do a Software Initiated Reset (entering PROM)", NULL,NULL) },
 	{ DDB_ADD_CMD("stack",		db_dump_stack,	0,
-	  "Dump the window stack.", "[addr][/u]",
+	  "Dump the window stack.", "[/u] [addr]",
 	  "   addr:\tstart address of dump (current stack otherwise)\n"
 	  "   /u:\tcontinue trace into userland") },
 	{ DDB_ADD_CMD("tf",		db_dump_trap,	0,
 	  "Display full trap frame state.",
-	  "[addr][/u]",
+	  "[/u] [addr]",
 	  "   addr:\tdisplay this trap frame (current kernel frame otherwise)\n"
 	  "   /u:\tdisplay the current userland trap frame") },
 	{ DDB_ADD_CMD("ts",		db_dump_ts,	0,
 	  "Display trap state.", NULL,NULL) },
 	{ DDB_ADD_CMD("traptrace",	db_traptrace,	0,
 	  "Display or set trap trace information.",
-	  "[addr][/fr]",
+	  "[/fr] [addr]",
 	  "   addr:\tstart address of trace\n"
 	  "   /f:\tdisplay full information\n"
 	  "   /r:\treverse the trace order") },
@@ -1287,7 +1287,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Dumps the UVM histories.",NULL,NULL) },
 	{ DDB_ADD_CMD("watch",	db_watch,	0,
 	  "Set or clear a physical or virtual hardware watchpoint.",
-	  "[addr][/prbhlL",
+	  "[/prbhlL] [addr]",
 	  "   addr:\tset the breakpoint (clear watchpoint if not present)\n"
 	  "   /p:\taddress is physical\n"
 	  "   /r:\ttrap on reads too (otherwise only write access)\n"
