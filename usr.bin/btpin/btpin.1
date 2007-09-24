@@ -1,4 +1,4 @@
-.\"	$NetBSD: btpin.1,v 1.5 2007/04/14 09:28:39 plunky Exp $
+.\"	$NetBSD: btpin.1,v 1.6 2007/09/24 19:29:01 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 25, 2007
+.Dd September 24, 2007
 .Dt BTPIN 1
 .Os
 .Sh NAME
@@ -44,8 +44,8 @@ The
 .Nm
 utility is used to register a temporary PIN with the
 .Xr bthcid 8
-daemon for the purposes of pairing Bluetooth devices. The PIN will
-be valid for 5 minutes or until used, whichever comes first.
+daemon for the purposes of pairing Bluetooth devices.
+The PIN will be valid for 5 minutes or until used, whichever comes first.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -57,17 +57,19 @@ If a name was specified, the
 utility attempts to resolve the name via
 .Xr bt_gethostbyname 3 .
 .It Fl d Ar device
-Specify the local device address. The device can
-be specified by BD_ADDR or device name. See
+Specify the local device address.
+The device can be specified by BD_ADDR or device name.
+See
 .Xr btconfig 8
-for a list of devices available. If no device is specified, the
-PIN will be valid for any local device.
+for a list of devices available.
+If no device is specified, the PIN will be valid for any local device.
 .It Fl l Ar len
 Specify length of PIN to generate, where 1 \*[Le]
 .Ar len
 \*[Le] 16.
 .It Fl p Ar pin
-The PIN to register. The PIN may be up to 16 bytes in length.
+The PIN to register.
+The PIN may be up to 16 bytes in length.
 .It Fl r
 Generate a random PIN, the default length is 4 bytes.
 .It Fl s Ar path
