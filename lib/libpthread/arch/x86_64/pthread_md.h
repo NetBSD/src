@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2007/09/07 00:24:57 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.6 2007/09/24 12:19:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,6 @@ pthread__sp(void)
 	} while (/*CONSTCOND*/0)
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-#define	PTHREAD__CHEAP_UNLOCK
 #define	PTHREAD__HAVE_ATOMIC
 
 #endif /* _LIB_PTHREAD_X86_64_MD_H */
