@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.26 2007/09/06 08:54:00 he Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.27 2007/09/24 14:16:54 pooka Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.26 2007/09/06 08:54:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.27 2007/09/24 14:16:54 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -88,21 +88,6 @@ static inline u_int	sonicput(struct sn_softc *sc, struct mbuf *m0,
     int mtd_next);
 static inline int	sonic_read(struct sn_softc *, void *, int);
 static inline struct mbuf *sonic_get(struct sn_softc *, void *, int);
-
-#undef assert
-#undef _assert
-
-#ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
-#else
-#define	_assert(e)	assert(e)
-#ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
-#endif
-#endif
 
 int sndebug = 0;
 
