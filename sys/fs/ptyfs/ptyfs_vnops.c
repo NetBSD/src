@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.24 2007/09/24 00:42:14 rumble Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.25 2007/09/24 01:00:02 rumble Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.24 2007/09/24 00:42:14 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.25 2007/09/24 01:00:02 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,62 +652,53 @@ ptyfs_readdir(void *v)
 	dp->d_reclen = UIO_MX;
 	ncookies = uio->uio_resid / UIO_MX;
 
-	switch (ptyfs->ptyfs_type) {
-	case PTYFSroot: /* root */
-
-		if (i >= npty)
-			return 0;
-
-		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (npty + 2 - i));
-			cookies = malloc(ncookies * sizeof (off_t),
-			    M_TEMP, M_WAITOK);
-			*ap->a_cookies = cookies;
-		}
-
-		for (; i < 2; i++) {
-			switch (i) {
-			case 0:		/* `.' */
-			case 1:		/* `..' */
-				dp->d_fileno = PTYFS_FILENO(0, PTYFSroot);
-				dp->d_namlen = i + 1;
-				(void)memcpy(dp->d_name, "..", dp->d_namlen);
-				dp->d_name[i + 1] = '\0';
-				dp->d_type = DT_DIR;
-				break;
-			}
-			if ((error = uiomove(dp, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			nc++;
-		}
-		if (error) {
-			ncookies = nc;
-			break;
-		}
-		for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
-			/* check for used ptys */
-			if (pty_isfree(i - 2, 1))
-				continue;
-
-			dp->d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);
-			dp->d_namlen = snprintf(dp->d_name, sizeof(dp->d_name),
-			    "%lld", (long long)(i - 2));
-			dp->d_type = DT_CHR;
-			if ((error = uiomove(dp, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			nc++;
-		}
-		ncookies = nc;
-		break;
-
-	default:
+	if (ptyfs->ptyfs_type != PTYFSroot) {
 		error = ENOTDIR;
-		break;
+		goto out;
 	}
+
+	if (i >= npty)
+		goto out;
+
+	if (ap->a_ncookies) {
+		ncookies = min(ncookies, (npty + 2 - i));
+		cookies = malloc(ncookies * sizeof (off_t),
+		    M_TEMP, M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
+
+	for (; i < 2; i++) {
+		/* `.' and/or `..' */
+		dp->d_fileno = PTYFS_FILENO(0, PTYFSroot);
+		dp->d_namlen = i + 1;
+		(void)memcpy(dp->d_name, "..", dp->d_namlen);
+		dp->d_name[i + 1] = '\0';
+		dp->d_type = DT_DIR;
+		if ((error = uiomove(dp, UIO_MX, uio)) != 0)
+			goto out;
+		if (cookies)
+			*cookies++ = i + 1;
+		nc++;
+	}
+	for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
+		/* check for used ptys */
+		if (pty_isfree(i - 2, 1))
+			continue;
+
+		dp->d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);
+		dp->d_namlen = snprintf(dp->d_name, sizeof(dp->d_name),
+		    "%lld", (long long)(i - 2));
+		dp->d_type = DT_CHR;
+		if ((error = uiomove(dp, UIO_MX, uio)) != 0)
+			goto out;
+		if (cookies)
+			*cookies++ = i + 1;
+		nc++;
+	}
+
+out:
+	/* not pertinent in error cases */
+	ncookies = nc;
 
 	if (ap->a_ncookies) {
 		if (error) {
