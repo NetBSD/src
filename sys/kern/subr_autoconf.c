@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119 2007/07/20 22:15:47 tsutsui Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.120 2007/09/24 18:47:56 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119 2007/07/20 22:15:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.120 2007/09/24 18:47:56 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1075,6 +1075,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	int myunit;
 	char num[10];
 	device_t dev;
+	void *dev_private;
 	const struct cfiattrdata *ia;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
@@ -1085,7 +1086,8 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (ca == NULL)
 		return (NULL);
 
-	if (ca->ca_devsize < sizeof(struct device))
+	if ((ca->ca_flags & DVF_PRIV_ALLOC) == 0 &&
+	    ca->ca_devsize < sizeof(struct device))
 		panic("config_devalloc");
 
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
@@ -1114,19 +1116,30 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		panic("config_devalloc: device name too long");
 
 	/* get memory for all device vars */
-	dev = (device_t)malloc(ca->ca_devsize, M_DEVBUF,
-			       M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
-	if (!dev)
+	dev_private = malloc(ca->ca_devsize, M_DEVBUF,
+			     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+	if (dev_private == NULL)
 		panic("config_devalloc: memory allocation for device softc failed");
+
+	if ((ca->ca_flags & DVF_PRIV_ALLOC) != 0) {
+		dev = malloc(sizeof(struct device), M_DEVBUF, 
+			     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+	} else {
+		dev = dev_private;
+	}
+	if (dev == NULL)
+		panic("config_devalloc: memory allocation for device_t failed");
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
 	dev->dv_cfattach = ca;
 	dev->dv_unit = myunit;
+	dev->dv_private = dev_private;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
@@ -1150,6 +1163,9 @@ config_devdealloc(device_t dev)
 
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
+
+	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0)
+		free(dev->dv_private, M_DEVBUF);
 
 	free(dev, M_DEVBUF);
 }
@@ -1690,11 +1706,7 @@ void *
 device_private(device_t dev)
 {
 
-	/*
-	 * For now, at least, "struct device" is the first thing in
-	 * the driver's private data.  So, we just return ourselves.
-	 */
-	return (dev);
+	return (dev->dv_private);
 }
 
 prop_dictionary_t
