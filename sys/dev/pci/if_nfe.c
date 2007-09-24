@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.17 2007/09/01 07:32:30 dyoung Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.18 2007/09/24 13:11:08 cube Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.17 2007/09/01 07:32:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.18 2007/09/24 13:11:08 cube Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1089,6 +1089,9 @@ nfe_start(struct ifnet *ifp)
 	struct nfe_softc *sc = ifp->if_softc;
 	int old = sc->txq.queued;
 	struct mbuf *m0;
+
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+		return;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
