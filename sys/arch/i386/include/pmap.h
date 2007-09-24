@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.1 2007/09/23 18:28:18 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.2 2007/09/24 10:56:49 yamt Exp $	*/
 
 /*
  *
@@ -230,15 +230,10 @@
 #define NKL2_MAX_ENTRIES	(NTOPLEVEL_PDES - (KERNBASE/NBPD_L2) - 1)
 #define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * NPDPG)
 
-/* XXX */
-#define NKL2_KIMG_ENTRIES	4
+#define NKL2_KIMG_ENTRIES	0	/* XXX unused */
 
-/*
- * Since kva space is below the kernel in its entirety, we start off
- * with zero entries on each level.
- */
-#define NKL2_START_ENTRIES	0
-#define NKL1_START_ENTRIES	0	/* XXX */
+#define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
+#define NKL1_START_ENTRIES	0	/* XXX unused */
 
 #define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
 
@@ -405,6 +400,7 @@ extern u_long PDPpaddr;
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int nkpde;			/* current # of PDEs for kernel */
 extern int pmap_pg_g;			/* do we support PG_G? */
+extern long nkptp[PTP_LEVELS];
 
 /*
  * macros

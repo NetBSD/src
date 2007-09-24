@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50.2.1 2007/09/23 18:28:16 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.50.2.2 2007/09/24 10:56:48 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 define	PTE_BASE		PTE_BASE
-define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
@@ -399,5 +398,7 @@ define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
 
 define	L1_SHIFT		L1_SHIFT
+define	L2_SHIFT		L2_SHIFT
+define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
