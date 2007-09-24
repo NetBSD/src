@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.30 2007/08/20 01:05:23 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.31 2007/09/24 01:17:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.30 2007/08/20 01:05:23 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.31 2007/09/24 01:17:15 uwe Exp $")
 
 
 /*
@@ -467,12 +467,34 @@ NENTRY(sh_vector_interrupt)
 	mov.l	.Li_intc_intr, r0
 	jsr	@r0		/* intc_intr(ssr, spc, ssp) */
 	 nop
+
+	mov.l	@(TF_SSR, r14), r2
+	mov.l	.Li_PSL_MD, r1
+	tst	r1, r2			! tf->tf_ssr & PSL_MD == 0 ?
+	bt	.Li_return_to_user
+
+	!! Check for interrupted kernel RAS when returning to kernel
+	mov.l	@(TF_SPC, r14), r2
+	mov.l	.Li_ras_start, r3
+	cmp/hi	r3, r2			! spc > _lock_cas_ras_start ?
+	bf	.Li_return_from_interrupt
+
+	mov.l	.Li_ras_end, r1
+	cmp/hs	r1, r2			! spc >= _lock_cas_ras_end ?
+	bt	.Li_return_from_interrupt
+
+	bra	.Li_return_from_interrupt
+	 mov.l	r3, @(TF_SPC, r14)	! spc = _lock_cas_ras_start
+
+.Li_return_to_user:
 	/* Check for ASTs on exit to user mode. */
 	mov.l	.Li_curlwp, r0
 	mov.l	@r0, r4		/* 1st arg */
 	mov.l	.Li_ast, r0
 	jsr	@r0
 	 mov	r14, r5		/* 2nd arg */
+
+.Li_return_from_interrupt:
 	__EXCEPTION_RETURN
 
 	.align	5
@@ -480,6 +502,10 @@ NENTRY(sh_vector_interrupt)
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_ast:		.long	_C_LABEL(ast)
 .Li_uvmexp_intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
+.Li_PSL_MD:		.long	0x40000000 /* PSL_MD */
+.Li_ras_start:		.long	_C_LABEL(_lock_cas_ras_start)
+.Li_ras_end:		.long	_C_LABEL(_lock_cas_ras_end)
+
 
 /* LINTSTUB: Var: char sh_vector_interrupt_end[1]; */
 VECTOR_END_MARKER(sh_vector_interrupt_end)
