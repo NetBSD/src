@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.1 2007/09/24 16:16:42 kiyohara Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.2 2007/09/24 18:08:53 kiyohara Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.1 2007/09/24 16:16:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.2 2007/09/24 18:08:53 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -35,10 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.1 2007/09/24 16:16:42 kiyohara Exp $")
 #include <sys/systm.h>
 #include <sys/callout.h>
 
+#include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
-#include <dev/sysmon/sysmonvar.h>
+#include <dev/apm/apmbios.h>
 
 #include <sh3/exception.h>
 #include <sh3/intcreg.h>
@@ -67,22 +68,30 @@ __KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.1 2007/09/24 16:16:42 kiyohara Exp $")
  */
 #define PSH3PWR_PLUG_OUT	0x40
 
-/* warn that main battery is low after drops below this value */
-#define PSH3PWR_BATTERY_WARNING_THRESHOLD	200
+
+static inline int __attribute__((__always_inline__))
+psh3pwr_ac_is_off(void)
+{
+
+	return _reg_read_1(SH7709_SCPDR) & PSH3PWR_PLUG_OUT;
+}
+
+
+/*
+ * Empirical range of battery values.
+ * Thanks to Joseph Heenan for measurements.
+ */
+#define PSH3PWR_BATTERY_MIN		630
+#define PSH3PWR_BATTERY_CRITICAL	635
+#define PSH3PWR_BATTERY_LOW		645
+#define PSH3PWR_BATTERY_FULL		910 /* can be slightly more */
 
 
 struct psh3pwr_softc {
 	struct device sc_dev;
 
-	struct callout sc_poll_ch;
 	void *sc_ih_pin;
 	void *sc_ih_pout;
-
-	int sc_plug;		/* In/Out flug */
-	int sc_capacity;
-
-	struct sysmon_envsys sc_sysmon;
-	struct envsys_data sc_data;
 };
 
 static int psh3pwr_match(struct device *, struct cfdata *, void *);
@@ -91,11 +100,11 @@ static void psh3pwr_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(psh3pwr, sizeof(struct psh3pwr_softc),
     psh3pwr_match, psh3pwr_attach, NULL, NULL);
 
-static int psh3pwr_intr_plug_out(void *); 
+static int psh3pwr_intr_plug_out(void *);
 static int psh3pwr_intr_plug_in(void *);
-static void psh3pwr_poll_callout(void *);
 static void psh3pwr_sleep(void *);
-static int psh3pwr_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static int psh3pwr_apm_getpower_hook(void *, int, long, void *);
+static int psh3pwr_get_battery(void);
 
 
 static int
@@ -118,14 +127,19 @@ psh3pwr_attach(struct device *parent, struct device *self, void *aux)
 	extern void (*__sleep_func)(void *);
 	extern void *__sleep_ctx;
 	struct psh3pwr_softc *sc = (struct psh3pwr_softc *)self;
-	uint8_t phdr, scpdr;
+	uint8_t phdr;
+
+	/* arrange for hpcapm to call us when power status is requested */
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_ACADAPTER,
+	    CONFIG_HOOK_EXCLUSIVE, psh3pwr_apm_getpower_hook, sc);
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CHARGE,
+	    CONFIG_HOOK_EXCLUSIVE, psh3pwr_apm_getpower_hook, sc);
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BATTERYVAL,
+	    CONFIG_HOOK_EXCLUSIVE, psh3pwr_apm_getpower_hook, sc);
 
 	/* regisiter sleep function to APM */
 	__sleep_func = psh3pwr_sleep;
 	__sleep_ctx = self;
-
-	callout_init(&sc->sc_poll_ch, 0);
-	callout_setfunc(&sc->sc_poll_ch, psh3pwr_poll_callout, sc);
 
 	phdr = _reg_read_1(SH7709_PHDR);
 	_reg_write_1(SH7709_PHDR, phdr | PSH3_GREEN_LED_ON);
@@ -138,40 +152,16 @@ psh3pwr_attach(struct device *parent, struct device *self, void *aux)
 	    IST_EDGE, IPL_TTY, psh3pwr_intr_plug_in, sc);
 
 	/* XXXX: WindowsCE sets this bit. */
-	scpdr = _reg_read_1(SH7709_SCPDR);
-	if (scpdr & PSH3PWR_PLUG_OUT) {
-		sc->sc_plug = 0;
-		printf("%s: plug status: out\n", device_xname(&sc->sc_dev));
-	} else {
-		sc->sc_plug = 1;
-		printf("%s: plug status: in\n", device_xname(&sc->sc_dev));
-	}
-	psh3pwr_poll_callout(sc);
-
-	sc->sc_data.sensor = 0;
-	sc->sc_data.units = ENVSYS_INDICATOR;
-	sc->sc_data.state = ENVSYS_SVALID;
-	sc->sc_data.value_cur = sc->sc_plug;
-	snprintf(sc->sc_data.desc, sizeof(sc->sc_data.desc),
-	    "%s %s", device_xname(&sc->sc_dev), "plug");
-
-	sc->sc_sysmon.sme_sensor_data = &sc->sc_data;
-	sc->sc_sysmon.sme_name = device_xname(&sc->sc_dev);
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = psh3pwr_gtredata;
-	sc->sc_sysmon.sme_nsensors =
-	    sizeof(sc->sc_data) / sizeof(struct envsys_data);
-
-	if (sysmon_envsys_register(&sc->sc_sysmon))
-		aprint_error("%s: unable to register with sysmon\n",
-		    device_xname(&sc->sc_dev));
+	printf("%s: plug status: %s\n",
+	    device_xname(&sc->sc_dev), psh3pwr_ac_is_off() ? "out" : "in");
 }
 
 
-static int      
+static int
 psh3pwr_intr_plug_out(void *self)
 {
-	struct psh3pwr_softc *sc = (struct psh3pwr_softc *)self;
+	struct psh3pwr_softc *sc __attribute__((__unused__)) =
+	    (struct psh3pwr_softc *)self;
 	uint8_t irr0, scpdr;
 
 	irr0 = _reg_read_1(SH7709_IRR0);
@@ -184,16 +174,16 @@ psh3pwr_intr_plug_out(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr | PSH3PWR_PLUG_OUT);
 
-	sc->sc_plug = 0;
 	DPRINTF(("%s: plug out\n", device_xname(&sc->sc_dev)));
 
 	return 1;
 }
 
-static int 
+static int
 psh3pwr_intr_plug_in(void *self)
 {
-	struct psh3pwr_softc *sc = (struct psh3pwr_softc *)self;
+	struct psh3pwr_softc *sc __attribute__((__unused__)) =
+	    (struct psh3pwr_softc *)self;
 	uint8_t irr0, scpdr;
 
 	irr0 = _reg_read_1(SH7709_IRR0);
@@ -205,7 +195,6 @@ psh3pwr_intr_plug_in(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr & ~PSH3PWR_PLUG_OUT);
 
-	sc->sc_plug = 1;
 	DPRINTF(("%s: plug in\n", device_xname(&sc->sc_dev)));
 
 	return 1;
@@ -228,35 +217,57 @@ psh3pwr_sleep(void *self)
 	_reg_write_1(SH7709_PHDR, phdr | PSH3_GREEN_LED_ON);
 }
 
-volatile int psh3pwr_poll_verbose = 0; /* XXX: tweak from ddb */
-
-static void
-psh3pwr_poll_callout(void *self)
+static int
+psh3pwr_apm_getpower_hook(void *ctx, int type, long id, void *msg)
 {
-	struct psh3pwr_softc *sc = (struct psh3pwr_softc *)self;
+	/* struct psh0pwr_softc * const sc = ctx; */
+	int * const pval = msg;
+	int battery, state;
+
+	if (type != CONFIG_HOOK_GET)
+		return EINVAL;
+
+	switch (id) {
+
+	case CONFIG_HOOK_ACADAPTER:
+		*pval = psh3pwr_ac_is_off() ? APM_AC_OFF : APM_AC_ON;
+		return 0;
+
+	case CONFIG_HOOK_CHARGE:
+		battery = psh3pwr_get_battery();
+		if (battery < PSH3PWR_BATTERY_CRITICAL)
+			state = APM_BATT_FLAG_CRITICAL;
+		else if (battery < PSH3PWR_BATTERY_LOW)
+			state = APM_BATT_FLAG_LOW;
+		else
+			state = APM_BATT_FLAG_HIGH; /* XXX? */
+		*pval = state;
+		return 0;
+
+	case CONFIG_HOOK_BATTERYVAL:
+		battery = psh3pwr_get_battery();
+		if (battery > PSH3PWR_BATTERY_FULL)
+			state = 100;
+		else
+			state = 100 * (battery - PSH3PWR_BATTERY_MIN) /
+			    (PSH3PWR_BATTERY_FULL - PSH3PWR_BATTERY_MIN);
+		*pval = state;
+		return 0;
+	}
+
+	return EINVAL;
+}
+
+
+static int
+psh3pwr_get_battery(void)
+{
+	int battery;
 	int s;
 
 	s = spltty();
-	sc->sc_capacity = adc_sample_channel(ADC_CHANNEL_BATTERY);
+	battery = adc_sample_channel(ADC_CHANNEL_BATTERY);
 	splx(s);
 
-	if (psh3pwr_poll_verbose != 0)
-		printf_nolog("%s: main=%-4d\n",
-		    device_xname(&sc->sc_dev), sc->sc_capacity);
-
-	if (!sc->sc_plug && sc->sc_capacity < PSH3PWR_BATTERY_WARNING_THRESHOLD)
-		printf("%s: WARNING: main battery %d is low!\n",
-		    device_xname(&sc->sc_dev), sc->sc_capacity);
-
-	callout_schedule(&sc->sc_poll_ch, 5 * hz);
-}
-
-static int
-psh3pwr_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
-{
-	struct psh3pwr_softc *sc = sme->sme_cookie;
-
-	edata->value_cur = sc->sc_plug;
-
-	return 0;
+	return battery;
 }
