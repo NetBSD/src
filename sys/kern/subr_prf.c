@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.107 2007/07/29 09:38:01 pooka Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.108 2007/09/24 20:01:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107 2007/07/29 09:38:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.108 2007/09/24 20:01:03 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107 2007/07/29 09:38:01 pooka Exp $")
 #include <sys/kprintf.h>
 
 #include <dev/cons.h>
+
+#include <net/if.h>
 
 #ifdef DDB
 #include <ddb/ddbvar.h>
@@ -582,6 +584,16 @@ db_vprintf(const char *fmt, va_list ap)
 
 #endif /* DDB */
 
+static void
+kprintf_internal(const char *fmt, int oflags, void *vp, char *sbuf, ...)
+{
+	va_list ap;
+	
+	va_start(ap, sbuf);
+	(void)kprintf(fmt, oflags, vp, sbuf, ap);
+	va_end(ap);
+}
+
 /*
  * Device autoconfiguration printf routines.  These change their
  * behavior based on the AB_* flags in boothowto.  If AB_SILENT
@@ -593,10 +605,9 @@ db_vprintf(const char *fmt, va_list ap)
  * aprint_normal: Send to console unless AB_QUIET.  Always goes
  * to the log.
  */
-void
-aprint_normal(const char *fmt, ...)
+static void
+aprint_normal_internal(const char *prefix, const char *fmt, va_list ap)
 {
-	va_list ap;
 	int s, flags = TOLOG;
 
 	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
@@ -605,14 +616,44 @@ aprint_normal(const char *fmt, ...)
 
 	KPRINTF_MUTEX_ENTER(s);
 
-	va_start(ap, fmt);
+	if (prefix)
+		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
 	kprintf(fmt, flags, NULL, NULL, ap);
-	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
 
 	if (!panicstr)
 		logwakeup();
+}
+
+void
+aprint_normal(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_normal_internal(NULL, fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_normal_dev(device_t dv, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_normal_internal(device_xname(dv), fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_normal_ifnet(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_normal_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
 }
 
 /*
@@ -638,10 +679,9 @@ aprint_get_error_count(void)
 	return (count);
 }
 
-void
-aprint_error(const char *fmt, ...)
+static void
+aprint_error_internal(const char *prefix, const char *fmt, va_list ap)
 {
-	va_list ap;
 	int s, flags = TOLOG;
 
 	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
@@ -652,9 +692,9 @@ aprint_error(const char *fmt, ...)
 
 	aprint_error_count++;
 
-	va_start(ap, fmt);
+	if (prefix)
+		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
 	kprintf(fmt, flags, NULL, NULL, ap);
-	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
 
@@ -662,35 +702,94 @@ aprint_error(const char *fmt, ...)
 		logwakeup();
 }
 
+void
+aprint_error(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_error_internal(NULL, fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_error_dev(device_t dv, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_error_internal(device_xname(dv), fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_error_ifnet(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_error_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
+}
+
 /*
  * aprint_naive: Send to console only if AB_QUIET.  Never goes
  * to the log.
  */
+static void
+aprint_naive_internal(const char *prefix, const char *fmt, va_list ap)
+{
+	int s;
+
+	if ((boothowto & (AB_QUIET|AB_SILENT|AB_VERBOSE)) != AB_QUIET)
+		return;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	if (prefix)
+		kprintf_internal("%s: ", TOCONS, NULL, NULL, prefix);
+	kprintf(fmt, TOCONS, NULL, NULL, ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+}
+
 void
 aprint_naive(const char *fmt, ...)
 {
 	va_list ap;
-	int s;
 
-	if ((boothowto & (AB_QUIET|AB_SILENT|AB_VERBOSE)) == AB_QUIET) {
-		KPRINTF_MUTEX_ENTER(s);
+	va_start(ap, fmt);
+	aprint_naive_internal(NULL, fmt, ap);
+	va_end(ap);
+}
 
-		va_start(ap, fmt);
-		kprintf(fmt, TOCONS, NULL, NULL, ap);
-		va_end(ap);
+void
+aprint_naive_dev(device_t dv, const char *fmt, ...)
+{
+	va_list ap;
 
-		KPRINTF_MUTEX_EXIT(s);
-	}
+	va_start(ap, fmt);
+	aprint_naive_internal(device_xname(dv), fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_naive_ifnet(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_naive_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
 }
 
 /*
  * aprint_verbose: Send to console only if AB_VERBOSE.  Always
  * goes to the log.
  */
-void
-aprint_verbose(const char *fmt, ...)
+static void
+aprint_verbose_internal(const char *prefix, const char *fmt, va_list ap)
 {
-	va_list ap;
 	int s, flags = TOLOG;
 
 	if (boothowto & AB_VERBOSE)
@@ -698,9 +797,9 @@ aprint_verbose(const char *fmt, ...)
 
 	KPRINTF_MUTEX_ENTER(s);
 
-	va_start(ap, fmt);
+	if (prefix)
+		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
 	kprintf(fmt, flags, NULL, NULL, ap);
-	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
 
@@ -708,24 +807,84 @@ aprint_verbose(const char *fmt, ...)
 		logwakeup();
 }
 
+void
+aprint_verbose(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_verbose_internal(NULL, fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_verbose_dev(device_t dv, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_verbose_internal(device_xname(dv), fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_verbose_ifnet(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_verbose_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
+}
+
 /*
  * aprint_debug: Send to console and log only if AB_DEBUG.
  */
+static void
+aprint_debug_internal(const char *prefix, const char *fmt, va_list ap)
+{
+	int s;
+
+	if ((boothowto & AB_DEBUG) == 0)
+		return;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	if (prefix)
+		kprintf_internal("%s: ", TOCONS | TOLOG, NULL, NULL, prefix);
+	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+}
+
 void
 aprint_debug(const char *fmt, ...)
 {
 	va_list ap;
-	int s;
 
-	if (boothowto & AB_DEBUG) {
-		KPRINTF_MUTEX_ENTER(s);
+	va_start(ap, fmt);
+	aprint_debug_internal(NULL, fmt, ap);
+	va_end(ap);
+}
 
-		va_start(ap, fmt);
-		kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
-		va_end(ap);
+void
+aprint_debug_dev(device_t dv, const char *fmt, ...)
+{
+	va_list ap;
 
-		KPRINTF_MUTEX_EXIT(s);
-	}
+	va_start(ap, fmt);
+	aprint_debug_internal(device_xname(dv), fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	aprint_debug_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
 }
 
 /*
