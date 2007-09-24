@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.11 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.12 2007/09/24 13:56:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,8 +89,6 @@ int pthread__debuglog_newline(void);
 
 #undef	PTHREAD_ALARM_DEBUG
 #define PTHREAD_MAIN_DEBUG
-#define PTHREAD_SPIN_DEBUG
-#undef	PTHREAD_SPIN_DEBUG_PRINT
 
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
 
