@@ -1,4 +1,4 @@
-;; $NetBSD: NetBSD.el,v 1.4 2007/09/22 16:17:52 christos Exp $
+;; $NetBSD: NetBSD.el,v 1.5 2007/09/24 15:38:11 christos Exp $
 
 (defconst netbsd-knf-style
   '(
@@ -57,14 +57,52 @@
   )
   "NetBSD KNF Style")
 
-(defun knf-write-contents-hook ()
+(eval-when-compile (require 'whitespace nil t))
+
+(defcustom netbsd-knf-whitespace-check nil
+  "Enable NetBSD KNF whitespace cleanup when saving the buffer.
+See also:
+  `whitespace-auto-cleanup',
+  `whitespace-abort-on-error',
+  `whitespace-check-leading-whitespace',
+  `whitespace-check-trailing-whitespace',
+  `whitespace-check-spacetab-whitespace',
+  `whitespace-check-indent-whitespace',
+  `whitespace-check-ateol-whitespace'.
+NOTES:
+1) `whitespace-check-spacetab-whitespace' will replace any RE-match of
+   \" +\\t\" with single '\\t' and hence may break tabbing.
+2) Both `whitespace-check-spacetab-whitespace' and
+   `whitespace-check-indent-whitespace' may alter strings."
+  :type 'boolean
+  :group 'netbsd-knf)
+
+(defun netbsd-knf-whitespace-cleanup ()
+  ;; XXX - emacs 21.4 whitespace.el was badly behaved on blank
+  ;; buffers.  This was fixed in 22.1.  I don't know about other
+  ;; versions, so these conditions may need to be more restrictive.
+  (cond ((> emacs-major-version 21)
+	 (whitespace-cleanup-internal))
+	(t ;; default
+	 (if (save-excursion
+	       (goto-char (point-min))
+	       (re-search-forward "[^ \t\n]" nil t))
+	     (whitespace-cleanup)
+	   (delete-region (point-min) (point-max))))))
+
+(defun netbsd-knf-write-contents-hook ()
   (if (and (string-equal c-indentation-style "netbsd knf")
 	   (require 'whitespace nil t))
-      (whitespace-cleanup))
-  nil	;; XXX - make sure we return nil or the file will not be written.
-)
+      (if netbsd-knf-whitespace-check
+	  (if whitespace-auto-cleanup
+	      (netbsd-knf-whitespace-cleanup)
+	    (if (and (whitespace-buffer) whitespace-abort-on-error)
+		(error (concat "Abort write due to whitespaces in "
+			       buffer-file-name)))))
+    (remove-hook 'write-contents-hook 'netbsd-knf-write-contents-hook))
+  nil)
 
-(defun knf-c-mode-hook ()
+(defun netbsd-knf-c-mode-hook ()
   ;; Add style and set it for current buffer
   (c-add-style "NetBSD KNF" netbsd-knf-style t)
   ;; useful, but not necessary for the mode
@@ -76,8 +114,7 @@
   (setq c-toggle-hungry-state 1)
   ;; auto-indent new lines
   (define-key c-mode-base-map "\C-m" 'newline-and-indent)
-  ;; cleanup whitespace when saving
-  (add-hook 'write-contents-hooks 'knf-write-contents-hook)
-)
+  ;; check/cleanup whitespace when saving
+  (add-hook 'write-contents-hooks 'netbsd-knf-write-contents-hook))
 
-(add-hook 'c-mode-hook 'knf-c-mode-hook)
+(add-hook 'c-mode-hook 'netbsd-knf-c-mode-hook)
