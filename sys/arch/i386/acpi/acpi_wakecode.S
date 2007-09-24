@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.4 2007/09/08 01:22:16 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.5 2007/09/24 15:40:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
+#define	ACPI_WAKEUP_ADDR	0x3000
+
 	.text
 	.code16
 	.org 0	/* ACPI spec says: cs==(phys>>8), ip==(phys&0x000F) */
@@ -132,18 +134,7 @@ wakeup_16:
 	movw	%cs,%si
 	shll	$4,%esi
 
-	/* Fill 16->32 address */
-	movl	%esi,%eax
-	addl	$wakeup_32,%eax
-	movl	%eax,wakeup_sw32+2
-	jmp	1f			/* flush prefetch queue */
-1:	jmp	1f
-1:
-
 	/* Load GDT while non-paging */
-	movl	%esi,%eax
-	addl	$tmp_gdtable,%eax
-	movl	%eax,tmp_gdt+2
 	lgdt	tmp_gdt
 
 	/* Enable protected mode */
@@ -151,9 +142,8 @@ wakeup_16:
 	orl	$(CR0_PE),%eax
 	mov	%eax,%cr0
 
-wakeup_sw32:
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$0x8,$0x12345678	/* Code location, to be replaced */
+	ljmpl	$0x8,$wakeup_32	+ ACPI_WAKEUP_ADDR /* Code location, to be replaced */
 
 
 	.code32
@@ -169,9 +159,9 @@ wakeup_32:
 	movw	%ax,%ds
 
 	/* Enable paging (assumes identical mapping) */
-	movl	WAKEUP_r_cr3(%esi),%eax
+	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
-	movl	WAKEUP_r_cr0(%esi),%eax
+	movl	WAKEUP_r_cr0 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr0
 
 	/* Flush the prefetch queue */
@@ -182,17 +172,17 @@ wakeup_32:
 	nop
 
 	/* Restore registers */
-	lgdt	WAKEUP_r_gdt(%esi)
+	lgdt	WAKEUP_r_gdt + ACPI_WAKEUP_ADDR
 
-	movl	WAKEUP_restorecpu(%esi),%ebx
-	movw	WAKEUP_r_ds(%esi),%ax
+	movl	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%ebx
+	movw	WAKEUP_r_ds + ACPI_WAKEUP_ADDR,%ax
 	movw	%ax,%ds
 	jmp	*%ebx
 
 	.align	8
 tmp_gdt:
 	.word	0xffff
-	.long	0
+	.long	tmp_gdtable + ACPI_WAKEUP_ADDR
 
 	.align	8, 0
 tmp_gdtable:
