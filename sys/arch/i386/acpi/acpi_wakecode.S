@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.5 2007/09/24 15:40:32 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.6 2007/09/24 21:30:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ wakeup_16:
 	mov	%eax,%cr0
 
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$0x8,$wakeup_32	+ ACPI_WAKEUP_ADDR /* Code location, to be replaced */
+	ljmpl	$0x8,$wakeup_32	+ ACPI_WAKEUP_ADDR
 
 
 	.code32
