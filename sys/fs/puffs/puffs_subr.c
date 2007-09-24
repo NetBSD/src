@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.45 2007/09/04 00:11:38 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.46 2007/09/24 19:15:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.45 2007/09/04 00:11:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.46 2007/09/24 19:15:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,6 +119,11 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	 *
 	 * XXX: yes, should call vfs_busy(), but thar be rabbits with
 	 * vicious streaks a mile wide ...
+	 *
+	 * XXX: there is a transient failure here: if someone is unmounting
+	 * the file system but doesn't succeed (due to it being busy),
+	 * we incorrectly fail new vnode allocation.  This is *very*
+	 * hard to fix with the current structure of file system unmounting.
 	 */
 	if (mp->mnt_iflag & IMNT_UNMOUNT) {
 		DPRINTF(("puffs_getvnode: mp %p unmount, unable to create "
@@ -243,6 +248,11 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		error = EEXIST;
 		return error;
 	}
+	/*
+	 * XXX: there is a race here.  Nothing prevents another cookie
+	 * from being inserted.  Solution: insert the cookie and back
+	 * it out in case of failure?
+	 */
 	mutex_exit(&pmp->pmp_lock);
 
 	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
@@ -553,18 +563,6 @@ puffs_updatenode(struct vnode *vp, int flags)
 		pn->pn_mc_size = vp->v_size;
 		pn->pn_stat |= PNODE_METACACHE_SIZE;
 	}
-}
-
-void
-puffs_updatevpsize(struct vnode *vp)
-{
-	struct vattr va;
-
-	if (VOP_GETATTR(vp, &va, FSCRED, NULL))
-		return;
-
-	if (va.va_size != VNOVAL)
-		vp->v_size = va.va_size;
 }
 
 void

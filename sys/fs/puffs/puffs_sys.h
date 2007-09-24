@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.48 2007/07/30 09:04:58 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.49 2007/09/24 19:15:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -249,7 +249,6 @@ void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATECTIME	0x02
 #define PUFFS_UPDATEMTIME	0x04
 #define PUFFS_UPDATESIZE	0x08
-void	puffs_updatevpsize(struct vnode *);
 
 int	puffs_setpmp(pid_t, int, struct puffs_mount *);
 void	puffs_nukebypmp(struct puffs_mount *);
