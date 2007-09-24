@@ -1,6 +1,6 @@
-.\"     $NetBSD: kprintf.9,v 1.21 2007/07/26 10:00:21 pooka Exp $
+.\"     $NetBSD: kprintf.9,v 1.22 2007/09/24 20:44:24 wiz Exp $
 .\"
-.\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,11 +34,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2007
+.Dd September 24, 2007
 .Dt KPRINTF 9
 .Os
 .Sh NAME
-.Nm printf, snprintf, vprintf, vsnprintf, uprintf, ttyprintf, tprintf
+.Nm printf, snprintf, vprintf, vsnprintf, uprintf, ttyprintf, tprintf, aprint
 .Nd kernel formatted output conversion
 .Sh SYNOPSIS
 .In sys/systm.h
@@ -74,6 +74,26 @@
 .Fn "aprint_debug" "const char *format" "..."
 .Ft void
 .Fn "aprint_error" "const char *format" "..."
+.Ft void
+.Fn "aprint_normal_dev" "device_t" "const char *format" "..."
+.Ft void
+.Fn "aprint_naive_dev" "device_t" "const char *format" "..."
+.Ft void
+.Fn "aprint_verbose_dev" "device_t" "const char *format" "..."
+.Ft void
+.Fn "aprint_debug_dev" "device_t" "const char *format" "..."
+.Ft void
+.Fn "aprint_error_dev" "device_t" "const char *format" "..."
+.Ft void
+.Fn "aprint_normal_ifnet" "struct ifnet *" "const char *format" "..."
+.Ft void
+.Fn "aprint_naive_ifnet" "struct ifnet *" "const char *format" "..."
+.Ft void
+.Fn "aprint_verbose_ifnet" "struct ifnet *" "const char *format" "..."
+.Ft void
+.Fn "aprint_debug_ifnet" "struct ifnet *" "const char *format" "..."
+.Ft void
+.Fn "aprint_error_ifnet" "struct ifnet *" "const char *format" "..."
 .Ft int
 .Fn "aprint_get_error_count" "void"
 .Sh DESCRIPTION
@@ -155,10 +175,26 @@ Like
 but also keeps track of the number of times called.
 This allows a subsystem to report the number of errors that occurred
 during a quiet or silent initialization phase.
+.El
+.Pp
+For the
+.Fn aprint_*
+functions there are two additional families of functions with the
+suffixes
+.Dv _dev
+and
+.Dv _ifnet
+which work like their counterparts without the suffixes, except that
+they take a
+.Ft device_t
+or
+.Ft struct ifnet *
+respectively as first argument and prefix the log message with the
+corresponding device or interface name.
+.Pp
 The
 .Fn aprint_get_error_count
 function reports the number of errors and resets the counter to 0.
-.El
 .Pp
 If
 .Dv AB_SILENT
