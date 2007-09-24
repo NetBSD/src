@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.150.8.3 2007/09/10 20:36:28 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.150.8.4 2007/09/24 16:33:01 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -111,6 +111,7 @@ clock.o: config_time.h
 
 ## Include rules for Atheros WLAN
 .include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
 
 ##
 ## (9) port independent kernel machinery
