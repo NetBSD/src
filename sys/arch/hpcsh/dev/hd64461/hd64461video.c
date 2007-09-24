@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.41 2007/07/09 20:52:14 ad Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.42 2007/09/24 16:16:42 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.41 2007/07/09 20:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.42 2007/09/24 16:16:42 kiyohara Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.41 2007/07/09 20:52:14 ad Exp $")
 
 #include <machine/config_hook.h>
 #include <machine/bootinfo.h>
+
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #ifdef	HD64461VIDEO_DEBUG
 #define DPRINTF_ENABLE
@@ -1221,6 +1224,9 @@ hd64461video_display_onoff(void *arg, bool on)
 {
 	/* struct hd64461video_chip *vc = arg; */
 	uint16_t r;
+
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		return;
 
 	/* turn on/off display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
