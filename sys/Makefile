@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2007/09/23 23:08:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.65 2007/09/24 14:19:36 pooka Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -6,7 +6,6 @@ SUBDIR=	altq arch compat dev fs miscfs \
 	nfs opencrypto sys ufs uvm
 
 .if (${MACHINE} != "vax" \
-  && ${MACHINE} != "sun2" \
   && ${MACHINE} != "evbppc")
 SUBDIR+=	rump
 .endif
