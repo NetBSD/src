@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.6 2007/08/15 01:47:42 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.7 2007/09/24 20:06:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.6 2007/08/15 01:47:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.7 2007/09/24 20:06:02 macallan Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -81,6 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.6 2007/08/15 01:47:42 macal
 #include <ipkdb/ipkdb.h>
 #endif
 
+#include "opt_ofwoea.h"
+
+#ifdef OFWOEA_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while(0) printf
+#endif
 
 typedef struct _rangemap {
 	u_int32_t addr;
@@ -407,7 +414,7 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		reclen = 6;
 	else
 		reclen = acells + scells + 1;
-	printf("found a map reclen=%d cur=%d\n", reclen, *cur);
+	DPRINTF("found a map reclen=%d cur=%d\n", reclen, *cur);
 	switch (type) {
 		case RANGE_TYPE_PCI:
 		case RANGE_TYPE_FIRSTPCI:
@@ -510,10 +517,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 	}
 	find_ranges(node, list, &cur, rangetype);
 
-	printf("cur == %d\n", cur);
+	DPRINTF("cur == %d\n", cur);
 	/* now list should contain a list of memory regions */
 	for (i=0; i < cur; i++)
-		printf("addr=0x%x size=0x%x type=%d\n", list[i].addr,
+		DPRINTF("addr=0x%x size=0x%x type=%d\n", list[i].addr,
 		    list[i].size, list[i].type);
 
 	addr=0;
@@ -521,8 +528,8 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 	i = 0;
 	nrofholes = 0;
 	while (range != -1) {
-		printf("range==%d\n", range);
-		printf("i==%d\n", i);
+		DPRINTF("range==%d\n", range);
+		DPRINTF("i==%d\n", i);
 		if (i == 0) {
 			memcpy(&region, &list[range], sizeof(rangemap_t));
 			list[range].addr = 0;
@@ -542,12 +549,12 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		list[range].addr = 0;
 		range = find_lowest_range(list, cur, iomem);
 	}
-	printf("RANGE iomem=%d FOUND\n", iomem);
-	printf("addr=0x%x size=0x%x type=%d\n", region.addr,
+	DPRINTF("RANGE iomem=%d FOUND\n", iomem);
+	DPRINTF("addr=0x%x size=0x%x type=%d\n", region.addr,
 		    region.size, region.type);
-	printf("HOLES FOUND\n");
+	DPRINTF("HOLES FOUND\n");
 	for (i=0; i < nrofholes; i++)
-		printf("addr=0x%x size=0x%x type=%d\n", holes[i].addr,
+		DPRINTF("addr=0x%x size=0x%x type=%d\n", holes[i].addr,
 		    holes[i].size, holes[i].type);
 	/* AT THIS POINT WE MAP IT */
 
