@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.53 2007/09/20 18:38:49 plunky Exp $ */
+/* $NetBSD: envstat.c,v 1.54 2007/09/25 14:20:49 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ struct envsys_sensor {
 	char	type[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
 	char	battstate[ENVSYS_DESCLEN];
+	char 	dvname[ENVSYS_DESCLEN];
 };
 
 static int interval, flags, width;
@@ -98,8 +99,8 @@ static size_t gnelems, newsize;
 
 static int parse_dictionary(int);
 static int send_dictionary(int);
-static int find_sensors(prop_array_t);
-static void print_sensors(struct envsys_sensor *, size_t);
+static int find_sensors(prop_array_t, const char *);
+static void print_sensors(struct envsys_sensor *, size_t, const char *);
 static int check_sensors(struct envsys_sensor *, char *, size_t);
 static int usage(void);
 
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 		case 'd':	/* show sensors of a specific device */
 			mydevname = strdup(optarg);
 			if (mydevname == NULL)
-				err(ENOMEM, "out of memory");
+				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'f':	/* display temperature in Farenheit */
 			flags |= ENVSYS_FFLAG;
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
 		case 'i':	/* wait time between intervals */
 			interval = strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
-				errx(1, "interval must be an integer");
+				errx(EXIT_FAILURE, "bad interval '%s'", optarg);
 			break;
 		case 'l':	/* list sensors */
 			flags |= ENVSYS_LFLAG;
@@ -143,7 +144,7 @@ int main(int argc, char **argv)
 		case 'm':
 			userreq = strdup(optarg);
 			if (userreq == NULL)
-				err(ENOMEM, "out of memory");
+				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'r':
 			/* 
@@ -154,12 +155,12 @@ int main(int argc, char **argv)
 		case 's':	/* only show specified sensors */
 			sensors = strdup(optarg);
 			if (sensors == NULL)
-				err(ENOMEM, "out of memory");
+				err(EXIT_FAILURE, "strdup");
 			break;
 		case 'w':	/* width value for the lines */
 			width = strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
-				errx(1, "width must be an integer");
+				errx(EXIT_FAILURE, "bad width '%s'", optarg);
 			break;
 		case 'x':	/* print the dictionary in raw format */
 			flags |= ENVSYS_XFLAG;
@@ -178,47 +179,38 @@ int main(int argc, char **argv)
 		usage();
 
 	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
-		err(EXIT_FAILURE, "open");
+		err(EXIT_FAILURE, "%s", _PATH_DEV_SYSMON);
 
 	if (flags & ENVSYS_XFLAG) {
 		rval = prop_dictionary_recv_ioctl(fd,
 						  ENVSYS_GETDICTIONARY,
 						  &dict);
-		if (rval) {
-			(void)printf("%s: %s\n", getprogname(),
-			    strerror(rval));
-			goto out;
-		}
+		if (rval)
+			errx(EXIT_FAILURE, "%s", strerror(rval));
+
 		buf = prop_dictionary_externalize(dict);
 		(void)printf("%s", buf);
 		free(buf);
 
 	} else if (userreq) {
-		if (!sensors || !mydevname) {
-			(void)fprintf(stderr, "%s: -m cannot be used "
-			    "without -s and -d\n", getprogname());
-			rval = EINVAL;
-			goto out;
-		}
-		rval = send_dictionary(fd);
-		goto out;
+		if (!sensors || !mydevname)
+			errx(EXIT_FAILURE, "-m requires -s and -d");
 
-#define MISSING_FLAG() 						\
-do {								\
-	if (sensors && !mydevname) {				\
-		(void)fprintf(stderr, "%s: -s cannot be used "	\
-		    "without -d\n", getprogname());		\
-		rval = EINVAL;					\
-		goto out;					\
-	}							\
+		rval = send_dictionary(fd);
+
+#define MISSING_FLAG() 							\
+do {									\
+	if (sensors && !mydevname)					\
+		errx(EXIT_FAILURE, "-s requires -d");	\
 } while (/* CONSTCOND */ 0)
 
 	} else if (interval) {
+		MISSING_FLAG();
 		for (;;) {
-			MISSING_FLAG();
 			rval = parse_dictionary(fd);
 			if (rval)
-				goto out;
+				break;
+
 			(void)fflush(stdout);
 			(void)sleep(interval);
 		}
@@ -227,7 +219,6 @@ do {								\
 		rval = parse_dictionary(fd);
 	}
 
-out:
 	if (sensors)
 		free(sensors);
 	if (userreq)
@@ -235,7 +226,8 @@ out:
 	if (mydevname)
 		free(mydevname);
 	(void)close(fd);
-	return rval;
+
+	return (rval == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 static int
@@ -269,7 +261,7 @@ send_dictionary(int fd)
 			return EINVAL;
 		}
 
-		if (find_sensors(obj)) {
+		if (find_sensors(obj, mydevname)) {
 			prop_object_release(dict);
 			return EINVAL;
 		}
@@ -351,8 +343,7 @@ do {									\
 		uflag |= (b);						\
 		val = strtod(buf, &endptr);				\
 		if (*endptr != '\0') {					\
-			(void)printf("%s: invalid value\n",		\
-			    getprogname());				\
+			warnx("invalid value");				\
 			error = EINVAL;					\
 			goto out;					\
 		}							\
@@ -372,15 +363,13 @@ do {									\
 				uflag |= USERF_SRFACT;
 				val = strtod(buf, &endptr);
 				if (*endptr != '\0') {
-					(void)printf("%s: invalid value\n",
-					    getprogname());
+					warnx("invalid value");
 					error = EINVAL;
 					goto out;
 				}
 				break;
 			} else {
-				(void)printf("%s: invalid target\n",
-				    getprogname());
+				warnx("invalid target");
 				error =  EINVAL;
 				goto out;
 			}
@@ -394,8 +383,7 @@ do {									\
 	if (uflag & USERF_SCRITICAL) {
 		/* sanity check */
 		if (val < 0 || val > 100) {
-			(void)printf("%s: invalid value (0><100)\n",
-			    getprogname());
+			warnx("invalid value (0><100)");
 			error = EINVAL;
 			goto out;
 		}
@@ -481,7 +469,7 @@ do {									\
 		SETPROP("new-rfact");
 
 	} else {
-		(void)printf("%s: unknown operation\n", getprogname());
+		warnx("unknown operation");
 		error = EINVAL;
 		goto out;
 	}
@@ -497,7 +485,7 @@ do {									\
 
 	if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1) {
 		error = errno;
-		warnx("%s", strerror(errno));
+		warn("%s", _PATH_DEV_SYSMON);
 		goto out;
 	}
 
@@ -505,7 +493,7 @@ do {									\
 	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
 
 	if (error)
-		(void)printf("%s: %s\n", getprogname(), strerror(error));
+		warnx("%s", strerror(error));
 out:
 	prop_object_release(udict);
 	return error;
@@ -539,9 +527,16 @@ parse_dictionary(int fd)
 			goto out;
 		}
 
-		rval = find_sensors(obj);
+		rval = find_sensors(obj, mydevname);
 		if (rval)
 			goto out;
+
+		if (userreq == NULL) {
+			if ((flags & ENVSYS_LFLAG) == 0)
+				print_sensors(gesen, gnelems, mydevname);
+			if (interval)
+				(void)printf("\n");
+		}
 	} else {
 		iter = prop_dictionary_iterator(dict);
 		if (iter == NULL) {
@@ -563,22 +558,24 @@ parse_dictionary(int fd)
 
 			if (flags & ENVSYS_DFLAG) {
 				(void)printf("%s\n", dnp);
+				continue;
 			} else {
-				rval = find_sensors(array);
+				(void)printf("[%s]\n", dnp);
+				rval = find_sensors(array, dnp);
 				if (rval)
 					goto out;
+			}
+
+			if (userreq == NULL) {
+				if ((flags & ENVSYS_LFLAG) == 0)
+					print_sensors(gesen, gnelems, dnp);
+				if (interval)
+					(void)printf("\n");
 			}
 		}
 
 		prop_object_iterator_release(iter);
 	}
-
-	if (userreq == NULL)
-		if ((flags & ENVSYS_LFLAG) == 0)
-			print_sensors(gesen, gnelems);
-
-	if (interval)
-		(void)printf("\n");
 
 out:
 	if (gesen) {
@@ -592,7 +589,7 @@ out:
 }
 
 static int
-find_sensors(prop_array_t array)
+find_sensors(prop_array_t array, const char *dvname)
 {
 	prop_object_iterator_t iter;
 	prop_object_t obj, obj1;
@@ -620,7 +617,11 @@ find_sensors(prop_array_t array)
 
 	/* iterate over the array of dictionaries */
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
-		
+	
+		/* copy device name */
+		(void)strlcpy(gesen[gnelems].dvname, dvname,
+		    sizeof(gesen[gnelems].dvname));
+
 		gesen[gnelems].visible = false;
 
 		/* check sensor's state */
@@ -795,7 +796,7 @@ check_sensors(struct envsys_sensor *es, char *str, size_t nelems)
 }
 
 static void
-print_sensors(struct envsys_sensor *es, size_t nelems)
+print_sensors(struct envsys_sensor *es, size_t nelems, const char *dvname)
 {
 	size_t maxlen = 0;
 	double temp = 0;
@@ -814,6 +815,9 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 
 	/* print the sensors */
 	for (i = 0; i < nelems; i++) {
+		/* skip sensors that don't belong to device 'dvname' */
+		if (strcmp(es[i].dvname, dvname))
+			continue;
 
 		/* skip sensors that were not marked as visible */
 		if (sensors && !es[i].visible)
@@ -823,7 +827,8 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		if ((flags & ENVSYS_IFLAG) && es[i].invalid)
 			continue;
 
-		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
+		(void)printf("%s%*.*s", mydevname ? "" : "  ", (int)maxlen,
+		    (int)maxlen, es[i].desc);
 
 		if (es[i].invalid) {
 			(void)printf(": %10s\n", invalid);
@@ -954,8 +959,8 @@ static int
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s [-DfIlrx] ", getprogname());
-	(void)fprintf(stderr, "[-d ...] [-i num] ");
-	(void)fprintf(stderr, "[-m ...] [-s s1,s2 ] [-w num]\n");
+	(void)fprintf(stderr, "[-d device] [-i interval] ");
+	(void)fprintf(stderr, "[-m key=value] [-s sensor,...] [-w width]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
