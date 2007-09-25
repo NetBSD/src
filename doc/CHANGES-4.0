@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.280 2007/09/25 00:38:47 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.281 2007/09/25 00:42:05 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9690,4 +9690,12 @@ lib/libpthread/pthread_sig.c			1.47.4.2
 	While examining the target's state, grab the target's statelock,
 	not our own.
 	[wrstuden, ticket #892]
+
+sys/netinet6/esp_output.c			1.29
+
+	In the IPSEC_NAT_T case, we must set the udp length even if the ESP entry
+	doesn't have an integrity algorithm.
+
+	Reported by Wolfgang Stukenbrock in pr/36781 . Thanks you a lot.
+	[degroote, ticket #893]
 
