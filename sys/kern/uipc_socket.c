@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.142 2007/09/19 04:33:43 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.143 2007/09/25 14:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.142 2007/09/19 04:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.143 2007/09/25 14:04:07 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -519,6 +519,8 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
+	selinit(&so->so_rcv.sb_sel);
+	selinit(&so->so_snd.sb_sel);
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, NULL,
@@ -624,6 +626,8 @@ sofree(struct socket *so)
 		    RLIM_INFINITY);
 	sbrelease(&so->so_snd, so);
 	sorflush(so);
+	seldestroy(&so->so_rcv.sb_sel);
+	seldestroy(&so->so_snd.sb_sel);
 	pool_put(&socket_pool, so);
 }
 

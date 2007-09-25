@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.85 2007/08/02 02:42:40 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.85 2007/08/02 02:42:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -179,6 +179,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
 	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
 #endif
+	selinit(&so->so_rcv.sb_sel);
+	selinit(&so->so_snd.sb_sel);
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
@@ -191,6 +193,8 @@ sonewconn(struct socket *head, int connstatus)
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
 	    (struct lwp *)0)) {
 		(void) soqremque(so, soqueue);
+		seldestroy(&so->so_rcv.sb_sel);
+		seldestroy(&so->so_snd.sb_sel);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}

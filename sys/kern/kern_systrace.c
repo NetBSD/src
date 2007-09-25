@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.74 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.75 2007/09/25 14:04:07 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.74 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.75 2007/09/25 14:04:07 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -520,6 +520,7 @@ systracef_close(struct file *fp, struct lwp *l)
 		vrele(fst->fd_rdir);
 	SYSTRACE_UNLOCK(fst, curlwp);
 
+	seldestroy(&fst->si);
 	FREE(fp->f_data, M_XDATA);
 	fp->f_data = NULL;
 
@@ -563,7 +564,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 #else
 	lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
 #endif
-
+	selinit(&fst->si);
 	TAILQ_INIT(&fst->processes);
 	TAILQ_INIT(&fst->messages);
 	TAILQ_INIT(&fst->policies);
