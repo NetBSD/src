@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.11 2007/09/25 08:19:09 junyoung Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.12 2007/09/25 08:22:44 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -54,25 +54,25 @@ struct mo {
 	uint32_t mo_sysdep_nstring;	/* number of strings */
 	uint32_t mo_sysdep_otable;	/* offset of original text table */
 	uint32_t mo_sysdep_ttable;	/* offset of translated text table */
-} __attribute__((__packed__));
+} __packed;
 
 struct moentry {
 	uint32_t len;		/* strlen(str), so region will be len + 1 */
 	uint32_t off;		/* offset of \0-terminated string */
-} __attribute__((__packed__));
+} __packed;
 
 struct mosysdepsegentry {
 	uint32_t len;		/* length of this part */
 	uint32_t ref;		/* reference number of the sysdep string,
 				 * concatenated just after this segment.
 				 */
-} __attribute__((__packed__));
+} __packed;
 #define MO_LASTSEG		(0xFFFFFFFF)
 
 struct mosysdepstr {
 	uint32_t off;				/* offset of seed text */
 	struct mosysdepsegentry segs[1];	/* text segments */
-} __attribute__((__packed__));
+} __packed;
 
 /* libintl internal data format */
 struct moentry_h {
