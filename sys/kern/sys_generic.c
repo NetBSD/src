@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.11 2007/08/30 13:10:37 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.12 2007/09/25 13:51:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.11 2007/08/30 13:10:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.12 2007/09/25 13:51:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1241,7 +1241,9 @@ selinit(struct selinfo *sip)
 }
 
 /*
- * Destroy a selector.
+ * Destroy a selector.  The owning object must not gain new
+ * references while this is in progress: all activity on the
+ * selector must be stopped.
  */
 void
 seldestroy(struct selinfo *sip)
