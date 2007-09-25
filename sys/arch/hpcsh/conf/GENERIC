@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2007/06/03 19:46:23 uwe Exp $
+# $NetBSD: GENERIC,v 1.75 2007/09/25 17:40:29 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -258,6 +258,8 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
 com0		at hd64461if?
+
+psh3pwr*	at adc?			# PERSONA SH3 battery, on/off, etc
 
 psh3lcd*	at shb?			# LCD power, brightness, contrast
 
