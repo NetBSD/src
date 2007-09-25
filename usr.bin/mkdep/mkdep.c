@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.29 2006/10/15 18:50:47 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.30 2007/09/25 04:36:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.29 2006/10/15 18:50:47 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.30 2007/09/25 04:36:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: mkdep.c,v 1.29 2006/10/15 18:50:47 christos Exp $");
 #include <fcntl.h>
 #include <locale.h>
 #include <paths.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
