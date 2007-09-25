@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.106 2007/09/06 04:00:44 rmind Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.107 2007/09/25 13:53:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.106 2007/09/06 04:00:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.107 2007/09/25 13:53:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1226,4 +1226,36 @@ selsysinit(void)
 
 	mutex_init(&select_lock, MUTEX_DRIVER, IPL_VM);
 	cv_init(&select_cv, "select");
+}
+
+/*
+ * Initialize a selector.
+ */
+void
+selinit(struct selinfo *sip)
+{
+
+	memset(sip, 0, sizeof(*sip));
+}
+
+/*
+ * Destroy a selector.  The owning object must not gain new
+ * references while this is in progress: all activity on the
+ * selector must be stopped.
+ */
+void
+seldestroy(struct selinfo *sip)
+{
+	lwp_t *l;
+
+	if (sip->sel_lwp == NULL)
+		return;
+
+	mutex_enter(&select_lock);
+	if ((l = sip->sel_lwp) != NULL) {
+		/* This should rarely happen, so SLIST_REMOVE() is OK. */
+		SLIST_REMOVE(&l->l_selwait, sip, selinfo, sel_chain);
+		sip->sel_lwp = NULL;
+	}
+	mutex_exit(&select_lock);
 }
