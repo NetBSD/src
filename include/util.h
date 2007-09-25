@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.46 2007/07/01 21:41:16 pooka Exp $	*/
+/*	$NetBSD: util.h,v 1.47 2007/09/25 01:13:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -113,6 +113,7 @@ int		pw_policy_test(pw_policy_t, char *);
 void		pw_policy_free(pw_policy_t);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
+int		raise_default_signal(int);
 int		secure_path(const char *);
 int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
