@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.9 2007/09/10 11:13:17 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.10 2007/09/25 01:36:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.9 2007/09/10 11:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.10 2007/09/25 01:36:19 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1974,6 +1974,13 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 
 	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, pp->pr_ipl);
 
+	if (ctor == NULL) {
+		ctor = (int (*)(void *, void *, int))nullop;
+	}
+	if (dtor == NULL) {
+		dtor = (void (*)(void *, void *))nullop;
+	}
+
 	pc->pc_emptygroups = NULL;
 	pc->pc_fullgroups = NULL;
 	pc->pc_ctor = ctor;
@@ -2145,8 +2152,7 @@ void
 pool_cache_destruct_object(pool_cache_t pc, void *object)
 {
 
-	if (pc->pc_dtor != NULL)
-		(*pc->pc_dtor)(pc->pc_arg, object);
+	(*pc->pc_dtor)(pc->pc_arg, object);
 	pool_put(&pc->pc_pool, object);
 }
 
@@ -2344,12 +2350,10 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 	if (object == NULL)
 		return NULL;
 
-	if (pc->pc_ctor != NULL) {
-		if ((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0) {
-			pool_put(&pc->pc_pool, object);
-			*objectp = NULL;
-			return NULL;
-		}
+	if ((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0) {
+		pool_put(&pc->pc_pool, object);
+		*objectp = NULL;
+		return NULL;
 	}
 
 	KASSERT((((vaddr_t)object + pc->pc_pool.pr_itemoffset) &
