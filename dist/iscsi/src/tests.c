@@ -711,13 +711,8 @@ done:
 
 /*
  * scatter_gather() tests scatter/gather performance for WRITE_10 and
- * READ_10.
- */
-/*
- * Instead of specifying a data buffer in args.send_data and arg.recv_data,
- * we
- */
-/* specify a scatter/gather list. */
+ * READ_10.  Instead of specifying a data buffer in args.send_data and
+ * arg.recv_data, we specify a scatter/gather list.  */
 
 int 
 scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
