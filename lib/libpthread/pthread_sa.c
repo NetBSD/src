@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37.6.1 2007/09/10 05:24:54 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.37.6.2 2007/09/25 05:12:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.1 2007/09/10 05:24:54 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.2 2007/09/25 05:12:03 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -103,6 +103,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__maxlwps = sas[0]->sa_id;
 
 	self->pt_vpid = sas[0]->sa_cpu;
+	self->pt_lastlwp = sas[0]->sa_id;
 
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev, intr));
@@ -132,11 +133,11 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self,
 			     sas[1]->sa_id, t, t->pt_type));
 		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
-		t->pt_blockedlwp = sas[1]->sa_id;
+		t->pt_lastlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
 		/* pthread__assert(t->pt_blockgen <= t->pt_unblockgen + 2); */
 		if (t->pt_cancel)
-			_lwp_wakeup(t->pt_blockedlwp);
+			_lwp_wakeup(t->pt_lastlwp);
 #ifdef PTHREAD__DEBUG
 		t->blocks++;
 #endif
@@ -232,6 +233,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	pthread_spinlock(self, &next->pt_statelock);
 	next->pt_state = PT_STATE_RUNNING;
 	next->pt_vpid = self->pt_vpid;
+	next->pt_lastlwp = self->pt_lastlwp;
 	pthread_spinunlock(self, &next->pt_statelock);
 	SDPRINTF(("(up %p) switching to %p (uc: %c %p pc: %lx)\n", 
 		     self, next, PUC(next), pthread__uc_pc(UC(next))));

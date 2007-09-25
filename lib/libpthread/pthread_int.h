@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34.4.1 2007/09/10 05:24:53 wrstuden Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.4.2 2007/09/25 05:12:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct	__pthread_st {
 	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
-	int	pt_blockedlwp;	/* LWP/SA number when blocked */
+	int	pt_lastlwp;	/* LWP/SA number when running or blocked */
 	int	pt_vpid;	/* VP number */
 	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
 	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
