@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.11 2006/01/23 22:32:50 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.12 2007/09/25 01:50:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _LOCORE
 
 #if defined(SH3) && defined(SH4)
 #define	MOV(x, r)	mov.l .L_/**/x, r; mov.l @r, r
@@ -158,11 +160,9 @@
  * Macros to disable and enable exceptions (including interrupts).
  * This modifies SR.BL
  */
-#define	__0x10	#0x10
-#define	__0x78	#0x78
 
 #define	__EXCEPTION_BLOCK(Rn, Rm)					;\
-	mov	__0x10,	Rn						;\
+	mov	#0x10,	Rn						;\
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
 	stc	sr,	Rm						;\
@@ -170,7 +170,7 @@
 	ldc	Rm,	sr	/* block exceptions */
 
 #define	__EXCEPTION_UNBLOCK(Rn, Rm)					;\
-	mov	__0x10,	Rn						;\
+	mov	#0x10,	Rn						;\
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
 	not	Rn,	Rn						;\
@@ -183,24 +183,26 @@
  * This modifies SR.I[0-3]
  */
 #define	__INTR_MASK(Rn, Rm)						;\
-	mov	__0x78,	Rn						;\
+	mov	#0x78,	Rn						;\
 	shll	Rn		/* Rn = 0x000000f0 */			;\
 	stc	sr,	Rm						;\
 	or	Rn,	Rm						;\
 	ldc	Rm,	sr	/* mask all interrupt */
 
 #define	__INTR_UNMASK(Rn, Rm)						;\
-	mov	__0x78,	Rn						;\
+	mov	#0x78,	Rn						;\
 	shll	Rn		/* Rn = 0x000000f0 */			;\
 	not	Rn,	Rn						;\
 	stc	sr,	Rm						;\
 	and	Rn,	Rm						;\
 	ldc	Rm,	sr	/* unmask all interrupt */
 
-#ifndef _LOCORE
+#else /* !_LOCORE */
+
 void sh3_switch_setup(struct lwp *);
 void sh4_switch_setup(struct lwp *);
 void sh3_switch_resume(struct lwp *);
 void sh4_switch_resume(struct lwp *);
 extern void (*__sh_switch_resume)(struct lwp *);
+
 #endif /* !_LOCORE */
