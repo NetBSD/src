@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.27 2007/09/19 19:54:09 agc Exp $ */
+/* $NetBSD: disk.c,v 1.28 2007/09/25 22:15:00 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -759,18 +759,18 @@ static int
 de_allocate(disc_de_t *de, char *filename)
 {
 	off_t	size;
-	char	ch;
+	char	block[DEFAULT_TARGET_BLOCK_LEN];
 
 	size = de_getsize(de);
 	if (de_lseek(de, size - 1, SEEK_SET) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\"\n", filename);
 		return 0;
 	}
-	if (de_read(de, &ch, 1) == -1) {
+	if (de_read(de, block, sizeof(block)) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error reading \"%s\"", filename);
 		return 0;
 	}
-	if (de_write(de, &ch, 1) == -1) {
+	if (de_write(de, block, sizeof(block)) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error writing \"%s\"", filename);
 		return 0;
 	}
@@ -1059,10 +1059,19 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			case INQUIRY_SUPPORTED_VPD_PAGES:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_SUPPORTED_VPD_PAGES;
-				*totlen = 2;	/* # of supported pages */
+				*totlen = 3;	/* # of supported pages */
 				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
 				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				data[6] = EXTENDED_INQUIRY_DATA_VPD;
 				args->length = *totsize + 1;
+				break;
+			case EXTENDED_INQUIRY_DATA_VPD:
+				data[0] = DISK_PERIPHERAL_DEVICE;
+				data[1] = EXTENDED_INQUIRY_DATA_VPD;
+				data[3] = 0x3c;	/* length is defined to be 60 */
+				data[4] = 0;
+				data[5] = 0;
+				args->length = 64;
 				break;
 			default:
 				iscsi_trace_error(__FILE__, __LINE__, "Unsupported INQUIRY VPD page %x\n", cdb[2]);
@@ -1158,9 +1167,10 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case WRITE_10:
+	case WRITE_VERIFY:
 		cdb2lba(&lba, &len, cdb);
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10 | WRITE_VERIFY(lba %u, len %u blocks)\n", lba, len);
 		if (disk_write(sess, args, lun, lba, (unsigned) len) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "disk_write() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
