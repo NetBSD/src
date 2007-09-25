@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.552 2007/09/10 19:09:28 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.553 2007/09/25 14:00:18 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -495,7 +495,7 @@ leave it alone.  (garbled 1/4/2001)
 
 Package:	libevent
 Version:	1.0c
-Current Vers:	1.3b
+Current Vers:	1.3e
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
