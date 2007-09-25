@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.2 2007/09/11 21:20:06 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.3 2007/09/25 05:12:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.2 2007/09/11 21:20:06 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.3 2007/09/25 05:12:03 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -384,7 +384,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 			 * Some new signal in set, wakeup master. It will
 			 * rebuild its wait set.
 			 */
-			_lwp_wakeup(pt_sigwmaster->pt_blockedlwp);
+			_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
 		}
 
 		/* Save our wait set and info pointer */
@@ -438,7 +438,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 				/*
 				 * Signal master. It will rebuild its wait set.
 				 */
-				_lwp_wakeup(pt_sigwmaster->pt_blockedlwp);
+				_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
 
 				pthread_spinunlock(self, &pt_sigwaiting_lock);
 				errno = EAGAIN;
@@ -908,7 +908,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
 		pthread_spinunlock(self, &target->pt_flaglock);
 		pthread_spinunlock(self, &target->pt_statelock);
-		_lwp_wakeup(target->pt_blockedlwp);
+		_lwp_wakeup(target->pt_lastlwp);
 		return;
 	}
 	SDPRINTF(("(pthread__kill %p) target state %d\n", target,

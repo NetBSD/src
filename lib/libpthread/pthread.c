@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.48.6.1 2007/09/10 05:24:51 wrstuden Exp $	*/
+/*	$NetBSD: pthread.c,v 1.48.6.2 2007/09/25 05:12:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.48.6.1 2007/09/10 05:24:51 wrstuden Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.48.6.2 2007/09/25 05:12:02 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -919,7 +919,7 @@ pthread_cancel(pthread_t thread)
 			 * uninterruptably in the kernel, and there's
 			 * not much to be done about it.
 			 */
-			_lwp_wakeup(thread->pt_blockedlwp);
+			_lwp_wakeup(thread->pt_lastlwp);
 		} else if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 			/*
 			 * We're blocked somewhere (pthread__block()
