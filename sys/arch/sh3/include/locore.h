@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.12 2007/09/25 01:50:47 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.13 2007/09/25 01:55:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,13 +50,13 @@
 #endif /* SH3 && SH4 */
 
 /*
- * BANK1 r7 contains kernel stack top address.
- * BANK1 r6 conatins current frame pointer. (per process)
+ * BANK1 r6 contains current trapframe pointer.
+ * BANK1 r7 contains bottom address of lwp's kernel stack.
  */
 /*
  * __EXCEPTION_ENTRY:
  *	+ setup stack pointer
- *	+ save all register to frame. (struct trapframe)
+ *	+ save all registers to trapframe.
  *	+ setup kernel stack.
  *	+ change bank from 1 to 0
  *	+ set BANK0 (r4, r5, r6) = (ssr, spc, ssp)
@@ -107,14 +107,14 @@
 	not	r3,	r3						;\
 	and	r1,	r3						;\
 	ldc	r3,	sr	/* SR.RB = 0 */				;\
-	/* Set up argument. r4 = ssr, r5 = spc */			;\
+	/* Set up arguments. r4 = ssr, r5 = spc */			;\
 	stc	r2_bank,r4						;\
 	stc	spc,	r5
 
 /*
  * __EXCEPTION_RETURN:
- *	+ block exception
- *	+ restore all register from stack.
+ *	+ block exceptions
+ *	+ restore all registers from stack.
  *	+ rte.
  */
 #define	__EXCEPTION_RETURN						;\
@@ -187,7 +187,7 @@
 	shll	Rn		/* Rn = 0x000000f0 */			;\
 	stc	sr,	Rm						;\
 	or	Rn,	Rm						;\
-	ldc	Rm,	sr	/* mask all interrupt */
+	ldc	Rm,	sr	/* mask all interrupts */
 
 #define	__INTR_UNMASK(Rn, Rm)						;\
 	mov	#0x78,	Rn						;\
@@ -195,7 +195,7 @@
 	not	Rn,	Rn						;\
 	stc	sr,	Rm						;\
 	and	Rn,	Rm						;\
-	ldc	Rm,	sr	/* unmask all interrupt */
+	ldc	Rm,	sr	/* unmask all interrupts */
 
 #else /* !_LOCORE */
 
