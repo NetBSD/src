@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.277 2007/09/17 20:28:04 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.278 2007/09/25 00:29:14 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9668,4 +9668,13 @@ etc/security					1.104
 	/etc/security.conf.
 	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
 	[adrianp, ticket #883]
+
+sys/arch/landisk/dev/obio.c			1.2
+
+	Pass correct size in CFATTACH_DECL (obio_softc, not device).
+
+	I have no idea how/why it's been working all this time, but I guess
+	today's changes to struct device shifted delicate numerology balance
+	and exposed the problem that's been around since the import.
+	[uwe, ticket #902]
 
