@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.194 2007/08/06 11:48:23 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.195 2007/09/25 21:38:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.194 2007/08/06 11:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.195 2007/09/25 21:38:57 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -468,7 +468,6 @@ mi_switch(struct lwp *l)
 		 * .. we have switched away and are now back so we must
 		 * be the new curlwp.  prevlwp is who we replaced.
 		 */
-		curlwp = l;
 		if (prevlwp != NULL) {
 			curcpu()->ci_mtx_oldspl = oldspl;
 			lwp_unlock(prevlwp);
@@ -504,6 +503,7 @@ mi_switch(struct lwp *l)
 	 * schedstate_percpu pointer.
 	 */
 	SYSCALL_TIME_WAKEUP(l);
+	KASSERT(curlwp == l);
 	KDASSERT(l->l_cpu == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 1);
 
