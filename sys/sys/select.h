@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.28 2007/07/09 21:11:33 ad Exp $	*/
+/*	$NetBSD: select.h,v 1.29 2007/09/25 13:53:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,6 +52,8 @@ void	selrecord(struct lwp *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 void	selnotify(struct selinfo *sip, long knhint);
 void	selsysinit(void);
+void	selinit(struct selinfo *);
+void	seldestroy(struct selinfo *);
 
 #else /* _KERNEL */
 
