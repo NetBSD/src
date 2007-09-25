@@ -134,4 +134,6 @@ int             initiator_abort(initiator_cmd_t *);
 int             initiator_shutdown(void);
 int             initiator_discover(char *, uint64_t, int);
 
+void		get_target_info(uint64_t, initiator_target_t *);
+
 #endif				/* _INITIATOR_H_ */
