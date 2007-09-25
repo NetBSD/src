@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.24 2007/09/04 16:54:02 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.25 2007/09/25 19:27:08 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.24 2007/09/04 16:54:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.25 2007/09/25 19:27:08 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -171,6 +171,7 @@ static char sysmon_power_type[32];
 
 static int sysmon_power_make_dictionary(void *, int, int);
 static int sysmon_power_daemon_task(void *, int);
+static void sysmon_power_destroy_dictionary(prop_dictionary_t);
 
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
@@ -534,6 +535,11 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = prop_dictionary_copyout_ioctl(plist,
 						      cmd,
 						      sysmon_power_dict);
+		/*
+		 * Destroy the dictionary once it was sent, we don't
+		 * need it anymore.
+		 */
+		sysmon_power_destroy_dictionary(sysmon_power_dict);
 		break;
 	    }
 	default:
@@ -556,15 +562,10 @@ sysmon_power_make_dictionary(void *power_data, int event, int type)
 
 	mutex_exit(&sysmon_power_event_queue_mtx);
 
-	/* 
-	 * if there's a dictionary already created, destroy it
-	 * and make a new one to make sure it's always the latest
-	 * used by the event.
-	 */
-	if (sysmon_power_dict)
-		prop_object_release(sysmon_power_dict);
-
 	sysmon_power_dict = prop_dictionary_create();
+	if (sysmon_power_dict == NULL)
+		return ENOMEM;
+
 	mutex_enter(&sysmon_power_event_queue_mtx);
 
 	switch (type) {
@@ -583,10 +584,9 @@ sysmon_power_make_dictionary(void *power_data, int event, int type)
 
 #define SETPROP(key, str)						\
 do {									\
-	if ((str) &&							\
-	    !prop_dictionary_set_cstring_nocopy(sysmon_power_dict,	\
-						(key),			\
-						(str))) {		\
+	if ((str) && !prop_dictionary_set_cstring(sysmon_power_dict,	\
+						  (key),		\
+						  (str))) {		\
 		printf("%s: failed to set %s\n", __func__, (str));	\
 		return EINVAL;						\
 	}								\
@@ -644,6 +644,31 @@ do {									\
 	}
 
 	return 0;
+}
+
+/*
+ * sysmon_power_destroy_dictionary:
+ *
+ * 	Destroys the current sysmon power dictionary and all its properties.
+ */
+static void
+sysmon_power_destroy_dictionary(prop_dictionary_t dict)
+{
+	prop_object_iterator_t iter;
+	prop_object_t obj;
+
+	iter = prop_dictionary_iterator(dict);
+	if (iter == NULL)
+		return;
+
+	while ((obj = prop_object_iterator_next(iter)) != NULL) {
+		prop_dictionary_remove(dict,
+		    prop_dictionary_keysym_cstring_nocopy(obj));
+		prop_object_iterator_reset(iter);
+	}
+
+	prop_object_iterator_release(iter);
+	prop_object_release(dict);
 }
 
 /*
