@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.283 2007/09/25 00:49:50 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.284 2007/09/25 00:53:26 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9720,4 +9720,13 @@ sys/opencrypto/deflate.c			1.9
 	I will write it 1000 times : when I convert bcopy to memcpy, don't forget to
 	swap first and secund args.
 	[degroote, ticket #897]
+
+sys/dev/ata/wd.c				1.345
+
+	Add a workaround for drives with the LBA48 bug:
+	if we get a "ID not found" error for a transfer crossing LBA48_THRESHOLD,
+	and the drive is larger than 128GB, automatically add WD_QUIRK_FORCE_LBA48
+	to the drive's quirks and retry the transfers.
+	Hopefully this will obsolete the WD_QUIRK_FORCE_LBA48 quirk list ...
+	[bouyer, ticket #899]
 
