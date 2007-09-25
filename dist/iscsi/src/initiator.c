@@ -3072,3 +3072,9 @@ initiator_discover(char *host, uint64_t target, int lun)
 	}
 	return 0;
 }
+
+void
+get_target_info(uint64_t target, initiator_target_t *ip)
+{
+	(void) memcpy(ip, &g_target[target], sizeof(*ip));
+}
