@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.9 2007/09/25 01:10:11 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.10 2007/09/25 10:51:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.9 2007/09/25 01:10:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.10 2007/09/25 10:51:24 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -152,11 +152,6 @@ acpi_md_sleep(int state)
 		}
 		pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
 		    VM_PROT_READ | VM_PROT_WRITE);
-	}
-
-	if (!CPU_IS_PRIMARY(curcpu())) {
-		printf("acpi: apci_md_sleep called from secondary CPU ignored\n");
-		return -1;
 	}
 
 #ifdef DIAGNOSTIC
