@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.20 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.20.2.1 2007/09/25 00:45:48 xtraeme Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.20 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.20.2.1 2007/09/25 00:45:48 xtraeme Exp $");
 
 #include "opt_inet.h"
 
@@ -143,8 +143,8 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	algo = ipcomp_algorithm_lookup(sav->alg_enc);
 	if ((ntohl(sav->spi) & ~0xffff) != 0 || !algo) {
 		stat->out_inval++;
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto fail1;
 	}
 	if ((sav->flags & SADB_X_EXT_RAWCPI) == 0)
 		cpi = sav->alg_enc;
@@ -171,13 +171,12 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	mcopy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 	if (mcopy == NULL) {
 		error = ENOBUFS;
-		return 0;
+		goto fail1;
 	}
 	md0 = m_copym(md, 0, M_COPYALL, M_NOWAIT);
 	if (md0 == NULL) {
-		m_freem(mcopy);
 		error = ENOBUFS;
-		return 0;
+		goto fail2;
 	}
 	plen0 = plen;
 
@@ -188,18 +187,13 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		ipseclog((LOG_DEBUG, "ipcomp%d_output: md is not in chain\n",
 		    afnumber));
 		stat->out_inval++;
-		m_freem(m);
-		m_freem(md0);
-		m_freem(mcopy);
-		return EINVAL;
+		error = EINVAL;
+		goto fail3;
 	}
 	mprev->m_next = NULL;
 	if ((md = ipsec_copypkt(md)) == NULL) {
-		m_freem(m);
-		m_freem(md0);
-		m_freem(mcopy);
 		error = ENOBUFS;
-		goto fail;
+		goto fail3;
 	}
 	mprev->m_next = md;
 
@@ -207,11 +201,9 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	if ((*algo->compress)(m, md, &plen) || mprev->m_next == NULL) {
 		ipseclog((LOG_ERR, "packet compression failure\n"));
 		m = NULL;
-		m_freem(md0);
-		m_freem(mcopy);
 		stat->out_inval++;
 		error = EINVAL;
-		goto fail;
+		goto fail3;
 	}
 	stat->out_comphist[sav->alg_enc]++;
 	md = mprev->m_next;
@@ -278,9 +270,8 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	if (M_LEADINGSPACE(md) < complen) {
 		MGET(n, M_DONTWAIT, MT_DATA);
 		if (!n) {
-			m_freem(m);
 			error = ENOBUFS;
-			goto fail;
+			goto fail2;
 		}
 		n->m_len = complen;
 		mprev->m_next = n;
@@ -307,9 +298,8 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 			ipseclog((LOG_ERR,
 			    "IPv4 ESP output: size exceeds limit\n"));
 			ipsecstat.out_inval++;
-			m_freem(m);
 			error = EMSGSIZE;
-			goto fail;
+			goto fail2;
 		}
 		break;
 #endif
@@ -335,7 +325,12 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 
 	return 0;
 
-fail:
+fail3:
+	m_freem(md0);
+fail2:
+	m_freem(mcopy);
+fail1:
+	m_freem(m);
 #if 1
 	return error;
 #else
@@ -354,7 +349,7 @@ ipcomp4_output(m, isr)
 		ipseclog((LOG_DEBUG, "ipcomp4_output: first mbuf too short\n"));
 		ipsecstat.out_inval++;
 		m_freem(m);
-		return 0;
+		return EINVAL;
 	}
 	ip = mtod(m, struct ip *);
 	/* XXX assumes that m->m_next points to payload */
@@ -374,7 +369,7 @@ ipcomp6_output(m, nexthdrp, md, isr)
 		ipseclog((LOG_DEBUG, "ipcomp6_output: first mbuf too short\n"));
 		ipsec6stat.out_inval++;
 		m_freem(m);
-		return 0;
+		return EINVAL;
 	}
 	return ipcomp_output(m, nexthdrp, md, isr, AF_INET6);
 }
