@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.8 2007/09/10 21:26:59 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.9 2007/09/25 01:10:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.8 2007/09/10 21:26:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.9 2007/09/25 01:10:11 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -206,7 +206,7 @@ acpi_md_sleep(int state)
 		for (;;) ;
 	} else {
 		/* Execute Wakeup */
-
+		cpu_init_msrs(&cpu_info_primary);
 		fpuinit(&cpu_info_primary);
 		i8259_reinit();
 #if NLAPIC > 0
