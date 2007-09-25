@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37.6.2 2007/09/25 05:12:03 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.37.6.3 2007/09/25 05:17:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.2 2007/09/25 05:12:03 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.3 2007/09/25 05:17:52 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -205,7 +205,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 */
 		break;
 	case SA_UPCALL_USER:
-		/* We don't send ourselves one of these. */
+		PTHREADD_ADD(PTHREADD_UP_USER);
+		break;
 	default:
 		pthread__abort();
 	}
