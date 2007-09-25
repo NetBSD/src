@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.54 2007/09/25 14:20:49 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.55 2007/09/25 15:09:32 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -604,16 +604,13 @@ find_sensors(prop_array_t array, const char *dvname)
 		if (gesen)
 			free(gesen);
 		gesen = NULL;
-		rval = ENOMEM;
-		goto out;
+		return ENOMEM;
 	}
 	gesen = esen;
 
 	iter = prop_array_iterator(array);
-	if (iter == NULL) {
-		rval = EINVAL;
-		goto out;
-	}
+	if (iter == NULL)
+		return EINVAL;
 
 	/* iterate over the array of dictionaries */
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
@@ -748,13 +745,9 @@ find_sensors(prop_array_t array, const char *dvname)
 			return ENOMEM;
 
 		rval = check_sensors(gesen, str, gnelems);
-		if (rval)
-			goto out;
+		free(str);
 	}
 
-out:
-	if (str)
-		free(str);
 	return rval;
 }
 
@@ -776,9 +769,6 @@ check_sensors(struct envsys_sensor *es, char *str, size_t nelems)
 			if (mydevname) {
 				warnx("unknown sensor `%s' for device `%s'",
 				    sname, mydevname);
-				return EINVAL;
-			} else {
-				warnx("unknown sensor `%s'", sname);
 				return EINVAL;
 			}
 		}
