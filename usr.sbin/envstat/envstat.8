@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.27 2007/09/20 19:48:26 plunky Exp $
+.\"	$NetBSD: envstat.8,v 1.28 2007/09/25 14:20:48 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,8 +45,8 @@
 .Op Fl DfIlx
 .Op Fl d Ar device
 .Op Fl i Ar interval
-.Op Fl m Ar critical=... critmax=... critmin=... desc=... rfact=...
-.Op Fl s Ar sensor1,sensor2,...
+.Op Fl m Ar "key=value"
+.Op Fl s Ar "sensor,..."
 .Op Fl w Ar width
 .Sh DESCRIPTION
 .Nm
@@ -70,42 +70,42 @@ Display the names of the drivers that were registered with
 the
 .Xr envsys 4
 framework, one per line.
-.It Fl d
-Display only the sensors for a given
-.Ar driver .
-This is useful when there are multiple drivers registered and
-you want to only see those from a specific driver.
+.It Fl d Ar device
+Display only the sensors for the given
+.Ar device .
+This is useful when there are multiple devices registered and
+you want to only see results from a specific device.
 .It Fl f
 Display temperature values in degrees Fahrenheit.
 The default is to display temperature values in degrees Celsius.
 When changing properties on a sensor and this flag is specified,
 the value provided must be in degrees Fahrenheit too.
 .It Fl I
-This flag skips the sensors with invalid state, they are showed up
-with the
-.Em N/A
+This flag skips the sensors with invalid state, these are normally
+shown using the
+.Qq N/A
 string by default.
-.It Fl i
+.It Fl i Ar interval
 Repeat the display every
 .Ar interval
 seconds.
 Note that some devices do not provide fresh values on demand.
-See the individual device's manual page for meaningful values for
+See the individual devices manual page for meaningful values for
 .Ar interval .
 If not specified, or specified as 0,
 .Nm
-produces one line of values and exits.
+produces one round of values and exits.
 .It Fl l
 List the names of all supported sensors, one per line.
 Use of this flag causes
 .Nm
 to ignore all other option flags.
-.It Fl m
-This flag can be used to change a description of a sensor, to
+.It Fl m Ar "key=value"
+This flag can be used to modify a description of a sensor, to
 change the rfact (resistor factor) in a voltage sensor or
 to set critical capacity for (battery sensors) and critical
 min and max limits (for all supported sensors).
-Recognized keywords are:
+Recognized keys are:
 .Ar critical , critmax , critmin , desc ,
 and
 .Ar rfact .
@@ -113,16 +113,16 @@ See the
 .Sx EXAMPLES
 section for more information.
 .It Fl r
-This flag is only used for compatibility reasons and there's no need
+This flag is provided for compatibility reasons and there's no need
 to use it. In the previous implementation, it was used to enable the
-row mode; this mode is enabled by default.
-.It Fl s
+row mode; this mode is now the default.
+.It Fl s Ar "sensor,..."
 Restrict the display to the named sensors.
 The sensor names must be supplied as a comma separated list.
 Sensor names are case sensitive. Note that it's mandatory to use the
 .Fl d
-flag to specify the driver that has the sensor.
-.It Fl w
+flag to specify the device that has the sensor.
+.It Fl w Ar width
 Use
 .Ar width
 as the column width for the output.
@@ -168,7 +168,7 @@ is required to set the new target mode.
 is required to specify sensor's name.
 .El
 .Pp
-The available targets for the
+The available keys for the
 .Fl m
 flag are:
 .Pp
@@ -202,12 +202,12 @@ accepts a number that will be used as new rfact in voltage sensors.
 Also is possible to remove a critical limit if one was set before,
 with the
 .Ar remove
-keyword passed to the
+value passed with the
 .Ar critical ,
 .Ar critmax ,
 or
 .Ar critmin
-target.
+keys.
 See the
 .Sx EXAMPLES
 for information how to use it.
@@ -217,7 +217,7 @@ It's possible to change properties with the
 .Pa /etc/envsys.conf
 configuration file. The syntax for this file is the following:
 .Bd -literal
-device:sensor name:target:value
+device:sensor name:key:value
 
 aiboost0:CPU Temperature:critmax:70
 lm0:Temp0:desc:CPU Temperature
@@ -226,10 +226,9 @@ smsc0:+3.3V:rfact:56000
 .Pp
 In the example configuration file the first argument is the name of
 the device, second argument is the name of the sensor that we want to change,
-third argument is the target that will be used for the
+third and fourth arguments are the key and value that will be used for the
 .Ar -m
-flag and finally the fourth argument is the value that will be used for the
-target.
+flag.
 .Pp
 The first example sets a critical over limit of
 .Dq 70
