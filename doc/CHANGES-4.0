@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.281 2007/09/25 00:42:05 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.282 2007/09/25 00:46:00 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9698,4 +9698,19 @@ sys/netinet6/esp_output.c			1.29
 
 	Reported by Wolfgang Stukenbrock in pr/36781 . Thanks you a lot.
 	[degroote, ticket #893]
+
+sys/netinet6/ah_output.c			1.30
+sys/netinet6/esp_output.c			1.30
+sys/netinet6/ipcomp_output.c			1.22
+
+	{ah,esp,ipcomp}_output must return 0 on success. On failure, it returns the
+	error and m is freed. Previously, it was not the case in ipcomp and esp case
+	(aka in some case, it returns 0 with m freed, or an error and m was not freed).
+
+	In ipcomp_output, fix some leak of mcopy too.
+
+	Use the same error path in {ah,esp,ipcomp}_output.
+
+	Problem was reported by Wolfgang Stukenbrock in pr/36768.
+	[degroote, ticket #896]
 
