@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.4 2007/09/25 05:38:49 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.5 2007/09/25 06:01:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.4 2007/09/25 05:38:49 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.5 2007/09/25 06:01:30 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -879,11 +879,12 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	 * Ensure the victim is not running.
 	 * In a MP world, it could be on another processor somewhere.
 	 *
-	 * XXX As long as this is uniprocessor, encountering a running
-	 * target process is a bug.
+	 * Encountering a target process running on our virtual CPU
+	 * is a bug.
 	 */
 	pthread__assert(target->pt_state != PT_STATE_RUNNING ||
-		target->pt_blockgen != target->pt_unblockgen);
+		target->pt_blockgen != target->pt_unblockgen ||
+		self->pt_vpid != target->pt_vpid);
 
 	/*
 	 * Holding the state lock blocks out cancellation and any other
@@ -900,6 +901,8 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * won't run again for a while. Try to wake it
 		 * from its torpor, then mark the signal for
 		 * later processing.
+		 *
+		 * WRS - are we supposed to mask the signal here?
 		 */
 		__sigaddset14(&target->pt_sigblocked, si->si_signo);
 		__sigaddset14(&target->pt_sigmask, si->si_signo);
@@ -914,6 +917,29 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	SDPRINTF(("(pthread__kill %p) target state %d\n", target,
 		  target->pt_state));
 	switch (target->pt_state) {
+	case PT_STATE_RUNNING:
+		/*
+		 * The target is alive on another CPU. Mark the
+		 * signal for delivery then ask the kernel to
+		 * preempt it.
+		 *
+		 * WRS - are we supposed to mask the signal here?
+		 */
+		__sigaddset14(&target->pt_sigblocked, si->si_signo);
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
+
+		pthread_spinlock(self, &target->pt_flaglock);
+		target->pt_flags |= PT_FLAG_SIGDEFERRED;
+		pthread_spinunlock(self, &target->pt_flaglock);
+		pthread_spinunlock(self, &target->pt_statelock);
+		/*
+		 * For the moment (while testing), we don't actually have
+		 * the kernel send the preempt. Both because the upcall
+		 * handler doesn't handle it (easy to add), and more
+		 * importantly so that we can test signal capture points.
+		 */
+		//sa_preempt(target->pt_lastlwp);
+		return;
 	case PT_STATE_SUSPENDED:
 		pthread_spinlock(self, &pthread__runqueue_lock);
 		PTQ_REMOVE(&pthread__suspqueue, target, pt_runq);
