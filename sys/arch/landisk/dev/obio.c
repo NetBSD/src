@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: obio.c,v 1.1.10.1 2007/09/25 00:28:46 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.10.1 2007/09/25 00:28:46 xtraeme Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -72,7 +72,7 @@ static int	obio_print(void *, const char *);
 static int	obio_search(struct device *, struct cfdata *,
 		    const int *, void *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 static int
