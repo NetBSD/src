@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.3 2007/09/25 05:12:03 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.4 2007/09/25 05:38:49 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.3 2007/09/25 05:12:03 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.4 2007/09/25 05:38:49 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -847,10 +847,9 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * If the target is waiting for this signal in sigtimedwait(),
 		 * make the target runnable but do not deliver the signal.
 		 * Otherwise record the signal for later delivery.
-		 * XXX not MPsafe.
-		 * WRS - how is it not MP safe?
-		 * Hmm... We probably should hold the target's pt_statelock,
-		 * not our own.
+		 * Note: since we are running, we implcitily know that
+		 * target != self here. So in the deliver = 0 case, we will
+		 * not exit this routine w/ target->pt_statelock held.
 		 */
 		pthread_spinlock(self, &target->pt_statelock);
 		if (target->pt_state == PT_STATE_BLOCKED_QUEUE &&
@@ -858,7 +857,6 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		    __sigismember14(target->pt_sigwait, si->si_signo)) {
 			SDPRINTF(("(pthread__kill %p) stw\n", target));
 			target->pt_wsig->si_signo = si->si_signo;
-			pthread_spinunlock(self, &target->pt_statelock);
 			deliver = 0;
 		} else {
 			SDPRINTF(("(pthread__kill %p) deferring\n", target));
@@ -889,9 +887,11 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 
 	/*
 	 * Holding the state lock blocks out cancellation and any other
-	 * attempts to set this thread up to take a signal.
+	 * attempts to set this thread up to take a signal. Grab it if
+	 * we didn't grab it above.
 	 */
-	pthread_spinlock(self, &target->pt_statelock);
+	if (deliver == 1)
+		pthread_spinlock(self, &target->pt_statelock);
 	if (target->pt_blockgen != target->pt_unblockgen) {
 		SDPRINTF(("(pthread__kill %p) target blocked\n", target));
 
