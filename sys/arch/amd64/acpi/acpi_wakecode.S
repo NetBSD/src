@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.5 2007/09/10 20:38:59 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.6 2007/09/25 00:56:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,6 +74,8 @@
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
+#define	ACPI_WAKEUP_ADDR	0x3000
+
 	.text
 	.code16
 	.org 0	/* ACPI spec says: cs==(phys>>8), ip==(phys&0x000F) */
@@ -127,32 +129,6 @@ wakeup_16:
 	outb	%al,$0x61
 1:
 
-	/* Get physical address of the code */
-	xorl	%esi,%esi
-	movw	%cs,%si
-	shll	$4,%esi
-
-	/* Prepare ljmpl into 32bit mode */
-	movl	%esi,%eax
-	addl	$wakeup_32,%eax
-	movl	%eax,wakeup_sw32+2
-
-	/* Flush prefetch queue
-	jmp	1f
-1:	jmp	1f
-1:
-
-	/* Prepare ljmpl into 64bit mode */
-	addl	%esi,wakeup_64_ptr
-	/* Prepare GDT64 */
-	movl	%esi,%eax
-	addl	$tmp_gdtable64,%eax
-	movl	%eax,tmp_gdt64+2
-	/* Prepare GDT */
-	movl	%esi,%eax
-	addl	$tmp_gdtable,%eax
-	movl	%eax,tmp_gdt+2
-	/* Load 32bit GDT */
 	data32 addr32 lgdt	tmp_gdt
 
 	/* Enable protected mode */
@@ -160,11 +136,9 @@ wakeup_16:
 	orl	$(CR0_PE),%eax
 	mov	%eax,%cr0
 
-
 wakeup_sw32:
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$0x8,$0x12345678	/* Code location, to be replaced */
-
+	ljmpl	$0x8,$wakeup_32 + ACPI_WAKEUP_ADDR
 
 	.code32
 	.align	16
@@ -175,11 +149,10 @@ wakeup_32:
 
 	nop
 	/* Set up segment registers for protected mode */
-	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
+	movw	$0x10, %ax
 	movw	%ax,%ds
 
-	movl	%esi,%esp
-	addl	4096,%esp
+	movl	ACPI_WAKEUP_ADDR + 4096,%esp
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -195,44 +168,35 @@ wakeup_32:
 	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
-	movl	%esi,%edx
-	addl	$wakeup_64_ptr,%edx
-	movl	%esi,%ecx
-	addl	$tmp_gdt64,%ecx
-	movl	WAKEUP_r_cr3(%esi),%eax
+	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
 
-	movl	WAKEUP_r_cr0(%esi),%eax
+	movl	WAKEUP_r_cr0 + ACPI_WAKEUP_ADDR,%eax
         movl	%eax,%cr0
 	jmp	1f
 1:
-	lgdt	(%ecx)
+	lgdt	tmp_gdt64 + ACPI_WAKEUP_ADDR
 
-	ljmp	*(%edx)
-
-wakeup_64_ptr:
-	.long   wakeup_64
-	.word   GSEL(GCODE_SEL, SEL_KPL)
+	ljmp	$0x8, $wakeup_64 + ACPI_WAKEUP_ADDR
 
 	.code64
 wakeup_64:
 
 	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax 	#switch to new segment
 	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 
-	xorq	%rdi,%rdi
-	movl	%esi,%edi
+	movq	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%rbx
 
-	movq	WAKEUP_restorecpu(%rdi),%rbx
-
-	lgdt	WAKEUP_r_gdt(%rdi)
+	lgdt	WAKEUP_r_gdt + ACPI_WAKEUP_ADDR
 
 	jmp	*%rbx
 
 	.align	8
 tmp_gdt:
 	.word	0xffff
-	.long	0
+	.long	tmp_gdtable + ACPI_WAKEUP_ADDR
 
 	.align	8, 0
 tmp_gdtable:
@@ -248,7 +212,7 @@ tmp_gdtable:
 
 tmp_gdt64:
 	.word 0xffff
-	.long 0
+	.long tmp_gdtable64 + ACPI_WAKEUP_ADDR
 
 tmp_gdtable64:
 	.quad 0x0000000000000000
