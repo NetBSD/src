@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.24 2007/09/25 04:09:03 lukem Exp $	*/
+/*	$NetBSD: find.c,v 1.25 2007/09/25 04:10:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.24 2007/09/25 04:09:03 lukem Exp $");
+__RCSID("$NetBSD: find.c,v 1.25 2007/09/25 04:10:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: find.c,v 1.24 2007/09/25 04:09:03 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
