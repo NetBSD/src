@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.2 2007/09/10 23:11:23 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.3 2007/09/25 00:59:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -30,6 +30,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/specialreg.h>
 
 	.text
 	.p2align 2, 0x90
@@ -40,6 +41,16 @@ acpi_restorecpu:
 	movw	%ax,%fs
 	movw	r_gs,%ax
 	movw	%ax,%gs
+
+	movl	$MSR_FSBASE,%ecx
+	movl	r_fs_base_l,%eax
+	movl	r_fs_base_h,%edx
+	wrmsr
+	movl	$MSR_KERNELGSBASE,%ecx
+	movl	r_gs_base_l,%eax
+	movl	r_gs_base_h,%edx
+	wrmsr
+	swapgs
 
 	movq	r_cr8,%rax
 	movq	%rax,%cr8
@@ -52,9 +63,9 @@ acpi_restorecpu:
 	movq	r_cr0,%rax
 	movq	%rax,%cr0
 
-
 	jmp 1f
 1:
+
 	//movq	CPUVAR(GDT),%rax
 	//movzwq	r_tr,%rdx
 	//andq	$~0x0200,4(%rax,%rdx, 1)
@@ -86,7 +97,6 @@ acpi_restorecpu:
 
 	pushq	r_rfl
 	popfq
-
 	ret
 
 	.p2align 2, 0x90
@@ -127,6 +137,18 @@ acpi_savecpu:
 
 	movq	%rsp,r_rsp
 
+	movl	$MSR_FSBASE,%ecx
+	rdmsr
+	movl	%eax,r_fs_base_l
+	movl	%edx,r_fs_base_h
+
+	swapgs
+	movl	$MSR_KERNELGSBASE,%ecx
+	rdmsr
+	movl	%eax,r_gs_base_l
+	movl	%edx,r_gs_base_h
+	swapgs
+
 	sgdt	r_gdt
 	sidt	r_idt
 	sldt	r_ldt
@@ -139,6 +161,7 @@ acpi_savecpu:
 
 	.data
 	.align 16
+
 	.globl acpi_wakeup_ds
 acpi_wakeup_ds:
 r_fs:		.word	0
@@ -146,6 +169,14 @@ r_gs:		.word	0
 r_tr:		.word	0
 r_ldt:		.word	0
 
+r_fs_base_l:
+		.long	0
+r_fs_base_h:
+		.long	0
+r_gs_base_l:
+		.long	0
+r_gs_base_h:
+		.long	0
 r_rbx:		.quad	0
 r_rcx:		.quad	0
 r_rdx:		.quad	0
