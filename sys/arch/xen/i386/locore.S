@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27 2007/09/05 19:30:01 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.28 2007/09/25 21:38:37 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -668,6 +668,9 @@ switch_skipsave:
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
+
 	/*
 	 * Restore the rest of newlwp's context.
 	 *
@@ -679,8 +682,6 @@ switch_skipsave:
 	pushl	%ebx
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
-
-	movl	$0,CPUVAR(RESCHED)
 
 	STIC(%ebx)
 	jz 1f
@@ -707,15 +708,16 @@ switch_return:
 	ret
 
 check_ras:
-	movl	L_MD_REGS(%edi),%ebx
-	pushl	TF_EIP(%ebx)
-	pushl	L_PROC(%edi)
+	movl	L_MD_REGS(%edi),%ecx
+	pushl	TF_EIP(%ecx)
+	pushl	%eax
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
-	je	switch_return
-	movl	%eax,TF_EIP(%ebx)
-	jmp	switch_return
+	je	2b
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
+	jmp	2b
 
 /*
  * void savectx(struct pcb *pcb);
