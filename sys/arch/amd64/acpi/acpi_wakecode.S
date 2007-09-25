@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.6 2007/09/25 00:56:42 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.7 2007/09/25 23:29:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ wakeup_32:
 	/* Set up segment registers for protected mode */
 	movw	$0x10, %ax
 	movw	%ax,%ds
+	movw	%ax,%ss
 
 	movl	ACPI_WAKEUP_ADDR + 4096,%esp
 
