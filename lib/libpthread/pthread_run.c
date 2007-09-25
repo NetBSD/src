@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.18.12.2 2007/09/25 05:12:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.18.12.2 2007/09/25 05:12:03 wrstuden Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -94,6 +94,7 @@ sched_yield(void)
 		next->pt_state = PT_STATE_RUNNING;
 		if (next != self) {
 			next->pt_vpid = self->pt_vpid;
+			next->pt_lastlwp = self->pt_lastlwp;
 			pthread_spinunlock(self, &next->pt_statelock);
 			pthread__locked_switch(self, next,
 			    &pthread__runqueue_lock);
@@ -117,6 +118,7 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 	pthread_spinlock(self, &next->pt_statelock);
 	next->pt_state = PT_STATE_RUNNING;
 	next->pt_vpid = self->pt_vpid;
+	next->pt_lastlwp = self->pt_lastlwp;
 	pthread_spinunlock(self, &next->pt_statelock);
 	SDPRINTF(("(calling locked_switch %p, %p) spinlock %d, %d\n",
  		self, next, self->pt_spinlocks, next->pt_spinlocks));
