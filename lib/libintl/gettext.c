@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.24 2005/06/01 11:08:57 lukem Exp $	*/
+/*	$NetBSD: gettext.c,v 1.25 2007/09/25 08:19:09 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.24 2005/06/01 11:08:57 lukem Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.25 2007/09/25 08:19:09 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -51,68 +51,55 @@ __RCSID("$NetBSD: gettext.c,v 1.24 2005/06/01 11:08:57 lukem Exp $");
 #include "plural_parser.h"
 #include "pathnames.h"
 
-static const char *lookup_category __P((int));
-static const char *split_locale __P((const char *));
-static const char *lookup_mofile __P((char *, size_t, const char *,
-	const char *, const char *, const char *, struct domainbinding *));
-static u_int32_t flip __P((u_int32_t, u_int32_t));
-static int validate __P((void *, struct mohandle *));
-static int mapit __P((const char *, struct domainbinding *));
-static int unmapit __P((struct domainbinding *));
-static const char *lookup_hash __P((const char *, struct domainbinding *,
-				    size_t *));
-static const char *lookup_bsearch __P((const char *, struct domainbinding *,
-				       size_t *));
-static const char *lookup __P((const char *, struct domainbinding *,
-			       size_t *));
-static const char *get_lang_env __P((const char *));
+static const char *lookup_category(int);
+static const char *split_locale(const char *);
+static const char *lookup_mofile(char *, size_t, const char *, const char *,
+				 const char *, const char *,
+				 struct domainbinding *);
+static uint32_t flip(uint32_t, uint32_t);
+static int validate(void *, struct mohandle *);
+static int mapit(const char *, struct domainbinding *);
+static int unmapit(struct domainbinding *);
+static const char *lookup_hash(const char *, struct domainbinding *, size_t *);
+static const char *lookup_bsearch(const char *, struct domainbinding *,
+				  size_t *);
+static const char *lookup(const char *, struct domainbinding *, size_t *);
+static const char *get_lang_env(const char *);
 
 /*
  * shortcut functions.  the main implementation resides in dcngettext().
  */
 char *
-gettext(msgid)
-	const char *msgid;
+gettext(const char *msgid)
 {
 
 	return dcngettext(NULL, msgid, NULL, 1UL, LC_MESSAGES);
 }
 
 char *
-dgettext(domainname, msgid)
-	const char *domainname;
-	const char *msgid;
+dgettext(const char *domainname, const char *msgid)
 {
 
 	return dcngettext(domainname, msgid, NULL, 1UL, LC_MESSAGES);
 }
 
 char *
-dcgettext(domainname, msgid, category)
-	const char *domainname;
-	const char *msgid;
-	int category;
+dcgettext(const char *domainname, const char *msgid, int category)
 {
 
 	return dcngettext(domainname, msgid, NULL, 1UL, category);
 }
 
 char *
-ngettext(msgid1, msgid2, n)
-	const char *msgid1;
-	const char *msgid2;
-	unsigned long int n;
+ngettext(const char *msgid1, const char *msgid2, unsigned long int n)
 {
 
 	return dcngettext(NULL, msgid1, msgid2, n, LC_MESSAGES);
 }
 
 char *
-dngettext(domainname, msgid1, msgid2, n)
-	const char *domainname;
-	const char *msgid1;
-	const char *msgid2;
-	unsigned long int n;
+dngettext(const char *domainname, const char *msgid1, const char *msgid2,
+	  unsigned long int n)
 {
 
 	return dcngettext(domainname, msgid1, msgid2, n, LC_MESSAGES);
@@ -140,8 +127,7 @@ dngettext(domainname, msgid1, msgid2, n)
  */
 
 static const char *
-lookup_category(category)
-	int category;
+lookup_category(int category)
 {
 
 	switch (category) {
@@ -160,8 +146,7 @@ lookup_category(category)
  * XXX boundary check on "result" is lacking
  */
 static const char *
-split_locale(lname)
-	const char *lname;
+split_locale(const char *lname)
 {
 	char buf[BUFSIZ], tmp[BUFSIZ];
 	char *l, *t, *c, *m;
@@ -222,14 +207,9 @@ fail:
 }
 
 static const char *
-lookup_mofile(buf, len, dir, lpath, category, domainname, db)
-	char *buf;
-	size_t len;
-	const char *dir;
-	const char *lpath;	/* list of locales to be tried */
-	const char *category;
-	const char *domainname;
-	struct domainbinding *db;
+lookup_mofile(char *buf, size_t len, const char *dir, const char *lpath,
+	      const char *category, const char *domainname,
+	      struct domainbinding *db)
 {
 	struct stat st;
 	char *p, *q;
@@ -271,10 +251,8 @@ lookup_mofile(buf, len, dir, lpath, category, domainname, db)
 	return NULL;
 }
 
-static u_int32_t
-flip(v, magic)
-	u_int32_t v;
-	u_int32_t magic;
+static uint32_t
+flip(uint32_t v, uint32_t magic)
 {
 
 	if (magic == MO_MAGIC)
@@ -290,9 +268,7 @@ flip(v, magic)
 }
 
 static int
-validate(arg, mohandle)
-	void *arg;
-	struct mohandle *mohandle;
+validate(void *arg, struct mohandle *mohandle)
 {
 	char *p;
 
@@ -307,8 +283,8 @@ validate(arg, mohandle)
 /*
  * calculate the step value if the hash value is conflicted.
  */
-static __inline u_int32_t
-calc_collision_step(u_int32_t hashval, u_int32_t hashsize)
+static __inline uint32_t
+calc_collision_step(uint32_t hashval, uint32_t hashsize)
 {
 	_DIAGASSERT(hashsize>2);
 	return (hashval % (hashsize - 2)) + 1;
@@ -317,16 +293,15 @@ calc_collision_step(u_int32_t hashval, u_int32_t hashsize)
 /*
  * calculate the next index while conflicting.
  */
-static __inline u_int32_t
-calc_next_index(u_int32_t curidx, u_int32_t hashsize, u_int32_t step)
+static __inline uint32_t
+calc_next_index(uint32_t curidx, uint32_t hashsize, uint32_t step)
 {
 	return curidx+step - (curidx >= hashsize-step ? hashsize : 0);
 }
 
 static int
-get_sysdep_string_table(struct mosysdepstr_h **table_h,
-			u_int32_t *ofstable, uint32_t nstrings,
-			u_int32_t magic, char *base)
+get_sysdep_string_table(struct mosysdepstr_h **table_h, uint32_t *ofstable,
+			uint32_t nstrings, uint32_t magic, char *base)
 {
 	int i, j;
 	int count;
@@ -403,10 +378,9 @@ expand_sysdep(struct mohandle *mohandle, struct mosysdepstr_h *str)
 }
 
 static void
-insert_to_hash(u_int32_t *htable, u_int32_t hsize, const char *str,
-	       u_int32_t ref)
+insert_to_hash(uint32_t *htable, uint32_t hsize, const char *str, uint32_t ref)
 {
-	u_int32_t hashval, idx, step;
+	uint32_t hashval, idx, step;
 
 	hashval = __intl_string_hash(str);
 	step = calc_collision_step(hashval, hsize);
@@ -421,12 +395,12 @@ insert_to_hash(u_int32_t *htable, u_int32_t hsize, const char *str,
 static int
 setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 {
-	u_int32_t magic;
+	uint32_t magic;
 	struct moentry *stable;
 	size_t l;
 	int i;
 	char *v;
-	u_int32_t *ofstable;
+	uint32_t *ofstable;
 
 	magic = mo->mo_magic;
 
@@ -464,7 +438,7 @@ setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 	if (!mohandle->mo.mo_sysdep_otable)
 		return -1;
 	/* LINTED: ignore the alignment problem. */
-	ofstable = (u_int32_t *)(base + flip(mo->mo_sysdep_otable, magic));
+	ofstable = (uint32_t *)(base + flip(mo->mo_sysdep_otable, magic));
 	if (get_sysdep_string_table(mohandle->mo.mo_sysdep_otable, ofstable,
 				    mohandle->mo.mo_sysdep_nstring, magic,
 				    base))
@@ -475,7 +449,7 @@ setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 	if (!mohandle->mo.mo_sysdep_ttable)
 		return -1;
 	/* LINTED: ignore the alignment problem. */
-	ofstable = (u_int32_t *)(base + flip(mo->mo_sysdep_ttable, magic));
+	ofstable = (uint32_t *)(base + flip(mo->mo_sysdep_ttable, magic));
 	if (get_sysdep_string_table(mohandle->mo.mo_sysdep_ttable, ofstable,
 				    mohandle->mo.mo_sysdep_nstring, magic,
 				    base))
@@ -495,16 +469,14 @@ setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 }
 
 int
-mapit(path, db)
-	const char *path;
-	struct domainbinding *db;
+mapit(const char *path, struct domainbinding *db)
 {
 	int fd;
 	struct stat st;
 	char *base;
-	u_int32_t magic, revision, flags = 0;
+	uint32_t magic, revision, flags = 0;
 	struct moentry *otable, *ttable;
-	const u_int32_t *htable;
+	const uint32_t *htable;
 	struct moentry_h *p;
 	struct mo *mo;
 	size_t l, headerlen;
@@ -620,14 +592,14 @@ mapit(path, db)
 	}
 	/* allocate htable, and convert it to the host order. */
 	if (mohandle->mo.mo_hsize > 2) {
-		l = sizeof(u_int32_t) * mohandle->mo.mo_hsize;
-		mohandle->mo.mo_htable = (u_int32_t *)malloc(l);
+		l = sizeof(uint32_t) * mohandle->mo.mo_hsize;
+		mohandle->mo.mo_htable = (uint32_t *)malloc(l);
 		if (!mohandle->mo.mo_htable) {
 			unmapit(db);
 			goto fail;
 		}
 		/* LINTED: ignore the alignment problem. */
-		htable = (const u_int32_t *)(base+flip(mo->mo_hoffset, magic));
+		htable = (const uint32_t *)(base+flip(mo->mo_hoffset, magic));
 		for (i=0; i < mohandle->mo.mo_hsize; i++) {
 			mohandle->mo.mo_htable[i] = flip(htable[i], magic);
 			if (mohandle->mo.mo_htable[i] >=
@@ -680,9 +652,9 @@ fail:
 }
 
 static void
-free_sysdep_table(struct mosysdepstr_h **table, u_int32_t nstring)
+free_sysdep_table(struct mosysdepstr_h **table, uint32_t nstring)
 {
-	u_int32_t i;
+	uint32_t i;
 
 	for (i=0; i<nstring; i++) {
 		if (table[i]) {
@@ -695,8 +667,7 @@ free_sysdep_table(struct mosysdepstr_h **table, u_int32_t nstring)
 }
 
 static int
-unmapit(db)
-	struct domainbinding *db;
+unmapit(struct domainbinding *db)
 {
 	struct mohandle *mohandle = &db->mohandle;
 
@@ -730,13 +701,10 @@ unmapit(db)
 
 /* ARGSUSED */
 static const char *
-lookup_hash(msgid, db, rlen)
-	const char *msgid;
-	struct domainbinding *db;
-	size_t *rlen;
+lookup_hash(const char *msgid, struct domainbinding *db, size_t *rlen)
 {
 	struct mohandle *mohandle = &db->mohandle;
-	u_int32_t idx, hashval, step, strno;
+	uint32_t idx, hashval, step, strno;
 	size_t len;
 	struct mosysdepstr_h *sysdep_otable, *sysdep_ttable;
 
@@ -786,10 +754,7 @@ lookup_hash(msgid, db, rlen)
 }
 
 static const char *
-lookup_bsearch(msgid, db, rlen)
-	const char *msgid;
-	struct domainbinding *db;
-	size_t *rlen;
+lookup_bsearch(const char *msgid, struct domainbinding *db, size_t *rlen)
 {
 	int top, bottom, middle, omiddle;
 	int n;
@@ -826,10 +791,7 @@ lookup_bsearch(msgid, db, rlen)
 }
 
 static const char *
-lookup(msgid, db, rlen)
-	const char *msgid;
-	struct domainbinding *db;
-	size_t *rlen;
+lookup(const char *msgid, struct domainbinding *db, size_t *rlen)
 {
 	const char *v;
 
@@ -883,12 +845,8 @@ get_indexed_string(const char *str, size_t len, unsigned long idx)
 	((char *)__UNCONST((n) == 1 ? (msgid1) : (msgid2)))
 
 char *
-dcngettext(domainname, msgid1, msgid2, n, category)
-	const char *domainname;
-	const char *msgid1;
-	const char *msgid2;
-	unsigned long int n;
-	int category;
+dcngettext(const char *domainname, const char *msgid1, const char *msgid2,
+	   unsigned long int n, int category)
 {
 	const char *msgid;
 	char path[PATH_MAX];
