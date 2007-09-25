@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1067 2007/09/24 20:44:24 wiz Exp $
+#	$NetBSD: mi,v 1.1068 2007/09/25 01:13:55 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5950,6 +5950,7 @@
 ./usr/share/man/cat3/queue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/radixsort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/raise.0			comp-c-catman		.cat
+./usr/share/man/cat3/raise_default_signal.0	comp-c-catman		.cat
 ./usr/share/man/cat3/rand.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rand_r.0			comp-c-catman		.cat
@@ -10531,6 +10532,7 @@
 ./usr/share/man/man3/queue.3			comp-c-man		.man
 ./usr/share/man/man3/radixsort.3		comp-c-man		.man
 ./usr/share/man/man3/raise.3			comp-c-man		.man
+./usr/share/man/man3/raise_default_signal.3	comp-c-man		.man
 ./usr/share/man/man3/rand.3			comp-c-man		.man
 ./usr/share/man/man3/rand48.3			comp-c-man		.man
 ./usr/share/man/man3/rand_r.3			comp-c-man		.man
