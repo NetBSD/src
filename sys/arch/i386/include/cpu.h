@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.144 2007/08/29 23:38:04 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.145 2007/09/25 17:08:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,7 +140,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
