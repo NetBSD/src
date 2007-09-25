@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.11 2007/09/25 13:16:36 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.12 2007/09/25 14:56:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.11 2007/09/25 13:16:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.12 2007/09/25 14:56:25 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -154,7 +154,7 @@ acpi_md_sleep(int state)
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 
-	if (!CPU_IS_PRIMARY(curcpu()) {
+	if (!CPU_IS_PRIMARY(curcpu())) {
 		printf("acpi0: WARNING: ignoring sleep from secondary CPU\n");
 		return -1;
 	}
