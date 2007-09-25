@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.278 2007/09/25 00:29:14 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.279 2007/09/25 00:33:11 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9677,4 +9677,11 @@ sys/arch/landisk/dev/obio.c			1.2
 	today's changes to struct device shifted delicate numerology balance
 	and exposed the problem that's been around since the import.
 	[uwe, ticket #902]
+
+sys/arch/sparc64/conf/GENERIC			1.92
+
+	add mskc/msk & skc/sk network drivers.
+
+	reported to work by Chris Ross on port-sparc64.
+	[mrg, ticket #901]
 
