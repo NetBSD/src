@@ -1,11 +1,11 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2007/09/26 19:48:38 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2007/09/26 23:48:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
