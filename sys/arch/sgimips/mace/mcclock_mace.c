@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.6 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.7 2007/09/26 05:50:02 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.6 2007/07/24 14:41:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.7 2007/09/26 05:50:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ struct mcclock_mace_softc {
 	bus_space_handle_t	sc_sh;
 };
 
+static struct mcclock_mace_softc *mace0 = NULL;
+
 static int	mcclock_mace_match(struct device *, struct cfdata *, void *);
 static void	mcclock_mace_attach(struct device*, struct device *, void *);
 
@@ -101,6 +103,9 @@ static int	mcclock_mace_settime(struct todr_chip_handle *,
 
 unsigned int	ds1687_read(void *arg, unsigned int addr);
 void		ds1687_write(void *arg, unsigned int addr, unsigned int data);
+
+void		mcclock_poweroff(void);
+
 
 CFATTACH_DECL(mcclock_mace, sizeof(struct mcclock_mace_softc),
     mcclock_mace_match, mcclock_mace_attach, NULL, NULL);
@@ -145,6 +150,7 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
+	mace0 = sc;
 }
 
 /*
@@ -230,4 +236,36 @@ mcclock_mace_settime(struct todr_chip_handle *todrch,
 	splx(s);
 
 	return (0);
+}
+
+void
+mcclock_poweroff()
+{
+	int s;
+	uint8_t a, xctl_a, xctl_b;
+
+	if (mace0 == NULL)
+		return;
+
+	s = splhigh();
+	a = ds1687_read(mace0, DS1687_CONTROLA);
+	a &= ~DS1687_DV2;
+	a |= DS1687_DV1;
+	ds1687_write(mace0, DS1687_CONTROLA, a | DS1687_BANK1);
+	wbflush();
+
+	xctl_b = ds1687_read(mace0, DS1687_BANK1_XCTRL4B);
+	xctl_b |= DS1687_X4B_ABE | DS1687_X4B_KIE;
+	ds1687_write(mace0, DS1687_BANK1_XCTRL4B, xctl_b);
+
+	xctl_a = ds1687_read(mace0, DS1687_BANK1_XCTRL4A);
+	xctl_a &= ~(DS1687_X4A_RCF | DS1687_X4A_WAF | DS1687_X4A_KF);
+	ds1687_write(mace0, DS1687_BANK1_XCTRL4A, xctl_a);
+	wbflush();
+
+	/* and down we go */
+	ds1687_write(mace0, DS1687_BANK1_XCTRL4A, xctl_a | DS1687_X4A_PAB);
+	ds1687_write(mace0, DS1687_CONTROLA, a);
+	wbflush();
+	while(1);
 }
