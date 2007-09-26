@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.3 2007/09/26 16:36:54 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.4 2007/09/26 16:53:38 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.3 2007/09/26 16:36:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.4 2007/09/26 16:53:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,6 @@ static ACPI_STATUS	EcSpaceSetup(ACPI_HANDLE, UINT32, void *, void **);
 static ACPI_STATUS	EcSpaceHandler(UINT32, ACPI_PHYSICAL_ADDRESS, UINT32,
 			    ACPI_INTEGER *, void *, void *);
 
-static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *, EC_EVENT);
 static ACPI_STATUS	EcQuery(struct acpi_ec_softc *, UINT8 *);
 static ACPI_STATUS	EcTransaction(struct acpi_ec_softc *, EC_REQUEST *);
 static void		EcGpeQueryHandler(void *);
@@ -819,25 +818,36 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 }
 
 static ACPI_STATUS
-EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
+EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
 {
 	EC_STATUS EcStatus;
-	int i;
+	int i, max_iter;
 
 	ACPI_FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Event);
 
-	/* XXX Need better test for "yes, you have interrupts". */
-	if (cold)
-		return_ACPI_STATUS(EcWaitEvent(sc, Event));
-
 	if (EcIsLocked(sc) == 0)
-		printf("%s: EcWaitEventIntr called without EC lock!\n",
+		printf("%s: EcWaitEvent called without EC lock!\n",
 		    sc->sc_dev.dv_xname);
+
+	if (cold) {
+		/*
+		 * Stall 10us:
+		 * ----------
+		 * Stall for 10 microseconds before reading the status register
+		 * for the first time.  This allows the EC to set the IBF/OBF
+		 * bit to its proper state.
+		 */
+		AcpiOsStall(10);
+
+		max_iter = 5000;
+	} else {
+		/* Too long? */
+		max_iter = 10;
+	}
 
 	EcStatus = EC_CSR_READ(sc);
 
-	/* Too long? */
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < max_iter; i++) {
 		/* Check EC status against the desired event. */
 		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
 		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
@@ -848,56 +858,16 @@ EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
 			return_ACPI_STATUS(AE_OK);
 
 		sc->sc_csrvalue = 0;
-		/* XXXJRT Sleeping with a lock held? */
-		if (tsleep(&sc->sc_csrvalue, 0, "EcWait", (hz + 99) / 100)
-		    != EWOULDBLOCK)
-			EcStatus = sc->sc_csrvalue;
-		else
+		if (cold) {
+			AcpiOsStall(10);
 			EcStatus = EC_CSR_READ(sc);
+		} else if (tsleep(&sc->sc_csrvalue, 0, "EcWait", hz)
+		    == EWOULDBLOCK)
+			EcStatus = EC_CSR_READ(sc);
+		else
+			EcStatus = sc->sc_csrvalue;
 	}
 	return_ACPI_STATUS(AE_ERROR);
-}
-
-static ACPI_STATUS
-EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
-{
-	EC_STATUS EcStatus;
-	UINT32 i = 0;
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcWaitEvent called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	/*
-	 * Stall 10us:
-	 * ----------
-	 * Stall for 10 microseconds before reading the status register
-	 * for the first time.  This allows the EC to set the IBF/OBF
-	 * bit to its proper state.
-	 */
-	AcpiOsStall(10);
-
-	/*
-	 * Wait For Event:
-	 * ---------------
-	 * Poll the EC status register to detect completion of the last
-	 * command.  Wait up to 500ms (in 100us chunks) for this to occur.
-	 */
-	for (i = 0; i < 5000; i++) {
-		EcStatus = EC_CSR_READ(sc);
-
-		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
-		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
-			return AE_OK;
-
-		if ((Event == EC_EVENT_INPUT_BUFFER_EMPTY) &&
-		    (EcStatus & EC_FLAG_INPUT_BUFFER) == 0)
-			return AE_OK;
-
-		AcpiOsStall(10);
-	}
-
-	return AE_ERROR;
 }
 
 static ACPI_STATUS
@@ -910,7 +880,7 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 		    sc->sc_dev.dv_xname);
 
 	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
-	rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
+	rv = EcWaitEvent(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
 	if (ACPI_SUCCESS(rv))
 		*Data = EC_DATA_READ(sc);
 
@@ -933,7 +903,7 @@ EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstEnable(EmbeddedController); */
 
 	EC_CSR_WRITE(sc, EC_COMMAND_READ);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEvent(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcRead: timeout waiting for EC to process "
 		    "read command\n", sc->sc_dev.dv_xname);
@@ -941,7 +911,7 @@ EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	}
 
 	EC_DATA_WRITE(sc, Address);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL)) !=
+	if ((rv = EcWaitEvent(sc, EC_EVENT_OUTPUT_BUFFER_FULL)) !=
 	    AE_OK) {
 		printf("%s: EcRead: timeout waiting for EC to send data\n",
 		    sc->sc_dev.dv_xname);
@@ -967,7 +937,7 @@ EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstEnable(EmbeddedController); */
 
 	EC_CSR_WRITE(sc, EC_COMMAND_WRITE);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEvent(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "write command\n", sc->sc_dev.dv_xname);
@@ -975,7 +945,7 @@ EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	}
 
 	EC_DATA_WRITE(sc, Address);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEvent(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "address\n", sc->sc_dev.dv_xname);
@@ -983,7 +953,7 @@ EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	}
 
 	EC_DATA_WRITE(sc, *Data);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEvent(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "data\n", sc->sc_dev.dv_xname);
