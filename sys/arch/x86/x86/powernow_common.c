@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_common.c,v 1.5 2007/09/10 10:35:52 cube Exp $	*/
+/*	$NetBSD: powernow_common.c,v 1.6 2007/09/26 19:48:43 ad Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.5 2007/09/10 10:35:52 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.6 2007/09/26 19:48:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,12 +45,12 @@ powernow_probe(struct cpu_info *ci)
 	uint32_t regs[4];
 	char line[80];
 
-	CPUID(0x80000000, regs[0], regs[1], regs[2], regs[3]);
+	x86_cpuid(0x80000000, regs);
 
 	/* We need CPUID(0x80000007) */
 	if (regs[0] < 0x80000007)
 		return 0;
-	CPUID(0x80000007, regs[0], regs[1], regs[2], regs[3]);
+	x86_cpuid(0x80000007, regs);
 
 	bitmask_snprintf(regs[3], "\20\6STC\5TM\4TTP\3VID\2FID\1TS", line,
 	    sizeof line);

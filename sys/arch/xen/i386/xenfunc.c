@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.11 2007/09/26 19:48:44 ad Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.1 2007/09/26 19:48:38 ad Exp $	*/
 
 /*
  *
@@ -31,10 +31,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 
-#ifndef _XEN_XENFUNC_H_
-#define _XEN_XENFUNC_H_
+#include <uvm/uvm_extern.h>
 
+#include <machine/intr.h>
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
@@ -50,4 +53,103 @@
 void xen_set_ldt(vaddr_t, uint32_t);
 void xen_update_descriptor(union descriptor *, union descriptor *);
 
-#endif /* _XEN_XENFUNC_H_ */
+void 
+invlpg(vaddr_t addr)
+{
+	int s = splvm();
+	xpq_queue_invlpg(addr);
+	xpq_flush_queue();
+	splx(s);
+}  
+
+void
+lldt(u_short sel)
+{
+
+	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
+	if (sel == GSEL(GLDT_SEL, SEL_KPL))
+		xen_set_ldt((vaddr_t)ldt, NLDT);
+	else
+		xen_set_ldt(cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_base,
+		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
+}
+
+void
+ltr(u_short sel)
+{
+	__PRINTK(("XXX ltr not supported\n"));
+}
+
+void
+lcr0(u_int val)
+{
+	__PRINTK(("XXX lcr0 not supported\n"));
+}
+
+u_int
+rcr0(void)
+{
+	__PRINTK(("XXX rcr0 not supported\n"));
+	return 0;
+}
+
+void
+lcr3(vaddr_t val)
+{
+	int s = splvm();
+	xpq_queue_pt_switch(xpmap_ptom(val) & PG_FRAME);
+	xpq_flush_queue();
+	splx(s);
+}
+
+void
+tlbflush(void)
+{
+	int s = splvm();
+	xpq_queue_tlb_flush();
+	xpq_flush_queue();
+	splx(s);
+}
+
+void
+tlbflushg(void)
+{
+	tlbflush();
+}
+
+vaddr_t
+rdr6(void)
+{
+	u_int val;
+
+	val = HYPERVISOR_get_debugreg(6);
+	return val;
+}
+
+void
+ldr6(vaddr_t val)
+{
+
+	HYPERVISOR_set_debugreg(6, val);
+}
+
+void
+wbinvd(void)
+{
+
+	xpq_flush_cache();
+}
+
+vaddr_t
+rcr2(void)
+{
+
+	return 0;	/* XXX Why? */
+}
+
+void
+lgdt(struct region_descriptor *rdp)
+{
+
+	panic("lgdt %p %08x\n", (void *)rdp->rd_base, rdp->rd_limit);
+}

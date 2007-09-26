@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.9 2007/03/20 18:05:25 drochner Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.10 2007/09/26 19:48:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.9 2007/03/20 18:05:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.10 2007/09/26 19:48:43 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -166,7 +166,7 @@ i686_mtrr_reload(int synch)
 	 * 2. Disable interrupts
 	 */
 
-	disable_intr();
+	x86_disable_intr();
 
 #ifdef MULTIPROCESSOR
 	if (synch) {
@@ -281,7 +281,7 @@ i686_mtrr_reload(int synch)
 	/*
 	 * 15. Enable interrupts.
 	 */
-	enable_intr();
+	x86_enable_intr();
 }
 
 static void

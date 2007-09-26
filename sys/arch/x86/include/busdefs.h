@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2007/09/26 19:48:38 ad Exp $	*/
+/*	$NetBSD: busdefs.h,v 1.1 2007/09/26 19:48:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -68,76 +68,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_BUS_H_
-#define _X86_BUS_H_
-
-#include <x86/busdefs.h>
-
-#ifdef BUS_SPACE_DEBUG 
-#define	BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
-	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-#define BUS_SPACE_ALIGNED_POINTER(p, t) BUS_SPACE_ALIGNED_ADDRESS(p, t)
-#else
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
-#endif /* BUS_SPACE_DEBUG */
+#ifndef _X86_BUSDEFS_H_
+#define _X86_BUSDEFS_H_
 
 /*
- * Bus address and size types
+ * Values for the x86 bus space tag, not to be used directly by MI code.
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+#define	X86_BUS_SPACE_IO	0	/* space is i/o space */
+#define X86_BUS_SPACE_MEM	1	/* space is mem space */
 
-typedef	int bus_space_tag_t;
-typedef	u_long bus_space_handle_t;
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
 
-int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp);
-void	_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size, bus_addr_t *);
-
-typedef struct x86_bus_dma_tag		*bus_dma_tag_t;
-typedef struct x86_bus_dmamap		*bus_dmamap_t;
-
-#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
-
-/*
- *	bus_dma_segment_t
- *
- *	Describes a single contiguous DMA transaction.  Values
- *	are suitable for programming into DMA registers.
- */
-typedef struct x86_bus_dma_segment {
-	bus_addr_t	ds_addr;	/* DMA address */
-	bus_size_t	ds_len;		/* length of transfer */
-} bus_dma_segment_t;
-
-/*
- *	bus_dmamap_t
- *
- *	Describes a DMA mapping.  XXX exposing structure to LKM.
- */
-struct x86_bus_dmamap {
-	/*
-	 * PRIVATE MEMBERS: not for use by machine-independent code.
-	 */
-	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
-	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
-	bus_size_t	_dm_boundary;	/* don't cross this */
-	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
-	int		_dm_flags;	/* misc. flags */
-
-	void		*_dm_cookie;	/* cookie for bus-specific functions */
-
-	/*
-	 * PUBLIC MEMBERS: these are used by machine-independent code.
-	 */
-	bus_size_t	dm_maxsegsz;	/* largest possible segment */
-	bus_size_t	dm_mapsize;	/* size of the mapping */
-	int		dm_nsegs;	/* # valid segments in mapping */
-	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
-};
-
-#include <sys/bus_proto.h>
-
-#endif /* _X86_BUS_H_ */
+#endif /* _X86_BUSDEFS_H_ */

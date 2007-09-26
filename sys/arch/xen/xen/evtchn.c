@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.21 2007/09/23 16:54:09 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.22 2007/09/26 19:48:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.21 2007/09/23 16:54:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.22 2007/09/26 19:48:45 ad Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -175,7 +175,7 @@ init_events()
 	ctrl_if_init();
 #endif
 
-	enable_intr();		/* at long last... */
+	x86_enable_intr();		/* at long last... */
 }
 
 unsigned int
