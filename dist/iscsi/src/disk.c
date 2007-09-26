@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.28 2007/09/25 22:15:00 agc Exp $ */
+/* $NetBSD: disk.c,v 1.29 2007/09/26 12:01:49 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -762,7 +762,7 @@ de_allocate(disc_de_t *de, char *filename)
 	char	block[DEFAULT_TARGET_BLOCK_LEN];
 
 	size = de_getsize(de);
-	if (de_lseek(de, size - 1, SEEK_SET) == -1) {
+	if (de_lseek(de, size - sizeof(block), SEEK_SET) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\"\n", filename);
 		return 0;
 	}
