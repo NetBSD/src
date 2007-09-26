@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 2007/08/29 23:38:01 ad Exp $
+#	$NetBSD: genassym.cf,v 1.11 2007/09/26 00:14:53 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -225,7 +225,6 @@ define  CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
 define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define  CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define  CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define  CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 
 define  CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
