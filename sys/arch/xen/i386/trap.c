@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2007/05/17 14:51:36 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2007/09/26 19:48:39 ad Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2007/05/17 14:51:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2007/09/26 19:48:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -241,10 +241,10 @@ trap(frame)
 	}
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x/%x eflags %x cr2 %x cpl %x\n",
+		printf("trap %d code %x eip %x cs %x/%x eflags %x cr2 %lx cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip,
 		    frame->tf_cs, IDXSEL(frame->tf_cs),
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
 		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
@@ -262,6 +262,14 @@ trap(frame)
 
 	default:
 	we_re_toast:
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %d", frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 #ifdef KSTACK_CHECK_DR0
 		if (type == T_TRCTRAP) {
 			u_int mask, dr6 = rdr6();
@@ -295,15 +303,6 @@ trap(frame)
 			}
 		}
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x ilevel %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
-
 		panic("trap");
 		/*NOTREACHED*/
 

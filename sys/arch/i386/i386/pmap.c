@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2007/09/01 10:47:43 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.215 2007/09/26 19:48:37 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2007/09/01 10:47:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2007/09/26 19:48:37 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1922,7 +1922,7 @@ pmap_load(void)
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
-	KASSERT((read_psl() & PSL_I) != 0);
+	KASSERT((x86_read_psl() & PSL_I) != 0);
 
 	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
