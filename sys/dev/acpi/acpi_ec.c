@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.2 2007/08/05 19:01:01 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.3 2007/09/26 16:36:54 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.2 2007/08/05 19:01:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.3 2007/09/26 16:36:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,6 @@ static ACPI_STATUS	EcSpaceHandler(UINT32, ACPI_PHYSICAL_ADDRESS, UINT32,
 static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *, EC_EVENT);
 static ACPI_STATUS	EcQuery(struct acpi_ec_softc *, UINT8 *);
 static ACPI_STATUS	EcTransaction(struct acpi_ec_softc *, EC_REQUEST *);
-static ACPI_STATUS	EcRead(struct acpi_ec_softc *, UINT8, UINT8 *);
-static ACPI_STATUS	EcWrite(struct acpi_ec_softc *, UINT8, UINT8 *);
 static void		EcGpeQueryHandler(void *);
 static inline int	EcIsLocked(struct acpi_ec_softc *);
 static inline void	EcLock(struct acpi_ec_softc *);
@@ -924,32 +922,6 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 }
 
 static ACPI_STATUS
-EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
-{
-	ACPI_STATUS rv;
-
-	EcLock(sc);
-
-	switch (EcRequest->Command) {
-	case EC_COMMAND_READ:
-		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
-		break;
-
-	case EC_COMMAND_WRITE:
-		rv = EcWrite(sc, EcRequest->Address, &(EcRequest->Data));
-		break;
-
-	default:
-		rv = AE_SUPPORT;
-		break;
-	}
-
-	EcUnlock(sc);
-
-	return rv;
-}
-
-static ACPI_STATUS
 EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 {
 	ACPI_STATUS rv;
@@ -1021,4 +993,30 @@ EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstDisable(EmbeddedController); */
 
 	return AE_OK;
+}
+
+static ACPI_STATUS
+EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
+{
+	ACPI_STATUS rv;
+
+	EcLock(sc);
+
+	switch (EcRequest->Command) {
+	case EC_COMMAND_READ:
+		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
+		break;
+
+	case EC_COMMAND_WRITE:
+		rv = EcWrite(sc, EcRequest->Address, &(EcRequest->Data));
+		break;
+
+	default:
+		rv = AE_SUPPORT;
+		break;
+	}
+
+	EcUnlock(sc);
+
+	return rv;
 }
