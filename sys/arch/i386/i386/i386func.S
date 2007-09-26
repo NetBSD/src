@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.1 2007/09/26 19:48:36 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.2 2007/09/26 22:05:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -52,31 +52,31 @@
 #undef _ALIGN_TEXT
 #define	_ALIGN_TEXT	.align 8
 
-NENTRY(invlpg)
+ENTRY(invlpg)
 	movl	4(%esp), %eax
 	invlpg	(%eax)
 	ret
 
-NENTRY(lldt)
+ENTRY(lldt)
 	movl	4(%esp), %eax
 	lldt	%ax
 	ret
 
-NENTRY(ltr)
+ENTRY(ltr)
 	movl	4(%esp), %eax
 	ltr	%ax
 	ret
 
-NENTRY(lcr0)
+ENTRY(lcr0)
 	movl	4(%esp), %eax
 	movl	%eax, %cr0
 	ret
 
-NENTRY(rcr0)
+ENTRY(rcr0)
 	movl	%cr0, %eax
 	ret
 
-NENTRY(lcr3)
+ENTRY(lcr3)
 	movl	4(%esp), %eax
 	movl	%eax, %cr3
 	ret
@@ -100,7 +100,7 @@ NENTRY(lcr3)
  * If PGE is not in use, we reload CR3 for the benefit of
  * pre-P6-family processors.
  */
-NENTRY(tlbflushg)
+ENTRY(tlbflushg)
 	testl	$CPUID_PGE, _C_LABEL(cpu_feature)
 	jz	1f
 	movl	%cr4, %eax
@@ -110,26 +110,26 @@ NENTRY(tlbflushg)
 	movl	%eax, %cr4
 	ret
 
-NENTRY(tlbflush)
+ENTRY(tlbflush)
 1:
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 	ret
 
-NENTRY(ldr6)
+ENTRY(ldr6)
 	movl	4(%esp), %eax
 	movl	%eax, %dr6
 	ret
 
-NENTRY(rdr6)
+ENTRY(rdr6)
 	movl	%dr6, %eax
 	ret
 
-NENTRY(rcr2)
+ENTRY(rcr2)
 	movl	%cr2, %eax
 	ret
 
-NENTRY(wbinvd)
+ENTRY(wbinvd)
 	wbinvd
 	ret
 
@@ -150,7 +150,7 @@ NENTRY(x86_enable_intr)
  * process creation and exit, both of which clean up via task switches.  OTOH,
  * this only happens at run time when the GDT is resized.
  */
-NENTRY(lgdt)
+ENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp), %eax
 	lgdt	(%eax)
