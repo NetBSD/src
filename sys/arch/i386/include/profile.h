@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.29 2007/09/26 20:27:26 xtraeme Exp $	*/
+/*	$NetBSD: profile.h,v 1.30 2007/09/26 21:05:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,10 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#ifdef _KERNEL
 #include <machine/cpufunc.h>
 #include <machine/atomic.h>
+#endif
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
