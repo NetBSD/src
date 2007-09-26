@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.16 2007/09/11 21:01:40 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.17 2007/09/26 20:59:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -47,7 +47,9 @@
 #include "opt_lockdebug.h"
 #endif
 
+#ifdef _KERNEL
 #include <machine/cpufunc.h>
+#endif
 
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
@@ -110,7 +112,9 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 	while (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
 	    != __SIMPLELOCK_UNLOCKED) {
 		do {
+#ifdef _KERNEL
 			x86_pause();
+#endif /* _KERNEL */
 		} while (*lockp == __SIMPLELOCK_LOCKED);
 	}
 	__insn_barrier();
@@ -196,24 +200,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 void	mb_read(void);
 void	mb_write(void);
 void	mb_memory(void);
-#else	/* _KERNEL */
-static __inline void
-mb_read(void)
-{
-	x86_lfence();
-}
-
-static __inline void
-mb_write(void)
-{
-	__insn_barrier();
-}
-
-static __inline void
-mb_memory(void)
-{
-	x86_mfence();
-}
 #endif	/* _KERNEL */
 
 #endif /* _X86_LOCK_H_ */
