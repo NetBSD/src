@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.1 2007/09/26 19:48:36 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.2 2007/09/26 22:05:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -54,36 +54,36 @@
 #undef _ALIGN_TEXT
 #define	_ALIGN_TEXT	.align 8
 
-NENTRY(x86_lfence)
+ENTRY(x86_lfence)
 	lock
 	addl	$0, -4(%esp)
 	ret
 
-NENTRY(x86_sfence)
+ENTRY(x86_sfence)
 	lock
 	addl	$0, -4(%esp)
 	ret
 
-NENTRY(x86_mfence)
+ENTRY(x86_mfence)
 	lock
 	addl	$0, -4(%esp)
 	ret
 
-NENTRY(lidt)
+ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
 
-NENTRY(rcr3)
+ENTRY(rcr3)
 	movl	%cr3, %eax
 	ret
 
-NENTRY(lcr4)
+ENTRY(lcr4)
 	movl	4(%esp), %eax
 	movl	%eax, %cr4
 	ret
 
-NENTRY(rcr4)
+ENTRY(rcr4)
 	movl	%cr4, %eax
 	ret
 
@@ -103,19 +103,19 @@ STRONG_ALIAS(x86_write_psl,x86_write_flags)
 STRONG_ALIAS(x86_read_psl,x86_read_flags)
 #endif	/* XEN */
 
-NENTRY(rdmsr)
+ENTRY(rdmsr)
 	movl	4(%esp), %ecx
 	rdmsr
 	ret
 
-NENTRY(wrmsr)
+ENTRY(wrmsr)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	movl	12(%esp), %edx
 	wrmsr
 	ret
 
-NENTRY(rdmsr_locked)
+ENTRY(rdmsr_locked)
 	movl	4(%esp), %ecx
 	pushl	%edi
 	movl	$OPTERON_MSR_PASSCODE, %edi
@@ -123,7 +123,7 @@ NENTRY(rdmsr_locked)
 	popl	%edi
 	ret
 
-NENTRY(wrmsr_locked)
+ENTRY(wrmsr_locked)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	movl	12(%esp), %edx
@@ -133,11 +133,11 @@ NENTRY(wrmsr_locked)
 	popl	%edi
 	ret
 
-NENTRY(rdtsc)
+ENTRY(rdtsc)
 	rdtsc
 	ret
 
-NENTRY(rdpmc)
+ENTRY(rdpmc)
 	movl	4(%esp), %ecx
 	rdpmc
 	ret
@@ -188,12 +188,12 @@ NENTRY(x86_curlwp)
 	movl	%fs:(CPU_INFO_CURLWP), %eax
 	ret
 
-NENTRY(__byte_swap_u32_variable)
+ENTRY(__byte_swap_u32_variable)
 	movl	4(%esp), %eax
 	bswapl	%eax
 	ret
 
-NENTRY(__byte_swap_u16_variable)
+ENTRY(__byte_swap_u16_variable)
 	movl	4(%esp), %eax
 	xchgb	%al, %ah
 	ret
@@ -247,7 +247,7 @@ NENTRY(x86_pause)
 	pause
 	ret
 
-NENTRY(x86_cpuid)
+ENTRY(x86_cpuid)
 	pushl	%ebx
 	pushl	%edi
 	movl	12(%esp), %eax
@@ -261,51 +261,51 @@ NENTRY(x86_cpuid)
 	popl	%ebx
 	ret
 
-NENTRY(x86_getss)
+ENTRY(x86_getss)
 	movl	%ss, %eax
 	ret
 
-NENTRY(fldcw)
+ENTRY(fldcw)
 	movl	4(%esp), %eax
 	fldcw	(%eax)
 	ret
 
-NENTRY(fnclex)	
+ENTRY(fnclex)	
 	fnclex
 	ret
 
-NENTRY(fninit)
+ENTRY(fninit)
 	fninit
 	ret
 
-NENTRY(fnsave)
+ENTRY(fnsave)
 	movl	4(%esp), %eax
 	fnsave	(%eax)
 	ret
 
-NENTRY(fnstcw)
+ENTRY(fnstcw)
 	movl	4(%esp), %eax
 	fnstcw	(%eax)
 	ret
 
-NENTRY(fnstsw)
+ENTRY(fnstsw)
 	movl	4(%esp), %eax
 	fnstsw	(%eax)
 	ret
 
-NENTRY(fp_divide_by_0)
+ENTRY(fp_divide_by_0)
 	fldz
 	fld1
 	fdiv	%st, %st(1)
 	fwait
 	ret
 
-NENTRY(frstor)
+ENTRY(frstor)
 	movl	4(%esp), %eax
 	frstor	(%eax)
 	ret
 
-NENTRY(fwait)
+ENTRY(fwait)
 	fwait
 	ret
 
@@ -319,29 +319,29 @@ NENTRY(stts)
 	movl	%eax, %cr0
 	ret
 
-NENTRY(fxsave)
+ENTRY(fxsave)
 	movl	4(%esp), %eax
 	fxsave	(%eax)
 	ret
 
-NENTRY(fxrstor)
+ENTRY(fxrstor)
 	movl	4(%esp), %eax
 	fxrstor	(%eax)
 	ret
 
-NENTRY(fldummy)
+ENTRY(fldummy)
 	movl	4(%esp), %eax
 	ffree	%st(7)
 	fld	(%eax)
 	ret
 
-NENTRY(inb)
+ENTRY(inb)
 	movl	4(%esp), %edx
 	xorl	%eax, %eax
 	inb	%dx, %al
 	ret
 
-NENTRY(insb)
+ENTRY(insb)
 	pushl	%edi
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
@@ -352,13 +352,13 @@ NENTRY(insb)
 	popl	%edi
 	ret
 
-NENTRY(inw)
+ENTRY(inw)
 	movl	4(%esp), %edx
 	xorl	%eax, %eax
 	inw	%dx, %ax
 	ret
 
-NENTRY(insw)
+ENTRY(insw)
 	pushl	%edi
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
@@ -369,12 +369,12 @@ NENTRY(insw)
 	popl	%edi
 	ret
 
-NENTRY(inl)
+ENTRY(inl)
 	movl	4(%esp), %edx
 	inl	%dx, %eax
 	ret
 
-NENTRY(insl)
+ENTRY(insl)
 	pushl	%edi
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
@@ -385,13 +385,13 @@ NENTRY(insl)
 	popl	%edi
 	ret
 
-NENTRY(outb)
+ENTRY(outb)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	outb	%al, %dx
 	ret
 
-NENTRY(outsb)
+ENTRY(outsb)
 	pushl	%esi
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi
@@ -402,13 +402,13 @@ NENTRY(outsb)
 	popl	%esi
 	ret
 
-NENTRY(outw)
+ENTRY(outw)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	outw	%ax, %dx
 	ret
 
-NENTRY(outsw)
+ENTRY(outsw)
 	pushl	%esi
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi
@@ -419,13 +419,13 @@ NENTRY(outsw)
 	popl	%esi
 	ret
 
-NENTRY(outl)
+ENTRY(outl)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	outl	%eax, %dx
 	ret
 
-NENTRY(outsl)
+ENTRY(outsl)
 	pushl	%esi
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi

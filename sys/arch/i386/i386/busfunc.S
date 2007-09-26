@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.1 2007/09/26 19:48:35 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.2 2007/09/26 22:05:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * uint8_t bus_space_read_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_1)
+ENTRY(bus_space_read_1)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -64,7 +64,7 @@ NENTRY(bus_space_read_1)
  * uint16_t bus_space_read_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_2)
+ENTRY(bus_space_read_2)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -80,7 +80,7 @@ NENTRY(bus_space_read_2)
  * uint32_t bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_4)
+ENTRY(bus_space_read_4)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -99,7 +99,7 @@ STRONG_ALIAS(bus_space_read_stream_4,bus_space_read_4)
  * void bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t value);
  */
-NENTRY(bus_space_write_1)
+ENTRY(bus_space_write_1)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -115,7 +115,7 @@ NENTRY(bus_space_write_1)
  * void bus_space_write_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t value);
  */
-NENTRY(bus_space_write_2)
+ENTRY(bus_space_write_2)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -131,7 +131,7 @@ NENTRY(bus_space_write_2)
  * void bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *     bus_size_t offset, uint32_t value);
  */
-NENTRY(bus_space_write_4)
+ENTRY(bus_space_write_4)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
 	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
@@ -151,7 +151,7 @@ STRONG_ALIAS(bus_space_write_stream_4,bus_space_write_4)
  * void bus_space_read_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_1)
+ENTRY(bus_space_read_multi_1)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -178,7 +178,7 @@ NENTRY(bus_space_read_multi_1)
  * void bus_space_read_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_2)
+ENTRY(bus_space_read_multi_2)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -205,7 +205,7 @@ NENTRY(bus_space_read_multi_2)
  * void bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_4)
+ENTRY(bus_space_read_multi_4)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -236,7 +236,7 @@ STRONG_ALIAS(bus_space_read_multi_stream_4,bus_space_read_multi_4)
  * void bus_space_write_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_1)
+ENTRY(bus_space_write_multi_1)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -263,7 +263,7 @@ NENTRY(bus_space_write_multi_1)
  * void bus_space_write_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_2)
+ENTRY(bus_space_write_multi_2)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -290,7 +290,7 @@ NENTRY(bus_space_write_multi_2)
  * void bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_4)
+ENTRY(bus_space_write_multi_4)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -321,7 +321,7 @@ STRONG_ALIAS(bus_space_write_multi_stream_4,bus_space_write_multi_4)
  * void bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_1)
+ENTRY(bus_space_read_region_1)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -351,7 +351,7 @@ NENTRY(bus_space_read_region_1)
  * void bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_2)
+ENTRY(bus_space_read_region_2)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -381,7 +381,7 @@ NENTRY(bus_space_read_region_2)
  * void bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_4)
+ENTRY(bus_space_read_region_4)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -415,7 +415,7 @@ STRONG_ALIAS(bus_space_read_region_stream_4,bus_space_read_region_4)
  * void bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_1)
+ENTRY(bus_space_write_region_1)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -445,7 +445,7 @@ NENTRY(bus_space_write_region_1)
  * void bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_2)
+ENTRY(bus_space_write_region_2)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
@@ -475,7 +475,7 @@ NENTRY(bus_space_write_region_2)
  * void bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_4)
+ENTRY(bus_space_write_region_4)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
