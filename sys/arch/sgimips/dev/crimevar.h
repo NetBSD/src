@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.5 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.6 2007/09/26 05:48:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -40,3 +40,4 @@ struct crime_softc {
 
 void crime_intr_mask(unsigned int);
 void crime_intr_unmask(unsigned int);
+void crime_reboot(void);
