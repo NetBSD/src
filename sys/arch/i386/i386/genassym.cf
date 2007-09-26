@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.51 2007/09/25 17:08:08 ad Exp $
+#	$NetBSD: genassym.cf,v 1.52 2007/09/26 19:48:36 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,8 @@ include <machine/isa_machdep.h>
 endif
 
 include <machine/tlog.h>
+
+include <x86/busdefs.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -401,3 +403,7 @@ define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
 define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
+
+define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
+
+define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO

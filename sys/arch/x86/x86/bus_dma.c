@@ -1,12 +1,12 @@
-/*	$NetBSD: bus_dma.c,v 1.36 2007/08/29 23:38:05 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.37 2007/09/26 19:48:42 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center.
+ * Simulation Facility NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2007/08/29 23:38:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2007/09/26 19:48:42 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1234,4 +1234,130 @@ _bus_dmatag_destroy(bus_dma_tag_t tag)
 	default:
 		(tag->_tag_needs_free)--;	/* one less reference */
 	}
+}
+
+
+void
+bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
+		int ops)
+{
+
+	if (ops & BUS_DMASYNC_POSTREAD)
+		x86_lfence();
+	if (t->_dmamap_sync)
+		(*t->_dmamap_sync)(t, p, o, l, ops);
+}
+
+int
+bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments,
+		  bus_size_t maxsegsz, bus_size_t boundary, int flags,
+		  bus_dmamap_t *dmamp)
+{
+
+	return (*tag->_dmamap_create)(tag, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp);
+}
+
+void
+bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam)
+{
+
+	(*tag->_dmamap_destroy)(tag, dmam);
+}
+
+int
+bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf,
+		bus_size_t buflen, struct proc *p, int flags)
+{
+
+	return (*tag->_dmamap_load)(tag, dmam, buf, buflen, p, flags);
+}
+
+int
+bus_dmamap_load_mbuf(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		     struct mbuf *chain, int flags)
+{
+
+	return (*tag->_dmamap_load_mbuf)(tag, dmam, chain, flags);
+}
+
+int
+bus_dmamap_load_uio(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		    struct uio *uio, int flags)
+{
+
+	return (*tag->_dmamap_load_uio)(tag, dmam, uio, flags);
+}
+
+int
+bus_dmamap_load_raw(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		    bus_dma_segment_t *segs, int nsegs,
+		    bus_size_t size, int flags)
+{
+
+	return (*tag->_dmamap_load_raw)(tag, dmam, segs, nsegs,
+	    size, flags);
+}
+
+void
+bus_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
+{
+
+	(*tag->_dmamap_unload)(tag, dmam);
+}
+
+int
+bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
+		 bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
+		 int *rsegs, int flags)
+{
+
+	return (*tag->_dmamem_alloc)(tag, size, alignment, boundary, segs,
+	    nsegs, rsegs, flags);
+}
+
+void
+bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
+{
+
+	(*tag->_dmamem_free)(tag, segs, nsegs);
+}
+
+int
+bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+	       size_t size, void **kvap, int flags)
+{
+
+	return (*tag->_dmamem_map)(tag, segs, nsegs, size, kvap, flags);
+}
+
+void
+bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
+{
+
+	(*tag->_dmamem_unmap)(tag, kva, size);
+}
+
+paddr_t
+bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+		off_t off, int prot, int flags)
+{
+
+	return (*tag->_dmamem_mmap)(tag, segs, nsegs, off, prot, flags);
+}
+
+int
+bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+		     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
+{
+
+	return (*tag->_dmatag_subregion)(tag, min_addr, max_addr, newtag,
+	    flags);
+}
+
+void
+bus_dmatag_destroy(bus_dma_tag_t tag)
+{
+
+	(*tag->_dmatag_destroy)(tag);
 }
