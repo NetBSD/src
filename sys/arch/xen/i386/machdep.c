@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2007/09/24 18:34:01 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2007/09/26 19:48:39 ad Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2007/09/24 18:34:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2007/09/26 19:48:39 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2040,7 +2040,7 @@ init386(paddr_t first_avail)
 	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);
 	XENPRINTF(("enable_intr\n"));
-	enable_intr();
+	x86_enable_intr();
 
 	XENPRINTF(("physmem %lu\n", ptoa(physmem)));
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -2155,7 +2155,7 @@ void
 cpu_reset()
 {
 
-	disable_intr();
+	x86_disable_intr();
 
 #if 0
 	/*

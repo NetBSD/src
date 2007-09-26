@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.13 2007/04/16 19:12:18 ad Exp $	*/
+/*	$NetBSD: pmc.c,v 1.14 2007/09/26 19:48:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.13 2007/04/16 19:12:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.14 2007/09/26 19:48:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
 	else if ((pmc_running & mask) == 0 && start == 0)
 		return (0);
 
+	x86_disable_intr();
 	if (start) {
 		pmc_running |= mask;
 		pmc_state[args.counter].pmcs_val = args.val;
@@ -215,10 +216,8 @@ pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
 			    (args.compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
 			break;
 		}
-		disable_intr();
 		wrmsr(pmc_state[args.counter].pmcs_ctrmsr,
 		    pmc_state[args.counter].pmcs_val);
-		enable_intr();
 	} else {
 		pmc_running &= ~mask;
 		pmc_state[args.counter].pmcs_control = 0;
@@ -226,30 +225,25 @@ pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
 
 	switch (pmc_type) {
 	case PMC_TYPE_I586:
-		disable_intr();
 		wrmsr(MSR_CESR, pmc_state[0].pmcs_control |
 		    (pmc_state[1].pmcs_control << 16));
-		enable_intr();
 		break;
 
 	case PMC_TYPE_I686:
-		disable_intr();
 		if (args.counter == 1)
 			wrmsr(MSR_EVNTSEL1, pmc_state[1].pmcs_control);
 		wrmsr(MSR_EVNTSEL0, pmc_state[0].pmcs_control |
 		    (pmc_running ? PMC6_EVTSEL_EN : 0));
-		enable_intr();
 		break;
 
 	case PMC_TYPE_K7:
-		disable_intr();
 		if (args.counter == 1)
 			wrmsr(MSR_K7_EVNTSEL1, pmc_state[1].pmcs_control);
 		wrmsr(MSR_K7_EVNTSEL0, pmc_state[0].pmcs_control |
 		    (pmc_running ? K7_EVTSEL_EN : 0));
-		enable_intr();
 		break;
 	}
+	x86_enable_intr();
 
 	return (0);
 }

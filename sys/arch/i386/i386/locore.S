@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2007/08/29 23:38:04 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.51 2007/09/26 19:48:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -628,47 +628,6 @@ NENTRY(sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
-
-/*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Load a new GDT pointer (and do any necessary cleanup).
- * XXX It's somewhat questionable whether reloading all the segment registers
- * is necessary, since the actual descriptor data is not changed except by
- * process creation and exit, both of which clean up via task switches.  OTOH,
- * this only happens at run time when the GDT is resized.
- */
-NENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movl	4(%esp),%eax
-	lgdt	(%eax)
-	/* Flush the prefetch queue. */
-	jmp	1f
-	nop
-1:	/* Reload "stale" selectors. */
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%gs
-	movw	%ax,%ss
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-	/* Reload code selector by doing intersegment return. */
-	popl	%eax
-	pushl	$GSEL(GCODE_SEL, SEL_KPL)
-	pushl	%eax
-	lret
-
-/*
- * void x86_flush()
- *
- * Flush instruction pipelines by doing an intersegment (far) return.
- */
-NENTRY(x86_flush)
-	popl	%eax
-	pushl	$GSEL(GCODE_SEL, SEL_KPL)
-	pushl	%eax
-	lret
 
 /*
  * int setjmp(label_t *)

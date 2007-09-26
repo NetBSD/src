@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.314 2007/08/29 23:38:03 ad Exp $
+#	$NetBSD: files.i386,v 1.315 2007/09/26 19:48:40 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -67,6 +67,8 @@ file	arch/i386/i386/multiboot.c	multiboot
 defflag			POWERNOW_K7
 
 file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
@@ -74,6 +76,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
+file	arch/i386/i386/i386func.S
 file	arch/x86/x86/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb

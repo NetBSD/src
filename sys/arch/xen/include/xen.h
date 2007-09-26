@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.22 2007/09/23 16:54:08 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.23 2007/09/26 19:48:44 ad Exp $	*/
 
 /*
  *
@@ -296,11 +296,7 @@ xen_atomic_clear_bit(volatile void *ptr, int bitno)
 
 #undef XATOMIC_T
 
-static __inline void
-wbinvd(void)
-{
-	xpq_flush_cache();
-}
+void	wbinvd(void);
 
 #endif /* !__ASSEMBLY__ */
 
