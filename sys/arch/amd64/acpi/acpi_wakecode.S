@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.7 2007/09/25 23:29:40 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.8 2007/09/26 00:42:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ wakeup_16:
 	/* Kick the VBIOS. */
 	lcall	$0xc000,$3
 
+	/* Reset registers in case the VBIOS changed them. */
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
@@ -129,15 +130,21 @@ wakeup_16:
 	outb	%al,$0x61
 1:
 
+	/* Load temporary 32bit GDT */
 	data32 addr32 lgdt	tmp_gdt
 
-	/* Enable protected mode */
+	/* Enable protected mode w/o paging */
 	mov	%cr0,%eax
 	orl	$(CR0_PE),%eax
 	mov	%eax,%cr0
 
 wakeup_sw32:
-	/* Switch to protected mode by intersegmental jump */
+	/*
+	 * Switch to protected mode by intersegmental jump.
+	 * Target and everything else has to compensate for the new origin
+	 * as this is using the flat memory model now.
+	 */
+
 	ljmpl	$0x8,$wakeup_32 + ACPI_WAKEUP_ADDR
 
 	.code32
@@ -148,7 +155,7 @@ wakeup_32:
 	 */
 
 	nop
-	/* Set up segment registers for protected mode */
+	/* Set up segment registers and initial stack for protected mode */
 	movw	$0x10, %ax
 	movw	%ax,%ds
 	movw	%ax,%ss
@@ -159,39 +166,49 @@ wakeup_32:
 	pushl	$PSL_MBO
 	popfl
 
+	/* Enable PAE */
 	movl	%cr4,%eax
 	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
 	movl	%eax,%cr4
 
+	/* Enable SYSCALL extension and Long Mode */
 	movl	$MSR_EFER,%ecx
 	rdmsr
 	xorl	%eax,%eax
 	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
+	/* Load temporary PML4, code will switch to full PML4 later */
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
 
+	/* Reload cr0 with normal values, activating paging effectively */
 	movl	WAKEUP_r_cr0 + ACPI_WAKEUP_ADDR,%eax
         movl	%eax,%cr0
+	/* Flush prefetch queue */
 	jmp	1f
 1:
+	/* Switch to temporary 64bit GDT */
 	lgdt	tmp_gdt64 + ACPI_WAKEUP_ADDR
 
+	/* Switch to long mode using intersegmental jump. */
 	ljmp	$0x8, $wakeup_64 + ACPI_WAKEUP_ADDR
 
 	.code64
 wakeup_64:
 
-	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax 	#switch to new segment
+	/* Reload normal segment registers with correct values */
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
 
 	movq	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%rbx
 
+	/* Switch to the normal kernel GDT */
 	lgdt	WAKEUP_r_gdt + ACPI_WAKEUP_ADDR
 
+	/* Continue with wakeup in the high-level wakeup code */
 	jmp	*%rbx
 
 	.align	8
