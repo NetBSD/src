@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: profile.h,v 1.8 2007/09/26 20:27:26 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,12 +106,12 @@ MCOUNT_EXIT_MP(void)
 #endif
 
 #define	MCOUNT_ENTER							\
-	s = (int)read_psl();						\
-	disable_intr();							\
+	s = (int)x86_read_psl();					\
+	x86_disable_intr();						\
 	MCOUNT_ENTER_MP();
 
 #define	MCOUNT_EXIT							\
 	MCOUNT_EXIT_MP();						\
-	write_psl(s);
+	x86_write_psl(s);
 
 #endif /* _KERNEL */
