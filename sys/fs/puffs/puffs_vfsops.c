@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.56 2007/09/05 22:34:17 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.57 2007/09/27 14:35:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.56 2007/09/05 22:34:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.57 2007/09/27 14:35:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -220,6 +220,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	    M_PUFFS, M_WAITOK);
 	for (i = 0; i < pmp->pmp_npnodehash; i++)
 		LIST_INIT(&pmp->pmp_pnodehash[i]);
+	LIST_INIT(&pmp->pmp_newcookie);
 
 	/*
 	 * Inform the fileops processing code that we have a mountpoint.
@@ -365,7 +366,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 
-	return puffs_pnode2vnode(pmp, pmp->pmp_root_cookie, 1, vpp);
+	return puffs_cookie2vnode(pmp, pmp->pmp_root_cookie, 1, 1, vpp);
 }
 
 int
@@ -581,7 +582,7 @@ puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (error)
 		goto out;
 
-	error = puffs_pnode2vnode(pmp, fhtonode_argp->pvfsr_fhcookie, 1, &vp);
+	error = puffs_cookie2vnode(pmp, fhtonode_argp->pvfsr_fhcookie, 1,1,&vp);
 	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
 	    fhtonode_argp->pvfsr_fhcookie, vp));
 	if (error) {
