@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.47 2007/09/27 14:35:14 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.48 2007/09/27 18:06:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.47 2007/09/27 14:35:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.48 2007/09/27 18:06:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -203,14 +203,13 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	pnode->pn_cookie = cookie;
 	pnode->pn_refcount = 1;
 
+	/* insert cookie on list, take off of interlock list */
 	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
 	SLIST_INIT(&pnode->pn_sel.sel_klist);
-
-	/* insert cookie on list, take off of interlock list */
+	plist = puffs_cookie2hashlist(pmp, cookie);
+	mutex_enter(&pmp->pmp_lock);
+	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	if (cookie != pmp->pmp_root_cookie) {
-		plist = puffs_cookie2hashlist(pmp, cookie);
-		mutex_enter(&pmp->pmp_lock);
-		LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 		LIST_FOREACH(pnc, &pmp->pmp_newcookie, pnc_entries) {
 			if (pnc->pnc_cookie == cookie) {
 				LIST_REMOVE(pnc, pnc_entries);
@@ -219,8 +218,8 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			}
 		}
 		KASSERT(pnc != NULL);
-		mutex_exit(&pmp->pmp_lock);
 	}
+	mutex_exit(&pmp->pmp_lock);
 
 	vp->v_data = pnode;
 	vp->v_type = type;
@@ -454,6 +453,9 @@ puffs_makeroot(struct puffs_mount *pmp)
  * not.  Locking always might cause us to lock against ourselves
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
+ *
+ * XXX: this has the problem of returning an error even if a
+ * node does exist
  */
 int
 puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
