@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.73 2006/05/22 19:49:09 drochner Exp $	 */
+/*	$NetBSD: rtld.h,v 1.73.4.1 2007/09/27 13:44:48 xtraeme Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -35,6 +35,7 @@
 #define RTLD_H
 
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,11 +65,6 @@ extern int _rtld_pagesz;
  * C++ has mandated the use of the following keywords for its new boolean
  * type.  We might as well follow their lead.
  */
-typedef enum {
-	false = 0,
-	true = 1
-} bool;
-
 struct Struct_Obj_Entry;
 
 typedef struct Struct_Objlist_Entry {
