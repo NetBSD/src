@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.35 2007/09/20 14:14:25 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.36 2007/09/27 17:52:16 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.35 2007/09/20 14:14:25 christos Exp $");
+__RCSID("$NetBSD: paths.c,v 1.36 2007/09/27 17:52:16 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -407,7 +407,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 
 	/* Start with 16 entries, will grow it up as needed. */
 	res_size = 16 * sizeof(struct sysctlnode);
-	result = (struct sysctlnode *)malloc(res_size);
+	result = xmalloc(res_size);
 	if (result == NULL)
 		return (-1);
 
@@ -424,17 +424,17 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 		query.sysctl_flags = SYSCTL_VERSION;
 
 		n = res_size;
-		if (sysctl(mib, miblen+1, result, &n, &query,
+		if (sysctl(mib, miblen + 1, result, &n, &query,
 		    sizeof(query)) == -1) {
 			if (errno != ENOMEM)
 				goto bad;
 			/* Grow up result */
 			res_size = n;
-			newresult = (struct sysctlnode *)realloc(result, res_size);
+			newresult = xrealloc(result, res_size);
 			if (newresult == NULL)
 				goto bad;
 			result = newresult;
-			if (sysctl(mib, miblen+1, result, &n, &query,
+			if (sysctl(mib, miblen + 1, result, &n, &query,
 			    sizeof(query)) == -1)
 				goto bad;
 		}

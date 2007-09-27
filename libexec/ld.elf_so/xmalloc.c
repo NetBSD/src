@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.5 2004/10/22 05:39:57 skrll Exp $	 */
+/*	$NetBSD: xmalloc.c,v 1.6 2007/09/27 17:52:16 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.5 2004/10/22 05:39:57 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.6 2007/09/27 17:52:16 christos Exp $");
 #endif /* not lint */
 
 #include "rtldenv.h"
@@ -53,6 +53,16 @@ void *
 xmalloc(size_t size)
 {
 	void *p = malloc(size);
+
+	if (p == NULL)
+		xerr(1, "%s", xstrerror(errno));
+	return p;
+}
+
+void *
+xrealloc(void *p, size_t size)
+{
+	p = realloc(p, size);
 
 	if (p == NULL)
 		xerr(1, "%s", xstrerror(errno));
