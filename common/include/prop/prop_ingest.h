@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_ingest.h,v 1.1 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_ingest.h,v 1.1.6.1 2007/09/27 16:16:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,8 +54,7 @@ typedef enum {
 
 typedef struct _prop_ingest_context *prop_ingest_context_t;
 
-typedef boolean_t (*prop_ingest_handler_t)(prop_ingest_context_t,
-					   prop_object_t);
+typedef bool (*prop_ingest_handler_t)(prop_ingest_context_t, prop_object_t);
 
 typedef struct {
 	const char *pite_key;
@@ -90,7 +89,7 @@ prop_type_t	prop_ingest_context_type(prop_ingest_context_t);
 const char *	prop_ingest_context_key(prop_ingest_context_t);
 void *		prop_ingest_context_private(prop_ingest_context_t);
 
-boolean_t	prop_dictionary_ingest(prop_dictionary_t,
+bool		prop_dictionary_ingest(prop_dictionary_t,
 				       const prop_ingest_table_entry[],
 				       prop_ingest_context_t);
 __END_DECLS

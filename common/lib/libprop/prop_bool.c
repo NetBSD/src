@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.9.4.1 2007/09/27 16:16:27 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,20 +41,22 @@
 
 struct _prop_bool {
 	struct _prop_object	pb_obj;
-	boolean_t		pb_value;
+	bool		pb_value;
 };
 
 static struct _prop_bool _prop_bool_true;
 static struct _prop_bool _prop_bool_false;
 
 _PROP_MUTEX_DECL_STATIC(_prop_bool_initialized_mutex)
-static boolean_t	_prop_bool_initialized;
+static bool	_prop_bool_initialized;
 
-static void		_prop_bool_free(void *);
-static boolean_t	_prop_bool_externalize(
+static int		_prop_bool_free(prop_stack_t, prop_object_t *);
+static bool	_prop_bool_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_bool_equals(void *, void *);
+static bool	_prop_bool_equals(prop_object_t, prop_object_t,
+				  void **, void **,
+				  prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_bool = {
 	.pot_type	=	PROP_TYPE_BOOL,
@@ -66,19 +68,20 @@ static const struct _prop_object_type _prop_object_type_bool = {
 #define	prop_object_is_bool(x)		\
 	((x) != NULL && (x)->pb_obj.po_type == &_prop_object_type_bool)
 
-static void
-/*ARGSUSED*/
-_prop_bool_free(void *v _PROP_ARG_UNUSED)
+/* ARGSUSED */
+static int
+_prop_bool_free(prop_stack_t stack, prop_object_t *obj)
 {
-
 	/*
 	 * This should never happen as we "leak" our initial reference
 	 * count.
 	 */
+
 	/* XXX forced assertion failure? */
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
-static boolean_t
+static bool
 _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 		       void *v)
 {
@@ -88,25 +91,31 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 	    pb->pb_value ? "true" : "false"));
 }
 
-static boolean_t
-_prop_bool_equals(void *v1, void *v2)
+/* ARGSUSED */
+static bool
+_prop_bool_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_bool_t b1 = v1;
 	prop_bool_t b2 = v2;
 
 	if (! (prop_object_is_bool(b1) &&
 	       prop_object_is_bool(b2)))
-		return (FALSE);
+		return (_PROP_OBJECT_EQUALS_FALSE);
 
 	/*
 	 * Since we only ever allocate one true and one false,
 	 * save ourselves a couple of memory operations.
 	 */
-	return (b1 == b2);
+	if (b1 == b2)
+		return (_PROP_OBJECT_EQUALS_TRUE);
+	else
+		return (_PROP_OBJECT_EQUALS_FALSE);
 }
 
 static prop_bool_t
-_prop_bool_alloc(boolean_t val)
+_prop_bool_alloc(bool val)
 {
 	prop_bool_t pb;
 
@@ -115,13 +124,13 @@ _prop_bool_alloc(boolean_t val)
 		if (! _prop_bool_initialized) {
 			_prop_object_init(&_prop_bool_true.pb_obj,
 					  &_prop_object_type_bool);
-			_prop_bool_true.pb_value = TRUE;
+			_prop_bool_true.pb_value = true;
 
 			_prop_object_init(&_prop_bool_false.pb_obj,
 					  &_prop_object_type_bool);
-			_prop_bool_false.pb_value = FALSE;
+			_prop_bool_false.pb_value = false;
 
-			_prop_bool_initialized = TRUE;
+			_prop_bool_initialized = true;
 		}
 		_PROP_MUTEX_UNLOCK(_prop_bool_initialized_mutex);
 	}
@@ -138,7 +147,7 @@ _prop_bool_alloc(boolean_t val)
  *	provided boolean value.
  */
 prop_bool_t
-prop_bool_create(boolean_t val)
+prop_bool_create(bool val)
 {
 
 	return (_prop_bool_alloc(val));
@@ -167,25 +176,27 @@ prop_bool_copy(prop_bool_t opb)
  * prop_bool_true --
  *	Get the value of a prop_bool_t.
  */
-boolean_t
+bool
 prop_bool_true(prop_bool_t pb)
 {
 
 	if (! prop_object_is_bool(pb))
-		return (FALSE);
+		return (false);
 
 	return (pb->pb_value);
 }
 
 /*
  * prop_bool_equals --
- *	Return TRUE if the boolean values are equivalent.
+ *	Return true if the boolean values are equivalent.
  */
-boolean_t
+bool
 prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 {
+	if (!prop_object_is_bool(b1) || !prop_object_is_bool(b2))
+		return (false);
 
-	return (_prop_bool_equals(b1, b2));
+	return (prop_object_equals(b1, b2));
 }
 
 /*
@@ -193,22 +204,25 @@ prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
  *	Parse a <true/> or <false/> and return the object created from
  *	the external representation.
  */
-prop_object_t
-_prop_bool_internalize(struct _prop_object_internalize_context *ctx)
+
+/* ARGSUSED */
+bool
+_prop_bool_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
-	boolean_t val;
+	bool val;
 
 	/* No attributes, and it must be an empty element. */
 	if (ctx->poic_tagattr != NULL ||
-	    ctx->poic_is_empty_element == FALSE)
-	    	return (NULL);
+	    ctx->poic_is_empty_element == false)
+	    	return (true);
 
 	if (_PROP_TAG_MATCH(ctx, "true"))
-		val = TRUE;
+		val = true;
 	else {
 		_PROP_ASSERT(_PROP_TAG_MATCH(ctx, "false"));
-		val = FALSE;
+		val = false;
 	}
-
-	return (prop_bool_create(val));
+	*obj = prop_bool_create(val);
+	return (true);
 }

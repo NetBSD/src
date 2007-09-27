@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.4.1 2007/07/19 16:04:22 liamjfoy Exp $	*/
+/*	$NetBSD: db.c,v 1.1.4.2 2007/09/27 16:16:31 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.1.4.1 2007/07/19 16:04:22 liamjfoy Exp $");
+__RCSID("$NetBSD: db.c,v 1.1.4.2 2007/09/27 16:16:31 xtraeme Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: db.c,v 1.1.4.1 2007/07/19 16:04:22 liamjfoy Exp $");
 #define BTDEVCTL_VERSION	2
 
 static prop_dictionary_t db = NULL;
-static int db_flush = TRUE;		/* write db on set */
+static bool db_flush = true;		/* write db on set */
 
 static void db_update0(void);
 static void db_update1(void);
@@ -137,7 +137,7 @@ db_set(prop_dictionary_t dev, bdaddr_t *laddr, bdaddr_t *raddr, const char *serv
 	if (!prop_dictionary_set(rdev, service, dev))
 		return 0;
 
-	if (db_flush == TRUE) {
+	if (db_flush == true) {
 		version = prop_number_create_integer(BTDEVCTL_VERSION);
 		if (version == NULL)
 			err(EXIT_FAILURE, "prop_number_create_integer");
@@ -171,7 +171,7 @@ db_update0(void)
 	bdaddr_t laddr, raddr;
 	char *service;
 
-	db_flush = FALSE;	/* no write on set */
+	db_flush = false;	/* no write on set */
 	old = db;
 
 	db = prop_dictionary_create();
@@ -220,7 +220,7 @@ db_update0(void)
 	prop_object_iterator_release(iter);
 	prop_object_release(old);
 
-	db_flush = TRUE;	/* write on set */
+	db_flush = true;	/* write on set */
 }
 
 /*
