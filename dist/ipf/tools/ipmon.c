@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.8.4.2 2007/07/16 11:05:34 liamjfoy Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8.4.3 2007/09/27 14:10:44 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -1003,6 +1003,9 @@ int	blen;
 	iplog_t	*ipl;
 #ifdef	USE_INET6
 	ip6_t *ip6;
+	int	go;
+	u_short	ehl;
+	struct	ip6_ext *ehp;
 #endif
 
 	ipl = (iplog_t *)buf;
@@ -1111,6 +1114,26 @@ int	blen;
 		s = (u_32_t *)&ip6->ip6_src;
 		d = (u_32_t *)&ip6->ip6_dst;
 		plen = hl + ntohs(ip6->ip6_plen);
+		go = 1;
+		ehp = (struct ip6_ext *)((char *)ip6 + hl);
+		do {
+		    switch (p) {
+			case IPPROTO_HOPOPTS:
+			case IPPROTO_MOBILITY:
+			case IPPROTO_DSTOPTS:
+			case IPPROTO_ROUTING:
+			case IPPROTO_AH:
+			    p = ehp->ip6e_nxt;
+			    ehl = 8 + (ehp->ip6e_len << 3);
+			    hl += ehl;
+			    ehp = (struct ip6_ext *)((char *)ehp + ehl);
+			    break;
+			case IPPROTO_FRAGMENT:
+			    hl += sizeof(struct ip6_frag);
+			default:
+			    go = 0;
+		    }
+		} while (go);
 #else
 		sprintf(t, "ipv6");
 		goto printipflog;
