@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.289 2007/09/27 14:01:18 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.290 2007/09/27 14:04:44 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9764,4 +9764,9 @@ sys/dist/ipf/netinet/ip_state.c			1.29
 	Fixed IPF bug #1779455
 	  state timer should be reset when retransmission is seen
 	[martti, ticket #887]
+
+usr.bin/make/Makefile				1.42
+
+	Revert 1.34 (CFLAGS+=-g) that have been commited by mistake (hi, xtos).
+	[uwe, ticket #903]
 
