@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.295 2007/09/27 16:16:48 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.296 2007/09/27 17:01:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9912,4 +9912,10 @@ usr.sbin/btdevctl/sdp.c				1.4 (via patch)
 
 	Reviewed by mjf@ and adrianp@
 	[joerg, ticket #904]
+
+doc/CHANGES					patch
+
+	Bring over CHANGES entries that were left out when the changes
+	themselves were pulled up.
+	[xtraeme, ticket #863]
 
