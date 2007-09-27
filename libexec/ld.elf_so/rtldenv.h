@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.7 2006/05/22 19:49:09 drochner Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.8 2007/09/27 17:52:16 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -35,6 +35,7 @@
 
 void    *xcalloc(size_t);
 void    *xmalloc(size_t);
+void    *xrealloc(void *, size_t);
 char    *xstrdup(const char *);
 
 #ifdef RTLD_LOADER
