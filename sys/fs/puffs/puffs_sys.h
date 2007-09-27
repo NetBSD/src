@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.50 2007/09/27 14:35:15 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.51 2007/09/27 21:14:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -230,6 +230,7 @@ void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t,
 void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
 		      struct puffs_cacheinfo *, size_t, void *);
 struct puffs_park *puffs_cacheop_alloc(void);
+void	puffs_errnotify(struct puffs_mount *, uint8_t, int, void *);
 
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.99 2007/09/27 14:35:15 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.100 2007/09/27 21:14:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.99 2007/09/27 14:35:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.100 2007/09/27 21:14:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -506,7 +506,9 @@ puffs_lookup(void *v)
 	 */
 	dpn = dvp->v_data;
 	if (lookup_arg.pvnr_newnode == dpn->pn_cookie) {
-		error = EINVAL;
+		puffs_errnotify(pmp, PUFFS_ERR_LOOKUP, EINVAL,
+		    lookup_arg.pvnr_newnode);
+		error = EPROTO;
 		goto out;
 	}
 
@@ -1033,8 +1035,11 @@ puffs_readdir(void *v)
 
 	/* userspace is cheating? */
 	if (readdir_argp->pvnr_resid > resid
-	    || readdir_argp->pvnr_ncookies > cookiesmax)
-		ERROUT(EINVAL);
+	    || readdir_argp->pvnr_ncookies > cookiesmax) {
+		puffs_errnotify(pmp, PUFFS_ERR_READDIR, E2BIG,
+		    VPTOPNC(ap->a_vp));
+		ERROUT(EPROTO);
+	}
 
 	/* check eof */
 	if (readdir_argp->pvnr_eofflag)
@@ -1435,6 +1440,7 @@ puffs_readlink(void *v)
 		struct uio *a_uio;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	size_t linklen;
 	int error;
 
@@ -1451,8 +1457,11 @@ puffs_readlink(void *v)
 		return error;
 
 	/* bad bad user file server */
-	if (readlink_arg.pvnr_linklen > linklen)
-		return EINVAL;
+	if (readlink_arg.pvnr_linklen > linklen) {
+		puffs_errnotify(pmp, PUFFS_ERR_READLINK, E2BIG,
+		    VPTOPNC(ap->a_vp));
+		return EPROTO;
+	}
 
 	return uiomove(&readlink_arg.pvnr_link, readlink_arg.pvnr_linklen,
 	    ap->a_uio);
@@ -1604,7 +1613,9 @@ puffs_read(void *v)
 				break;
 
 			if (read_argp->pvnr_resid > tomove) {
-				error = EINVAL;
+				puffs_errnotify(pmp, PUFFS_ERR_READ,
+				    E2BIG, VPTOPNC(ap->a_vp));
+				error = EPROTO;
 				break;
 			}
 
@@ -1759,7 +1770,9 @@ puffs_write(void *v)
 				break;
 
 			if (write_argp->pvnr_resid > tomove) {
-				error = EINVAL;
+				puffs_errnotify(pmp, PUFFS_ERR_WRITE,
+				    E2BIG, VPTOPNC(ap->a_vp));
+				error = EPROTO;
 				break;
 			}
 
@@ -2040,8 +2053,11 @@ puffs_strategy(void *v)
 			if (error)
 				goto out;
 
-			if (rw_argp->pvnr_resid > tomove)
-				ERROUT(EINVAL);
+			if (rw_argp->pvnr_resid > tomove) {
+				puffs_errnotify(pmp, PUFFS_ERR_READ,
+				    E2BIG, VPTOPNC(vp));
+				ERROUT(EPROTO);
+			}
 
 			moved = tomove - rw_argp->pvnr_resid;
 
@@ -2089,12 +2105,16 @@ puffs_strategy(void *v)
 				goto out;
 
 			moved = tomove - rw_argp->pvnr_resid;
-			if (rw_argp->pvnr_resid > tomove)
-				ERROUT(EINVAL);
+			if (rw_argp->pvnr_resid > tomove) {
+				puffs_errnotify(pmp, PUFFS_ERR_WRITE,
+				    E2BIG, VPTOPNC(vp));
+				ERROUT(EPROTO);
+			}
 
 			bp->b_resid = bp->b_bcount - moved;
-			if (rw_argp->pvnr_resid != 0)
+			if (rw_argp->pvnr_resid != 0) {
 				ERROUT(EIO);
+			}
 		}
 	}
 

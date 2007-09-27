@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.50 2007/08/23 14:36:46 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.51 2007/09/27 21:14:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -44,12 +44,13 @@
 
 #include <uvm/uvm_prot.h>
 
-#define PUFFSOP_VFS	1
-#define PUFFSOP_VN	2
-#define PUFFSOP_CACHE	3
+#define PUFFSOP_VFS	0x01
+#define PUFFSOP_VN	0x02
+#define PUFFSOP_CACHE	0x03
+#define PUFFSOP_ERROR	0x04
 #define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
 
-#define PUFFSOP_OPCMASK		0x03
+#define PUFFSOP_OPCMASK		0x07
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
 #define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
@@ -84,8 +85,15 @@ enum {
 };
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
+enum {
+	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
+	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
+	PUFFS_ERR_VPTOFH,
+};
+#define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
+
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	17
+#define PUFFSVERSION	18
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -708,6 +716,15 @@ struct puffs_cacheinfo {
 };
 #define PCACHE_TYPE_READ	0
 #define PCACHE_TYPE_WRITE	1
+
+/*
+ * Error notification.  Always outgoing, no response, no remorse.
+ */
+struct puffs_error {
+	struct puffs_req	perr_pr;
+
+	int			perr_error;
+};
 
 /* notyet */
 #if 0
