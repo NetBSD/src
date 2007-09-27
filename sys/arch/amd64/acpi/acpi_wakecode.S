@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.8 2007/09/26 00:42:20 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.9 2007/09/27 18:27:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ wakeup_32:
 	movw	%ax,%ds
 	movw	%ax,%ss
 
-	movl	ACPI_WAKEUP_ADDR + 4096,%esp
+	movl	$(ACPI_WAKEUP_ADDR + 4096),%esp
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -168,7 +168,7 @@ wakeup_32:
 
 	/* Enable PAE */
 	movl	%cr4,%eax
-	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
+	orl	$(CR4_PAE),%eax
 	movl	%eax,%cr4
 
 	/* Enable SYSCALL extension and Long Mode */
