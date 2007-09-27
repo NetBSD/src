@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.294 2007/09/27 15:07:18 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.295 2007/09/27 16:16:48 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9804,4 +9804,112 @@ sys/arch/x86/x86/ipmi.c				1.13 (via patch)
 
 	Don't attach ipmi if GETID failed. From Nicolas Joly.
 	[bouyer, ticket #898]
+
+common/include/prop/Makefile			1.3 (via patch)
+common/include/prop/plistref.h			1.1 (via patch)
+common/include/prop/prop_array.h		1.5 (via patch)
+common/include/prop/prop_bool.h			1.3 (via patch)
+common/include/prop/prop_data.h			1.2 (via patch)
+common/include/prop/prop_dictionary.h		1.7 (via patch)
+common/include/prop/prop_ingest.h		1.2 (via patch)
+common/include/prop/prop_number.h		1.5 (via patch)
+common/include/prop/prop_object.h		1.5 (via patch)
+common/include/prop/prop_object.h		1.6 (via patch)
+common/include/prop/prop_string.h		1.2 (via patch)
+common/include/prop/proplib.h			1.5 (via patch)
+common/lib/libprop/Makefile.inc			1.6 (via patch)
+common/lib/libprop/prop_array.3			1.5 (via patch)
+common/lib/libprop/prop_array.c			1.10 (via patch)
+common/lib/libprop/prop_array.c			1.11 (via patch)
+common/lib/libprop/prop_array.c			1.9 (via patch)
+common/lib/libprop/prop_bool.3			1.3 (via patch)
+common/lib/libprop/prop_bool.c			1.10 (via patch)
+common/lib/libprop/prop_bool.c			1.11 (via patch)
+common/lib/libprop/prop_bool.c			1.12 (via patch)
+common/lib/libprop/prop_data.3			1.4 (via patch)
+common/lib/libprop/prop_data.c			1.7 (via patch)
+common/lib/libprop/prop_data.c			1.8 (via patch)
+common/lib/libprop/prop_data.c			1.9 (via patch)
+common/lib/libprop/prop_dictionary.3		1.8 (via patch)
+common/lib/libprop/prop_dictionary.c		1.18 (via patch)
+common/lib/libprop/prop_dictionary.c		1.19 (via patch)
+common/lib/libprop/prop_dictionary.c		1.20 (via patch)
+common/lib/libprop/prop_dictionary_util.3	1.2 (via patch)
+common/lib/libprop/prop_dictionary_util.c	1.2 (via patch)
+common/lib/libprop/prop_ingest.3		1.3 (via patch)
+common/lib/libprop/prop_ingest.c		1.2 (via patch)
+common/lib/libprop/prop_kern.c			1.8 (via patch)
+common/lib/libprop/prop_number.3		1.7 (via patch)
+common/lib/libprop/prop_number.c		1.12 (via patch)
+common/lib/libprop/prop_number.c		1.13 (via patch)
+common/lib/libprop/prop_number.c		1.14 (via patch)
+common/lib/libprop/prop_object.3		1.6 (via patch)
+common/lib/libprop/prop_object.c		1.14 (via patch)
+common/lib/libprop/prop_object.c		1.15 (via patch)
+common/lib/libprop/prop_object.c		1.16 (via patch)
+common/lib/libprop/prop_object_impl.h		1.14 (via patch)
+common/lib/libprop/prop_object_impl.h		1.16 (via patch)
+common/lib/libprop/prop_object_impl.h		1.17 (via patch)
+common/lib/libprop/prop_object_impl.h		1.18 (via patch)
+common/lib/libprop/prop_rb.c			1.7 (via patch)
+common/lib/libprop/prop_stack.c			1.1 (via patch)
+common/lib/libprop/prop_stack.c			1.2 (via patch)
+common/lib/libprop/prop_stack.h			1.1 (via patch)
+common/lib/libprop/prop_stack.h			1.2 (via patch)
+common/lib/libprop/prop_string.3		1.4 (via patch)
+common/lib/libprop/prop_string.c		1.7 (via patch)
+common/lib/libprop/prop_string.c		1.8 (via patch)
+common/lib/libprop/prop_string.c		1.9 (via patch)
+distrib/sets/lists/comp/mi			1.1063 (via patch)
+sys/sys/dkio.h					1.14 (via patch)
+usr.sbin/btdevctl/btdevctl.c			1.5 (via patch)
+usr.sbin/btdevctl/db.c				1.4 (via patch)
+usr.sbin/btdevctl/print.c			1.9 (via patch)
+usr.sbin/btdevctl/sdp.c				1.4 (via patch)
+
+	Consider '\r' to be white space. Discussed with and also kept as local
+	change by freza. With this change, DOS style line endings work.
+
+	boolean_t -> bool
+	TRUE -> true
+	FALSE -> false
+
+	libprop is currently using a recursive parser. While this is fine for
+	userland, deeply nested arrays and dictionaries can easily overflow
+	the kernel stack and thereby force a panic.
+
+	Fix the internalizer and prop_object_release to use a separate call
+	stack and alter the dictionary and array handling to not recurse on
+	the C stack. The default stack has an inline depth of 16 elements,
+	which should keep the overhead reasonable.
+
+	This issue was found by Pavel Cahyna and Jachym Holecek.
+
+	Additionally add a limit for prop_object_copyin_ioctl to prevent user
+	programs from temporary allocating unbound amount of kernel memory.
+	Allow malloc to fail so that tight loops of userland processes can't
+	force panics by exhausting the kernel map.
+
+	Tested with the sample exploit of Jachym, his test suite and reviewed
+	by himself (initial patch), Christos Zoulas and Jason Thorpe.
+
+	struct plistref does not reference other proplib data types, so split it
+	in its own header file to be included by dkio.h. Fixes breakage due to
+	pollution from proplib.h in programs which include ioctl.h. Tested and OK
+	by dogcow@.
+
+	Attempt at fixing build failures after proplib was converted to bool:
+	FALSE -> false, TRUE -> true, boolean_t -> bool, int -> bool when
+	appropriate, include stdbool.h . proplib.h no longer provides boolean_t,
+	so it is necessary to change to bool.
+
+	From Tom Spindler (dogcow@).
+
+	Avoid using unbound amount of stack frames in prop_object_equal
+	by using a dynamic stack as well. Reorder arguments for the internalizer
+	as the iteration is always present and should go before possibly
+	NULL arguments.
+
+	Reviewed by mjf@ and adrianp@
+	[joerg, ticket #904]
 
