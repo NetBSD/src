@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.288 2007/09/27 13:58:30 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.289 2007/09/27 14:01:18 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9758,4 +9758,10 @@ sys/dist/ipf/netinet/ip_fil_netbsd.c		1.41
 
 	Patch from the official IPFilter repository.
 	[martti, ticket #886]
+
+sys/dist/ipf/netinet/ip_state.c			1.29
+
+	Fixed IPF bug #1779455
+	  state timer should be reset when retransmission is seen
+	[martti, ticket #887]
 
