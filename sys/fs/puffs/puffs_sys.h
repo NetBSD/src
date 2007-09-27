@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.52 2007/09/27 21:44:12 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.53 2007/09/27 23:21:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -254,6 +254,9 @@ void	puffs_parkdone_poll(struct puffs_req *, void *);
 
 void	puffs_mp_reference(struct puffs_mount *);
 void	puffs_mp_release(struct puffs_mount *);
+
+void	puffs_gop_size(struct vnode *, off_t, off_t *, int); 
+void	puffs_gop_markupdate(struct vnode *, int);
 
 void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATEATIME	0x01
