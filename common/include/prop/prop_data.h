@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_data.h,v 1.1.6.1 2007/09/27 16:16:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ size_t		prop_data_size(prop_data_t);
 void *		prop_data_data(prop_data_t);
 const void *	prop_data_data_nocopy(prop_data_t);
 
-boolean_t	prop_data_equals(prop_data_t, prop_data_t);
-boolean_t	prop_data_equals_data(prop_data_t, const void *, size_t);
+bool		prop_data_equals(prop_data_t, prop_data_t);
+bool		prop_data_equals_data(prop_data_t, const void *, size_t);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_DATA_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib.h,v 1.4 2006/09/22 04:20:23 thorpej Exp $	*/
+/*	$NetBSD: proplib.h,v 1.4.4.1 2007/09/27 16:16:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,14 +48,6 @@
 
 #include <prop/prop_ingest.h>
 
-/*
- * Property List Reference --
- *	Used to pass externalized property lists across protection
- *	boundaries (ioctls, syscalls, etc.).
- */
-struct plistref {
-	void *pref_plist;		/* plist data */
-	size_t pref_len;		/* total length of plist data */
-};
+#include <prop/plistref.h>
 
 #endif /* _PROPLIB_PROPLIB_H_ */

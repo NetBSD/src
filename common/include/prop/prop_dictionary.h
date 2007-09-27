@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.6 2006/10/26 05:02:12 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.6.4.1 2007/09/27 16:16:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -53,40 +53,40 @@ prop_dictionary_t prop_dictionary_copy_mutable(prop_dictionary_t);
 
 unsigned int	prop_dictionary_capacity(prop_dictionary_t);
 unsigned int	prop_dictionary_count(prop_dictionary_t);
-boolean_t	prop_dictionary_ensure_capacity(prop_dictionary_t,
+bool		prop_dictionary_ensure_capacity(prop_dictionary_t,
 						unsigned int);
 
 void		prop_dictionary_make_immutable(prop_dictionary_t);
-boolean_t	prop_dictionary_mutable(prop_dictionary_t);
+bool		prop_dictionary_mutable(prop_dictionary_t);
 
 prop_object_iterator_t prop_dictionary_iterator(prop_dictionary_t);
 prop_array_t	prop_dictionary_all_keys(prop_dictionary_t);
 
 prop_object_t	prop_dictionary_get(prop_dictionary_t, const char *);
-boolean_t	prop_dictionary_set(prop_dictionary_t, const char *,
+bool		prop_dictionary_set(prop_dictionary_t, const char *,
 				    prop_object_t);
 void		prop_dictionary_remove(prop_dictionary_t, const char *);
 
 prop_object_t	prop_dictionary_get_keysym(prop_dictionary_t,
 					   prop_dictionary_keysym_t);
-boolean_t	prop_dictionary_set_keysym(prop_dictionary_t,
+bool		prop_dictionary_set_keysym(prop_dictionary_t,
 					   prop_dictionary_keysym_t,
 					   prop_object_t);
 void		prop_dictionary_remove_keysym(prop_dictionary_t,
 					      prop_dictionary_keysym_t);
 
-boolean_t	prop_dictionary_equals(prop_dictionary_t, prop_dictionary_t);
+bool		prop_dictionary_equals(prop_dictionary_t, prop_dictionary_t);
 
 char *		prop_dictionary_externalize(prop_dictionary_t);
 prop_dictionary_t prop_dictionary_internalize(const char *);
 
-boolean_t	prop_dictionary_externalize_to_file(prop_dictionary_t,
+bool		prop_dictionary_externalize_to_file(prop_dictionary_t,
 						    const char *);
 prop_dictionary_t prop_dictionary_internalize_from_file(const char *);
 
 const char *	prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t);
 
-boolean_t	prop_dictionary_keysym_equals(prop_dictionary_keysym_t,
+bool		prop_dictionary_keysym_equals(prop_dictionary_keysym_t,
 					      prop_dictionary_keysym_t);
 
 #if defined(__NetBSD__)
@@ -114,56 +114,56 @@ int		prop_dictionary_copyout_ioctl(struct plistref *,
  * Utility routines to make it more convenient to work with values
  * stored in dictionaries.
  */
-boolean_t	prop_dictionary_get_bool(prop_dictionary_t, const char *,
-					 boolean_t *);
-boolean_t	prop_dictionary_set_bool(prop_dictionary_t, const char *,
-					 boolean_t);
+bool		prop_dictionary_get_bool(prop_dictionary_t, const char *,
+					 bool *);
+bool		prop_dictionary_set_bool(prop_dictionary_t, const char *,
+					 bool);
 
-boolean_t	prop_dictionary_get_int8(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_int8(prop_dictionary_t, const char *,
 					 int8_t *);
-boolean_t	prop_dictionary_get_uint8(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_uint8(prop_dictionary_t, const char *,
 					  uint8_t *);
-boolean_t	prop_dictionary_set_int8(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_int8(prop_dictionary_t, const char *,
 					 int8_t);
-boolean_t	prop_dictionary_set_uint8(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_uint8(prop_dictionary_t, const char *,
 					  uint8_t);
 
-boolean_t	prop_dictionary_get_int16(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_int16(prop_dictionary_t, const char *,
 					  int16_t *);
-boolean_t	prop_dictionary_get_uint16(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_uint16(prop_dictionary_t, const char *,
 					   uint16_t *);
-boolean_t	prop_dictionary_set_int16(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_int16(prop_dictionary_t, const char *,
 					  int16_t);
-boolean_t	prop_dictionary_set_uint16(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_uint16(prop_dictionary_t, const char *,
 					   uint16_t);
 
-boolean_t	prop_dictionary_get_int32(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_int32(prop_dictionary_t, const char *,
 					  int32_t *);
-boolean_t	prop_dictionary_get_uint32(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_uint32(prop_dictionary_t, const char *,
 					   uint32_t *);
-boolean_t	prop_dictionary_set_int32(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_int32(prop_dictionary_t, const char *,
 					  int32_t);
-boolean_t	prop_dictionary_set_uint32(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_uint32(prop_dictionary_t, const char *,
 					   uint32_t);
 
-boolean_t	prop_dictionary_get_int64(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_int64(prop_dictionary_t, const char *,
 					  int64_t *);
-boolean_t	prop_dictionary_get_uint64(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_uint64(prop_dictionary_t, const char *,
 					   uint64_t *);
-boolean_t	prop_dictionary_set_int64(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_int64(prop_dictionary_t, const char *,
 					  int64_t);
-boolean_t	prop_dictionary_set_uint64(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_uint64(prop_dictionary_t, const char *,
 					   uint64_t);
 
-boolean_t	prop_dictionary_get_cstring(prop_dictionary_t, const char *,
+bool		prop_dictionary_get_cstring(prop_dictionary_t, const char *,
 					     char **);
-boolean_t	prop_dictionary_set_cstring(prop_dictionary_t, const char *,
+bool		prop_dictionary_set_cstring(prop_dictionary_t, const char *,
 					    const char *);
 
-boolean_t	prop_dictionary_get_cstring_nocopy(prop_dictionary_t,
+bool		prop_dictionary_get_cstring_nocopy(prop_dictionary_t,
 						   const char *,
 						   const char **);
-boolean_t	prop_dictionary_set_cstring_nocopy(prop_dictionary_t,
+bool		prop_dictionary_set_cstring_nocopy(prop_dictionary_t,
 						   const char *,
 						   const char *);
 

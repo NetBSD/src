@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7.2.1 2007/07/19 16:04:22 liamjfoy Exp $	*/
+/*	$NetBSD: print.c,v 1.7.2.2 2007/09/27 16:16:31 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.7.2.1 2007/07/19 16:04:22 liamjfoy Exp $");
+__RCSID("$NetBSD: print.c,v 1.7.2.2 2007/09/27 16:16:31 xtraeme Exp $");
 
 #include <sys/types.h>
 
@@ -140,7 +140,7 @@ cfg_bthidev(prop_dictionary_t dict)
 
 	obj = prop_dictionary_get(dict, BTHIDEVreconnect);
 	if (prop_bool_true(obj))
-		printf("reconnect mode: TRUE\n");
+		printf("reconnect mode: true\n");
 
 	obj = prop_dictionary_get(dict, BTHIDEVdescriptor);
 	if (prop_object_type(obj) == PROP_TYPE_DATA)
