@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.220 2007/09/26 19:48:37 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.221 2007/09/27 22:43:15 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.220 2007/09/26 19:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221 2007/09/27 22:43:15 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -277,7 +277,7 @@ trap(frame)
 	}
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip, frame->tf_cs,
 		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
