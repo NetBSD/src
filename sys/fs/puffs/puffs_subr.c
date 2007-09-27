@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.49 2007/09/27 21:14:50 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.50 2007/09/27 21:44:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.49 2007/09/27 21:14:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.50 2007/09/27 21:44:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -453,9 +453,6 @@ puffs_makeroot(struct puffs_mount *pmp)
  * not.  Locking always might cause us to lock against ourselves
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
- *
- * XXX: this has the problem of returning an error even if a
- * node does exist
  */
 int
 puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
@@ -482,7 +479,6 @@ puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 
 	mutex_enter(&pmp->pmp_lock);
 	pnode = puffs_cookie2pnode(pmp, cookie);
-
 	if (pnode == NULL) {
 		if (willcreate) {
 			pnc = kmem_alloc(sizeof(struct puffs_newcookie),
@@ -491,9 +487,8 @@ puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 			LIST_INSERT_HEAD(&pmp->pmp_newcookie, pnc, pnc_entries);
 		}
 		mutex_exit(&pmp->pmp_lock);
-		return ENOENT;
+		return PUFFS_NOSUCHCOOKIE;
 	}
-
 	vp = pnode->pn_vp;
 	simple_lock(&vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
