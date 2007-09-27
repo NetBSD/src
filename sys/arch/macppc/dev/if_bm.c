@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.31.10.4 2007/08/02 16:10:13 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31.10.5 2007/09/27 04:49:26 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.4 2007/08/02 16:10:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.5 2007/09/27 04:49:26 macallan Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -784,8 +784,8 @@ bmac_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
+		    ether_addmulti(ifreq_getaddr(cmd, ifr), &sc->sc_ethercom) :
+		    ether_delmulti(ifreq_getaddr(cmd, ifr), &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
