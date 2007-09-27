@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.3.2.2 2007/09/27 16:16:31 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btdevctl.c,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.3.2.2 2007/09/27 16:16:31 xtraeme Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -71,17 +71,17 @@ main(int argc, char *argv[])
 	bdaddr_copy(&raddr, BDADDR_ANY);
 	service = NULL;
 	mode = NULL;
-	query = FALSE;
-	verbose = FALSE;
-	attach = FALSE;
-	detach = FALSE;
-	set = FALSE;
-	none = FALSE;
+	query = false;
+	verbose = false;
+	attach = false;
+	detach = false;
+	set = false;
+	none = false;
 
 	while ((ch = getopt(argc, argv, "Aa:Dd:hm:qs:v")) != -1) {
 		switch (ch) {
 		case 'A': /* Attach device */
-			attach = TRUE;
+			attach = true;
 			break;
 
 		case 'a': /* remote address */
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'D': /* Detach device */
-			detach = TRUE;
+			detach = true;
 			break;
 
 		case 'd': /* local device address */
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 
 		case 'm': /* link mode */
 			if (strcasecmp(optarg, "none") == 0)
-				none = TRUE;
+				none = true;
 			else if (strcasecmp(optarg, BTDEVauth) == 0)
 				mode = BTDEVauth;
 			else if (strcasecmp(optarg, BTDEVencrypt) == 0)
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'q':
-			query = TRUE;
+			query = true;
 			break;
 
 		case 's': /* service */
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'v': /* verbose */
-			verbose = TRUE;
+			verbose = true;
 			break;
 
 		case 'h':
@@ -142,25 +142,25 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc > 0
-	    || (attach == TRUE && detach == TRUE)
+	    || (attach == true && detach == true)
 	    || bdaddr_any(&laddr)
 	    || bdaddr_any(&raddr)
 	    || service == NULL)
 		usage();
 
-	if (attach == FALSE && detach == FALSE)
-		verbose = TRUE;
+	if (attach == false && detach == false)
+		verbose = true;
 
 	dev = db_get(&laddr, &raddr, service);
-	if (dev == NULL || query == TRUE) {
-		if (verbose == TRUE)
+	if (dev == NULL || query == true) {
+		if (verbose == true)
 			printf("Performing SDP query for service '%s'..\n", service);
 
 		dev = cfg_query(&laddr, &raddr, service);
 		if (dev == NULL)
 			errx(EXIT_FAILURE, "%s/%s not found", bt_ntoa(&raddr, NULL), service);
 
-		set = TRUE;
+		set = true;
 	}
 
 	if (mode != NULL) {
@@ -169,15 +169,15 @@ main(int argc, char *argv[])
 			errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVmode);
 
 		prop_object_release(obj);
-		set = TRUE;
+		set = true;
 	}
 
-	if (none == TRUE) {
+	if (none == true) {
 		prop_dictionary_remove(dev, BTDEVmode);
-		set = TRUE;
+		set = true;
 	}
 
-	if (set == TRUE && !db_set(dev, &laddr, &raddr, service))
+	if (set == true && !db_set(dev, &laddr, &raddr, service))
 		errx(EXIT_FAILURE, "service store failed");
 
 	/* add binary local-bdaddr */
@@ -201,13 +201,13 @@ main(int argc, char *argv[])
 
 	prop_object_release(obj);
 
-	if (verbose == TRUE)
+	if (verbose == true)
 		cfg_print(dev);
 
-	if (attach == TRUE)
+	if (attach == true)
 		bthub_pioctl(BTDEV_ATTACH, dev);
 
-	if (detach == TRUE)
+	if (detach == true)
 		bthub_pioctl(BTDEV_DETACH, dev);
 
 	exit(EXIT_SUCCESS);

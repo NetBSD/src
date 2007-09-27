@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.11 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.11.4.1 2007/09/27 16:16:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <inttypes.h>
 #endif
 
+#include "prop_stack.h"
+
 struct _prop_object_externalize_context {
 	char *		poec_buf;		/* string buffer */
 	size_t		poec_capacity;		/* capacity of buffer */
@@ -52,27 +54,27 @@ struct _prop_object_externalize_context {
 	unsigned int	poec_depth;		/* nesting depth */
 };
 
-boolean_t	_prop_object_externalize_start_tag(
+bool	_prop_object_externalize_start_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_end_tag(
+bool	_prop_object_externalize_end_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_empty_tag(
+bool	_prop_object_externalize_empty_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_cstring(
+bool	_prop_object_externalize_append_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_encoded_cstring(
+bool	_prop_object_externalize_append_encoded_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_char(
+bool	_prop_object_externalize_append_char(
 				struct _prop_object_externalize_context *,
 				unsigned char);
-boolean_t	_prop_object_externalize_header(
+bool	_prop_object_externalize_header(
 				struct _prop_object_externalize_context *);
-boolean_t	_prop_object_externalize_footer(
+bool	_prop_object_externalize_footer(
 				struct _prop_object_externalize_context *);
 
 struct _prop_object_externalize_context *
@@ -99,13 +101,26 @@ struct _prop_object_internalize_context {
 	const char *poic_tagattrval;
 	size_t      poic_tagattrval_len;
 
-	boolean_t   poic_is_empty_element;
+	bool   poic_is_empty_element;
 	_prop_tag_type_t poic_tag_type;
+};
+
+enum {
+	_PROP_OBJECT_FREE_DONE,
+	_PROP_OBJECT_FREE_RECURSE,
+	_PROP_OBJECT_FREE_FAILED
+};
+
+enum {
+	_PROP_OBJECT_EQUALS_FALSE,
+	_PROP_OBJECT_EQUALS_TRUE,
+	_PROP_OBJECT_EQUALS_RECURSE
 };
 
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
-	((c) == ' ' || (c) == '\t' || (c) == '\n' || _PROP_EOF(c))
+	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || \
+	 _PROP_EOF(c))
 
 #define	_PROP_TAG_MATCH(ctx, t)					\
 	_prop_object_internalize_match((ctx)->poic_tagname,	\
@@ -122,16 +137,17 @@ struct _prop_object_internalize_context {
 				       (ctx)->poic_tagattrval_len,\
 				       (a), strlen(a))
 
-boolean_t	_prop_object_internalize_find_tag(
+bool	_prop_object_internalize_find_tag(
 				struct _prop_object_internalize_context *,
 				const char *, _prop_tag_type_t);
-boolean_t	_prop_object_internalize_match(const char *, size_t,
+bool	_prop_object_internalize_match(const char *, size_t,
 					       const char *, size_t);
 prop_object_t	_prop_object_internalize_by_tag(
 				struct _prop_object_internalize_context *);
-boolean_t	_prop_object_internalize_decode_string(
+bool	_prop_object_internalize_decode_string(
 				struct _prop_object_internalize_context *,
 				char *, size_t, size_t *, const char **);
+prop_object_t	_prop_generic_internalize(const char *, const char *);
 
 struct _prop_object_internalize_context *
 		_prop_object_internalize_context_alloc(const char *);
@@ -139,7 +155,7 @@ void		_prop_object_internalize_context_free(
 				struct _prop_object_internalize_context *);
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-boolean_t	_prop_object_externalize_write_file(const char *,
+bool	_prop_object_externalize_write_file(const char *,
 						    const char *, size_t);
 
 struct _prop_object_internalize_mapped_file {
@@ -153,28 +169,51 @@ void		_prop_object_internalize_unmap_file(
 				struct _prop_object_internalize_mapped_file *);
 #endif /* !_KERNEL && !_STANDALONE */
 
+typedef bool (*prop_object_internalizer_t)(prop_stack_t, prop_object_t *, 
+    struct _prop_object_internalize_context *);
+typedef bool (*prop_object_internalizer_continue_t)(prop_stack_t, prop_object_t *, 
+    struct _prop_object_internalize_context *, void *, prop_object_t);
+
 	/* These are here because they're required by shared code. */
-prop_object_t	_prop_array_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_bool_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_data_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_dictionary_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_number_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_string_internalize(
-				struct _prop_object_internalize_context *);
+bool	_prop_array_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_bool_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_data_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_dictionary_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_number_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_string_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
 
 struct _prop_object_type {
-	uint32_t	pot_type;		/* type indicator */
-	void		(*pot_free)(void *);	/* func to free object */
-	boolean_t	(*pot_extern)		/* func to externalize object */
-			    (struct _prop_object_externalize_context *,
-			     void *);
-	boolean_t	(*pot_equals)		/* func to test quality */
-			    (void *, void *);
+	/* type indicator */
+	uint32_t	pot_type;
+	/* func to free object */
+	int		(*pot_free)(prop_stack_t, prop_object_t *);
+	/*
+	 * func to free the child returned by pot_free with stack == NULL.
+	 *
+	 * Must be implemented if pot_free can return anything other than
+	 * _PROP_OBJECT_FREE_DONE.
+	 */
+	void	(*pot_emergency_free)(prop_object_t);
+	/* func to externalize object */
+	bool	(*pot_extern)(struct _prop_object_externalize_context *,
+			      void *);
+	/* func to test quality */
+	bool	(*pot_equals)(prop_object_t, prop_object_t,
+			      void **, void **,
+			      prop_object_t *, prop_object_t *);
+	/*
+	 * func to finish equality iteration.
+	 *
+	 * Must be implemented if pot_equals can return
+	 * _PROP_OBJECT_EQUALS_RECURSE
+	 */
+	void	(*pot_equals_finish)(prop_object_t, prop_object_t);
 };
 
 struct _prop_object {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.1.4.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
+/*	$NetBSD: sdp.c,v 1.1.4.2 2007/09/27 16:16:31 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.1.4.1 2007/07/19 16:04:21 liamjfoy Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.1.4.2 2007/09/27 16:16:31 xtraeme Exp $");
 
 #include <sys/types.h>
 
@@ -297,7 +297,7 @@ config_hid(prop_dictionary_t dict)
 	prop_object_release(obj);
 
 	if (!reconnect_initiate) {
-		obj = prop_bool_create(TRUE);
+		obj = prop_bool_create(true);
 		if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVreconnect, obj))
 			return errno;
 
@@ -380,7 +380,7 @@ config_hf(prop_dictionary_t dict)
 
 	prop_object_release(obj);
 
-	obj = prop_bool_create(TRUE);
+	obj = prop_bool_create(true);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOlisten, obj))
 		return errno;
 

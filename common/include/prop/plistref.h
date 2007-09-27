@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.h,v 1.4.4.1 2007/09/27 16:16:30 xtraeme Exp $	*/
+/*	$NetBSD: plistref.h,v 1.1.4.2 2007/09/27 16:16:31 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,31 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROPLIB_PROP_NUMBER_H_
-#define	_PROPLIB_PROP_NUMBER_H_
+#ifndef _PROPLIB_PLISTREF_H_
+#define	_PROPLIB_PLISTREF_H_
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <stdint.h>
-#endif
-#include <prop/prop_object.h>
+/* for size_t */
+#include <sys/types.h>
 
-typedef struct _prop_number *prop_number_t;
+/*
+ * Property List Reference --
+ *	Used to pass externalized property lists across protection
+ *	boundaries (ioctls, syscalls, etc.).
+ */
+struct plistref {
+	void *pref_plist;		/* plist data */
+	size_t pref_len;		/* total length of plist data */
+};
 
-__BEGIN_DECLS
-prop_number_t	prop_number_create_integer(int64_t);
-prop_number_t	prop_number_create_unsigned_integer(uint64_t);
-
-prop_number_t	prop_number_copy(prop_number_t);
-
-int		prop_number_size(prop_number_t);
-bool		prop_number_unsigned(prop_number_t);
-
-int64_t		prop_number_integer_value(prop_number_t);
-uint64_t	prop_number_unsigned_integer_value(prop_number_t);
-
-bool		prop_number_equals(prop_number_t, prop_number_t);
-bool		prop_number_equals_integer(prop_number_t, int64_t);
-bool		prop_number_equals_unsigned_integer(prop_number_t, uint64_t);
-__END_DECLS
-
-#endif /* _PROPLIB_PROP_NUMBER_H_ */
+#endif /* _PROPLIB_PLISTREF_H_ */

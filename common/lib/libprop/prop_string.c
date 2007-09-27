@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.6 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.6.4.1 2007/09/27 16:16:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -58,11 +58,13 @@ _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
-static void		_prop_string_free(void *);
-static boolean_t	_prop_string_externalize(
+static int		_prop_string_free(prop_stack_t, prop_object_t *);
+static bool	_prop_string_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_string_equals(void *, void *);
+static bool	_prop_string_equals(prop_object_t, prop_object_t,
+				void **, void **,
+				prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_string = {
 	.pot_type	=	PROP_TYPE_STRING,
@@ -75,17 +77,20 @@ static const struct _prop_object_type _prop_object_type_string = {
 	((x) != NULL && (x)->ps_obj.po_type == &_prop_object_type_string)
 #define	prop_string_contents(x)  ((x)->ps_immutable ? (x)->ps_immutable : "")
 
-static void
-_prop_string_free(void *v)
+/* ARGSUSED */
+static int
+_prop_string_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_string_t ps = v;
+	prop_string_t ps = *obj;
 
 	if ((ps->ps_flags & PS_F_NOCOPY) == 0 && ps->ps_mutable != NULL)
 	    	_PROP_FREE(ps->ps_mutable, M_PROP_STRING);
-	_PROP_POOL_PUT(_prop_string_pool, v);
+	_PROP_POOL_PUT(_prop_string_pool, ps);
+
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
-static boolean_t
+static bool
 _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
 {
@@ -94,31 +99,32 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	if (ps->ps_size == 0)
 		return (_prop_object_externalize_empty_tag(ctx, "string"));
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == FALSE ||
+	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
 	    _prop_object_externalize_append_encoded_cstring(ctx,
-	    					ps->ps_immutable) == FALSE ||
-	    _prop_object_externalize_end_tag(ctx, "string") == FALSE)
-		return (FALSE);
+	    					ps->ps_immutable) == false ||
+	    _prop_object_externalize_end_tag(ctx, "string") == false)
+		return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
-static boolean_t
-_prop_string_equals(void *v1, void *v2)
+/* ARGSUSED */
+static bool
+_prop_string_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_string_t str1 = v1;
 	prop_string_t str2 = v2;
 
-	if (! (prop_object_is_string(str1) &&
-	       prop_object_is_string(str2)))
-		return (FALSE);
-
 	if (str1 == str2)
-		return (TRUE);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 	if (str1->ps_size != str2->ps_size)
-		return (FALSE);
-	return (strcmp(prop_string_contents(str1),
-		       prop_string_contents(str2)) == 0);
+		return (_PROP_OBJECT_EQUALS_FALSE);
+	if (strcmp(prop_string_contents(str1), prop_string_contents(str2)))
+		return (_PROP_OBJECT_EQUALS_FALSE);
+	else
+		return (_PROP_OBJECT_EQUALS_TRUE);
 }
 
 static prop_string_t
@@ -165,7 +171,7 @@ prop_string_create_cstring(const char *str)
 		len = strlen(str);
 		cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 		if (cp == NULL) {
-			_prop_string_free(ps);
+			prop_object_release(ps);
 			return (NULL);
 		}
 		strcpy(cp, str);
@@ -216,7 +222,7 @@ prop_string_copy(prop_string_t ops)
 		else {
 			char *cp = _PROP_MALLOC(ps->ps_size + 1, M_PROP_STRING);
 			if (cp == NULL) {
-				_prop_string_free(ps);
+				prop_object_release(ps);
 				return (NULL);
 			}
 			strcpy(cp, prop_string_contents(ops));
@@ -244,7 +250,7 @@ prop_string_copy_mutable(prop_string_t ops)
 		ps->ps_size = ops->ps_size;
 		cp = _PROP_MALLOC(ps->ps_size + 1, M_PROP_STRING);
 		if (cp == NULL) {
-			_prop_string_free(ps);
+			prop_object_release(ps);
 			return (NULL);
 		}
 		strcpy(cp, prop_string_contents(ops));
@@ -269,14 +275,14 @@ prop_string_size(prop_string_t ps)
 
 /*
  * prop_string_mutable --
- *	Return TRUE if the string is a mutable string.
+ *	Return true if the string is a mutable string.
  */
-boolean_t
+bool
 prop_string_mutable(prop_string_t ps)
 {
 
 	if (! prop_object_is_string(ps))
-		return (FALSE);
+		return (false);
 
 	return ((ps->ps_flags & PS_F_NOCOPY) == 0);
 }
@@ -318,10 +324,10 @@ prop_string_cstring_nocopy(prop_string_t ps)
 
 /*
  * prop_string_append --
- *	Append the contents of one string to another.  Returns TRUE
+ *	Append the contents of one string to another.  Returns true
  *	upon success.  The destination string must be mutable.
  */
-boolean_t
+bool
 prop_string_append(prop_string_t dst, prop_string_t src)
 {
 	char *ocp, *cp;
@@ -329,15 +335,15 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 
 	if (! (prop_object_is_string(dst) &&
 	       prop_object_is_string(src)))
-		return (FALSE);
+		return (false);
 
 	if (dst->ps_flags & PS_F_NOCOPY)
-		return (FALSE);
+		return (false);
 
 	len = dst->ps_size + src->ps_size;
 	cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (cp == NULL)
-		return (FALSE);
+		return (false);
 	sprintf(cp, "%s%s", prop_string_contents(dst),
 		prop_string_contents(src));
 	ocp = dst->ps_mutable;
@@ -346,32 +352,32 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * prop_string_append_cstring --
- *	Append a C string to a string.  Returns TRUE upon success.
+ *	Append a C string to a string.  Returns true upon success.
  *	The destination string must be mutable.
  */
-boolean_t
+bool
 prop_string_append_cstring(prop_string_t dst, const char *src)
 {
 	char *ocp, *cp;
 	size_t len;
 
 	if (! prop_object_is_string(dst))
-		return (FALSE);
+		return (false);
 
 	_PROP_ASSERT(src != NULL);
 
 	if (dst->ps_flags & PS_F_NOCOPY)
-		return (FALSE);
+		return (false);
 	
 	len = dst->ps_size + strlen(src);
 	cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (cp == NULL)
-		return (FALSE);
+		return (false);
 	sprintf(cp, "%s%s", prop_string_contents(dst), src);
 	ocp = dst->ps_mutable;
 	dst->ps_mutable = cp;
@@ -379,31 +385,33 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * prop_string_equals --
- *	Return TRUE if two strings are equivalent.
+ *	Return true if two strings are equivalent.
  */
-boolean_t
+bool
 prop_string_equals(prop_string_t str1, prop_string_t str2)
 {
+	if (!prop_object_is_string(str1) || !prop_object_is_string(str2))
+		return (false);
 
-	return (_prop_string_equals(str1, str2));
+	return prop_object_equals(str1, str2);
 }
 
 /*
  * prop_string_equals_cstring --
- *	Return TRUE if the string is equivalent to the specified
+ *	Return true if the string is equivalent to the specified
  *	C string.
  */
-boolean_t
+bool
 prop_string_equals_cstring(prop_string_t ps, const char *cp)
 {
 
 	if (! prop_object_is_string(ps))
-		return (FALSE);
+		return (false);
 
 	return (strcmp(prop_string_contents(ps), cp) == 0);
 }
@@ -413,51 +421,56 @@ prop_string_equals_cstring(prop_string_t ps, const char *cp)
  *	Parse a <string>...</string> and return the object created from the
  *	external representation.
  */
-prop_object_t
-_prop_string_internalize(struct _prop_object_internalize_context *ctx)
+/* ARGSUSED */
+bool
+_prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	prop_string_t string;
 	char *str;
 	size_t len, alen;
 
-	if (ctx->poic_is_empty_element)
-		return (prop_string_create());
+	if (ctx->poic_is_empty_element) {
+		*obj = prop_string_create();
+		return (true);
+	}
 	
 	/* No attributes recognized here. */
 	if (ctx->poic_tagattr != NULL)
-		return (NULL);
+		return (true);
 
 	/* Compute the length of the result. */
 	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
-						   NULL) == FALSE)
-		return (NULL);
+						   NULL) == false)
+		return (true);
 	
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (str == NULL)
-		return (NULL);
+		return (true);
 	
 	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
-						   &ctx->poic_cp) == FALSE ||
+						   &ctx->poic_cp) == false ||
 	    alen != len) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 	str[len] = '\0';
 
 	if (_prop_object_internalize_find_tag(ctx, "string",
-					      _PROP_TAG_TYPE_END) == FALSE) {
+					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 
 	string = _prop_string_alloc();
 	if (string == NULL) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 
 	string->ps_mutable = str;
 	string->ps_size = len;
+	*obj = string;
 
-	return (string);
+	return (true);
 }

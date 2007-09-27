@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.h,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_object.h,v 1.4.4.1 2007/09/27 16:16:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,13 +42,7 @@
 #include <sys/types.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-
-typedef	int	boolean_t;
-#undef TRUE
-#define	TRUE	1
-#undef FALSE
-#define	FALSE	0
-
+#include <stdbool.h>
 #endif /* ! _KERNEL && ! _STANDALONE */
 
 typedef void *prop_object_t;
@@ -70,7 +64,8 @@ void		prop_object_release(prop_object_t);
 
 prop_type_t	prop_object_type(prop_object_t);
 
-boolean_t	prop_object_equals(prop_object_t, prop_object_t);
+bool		prop_object_equals(prop_object_t, prop_object_t);
+bool		prop_object_equals_with_error(prop_object_t, prop_object_t, bool *);
 
 typedef struct _prop_object_iterator *prop_object_iterator_t;
 
