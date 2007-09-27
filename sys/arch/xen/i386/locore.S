@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2007/09/25 21:38:37 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2007/09/27 19:39:20 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -714,10 +714,10 @@ check_ras:
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
-	je	2b
+	je	switch_return
 	movl	L_MD_REGS(%edi),%ecx
 	movl	%eax,TF_EIP(%ecx)
-	jmp	2b
+	jmp	switch_return
 
 /*
  * void savectx(struct pcb *pcb);
