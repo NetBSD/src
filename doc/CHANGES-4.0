@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.287 2007/09/27 13:52:52 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.288 2007/09/27 13:58:30 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9748,4 +9748,14 @@ lib/libcurses/curses.h				1.89 (via patch)
 
 	Suggestion by mlelstv@ and ok by blymn@.
 	[joerg, ticket #891]
+
+sys/dist/ipf/netinet/fil.c			1.42
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.41
+
+	Returning from m_pulldown can leave the first mbut with no data (m_len = 0).
+	The mbuf chain wasn't being walked and thus fin_m was not updated to point
+	to the new first mbuf with data in it.
+
+	Patch from the official IPFilter repository.
+	[martti, ticket #886]
 
