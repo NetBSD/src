@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.83 2007/09/06 16:08:56 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.84 2007/09/27 21:14:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -239,8 +239,9 @@ struct puffs_ops {
 	int (*puffs_node_write)(struct puffs_cc *, void *,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 
-	int (*puffs_cache_write)(struct puffs_usermount *,
-		void *, size_t, struct puffs_cacherun *);
+	/* XXX: this shouldn't be here */
+	void (*puffs_cache_write)(struct puffs_usermount *,
+	    void *, size_t, struct puffs_cacherun *);
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -257,6 +258,9 @@ typedef void (*pu_pathfree_fn)(struct puffs_usermount *,
 			       struct puffs_pathobj *);
 typedef int (*pu_namemod_fn)(struct puffs_usermount *,
 			     struct puffs_pathobj *, struct puffs_cn *);
+
+typedef void (*pu_errnotify_fn)(struct puffs_usermount *,
+				uint8_t, int, void *);
 
 enum {
 	PUFFS_STATE_BEFOREMOUNT,	PUFFS_STATE_RUNNING,
@@ -628,6 +632,8 @@ void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
 void	puffs_set_pathcmp(struct puffs_usermount *, pu_pathcmp_fn);
 void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
 void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
+
+void	puffs_set_errnotify(struct puffs_usermount *, pu_errnotify_fn);
 
 /*
  * Suspension
