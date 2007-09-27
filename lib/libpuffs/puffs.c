@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.63 2007/09/27 21:14:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.63 2007/09/27 21:14:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -101,6 +101,14 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(listextattr, LISTEXTATTR);
 }
 #undef FILLOP
+
+static void
+puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
+	int error, void *cookie)
+{
+
+	abort();
+}
 
 int
 puffs_getselectable(struct puffs_usermount *pu)
@@ -273,6 +281,13 @@ puffs_set_namemod(struct puffs_usermount *pu, pu_namemod_fn fn)
 }
 
 void
+puffs_set_errnotify(struct puffs_usermount *pu, pu_errnotify_fn fn)
+{
+
+	pu->pu_errnotify = fn;
+}
+
+void
 puffs_ml_setloopfn(struct puffs_usermount *pu, puffs_ml_loop_fn lfn)
 {
 
@@ -411,6 +426,8 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pu->pu_pathcmp = puffs_stdpath_cmppath;
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
+
+	pu->pu_errnotify = puffs_defaulterror;
 
 	PU_SETSTATE(pu, PUFFS_STATE_BEFOREMOUNT);
 

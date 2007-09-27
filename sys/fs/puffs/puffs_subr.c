@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.48 2007/09/27 18:06:41 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.49 2007/09/27 21:14:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.48 2007/09/27 18:06:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.49 2007/09/27 21:14:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,11 +89,11 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 
 	pmp = MPTOPUFFSMP(mp);
 
-	error = EINVAL;
-	if (type <= VNON || type >= VBAD)
+	error = EPROTO;
+	if (type <= VNON || type >= VBAD || vsize == VSIZENOTSET) {
+		puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL, cookie);
 		goto bad;
-	if (vsize == VSIZENOTSET)
-		goto bad;
+	}
 
 	/*
 	 * XXX: there is a deadlock condition between vfs_busy() and
@@ -280,15 +280,15 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
 		mutex_exit(&pmp->pmp_lock);
-		error = EEXIST;
-		return error;
+		puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST, cookie);
+		return EPROTO;
 	}
 
 	LIST_FOREACH(pnc, &pmp->pmp_newcookie, pnc_entries) {
 		if (pnc->pnc_cookie == cookie) {
 			mutex_exit(&pmp->pmp_lock);
-			error = EEXIST;
-			return error;
+			puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,cookie);
+			return EPROTO;
 		}
 	}
 	pnc = kmem_alloc(sizeof(struct puffs_newcookie), KM_SLEEP);
