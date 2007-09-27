@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.15.2.7 2007/09/16 15:46:48 xtraeme Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.15.2.8 2007/09/27 14:01:10 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,7 +114,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.7 2007/09/16 15:46:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.8 2007/09/27 14:01:10 xtraeme Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
@@ -3556,14 +3556,7 @@ int flags, seqnext;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
 			if (tcpflags & TH_ACK) {
-				if ((tcpflags & TH_PUSH) || dlen)
-					/*
-					 * there is still data to be delivered,
-					 * reset timeout
-					 */
-					rval = 1;
-				else
-					rval = 2;
+				rval = 1;
 			}
 			/*
 			 * we cannot detect when we go out of LAST_ACK state to
@@ -3575,23 +3568,15 @@ int flags, seqnext;
 
 		case IPF_TCPS_FIN_WAIT_2: /* 9 */
 			/* NOT USED */
-#if 0
-			rval = 1;
-			if ((tcpflags & TH_OPENING) == TH_OPENING) {
-				nstate = IPF_TCPS_SYN_RECEIVED;
-			} else if (tcpflags & TH_SYN) {
-				nstate = IPF_TCPS_SYN_SENT;
-			} else if ((tcpflags & (TH_FIN|TH_ACK)) != 0) {
-				nstate = IPF_TCPS_TIME_WAIT;
-			}
-#endif
 			break;
 
 		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
-			rval = 2;
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
+				rval = 1;
+			} else {
+				rval = 2;
 			}
 			break;
 
