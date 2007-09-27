@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.71 2007/09/27 00:13:17 ad Exp $
+#	$NetBSD: Makefile.booters,v 1.72 2007/09/27 01:57:23 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,6 @@ CPUFLAGS=  -mcpu=i386
 CPUFLAGS=  -march=i386 -mtune=i386 -Wno-attributes
 .endif
 .endif
-# CPPFLAGS+= -DBOOT_ELF64
 COPTS=	-Os -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
