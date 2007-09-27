@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.57 2007/09/27 14:35:15 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.58 2007/09/27 21:14:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.57 2007/09/27 14:35:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.58 2007/09/27 21:14:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -645,8 +645,8 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	}
 
 	if (fhlen > FHANDLE_SIZE_MAX) {
-		/* XXX: wrong direction */
-		error = EINVAL;
+		puffs_errnotify(pmp, PUFFS_ERR_VPTOFH, E2BIG, VPTOPNC(vp));
+		error = EPROTO;
 		goto out;
 	}
 
