@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.10 2007/09/27 18:08:32 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.11 2007/09/27 18:11:05 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -307,6 +307,7 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	if (debug) {
 		buf = prop_dictionary_externalize(dict);
 		printf("%s", buf);
+		free(buf);
 	}
 
 	obj = prop_dictionary_get(dict, "powerd-script-name");
