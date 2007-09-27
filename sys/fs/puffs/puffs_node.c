@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.1 2007/09/27 23:21:08 pooka Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.2 2007/09/27 23:25:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.1 2007/09/27 23:21:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.2 2007/09/27 23:25:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -179,10 +179,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	case VSOCK:
 		break;
 	default:
-#ifdef DIAGNOSTIC
 		panic("puffs_getvnode: invalid vtype %d", type);
-#endif
-		break;
 	}
 
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
@@ -260,9 +257,6 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	 * Check for previous node with the same designation.
 	 * Explicitly check the root node cookie, since it might be
 	 * reclaimed from the kernel when this check is made.
-	 *
-	 * XXX: technically this error check should punish the fs,
-	 * not the caller.
 	 */
 	mutex_enter(&pmp->pmp_lock);
 	if (cookie == pmp->pmp_root_cookie
@@ -330,8 +324,8 @@ puffs_cookie2hashlist(struct puffs_mount *pmp, void *cookie)
 }
 
 /*
- * Translate cookie to puffs_node.  Caller must hold mountpoint
- * lock and it will be held upon return.
+ * Translate cookie to puffs_node.  Caller must hold pmp_lock
+ * and it will be held upon return.
  */
 static struct puffs_node *
 puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
