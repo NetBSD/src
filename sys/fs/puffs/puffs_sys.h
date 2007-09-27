@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.49 2007/09/24 19:15:42 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.50 2007/09/27 14:35:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -116,6 +116,12 @@ extern int puffsdebug; /* puffs_subr.c */
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
+struct puffs_newcookie {
+	void	*pnc_cookie;
+
+	LIST_ENTRY(puffs_newcookie) pnc_entries;
+};
+
 TAILQ_HEAD(puffs_wq, puffs_park);
 LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
@@ -135,6 +141,8 @@ struct puffs_mount {
 
 	struct puffs_node_hashlist	*pmp_pnodehash;
 	int				pmp_npnodehash;
+
+	LIST_HEAD(, puffs_newcookie)	pmp_newcookie;
 
 	struct mount			*pmp_mp;
 
@@ -232,7 +240,8 @@ void	puffs_putvnode(struct vnode *);
 void	puffs_releasenode(struct puffs_node *);
 void	puffs_referencenode(struct puffs_node *);
 
-int	puffs_pnode2vnode(struct puffs_mount *, void *, int, struct vnode **);
+int	puffs_cookie2vnode(struct puffs_mount *, void *, int, int,
+			   struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
 		     struct puffs_kcid *, const struct componentname *, int);
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
