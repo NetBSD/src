@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.296 2007/09/27 17:01:43 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.297 2007/09/27 17:48:01 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9918,4 +9918,12 @@ doc/CHANGES					patch
 	Bring over CHANGES entries that were left out when the changes
 	themselves were pulled up.
 	[xtraeme, ticket #863]
+
+sys/miscfs/procfs/procfs_vnops.c		1.152
+
+	Don't prepend rootvnode to the path in non-NULL case for exe links.
+	It breaks procfs in chroot.
+
+	from <christos>, tested by me.
+	[martti, ticket #905]
 
