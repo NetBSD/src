@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.286 2007/09/27 13:45:04 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.287 2007/09/27 13:52:52 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9740,4 +9740,12 @@ libexec/ld.elf_so/rtld.h			1.75
 
 	Don't define bool, false and true. Use stdbool.h.
 	[joerg, ticket #889]
+
+lib/libcurses/curses.h				1.89 (via patch)
+
+	Do not typedef bool as char, just include stdbool.h. Fixes a build
+	failure with regress/include/okheaders.
+
+	Suggestion by mlelstv@ and ok by blymn@.
+	[joerg, ticket #891]
 
