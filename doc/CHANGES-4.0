@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.291 2007/09/27 14:07:32 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.292 2007/09/27 14:10:53 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9774,4 +9774,11 @@ share/man/man4/vlan.4				1.28
 
 	bnx supports VLANs.
 	[martti, ticket #900]
+
+dist/ipf/tools/ipmon.c				1.13
+sys/dist/ipf/netinet/ip_log.c			1.10
+
+	Fixed IPF bug #1767831
+	  ipflog() & ipmon ignore IPv6 extension headers
+	[martti, ticket #888]
 
