@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.20 2007/07/27 08:29:10 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.21 2007/09/27 12:03:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 PUFFSOP_PROTOS(dtfs);
 int	dtfs_domount(struct puffs_usermount *, const char *);
 
-#define DTFS_BLOCKSHIFT	(16)
+#define DTFS_BLOCKSHIFT	(12)
 #define DTFS_BLOCKSIZE	(1<<DTFS_BLOCKSHIFT)
 
 #define ROUNDUP(a,b) ((a) & ((b)-1))
