@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.72.2.1 2007/05/12 17:08:13 snj Exp $
+#	$NetBSD: files.usb,v 1.72.2.2 2007/09/27 22:04:26 xtraeme Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -238,6 +238,10 @@ device	ukyopon: ucombus, umodem_common
 attach	ukyopon at usbdevif
 file	dev/usb/ukyopon.c		ukyopon
 
+# Silicon Labs CP210x serial driver
+device	uslsa: ucombus
+attach	uslsa at usbdevif
+file	dev/usb/uslsa.c			uslsa
 
 # Scanners
 # Generic scanner support
