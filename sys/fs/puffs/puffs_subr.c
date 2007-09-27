@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.50 2007/09/27 21:44:12 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.51 2007/09/27 21:49:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.50 2007/09/27 21:44:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.51 2007/09/27 21:49:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -496,8 +496,13 @@ puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 	vgetflags = LK_INTERLOCK;
 	if (lock)
 		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
-	if ((rv = vget(vp, vgetflags)))
+	if ((rv = vget(vp, vgetflags))) {
+		mutex_enter(&pmp->pmp_lock);
+		LIST_REMOVE(pnc, pnc_entries);
+		mutex_exit(&pmp->pmp_lock);
+		kmem_free(pnc, sizeof(struct puffs_newcookie));
 		return rv;
+	}
 
 	*vpp = vp;
 	return 0;
