@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.285 2007/09/27 13:41:24 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.286 2007/09/27 13:45:04 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9735,4 +9735,9 @@ sys/sys/types.h					1.72
 	Replace the Mach-derived boolean_t type with the C99 bool type.  A
 	future commit will replace use of TRUE and FALSE with true and false.
 	[joerg, ticket #890]
+
+libexec/ld.elf_so/rtld.h			1.75
+
+	Don't define bool, false and true. Use stdbool.h.
+	[joerg, ticket #889]
 
