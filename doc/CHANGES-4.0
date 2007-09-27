@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.293 2007/09/27 15:02:21 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.294 2007/09/27 15:07:18 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9799,4 +9799,9 @@ sys/dev/pci/if_wpivar.h				1.7  (via patch)
 
 	Moreover, it fixes WPA issues for me.
 	[degroote, ticket #860]
+
+sys/arch/x86/x86/ipmi.c				1.13 (via patch)
+
+	Don't attach ipmi if GETID failed. From Nicolas Joly.
+	[bouyer, ticket #898]
 
