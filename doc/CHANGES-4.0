@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.284 2007/09/25 00:53:26 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.285 2007/09/27 13:41:24 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9729,4 +9729,10 @@ sys/dev/ata/wd.c				1.345
 	to the drive's quirks and retry the transfers.
 	Hopefully this will obsolete the WD_QUIRK_FORCE_LBA48 quirk list ...
 	[bouyer, ticket #899]
+
+sys/sys/types.h					1.72
+
+	Replace the Mach-derived boolean_t type with the C99 bool type.  A
+	future commit will replace use of TRUE and FALSE with true and false.
+	[joerg, ticket #890]
 
