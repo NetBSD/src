@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.292 2007/09/27 14:10:53 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.293 2007/09/27 15:02:21 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9781,4 +9781,22 @@ sys/dist/ipf/netinet/ip_log.c			1.10
 	Fixed IPF bug #1767831
 	  ipflog() & ipmon ignore IPv6 extension headers
 	[martti, ticket #888]
+
+sys/dev/pci/if_wpi.c				1.18 (via patch)
+sys/dev/pci/if_wpi.c				1.19 (via patch)
+sys/dev/pci/if_wpi.c				1.23 (via patch)
+sys/dev/pci/if_wpivar.h				1.7  (via patch)
+
+	Call wpi_stop at the beginning of wpi_init so we are sure that wpi is really
+	stopped (in particular interrupt are disabled).
+	Fix possible "packet corruption" which appears on high load
+	Fix scanning code for wpi based on the iwi code.
+	Keep track of the status of the scan.
+	On a transition IEEE80211_S_SCAN -> IEEE80211_S_SCAN, don't stop the previous
+	scan, finish the current scan.
+	When we receive some frames in the IEEE80211_S_SCAN state, set current_channel
+	based on the value advertised in beacons or probre reponse.
+
+	Moreover, it fixes WPA issues for me.
+	[degroote, ticket #860]
 
