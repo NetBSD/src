@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29 2007/09/27 19:39:20 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.30 2007/09/27 21:14:04 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -690,6 +690,7 @@ switch_skipsave:
 	jz 1f
 	pushl  CPUVAR(ILEVEL)
 	call	_C_LABEL(Xspllower) # process pending interrupts
+	addl    $4,%esp
 1:
 
 	/*
