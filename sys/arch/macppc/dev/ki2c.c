@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.8 2006/06/26 18:37:53 drochner Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.9 2007/09/27 08:49:33 dogcow Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -59,9 +59,8 @@ static int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
 
-struct cfattach ki2c_ca = {
-	"ki2c", {}, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
-};
+CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
+	NULL, NULL);
 
 int
 ki2c_match(parent, match, aux)
