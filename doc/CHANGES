@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.927 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.928 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -228,3 +228,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		provides support for some sensors exported through
 		the envsys(4) framework. Ported by Pierre Pronchery
 		from OpenBSD. [xtraeme 20070911]
+	i386, amd64: pcc is now able to compile most of the i386 kernel.
+		a number of changes have been made for LKM and
+		preemption safety. [ad 20070927]
+	i386: i386 bootblocks are now able to boot amd64 kernels.
+		support for a.out kernels has been removed [ad 20070927]
