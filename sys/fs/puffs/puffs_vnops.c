@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.100 2007/09/27 21:14:50 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.101 2007/09/27 21:44:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.100 2007/09/27 21:14:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.101 2007/09/27 21:44:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -513,7 +513,7 @@ puffs_lookup(void *v)
 	}
 
 	error = puffs_cookie2vnode(pmp, lookup_arg.pvnr_newnode, 1, 1, &vp);
-	if (error) {
+	if (error == PUFFS_NOSUCHCOOKIE) {
 		error = puffs_getvnode(dvp->v_mount,
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
 		    lookup_arg.pvnr_size, lookup_arg.pvnr_rdev, &vp);
@@ -521,7 +521,10 @@ puffs_lookup(void *v)
 			goto out;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	} else if (error) {
+		goto out;
 	}
+
 	*ap->a_vpp = vp;
 
 	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))

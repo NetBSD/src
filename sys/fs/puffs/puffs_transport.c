@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.23 2007/09/27 14:35:15 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.24 2007/09/27 21:44:12 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.23 2007/09/27 14:35:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.24 2007/09/27 21:44:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -347,8 +347,11 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	 * will need to lock the node if we wish to do flushes.
 	 */
 	rv = puffs_cookie2vnode(pmp, pf->pf_cookie, 0, 0, &vp);
-	if (rv)
+	if (rv) {
+		if (rv == PUFFS_NOSUCHCOOKIE)
+			return ENOENT;
 		return rv;
+	}
 
 	switch (pf->pf_op) {
 #if 0
