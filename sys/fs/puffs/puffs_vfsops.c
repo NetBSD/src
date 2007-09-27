@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.58 2007/09/27 21:14:50 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.59 2007/09/27 21:44:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.58 2007/09/27 21:14:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.59 2007/09/27 21:44:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -365,8 +365,11 @@ int
 puffs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	int rv;
 
-	return puffs_cookie2vnode(pmp, pmp->pmp_root_cookie, 1, 1, vpp);
+	rv = puffs_cookie2vnode(pmp, pmp->pmp_root_cookie, 1, 1, vpp);
+	KASSERT(rv != PUFFS_NOSUCHCOOKIE);
+	return rv;
 }
 
 int
@@ -585,13 +588,15 @@ puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	error = puffs_cookie2vnode(pmp, fhtonode_argp->pvfsr_fhcookie, 1,1,&vp);
 	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
 	    fhtonode_argp->pvfsr_fhcookie, vp));
-	if (error) {
+	if (error == PUFFS_NOSUCHCOOKIE) {
 		error = puffs_getvnode(mp, fhtonode_argp->pvfsr_fhcookie,
 		    fhtonode_argp->pvfsr_vtype, fhtonode_argp->pvfsr_size,
 		    fhtonode_argp->pvfsr_rdev, &vp);
 		if (error)
 			goto out;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	} else if (error) {
+		goto out;
 	}
 
 	*vpp = vp;
