@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.9 2007/09/04 16:54:37 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.10 2007/09/27 18:08:32 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -293,6 +293,7 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	prop_dictionary_t dict;
 	prop_object_t obj;
 	const char *argv[6];
+	char *buf = NULL;
 	int error;
 
 	error = prop_dictionary_recv_ioctl(fd, POWER_EVENT_RECVDICT, &dict);
@@ -303,8 +304,10 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 		return;
 	}
 	
-	if (debug)
-		printf("%s", prop_dictionary_externalize(dict));
+	if (debug) {
+		buf = prop_dictionary_externalize(dict);
+		printf("%s", buf);
+	}
 
 	obj = prop_dictionary_get(dict, "powerd-script-name");
 	argv[0] = prop_string_cstring_nocopy(obj);
