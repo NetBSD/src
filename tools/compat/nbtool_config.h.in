@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.17 2007/08/07 08:29:16 apb Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.18 2007/09/28 09:12:20 lukem Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -325,6 +325,9 @@
 
 /* Define if you have the `pwrite' function. */
 #undef HAVE_PWRITE
+
+/* Define if you have the `raise_default_signal' function. */
+#undef HAVE_RAISE_DEFAULT_SIGNAL
 
 /* Define if you have the `random' function. */
 #undef HAVE_RANDOM
