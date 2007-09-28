@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.23 2007/09/24 00:42:13 rumble Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.24 2007/09/28 19:48:42 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.23 2007/09/24 00:42:13 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.24 2007/09/28 19:48:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * need to it.
 	 */
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
+	genfs_node_init(nvp, &msdosfs_genfsops);
 	msdosfs_hashins(ldep);
 
 	ldep->de_pmp = pmp;
@@ -331,8 +332,12 @@ deget(pmp, dirclust, diroffset, depp)
 		/* leave the other fields as garbage */
 	} else {
 		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
-		if (error)
+		if (error) {
+			ldep->de_devvp = NULL;
+			ldep->de_Name[0] = SLOT_DELETED;
+			vput(nvp);
 			return (error);
+		}
 		DE_INTERNALIZE(ldep, direntptr);
 		brelse(bp);
 	}
@@ -361,7 +366,6 @@ deget(pmp, dirclust, diroffset, depp)
 		}
 	} else
 		nvp->v_type = VREG;
-	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
 	uvm_vnp_setsize(nvp, ldep->de_FileSize);
