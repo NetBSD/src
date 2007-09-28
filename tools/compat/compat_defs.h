@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.60 2007/08/07 08:22:04 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.61 2007/09/28 09:11:11 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -353,6 +353,10 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
 
 #if !HAVE_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
+#endif
+
+#if !HAVE_RAISE_DEFAULT_SIGNAL
+int raise_default_signal(int);
 #endif
 
 #if !HAVE_SETENV
