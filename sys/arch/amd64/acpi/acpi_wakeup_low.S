@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.3 2007/09/25 00:59:10 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.4 2007/09/28 23:11:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -37,9 +37,8 @@
 	.globl acpi_restorecpu
 acpi_restorecpu:
 
-	movw	r_fs,%ax
+	xorw	%ax,%ax
 	movw	%ax,%fs
-	movw	r_gs,%ax
 	movw	%ax,%gs
 
 	movl	$MSR_FSBASE,%ecx
@@ -103,9 +102,6 @@ acpi_restorecpu:
 	.type acpi_savecpu, @function
 	.globl acpi_savecpu
 acpi_savecpu:
-	movw	%fs,r_fs
-	movw	%gs,r_gs
-
 	movq	%rbx,r_rbx
 	movq	%rcx,r_rcx
 	movq	%rdx,r_rdx
@@ -164,8 +160,6 @@ acpi_savecpu:
 
 	.globl acpi_wakeup_ds
 acpi_wakeup_ds:
-r_fs:		.word	0
-r_gs:		.word	0
 r_tr:		.word	0
 r_ldt:		.word	0
 
