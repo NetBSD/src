@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.1 2007/09/26 19:48:34 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.2 2007/09/28 14:33:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -381,8 +381,8 @@ NENTRY(bus_space_write_region_1)
 	testl	%edi, %edi
 	jne	2f
 1:
-	addq	%rdx, %rsi
-	movq	%rcx, %rdi
+	leaq	(%rdx,%rsi,1), %rdi
+	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	cld	
 	rep
@@ -407,8 +407,8 @@ NENTRY(bus_space_write_region_2)
 	testl	%edi, %edi
 	jne	2f
 1:
-	addq	%rdx, %rsi
-	movq	%rcx, %rdi
+	leaq	(%rdx,%rsi,1), %rdi
+	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	cld	
 	rep
@@ -433,8 +433,8 @@ NENTRY(bus_space_write_region_4)
 	testl	%edi, %edi
 	jne	2f
 1:
-	addq	%rdx, %rsi
-	movq	%rcx, %rdi
+	leaq	(%rdx,%rsi,1), %rdi
+	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	cld	
 	rep
