@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.18 2006/03/22 16:16:59 christos Exp $ */
+/* $NetBSD: read.c,v 1.18.6.1 2007/09/28 22:03:29 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.18 2006/03/22 16:16:59 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.18.6.1 2007/09/28 22:03:29 xtraeme Exp $");
 #endif
 
 #include <ctype.h>
@@ -540,7 +540,7 @@ inptype(const char *cp, const char **epp)
 	type_t	*tp;
 	int	narg, i, osdef = 0;
 	size_t	tlen;
-	u_short	tidx;
+	u_short	tidx, sidx;
 	int	h;
 
 	/* If we have this type already, return it's index. */
@@ -619,10 +619,12 @@ inptype(const char *cp, const char **epp)
 	case ARRAY:
 		tp->t_dim = (int)strtol(cp, &eptr, 10);
 		cp = eptr;
-		tp->t_subt = TP(inptype(cp, &cp));
+		sidx = inptype(cp, &cp); /* force seq. point! (ditto below) */
+		tp->t_subt = TP(sidx);
 		break;
 	case PTR:
-		tp->t_subt = TP(inptype(cp, &cp));
+		sidx = inptype(cp, &cp);
+		tp->t_subt = TP(sidx);
 		break;
 	case FUNC:
 		c = *cp;
@@ -638,11 +640,13 @@ inptype(const char *cp, const char **epp)
 					tp->t_vararg = 1;
 					cp++;
 				} else {
-					tp->t_args[i] = TP(inptype(cp, &cp));
+					sidx = inptype(cp, &cp);
+					tp->t_args[i] = TP(sidx);
 				}
 			}
 		}
-		tp->t_subt = TP(inptype(cp, &cp));
+		sidx = inptype(cp, &cp);
+		tp->t_subt = TP(sidx);
 		break;
 	case ENUM:
 		tp->t_tspec = INT;
