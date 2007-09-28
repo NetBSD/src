@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.80 2007/09/28 18:20:13 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.81 2007/09/28 18:26:47 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ What you need.
 The distribution sets (in this example, they are on CD).
 .if !\n[pmax]:\n[sgimips]:\n[sparc64] \{\
 .It
-.ie \n[alpha] Two floppy disks.
+.ie \n[alpha] Three floppy disks.
 .el \{\
 .ie \n[ews4800mips] Two floppy disks.
 .el \{\
@@ -279,15 +279,14 @@ command prompt:
 .Dl Ic "rawrite"
 .Pp
 When asked for a source filename, answer
-.if \n[ews4800mips]:\n[i386] \{\
+.if \n[ews4800mips]:\n[i386]:\n[newsmips] \{\
 .Dl Pa \&..\efloppy\eboot1.fs
 for the first diskette and
 .Dl Pa \&..\efloppy\eboot2.fs
 for the second diskette.
 .\}
-.if \n[alpha] .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
+.if \n[alpha] .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of3
 .if \n[news68k] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
-.if \n[newsmips] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
 .Sq Ic a .
