@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.105 2007/08/15 12:07:32 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.106 2007/09/28 21:25:21 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.105 2007/08/15 12:07:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.106 2007/09/28 21:25:21 joerg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -844,6 +844,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_security_setidcore, 0, &security_setidcore_mode,
 		       0,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "no_sa_support",
+		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
+		       NULL, 1, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
