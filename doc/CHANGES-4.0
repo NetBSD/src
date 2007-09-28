@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.299 2007/09/28 20:17:40 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.300 2007/09/28 22:03:40 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9945,4 +9945,15 @@ distrib/sets/lists/man/mi			1.1003
 
 	.4 files use /man4/, not /cat4/, durrrr.
 	[mlelstv, ticket #906]
+
+usr.bin/xlint/lint2/read.c			1.19
+
+	tlst[inptype(...)] is bad C code because inptype() can realloc tlst
+	and there's no intermediate sequence point!  We actually hit this on
+	sh3 with -O2 where gcc4 caches tlst in a register prior to recursive
+	call to inptype() and if you are unlucky the recursive call needs to
+	realloc tlst.
+
+	Introduce a temp variable to force a sequence point.
+	[uwe, ticket #907]
 
