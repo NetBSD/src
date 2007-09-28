@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.138 2007/09/24 21:25:45 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.139 2007/09/28 15:37:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.138 2007/09/24 21:25:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.139 2007/09/28 15:37:45 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1103,7 +1103,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 	/* NIC-memory send ring  not used; initialize to zero. */
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
-		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_RSLOTS; i++) {
@@ -2831,11 +2831,6 @@ bge_reset(struct bge_softc *sc)
 			val |= (1<<29);
 		}
 	}
-	/*
-	 * Write the magic number to the firmware mailbox at 0xb50
-	 * so that the driver can synchronize with the firmware.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, val);
@@ -2884,6 +2879,12 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	/*
+	 * Write the magic number to the firmware mailbox at 0xb50
+	 * so that the driver can synchronize with the firmware.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
+	/*
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
 	 * This indicates that the firmware initialization
@@ -2916,7 +2917,7 @@ bge_reset(struct bge_softc *sc)
 	 * from the device's non-PCI registers may yield garbage
 	 * results.
 	 */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 10000; i++) {
 		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    BGE_PCI_PCISTATE);
 		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==
