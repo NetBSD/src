@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30 2007/09/27 21:14:04 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.31 2007/09/28 17:02:39 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -697,9 +697,17 @@ switch_skipsave:
 	 *  Check for restartable atomic sequences (RAS)
 	 */
 
-	movl	L_PROC(%edi),%ebx
-	cmpl	$0,P_RASLIST(%ebx)
-	jne	check_ras
+	movl	L_PROC(%edi),%eax
+	cmpl	$0,P_RASLIST(%eax)
+	jz	switch_return
+	movl	L_MD_REGS(%edi),%ebx
+	pushl	TF_EIP(%ebx)
+	pushl	%eax
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	switch_return
+	movl	%eax,TF_EIP(%ebx)
 
 switch_return:
 	movl	%esi,%eax	# return 'oldlwp'
@@ -708,17 +716,6 @@ switch_return:
 	popl	%ebx
 	ret
 
-check_ras:
-	movl	L_MD_REGS(%edi),%ecx
-	pushl	TF_EIP(%ecx)
-	pushl	%eax
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	switch_return
-	movl	L_MD_REGS(%edi),%ecx
-	movl	%eax,TF_EIP(%ecx)
-	jmp	switch_return
 
 /*
  * void savectx(struct pcb *pcb);
