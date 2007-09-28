@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.126 2007/07/24 10:22:02 pavel Exp $
+.\"	$NetBSD: contents,v 1.127 2007/09/28 19:14:33 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -270,8 +270,9 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
-\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
+.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
+\n[i386]:\n[news68k]:\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\
+\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
@@ -558,6 +559,7 @@ everything described below.
 .if \n[evbmips] .setsize 20 72
 .if \n[evbppc] .setsize 18 51
 .if \n[evbsh3] .setsize 17 46
+.if \n[ews4800mips] .setsize 20 72
 .if \n[hp300] .setsize 16 46
 .if \n[hp700] .setsize 20 67		\" XXX old
 .if \n[hpcarm] .setsize 18 50
@@ -622,6 +624,7 @@ system call and library manual pages.
 .if \n[evbmips] .setsize 21 88
 .if \n[evbppc] .setsize 23 83
 .if \n[evbsh3] .setsize 20 71
+.if \n[ews4800mips] .setsize 21 88
 .if \n[hp300] .setsize 18 69
 .if \n[hp700] .setsize 9 42			\" XXX old
 .if \n[hpcarm] .setsize 21 76
@@ -692,6 +695,7 @@ This set includes the games and their manual pages.
 .if \n[evbmips] .setsize 4 9
 .if \n[evbppc] .setsize 3 8
 .if \n[evbsh3] .setsize 3 7
+.if \n[ews4800mips] .setsize 4 9
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 3 8
@@ -942,6 +946,7 @@ that your system may need to boot.
 .if \n[cats] .setsize 5 10
 .if \n[cobalt] .setsize 2 3
 .if \n[dreamcast] .setsize 1 2
+.if \n[ews4800mips] .setsize 2 3
 .if \n[hp300] .setsize 2 3
 .if \n[hpcmips] .setsize 2 4
 .if \n[hpcsh] .setsize 1 2
@@ -1019,6 +1024,7 @@ all related programs, and their manual pages.
 .if \n[evbmips] .setsize 3 9
 .if \n[evbppc] .setsize 2 7
 .if \n[evbsh3] .setsize 2 7
+.if \n[ews4800mips] .setsize 3 9
 .if \n[hp300] .setsize 2 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 2 7
@@ -1097,6 +1103,7 @@ This does not include the X servers.
 .if \n[evbmips] .setsize 7 24
 .if \n[evbppc] .setsize 7 19
 .if \n[evbsh3] .setsize 7 18
+.if \n[ews4800mips] .setsize 7 24
 .if \n[hp300] .setsize 6 17
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 6 18
@@ -1152,6 +1159,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[evbmips] .setsize 10 39
 .if \n[evbppc] .setsize 13 44
 .if \n[evbsh3] .setsize 12 39
+.if \n[ews4800mips] .setsize 10 39
 .if \n[hp300] .setsize 10 37
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 13 44
@@ -1206,6 +1214,7 @@ Fonts needed by the X server and by X clients.
 .if \n[evbmips] .setsize 31 39
 .if \n[evbppc] .setsize 31 39
 .if \n[evbsh3] .setsize 31 39
+.if \n[ews4800mips] .setsize 31 39
 .if \n[hp300] .setsize 31 39
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 31 39
@@ -1316,6 +1325,7 @@ servers with man pages and the runtime configuration file.
 .if \n[evbmips] .setsize 4 14
 .if \n[evbppc] .setsize 4 10
 .if \n[evbsh3] .setsize 4 8
+.if \n[ews4800mips] .setsize 4 14
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 5 11
