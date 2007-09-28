@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.127 2007/09/28 19:14:33 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.128 2007/09/28 19:40:24 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,11 +231,18 @@ The install kernel.
 .\}
 .
 .if \n[sgimips] \{\
-.			It Pa netbsd-GENERIC_INDY.gz
+.			It Pa netbsd-GENERIC32_IP12.gz
+A kernel suitable for booting on R3000 Indigo, IRIS 4D/3x and similar machines.
+.			It Pa netbsd.ecoff-GENERIC32_IP12.gz
+GENERIC32_IP2x targeted for being bootable on the above machines
+with PROMs that do not understand the ELF binary format.
+.			It Pa netbsd-GENERIC32_IP2x.gz
 A kernel suitable for booting on Indy, Indigo 2 and similar machines.
-.			It Pa netbsd.ecoff-GENERIC_INDY.gz
-GENERIC_INDY targeted for being bootable on older Indigo 2 and possibly 
+.			It Pa netbsd.ecoff-GENERIC32_IP2x.gz
+GENERIC32_IP2x targeted for being bootable on older Indigo 2 and possibly
 Indy machines with PROMs that do not understand the ELF binary format.
+.			It Pa netbsd-GENERIC32_IP3x.gz
+A kernel suitable for booting on O2.
 .\}
 .
 .if \n[evbppc] \{\
@@ -822,19 +829,36 @@ kernel, which will use multiple processors (if present), named
 .\}
 .el \{\
 .ie \n[sgimips] \{\
-.It Sy kern-GENERIC_INDY
+.It Sy kern-GENERIC32_IP2x
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC_INDY
+.Li GENERIC32_IP12
+kernel (for R3000 Indigo, IRIS 4D/3x machines), named
+.Pa /netbsd .
+This set also contains an ECOFF kernel named
+.Pa /netbsd.ecoff
+that your system may need to boot.
+.It Sy kern-GENERIC32_IP2x
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC32_IP2x
 kernel (for Indy, Indigo 2 and Challenge S/M machines), named
 .Pa /netbsd .
 This set also contains an ECOFF kernel named
 .Pa /netbsd.ecoff
 that your system may need to boot.
+.It Sy kern-GENERIC32_IP3x
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC32_IP3x
+kernel (for O2), named
+.Pa /netbsd .
 You
 .Em must
-install this distribution set.
+install one of these distribution sets for your machine.
 .showsize 3 7				\" XXX old
 .\}
 .el \{\
@@ -1899,23 +1923,23 @@ The following are included in the
 .Pa sgimips/binary/kernel
 directory:
 .
-.(tag netbsd-INDY_INSTALL.symbols.gz
-.It Pa netbsd.ecoff-GENERIC_INDY.gz
+.(tag netbsd-INSTALL32_IPxx.symbols.gz
+.It Pa netbsd.ecoff-GENERIC32_IPxx.gz
 An ECOFF
 version of the 
-.Li GENERIC_INDY
+.Li GENERIC32_IPxx
 kernel (gzipped).  This kernel can be used when booting machines
 whose PROMs do not understand the ELF binary format.
-.It Pa netbsd-INDY_INSTALL.gz
+.It Pa netbsd-INSTALL32_IPxx.gz
 A gzipped
-.Li INDY_INSTALL
+.Li INSTALL32_IPxx
 kernel, which includes an embedded ramdisk with the installation tools.
-.It Pa netbsd-INDY_INSTALL.ecoff.gz
+.It Pa netbsd-INSTALL32_IPxx.ecoff.gz
 An ECOFF version of the
-.Li netbsd-INDY_INSTALL kernel (also gzipped).
-.It Pa netbsd-INDY_INSTALL.symbols.gz
+.Li netbsd-INSTALL32_IPxx kernel (also gzipped).
+.It Pa netbsd-INSTALL32_IPxx.symbols.gz
 Symbols for
-.Pa netbsd-INDY_INSTALL.gz .
+.Pa netbsd-INSTALL32_IPxx.gz .
 .tag)
 .\}
 .
