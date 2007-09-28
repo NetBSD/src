@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.56 2007/09/28 18:20:13 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.57 2007/09/28 19:45:56 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -487,10 +487,8 @@ Installation is supported from several media types, including:
 .
 CD-ROM / DVD
 .
-.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It
 .Tn MS-DOS No floppy
-.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k]
 .
 .It
 FTP
@@ -503,12 +501,9 @@ Magneto-Optical (M-O) or other removable SCSI disk
 .It
 Remote NFS partition
 .
-.if !\n[macppc]:\n[news68k]:\n[sgimips]:\n[i386] \{\
 .It
 Tape
-.\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
 .
-.if !\n[news68k] \{\
 .It
 Existing
 .Nx
@@ -518,7 +513,6 @@ or
 UFS
 .\} \" \n[macppc]
 partitions, if performing an upgrade
-.\} \" ! \n[news68k]
 .
 .bullet)
 .Pp
@@ -585,7 +579,6 @@ and
 .Pp
 Proceed to the instruction on installation.
 .
-.if !\n[ews4800mips]:\n[hp300]:\n[macppc]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It Em MS-DOS floppy
 .Nx
 doesn't include split sets to keep the distribution size down.
@@ -652,7 +645,6 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
-.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k]
 .
 .It Em FTP
 The preparations for this installation/upgrade method are
@@ -771,7 +763,6 @@ If you aren't, this documentation should help, but is not intended to
 be all-encompassing.
 .Note)
 .
-.if !\n[macppc]:\n[news68k]:\n[i386]:\n[sgimips] \{\
 .It Em Tape
 To install
 .Nx
@@ -832,6 +823,5 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the section
 on upgrading.
-.\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
 .
 .tag)
