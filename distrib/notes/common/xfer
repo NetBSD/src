@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.55 2007/01/04 00:19:45 wiz Exp $
+.\"	$NetBSD: xfer,v 1.56 2007/09/28 18:20:13 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,14 +154,33 @@ mode.
 .Pp
 .\} \" \n[macppc]
 .
-.if \n[news68k] \{\
+.if \n[ews4800mips]:\n[news68k]:\n[newsmips] \{\
 .(Note
 .Nx*M
-\*V does not support any framebuffers (yet) so
+\*V
+.if \n[ews4800mips] \{\
+does not support framebuffers other than onboard ones on
+EWS4800/350, EWS4800/360AD and EWS4800/360ADII so
+you have to use serial console on installation procedure
+if your machine doesn't have supported framebuffers listed above.
+.\} \" \n[ews4800mips]
+.if \n[news68k] \{\
+does not support any framebuffers (yet) so
 you have to use serial console on installation procedure.
+.\} \" \n[news68k]
+.if \n[newsmips] \{\
+does not support any framebuffers other than NWB-253 on NWS-3470D and
+XA on NWS-5000 (yet) so
+you have to use serial console on installation procedure
+if your machine doesn't have supported framebuffers listed above.
+.\} \" \n[newsmips]
 .Note)
 .Pp
-You will need to have a 1.44 MB floppy disk to boot off.
+You will need to have
+.if \n[ews4800mips] two 1.44 MB floppy disks
+.if \n[news68k] a 1.44 MB floppy disk
+.if \n[newsmips] two 1.44 MB floppy disks
+to boot off.
 You must put the boot floppy image onto this disk, which contains
 software to install
 .Nx
@@ -170,7 +189,12 @@ system.
 If you are using a
 .Ul
 system (such as
+.if \n[ews4800mips] \{\
+.Tn EWS-UX
+.\} \" \n[ews4800mips]
+.if \n[news68k]:\n[newsmips] \{\
 .Tn NEWS-OS
+.\} \" \n[news68k]:\n[newsmips]
 or other
 .Nx
 machines) to write the floppy images to disks, you should use the
@@ -212,8 +236,8 @@ even after
 .Nx*M
 has been installed.
 .Pp
-SCSI devices on NWS-12x0 machines are not supported (yet), so they
-can only run
+If your machine doesn't have any SCSI disks, or SCSI interface
+on your machine is not supported, it can still run
 .Nx*M
 diskless.
 No file transfer is needed, and all you have to do is to prepare files on
@@ -221,6 +245,18 @@ the server.
 More information about diskless setting can be found at
 .Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
+.if \n[ews4800mips] \{\
+The PROM uses the ordinary tftp protocol, so
+you can load bootloader via network.
+The PROM also supports tape boot but
+.Nx*M
+does not support it currently.
+.Pp
+After the boot floppy or diskless server is prepared, just set
+boot device on the PROM menu which can be invoked by pressing ESC key
+right after hardware checks.
+.\} \" \n[ews4800mips]
+.if \n[news68k] \{\
 The
 .Tn NEWS
 PROM also supports tape boot and network boot, but
@@ -232,75 +268,7 @@ After the boot floppy is prepared, just type
 on the PROM prompt to boot it.
 .Pp
 .\} \" \n[news68k]
-.
 .if \n[newsmips] \{\
-.(Note
-.Nx*M
-\*V does not support any framebuffers other than NWB-253 on NWS-3470D and
-XA on NWS-5000 (yet) so
-you have to use serial console on installation procedure.
-.Note)
-.Pp
-You will need to have a 1.44 MB floppy disk to boot off.
-You must put the boot floppy image onto this disk, which contains
-software to install
-.Nx
-system.
-.Pp
-If you are using a
-.Ul
-system (such as
-.Tn NEWS-OS
-or other
-.Nx
-machines) to write the floppy images to disks, you should use the
-.Xr dd 1
-command to copy the file system image(s)
-(.fs file(s)) directly to the raw floppy disk.
-It is suggested that you read the
-.Xr dd 1
-manual page or ask your system administrator to determine the correct
-set of arguments to use; it will be slightly different from system to
-system, and a comprehensive list of the possibilities is beyond the
-scope of this document.
-.Pp
-If you have an i386 machine which runs
-.Tn MS-DOS
-and use them to write the floppy image(s) to floppy disk,
-you can use the
-.Ic rawrite
-utility, provided in the
-.Pa i386/installation/misc
-directory of the
-.Nx
-distribution.
-It will write a file system image (.fs file) to a floppy disk.
-A
-.Ic rawrite32
-is also available that runs under
-.Tn MS Windows .
-.Pp
-Though
-.Nx*M
-uses the floppy disk to boot for the initial
-installation, the
-.Nx*M
-kernel does not support the
-floppy device.
-Some other machines or systems are still required to write floppy images
-even after
-.Nx*M
-has been installed.
-.Pp
-SCSI devices on NWS-3xxx and NWS-5000 machines are supported.
-But they also can run
-.Nx*M
-diskless.
-No file transfer is needed, and all you have to do is to prepare files on
-the server.
-More information about diskless setting can be found at
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
-.Pp
 On NWS-3xxx machines, the PROM also supports network boot but it uses
 an unusual protocol which is not supported by
 .Nx*M .
@@ -320,8 +288,9 @@ After the boot floppy is prepared, just type
 (NWS-5000) or
 .Ic "bo fh"
 (NWS-3xxx) on the PROM prompt to boot it.
-.Pp
 .\} \" \n[newsmips]
+.Pp
+.\} \" \n[ews4800mips]:\n[news68k]:\n[newsmips]
 .
 .if \n[pmax] \{\
 First-time installation on a bare machine is not supported, because most
@@ -616,7 +585,7 @@ and
 .Pp
 Proceed to the instruction on installation.
 .
-.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
+.if !\n[ews4800mips]:\n[hp300]:\n[macppc]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It Em MS-DOS floppy
 .Nx
 doesn't include split sets to keep the distribution size down.
