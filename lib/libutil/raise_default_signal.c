@@ -1,4 +1,4 @@
-/*	$NetBSD: raise_default_signal.c,v 1.1 2007/09/25 01:13:56 lukem Exp $	 */
+/*	$NetBSD: raise_default_signal.c,v 1.2 2007/09/28 09:07:16 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: raise_default_signal.c,v 1.1 2007/09/25 01:13:56 lukem Exp $");
+__RCSID("$NetBSD: raise_default_signal.c,v 1.2 2007/09/28 09:07:16 lukem Exp $");
 #endif
 
 #include <errno.h>
@@ -47,6 +51,7 @@ __RCSID("$NetBSD: raise_default_signal.c,v 1.1 2007/09/25 01:13:56 lukem Exp $")
 #include <string.h>
 #include <util.h>
 
+#if ! HAVE_RAISE_DEFAULT_SIGNAL
 /*
  * raise_default_signal sig
  *	Raise the default signal handler for sig, by
@@ -115,3 +120,5 @@ raise_default_signal(int sig)
  restore_none:
 	return retval;
 }
+
+#endif	/* ! HAVE_RAISE_DEFAULT_SIGNAL */
