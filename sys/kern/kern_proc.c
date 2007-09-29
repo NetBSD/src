@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.116 2007/09/21 19:19:20 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.117 2007/09/29 12:22:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.116 2007/09/21 19:19:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.117 2007/09/29 12:22:31 dsl Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -407,6 +407,7 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	limit0.pl_corename = defcorename;
 	limit0.pl_refcnt = 1;
+	limit0.pl_sv_limit = NULL;
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);
@@ -1314,6 +1315,18 @@ proc_crmod_enter(void)
 	kauth_cred_t oc;
 	char *cn;
 
+	/* Reset what needs to be reset in plimit. */
+	if (p->p_limit->pl_corename != defcorename) {
+		lim_privatise(p, false);
+		lim = p->p_limit;
+		mutex_enter(&lim->pl_lock);
+		cn = lim->pl_corename;
+		lim->pl_corename = defcorename;
+		mutex_exit(&lim->pl_lock);
+		if (cn != defcorename)
+			free(cn, M_TEMP);
+	}
+
 	mutex_enter(&p->p_mutex);
 
 	/* Ensure the LWP cached credentials are up to date. */
@@ -1323,22 +1336,6 @@ proc_crmod_enter(void)
 		kauth_cred_free(oc);
 	}
 
-	/* Reset what needs to be reset in plimit. */
-	lim = p->p_limit;
-	if (lim->pl_corename != defcorename) {
-		if (lim->pl_refcnt > 1 &&
-		    (lim->pl_flags & PL_SHAREMOD) == 0) {
-			p->p_limit = limcopy(p);
-			limfree(lim);
-			lim = p->p_limit;
-		}
-		mutex_enter(&lim->pl_lock);
-		cn = lim->pl_corename;
-		lim->pl_corename = defcorename;
-		mutex_exit(&lim->pl_lock);
-		if (cn != defcorename)
-			free(cn, M_TEMP);
-	}
 }
 
 /*

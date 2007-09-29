@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.38 2007/09/21 19:19:21 dsl Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.39 2007/09/29 12:22:31 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.38 2007/09/21 19:19:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.39 2007/09/29 12:22:31 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -297,7 +297,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 
 	if (inh & IRIX_PR_SFDS)
 		bsd_flags |= FORK_SHAREFILES;
-	if (inh & (IRIX_PR_SUMASK|IRIX_PR_SDIR)) {
+	if (inh & IRIX_PR_SUMASK && inh & IRIX_PR_SDIR) {
 		bsd_flags |= FORK_SHARECWD;
 		/* Forget them so that we don't get warning below */
 		inh &= ~(IRIX_PR_SUMASK|IRIX_PR_SDIR);
@@ -307,6 +307,8 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		printf("Warning: unimplemented IRIX sproc flag PR_SUMASK\n");
 	if (inh & IRIX_PR_SDIR)
 		printf("Warning: unimplemented IRIX sproc flag PR_SDIR\n");
+	if (inh & IRIX_PR_SULIMIT)
+		bsd_flags |= FORK_SHARELIMIT;
 
 	/*
 	 * If relevant, initialize the share group structure
@@ -491,17 +493,6 @@ irix_sproc_child(isc)
 		kauth_cred_hold(parent->p_cred);
 		p2->p_cred = parent->p_cred;
 		kauth_cred_free(pc);
-	}
-
-	/*
-	 * Handle shared process limits
-	 */
-	if (inh & IRIX_PR_SULIMIT) {
-		pl = p2->p_limit;
-		parent->p_limit->pl_refcnt++;
-		p2->p_limit = parent->p_limit;
-		if(--pl->pl_refcnt == 0)
-			limfree(pl);
 	}
 
 	/*
