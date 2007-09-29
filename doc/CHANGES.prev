@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.73 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.74 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8619,6 +8619,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		IDE Controller for systems with an AMD Geode GX2 CPU
 		(for example the decTOP). [xtraeme 20070627]
 	bind: import 9.4.1-P1 [christos 20070724]
+	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
+	postfix(1): Updated to 2.4.5 [heas 20070802]
 	build.sh: Add iso-image-source option which does iso-image with
 		source sets. [jnemeth 20070830]
 	build.sh: Add iso-dir=directory option which when combined with
