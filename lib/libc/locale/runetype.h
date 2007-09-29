@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.19 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: runetype.h,v 1.20 2007/09/29 07:55:45 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -207,6 +207,10 @@ typedef struct _NBRuneLocale {
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
 	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
+
+	const unsigned char		*rl_ctype_tab;
+	const short			*rl_tolower_tab;
+	const short			*rl_toupper_tab;
 } _NBRuneLocale;
 
 
