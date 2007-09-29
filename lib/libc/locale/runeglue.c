@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.12 2007/09/29 07:55:45 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.12 2007/09/29 07:55:45 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _CTYPE_PRIVATE
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#include "citrus/citrus_module.h"
+#include "citrus/citrus_ctype.h"
 #include "rune.h"
 #include "rune_local.h"
 
@@ -58,31 +60,14 @@ __RCSID("$NetBSD: runeglue.c,v 1.11 2005/11/29 03:11:59 christos Exp $");
 #endif
 
 int
-__runetable_to_netbsd_ctype(locale)
-	const char *locale;
+__runetable_to_netbsd_ctype(rl)
+	_RuneLocale *rl;
 {
-	int i;
+	int i, ch;
 	unsigned char *new_ctype;
 	short *new_toupper, *new_tolower;
 
 	_DIAGASSERT(locale != NULL);
-
-	/* set to C locale, to ease failure case handling */
-	if (_ctype_ != _C_ctype_) {
-		free(__UNCONST(_ctype_));
-		_ctype_ = _C_ctype_;
-	}
-	if (_toupper_tab_ != _C_toupper_) {
-		free(__UNCONST(_toupper_tab_));
-		_toupper_tab_ = _C_toupper_;
-	}
-	if (_tolower_tab_ != _C_tolower_) {
-		free(__UNCONST(_tolower_tab_));
-		_tolower_tab_ = _C_tolower_;
-	}
-
-	if (!strcmp(locale, "C") || !strcmp(locale, "POSIX"))
-		return 0;
 
 	new_ctype = malloc(sizeof(*new_ctype) * (1 + _CTYPE_NUM_CHARS));
 	if (!new_ctype)
@@ -107,20 +92,36 @@ __runetable_to_netbsd_ctype(locale)
 	new_toupper[0] = EOF;
 	new_tolower[0] = EOF;
 	for (i = 0; i < _CTYPE_NUM_CHARS; i++) {
-		new_ctype[i + 1]=0;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_U)
+		new_ctype[i + 1] = 0;
+		new_toupper[i + 1] = i;
+		new_tolower[i + 1] = i;
+
+		/* XXX: FIXME
+		 * expected 'x' == L'x', see defect report #279
+		 * http://www.open-std.org/JTC1/SC22/WG14/www/docs/dr_279.htm
+		 */
+		if (_citrus_ctype_wctob(rl->rl_citrus_ctype, (wint_t)i, &ch)) {
+			free(new_ctype);
+			free(new_toupper);
+			free(new_tolower);
+			return -1;
+		}
+		if (ch == EOF)
+			continue;
+
+		if (rl->rl_runetype[i] & _CTYPE_U)
 			new_ctype[i + 1] |= _U;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_L)
+		if (rl->rl_runetype[i] & _CTYPE_L)
 			new_ctype[i + 1] |= _L;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_D)
+		if (rl->rl_runetype[i] & _CTYPE_D)
 			new_ctype[i + 1] |= _N;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_S)
+		if (rl->rl_runetype[i] & _CTYPE_S)
 			new_ctype[i + 1] |= _S;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_P)
+		if (rl->rl_runetype[i] & _CTYPE_P)
 			new_ctype[i + 1] |= _P;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_C)
+		if (rl->rl_runetype[i] & _CTYPE_C)
 			new_ctype[i + 1] |= _C;
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_X)
+		if (rl->rl_runetype[i] & _CTYPE_X)
 			new_ctype[i + 1] |= _X;
 		/*
 		 * TWEAK!  _B has been used incorrectly (or with older
@@ -130,23 +131,22 @@ __runetable_to_netbsd_ctype(locale)
 		 * function (i.e. isblank() is inherently locale unfriendly).
 		 */
 #if 1
-		if ((_CurrentRuneLocale->rl_runetype[i] & (_CTYPE_R | _CTYPE_G))
-		    == _CTYPE_R)
+		if ((rl->rl_runetype[i] & (_CTYPE_R | _CTYPE_G)) == _CTYPE_R)
 			new_ctype[i + 1] |= _B;
 #else
-		if (_CurrentRuneLocale->rl_runetype[i] & _CTYPE_B)
+		if (rl->rl_runetype[i] & _CTYPE_B)
 			new_ctype[i + 1] |= _B;
 #endif
-		new_toupper[i + 1] = (short)_CurrentRuneLocale->rl_mapupper[i];
-		new_tolower[i + 1] = (short)_CurrentRuneLocale->rl_maplower[i];
+		new_toupper[i + 1] = (short)rl->rl_mapupper[i];
+		new_tolower[i + 1] = (short)rl->rl_maplower[i];
 	}
 
 	/* LINTED const cast */
-	_ctype_ = (const unsigned char *)new_ctype;
+	rl->rl_ctype_tab = (const unsigned char *)new_ctype;
 	/* LINTED const cast */
-	_toupper_tab_ = (const short *)new_toupper;
+	rl->rl_toupper_tab = (const short *)new_toupper;
 	/* LINTED const cast */
-	_tolower_tab_ = (const short *)new_tolower;
+	rl->rl_tolower_tab = (const short *)new_tolower;
 
 	return 0;
 }
