@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.1 2007/09/29 08:26:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.2 2007/09/29 08:47:36 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.1 2007/09/29 08:26:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.2 2007/09/29 08:47:36 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -117,7 +117,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.1 2007/09/29 08:26:33 yamt Exp $");
 #include "opt_largepages.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#if !defined(__x86_64__)
 #include "opt_kstack_dr0.h"
+#endif /* !defined(__x86_64__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +647,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	ourpmap = ci->ci_pmap;
 
 	/* need to lock both curpmap and pmap: use ordered locking */
-	if ((unsigned) pmap < (unsigned) ourpmap) {
+	if ((uintptr_t) pmap < (uintptr_t) ourpmap) {
 		mutex_enter(&pmap->pm_lock);
 		mutex_enter(&ourpmap->pm_lock);
 	} else {
@@ -716,6 +718,8 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 inline static void
 pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 {
+
+#if !defined(__x86_64__)
 	if (curproc == NULL || curproc->p_vmspace == NULL ||
 	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
 		return;
@@ -737,8 +741,10 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 	}
+#endif /* !defined(__x86_64__) */
 }
 
+#if !defined(__x86_64__)
 /*
  * Fixup the code segment to cover all potential executable mappings.
  * returns 0 if no changes to the code segment were made.
@@ -775,6 +781,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 	}
 	return (1);
 }
+#endif /* !defined(__x86_64__) */
 
 /*
  * p m a p   k e n t e r   f u n c t i o n s
@@ -1805,7 +1812,9 @@ pmap_create(void)
 	}
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
+#if !defined(__x86_64__)
 	pmap->pm_hiexec = 0;
+#endif /* !defined(__x86_64__) */
 	pmap->pm_flags = 0;
 	pmap->pm_cpus = 0;
 	pmap->pm_kernel_cpus = 0;
