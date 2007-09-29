@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13.2.1 2007/09/29 08:43:28 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.2 2007/09/29 11:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -157,21 +157,21 @@
 
 #define __HAVE_VM_PAGE_MD
 #define VM_MDPAGE_INIT(pg)                                      \
-        memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));         \
-        mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM); \
-        SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));         \
+	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM); \
+	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
 
 struct pv_head {
-	kmutex_t pvh_lock;	     /* locks every pv in this tree */
-        SPLAY_HEAD(pvtree, pv_entry) pvh_root;
-                                        /* head of tree (locked by pvh_lock) */
+	kmutex_t pvh_lock;		/* locks every pv in this tree */
+	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
+					/* head of tree (locked by pvh_lock) */
 };
 
 struct vm_page_md {
-        struct pv_head mp_pvhead;
-        int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
+	struct pv_head mp_pvhead;
+	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
 };
 
 /*
