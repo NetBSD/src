@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17.4.1 2007/09/29 11:25:40 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.4.2 2007/09/29 12:22:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ IDTVEC(doreti)
 .Ldoreti_checkast:
 	CHECK_ASTPENDING(%eax)
 	jz	3f
-4:	CLEAR_ASTPENDING(%eax)
+	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
