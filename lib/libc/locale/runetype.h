@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.20 2007/09/29 07:55:45 tnozaki Exp $	*/
+/*	$NetBSD: runetype.h,v 1.21 2007/09/29 08:10:17 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -89,14 +89,14 @@ typedef struct {
 	int32_t		fre_map;	/* What first maps to in maps */
 	uint32_t	fre_pad1;	/* backward compatibility */
 	__runepad_t	fre_pad2;	/* backward compatibility */
-} __attribute__((__packed__)) _FileRuneEntry;
+} __packed _FileRuneEntry;
 
 
 typedef struct {
 	uint32_t	frr_nranges;	/* Number of ranges stored */
 	uint32_t	frr_pad1;	/* backward compatibility */
 	__runepad_t	frr_pad2;	/* backward compatibility */
-} __attribute__((__packed__)) _FileRuneRange;
+} __packed _FileRuneRange;
 
 
 typedef struct {
@@ -126,7 +126,7 @@ typedef struct {
 	uint32_t	frl_pad5;	/* backward compatibility */
 
 	/* variable size data follows */
-} __attribute__((__packed__)) _FileRuneLocale;
+} __packed _FileRuneLocale;
 
 
 /*
