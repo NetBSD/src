@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.4 2007/09/29 11:25:39 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.5 2007/09/29 13:20:03 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -940,7 +940,7 @@ syscall1:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
