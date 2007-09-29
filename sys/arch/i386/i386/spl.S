@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17 2007/08/05 10:50:26 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.4.1 2007/09/29 11:25:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -259,7 +259,7 @@ IDTVEC(doreti)
 	cli
 	jmp	5b
 3:
-	CHECK_DEFERRED_SWITCH(%eax)
+	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:
 	INTRFASTEXIT
