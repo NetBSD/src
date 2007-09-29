@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.314 2007/08/29 23:38:03 ad Exp $
+#	$NetBSD: files.i386,v 1.314.2.1 2007/09/29 08:26:34 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -83,7 +83,7 @@ file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	arch/i386/i386/pmap.c
+file	arch/x86/x86/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
