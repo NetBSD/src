@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.53 2007/09/27 23:21:08 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.54 2007/09/29 20:17:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.53 2007/09/27 23:21:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.54 2007/09/29 20:17:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -180,4 +180,3 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 
 	puffs_updatenode(vp, uflags);
 }
-
