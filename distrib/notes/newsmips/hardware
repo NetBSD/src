@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2003/07/26 17:07:13 salo Exp $
+.\"	$NetBSD: hardware,v 1.2.16.1 2007/09/29 17:05:22 pavel Exp $
 .
 .Nx*M
 \*V will run on single MIPS-based Sony NEWS workstations.
@@ -24,7 +24,7 @@ Framebuffer
 .(bullet -compact
 NWB-253 monochrome framebuffer on NWS-3470D (text only)
 .It
-XA color framebuffer on NWS-5000 (text only)
+XA color framebuffer on NWS-5000
 .bullet)
 .It
 RS232 interfaces

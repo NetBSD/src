@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2007/08/31 20:48:59 pavel Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2007/09/29 17:05:20 pavel Exp $
 
 MERGED_SRCS+=	${COMMON}/upgrade ${COMMON}/xfer
 
