@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.2 2007/09/29 08:47:36 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.3 2007/09/29 13:43:56 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.2 2007/09/29 08:47:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.3 2007/09/29 13:43:56 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -823,6 +823,33 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 }
 
+#if defined(__x86_64__)
+/*
+ * Change protection for a virtual address. Local for a CPU only, don't
+ * care about TLB shootdowns.
+ */
+void
+pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
+{
+	pt_entry_t *pte, opte;
+
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		pte = vtopte(va);
+	else
+		pte = kvtopte(va);
+
+	opte = *pte;
+
+	if ((prot & VM_PROT_WRITE) != 0)
+		*pte |= PG_RW;
+	else
+		*pte &= ~PG_RW;
+
+	if (opte != *pte)
+		invlpg(va);
+}
+#endif /* defined(__x86_64__) */
+
 /*
  * pmap_kremove: remove a kernel mapping(s) without R/M (pv_entry) tracking
  *
@@ -1151,6 +1178,35 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	tlbflush();
 }
+
+#if defined(__x86_64__)
+/*
+ * Pre-allocate PTPs for low memory, so that 1:1 mappings for various
+ * trampoline code can be entered.
+ */
+void
+pmap_prealloc_lowmem_ptps(void)
+{
+	pd_entry_t *pdes;
+	int level;
+	paddr_t newp;
+
+	pdes = pmap_kernel()->pm_pdir;
+	level = PTP_LEVELS;
+	for (;;) {
+		newp = avail_start;
+		avail_start += PAGE_SIZE;
+		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg((vaddr_t)early_zerop);
+		memset(early_zerop, 0, PAGE_SIZE);
+		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
+		level--;
+		if (level <= 1)
+			break;
+		pdes = normal_pdes[level - 2];
+	}
+}
+#endif /* defined(__x86_64__) */
 
 /*
  * pmap_init: called from uvm_init, our job is to get the pmap
