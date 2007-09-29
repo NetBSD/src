@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2007/08/29 23:38:03 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.1 2007/09/29 08:43:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -171,7 +171,7 @@ struct pv_head {
 
 struct vm_page_md {
         struct pv_head mp_pvhead;
-        int mp_attrs;
+        int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
 };
 
 /*
