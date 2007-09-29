@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.35 2007/02/15 12:00:15 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.36 2007/09/29 21:54:13 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -249,7 +249,7 @@ message fspart
 }
 
 message fspart_header
-{   Start %3s  Ende %3s Größe %3s FS Typ     Newfs Mount Mount Verz.
+{   Start %3s Ende  %3s Größe  %3s FS Typ     Newfs Mount Mount Verz.
    --------- --------- ---------- ---------- ----- ----- -----------
 }
 
