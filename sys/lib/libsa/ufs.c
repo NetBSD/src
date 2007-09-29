@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.49 2006/05/11 01:13:44 mrg Exp $	*/
+/*	$NetBSD: ufs.c,v 1.50 2007/09/29 21:36:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -855,8 +855,16 @@ ffs_oldfscompat(struct fs *fs)
 {
 
 #ifdef COMPAT_UFS
-	if (fs->fs_magic == FS_UFS1_MAGIC &&
-	    fs->fs_old_inodefmt < FS_44INODEFMT) {
+	/*
+	 * Newer Solaris versions have a slightly incompatible
+	 * superblock - so always calculate this values on the fly, which
+	 * is good enough for libsa purposes
+	 */
+	if (fs->fs_magic == FS_UFS1_MAGIC
+#ifndef COMPAT_SOLARIS_UFS
+	    && fs->fs_old_inodefmt < FS_44INODEFMT
+#endif
+	    ) {
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
