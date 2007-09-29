@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.3 2007/09/29 13:43:56 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.4 2007/09/29 20:05:15 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.3 2007/09/29 13:43:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.4 2007/09/29 20:05:15 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -970,7 +970,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
-	kpm->pm_pdirpa = (uint32_t) lwp0.l_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdirpa = (paddr_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
