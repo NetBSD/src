@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.302 2007/09/29 11:14:02 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.303 2007/09/29 11:33:50 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9990,4 +9990,14 @@ share/man/man7/release.7			1.24
 	Convert build.sh iso-dir=directory option to -C cddir as per jmmv@ on
 	source-changes.
 	[jnemeth, ticket #864]
+
+sys/fs/msdosfs/msdosfs_denode.c			1.24
+
+	Release vnode being created in error branch instead of leaving it
+	locked.  Ideally the function should be rewritten to do things in
+	a different order, but this tries to keep changes minimal aiming
+	for a possible netbsd-4 pullup.
+
+	fixes PR kern/37034
+	[pooka, ticket #909]
 
