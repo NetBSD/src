@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2007/08/29 23:38:03 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.1 2007/09/29 08:32:52 yamt Exp $	*/
 
 /*
  *
@@ -322,7 +322,7 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
-	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
+	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 
 /* pm_flags */
