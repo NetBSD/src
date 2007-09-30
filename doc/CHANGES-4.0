@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.304 2007/09/30 19:40:26 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.305 2007/09/30 19:47:42 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10005,4 +10005,13 @@ distrib/utils/sysinst/msg.mi.de			1.36
 
 	Fix column alignment in partition size display
 	[martin, ticket #910]
+
+sys/arch/sparc64/sparc64/machdep.c		1.203 (via patch)
+
+	When calculating memory sizes and related values for kernel dumps,
+	consistently use uint64_t. Fixes crash dumps on machines with > 2GB
+	memory. Found by Chris Ross.
+	While there, remove a #if 0'd part of code that prevented the first
+	physical memory page to be dumped - I'll solve that differently.
+	[martin, ticket #911]
 
