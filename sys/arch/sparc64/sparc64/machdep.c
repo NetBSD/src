@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2006/11/24 19:46:59 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.193.2.1 2007/09/30 19:47:27 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2006/11/24 19:46:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.1 2007/09/30 19:47:27 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -748,7 +748,7 @@ dumpsys()
 	daddr_t blkno;
 	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int j, error = 0;
-	unsigned long todo;
+	uint64_t todo;
 	register struct mem_region *mp;
 
 	/* copy registers to memory */
@@ -797,11 +797,14 @@ dumpsys()
 
 	for (mp = &phys_installed[0], j = 0; j < phys_installed_size;
 			j++, mp = &phys_installed[j]) {
-		unsigned i = 0, n;
+		uint64_t i = 0, n;
 		paddr_t maddr = mp->start;
 
-#if 0
-		/* Remind me: why don't we dump page 0 ? */
+#if 1
+		/*
+		 * work around pmap_extract() bug: it returns failure
+		 * when the resulting PA is 0.
+		 */
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
 			maddr += PAGE_SIZE;
