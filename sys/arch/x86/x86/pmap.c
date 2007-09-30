@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.4 2007/09/29 20:05:15 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.5 2007/09/30 10:56:33 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.4 2007/09/29 20:05:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.5 2007/09/30 10:56:33 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2424,14 +2424,14 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 #ifdef LARGEPAGES
 	if (pde & PG_PS) {
 		if (pap != NULL)
-			*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			*pap = (pde & PG_LGFRAME) | (va & (NBPD_L2 - 1));
 		return (true);
 	}
 #endif
 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
 		return (true);
 	}
 
