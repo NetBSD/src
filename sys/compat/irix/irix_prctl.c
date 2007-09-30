@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.39 2007/09/29 12:22:31 dsl Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.40 2007/09/30 10:35:16 he Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.39 2007/09/29 12:22:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.40 2007/09/30 10:35:16 he Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -427,7 +427,6 @@ irix_sproc_child(isc)
 	struct frame *tf = (struct frame *)l2->l_md.md_regs;
 	struct frame *ptf = (struct frame *)lparent->l_md.md_regs;
 	kauth_cred_t pc;
-	struct plimit *pl;
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
 
