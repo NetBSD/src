@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.46 2007/03/04 12:02:02 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.47 2007/09/30 12:25:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.46 2007/03/04 12:02:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47 2007/09/30 12:25:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.46 2007/03/04 12:02:02 tsutsui Exp $");
 #include <uvm/uvm_extern.h>
 
 extern u_int lowram;
-extern char *extiobase;
 static void *devzeropage;
 
 static dev_type_read(mmrw);
