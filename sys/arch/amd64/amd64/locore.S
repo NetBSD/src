@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.1 2007/09/30 15:32:20 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -882,18 +882,20 @@ IDTVEC(syscall)
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%r15)
-1:	/* Check for ASTs on exit to user mode. */
+.Lsyscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r14)
-	je	2f
+	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	1b
-2:
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 	sti
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
@@ -932,9 +934,13 @@ syscall_return:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	1b
+	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
+
+9:	sti
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 /*
  * void lwp_trampoline(void);
@@ -950,6 +956,7 @@ NENTRY(lwp_trampoline)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -965,6 +972,7 @@ NENTRY(child_trampoline)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
+	DO_DEFERRED_SWITCH
 	jmp	syscall_return
 
 	.globl  _C_LABEL(osyscall_return)
@@ -1000,7 +1008,8 @@ osyscall1:
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
-2:	/* Check for ASTs on exit to user mode. */
+.Losyscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r14)
 	je	1f
@@ -1010,13 +1019,14 @@ _C_LABEL(osyscall_return):
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	2b
-
+	jmp	.Losyscall_checkast
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 iret_return:
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -1027,9 +1037,12 @@ iret_return:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
  * void sse2_zero_page(void *pg)

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2007/08/29 23:38:05 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.2.8.1 2007/09/30 15:32:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2007/08/29 23:38:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.8.1 2007/09/30 15:32:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -319,11 +319,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
-#ifdef i386
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
-#endif
 
 	/* further PCB init done later. */
 

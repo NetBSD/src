@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4 2007/05/21 08:10:39 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4.12.1 2007/09/30 15:32:24 yamt Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -81,6 +81,14 @@
 	pushq	%r11			; \
 	pushq	%r13			;
 
+#define	DO_DEFERRED_SWITCH \
+	cmpq	$0, CPUVAR(WANT_PMAPLOAD)		; \
+	jz	1f					; \
+	call	_C_LABEL(do_pmap_load)			; \
+	1:
+
+#define	CHECK_DEFERRED_SWITCH \
+	cmpq	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define CHECK_ASTPENDING(reg)	cmpq	$0, reg				; \
 				je	99f				; \

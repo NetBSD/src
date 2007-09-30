@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12 2007/09/17 21:41:54 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.2.1 2007/09/30 15:32:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -228,23 +228,27 @@ calltrap:
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
+	testb	$SEL_RPL,TF_CS(%rsp)
+	jnz	.Lalltraps_checkast
+	jmp	6f
+.Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
-2:	/* Check for ASTs on exit to user mode. */
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r14)
-	je	1f
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jz	1f
+	je	3f
 	CLEAR_ASTPENDING(%r14)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	2b
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+3:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+6:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	CPUVAR(ILEVEL),%ebx
+6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -257,9 +261,12 @@ calltrap:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
 
 #define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
@@ -397,7 +404,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	xchgq	MB_POINTER(%rcx), %rbx
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
-	je	4f
+	je	5f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	(%rax)
@@ -405,19 +412,34 @@ IDTVEC(intr_lapic_tlb_mcast)
 	cmpq	%rdx, %rax
 	jb	1b
 2:
-	/* Restore state and return. */
+	/* Ack the request. */
 	lock
 	incq	(%rbx)
+	/*
+	 * Check the current TLB state.  If we don't want further
+	 * invalidations for this pmap, then take the CPU out of
+	 * the pmap's bitmask.
+	 */
+	cmpq	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
+	jne	3f
+	movq	CPUVAR(PMAP), %rdx
+	movq	CPUVAR(CPUMASK), %rcx
+	notq	%rcx
+	lock
+	andq	%rcx, PM_CPUS(%rdx)
+	movq	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
+3:
+	/* Restore state and return. */
 	popq	%rdx
 	popq	%rcx
 	popq	%rbx
 	popq	%rax
 	testq	$SEL_UPL, 8(%rsp)
-	jz	3f
+	jz	4f
 	swapgs
-3:
-	iretq
 4:
+	iretq
+5:
 	/* Invalidate all user pages. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
