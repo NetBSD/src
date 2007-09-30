@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.5 2007/09/24 05:12:41 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.6 2007/09/30 03:38:56 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9668,4 +9668,276 @@ etc/security					1.104
 	/etc/security.conf.
 	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
 	[adrianp, ticket #883]
+
+sys/arch/landisk/dev/obio.c			1.2
+
+	Pass correct size in CFATTACH_DECL (obio_softc, not device).
+
+	I have no idea how/why it's been working all this time, but I guess
+	today's changes to struct device shifted delicate numerology balance
+	and exposed the problem that's been around since the import.
+	[uwe, ticket #902]
+
+sys/arch/sparc64/conf/GENERIC			1.92
+
+	add mskc/msk & skc/sk network drivers.
+
+	reported to work by Chris Ross on port-sparc64.
+	[mrg, ticket #901]
+
+lib/libpthread/pthread_sig.c			1.47.4.2
+
+	While examining the target's state, grab the target's statelock,
+	not our own.
+	[wrstuden, ticket #892]
+
+sys/netinet6/esp_output.c			1.29
+
+	In the IPSEC_NAT_T case, we must set the udp length even if the ESP entry
+	doesn't have an integrity algorithm.
+
+	Reported by Wolfgang Stukenbrock in pr/36781 . Thanks you a lot.
+	[degroote, ticket #893]
+
+sys/netinet6/ah_output.c			1.30
+sys/netinet6/esp_output.c			1.30
+sys/netinet6/ipcomp_output.c			1.22
+
+	{ah,esp,ipcomp}_output must return 0 on success. On failure, it returns the
+	error and m is freed. Previously, it was not the case in ipcomp and esp case
+	(aka in some case, it returns 0 with m freed, or an error and m was not freed).
+
+	In ipcomp_output, fix some leak of mcopy too.
+
+	Use the same error path in {ah,esp,ipcomp}_output.
+
+	Problem was reported by Wolfgang Stukenbrock in pr/36768.
+	[degroote, ticket #896]
+
+sys/opencrypto/deflate.c			1.9
+
+	Fix a stupid bogus bcopy -> memcpy conversion.
+	I will write it 1000 times : when I convert bcopy to memcpy, don't forget to
+	swap first and secund args.
+	[degroote, ticket #897]
+
+sys/dev/ata/wd.c				1.345
+
+	Add a workaround for drives with the LBA48 bug:
+	if we get a "ID not found" error for a transfer crossing LBA48_THRESHOLD,
+	and the drive is larger than 128GB, automatically add WD_QUIRK_FORCE_LBA48
+	to the drive's quirks and retry the transfers.
+	Hopefully this will obsolete the WD_QUIRK_FORCE_LBA48 quirk list ...
+	[bouyer, ticket #899]
+
+sys/sys/types.h					1.72
+
+	Replace the Mach-derived boolean_t type with the C99 bool type.  A
+	future commit will replace use of TRUE and FALSE with true and false.
+	[joerg, ticket #890]
+
+libexec/ld.elf_so/rtld.h			1.75
+
+	Don't define bool, false and true. Use stdbool.h.
+	[joerg, ticket #889]
+
+lib/libcurses/curses.h				1.89 (via patch)
+
+	Do not typedef bool as char, just include stdbool.h. Fixes a build
+	failure with regress/include/okheaders.
+
+	Suggestion by mlelstv@ and ok by blymn@.
+	[joerg, ticket #891]
+
+sys/dist/ipf/netinet/fil.c			1.42
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.41
+
+	Returning from m_pulldown can leave the first mbut with no data (m_len = 0).
+	The mbuf chain wasn't being walked and thus fin_m was not updated to point
+	to the new first mbuf with data in it.
+
+	Patch from the official IPFilter repository.
+	[martti, ticket #886]
+
+sys/dist/ipf/netinet/ip_state.c			1.29
+
+	Fixed IPF bug #1779455
+	  state timer should be reset when retransmission is seen
+	[martti, ticket #887]
+
+usr.bin/make/Makefile				1.42
+
+	Revert 1.34 (CFLAGS+=-g) that have been commited by mistake (hi, xtos).
+	[uwe, ticket #903]
+
+share/man/man4/vlan.4				1.28
+
+	bnx supports VLANs.
+	[martti, ticket #900]
+
+dist/ipf/tools/ipmon.c				1.13
+sys/dist/ipf/netinet/ip_log.c			1.10
+
+	Fixed IPF bug #1767831
+	  ipflog() & ipmon ignore IPv6 extension headers
+	[martti, ticket #888]
+
+sys/dev/pci/if_wpi.c				1.18 (via patch)
+sys/dev/pci/if_wpi.c				1.19 (via patch)
+sys/dev/pci/if_wpi.c				1.23 (via patch)
+sys/dev/pci/if_wpivar.h				1.7  (via patch)
+
+	Call wpi_stop at the beginning of wpi_init so we are sure that wpi is really
+	stopped (in particular interrupt are disabled).
+	Fix possible "packet corruption" which appears on high load
+	Fix scanning code for wpi based on the iwi code.
+	Keep track of the status of the scan.
+	On a transition IEEE80211_S_SCAN -> IEEE80211_S_SCAN, don't stop the previous
+	scan, finish the current scan.
+	When we receive some frames in the IEEE80211_S_SCAN state, set current_channel
+	based on the value advertised in beacons or probre reponse.
+
+	Moreover, it fixes WPA issues for me.
+	[degroote, ticket #860]
+
+sys/arch/x86/x86/ipmi.c				1.13 (via patch)
+
+	Don't attach ipmi if GETID failed. From Nicolas Joly.
+	[bouyer, ticket #898]
+
+common/include/prop/Makefile			1.3 (via patch)
+common/include/prop/plistref.h			1.1 (via patch)
+common/include/prop/prop_array.h		1.5 (via patch)
+common/include/prop/prop_bool.h			1.3 (via patch)
+common/include/prop/prop_data.h			1.2 (via patch)
+common/include/prop/prop_dictionary.h		1.7 (via patch)
+common/include/prop/prop_ingest.h		1.2 (via patch)
+common/include/prop/prop_number.h		1.5 (via patch)
+common/include/prop/prop_object.h		1.5 (via patch)
+common/include/prop/prop_object.h		1.6 (via patch)
+common/include/prop/prop_string.h		1.2 (via patch)
+common/include/prop/proplib.h			1.5 (via patch)
+common/lib/libprop/Makefile.inc			1.6 (via patch)
+common/lib/libprop/prop_array.3			1.5 (via patch)
+common/lib/libprop/prop_array.c			1.10 (via patch)
+common/lib/libprop/prop_array.c			1.11 (via patch)
+common/lib/libprop/prop_array.c			1.9 (via patch)
+common/lib/libprop/prop_bool.3			1.3 (via patch)
+common/lib/libprop/prop_bool.c			1.10 (via patch)
+common/lib/libprop/prop_bool.c			1.11 (via patch)
+common/lib/libprop/prop_bool.c			1.12 (via patch)
+common/lib/libprop/prop_data.3			1.4 (via patch)
+common/lib/libprop/prop_data.c			1.7 (via patch)
+common/lib/libprop/prop_data.c			1.8 (via patch)
+common/lib/libprop/prop_data.c			1.9 (via patch)
+common/lib/libprop/prop_dictionary.3		1.8 (via patch)
+common/lib/libprop/prop_dictionary.c		1.18 (via patch)
+common/lib/libprop/prop_dictionary.c		1.19 (via patch)
+common/lib/libprop/prop_dictionary.c		1.20 (via patch)
+common/lib/libprop/prop_dictionary_util.3	1.2 (via patch)
+common/lib/libprop/prop_dictionary_util.c	1.2 (via patch)
+common/lib/libprop/prop_ingest.3		1.3 (via patch)
+common/lib/libprop/prop_ingest.c		1.2 (via patch)
+common/lib/libprop/prop_kern.c			1.8 (via patch)
+common/lib/libprop/prop_number.3		1.7 (via patch)
+common/lib/libprop/prop_number.c		1.12 (via patch)
+common/lib/libprop/prop_number.c		1.13 (via patch)
+common/lib/libprop/prop_number.c		1.14 (via patch)
+common/lib/libprop/prop_object.3		1.6 (via patch)
+common/lib/libprop/prop_object.c		1.14 (via patch)
+common/lib/libprop/prop_object.c		1.15 (via patch)
+common/lib/libprop/prop_object.c		1.16 (via patch)
+common/lib/libprop/prop_object_impl.h		1.14 (via patch)
+common/lib/libprop/prop_object_impl.h		1.16 (via patch)
+common/lib/libprop/prop_object_impl.h		1.17 (via patch)
+common/lib/libprop/prop_object_impl.h		1.18 (via patch)
+common/lib/libprop/prop_rb.c			1.7 (via patch)
+common/lib/libprop/prop_stack.c			1.1 (via patch)
+common/lib/libprop/prop_stack.c			1.2 (via patch)
+common/lib/libprop/prop_stack.h			1.1 (via patch)
+common/lib/libprop/prop_stack.h			1.2 (via patch)
+common/lib/libprop/prop_string.3		1.4 (via patch)
+common/lib/libprop/prop_string.c		1.7 (via patch)
+common/lib/libprop/prop_string.c		1.8 (via patch)
+common/lib/libprop/prop_string.c		1.9 (via patch)
+distrib/sets/lists/comp/mi			1.1063 (via patch)
+sys/sys/dkio.h					1.14 (via patch)
+usr.sbin/btdevctl/btdevctl.c			1.5 (via patch)
+usr.sbin/btdevctl/db.c				1.4 (via patch)
+usr.sbin/btdevctl/print.c			1.9 (via patch)
+usr.sbin/btdevctl/sdp.c				1.4 (via patch)
+
+	Consider '\r' to be white space. Discussed with and also kept as local
+	change by freza. With this change, DOS style line endings work.
+
+	boolean_t -> bool
+	TRUE -> true
+	FALSE -> false
+
+	libprop is currently using a recursive parser. While this is fine for
+	userland, deeply nested arrays and dictionaries can easily overflow
+	the kernel stack and thereby force a panic.
+
+	Fix the internalizer and prop_object_release to use a separate call
+	stack and alter the dictionary and array handling to not recurse on
+	the C stack. The default stack has an inline depth of 16 elements,
+	which should keep the overhead reasonable.
+
+	This issue was found by Pavel Cahyna and Jachym Holecek.
+
+	Additionally add a limit for prop_object_copyin_ioctl to prevent user
+	programs from temporary allocating unbound amount of kernel memory.
+	Allow malloc to fail so that tight loops of userland processes can't
+	force panics by exhausting the kernel map.
+
+	Tested with the sample exploit of Jachym, his test suite and reviewed
+	by himself (initial patch), Christos Zoulas and Jason Thorpe.
+
+	struct plistref does not reference other proplib data types, so split it
+	in its own header file to be included by dkio.h. Fixes breakage due to
+	pollution from proplib.h in programs which include ioctl.h. Tested and OK
+	by dogcow@.
+
+	Attempt at fixing build failures after proplib was converted to bool:
+	FALSE -> false, TRUE -> true, boolean_t -> bool, int -> bool when
+	appropriate, include stdbool.h . proplib.h no longer provides boolean_t,
+	so it is necessary to change to bool.
+
+	From Tom Spindler (dogcow@).
+
+	Avoid using unbound amount of stack frames in prop_object_equal
+	by using a dynamic stack as well. Reorder arguments for the internalizer
+	as the iteration is always present and should go before possibly
+	NULL arguments.
+
+	Reviewed by mjf@ and adrianp@
+	[joerg, ticket #904]
+
+doc/CHANGES					patch
+
+	Bring over CHANGES entries that were left out when the changes
+	themselves were pulled up.
+	[xtraeme, ticket #863]
+
+sys/miscfs/procfs/procfs_vnops.c		1.152
+
+	Don't prepend rootvnode to the path in non-NULL case for exe links.
+	It breaks procfs in chroot.
+
+	from <christos>, tested by me.
+	[martti, ticket #905]
+
+distrib/sets/lists/man/mi			1.1002
+share/man/man4/Makefile				1.429
+share/man/man4/uslsa.4				1.1
+sys/arch/i386/conf/ALL				1.99
+sys/arch/i386/conf/GENERIC			1.828
+sys/dev/usb/files.usb				1.77
+sys/dev/usb/usbdevs				1.466 (via patch)
+sys/dev/usb/uslsa.c				1.1
+sys/dev/usb/uslsa.c				1.2
+sys/dev/usb/uslsa.c				1.3
+
+	From PR kern/33496 - add uslsa(4), a CP210x USB-RS232 ucom driver.
+	[mlelstv, ticket #895]
 

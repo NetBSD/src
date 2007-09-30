@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.4.12.1 2007/09/30 03:38:42 wrstuden Exp $	*/
+/*	$NetBSD: plistref.h,v 1.1.6.2 2007/09/30 03:38:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,56 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROPLIB_PROP_ARRAY_H_
-#define	_PROPLIB_PROP_ARRAY_H_
+#ifndef _PROPLIB_PLISTREF_H_
+#define	_PROPLIB_PLISTREF_H_
 
-#include <prop/prop_object.h>
+/* for size_t */
+#include <sys/types.h>
 
-typedef struct _prop_array *prop_array_t;
+/*
+ * Property List Reference --
+ *	Used to pass externalized property lists across protection
+ *	boundaries (ioctls, syscalls, etc.).
+ */
+struct plistref {
+	void *pref_plist;		/* plist data */
+	size_t pref_len;		/* total length of plist data */
+};
 
-__BEGIN_DECLS
-prop_array_t	prop_array_create(void);
-prop_array_t	prop_array_create_with_capacity(unsigned int);
-
-prop_array_t	prop_array_copy(prop_array_t);
-prop_array_t	prop_array_copy_mutable(prop_array_t);
-
-unsigned int	prop_array_capacity(prop_array_t);
-unsigned int	prop_array_count(prop_array_t);
-bool		prop_array_ensure_capacity(prop_array_t, unsigned int);
-
-void		prop_array_make_immutable(prop_array_t);
-bool		prop_array_mutable(prop_array_t);
-
-prop_object_iterator_t prop_array_iterator(prop_array_t);
-
-prop_object_t	prop_array_get(prop_array_t, unsigned int);
-bool		prop_array_set(prop_array_t, unsigned int, prop_object_t);
-bool		prop_array_add(prop_array_t, prop_object_t);
-void		prop_array_remove(prop_array_t, unsigned int);
-
-bool		prop_array_equals(prop_array_t, prop_array_t);
-
-char *		prop_array_externalize(prop_array_t);
-prop_array_t	prop_array_internalize(const char *);
-
-bool		prop_array_externalize_to_file(prop_array_t, const char *);
-prop_array_t	prop_array_internalize_from_file(const char *);
-
-#if defined(__NetBSD__)
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-int		prop_array_send_ioctl(prop_array_t, int, unsigned long);
-int		prop_array_recv_ioctl(int, unsigned long, prop_array_t *);
-#elif defined(_KERNEL)
-struct plistref;
-
-int		prop_array_copyin_ioctl(const struct plistref *, const u_long,
-					prop_array_t *);
-int		prop_array_copyout_ioctl(struct plistref *, const u_long,
-					 prop_array_t);
-#endif
-#endif /* __NetBSD__ */
-
-__END_DECLS
-
-#endif /* _PROPLIB_PROP_ARRAY_H_ */
+#endif /* _PROPLIB_PLISTREF_H_ */
