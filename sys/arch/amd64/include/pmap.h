@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.2 2007/09/30 08:05:05 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.3 2007/09/30 09:08:36 yamt Exp $	*/
 
 /*
  *
@@ -372,18 +372,6 @@ struct pv_page_info {
 struct pv_page {
 	struct pv_page_info pvinfo;
 	struct pv_entry pvents[PVE_PER_PVPAGE];
-};
-
-/*
- * pmap_remove_record: a record of VAs that have been unmapped, used to
- * flush TLB.  if we have more than PMAP_RR_MAX then we stop recording.
- */
-
-#define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
-
-struct pmap_remove_record {
-	int prr_npages;
-	vaddr_t prr_vas[PMAP_RR_MAX];
 };
 
 /*
