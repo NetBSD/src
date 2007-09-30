@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_ingest.c,v 1.1 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_ingest.c,v 1.1.14.1 2007/09/30 03:38:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ prop_ingest_context_private(prop_ingest_context_t ctx)
  *	Ingest a dictionary using handlers for each object to translate
  *	into an arbitrary binary format.
  */
-boolean_t
+bool
 prop_dictionary_ingest(prop_dictionary_t dict,
 		       const prop_ingest_table_entry rules[],
 		       prop_ingest_context_t ctx)
@@ -141,26 +141,26 @@ prop_dictionary_ingest(prop_dictionary_t dict,
 		ctx->pic_type = prop_object_type(obj);
 		if (obj == NULL) {
 			if (pite->pite_flags & PROP_INGEST_FLAG_OPTIONAL) {
-				if ((*pite->pite_handler)(ctx, NULL) == FALSE) {
+				if ((*pite->pite_handler)(ctx, NULL) == false) {
 					ctx->pic_error =
 					    PROP_INGEST_ERROR_HANDLER_FAILED;
-					return (FALSE);
+					return (false);
 				}
 				continue;
 			}
 			ctx->pic_error = PROP_INGEST_ERROR_NO_KEY;
-			return (FALSE);
+			return (false);
 		}
 		if (ctx->pic_type != pite->pite_type &&
 		    pite->pite_type != PROP_TYPE_UNKNOWN) {
 			ctx->pic_error = PROP_INGEST_ERROR_WRONG_TYPE;
-			return (FALSE);
+			return (false);
 		}
-		if ((*pite->pite_handler)(ctx, obj) == FALSE) {
+		if ((*pite->pite_handler)(ctx, obj) == false) {
 			ctx->pic_error = PROP_INGEST_ERROR_HANDLER_FAILED;
-			return (FALSE);
+			return (false);
 		}
 	}
 
-	return (TRUE);
+	return (true);
 }

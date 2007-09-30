@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary_util.c,v 1.1 2006/10/26 05:02:12 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary_util.c,v 1.1.12.1 2007/09/30 03:38:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,33 +48,33 @@
 #include <prop/proplib.h>
 #include "prop_object_impl.h"	/* only to hide kernel vs. not-kernel */
 
-boolean_t
+bool
 prop_dictionary_get_bool(prop_dictionary_t dict,
 			 const char *key,
-			 boolean_t *valp)
+			 bool *valp)
 {
 	prop_bool_t b;
 
 	b = prop_dictionary_get(dict, key);
 	if (prop_object_type(b) != PROP_TYPE_BOOL)
-		return (FALSE);
+		return (false);
 	
 	*valp = prop_bool_true(b);
 
-	return (TRUE);
+	return (true);
 }
 
-boolean_t
+bool
 prop_dictionary_set_bool(prop_dictionary_t dict,
 			 const char *key,
-			 boolean_t val)
+			 bool val)
 {
 	prop_bool_t b;
 	int rv;
 
 	b = prop_bool_create(val);
 	if (b == NULL)
-		return (FALSE);
+		return (false);
 	rv = prop_dictionary_set(dict, key, b);
 	prop_object_release(b);
 
@@ -82,7 +82,7 @@ prop_dictionary_set_bool(prop_dictionary_t dict,
 }
 
 #define	TEMPLATE(size)							\
-boolean_t								\
+bool								\
 prop_dictionary_get_int ## size (prop_dictionary_t dict,		\
 				 const char *key,			\
 				 int ## size ## _t *valp)		\
@@ -91,25 +91,25 @@ prop_dictionary_get_int ## size (prop_dictionary_t dict,		\
 									\
 	num = prop_dictionary_get(dict, key);				\
 	if (prop_object_type(num) != PROP_TYPE_NUMBER)			\
-		return (FALSE);						\
+		return (false);						\
 									\
 	if (prop_number_unsigned(num) &&				\
 	    prop_number_unsigned_integer_value(num) >			\
 	   /*CONSTCOND*/((size) ==  8 ?  INT8_MAX :			\
 			 (size) == 16 ? INT16_MAX :			\
 			 (size) == 32 ? INT32_MAX : INT64_MAX)) {	\
-		return (FALSE);						\
+		return (false);						\
 	}								\
 									\
 	if (prop_number_size(num) > (size))				\
-		return (FALSE);						\
+		return (false);						\
 									\
 	*valp = (int ## size ## _t) prop_number_integer_value(num);	\
 									\
-	return (TRUE);							\
+	return (true);							\
 }									\
 									\
-boolean_t								\
+bool								\
 prop_dictionary_get_uint ## size (prop_dictionary_t dict,		\
 				  const char *key,			\
 				  uint ## size ## _t *valp)		\
@@ -118,23 +118,23 @@ prop_dictionary_get_uint ## size (prop_dictionary_t dict,		\
 									\
 	num = prop_dictionary_get(dict, key);				\
 	if (prop_object_type(num) != PROP_TYPE_NUMBER)			\
-		return (FALSE);						\
+		return (false);						\
 									\
-	if (prop_number_unsigned(num) == FALSE &&			\
+	if (prop_number_unsigned(num) == false &&			\
 	    prop_number_integer_value(num) < 0) {			\
-		return (FALSE);						\
+		return (false);						\
 	}								\
 									\
 	if (prop_number_size(num) > (size))				\
-		return (FALSE);						\
+		return (false);						\
 									\
 	*valp = (uint ## size ## _t)					\
 	    prop_number_unsigned_integer_value(num);			\
 									\
-	return (TRUE);							\
+	return (true);							\
 }									\
 									\
-boolean_t								\
+bool								\
 prop_dictionary_set_int ## size (prop_dictionary_t dict,		\
 				 const char *key,			\
 				 int ## size ## _t val)			\
@@ -144,14 +144,14 @@ prop_dictionary_set_int ## size (prop_dictionary_t dict,		\
 									\
 	num = prop_number_create_integer((int64_t) val);		\
 	if (num == NULL)						\
-		return (FALSE);						\
+		return (false);						\
 	rv = prop_dictionary_set(dict, key, num);			\
 	prop_object_release(num);					\
 									\
 	return (rv);							\
 }									\
 									\
-boolean_t								\
+bool								\
 prop_dictionary_set_uint ## size (prop_dictionary_t dict,		\
 				  const char *key,			\
 				  uint ## size ## _t val)		\
@@ -161,7 +161,7 @@ prop_dictionary_set_uint ## size (prop_dictionary_t dict,		\
 									\
 	num = prop_number_create_unsigned_integer((uint64_t) val);	\
 	if (num == NULL)						\
-		return (FALSE);						\
+		return (false);						\
 	rv = prop_dictionary_set(dict, key, num);			\
 	prop_object_release(num);					\
 									\
@@ -176,7 +176,7 @@ TEMPLATE(64)
 #undef TEMPLATE
 
 #define	TEMPLATE(variant, qualifier)					\
-boolean_t								\
+bool								\
 prop_dictionary_get_cstring ## variant (prop_dictionary_t dict,		\
 					const char *key,		\
 					qualifier char **cpp)		\
@@ -185,14 +185,14 @@ prop_dictionary_get_cstring ## variant (prop_dictionary_t dict,		\
 									\
 	str = prop_dictionary_get(dict, key);				\
 	if (prop_object_type(str) != PROP_TYPE_STRING)			\
-		return (FALSE);						\
+		return (false);						\
 									\
 	*cpp = prop_string_cstring ## variant (str);			\
 									\
-	return (*cpp == NULL ? FALSE : TRUE);				\
+	return (*cpp == NULL ? false : true);				\
 }									\
 									\
-boolean_t								\
+bool								\
 prop_dictionary_set_cstring ## variant (prop_dictionary_t dict,		\
 					const char *key,		\
 					const char *cp)			\
@@ -202,7 +202,7 @@ prop_dictionary_set_cstring ## variant (prop_dictionary_t dict,		\
 									\
 	str = prop_string_create_cstring ## variant (cp);		\
 	if (str == NULL)						\
-		return (FALSE);						\
+		return (false);						\
 	rv = prop_dictionary_set(dict, key, str);			\
 	prop_object_release(str);					\
 									\

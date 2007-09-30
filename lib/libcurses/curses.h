@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.87 2005/08/09 02:33:38 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.87.8.1 2007/09/30 03:38:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -39,6 +39,7 @@
 #include <wchar.h>
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <termcap.h>
 
 /*
@@ -47,11 +48,6 @@
  */
 typedef wchar_t	chtype;
 typedef wchar_t	attr_t;
-
-/* C++ already defines bool. */
-#ifndef __cplusplus
-typedef	char	bool;
-#endif
 
 #ifndef TRUE
 #define	TRUE	(/*CONSTCOND*/1)

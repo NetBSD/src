@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.6.6.1 2007/09/03 07:04:34 wrstuden Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.6.6.2 2007/09/30 03:39:06 wrstuden Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.6.6.1 2007/09/03 07:04:34 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.6.6.2 2007/09/30 03:39:06 wrstuden Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -117,6 +117,7 @@ static struct ieee80211_node * wpi_node_alloc(struct ieee80211_node_table *);
 static void wpi_newassoc(struct ieee80211_node *, int);
 static int  wpi_media_change(struct ifnet *);
 static int  wpi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static void	wpi_fix_channel(struct ieee80211com *, struct mbuf *);
 static void wpi_mem_lock(struct wpi_softc *);
 static void wpi_mem_unlock(struct wpi_softc *);
 static uint32_t wpi_mem_read(struct wpi_softc *, uint16_t);
@@ -892,6 +893,11 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
+		
+		if (sc->is_scanning)
+			break;
+
+		sc->is_scanning = true;
 		ieee80211_node_table_reset(&ic->ic_scan);
 		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
 
@@ -984,10 +990,49 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_INIT:
+		sc->is_scanning = false;
 		break;
 	}
 
 	return sc->sc_newstate(ic, nstate, arg);
+}
+
+/*
+ * XXX: Hack to set the current channel to the value advertised in beacons or
+ * probe responses. Only used during AP detection.
+ * XXX: Duplicated from if_iwi.c
+ */
+static void
+wpi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
+{
+	struct ieee80211_frame *wh;
+	uint8_t subtype;
+	uint8_t *frm, *efrm;
+
+	wh = mtod(m, struct ieee80211_frame *);
+
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_MGT)
+		return;
+
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
+	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		return;
+
+	frm = (uint8_t *)(wh + 1);
+	efrm = mtod(m, uint8_t *) + m->m_len;
+
+	frm += 12;	/* skip tstamp, bintval and capinfo fields */
+	while (frm < efrm) {
+		if (*frm == IEEE80211_ELEMID_DSPARMS)
+#if IEEE80211_CHAN_MAX < 255
+		if (frm[2] <= IEEE80211_CHAN_MAX)
+#endif
+			ic->ic_curchan = &ic->ic_channels[frm[2]];
+
+		frm += frm[1] + 2;
+	}
 }
 
 /*
@@ -1347,6 +1392,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
+	int data_off ; 
 
 	stat = (struct wpi_rx_stat *)(desc + 1);
 
@@ -1375,18 +1421,28 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-
-
+	/* Compute where are the useful datas */
+	data_off = (char*)(head + 1) - mtod(data->m, char*); 
+			 
 	/* 
 	 * If the number of free entry is too low
 	 * just dup the data->m socket and reuse the same rbuf entry
 	 */
 	if (sc->rxq.nb_free_entries <= WPI_RBUF_LOW_LIMIT) {
 		
-		/* Set length before calling m_dup */
+		/* Prepare the mbuf for the m_dup */
 		data->m->m_pkthdr.len = data->m->m_len = le16toh(head->len);
-		
+		data->m->m_data = (char*) data->m->m_data + data_off;
+
 		m = m_dup(data->m,0,M_COPYALL,M_DONTWAIT);
+
+		/* Restore the m_data pointer for future use */
+		data->m->m_data = (char*) data->m->m_data - data_off;
+
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
 	} else {
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
@@ -1408,13 +1464,17 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 		/* update Rx descriptor */
 		ring->desc[ring->cur] = htole32(rbuf->paddr);
+
+		m->m_data = (char*)m->m_data + data_off;
+		m->m_pkthdr.len = m->m_len = le16toh(head->len);
 	}
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (caddr_t)(head + 1);
-	m->m_pkthdr.len = m->m_len = le16toh(head->len);
 
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		wpi_fix_channel(ic, m);
+	
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1624,6 +1684,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 				if (wpi_scan(sc, IEEE80211_CHAN_A) == 0)
 					break;
 			}
+			sc->is_scanning = false;
 			ieee80211_end_scan(ic);
 			break;
 		}
@@ -3003,6 +3064,7 @@ wpi_init(struct ifnet *ifp)
 	uint32_t tmp;
 	int qid, ntries, error;
 
+	wpi_stop(ifp,1);
 	(void)wpi_reset(sc);
 
 	wpi_mem_lock(sc);
