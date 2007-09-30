@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.11 2007/09/30 15:32:25 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.12 2007/09/30 16:14:01 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.11 2007/09/30 15:32:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.12 2007/09/30 16:14:01 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2437,7 +2437,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	struct pmap *pmap2;
 
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (pmap_pdes_valid(va, pdes, &pde) == false) {
+	if (!pmap_pdes_valid(va, pdes, &pde)) {
 		pmap_unmap_ptes(pmap, pmap2);
 		return false;
 	}
