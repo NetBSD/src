@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.2.1 2007/09/30 15:32:22 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.2.2 2007/09/30 15:57:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -423,10 +423,10 @@ IDTVEC(intr_lapic_tlb_mcast)
 	cmpq	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
 	jne	3f
 	movq	CPUVAR(PMAP), %rdx
-	movq	CPUVAR(CPUMASK), %rcx
-	notq	%rcx
+	movl	CPUVAR(CPUMASK), %ecx
+	notl	%ecx
 	lock
-	andq	%rcx, PM_CPUS(%rdx)
+	andl	%ecx, PM_CPUS(%rdx)
 	movq	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
 3:
 	/* Restore state and return. */
