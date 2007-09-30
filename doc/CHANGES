@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.15.2.3 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.15.2.4 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -654,3 +654,10 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	bind: import 9.4.1-P1 [christos 20070724]
 	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
 	postfix(1): Updated to 2.4.5 [heas 20070802]
+	build.sh: Add iso-image-source option which does iso-image with
+		source sets. [jnemeth 20070830]
+	build.sh: Add iso-dir=directory option which when combined with
+		iso-image or iso-image-source causes directory to be
+		added to the CD-ROM image. [jnemeth 20070901]
+	build.sh: Convert iso-dir=directory option to -C cddir.
+		[jnemeth 20070901]

@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.6 2007/09/30 03:38:56 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.7 2007/09/30 20:27:50 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9940,4 +9940,64 @@ sys/dev/usb/uslsa.c				1.3
 
 	From PR kern/33496 - add uslsa(4), a CP210x USB-RS232 ucom driver.
 	[mlelstv, ticket #895]
+
+distrib/sets/lists/man/mi			1.1003
+
+	.4 files use /man4/, not /cat4/, durrrr.
+	[mlelstv, ticket #906]
+
+usr.bin/xlint/lint2/read.c			1.19
+
+	tlst[inptype(...)] is bad C code because inptype() can realloc tlst
+	and there's no intermediate sequence point!  We actually hit this on
+	sh3 with -O2 where gcc4 caches tlst in a register prior to recursive
+	call to inptype() and if you are unlucky the recursive call needs to
+	realloc tlst.
+
+	Introduce a temp variable to force a sequence point.
+	[uwe, ticket #907]
+
+sys/dev/usb/if_rum.c				1.11 (via patch)
+sys/dev/usb/if_ural.c				1.21
+sys/dev/usb/usbdevs				1.464 (via patch)
+sys/dev/usb/usbdevs				1.465 (via patch)
+
+	Sync the list of supported models with OpenBSD, 13 new models were
+	added for rum(4) and 4 new models for ral(4).
+	[rmind, ticket #908]
+
+BUILDING					1.64
+BUILDING					1.65
+BUILDING					1.66
+Makefile					1.248
+build.sh					1.172
+build.sh					1.173
+build.sh					1.174
+build.sh					1.175
+distrib/common/Makefile.bootcd			1.9
+distrib/common/Makefile.bootcd			1.10
+distrib/common/Makefile.bootcd			1.11
+doc/BUILDING.mdoc				1.51
+doc/BUILDING.mdoc				1.52
+doc/BUILDING.mdoc				1.53
+doc/CHANGES					1.918
+share/man/man7/release.7 			1.23
+share/man/man7/release.7			1.24
+
+	Add an iso-dir=directory option.  When combined with iso-image or
+	iso-image-source, it will cause directory to be added to the CD-ROM image.
+
+	Convert build.sh iso-dir=directory option to -C cddir as per jmmv@ on
+	source-changes.
+	[jnemeth, ticket #864]
+
+sys/fs/msdosfs/msdosfs_denode.c			1.24
+
+	Release vnode being created in error branch instead of leaving it
+	locked.  Ideally the function should be rewritten to do things in
+	a different order, but this tries to keep changes minimal aiming
+	for a possible netbsd-4 pullup.
+
+	fixes PR kern/37034
+	[pooka, ticket #909]
 

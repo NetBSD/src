@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.46.2.2 2007/04/16 19:52:26 bouyer Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.46.2.2.2.1 2007/09/30 20:27:49 wrstuden Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd April 13, 2007
+.Dd September 1, 2007
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -994,6 +994,50 @@ utility, which is not part of
 but which can be installed from
 .Pa pkgsrc/sysutils/cdrtools .
 .
+.It iso-image-source
+Create a
+.Nx
+installation CD-ROM image in the
+.Sy RELEASEDIR Ns Pa /iso
+directory.
+The CD-ROM file system will have a layout as described in
+.Xr release 7 .
+It will have top level directories for the machine type and source.
+.Pp
+For most machine types, the CD-ROM will be bootable, and will automatically
+run the
+.Xr sysinst 8
+menu-based installation program, which can be used to install or upgrade a
+.Nx
+system.
+Bootable CD-ROMs also contain tools that may be useful in
+repairing a damaged
+.Nx
+installation.
+.Pp
+Before
+.Dq make iso-image-source
+is attempted, RELEASEDIR must be populated by
+.Dq make sourcesets release
+or equivalent.
+.Pp
+Note that other, smaller, CD-ROM images may be created in the
+.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom
+directory by
+.Dq make release .
+These smaller images usually contain the same tools as the larger images in
+.Sy RELEASEDIR Ns Pa /iso ,
+but do not contain additional content such as the distribution sets.
+.Pp
+Note that the mac68k port still uses an older method of creating
+CD-ROM images.
+This requires the
+.Xr mkisofs 1
+utility, which is not part of
+.Nx ,
+but which can be installed from
+.Pa pkgsrc/sysutils/cdrtools .
+.
 .It Sy regression-tests
 Can only be run after building the regression tests in the directory
 .Dq regress .
@@ -1151,6 +1195,10 @@ Perform
 Perform
 .Dq make iso-image .
 .
+.It Sy iso-image-source
+Perform
+.Dq make iso-image-source .
+.
 .El
 .
 .Pp
@@ -1175,6 +1223,21 @@ This will also append the build idenfitier to the name of the
 .Dq make
 wrapper script so that the resulting name is of the form
 .Dq Sy \*[toolprefix]make-MACHINE-BUILDID .
+.
+.It Fl C Ar cddir
+Set the value of
+.Sy CDEXTRA
+to
+.Ar cddir .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
+When combined with
+.Dq iso-image
+or
+.Dq iso-image-source ,
+it will cause the contents of
+.Ar cddir
+to be added to the CD-ROM image.
 .
 .It Fl D Ar dest
 Set the value of
