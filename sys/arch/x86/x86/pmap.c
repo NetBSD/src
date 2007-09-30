@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.12 2007/09/30 16:14:01 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.13 2007/09/30 16:21:11 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.12 2007/09/30 16:14:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.13 2007/09/30 16:21:11 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -545,7 +545,10 @@ static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 
 static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
-static bool		 pmap_pdes_valid(vaddr_t, pd_entry_t **, pd_entry_t *);
+static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t **,
+					   pd_entry_t *);
+#define	pmap_pdes_valid(va, pdes, lastpde)	\
+	(pmap_pdes_invalid((va), (pdes), (lastpde)) == 0)
 static void		 pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
 
 static bool		 pmap_reactivate(struct pmap *);
@@ -2407,8 +2410,8 @@ pmap_deactivate(struct lwp *l)
  * some misc. functions
  */
 
-static bool
-pmap_pdes_valid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
+static int
+pmap_pdes_invalid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
 {
 	int i;
 	unsigned long index;
@@ -2418,11 +2421,11 @@ pmap_pdes_valid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
 		index = pl_i(va, i);
 		pde = pdes[i - 2][index];
 		if ((pde & PG_V) == 0)
-			return false;
+			return i;
 	}
 	if (lastpde != NULL)
 		*lastpde = pde;
-	return true;
+	return 0;
 }
 
 /*
@@ -2845,6 +2848,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 				    &empty_ptps);
 		}
 	} else for (/* null */ ; va < eva ; va = blkendva) {
+		int lvl;
 
 		/* determine range of block */
 		blkendva = x86_round_pdr(va+1);
@@ -2869,9 +2873,14 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			/* XXXCDC: ugly hack to avoid freeing PDP here */
 			continue;
 
-		if (!pmap_pdes_valid(va, pdes, &pde))
-			/* valid block? */
-			continue;
+		lvl = pmap_pdes_invalid(va, pdes, &pde);
+		if (lvl != 0) {
+			/*
+			 * skip a range corresponding to an invalid pde.
+			 */
+			blkendva = (va & ptp_masks[lvl - 1]) + nbpd[lvl - 1]; 
+ 			continue;
+		}
 
 		/* PA of the PTP */
 		ptppa = pde & PG_FRAME;
