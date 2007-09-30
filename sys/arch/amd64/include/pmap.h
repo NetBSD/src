@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.1 2007/09/29 08:32:52 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.2 2007/09/30 08:05:05 yamt Exp $	*/
 
 /*
  *
@@ -336,13 +336,13 @@ struct pmap {
  * describes one mapping).
  */
 
-struct pv_entry {                       /* locked by its list's pvh_lock */
-        SPLAY_ENTRY(pv_entry) pv_node;  /* splay-tree node */
-        struct pmap *pv_pmap;           /* the pmap */
-        vaddr_t pv_va;                  /* the virtual address */
-        struct vm_page *pv_ptp;         /* the vm_page of the PTP */
+struct pv_entry {			/* locked by its list's pvh_lock */
+	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
+	struct pmap *pv_pmap;		/* the pmap */
+	vaddr_t pv_va;			/* the virtual address */
+	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
 	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
-};    
+};
 
 /*
  * pv_entrys are dynamically allocated in chunks from a single page.
@@ -410,11 +410,11 @@ extern long nkptp[], nbpd[], nkptpmax[];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		
+#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		
-#define pmap_phys_address(ppn)		ptob(ppn)
+#define pmap_move(DP,SP,D,L,S)
+#define pmap_phys_address(ppn)		x86_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 
