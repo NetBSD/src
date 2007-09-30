@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.5 2007/09/30 10:56:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.6 2007/09/30 11:39:37 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.5 2007/09/30 10:56:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.6 2007/09/30 11:39:37 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2155,6 +2155,13 @@ pmap_activate(struct lwp *l)
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 
 		ci->ci_want_pmapload = 1;
+
+#if defined(__x86_64__)
+		if (pcb->pcb_flags & PCB_GS64)
+			wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
+		if (pcb->pcb_flags & PCB_FS64)
+			wrmsr(MSR_FSBASE, pcb->pcb_fs);
+#endif /* defined(__x86_64__) */
 	}
 }
 
