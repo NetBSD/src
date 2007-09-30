@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.7 2007/09/30 11:43:39 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.8 2007/09/30 14:51:34 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.7 2007/09/30 11:43:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.8 2007/09/30 14:51:34 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -963,11 +963,7 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		mutex_init(&kpm->pm_obj[i].vmobjlock, MUTEX_DEFAULT, IPL_NONE);
-		kpm->pm_obj[i].pgops = NULL;
-		TAILQ_INIT(&kpm->pm_obj[i].memq);
-		kpm->pm_obj[i].uo_npages = 0;
-		kpm->pm_obj[i].uo_refs = 1;
+		UVM_OBJ_INIT(&kpm->pm_obj[i], NULL, 1);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
