@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2007/09/11 16:00:06 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.203 2007/09/30 12:06:14 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2007/09/11 16:00:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2007/09/30 12:06:14 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -710,7 +710,7 @@ dumpsys()
 	daddr_t blkno;
 	register int (*dump)(dev_t, daddr_t, void *, size_t);
 	int j, error = 0;
-	unsigned long todo;
+	uint64_t todo;
 	register struct mem_region *mp;
 
 	/* copy registers to memory */
@@ -759,18 +759,9 @@ dumpsys()
 
 	for (mp = &phys_installed[0], j = 0; j < phys_installed_size;
 			j++, mp = &phys_installed[j]) {
-		unsigned i = 0, n;
+		uint64_t i = 0, n;
 		paddr_t maddr = mp->start;
 
-#if 0
-		/* Remind me: why don't we dump page 0 ? */
-		if (maddr == 0) {
-			/* Skip first page at physical address 0 */
-			maddr += PAGE_SIZE;
-			i += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-		}
-#endif
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
 			if (n > BYTES_PER_DUMP)
