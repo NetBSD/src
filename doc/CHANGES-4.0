@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.305 2007/09/30 19:47:42 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.306 2007/09/30 19:50:42 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10014,4 +10014,10 @@ sys/arch/sparc64/sparc64/machdep.c		1.203 (via patch)
 	While there, remove a #if 0'd part of code that prevented the first
 	physical memory page to be dumped - I'll solve that differently.
 	[martin, ticket #911]
+
+sys/arch/x86/x86/acpi_machdep.c			1.15
+
+	The ACPI SCI override is relative to the Source of the MADT entry,
+	so use bus_pin for the comparision. Tested by reinoud@.
+	[joerg, ticket #912]
 
