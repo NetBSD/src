@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13.2.3 2007/09/29 11:08:47 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.4 2007/09/30 15:32:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -153,8 +153,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
 
-#define __HAVE_PMAP_PHYSSEG
-
 #define	__HAVE_VM_PAGE_MD
 #define	VM_MDPAGE_INIT(pg)							\
 	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
@@ -171,15 +169,8 @@ struct pv_head {
 
 struct vm_page_md {
 	struct pv_head mp_pvhead;
+	struct vm_page *mp_link;
 	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
-};
-
-/*
- * pmap specific data stored in the vm_physmem[] array
- */
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv_head array */
-	unsigned char *attrs;		/* attrs array */
 };
 
 #endif /* _VMPARAM_H_ */

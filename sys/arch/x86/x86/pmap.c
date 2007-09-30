@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.10 2007/09/30 15:02:27 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.11 2007/09/30 15:32:25 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.10 2007/09/30 15:02:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.11 2007/09/30 15:32:25 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1886,7 +1886,11 @@ pmap_create(void)
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_len = 0;
+#if defined(__x86_64__)
+	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
+#else /* defined(__x86_64__) */
 	pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+#endif /* defined(__x86_64__) */
 
 	/* allocate PDP */
 
@@ -2098,7 +2102,11 @@ pmap_ldt_cleanup(struct lwp *l)
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		sel = pmap->pm_ldt_sel;
+#if defined(__x86_64__)
+		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
+#else /* defined(__x86_64__) */
 		pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+#endif /* defined(__x86_64__) */
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 		if (l == curlwp)
 			lldt(pcb->pcb_ldt_sel);

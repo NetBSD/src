@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.3 2007/09/30 09:08:36 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.4 2007/09/30 15:32:24 yamt Exp $	*/
 
 /*
  *
@@ -272,6 +272,8 @@
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 /* PG_AVAIL3 not used */
 
+#define	PG_X		0		/* XXX dummy */
+
 /*
  * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
@@ -323,6 +325,8 @@ struct pmap {
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
+	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
+					 of pmap */
 };
 
 /* pm_flags */
@@ -425,6 +429,7 @@ static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_changeprot_local(vaddr_t, vm_prot_t);
+void		pmap_load(void);
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 

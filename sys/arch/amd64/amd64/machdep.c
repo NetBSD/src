@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.2.1 2007/09/30 15:32:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2007/08/29 23:38:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.1 2007/09/30 15:32:21 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1840,7 +1840,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 			dt = ldtp;
 			len = llen;
 		} else if (pmap->pm_flags & PMF_USER_LDT) {
-			len = pmap->pm_ldt_len;
+			len = pmap->pm_ldt_len; /* XXX broken */
 			dt = (char *)pmap->pm_ldt;
 		} else {
 			dt = ldtstore;
