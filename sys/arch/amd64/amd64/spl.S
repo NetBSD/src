@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.2.1 2007/09/30 15:32:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -242,11 +242,13 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-	movq	CPUVAR(CURLWP),%r14
-5:	CHECK_ASTPENDING(%r14)
-	je	3f
+5:
 	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
+	jz	6f
+.Ldoreti_checkast:
+	movq	CPUVAR(CURLWP),%r14
+	CHECK_ASTPENDING(%r14)
+	je	3f
 	CLEAR_ASTPENDING(%r14)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
@@ -254,5 +256,14 @@ IDTVEC(doreti)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	cli
-	jmp	5b
-3: 	INTRFASTEXIT
+	jmp	.Ldoreti_checkast
+3:
+	CHECK_DEFERRED_SWITCH
+	jnz	9f
+6:
+	INTRFASTEXIT
+9:
+	sti
+	call	_C_LABEL(do_pmap_load)
+	cli
+	jmp	.Ldoreti_checkast	/* recheck ASTs */
