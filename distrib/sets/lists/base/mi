@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.720 2007/08/09 22:01:25 pooka Exp $
+# $NetBSD: mi,v 1.721 2007/09/30 11:29:43 kleink Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3511,6 +3511,7 @@
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
