@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.15 2007/09/25 13:14:17 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.16 2007/09/30 17:24:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.15 2007/09/25 13:14:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.16 2007/09/30 17:24:09 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -375,13 +375,27 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		acpi_osd_debugger();
 #endif
 
-	rv = AcpiEnableSubsystem(0);
+#define ACPI_ENABLE_PHASE1 \
+    (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
+#define ACPI_ENABLE_PHASE2 \
+    (ACPI_NO_HARDWARE_INIT | ACPI_NO_ACPI_ENABLE | \
+     ACPI_NO_ADDRESS_SPACE_INIT)
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("%s: unable to enable ACPI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
+	acpi_md_callback();
+
+	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error("%s: unable to enable ACPI: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+		return;
+	}
 	/* early EC handler initialization if ECDT table is available */
 #if NACPIEC > 0
 	acpiec_early_attach(&sc->sc_dev);
@@ -416,7 +430,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
-	acpi_md_callback();
 	acpi_build_tree(sc);
 
 	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL) {
