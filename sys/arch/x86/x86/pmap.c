@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.8 2007/09/30 14:51:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.9 2007/09/30 15:01:41 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.8 2007/09/30 14:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.9 2007/09/30 15:01:41 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1121,7 +1121,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += PAGE_SIZE;
+	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
 #ifdef _LP64
