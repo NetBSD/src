@@ -1,4 +1,4 @@
-.\" $NetBSD: btuartd.8,v 1.4 2007/03/12 08:10:31 kiyohara Exp $
+.\" $NetBSD: btuartd.8,v 1.5 2007/09/30 04:11:02 kiyohara Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,9 +24,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $Id: btuartd.8,v 1.4 2007/03/12 08:10:31 kiyohara Exp $
+.\" $Id: btuartd.8,v 1.5 2007/09/30 04:11:02 kiyohara Exp $
 .\"
-.Dd February 19, 2007
+.Dd September 22, 2007
 .Dt BTUARTD 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl c Ar conffile
 .Nm
 .Op Fl f
+.Op Fl p Op Fl o
 .Op Fl i Ar init_speed
 .Op Ar type
 .Ar comdev speed
@@ -51,7 +52,7 @@ like
 .Xr com 4
 and compatible devices, also configures
 .Ar speed
-and flow.
+and flow, parity.
 The
 .Nm
 daemon supports HCI UART.
@@ -86,6 +87,8 @@ Ericsson based modules
 Digianswer based cards
 .It Cm texas
 Texas Instruments
+.It Cm bcsp
+BCSP (BlueCore Serial Protocol)
 .It Cm csr
 Cambridge Silicon Radio Casira serial adapter or BrainBoxes serial dongle
 (BL642)
@@ -113,7 +116,13 @@ Run in foreground (do not detach).
 Enable flow control as
 .Xr com 4 .
 .It Fl i Ar init_speed
-Specify the initial speed for the Bluetooth module.
+Specify the initial speed for the Bluetooth module. It first sets to this
+value, and it initializes it if specified. Afterwards, the speed is set to
+.Ar speed. 
+.It Fl o
+Enable odd parity, if enabled parity.
+.It Fl p
+Enable parity (even parity).
 .El
 .Sh FILES
 .Bl -tag -compact
@@ -121,6 +130,7 @@ Specify the initial speed for the Bluetooth module.
 .It Pa /var/run/btuartd.pid
 .El
 .Sh SEE ALSO
+.Xr bcsp 4 ,
 .Xr bluetooth 4 ,
 .Xr btuart 4 ,
 .Xr btconfig 8
