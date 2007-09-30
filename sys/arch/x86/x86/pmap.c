@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.6 2007/09/30 11:39:37 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.7 2007/09/30 11:43:39 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.6 2007/09/30 11:39:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.7 2007/09/30 11:43:39 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -332,6 +332,8 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
 static kmutex_t pmaps_lock;
 static krwlock_t pmap_main_lock;
+
+static vaddr_t pmap_maxkvaddr;
 
 #define COUNT(x)	/* nothing */
 
@@ -1177,6 +1179,16 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	tlbflush();
+
+	/*
+	 * calculate pmap_maxkvaddr from nkptp[].
+	 */
+
+	kva = VM_MIN_KERNEL_ADDRESS;
+	for (i = PTP_LEVELS - 1; i >= 1; i--) {
+		kva += nkptp[i] * nbpd[i];
+	}
+	pmap_maxkvaddr = kva;
 }
 
 #if defined(__x86_64__)
@@ -3606,6 +3618,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 	return true;
 }
 
+#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_masks[(lvl)-1], (lvl))
 /*
  * Allocate the amount of specified ptps for a ptp level, and populate
  * all levels below accordingly, mapping virtual addresses starting at
@@ -3629,7 +3642,7 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 		else
 			pdep = pdes[level - 2];
 		va = kva;
-		index = pl_i(kva, level);
+		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
 
 		for (i = index; i <= endindex; i++) {
@@ -3651,8 +3664,6 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
  *	the pmaps on the system.
  */
 
-static vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS;
-
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
@@ -3660,7 +3671,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	int s, i;
 	unsigned newpdes;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
-	vaddr_t va;
 
 	if (maxkvaddr <= pmap_maxkvaddr)
 		return pmap_maxkvaddr;
@@ -3671,23 +3681,21 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * This loop could be optimized more, but pmap_growkernel()
 	 * is called infrequently.
 	 */
-	va = VM_MIN_KERNEL_ADDRESS;
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
-		target_nptp = pl_i(maxkvaddr, i + 1) -
-		    pl_i(VM_MIN_KERNEL_ADDRESS, i + 1);
+		target_nptp = pl_i_roundup(maxkvaddr, i + 1) -
+		    pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1);
 		/*
 		 * XXX only need to check toplevel.
 		 */
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
-		va += nkptp[i] * nbpd[i];
+		KASSERT(target_nptp >= nkptp[i]);
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
-	KASSERT(va >= pmap_maxkvaddr);
 
 	s = splhigh();	/* to be safe */
 	mutex_enter(&kpm->pm_lock);
-	pmap_alloc_level(normal_pdes, va, PTP_LEVELS, needed_kptp);
+	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS, needed_kptp);
 
 	/*
 	 * If the number of top level entries changed, update all
