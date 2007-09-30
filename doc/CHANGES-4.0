@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.303 2007/09/29 11:33:50 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.304 2007/09/30 19:40:26 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10000,4 +10000,9 @@ sys/fs/msdosfs/msdosfs_denode.c			1.24
 
 	fixes PR kern/37034
 	[pooka, ticket #909]
+
+distrib/utils/sysinst/msg.mi.de			1.36
+
+	Fix column alignment in partition size display
+	[martin, ticket #910]
 
