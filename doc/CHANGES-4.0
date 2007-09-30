@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.306 2007/09/30 19:50:42 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.307 2007/09/30 21:05:58 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9440,7 +9440,6 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 4.0_RC1.
-	[liamjfoy]
 
 usr.sbin/rtsold/rtsol.c				1.14
 
@@ -10020,4 +10019,9 @@ sys/arch/x86/x86/acpi_machdep.c			1.15
 	The ACPI SCI override is relative to the Source of the MADT entry,
 	so use bus_pin for the comparision. Tested by reinoud@.
 	[joerg, ticket #912]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD-4.0_RC2.
 
