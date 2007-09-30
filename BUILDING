@@ -542,6 +542,34 @@ BUILDING
                    ity, which is not part of NetBSD, but which can be
                    installed from pkgsrc/sysutils/cdrtools.
 
+     iso-image-source
+                   Create a NetBSD installation CD-ROM image in the
+                   RELEASEDIR/iso directory.  The CD-ROM file system will have
+                   a layout as described in release(7).  It will have top
+                   level directories for the machine type and source.
+
+                   For most machine types, the CD-ROM will be bootable, and
+                   will automatically run the sysinst(8) menu-based installa-
+                   tion program, which can be used to install or upgrade a
+                   NetBSD system.  Bootable CD-ROMs also contain tools that
+                   may be useful in repairing a damaged NetBSD installation.
+
+                   Before ``make iso-image-source'' is attempted, RELEASEDIR
+                   must be populated by ``make sourcesets release'' or equiva-
+                   lent.
+
+                   Note that other, smaller, CD-ROM images may be created in
+                   the RELEASEDIR/MACHINE/installation/cdrom directory by
+                   ``make release''.  These smaller images usually contain the
+                   same tools as the larger images in RELEASEDIR/iso, but do
+                   not contain additional content such as the distribution
+                   sets.
+
+                   Note that the mac68k port still uses an older method of
+                   creating CD-ROM images.  This requires the mkisofs(1) util-
+                   ity, which is not part of NetBSD, but which can be
+                   installed from pkgsrc/sysutils/cdrtools.
+
      regression-tests
                    Can only be run after building the regression tests in the
                    directory ``regress''.  Runs the compiled regression tests
@@ -611,6 +639,9 @@ BUILDING
 
      iso-image     Perform ``make iso-image''.
 
+     iso-image-source
+                   Perform ``make iso-image-source''.
+
      The following command line options alter the behaviour of the build.sh
      operations described above:
 
@@ -621,6 +652,12 @@ BUILDING
                build idenfitier to the name of the ``make'' wrapper script so
                that the resulting name is of the form
                ``nbmake-MACHINE-BUILDID''.
+
+     -C cddir  Set the value of CDEXTRA to cddir.  If a relative path is spec-
+               ified, it will be converted to an absolute path before being
+               used.  When combined with ``iso-image'' or
+               ``iso-image-source'', it will cause the contents of cddir to be
+               added to the CD-ROM image.
 
      -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
                fied, it will be converted to an absolute path before being
@@ -783,4 +820,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          April 13, 2007                          NetBSD
+NetBSD                         September 1, 2007                        NetBSD
