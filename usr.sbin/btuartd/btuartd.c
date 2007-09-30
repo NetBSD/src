@@ -1,4 +1,4 @@
-/*	$NetBSD: btuartd.c,v 1.2 2007/06/12 10:05:24 kiyohara Exp $	*/
+/*	$NetBSD: btuartd.c,v 1.3 2007/09/30 04:11:02 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: btuartd.c,v 1.2 2007/06/12 10:05:24 kiyohara Exp $");
+__RCSID("$NetBSD: btuartd.c,v 1.3 2007/09/30 04:11:02 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -58,13 +58,15 @@ struct btuartd_conf {
 	char comdev[PATH_MAX];
 	int speed;
 	int flow;
+	int parity;
+	int odd;	/* odd parity */
 	int init_speed;
 };
 
 static void usage(void);
 static int read_config(int, struct btuartd_conf **, char *);
 static void btuartd_sigcaught(int);
-static int btuart_setting(int, int, int, int, int);
+static int btuart_setting(int, int, int, int, int, int, int);
 static int btuartd(int, struct btuartd_conf *);
 
 
@@ -83,6 +85,7 @@ static struct hcitypetbl {
 	{ "stlc2500",		BTUART_HCITYPE_STLC2500 },
 	{ "bt2000c",		BTUART_HCITYPE_BT2000C },
 	{ "bcm2035",		BTUART_HCITYPE_BCM2035 },
+	{ "bcsp",		BTUART_HCITYPE_BCSP },
 	{ "*",			BTUART_HCITYPE_ANY },
 	{ NULL },
 };
@@ -93,7 +96,7 @@ usage()
 {
 	const char *progname = getprogname();
 
-	printf("usage: %s [-f] [-i init_speed] [type] comdev speed\n",
+	printf("usage: %s [-f] [-p [-o]] [-i init_speed] [type] comdev speed\n",
 	    progname);
 	printf("       %s [-d] [-c conffile]\n", progname);
 	printf("    comdev: com device. e.g. /dev/dty00\n");
@@ -102,10 +105,12 @@ usage()
 }
 
 static int
-btuart_setting(int comfd, int type, int speed, int flow, int init_speed)
+btuart_setting(int comfd, int type, int speed, int flow, int parity, int odd,
+	       int init_speed)
 {
 	struct termios t;
 	int rv;
+	char *line;
 
 	tcflush(comfd, TCIOFLUSH);
 	if ((rv = tcgetattr(comfd, &t)) == -1) {
@@ -116,6 +121,11 @@ btuart_setting(int comfd, int type, int speed, int flow, int init_speed)
 	t.c_cflag |= CLOCAL;
 	if (flow)
 		t.c_cflag |= CRTSCTS;
+	if (parity) {
+		t.c_cflag |= PARENB;
+		if (odd)
+			t.c_cflag |= PARODD;
+	}
 
 	tcflush(comfd, TCIOFLUSH);
 	if ((rv = cfsetspeed(&t, speed)) == -1) {
@@ -127,12 +137,15 @@ btuart_setting(int comfd, int type, int speed, int flow, int init_speed)
 		return rv;
 	}
 
-	/* set btuart discipline */
-	if ((rv = ioctl(comfd, TIOCSLINED, "btuart")) == -1) {
+	/* set btuart or bcsp discipline */
+	line = (type != BTUART_HCITYPE_BCSP) ? "btuart" : "bcsp";
+	if ((rv = ioctl(comfd, TIOCSLINED, line)) == -1) {
 		syslog(LOG_ERR,
-		    "ioctl TIOCSLINE btuart failed: %s", strerror(errno));
+		    "ioctl TIOCSLINE %s failed: %s", line, strerror(errno));
 		return rv;
 	}
+	if (type == BTUART_HCITYPE_BCSP)
+		return rv;
 
 	if (init_speed != B0)
 		if ((rv = ioctl(comfd, BTUART_INITSPEED, &init_speed)) == -1) {
@@ -208,6 +221,8 @@ read_config(int onbtuart, struct btuartd_conf **btuartd_conf, char *conffile)
 		}
 		(*btuartd_conf)[nbtuart].type = hcitypetbl[j].hcitype;
 		(*btuartd_conf)[nbtuart].flow = 0;
+		(*btuartd_conf)[nbtuart].parity = 0;
+		(*btuartd_conf)[nbtuart].odd = 0;
 		(*btuartd_conf)[nbtuart].init_speed = B0;
 
 		while (1 /* CONSTCOND */) {
@@ -216,6 +231,10 @@ read_config(int onbtuart, struct btuartd_conf **btuartd_conf, char *conffile)
 
 			if (strstr(&buf[n], "flow") == &buf[n])
 				(*btuartd_conf)[nbtuart].flow = 1;
+			else if (strstr(&buf[n], "parity") == &buf[n])
+				(*btuartd_conf)[nbtuart].parity = 1;
+			else if (strstr(&buf[n], "odd") == &buf[n])
+				(*btuartd_conf)[nbtuart].odd = 1;
 			else if (strstr(&buf[n], "init_speed") == &buf[n]) {
 				n += strcspn(&buf[n], " \t");
 				n += strspn(&buf[n], " \t");
@@ -233,6 +252,8 @@ read_config(int onbtuart, struct btuartd_conf **btuartd_conf, char *conffile)
 		}
 		if (nbtuart == -1)
 			break;
+		if (!(*btuartd_conf)[nbtuart].parity)
+		    (*btuartd_conf)[nbtuart].odd = 0;
 		nbtuart++;
 	}
 	if (nbtuart < onbtuart && threshold > BTUARTD_CONF_MIN) {
@@ -284,7 +305,8 @@ btuartd(int nbtuart, struct btuartd_conf *btuartd_conf)
 		    (btuartd_conf[i].flow == 1) ? " flow" : "", strbuf);
 		error = btuart_setting(comfd,
 		    btuartd_conf[i].type, btuartd_conf[i].speed,
-		    btuartd_conf[i].flow, btuartd_conf[i].init_speed);
+		    btuartd_conf[i].flow, btuartd_conf[i].parity,
+		    btuartd_conf[i].odd, btuartd_conf[i].init_speed);
 		if (error != 0) {
 			close(comfd);
 			syslog(LOG_ERR, "btuart setting failed: %s",
@@ -319,19 +341,19 @@ main(int argc, char *argv[])
 	extern int optind;
 	struct btuartd_conf *btuartd_conf;
 	int nbtuart, ch, i, status;
-	int type, init_speed, flow, debug;
+	int type, init_speed, flow, parity, odd, debug;
 	char *conffile;
 	const char *progname = getprogname();
 
 	conffile = BTUARTD_CONFFILE;
 	init_speed = B0;
-	flow = 0;
+	flow = parity = odd = 0;
 	debug = 0;
 
 	nbtuart = 0;
 	btuartd_conf = malloc(sizeof(struct btuartd_conf) * BTUARTD_CONF_MIN);
 
-	while ((ch = getopt(argc, argv, "c:dfi:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dfi:op")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -349,6 +371,14 @@ main(int argc, char *argv[])
 			init_speed = atoi(optarg);
 			break;
 
+		case 'o':
+			odd = 1;
+			break;
+
+		case 'p':
+			parity = 1;
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -356,6 +386,9 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (!parity)
+		odd = 0;
 
 	openlog(progname, LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);
 
@@ -403,6 +436,8 @@ main(int argc, char *argv[])
 		    sizeof(btuartd_conf[0].comdev));;
 		btuartd_conf[0].speed = atoi(argv[1]);
 		btuartd_conf[0].flow = flow;
+		btuartd_conf[0].parity = parity;
+		btuartd_conf[0].odd = odd;
 		btuartd_conf[0].init_speed = init_speed;
 		nbtuart = 1;
 	}
