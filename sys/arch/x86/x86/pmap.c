@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.9 2007/09/30 15:01:41 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.10 2007/09/30 15:02:27 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.9 2007/09/30 15:01:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.10 2007/09/30 15:02:27 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1233,7 +1233,7 @@ pmap_init(void)
 }
 
 /*
- * pmap_cpu_init: perform early per-CPU initialization.
+ * pmap_cpu_init_early: perform early per-CPU initialization.
  */
 
 void
