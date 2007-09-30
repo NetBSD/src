@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2007/09/30 12:06:14 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.204 2007/09/30 13:56:02 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2007/09/30 12:06:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2007/09/30 13:56:02 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -734,7 +734,8 @@ dumpsys()
 		return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %u,%u not possible (partition"
+		    " too small?)\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
@@ -742,7 +743,7 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
-	printf("dump ");
+	printf("dump 000000 ");
 	if (psize == -1) {
 		printf("area unavailable\n");
 		return;
@@ -769,7 +770,8 @@ dumpsys()
 
 			/* print out how many MBs we still have to dump */
 			if ((todo % (1024*1024)) == 0)
-				printf("%ld ", todo / (1024*1024));
+				printf("\b\b\b\b\b\b\b%6ld ",
+				    todo / (1024*1024));
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
@@ -787,27 +789,27 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		printf("- device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		printf("- device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		printf("- area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		printf("- i/o error\n");
 		break;
 
 	case 0:
-		printf("succeeded\n");
+		printf("- succeeded\n");
 		break;
 
 	default:
-		printf("error %d\n", error);
+		printf("- error %d\n", error);
 		break;
 	}
 }
