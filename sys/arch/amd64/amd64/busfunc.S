@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.2 2007/09/28 14:33:10 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.3 2007/10/01 21:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ STRONG_ALIAS(bus_space_write_multi_stream_4,bus_space_write_multi_4)
  */
 NENTRY(bus_space_read_region_1)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -323,7 +323,7 @@ NENTRY(bus_space_read_region_1)
  */
 NENTRY(bus_space_read_region_2)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -349,7 +349,7 @@ NENTRY(bus_space_read_region_2)
  */
 NENTRY(bus_space_read_region_4)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -379,7 +379,7 @@ STRONG_ALIAS(bus_space_read_region_stream_4,bus_space_read_region_4)
  */
 NENTRY(bus_space_write_region_1)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
@@ -405,7 +405,7 @@ NENTRY(bus_space_write_region_1)
  */
 NENTRY(bus_space_write_region_2)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
@@ -431,7 +431,7 @@ NENTRY(bus_space_write_region_2)
  */
 NENTRY(bus_space_write_region_4)
 	testl	%edi, %edi
-	jne	2f
+	je	2f
 1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
