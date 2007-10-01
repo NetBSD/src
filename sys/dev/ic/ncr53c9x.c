@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.129 2007/08/20 12:32:30 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.130 2007/10/01 09:43:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.129 2007/08/20 12:32:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.130 2007/10/01 09:43:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1211,7 +1211,8 @@ ncr53c9x_done(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	callout_stop(&ecb->xs->xs_callout);
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
+		callout_stop(&xs->xs_callout);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -2251,6 +2252,8 @@ again:
 	 */
 	if ((sc->sc_espstat & NCRSTAT_PE) != 0) {
 		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		if (sc->sc_initialreset++ < 3)
+			goto reset;
 		if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 			ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
 		else
