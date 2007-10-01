@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.54 2007/09/29 20:17:36 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.55 2007/10/01 21:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.54 2007/09/29 20:17:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.55 2007/10/01 21:09:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -102,13 +102,14 @@ puffs_cidcvt(struct puffs_kcid *pkcid, const struct lwp *l)
 }
 
 void
-puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
+puffs_parkdone_asyncbioread(struct puffs_mount *pmp,
+	struct puffs_req *preq, void *arg)
 {
 	struct puffs_vnreq_read *read_argp = (void *)preq;
 	struct buf *bp = arg;
 	size_t moved;
 
-	bp->b_error = preq->preq_rv;
+	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
 	if (bp->b_error == 0) {
 		moved = bp->b_bcount - read_argp->pvnr_resid;
 		bp->b_resid = read_argp->pvnr_resid;
@@ -122,13 +123,14 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 
 /* XXX: userspace can leak kernel resources */
 void
-puffs_parkdone_poll(struct puffs_req *preq, void *arg)
+puffs_parkdone_poll(struct puffs_mount *pmp, struct puffs_req *preq, void *arg)
 {
 	struct puffs_vnreq_poll *poll_argp = (void *)preq;
 	struct puffs_node *pn = arg;
-	int revents;
+	int revents, error;
 
-	if (preq->preq_rv == 0)
+	error = checkerr(pmp, preq->preq_rv, __func__);
+	if (error)
 		revents = poll_argp->pvnr_events;
 	else
 		revents = POLLERR;
