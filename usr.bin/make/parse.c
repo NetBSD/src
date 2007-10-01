@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.134 2007/05/23 19:03:56 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1614,6 +1614,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	 */
 	Dir_InitCur(cp);
 	Dir_SetPATH();
+    } else if (strcmp(line, MAKEJOBPREFIX) == 0) {
+	Job_SetPrefix();
     }
     if (freeCp)
 	free(cp);

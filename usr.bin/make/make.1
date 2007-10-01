@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.131 2007/08/13 06:14:08 rillig Exp $
+.\"	$NetBSD: make.1,v 1.132 2007/10/01 22:14:10 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -580,6 +580,27 @@ The preferred variable to use is the environment variable
 because it is more compatible with other versions of
 .Nm
 and cannot be confused with the special target with the same name.
+.It Va .MAKE.PID
+The process-id of 
+.Nm .
+.It Va .MAKE.PPID
+The parent process-id of 
+.Nm .
+.It Va .MAKE.JOB.PREFIX
+If 
+.Nm
+is run with
+.Ar j
+then output for each target is prefixed with a token 
+.Ql --- target ---
+the first part of which can be controlled via
+.Va .MAKE.JOB.PREFIX .
+.br
+For example: 
+.Li .MAKE.JOB.PREFIX=${.newline}---${.MAKE:T}[${.MAKE.PID}]
+would produce tokens like
+.Ql ---make[1234] target ---
+making it easier to track the degree of parallelism being achieved.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS

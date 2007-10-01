@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -305,15 +305,16 @@ STATIC GNode   	*lastNode;	/* The node for which output was most recently
 STATIC const char *targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
+static char *targPrefix = NULL; /* What we print at the start of targFmt */
 static Job tokenWaitJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
 #define	CHILD_EXIT	"."
 #define	DO_JOB_RESUME	"R"
 
-#define TARG_FMT  "--- %s ---\n" /* Default format */
+#define TARG_FMT  "%s %s ---\n" /* Default format */
 #define MESSAGE(fp, gn) \
-	(void)fprintf(fp, targFmt, gn->name)
+	(void)fprintf(fp, targFmt, targPrefix, gn->name)
 
 static sigset_t caught_signals;	/* Set of signals we handle */
 #if defined(SYSV)
@@ -2051,6 +2052,20 @@ Shell_GetNewline(void)
 {
 
     return commandShell->newline;
+}
+
+void
+Job_SetPrefix(void)
+{
+    char tmp[sizeof("${" MAKEJOBPREFIX "}") + 1];
+    
+    if (targPrefix) {
+	free(targPrefix);
+    } else if (!Var_Exists(MAKEJOBPREFIX, VAR_GLOBAL)) {
+	Var_Set(MAKEJOBPREFIX, "---", VAR_GLOBAL, 0);
+    }
+    strncpy(tmp, "${" MAKEJOBPREFIX "}", sizeof(tmp));
+    targPrefix = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
 }
 
 /*-
