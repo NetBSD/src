@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.197 2007/09/30 13:54:00 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.198 2007/10/01 08:53:35 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2007/09/30 13:54:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2007/10/01 08:53:35 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2102,10 +2102,8 @@ pmap_extract(pm, va, pap)
 			simple_unlock(&pm->pm_lock);
 		}
 	}
-	if (pa == 0) {
-		if (!(data & TLB_V) || pm != pmap_kernel())
-			return (FALSE);
-	}
+	if ((data & TLB_V) == 0)
+		return (FALSE);
 	if (pap != NULL)
 		*pap = pa + (va & PGOFSET);
 	return (TRUE);
