@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.141 2007/01/01 21:29:01 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.142 2007/10/01 22:14:10 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.141 2007/01/01 21:29:01 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.142 2007/10/01 22:14:10 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.141 2007/01/01 21:29:01 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.142 2007/10/01 22:14:10 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -864,6 +864,19 @@ main(int argc, char **argv)
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
 	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
 	Var_Set(".ALLTARGETS", "", VAR_GLOBAL, 0);
+
+	/*
+	 * Set some other useful macros
+	 */
+	{
+	    char tmp[64];
+
+	    snprintf(tmp, sizeof(tmp), "%u", getpid());
+	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
+	    snprintf(tmp, sizeof(tmp), "%u", getppid());
+	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL, 0);
+	}
+	Job_SetPrefix();
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
