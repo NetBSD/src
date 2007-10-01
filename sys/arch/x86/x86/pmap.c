@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.13 2007/09/30 16:21:11 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.14 2007/10/01 14:47:30 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.13 2007/09/30 16:21:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.14 2007/10/01 14:47:30 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -818,7 +818,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
-		panic("pmap_kenter_pa: PG_PS");
+		panic("pmap_kenter_pa: PG_PS\n%p %p\n%p %p", (void *)va, (void *)pa, (void *)pte, (void *)opte);
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 		/* This should not happen, so no need to batch updates. */
@@ -1027,12 +1027,12 @@ pmap_bootstrap(vaddr_t kva_start)
 		/*
 		 * now, remap the kernel text using large pages.  we
 		 * assume that the linker has properly aligned the
-		 * .data segment to a 4MB boundary.
+		 * .data segment to a NBPD_L2 boundary.
 		 */
 		kva_end = roundup((vaddr_t)&_etext, NBPD_L2);
 		for (pa = 0, kva = KERNBASE; kva < kva_end;
 		     kva += NBPD_L2, pa += NBPD_L2) {
-			pde = &kpm->pm_pdir[pl_i(kva, PTP_LEVELS)];
+			pde = &L2_BASE[pl2_i(kva)];
 			*pde = pa | pmap_pg_g | PG_PS |
 			    PG_KR | PG_V;	/* zap! */
 			tlbflush();

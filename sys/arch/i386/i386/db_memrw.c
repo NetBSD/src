@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.20 2007/08/29 23:38:04 ad Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.20.2.1 2007/10/01 14:47:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.20 2007/08/29 23:38:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.20.2.1 2007/10/01 14:47:30 yamt Exp $");
 
 #include "opt_largepages.h"
 
@@ -147,7 +147,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 */
 #ifdef LARGEPAGES
 		if (oldpte & PG_PS)
-			limit = NBPD - ((vaddr_t)dst & (NBPD - 1));
+			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
 		else
 #endif
 			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
