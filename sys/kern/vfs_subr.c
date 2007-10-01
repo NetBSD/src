@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.17 2007/09/16 19:01:19 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.18 2007/10/01 16:08:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.17 2007/09/16 19:01:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.18 2007/10/01 16:08:54 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -126,14 +126,16 @@ pool_cache_t vnode_cache;
 
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 
+extern struct uvm_pagerops uvm_vnodeops;
+
 /*
  * Local declarations.
  */
 
 static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
-static vnode_t *getcleanvnode(void);
-static void vpanic(vnode_t *, const char *);
+static vnode_t *getcleanvnode(void);;
+void vpanic(vnode_t *, const char *);
 
 #ifdef DIAGNOSTIC
 void
@@ -374,7 +376,6 @@ int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	    vnode_t **vpp)
 {
-	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
 	static int toggle;
 	vnode_t *vp;
@@ -1210,8 +1211,9 @@ vclean(vnode_t *vp, int flags)
 	 * Prevent the vnode from being recycled or brought into use
 	 * while we clean it out.
 	 */
-	if (vp->v_iflag & VI_XLOCK)
+	if (vp->v_iflag & VI_XLOCK) {
 		vpanic(vp, "vclean: deadlock");
+	}
 	vp->v_iflag |= VI_XLOCK;
 	if (vp->v_iflag & VI_EXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
@@ -1313,8 +1315,9 @@ vclean(vnode_t *vp, int flags)
 	}
 
 	/* Disassociate the underlying file system from the vnode. */
-	if (VOP_RECLAIM(vp, l))
+	if (VOP_RECLAIM(vp, l)) {
 		vpanic(vp, "vclean: cannot reclaim");
+	}
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
 	if (vp->v_type == VREG && vp->v_ractx != NULL) {
