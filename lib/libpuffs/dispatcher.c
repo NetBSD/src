@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.12 2007/09/27 21:14:49 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.13 2007/10/01 21:10:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.12 2007/09/27 21:14:49 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.13 2007/10/01 21:10:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -84,7 +84,7 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 		struct puffs_error *perr = (void *)preq;
 
 		pu->pu_errnotify(pu, preq->preq_optype,
-		    perr->perr_error, preq->preq_cookie);
+		    perr->perr_error, perr->perr_str, preq->preq_cookie);
 		return 0;
 	}
 
