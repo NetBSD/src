@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.140 2007/08/14 11:10:55 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.141 2007/10/01 14:17:34 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.140 2007/08/14 11:10:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.141 2007/10/01 14:17:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -169,6 +169,7 @@ struct intrmap intrmap[] = {
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
 #define	ACDB_PROBE	0x2
+#define ACDB_BOOTARGS	0x4
 int autoconf_debug = 0x0;
 #define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
 #else
@@ -260,8 +261,9 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 
-	printf("sparc64_init(%p, %p, %p, %p, %p)\n", o0, bootargs, bootsize,
-			o3, ofw);
+	DPRINTF(ACDB_BOOTARGS,
+		("sparc64_init(%p, %p, %p, %p, %p)\n", o0, bootargs, bootsize,
+			o3, ofw));
 
 	/* Extract bootinfo pointer */
 	if ((long)bootsize >= (4 * sizeof(uint64_t))) {
@@ -278,7 +280,8 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 		panic("sparc64_init.");
 	}
 
-	printf("sparc64_init: bmagic=%lx, bi=%p\n", bmagic, bi);
+	DPRINTF(ACDB_BOOTARGS,
+		("sparc64_init: bmagic=%lx, bi=%p\n", bmagic, bi));
 
 	/* Read in the information provided by NetBSD boot loader */
 	if (SPARC_MACHINE_OPENFIRMWARE != bmagic) {
@@ -336,7 +339,7 @@ get_bootpath_from_prom(void)
 		return;
 
 	strcpy(ofbootpath, sbuf);
-	printf("bootpath: %s\n", ofbootpath);
+	DPRINTF(ACDB_BOOTDEV, ("bootpath: %s\n", ofbootpath));
 	ofbootpackage = prom_finddevice(ofbootpath);
 
 	/*
