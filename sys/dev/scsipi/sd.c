@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.265 2007/08/03 13:56:37 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.266 2007/10/01 18:16:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265 2007/08/03 13:56:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.266 2007/10/01 18:16:05 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1570,6 +1570,7 @@ sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		xs->bp = 0;
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
+		callout_init(&xs->xs_callout, 0);
 
 		/*
 		 * Pass all this info to the scsi driver.
