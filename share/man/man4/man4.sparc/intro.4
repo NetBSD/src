@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.22 2007/10/01 23:08:36 jnemeth Exp $
+.\"	$NetBSD: intro.4,v 1.23 2007/10/01 23:15:13 jnemeth Exp $
 .\"
 .Dd October 1, 2007
 .Dt INTRO 4 sparc
@@ -219,7 +219,7 @@ Not all supported devices are listed.
 .Pp
 .Bl -tag -width leXlebufferXX
 .It audio
-AMD 79C30 obio (sun4c) audio controller
+AMD 79C30 obio (sun4c) and dbri (sun4m) audio controller
 .It bpp
 Bi-directional Parallel port
 .It bwtwo
@@ -236,6 +236,8 @@ black and white obio frame buffer
 8 bit VMEbus, Sbus, and obio (sun4m) color graphics frame buffer
 .It cgtwo
 8 bit VMEbus color frame buffer
+.It dbri
+Dual Basic Rate Interface (BRI) ISDN (SPARC LX \*[Am] SPARCstation 10) (only the audio component is supported)
 .It eeprom
 Sun non-volatile configuration RAM driver
 .It esp
@@ -285,8 +287,6 @@ either documentation or sample hardware:
 .Bl -tag -width speaker
 .It dbri
 Dual Basic Rate Interface (BRI) ISDN (SPARC LX \*[Am] SPARCstation 10)
-.It audio
-sun4m audio that is dependent on the dbri
 .El
 .Sh HISTORY
 This
