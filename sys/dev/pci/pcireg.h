@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.54 2007/05/13 03:30:46 kent Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.54.6.1 2007/10/01 05:37:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -748,5 +748,11 @@ struct pci_rom {
  * Threshold below which 32bit PCI DMA needs bouncing.
  */
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
+
+/*
+ * 
+ */
+#define	PCI_RETRY_TIMEOUT_REG		0x40
+#define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00
 
 #endif /* _DEV_PCI_PCIREG_H_ */

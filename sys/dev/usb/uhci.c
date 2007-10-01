@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.209.2.2 2007/08/16 11:03:22 jmcneill Exp $	*/
+/*	$NetBSD: uhci.c,v 1.209.2.3 2007/10/01 05:38:05 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.2 2007/08/16 11:03:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.3 2007/10/01 05:38:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,89 +735,78 @@ uhci_shutdown(void *v)
  * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
-pnp_status_t
-uhci_power(device_t dv, pnp_request_t req, void *opaque)
+void
+uhci_resume(device_t dv)
 {
-	uhci_softc_t *sc = (uhci_softc_t *)dv;
-	pnp_state_t *pstate;
-	pnp_capabilities_t *pcaps;
+	uhci_softc_t *sc = device_private(dv);
 	int cmd;
 	int s;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
+	s = splhardusb();
 
-		s = splhardusb();
+	cmd = UREAD2(sc, UHCI_CMD);
+	sc->sc_bus.use_polling++;
+	if (cmd & UHCI_CMD_RS)
+		uhci_run(sc, 0);
 
-		cmd = UREAD2(sc, UHCI_CMD);
+	/* restore saved state */
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
+	UWRITE2(sc, UHCI_FRNUM, sc->sc_saved_frnum);
+	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
-		switch (*pstate) {
-		case PNP_STATE_D3:
+	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
+	UHCICMD(sc, UHCI_CMD_MAXP);
+	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
+	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
+	uhci_run(sc, 1); /* and start traffic again */
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+	sc->sc_bus.use_polling--;
+	if (sc->sc_intr_xfer != NULL)
+		usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub,
+		    sc->sc_intr_xfer);
 #ifdef UHCI_DEBUG
-			if (uhcidebug > 2)
-				uhci_dumpregs(sc);
+	if (uhcidebug > 2)
+		uhci_dumpregs(sc);
 #endif
-			if (sc->sc_intr_xfer != NULL)
-				usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
-				    sc->sc_intr_xfer);
-			sc->sc_bus.use_polling++;
-			uhci_run(sc, 0); /* stop the controller */
-			cmd &= ~UHCI_CMD_RS;
 
-			/* save some state if BIOS doesn't */
-			sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
-			sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
+	splx(s);
+}
 
-			UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
+void
+uhci_suspend(device_t dv)
+{
+	uhci_softc_t *sc = device_private(dv);
+	int cmd;
+	int s;
 
-			UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter suspend */
-			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-			sc->sc_bus.use_polling--;
-			break;
-		case PNP_STATE_D0:
-			sc->sc_bus.use_polling++;
-			if (cmd & UHCI_CMD_RS)
-				uhci_run(sc, 0);
+	s = splhardusb();
 
-			/* restore saved state */
-			UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
-			UWRITE2(sc, UHCI_FRNUM, sc->sc_saved_frnum);
-			UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
+	cmd = UREAD2(sc, UHCI_CMD);
 
-			UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
-			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
-			UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
-			UHCICMD(sc, UHCI_CMD_MAXP);
-			UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
-			    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
-			uhci_run(sc, 1); /* and start traffic again */
-			usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
-			sc->sc_bus.use_polling--;
-			if (sc->sc_intr_xfer != NULL)
-				usb_callout(sc->sc_poll_handle, sc->sc_ival,
-					    uhci_poll_hub, sc->sc_intr_xfer);
 #ifdef UHCI_DEBUG
-			if (uhcidebug > 2)
-				uhci_dumpregs(sc);
+	if (uhcidebug > 2)
+		uhci_dumpregs(sc);
 #endif
-			break;
-		default:
-			break;
-		}
+	if (sc->sc_intr_xfer != NULL)
+		usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
+		    sc->sc_intr_xfer);
+	sc->sc_bus.use_polling++;
+	uhci_run(sc, 0); /* stop the controller */
+	cmd &= ~UHCI_CMD_RS;
 
-		splx(s);
+	/* save some state if BIOS doesn't */
+	sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
+	sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
 
-		break;
-	default:
-		break;
-	}
+	UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
-	return PNP_STATUS_SUCCESS;
+	UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter suspend */
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+	sc->sc_bus.use_polling--;
+
+	splx(s);
 }
 
 #ifdef UHCI_DEBUG

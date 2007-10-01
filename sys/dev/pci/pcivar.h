@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.14.2 2007/08/23 09:32:51 joerg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.14.3 2007/10/01 05:37:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -178,6 +178,8 @@ struct pci_conf_state {
 
 extern struct cfdriver pci_cd;
 
+struct ifnet;
+
 int pcibusprint(void *, const char *);
 
 /*
@@ -246,6 +248,7 @@ int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
 int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
     int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Device power management
@@ -253,11 +256,18 @@ int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 pnp_state_t	pci_pnp_powerstate(pcireg_t);
 pnp_state_t	pci_pnp_capabilities(pcireg_t);
 
-struct ifnet;
+pnp_status_t	pci_generic_power_register(device_t dv,
+					   pci_chipset_tag_t, pcitag_t,
+					   void (*)(device_t),
+					   void (*)(device_t));
+void		pci_generic_power_deregister(device_t);
 
-pnp_status_t	pci_net_generic_power(device_t, pnp_request_t, void *,
-				      pci_chipset_tag_t, pcitag_t, 
-				      struct pci_conf_state *, struct ifnet *);
+pnp_status_t	pci_net_generic_power_register(device_t,
+					       pci_chipset_tag_t, pcitag_t,
+					       struct ifnet *,
+					       void (*)(device_t),
+					       void (*)(device_t));
+void		pci_net_generic_power_deregister(device_t);
 
 #endif /* _KERNEL */
 

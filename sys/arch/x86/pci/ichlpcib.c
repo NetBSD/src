@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.12 2007/09/05 21:23:30 cube Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.13 2007/10/01 05:37:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.12 2007/09/05 21:23:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.13 2007/10/01 05:37:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,7 +104,8 @@ struct lpcib_softc {
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
-static pnp_status_t lpcib_power(device_t, pnp_request_t, void *);
+static void lpcib_suspend(device_t);
+static void lpcib_resume(device_t);
 
 static void pmtimer_configure(struct lpcib_softc *);
 
@@ -190,7 +191,7 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = device_private(self);
 	struct lpcib_device *lpcib_dev;
-	pnp_status_t status;
+	pnp_status_t pnp_status;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -256,141 +257,78 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Install power handler */
-	status = pnp_register(self, lpcib_power);
-	if (status != PNP_STATUS_SUCCESS)
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    lpcib_suspend, lpcib_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 }
 
-static pnp_status_t
-lpcib_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+lpcib_suspend(device_t dv)
 {
-	struct lpcib_softc *sc;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pcireg_t val;
-	int off;
+	struct lpcib_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
 
-	sc = device_private(dv);
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
+	/* capture PIRQ routing control registers */
+	sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
+	sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQB_ROUT);
+	sc->sc_pirq[2] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQC_ROUT);
+	sc->sc_pirq[3] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQD_ROUT);
+	sc->sc_pirq[4] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
+	sc->sc_pirq[5] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQF_ROUT);
+	sc->sc_pirq[6] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQG_ROUT);
+	sc->sc_pirq[7] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQH_ROUT);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = (pnp_capabilities_t *)opaque;
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			caps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		else
-			caps->state = pci_pnp_capabilities(val);
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = (pnp_state_t *)opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			*state = PNP_STATE_D0;
-		else
-			*state = pci_pnp_powerstate(val);
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = (pnp_state_t *)opaque;
+	sc->sc_pmcon = pci_conf_read(pc, tag, LPCIB_PCI_GEN_PMCON_1);
+	sc->sc_fwhsel2 = pci_conf_read(pc, tag, LPCIB_PCI_GEN_STA);
 
-		switch (*state) {
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-
-			/* capture PIRQ routing control registers */
-			sc->sc_pirq[0] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQA_ROUT);
-			sc->sc_pirq[1] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQB_ROUT);
-			sc->sc_pirq[2] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQC_ROUT);
-			sc->sc_pirq[3] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQD_ROUT);
-			sc->sc_pirq[4] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQE_ROUT);
-			sc->sc_pirq[5] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQF_ROUT);
-			sc->sc_pirq[6] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQG_ROUT);
-			sc->sc_pirq[7] = pci_conf_read(pc, tag,
-			    LPCIB_PCI_PIRQH_ROUT);
-
-			sc->sc_pmcon = pci_conf_read(pc, tag,
-			    LPCIB_PCI_GEN_PMCON_1);
-			sc->sc_fwhsel2 = pci_conf_read(pc, tag,
-			    LPCIB_PCI_GEN_STA);
-			if (sc->sc_has_rcba) {
-				sc->sc_rcba_reg = pci_conf_read(pc, tag,
-				    LPCIB_RCBA);
+	if (sc->sc_has_rcba) {
+		sc->sc_rcba_reg = pci_conf_read(pc, tag, LPCIB_RCBA);
 #if NHPET > 0
-				sc->sc_hpet_reg = bus_space_read_4(sc->sc_rcbat,
-				    sc->sc_rcbah, LPCIB_RCBA_HPTC);
+		sc->sc_hpet_reg = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
+		    LPCIB_RCBA_HPTC);
 #endif
-			} else if (sc->sc_has_ich5_hpet) {
+	} else if (sc->sc_has_ich5_hpet) {
 #if NHPET > 0
-				sc->sc_hpet_reg = pci_conf_read(pc, tag,
-				    LPCIB_PCI_GEN_CNTL);
+		sc->sc_hpet_reg = pci_conf_read(pc, tag, LPCIB_PCI_GEN_CNTL);
 #endif
-			}
-
-			break;
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		(void)pci_set_powerstate(pc, tag, val);
-
-		if (*state != PNP_STATE_D0)
-			break;
-		
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-
-		/* restore PIRQ routing control registers */
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT,
-		    sc->sc_pirq[0]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT,
-		    sc->sc_pirq[1]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT,
-		    sc->sc_pirq[2]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT,
-		    sc->sc_pirq[3]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT,
-		    sc->sc_pirq[4]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT,
-		    sc->sc_pirq[5]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT,
-		    sc->sc_pirq[6]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT,
-		    sc->sc_pirq[7]);
-
-		pci_conf_write(pc, tag, LPCIB_PCI_GEN_PMCON_1, sc->sc_pmcon);
-		pci_conf_write(pc, tag, LPCIB_PCI_GEN_STA, sc->sc_fwhsel2);
-		if (sc->sc_has_rcba) {
-			pci_conf_write(pc, tag, LPCIB_RCBA, sc->sc_rcba_reg);
-#if NHPET > 0
-			bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah,
-			    LPCIB_RCBA_HPTC, sc->sc_hpet_reg);
-#endif
-		} else if (sc->sc_has_ich5_hpet) {
-#if NHPET > 0
-			pci_conf_write(pc, tag, LPCIB_PCI_GEN_CNTL, sc->sc_hpet_reg);
-#endif
-		}
-
-
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
 	}
+}
 
-	return PNP_STATUS_SUCCESS;
+static void
+lpcib_resume(device_t dv)
+{
+	struct lpcib_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	/* restore PIRQ routing control registers */
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT, sc->sc_pirq[1]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT, sc->sc_pirq[2]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT, sc->sc_pirq[3]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[4]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT, sc->sc_pirq[5]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT, sc->sc_pirq[6]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT, sc->sc_pirq[7]);
+
+	pci_conf_write(pc, tag, LPCIB_PCI_GEN_PMCON_1, sc->sc_pmcon);
+	pci_conf_write(pc, tag, LPCIB_PCI_GEN_STA, sc->sc_fwhsel2);
+
+	if (sc->sc_has_rcba) {
+		pci_conf_write(pc, tag, LPCIB_RCBA, sc->sc_rcba_reg);
+#if NHPET > 0
+		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_HPTC,
+		    sc->sc_hpet_reg);
+#endif
+	} else if (sc->sc_has_ich5_hpet) {
+#if NHPET > 0
+		pci_conf_write(pc, tag, LPCIB_PCI_GEN_CNTL, sc->sc_hpet_reg);
+#endif
+	}
 }
 
 /*

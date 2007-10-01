@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.50.6.2 2007/08/16 11:03:08 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.50.6.3 2007/10/01 05:37:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.2 2007/08/16 11:03:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.3 2007/10/01 05:37:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -144,7 +144,6 @@ typedef struct azalia_t {
 	stream_t pstream;
 	stream_t rstream;
 
-	struct pci_conf_state pciconf;
 	int mode_cap;
 } azalia_t;
 #define XNAME(sc)		((sc)->dev.dv_xname)
@@ -161,7 +160,8 @@ static int	azalia_pci_match(struct device *, struct cfdata *, void *);
 static void	azalia_pci_attach(struct device *, struct device *, void *);
 static int	azalia_pci_activate(struct device *, enum devact);
 static int	azalia_pci_detach(struct device *, int);
-static pnp_status_t	azalia_pci_power(device_t, pnp_request_t, void *);
+static void	azalia_pci_suspend(device_t);
+static void	azalia_pci_resume(device_t);
 static int	azalia_intr(void *);
 static int	azalia_attach(azalia_t *);
 static void	azalia_attach_intr(struct device *);
@@ -307,6 +307,7 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	const char *intrrupt_str;
 	const char *name;
 	const char *vendor;
+	pnp_status_t pnp_status;
 
 	sc = (azalia_t*)self;
 	pa = aux;
@@ -345,8 +346,12 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	}
 	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
 
-	/* register device power management hooks */
-	pnp_register(self, azalia_pci_power);
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    azalia_pci_suspend, azalia_pci_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+	}
 
 	sc->pciid = pa->pa_id;
 	vendor = pci_findvendor(pa->pa_id);
@@ -428,76 +433,23 @@ azalia_pci_detach(struct device *self, int flags)
 	return 0;
 }
 
-static pnp_status_t
-azalia_pci_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+azalia_pci_suspend(device_t dv)
 {
-	azalia_t *az;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcireg_t val;
-	pcitag_t tag;
-	int off, s;
+	/* XXX stop input/output */
+}
 
-	az = (azalia_t *)dv;
-	status = PNP_STATUS_UNSUPPORTED;
-	pc = az->pc;
-	tag = az->tag;
+static void
+azalia_pci_resume(device_t dv)
+{
+	azalia_t *az = device_private(dv);
+	int s;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
+	s = splaudio();
+	azalia_attach(az);
+	splx(s);
 
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			s = splaudio();
-			pci_conf_capture(az->pc, az->tag, &az->pciconf);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splaudio();
-			pci_conf_restore(az->pc, az->tag, &az->pciconf);
-			azalia_attach(az);
-			splx(s);
-
-			azalia_attach_intr((struct device *)az);
-		}
-
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-		break;
-	}
-
-	return status;
+	azalia_attach_intr((struct device *)az);
 }
 
 static int

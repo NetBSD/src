@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.5 2007/09/03 16:48:14 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.6 2007/10/01 05:37:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.5 2007/09/03 16:48:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.6 2007/10/01 05:37:38 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -183,8 +183,6 @@ static int	bge_rxthresh_nodenum;
 
 static int	bge_probe(device_t, cfdata_t, void *);
 static void	bge_attach(device_t, device_t, void *);
-static pnp_status_t
-		bge_pci_power(device_t, pnp_request_t, void *);
 static void	bge_release_resources(struct bge_softc *);
 static void	bge_txeof(struct bge_softc *);
 static void	bge_rxeof(struct bge_softc *);
@@ -2427,6 +2425,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 	u_int32_t		pm_ctl;
+	pnp_status_t		pnp_status;
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -2772,10 +2771,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
 
-	/* register device power management hooks */
-	if (pnp_register(self, bge_pci_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 }
 
 static void
@@ -4361,13 +4362,4 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 
 err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
-}
-
-static pnp_status_t
-bge_pci_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct bge_softc *sc = (struct bge_softc *)dv;
-
-	return pci_net_generic_power(dv, req, opaque, sc->sc_pc, sc->sc_pcitag,
-	    &sc->sc_pciconf, &sc->ethercom.ec_if);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.95.4.2 2007/08/04 19:37:34 jmcneill Exp $ */
+/* $NetBSD: vga.c,v 1.95.4.3 2007/10/01 05:37:28 joerg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.4.2 2007/08/04 19:37:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.4.3 2007/10/01 05:37:28 joerg Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1489,41 +1489,10 @@ vga_setborder(struct vga_config *vc, u_int value)
 }
 #endif /* WSDISPLAY_CUSTOM_BORDER */
 
-pnp_status_t
-vga_power(device_t dv, pnp_request_t req, void *opaque)
+void
+vga_resume(struct vga_softc *sc)
 {
-	struct vga_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-
-	sc = (struct vga_softc *)dv;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
 #ifdef VGA_RESET_ON_RESUME
-			vga_initregs(&sc->sc_vc->hdl);
+	vga_initregs(&sc->sc_vc->hdl);
 #endif
-			break;
-		case PNP_STATE_D3:
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
 }

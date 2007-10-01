@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.42.6.2 2007/08/21 06:56:49 joerg Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.42.6.3 2007/10/01 05:37:40 joerg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2387,7 +2387,6 @@ struct bge_softc {
 	void			*bge_intrhand;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
-	struct pci_conf_state	sc_pciconf;
 
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */

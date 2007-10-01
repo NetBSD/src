@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.41.22.1 2007/09/04 15:05:48 joerg Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.41.22.2 2007/10/01 05:37:43 joerg Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41.22.1 2007/09/04 15:05:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41.22.2 2007/10/01 05:37:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ struct wi_pci_softc {
 	pci_intr_handle_t psc_ih;
 	pci_chipset_tag_t psc_pc;
 	pcitag_t psc_pcitag;
-
-	struct pci_conf_state psc_pciconf;
 };
 
 static int	wi_pci_match(struct device *, struct cfdata *, void *);
@@ -102,8 +100,6 @@ static void	wi_pci_attach(struct device *, struct device *, void *);
 static int	wi_pci_enable(struct wi_softc *);
 static void	wi_pci_disable(struct wi_softc *);
 static void	wi_pci_reset(struct wi_softc *);
-static pnp_status_t
-		wi_pci_power(device_t, pnp_request_t, void *);
 
 static const struct wi_pci_product
 	*wi_pci_lookup(struct pci_attach_args *);
@@ -236,6 +232,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	bus_space_tag_t memt, iot, plxt, tmdt;
 	bus_space_handle_t memh, ioh, plxh, tmdh;
+	pnp_status_t pnp_status;
 
 	psc->psc_pc = pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -386,16 +383,10 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!wpp->wpp_chip)
 		sc->sc_reset = wi_pci_reset;
 
-	if (pnp_register(self, wi_pci_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, &sc->sc_if, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
-}
-
-static pnp_status_t
-wi_pci_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct wi_pci_softc *psc = (struct wi_pci_softc *)dv;
-
-	return pci_net_generic_power(dv, req, opaque, psc->psc_pc, psc->psc_pcitag,
-	    &psc->psc_pciconf, &psc->psc_wi.sc_if);
+	}
 }
