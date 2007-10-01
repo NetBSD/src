@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.130 2007/10/01 09:43:00 martin Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.131 2007/10/01 12:54:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.130 2007/10/01 09:43:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.131 2007/10/01 12:54:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2252,8 +2252,6 @@ again:
 	 */
 	if ((sc->sc_espstat & NCRSTAT_PE) != 0) {
 		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
-		if (sc->sc_initialreset++ < 3)
-			goto reset;
 		if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 			ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
 		else
