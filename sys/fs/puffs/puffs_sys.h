@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.53 2007/09/27 23:21:08 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.54 2007/10/01 21:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -207,7 +207,7 @@ struct puffs_node {
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
-typedef void (*parkdone_fn)(struct puffs_req *, void *);
+typedef void (*parkdone_fn)(struct puffs_mount *, struct puffs_req *, void *);
 
 void	puffs_transport_init(void);
 void	puffs_transport_destroy(void);
@@ -230,7 +230,7 @@ void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t,
 void	puffs_cacheop(struct puffs_mount *, struct puffs_park *,
 		      struct puffs_cacheinfo *, size_t, void *);
 struct puffs_park *puffs_cacheop_alloc(void);
-void	puffs_errnotify(struct puffs_mount *, uint8_t, int, void *);
+void	puffs_errnotify(struct puffs_mount *, uint8_t, int, const char*, void*);
 
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);
@@ -249,8 +249,9 @@ void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
 void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
-void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
-void	puffs_parkdone_poll(struct puffs_req *, void *);
+void	puffs_parkdone_asyncbioread(struct puffs_mount *,
+				    struct puffs_req *, void *);
+void	puffs_parkdone_poll(struct puffs_mount *, struct puffs_req *, void *);
 
 void	puffs_mp_reference(struct puffs_mount *);
 void	puffs_mp_release(struct puffs_mount *);
@@ -277,5 +278,17 @@ int	puffs_putop(struct puffs_mount *, struct puffs_reqh_put *);
 extern int (**puffs_vnodeop_p)(void *);
 
 MALLOC_DECLARE(M_PUFFS);
+
+static __inline int
+checkerr(struct puffs_mount *pmp, int error, const char *str)
+{
+
+	if (error < 0 || error > ELAST) {
+		puffs_errnotify(pmp, PUFFS_ERR_ERROR, error, str, NULL);
+		error = EPROTO;
+	}
+
+	return error;
+}
 
 #endif /* _PUFFS_SYS_H_ */

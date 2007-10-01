@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.59 2007/09/27 21:44:12 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.60 2007/10/01 21:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.59 2007/09/27 21:44:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.60 2007/10/01 21:09:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -312,6 +312,7 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 		error = puffs_vfstouser(pmp, PUFFS_VFS_UNMOUNT,
 		     &unmount_arg, sizeof(unmount_arg));
+		error = checkerr(pmp, error, __func__);
 		DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
 
 		mutex_enter(&pmp->pmp_lock);
@@ -397,6 +398,7 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	error = puffs_vfstouser(pmp, PUFFS_VFS_STATVFS,
 	    statvfs_arg, sizeof(*statvfs_arg));
+	error = checkerr(pmp, error, __func__);
 	statvfs_arg->pvfsr_sb.f_iosize = DEV_BSIZE;
 
 	/*
@@ -541,6 +543,7 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 
 	rv = puffs_vfstouser(MPTOPUFFSMP(mp), PUFFS_VFS_SYNC,
 	    &sync_arg, sizeof(sync_arg));
+	rv = checkerr(MPTOPUFFSMP(mp), rv, __func__);
 	if (rv)
 		error = rv;
 
@@ -582,6 +585,7 @@ puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	memcpy(fhtonode_argp->pvfsr_data, fhdata, fhlen);
 
 	error = puffs_vfstouser(pmp, PUFFS_VFS_FHTOVP, fhtonode_argp, argsize);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
@@ -635,6 +639,7 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	nodetofh_argp->pvfsr_dsize = fhlen;
 
 	error = puffs_vfstouser(pmp, PUFFS_VFS_VPTOFH, nodetofh_argp, argsize);
+	error = checkerr(pmp, error, __func__);
 
 	if (pmp->pmp_args.pa_fhflags & PUFFS_FHFLAG_PASSTHROUGH)
 		fhlen = nodetofh_argp->pvfsr_dsize;
@@ -650,7 +655,8 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	}
 
 	if (fhlen > FHANDLE_SIZE_MAX) {
-		puffs_errnotify(pmp, PUFFS_ERR_VPTOFH, E2BIG, VPTOPNC(vp));
+		puffs_errnotify(pmp, PUFFS_ERR_VPTOFH, E2BIG,
+		    "file handle too big", VPTOPNC(vp));
 		error = EPROTO;
 		goto out;
 	}

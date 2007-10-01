@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.41 2007/09/27 21:14:49 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.42 2007/10/01 21:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.41 2007/09/27 21:14:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.42 2007/10/01 21:09:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -418,7 +418,8 @@ puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *park,
 }
 
 void
-puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error, void *cookie)
+puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error,
+	const char *str, void *cookie)
 {
 	struct puffs_park *park;
 	struct puffs_error *perr;
@@ -428,6 +429,7 @@ puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error, void *cookie)
 	    M_PUFFS, M_ZERO | M_WAITOK);
 
 	perr->perr_error = error;
+	strlcpy(perr->perr_str, str, sizeof(perr->perr_str));
 
 	park->park_preq = (struct puffs_req *)perr;
 	park->park_preq->preq_opclass = PUFFSOP_ERROR | PUFFSOPFLAG_FAF;
@@ -836,7 +838,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		if (park->park_flags & PARKFLAG_CALL) {
 			DPRINTF(("puffsputopt: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
-			park->park_done(park->park_preq, park->park_donearg);
+			park->park_done(pmp,park->park_preq,park->park_donearg);
 			release = 1;
 		}
 
@@ -903,7 +905,7 @@ puffs_userdead(struct puffs_mount *pmp)
 			park->park_preq->preq_rv = ENXIO;
 
 			if (park->park_flags & PARKFLAG_CALL) {
-				park->park_done(park->park_preq,
+				park->park_done(pmp, park->park_preq,
 				    park->park_donearg);
 				puffs_park_release(park, 1);
 			} else if ((park->park_flags & PARKFLAG_WANTREPLY)==0) {
@@ -937,7 +939,7 @@ puffs_userdead(struct puffs_mount *pmp)
 		} else {
 			park->park_preq->preq_rv = ENXIO;
 			if (park->park_flags & PARKFLAG_CALL) {
-				park->park_done(park->park_preq,
+				park->park_done(pmp, park->park_preq,
 				    park->park_donearg);
 				puffs_park_release(park, 1);
 			} else {
