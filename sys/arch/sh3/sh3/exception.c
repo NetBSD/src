@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.41 2007/09/24 01:17:15 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.42 2007/10/01 21:26:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.41 2007/09/24 01:17:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.42 2007/10/01 21:26:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -447,7 +447,7 @@ ast(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 
-		if (want_resched) {
+		if (l->l_cpu->ci_want_resched) {
 			/* We are being preempted. */
 			preempt();
 		}
