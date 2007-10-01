@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.64 2007/09/27 23:11:41 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.65 2007/10/01 21:10:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.64 2007/09/27 23:11:41 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.65 2007/10/01 21:10:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -105,9 +105,10 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 /*ARGSUSED*/
 static void
 puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
-	int error, void *cookie)
+	int error, const char *str, void *cookie)
 {
 
+	fprintf(stderr, "%s\n", str);
 	abort();
 }
 
