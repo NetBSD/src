@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.52 2007/09/27 23:10:42 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.53 2007/10/01 21:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -88,12 +88,12 @@ enum {
 enum {
 	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
 	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
-	PUFFS_ERR_VPTOFH
+	PUFFS_ERR_VPTOFH,	PUFFS_ERR_ERROR
 };
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	18
+#define PUFFSVERSION	19
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -226,29 +226,23 @@ struct puffs_reqh_put {
 struct puffs_req {
 	uint64_t	preq_id;		/* get: cur, put: next */
 
-	union u {
-		struct {
-			uint8_t	opclass;	/* cur */
-			uint8_t	optype;		/* cur */
+	uint8_t		preq_opclass;		/* get, cur */
+	uint8_t		preq_optype;		/* get, cur */
+	int		preq_rv;		/* put, cur */
+	int		preq_setbacks;		/* put, cur */
 
-			/*
-			 * preq_cookie is the node cookie associated with
-			 * the request.  It always maps 1:1 to a vnode
-			 * and could map to a userspace struct puffs_node.
-			 * The cookie usually describes the first
-			 * vnode argument of the VOP_POP() in question.
-			 */
+	/*
+	 * preq_cookie is the node cookie associated with
+	 * the request.  It always maps 1:1 to a vnode
+	 * and could map to a userspace struct puffs_node.
+	 * The cookie usually describes the first
+	 * vnode argument of the VOP_POP() in question.
+	 */
+	void		*preq_cookie;		/* get, cur */
 
-			void	*cookie;	/* cur */
-		} out;
-		struct {
-			int	rv;		/* cur */
-			int	setbacks;	/* cur */
-			void	*buf;		/* next */
-		} in;
-	} u;
+	void		*preq_nextbuf;		/* put, next */
 
-	size_t  preq_buflen;			/* get: cur, put: next */
+	size_t  	preq_buflen;		/* get: cur, put: next */
 	/*
 	 * the following helper pads the struct size to md alignment
 	 * multiple (should size_t not cut it).  it makes sure that
@@ -256,12 +250,6 @@ struct puffs_req {
 	 */
 	uint8_t	preq_buf[0] __aligned(ALIGNBYTES+1);
 };
-#define preq_opclass	u.out.opclass
-#define preq_optype	u.out.optype
-#define preq_cookie	u.out.cookie
-#define preq_rv		u.in.rv
-#define preq_setbacks	u.in.setbacks
-#define preq_nextbuf	u.in.buf
 
 #define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
 #define PUFFS_SETBACK_INACT_N2	0x02	/* set VOP_INACTIVE for node 2 */
@@ -724,6 +712,7 @@ struct puffs_error {
 	struct puffs_req	perr_pr;
 
 	int			perr_error;
+	char			perr_str[256];
 };
 
 /* notyet */
