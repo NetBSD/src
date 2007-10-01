@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.117.14.2 2007/09/03 16:48:13 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.117.14.3 2007/10/01 05:37:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.2 2007/09/03 16:48:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.3 2007/10/01 05:37:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,6 @@ struct auich_softc {
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
 
-	/* Power Management */
-	struct pci_conf_state sc_pciconf;
-
 	/* sysctl */
 	struct sysctllog *sc_log;
 	uint32_t sc_ac97_clock;
@@ -288,7 +285,8 @@ static int	auich_allocmem(struct auich_softc *, size_t, size_t,
 		    struct auich_dma *);
 static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-static pnp_status_t	auich_power(device_t, pnp_request_t, void *);
+static void	auich_suspend(device_t);
+static void	auich_resume(device_t);
 static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(struct device *);
@@ -459,6 +457,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	const struct auich_devtype *d;
 	const struct sysctlnode *node, *node_ac97clock;
 	int err, node_mib, i;
+	pnp_status_t pnp_status;
 
 	sc = (struct auich_softc *)self;
 	pa = aux;
@@ -642,11 +641,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 			return;
 	}
 
-
 	/* Watch for power change */
-	if (pnp_register(self, auich_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    auich_suspend, auich_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 	config_interrupts(self, auich_finish_attach);
 
@@ -1584,51 +1585,21 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return error;
 }
 
-static pnp_status_t
-auich_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+auich_suspend(device_t dv)
 {
-	struct auich_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	int s;
+	/* XXX stop input/output */
+}
 
-	sc = (struct auich_softc *)dv;
+static void
+auich_resume(device_t dv)
+{
+	struct auich_softc *sc = device_private(dv);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D3:
-			DELAY(1000);
-			s = splaudio();
-			pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-			splx(s);
-			break;
-		case PNP_STATE_D0:
-			s = splaudio();
-			pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-			splx(s);
-			auich_reset_codec(sc);
-			DELAY(1000);
-			(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	auich_reset_codec(sc);
+	DELAY(1000);
+	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+	/* XXX restart input/output */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.24.20.1 2007/08/03 22:17:25 jmcneill Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.24.20.2 2007/10/01 05:37:59 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,4 +160,5 @@ usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
 int		ehci_activate(device_ptr_t, enum devact);
-pnp_status_t	ehci_power(device_t, pnp_request_t, void *);
+void		ehci_suspend(device_t dv);
+void		ehci_resume(device_t dv);

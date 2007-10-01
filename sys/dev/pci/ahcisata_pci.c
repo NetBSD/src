@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1.12.1 2007/08/04 18:20:51 he Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.12.2 2007/10/01 05:37:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.1 2007/08/04 18:20:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.2 2007/10/01 05:37:33 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -53,14 +53,12 @@ struct ahci_pci_softc {
 	struct ahci_softc ah_sc; /* must come first, struct device */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	struct pci_conf_state sc_pciconf;
 };
 
 
 static int  ahci_pci_match(struct device *, struct cfdata *, void *);
 static void ahci_pci_attach(struct device *, struct device *, void *);
-
-static pnp_status_t ahci_pci_power(device_t, pnp_request_t, void *);
+static void ahci_pci_resume(device_t);
 
 
 CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_pci_softc),
@@ -104,6 +102,7 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	void *ih;
+	pnp_status_t pnp_status;
 
 	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
@@ -133,78 +132,25 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	ahci_attach(sc);
 
-	/* register device power management */
-	pnp_register(self, ahci_pci_power);
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    NULL, ahci_pci_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+	}
 }
 
-static pnp_status_t
-ahci_pci_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+ahci_pci_resume(device_t dv)
 {
-	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)dv;
+	struct ahci_pci_softc *psc = device_private(dv);
 	struct ahci_softc *sc = &psc->ah_sc;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcireg_t val;
-	pcitag_t tag;
-	int off, s;
+	int s;
 
-	status = PNP_STATUS_UNSUPPORTED;
-	pc = psc->sc_pc;
-	tag = psc->sc_pcitag;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			s = splbio();
-			pci_conf_capture(pc, tag, &psc->sc_pciconf);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splbio();
-			pci_conf_restore(pc, tag, &psc->sc_pciconf);
-
-			ahci_reset(sc);
-			ahci_setup_ports(sc);
-			ahci_reprobe_drives(sc);
-			ahci_enable_intrs(sc);
-
-			splx(s);
-		}
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-		break;
-	}
-	return status;
+	s = splbio();
+	ahci_reset(sc);
+	ahci_setup_ports(sc);
+	ahci_reprobe_drives(sc);
+	ahci_enable_intrs(sc);
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.37.14.2 2007/09/03 16:48:23 jmcneill Exp $	*/
+/*	$NetBSD: piixide.c,v 1.37.14.3 2007/10/01 05:37:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.2 2007/09/03 16:48:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.3 2007/10/01 05:37:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,8 @@ static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
-static pnp_status_t piixide_power(device_t, pnp_request_t, void *);
+static void piixide_resume(device_t);
+static void piixide_suspend(device_t);
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
 
@@ -273,74 +274,34 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
-	/* Setup our power handler */
-	status = pnp_register(self, piixide_power);
-	if (status != PNP_STATUS_SUCCESS)
+	status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    piixide_suspend, piixide_resume);
+	if (status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 }
 
-static pnp_status_t
-piixide_power(device_t dv, pnp_request_t req, void *aux)
+static void
+piixide_resume(device_t dv)
 {
-	struct pciide_softc *sc = (struct pciide_softc *)dv;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pcireg_t val;
-	int off;
+	struct pciide_softc *sc = device_private(dv);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = (pnp_capabilities_t *)aux;
-		pci_get_capability(sc->sc_pc, sc->sc_tag,
-		    PCI_CAP_PWRMGMT, &off, &val);
-		caps->state = pci_pnp_capabilities(val);
-		caps->state |= PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = (pnp_state_t *)aux;
-		if (pci_get_powerstate(sc->sc_pc, sc->sc_tag, &val) != 0)
-			*state = PNP_STATE_D0;
-		else
-			*state = pci_pnp_powerstate(val);
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = (pnp_state_t *)aux;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+	    sc->sc_idetim);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
+	    sc->sc_udmatim);
+}
 
-		switch (*state) {
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			pci_conf_capture(sc->sc_pc, sc->sc_tag,
-			    &sc->sc_pciconf);
-			sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    PIIX_IDETIM);
-			sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    PIIX_UDMATIM);
-			break;
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
+static void
+piixide_suspend(device_t dv)
+{
+	struct pciide_softc *sc = device_private(dv);
 
-		(void)pci_set_powerstate(sc->sc_pc, sc->sc_tag, val);
-
-		if (*state != PNP_STATE_D0)
-			break;
-
-		pci_conf_restore(sc->sc_pc, sc->sc_tag,
-		    &sc->sc_pciconf);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
-		    sc->sc_idetim);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
-		    sc->sc_udmatim);
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_IDETIM);
+	sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_UDMATIM);
 }
 
 static void

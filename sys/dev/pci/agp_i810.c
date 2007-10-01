@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.6 2007/09/06 22:12:53 jmcneill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.7 2007/10/01 05:37:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.6 2007/09/06 22:12:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.7 2007/10/01 05:37:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-static pnp_status_t agp_i810_power(device_t, pnp_request_t, void *);
+static void agp_i810_resume(device_t);
 static int agp_i810_init(struct agp_softc *);
 
 static struct agp_methods agp_i810_methods = {
@@ -186,6 +186,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt *gatt;
 	int error, apbase;
 	bus_size_t mmadrsize;
+	pnp_status_t pnp_status;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
@@ -318,9 +319,12 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
-	if (pnp_register(self, agp_i810_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_generic_power_register(self,
+    	    isc->vga_pa.pa_pc, isc->vga_pa.pa_tag, NULL, agp_i810_resume);
+
+	if (pnp_status != PNP_STATUS_SUCCESS)
 		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(&sc->as_dev));
+		    device_xname(self));
 
 	return agp_i810_init(sc);
 }
@@ -867,38 +871,12 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	return 0;
 }
 
-static pnp_status_t
-agp_i810_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+agp_i810_resume(device_t dv)
 {
-	struct agp_softc *sc;
-	struct agp_i810_softc *isc;
-	pnp_state_t *pstate;
+	struct agp_softc *sc = device_private(dv);
+	struct agp_i810_softc *isc = sc->as_chipc;
 
-	sc = (struct agp_softc *)dv;
-	isc = sc->as_chipc;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-	case PNP_REQUEST_GET_STATE:
-		return agp_power(dv, req, opaque);
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			agp_power(dv, req, opaque);
-			WRITE4(AGP_I810_PGTBL_CTL, isc->pgtblctl);
-			break;
-		case PNP_STATE_D3:
-			isc->pgtblctl = READ4(AGP_I810_PGTBL_CTL);
-			agp_power(dv, req, opaque);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return agp_power(dv, req, opaque);
-	}
-
-	return PNP_STATUS_SUCCESS;
+	isc->pgtblctl = READ4(AGP_I810_PGTBL_CTL);
+	agp_flush_cache();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62.14.3 2007/09/03 16:48:16 jmcneill Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.4 2007/10/01 05:37:40 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.3 2007/09/03 16:48:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.4 2007/10/01 05:37:40 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -93,8 +93,6 @@ int iwi_debug = 4;
 static int	iwi_match(struct device *, struct cfdata *, void *);
 static void	iwi_attach(struct device *, struct device *, void *);
 static int	iwi_detach(struct device *, int);
-static pnp_status_t
-		iwi_pci_power(device_t, pnp_request_t, void *);
 
 static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
     int);
@@ -204,13 +202,21 @@ iwi_match(struct device *parent, struct cfdata *match,
 	return 0;
 }
 
+static void
+iwi_pci_resume(device_t dv)
+{
+	struct iwi_softc *sc = device_private(dv);
+
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+}
+
 /* Base Address Register */
 #define IWI_PCI_BAR0	0x10
 
 static void
 iwi_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct iwi_softc *sc = (struct iwi_softc *)self;
+	struct iwi_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
@@ -222,6 +228,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t data;
 	uint16_t val;
 	int error, revision, i;
+	pnp_status_t pnp_status;
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -230,10 +237,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
@@ -443,9 +447,12 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	if (pnp_register(self, iwi_pci_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, ifp, NULL, iwi_pci_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 	ieee80211_announce(ic);
 
@@ -460,7 +467,7 @@ iwi_detach(struct device* self, int flags)
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
-	pnp_deregister(self);
+	pci_net_generic_power_deregister(self);
 
 	if (ifp != NULL)
 		iwi_stop(ifp, 1);
@@ -783,15 +790,6 @@ iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 		}
 		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
 	}
-}
-
-static pnp_status_t
-iwi_pci_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct iwi_softc *sc = (struct iwi_softc *)dv;
-
-	return pci_net_generic_power(dv, req, opaque, sc->sc_pct, sc->sc_pcitag,
-	    &sc->sc_pciconf, &sc->sc_if);
 }
 
 static struct ieee80211_node *

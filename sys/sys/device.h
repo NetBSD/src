@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96.6.2 2007/09/03 16:49:11 jmcneill Exp $ */
+/* $NetBSD: device.h,v 1.96.6.3 2007/10/01 05:38:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -128,6 +128,7 @@ struct device {
 	int		*dv_locators;	/* our actual locators (optional) */
 	pnp_device_t	dv_pnp;		/* device pnp messaging */
 	prop_dictionary_t dv_properties;/* properties dictionary */
+	void		*dv_power;	/* storage for power handler */
 };
 
 /* dv_flags */
@@ -389,6 +390,8 @@ bool		device_is_active(device_t);
 int		device_locator(device_t, u_int);
 pnp_device_t	*device_pnp(device_t);
 void		*device_private(device_t);
+void		*device_power_private(device_t);
+void		device_power_set_private(device_t, void *);
 prop_dictionary_t device_properties(device_t);
 
 bool		device_is_a(device_t, const char *);
