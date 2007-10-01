@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.102 2007/09/23 23:55:54 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.103 2007/10/01 22:01:38 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.102 2007/09/23 23:55:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.103 2007/10/01 22:01:38 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,18 +144,30 @@ db_addr_t	db_next;
   add them to representativ lists.
 */
 
-/*head of base commands list*/
+static const struct db_command db_command_table[];
+static const struct db_command db_show_cmds[];
+#ifdef DB_MACHINE_COMMANDS
+static const struct db_command db_machine_command_table[];
+#endif
+
+/* head of base commands list */
 static struct db_cmd_tbl_en_head db_base_cmd_list =
 	TAILQ_HEAD_INITIALIZER(db_base_cmd_list);
+static struct db_cmd_tbl_en db_base_cmd_builtins =
+     { .db_cmd = db_command_table };
 
-/*head of show commands list*/
+/* head of show commands list */
 static struct db_cmd_tbl_en_head db_show_cmd_list =
 	TAILQ_HEAD_INITIALIZER(db_show_cmd_list);
+static struct db_cmd_tbl_en db_show_cmd_builtins =
+     { .db_cmd = db_show_cmds };
 
-#ifdef DB_MACHINE_COMMANDS
-/*head of machine commands list*/
+/* head of machine commands list */
 static struct db_cmd_tbl_en_head db_mach_cmd_list =
 	TAILQ_HEAD_INITIALIZER(db_mach_cmd_list);
+#ifdef DB_MACHINE_COMMANDS
+static struct db_cmd_tbl_en db_mach_cmd_builtins =
+     { .db_cmd = db_machine_command_table };
 #endif
 
 /*
@@ -165,6 +177,8 @@ static struct db_cmd_tbl_en_head db_mach_cmd_list =
  */
 static bool	 db_ed_style = true;
 
+static int	db_register_tbl_entry(uint8_t type,
+    struct db_cmd_tbl_en *list_ent);
 static void	db_cmd_list(const struct db_cmd_tbl_en_head *);
 static int	db_cmd_search(const char *, const struct db_command *,
     const struct db_command **);
@@ -288,10 +302,8 @@ static const struct db_command db_command_table[] = {
 #ifdef KGDB
 	{ DDB_ADD_CMD("kgdb",	db_kgdb_cmd,	0,	NULL,NULL,NULL) },
 #endif
-#ifdef DB_MACHINE_COMMANDS
 	{ DDB_ADD_CMD("machine",NULL,CS_MACH,
 	    "Architecture specific functions.",NULL,NULL) },
-#endif	
 	{ DDB_ADD_CMD("match",	db_trace_until_matching_cmd,0,
 	    "Stop at the matching return instruction.","See help next",NULL) },
 	{ DDB_ADD_CMD("next",	db_trace_until_matching_cmd,0,
@@ -405,13 +417,12 @@ db_init_commands(void)
 	if (done) return;
 	done = true;
 
-	/*register command tables*/
-	(void)db_register_tbl(DDB_BASE_CMD,db_command_table);
-
+	/* register command tables */
+	(void)db_register_tbl_entry(DDB_BASE_CMD, &db_base_cmd_builtins);
 #ifdef DB_MACHINE_COMMANDS
-	(void)db_register_tbl(DDB_MACH_CMD,db_machine_command_table);
+	(void)db_register_tbl_entry(DDB_MACH_CMD, &db_mach_cmd_builtins);
 #endif
-	(void)db_register_tbl(DDB_SHOW_CMD,db_show_cmds);
+	(void)db_register_tbl_entry(DDB_SHOW_CMD, &db_show_cmd_builtins);
 }
 
 
@@ -426,111 +437,97 @@ db_init_commands(void)
 int
 db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 {
-	/*XXX what is better count number of elements here or use num argument ?*/
-	uint32_t i=0; 
 	struct db_cmd_tbl_en *list_ent;
+
+	if (cmd_tbl->name == 0)
+		/* empty list - ignore */
+		return 0;
+
+	list_ent = malloc(sizeof(struct db_cmd_tbl_en), M_TEMP, M_ZERO);
+	if (list_ent == NULL)
+		return ENOMEM;
+
+	list_ent->db_cmd=cmd_tbl;
+	return db_register_tbl_entry(type, list_ent);
+}
+
+static int
+db_register_tbl_entry(uint8_t type, struct db_cmd_tbl_en *list_ent)
+{
+	size_t i = 0; 
 	const struct db_command *cmd;
 	struct db_cmd_tbl_en_head *list;
 	
-	/*I have to check this because e.g. machine commands can be NULL*/
-	if (cmd_tbl->name != 0) {   
+	for (cmd = list_ent->db_cmd; cmd->name != NULL; cmd++)
+		i++;
 
-		if ((list_ent = malloc(sizeof(struct db_cmd_tbl_en),M_TEMP,M_ZERO))
-		    == NULL)
-			return(ENOMEM);
-		  
-		list_ent->db_cmd=cmd_tbl;
-		  
-		  
-		for (cmd = cmd_tbl; cmd->name != 0; cmd++)
-			i++;
-		  
-		list_ent->db_cmd_num=i;
+	list_ent->db_cmd_num = i;
 
-		switch(type){
+	switch(type) {
 
-		case DDB_BASE_CMD:
-			list=&db_base_cmd_list;
-			break;
-			
-		case DDB_SHOW_CMD:
-			list=&db_show_cmd_list;
-			break;
+	case DDB_BASE_CMD:
+		list = &db_base_cmd_list;
+		break;
 
-#ifdef DB_MACHINE_COMMANDS
-		case DDB_MACH_CMD:
-			list=&db_mach_cmd_list;
-			break;
-#endif
+	case DDB_SHOW_CMD:
+		list = &db_show_cmd_list;
+		break;
 
-		default:
-			return (ENOENT);
-			break;
-		}
-		
-		/*Type specify list*/
-		
-		if (TAILQ_EMPTY(list))
-			/*If head is empty we add first table here*/
-			TAILQ_INSERT_HEAD(list,
-			    list_ent,db_cmd_next);
-		else	
-			/*new commands go to the end*/
-			TAILQ_INSERT_TAIL(list,
-			    list_ent,db_cmd_next);
+	case DDB_MACH_CMD:
+		list = &db_mach_cmd_list;
+		break;
+
+	default:
+		return ENOENT;
 	}
+
+
+	TAILQ_INSERT_TAIL(list, list_ent, db_cmd_next);
 	return 0;
 }
+
 /*
- *Remove command table specified with db_cmd address == cmd_tbl
+ * Remove command table specified with db_cmd address == cmd_tbl
  */
 int
 db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 {
-
 	struct db_cmd_tbl_en *list_ent;
 	struct db_cmd_tbl_en_head *list;
-	int error=ENOENT;
+	int error = ENOENT;
   
 	if  (db_base_cmd_list.tqh_first == NULL)
 		return (error);
 
-	/*I go through the list, selected with type and look for
-	  cmd_tbl address in list entries.*/
-	switch(type){
-		
+	/* find list on which the entry should live */
+	switch (type) {
 	case DDB_BASE_CMD:
 		list=&db_base_cmd_list;
 		break;
-		
+
 	case DDB_SHOW_CMD:
 		list=&db_show_cmd_list;
 		break;
-		
-#ifdef DB_MACHINE_COMMANDS
+
 	case DDB_MACH_CMD:
 		list=&db_mach_cmd_list;
 		break;
-#endif
-			
+
 	default:
-		return (EINVAL);
-		break;
+		return EINVAL;
 	}
-			
-	TAILQ_FOREACH(list_ent,list,db_cmd_next){
-		
+
+	TAILQ_FOREACH (list_ent,list,db_cmd_next) {
 		if (list_ent->db_cmd == cmd_tbl){
 			TAILQ_REMOVE(list,
 			    list_ent,db_cmd_next);
-			
 			free(list_ent,M_TEMP);
-			error=0;
+			error = 0;
 		}
-	}			
-	return (error);
+	}
+	return error;
 }		
- 
+
 /*This function is called from machine trap code.*/
 void
 db_command_loop(void)
@@ -806,7 +803,6 @@ db_command(const struct db_command **last_cmdp)
 				return;
 			}
 			break;
-#ifdef DB_MACHINE_COMMANDS
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* need to read machine subcommand if
@@ -821,7 +817,6 @@ db_command(const struct db_command **last_cmdp)
 				return;
 			}	
 			break;
-#endif
 		default:
 			db_printf("No such command\n");
 			db_flush_lex();                 
@@ -975,7 +970,6 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			}	
 			
 			break;
-#ifdef DB_MACHINE_COMMANDS
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* read machine subcommand */
@@ -988,7 +982,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 				return;
 			}
 			break;
-#endif
+
 		default:
 			db_printf("No such command\n");
 			db_flush_lex();
