@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.199 2007/09/29 11:04:51 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.200 2007/10/01 18:43:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.199 2007/09/29 11:04:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.200 2007/10/01 18:43:30 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2242,7 +2242,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			 * field of 0x3de8000 on a Media Error/Write Error
 			 * for this CBD: 0x0a 00 00 80 00 00
 			 */
-			if (bp->b_resid > bp->b_bcount)
+			if (bp->b_resid > bp->b_bcount || bp->b_resid < 0)
 				bp->b_resid = bp->b_bcount;
 		}
 	}
