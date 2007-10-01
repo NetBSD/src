@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.6 2007/09/04 20:49:34 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.7 2007/10/01 05:37:46 joerg Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.6 2007/09/04 20:49:34 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.7 2007/10/01 05:37:46 joerg Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -94,7 +94,6 @@ static const struct ieee80211_rateset wpi_rateset_11g =
 static int  wpi_match(struct device *, struct cfdata *, void *);
 static void wpi_attach(struct device *, struct device *, void *);
 static int  wpi_detach(struct device*, int);
-static pnp_status_t wpi_power(device_t, pnp_request_t, void *);
 static int  wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
 	void **, bus_size_t, bus_size_t, int);
 static void wpi_dma_contig_free(struct wpi_dma_info *);
@@ -200,6 +199,7 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	int error, ac, revision;
+	pnp_status_t pnp_status;
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -352,10 +352,12 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	/* set power handler */
-	if (pnp_register(self, wpi_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -415,15 +417,6 @@ wpi_detach(struct device* self, int flags __unused)
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
 	return 0;
-}
-
-static pnp_status_t
-wpi_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct wpi_softc *sc = (struct wpi_softc *)dv;
-
-	return pci_net_generic_power(dv, req, opaque, sc->sc_pct, sc->sc_pcitag,
-								 &sc->sc_pciconf, sc->sc_ic.ic_ifp);
 }
 
 static int

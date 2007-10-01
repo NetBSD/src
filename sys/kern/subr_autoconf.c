@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.4.1 2007/08/03 22:17:29 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.2 2007/10/01 05:38:07 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.1 2007/08/03 22:17:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.2 2007/10/01 05:38:07 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1716,6 +1716,18 @@ device_private(device_t dev)
 	 * the driver's private data.  So, we just return ourselves.
 	 */
 	return (dev);
+}
+
+void *
+device_power_private(device_t dev)
+{
+	return (dev->dv_power);
+}
+
+void
+device_power_set_private(device_t dev, void *dv_power)
+{
+	dev->dv_power = dv_power;
 }
 
 prop_dictionary_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.4 2007/09/04 15:11:21 joerg Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.5 2007/10/01 05:37:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.4 2007/09/04 15:11:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.5 2007/10/01 05:37:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,11 +48,11 @@ struct ppb_softc {
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
 
-	struct pci_conf_state sc_pciconf;
 	pcireg_t sc_pciconfext[48];
 };
 
-static pnp_status_t	ppb_power(device_t, pnp_request_t, void *);
+static void		ppb_resume(device_t);
+static void		ppb_suspend(device_t);
 
 static int
 ppbmatch(struct device *parent, struct cfdata *match,
@@ -117,6 +117,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
 	char devinfo[256];
+	pnp_status_t pnp_status;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
@@ -170,9 +171,12 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
 
-	if (pnp_register(self, ppb_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    ppb_suspend, ppb_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 	/*
 	 * Attach the PCI bus than hangs off of it.
@@ -194,55 +198,30 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-static pnp_status_t
-ppb_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+ppb_resume(device_t dv)
 {
-	struct ppb_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
+	struct ppb_softc *sc = device_private(dv);
+	int off;
 	pcireg_t val;
+
+        for (off = 0x40; off <= 0xff; off += 4) {
+		val = pci_conf_read(sc->sc_pc, sc->sc_tag, off);
+		if (val != sc->sc_pciconfext[(off - 0x40) / 4])
+			pci_conf_write(sc->sc_pc, sc->sc_tag, off,
+			    sc->sc_pciconfext[(off - 0x40)/4]);
+	}
+}
+
+static void
+ppb_suspend(device_t dv)
+{
+	struct ppb_softc *sc = device_private(dv);
 	int off;
 
-	sc = (struct ppb_softc *)dv;
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			pci_conf_restore(sc->sc_pc, sc->sc_tag,
-			    &sc->sc_pciconf);
-                        for (off = 0x40; off <= 0xff; off += 4) {
-				val = pci_conf_read(sc->sc_pc, sc->sc_tag, off);
-				if (val != sc->sc_pciconfext[(off - 0x40) / 4])
-					pci_conf_write(sc->sc_pc, sc->sc_tag,
-					    off,
-					    sc->sc_pciconfext[(off - 0x40)/4]);
-			}
-			break;
-		case PNP_STATE_D3:
-			pci_conf_capture(sc->sc_pc, sc->sc_tag,
-			    &sc->sc_pciconf);
-			for (off = 0x40; off <= 0xff; off += 4)
-				sc->sc_pciconfext[(off - 0x40) / 4] =
-				    pci_conf_read(sc->sc_pc, sc->sc_tag, off);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	for (off = 0x40; off <= 0xff; off += 4)
+		sc->sc_pciconfext[(off - 0x40) / 4] =
+		    pci_conf_read(sc->sc_pc, sc->sc_tag, off);
 }
 
 CFATTACH_DECL(ppb, sizeof(struct ppb_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.6 2007/09/04 15:10:52 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.7 2007/10/01 05:37:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.6 2007/09/04 15:10:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.7 2007/10/01 05:37:44 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -270,7 +270,6 @@ struct wm_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -520,8 +519,6 @@ static void	wm_watchdog(struct ifnet *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
-
-static pnp_status_t wm_pci_power(device_t, pnp_request_t, void*);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -931,6 +928,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
 	pcireg_t preg, memtype;
 	uint32_t reg;
+	pnp_status_t pnp_status;
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -1614,10 +1612,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	/* register device power management hooks */
-	if (pnp_register(self, wm_pci_power) != PNP_STATUS_SUCCESS)
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 	return;
 
@@ -1647,79 +1647,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
 	return;
-}
-
-static pnp_status_t
-wm_pci_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct wm_softc *sc = (struct wm_softc *)dv;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcireg_t val;
-	pcitag_t tag;
-	int off, s;
-
-	status = PNP_STATUS_UNSUPPORTED;
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			s = splnet();
-			wm_stop(ifp, 1);
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splnet();
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				wm_init(ifp);
-				wm_start(ifp);
-			}
-			splx(s);
-		}
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-		break;
-	}
-	return status;
 }
 
 /*

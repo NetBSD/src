@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.6 2007/09/11 11:59:59 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.7 2007/10/01 05:37:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,11 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.6 2007/09/11 11:59:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.7 2007/10/01 05:37:50 joerg Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -128,114 +129,11 @@ pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pci_power_devices(struct pci_softc *sc, pnp_state_t newstate)
-{
-	pci_chipset_tag_t pc;
-	int device, function, nfunctions;
-	pcitag_t tag;
-	pcireg_t bhlcr, id;
-	pcireg_t state;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int i;
-#endif
-
-	pc = sc->sc_pc;
-	switch (newstate) {
-	case PNP_STATE_D1:
-		state = PCI_PMCSR_STATE_D1;
-		break;
-	case PNP_STATE_D3:
-		state = PCI_PMCSR_STATE_D3;
-		break;
-	case PNP_STATE_D0:
-		state = PCI_PMCSR_STATE_D0;
-		break;
-	default:
-		/* we should never be called here */
-#ifdef DIAGNOSTIC
-		panic("pci_power_devices called with invalid reason %d\n",
-		    newstate);
-		/* NOTREACHED */
-#endif
-		return;
-	}
-
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
-#else
-	for (device = 0; device < sc->sc_maxndevs; device++)
-#endif
-	{
-		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-			continue;
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
-		    PCI_VENDOR(id) == 0x0000)
-			continue;
-		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
-
-		for (function = 0; function < nfunctions; function++) {
-			tag = pci_make_tag(pc, sc->sc_bus, device, function);
-			if (sc->PCI_SC_DEVICESC(device, function) != NULL)
-				continue;
-			(void)pci_set_powerstate(pc, tag, state);
-		}
-	}
-
-	return;
-}
-
-static pnp_status_t
-pci_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct pci_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-
-	sc = (struct pci_softc *)dv;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-
-		if (*pstate == PNP_STATE_D2)
-			return PNP_STATUS_UNSUPPORTED;
-
-		pci_power_devices(sc, req);
-		break;
-
-	case PNP_REQUEST_NOTIFY:
-		/* XXX TODO */
-		break;
-
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
-}
-
-static void
 pciattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
 	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
-	pnp_status_t status;
 	const char *sep = "";
 	static const int wildcard[PCICF_NLOCS] = {
 		PCICF_DEV_DEFAULT, PCICF_FUNCTION_DEFAULT
@@ -297,12 +195,16 @@ do {									\
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
 
-	status = pnp_register(self, pci_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-
 	pcirescan(&sc->sc_dev, "pci", wildcard);
+
+	(void)pnp_register(self, pnp_generic_power);
+}
+
+static int
+pcidetach(struct device *self, int flags)
+{
+	pnp_deregister(self);
+	return 0;
 }
 
 int
@@ -470,6 +372,9 @@ pcidevdetached(struct device *sc, struct device *dev)
 
 	psc->PCI_SC_DEVICESC(d, f) = 0;
 }
+
+CFATTACH_DECL2(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached);
 
 int
 pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
@@ -732,16 +637,12 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 /*
  * Power Management Capability (Rev 2.2)
  */
-int
-pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
+static int
+pci_get_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state,
+    int offset)
 {
-	int offset;
-	pcireg_t value, cap, now;
+	pcireg_t value, now;
 
-	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
-		return EOPNOTSUPP;
-
-	cap = value >> PCI_PMCR_SHIFT;
 	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	switch (now) {
@@ -757,15 +658,24 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
 }
 
 int
-pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
+pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
 {
 	int offset;
-	pcireg_t value, cap, now;
+	pcireg_t value;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return EOPNOTSUPP;
 
-	cap = value >> PCI_PMCR_SHIFT;
+	return pci_get_powerstate_int(pc, tag, state, offset);
+}
+
+static int
+pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
+    int offset, pcireg_t cap_reg)
+{
+	pcireg_t value, cap, now;
+
+	cap = cap_reg >> PCI_PMCR_SHIFT;
 	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	value &= ~PCI_PMCSR_STATE_MASK;
@@ -777,22 +687,28 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
-		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D1\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D1SUPP))
+		}
+		if (!(cap & PCI_PMCR_D1SUPP)) {
+			printf("D1 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
-		if (now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D2\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D2SUPP))
+		}
+		if (!(cap & PCI_PMCR_D2SUPP)) {
+			printf("D2 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
-		if (now == PCI_PMCSR_STATE_D3)
-			return 0;
 		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
@@ -801,6 +717,20 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 	return 0;
+}
+
+int
+pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
+{
+	int offset;
+	pcireg_t value;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value)) {
+		printf("pci_set_powerstate not supported\n");
+		return EOPNOTSUPP;
+	}
+
+	return pci_set_powerstate_int(pc, tag, state, offset, value);
 }
 
 pnp_state_t
@@ -893,16 +823,47 @@ pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
 	return 0;
 }
 
-pnp_status_t
-pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
-    pci_chipset_tag_t pc, pcitag_t tag, struct pci_conf_state *pciconf,
-    struct ifnet *ifp)
+void
+pci_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
 {
+	pcireg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = pci_conf_read(pc, tag, PCI_RETRY_TIMEOUT_REG);
+	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
+	pci_conf_write(pc, tag, PCI_RETRY_TIMEOUT_REG, retry);
+}
+
+struct pci_generic_power {
+	struct pci_conf_state p_pciconf;
+	pci_chipset_tag_t p_pc;
+	pcitag_t p_tag;
+	bool p_has_pm;
+	int p_pm_offset;
+	pnp_state_t p_pm_states;
+	pcireg_t p_pm_cap;
+	void (*p_resume)(device_t);
+	void (*p_suspend)(device_t);
+};
+
+struct pci_net_generic_power {
+	struct pci_generic_power p_generic;
+	struct ifnet *p_ifp;
+	void (*p_resume)(device_t);
+	void (*p_suspend)(device_t);
+};
+
+static pnp_status_t
+pci_generic_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct pci_generic_power *arg = device_power_private(dv);
 	pnp_status_t status;
 	pnp_state_t *state;
 	pnp_capabilities_t *caps;
 	pcireg_t val;
-	int off, s;
 
 	status = PNP_STATUS_UNSUPPORTED;
 
@@ -910,9 +871,7 @@ pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 	case PNP_REQUEST_GET_CAPABILITIES:
 		caps = opaque;
 
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
+		caps->state = arg->p_pm_states;
 		status = PNP_STATUS_SUCCESS;
 		break;
 	case PNP_REQUEST_SET_STATE:
@@ -923,37 +882,39 @@ pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 			break;
 		case PNP_STATE_D3:
 			val = PCI_PMCSR_STATE_D3;
-			s = splnet();
-			(*ifp->if_stop)(ifp, 1);
-			pci_conf_capture(pc, tag, pciconf);
-			splx(s);
+			if (arg->p_suspend)
+				(*arg->p_suspend)(dv);
+			pci_conf_capture(arg->p_pc, arg->p_tag,
+			    &arg->p_pciconf);
 			break;
 		default:
 			return PNP_STATUS_UNSUPPORTED;
 		}
 
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splnet();
-			pci_conf_restore(pc, tag, pciconf);
-
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				(*ifp->if_init)(ifp);
-				(*ifp->if_start)(ifp);
-			}
-			splx(s);
+		if (arg->p_has_pm &&
+		    pci_set_powerstate_int(arg->p_pc, arg->p_tag, val,
+					   arg->p_pm_offset, arg->p_pm_cap)) {
+			aprint_error("%s: unsupported state, continuing.\n",
+			    device_xname(dv));
 		}
+
+		if (*state == PNP_STATE_D0) {
+			pci_conf_restore(arg->p_pc, arg->p_tag,
+			    &arg->p_pciconf);
+			if (arg->p_resume)
+				(*arg->p_resume)(dv);
+		}
+		status = PNP_STATUS_SUCCESS;
 		break;
+
 	case PNP_REQUEST_GET_STATE:
 		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
+		if (arg->p_has_pm &&
+		    pci_get_powerstate_int(arg->p_pc, arg->p_tag, &val,
+					   arg->p_pm_offset) == 0)
+			*state = pci_pnp_powerstate(val);
+		else
+			*state = PNP_STATE_D0;
 		status = PNP_STATUS_SUCCESS;
 		break;
 	default:
@@ -963,5 +924,137 @@ pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 	return status;
 }
 
-CFATTACH_DECL2(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
+static pnp_status_t
+pci_generic_power_register_internal(device_t dv,
+    pci_chipset_tag_t p_pc, pcitag_t p_tag,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct pci_generic_power *arg = device_power_private(dv);
+	pcireg_t reg;
+	int off;
+
+	arg->p_pc = p_pc;
+	arg->p_tag = p_tag;
+	arg->p_resume = p_resume;
+	arg->p_suspend = p_suspend;
+
+	if (pci_get_capability(p_pc, p_tag, PCI_CAP_PWRMGMT, &off, &reg)) {
+		arg->p_pm_states = pci_pnp_capabilities(reg);
+		arg->p_has_pm = true;
+		arg->p_pm_offset = off;
+		arg->p_pm_cap = reg;
+	} else {
+		arg->p_pm_states = PNP_STATE_D0 | PNP_STATE_D3;
+		arg->p_has_pm = false;
+		arg->p_pm_offset = -1;
+	}
+
+	return pnp_register(dv, pci_generic_power);
+}
+
+static void
+pci_generic_power_deregister_internal(device_t dv)
+{
+	pnp_deregister(dv);
+}
+
+pnp_status_t
+pci_generic_power_register(device_t dv,
+    pci_chipset_tag_t p_pc, pcitag_t p_tag,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct pci_generic_power *arg;
+	pnp_status_t status;
+
+	arg = malloc(sizeof(*arg), M_DEVBUF, M_ZERO | M_WAITOK);
+	device_power_set_private(dv, arg);
+
+	status = pci_generic_power_register_internal(dv, p_pc, p_tag,
+	    p_suspend, p_resume);
+	if (status != PNP_STATUS_SUCCESS) {
+		free(arg, M_DEVBUF);
+		device_power_set_private(dv, NULL);
+	}
+	return status;
+}
+
+void
+pci_generic_power_deregister(device_t dv)
+{
+	struct pci_generic_power *arg = device_power_private(dv);
+
+	if (arg == NULL)
+		return;
+
+	pci_generic_power_deregister_internal(dv);
+	free(arg, M_DEVBUF);
+}
+
+static void
+pci_net_generic_power_resume(device_t dv)
+{
+	struct pci_net_generic_power *arg = device_power_private(dv);
+	struct ifnet *ifp = arg->p_ifp;
+	int s;
+
+	if (arg->p_resume)
+		(*arg->p_resume)(dv);
+
+	s = splnet();
+	if (ifp->if_flags & IFF_UP) {
+		ifp->if_flags &= ~IFF_RUNNING;
+		(*ifp->if_init)(ifp);
+		(*ifp->if_start)(ifp);
+	}
+	splx(s);
+}
+
+static void
+pci_net_generic_power_suspend(device_t dv)
+{
+	struct pci_net_generic_power *arg = device_power_private(dv);
+	struct ifnet *ifp = arg->p_ifp;
+	int s;
+
+	s = splnet();
+	(*ifp->if_stop)(ifp, 1);
+	splx(s);
+
+	if (arg->p_suspend)
+		(*arg->p_suspend)(dv);
+}
+
+pnp_status_t
+pci_net_generic_power_register(device_t dv,
+    pci_chipset_tag_t p_pc, pcitag_t p_tag, struct ifnet *p_ifp,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct pci_net_generic_power *arg;
+	pnp_status_t status;
+
+	arg = malloc(sizeof(*arg), M_DEVBUF, M_ZERO | M_WAITOK);
+	arg->p_resume = p_resume;
+	arg->p_suspend = p_suspend;
+	arg->p_ifp = p_ifp;
+	device_power_set_private(dv, arg);
+
+	status = pci_generic_power_register_internal(dv, p_pc, p_tag,
+	    pci_net_generic_power_suspend, pci_net_generic_power_resume);
+	if (status != PNP_STATUS_SUCCESS) {
+		free(arg, M_DEVBUF);
+		device_power_set_private(dv, NULL);
+	}
+	return status;
+}
+
+void
+pci_net_generic_power_deregister(device_t dv)
+{
+	struct pci_net_generic_power *arg = device_power_private(dv);
+
+	if (arg == NULL)
+		return;
+
+	pci_generic_power_deregister_internal(dv);
+	free(arg, M_DEVBUF);
+}

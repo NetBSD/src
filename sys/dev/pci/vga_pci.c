@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32.8.2 2007/09/03 16:48:24 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.3 2007/10/01 05:37:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.2 2007/09/03 16:48:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.3 2007/10/01 05:37:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,11 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
+	/*
+	 * XXX Do not use the generic PCI framework for now as
+	 * XXX it would power down the device when the console
+	 * XXX is still using it.
+	 */
 	status = pnp_register(self, vga_pci_power);
 	if (status != PNP_STATUS_SUCCESS)
 		aprint_error("%s: couldn't establish power handler\n",
@@ -255,7 +260,7 @@ vga_pci_power(device_t dv, pnp_request_t req, void *opaque)
 		switch (*pstate) {
 		case PNP_STATE_D0:
 			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			return vga_power(dv, req, opaque);
+			vga_resume(&sc->sc_vga);
 			break;
 		case PNP_STATE_D3:
 			pci_conf_capture(pc, tag, &sc->sc_pciconf);
