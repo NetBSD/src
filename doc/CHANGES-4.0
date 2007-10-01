@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.7 2007/09/30 20:27:50 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.8 2007/10/01 16:51:51 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9440,7 +9440,6 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 4.0_RC1.
-	[liamjfoy]
 
 usr.sbin/rtsold/rtsol.c				1.14
 
@@ -10000,4 +9999,29 @@ sys/fs/msdosfs/msdosfs_denode.c			1.24
 
 	fixes PR kern/37034
 	[pooka, ticket #909]
+
+distrib/utils/sysinst/msg.mi.de			1.36
+
+	Fix column alignment in partition size display
+	[martin, ticket #910]
+
+sys/arch/sparc64/sparc64/machdep.c		1.203 (via patch)
+
+	When calculating memory sizes and related values for kernel dumps,
+	consistently use uint64_t. Fixes crash dumps on machines with > 2GB
+	memory. Found by Chris Ross.
+	While there, remove a #if 0'd part of code that prevented the first
+	physical memory page to be dumped - I'll solve that differently.
+	[martin, ticket #911]
+
+sys/arch/x86/x86/acpi_machdep.c			1.15
+
+	The ACPI SCI override is relative to the Source of the MADT entry,
+	so use bus_pin for the comparision. Tested by reinoud@.
+	[joerg, ticket #912]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD-4.0_RC2.
 
