@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.6 2007/09/30 23:50:41 joerg Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.7 2007/10/01 03:00:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.6 2007/09/30 23:50:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.7 2007/10/01 03:00:07 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -451,8 +451,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 				redlo &= ~IOAPIC_REDLO_ACTLO;
 		}
 	}
-	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
+	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	if (mp_verbose)
 		ioapic_print_redir(sc, "int", pin);
 }
@@ -487,6 +487,10 @@ ioapic_reenable(void)
 	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		ioapic_write(sc,IOAPIC_ID,
+		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,
 				    sc->sc_pins[p].ip_cpu);
