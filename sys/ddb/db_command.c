@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.103 2007/10/01 22:01:38 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.104 2007/10/01 22:05:15 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.103 2007/10/01 22:01:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.104 2007/10/01 22:05:15 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -177,6 +177,7 @@ static struct db_cmd_tbl_en db_mach_cmd_builtins =
  */
 static bool	 db_ed_style = true;
 
+static void	db_init_commands(void);
 static int	db_register_tbl_entry(uint8_t type,
     struct db_cmd_tbl_en *list_ent);
 static void	db_cmd_list(const struct db_cmd_tbl_en_head *);
