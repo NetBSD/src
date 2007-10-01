@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2007/10/01 09:13:51 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.207 2007/10/01 09:15:46 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2007/10/01 09:13:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2007/10/01 09:15:46 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -775,7 +775,7 @@ dumpsys()
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
-					(void *)dumpspace, (int)n);
+					(void *)dumpspace, (size_t)n);
 			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
