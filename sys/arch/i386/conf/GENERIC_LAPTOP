@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.238.4.3 2007/10/02 18:27:07 joerg Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.238.4.4 2007/10/02 21:44:09 joerg Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238.4.3 $"
+#ident 		"GENERIC-$Revision: 1.238.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -283,7 +283,11 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
