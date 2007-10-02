@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.196 2007/10/01 22:14:23 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.197 2007/10/02 13:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.196 2007/10/01 22:14:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.197 2007/10/02 13:17:16 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -506,7 +506,7 @@ mi_switch(struct lwp *l)
 	 */
 	SYSCALL_TIME_WAKEUP(l);
 	KASSERT(curlwp == l);
-	KDASSERT(l->l_cpu == ci);
+	KDASSERT(l->l_cpu == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 1);
 
 	return retval;
