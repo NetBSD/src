@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.5 2007/05/30 21:02:40 manu Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.6 2007/10/02 09:47:45 vanhu Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -186,7 +186,7 @@ bad1:
  * Dumb plog functions (used by sockmisc.c) 
  */
 void
-plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
+_plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 {
 	va_list ap;
 
