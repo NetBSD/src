@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.79 2007/03/25 20:12:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.80 2007/10/02 20:35:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -241,7 +241,6 @@ int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *);
 void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(void);
-void	 ip_stripoptions(struct mbuf *, struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
