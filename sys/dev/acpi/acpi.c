@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.16 2007/09/30 17:24:09 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.17 2007/10/02 21:44:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.16 2007/09/30 17:24:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.17 2007/10/02 21:44:10 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -396,10 +396,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
+
 	/* early EC handler initialization if ECDT table is available */
-#if NACPIEC > 0
-	acpiec_early_attach(&sc->sc_dev);
-#endif
+	config_found_ia(&sc->sc_dev, "acpiecdtbus", NULL, NULL);
 
 	rv = AcpiInitializeObjects(0);
 	if (ACPI_FAILURE(rv)) {

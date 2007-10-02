@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.28.22.1 2007/08/09 02:37:08 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.28.22.2 2007/10/02 21:44:11 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -288,19 +288,6 @@ int		acpi_pci_link_route_interrupt(void *, int, int *, int *, int *);
 char *		acpi_pci_link_name(void *);
 ACPI_HANDLE	acpi_pci_link_handle(void *);
 void		acpi_pci_link_state(void);
-
-
-
-
-#if defined(_KERNEL_OPT)
-#include "acpiec.h"
-
-#if NACPIEC > 0
-void		acpiec_early_attach(struct device *);
-#endif
-#else
-#define	NACPIEC	0
-#endif
 
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);
