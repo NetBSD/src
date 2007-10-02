@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20.6.3 2007/09/03 16:48:40 jmcneill Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.6.4 2007/10/02 18:28:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.3 2007/09/03 16:48:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.4 2007/10/02 18:28:41 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_USER_CRITMAX,	"critical-over" },
 	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
 	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
-	{ PENVSYS_EVENT_DRIVE_STCHANGED,"state-changed" },
+	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
 	{ -1, NULL }
 };
 
@@ -171,6 +171,7 @@ static char sysmon_power_type[32];
 
 static int sysmon_power_make_dictionary(void *, int, int);
 static int sysmon_power_daemon_task(void *, int);
+static void sysmon_power_destroy_dictionary(prop_dictionary_t);
 
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
@@ -304,7 +305,7 @@ sysmon_power_daemon_task(void *pev_data, int event)
 	case PENVSYS_EVENT_USER_CRITMAX:
 	case PENVSYS_EVENT_USER_CRITMIN:
 	case PENVSYS_EVENT_BATT_USERCAP:
-	case PENVSYS_EVENT_DRIVE_STCHANGED:
+	case PENVSYS_EVENT_STATE_CHANGED:
 	    {
 		struct penvsys_state *penvsys =
 		    (struct penvsys_state *)pev_data;
@@ -534,6 +535,11 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = prop_dictionary_copyout_ioctl(plist,
 						      cmd,
 						      sysmon_power_dict);
+		/*
+		 * Destroy the dictionary once it was sent, we don't
+		 * need it anymore.
+		 */
+		sysmon_power_destroy_dictionary(sysmon_power_dict);
 		break;
 	    }
 	default:
@@ -556,15 +562,10 @@ sysmon_power_make_dictionary(void *power_data, int event, int type)
 
 	mutex_exit(&sysmon_power_event_queue_mtx);
 
-	/* 
-	 * if there's a dictionary already created, destroy it
-	 * and make a new one to make sure it's always the latest
-	 * used by the event.
-	 */
-	if (sysmon_power_dict)
-		prop_object_release(sysmon_power_dict);
-
 	sysmon_power_dict = prop_dictionary_create();
+	if (sysmon_power_dict == NULL)
+		return ENOMEM;
+
 	mutex_enter(&sysmon_power_event_queue_mtx);
 
 	switch (type) {
@@ -583,10 +584,9 @@ sysmon_power_make_dictionary(void *power_data, int event, int type)
 
 #define SETPROP(key, str)						\
 do {									\
-	if ((str) &&							\
-	    !prop_dictionary_set_cstring_nocopy(sysmon_power_dict,	\
-						(key),			\
-						(str))) {		\
+	if ((str) && !prop_dictionary_set_cstring(sysmon_power_dict,	\
+						  (key),		\
+						  (str))) {		\
 		printf("%s: failed to set %s\n", __func__, (str));	\
 		return EINVAL;						\
 	}								\
@@ -623,7 +623,7 @@ do {									\
 
 		SETPROP("driver-name", pes->pes_dvname);
 		SETPROP("sensor-name", pes->pes_sensname);
-		SETPROP("drive-state-desc", pes->pes_statedesc);
+		SETPROP("state-description", pes->pes_statedesc);
 
 		for (i = 0; peevent[i].type != -1; i++)
 			if (peevent[i].type == event)
@@ -644,6 +644,31 @@ do {									\
 	}
 
 	return 0;
+}
+
+/*
+ * sysmon_power_destroy_dictionary:
+ *
+ * 	Destroys the current sysmon power dictionary and all its properties.
+ */
+static void
+sysmon_power_destroy_dictionary(prop_dictionary_t dict)
+{
+	prop_object_iterator_t iter;
+	prop_object_t obj;
+
+	iter = prop_dictionary_iterator(dict);
+	if (iter == NULL)
+		return;
+
+	while ((obj = prop_object_iterator_next(iter)) != NULL) {
+		prop_dictionary_remove(dict,
+		    prop_dictionary_keysym_cstring_nocopy(obj));
+		prop_object_iterator_reset(iter);
+	}
+
+	prop_object_iterator_release(iter);
+	prop_object_release(dict);
 }
 
 /*
@@ -690,21 +715,17 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 	switch (pes->pes_type) {
 	case PENVSYS_TYPE_BATTERY:
 		switch (event) {
-		case PENVSYS_EVENT_WARNUNDER:
-			mystr = "warning capacity";
-			PENVSYS_SHOWSTATE(mystr);
+		case PENVSYS_EVENT_STATE_CHANGED:
+			printf("%s: state changed on '%s' to '%s'\n",
+			    pes->pes_dvname, pes->pes_sensname,
+			    pes->pes_statedesc);
 			break;
-		case PENVSYS_EVENT_CRITUNDER:
-			mystr = "low capacity";
-			PENVSYS_SHOWSTATE(mystr);
-			break;
-		case PENVSYS_EVENT_CRITICAL:
 		case PENVSYS_EVENT_BATT_USERCAP:
 			mystr = "critical capacity";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_NORMAL:
-			printf("%s: acceptable capacity on '%s'\n",
+			printf("%s: normal capacity on '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname);
 			break;
 		}
@@ -748,7 +769,7 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 		break;
 	case PENVSYS_TYPE_DRIVE:
 		switch (event) {
-		case PENVSYS_EVENT_DRIVE_STCHANGED:
+		case PENVSYS_EVENT_STATE_CHANGED:
 			printf("%s: state changed on '%s' to '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname,
 			    pes->pes_statedesc);

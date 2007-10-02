@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8.8.2 2007/08/09 02:37:28 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8.8.3 2007/10/02 18:29:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -45,13 +45,6 @@ void cpu_need_resched(struct cpu_info *, int);
 
 /* flags for cpu_need_resched */
 #define	RESCHED_IMMED	1
-
-#ifndef cpu_did_resched
-#define	cpu_did_resched()			\
-do {						\
-	curcpu()->ci_want_resched = 0;		\
-} while (0)
-#endif
 
 #ifndef CPU_INFO_ITERATOR
 #define	CPU_INFO_ITERATOR		int

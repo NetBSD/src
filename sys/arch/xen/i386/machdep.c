@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2007/07/08 10:19:24 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.8.1 2007/10/02 18:27:56 joerg Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2007/07/08 10:19:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.8.1 2007/10/02 18:27:56 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1436,7 +1436,6 @@ init386(paddr_t first_avail)
 #if defined(XEN) && (NISA > 0 || NPCI > 0)
 	x86_bus_space_init();
 #endif
-	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
@@ -1480,6 +1479,13 @@ init386(paddr_t first_avail)
 	physmem += xen_start_info.nr_pages;
 	uvmexp.wired += atop(avail_start);
 #endif
+	/*
+	 * initgdt() has to be done before consinit(), so that %fs is properly
+	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
+	 * before the above variables are set.
+	 */
+	initgdt();
+	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/*
 	 * reserve memory for real-mode call
@@ -1879,8 +1885,6 @@ init386(paddr_t first_avail)
 #endif
 	pmap_update(pmap_kernel());
 
-	initgdt();
-
 	HYPERVISOR_set_callbacks(
 		GSEL(GCODE_SEL, SEL_KPL), (unsigned long)hypervisor_callback,
 		GSEL(GCODE_SEL, SEL_KPL), (unsigned long)failsafe_callback);
@@ -2036,7 +2040,7 @@ init386(paddr_t first_avail)
 	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);
 	XENPRINTF(("enable_intr\n"));
-	enable_intr();
+	x86_enable_intr();
 
 	XENPRINTF(("physmem %lu\n", ptoa(physmem)));
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -2151,7 +2155,7 @@ void
 cpu_reset()
 {
 
-	disable_intr();
+	x86_disable_intr();
 
 #if 0
 	/*

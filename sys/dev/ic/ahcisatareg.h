@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.1 2007/05/12 11:04:58 bouyer Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.1.12.1 2007/10/02 18:28:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -233,7 +233,7 @@ struct ahci_r_fis {
 
 #define AHCI_P_TFD(p)	(0x120 + AHCI_P_OFFSET(p)) /* Port task file data */
 #define		AHCI_P_TFD_ERR_MASK	0x0000ff00 /* error register */
-#define		AHCI_P_TFD_ERR_SHIFT	7
+#define		AHCI_P_TFD_ERR_SHIFT	8
 #define		AHCI_P_TFD_ST		0x000000ff /* status register */
 #define		AHCI_P_TFD_ST_SHIFT	0
 

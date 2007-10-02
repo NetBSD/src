@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200 2007/07/09 20:52:32 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.200.8.1 2007/10/02 18:27:45 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2007/07/09 20:52:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.8.1 2007/10/02 18:27:45 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -710,7 +710,7 @@ dumpsys()
 	daddr_t blkno;
 	register int (*dump)(dev_t, daddr_t, void *, size_t);
 	int j, error = 0;
-	unsigned long todo;
+	uint64_t todo;
 	register struct mem_region *mp;
 
 	/* copy registers to memory */
@@ -734,7 +734,8 @@ dumpsys()
 		return;
 	}
 	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		printf("\ndump to dev %u,%u not possible (partition"
+		    " too small?)\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
@@ -742,7 +743,7 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
-	printf("dump ");
+	printf("dump 000000 ");
 	if (psize == -1) {
 		printf("area unavailable\n");
 		return;
@@ -759,18 +760,9 @@ dumpsys()
 
 	for (mp = &phys_installed[0], j = 0; j < phys_installed_size;
 			j++, mp = &phys_installed[j]) {
-		unsigned i = 0, n;
+		uint64_t i = 0, n;
 		paddr_t maddr = mp->start;
 
-#if 0
-		/* Remind me: why don't we dump page 0 ? */
-		if (maddr == 0) {
-			/* Skip first page at physical address 0 */
-			maddr += PAGE_SIZE;
-			i += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-		}
-#endif
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
 			if (n > BYTES_PER_DUMP)
@@ -778,11 +770,12 @@ dumpsys()
 
 			/* print out how many MBs we still have to dump */
 			if ((todo % (1024*1024)) == 0)
-				printf("%ld ", todo / (1024*1024));
+				printf("\b\b\b\b\b\b\b%6" PRIu64 " ",
+				    todo / (1024*1024));
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
-					(void *)dumpspace, (int)n);
+					(void *)dumpspace, (size_t)n);
 			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
@@ -796,27 +789,27 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		printf("- device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		printf("- device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		printf("- area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		printf("- i/o error\n");
 		break;
 
 	case 0:
-		printf("succeeded\n");
+		printf("- succeeded\n");
 		break;
 
 	default:
-		printf("error %d\n", error);
+		printf("- error %d\n", error);
 		break;
 	}
 }
@@ -1513,7 +1506,6 @@ static int	sparc_bus_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 static void	sparc_bus_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
 
 /*
@@ -1575,8 +1567,6 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 	vm_prot_t pm_prot = VM_PROT_READ;
 	int err, map_little = 0;
 
-	if (iobase == 0UL)
-		iobase = IODEV_BASE;
 	if (io_space == NULL)
 		/*
 		 * And set up IOSPACE extents.
@@ -1956,7 +1946,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 
 #if defined(MULTIPROCESSOR)
 	/* Just interrupt the target CPU, so it can notice its AST */
-	if ((flags & RESCHED_IMMED) || ci->ci_cpuid != cpu_number())
-		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_nop);
+	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop);
 #endif
 }

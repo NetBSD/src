@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.51.18.1 2007/10/02 18:27:16 joerg Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2007/03/07 21:43:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.18.1 2007/10/02 18:27:16 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -72,9 +72,10 @@ void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
-	{ "cpu",	db_mach_cpu,	0,	0 },
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0, NULL,NULL,NULL) },
 #endif
-	{ NULL, NULL, 0, 0 },
+		
+	{ DDB_ADD_CMD(NULL, NULL, 0,  NULL,NULL,NULL) },
 };
 
 void kdbprinttrap(int, int);
@@ -211,7 +212,7 @@ kdb_trap(type, code, regs)
 		 * Kernel mode - esp and ss not saved
 		 */
 		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
-		__asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
+		ddb_regs.tf_ss = x86_getss();
 	}
 
 	ddb_regs.tf_cs &= 0xffff;
@@ -324,7 +325,7 @@ ddb_suspend(struct trapframe *frame)
 		 * Kernel mode - esp and ss not saved
 		 */
 		regs.tf_esp = (int)&frame->tf_esp; /* kernel stack pointer */
-		__asm("movw %%ss,%w0" : "=r" (regs.tf_ss));
+		regs.tf_ss = x86_getss();
 	}
 
 	ci->ci_ddb_regs = &regs;

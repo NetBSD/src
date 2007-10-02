@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.116.22.1 2007/08/05 19:00:58 jmcneill Exp $	*/
+/*	$NetBSD: npx.c,v 1.116.22.2 2007/10/02 18:27:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.22.1 2007/08/05 19:00:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.22.2 2007/10/02 18:27:25 joerg Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -125,28 +125,11 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.22.1 2007/08/05 19:00:58 jmcneill Exp 
  * state is saved.
  */
 
-#define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
-#define	fnclex()		__asm("fnclex")
-#define	fninit()		__asm("fninit")
-#define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr))
-#define	fnstcw(addr)		__asm("fnstcw %0" : "=m" (*addr))
-#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr))
-#define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
-#define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
-#define	fwait()			__asm("fwait")
-#define	clts()			__asm("clts")
-#define	stts()			lcr0(rcr0() | CR0_TS)
-
 static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
 #endif /* I686_CPU */
 static int	x86fpflags_to_ksiginfo(uint32_t flags);
-
-#ifdef I686_CPU
-#define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
-#define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
-#endif /* I686_CPU */
 
 static	enum npx_type		npx_type;
 volatile u_int			npx_intrs_while_probing;
@@ -205,8 +188,8 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 		i386_fpu_exception = 1;
 		return NPX_CPUID;
 	}
-	save_eflags = read_eflags();
-	disable_intr();
+	save_eflags = x86_read_psl();
+	x86_disable_intr();
 	save_idt_npxintr = idt[NRSVIDT + irq];
 	save_idt_npxtrap = idt[16];
 	setgate(&idt[NRSVIDT + irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL,
@@ -231,7 +214,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	 * We have to turn off the CR0_EM bit temporarily while probing.
 	 */
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	enable_intr();
+	x86_enable_intr();
 
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
@@ -282,7 +265,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 		}
 	}
 
-	disable_intr();
+	x86_disable_intr();
 	lcr0(rcr0() | (CR0_EM|CR0_TS));
 
 	irqmask = i8259_setmask(irqmask);
@@ -291,7 +274,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	idt_allocmap[NRSVIDT + irq] = 1;
 
 	idt[16] = save_idt_npxtrap;
-	write_eflags(save_eflags);
+	x86_write_psl(save_eflags);
 
 	return (rv);
 }
@@ -588,7 +571,7 @@ npxdna_xmm(struct cpu_info *ci)
 		 * the x87 stack, but we don't care since we're about to call
 		 * fxrstor() anyway.
 		 */
-		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
+		fldummy(&zero);
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 

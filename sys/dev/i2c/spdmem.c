@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.1.10.2 2007/09/03 16:47:55 jmcneill Exp $ */
+/* $NetBSD: spdmem.c,v 1.1.10.3 2007/10/02 18:28:22 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1.10.2 2007/09/03 16:47:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1.10.3 2007/10/02 18:28:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1.10.2 2007/09/03 16:47:55 jmcneill Exp
 
 static int spdmem_match(struct device *, struct cfdata *, void *);
 static void spdmem_attach(struct device *, struct device *, void *);
+SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 
@@ -149,6 +150,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	const char *type;
 	const char *voltage;
 	const char *refresh;
+	const char *ddr_type_string = NULL;
 	int num_banks = 0;
 	int per_chip = 0;
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
@@ -287,6 +289,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			bits = s->sm_ddr2.ddr2_datawidth;
 			if ((s->sm_config & 0x03) != 0)
 				bits -= 8;
+			ddr_type_string = "PC2";
 		} else if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
 			/* DDR uses dual-pumped clock */
 			d_clk *= 2;
@@ -297,6 +300,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 #endif
 			if (s->sm_config == 1 || s->sm_config == 2)
 				bits -= 8;
+			ddr_type_string = "PC";
 		} else {	/* SPDMEM_MEMTYPE_SDRAM */
 #if BYTE_ORDER == BIG_ENDIAN
 			bits = bswap16(s->sm_ddr.ddr_datawidth);
@@ -305,13 +309,16 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 #endif
 			if (s->sm_config == 1 || s->sm_config == 2)
 				bits -= 8;
+			ddr_type_string = "PC";
 		}
 		d_clk /= cycle_time;
+		if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
+			d_clk = (d_clk + 1) / 2;
 		p_clk = d_clk * bits / 8;
 		if ((p_clk % 100) >= 50)
 			p_clk += 50;
 		p_clk -= p_clk % 100;
-		aprint_normal(", %dMHz, PC%d", d_clk, p_clk);
+		aprint_normal(", %dMHz, %s-%d", d_clk, ddr_type_string, p_clk);
 		if (node != NULL)
 			sysctl_createv(NULL, 0, NULL, NULL,
 			    CTLFLAG_IMMEDIATE,

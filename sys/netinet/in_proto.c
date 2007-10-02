@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.87.6.1 2007/09/03 16:49:02 jmcneill Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.87.6.2 2007/10/02 18:29:18 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87.6.1 2007/09/03 16:49:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87.6.2 2007/10/02 18:29:18 joerg Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -404,6 +404,13 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
+const struct sockaddr_in in_any = {
+	  .sin_len = sizeof(struct sockaddr_in)
+	, .sin_family = AF_INET
+	, .sin_port = 0
+	, .sin_addr = {.s_addr = 0 /* INADDR_ANY */}
+};
+
 struct domain inetdomain = {
 	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
 	.dom_externalize = NULL, .dom_dispose = NULL,
@@ -423,12 +430,48 @@ struct domain inetdomain = {
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
 	.dom_sa_cmplen = sizeof(struct in_addr),
+	.dom_sa_any = (const struct sockaddr *)&in_any,
+	.dom_sockaddr_const_addr = sockaddr_in_const_addr,
+	.dom_sockaddr_addr = sockaddr_in_addr,
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
 u_char	ip_protox[IPPROTO_MAX];
 
 int icmperrppslim = 100;			/* 100pps */
+
+static void
+sockaddr_in_addrlen(const struct sockaddr *sa, socklen_t *slenp)
+{
+	socklen_t slen;
+
+	if (slenp == NULL)
+		return;
+
+	slen = sockaddr_getlen(sa);
+	*slenp = (socklen_t)MIN(sizeof(struct in_addr),
+	    slen - MIN(slen, offsetof(struct sockaddr_in, sin_addr)));
+}
+
+const void *
+sockaddr_in_const_addr(const struct sockaddr *sa, socklen_t *slenp)
+{
+	const struct sockaddr_in *sin;
+
+	sockaddr_in_addrlen(sa, slenp);
+	sin = (const struct sockaddr_in *)sa;
+	return &sin->sin_addr;
+}
+
+void *
+sockaddr_in_addr(struct sockaddr *sa, socklen_t *slenp)
+{
+	struct sockaddr_in *sin;
+
+	sockaddr_in_addrlen(sa, slenp);
+	sin = (struct sockaddr_in *)sa;
+	return &sin->sin_addr;
+}
 
 int
 sockaddr_in_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.6.4.1 2007/10/02 18:28:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.4.1 2007/10/02 18:28:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ efs_lookup(void *v)
 				cache_enter(ap->a_dvp, NULL, cnp);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
-				err = VOP_ACCESS(vp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				err = VOP_ACCESS(ap->a_dvp, VWRITE,
+				    cnp->cn_cred, cnp->cn_lwp);
 				if (err)
 					return (err);
 				cnp->cn_flags |= SAVENAME;
@@ -296,11 +296,11 @@ efs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
+	struct dirent *dp;
 	struct efs_dinode edi;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
 	struct buf *bp;
-	struct dirent *dp;
 	struct efs_dirent *de;
 	struct efs_dirblk *db;
 	struct uio *uio = ap->a_uio;
@@ -321,6 +321,8 @@ efs_readdir(void *v)
 		    uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
  	}
+
+	dp = malloc(sizeof(struct dirent), M_EFSTMP, M_WAITOK | M_ZERO);
 
 	offset = 0;
 	efs_extent_iterator_init(&exi, ei, 0);
@@ -366,7 +368,8 @@ efs_readdir(void *v)
 					goto exit_ok;
 				}
 
-				dp = malloc(s, M_EFSTMP, M_ZERO | M_WAITOK);
+				/* de_namelen is uint8_t, d.d_name is 512b */
+				KASSERT(sizeof(dp->d_name)-de->de_namelen > 0);
 				dp->d_fileno = be32toh(de->de_inumber);
 				dp->d_reclen = s;
 				dp->d_namlen = de->de_namelen;
@@ -380,7 +383,6 @@ efs_readdir(void *v)
 				    dp->d_fileno, NULL, &edi);
 				if (err) {
 					brelse(bp);
-					free(dp, M_EFSTMP);
 					goto exit_err;
 				}
 
@@ -412,7 +414,6 @@ efs_readdir(void *v)
 				}
 
 				err = uiomove(dp, s, uio);
-				free(dp, M_EFSTMP);
 				if (err) {
 					brelse(bp);
 					goto exit_err;
@@ -449,11 +450,15 @@ efs_readdir(void *v)
 
 	uio->uio_offset = offset;
 
+	free(dp, M_EFSTMP);
+
 	return (0);
 
  exit_err:
 	if (cookies != NULL)
 		free(cookies, M_TEMP);
+
+	free(dp, M_EFSTMP);
 	
 	return (err);
 }

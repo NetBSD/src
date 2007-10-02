@@ -1,12 +1,12 @@
-#	$NetBSD: files.ddb,v 1.1 2005/11/27 22:44:35 thorpej Exp $
+#	$NetBSD: files.ddb,v 1.1.50.1 2007/10/02 18:28:17 joerg Exp $
 
 #
 # DDB options
 #
-defflag opt_ddb.h		DDB
+defflag opt_ddb.h		DDB DDB_VERBOSE_HELP
 defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
-				DDB_COMMANDONENTER
+				DDB_COMMANDONENTER 
 
 file	ddb/db_access.c			ddb | kgdb	# XXX kgdb reference
 file	ddb/db_aout.c			ddb

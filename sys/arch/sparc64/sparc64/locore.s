@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.252.8.2 2007/09/03 16:47:43 jmcneill Exp $	*/
+/*	$NetBSD: locore.s,v 1.252.8.3 2007/10/02 18:27:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3628,8 +3628,6 @@ interrupt_vector:
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 	membar	#Sync
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
-	membar	#Sync			! Should not be needed due to retry
 
 #if KTR_COMPILE & KTR_INTR
 	CATR(KTR_TRAP, "interrupt_vector: tl %d ASI_IRSR %p ASI_IRDR %p",
@@ -3652,11 +3650,22 @@ interrupt_vector:
 	ldxa	[%g1] ASI_IRDR, %g1	! Get IPI handler address
 	brz,pn  %g1, ret_from_intr_vector
 	 mov	IRDR_2H, %g2
+	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
+
+	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 
 	jmpl	%g1, %g0
-	 ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+	 nop
 
 Lsoftint_regular:
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	bgeu,pn	%xcc, 3f
 	 or	%g3, %lo(_C_LABEL(intrlev)), %g3
@@ -4970,29 +4979,16 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l1, %l4, %l1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=0|G=0
+	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
 	!!
 	set	TLB_TAG_ACCESS, %l5
-	set	1f, %o5
-	sethi	%hi(INTSTACK), %l0
+	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync				! We may need more membar #Sync in here
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync				! We may need more membar #Sync in here
-	flush	%o5
-1:
-	!!
-	!! Map in idle u area and kernel stack
-	!!
-	sethi	%hi(KSTACK_VA), %l0
-	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync
-	flush	%o5
 
 	!! Setup kernel stack (we rely on curlwp on this cpu
 	!! being lwp0 here and it's uarea is mapped special
@@ -5047,12 +5043,14 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l0, %l3, %l0			! Mask off size and split bits
 	or	%l0, %l2, %l0			! Make a TSB pointer
 	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
-	membar	#Sync
 
 	andn	%l1, %l3, %l1			! Mask off size and split bits
 	or	%l1, %l2, %l1			! Make a TSB pointer
 	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
+	set	1f, %l1
+	flush	%l1
+1:
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
@@ -5117,8 +5115,9 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 */
 ENTRY(cpu_mp_startup)
 	wrpr    %g0, 0, %cleanwin
-!	wrpr	%g0, 0, %pstate
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
+	wrpr	%g0, WSTATE_KERN, %wstate
+	wrpr	%g0, PSTATE_KERN, %pstate
 	flushw
 
 	/*
@@ -5132,42 +5131,22 @@ ENTRY(cpu_mp_startup)
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number
 	or	%l2, %l1, %l1			! Now take care of the high bits
-#ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
-#else
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
-#endif
+	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	/*
 	 *  Now, map in the interrupt stack & cpu_info as context==0
 	 */
 	set	TLB_TAG_ACCESS, %l5
-	set	1f, %o5
 	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync
-	flush	%o5
-	flush	%l0
-1:
-	/*
-	 * Map in idle u area and kernel stack
-	 */
-	set	KSTACK_VA, %l0
-	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync
-	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync
-	flush	%o5
-	flush	%l0
 
 	/*
 	 * Set 0 as primary context XXX
 	 */
 	mov	CTX_PRIMARY, %o0
 	stxa	%g0, [%o0] ASI_DMMU
-	flush	%o5
+	membar	#Sync
 
 	/*
 	 * Temporarily use the interrupt stack
@@ -5203,6 +5182,9 @@ ENTRY(cpu_mp_startup)
 	or	%l1, %l2, %l1			! Make a TSB pointer
 	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
+	set	1f, %o0
+	flush	%o0
+1:
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
@@ -5223,6 +5205,7 @@ ENTRY(cpu_mp_startup)
 	sub	%l0, BIAS, %l0			! and biased
 #endif
 	mov	%l0, %sp
+	flushw
 
 	/*
 	 * Switch to the kernel mode and run away.
@@ -5230,7 +5213,6 @@ ENTRY(cpu_mp_startup)
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 	wr	%g0, FPRS_FEF, %fprs			! Turn on FPU
-	wrpr	%g0, WSTATE_KERN, %wstate
 
 	call	_C_LABEL(cpu_hatch)
 	 clr %g4
@@ -9843,42 +9825,8 @@ ENTRY(random)
 	retl
 	 st	%o0, [%o5 + %lo(randseed)]
 
-/*
- * void microtime(struct timeval *tv)
- *
- * LBL's sparc bsd 'microtime': We don't need to spl (so this routine
- * can be a leaf routine) and we don't keep a 'last' timeval (there
- * can't be two calls to this routine in a microsecond).  This seems to
- * be about 20 times faster than the Sun code on an SS-2. - vj
- *
- * Read time values from slowest-changing to fastest-changing,
- * then re-read out to slowest.  If the values read before
- * the innermost match those read after, the innermost value
- * is consistent with the outer values.  If not, it may not
- * be and we must retry.  Typically this loop runs only once;
- * occasionally it runs twice, and only rarely does it run longer.
- *
- * If we used the %tick register we could go into the nano-seconds,
- * and it must run for at least 10 years according to the v9 spec.
- *
- * For some insane reason timeval structure members are `long's so
- * we need to change this code depending on the memory model.
- *
- * NB: if somehow time was 128-bit aligned we could use an atomic
- * quad load to read it in and not bother de-bouncing it.
- */
+
 #define MICROPERSEC	(1000000)
-
-	.data
-	.align	8
-	.globl	_C_LABEL(cpu_clockrate)
-_C_LABEL(cpu_clockrate):
-	!! Pretend we have a 200MHz clock -- cpu_attach will fix this
-	.xword	200000000
-	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
-	.xword	0
-	.text
-
 
 /*
  * delay function
@@ -9890,22 +9838,23 @@ _C_LABEL(cpu_clockrate):
  *		   %o2 = counter for 1 usec (counts down from %o1 to zero)
  *
  *
- *	cpu_clockrate should be tuned during CPU probe to the CPU clockrate in Hz
+ *	ci_cpu_clockrate should be tuned during CPU probe to the CPU
+ *	clockrate in Hz
  *
  */
 ENTRY(delay)			! %o0 = n
 #if 1
 	rdpr	%tick, %o1					! Take timer snapshot
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %o2
+	sethi	%hi(CPUINFO_VA + CI_CLOCKRATE), %o2
 	sethi	%hi(MICROPERSEC), %o3
-	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
+	ldx	[%o2 + %lo(CPUINFO_VA + CI_CLOCKRATE + 8)], %o4	! Get scale factor
 	brnz,pt	%o4, 0f
 	 or	%o3, %lo(MICROPERSEC), %o3
 
 	!! Calculate ticks/usec
-	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
+	ldx	[%o2 + %lo(CPUINFO_VA + CI_CLOCKRATE)], %o4	! No, we need to calculate it
 	udivx	%o4, %o3, %o4
-	stx	%o4, [%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
+	stx	%o4, [%o2 + %lo(CPUINFO_VA + CI_CLOCKRATE + 8)]	! Save it so we don't need to divide again
 0:
 
 	mulx	%o0, %o4, %o0					! Convert usec -> ticks
@@ -9923,9 +9872,9 @@ ENTRY(delay)			! %o0 = n
 #else
 /* This code only works if %tick does not wrap */
 	rdpr	%tick, %g1					! Take timer snapshot
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %g2
+	sethi	%hi(CPUINFO_VA + CI_CLOCKRATE), %g2
 	sethi	%hi(MICROPERSEC), %o2
-	ldx	[%g2 + %lo(_C_LABEL(cpu_clockrate))], %g2	! Get scale factor
+	ldx	[%g2 + %lo(CPUINFO_VA + CI_CLOCKRATE)], %g2	! Get scale factor
 	or	%o2, %lo(MICROPERSEC), %o2
 !	sethi	%hi(_C_LABEL(timerblurb), %o5			! This is if we plan to tune the clock
 !	ld	[%o5 + %lo(_C_LABEL(timerblurb))], %o5		!  with respect to the counter/timer
@@ -9964,11 +9913,6 @@ Lstupid_loop:
  * cycles in the future.  Also handles %tick wraparound.  In 32-bit
  * mode we're limited to a 32-bit increment.
  */
-	.data
-	.align	8
-tlimit:
-	.xword	0
-	.text
 ENTRY(next_tick)
 	rd	TICK_CMPR, %o2
 	rdpr	%tick, %o1

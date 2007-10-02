@@ -1,9 +1,27 @@
-/* $NetBSD: blkif.h,v 1.2 2006/04/04 20:30:31 bouyer Exp $ */
+/* $NetBSD: blkif.h,v 1.2.40.1 2007/10/02 18:28:09 joerg Exp $ */
 /******************************************************************************
  * blkif.h
  * 
  * Unified block-device I/O interface for Xen guest OSes.
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2003-2004, Keir Fraser
  */
 
@@ -30,8 +48,22 @@
 #endif
 #define blkif_sector_t uint64_t
 
-#define BLKIF_OP_READ      0
-#define BLKIF_OP_WRITE     1
+/*
+ * REQUEST CODES.
+ */
+#define BLKIF_OP_READ              0
+#define BLKIF_OP_WRITE             1
+/*
+ * Recognised only if "feature-barrier" is present in backend xenbus info.
+ * The "feature_barrier" node contains a boolean indicating whether barrier
+ * requests are likely to succeed or fail. Either way, a barrier request
+ * may fail at any time with BLKIF_RSP_EOPNOTSUPP if it is unsupported by
+ * the underlying block-device hardware. The boolean simply indicates whether
+ * or not it is worthwhile for the frontend to attempt barrier requests.
+ * If a backend does not recognise BLKIF_OP_WRITE_BARRIER, it should *not*
+ * create the "feature-barrier" node!
+ */
+#define BLKIF_OP_WRITE_BARRIER     2
 
 /*
  * Maximum scatter/gather segments per request.
@@ -40,34 +72,45 @@
  */
 #define BLKIF_MAX_SEGMENTS_PER_REQUEST 11
 
-typedef struct blkif_request {
+struct blkif_request_segment {
+    grant_ref_t gref;        /* reference to I/O buffer frame        */
+    /* @first_sect: first sector in frame to transfer (inclusive).   */
+    /* @last_sect: last sector in frame to transfer (inclusive).     */
+    uint8_t     first_sect, last_sect;
+};
+
+struct blkif_request {
     uint8_t        operation;    /* BLKIF_OP_???                         */
     uint8_t        nr_segments;  /* number of segments                   */
     blkif_vdev_t   handle;       /* only for read/write requests         */
     uint64_t       id;           /* private guest value, echoed in resp  */
     blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-    struct blkif_request_segment {
-        grant_ref_t gref;        /* reference to I/O buffer frame        */
-        /* @first_sect: first sector in frame to transfer (inclusive).   */
-        /* @last_sect: last sector in frame to transfer (inclusive).     */
-        uint8_t     first_sect, last_sect;
-    } seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-} blkif_request_t;
+    struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+};
+typedef struct blkif_request blkif_request_t;
 
-typedef struct blkif_response {
+struct blkif_response {
     uint64_t        id;              /* copied from request */
     uint8_t         operation;       /* copied from request */
     int16_t         status;          /* BLKIF_RSP_???       */
-} blkif_response_t;
+};
+typedef struct blkif_response blkif_response_t;
 
-#define BLKIF_RSP_ERROR  -1 /* non-specific 'error' */
-#define BLKIF_RSP_OKAY    0 /* non-specific 'okay'  */
+/*
+ * STATUS RETURN CODES.
+ */
+ /* Operation not supported (only happens on barrier writes). */
+#define BLKIF_RSP_EOPNOTSUPP  -2
+ /* Operation failed for some unspecified reason (-EIO). */
+#define BLKIF_RSP_ERROR       -1
+ /* Operation completed successfully. */
+#define BLKIF_RSP_OKAY         0
 
 /*
  * Generate blkif ring structures and types.
  */
 
-DEFINE_RING_TYPES(blkif, blkif_request_t, blkif_response_t);
+DEFINE_RING_TYPES(blkif, struct blkif_request, struct blkif_response);
 
 #define VDISK_CDROM        0x1
 #define VDISK_REMOVABLE    0x2

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.70 2006/07/12 14:56:59 yamt Exp $
+#	$NetBSD: Makefile.booters,v 1.70.32.1 2007/10/02 18:27:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,6 @@ LIBC=		# nothing
 # user.
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
-CPPFLAGS+= -DBOOT_ELF64
 .if ${HAVE_GCC} != 3
 CPUFLAGS+= -Wno-attributes
 .endif
@@ -104,7 +103,7 @@ LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}conf/newvers_stand.sh ${.ALLSRC} x86 ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}

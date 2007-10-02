@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.8 2007/06/15 20:17:08 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.8.6.1 2007/10/02 18:29:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
  * Basic lock debugging code shared among lock primatives.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.8.6.1 2007/10/02 18:29:03 joerg Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.8 2007/06/15 20:17:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

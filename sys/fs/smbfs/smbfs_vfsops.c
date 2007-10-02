@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.70 2007/07/31 21:14:18 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.70.2.1 2007/10/02 18:28:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.70 2007/07/31 21:14:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.70.2.1 2007/10/02 18:28:54 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -167,6 +167,12 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    SMBFS_VERSION, args->version);
 		return EINVAL;
 	}
+
+	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
+	if (error)
+		return error;
+
 	smb_makescred(&scred, l, l->l_cred);
 	error = smb_dev2share(args->dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
@@ -194,33 +200,12 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	smp->sm_args.dir_mode  = (smp->sm_args.dir_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
-	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
-	if (error)
-		goto bad;
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
 	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
 
 	vfs_getnewfsid(mp);
 	return (0);
-
-bad:
-	if (smp) {
-		if (smp->sm_hash)
-			free(smp->sm_hash, M_SMBFSHASH);
-#ifdef __NetBSD__
-		lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
-#else
-		lockdestroy(&smp->sm_hashlock);
-#endif
-		FREE(smp, M_SMBFSDATA);
-	}
-	if (ssp) {
-		smb_share_lock(smp->sm_share, 0);
-		smb_share_put(ssp, &scred);
-	}
-	return error;
 }
 
 /* Unmount the filesystem described by mp. */
