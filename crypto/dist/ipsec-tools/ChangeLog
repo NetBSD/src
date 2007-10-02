@@ -1,3 +1,10 @@
+2007-10-02  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Scott Lamb <slamb@slamb.org>
+	* src/racoon/plog.[ch]: new plog macro
+	* src/racoon/kmpstat.c: plog changed to _plog to work with new plog macro
+	* src/racoon/crypto_openssl.c: includes plog.h to work with the
+	  new plog macro
+	
 2007-09-19  Matthew Grooms <mgrooms@shrew.net>
 	From Gabriel Somlo <somlo@cmu.edu>
 	* src/racoon/isakmp.c: Set REUSE option on sockets to prevent failures
