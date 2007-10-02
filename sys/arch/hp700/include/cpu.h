@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2007/05/17 14:51:18 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2007/10/02 13:49:45 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -187,7 +187,6 @@ struct clockframe {
 
 #define	cpu_signotify(l)	(setsoftast())
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
-#define	cpu_did_resched()	do { want_resched = 0; } while(0)
 
 #include <sys/cpu_data.h>
 struct cpu_info {
@@ -197,6 +196,7 @@ struct cpu_info {
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
+	int		ci_want_resched;
 };
 
 #include <machine/intr.h>
@@ -223,8 +223,6 @@ void	cpu_boot_secondary_processors(void);
 #endif
 
 #define	HPPA_SID_KERNEL 0
-
-extern int want_resched;
 
 #define DELAY(x) delay(x)
 
