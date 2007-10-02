@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.19.4.1 2007/08/03 22:17:23 jmcneill Exp $ */
+/* $NetBSD: pms.c,v 1.19.4.2 2007/10/02 16:31:39 joerg Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.1 2007/08/03 22:17:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.2 2007/10/02 16:31:39 joerg Exp $");
 
 #include "opt_pms.h"
 
@@ -227,7 +227,9 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	kthread_create(PRI_NONE, 0, NULL, pms_reset_thread, sc,
 	    &sc->sc_event_thread, sc->sc_dev.dv_xname);
 
+#ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_suspended = 0;
+#endif
 	status = pnp_register(self, pms_power);
 	if (status != PNP_STATUS_SUCCESS)
 		aprint_error("%s: couldn't establish power handler\n",
