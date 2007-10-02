@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.51.6.4 2007/10/02 18:28:18 joerg Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.51.6.5 2007/10/02 23:37:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.6.4 2007/10/02 18:28:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.6.5 2007/10/02 23:37:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,8 +645,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		mutex_enter(&sc->sc_mtx);
 		acpibat_clear_presence(sc);
 		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, sc);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, sc);
 		if (ACPI_FAILURE(rv))
 			printf("%s: unable to queue status check: %s\n",
 			       sc->sc_dev.dv_xname, AcpiFormatException(rv));
@@ -656,8 +655,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		mutex_enter(&sc->sc_mtx);
 		acpibat_clear_stat(sc);
 		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, sc);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, sc);
 		if (ACPI_FAILURE(rv))
 			printf("%s: unable to queue status check: %s\n",
 			       sc->sc_dev.dv_xname, AcpiFormatException(rv));

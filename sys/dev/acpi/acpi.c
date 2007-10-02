@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.17 2007/10/02 21:44:10 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.18 2007/10/02 23:37:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.17 2007/10/02 21:44:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.18 2007/10/02 23:37:17 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -121,6 +121,8 @@ MALLOC_DECLARE(M_ACPI);
 
 static int acpi_dbgr = 0x00;
 #endif
+
+static ACPI_TABLE_DESC	acpi_initial_tables[128];
 
 static int	acpi_match(struct device *, struct cfdata *, void *);
 static void	acpi_attach(struct device *, struct device *, void *);
@@ -203,9 +205,26 @@ acpi_probe(void)
 		acpi_osd_debugger();
 #endif
 
+	AcpiGbl_AllMethodsSerialized = FALSE;
+	AcpiGbl_EnableInterpreterSlack = TRUE;
+
 	rv = AcpiInitializeSubsystem();
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to initialize ACPICA: %s\n",
+		    AcpiFormatException(rv));
+		return 0;
+	}
+
+	rv = AcpiInitializeTables(acpi_initial_tables, 128, 0);
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unable to initialize ACPI tables: %s\n",
+		    AcpiFormatException(rv));
+		return 0;
+	}
+
+	rv = AcpiReallocateRootTable();
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unable to reallocate root table: %s\n",
 		    AcpiFormatException(rv));
 		return 0;
 	}
@@ -222,6 +241,7 @@ acpi_probe(void)
 		return 0;
 	}
 
+#if notyet
 	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
 		printf("ACPI: BIOS implementation in listed as broken:\n");
 		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
@@ -256,6 +276,13 @@ acpi_probe(void)
 		    AcpiFormatException(rv));
 		return 0;
 	}
+#endif
+
+	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unable to enable: %s\n", AcpiFormatException(rv));
+		return 0;
+	}
 
 	/*
 	 * Looks like we have ACPI!
@@ -279,10 +306,10 @@ acpi_check(device_t parent, const char *ifattr)
 	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
 }
 
-ACPI_STATUS
-acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
+ACPI_PHYSICAL_ADDRESS
+acpi_OsGetRootPointer(void)
 {
-	ACPI_STATUS rv;
+	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
 
 	/*
 	 * IA-32: Use AcpiFindRootPointer() to locate the RSDP.
@@ -293,13 +320,12 @@ acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
 	 * ways to do it.
 	 */
 
-	rv = acpi_md_OsGetRootPointer(Flags, PhysicalAddress);
+	PhysicalAddress = acpi_md_OsGetRootPointer();
 
-	if (acpi_root_pointer == 0 && ACPI_SUCCESS(rv))
-		acpi_root_pointer =
-		    (uint64_t)PhysicalAddress->Pointer.Physical;
+	if (acpi_root_pointer == 0)
+		acpi_root_pointer = PhysicalAddress;
 
-	return rv;
+	return PhysicalAddress;
 }
 
 /*
@@ -346,11 +372,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_verbose("%s: using Intel ACPI CA subsystem version %08x\n",
 	    sc->sc_dev.dv_xname, ACPI_CA_VERSION);
 
+#if 0
 	aprint_verbose("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
 	    AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
 	    AcpiGbl_XSDT->OemRevision,
 	    AcpiGbl_XSDT->AslCompilerId, AcpiGbl_XSDT->AslCompilerRevision);
+#endif
 
 	sc->sc_quirks = acpi_find_quirks();
 
@@ -400,7 +428,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* early EC handler initialization if ECDT table is available */
 	config_found_ia(&sc->sc_dev, "acpiecdtbus", NULL, NULL);
 
-	rv = AcpiInitializeObjects(0);
+	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("%s: unable to initialize ACPI objects: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
@@ -412,9 +440,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
 	/* Show SCI interrupt. */
-	if (AcpiGbl_FADT != NULL)
-		aprint_verbose("%s: SCI interrupting at int %d\n",
-		    sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
+	aprint_verbose("%s: SCI interrupting at int %d\n",
+	    sc->sc_dev.dv_xname, AcpiGbl_FADT.SciInterrupt);
 
 	/*
 	 * Check for fixed-hardware features.
@@ -814,7 +841,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	 * Check for fixed-hardware buttons.
 	 */
 
-	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->PwrButton == 0) {
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_POWER_BUTTON) == 0) {
 		aprint_verbose("%s: fixed-feature power button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
@@ -835,7 +862,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 		}
 	}
 
-	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->SleepButton == 0) {
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_SLEEP_BUTTON) == 0) {
 		aprint_verbose("%s: fixed-feature sleep button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
@@ -872,7 +899,7 @@ acpi_fixed_button_handler(void *context)
 	printf("%s: fixed button handler\n", smpsw->smpsw_name);
 #endif
 
-	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 	    acpi_fixed_button_pressed, smpsw);
 	if (ACPI_FAILURE(rv))
 		printf("%s: WARNING: unable to queue fixed button pressed "
@@ -1147,7 +1174,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		if (state != ACPI_STATE_S1)
+		if (state == ACPI_STATE_S3)
 			pnp_global_transition(PNP_STATE_D3);
 
 		ret = AcpiEnterSleepStatePrep(state);
@@ -1157,7 +1184,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		DELAY(1000000);
 		acpi_sleepstate = state;
 		if (state == ACPI_STATE_S1) {
 			/* just enter the state */

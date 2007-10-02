@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.5 2007/10/02 21:44:11 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.6 2007/10/02 23:37:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.5 2007/10/02 21:44:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.6 2007/10/02 23:37:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,34 +135,31 @@ static bool
 acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
     bus_addr_t *cmd_reg, bus_addr_t *data_reg, uint8_t *gpebit)
 {
-	EC_BOOT_RESOURCES *ec_boot;
+	ACPI_TABLE_ECDT *ecdt;
 	ACPI_STATUS rv;
 
-	rv = AcpiGetFirmwareTable("ECDT", 1, ACPI_LOGICAL_ADDRESSING,
-	    (void *)&ec_boot);
-	if (rv != AE_OK)
+	rv = AcpiGetTable(ACPI_SIG_ECDT, 1, (ACPI_TABLE_HEADER **)&ecdt);
+	if (ACPI_FAILURE(rv))
 		return false;
 
-	if (ec_boot->EcControl.RegisterBitWidth != 8 ||
-	    ec_boot->EcData.RegisterBitWidth != 8) {
+	if (ecdt->Control.BitWidth != 8 || ecdt->Data.BitWidth != 8) {
 		aprint_error_dev(parent,
 		    "ECDT register width invalid (%d/%d)\n",
-		    ec_boot->EcControl.RegisterBitWidth,
-		    ec_boot->EcData.RegisterBitWidth);
+		    ecdt->Control.BitWidth, ecdt->Data.BitWidth);
 		return false;
 	}
 
-	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, ec_boot->EcId, ec_handle);
-	if (rv != AE_OK) {
+	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, ecdt->Id, ec_handle);
+	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(parent,
 		    "failed to look up EC object %s: %s\n",
-		    ec_boot->EcId, AcpiFormatException(rv));
+		    ecdt->Id, AcpiFormatException(rv));
 		return false;
 	}
 
-	*cmd_reg = ec_boot->EcControl.Address;
-	*data_reg = ec_boot->EcData.Address;
-	*gpebit = ec_boot->GpeBit;
+	*cmd_reg = ecdt->Control.Address;
+	*data_reg = ecdt->Data.Address;
+	*gpebit = ecdt->Gpe;
 
 	return true;
 }
