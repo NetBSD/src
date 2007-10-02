@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.48.12.1 2007/08/16 11:02:40 jmcneill Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.48.12.2 2007/10/02 22:56:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.12.1 2007/08/16 11:02:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.12.2 2007/10/02 22:56:20 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -134,6 +134,8 @@ static int mpacpi_npci;
 static int mpacpi_maxpci;
 static int mpacpi_npciroots;
 #endif
+
+struct mp_intr_map *mpacpi_sci_override;
 
 static int mpacpi_intr_index;
 static paddr_t mpacpi_lapic_base = LAPIC_BASE;
@@ -289,6 +291,9 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		if (pic->pic_type == PIC_IOAPIC)
 			((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
 #endif
+		if (isa_ovr->Source == AcpiGbl_FADT->SciInt)
+			mpacpi_sci_override = mpi;
+			
 	default:
 		break;
 	}

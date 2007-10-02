@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.13.22.4 2007/10/02 18:27:50 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13.22.5 2007/10/02 22:56:20 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.4 2007/10/02 18:27:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.5 2007/10/02 22:56:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,63 +103,53 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	void *ih;
 	struct pic *pic;
 	int irq, pin, trigger;
-#if NIOAPIC > 0
-	int i, h;
-	struct ioapic_softc *sc;
-#endif
-	struct mp_intr_map *mip = NULL;
-
-	trigger = IST_LEVEL;
 
 #if NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
 	 * interrupt info was extracted, which is in the ACPI case.
 	 */
-	if (mp_busses == NULL)
-		goto nomap;
-	for (i = 0; i < mp_nbus; i++) {
-		for (mip = mp_busses[i].mb_intrs; mip != NULL;
-		     mip = mip->next) {
-			if (mip->bus_pin == (int)InterruptNumber) {
-				h = mip->ioapic_ih;
-				if (APIC_IRQ_ISLEGACY(h)) {
-					irq = APIC_IRQ_LEGACY_IRQ(h);
-					pin = irq;
-					pic = &i8259_pic;
-					trigger = IST_EDGE;
-				} else {
-					sc = ioapic_find(APIC_IRQ_APIC(h));
-					if (sc == NULL)
-						goto nomap;
-					pic = (struct pic *)sc;
-					pin = APIC_IRQ_PIN(h);
-					irq = -1;
-					trigger =
-					   ((mip->flags >> 2) & 3) ==
-					      MPS_INTTR_EDGE ?
-					    IST_EDGE : IST_LEVEL;
-				}
-				goto found;
-			}
-		}
+	if (mpacpi_sci_override != NULL) {
+		pic = mpacpi_sci_override->ioapic;
+		pin = mpacpi_sci_override->ioapic_pin;
+		if (mpacpi_sci_override->redir & IOAPIC_REDLO_LEVEL)
+			trigger = IST_LEVEL;
+		else
+			trigger = IST_EDGE;
+		if (pic->pic_type == PIC_IOAPIC)
+			irq = -1;
+		else
+			irq = (int)InterruptNumber;
+		goto sci_override;
 	}
-nomap:
 #endif
 
+	/*
+	 * There was no ACPI interrupt source override,
+	 *
+	 * If the interrupt is handled via IOAPIC, mark it
+	 * as level-triggered, active low in the table.
+	 */
+
 #if NIOAPIC > 0
-	pin = (int)InterruptNumber;
-	for (sc = ioapics ; sc != NULL && pin > sc->sc_apic_sz;
-	     sc = sc->sc_next)
-		pin -= sc->sc_apic_sz;
-	if (sc != NULL) {
-		if (nioapics > 1)
-			printf("acpi: WARNING: no matching "
-			       "I/O apic for SCI, assuming %s\n",
-			    sc->sc_pic.pic_dev.dv_xname);
-		pic = (struct pic *)sc;
+	pic = (struct pic *)ioapic_find_bybase(InterruptNumber);
+	if (pic != NULL) {
+		struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+		struct mp_intr_map *mip;
+
+		if (pic->pic_type == PIC_IOAPIC) {
+			pin = (int)InterruptNumber - pic->pic_vecbase;
+			irq = -1;
+		} else {
+			irq = pin = (int)InterruptNumber;
+		}
+
 		mip = sc->sc_pins[pin].ip_map;
-		irq = -1;
+		if (mip) {
+			mip->flags &= ~3;
+			mip->flags |= MPS_INTPO_ACTLO;
+			mip->redir |= IOAPIC_REDLO_ACTLO;
+		}
 	} else
 #endif
 	{
@@ -167,21 +157,11 @@ nomap:
 		irq = pin = (int)InterruptNumber;
 	}
 
-#if NIOAPIC > 0
-found:
-#endif
+	trigger = IST_LEVEL;
 
-	/*
-	 * If there was no ACPI interrupt source override,
-	 * mark the SCI interrupt as level-triggered, active low
-	 * in the table.
-	 */
-	if (mip != NULL && ((mip->sflags & MPI_OVR) == 0)) {
-		trigger = IST_LEVEL;
-		mip->flags &= ~3;
-		mip->flags |= MPS_INTPO_ACTLO;
-		mip->redir |= IOAPIC_REDLO_ACTLO;
-	}
+#if NIOAPIC > 0
+sci_override:
+#endif
 
 	/*
 	 * XXX probably, IPL_BIO is enough.
