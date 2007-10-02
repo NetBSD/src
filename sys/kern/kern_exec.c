@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.248 2007/09/20 20:51:38 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.249 2007/10/02 12:01:17 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.248 2007/09/20 20:51:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.249 2007/10/02 12:01:17 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -349,6 +349,8 @@ check_exec(struct lwp *l, struct exec_package *epp)
 			/* Error from "#!" code, tidied up by recursive call */
 			return error;
 	}
+
+	/* not found, error */
 
 	/*
 	 * free any vmspace-creation commands,
