@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.7 2007/06/16 10:52:28 martin Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.8 2007/10/02 06:15:12 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -103,10 +103,10 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.7 2007/06/16 10:52:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.8 2007/10/02 06:15:12 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.9 2007/05/27 11:13:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.12 2007/09/20 12:51:51 darrenr Exp $";
 #endif
 #endif
 
@@ -943,16 +943,16 @@ ipfrwlock_t *lock;
 	} else {
 		bzero(&zero, sizeof(zero));
 		next = &zero;
-		token->ipt_data = (void *)-1;
+		token->ipt_data = NULL;
 	}
 	RWLOCK_EXIT(lock);
 
 	if (frag != NULL) {
-		WRITE_ENTER(lock);
-		frag->ipfr_ref--;
-		if (frag->ipfr_ref <= 0)
-			fr_fragfree(frag);
-		RWLOCK_EXIT(lock);
+#ifdef USE_MUTEXES
+		fr_fragderef(&frag, lock);
+#else
+		fr_fragderef(&frag);
+#endif
 	}
 
 	error = COPYOUT(next, itp->igi_data, sizeof(*next));
