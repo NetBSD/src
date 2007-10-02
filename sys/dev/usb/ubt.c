@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.25 2007/10/02 05:38:06 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.26 2007/10/02 05:53:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.25 2007/10/02 05:38:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.26 2007/10/02 05:53:47 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -571,7 +571,7 @@ ubt_activate(device_ptr_t self, enum devact act)
 		break;
 
 	default:
-		error = EOPNOTSUPP:
+		error = EOPNOTSUPP;
 		break;
 	}
 
