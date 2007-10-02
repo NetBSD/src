@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.2 2007/08/05 19:01:02 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.3 2007/10/02 23:37:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.2 2007/08/05 19:01:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.3 2007/10/02 23:37:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 
 	KASSERT(func != NULL);
 
-	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO, func, sc);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc);
 	if (rv != AE_OK)
 		printf("%s: unable to queue %s\n", sc->sc_dev.dv_xname, name);
 
@@ -569,7 +569,7 @@ acpitz_tick(void *opaque)
 
 	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
 	    acpitz_tick, opaque);
-	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
+	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, sc);
 
 	return;
 }

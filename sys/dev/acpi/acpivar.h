@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.28.22.2 2007/10/02 21:44:11 joerg Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.28.22.3 2007/10/02 23:37:20 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -260,7 +260,7 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_check(device_t, const char *);
 int		acpi_probe(void);
-ACPI_STATUS	acpi_OsGetRootPointer(UINT32, ACPI_POINTER *);
+ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
 
@@ -305,7 +305,7 @@ ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
  * quirk handling
  */
 struct acpi_quirk {
-	uint32_t aq_tabletype;	/* what type of table (FADT, DSDT, etc) */
+	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
 	const char *aq_oemid;	/* compared against the table OemId */
 	int aq_oemrev;		/* compared against the table OemRev */
 	int aq_cmpop;		/* how to compare the oemrev number */

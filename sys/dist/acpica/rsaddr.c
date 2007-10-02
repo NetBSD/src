@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsaddr - Address resource descriptors (16/32/64)
- *              xRevision: 1.49 $
+ *              $Revision: 1.1.44.1 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,13 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
-
 #define __RSADDR_C__
 
-#include "acpi.h"
-#include "acresrc.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acresrc.h>
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsaddr")

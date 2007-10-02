@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.21.22.1 2007/08/05 19:01:01 jmcneill Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.21.22.2 2007/10/02 23:37:19 jmcneill Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21.22.1 2007/08/05 19:01:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21.22.2 2007/10/02 23:37:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 		printf("%s: received LidStatusChanged message\n",
 		    sc->sc_dev.dv_xname);
 #endif
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 		    acpilid_status_changed, sc);
 		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue lid change "
