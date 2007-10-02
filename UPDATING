@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.163 2007/07/03 16:35:47 joerg Exp $
+$NetBSD: UPDATING,v 1.164 2007/10/02 12:45:51 gdt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,16 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070913:
+	A latent bug in dhclient/dhcpd that caused it to be unable to
+	enumerate interfaces was fixed.  The bug began to cause
+	problems after 20070911 when the kernel's SIOCGIFCONF
+	implementation was repaired.  From 20070529 to 20070911 racoon
+	could not enumerate interfaces.  (These are noted because
+	normal kernel/userspace version matching hygiene is not
+	sufficient to avoid this problem.)  Ensure that both kernel
+	and userland are from after 20070913.
 
 20070703:
 	nbinstall has been renamed as it calls the target specific and
