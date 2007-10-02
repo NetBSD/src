@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.14.4.1 2007/09/03 16:49:03 jmcneill Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.14.4.2 2007/10/02 18:29:19 joerg Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -2098,6 +2098,7 @@ carp_carpdev_state(void *v)
 int
 carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 {
+	const struct sockaddr *sa = ifreq_getaddr(SIOCADDMULTI, ifr);
 	struct ifnet *ifp;
 	struct carp_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
@@ -2107,7 +2108,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	if (ifp == NULL)
 		return (EINVAL);
 
-	error = ether_addmulti(ifr, &sc->sc_ac);
+	error = ether_addmulti(sa, &sc->sc_ac);
 	if (error != ENETRESET)
 		return (error);
 
@@ -2127,9 +2128,9 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	 * As ether_addmulti() returns ENETRESET, following two
 	 * statement shouldn't fail.
 	 */
-	(void)ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	(void)ether_multiaddr(sa, addrlo, addrhi);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &sc->sc_ac, mc->mc_enm);
-	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
+	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&sc->carp_mc_listhead, mc, mc_entries);
 
 	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)ifr);
@@ -2142,7 +2143,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	LIST_REMOVE(mc, mc_entries);
 	FREE(mc, M_DEVBUF);
  alloc_failed:
-	(void)ether_delmulti(ifr, &sc->sc_ac);
+	(void)ether_delmulti(sa, &sc->sc_ac);
 
 	return (error);
 }
@@ -2150,6 +2151,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 int
 carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 {
+	const struct sockaddr *sa = ifreq_getaddr(SIOCDELMULTI, ifr);
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct carp_mc_entry *mc;
@@ -2164,7 +2166,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	 * Find a key to lookup carp_mc_entry.  We have to do this
 	 * before calling ether_delmulti for obvious reason.
 	 */
-	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
+	if ((error = ether_multiaddr(sa, addrlo, addrhi)) != 0)
 		return (error);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &sc->sc_ac, enm);
 	if (enm == NULL)
@@ -2178,7 +2180,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	if (mc == NULL)
 		return (EINVAL);
 
-	error = ether_delmulti(ifr, &sc->sc_ac);
+	error = ether_delmulti(sa, &sc->sc_ac);
 	if (error != ENETRESET)
 		return (error);
 
@@ -2189,7 +2191,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);
 	} else
-		(void)ether_addmulti(ifr, &sc->sc_ac);
+		(void)ether_addmulti(sa, &sc->sc_ac);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.9 2007/03/24 17:50:17 christos Exp $ */
+/* $NetBSD: atomic.h,v 1.9.12.1 2007/10/02 18:27:23 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,15 @@
 #ifndef _I386_ATOMIC_H_
 #define _I386_ATOMIC_H_
 
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
+
+unsigned long	x86_atomic_testset_ul(volatile uint32_t *, unsigned long);
+int		x86_atomic_testset_i(volatile int *, int);
+uint8_t		x86_atomic_testset_b(volatile uint8_t *, uint8_t);
+void		x86_atomic_setbits_l(volatile uint32_t *, unsigned long);
+void		x86_atomic_clearbits_l(volatile uint32_t *, unsigned long);
+
+#elif !defined(_LOCORE)
 
 static __inline unsigned long x86_atomic_testset_ul(volatile uint32_t *,
     unsigned long);
@@ -78,4 +86,5 @@ x86_atomic_clearbits_l(volatile uint32_t *__ptr, unsigned long __bits) {
 }
 
 #endif
+
 #endif

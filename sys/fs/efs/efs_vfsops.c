@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.8.2.1 2007/08/09 02:37:17 jmcneill Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.8.2.2 2007/10/02 18:28:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.1 2007/08/09 02:37:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.2 2007/10/02 18:28:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,6 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	efs_sync_dinode_to_inode(eip);
-	vp->v_size = eip->ei_size;
 
 	if (ino == EFS_ROOTINO && !S_ISDIR(eip->ei_mode)) {
 		printf("efs: root inode (%lu) is not a directory!\n",
@@ -442,7 +441,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (EIO);
 	}
 
-	uvm_vnp_setsize(vp, vp->v_size);
+	uvm_vnp_setsize(vp, eip->ei_size);
 	*vpp = vp;
 
 	KASSERT(VOP_ISLOCKED(vp));

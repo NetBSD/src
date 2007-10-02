@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.45.4.2 2007/09/03 16:48:39 jmcneill Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.45.4.3 2007/10/02 18:28:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45.4.2 2007/09/03 16:48:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45.4.3 2007/10/02 18:28:40 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,70 +88,34 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45.4.2 2007/09/03 16:48:39 jmcne
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 
+/* #define ENVSYS_DEBUG */
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
-#include "opt_compat_netbsd.h"
+/*
+ * Notes about locking:
+ *
+ * There's a global lock 'sme_mtx' to protect access to 'sysmon_envsys_list'
+ * (devices linked list), 'struct sysmon_envsys' (device), 'sme_events_list'
+ * (events linked list), 'sme_event_t' (event) and the global counter
+ * 'sysmon_envsys_next_sensor_index'.
+ *
+ * Another lock 'sme_init_mtx' is used to protect initialization and
+ * finalization of the events framework (the callout(9) and workqueue(9)
+ * that is used to check for conditions and sending events to powerd(8)).
+ *
+ * The global 'sme_cv' condition variable is used to wait for state changes
+ * on the 'sysmon_envsys_list' and 'sme_events_list' linked lists.
+ *
+ */
 
-struct sme_sensor_type {
-	int		type;
-	int		crittype;
-	const char	*desc;
-};
-
-static const struct sme_sensor_type sme_sensor_type[] = {
-	{ ENVSYS_STEMP,		PENVSYS_TYPE_TEMP,	"Temperature" },
-	{ ENVSYS_SFANRPM,	PENVSYS_TYPE_FAN,	"Fan" },
-	{ ENVSYS_SVOLTS_AC,	PENVSYS_TYPE_VOLTAGE,	"Voltage AC" },
-	{ ENVSYS_SVOLTS_DC,	PENVSYS_TYPE_VOLTAGE,	"Voltage DC" },
-	{ ENVSYS_SOHMS,		PENVSYS_TYPE_RESISTANCE,"Ohms" },
-	{ ENVSYS_SWATTS,	PENVSYS_TYPE_POWER,	"Watts" },
-	{ ENVSYS_SAMPS,		PENVSYS_TYPE_POWER,	"Ampere" },
-	{ ENVSYS_SWATTHOUR,	PENVSYS_TYPE_BATTERY,	"Watt hour" },
-	{ ENVSYS_SAMPHOUR,	PENVSYS_TYPE_BATTERY,	"Ampere hour" },
-	{ ENVSYS_INDICATOR,	PENVSYS_TYPE_INDICATOR,	"Indicator" },
-	{ ENVSYS_INTEGER,	PENVSYS_TYPE_INDICATOR,	"Integer" },
-	{ ENVSYS_DRIVE,		PENVSYS_TYPE_DRIVE,	"Drive" },
-	{ ENVSYS_GSTRING,	-1, 			"Generic string" },
-	{ -1,			-1,			"unknown" }
-};
-
-static const struct sme_sensor_type sme_sensor_state[] = {
-	{ ENVSYS_SVALID,	-1, 	"valid" },
-	{ ENVSYS_SINVALID,	-1, 	"invalid" },
-	{ ENVSYS_SCRITICAL,	-1, 	"critical" },
-	{ ENVSYS_SCRITUNDER,	-1, 	"critical-under" },
-	{ ENVSYS_SCRITOVER,	-1, 	"critical-over" },
-	{ ENVSYS_SWARNUNDER,	-1, 	"warning-under" },
-	{ ENVSYS_SWARNOVER,	-1, 	"warning-over" },
-	{ -1,			-1, 	"unknown" }
-};
-
-static const struct sme_sensor_type sme_sensor_drive_state[] = {
-	{ ENVSYS_DRIVE_EMPTY,		-1, 	"drive state is unknown" },
-	{ ENVSYS_DRIVE_READY,		-1, 	"drive is ready" },
-	{ ENVSYS_DRIVE_POWERUP,		-1, 	"drive is powering up" },
-	{ ENVSYS_DRIVE_ONLINE,		-1, 	"drive is online" },
-	{ ENVSYS_DRIVE_IDLE,		-1, 	"drive is idle" },
-	{ ENVSYS_DRIVE_ACTIVE,		-1, 	"drive is active" },
-	{ ENVSYS_DRIVE_REBUILD,		-1, 	"drive is rebuilding" },
-	{ ENVSYS_DRIVE_POWERDOWN,	-1, 	"drive is powering down" },
-	{ ENVSYS_DRIVE_FAIL,		-1, 	"drive failed" },
-	{ ENVSYS_DRIVE_PFAIL,		-1, 	"drive degraded" },
-	{ -1,				-1, 	"unknown" }
-};
+kmutex_t sme_mtx, sme_event_init_mtx;
+kcondvar_t sme_cv;
 
 static prop_dictionary_t sme_propd;
-static kcondvar_t sme_list_cv;
-
-kmutex_t sme_list_mtx, sme_event_mtx, sme_event_init_mtx;
-kcondvar_t sme_event_cv;
-
-#ifdef COMPAT_40
-static u_int sysmon_envsys_next_sensor_index = 0;
+static uint32_t sysmon_envsys_next_sensor_index = 0;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
-#endif
 
 static void sysmon_envsys_release(struct sysmon_envsys *);
 static void sysmon_envsys_destroy_plist(prop_array_t);
@@ -167,11 +131,9 @@ sysmon_envsys_init(void)
 {
 	LIST_INIT(&sysmon_envsys_list);
 	LIST_INIT(&sme_events_list);
-	mutex_init(&sme_list_mtx, MUTEX_DRIVER, IPL_NONE);
-	mutex_init(&sme_event_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sme_mtx, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&sme_event_init_mtx, MUTEX_DRIVER, IPL_NONE);
-	cv_init(&sme_list_cv, "smefind");
-	cv_init(&sme_event_cv, "smeevent");
+	cv_init(&sme_cv, "smework");
 	sme_propd = prop_dictionary_create();
 }
 
@@ -208,21 +170,19 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct sysmon_envsys *sme = NULL;
 	int error = 0;
-#ifdef COMPAT_40
 	u_int oidx;
-#endif
 
 	switch (cmd) {
 	case ENVSYS_GETDICTIONARY:
 	    {
 		struct plistref *plist = (struct plistref *)data;
-	
+
 		/*
 		 * Update all sysmon envsys devices dictionaries with
 		 * new data if it's different than we have currently
 		 * in the dictionary.
 		 */		
-		mutex_enter(&sme_list_mtx);
+		mutex_enter(&sme_mtx);
 		LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 			sme->sme_flags |= SME_FLAG_BUSY;
 			error = sme_update_dictionary(sme);
@@ -230,12 +190,12 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				DPRINTF(("%s: sme_update_dictionary, "
 				    "error=%d\n", __func__, error));
 				sme->sme_flags &= ~SME_FLAG_BUSY;
-				mutex_exit(&sme_list_mtx);
+				mutex_exit(&sme_mtx);
 				return error;
 			}
 			sme->sme_flags &= ~SME_FLAG_BUSY;
 		}
-		mutex_exit(&sme_list_mtx);
+		mutex_exit(&sme_mtx);
 		/*
 		 * Copy global dictionary to userland.
 		 */
@@ -310,7 +270,6 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	     * implemented ENVSYS_GTREDATA and ENVSYS_GTREINFO; enough
 	     * to make old applications work.
 	     */
-#ifdef COMPAT_40
 	case ENVSYS_GTREDATA:
 	    {
 		struct envsys_tre_data *tred = (void *)data;
@@ -322,7 +281,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (sme == NULL)
 			break;
 
-		mutex_enter(&sme_list_mtx);
+		mutex_enter(&sme_mtx);
 		oidx = tred->sensor;
 		tred->sensor = SME_SENSOR_IDX(sme, tred->sensor);
 
@@ -338,7 +297,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (error) {
 					DPRINTF(("%s: sme_gtredata failed\n",
 				    	    __func__));
-					mutex_exit(&sme_list_mtx);
+					mutex_exit(&sme_mtx);
 					return error;
 				}
 			}
@@ -376,7 +335,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    tred->units, tred->sensor));
 		}
 		tred->sensor = oidx;
-		mutex_exit(&sme_list_mtx);
+		mutex_exit(&sme_mtx);
 
 		break;
 	    }
@@ -391,7 +350,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (sme == NULL)
 			break;
 
-		mutex_enter(&sme_list_mtx);
+		mutex_enter(&sme_mtx);
 		oidx = binfo->sensor;
 		binfo->sensor = SME_SENSOR_IDX(sme, binfo->sensor);
 
@@ -411,11 +370,10 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    __func__, binfo->desc, binfo->sensor));
 
 		binfo->sensor = oidx;
-		mutex_exit(&sme_list_mtx);
+		mutex_exit(&sme_mtx);
 
 		break;
 	    }
-#endif /* COMPAT_40 */
 	default:
 		error = ENOTTY;
 		break;
@@ -433,6 +391,12 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 int
 sysmon_envsys_register(struct sysmon_envsys *sme)
 {
+	struct sme_evdrv {
+		SLIST_ENTRY(sme_evdrv) evdrv_head;
+		sme_event_drv_t *evdrv;
+	};
+	SLIST_HEAD(, sme_evdrv) sme_evdrv_list;
+	struct sme_evdrv *sme_evdrv = NULL;
 	struct sysmon_envsys *lsme;
 	prop_dictionary_t dict;
 	prop_array_t array;
@@ -458,6 +422,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 			return EINVAL;
 	}
 
+
 	/* create the sysmon envsys device array. */
 	array = prop_array_create();
 	if (array == NULL)
@@ -467,24 +432,16 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * Initialize the singly linked list for sensor descriptions.
 	 */
 	SLIST_INIT(&sme->sme_names_list);
+
+	/*
+	 * Initialize the singly linked list for driver events.
+	 */
+	SLIST_INIT(&sme_evdrv_list);
 	/*
 	 * Iterate over all sensors and create a dictionary per sensor,
 	 * checking firstly if sensor description is unique.
 	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
-		/*
-		 * XXX:
-		 *
-		 * workaround for LKMs. First sensor used in a LKM
-		 * gets the index sensor from all edata structs
-		 * allocated in kernel. It is unknown to me why this
-		 * value is not 0 when using a LKM.
-		 *
-		 * For now overwrite its index to 0.
-		 */
-		if (i == 0)
-			sme->sme_sensor_data[0].sensor = 0;
-
 		edata = &sme->sme_sensor_data[i];
 		/*
 		 * Check if sensor description is unique.
@@ -501,14 +458,19 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		/*
 		 * Create all objects in sensor's dictionary.
 		 */
-		sme_add_sensor_dictionary(sme, array, dict, edata);
+		sme_evdrv = kmem_zalloc(sizeof(*sme_evdrv), KM_SLEEP);
+		sme_evdrv->evdrv = sme_add_sensor_dictionary(sme,
+					array, dict, edata);
+		if (sme_evdrv->evdrv)
+			SLIST_INSERT_HEAD(&sme_evdrv_list,
+					  sme_evdrv, evdrv_head);
 	}
 
 	/*
 	 * Check if requested sysmon_envsys device is valid
 	 * and does not exist already in the list.
 	 */
-	mutex_enter(&sme_list_mtx);
+	mutex_enter(&sme_mtx);
 	sme->sme_flags |= SME_FLAG_BUSY;
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
@@ -516,6 +478,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		       goto out;
 	       }
 	}
+
 	/* 
 	 * If the array does not contain any object (sensor), there's
 	 * no need to attach the driver.
@@ -543,23 +506,43 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	/*
 	 * Add the device into the list.
 	 */
-#ifdef COMPAT_40
+	LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
 	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
 	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
-#endif
-	LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
-
 out:
-	sme->sme_flags &= ~SME_FLAG_BUSY;
 	sme->sme_uniqsensors = 0;
-	mutex_exit(&sme_list_mtx);
+	sme->sme_flags &= ~SME_FLAG_BUSY;
+	mutex_exit(&sme_mtx);
+
+	if (error == 0) {
+		i = 0;
+		SLIST_FOREACH(sme_evdrv, &sme_evdrv_list, evdrv_head) {
+			if (i == 0)
+				sysmon_task_queue_init();
+			sysmon_task_queue_sched(0,
+			    sme_event_drvadd, sme_evdrv->evdrv);
+		}
+		DPRINTF(("%s: driver '%s' registered (nsens=%d)\n",
+		    __func__, sme->sme_name, sme->sme_nsensors));
+	}
+
+out2:
+	while (!SLIST_EMPTY(&sme_evdrv_list)) {
+		sme_evdrv = SLIST_FIRST(&sme_evdrv_list);
+		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
+		kmem_free(sme_evdrv, sizeof(*sme_evdrv));
+	}
 	if (error == 0)
 		return 0;
-out2:
+
 	DPRINTF(("%s: failed to register '%s' (%d)\n", __func__,
 	    sme->sme_name, error));
+	if (error != EEXIST) {
+		mutex_enter(&sme_mtx);
+		sme_event_unregister_all(sme->sme_name);
+		mutex_exit(&sme_mtx);
+	}
 	sysmon_envsys_destroy_plist(array);
-	prop_object_release(array);
 	return error;
 }
 
@@ -572,28 +555,41 @@ out2:
 static void
 sysmon_envsys_destroy_plist(prop_array_t array)
 {
-	prop_dictionary_t dict;
 	prop_object_iterator_t iter, iter2;
+	prop_dictionary_t dict;
 	prop_object_t obj;
 
 	KASSERT(array != NULL);
+
+	DPRINTFOBJ(("%s: objects in array=%d\n", __func__,
+	    prop_array_count(array)));
 
 	iter = prop_array_iterator(array);
 	if (iter == NULL)
 		return;
 
 	while ((dict = prop_object_iterator_next(iter)) != NULL) {
+		KASSERT(prop_object_type(dict) == PROP_TYPE_DICTIONARY);
 		iter2 = prop_dictionary_iterator(dict);
-		if (iter2) {
-			while ((obj = prop_object_iterator_next(iter2)) != NULL)
-				prop_object_release(obj);
-
-			prop_object_iterator_release(iter2);
+		if (iter2 == NULL)
+			goto out;
+		DPRINTFOBJ(("%s: iterating over dictionary\n", __func__));
+		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
+			DPRINTFOBJ(("%s: obj=%s\n", __func__,
+			    prop_dictionary_keysym_cstring_nocopy(obj)));
+			prop_dictionary_remove(dict,
+			    prop_dictionary_keysym_cstring_nocopy(obj));
+			prop_object_iterator_reset(iter2);
 		}
+		prop_object_iterator_release(iter2);
+		DPRINTFOBJ(("%s: objects in dictionary:%d\n",
+		    __func__, prop_dictionary_count(dict)));
 		prop_object_release(dict);
 	}
 
+out:
 	prop_object_iterator_release(iter);
+	prop_object_release(array);
 }
 
 /*
@@ -609,13 +605,12 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 
 	KASSERT(sme != NULL);
 
-	mutex_enter(&sme_list_mtx);
+	mutex_enter(&sme_mtx);
 	while (sme->sme_flags & SME_FLAG_BUSY) {
 		sme->sme_flags |= SME_FLAG_WANTED;
-		cv_wait(&sme_list_cv, &sme_list_mtx);
+		cv_wait(&sme_cv, &sme_mtx);
 	}
-	LIST_REMOVE(sme, sme_list);
-	mutex_exit(&sme_list_mtx);
+	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
 	/*
 	 * Remove all sensor descriptions from the singly linked list.
 	 */
@@ -628,13 +623,15 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	 * Unregister all events associated with this device.
 	 */
 	sme_event_unregister_all(sme->sme_name);
+	LIST_REMOVE(sme, sme_list);
+	mutex_exit(&sme_mtx);
 	/*
 	 * Remove the device (and all its objects) from the global dictionary.
 	 */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
-	if (array) {
-		sysmon_envsys_destroy_plist(array);
+	if (array && prop_object_type(array) == PROP_TYPE_ARRAY) {
 		prop_dictionary_remove(sme_propd, sme->sme_name);
+		sysmon_envsys_destroy_plist(array);
 	}
 }
 
@@ -648,21 +645,21 @@ sysmon_envsys_find(const char *name)
 {
 	struct sysmon_envsys *sme;
 
-	mutex_enter(&sme_list_mtx);
+	mutex_enter(&sme_mtx);
 again:
 	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
 	     sme = LIST_NEXT(sme, sme_list)) {
 			if (strcmp(sme->sme_name, name) == 0) {
 				if (sme->sme_flags & SME_FLAG_BUSY) {
 					sme->sme_flags |= SME_FLAG_WANTED;
-					cv_wait(&sme_list_cv, &sme_list_mtx);
+					cv_wait(&sme_cv, &sme_mtx);
 					goto again;
 				}
 				sme->sme_flags |= SME_FLAG_BUSY;
 				break;
 			}
 	}
-	mutex_exit(&sme_list_mtx);
+	mutex_exit(&sme_mtx);
 	return sme;
 }
 
@@ -674,31 +671,29 @@ again:
 void
 sysmon_envsys_release(struct sysmon_envsys *sme)
 {
-	mutex_enter(&sme_list_mtx);
+	mutex_enter(&sme_mtx);
 	if (sme->sme_flags & SME_FLAG_WANTED)
-		cv_broadcast(&sme_list_cv);
+		cv_broadcast(&sme_cv);
 	sme->sme_flags &= ~(SME_FLAG_BUSY | SME_FLAG_WANTED);
-	mutex_exit(&sme_list_mtx);
+	mutex_exit(&sme_mtx);
 }
 
 /* compatibility function */
-#ifdef COMPAT_40
 struct sysmon_envsys *
 sysmon_envsys_find_40(u_int idx)
 {
 	struct sysmon_envsys *sme;
 
-	mutex_enter(&sme_list_mtx);
+	mutex_enter(&sme_mtx);
 	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
 	     sme = LIST_NEXT(sme, sme_list)) {
 		if (idx >= sme->sme_fsensor &&
 	    	    idx < (sme->sme_fsensor + sme->sme_nsensors))
 			break;
 	}
-	mutex_exit(&sme_list_mtx);
+	mutex_exit(&sme_mtx);
 	return sme;
 }
-#endif
 
 /*
  * sme_register_sensorname:
@@ -720,8 +715,8 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 		    strcmp(snames2->desc, edata->desc) == 0)
 			if (snames2->assigned) {
 				edata->flags |= ENVSYS_FNOTVALID;
-				DPRINTF(("%s: duplicate name "
-				    "(%s)\n", __func__, edata->desc));
+				DPRINTF(("%s: wrong sensor name='%s'\n",
+				    sme->sme_name, edata->desc));
 				return EEXIST;
 			}
 	}
@@ -732,7 +727,8 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	snames->assigned = true;
 	(void)strlcpy(snames->desc, edata->desc, sizeof(snames->desc));
-	DPRINTF(("%s: registering sensor name=%s\n", __func__, edata->desc));
+	DPRINTF(("%s: registering sensor name='%s'\n",
+	    sme->sme_name, edata->desc));
 	SLIST_INSERT_HEAD(&sme->sme_names_list, snames, sme_names);
 	sme->sme_uniqsensors++;
 
@@ -744,24 +740,23 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
  *
  * 	+ Add the objects into the dictionary.
  */
-void
+sme_event_drv_t *
 sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    	  prop_dictionary_t dict, envsys_data_t *edata)
 {
-	const struct sme_sensor_type *est = sme_sensor_type;
-	const struct sme_sensor_type *ess = sme_sensor_state;
-	const struct sme_sensor_type *esds = sme_sensor_drive_state;
+	const struct sme_description_table *sdt, *sdt_units;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	int i, j;
 
 	i = j = 0;
 
 	/* find the correct unit for this sensor. */
-	for (i = 0; est[i].type != -1; i++)
-		if (est[i].type == edata->units)
+	sdt_units = sme_get_description_table(SME_DESC_UNITS);
+	for (i = 0; sdt_units[i].type != -1; i++)
+		if (sdt_units[i].type == edata->units)
 			break;
 
-	if (strcmp(est[i].desc, "unknown") == 0) {
+	if (strcmp(sdt_units[i].desc, "unknown") == 0) {
 		DPRINTF(("%s: invalid units type for sensor=%d\n",
 		    __func__, edata->sensor));
 		goto invalidate_sensor;
@@ -775,7 +770,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>blah blah</string>
 	 * 		...
 	 */
-	if (sme_sensor_upstring(dict, "type", est[i].desc))
+	if (sme_sensor_upstring(dict, "type", sdt_units[i].desc))
 		goto invalidate_sensor;
 
 	if (strlen(edata->desc) == 0) {
@@ -795,11 +790,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>valid</string>
 	 * 		...
 	 */
-	for (j = 0; ess[j].type != -1; j++)
-		if (ess[j].type == edata->state) 
+	sdt = sme_get_description_table(SME_DESC_STATES);
+	for (j = 0; sdt[j].type != -1; j++)
+		if (sdt[j].type == edata->state) 
 			break;
 
-	if (strcmp(ess[j].desc, "unknown") == 0) {
+	if (strcmp(sdt[j].desc, "unknown") == 0) {
 		DPRINTF(("%s: invalid state for sensor=%d\n",
 		    __func__, edata->sensor));
 		goto invalidate_sensor;
@@ -808,7 +804,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	DPRINTF(("%s: sensor desc=%s type=%d state=%d\n",
 	    __func__, edata->desc, edata->units, edata->state));
 
-	if (sme_sensor_upstring(dict, "state", ess[j].desc))
+	if (sme_sensor_upstring(dict, "state", sdt[j].desc))
 		goto invalidate_sensor;
 
 	/*
@@ -819,41 +815,19 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<true/>
 	 *		...
 	 * 
-	 * always false on Drive, Generic strings and Indicator types.
+	 * always false on Battery state, Drive and Indicator types.
 	 * They cannot be monitored.
 	 *
 	 */
 	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE) ||
-	    (edata->units == ENVSYS_GSTRING)) {
+	    (edata->units == ENVSYS_BATTERY_STATE)) {
 		if (sme_sensor_upbool(dict, "monitoring-supported", false))
-			return;
+			goto out;
 	} else {
 		if (sme_sensor_upbool(dict, "monitoring-supported", true))
-			return;
-	}
-
-	/*
-	 * Add the generic-state-string object for gstring sensors:
-	 *
-	 * 		...
-	 * 		<key>generic-state-string</key>
-	 * 		<string>NORMAL</string>
-	 * 		...
-	 */
-	if (edata->units == ENVSYS_GSTRING) {
-		if (strlen(edata->genstr) == 0) {
-			DPRINTF(("%s: invalid generic state string for "
-			    "sensor=%s\n", __func__, edata->desc));
-			goto invalidate_sensor;
-		}
-		if (sme_sensor_upstring(dict,
-					"generic-state-string",
-					edata->genstr))
-			goto invalidate_sensor;
-
-		goto add_sensor;
+			goto out;
 	}
 
 	/*
@@ -866,7 +840,25 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 */
 	if (edata->flags & ENVSYS_FPERCENT)
 		if (sme_sensor_upbool(dict, "want-percentage", true))
-			return;
+			goto out;
+
+	/*
+	 * Add the battery-state object for battery state sensors:
+	 *
+	 * 		...
+	 * 		<key>battery-state</key>
+	 * 		<string>NORMAL</string>
+	 * 		...
+	 */
+	if (edata->units == ENVSYS_BATTERY_STATE) {
+		sdt = sme_get_description_table(SME_DESC_BATTERY_STATES);
+		for (j = 0; sdt[j].type != -1; j++)
+			if (sdt[j].type == edata->value_cur)
+				break;
+
+		if (sme_sensor_upstring(dict, "battery-state", sdt[j].desc))
+			goto out;
+	}
 
 	/*
 	 * Add the drive-state object for drive sensors:
@@ -877,12 +869,13 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	if (edata->units == ENVSYS_DRIVE) {
-		for (j = 0; esds[j].type != -1; j++)
-			if (esds[j].type == edata->value_cur)
+		sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+		for (j = 0; sdt[j].type != -1; j++)
+			if (sdt[j].type == edata->value_cur)
 				break;
 
-		if (sme_sensor_upstring(dict, "drive-state", esds[j].desc))
-			return;
+		if (sme_sensor_upstring(dict, "drive-state", sdt[j].desc))
+			goto out;
 	}
 
 	/* 
@@ -907,35 +900,35 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		 */
 		if (edata->units == ENVSYS_SFANRPM)
 			if (sme_sensor_upuint32(dict, "rpms", edata->rpms))
-				return;
+				goto out;
 
 		if (edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC)
 			if (sme_sensor_upint32(dict, "rfact", edata->rfact))
-				return;
+				goto out;
 
 		if (sme_sensor_upint32(dict, "cur-value", edata->value_cur))
-			return;
+			goto out;
 
 		if (edata->flags & ENVSYS_FVALID_MIN) {
 			if (sme_sensor_upint32(dict,
 					       "min-value",
 					       edata->value_min))
-				return;
+				goto out;
 		}
 
 		if (edata->flags & ENVSYS_FVALID_MAX) {
 			if (sme_sensor_upint32(dict,
 					       "max-value",
 					       edata->value_max))
-				return;
+				goto out;
 		}
 
 		if (edata->flags & ENVSYS_FVALID_AVG) {
 			if (sme_sensor_upint32(dict,
 					       "avg-value",
 					        edata->value_avg))
-				return;
+				goto out;
 		}
 	}
 
@@ -947,7 +940,6 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 *
 	 */
 
-add_sensor:
 	if (!prop_array_set(array, sme->sme_uniqsensors - 1, dict)) {
 		DPRINTF(("%s: prop_array_add\n", __func__));
 		goto invalidate_sensor;
@@ -957,25 +949,20 @@ add_sensor:
 	 * Add a new event if a monitoring flag was set.
 	 */
 	if (edata->monitor) {
-		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_NOSLEEP);
-		if (sme_evdrv_t == NULL) {
-			DPRINTF(("%s: edata->monitor failed\n", __func__));
-			return;
-		}
-
+		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_SLEEP);
 		sme_evdrv_t->sdict = dict;
 		sme_evdrv_t->edata = edata;
 		sme_evdrv_t->sme = sme;
-		sme_evdrv_t->powertype = est[i].crittype;
-
-		sysmon_task_queue_init();
-		sysmon_task_queue_sched(0, sme_event_drvadd, sme_evdrv_t);
+		sme_evdrv_t->powertype = sdt_units[i].crittype;
 	}
 
-	return;
+out:
+	return sme_evdrv_t;
 
 invalidate_sensor:
 	edata->flags |= ENVSYS_FNOTVALID;
+	prop_object_release(dict);
+	return sme_evdrv_t;
 }
 
 /*
@@ -987,14 +974,12 @@ invalidate_sensor:
 int
 sme_update_dictionary(struct sysmon_envsys *sme)
 {
-	const struct sme_sensor_type *est = sme_sensor_type;
-	const struct sme_sensor_type *ess = sme_sensor_state;
-	const struct sme_sensor_type *esds = sme_sensor_drive_state;
-	envsys_data_t *edata = NULL;
+	const struct sme_description_table *sdt;
+	envsys_data_t *edata;
 	prop_object_t array, dict;
 	int i, j, error, invalid;
 
-	KASSERT(mutex_owned(&sme_list_mtx));
+	KASSERT(mutex_owned(&sme_mtx));
 
 	error = invalid = 0;
 	array = dict = NULL;
@@ -1012,10 +997,15 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 * - check if data in dictionary is different than new data.
 	 * - update dictionary if there were changes.
 	 */
+	DPRINTF(("%s: updating '%s' with nsensors=%d\n", __func__,
+	    sme->sme_name, sme->sme_nsensors));
+
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
 		/* skip invalid sensors */
 		if (edata->flags & ENVSYS_FNOTVALID) {
+			DPRINTF(("%s: invalid sensor=%s idx=%d\n",
+			    __func__, edata->desc, edata->sensor));
 			invalid++;
 			continue;
 		}
@@ -1041,43 +1031,30 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			return EINVAL;
 		}
 
-		for (j = 0; ess[j].type != -1; j++)
-			if (ess[j].type == edata->state)
+		/* update sensor's state */
+		sdt = sme_get_description_table(SME_DESC_STATES);
+		for (j = 0; sdt[j].type != -1; j++)
+			if (sdt[j].type == edata->state)
 				break;
 
 		DPRINTFOBJ(("%s: state=%s type=%d flags=%d "
-		    "units=%d sensor=%d\n", __func__, ess[j].desc,
-		    ess[j].type, edata->flags, edata->units, edata->sensor));
+		    "units=%d sensor=%d\n", __func__, sdt[j].desc,
+		    sdt[j].type, edata->flags, edata->units, edata->sensor));
 
 		/* update sensor state */
-		error = sme_sensor_upstring(dict, "state", ess[j].desc);
+		error = sme_sensor_upstring(dict, "state", sdt[j].desc);
 		if (error)
 			break;
-
-		for (j = 0; est[j].type != -1; j++)
-			if (est[j].type == edata->units)
-				break;
 
 		/* update sensor type */
-		error = sme_sensor_upstring(dict, "type", est[j].desc);
+		sdt = sme_get_description_table(SME_DESC_UNITS);
+		for (j = 0; sdt[j].type != -1; j++)
+			if (sdt[j].type == edata->units)
+				break;
+
+		error = sme_sensor_upstring(dict, "type", sdt[j].desc);
 		if (error)
 			break;
-
-		/*
-		 * Update the generic-state-string object for gstring
-		 * sensors, they only need the following objects:
-		 *
-		 * 	description, generic-state-string, state and type.
-		 *
-		 */
-		if (edata->units == ENVSYS_GSTRING) {
-			error = sme_sensor_upstring(dict,
-						    "generic-state-string",
-						    edata->genstr);
-			if (error)
-				break;
-			continue;
-		}
 
 		/* update sensor current value */
 		error = sme_sensor_upint32(dict,
@@ -1148,13 +1125,29 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		
 		/* update 'drive-state' only in ENVSYS_DRIVE. */
 		if (edata->units == ENVSYS_DRIVE) {
-			for (j = 0; esds[j].type != -1; j++)
-				if (esds[j].type == edata->value_cur)
+			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+			for (j = 0; sdt[j].type != -1; j++)
+				if (sdt[j].type == edata->value_cur)
 					break;
 
 			error = sme_sensor_upstring(dict,
 						    "drive-state",
-						    esds[j].desc);
+						    sdt[j].desc);
+			if (error)
+				break;
+		}
+
+		/* update 'battery-state' only in ENVSYS_BATTERY_STATE. */
+		if (edata->units == ENVSYS_BATTERY_STATE) {
+			sdt =
+			    sme_get_description_table(SME_DESC_BATTERY_STATES);
+			for (j = 0; sdt[j].type != -1; j++)
+				if (sdt[j].type == edata->value_cur)
+					break;
+
+			error = sme_sensor_upstring(dict,
+						    "battery-state",
+						    sdt[j].desc);
 			if (error)
 				break;
 		}
@@ -1173,7 +1166,7 @@ int
 sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		       prop_array_t array)
 {
-	const struct sme_sensor_type *sst = sme_sensor_type;
+	const struct sme_description_table *sdt;
 	envsys_data_t *edata, *nedata;
 	prop_dictionary_t dict;
 	prop_object_t obj, obj1, obj2;
@@ -1301,8 +1294,9 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			break;
 		}
 
-		for (i = 0; sst[i].type != -1; i++)
-			if (sst[i].type == edata->units)
+		sdt = sme_get_description_table(SME_DESC_UNITS);
+		for (i = 0; sdt[i].type != -1; i++)
+			if (sdt[i].type == edata->units)
 				break;
 
 		/* did the user want to set a critical capacity event? */
@@ -1322,7 +1316,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					      "critical-capacity",
 					      critval,
 					      PENVSYS_EVENT_BATT_USERCAP,
-					      sst[i].crittype);
+					      sdt[i].crittype);
 			break;
 		}
 
@@ -1343,7 +1337,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					      "critical-max-limit",
 					      critval,
 					      PENVSYS_EVENT_USER_CRITMAX,
-					      sst[i].crittype);
+					      sdt[i].crittype);
 			break;
 		}
 
@@ -1364,7 +1358,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					      "critical-min-limit",
 					      critval,
 					      PENVSYS_EVENT_USER_CRITMIN,
-					      sst[i].crittype);
+					      sdt[i].crittype);
 			break;
 		}
 	}

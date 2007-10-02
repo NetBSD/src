@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.8 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.8.18.1 2007/10/02 18:27:48 joerg Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -198,5 +198,53 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 #define _BUS_AVAIL_END (avail_end)
 #endif
 
+struct x86_bus_dma_tag {
+	/*
+	 * The `bounce threshold' is checked while we are loading
+	 * the DMA map.  If the physical address of the segment
+	 * exceeds the threshold, an error will be returned.  The
+	 * caller can then take whatever action is necessary to
+	 * bounce the transfer.  If this value is 0, it will be
+	 * ignored.
+	 */
+	int        _tag_needs_free;
+	bus_addr_t _bounce_thresh;
+	bus_addr_t _bounce_alloc_lo;
+	bus_addr_t _bounce_alloc_hi;
+	int	(*_may_bounce)(bus_dma_tag_t, bus_dmamap_t, int, int *);
+
+	/*
+	 * DMA mapping methods.
+	 */
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
+
+	/*
+	 * DMA memory utility functions.
+	 */
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t, bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
+	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
+	int 	(*_dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+		    bus_dma_tag_t *, int);
+	void	(*_dmatag_destroy)(bus_dma_tag_t);
+};
 
 #endif /* !defined(_X86_BUS_PRIVATE_H_) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.136 2007/08/02 02:42:41 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.136.2.1 2007/10/02 18:29:21 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.136 2007/08/02 02:42:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.136.2.1 2007/10/02 18:29:21 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -803,9 +803,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		break;
 
 	case PRCO_GETOPT:
-		*mp = m = m_get(M_WAIT, MT_SOOPTS);
-		m->m_len = sizeof(int);
-		MCLAIM(m, so->so_mowner);
+		*mp = m = m_intopt(so, 0);
 
 		switch (optname) {
 #ifdef TCP_SIGNATURE

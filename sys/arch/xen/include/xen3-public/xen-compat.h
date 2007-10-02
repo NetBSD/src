@@ -1,17 +1,36 @@
+/* $NetBSD: xen-compat.h,v 1.1.1.1.48.1 2007/10/02 18:28:05 joerg Exp $ */
 /******************************************************************************
  * xen-compat.h
  * 
  * Guest OS interface to Xen.  Compatibility layer.
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2006, Christian Limpach
  */
 
 #ifndef __XEN_PUBLIC_XEN_COMPAT_H__
 #define __XEN_PUBLIC_XEN_COMPAT_H__
 
-#define __XEN_LATEST_INTERFACE_VERSION__ 0x00030101
+#define __XEN_LATEST_INTERFACE_VERSION__ 0x00030205
 
-#if defined(__XEN__)
+#if defined(__XEN__) || defined(__XEN_TOOLS__)
 /* Xen is built with matching headers and implements the latest interface. */
 #define __XEN_INTERFACE_VERSION__ __XEN_LATEST_INTERFACE_VERSION__
 #elif !defined(__XEN_INTERFACE_VERSION__)
@@ -23,9 +42,11 @@
 #error "These header files do not support the requested interface version."
 #endif
 
-#if __XEN_INTERFACE_VERSION__ < 0x00030101
-#undef __HYPERVISOR_sched_op
-#define __HYPERVISOR_sched_op __HYPERVISOR_sched_op_compat
+/* Fields defined as a Xen guest handle since 0x00030205. */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030205
+#define XEN_GUEST_HANDLE_00030205(type) XEN_GUEST_HANDLE(type)
+#else
+#define XEN_GUEST_HANDLE_00030205(type) type *
 #endif
 
 #endif /* __XEN_PUBLIC_XEN_COMPAT_H__ */

@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.14.4.1 2007/09/03 16:49:12 jmcneill Exp $ */
+/* $NetBSD: envsys.h,v 1.14.4.2 2007/10/02 18:29:27 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ struct envsys_data {
 	int32_t		value_avg;	/* avg value */
 	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
-	char 		genstr[ENVSYS_DESCLEN];	/* generic sensor string */
 };
 
 typedef struct envsys_data envsys_data_t;
@@ -86,7 +85,7 @@ enum envsys_units {
 	ENVSYS_INDICATOR,		/* Indicator */
 	ENVSYS_INTEGER,			/* Integer */
 	ENVSYS_DRIVE,			/* Drive */
-	ENVSYS_GSTRING,			/* Generic string */
+	ENVSYS_BATTERY_STATE,		/* Battery state */
 	ENVSYS_NSENSORS
 };
 
@@ -115,6 +114,14 @@ enum envsys_drive_states {
 	ENVSYS_DRIVE_PFAIL		/* drive is degraded */
 };
 
+/* sensor battery states */
+enum envsys_battery_states {
+	ENVSYS_BATTERY_STATE_NORMAL	= 1,	/* normal cap in battery */
+	ENVSYS_BATTERY_STATE_WARNING,		/* warning cap in battery */
+	ENVSYS_BATTERY_STATE_CRITICAL,		/* critical cap in battery */
+	ENVSYS_BATTERY_STATE_LOW		/* low cap in battery */
+};
+
 /* sensor flags */
 #define ENVSYS_FPERCENT 	0x00000001	/* sensor wants a percentage */
 #define ENVSYS_FVALID_MAX	0x00000002	/* max value is ok */
@@ -128,7 +135,7 @@ enum envsys_drive_states {
 #define ENVSYS_FMONCRITOVER	0x00000080	/* monitor a critover state */
 #define ENVSYS_FMONWARNUNDER	0x00000100	/* monitor a warnunder state */
 #define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
-#define ENVSYS_FMONDRVSTATE	0x00000400	/* monitor a drive state */
+#define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNOTVALID 	0x00001000	/* sensor is invalid */
 

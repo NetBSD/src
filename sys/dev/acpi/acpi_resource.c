@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.21 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.21.22.1 2007/10/02 18:28:18 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.21 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.21.22.1 2007/10/02 18:28:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_IO:
 		if (res->Data.Io.Minimum ==
-			    res->Data.Io.Maximum) {
+		    res->Data.Io.Maximum) {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Io 0x%x/%d\n",
 					     res->Data.Io.Minimum,
@@ -128,7 +128,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 					     res->Data.Io.Minimum,
 					     res->Data.Io.Maximum,
 					     res->Data.Io.AddressLength));
-			if (ops->ioport)
+			if (ops->iorange)
 				(*ops->iorange)(arg->dev, arg->context,
 				    res->Data.Io.Minimum,
 				    res->Data.Io.Maximum,
@@ -237,10 +237,53 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				     "End dependant functions\n"));
 		if (ops->end_dep)
 			(*ops->end_dep)(arg->dev, arg->context);
+		break;
 
 	case ACPI_RESOURCE_TYPE_ADDRESS32:
-		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				     "Address32 unimplemented\n"));
+		/* XXX Only fixed size supported for now */
+		if (res->Data.Address32.AddressLength == 0 ||
+		    res->Data.Address32.ProducerConsumer != ACPI_CONSUMER)
+			break;
+#define ADRRESS32_FIXED2(r)						\
+	((r)->Data.Address32.MinAddressFixed == ACPI_ADDRESS_FIXED &&	\
+	 (r)->Data.Address32.MaxAddressFixed == ACPI_ADDRESS_FIXED)
+		switch (res->Data.Address32.ResourceType) {
+		case ACPI_MEMORY_RANGE:
+			if (ADRRESS32_FIXED2(res)) {
+				if (ops->memory)
+					(*ops->memory)(arg->dev, arg->context,
+					    res->Data.Address32.Minimum,
+					    res->Data.Address32.AddressLength);
+			} else {
+				if (ops->memrange)
+					(*ops->memrange)(arg->dev, arg->context,
+					    res->Data.Address32.Minimum,
+					    res->Data.Address32.Maximum,
+					    res->Data.Address32.AddressLength,
+					    res->Data.Address32.Granularity);
+			}
+			break;
+		case ACPI_IO_RANGE:
+			if (ADRRESS32_FIXED2(res)) {
+				if (ops->ioport)
+					(*ops->ioport)(arg->dev, arg->context,
+					    res->Data.Address32.Minimum,
+					    res->Data.Address32.AddressLength);
+			} else {
+				if (ops->iorange)
+					(*ops->iorange)(arg->dev, arg->context,
+					    res->Data.Address32.Minimum,
+					    res->Data.Address32.Maximum,
+					    res->Data.Address32.AddressLength,
+					    res->Data.Address32.Granularity);
+			}
+			break;
+		case ACPI_BUS_NUMBER_RANGE:
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				      "Address32/BusNumber unimplemented\n"));
+			break;
+		}
+#undef ADRRESS32_FIXED2
 		break;
 
 	case ACPI_RESOURCE_TYPE_ADDRESS16:
@@ -260,7 +303,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				     "ExtendedIrq unimplemented\n"));
+				     "GenericRegister unimplemented\n"));
 		break;
 
 	case ACPI_RESOURCE_TYPE_VENDOR:

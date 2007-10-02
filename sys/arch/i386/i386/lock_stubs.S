@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3.8.1 2007/08/09 02:36:57 jmcneill Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3.8.2 2007/10/02 18:27:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #if defined(I386_CPU)
 #define	STUB(name, alternate)					\
-	NENTRY(name) ;						\
+	ENTRY(name) ;						\
 	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class) ;		\
 	movl	4(%esp), %edx ;					\
 	je	_C_LABEL(alternate)
@@ -72,7 +72,7 @@
 #define	ALIGN32		.align	16	/* don't bother */
 #else
 #define	STUB(name, alternate)					\
-	NENTRY(name) ;						\
+	ENTRY(name) ;						\
 	movl	4(%esp), %edx
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
@@ -292,10 +292,10 @@ LABEL(i686_mutex_spin_exit_end)
 #else	/* !__XEN__ */
 
 /* For now; strong alias not working for some reason. */
-NENTRY(mutex_spin_enter)
+ENTRY(mutex_spin_enter)
 	jmp	_C_LABEL(mutex_vector_enter)
 
-NENTRY(mutex_spin_exit)
+ENTRY(mutex_spin_exit)
 	jmp	_C_LABEL(mutex_vector_exit)
 
 #endif	/* !__XEN__ */
@@ -344,29 +344,29 @@ _80386_lock_cas:
  */
 	.align	8
 
-NENTRY(mb_read)
+ENTRY(mb_read)
 	lock
 	addl	$0, 0(%esp)
 	ret
 END(mb_read_end, 8)
 
-NENTRY(mb_write)
+ENTRY(mb_write)
 	/* Nothing at the moment. */
 	ret
 END(mb_write_end, 8)
 
-NENTRY(mb_memory)
+ENTRY(mb_memory)
 	lock
 	addl	$0, 0(%esp)
 	ret
 END(mb_memory_end, 8)
 
-NENTRY(sse2_mb_read)
+ENTRY(sse2_mb_read)
 	lfence
 	ret
 END(sse2_mb_read_end, 8)
 
-NENTRY(sse2_mb_memory)
+ENTRY(sse2_mb_memory)
 	mfence
 	ret
 END(sse2_mb_memory_end, 8)
@@ -376,6 +376,6 @@ END(sse2_mb_memory_end, 8)
  * by gas, or could stall newer processors.
  */
 
-NENTRY(x86_mb_nop)
+ENTRY(x86_mb_nop)
 	ret
 END(x86_mb_nop_end, 8)

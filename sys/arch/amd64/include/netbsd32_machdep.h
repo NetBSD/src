@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.12 2007/03/16 22:23:30 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.12.12.1 2007/10/02 18:26:44 joerg Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -9,6 +9,9 @@
 
 #define NETBSD32_POINTER_TYPE uint32_t
 typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
+
+/* i386 has 32bit aligned 64bit integers */
+#define NETBSD32_INT64_ALIGN __attribute__((__aligned__(4)))
 
 typedef netbsd32_pointer_t netbsd32_sigcontextp_t;
 

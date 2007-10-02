@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.S,v 1.4 2006/08/30 15:35:56 cube Exp $	*/
+/*	$NetBSD: db_dbgreg.S,v 1.4.30.1 2007/10/02 18:27:16 joerg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,75 +38,6 @@
 #define B_ARG1	12(%ebp)
 #define B_ARG2	16(%ebp)
 #define B_ARG3	20(%ebp)
-
-/*
- * void outb(unsigned char *io_port,
- *	     unsigned char byte)
- *
- * Output a byte to an IO port.
- */
-ENTRY(outb)
-	movl	S_ARG0,%edx		/* IO port address */
-	movl	S_ARG1,%eax		/* data to output */
-	outb	%al,%dx			/* send it out */
-	ret
-
-/*
- * unsigned char inb(unsigned char *io_port)
- *
- * Input a byte from an IO port.
- */
-ENTRY(inb)
-	movl	S_ARG0,%edx		/* IO port address */
-	xorl	%eax,%eax		/* clear high bits of register */
-	inb	%dx,%al			/* get the byte */
-	ret
-
-/*
- * void outw(unsigned short *io_port,
- *	     unsigned short word)
- *
- * Output a word to an IO port.
- */
-ENTRY(outw)
-	movl	S_ARG0,%edx		/* IO port address */
-	movl	S_ARG1,%eax		/* data to output */
-	outw	%ax,%dx			/* send it out */
-	ret
-
-/*
- * unsigned short inw(unsigned short *io_port)
- *
- * Input a word from an IO port.
- */
-ENTRY(inw)
-	movl	S_ARG0,%edx		/* IO port address */
-	xorl	%eax,%eax		/* clear high bits of register */
-	inw	%dx,%ax			/* get the word */
-	ret
-
-/*
- * void outl(unsigned int *io_port,
- *	     unsigned int byte)
- *
- * Output an int to an IO port.
- */
-ENTRY(outl)
-	movl	S_ARG0,%edx		/* IO port address */
-	movl	S_ARG1,%eax		/* data to output */
-	outl	%eax,%dx		/* send it out */
-	ret
-
-/*
- * unsigned int inl(unsigned int *io_port)
- *
- * Input an int from an IO port.
- */
-ENTRY(inl)
-	movl	S_ARG0,%edx		/* IO port address */
-	inl	%dx,%eax		/* get the int */
-	ret
-
 
 ENTRY(dr6)
 	movl	%db6, %eax

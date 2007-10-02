@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.20 2007/04/30 14:44:30 rmind Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.20.6.1 2007/10/02 18:28:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ void		db_show_arptab(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/vfs_aio.c */
 void		db_show_aio_jobs(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/sys_mqueue.c */
+void		db_show_mqueue_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * This is used in several places to determine which printf format

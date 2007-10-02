@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.40.2.1 2007/10/02 18:28:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40.2.1 2007/10/02 18:28:50 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka E
 
 MALLOC_JUSTDEFINE(M_FILECOREMNT,
     "filecore mount", "Filecore FS mount structures");
+MALLOC_JUSTDEFINE(M_FILECORETMP,
+    "filecore temp", "Filecore FS temporary structures");
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 

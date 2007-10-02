@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.22 2007/07/19 07:52:45 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.22.4.1 2007/10/02 18:28:53 joerg Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.22 2007/07/19 07:52:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.22.4.1 2007/10/02 18:28:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -346,9 +346,12 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	 * reason we need to eventually bump locking to userspace, as we
 	 * will need to lock the node if we wish to do flushes.
 	 */
-	rv = puffs_pnode2vnode(pmp, pf->pf_cookie, 0, &vp);
-	if (rv)
+	rv = puffs_cookie2vnode(pmp, pf->pf_cookie, 0, 0, &vp);
+	if (rv) {
+		if (rv == PUFFS_NOSUCHCOOKIE)
+			return ENOENT;
 		return rv;
+	}
 
 	switch (pf->pf_op) {
 #if 0

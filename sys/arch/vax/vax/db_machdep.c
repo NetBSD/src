@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.46 2007/03/04 06:00:58 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.46.18.1 2007/10/02 18:27:48 joerg Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.46 2007/03/04 06:00:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.46.18.1 2007/10/02 18:27:48 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -658,7 +658,7 @@ db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
-	{ "cpu",	db_mach_cpu,	0,	0 },
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,	NULL,NULL,NULL) },
 #endif
-	{ NULL },
+	{ DDB_ADD_CMD(NULL,NULL,0,NULL,NULL,NULL) },
 };

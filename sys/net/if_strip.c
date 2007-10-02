@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.77.4.2 2007/09/03 16:48:57 jmcneill Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.77.4.3 2007/10/02 18:29:15 joerg Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.77.4.2 2007/09/03 16:48:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.77.4.3 2007/10/02 18:29:15 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1224,7 +1224,7 @@ stripintr(void *arg)
 #endif
 		m->m_data = (void *) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
-#if NPBFILTER > 0
+#if NBPFILTER > 0
 		if (sc->sc_if.if_bpf) {
 			bpf_mtap_sl_in(sc->sc_if.if_bpf, chdr, &m);
 			if (m == NULL)

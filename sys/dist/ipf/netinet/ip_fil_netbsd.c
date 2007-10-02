@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.40 2007/07/09 21:10:48 ad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.40.6.1 2007/10/02 18:28:46 joerg Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1899,11 +1899,16 @@ int len;
 			m = m_pullup(m, len);
 		}
 		*fin->fin_mp = m;
-		fin->fin_m = m;
 		if (m == NULL) {
+			fin->fin_m = NULL;
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
 			return NULL;
 		}
+
+		while (M_LEN(m) == 0) {
+			m = m->m_next;
+		}
+		fin->fin_m = m;
 		ip = MTOD(m, char *) + ipoff;
 	}
 

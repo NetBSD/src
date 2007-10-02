@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.10 2007/06/30 09:37:55 pooka Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.10.6.1 2007/10/02 18:28:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10 2007/06/30 09:37:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10.6.1 2007/10/02 18:28:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ filecore_init()
 {
 
 	malloc_type_attach(M_FILECOREMNT);
+	malloc_type_attach(M_FILECORETMP);
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node), 0, 0, 0,
 	    "filecrnopl", &pool_allocator_nointr, IPL_NONE);
 	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
@@ -152,6 +153,7 @@ filecore_done()
 {
 	hashdone(filecorehashtbl, M_FILECOREMNT);
 	pool_destroy(&filecore_node_pool);
+	malloc_type_detach(M_FILECORETMP);
 	malloc_type_detach(M_FILECOREMNT);
 }
 

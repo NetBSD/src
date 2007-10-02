@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.250.4.2 2007/09/03 16:49:04 jmcneill Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.250.4.3 2007/10/02 18:29:19 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.250.4.2 2007/09/03 16:49:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.250.4.3 2007/10/02 18:29:19 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1013,7 +1013,6 @@ found:
 			/* XXX error stat??? */
 			error = EINVAL;
 DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
-			goto bad;
 		}
 		splx(s);
 		if (error)

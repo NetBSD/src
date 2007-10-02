@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.10 2006/08/28 00:20:47 christos Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.10.30.1 2007/10/02 18:27:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.10 2006/08/28 00:20:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.10.30.1 2007/10/02 18:27:51 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * Determine the largest extended function value.
 	 */
-	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
 	/*
@@ -195,7 +195,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000005, descs);
 
 	/*
 	 * K6-III and higher have large page TLBs.
@@ -240,7 +240,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
 	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
@@ -270,7 +270,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * Determine the largest extended function value.
 	 */
-	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
 	/*
@@ -281,7 +281,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000005, descs);
 
 	cai = &ci->ci_cinfo[CAI_ITLB];
 	cai->cai_totalsize = VIA_L1_EBX_ITLB_ENTRIES(descs[1]);
@@ -319,7 +319,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
 	if (model >= 9) {
