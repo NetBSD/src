@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.24 2007/02/11 15:41:31 ad Exp $ */
+/* $NetBSD: lock.h,v 1.24.22.1 2007/10/02 16:48:36 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,30 @@
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
+
+static __inline int
+__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_LOCKED;
+}
+
+static __inline int
+__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_LOCKED;
+}
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

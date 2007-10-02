@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.14 2007/09/30 23:50:42 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.15 2007/10/02 16:48:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.14 2007/09/30 23:50:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.15 2007/10/02 16:48:37 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -169,7 +169,7 @@ acpi_md_sleep(int state)
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
-	disable_intr();
+	x86_disable_intr();
 
 	if (acpi_savecpu()) {
 
@@ -217,7 +217,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
-	enable_intr();
+	x86_enable_intr();
 
 	return (ret);
 #undef WAKECODE_FIXUP
