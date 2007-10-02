@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.h,v 1.1 2007/09/30 04:07:42 kiyohara Exp $	*/
+/*	$NetBSD: bcsp.h,v 1.2 2007/10/02 05:40:10 junyoung Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -48,7 +48,7 @@ typedef struct {
 	uint8_t plen2;			/* Payload Length (bits 4-11) */
 	uint8_t csum;			/* Checksum */
 	u_char payload[0];
-} __attribute__ ((__packed__)) bcsp_hdr_t;
+} __packed bcsp_hdr_t;
 
 #define BCSP_FLAGS_SEQ_SHIFT	0
 #define BCSP_FLAGS_SEQ_MASK	0x07
