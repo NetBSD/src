@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.23 2007/07/09 21:10:48 ad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.23.6.1 2007/10/02 18:28:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.23 2007/07/09 21:10:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.23.6.1 2007/10/02 18:28:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.23 2007/07/09 21:10:48 ad Exp $");
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+MALLOC_DECLARE(M_PTYFSTMP);
 
 /*
  * Vnode Operations.
@@ -626,7 +628,7 @@ ptyfs_readdir(void *v)
 		int *a_ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
-	struct dirent d;
+	struct dirent *dp;
 	struct ptyfsnode *ptyfs;
 	off_t i;
 	int error;
@@ -643,68 +645,60 @@ ptyfs_readdir(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
+	dp = malloc(sizeof(struct dirent), M_PTYFSTMP, M_WAITOK | M_ZERO);
+
 	error = 0;
 	i = uio->uio_offset;
-	(void)memset(&d, 0, sizeof(d));
-	d.d_reclen = UIO_MX;
+	dp->d_reclen = UIO_MX;
 	ncookies = uio->uio_resid / UIO_MX;
 
-	switch (ptyfs->ptyfs_type) {
-	case PTYFSroot: /* root */
-
-		if (i >= npty)
-			return 0;
-
-		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (npty + 2 - i));
-			cookies = malloc(ncookies * sizeof (off_t),
-			    M_TEMP, M_WAITOK);
-			*ap->a_cookies = cookies;
-		}
-
-		for (; i < 2; i++) {
-			switch (i) {
-			case 0:		/* `.' */
-			case 1:		/* `..' */
-				d.d_fileno = PTYFS_FILENO(0, PTYFSroot);
-				d.d_namlen = i + 1;
-				(void)memcpy(d.d_name, "..", d.d_namlen);
-				d.d_name[i + 1] = '\0';
-				d.d_type = DT_DIR;
-				break;
-			}
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			nc++;
-		}
-		if (error) {
-			ncookies = nc;
-			break;
-		}
-		for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
-			/* check for used ptys */
-			if (pty_isfree(i - 2, 1))
-				continue;
-
-			d.d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);
-			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
-			    "%lld", (long long)(i - 2));
-			d.d_type = DT_CHR;
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			nc++;
-		}
-		ncookies = nc;
-		break;
-
-	default:
+	if (ptyfs->ptyfs_type != PTYFSroot) {
 		error = ENOTDIR;
-		break;
+		goto out;
 	}
+
+	if (i >= npty)
+		goto out;
+
+	if (ap->a_ncookies) {
+		ncookies = min(ncookies, (npty + 2 - i));
+		cookies = malloc(ncookies * sizeof (off_t),
+		    M_TEMP, M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
+
+	for (; i < 2; i++) {
+		/* `.' and/or `..' */
+		dp->d_fileno = PTYFS_FILENO(0, PTYFSroot);
+		dp->d_namlen = i + 1;
+		(void)memcpy(dp->d_name, "..", dp->d_namlen);
+		dp->d_name[i + 1] = '\0';
+		dp->d_type = DT_DIR;
+		if ((error = uiomove(dp, UIO_MX, uio)) != 0)
+			goto out;
+		if (cookies)
+			*cookies++ = i + 1;
+		nc++;
+	}
+	for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
+		/* check for used ptys */
+		if (pty_isfree(i - 2, 1))
+			continue;
+
+		dp->d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);
+		dp->d_namlen = snprintf(dp->d_name, sizeof(dp->d_name),
+		    "%lld", (long long)(i - 2));
+		dp->d_type = DT_CHR;
+		if ((error = uiomove(dp, UIO_MX, uio)) != 0)
+			goto out;
+		if (cookies)
+			*cookies++ = i + 1;
+		nc++;
+	}
+
+out:
+	/* not pertinent in error cases */
+	ncookies = nc;
 
 	if (ap->a_ncookies) {
 		if (error) {
@@ -716,6 +710,7 @@ ptyfs_readdir(void *v)
 			*ap->a_ncookies = ncookies;
 	}
 	uio->uio_offset = i;
+	free(dp, M_PTYFSTMP);
 	return error;
 }
 

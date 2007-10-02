@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.8 2007/05/21 11:35:16 degroote Exp $ */
+/*	$NetBSD: deflate.c,v 1.8.6.1 2007/10/02 18:29:25 joerg Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.8 2007/05/21 11:35:16 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.8.6.1 2007/10/02 18:29:25 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -177,13 +177,13 @@ end:
 	output = *out;
 	for (j = 0; buf[j].flag != 0; j++) {
 		if (count > buf[j].size) {
-			memcpy(buf[j].out, *out, buf[j].size);
+			memcpy(*out, buf[j].out, buf[j].size);
 			*out += buf[j].size;
 			free(buf[j].out, M_CRYPTO_DATA);
 			count -= buf[j].size;
 		} else {
 			/* it should be the last buffer */
-			memcpy(buf[j].out, *out, count);
+			memcpy(*out, buf[j].out, count);
 			*out += count;
 			free(buf[j].out, M_CRYPTO_DATA);
 			count = 0;

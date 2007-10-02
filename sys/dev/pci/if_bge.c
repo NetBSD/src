@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.6 2007/10/01 05:37:38 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.7 2007/10/02 18:28:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.6 2007/10/01 05:37:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.7 2007/10/02 18:28:31 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -288,7 +288,7 @@ int	bge_tso_debug = 0;
 #define BGE_QUIRK_5700_COMMON \
 	(BGE_QUIRK_5700_SMALLDMA|BGE_QUIRK_PRODUCER_BUG)
 
-CFATTACH_DECL(bge, sizeof(struct bge_softc),
+CFATTACH_DECL_NEW(bge, sizeof(struct bge_softc),
     bge_probe, bge_attach, NULL, NULL);
 
 static u_int32_t
@@ -340,7 +340,7 @@ bge_vpd_readbyte(struct bge_softc *sc, int addr)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: VPD read timed out\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "VPD read timed out\n");
 		return(0);
 	}
 
@@ -376,8 +376,8 @@ bge_vpd_read(struct bge_softc *sc)
 	bge_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_ID) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-			sc->bge_dev.dv_xname, VPD_RES_ID, res.vr_id);
+		aprint_error_dev("bad VPD resource id: expected %x got %x\n",
+		    VPD_RES_ID, res.vr_id);
 		return;
 	}
 
@@ -393,8 +393,9 @@ bge_vpd_read(struct bge_softc *sc)
 	bge_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_READ) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-		    sc->bge_dev.dv_xname, VPD_RES_READ, res.vr_id);
+		aprint_error_dev(sc->bge_dev,
+		    "bad VPD resource id: expected %x got %x\n",
+		    VPD_RES_READ, res.vr_id);
 		return;
 	}
 
@@ -441,7 +442,7 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, u_int8_t *dest)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: eeprom read timed out\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "eeprom read timed out\n");
 		return(0);
 	}
 
@@ -476,7 +477,7 @@ bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 static int
 bge_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct bge_softc *sc = (struct bge_softc *)dev;
+	struct bge_softc *sc = device_private(dev);
 	u_int32_t val;
 	u_int32_t saved_autopoll;
 	int i;
@@ -507,7 +508,7 @@ bge_miibus_readreg(device_t dev, int phy, int reg)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
 		val = 0;
 		goto done;
 	}
@@ -529,7 +530,7 @@ done:
 static void
 bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct bge_softc *sc = (struct bge_softc *)dev;
+	struct bge_softc *sc = device_private(dev);
 	u_int32_t saved_autopoll;
 	int i;
 
@@ -556,15 +557,14 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 		delay(40);
 	}
 
-	if (i == BGE_TIMEOUT) {
-		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
-	}
+	if (i == BGE_TIMEOUT)
+		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
 }
 
 static void
 bge_miibus_statchg(device_t dev)
 {
-	struct bge_softc *sc = (struct bge_softc *)dev;
+	struct bge_softc *sc = device_private(dev);
 	struct mii_data *mii = &sc->bge_mii;
 
 	/*
@@ -685,15 +685,15 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->bge_dmatag, BGE_JMEM, PAGE_SIZE, 0,
 	     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return ENOBUFS;
 	}
 
 	state = 1;
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, (void **)&kva,
 	    BUS_DMA_NOWAIT)) {
-		printf("%s: can't map DMA buffers (%d bytes)\n",
-		    sc->bge_dev.dv_xname, (int)BGE_JMEM);
+		aprint_error_dev(sc->bge_dev,
+		    "can't map DMA buffers (%d bytes)\n", (int)BGE_JMEM);
 		error = ENOBUFS;
 		goto out;
 	}
@@ -701,7 +701,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	state = 2;
 	if (bus_dmamap_create(sc->bge_dmatag, BGE_JMEM, 1, BGE_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
-		printf("%s: can't create DMA map\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't create DMA map\n");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -709,7 +709,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	state = 3;
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
 	    kva, BGE_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load DMA map\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't load DMA map\n");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -732,8 +732,8 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 		entry = malloc(sizeof(struct bge_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			printf("%s: no memory for jumbo buffer queue!\n",
-			    sc->bge_dev.dv_xname);
+			aprint_error_dev(sc->bge_dev,
+			    "no memory for jumbo buffer queue!\n");
 			error = ENOBUFS;
 			goto out;
 		}
@@ -774,7 +774,7 @@ bge_jalloc(struct bge_softc *sc)
 	entry = SLIST_FIRST(&sc->bge_jfree_listhead);
 
 	if (entry == NULL) {
-		printf("%s: no free jumbo buffers\n", sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "no free jumbo buffers\n");
 		return(NULL);
 	}
 
@@ -906,8 +906,8 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		buf = bge_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
-			printf("%s: jumbo allocation failed "
-			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
+			aprint_error_dev(sc->bge_dev,
+			    "jumbo allocation failed -- packet dropped!\n");
 			return(ENOBUFS);
 		}
 
@@ -1093,7 +1093,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 	/* NIC-memory send ring  not used; initialize to zero. */
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
-		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_RSLOTS; i++) {
@@ -1105,8 +1105,8 @@ bge_init_tx_ring(struct bge_softc *sc)
 			panic("dmamap NULL in bge_init_tx_ring");
 		dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT);
 		if (dma == NULL) {
-			printf("%s: can't alloc txdmamap_pool_entry\n",
-			    sc->bge_dev.dv_xname);
+			aprint_error_dev(sc->bge_dev,
+			    "can't alloc txdmamap_pool_entry\n");
 			bus_dmamap_destroy(sc->bge_dmatag, dmamap);
 			return (ENOMEM);
 		}
@@ -1224,8 +1224,8 @@ bge_chipinit(struct bge_softc *sc)
 	 * self-tests passed.
 	 */
 	if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL) {
-		printf("%s: RX CPU self-diagnostics failed!\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "RX CPU self-diagnostics failed!\n");
 		return(ENODEV);
 	}
 
@@ -1250,7 +1250,7 @@ bge_chipinit(struct bge_softc *sc)
 
 		/* From FreeBSD */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
-		    sc->bge_dev.dv_xname));
+		    device_xname(sc->bge_dev)));
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
@@ -1262,8 +1262,7 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
 		device_ctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 					   BGE_PCI_CONF_DEV_CTRL);
-		aprint_debug("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname,
-		    device_ctl);
+		aprint_debug_dev(sc->bge_dev, "pcie mode=0x%x\n", device_ctl);
 
 		if ((device_ctl & 0x00e0) && 0) {
 			/*
@@ -1280,7 +1279,8 @@ bge_chipinit(struct bge_softc *sc)
 	} else if (pci_conf_read(sc->sc_pc, sc->sc_pcitag,BGE_PCI_PCISTATE) &
 	    BGE_PCISTATE_PCI_BUSMODE) {
 		/* Conventional PCI bus */
-	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n", sc->bge_dev.dv_xname));
+	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
+		    device_xname(sc->bge_dev)));
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
@@ -1288,7 +1288,8 @@ bge_chipinit(struct bge_softc *sc)
 			dma_rw_ctl |= 0x0F;
 		}
 	} else {
-	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n", sc->bge_dev.dv_xname));
+	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
+		    device_xname(sc->bge_dev)));
 		/* PCI-X bus */
 		dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 		    (0x3 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
@@ -1373,9 +1374,9 @@ bge_chipinit(struct bge_softc *sc)
 		/* Disable PCI memory write and invalidate. */
 #if 0
 			if (bootverbose)
-				printf("%s: cache line size %d not "
-				    "supported; disabling PCI MWI\n",
-				    sc->bge_dev.dv_xname, cachesize);
+				aprint_error_dev(sc->bge_dev,
+				    "cache line size %d not supported "
+				    "disabling PCI MWI\n",
 #endif
 			PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD,
 			    PCIM_CMD_MWIEN);
@@ -1489,8 +1490,8 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: buffer manager failed to start\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "buffer manager failed to start\n");
 		return(ENXIO);
 	}
 
@@ -1506,8 +1507,8 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: flow-through queue init failed\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "flow-through queue init failed\n");
 		return(ENXIO);
 	}
 
@@ -1692,8 +1693,8 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	if (i == BGE_TIMEOUT) {
-		printf("%s: host coalescing engine failed to idle\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "host coalescing engine failed to idle\n");
 		return(ENXIO);
 	}
 
@@ -2377,8 +2378,9 @@ bge_setpowerstate(struct bge_softc *sc, int powerlevel)
 	 * followed Broadom's sample pcb layout. Until we verify that
 	 * for all supported OEM cards, states D1-D3 are  unsupported.
 	 */
-	printf("%s: power state %d unimplemented; check GPIO pins\n",
-	       sc->bge_dev.dv_xname, powerlevel);
+	aprint_error_dev(sc->bge_dev,
+	    "power state %d unimplemented; check GPIO pins\n",
+	    powerlevel);
 #endif
 	return EOPNOTSUPP;
 }
@@ -2406,7 +2408,7 @@ bge_probe(device_t parent, cfdata_t match, void *aux)
 static void
 bge_attach(device_t parent, device_t self, void *aux)
 {
-	struct bge_softc	*sc = (struct bge_softc *)self;
+	struct bge_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
@@ -2432,6 +2434,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->bge_dev = self;
 
 	aprint_naive(": Ethernet controller\n");
 	aprint_normal(": %s\n", bp->bp_name);
@@ -2446,8 +2449,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	command = pci_conf_read(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		aprint_error("%s: failed to enable memory mapping!\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "failed to enable memory mapping!\n");
 		return;
 	}
 
@@ -2461,15 +2464,13 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    &memaddr, &memsize) == 0)
 			break;
 	default:
-		aprint_error("%s: can't find mem space\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't find mem space\n");
 		return;
 	}
 
 	DPRINTFN(5, ("pci_intr_map\n"));
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -2480,15 +2481,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc);
 
 	if (sc->bge_intrhand == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->bge_dev.dv_xname);
-		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+		aprint_error_dev(sc->bge_dev,
+		    "couldn't establish interrupt%s%s\n",
+		    intrstr ? " at " : "", intrstr ? intrstr : "");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n",
-	    sc->bge_dev.dv_xname, intrstr);
+	aprint_normal_dev(sc->bge_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
@@ -2526,8 +2524,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bge_reset(sc);
 
 	if (bge_chipinit(sc)) {
-		aprint_error("%s: chip initialization failed\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "chip initialization failed\n");
 		bge_release_resources(sc);
 		return;
 	}
@@ -2546,20 +2543,20 @@ bge_attach(device_t parent, device_t self, void *aux)
 		eaddr[5] = (u_char)(mac_addr >> 0);
 	} else if (bge_read_eeprom(sc, (void *)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		aprint_error("%s: failed to read station address\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev,
+		    "failed to read station address\n");
 		bge_release_resources(sc);
 		return;
 	}
 
 	br = bge_lookup_rev(sc->bge_chipid);
-	aprint_normal("%s: ", sc->bge_dev.dv_xname);
 
 	if (br == NULL) {
-		aprint_normal("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
+		aprint_normal_dev(sc->bge_dev, "unknown ASIC (0x%04x)",
+		    sc->bge_chipid >> 16);
 		sc->bge_quirks = 0;
 	} else {
-		aprint_normal("ASIC %s (0x%04x)",
+		aprint_normal_dev(sc->bge_dev, "ASIC %s (0x%04x)",
 		    br->br_name, sc->bge_chipid >> 16);
 		sc->bge_quirks |= br->br_quirks;
 	}
@@ -2573,16 +2570,16 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		aprint_error("%s: can't alloc rx buffers\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
 			   sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
-		aprint_error("%s: can't map DMA buffers (%d bytes)\n",
-		    sc->bge_dev.dv_xname, (int)sizeof(struct bge_ring_data));
+		aprint_error_dev(sc->bge_dev,
+		    "can't map DMA buffers (%zu bytes)\n",
+		    sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		return;
 	}
@@ -2590,8 +2587,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
-		aprint_error("%s: can't create DMA map\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "can't create DMA map\n");
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
@@ -2616,8 +2612,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	/* Try to allocate memory for jumbo buffers. */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
 		if (bge_alloc_jumbo_mem(sc)) {
-			aprint_error("%s: jumbo buffer allocation failed\n",
-			    sc->bge_dev.dv_xname);
+			aprint_error_dev(sc->bge_dev,
+			    "jumbo buffer allocation failed\n");
 		} else
 			sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 	}
@@ -2636,8 +2632,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) {
 		sc->bge_tx_coal_ticks = (12 * 5);
 		sc->bge_rx_max_coal_bds = (12 * 5);
-			aprint_verbose("%s: setting short Tx thresholds\n",
-			    sc->bge_dev.dv_xname);
+			aprint_verbose_dev(sc->bge_dev,
+			    "setting short Tx thresholds\n");
 	}
 
 	/* Set up ifnet structure */
@@ -2652,7 +2648,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("strcpy if_xname\n"));
-	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->bge_dev));
 
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
 		sc->ethercom.ec_if.if_capabilities |=
@@ -2711,12 +2707,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 		 */
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
-		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
+		mii_attach(sc->bge_dev, &sc->bge_mii, 0xffffffff,
 			   MII_PHY_ANY, MII_OFFSET_ANY,
 			   MIIF_FORCEANEG|MIIF_DOPAUSE);
 
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
-			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
+			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
 			ifmedia_add(&sc->bge_mii.mii_media,
 				    IFM_ETHER|IFM_MANUAL, 0, NULL);
 			ifmedia_set(&sc->bge_mii.mii_media,
@@ -2754,19 +2750,19 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Attach event counters.
 	 */
 	evcnt_attach_dynamic(&sc->bge_ev_intr, EVCNT_TYPE_INTR,
-	    NULL, sc->bge_dev.dv_xname, "intr");
+	    NULL, device_xname(sc->bge_dev), "intr");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xoff, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "tx_xoff");
+	    NULL, device_xname(sc->bge_dev), "tx_xoff");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xon, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "tx_xon");
+	    NULL, device_xname(sc->bge_dev), "tx_xon");
 	evcnt_attach_dynamic(&sc->bge_ev_rx_xoff, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "rx_xoff");
+	    NULL, device_xname(sc->bge_dev), "rx_xoff");
 	evcnt_attach_dynamic(&sc->bge_ev_rx_xon, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "rx_xon");
+	    NULL, device_xname(sc->bge_dev), "rx_xon");
 	evcnt_attach_dynamic(&sc->bge_ev_rx_macctl, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "rx_macctl");
+	    NULL, device_xname(sc->bge_dev), "rx_macctl");
 	evcnt_attach_dynamic(&sc->bge_ev_xoffentered, EVCNT_TYPE_MISC,
-	    NULL, sc->bge_dev.dv_xname, "xoffentered");
+	    NULL, device_xname(sc->bge_dev), "xoffentered");
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
@@ -2774,8 +2770,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pnp_status = pci_net_generic_power_register(self,
 	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
 	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 }
 
@@ -2826,11 +2821,6 @@ bge_reset(struct bge_softc *sc)
 			val |= (1<<29);
 		}
 	}
-	/*
-	 * Write the magic number to the firmware mailbox at 0xb50
-	 * so that the driver can synchronize with the firmware.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, val);
@@ -2879,6 +2869,12 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	/*
+	 * Write the magic number to the firmware mailbox at 0xb50
+	 * so that the driver can synchronize with the firmware.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
+	/*
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
 	 * This indicates that the firmware initialization
@@ -2892,8 +2888,8 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	if (i >= BGE_TIMEOUT) {
-		printf("%s: firmware handshake timed out, val = %x\n",
-		    sc->bge_dev.dv_xname, val);
+		aprint_error_dev(sc->bge_dev,
+		    "firmware handshake timed out, val = %x\n", val);
 		/*
 		 * XXX: occasionally fired on bcm5721, but without
 		 * apparent harm.  For now, keep going if we timeout
@@ -2911,7 +2907,7 @@ bge_reset(struct bge_softc *sc)
 	 * from the device's non-PCI registers may yield garbage
 	 * results.
 	 */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 10000; i++) {
 		new_pcistate = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    BGE_PCI_PCISTATE);
 		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==
@@ -2921,8 +2917,7 @@ bge_reset(struct bge_softc *sc)
 	}
 	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) !=
 	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
-		printf("%s: pcistate failed to revert\n",
-		    sc->bge_dev.dv_xname);
+		aprint_error_dev(sc->bge_dev, "pcistate failed to revert\n");
 	}
 
 	/* XXX: from FreeBSD/Linux; no documentation */
@@ -3220,8 +3215,8 @@ bge_intr(void *xsc)
 			/* Clear the interrupt */
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
-			bge_miibus_readreg(&sc->bge_dev, 1, BRGPHY_MII_ISR);
-			bge_miibus_writereg(&sc->bge_dev, 1, BRGPHY_MII_IMR,
+			bge_miibus_readreg(sc->bge_dev, 1, BRGPHY_MII_ISR);
+			bge_miibus_writereg(sc->bge_dev, 1, BRGPHY_MII_IMR,
 			    BRGPHY_INTRS);
 		}
 	} else {
@@ -3658,9 +3653,10 @@ doit:
 		if (__predict_false(m0->m_len <
 				    (hlen + sizeof(struct tcphdr)))) {
 
-			  printf("TSO: hard case m0->m_len == %d <"
-				 " ip/tcp hlen %zd, not handled yet\n",
-				 m0->m_len, hlen+ sizeof(struct tcphdr));
+			aprint_debug_dev(sc->bge_dev,
+			    "TSO: hard case m0->m_len == %d < ip/tcp hlen %zd,"
+			    "not handled yet\n",
+			     m0->m_len, hlen+ sizeof(struct tcphdr));
 #ifdef NOTYET
 			/*
 			 * XXX jonathan@NetBSD.org: untested.
@@ -3764,7 +3760,7 @@ doit:
 	if (dmamap->dm_nsegs > (BGE_TX_RING_CNT - sc->bge_txcnt - 16)) {
 		BGE_TSO_PRINTF(("%s: "
 		    " dmamap_load_mbuf too close to ring wrap\n",
-		    sc->bge_dev.dv_xname));
+		    device_xname(sc->bge_dev)));
 		goto fail_unload;
 	}
 
@@ -3813,7 +3809,7 @@ doit:
 
 	if (i < dmamap->dm_nsegs) {
 		BGE_TSO_PRINTF(("%s: reached %d < dm_nsegs %d\n",
-		    sc->bge_dev.dv_xname, i, dmamap->dm_nsegs));
+		    device_xname(sc->bge_dev), i, dmamap->dm_nsegs));
 		goto fail_unload;
 	}
 
@@ -3822,7 +3818,7 @@ doit:
 
 	if (frag == sc->bge_tx_saved_considx) {
 		BGE_TSO_PRINTF(("%s: frag %d = wrapped id %d?\n",
-		    sc->bge_dev.dv_xname, frag, sc->bge_tx_saved_considx));
+		    device_xname(sc->bge_dev), frag, sc->bge_tx_saved_considx));
 
 		goto fail_unload;
 	}
@@ -3947,7 +3943,7 @@ bge_init(struct ifnet *ifp)
 	 */
 	error = bge_blockinit(sc);
 	if (error != 0) {
-		printf("%s: initialization error %d\n", sc->bge_dev.dv_xname,
+		aprint_error_dev(sc->bge_dev, "initialization error %d\n",
 		    error);
 		splx(s);
 		return error;
@@ -4176,7 +4172,7 @@ bge_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	printf("%s: watchdog timeout -- resetting\n", sc->bge_dev.dv_xname);
+	aprint_error_dev(sc->bge_dev, "watchdog timeout -- resetting\n");
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	bge_init(ifp);
@@ -4199,8 +4195,8 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		  DELAY(1000);
 	}
 
-	printf("%s: block failed to stop: reg 0x%lx, bit 0x%08x\n",
-	    sc->bge_dev.dv_xname, (u_long) reg, bit);
+	aprint_error_dev(sc->bge_dev,
+	    "block failed to stop: reg 0x%lx, bit 0x%08x\n", (u_long)reg, bit);
 }
 
 /*
@@ -4361,5 +4357,5 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	return;
 
 err:
-	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

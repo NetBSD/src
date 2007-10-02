@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.31.10.1 2007/09/03 16:48:43 jmcneill Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.31.10.2 2007/10/02 18:28:43 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,13 +40,8 @@
  * FTDI FT8U100AX serial adapter driver
  */
 
-/*
- * XXX This driver will not support multiple serial ports.
- * XXX The ucom layer needs to be extended first.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.1 2007/09/03 16:48:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.2 2007/10/02 18:28:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

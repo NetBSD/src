@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.11.8.1 2007/08/16 11:02:39 jmcneill Exp $ */
+/*	$NetBSD: ipmi.c,v 1.11.8.2 2007/10/02 18:27:53 joerg Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.11.8.1 2007/08/16 11:02:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.11.8.2 2007/10/02 18:27:53 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1717,8 +1717,8 @@ ipmi_match(struct device *parent, struct cfdata *cf,
 		}
 
 		dbg_dump(1, "bmc data", len, cmd);
-unmap:
 		rv = 1; /* GETID worked, we got IPMI */
+unmap:
 		ipmi_unmap_regs(&sc, ia);
 	}
 

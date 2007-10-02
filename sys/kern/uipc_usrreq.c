@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.97.6.2 2007/08/16 11:03:41 jmcneill Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.97.6.3 2007/10/02 18:29:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.97.6.2 2007/08/16 11:03:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.97.6.3 2007/10/02 18:29:07 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ uipc_ctloutput(int op, struct socket *so, int level, int optname,
 	int optval = 0, error = 0;
 
 	if (level != 0) {
-		error = EINVAL;
+		error = ENOPROTOOPT;
 		if (op == PRCO_SETOPT && m)
 			(void) m_free(m);
 	} else switch (op) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.2 2007/08/09 02:37:19 jmcneill Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.3 2007/10/02 18:29:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.2 2007/08/09 02:37:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.3 2007/10/02 18:29:02 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -355,6 +355,7 @@ mi_switch(struct lwp *l)
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
+	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, NULL));
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
@@ -368,13 +369,14 @@ mi_switch(struct lwp *l)
 	 * are after is the run time and that's guarenteed to have been last
 	 * updated by this CPU.
 	 */
-	KDASSERT(l->l_cpu == curcpu());
+	ci = l->l_cpu;
+	KDASSERT(ci == curcpu());
 
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
-	spc = &l->l_cpu->ci_schedstate;
+	spc = &ci->ci_schedstate;
 	newl = NULL;
 
 	if (l->l_switchto != NULL) {
@@ -422,17 +424,17 @@ mi_switch(struct lwp *l)
 			sched_dequeue(newl);
 			KASSERT(lwp_locked(newl, spc->spc_mutex));
 			newl->l_stat = LSONPROC;
-			newl->l_cpu = l->l_cpu;
+			newl->l_cpu = ci;
 			newl->l_flag |= LW_RUNNING;
 			lwp_setlock(newl, &spc->spc_lwplock);
 		} else {
-			newl = l->l_cpu->ci_data.cpu_idlelwp;
+			newl = ci->ci_data.cpu_idlelwp;
 			newl->l_stat = LSONPROC;
 			newl->l_flag |= LW_RUNNING;
 		}
 		spc->spc_curpriority = newl->l_usrpri;
 		newl->l_priority = newl->l_usrpri;
-		cpu_did_resched();
+		ci->ci_want_resched = 0;
 	}
 
 	if (l != newl) {
@@ -461,14 +463,13 @@ mi_switch(struct lwp *l)
 		/* Switch to the new LWP.. */
 		l->l_ncsw++;
 		l->l_flag &= ~LW_RUNNING;
-		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
+		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		prevlwp = cpu_switchto(l, newl);
 
 		/*
 		 * .. we have switched away and are now back so we must
 		 * be the new curlwp.  prevlwp is who we replaced.
 		 */
-		curlwp = l;
 		if (prevlwp != NULL) {
 			curcpu()->ci_mtx_oldspl = oldspl;
 			lwp_unlock(prevlwp);
@@ -504,6 +505,7 @@ mi_switch(struct lwp *l)
 	 * schedstate_percpu pointer.
 	 */
 	SYSCALL_TIME_WAKEUP(l);
+	KASSERT(curlwp == l);
 	KDASSERT(l->l_cpu == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 1);
 

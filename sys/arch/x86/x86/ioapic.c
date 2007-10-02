@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.7 2007/10/01 03:00:07 joerg Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.8 2007/10/02 18:27:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.7 2007/10/01 03:00:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.8 2007/10/02 18:27:53 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,19 +82,17 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.7 2007/10/01 03:00:07 joerg Exp $"
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
- 
-#include <uvm/uvm_extern.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
-
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-
-#include <machine/pmap.h>
-
 #include <machine/mpbiosvar.h>
+#include <machine/pio.h>
+#include <machine/pmap.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"
@@ -132,8 +130,8 @@ ioapic_lock(struct ioapic_softc *sc)
 {
 	u_long flags;
 
-	flags = read_psl();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&sc->sc_pic.pic_lock);
 	return flags;
 }
@@ -142,7 +140,7 @@ static inline void
 ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 {
 	__cpu_simple_unlock(&sc->sc_pic.pic_lock);
-	write_psl(flags);
+	x86_write_psl(flags);
 }
 
 #ifndef _IOAPIC_CUSTOM_RW

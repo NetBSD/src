@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.52 2007/07/19 20:48:56 dyoung Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.52.4.1 2007/10/02 18:29:22 joerg Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -419,7 +419,10 @@ struct	in6_rrenumreq {
 #define SIOCSRTRFLUSH_IN6	_IOWR('i', 80, struct in6_ifreq)
 
 #define SIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+#if 0
+/* withdrawn - do not reuse number 82 */
 #define SIOCSIFALIFETIME_IN6	_IOWR('i', 82, struct in6_ifreq)
+#endif
 #define SIOCGIFSTAT_IN6		_IOWR('i', 83, struct in6_ifreq)
 #define SIOCGIFSTAT_ICMP6	_IOWR('i', 84, struct in6_ifreq)
 

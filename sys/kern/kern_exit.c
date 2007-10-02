@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.183.6.2 2007/08/16 11:03:30 jmcneill Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.183.6.3 2007/10/02 18:28:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.2 2007/08/16 11:03:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.3 2007/10/02 18:28:59 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -547,7 +547,7 @@ exit1(struct lwp *l, int rv)
 	if (wakeinit)
 		cv_broadcast(&initproc->p_waitcv);
 
-	callout_destroy(&l->l_tsleep_ch);
+	callout_destroy(&l->l_timeout_ch);
 
 	/*
 	 * Remaining lwp resources will be freed in lwp_exit2() once we've

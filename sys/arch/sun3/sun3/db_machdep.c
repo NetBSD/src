@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.23 2007/02/22 14:39:34 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.23.20.1 2007/10/02 18:27:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.23 2007/02/22 14:39:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.23.20.1 2007/10/02 18:27:47 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,11 +64,11 @@ static void db_mach_reboot (db_expr_t, bool, db_expr_t, const char *);
 static void db_mach_pagemap(db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
-	{ "abort",	db_mach_abort,	0,	NULL },
-	{ "halt",	db_mach_halt,	0,	NULL },
-	{ "pgmap",	db_mach_pagemap, 	CS_SET_DOT, NULL },
-	{ "reboot",	db_mach_reboot,	0,	NULL },
-	{ NULL }
+	{ DDB_ADD_CMD("abort",	db_mach_abort,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("halt",	db_mach_halt,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pgmap",	db_mach_pagemap, 	CS_SET_DOT, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("reboot",	db_mach_reboot,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL,NULL,0,NULL,NULL,NULL) }
 };
 
 /*

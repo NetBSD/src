@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.115.6.2 2007/09/03 16:48:51 jmcneill Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.115.6.3 2007/10/02 18:29:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115.6.2 2007/09/03 16:48:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115.6.3 2007/10/02 18:29:07 joerg Exp $");
 
 #include "opt_pipe.h"
 
@@ -70,32 +70,13 @@ sys___socket30(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */ *uap = v;
-
-	struct filedesc	*fdp;
-	struct socket	*so;
-	struct file	*fp;
 	int		fd, error;
 
-	fdp = l->l_proc->p_fd;
-	/* falloc() will use the desciptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0)
-		return (error);
-	fp->f_flag = FREAD|FWRITE;
-	fp->f_type = DTYPE_SOCKET;
-	fp->f_ops = &socketops;
-	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
-			 SCARG(uap, protocol), l);
-	if (error) {
-		FILE_UNUSE(fp, l);
-		fdremove(fdp, fd);
-		ffree(fp);
-	} else {
-		fp->f_data = so;
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
+			 SCARG(uap, protocol), l, &fd);
+	if (error == 0)
 		*retval = fd;
-	}
-	return (error);
+	return error;
 }
 
 /* ARGSUSED */
@@ -422,7 +403,7 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = 0;
+	msg.msg_control = NULL;
 	msg.msg_flags = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, buf)); /* XXXUNCONST kills const */
 	aiov.iov_len = SCARG(uap, len);
@@ -459,7 +440,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	struct socket	*so;
 	struct iovec	*tiov;
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 
 	ktrkuser("msghdr", mp, sizeof *mp);
 
@@ -540,7 +521,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 	}
 
-	ktriov = NULL;
 	if (ktrpoint(KTR_GENIO)) {
 		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
@@ -577,17 +557,17 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	if (error == 0)
 		*retsize = len - auio.uio_resid;
 
+bad:
 	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
 		free(ktriov, M_TEMP);
 	}
 
- bad:
-	if (iov != aiov)
+ 	if (iov != aiov)
 		free(iov, M_IOV);
 	if (to)
 		m_freem(to);
-	if (control != NULL)
+	if (control)
 		m_freem(control);
 
 	return (error);
@@ -609,7 +589,7 @@ sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 	int		error;
 	struct mbuf	*from;
 
-	msg.msg_name = NULL;;
+	msg.msg_name = NULL;
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	aiov.iov_base = SCARG(uap, buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246.4.1 2007/08/16 11:03:29 jmcneill Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.246.4.2 2007/10/02 18:28:58 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.1 2007/08/16 11:03:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.2 2007/10/02 18:28:58 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -350,6 +350,8 @@ check_exec(struct lwp *l, struct exec_package *epp)
 			return error;
 	}
 
+	/* not found, error */
+
 	/*
 	 * free any vmspace-creation commands,
 	 * and release their references
@@ -411,7 +413,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
     char * const *envs, execve_fetch_element_t fetch_element)
 {
 	int			error;
-	u_int			i;
 	struct exec_package	pack;
 	struct nameidata	nid;
 	struct vattr		attr;
@@ -419,7 +420,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	char			*argp;
 	char			*dp, *sp;
 	long			argc, envc;
-	size_t			len;
+	size_t			i, len;
 	char			*stack;
 	struct ps_strings	arginfo;
 	struct ps_strings	*aip = &arginfo;
@@ -459,10 +460,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (ISSET(p->p_flag, PK_SYSTRACE))
 		systrace_execve0(p);
 
-	error = copyinstr(path, pathbuf, sizeof(pathbuf),
-			  &pathbuflen);
-	if (error)
+	error = copyinstr(path, pathbuf, sizeof(pathbuf), &pathbuflen);
+	if (error) {
+		DPRINTF(("execve: copyinstr path %d", error));
 		goto clrflg;
+	}
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf, l);
 #else
@@ -495,8 +497,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* see if we can run it. */
-        if ((error = check_exec(l, &pack)) != 0)
+	if ((error = check_exec(l, &pack)) != 0) {
+		DPRINTF(("execve: check exec failed %d\n", error));
 		goto freehdr;
+	}
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
@@ -530,6 +534,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now get argv & environment */
 	if (args == NULL) {
+		DPRINTF(("execve: null args\n"));
 		error = EINVAL;
 		goto bad;
 	}
@@ -540,11 +545,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	while (1) {
 		len = argp + ARG_MAX - dp;
-		if ((error = (*fetch_element)(args, i, &sp)) != 0)
+		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
+			DPRINTF(("execve: fetch_element args %d\n", error));
 			goto bad;
+		}
 		if (!sp)
 			break;
 		if ((error = copyinstr(sp, dp, len, &len)) != 0) {
+			DPRINTF(("execve: copyinstr args %d\n", error));
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
 			goto bad;
@@ -561,11 +569,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		i = 0;
 		while (1) {
 			len = argp + ARG_MAX - dp;
-			if ((error = (*fetch_element)(envs, i, &sp)) != 0)
+			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
+				DPRINTF(("execve: fetch_element env %d\n", error));
 				goto bad;
+			}
 			if (!sp)
 				break;
 			if ((error = copyinstr(sp, dp, len, &len)) != 0) {
+				DPRINTF(("execve: copyinstr env %d\n", error));
 				if (error == ENAMETOOLONG)
 					error = E2BIG;
 				goto bad;
@@ -601,6 +612,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
+		DPRINTF(("execve: stack limit exceeded %zu\n", len));
 		error = ENOMEM;
 		goto bad;
 	}
@@ -667,11 +679,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		error = (*vcp->ev_proc)(l, vcp);
 #ifdef DEBUG_EXEC
 		if (error) {
-			int j;
+			size_t j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
 			for (j = 0; j <= i; j++)
 				uprintf(
-			    "vmcmd[%d] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
+			"vmcmd[%zu] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
 				    j, vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
@@ -690,7 +702,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* if an error happened, deallocate and punt */
 	if (error) {
-		DPRINTF(("execve: vmcmd %i failed: %d\n", i - 1, error));
+		DPRINTF(("execve: vmcmd %zu failed: %d\n", i - 1, error));
 		goto exec_abort;
 	}
 
@@ -760,9 +772,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
-	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, len);
-	p->p_comm[len] = 0;
+	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
+	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
+	p->p_comm[i] = '\0';
 	p->p_acflag &= ~AFORK;
 
 	p->p_flag |= PK_EXEC;

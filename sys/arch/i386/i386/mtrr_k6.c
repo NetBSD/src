@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.10 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.10.26.1 2007/10/02 18:27:20 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.10 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.10.26.1 2007/10/02 18:27:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ k6_mtrr_reload(void)
 	uint32_t origcr0, cr0;
 	int i;
 
-	disable_intr();
+	x86_disable_intr();
 
 	origcr0 = cr0 = rcr0();
 	cr0 |= CR0_CD;
@@ -122,7 +122,7 @@ k6_mtrr_reload(void)
 
 	lcr0(origcr0);
 
-	enable_intr();
+	x86_enable_intr();
 }
 
 static void

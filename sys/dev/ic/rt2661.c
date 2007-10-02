@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.15.6.1 2007/09/03 16:48:06 jmcneill Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.15.6.2 2007/10/02 18:28:26 joerg Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.15.6.1 2007/09/03 16:48:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.15.6.2 2007/10/02 18:28:26 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -494,7 +494,7 @@ rt2661_attach(void *xsc, int id)
 	ic->ic_newstate = rt2661_newstate;
 	ieee80211_media_init(ic, rt2661_media_change, ieee80211_media_status);
 
-#if NPBFILTER > 0
+#if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
@@ -2336,10 +2336,11 @@ rt2661_set_chan(struct rt2661_softc *sc, struct ieee80211_channel *c)
 	}
 
 	/*
-	 * If we are switching from the 2GHz band to the 5GHz band or
-	 * vice-versa, BBP registers need to be reprogrammed.
+	 * If we've yet to select a channel, or we are switching from the
+	 * 2GHz band to the 5GHz band or vice-versa, BBP registers need to
+	 * be reprogrammed.
 	 */
-	if (c->ic_flags != sc->sc_curchan->ic_flags) {
+	if (sc->sc_curchan == NULL || c->ic_flags != sc->sc_curchan->ic_flags) {
 		rt2661_select_band(sc, c);
 		rt2661_select_antenna(sc);
 	}

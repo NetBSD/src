@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.12 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.12.32.1 2007/10/02 18:27:40 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,7 @@
 #include <machine/promlib.h>
 
 #include "ofdev.h"
+#include "boot.h"
 
 extern char bootdev[];
 
@@ -63,7 +64,7 @@ extern char bootdev[];
  *
  */
 
-static char *
+char *
 filename(char *str, char *ppart)
 {
 	char *cp, *lp;
@@ -73,7 +74,7 @@ filename(char *str, char *ppart)
 
 	lp = str;
 	devtype[0] = 0;
-	*ppart = 0;
+	*ppart = '\0';
 	for (cp = str; *cp; lp = cp) {
 		/* For each component of the path name... */
 		while (*++cp && *cp != '/');
@@ -81,10 +82,8 @@ filename(char *str, char *ppart)
 		*cp = 0;
 		/* ...look whether there is a device with this name */
 		dhandle = prom_finddevice(str);
-#ifdef NOTDEF_DEBUG
-		printf("filename: prom_finddevice(%s) returned %x\n",
-		       str, dhandle);
-#endif
+		DPRINTF(("filename: prom_finddevice(%s) returned %x\n",
+		       str, dhandle));
 		*cp = savec;
 		if (dhandle == -1) {
 			/*
@@ -93,10 +92,8 @@ filename(char *str, char *ppart)
 			 */
 			if (!strcmp(devtype, "block")) {
 				/* search for arguments */
-#ifdef NOTDEF_DEBUG
-				printf("filename: hunting for arguments "
-				       "in %s\n", str);
-#endif
+				DPRINTF(("filename: hunting for arguments "
+				       "in %s\n", lp));
 				for (cp = lp; ; ) {
 					cp--;
 					if (cp < str ||
@@ -106,23 +103,25 @@ filename(char *str, char *ppart)
 						break;
 				}
 				if (cp >= str && *cp == '-')
-					*cp = 0;	/* found arguments, make firmware ignore them */
-				for (cp = lp; *--cp && *cp != ',' && *cp != ':';);
-				if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS) {
-					*ppart = *cp;
-					*--cp = '\0';
+					/* found arguments, make firmware
+					   ignore them */
+					*cp = 0;
+				for (cp = lp; *--cp && *cp != ',' 
+					&& *cp != ':';)
+						;
+				if (cp[0] == ':' && cp[1] >= 'a' &&
+				    cp[1] <= 'a' + MAXPARTITIONS) {
+					*ppart = cp[1];
+					cp[0] = '\0';
 				}
 			}
-#ifdef NOTDEF_DEBUG
-			printf("filename: found %s\n",lp);
-#endif
+			DPRINTF(("filename: found %s\n",lp));
 			return lp;
-		} else if (_prom_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
+		} else if (_prom_getprop(dhandle, "device_type", devtype,
+				sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
-#ifdef NOTDEF_DEBUG
-	printf("filename: not found\n",lp);
-#endif
+	DPRINTF(("filename: not found\n",lp));
 	return 0;
 }
 
@@ -197,7 +196,7 @@ int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 #ifdef SPARC_BOOT_UFS
 static struct fs_ops file_system_ufs = FS_OPS(ufs);
 #endif
-#ifdef SPARC_BOOT_HSFS
+#ifdef SPARC_BOOT_CD9660
 static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 #endif
 #ifdef NETBOOT
@@ -296,9 +295,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
-#ifdef NOTDEF_DEBUG
-		printf("partition %d start %x size %x\n", i, (int)npp->p_offset, (int)npp->p_size);
-#endif
+		DPRINTF(("partition %d start %x size %x\n", i, (int)npp->p_offset, (int)npp->p_size));
 		if (npp->p_size == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
@@ -317,9 +314,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-#ifdef NOTDEF_DEBUG
-	printf("disklabel_sun_to_bsd: success!\n");
-#endif
+	DPRINTF(("disklabel_sun_to_bsd: success!\n"));
 	return (NULL);
 }
 
@@ -357,9 +352,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		if (dkcksum(dlp))
 			return ("NetBSD disk label corrupted");
 		*lp = *dlp;
-#ifdef NOTDEF_DEBUG
-		printf("search_label: found NetBSD label\n");
-#endif
+		DPRINTF(("search_label: found NetBSD label\n"));
 		return (NULL);
 	}
 
@@ -378,29 +371,30 @@ devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
-	char fname[256];
-	char buf[DEV_BSIZE];
+	char fname[256], devname[256];
+	union {
+		char buf[DEV_BSIZE];
+		struct disklabel label;
+	} b;
 	struct disklabel label;
-	int handle, part;
+	int handle, part, try = 0;
 	size_t read;
-	char *errmsg = NULL;
+	char *errmsg = NULL, *pp, savedpart = 0;
 	int error = 0;
 
 	if (ofdev.handle != -1)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: you want %s\n", name);
-#endif
+	DPRINTF(("devopen: you want %s\n", name));
 	strcpy(fname, name);
 	cp = filename(fname, &partition);
 	if (cp) {
-		strcpy(buf, cp);
+		strcpy(b.buf, cp);
 		*cp = 0;
 	}
-	if (!cp || !*buf)
-		strcpy(buf, DEFAULT_KERNEL);
+	if (!cp || !b.buf[0])
+		strcpy(b.buf, DEFAULT_KERNEL);
 	if (!*fname)
 		strcpy(fname, bootdev);
 	strcpy(opened_name, fname);
@@ -411,56 +405,81 @@ devopen(struct open_file *of, const char *name, char **file)
 		*cp = 0;
 	}
 	*file = opened_name + strlen(opened_name);
-	if (*buf != '/')
+	if (b.buf[0] != '/')
 		strcat(opened_name, "/");
-	strcat(opened_name, buf);
-#ifdef NOTDEF_DEBUG
-	printf("devopen: trying %s\n", fname);
-#endif
+	strcat(opened_name, b.buf);
+	DPRINTF(("devopen: trying %s\n", fname));
 	if ((handle = prom_finddevice(fname)) == -1)
 		return ENOENT;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: found %s\n", fname);
-#endif
-	if (_prom_getprop(handle, "name", buf, sizeof buf) < 0)
+	DPRINTF(("devopen: found %s\n", fname));
+	if (_prom_getprop(handle, "name", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is called %s\n", fname, buf);
-#endif
-	floppyboot = !strcmp(buf, "floppy");
-	if (_prom_getprop(handle, "device_type", buf, sizeof buf) < 0)
+	DPRINTF(("devopen: %s is called %s\n", fname, b.buf));
+	floppyboot = !strcmp(b.buf, "floppy");
+	if (_prom_getprop(handle, "device_type", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is a %s device\n", fname, buf);
-#endif
-#ifdef NOTDEF_DEBUG
-	printf("devopen: opening %s\n", fname);
-#endif
+	DPRINTF(("devopen: %s is a %s device\n", fname, b.buf));
+	if (!strcmp(b.buf, "block")) {
+		pp = strrchr(fname, ':');
+		if (pp && pp[1] >= 'a' && pp[1] <= 'f' && pp[2] == 0) {
+			savedpart = pp[1];
+		} else {
+			savedpart = 'a';
+			handle = prom_open(fname);
+			if (handle != -1) {
+				OF_instance_to_path(handle, devname,
+				    sizeof(devname));
+				DPRINTF(("real path: %s\n", devname));
+				prom_close(handle);
+				pp = devname + strlen(devname);
+				if (pp > devname + 3) pp -= 2;
+				if (pp[0] == ':')
+					savedpart = pp[1];
+			}
+			pp = fname + strlen(fname);
+			pp[0] = ':';
+			pp[2] = '\0';
+		}
+		pp[1] = 'c';
+		DPRINTF(("devopen: replacing by whole disk device %s\n",
+		    fname));
+		if (savedpart)
+			partition = savedpart;
+	}
+
+open_again:
+	DPRINTF(("devopen: opening %s\n", fname));
 	if ((handle = prom_open(fname)) == -1) {
-#ifdef NOTDEF_DEBUG
-		printf("devopen: open of %s failed\n", fname);
-#endif
+		DPRINTF(("devopen: open of %s failed\n", fname));
+		if (pp && savedpart) {
+			if (try == 0) {
+				pp[0] = '\0';
+				try = 1;
+			} else {
+				pp[0] = ':';
+				pp[1] = savedpart;
+				pp = NULL;
+				savedpart = '\0';
+			}
+			goto open_again;
+		}
 		return ENXIO;
 	}
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is now open\n", fname);
-#endif
+	DPRINTF(("devopen: %s is now open\n", fname));
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
-	if (!strcmp(buf, "block")) {
+	if (!strcmp(b.buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
-#ifdef NOTDEF_DEBUG
-		printf("devopen: trying to read disklabel\n");
-#endif
+		DPRINTF(("devopen: trying to read disklabel\n"));
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
+			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
 		    || read != DEV_BSIZE
-		    || (errmsg = getdisklabel(buf, &label))) {
+		    || (errmsg = getdisklabel(b.buf, &label))) {
 			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
 			/* Else try MBR partitions */
-			errmsg = search_label(&ofdev, 0, buf, &label, 0);
+			errmsg = search_label(&ofdev, 0, b.buf, &label, 0);
 			if (errmsg) {
 				printf("devopen: search_label returned %s\n", errmsg);
 				error = ERDLAB;
@@ -470,43 +489,47 @@ devopen(struct open_file *of, const char *name, char **file)
 		}
 
 		if (error == ERDLAB) {
-			if (partition)
-				/* User specified a parititon, but there is none */
-				goto bad;
 			/* No, label, just use complete disk */
 			ofdev.partoff = 0;
+			if (pp && savedpart) {
+				pp[1] = savedpart;
+				prom_close(handle);
+				if ((handle = prom_open(fname)) == -1) {
+					DPRINTF(("devopen: open of %s failed\n",
+						fname));
+					return ENXIO;
+				}
+				ofdev.handle = handle;
+				DPRINTF(("devopen: back to original device %s\n",
+					fname));
+			}
 		} else {
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
-#ifdef NOTDEF_DEBUG
-			printf("devopen: setting partition %d offset %x\n",
-			       part, ofdev.partoff);
-#endif
+			DPRINTF(("devopen: setting partition %d offset %x\n",
+			       part, ofdev.partoff));
 			if (label.d_partitions[part].p_fstype == FS_RAID) {
 				ofdev.partoff += RF_PROTECTED_SECTORS;
-#ifdef NOTDEF_DEBUG
-				printf("devopen: found RAID partition, "
-				    "adjusting offset to %x\n", ofdev.partoff);
-#endif
+				DPRINTF(("devopen: found RAID partition, "
+				    "adjusting offset to %x\n", ofdev.partoff));
 			}
 		}
 
+		nfsys = 0;
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
 		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
 #endif
-#ifdef SPARC_BOOT_HSFS
+#ifdef SPARC_BOOT_CD9660
 		bcopy(&file_system_cd9660, &file_system[nfsys++],
 		    sizeof file_system[0]);
 #endif
-#ifdef NOTDEF_DEBUG
-		printf("devopen: return 0\n");
-#endif
+		DPRINTF(("devopen: return 0\n"));
 		return 0;
 	}
 #ifdef NETBOOT
-	if (!strcmp(buf, "network")) {
+	if (!strcmp(b.buf, "network")) {
 		ofdev.type = OFDEV_NET;
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
@@ -519,9 +542,7 @@ devopen(struct open_file *of, const char *name, char **file)
 #endif
 	error = EFTYPE;
 bad:
-#ifdef NOTDEF_DEBUG
-	printf("devopen: error %d, cannot open device\n", error);
-#endif
+	DPRINTF(("devopen: error %d, cannot open device\n", error));
 	prom_close(handle);
 	ofdev.handle = -1;
 	return error;

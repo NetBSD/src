@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.13.22.3 2007/08/23 09:25:30 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13.22.4 2007/10/02 18:27:50 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.3 2007/08/23 09:25:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.4 2007/10/02 18:27:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	for (i = 0; i < mp_nbus; i++) {
 		for (mip = mp_busses[i].mb_intrs; mip != NULL;
 		     mip = mip->next) {
-			if (mip->global_int == (int)InterruptNumber) {
+			if (mip->bus_pin == (int)InterruptNumber) {
 				h = mip->ioapic_ih;
 				if (APIC_IRQ_ISLEGACY(h)) {
 					irq = APIC_IRQ_LEGACY_IRQ(h);
@@ -285,7 +285,7 @@ acpi_md_OsWritable(void *Pointer, UINT32 Length)
 void
 acpi_md_OsDisableInterrupt(void)
 {
-	disable_intr();
+	x86_disable_intr();
 }
 
 void

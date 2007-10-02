@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.22.1 2007/09/03 16:47:24 jmcneill Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.22.2 2007/10/02 18:27:23 joerg Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -286,7 +286,8 @@ IDTVEC(intr_lapic_tlb_bcast)
 	 * to invalidate the entire TLB we arrive here.
 	 */
 	movl	%cr4, %eax
-	leal	-CR4_PGE(%eax), %edx
+	movl	%eax, %edx
+	andl	$~CR4_PGE, %edx
 	movl	%edx, %cr4
 	movl	%eax, %cr4
 	jmp	2b

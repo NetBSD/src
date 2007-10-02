@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96.6.3 2007/10/01 05:38:09 joerg Exp $ */
+/* $NetBSD: device.h,v 1.96.6.4 2007/10/02 18:29:26 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -125,6 +125,7 @@ struct device {
 	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pseudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
+	void		*dv_private;	/* this device's private storage */
 	int		*dv_locators;	/* our actual locators (optional) */
 	pnp_device_t	dv_pnp;		/* device pnp messaging */
 	prop_dictionary_t dv_properties;/* properties dictionary */
@@ -133,6 +134,7 @@ struct device {
 
 /* dv_flags */
 #define	DVF_ACTIVE	0x0001		/* device is activated */
+#define	DVF_PRIV_ALLOC	0x0002		/* device private storage != device */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -221,6 +223,7 @@ struct cfattach {
 	const char *ca_name;		/* name of attachment */
 	LIST_ENTRY(cfattach) ca_list;	/* link on cfdriver's list */
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
+	int	  ca_flags;		/* flags for driver allocation etc */
 	int	(*ca_match)(device_t, cfdata_t, void *);
 	void	(*ca_attach)(device_t, device_t, void *);
 	int	(*ca_detach)(device_t, int);
@@ -231,16 +234,6 @@ struct cfattach {
 	void	(*ca_childdetached)(device_t, device_t);
 };
 LIST_HEAD(cfattachlist, cfattach);
-
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
-struct cfattach __CONCAT(name,_ca) = {					\
-	.ca_name		= ___STRING(name),			\
-	.ca_devsize		= ddsize,				\
-	.ca_match		= matfn,				\
-	.ca_attach		= attfn,				\
-	.ca_detach		= detfn,				\
-	.ca_activate		= actfn,				\
-}
 
 #define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn) \
@@ -254,6 +247,26 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_rescan		= rescanfn,				\
 	.ca_childdetached	= chdetfn,				\
 }
+
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
+	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
+
+#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn) \
+struct cfattach __CONCAT(name,_ca) = {					\
+	.ca_name		= ___STRING(name),			\
+	.ca_devsize		= ddsize,				\
+	.ca_flags		= DVF_PRIV_ALLOC,			\
+	.ca_match 		= matfn,				\
+	.ca_attach		= attfn,				\
+	.ca_detach		= detfn,				\
+	.ca_activate		= actfn,				\
+	.ca_rescan		= rescanfn,				\
+	.ca_childdetached	= chdetfn,				\
+}
+
+#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)		\
+	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */

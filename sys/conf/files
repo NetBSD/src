@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.856.4.3 2007/08/16 11:03:01 jmcneill Exp $
+#	$NetBSD: files,v 1.856.4.4 2007/10/02 18:28:16 joerg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1077,6 +1077,10 @@ defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
+# USB HID processing (as used by bluetooth and usb code)
+define	hid
+file	dev/usb/hid.c			hid
+
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
 file	dev/ic/mtd803.c			mtd
@@ -1389,6 +1393,7 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
+file	kern/sys_mqueue.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
@@ -1411,9 +1416,7 @@ file	kern/tty_tty.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
-file	net/link_proto.c		ether | fddi | netatalk | token |
-						wlan | inet | inet6 | iso |
-						natm | bluetooth
+file	net/link_proto.c
 file	kern/uipc_proto.c
 file	kern/uipc_sem.c			p1003_1b_semaphore
 file	kern/uipc_socket.c

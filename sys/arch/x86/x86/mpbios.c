@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.36.10.1 2007/08/09 02:37:04 jmcneill Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.36.10.2 2007/10/02 18:27:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.10.1 2007/08/09 02:37:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.10.2 2007/10/02 18:27:53 joerg Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.10.1 2007/08/09 02:37:04 jmcneill Ex
 #include <machine/cpuvar.h>
 #include <machine/bus.h>
 #include <machine/mpbiosvar.h>
+#include <machine/pio.h>
 
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>

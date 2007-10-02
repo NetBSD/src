@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.103.6.2 2007/09/03 16:48:50 jmcneill Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.103.6.3 2007/10/02 18:29:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.6.2 2007/09/03 16:48:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.6.3 2007/10/02 18:29:03 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,8 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 
 	aiov.iov_base = (void *)buf;
@@ -246,6 +247,12 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 
 	FILE_USE(fp);
 
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		FILE_UNUSE(fp, l);
+		return error;
+	}
+
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
@@ -263,10 +270,6 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		if (error != 0)
 			goto out;
 	}
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
 
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)
@@ -390,7 +393,8 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	p = l->l_proc;
 	error = proc_vmspace_getref(p, &vm);
 	if (error) {
-		goto out;
+		FILE_UNUSE(fp, l);
+		return error;
 	}
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
@@ -478,6 +482,12 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 
 	FILE_USE(fp);
 
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		FILE_UNUSE(fp, l);
+		return error;
+	}
+
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
@@ -495,10 +505,6 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		if (error != 0)
 			goto out;
 	}
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
 
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)
@@ -1220,4 +1226,36 @@ selsysinit(void)
 
 	mutex_init(&select_lock, MUTEX_DRIVER, IPL_VM);
 	cv_init(&select_cv, "select");
+}
+
+/*
+ * Initialize a selector.
+ */
+void
+selinit(struct selinfo *sip)
+{
+
+	memset(sip, 0, sizeof(*sip));
+}
+
+/*
+ * Destroy a selector.  The owning object must not gain new
+ * references while this is in progress: all activity on the
+ * selector must be stopped.
+ */
+void
+seldestroy(struct selinfo *sip)
+{
+	lwp_t *l;
+
+	if (sip->sel_lwp == NULL)
+		return;
+
+	mutex_enter(&select_lock);
+	if ((l = sip->sel_lwp) != NULL) {
+		/* This should rarely happen, so SLIST_REMOVE() is OK. */
+		SLIST_REMOVE(&l->l_selwait, sip, selinfo, sel_chain);
+		sip->sel_lwp = NULL;
+	}
+	mutex_exit(&select_lock);
 }

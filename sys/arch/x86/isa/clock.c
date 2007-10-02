@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2007/07/09 20:52:37 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.8.1 2007/10/02 18:27:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2007/07/09 20:52:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.1 2007/10/02 18:27:50 joerg Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -173,14 +173,6 @@ CFATTACH_DECL(sysbeep, sizeof(struct device),
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
-
-#ifdef __x86_64__
-#define READ_FLAGS()	read_rflags()
-#define WRITE_FLAGS(x)	write_rflags(x)
-#else /* i386 architecture processor */
-#define READ_FLAGS()	read_eflags()
-#define WRITE_FLAGS(x)	write_eflags(x)
-#endif
 
 #ifdef CLOCKDEBUG
 int clock_debug = 0;
@@ -269,8 +261,8 @@ gettick_broken_latch(void)
 	int w1, w2, w3;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
 	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
@@ -279,7 +271,7 @@ gettick_broken_latch(void)
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -432,8 +424,8 @@ i8254_get_timecount(struct timecounter *tc)
 	u_long flags;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&tmr_lock);
 
 	/* Select timer0 and latch counter value. */ 
@@ -452,7 +444,7 @@ i8254_get_timecount(struct timecounter *tc)
 	count += i8254_offset;
 
 	__cpu_simple_unlock(&tmr_lock);
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 
 	return (count);
 }
@@ -467,13 +459,13 @@ gettick(void)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 	return ((hi << 8) | lo);
 }
 

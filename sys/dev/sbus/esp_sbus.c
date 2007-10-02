@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.36 2007/03/04 06:02:40 christos Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.36.14.1 2007/10/02 18:28:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.36 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.36.14.1 2007/10/02 18:28:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.36 2007/03/04 06:02:40 christos Exp $
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/sbus/sbusvar.h>
+
+#include "opt_ddb.h"
 
 /* #define ESP_SBUS_DEBUG */
 
@@ -104,6 +106,10 @@ static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
 static int	esp_dma_isactive(struct ncr53c9x_softc *);
+
+#ifdef DDB
+static void	esp_init_ddb_cmds(void);
+#endif
 
 static struct ncr53c9x_glue esp_sbus_glue = {
 	esp_read_reg,
@@ -160,6 +166,10 @@ espattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct lsi64854_softc *lsc;
 	int burst, sbusburst;
+
+#ifdef DDB
+	esp_init_ddb_cmds();
+#endif
 
 	esc->sc_bustag = sa->sa_bustag;
 	esc->sc_dmatag = sa->sa_dmatag;
@@ -716,19 +726,32 @@ esp_dma_isactive(sc)
 	return (DMA_ISACTIVE(esc->sc_dma));
 }
 
-#include "opt_ddb.h"
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
+#include <ddb/db_command.h>
 
-void db_esp(db_expr_t, int, db_expr_t, const char*);
+void db_esp(db_expr_t, bool, db_expr_t, const char*);
+
+const struct db_command db_esp_command_table[] = {
+	{ DDB_ADD_CMD("esp",	db_esp,	0, 
+	  "display status of all esp SCSI controllers and their devices",
+	  NULL, NULL) },
+	{ DDB_ADD_CMD(NULL,	NULL,	0, NULL, NULL, NULL) }
+};
+
+static void
+esp_init_ddb_cmds()
+{
+	static int db_cmds_initialized = 0;
+
+	if (db_cmds_initialized) return;
+	db_cmds_initialized = 1;
+	(void)db_register_tbl(DDB_MACH_CMD, db_esp_command_table);
+}
 
 void
-db_esp(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	const char *modif;
+db_esp(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;

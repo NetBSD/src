@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_util.c,v 1.2.4.1 2007/10/02 18:28:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2.4.1 2007/10/02 18:28:41 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,16 +146,14 @@ sme_sensor_upstring(prop_dictionary_t dict, const char *key, const char *str)
 
 	obj = prop_dictionary_get(dict, key);
 	if (obj == NULL) {
-		if (!prop_dictionary_set_cstring_nocopy(dict, key, str)) {
+		if (!prop_dictionary_set_cstring(dict, key, str)) {
 			DPRINTF(("%s: (up) set_cstring %s:%s\n",
 			    __func__, key, str));
 			return EINVAL;
 		}
 	} else {
 		if (!prop_string_equals_cstring(obj, str)) {
-			if (!prop_dictionary_set_cstring_nocopy(dict,
-								key,
-								str)) {
+			if (!prop_dictionary_set_cstring(dict, key, str)) {
 				DPRINTF(("%s: (set) set_cstring %s:%s\n",
 				    __func__, key, str));
 				return EINVAL;

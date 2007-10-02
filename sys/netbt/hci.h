@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.10.6.1 2007/10/02 18:29:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $
+ * $Id: hci.h,v 1.10.6.1 2007/10/02 18:29:17 joerg Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1850,7 +1850,7 @@ typedef struct {
 	uint8_t		uclass[HCI_CLASS_SIZE];	/* unit class */
 	uint16_t	clock_offset;		/* clock offset */
 	int8_t		rssi;			/* rssi */
-} __attribute__ ((__packed__)) hci_rssi_response_ep;
+} __attribute__ ((__packed__)) hci_rssi_response;
 
 #define HCI_EVENT_READ_REMOTE_EXTENDED_FEATURES	0x23
 typedef struct {
@@ -2054,6 +2054,7 @@ struct hci_link {
 	uint16_t		 hl_refcnt;	/* reference count */
 	uint16_t		 hl_mtu;	/* signalling mtu for link */
 	uint16_t		 hl_flush;	/* flush timeout */
+	uint16_t		 hl_clock;	/* remote clock offset */
 
 	TAILQ_HEAD(,l2cap_pdu)	 hl_txq;	/* queue of outgoing PDUs */
 	int			 hl_txqlen;	/* number of fragments */
@@ -2090,7 +2091,10 @@ struct hci_link {
  */
 struct hci_memo {
 	struct timeval		time;		/* time of last response */
-	hci_inquiry_response	response;	/* inquiry response */
+	bdaddr_t		bdaddr;
+	uint8_t			page_scan_rep_mode;
+	uint8_t			page_scan_mode;
+	uint16_t		clock_offset;
 	LIST_ENTRY(hci_memo)	next;
 };
 
@@ -2196,6 +2200,7 @@ struct hci_link *hci_link_lookup_handle(struct hci_unit *, uint16_t);
 /* hci_misc.c */
 int hci_route_lookup(bdaddr_t *, bdaddr_t *);
 struct hci_memo *hci_memo_find(struct hci_unit *, bdaddr_t *);
+struct hci_memo *hci_memo_new(struct hci_unit *, bdaddr_t *);
 void hci_memo_free(struct hci_memo *);
 
 /* hci_socket.c */

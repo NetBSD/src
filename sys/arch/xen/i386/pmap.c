@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2007/05/17 14:51:36 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29.8.1 2007/10/02 18:27:56 joerg Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2007/05/17 14:51:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.8.1 2007/10/02 18:27:56 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1596,16 +1596,16 @@ pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
 {
 
 	if (pvh2 == NULL) {
-		simple_lock(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
 		return;
 	}
 
 	if (pvh1 < pvh2) {
-		simple_lock(&pvh1->pvh_lock);
-		simple_lock(&pvh2->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh2->pvh_lock);
 	} else {
-		simple_lock(&pvh2->pvh_lock);
-		simple_lock(&pvh1->pvh_lock);
+		mutex_spin_enter(&pvh2->pvh_lock);
+		mutex_spin_enter(&pvh1->pvh_lock);
 	}
 }
 
@@ -2186,7 +2186,7 @@ pmap_load()
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI);
-	KASSERT(read_psl() == 0);
+	KASSERT(x86_read_psl() == 0);
 
 	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
@@ -2655,10 +2655,10 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		mdpg = &pg->mdpage;
 
 		/* sync R/M bits */
-		simple_lock(&mdpg->mp_pvhead.pvh_lock);
+		mutex_spin_enter(&mdpg->mp_pvhead.pvh_lock);
 		mdpg->mp_attrs |= (opte & (PG_U|PG_M));
 		pve = pmap_remove_pv(&mdpg->mp_pvhead, pmap, startva);
-		simple_unlock(&mdpg->mp_pvhead.pvh_lock);
+		mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
 		if (pve) {
 			SPLAY_RIGHT(pve, pv_node) = pv_tofree;
@@ -2747,10 +2747,10 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	mdpg = &pg->mdpage;
 
 	/* sync R/M bits */
-	simple_lock(&mdpg->mp_pvhead.pvh_lock);
+	mutex_spin_enter(&mdpg->mp_pvhead.pvh_lock);
 	mdpg->mp_attrs |= (opte & (PG_U|PG_M));
 	pve = pmap_remove_pv(&mdpg->mp_pvhead, pmap, va);
-	simple_unlock(&mdpg->mp_pvhead.pvh_lock);
+	mutex_spin_exit(&mdpg->mp_pvhead.pvh_lock);
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
@@ -3031,7 +3031,7 @@ pmap_page_remove(pg)
 	curpmap = ci->ci_pmap;
 
 	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
+	mutex_spin_enter(&pvh->pvh_lock);
 
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root); pve != NULL; pve = npve) {
 		npve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve);
@@ -3118,7 +3118,7 @@ pmap_page_remove(pg)
 		killlist = pve;
 	}
 	pmap_free_pvs(NULL, killlist);
-	simple_unlock(&pvh->pvh_lock);
+	mutex_spin_exit(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 
@@ -3179,7 +3179,7 @@ pmap_test_attrs(pg, testbits)
 	/* nope, gonna have to do it the hard way */
 	PMAP_HEAD_TO_MAP_LOCK();
 	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
+	mutex_spin_enter(&pvh->pvh_lock);
 
 	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root);
 	     pve != NULL && (*myattrs & testbits) == 0;
@@ -3195,7 +3195,7 @@ pmap_test_attrs(pg, testbits)
 	 * we have found the bits we are testing for.
 	 */
 
-	simple_unlock(&pvh->pvh_lock);
+	mutex_spin_exit(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	return((*myattrs & testbits) != 0);
 }
@@ -3233,7 +3233,7 @@ pmap_clear_attrs(pg, clearbits)
 	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = &mdpg->mp_pvhead;
 	/* XXX: needed if we hold head->map lock? */
-	simple_lock(&pvh->pvh_lock);
+	mutex_spin_enter(&pvh->pvh_lock);
 
 	myattrs = &mdpg->mp_attrs;
 	result = *myattrs & clearbits;
@@ -3294,7 +3294,7 @@ no_tlb_shootdown:
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
 
-	simple_unlock(&pvh->pvh_lock);
+	mutex_spin_exit(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	pmap_tlb_shootnow(cpumask);
@@ -3592,9 +3592,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 #endif
 			mdpg = &pg->mdpage;
 			old_pvh = &mdpg->mp_pvhead;
-			simple_lock(&old_pvh->pvh_lock);
+			mutex_spin_enter(&old_pvh->pvh_lock);
 			mdpg->mp_attrs |= opte;
-			simple_unlock(&old_pvh->pvh_lock);
+			mutex_spin_exit(&old_pvh->pvh_lock);
 		}
 		goto shootdown_now;
 	}
@@ -3672,10 +3672,10 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 			if (new_pvh) {
 				pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
-				simple_unlock(&new_pvh->pvh_lock);
+				mutex_spin_exit(&new_pvh->pvh_lock);
 			} else
 				pmap_free_pv(pmap, pve);
-			simple_unlock(&old_pvh->pvh_lock);
+			mutex_spin_exit(&old_pvh->pvh_lock);
 
 			goto shootdown_test;
 		}
@@ -3686,9 +3686,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	if (new_pvh) {
-		simple_lock(&new_pvh->pvh_lock);
+		mutex_spin_enter(&new_pvh->pvh_lock);
 		pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
-		simple_unlock(&new_pvh->pvh_lock);
+		mutex_spin_exit(&new_pvh->pvh_lock);
 	}
 
 	XENPRINTK(("pmap initial setup\n"));

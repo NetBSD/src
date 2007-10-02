@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60.22.1 2007/10/02 16:48:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.60.22.2 2007/10/02 18:26:38 joerg Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \

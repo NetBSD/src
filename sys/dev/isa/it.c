@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.13 2007/07/20 07:23:47 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.13.4.1 2007/10/02 18:28:29 joerg Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13 2007/07/20 07:23:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13.4.1 2007/10/02 18:28:29 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13 2007/07/20 07:23:47 xtraeme Exp $");
 /* autoconf(9) functions */
 static int  it_isa_match(struct device *, struct cfdata *, void *);
 static void it_isa_attach(struct device *, struct device *, void *);
+static int  it_isa_detach(struct device *, int);
 
 CFATTACH_DECL(it_isa, sizeof(struct it_softc),
-    it_isa_match, it_isa_attach, NULL, NULL);
+    it_isa_match, it_isa_attach, it_isa_detach, NULL);
 
 /* driver functions */
 static int it_check(bus_space_tag_t, int);
@@ -197,6 +198,16 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
+}
+
+static int
+it_isa_detach(struct device *self, int flags)
+{
+	struct it_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(&sc->sc_sysmon);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
+	return 0;
 }
 
 static int

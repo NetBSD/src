@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.218.8.1 2007/08/16 11:02:20 jmcneill Exp $	*/
+/*	$NetBSD: trap.c,v 1.218.8.2 2007/10/02 18:27:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218.8.1 2007/08/16 11:02:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218.8.2 2007/10/02 18:27:23 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -277,7 +277,7 @@ trap(frame)
 	}
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip, frame->tf_cs,
 		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
@@ -335,9 +335,9 @@ trap(frame)
 		else
 			printf("unknown trap %d", frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x ilevel %x\n",
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
 		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 
 		panic("trap");
 		/*NOTREACHED*/

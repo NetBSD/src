@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.115.4.2 2007/09/04 20:05:11 joerg Exp $
+# $NetBSD: ALL,v 1.115.4.3 2007/10/02 18:27:05 joerg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.115.4.2 $"
+#ident 		"ALL-$Revision: 1.115.4.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -121,6 +121,7 @@ options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -174,17 +175,17 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	SYSVBFS		# System V boot file system
-file-system	PTYFS		# /dev/ptm support
-file-system	TMPFS		# Efficient memory file-system
-file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	PUFFS		# experimental - Userspace file system support
-file-system	HFS		# experimental - Apple HFS+ file system
-file-system	EFS		# Silicon Graphics Extent File System
-file-system	FILECORE	# Acorn filecore file system
-file-system	ADOSFS		# AmigaDOS file system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	SYSVBFS		# System V boot file system
+file-system 	PTYFS		# /dev/ptm support
+file-system 	TMPFS		# Efficient memory file-system
+file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	PUFFS		# experimental - Userspace file system support
+file-system 	HFS		# experimental - Apple HFS+ file system
+file-system 	EFS		# Silicon Graphics Extent File System
+file-system 	FILECORE	# Acorn filecore file system
+file-system 	ADOSFS		# AmigaDOS file system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -633,6 +634,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 adt7463c* at iic? addr 0x2D		# Tyan S2881
 adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# IBM Thinkpad Active Protection System
+aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
 it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
@@ -1135,6 +1139,9 @@ upl*	at uhub? port ?
 # Serial adapters
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?

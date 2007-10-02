@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.85 2007/07/09 21:10:56 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.85.6.1 2007/10/02 18:29:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.85 2007/07/09 21:10:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.85.6.1 2007/10/02 18:29:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,6 +316,7 @@ pipe_create(struct pipe **pipep, int allockva)
 	mutex_init(&pipe->pipe_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pipe->pipe_cv, "pipe");
 	cv_init(&pipe->pipe_lkcv, "pipelk");
+	selinit(&pipe->pipe_sel);
 
 	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
 		return (error);
@@ -1341,6 +1342,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	mutex_destroy(&pipe->pipe_lock);
 	cv_destroy(&pipe->pipe_cv);
 	cv_destroy(&pipe->pipe_lkcv);
+	seldestroy(&pipe->pipe_sel);
 	pool_put(&pipe_pool, pipe);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.5 2007/04/03 16:11:31 hannken Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.5.8.1 2007/10/02 18:28:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.5 2007/04/03 16:11:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.5.8.1 2007/10/02 18:28:58 joerg Exp $");
 
 #include "opt_coredump.h"
 
@@ -86,8 +86,11 @@ coredump(struct lwp *l, const char *pattern)
 	struct nameidata	nd;
 	struct vattr		vattr;
 	struct coredump_iostate	io;
+	struct plimit		*lim;
 	int			error, error1;
-	char			*name = NULL;
+	char			*name;
+
+	name = PNBUF_GET();
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
@@ -96,25 +99,16 @@ coredump(struct lwp *l, const char *pattern)
 	mutex_enter(&p->p_mutex);
 
 	/*
-	 * Make sure the process has not set-id, to prevent data leaks,
-	 * unless it was specifically requested to allow set-id coredumps.
-	 */
-	if ((p->p_flag & PK_SUGID) && !security_setidcore_dump) {
-		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
-		return EPERM;
-	}
-
-	/*
 	 * Refuse to core if the data + stack + user size is larger than
 	 * the core dump limit.  XXX THIS IS WRONG, because of mapped
 	 * data.
 	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
+		error = EFBIG;		/* better error code? */
 		mutex_exit(&p->p_mutex);
 		mutex_exit(&proclist_lock);
-		return EFBIG;		/* better error code? */
+		goto done;
 	}
 
 	/*
@@ -128,6 +122,10 @@ coredump(struct lwp *l, const char *pattern)
 	 * The core dump will go in the current working directory.  Make
 	 * sure that the directory is still there and that the mount flags
 	 * allow us to write core dumps there.
+	 *
+	 * XXX: this is partially bogus, it should be checking the directory
+	 * into which the file is actually written - which probably needs
+	 * a flag on namei()
 	 */
 	vp = p->p_cwdi->cwdi_cdir;
 	if (vp->v_mount == NULL ||
@@ -138,15 +136,27 @@ coredump(struct lwp *l, const char *pattern)
 		goto done;
 	}
 
-	if ((p->p_flag & PK_SUGID) && security_setidcore_dump)
+	/*
+	 * Make sure the process has not set-id, to prevent data leaks,
+	 * unless it was specifically requested to allow set-id coredumps.
+	 */
+	if (p->p_flag & PK_SUGID) {
+		if (!security_setidcore_dump) {
+			error = EPERM;
+			mutex_exit(&p->p_mutex);
+			mutex_exit(&proclist_lock);
+			goto done;
+		}
 		pattern = security_setidcore_path;
-
-	if (pattern == NULL)
-		pattern = p->p_limit->pl_corename;
-	if (name == NULL) {
-		name = PNBUF_GET();
 	}
+
+	/* It is (just) possible for p_limit and pl_corename to change */
+	lim = p->p_limit;
+	mutex_enter(&lim->pl_lock);
+	if (pattern == NULL)
+		pattern = lim->pl_corename;
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
+	mutex_exit(&lim->pl_lock);
 	mutex_exit(&p->p_mutex);
 	mutex_exit(&proclist_lock);
 	if (error)

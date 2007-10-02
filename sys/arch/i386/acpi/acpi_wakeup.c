@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.13 2007/09/30 23:50:41 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.14 2007/10/02 18:27:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.13 2007/09/30 23:50:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.14 2007/10/02 18:27:05 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -144,8 +144,8 @@ enter_s4_with_bios(void)
 
 	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
 
-	ef = read_eflags();
-	disable_intr();
+	ef = x86_read_psl();
+	x86_disable_intr();
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -170,7 +170,7 @@ enter_s4_with_bios(void)
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllRuntimeGpes();
 
-	write_eflags(ef);
+	x86_write_psl(ef);
 
 	return (AE_OK);
 }
@@ -231,7 +231,7 @@ acpi_md_sleep(int state)
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
-	disable_intr();
+	x86_disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 		bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
@@ -282,7 +282,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
-	enable_intr();
+	x86_enable_intr();
 
 	return (ret);
 #undef WAKECODE_FIXUP

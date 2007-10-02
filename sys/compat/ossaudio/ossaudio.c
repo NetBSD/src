@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.56 2007/06/11 13:05:47 joerg Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.56.6.1 2007/10/02 18:28:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56 2007/06/11 13:05:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56.6.1 2007/10/02 18:28:14 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -515,9 +515,22 @@ oss_ioctl_audio(l, uap, retval)
 	case OSS_SNDCTL_DSP_MAPINBUF:
 	case OSS_SNDCTL_DSP_MAPOUTBUF:
 	case OSS_SNDCTL_DSP_SETSYNCRO:
-	case OSS_SNDCTL_DSP_PROFILE:
 		error = EINVAL;
 		goto out;
+	case OSS_SNDCTL_DSP_GETODELAY:
+		error = ioctlf(fp, AUDIO_GETBUFINFO, (void *)&tmpinfo, l);
+		if (error)
+			goto out;
+		idat = tmpinfo.play.seek + tmpinfo.blocksize / 2;
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			goto out;
+		break;
+	case OSS_SNDCTL_DSP_PROFILE:
+		/* This gives just a hint to the driver,
+		 * implementing it as a NOP is ok
+		 */
+		break;
 	default:
 		error = EINVAL;
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.2.10.1 2007/09/03 16:47:48 jmcneill Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.2.10.2 2007/10/02 18:27:52 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.10.1 2007/09/03 16:47:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.10.2 2007/10/02 18:27:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,34 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.10.1 2007/09/03 16:47:48 jmcnei
 #if defined(I686_CPU) || defined(__x86_64__)
 
 static void
-monitor(const void *addr)
-{
-	uint32_t hint = 0;
-	uint32_t ext = 0;
-
-	__asm __volatile (".byte 0x0f, 0x01, 0xc8" /* monitor */
-	    :: "a"(addr), "c"(ext), "d"(hint));
-}
-
-static void
-mwait(void)
-{
-	uint32_t hint = 0;
-	uint32_t ext = 0;
-
-	__asm __volatile (".byte 0x0f, 0x01, 0xc9" /* mwait */
-	    :: "a"(hint), "c"(ext));
-}
-
-static void
 cpu_idle_mwait(struct cpu_info *ci)
 {
 
-	monitor(&ci->ci_want_resched);
+	x86_monitor(&ci->ci_want_resched, 0, 0);
 	if (__predict_false(ci->ci_want_resched)) {
 		return;
 	}
-	mwait();
+	x86_mwait(0, 0);
 }
 
 #endif /* defined(I686_CPU) || defined(__x86_64__) */
@@ -74,12 +54,11 @@ static void
 cpu_idle_halt(struct cpu_info *ci)
 {
 
-	disable_intr();
-	__insn_barrier();
+	x86_disable_intr();
 	if (!__predict_false(ci->ci_want_resched)) {
-		__asm __volatile ("sti; hlt");
+		x86_stihlt();
 	} else {
-		enable_intr();
+		x86_enable_intr();
 	}
 }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.62.14.1 2007/09/03 16:48:37 jmcneill Exp $ */
+/*      $NetBSD: if_qe.c,v 1.62.14.2 2007/10/02 18:28:38 joerg Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.14.1 2007/09/03 16:48:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.14.2 2007/10/02 18:28:38 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -649,7 +649,6 @@ int
 qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 

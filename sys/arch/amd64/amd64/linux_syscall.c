@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.14 2007/04/26 12:54:17 njoly Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.14.10.1 2007/10/02 18:26:40 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14 2007/04/26 12:54:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.10.1 2007/10/02 18:26:40 joerg Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

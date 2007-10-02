@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.81 2007/07/27 10:00:42 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.81.4.1 2007/10/02 18:29:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81 2007/07/27 10:00:42 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81.4.1 2007/10/02 18:29:33 joerg Exp $");
 
 #ifdef LFS_READWRITE
-#define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct lfs
 #define	I_FS			i_lfs
 #define	READ			lfs_read
@@ -45,7 +44,6 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81 2007/07/27 10:00:42 yamt Exp 
 #define	fs_bsize		lfs_bsize
 #define	fs_bmask		lfs_bmask
 #else
-#define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct fs
 #define	I_FS			i_fs
 #define	READ			ffs_read
@@ -140,7 +138,7 @@ READ(void *v)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = BLKSIZE(fs, ip, lbn);
+		size = blksize(fs, ip, lbn);
 		blkoffset = blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
@@ -148,7 +146,7 @@ READ(void *v)
 		if (lblktosize(fs, nextlbn) >= ip->i_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else {
-			int nextsize = BLKSIZE(fs, ip, nextlbn);
+			int nextsize = blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
 		}
@@ -455,7 +453,7 @@ WRITE(void *v)
 			uvm_vnp_setsize(vp, ip->i_size);
 			extended = 1;
 		}
-		size = BLKSIZE(fs, ip, lbn) - bp->b_resid;
+		size = blksize(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
 			xfersize = size;
 

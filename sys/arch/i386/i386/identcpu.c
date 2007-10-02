@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.74 2007/07/25 13:41:53 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.74.4.1 2007/10/02 18:27:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74 2007/07/25 13:41:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74.4.1 2007/10/02 18:27:17 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -660,14 +660,14 @@ via_cpu_probe(struct cpu_info *ci)
 	/*
 	 * Determine the largest extended function value.
 	 */
-	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
 	/*
 	 * Determine the extended feature flags.
 	 */
 	if (lfunc >= 0x80000001) {
-		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		x86_cpuid(0x80000001, descs);
 		ci->ci_feature_flags |= descs[3];
 	}
 
@@ -675,12 +675,12 @@ via_cpu_probe(struct cpu_info *ci)
 		return;
 
 	/* Nehemiah or Esther */
-	CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0xc0000000, descs);
 	lfunc = descs[0];
 	if (lfunc < 0xc0000001)	/* no ACE, no RNG */
 		return;
 
-	CPUID(0xc0000001, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(0xc0000001, descs);
 	lfunc = descs[3];
 	if (model > 0x9 || stepping >= 8) {	/* ACE */
 		if (lfunc & CPUID_VIA_HAS_ACE) {
@@ -905,23 +905,24 @@ cpu_probe_base_features(struct cpu_info *ci)
 	u_int descs[4];
 	int iterations, i, j;
 	uint8_t desc;
-	uint32_t dummy1, dummy2, miscbytes;
+	uint32_t miscbytes;
 	uint32_t brand[12];
 
 	if (ci->ci_cpuid_level < 0)
 		return;
 
-	CPUID(0, ci->ci_cpuid_level,
-	    ci->ci_vendor[0],
-	    ci->ci_vendor[2],
-	    ci->ci_vendor[1]);
+	x86_cpuid(0, descs);
+	ci->ci_cpuid_level = descs[0];
+	ci->ci_vendor[0] = descs[1];
+	ci->ci_vendor[2] = descs[2];
+	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
-	CPUID(0x80000000, brand[0], brand[1], brand[2], brand[3]);
+	x86_cpuid(0x80000000, brand);
 	if (brand[0] >= 0x80000004) {
-		CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
-		CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
-		CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+		x86_cpuid(0x80000002, brand);
+		x86_cpuid(0x80000003, brand + 4);
+		x86_cpuid(0x80000004, brand + 8);
 		for (i = 0; i < 48; i++)
 			if (((char *) brand)[i] != ' ')
 				break;
@@ -931,8 +932,11 @@ cpu_probe_base_features(struct cpu_info *ci)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	CPUID(1, ci->ci_signature, miscbytes, ci->ci_feature2_flags,
-	    ci->ci_feature_flags);
+	x86_cpuid(1, descs);
+	ci->ci_signature = descs[0];
+	miscbytes = descs[1];
+	ci->ci_feature2_flags = descs[2];
+	ci->ci_feature_flags = descs[3];
 
 	/* Brand is low order 8 bits of ebx */
 	ci->ci_brand_id = miscbytes & 0xff;
@@ -949,7 +953,7 @@ cpu_probe_base_features(struct cpu_info *ci)
 	 * XXX This is kinda ugly, but hey, so is the architecture...
 	 */
 
-	CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+	x86_cpuid(2, descs);
 
 	iterations = descs[0] & 0xff;
 	while (iterations-- > 0) {
@@ -968,7 +972,7 @@ cpu_probe_base_features(struct cpu_info *ci)
 					ci->ci_cinfo[cai->cai_index] = *cai;
 			}
 		}
-		CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+		x86_cpuid(2, descs);
 	}
 
 	if (ci->ci_cpuid_level < 3)
@@ -981,9 +985,9 @@ cpu_probe_base_features(struct cpu_info *ci)
 	if ((ci->ci_feature_flags & CPUID_PN) != 0)
 	{
 		ci->ci_cpu_serial[0] = ci->ci_signature;
-		CPUID(3, dummy1, dummy2,
-		    ci->ci_cpu_serial[2],
-		    ci->ci_cpu_serial[1]);
+		x86_cpuid(3, descs);
+		ci->ci_cpu_serial[2] = descs[2];
+		ci->ci_cpu_serial[1] = descs[3];
 	}
 }
 
@@ -1026,16 +1030,15 @@ cpu_probe_features(struct cpu_info *ci)
 void
 intel_family_new_probe(struct cpu_info *ci)
 {
-	uint32_t lfunc;
 	uint32_t descs[4];
 
-	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000000, descs);
 
 	/*
 	 * Determine extended feature flags.
 	 */
-	if (lfunc >= 0x80000001) {
-		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+	if (descs[0] >= 0x80000001) {
+		x86_cpuid(0x80000001, descs);
 		ci->ci_feature3_flags |= descs[3];
 	}
 }
@@ -1043,18 +1046,17 @@ intel_family_new_probe(struct cpu_info *ci)
 void
 amd_family6_probe(struct cpu_info *ci)
 {
-	uint32_t lfunc;
 	uint32_t descs[4];
 	char *p;
 	int i;
 
-	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+	x86_cpuid(0x80000000, descs);
 
 	/*
 	 * Determine the extended feature flags.
 	 */
-	if (lfunc >= 0x80000001) {
-		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+	if (descs[0] >= 0x80000001) {
+		x86_cpuid(0x80000001, descs);
 		ci->ci_feature_flags |= descs[3];
 	}
 
@@ -1131,8 +1133,8 @@ tmx86_get_longrun_mode(void)
 	union msrinfo	msrinfo;
 	u_int		low, high, flags, mode;
 
-	eflags = read_eflags();
-	disable_intr();
+	eflags = x86_read_psl();
+	x86_disable_intr();
 
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
 	low = LONGRUN_MODE_MASK(msrinfo.regs[0]);
@@ -1148,25 +1150,25 @@ tmx86_get_longrun_mode(void)
 	}
 	mode = LONGRUN_MODE_UNKNOWN;
 out:
-	write_eflags(eflags);
+	x86_write_psl(eflags);
 	return (mode);
 }
 
 static u_int
 tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
 {
-	u_long		eflags;
-	u_int		eax, ebx, ecx, edx;
+	u_long eflags;
+	u_int descs[4];
 
-	eflags = read_eflags();
-	disable_intr();
+	eflags = x86_read_psl();
+	x86_disable_intr();
 
-	CPUID(0x80860007, eax, ebx, ecx, edx);
-	*frequency = eax;
-	*voltage = ebx;
-	*percentage = ecx;
+	x86_cpuid(0x80860007, descs);
+	*frequency = descs[0];
+	*voltage = descs[1];
+	*percentage = descs[2];
 
-	write_eflags(eflags);
+	x86_write_psl(eflags);
 	return (1);
 }
 
@@ -1180,8 +1182,8 @@ tmx86_set_longrun_mode(u_int mode)
 		return (0);
 	}
 
-	eflags = read_eflags();
-	disable_intr();
+	eflags = x86_read_psl();
+	x86_disable_intr();
 
 	/* Write LongRun mode values to Model Specific Register. */
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
@@ -1196,7 +1198,7 @@ tmx86_set_longrun_mode(u_int mode)
 	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | longrun_modes[mode][2];
 	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
 
-	write_eflags(eflags);
+	x86_write_psl(eflags);
 	return (1);
 }
 
@@ -1216,47 +1218,39 @@ tmx86_get_longrun_status_all(void)
 static void
 transmeta_cpu_info(struct cpu_info *ci)
 {
-	u_int eax, ebx, ecx, edx, nreg = 0;
+	u_int descs[4], nreg;
 
-	CPUID(0x80860000, eax, ebx, ecx, edx);
-	nreg = eax;
+	x86_cpuid(0x80860000, descs);
+	nreg = descs[0];
 	if (nreg >= 0x80860001) {
-		CPUID(0x80860001, eax, ebx, ecx, edx);
+		x86_cpuid(0x80860001, descs);
 		aprint_verbose("%s: Processor revision %u.%u.%u.%u\n",
 		    ci->ci_dev->dv_xname,
-		    (ebx >> 24) & 0xff,
-		    (ebx >> 16) & 0xff,
-		    (ebx >> 8) & 0xff,
-		    ebx & 0xff);
+		    (descs[1] >> 24) & 0xff,
+		    (descs[1] >> 16) & 0xff,
+		    (descs[1] >> 8) & 0xff,
+		    descs[1] & 0xff);
 	}
 	if (nreg >= 0x80860002) {
-		CPUID(0x80860002, eax, ebx, ecx, edx);
+		x86_cpuid(0x80860002, descs);
 		aprint_verbose("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
-		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
-		    (ebx >> 16) & 0xff,
-		    (ebx >> 8) & 0xff,
-		    ebx & 0xff,
-		    ecx);
+		    ci->ci_dev->dv_xname, (descs[1] >> 24) & 0xff,
+		    (descs[1] >> 16) & 0xff,
+		    (descs[1] >> 8) & 0xff,
+		    descs[1] & 0xff,
+		    descs[2]);
 	}
 	if (nreg >= 0x80860006) {
 		union {
 			char text[65];
-			struct
-			{
-				u_int eax;
-				u_int ebx;
-				u_int ecx;
-				u_int edx;
-			} regs[4];
+			u_int descs[4][4];
 		} info;
 		int i;
 
 		for (i=0; i<4; i++) {
-			CPUID(0x80860003 + i,
-			    info.regs[i].eax, info.regs[i].ebx,
-			    info.regs[i].ecx, info.regs[i].edx);
+			x86_cpuid(0x80860003 + i, info.descs[i]);
 		}
-		info.text[64] = 0;
+		info.text[64] = '\0';
 		aprint_verbose("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
@@ -1274,10 +1268,10 @@ transmeta_cpu_info(struct cpu_info *ci)
 void
 transmeta_cpu_setup(struct cpu_info *ci)
 {
-	u_int nreg = 0, dummy;
+	u_int descs[4];
 
-	CPUID(0x80860000, nreg, dummy, dummy, dummy);
-	if (nreg >= 0x80860007)
+	x86_cpuid(0x80860000, descs);
+	if (descs[0] >= 0x80860007)
 		tmx86_has_longrun = 1;
 }
 
