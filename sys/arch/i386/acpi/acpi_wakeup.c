@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.14 2007/10/02 18:27:05 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.15 2007/10/02 23:37:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.14 2007/10/02 18:27:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.15 2007/10/02 23:37:15 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -142,7 +142,7 @@ enter_s4_with_bios(void)
 
 	/* clear wake status */
 
-	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
+	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1);
 
 	ef = x86_read_psl();
 	x86_disable_intr();
@@ -159,10 +159,9 @@ enter_s4_with_bios(void)
 	 */
 	do {
 		AcpiOsStall(1000000);
-		AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
-				AcpiGbl_FADT->S4BiosReq, 8);
-		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS,
-					&ret, ACPI_MTX_LOCK);
+		AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
+				AcpiGbl_FADT.S4BiosRequest, 8);
+		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS, &ret);
 		if (ACPI_FAILURE(status))
 			break;
 	} while (!ret);
@@ -198,6 +197,7 @@ acpi_md_sleep(int state)
 } while (0)
 
 	ACPI_STATUS			status;
+	ACPI_TABLE_FACS			*facs;
 	int				ret = 0;
 	paddr_t				tmp_pdir;
 
@@ -221,6 +221,10 @@ acpi_md_sleep(int state)
 		printf("acpi: apci_md_sleep called from secondary CPU ignored\n");
 		return -1;
 	}
+
+	status = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
+	if (ACPI_FAILURE(status))
+		facs = NULL;
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
@@ -249,7 +253,8 @@ acpi_md_sleep(int state)
 
 		ACPI_FLUSH_CPU_CACHE();
 
-		if (state == ACPI_STATE_S4 && AcpiGbl_FACS->S4Bios_f) {
+		if (state == ACPI_STATE_S4 && facs != NULL &&
+		    facs->Flags & ACPI_FACS_S4_BIOS_PRESENT) {
 			status = enter_s4_with_bios();
 		} else {
 			status = AcpiEnterSleepState(state);

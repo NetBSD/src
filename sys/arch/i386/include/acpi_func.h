@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.6 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.6.48.1 2007/10/02 23:37:15 jmcneill Exp $	*/
 
 #include <machine/cpufunc.h>
 
@@ -24,6 +24,7 @@ do { \
 	: "=&a" (Acq), "+m" (*GLptr) \
 	: "i" (~1L) \
 	: "edx"); \
+	(Acq) = -1; \
 } while (0)
 
 #define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq) \

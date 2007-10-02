@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.2.56.3 2007/09/08 22:03:16 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.2.56.4 2007/10/02 23:37:16 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,10 +41,12 @@
  */
 
 #include <machine/pio.h>
+#include <machine/i82489var.h>
+#include <machine/i82489reg.h>
 
 ACPI_STATUS	acpi_md_OsInitialize(void);
 ACPI_STATUS	acpi_md_OsTerminate(void);
-ACPI_STATUS	acpi_md_OsGetRootPointer(UINT32, ACPI_POINTER *);
+ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 
 #define	acpi_md_OsIn8(x)	inb((x))
 #define	acpi_md_OsIn16(x)	inw((x))

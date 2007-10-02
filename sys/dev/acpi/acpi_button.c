@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.22.22.1 2007/08/05 19:01:00 jmcneill Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.22.22.2 2007/10/02 23:37:18 jmcneill Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22.22.1 2007/08/05 19:01:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22.22.2 2007/10/02 23:37:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 		printf("%s: received ButtonPressed message\n",
 		    sc->sc_dev.dv_xname);
 #endif
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 		    acpibut_pressed_event, sc);
 		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue button pressed "

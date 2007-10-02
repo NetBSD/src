@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.25.6.1 2007/08/05 19:00:59 jmcneill Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25.6.2 2007/10/02 23:37:18 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.1 2007/08/05 19:00:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.2 2007/10/02 23:37:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		acpiacad_clear_status(sc);
 		mutex_exit(&sc->sc_mtx);
 		if (sc->sc_status == -1 || !sc->sc_notifysent) {
-			rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+			rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 			    acpiacad_get_status, sc);
 			if (ACPI_FAILURE(rv))
 				printf("%s: unable to queue status check: %s\n",
