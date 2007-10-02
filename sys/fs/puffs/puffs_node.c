@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.3 2007/10/01 21:09:08 pooka Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.4 2007/10/02 01:17:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.3 2007/10/01 21:09:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4 2007/10/02 01:17:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -130,7 +130,12 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 		goto bad;
 	}
 
-	/* So it's not dead yet.. good.. inform new vnode of its master */
+	/*
+	 * Creation should not fail after this point.  Or if it does,
+	 * care must be taken so that VOP_INACTIVE() isn't called.
+	 */
+
+	/* So mp is not dead yet.. good.. inform new vnode of its master */
 	simple_lock(&mntvnode_slock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	simple_unlock(&mntvnode_slock);

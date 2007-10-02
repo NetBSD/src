@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.53 2007/10/01 21:09:08 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.54 2007/10/02 01:17:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -85,6 +85,9 @@ enum {
 };
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
+/*
+ * These signal invalid parameters the file system returned.
+ */
 enum {
 	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
 	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
@@ -104,6 +107,7 @@ enum {
 struct puffs_kargs {
 	unsigned int	pa_vers;
 	int		pa_fd;
+
 	uint32_t	pa_flags;
 
 	size_t		pa_maxreqlen;
@@ -118,7 +122,7 @@ struct puffs_kargs {
 	dev_t		pa_root_rdev;
 
 	struct statvfs	pa_svfsb;
-	
+
 	char		pa_typename[_VFS_NAMELEN];
 	char		pa_mntfromname[_VFS_MNAMELEN];
 
