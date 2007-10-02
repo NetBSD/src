@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.13 2007/09/06 18:01:34 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.14 2007/10/02 13:41:44 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 6, 2007
+.Dd October 2, 2007
 .Dt PUFFS_FRAMEBUF 3
 .Os
 .Sh NAME
@@ -166,11 +166,8 @@ It operates on top of the puffs continuation framework,
 .Xr puffs_cc 3 ,
 and multiplexes execution automatically to an instance whenever
 one is runnable.
-Currently only request-response type "client pull" protocols are
-supported, but support for protocols which also feature "server
-push" type messaging may be added at a later date.
 .Pp
-The file system is entered in two different ways:
+The file system is entered in three different ways:
 .Bl -bullet -offset indent
 .It
 An event arrives from the kernel and the
@@ -179,6 +176,10 @@ callbacks are called to start processing the event.
 .It
 A file system which has sent out a request receives a response.
 Execution is resumed from the place where the file system yielded.
+.It
+A request from a peer arrives.
+A request is an incoming PDU which is not a response to any outstanding
+request.
 .El
 .Pp
 .Nm
@@ -211,7 +212,7 @@ The following callbacks can be defined, cf.
 and all are optional.
 None of them should block, because this would cause the entire file server
 to block.
-One option is to make the descriptors non-blocking before using them.
+One option is to make the descriptors non-blocking before adding them.
 .Bl -tag -width "xfdnotfnx"
 .It rfb
 Read a frame from the file descriptor onto the specified buffer.
@@ -221,6 +222,7 @@ Write a frame from the the specified buffer into the file descriptor.
 Identify if a buffer is the response to the specified buffer.
 .It gotfb
 Called iff no outstanding request matches the incoming frame.
+In other words, this is called when we receive a request from a peer.
 .It fdnotfn
 Receive notifications about a change-of-state in a file descriptor's
 status.
