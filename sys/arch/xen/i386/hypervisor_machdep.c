@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.17 2007/01/29 01:52:46 hubertf Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.17.14.1 2007/10/03 19:25:59 garbled Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.17 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.17.14.1 2007/10/03 19:25:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +111,16 @@ stipending()
 	 * we're only called after STIC, so we know that we'll have to
 	 * STI at the end
 	 */
-	while (s->vcpu_data[0].evtchn_upcall_pending) {
+	while (s->vcpu_info[0].evtchn_upcall_pending) {
 		cli();
-		s->vcpu_data[0].evtchn_upcall_pending = 0;
+		s->vcpu_info[0].evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
+#ifdef XEN3
+		l1 = xen_atomic_xchg(&s->vcpu_info[0].evtchn_pending_sel, 0);
+#else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
+#endif
 		while ((l1i = ffs(l1)) != 0) {
 			l1i--;
 			l1 &= ~(1 << l1i);
@@ -184,11 +188,15 @@ do_hypervisor_callback(struct intrframe *regs)
 	}
 #endif
 
-	while (s->vcpu_data[0].evtchn_upcall_pending) {
-		s->vcpu_data[0].evtchn_upcall_pending = 0;
+	while (s->vcpu_info[0].evtchn_upcall_pending) {
+		s->vcpu_info[0].evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
+#ifdef XEN3
+		l1 = xen_atomic_xchg(&s->vcpu_info[0].evtchn_pending_sel, 0);
+#else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
+#endif
 		while ((l1i = ffs(l1)) != 0) {
 			l1i--;
 			l1 &= ~(1 << l1i);
@@ -226,8 +234,12 @@ do_hypervisor_callback(struct intrframe *regs)
 #ifdef DIAGNOSTIC
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
-		    (uint)HYPERVISOR_shared_info->evtchn_pending_sel, level,
-		    ci->ci_ilevel, ci->ci_ipending);
+#ifdef XEN3
+		    (uint)HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel,
+#else
+		    (uint)HYPERVISOR_shared_info->evtchn_pending_sel,
+#endif
+		    level, ci->ci_ilevel, ci->ci_ipending);
 #endif
 }
 
@@ -247,9 +259,13 @@ hypervisor_unmask_event(unsigned int ev)
 	 * interrupt edge' if the channel is masked.
 	 */
 	if (xen_atomic_test_bit(&s->evtchn_pending[0], ev) && 
+#ifdef XEN3
+	    !xen_atomic_test_and_set_bit(&s->vcpu_info[0].evtchn_pending_sel, ev>>5)) {
+#else
 	    !xen_atomic_test_and_set_bit(&s->evtchn_pending_sel, ev>>5)) {
-		xen_atomic_set_bit(&s->vcpu_data[0].evtchn_upcall_pending, 0);
-		if (!s->vcpu_data[0].evtchn_upcall_mask)
+#endif
+		xen_atomic_set_bit(&s->vcpu_info[0].evtchn_upcall_pending, 0);
+		if (!s->vcpu_info[0].evtchn_upcall_mask)
 			hypervisor_force_callback();
 	}
 }

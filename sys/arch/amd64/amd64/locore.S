@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20.12.2 2007/06/26 18:11:57 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.12.3 2007/10/03 19:22:08 garbled Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -175,7 +175,7 @@ _C_LABEL(lapic_isr):
 #endif
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
@@ -185,6 +185,8 @@ _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
+					#   instruction
+_C_LABEL(cpu_feature2):	.long	0	# feature flags from 'cpuid'
 					#   instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
@@ -334,6 +336,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	cpuid
 	movl	%eax,RELOC(cpu_id)
 	movl	%edx,RELOC(cpu_feature)
+	movl	%ecx,RELOC(cpu_feature2)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
@@ -631,40 +634,6 @@ longmode_hi:
 	call 	_C_LABEL(main)
 
 /*****************************************************************************/
-
-/*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Change the global descriptor table.
- */
-NENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movq	%rdi,%rax
-	lgdt	(%rax)
-	/* Flush the prefetch q. */
-	jmp	1f
-	nop
-1:	/* Reload "stale" selectors. */
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%ds
-	movl	%eax,%es
-	movl	%eax,%ss
-	/* Reload code selector by doing intersegment return. */
-	popq	%rax
-	pushq	$GSEL(GCODE_SEL, SEL_KPL)
-	pushq	%rax
-	lretq
-
-/*
- * void x86_flush()
- *
- * Flush instruction pipelines by doing an intersegment (far) return.
- */
-NENTRY(x86_flush)
-	popq	%rax
-	pushq	$GSEL(GCODE_SEL, SEL_KPL)
-	pushq	%rax
-	lretq
 
 /*
  * int setjmp(label_t *)
@@ -1027,3 +996,51 @@ iret_return:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+
+/*
+ * void sse2_zero_page(void *pg)
+ *
+ * Zero a page without polluting the cache.
+ */
+ENTRY(sse2_zero_page)
+	movl	$PAGE_SIZE, %ecx
+	xorq	%rax, %rax
+	.align	16
+1:
+	movnti	%rax, 0(%rdi)
+	movnti	%rax, 8(%rdi)
+	movnti	%rax, 16(%rdi)
+	movnti	%rax, 24(%rdi)
+	movnti	%rax, 32(%rdi)
+	movnti	%rax, 40(%rdi)
+	movnti	%rax, 48(%rdi)
+	movnti	%rax, 56(%rdi)
+	subl	$64, %ecx
+	leaq	64(%rdi), %rdi
+	jnz	1b
+	sfence
+	ret
+
+/*
+ * void sse2_copy_page(void *src, void *dst)
+ *
+ * Copy a page without polluting the cache.
+ */
+ENTRY(sse2_copy_page)
+	movl	$PAGE_SIZE, %ecx
+	.align	16
+1:
+	movq	0(%rdi), %rax
+	movq	8(%rdi), %rdx
+	movq	16(%rdi), %r8
+	movq	24(%rdi), %r9
+	movnti	%rax, 0(%rsi)
+	movnti	%rdx, 8(%rsi)
+	movnti	%r8, 16(%rsi)
+	movnti	%r9, 24(%rsi)
+	subl	$32, %ecx
+	leaq	32(%rdi), %rdi
+	leaq	32(%rsi), %rsi
+	jnz	1b
+	sfence
+	ret

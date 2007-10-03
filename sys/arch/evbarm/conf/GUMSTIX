@@ -1,9 +1,11 @@
-#	$NetBSD: GUMSTIX,v 1.13 2007/04/20 13:22:21 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.13.2.1 2007/10/03 19:23:07 garbled Exp $
 #
-#	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
+#	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
 
 include 	"arch/evbarm/conf/std.gumstix"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -26,33 +28,36 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # File systems
 
-file-system	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system	LFS		# log-structured file system
-file-system	MFS		# memory file system
-file-system	NFS		# Network file system client
+file-system 	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network file system client
 #file-system 	NTFS		# Windows/NT file system (experimental)
-file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-file-system	FDESC		# /dev/fd
-file-system	KERNFS		# /kern
-file-system	NULLFS		# loopback file system
-#file-system 	OVERLAY		# overlay file system
-file-system	PORTAL		# portal filesystem (still experimental)
-file-system	PROCFS		# /proc
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION		# union file system
-#file-system	CODA		# Coda File System; also needs vcoda (below)
-#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
+file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -93,6 +98,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -215,12 +221,18 @@ pxaudc0	at pxaip?				# USB Device Controller
 # gumstix device support
 gxio0	at pxaip?
 options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
+options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
 
 # gumstix expantion boards
 
 # SMC 91C111
 sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
+
+# Inter-Integrated Circuit controller
+gxiic0	at pxaip?
+iic*	at gxiic?
+#dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
 
 # integrated PCMCIA/CF controller
 pxapcic0 at pxaip?				# cfstix, netCF
@@ -231,25 +243,24 @@ pcmcia*	at pxapcic?
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-# PCMCIA IDE controllers 
+# PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
-atabus*	at wdc? channel ? 
+atabus*	at wdc? channel ?
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-xi*	at xirc?
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xi*	at xirc?
 
 # MII/PHY support
-acphy*	at mii? phy ?			# AMD/Altima AC101 PHYs
+#acphy*	at mii? phy ?			# AMD/Altima AC101 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB Devices
 
 # USB bus support
-#usb*	at slhci?
 
 # USB Hubs
 #uhub*	at usb?
@@ -270,7 +281,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -291,15 +302,18 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
-#umidi*	at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
-#uirda*	at uhub? port ? configuration ? interface ?
+#uirda* at uhub? port ? configuration ? interface ?
 #irframe* at uirda?
 
+#stuirda* at uhub? port ? configuration ? interface ?
+#irframe* at stuirda?
+
 # SigmaTel STIr4200 USB/IrDA Bridge
-#ustir*	at uhub? port ?
+#ustir* at uhub? port ?
 #irframe* at ustir?
 
 # USB Ethernet adapters
@@ -311,9 +325,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 #ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
@@ -321,6 +337,9 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # Serial adapters
 #ubsa*	at uhub? port ?		# Belkin serial adapter
 #ucom*	at ubsa? portno ?
+
+#uchcom*	at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
+#ucom*	at uchcom? portno ?
 
 #uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 #ucom*	at uftdi? portno ?
@@ -331,10 +350,13 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 #ucom*	at umct? portno ?
 
-#uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 #ucom*	at uplcom? portno ?
 
-#uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+#uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+#ucom*	at uslsa? portno ?
+
+#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
@@ -354,8 +376,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
 
+# Topfield TF5000PVR range of DVB recorders
+#utoppy*	at uhub? port ?
+
 # Y@P firmware loader
-#uyap*	at uhub? port ?
+#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?
@@ -363,17 +388,25 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB Generic driver
 #ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+#options UGEN_BULK_RA_WB
+
+# USB generic serial port (e.g., data over cellular)
+#ugensa*	at uhub? port ?
+#ucom*	at ugensa?
 
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
 #bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 #ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub*	at bt3c?
+#bthub*	at btbc?
 bthub*	at btuart?
 #bthub*	at ubt?
 
@@ -393,11 +426,13 @@ bthub*	at btuart?
 
 # Pseudo-Devices
 
+pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -433,6 +468,7 @@ pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
@@ -444,12 +480,13 @@ options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+					# connect with Ericsson Bluetooth Module
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
-#pseudo-device	nsmb			# experimental - SMB requester
+pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
@@ -468,7 +505,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #
 #options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384 
+#options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5

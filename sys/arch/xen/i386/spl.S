@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.14.1 2007/06/26 18:13:55 garbled Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.14.2 2007/10/03 19:26:01 garbled Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -144,8 +144,6 @@ IDTVEC(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
-	IDEPTH_DECR
-	popl	%ebx			# get previous priority
 .Ldoreti_resume:
 	movl	$.Ldoreti_resume,%esi	# address to resume loop at
 	movl	%ebx,%eax

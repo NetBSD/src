@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.12.1 2007/05/22 17:26:59 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.12.2 2007/10/03 19:23:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -630,47 +630,6 @@ NENTRY(sigcode)
 _C_LABEL(esigcode):
 
 /*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Load a new GDT pointer (and do any necessary cleanup).
- * XXX It's somewhat questionable whether reloading all the segment registers
- * is necessary, since the actual descriptor data is not changed except by
- * process creation and exit, both of which clean up via task switches.  OTOH,
- * this only happens at run time when the GDT is resized.
- */
-NENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movl	4(%esp),%eax
-	lgdt	(%eax)
-	/* Flush the prefetch queue. */
-	jmp	1f
-	nop
-1:	/* Reload "stale" selectors. */
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%gs
-	movw	%ax,%ss
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-	/* Reload code selector by doing intersegment return. */
-	popl	%eax
-	pushl	$GSEL(GCODE_SEL, SEL_KPL)
-	pushl	%eax
-	lret
-
-/*
- * void x86_flush()
- *
- * Flush instruction pipelines by doing an intersegment (far) return.
- */
-NENTRY(x86_flush)
-	popl	%eax
-	pushl	$GSEL(GCODE_SEL, SEL_KPL)
-	pushl	%eax
-	lret
-
-/*
  * int setjmp(label_t *)
  *
  * Used primarily by DDB.
@@ -792,7 +751,8 @@ ENTRY(cpu_switchto)
 	addl	$8,%esp
 	cmpl	$-1,%eax
 	je	2b
-	movl	%eax,TF_EIP(%ebx)
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
 	jmp	2b
 
 /*
@@ -936,3 +896,65 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 #endif /* NNPX > 0 */
+
+/*
+ * void sse2_zero_page(void *pg)
+ *
+ * Zero a page without polluting the cache.
+ */
+ENTRY(sse2_zero_page)
+	pushl	%ebp
+	movl	%esp,%ebp
+	movl	8(%esp), %edx
+	movl	$PAGE_SIZE, %ecx
+	xorl	%eax, %eax
+	.align	16
+1:
+	movnti	%eax, 0(%edx)
+	movnti	%eax, 4(%edx)
+	movnti	%eax, 8(%edx)
+	movnti	%eax, 12(%edx)
+	movnti	%eax, 16(%edx)
+	movnti	%eax, 20(%edx)
+	movnti	%eax, 24(%edx)
+	movnti	%eax, 28(%edx)
+	subl	$32, %ecx
+	leal	32(%edx), %edx
+	jnz	1b
+	sfence
+	pop	%ebp
+	ret
+
+/*
+ * void sse2_copy_page(void *src, void *dst)
+ *
+ * Copy a page without polluting the cache.
+ */
+ENTRY(sse2_copy_page)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	20(%esp), %esi
+	movl	24(%esp), %edi
+	movl	$PAGE_SIZE, %ebp
+	.align	16
+1:
+	movl	0(%esi), %eax
+	movl	4(%esi), %ebx
+	movl	8(%esi), %ecx
+	movl	12(%esi), %edx
+	movnti	%eax, 0(%edi)
+	movnti	%ebx, 4(%edi)
+	movnti	%ecx, 8(%edi)
+	movnti	%edx, 12(%edi)
+	subl	$16, %ebp
+	leal	16(%esi), %esi
+	leal	16(%edi), %edi
+	jnz	1b
+	sfence
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	popl	%ebp
+	ret

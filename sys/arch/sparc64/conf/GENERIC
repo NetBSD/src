@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84.2.1 2007/06/26 18:13:40 garbled Exp $
+# $NetBSD: GENERIC,v 1.84.2.2 2007/10/03 19:25:19 garbled Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84.2.1 $"
+#ident 		"GENERIC-$Revision: 1.84.2.2 $"
 
 maxusers	64
 
@@ -90,6 +90,7 @@ options 	NFS_BOOT_DHCP
 # we enable DDB in GENERIC for now.
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_VERBOSE_HELP	# enable verbose online help
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -200,8 +201,8 @@ options 	INET6		# IPV6
 options 	MROUTING	# packet forwarding of multicast packets
 options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	ISO,TPIP	# OSI networking
+#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
@@ -492,6 +493,8 @@ gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 # XXX cause uncorrectable DMA error
@@ -499,6 +502,8 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 ral*	at pci? dev ? function ?	# ralink wifi UT
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
+sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
@@ -534,6 +539,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
@@ -783,12 +791,14 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## Bluetooth PCMCIA Controllers
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 ## Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 ## Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbc?
 #bthub* at btuart?
 bthub* at ubt?
 

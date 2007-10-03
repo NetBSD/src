@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.8 2007/03/12 18:18:25 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.8.8.1 2007/10/03 19:23:59 garbled Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2007/03/12 18:18:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8.8.1 2007/10/03 19:23:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1375,7 +1375,7 @@ pmap_clear_reference(struct vm_page *pg)
  *	Note: no locking is necessary in this function.
  */
 paddr_t
-pmap_phys_address(int ppn)
+pmap_phys_address(paddr_t ppn)
 {
 
 	return (ia64_ptob(ppn));

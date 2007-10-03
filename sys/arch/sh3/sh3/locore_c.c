@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.22.4.1 2007/05/22 17:27:27 matt Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.22.4.2 2007/10/03 19:25:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.22.4.1 2007/05/22 17:27:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.22.4.2 2007/10/03 19:25:02 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.22.4.1 2007/05/22 17:27:27 matt Exp $
 void cpu_switch_prepare(struct lwp *, struct lwp *);
 
 void (*__sh_switch_resume)(struct lwp *);
-int want_resched;
-
 
 /*
  * Called from cpu_switchto after olwp's state has been saved.

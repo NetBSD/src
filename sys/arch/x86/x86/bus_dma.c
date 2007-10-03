@@ -1,12 +1,12 @@
-/*	$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35.10.1 2007/10/03 19:25:52 garbled Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center.
+ * Simulation Facility NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.10.1 2007/10/03 19:25:52 garbled Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $"
  * SUCH DAMAGE.
  */
 
+#include "ioapic.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -100,18 +102,17 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $"
 
 #include <machine/bus.h>
 #include <machine/bus_private.h>
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include "ioapic.h"
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
-#include <machine/mpbiosvar.h>
-#endif
+/* XXX needs changes from vmlocking branch */
+#define	crit_enter()	/* nothing */
+#define	crit_exit()	/* nothing */
 
 extern	paddr_t avail_end;
 
@@ -1012,20 +1013,16 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
-	vaddr_t va;
+	vaddr_t sva, va, eva;
 	bus_addr_t addr;
 	int curseg;
-	int32_t cpumask;
 	int nocache;
-	int marked;
-	pt_entry_t *pte;
+	pt_entry_t *pte, opte, xpte;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
-	cpumask = 0;
 	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
-	marked = 0;
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
@@ -1033,6 +1030,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	*kvap = (void *)va;
+	sva = va;
+	eva = sva + size;
+	xpte = 0;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -1048,18 +1048,22 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 */
 			if (nocache) {
 				pte = kvtopte(va);
-				if ((*pte & PG_N) == 0) {
-					*pte |= PG_N;
-					pmap_tlb_shootdown(pmap_kernel(), va,
-					    *pte, &cpumask);
-					marked = 1;
+				opte = *pte;
+				if ((opte & PG_N) == 0) {
+					pmap_pte_setbits(pte, PG_N);
+					xpte |= opte;
 				}
 			}
 		}
 	}
-	if (marked)
-		pmap_tlb_shootnow(cpumask);
+#ifndef XEN	/* XXX */
+	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		crit_enter();
+		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
+		crit_exit();
+	}
 	pmap_update(pmap_kernel());
+#endif
 
 	return (0);
 }
@@ -1072,34 +1076,27 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
-	pt_entry_t *pte;
-	vaddr_t va, endva;
-	int cpumask;
-	int marked;
+	pt_entry_t *pte, opte;
+	vaddr_t va, sva, eva;
 
-	cpumask = 0;
-	marked = 0;
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
 	size = round_page(size);
+	sva = (vaddr_t)kva;
+	eva = sva + size;
+
 	/*
          * mark pages cacheable again.
          */
-	for (va = (vaddr_t)kva, endva = (vaddr_t)kva + size;
-	     va < endva; va += PAGE_SIZE) {
+	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
-		if ((*pte & PG_N) != 0) {
-			*pte &= ~PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte, &cpumask);
-			marked = 1;
-		}
+		opte = *pte;
+		if ((opte & PG_N) != 0)
+			pmap_pte_clearbits(pte, PG_N);
 	}
-	if (marked)
-		pmap_tlb_shootnow(cpumask);
-
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
@@ -1237,4 +1234,130 @@ _bus_dmatag_destroy(bus_dma_tag_t tag)
 	default:
 		(tag->_tag_needs_free)--;	/* one less reference */
 	}
+}
+
+
+void
+bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
+		int ops)
+{
+
+	if (ops & BUS_DMASYNC_POSTREAD)
+		x86_lfence();
+	if (t->_dmamap_sync)
+		(*t->_dmamap_sync)(t, p, o, l, ops);
+}
+
+int
+bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments,
+		  bus_size_t maxsegsz, bus_size_t boundary, int flags,
+		  bus_dmamap_t *dmamp)
+{
+
+	return (*tag->_dmamap_create)(tag, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp);
+}
+
+void
+bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam)
+{
+
+	(*tag->_dmamap_destroy)(tag, dmam);
+}
+
+int
+bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf,
+		bus_size_t buflen, struct proc *p, int flags)
+{
+
+	return (*tag->_dmamap_load)(tag, dmam, buf, buflen, p, flags);
+}
+
+int
+bus_dmamap_load_mbuf(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		     struct mbuf *chain, int flags)
+{
+
+	return (*tag->_dmamap_load_mbuf)(tag, dmam, chain, flags);
+}
+
+int
+bus_dmamap_load_uio(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		    struct uio *uio, int flags)
+{
+
+	return (*tag->_dmamap_load_uio)(tag, dmam, uio, flags);
+}
+
+int
+bus_dmamap_load_raw(bus_dma_tag_t tag, bus_dmamap_t dmam,
+		    bus_dma_segment_t *segs, int nsegs,
+		    bus_size_t size, int flags)
+{
+
+	return (*tag->_dmamap_load_raw)(tag, dmam, segs, nsegs,
+	    size, flags);
+}
+
+void
+bus_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
+{
+
+	(*tag->_dmamap_unload)(tag, dmam);
+}
+
+int
+bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
+		 bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
+		 int *rsegs, int flags)
+{
+
+	return (*tag->_dmamem_alloc)(tag, size, alignment, boundary, segs,
+	    nsegs, rsegs, flags);
+}
+
+void
+bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
+{
+
+	(*tag->_dmamem_free)(tag, segs, nsegs);
+}
+
+int
+bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+	       size_t size, void **kvap, int flags)
+{
+
+	return (*tag->_dmamem_map)(tag, segs, nsegs, size, kvap, flags);
+}
+
+void
+bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
+{
+
+	(*tag->_dmamem_unmap)(tag, kva, size);
+}
+
+paddr_t
+bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+		off_t off, int prot, int flags)
+{
+
+	return (*tag->_dmamem_mmap)(tag, segs, nsegs, off, prot, flags);
+}
+
+int
+bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+		     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
+{
+
+	return (*tag->_dmatag_subregion)(tag, min_addr, max_addr, newtag,
+	    flags);
+}
+
+void
+bus_dmatag_destroy(bus_dma_tag_t tag)
+{
+
+	(*tag->_dmatag_destroy)(tag);
 }

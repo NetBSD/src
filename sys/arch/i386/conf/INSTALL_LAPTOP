@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.115.6.1 2007/06/26 18:12:34 garbled Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.115.6.2 2007/10/03 19:23:37 garbled Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -120,8 +120,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
-#file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+#file-system 	PTYFS		# /dev/pts/N support
+#file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas

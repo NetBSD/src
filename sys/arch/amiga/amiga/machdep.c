@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202.10.1 2007/05/22 17:26:35 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202.10.2 2007/10/03 19:22:15 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.10.1 2007/05/22 17:26:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.10.2 2007/10/03 19:22:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,7 +1029,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
 /*
- * these are __GENERIC_SOFT_INTERRUPT wrappers; will be replaced
+ * these are generic soft interrupt wrappers; will be replaced
  * once by the real thing once all drivers are converted.
  *
  * to help performance for converted drivers, the YYY_sicallback() function
@@ -1516,7 +1516,7 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 void candbtimer(void);
-struct callout candbtimer_ch = CALLOUT_INITIALIZER;
+callout_t candbtimer_ch;
 
 void
 candbtimer()

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.92.10.1 2007/05/22 17:26:29 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.92.10.2 2007/10/03 19:21:59 garbled Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92.10.1 2007/05/22 17:26:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92.10.2 2007/10/03 19:21:59 garbled Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -131,8 +131,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct user *up = l2->l_addr;
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
-
 	l2->l_md.md_flags = l1->l_md.md_flags & (MDP_FPUSED | MDP_FP_C);
+	l2->l_md.md_astpending = 0;
 
 	/*
 	 * Cache the physical address of the pcb, so we can

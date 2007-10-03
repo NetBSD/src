@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.40 2007/03/04 06:00:27 christos Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.40.10.1 2007/10/03 19:24:33 garbled Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.40 2007/03/04 06:00:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.40.10.1 2007/10/03 19:24:33 garbled Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -648,12 +648,9 @@ mb8795_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		DPRINTF(("%s: mb8795_ioctl() SIOCADDMULTI\n",sc->sc_dev.dv_xname));
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		DPRINTF(("%s: mb8795_ioctl() SIOCADDMULTI\n",
+		    sc->sc_dev.dv_xname));
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

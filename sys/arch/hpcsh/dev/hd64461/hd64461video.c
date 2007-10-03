@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.40.10.1 2007/10/03 19:23:28 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40.10.1 2007/10/03 19:23:28 garbled Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos E
 
 #include <machine/config_hook.h>
 #include <machine/bootinfo.h>
+
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #ifdef	HD64461VIDEO_DEBUG
 #define DPRINTF_ENABLE
@@ -995,7 +998,7 @@ hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 		break;
 	}
 
-	callout_init(&hvc->unblank_ch);
+	callout_init(&hvc->unblank_ch, 0);
 	hvc->blanked = 0;
 
 	width = bootinfo->fb_width;
@@ -1221,6 +1224,9 @@ hd64461video_display_onoff(void *arg, bool on)
 {
 	/* struct hd64461video_chip *vc = arg; */
 	uint16_t r;
+
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		return;
 
 	/* turn on/off display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);

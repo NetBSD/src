@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.15 2007/03/04 06:01:10 christos Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.15.10.1 2007/10/03 19:26:14 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.15 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.15.10.1 2007/10/03 19:26:14 garbled Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.15 2007/03/04 06:01:10 christ
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -792,7 +793,7 @@ again:
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh = pktp;
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				DPRINTFN(XEDB_EVENT,
 				    ("xennet_handler bad dest\n"));
@@ -1174,10 +1175,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
-
-	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-	    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

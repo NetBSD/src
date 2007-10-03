@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.12 2007/03/04 05:59:23 christos Exp $ */
+/*	$NetBSD: melody.c,v 1.12.10.1 2007/10/03 19:22:25 garbled Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.12 2007/03/04 05:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.12.10.1 2007/10/03 19:22:25 garbled Exp $");
 
 /*
  * Melody audio driver.
@@ -64,7 +64,7 @@ struct melody_softc {
 	struct tav_softc	sc_tav;
 	struct bus_space_tag	sc_bst_leftbyte;
 	struct isr		sc_isr;
-	void *			sc_intack;
+	uint8_t *		sc_intack;
 };
 
 int melody_match(struct device *, struct cfdata *, void *);
@@ -102,7 +102,7 @@ melody_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bst_leftbyte.base = (u_long)zap->va + 0;
 	sc->sc_bst_leftbyte.absm = &amiga_bus_stride_2;
-	sc->sc_intack = (void *)zap->va + 0xc000;
+	sc->sc_intack = (uint8_t *)zap->va + 0xc000;
 
 	/* set up board specific part in sc_tav */
 

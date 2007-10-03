@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: fpu.c,v 1.17.14.1 2007/10/03 19:22:06 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.14.1 2007/10/03 19:22:06 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,17 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17 2007/02/09 21:55:01 ad Exp $");
  * state is saved.
  */
 
-#define	fninit()		__asm("fninit")
-#define fwait()			__asm("fwait")
-#define fnclex()		__asm("fnclex")
-#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr))
-#define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
-#define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
-#define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
-#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
-#define	clts()			__asm("clts")
-#define	stts()			lcr0(rcr0() | CR0_TS)
-
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_ksiginfo(u_int32_t);
 
@@ -160,21 +149,19 @@ fputrap(frame)
 	u_int16_t cw;
 	ksiginfo_t ksi;
 
-#ifdef DIAGNOSTIC
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
 	if (l != curlwp)
 		panic("fputrap: wrong lwp");
-#endif
 
 	fxsave(sfp);
 	if (frame->tf_trapno == T_XMM) {
 		mxcsr = sfp->fp_fxsave.fx_mxcsr;
 		statbits = mxcsr;
 		mxcsr &= ~0x3f;
-		ldmxcsr(&mxcsr);
+		x86_ldmxcsr(&mxcsr);
 	} else {
 		fninit();
 		fwait();
@@ -238,12 +225,7 @@ fpudna(struct cpu_info *ci)
 	}
 
 	s = splipi();
-
-#ifdef MULTIPROCESSOR
 	l = ci->ci_curlwp;
-#else
-	l = curlwp;
-#endif
 
 	/*
 	 * Initialize the FPU state to clear any exceptions.  If someone else
@@ -276,7 +258,7 @@ fpudna(struct cpu_info *ci)
 		cw = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		mxcsr = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr;
-		ldmxcsr(&mxcsr);
+		x86_ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*
@@ -298,7 +280,7 @@ fpudna(struct cpu_info *ci)
 		 * the x87 stack, but we don't care since we're about to call
 		 * fxrstor() anyway.
 		 */
-		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
+		fldummy(&zero);
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 	}
 }
@@ -353,37 +335,25 @@ fpusave_lwp(struct lwp *l, int save)
 	KDASSERT(l->l_addr != NULL);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL)
-		return;
-
-#if defined(MULTIPROCESSOR)
 	if (oci == ci) {
 		int s = splipi();
 		fpusave_cpu(ci, save);
 		splx(s);
-	} else {
-#ifdef DIAGNOSTIC
+	} else if (oci != NULL) {
+#ifdef MULTIPROCESSOR
 		int spincount;
-#endif
 
 		x86_send_ipi(oci,
 		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 
-#ifdef DIAGNOSTIC
 		spincount = 0;
-#endif
 		while (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
-#ifdef DIAGNOSTIC
+			x86_pause();
 			spincount++;
 			if (spincount > 10000000) {
 				panic("fp_save ipi didn't");
 			}
-#endif
-			__insn_barrier();
 		}
-	}
-#else
-	KASSERT(ci->ci_fpcurlwp == l);
-	fpusave_cpu(ci, save);
 #endif
+	}
 }

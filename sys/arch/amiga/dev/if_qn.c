@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $ */
+/*	$NetBSD: if_qn.c,v 1.27.10.1 2007/10/03 19:22:24 garbled Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27.10.1 2007/10/03 19:22:24 garbled Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -285,8 +285,8 @@ qninit(struct qn_softc *sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		*((u_short volatile *)(sc->sc_nic_base+
 				       QNET_HARDWARE_ADDRESS+2*i)) =
-		    ((((u_short)LLADDR(ifp->if_sadl)[i]) << 8) |
-		    LLADDR(ifp->if_sadl)[i]);
+		    ((((u_short)CLLADDR(ifp->if_sadl)[i]) << 8) |
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -817,7 +817,7 @@ qnintr(void *arg)
  * I somehow think that this is quite a common excuse... ;-)
  */
 int
-qnioctl(register struct ifnet *ifp, u_long command, void *data)
+qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qn_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
@@ -828,7 +828,7 @@ qnioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -899,11 +899,7 @@ qnioctl(register struct ifnet *ifp, u_long command, void *data)
 	case SIOCDELMULTI:
 		log(LOG_INFO, "qnioctl: multicast not done yet\n");
 #if 0
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

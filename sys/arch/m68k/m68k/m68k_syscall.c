@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.28 2007/03/04 10:56:21 tsutsui Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.28.10.1 2007/10/03 19:24:03 garbled Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,10 +110,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.28 2007/03/04 10:56:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.28.10.1 2007/10/03 19:24:03 garbled Exp $");
 
 #include "opt_execfmt.h"
-#include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
 
@@ -126,9 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.28 2007/03/04 10:56:21 tsutsui Ex
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -450,10 +447,7 @@ child_return(void *arg)
 	f->f_format = FMT0;
 
 	machine_userret(l, f, 0);
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

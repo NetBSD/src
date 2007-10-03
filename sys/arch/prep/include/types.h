@@ -1,7 +1,6 @@
-/*	$NetBSD: types.h,v 1.9 2006/09/05 06:32:21 garbled Exp $	*/
+/*	$NetBSD: types.h,v 1.9.20.1 2007/10/03 19:24:48 garbled Exp $	*/
 
 #define __HAVE_DEVICE_REGISTER
-#define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_TIMECOUNTER
 #define __HAVE_GENERIC_TODR
 

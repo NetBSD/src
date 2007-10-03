@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.314.8.2 2007/06/26 18:13:37 garbled Exp $ */
+/*	$NetBSD: pmap.c,v 1.314.8.3 2007/10/03 19:25:17 garbled Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314.8.2 2007/06/26 18:13:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314.8.3 2007/10/03 19:25:17 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7283,18 +7283,6 @@ pmap_copy_page_hypersparc(paddr_t src, paddr_t dst)
 	setpgt4m(cpuinfo.vpage_pte[1], SRMMU_TEINVALID);
 }
 #endif /* SUN4M || SUN4D */
-
-/*
- * Turn a cdevsw d_mmap value into a byte address for pmap_enter.
- * XXX	this should almost certainly be done differently, and
- *	elsewhere, or even not at all
- */
-paddr_t
-pmap_phys_address(int x)
-{
-
-	return ((paddr_t)x);
-}
 
 /*
  * Turn off cache for a given (va, number of pages).

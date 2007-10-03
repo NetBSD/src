@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21.4.1 2007/05/22 17:26:34 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.4.2 2007/10/03 19:22:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,23 +60,27 @@
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
+
+	/*
+	 * Will be accessed by other CPUs.
+	 */
 	struct cpu_info *ci_next;
-
 	struct lwp *ci_curlwp;
-	struct simplelock ci_slock;
-	u_int ci_cpuid;
-	u_int ci_apicid;
-
-	u_int64_t ci_scratch;
-
+	struct pmap_cpu *ci_pmap_cpu;
 	struct lwp *ci_fpcurlwp;
 	int ci_fpsaving;
+	u_int ci_cpuid;
+	int ci_cpumask;			/* (1 << CPU ID) */
+	u_int ci_apicid;
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
+	/*
+	 * Private members.
+	 */
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	u_int64_t ci_scratch;
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
@@ -97,9 +101,11 @@ struct cpu_info {
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
-	u_int32_t	ci_feature_flags;
+	int32_t		ci_cpuid_level;
+	uint32_t	ci_signature;
+	uint32_t	ci_feature_flags;
 	uint32_t	ci_feature2_flags;
-	u_int32_t	ci_signature;
+	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
 
 	const struct cpu_functions *ci_func;
@@ -107,7 +113,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
@@ -141,17 +146,45 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#if defined(MULTIPROCESSOR)
-
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define curcpu()	({struct cpu_info *__ci;                  \
-			__asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
-			__ci;})
+#if defined(__GNUC__) && defined(_KERNEL)
+static struct cpu_info *x86_curcpu(void);
+static lwp_t *x86_curlwp(void);
+
+__inline static struct cpu_info * __attribute__((__unused__))
+x86_curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (ci) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
+	return ci;
+}
+
+__inline static lwp_t * __attribute__((__unused__))
+x86_curlwp(void)
+{
+	lwp_t *l;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (l) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
+	return l;
+}
+#else	/* __GNUC__ && _KERNEL */
+/* For non-GCC and LKMs */
+struct cpu_info	*x86_curcpu(void);
+lwp_t	*x86_curlwp(void);
+#endif	/* __GNUC__ && _KERNEL */
+
 #define cpu_number()	(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
@@ -161,29 +194,12 @@ extern struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);    
 
-
-#else /* !MULTIPROCESSOR */
-
-#define X86_MAXPROCS		1
-
-extern struct cpu_info cpu_info_primary;
-
-#define curcpu()		(&cpu_info_primary)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()		0
-#define CPU_IS_PRIMARY(ci)	1
-
-#endif
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curlwp		curcpu()->ci_curlwp
+#define curcpu()	x86_curcpu()
+#define curlwp		x86_curlwp()
 #define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*
@@ -197,7 +213,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
 #define CLKF_PC(frame)		((frame)->cf_if.if_rip)
-#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -234,6 +250,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
+extern int cpu_feature2;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;

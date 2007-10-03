@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.21.10.1 2007/10/03 19:22:38 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.10.1 2007/10/03 19:22:38 garbled Exp $");
 
 #include "opt_irqstats.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $");
 #include <arm/arm32/machdep.h>
  
 extern int current_spl_level;
-
-extern unsigned spl_mask;
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 /* Prototypes */
@@ -224,7 +222,7 @@ dump_spl_masks(void)
 	int loop;
 
 	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
-		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		printf("spl_masks[%d]=%08x splsmask[%d]=%08x\n", loop,
 		    spl_masks[loop], loop, spl_smasks[loop]);
 	}
 }

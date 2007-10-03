@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.139 2007/04/10 02:57:14 macallan Exp $
+#	$NetBSD: files.sparc,v 1.139.4.1 2007/10/03 19:25:09 garbled Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -252,7 +252,7 @@ device cgeight: bt_dac, fb, rasops24, pfour
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device cgfourteen: fb, rasops32
+device cgfourteen: fb, rasops32, rasops8, wsemuldisplaydev
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
@@ -340,8 +340,6 @@ file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 file	arch/sparc/sparc/compat_13_machdep.c	compat_13 | compat_sunos
 
 # Miscellaneous
-file	netns/ns_cksum.c		ns
-
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc/conf/majors.sparc"

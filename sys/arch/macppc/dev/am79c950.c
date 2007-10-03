@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.21.10.2 2007/09/27 07:21:46 macallan Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.21.10.3 2007/10/03 19:24:12 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21.10.2 2007/09/27 07:21:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21.10.3 2007/10/03 19:24:12 garbled Exp $");
 
 #include "opt_inet.h"
 
@@ -234,9 +234,7 @@ mcioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *) data;
 		if ((err = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!

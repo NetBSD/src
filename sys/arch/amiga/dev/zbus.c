@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.57 2007/03/04 05:59:30 christos Exp $ */
+/*	$NetBSD: zbus.c,v 1.57.10.1 2007/10/03 19:22:27 garbled Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.57 2007/03/04 05:59:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.57.10.1 2007/10/03 19:22:27 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,7 +174,7 @@ static struct aconfdata aconftab[] = {
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
 	/* Individual Computers Jens Schoenfeld */
 	{ "buddha",	4626,	0 },
-	{ "X-serve",	4626,	23 },	/* X-serve Ethernet */
+	{ "xsurf",	4626,	23 },	/* X-Surf Ethernet */
 	/* VMC Harald Frank */
 	{ "blst",	5001,	1},	/* ISDN Blaster */
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
@@ -359,6 +359,7 @@ zbusprint(void *auxp, const char *pnp)
 void *
 zbusmap(void *pa, u_int size)
 {
+#if defined(__m68k__)
 	static vaddr_t nextkva = 0;
 	vaddr_t kva;
 
@@ -373,15 +374,12 @@ zbusmap(void *pa, u_int size)
 	nextkva += size;
 	if (nextkva > ZBUSADDR + ZBUSAVAIL)
 		panic("allocating too much Zorro I/O address space");
-#if defined(__powerpc__)
-/*
- * XXX we use direct constant mapping, so no need for:
- * physaccess((void *)kva, (void *)pa, size, PTE_RW|PTE_I);
- */
-#elif defined(__m68k__)
 	physaccess((void *)kva, (void *)pa, size, PG_RW|PG_CI);
-#else
-ERROR no support for this target CPU yet.
-#endif
 	return((void *)kva);
+#else
+/*
+ * XXX we use direct constant mapping
+ */
+	return(pa);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73.8.1 2007/05/22 17:27:43 matt Exp $	*/
+/*	$NetBSD: fd.c,v 1.73.8.2 2007/10/03 19:25:43 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.8.1 2007/05/22 17:27:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.8.2 2007/10/03 19:25:43 garbled Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -420,8 +420,8 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	/* Re-map the I/O space. */
 	bus_space_map(iot, ia->ia_addr, 0x2000, BUS_SPACE_MAP_SHIFTED, &ioh);
@@ -572,8 +572,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	struct fd_type *type = &fd_types[0];	/* XXX 1.2MB */
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	fd->sc_flags = 0;
 
@@ -639,7 +639,7 @@ fdstrategy(struct buf *bp)
 			 "bcount=%d\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -660,7 +660,7 @@ fdstrategy(struct buf *bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -691,8 +691,6 @@ fdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	biodone(bp);
@@ -1498,7 +1496,6 @@ fdcretry(struct fdc_softc *fdc)
 		       fdc->sc_status[4],
 		       fdc->sc_status[5]);
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}

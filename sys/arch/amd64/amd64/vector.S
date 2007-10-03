@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.14.1 2007/10/03 19:22:10 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,11 +36,11 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,7 @@
 #include <machine/trap.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
+#include <machine/specialreg.h>
 
 #include <net/netisr.h>
 
@@ -371,6 +372,104 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
+/*
+ * Multicast TLB shootdown handler for !kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_mcast)
+	/*
+	 * Save state, ack interrupt and count it.  Count locally
+	 * so other CPUs don't have to touch the counter's line.
+	 */
+	testq	$SEL_UPL,8(%rsp)
+	jz	0f
+	swapgs
+0:
+	pushq	%rax
+	pushq	%rbx
+	pushq	%rcx
+	pushq	%rdx
+	incq	CPUVAR(TLB_EVCNT)+EV_COUNT
+	/* Find out what needs to be invalidated and unlock the mailbox. */
+	movq	CPUVAR(PMAP_CPU),%rcx
+	movq	MB_ADDR1(%rcx), %rax
+	movq	MB_ADDR2(%rcx), %rdx
+	xorq	%rbx, %rbx
+	xchgq	MB_POINTER(%rcx), %rbx
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	cmpq	$-1, %rax
+	je	4f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%rax)
+	addq	$PAGE_SIZE, %rax
+	cmpq	%rdx, %rax
+	jb	1b
+2:
+	/* Restore state and return. */
+	lock
+	incq	(%rbx)
+	popq	%rdx
+	popq	%rcx
+	popq	%rbx
+	popq	%rax
+	testq	$SEL_UPL, 8(%rsp)
+	jz	3f
+	swapgs
+3:
+	iretq
+4:
+	/* Invalidate all user pages. */
+	movq	%cr3, %rax
+	movq	%rax, %cr3
+	jmp	2b
+
+/*
+ * Broadcast TLB shootdown handler for kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_bcast)
+	/* Save state. */
+	pushq	%rax
+	pushq	%rbx
+	pushq	%rdx
+	/* Find out what needs to be invalidated. */
+	movq	_C_LABEL(pmap_mbox)+MB_ADDR1, %rax
+	movq	_C_LABEL(pmap_mbox)+MB_ADDR2, %rdx
+	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rbx
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	cmpq	$-1, %rax
+	je,pn	3f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%rax)
+	addq	$PAGE_SIZE, %rax
+	cmpq	%rdx, %rax
+	jb	1b
+2:
+	/* Notify waiter of completion, restore state & return */
+	lock
+	incq	_C_LABEL(pmap_mbox)+MB_TAIL
+	popq	%rdx
+	popq	%rbx
+	popq	%rax
+	iretq
+3:
+	testq	%rbx, %rbx
+	jz	4f
+	/*
+	 * If we have been asked to invalidate the entire TLB
+	 * we arrive here.
+	 */
+	movq	%cr4, %rax
+	movq	%rax, %rdx
+	andq	$~CR4_PGE, %rdx
+	movq	%rdx, %cr4
+	movq	%rax, %cr4
+	jmp	2b
+4:
+	/* Invalidate user TLB entries. */
+	movq	%cr3, %rax
+	movq	%rax, %cr3
+	jmp	2b
 
 #define voidop(num)
 

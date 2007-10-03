@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.33.10.1 2007/08/18 17:13:49 macallan Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33.10.2 2007/10/03 19:24:47 garbled Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -60,7 +60,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33.10.1 2007/08/18 17:13:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33.10.2 2007/10/03 19:24:47 garbled Exp $");
 
 void
 child_return(void *arg)

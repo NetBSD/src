@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.602.4.1 2007/05/22 17:26:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.602.4.2 2007/10/03 19:23:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.602.4.1 2007/05/22 17:26:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.602.4.2 2007/10/03 19:23:46 garbled Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -754,7 +754,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	fp--;
 
@@ -777,7 +777,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -811,7 +811,7 @@ void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	LOCK_ASSERT(mutex_owned(&curproc->p_smutex));
+	KASSERT(mutex_owned(&curproc->p_smutex));
 
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
@@ -911,7 +911,7 @@ haltsys:
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			for(;;) {
-				__asm volatile("hlt");
+				x86_hlt();
 			}
 		}
 		cnpollc(0);
@@ -1144,6 +1144,7 @@ dumpsys()
 			for (m = 0; m < n; m += NBPG)
 				pmap_kenter_pa(dumpspace + m, maddr + m,
 				    VM_PROT_READ);
+			pmap_update(pmap_kernel());
 
 			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
@@ -1250,7 +1251,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
+kmutex_t idt_lock;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
@@ -1600,6 +1601,13 @@ init386(paddr_t first_avail)
 			case BIM_NVS:
 				break;
 			default:
+				continue;
+			}
+
+			/*
+			 * If the segment is smaller than a page, skip it.
+			 */
+			if (bim->entry[x].size < NBPG) {
 				continue;
 			}
 
@@ -1958,9 +1966,9 @@ init386(paddr_t first_avail)
 	idt = (struct gate_descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
-	pmap_update(pmap_kernel());
 
 	tgdt = gdt;
 	gdt = (union descriptor *)
@@ -2002,6 +2010,7 @@ init386(paddr_t first_avail)
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 
+	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -2061,7 +2070,7 @@ init386(paddr_t first_avail)
 	softintr_init();
 
 	splraise(IPL_IPI);
-	enable_intr();
+	x86_enable_intr();
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
@@ -2177,7 +2186,7 @@ cpu_reset()
 {
 	struct region_descriptor region;
 
-	disable_intr();
+	x86_disable_intr();
 
 #ifdef XBOX
 	if (arch_i386_is_xbox) {
@@ -2209,7 +2218,7 @@ cpu_reset()
 	 * sections 6.3.1, 6.3.2, and 6.4.1.
 	 */
 	if (cpu_info_primary.ci_signature == 0x540) {
-		outl(0xcf8, 0x80009044ul);
+		outl(0xcf8, 0x80009044);
 		outl(0xcfc, 0xf);
 	}
 
@@ -2230,7 +2239,7 @@ cpu_reset()
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
+	breakpoint();
 
 #if 0
 	/*
@@ -2481,7 +2490,6 @@ cpu_need_proftick(struct lwp *l)
 
 /*
  * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
  */
 
 int
@@ -2489,15 +2497,18 @@ idt_vec_alloc(int low, int high)
 {
 	int vec;
 
-	simple_lock(&idt_lock);
+	if (!cold)
+		mutex_enter(&idt_lock);
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
 			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
+			if (!cold)
+				mutex_exit(&idt_lock);
 			return vec;
 		}
 	}
-	simple_unlock(&idt_lock);
+	if (!cold)
+		mutex_exit(&idt_lock);
 	return 0;
 }
 
@@ -2515,10 +2526,10 @@ idt_vec_set(int vec, void (*function)(void))
 void
 idt_vec_free(int vec)
 {
-	simple_lock(&idt_lock);
+	mutex_enter(&idt_lock);
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
+	mutex_exit(&idt_lock);
 }
 
 /*

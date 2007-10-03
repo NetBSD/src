@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24.12.1 2007/05/22 17:27:51 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.12.2 2007/10/03 19:26:00 garbled Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -663,9 +663,13 @@ switch_skipsave:
 	 * Switch to newlwp's stack.
 	 */
 
+	CLI(%ebx)
 	movl	L_ADDR(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
+
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
 
 	/*
 	 * Restore the rest of newlwp's context.
@@ -679,15 +683,31 @@ switch_skipsave:
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
 
-	movl	$0,CPUVAR(RESCHED)
+	STIC(%ebx)
+	jz 1f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz 1f
+	pushl  CPUVAR(ILEVEL)
+	call	_C_LABEL(Xspllower) # process pending interrupts
+	addl    $4,%esp
+1:
 
 	/*
 	 *  Check for restartable atomic sequences (RAS)
 	 */
 
-	movl	L_PROC(%edi),%ebx
-	cmpl	$0,P_RASLIST(%ebx)
-	jne	check_ras
+	movl	L_PROC(%edi),%eax
+	cmpl	$0,P_RASLIST(%eax)
+	jz	switch_return
+	movl	L_MD_REGS(%edi),%ebx
+	pushl	TF_EIP(%ebx)
+	pushl	%eax
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	switch_return
+	movl	%eax,TF_EIP(%ebx)
 
 switch_return:
 	movl	%esi,%eax	# return 'oldlwp'
@@ -696,16 +716,6 @@ switch_return:
 	popl	%ebx
 	ret
 
-check_ras:
-	movl	L_MD_REGS(%edi),%ebx
-	pushl	TF_EIP(%ebx)
-	pushl	L_PROC(%edi)
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	switch_return
-	movl	%eax,TF_EIP(%ebx)
-	jmp	switch_return
 
 /*
  * void savectx(struct pcb *pcb);
@@ -780,9 +790,29 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-1:	STI(%eax)
-	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH(%eax)
 	jnz	9f
+	STIC(%eax)
+	jz	14f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz	14f
+	/* process pending interrupts */
+	CLI(%eax)
+	movl	CPUVAR(ILEVEL), %ebx
+	movl	$.Lsyscall_resume, %esi # address to resume loop at
+.Lsyscall_resume:
+	movl	%ebx,%eax		# get cpl
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
+	jz	17f
+	bsrl	%eax,%eax
+	btrl	%eax,CPUVAR(IPENDING)
+	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	jmp	*IS_RESUME(%eax)
+17:	movl	%ebx, CPUVAR(ILEVEL)	#restore cpl
+	jmp	.Lsyscall_checkast
+14:
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
 #else /* DIAGNOSTIC */
@@ -801,7 +831,8 @@ syscall1:
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
-9:	call    _C_LABEL(pmap_load)
+9:	STI(%eax)
+	call    _C_LABEL(pmap_load)
 	jmp     .Lsyscall_checkast        /* re-check ASTs */
 
 #if NNPX > 0

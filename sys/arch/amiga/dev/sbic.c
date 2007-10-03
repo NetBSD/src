@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.59 2007/03/04 05:59:27 christos Exp $ */
+/*	$NetBSD: sbic.c,v 1.59.10.1 2007/10/03 19:22:26 garbled Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.59 2007/03/04 05:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.59.10.1 2007/10/03 19:22:26 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,7 @@ sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
 		if (isztwomem(dev->sc_tinfo[xs->xs_periph->periph_target].bounce))
 			printf("alloc ZII target %d bounce pa 0x%x\n",
 			       xs->xs_periph->periph_target,
-			       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
+			       (unsigned)kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 		else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
 			printf("alloc CHIP target %d bounce pa %p\n",
 			       xs->xs_periph->periph_target,
@@ -810,7 +810,7 @@ sbicinit(struct sbic_softc *dev)
 		TAILQ_INIT(&dev->ready_list);
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
-		callout_init(&dev->sc_timo_ch);
+		callout_init(&dev->sc_timo_ch, 0);
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
@@ -1650,7 +1650,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	count = acb->sc_kv.dc_count;
 	if (count && (char *)kvtop(addr) != acb->sc_pa.dc_addr)	{ /* XXXX check */
 		printf("sbic: DMA buffer mapping changed %p->%x\n",
-		    acb->sc_pa.dc_addr, kvtop(addr));
+		    acb->sc_pa.dc_addr, (unsigned)kvtop(addr));
 #ifdef DDB
 		Debugger();
 #endif
@@ -1679,7 +1679,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 				if (isztwomem(dev->sc_tinfo[xs->xs_periph->periph_target].bounce))
 					printf("alloc ZII target %d bounce pa 0x%x\n",
 					       xs->xs_periph->periph_target,
-					       kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
+					       (unsigned)kvtop(dev->sc_tinfo[xs->xs_periph->periph_target].bounce));
 				else if (dev->sc_tinfo[xs->xs_periph->periph_target].bounce)
 					printf("alloc CHIP target %d bounce pa %p\n",
 					       xs->xs_periph->periph_target,
@@ -1687,14 +1687,14 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 
 				printf("Allocating %d bounce at %x\n",
 				       dev->target,
-				       kvtop(dev->sc_tinfo[dev->target].bounce));
+				       (unsigned)kvtop(dev->sc_tinfo[dev->target].bounce));
 			}
 		} else {	/* write: copy to DMA buffer */
 #ifdef DEBUG
 			if(data_pointer_debug)
 			printf("sbicgo: copying %x bytes to target %d bounce %x\n",
 			       count, dev->target,
-			       kvtop(dev->sc_tinfo[dev->target].bounce));
+			       (unsigned)kvtop(dev->sc_tinfo[dev->target].bounce));
 #endif
 			bcopy (addr, dev->sc_tinfo[dev->target].bounce, count);
 		}
@@ -2243,13 +2243,13 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			if ((u_char *)kvtop(acb->sc_dmausrbuf) != acb->sc_usrbufpa)
 				printf("%s: WARNING - buffer mapping changed %p->%x\n",
 				    dev->sc_dev.dv_xname, acb->sc_usrbufpa,
-				    kvtop(acb->sc_dmausrbuf));
+				    (unsigned)kvtop(acb->sc_dmausrbuf));
 #ifdef DEBUG
 			if(data_pointer_debug)
 			printf("sbicgo:copying %lx bytes from target %d bounce %x\n",
 			       acb->sc_dmausrlen,
 			       dev->target,
-			       kvtop(dev->sc_tinfo[dev->target].bounce));
+			       (unsigned)kvtop(dev->sc_tinfo[dev->target].bounce));
 #endif
 			bcopy(dev->sc_tinfo[dev->target].bounce,
 			      acb->sc_dmausrbuf,

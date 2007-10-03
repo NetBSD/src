@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.16 2007/03/04 06:00:13 christos Exp $ */
+/* $NetBSD: sbjcn.c,v 1.16.10.1 2007/10/03 19:24:25 garbled Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.16 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.16.10.1 2007/10/03 19:24:25 garbled Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -296,8 +296,8 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 	ch->ch_o_rts = ch->ch_o_rts_pin = 0 /* XXXCGD */;
 	ch->ch_o_mask = ch->ch_o_dtr | ch->ch_o_rts;
 
-	callout_init(&ch->ch_diag_callout);
-	callout_init(&ch->ch_callout);
+	callout_init(&ch->ch_diag_callout, 0);
+	callout_init(&ch->ch_callout, 0);
 
 	/* Disable interrupts before configuring the device. */
 	ch->ch_imr = 0;

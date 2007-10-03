@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30.14.3 2007/08/02 05:34:22 macallan Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.14.4 2007/10/03 19:24:45 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

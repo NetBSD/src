@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.36.2.1 2007/10/03 19:23:33 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36.2.1 2007/10/03 19:23:33 garbled Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -78,8 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#include "lapic.h"
 #include "ioapic.h"
 
+#if NLAPIC > 0
+#include <machine/i82489var.h>
+#endif
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
@@ -153,8 +157,8 @@ enter_s4_with_bios(void)
 
 	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
 
-	ef = read_eflags();
-	disable_intr();
+	ef = x86_read_psl();
+	x86_disable_intr();
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -179,7 +183,7 @@ enter_s4_with_bios(void)
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllRuntimeGpes();
 
-	write_eflags(ef);
+	x86_write_psl(ef);
 
 	return (AE_OK);
 }
@@ -338,7 +342,7 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
-	ef = read_eflags();
+	ef = x86_read_psl();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
@@ -356,7 +360,7 @@ acpi_md_sleep(int state)
 	cr3 = rcr3();
 
 	ret_addr = 0;
-	disable_intr();
+	x86_disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -439,9 +443,10 @@ acpi_md_sleep(int state)
 #if NIOAPIC > 0
 		ioapic_enable();
 #endif
-		/*
-		 * XXX must the local APIC be re-inited?
-		 */
+#if NLAPIC > 0
+		lapic_enable();
+		lapic_initclocks();
+#endif
 
 		initrtclock(TIMER_FREQ);
 		inittodr(time_second);
@@ -453,7 +458,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
-	enable_intr();
+	x86_enable_intr();
 
 	lcr3(cr3);
 	if (pm != pmap_kernel()) {
@@ -467,7 +472,7 @@ out:
 		pmap_update(pm);
 	}
 
-	write_eflags(ef);
+	x86_write_psl(ef);
 
 	return (ret);
 #undef WAKECODE_FIXUP

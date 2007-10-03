@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.41 2007/03/11 17:34:38 he Exp $ */
+/*	$NetBSD: bzsc.c,v 1.41.8.1 2007/10/03 19:22:20 garbled Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.41 2007/03/11 17:34:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.41.8.1 2007/10/03 19:22:20 garbled Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -72,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.41 2007/03/11 17:34:38 he Exp $");
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/bzscvar.h>
 #include <amiga/dev/zbusvar.h>
+
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
 
 void	bzscattach(struct device *, struct device *, void *);
 int	bzscmatch(struct device *, struct cfdata *, void *);

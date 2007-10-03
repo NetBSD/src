@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.5.4.6 2007/08/08 22:11:52 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.5.4.7 2007/10/03 19:24:15 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.6 2007/08/08 22:11:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.7 2007/10/03 19:24:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,7 +749,7 @@ pmu_autopoll(void *cookie, int flag)
 {
 	struct pmu_softc *sc = cookie;
 	/* magical incantation to re-enable autopolling */
-	uint8_t cmd[] = {0, 0x86, (flag >> 8) & 0xff, flag & 0xff};
+	uint8_t cmd[] = {0, PMU_SET_POLL_MASK, (flag >> 8) & 0xff, flag & 0xff};
 	uint8_t resp[16];
 
 	if (sc->sc_autopoll == flag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.18.8.1 2007/05/22 17:27:45 matt Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.18.8.2 2007/10/03 19:25:44 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.18.8.1 2007/05/22 17:27:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.18.8.2 2007/10/03 19:25:44 garbled Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -87,7 +87,7 @@ struct bell_softc {
 
 struct bell_softc *bell_softc;
 
-struct callout bell_ch = CALLOUT_INITIALIZER;
+callout_t bell_ch;
 
 static struct opm_voice vtab[NBELL];
 
@@ -132,6 +132,7 @@ bellattach(int num)
 
 	if (num <= 0)
 		return;
+	callout_init(&bell_ch, 0);
 	size = num * sizeof(struct bell_softc);
 	mem = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {

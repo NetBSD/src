@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.28.4.4 2007/08/14 18:19:51 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.28.4.5 2007/10/03 19:24:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28.4.4 2007/08/14 18:19:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28.4.5 2007/10/03 19:24:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>

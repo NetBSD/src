@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.20.4.4 2007/09/27 07:13:54 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.20.4.5 2007/10/03 19:24:15 garbled Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -210,8 +210,8 @@ snapper_dtor(stream_filter_t *this)
 		free(this, M_DEVBUF);
 }
 
-CFATTACH_DECL(snapper, sizeof(struct snapper_softc),
-    snapper_match, snapper_attach, NULL, NULL);
+CFATTACH_DECL(snapper, sizeof(struct snapper_softc), snapper_match,
+	snapper_attach, NULL, NULL);
 
 const struct audio_hw_if snapper_hw_if = {
 	NULL,

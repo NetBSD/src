@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.116.10.1 2007/05/22 17:27:13 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.116.10.2 2007/10/03 19:24:25 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116.10.1 2007/05/22 17:27:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116.10.2 2007/10/03 19:24:25 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pt_entry_t *pte;
 	int i, x;
 
+	l2->l_md.md_ss_addr = 0;
+	l2->l_md.md_ss_instr = 0;
+	l2->l_md.md_astpending = 0;
+
 #ifdef DIAGNOSTIC
 	/*
 	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
@@ -170,7 +174,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
 	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
-	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
 #endif
@@ -195,7 +198,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
 	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
-	pcb->pcb_context[11] |= PSL_LOWIPL;			/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif

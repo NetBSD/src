@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.2.2.1 2007/06/26 18:13:54 garbled Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2.2.2 2007/10/03 19:25:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #ifdef _KERNEL
 #define	_X86_SYSARCH_L(x)	x86_##x
 #define	_X86_SYSARCH_U(x)	X86_##x
-#elif defined(i386)
+#elif defined(__i386__)
 #define	_X86_SYSARCH_L(x)	i386_##x
 #define	_X86_SYSARCH_U(x)	I386_##x
 #define I386_GET_LDT		X86_GET_LDT
@@ -137,7 +137,7 @@ struct _X86_SYSARCH_L(pmc_info_args) {
 
 #define	PMC_INFO_HASTSC		0x01
 
-#ifdef i386
+#ifdef __i386__
 #define	PMC_NCOUNTERS		4
 #else
 #define	PMC_NCOUNTERS		2

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39.14.1 2007/05/22 17:27:10 matt Exp $
+#	$NetBSD: genassym.cf,v 1.39.14.2 2007/10/03 19:24:22 garbled Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -245,6 +245,9 @@ define	TF_REG_MULLO	offsetof(struct trapframe, tf_regs[TF_MULLO])
 define	TF_REG_MULHI	offsetof(struct trapframe, tf_regs[TF_MULHI])
 define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
 define	TF_PPL		offsetof(struct trapframe, tf_ppl)
+
+# XXX Atheros HAL
+define	TF_PAD		offsetof(struct trapframe, tf_pad)
 
 define	CTXSWFRAME_SIZ	sizeof(label_t)
 define	SF_REG_SR	offsetof(label_t, val[11])

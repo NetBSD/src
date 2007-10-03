@@ -1,9 +1,8 @@
-/*	$NetBSD: types.h,v 1.21 2002/08/05 02:13:15 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.21.72.1 2007/10/03 19:24:40 garbled Exp $	*/
 
 #include <mips/types.h>
 
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 /* MIPS specific options */
 #define	__HAVE_BOOTINFO_H

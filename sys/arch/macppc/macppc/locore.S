@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57.20.2 2007/08/02 05:34:36 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.57.20.3 2007/10/03 19:24:18 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

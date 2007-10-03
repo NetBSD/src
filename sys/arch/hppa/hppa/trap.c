@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42.10.2 2007/06/26 18:12:30 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.42.10.3 2007/10/03 19:23:31 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,23 +69,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.10.2 2007/06/26 18:12:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.10.3 2007/10/03 19:23:31 garbled Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/mutex.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -175,7 +172,6 @@ uint8_t fpopmap[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-int want_resched;
 volatile int astpending;
 
 void pmap_hptdump(void);
@@ -198,7 +194,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	struct proc *p = l->l_proc;
 
 	l->l_priority = l->l_usrpri;
-	if (want_resched) {
+	if (curcpu()->ci_want_resched) {
 		preempt();
 	}
 
@@ -927,15 +923,9 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 #ifdef DEBUG
 	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */

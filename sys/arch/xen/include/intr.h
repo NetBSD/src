@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15.14.1 2007/05/22 17:27:53 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.14.2 2007/10/03 19:26:04 garbled Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -41,6 +41,9 @@
 #define	_XEN_INTR_H_
 
 #include <machine/intrdefs.h>
+#include <machine/xen.h>
+#include <machine/hypervisor.h>
+#include <machine/evtchn.h>
 
 #ifndef _LOCORE
 #include <machine/cpu.h>

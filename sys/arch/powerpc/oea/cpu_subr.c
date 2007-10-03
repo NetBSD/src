@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28.16.3 2007/08/02 05:34:20 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.16.4 2007/10/03 19:24:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.3 2007/08/02 05:34:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.4 2007/10/03 19:24:44 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"

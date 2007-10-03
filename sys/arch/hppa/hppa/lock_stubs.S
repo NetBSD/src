@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6 2007/02/20 00:28:53 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.6.14.1 2007/10/03 19:23:30 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,8 +59,11 @@
 
 #ifndef MULTIPROCESSOR
 
-	.global _lock_cas_rasstart
-	.global _lock_cas_rasend
+	.global _lock_cas_ras_start
+	.global _lock_cas_ras_end
+
+	.global mutex_enter_crit_start
+	.global mutex_enter_crit_end
 
 	.import	curlwp, data
 	.import mutex_vector_enter, code
@@ -68,13 +71,12 @@
 	.import mutex_wakeup, code
 
 LEAF_ENTRY(_lock_cas)
-_lock_cas_rasstart:
+_lock_cas_ras_start:
 	ldw	0(%arg0),%t1
 	comb,<>	%arg1, %t1, 1f
 	 ldi	0,%ret0
+_lock_cas_ras_end:
 	stw	%arg2,0(%arg0)
-_lock_cas_rasend:
-
 	ldi	1,%ret0
 1:
 	bv,n	%r0(%rp)
@@ -102,8 +104,10 @@ LEAF_ENTRY(mutex_exit)
 	 */
 
 	ldi	1,%t2				/* unlocked = 1 */
+	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t3
+	depi	0, 31, 4, %t3
 	stw	%t1,MTX_OWNER(%arg0)
-	stw	%t2,MTX_LOCK(%arg0)
+	stw	%t2,0(%t3)			/* %t3 is 16 byte aligned */
 	sync
 
 	/*	
@@ -164,13 +168,18 @@ LEAF_ENTRY(mutex_enter)
 	 * else can acquire the mutex while the lock is held.
 	 */
 .Lmutexunowned:
-	ldcw	MTX_LOCK(%arg0), %ret0
+	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t1
+	depi	0, 31, 4, %t1
+	ldcw	0(%t1), %ret0
+
+mutex_enter_crit_start:
 	comib,=	0,%ret0,.Lenter_slowpath
 
 	ldil	L%curlwp, %t1
 	ldw	R%curlwp(%t1), %t2
 
 	bv	%r0(%rp)
+mutex_enter_crit_end:
 	 stw	%t2,MTX_OWNER(%arg0)
 EXIT(mutex_enter)
 

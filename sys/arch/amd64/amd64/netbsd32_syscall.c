@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.17 2007/03/04 14:36:12 yamt Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.17.10.1 2007/10/03 19:22:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,22 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.17 2007/03/04 14:36:12 yamt Exp $");
-
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.17.10.1 2007/10/03 19:22:09 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -175,10 +166,8 @@ netbsd32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
-#if defined(KTRACE) || defined(SYSTRACE)
 	int i;
 	register_t args64[8];
-#endif
 
 	uvmexp.syscalls++;
 	l = curlwp;
@@ -220,31 +209,16 @@ netbsd32_syscall_fancy(frame)
 
 	KERNEL_LOCK(1, l);
 
-#if defined(KTRACE) || defined(SYSTRACE)
-	if (
-#ifdef KTRACE
-	    KTRPOINT(p, KTR_SYSCALL) ||
-#endif
-#ifdef SYSTRACE
-	    ISSET(p->p_flag, PK_SYSTRACE)
-#else
-	0
-#endif
-	) {
-		for (i = 0; i < (argsize >> 2); i++)
-			args64[i] = args[i];
-		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
-			goto out;
-	}
-#endif
+	for (i = 0; i < (argsize >> 2); i++)
+		args64[i] = args[i];
+	/* XXX we need to pass argsize << 1 here? */
+	if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
-#if defined(KTRACE) || defined(SYSTRACE)
 out:
-#endif
 	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
@@ -270,9 +244,6 @@ out:
 		break;
 	}
 
-#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(l, code, args64, rval, error);
-#endif
-
 	userret(l);
 }
