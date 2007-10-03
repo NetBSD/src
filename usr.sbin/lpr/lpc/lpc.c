@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.22 2007/10/03 17:45:47 christos Exp $	*/
+/*	$NetBSD: lpc.c,v 1.23 2007/10/03 19:07:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.22 2007/10/03 17:45:47 christos Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.23 2007/10/03 19:07:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,8 +285,6 @@ help(int argc, char *argv[])
 		for (i = 0; i < lines; i++) {
 			for (j = 0; j < columns; j++) {
 				c = cmdtab + j * lines + i;
-				if (c->c_name == NULL)
-					return;
 				printf("%s", c->c_name);
 				if (c + lines >= &cmdtab[NCMDS - 1]) {
 					printf("\n");
