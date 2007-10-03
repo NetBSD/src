@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.14 2007/08/20 21:27:44 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.15 2007/10/03 19:11:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.14 2007/08/20 21:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.15 2007/10/03 19:11:16 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -697,6 +697,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&mp->mnt_mutex);
 		return (error);
 	}
+	vfs_scrubvnlist(mp);
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
@@ -2237,7 +2238,7 @@ sys_pread(struct lwp *l, void *v, register_t *retval)
 		goto out;
 
 	/* dofileread() will unuse the descriptor for us */
-	return (dofileread(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofileread(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, 0, retval));
 
  out:
@@ -2258,7 +2259,7 @@ sys_preadv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(off_t) offset;
 	} */ *uap = v;
 
-	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filereadv(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
@@ -2307,7 +2308,7 @@ sys_pwrite(struct lwp *l, void *v, register_t *retval)
 		goto out;
 
 	/* dofilewrite() will unuse the descriptor for us */
-	return (dofilewrite(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofilewrite(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, 0, retval));
 
  out:
@@ -2328,7 +2329,7 @@ sys_pwritev(struct lwp *l, void *v, register_t *retval)
 		syscallarg(off_t) offset;
 	} */ *uap = v;
 
-	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filewritev(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 

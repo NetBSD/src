@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.12 2007/09/25 13:51:01 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.13 2007/10/03 19:11:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.12 2007/09/25 13:51:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.13 2007/10/03 19:11:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,26 +145,21 @@ sys_read(lwp_t *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofileread() will unuse the descriptor for us */
-	return (dofileread(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofileread(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
+dofileread(int fd, struct file *fp, void *buf, size_t nbyte,
 	off_t *offset, int flags, register_t *retval)
 {
 	struct iovec aiov;
 	struct uio auio;
-	proc_t *p;
-	struct vmspace *vm;
 	size_t cnt;
 	int error;
-	p = l->l_proc;
+	lwp_t *l;
 
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
-	}
+	l = curlwp;
 
 	aiov.iov_base = (void *)buf;
 	aiov.iov_len = nbyte;
@@ -172,7 +167,7 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_READ;
-	auio.uio_vmspace = vm;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	/*
 	 * Reads return ssize_t because -1 is returned on error.  Therefore
@@ -195,7 +190,6 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
-	uvmspace_free(vm);
 	return (error);
 }
 
@@ -211,32 +205,29 @@ sys_readv(lwp_t *l, void *v, register_t *retval)
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
 
-	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filereadv(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
     off_t *offset, int flags, register_t *retval)
 {
-	struct proc	*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
-	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
 	struct file	*fp;
-	struct filedesc	*fdp;
 	struct iovec	*ktriov = NULL;
+	lwp_t		*l;
 
 	if (iovcnt == 0)
 		return EINVAL;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
+	l = curlwp;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -264,10 +255,6 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 			goto out;
 	}
 
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
-
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)
 		iov = __UNCONST(iovp);
@@ -293,7 +280,7 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_vmspace = vm;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++, iov++) {
@@ -337,7 +324,6 @@ do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		kmem_free(needfree, iovlen);
  out:
 	FILE_UNUSE(fp, l);
-	uvmspace_free(vm);
 	return (error);
 }
 
@@ -354,14 +340,10 @@ sys_write(lwp_t *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct file	*fp;
-	proc_t		*p;
-	struct filedesc	*fdp;
 
 	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(curproc->p_fd, fd)) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
@@ -372,33 +354,29 @@ sys_write(lwp_t *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofilewrite() will unuse the descriptor for us */
-	return (dofilewrite(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofilewrite(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
+dofilewrite(int fd, struct file *fp, const void *buf,
 	size_t nbyte, off_t *offset, int flags, register_t *retval)
 {
 	struct iovec aiov;
 	struct uio auio;
-	proc_t *p;
-	struct vmspace *vm;
 	size_t cnt;
 	int error;
+	lwp_t *l;
 
-	p = l->l_proc;
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
-	}
+	l = curlwp;
+
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_vmspace = vm;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	/*
 	 * Writes return ssize_t because -1 is returned on error.  Therefore
@@ -418,7 +396,7 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 			error = 0;
 		if (error == EPIPE) {
 			mutex_enter(&proclist_mutex);
-			psignal(p, SIGPIPE);
+			psignal(l->l_proc, SIGPIPE);
 			mutex_exit(&proclist_mutex);
 		}
 	}
@@ -427,7 +405,6 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
-	uvmspace_free(vm);
 	return (error);
 }
 
@@ -443,32 +420,29 @@ sys_writev(lwp_t *l, void *v, register_t *retval)
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
 
-	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filewritev(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
     off_t *offset, int flags, register_t *retval)
 {
-	struct proc	*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
-	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
 	struct file	*fp;
-	struct filedesc	*fdp;
 	struct iovec	*ktriov = NULL;
+	lwp_t		*l;
+
+	l = curlwp;
 
 	if (iovcnt == 0)
 		return EINVAL;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & FWRITE) == 0) {
@@ -496,10 +470,6 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 			goto out;
 	}
 
-	error = proc_vmspace_getref(p, &vm);
-	if (error)
-		goto out;
-
 	iovlen = iovcnt * sizeof(struct iovec);
 	if (flags & FOF_IOV_SYSSPACE)
 		iov = __UNCONST(iovp);
@@ -525,7 +495,7 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_vmspace = vm;
+	auio.uio_vmspace = curproc->p_vmspace;
 
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++, iov++) {
@@ -558,7 +528,7 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 			error = 0;
 		if (error == EPIPE) {
 			mutex_enter(&proclist_mutex);
-			psignal(p, SIGPIPE);
+			psignal(l->l_proc, SIGPIPE);
 			mutex_exit(&proclist_mutex);
 		}
 	}
@@ -575,7 +545,6 @@ do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
 		kmem_free(needfree, iovlen);
  out:
 	FILE_UNUSE(fp, l);
-	uvmspace_free(vm);
 	return (error);
 }
 
