@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.56.18.2 2007/07/15 13:28:10 ad Exp $	*/
+/*	$NetBSD: file.h,v 1.56.18.3 2007/10/03 19:11:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -160,14 +160,14 @@ extern int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 
-int	dofileread(struct lwp *, int, struct file *, void *, size_t,
+int	dofileread(int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
-int	dofilewrite(struct lwp *, int, struct file *, const void *,
+int	dofilewrite(int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	do_filereadv(struct lwp *, int, const struct iovec *, int, off_t *,
+int	do_filereadv(int, const struct iovec *, int, off_t *,
 	    int, register_t *);
-int	do_filewritev(struct lwp *, int, const struct iovec *, int, off_t *,
+int	do_filewritev(int, const struct iovec *, int, off_t *,
 	    int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);

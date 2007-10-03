@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.18 2007/10/01 16:08:54 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.19 2007/10/03 19:11:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.18 2007/10/01 16:08:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.19 2007/10/03 19:11:15 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -431,9 +431,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		if ((vp = valloc(NULL)) == NULL) {
 			mutex_enter(&vnode_free_list_lock);
 			numvnodes--;
-		} else {
+		} else
 			vp->v_usecount = 1;
-		}
 	}
 
 	if (vp == NULL) {
@@ -1160,7 +1159,6 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			} else {
 				vclean(vp, 0);
 				vp->v_op = spec_vnodeop_p;
-				insmntque(vp, NULL);	/* XXXAD */
 			}
 			vrelel(vp, 1, 0);
 			mutex_enter(&mntvnode_lock);
@@ -1632,6 +1630,25 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 
 	*sizep = bp - where;
 	return (0);
+}
+
+/*
+ * Remove clean vnodes from a mountpoint's vnode list.
+ */
+void
+vfs_scrubvnlist(struct mount *mp)
+{
+	vnode_t *vp, *nvp;
+
+	mutex_enter(&mntvnode_lock);
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+		mutex_enter(&vp->v_interlock);
+		if ((vp->v_iflag & VI_CLEAN) != 0)
+			TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		mutex_exit(&vp->v_interlock);
+	}
+	mutex_exit(&mntvnode_lock);
 }
 
 /*
