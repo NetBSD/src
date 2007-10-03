@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.111 2007/10/03 11:05:58 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.112 2007/10/03 14:49:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.111 2007/10/03 11:05:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.112 2007/10/03 14:49:24 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -949,7 +949,7 @@ proftick(struct clockframe *frame)
 #endif
 #ifdef LWP_PC
 		if (p != NULL && (p->p_stflag & PST_PROFIL) != 0)
-			addupc_intr(l, LWP_PC(p));
+			addupc_intr(l, LWP_PC(l));
 #endif
 	}
 }
