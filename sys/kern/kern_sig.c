@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.256 2007/08/17 17:25:14 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.257 2007/10/03 13:21:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.256 2007/08/17 17:25:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.257 2007/10/03 13:21:22 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -144,7 +144,7 @@ static	const char lognocoredump[] =
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
-    NULL, IPL_SOFTCLOCK);
+    NULL, IPL_VM);
 
 /*
  * signal_init:
@@ -448,7 +448,7 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 			return ok;
 	}
 
-	s = splsoftclock();
+	s = splvm();
 	kp = pool_get(&ksiginfo_pool, flags);
 	splx(s);
 	if (kp == NULL) {
@@ -483,7 +483,7 @@ ksiginfo_free(ksiginfo_t *kp)
 
 	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
 		return;
-	s = splsoftclock();
+	s = splvm();
 	pool_put(&ksiginfo_pool, kp);
 	splx(s);
 }
@@ -505,7 +505,7 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 	while (!CIRCLEQ_EMPTY(kq)) {
 		ksi = CIRCLEQ_FIRST(kq);
 		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
-		s = splsoftclock();
+		s = splvm();
 		pool_put(&ksiginfo_pool, ksi);
 		splx(s);
 	}
