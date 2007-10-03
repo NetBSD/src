@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.21 2006/05/25 00:21:52 christos Exp $	*/
+/*	$NetBSD: lpc.c,v 1.22 2007/10/03 17:45:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.21 2006/05/25 00:21:52 christos Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.22 2007/10/03 17:45:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,12 +267,12 @@ help(int argc, char *argv[])
 	struct cmd *c;
 
 	if (argc == 1) {
-		int i, j, w;
-		int columns, width = 0, lines;
+		size_t i, j, w;
+		size_t columns, width = 0, lines;
 
 		printf("Commands may be abbreviated.  Commands are:\n\n");
 		for (c = cmdtab; c->c_name; c++) {
-			int len = strlen(c->c_name);
+			size_t len = strlen(c->c_name);
 
 			if (len > width)
 				width = len;
@@ -286,9 +286,9 @@ help(int argc, char *argv[])
 			for (j = 0; j < columns; j++) {
 				c = cmdtab + j * lines + i;
 				if (c->c_name == NULL)
-					continue;
+					return;
 				printf("%s", c->c_name);
-				if (c + lines >= &cmdtab[NCMDS]) {
+				if (c + lines >= &cmdtab[NCMDS - 1]) {
 					printf("\n");
 					break;
 				}
