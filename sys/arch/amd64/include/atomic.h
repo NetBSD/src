@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.7 2007/10/03 12:24:48 ad Exp $	*/
+/*	$NetBSD: atomic.h,v 1.8 2007/10/03 20:19:47 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -38,8 +38,8 @@
 #ifndef _ATOMIC_H
 #define _ATOMIC_H
 
-#if !defined(_LOCORE) && defined(_KERNEL)
-#if !defined(__GNUC__)
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(__GNUC__)
 
 unsigned long	x86_atomic_testset_ul(volatile uint32_t *, unsigned long);
 int		x86_atomic_testset_i(volatile int *, int);
@@ -105,7 +105,7 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
 #define x86_atomic_clearbits_l	x86_atomic_clearbits_u32
 #define x86_atomic_clearbits_ul	x86_atomic_clearbits_u32
 
-#endif
-#endif	/* !defined(_LOCORE) && defined(_KERNEL) */
+#endif	/* _KERNEL && !__GNUC__ */
+#endif	/* _LOCORE */
 
 #endif
