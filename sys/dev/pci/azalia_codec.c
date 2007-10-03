@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.42.6.2 2007/10/02 18:28:31 joerg Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.42.6.3 2007/10/03 11:44:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42.6.2 2007/10/02 18:28:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42.6.3 2007/10/03 11:44:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,6 +111,7 @@ static int	alc260_mixer_init(codec_t *);
 static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_unsol_event(codec_t *, int);
+static int	alc262_init_widget(const codec_t *, widget_t *, nid_t);
 static int	alc861_init_dacgroup(codec_t *);
 static int	alc861vdgr_init_dacgroup(codec_t *);
 static int	alc880_init_dacgroup(codec_t *);
@@ -165,6 +166,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0262:
 		this->name = "Realtek ALC262";
+		this->init_widget = alc262_init_widget;
 		break;
 	case 0x10ec0268:
 		this->name = "Realtek ALC268";
@@ -1986,6 +1988,22 @@ alc260_unsol_event(codec_t *this, int tag)
 	default:
 		printf("%s: unknown tag: %d\n", __func__, tag);
 	}
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC861
+ * ---------------------------------------------------------------- */
+
+static int
+alc262_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	switch (nid) {
+	case 0x0c:
+		strlcpy(w->name, AudioNmaster, sizeof(w->name));
+		break;
+	}
+
 	return 0;
 }
 
