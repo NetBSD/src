@@ -1,7 +1,7 @@
-/* $NetBSD: atomic.h,v 1.11 2007/09/26 21:05:21 ad Exp $ */
+/*	$NetBSD: atomic.h,v 1.12 2007/10/03 12:24:48 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,8 @@
 #ifndef _I386_ATOMIC_H_
 #define _I386_ATOMIC_H_
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(__GNUC__)
 
 unsigned long	x86_atomic_testset_ul(volatile uint32_t *, unsigned long);
 int		x86_atomic_testset_i(volatile int *, int);
@@ -49,7 +50,7 @@ uint8_t		x86_atomic_testset_b(volatile uint8_t *, uint8_t);
 void		x86_atomic_setbits_l(volatile uint32_t *, unsigned long);
 void		x86_atomic_clearbits_l(volatile uint32_t *, unsigned long);
 
-#elif !defined(_LOCORE)
+#else
 
 static __inline unsigned long x86_atomic_testset_ul(volatile uint32_t *,
     unsigned long);
@@ -84,7 +85,7 @@ static __inline void
 x86_atomic_clearbits_l(volatile uint32_t *__ptr, unsigned long __bits) {
 	__asm volatile("lock ; andl %1,%0" :  "=m" (*__ptr) : "ir" (~__bits));
 }
-
-#endif
+#endif	/* _KERNEL && !__GNUC__ */
+#endif	/* _LOCORE */
 
 #endif
