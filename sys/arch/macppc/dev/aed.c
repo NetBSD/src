@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.18.10.1 2007/08/02 05:34:29 macallan Exp $	*/
+/*	$NetBSD: aed.c,v 1.18.10.2 2007/10/03 19:24:12 garbled Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.18.10.1 2007/08/02 05:34:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.18.10.2 2007/10/03 19:24:12 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

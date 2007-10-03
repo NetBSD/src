@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.12.2 2007/06/26 18:12:14 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.12.3 2007/10/03 19:22:41 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -211,6 +211,7 @@ void	arm32_vector_init(vaddr_t, int);
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct device *ci_dev;		/* Device corresponding to this CPU */
+	cpuid_t ci_cpuid;
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
@@ -218,6 +219,7 @@ struct cpu_info {
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
+	int ci_want_resched;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif
@@ -250,22 +252,11 @@ extern int astpending;
 #define cpu_signotify(l)            setsoftast()
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern int want_resched;	/* resched() was called */
-
-/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
-
-/*
- * reset want_resched, it's been processed.
- */
-#define	cpu_did_resched()	do { want_resched = 0; } while(0)
 
 #ifndef acorn26
 /*

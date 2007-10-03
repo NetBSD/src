@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.37.12.1 2007/05/28 20:01:43 freza Exp $ */
+/*	$NetBSD: db_interface.c,v 1.37.12.2 2007/10/03 19:24:45 garbled Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37.12.1 2007/05/28 20:01:43 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37.12.2 2007/10/03 19:24:45 garbled Exp $");
 
 #define USERACC
 
@@ -194,16 +194,16 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 
 #ifdef DDB
 const struct db_command db_machine_command_table[] = {
-	{ "ctx",	db_ppc4xx_ctx,		0,	0 },
-	{ "pv",		db_ppc4xx_pv,		0,	0 },
-	{ "reset",	db_ppc4xx_reset,	0,	0 },
-	{ "tf",		db_ppc4xx_tf,		0,	0 },
-	{ "tlb",	db_ppc4xx_dumptlb,	0,	0 },
-	{ "dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,	0 },
+	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pv",		db_ppc4xx_pv,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("tf",		db_ppc4xx_tf,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,	NULL,NULL,NULL) },
 #ifdef USERACC
-	{ "user",	db_ppc4xx_useracc,	0,	0 },
+	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,	NULL,NULL,NULL) },
 #endif
-	{ NULL, }
+	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 
 static void

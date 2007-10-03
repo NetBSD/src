@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.91.10.1 2007/06/21 18:49:47 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.91.10.2 2007/10/03 19:24:36 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.10.1 2007/06/21 18:49:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.10.2 2007/10/03 19:24:36 garbled Exp $");
+#include "opt_compat_netbsd.h"
+#include "opt_ddb.h"
+>>>>>>> 1.92
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.129.10.1 2007/05/22 17:27:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.129.10.2 2007/10/03 19:23:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.129.10.1 2007/05/22 17:27:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.129.10.2 2007/10/03 19:23:50 garbled Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -181,6 +181,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
+	l2->l_md.md_astpending = 0;
 
 	/*
 	 * Copy the trapframe.

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.65.16.1 2007/06/26 18:12:17 garbled Exp $
+#	$NetBSD: GENERIC.in,v 1.65.16.2 2007/10/03 19:22:52 garbled Exp $
 #
 # Generic atari
 #
@@ -62,7 +62,7 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #ifndef NO_PHYS_NETWORK
 options 	NETATALK	# AppleTalk networking protocols
@@ -153,6 +153,7 @@ options 	COMPAT_15	# Compatibility with NetBSD 1.5
 options 	COMPAT_16	# Compatibility with NetBSD 1.6
 options 	COMPAT_20	# Compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #ifndef INSTALL_KERNEL
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables

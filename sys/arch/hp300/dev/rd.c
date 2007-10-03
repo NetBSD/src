@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.80.10.1 2007/10/03 19:23:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80.10.1 2007/10/03 19:23:18 garbled Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -388,7 +388,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 
 	/* Initialize the hpib job queue entry */
 	sc->sc_hq.hq_softc = sc;
@@ -725,7 +725,7 @@ rdstrategy(struct buf *bp)
 			}
 			if (sz < 0) {
 				bp->b_error = EINVAL;
-				goto bad;
+				goto done;
 			}
 			bp->b_bcount = dbtob(sz);
 		}
@@ -738,7 +738,7 @@ rdstrategy(struct buf *bp)
 #endif
 		    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
 			bp->b_error = EROFS;
-			goto bad;
+			goto done;
 		}
 	}
 	bp->b_rawblkno = bn + offset;
@@ -750,8 +750,6 @@ rdstrategy(struct buf *bp)
 	}
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	biodone(bp);
 }
@@ -865,7 +863,6 @@ again:
 	printf("%s: rdstart err: cmd 0x%x sect %ld blk %" PRId64 " len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
-	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
 	bp = rdfinish(rs, bp);
 	if (bp) {
@@ -960,7 +957,6 @@ rdintr(void *arg)
 				rdstart(rs);
 			return;
 		}
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 	}
 	if (rdfinish(rs, bp))

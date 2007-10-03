@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24.4.1 2007/05/22 17:26:54 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24.4.2 2007/10/03 19:23:31 garbled Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24.4.1 2007/05/22 17:26:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24.4.2 2007/10/03 19:23:31 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("USPACE too small for user");
 #endif
 
+	l2->l_md.md_flags = 0;
+
 	/* Flush the parent LWP out of the FPU. */
 	hppa_fpu_flush(l1);
 
@@ -164,10 +166,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
 	tf->tf_iisq_head = tf->tf_iisq_tail = space;
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
-	/* record the vmspace just in case it changes underneath us. */
-	pmap->pmap_vmspace = p->p_vmspace;
+	/* Load the protection registers */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
 	/*
 	 * theoretically these could be inherited from the father,

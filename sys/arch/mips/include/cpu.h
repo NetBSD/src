@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.81.12.1 2007/05/22 17:27:08 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.81.12.2 2007/10/03 19:24:20 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */

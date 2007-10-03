@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48.8.1 2007/08/02 05:34:14 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48.8.2 2007/10/03 19:24:42 garbled Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.8.1 2007/08/02 05:34:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.8.2 2007/10/03 19:24:42 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

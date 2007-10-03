@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.7 2007/03/09 19:21:59 thorpej Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.7.10.1 2007/10/03 19:22:44 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -332,9 +332,6 @@ nextirq:
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
-
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
 
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */

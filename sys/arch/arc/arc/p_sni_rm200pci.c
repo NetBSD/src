@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.8.12.1 2007/06/26 18:12:10 garbled Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.8.12.2 2007/10/03 19:22:30 garbled Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.8.12.1 2007/06/26 18:12:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.8.12.2 2007/10/03 19:22:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.8.12.1 2007/06/26 18:12:10 garb
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
+
 #include <mips/pte.h>
 
 void p_sni_rm200pci_init(void);
@@ -171,6 +173,15 @@ p_sni_rm200pci_init(void)
 {
 
 	/*
+	 * Initialize wired TLB for I/O space which is used on early stage
+	 */
+
+	/*
+	 * Initialize interrupt priority
+	 */
+	ipl_sr_bits = sni_rm200pci_ipl_sr_bits;
+
+	/*
 	 * XXX - should be enabled, if tested.
 	 *
 	 * We use safe default for now, because this platform is untested.
@@ -181,21 +192,13 @@ p_sni_rm200pci_init(void)
 	/*
 	 * Initialize I/O address offset
 	 */
+	arc_init_wired_map();
 #if 0
 	arc_bus_space_init(&arc_bus_io, "rm200isaio",
 	    RM200_P_ISA_IO, RM200_V_ISA_IO, 0, RM200_S_ISA_IO);
 	arc_bus_space_init(&arc_bus_mem, "rm200isamem",
 	    RM200_P_ISA_MEM, RM200_V_ISA_MEM, 0, RM200_S_ISA_MEM);
 #endif
-
-	/*
-	 * Initialize wired TLB for I/O space which is used on early stage
-	 */
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	ipl_sr_bits = sni_rm200pci_ipl_sr_bits;
 }
 
 void

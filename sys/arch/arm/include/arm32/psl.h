@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.10.10.1 2007/10/03 19:22:43 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
-#ifndef _LOCORE
+#if (! defined(_LOCORE)) && (! defined(hpcarm))
 #include <arm/softintr.h>
 #endif
 
@@ -75,7 +75,6 @@
 #define spl0()		splx(_SPL_0)
 #define splsoft()	raisespl(_SPL_SOFT)
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
-#define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)

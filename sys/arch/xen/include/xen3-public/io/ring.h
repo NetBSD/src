@@ -1,8 +1,26 @@
-/* $NetBSD: ring.h,v 1.6 2006/10/15 13:35:15 bouyer Exp $ */
+/* $NetBSD: ring.h,v 1.6.16.1 2007/10/03 19:26:11 garbled Exp $ */
 /******************************************************************************
  * ring.h
  * 
  * Shared producer-consumer ring macros.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Tim Deegan and Andrew Warfield November 2004.
  */
@@ -26,7 +44,7 @@ typedef unsigned int RING_IDX;
  * power of two (so we can mask with (size-1) to loop around).
  */
 #define __RING_SIZE(_s, _sz) \
-    (__RD32(((_sz) - (long)&(_s)->ring + (long)(_s)) / sizeof((_s)->ring[0])))
+    (__RD32(((_sz) - (long)(_s)->ring + (long)(_s)) / sizeof((_s)->ring[0])))
 
 /*
  * Macros to make the correct C datatypes for a new kind of ring.
@@ -152,19 +170,35 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_SIZE(_r)                                                   \
     ((_r)->nr_ents)
 
+/* Number of free requests (for use on front side only). */
+#define RING_FREE_REQUESTS(_r)                                          \
+    (RING_SIZE(_r) - ((_r)->req_prod_pvt - (_r)->rsp_cons))
+
 /* Test if there is an empty slot available on the front ring.
  * (This is only meaningful from the front. )
  */
 #define RING_FULL(_r)                                                   \
-    (((_r)->req_prod_pvt - (_r)->rsp_cons) == RING_SIZE(_r))
+    (RING_FREE_REQUESTS(_r) == 0)
 
 /* Test if there are outstanding messages to be processed on a ring. */
 #define RING_HAS_UNCONSUMED_RESPONSES(_r)                               \
-    ((_r)->rsp_cons != (_r)->sring->rsp_prod)
+    ((_r)->sring->rsp_prod - (_r)->rsp_cons)
 
+#ifdef __GNUC__
+#define RING_HAS_UNCONSUMED_REQUESTS(_r) ({                             \
+    unsigned int req = (_r)->sring->req_prod - (_r)->req_cons;          \
+    unsigned int rsp = RING_SIZE(_r) -                                  \
+        ((_r)->req_cons - (_r)->rsp_prod_pvt);                          \
+    req < rsp ? req : rsp;                                              \
+})
+#else
+/* Same as above, but without the nice GCC ({ ... }) syntax. */
 #define RING_HAS_UNCONSUMED_REQUESTS(_r)                                \
-    (((_r)->req_cons != (_r)->sring->req_prod) &&                       \
-     (((_r)->req_cons - (_r)->rsp_prod_pvt) != RING_SIZE(_r)))
+    ((((_r)->sring->req_prod - (_r)->req_cons) <                        \
+      (RING_SIZE(_r) - ((_r)->req_cons - (_r)->rsp_prod_pvt))) ?        \
+     ((_r)->sring->req_prod - (_r)->req_cons) :                         \
+     (RING_SIZE(_r) - ((_r)->req_cons - (_r)->rsp_prod_pvt)))
+#endif
 
 /* Direct access to individual ring elements, by index. */
 #define RING_GET_REQUEST(_r, _idx)                                      \

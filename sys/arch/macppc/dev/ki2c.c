@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.8.22.1 2007/09/27 07:13:54 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.8.22.2 2007/10/03 19:24:14 garbled Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -58,8 +58,9 @@ static void ki2c_i2c_release_bus(void *, int);
 static int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
-CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc),
-    ki2c_match, ki2c_attach, NULL, NULL);
+
+CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
+	NULL, NULL);
 
 int
 ki2c_match(parent, match, aux)

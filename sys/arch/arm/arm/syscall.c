@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.35 2007/02/18 07:25:35 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.35.12.1 2007/10/03 19:22:35 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -76,11 +76,9 @@
  * Created      : 09/11/94
  */
 
-#include "opt_ktrace.h"
-
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35 2007/02/18 07:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35.12.1 2007/10/03 19:22:35 garbled Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -90,9 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35 2007/02/18 07:25:35 matt Exp $");
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -522,9 +518,6 @@ child_return(arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *frame = l->l_addr->u_pcb.pcb_tf;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	frame->tf_r0 = 0;
 #ifdef __PROG32
@@ -535,11 +528,5 @@ child_return(arg)
 
 	KERNEL_UNLOCK_LAST(l);
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }

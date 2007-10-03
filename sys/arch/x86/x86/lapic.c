@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.20.14.1 2007/10/03 19:25:55 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.14.1 2007/10/03 19:25:55 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -107,7 +107,7 @@ lapic_map(lapic_base)
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
 
-	disable_intr();
+	x86_disable_intr();
 	s = lapic_tpr;
 
 	/*
@@ -128,7 +128,7 @@ lapic_map(lapic_base)
 #endif
 
 	lapic_tpr = s;
-	enable_intr();
+	x86_enable_intr();
 }
 
 /*
@@ -211,6 +211,10 @@ lapic_boot_init(lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
+	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
@@ -576,10 +580,13 @@ x86_ipi(vec,target,dl)
 	i82489_writereg(LAPIC_ICRLO,
 	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
+#ifdef DIAGNOSTIC
 	i82489_icr_wait();
-
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
-
+#else
+	/* Don't wait - if it doesn't go, we're in big trouble anyway. */
+        result = 0;
+#endif
 	splx(s);
 
 	return result;

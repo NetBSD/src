@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.65.12.1 2007/06/26 18:13:28 garbled Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.65.12.2 2007/10/03 19:24:50 garbled Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.65.12.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.65.12.2 $"
 
 maxusers	32
 
@@ -117,6 +117,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	EFS		# Silicon Graphics Extent File System
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -138,7 +139,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

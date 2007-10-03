@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5.4.1 2007/06/26 18:13:57 garbled Exp $
+#	$NetBSD: GENERIC,v 1.5.4.2 2007/10/03 19:26:18 garbled Exp $
 #
 # GENERIC machine description file
 #
@@ -177,6 +177,10 @@ pxagpio0 at pxaip?	# GPIO
 pxadmac0 at pxaip?	# DMA controller
 pxartc0 at pxaip?	# RTC
 
+# Power management
+zapm0 at pxaip?		# power management
+apmdev0 at zapm0	# APM
+
 # PCMCIA/CF socket and GPIO controllers
 scoop0 at pxaip?
 scoop1 at pxaip?
@@ -235,8 +239,12 @@ wd* at atabus? drive ? flags 0x0000
 pxaudc0 at pxaip?	# USB Device Controller
 #ohci0 at pxaip?	# USB Host Controller
 
+# PCMCIA USB controllers
+#slhci* at pcmcia? function ?	# ScanLogic SL811HS
+
 # USB bus support
 #usb* at ohci?
+#usb* at slhci?
 
 # USB Hubs
 #uhub* at usb?
@@ -316,4 +324,4 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-pseudo-device   bpfilter                # Berkeley packet filter#
+pseudo-device   bpfilter                # Berkeley packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.84.16.1 2007/05/22 17:27:33 matt Exp $ */
+/*	$NetBSD: clock.c,v 1.84.16.2 2007/10/03 19:25:25 garbled Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84.16.1 2007/05/22 17:27:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84.16.2 2007/10/03 19:25:25 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,7 +109,6 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-static long tick_increment;
 int schedintr(void *);
 
 static struct intrhand level10 = { .ih_fun = clockintr };
@@ -117,6 +116,7 @@ static struct intrhand level0 = { .ih_fun = tickintr };
 static struct intrhand level14 = { .ih_fun = statintr };
 static struct intrhand schedint = { .ih_fun = schedintr };
 
+void		tickintr_establish(void);
 static int	timermatch(struct device *, struct cfdata *, void *);
 static void	timerattach(struct device *, struct device *, void *);
 
@@ -252,6 +252,42 @@ stopcounter(struct timer_4u *creg)
 }
 
 /*
+ * Untill interrupts are established per CPU, we rely on the special
+ * handling of tickintr in locore.s.
+ * We establish this interrupt if there is no real counter-timer on
+ * the machine, or on secondary CPUs. The latter would normally not be
+ * able to dispatch the interrupt (established on cpu0) to another cpu,
+ * but the shortcut during dispatch makes it work.
+ */
+void
+tickintr_establish()
+{
+	static bool done = false;	/* only do this once */
+
+	if (!done) {
+		done = true;
+
+		level0.ih_clr = 0;
+		/* 
+		 * Establish a level 10 interrupt handler 
+		 *
+		 * We will have a conflict with the softint handler,
+		 * so we set the ih_number to 1.
+		 */
+		level0.ih_number = 1;
+		intr_establish(10, &level0);
+	}
+
+	/* set the next interrupt time */
+	curcpu()->ci_tick_increment = curcpu()->ci_cpu_clockrate[0] / hz;
+#ifdef DEBUG
+	printf("Using %%tick -- intr in %ld cycles\n",
+	    curcpu()->ci_tick_increment);
+#endif
+	next_tick(curcpu()->ci_tick_increment);
+}
+
+/*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
  *
@@ -282,10 +318,10 @@ cpu_initclocks()
 	}
 
 	/* Make sure we have a sane cpu_clockrate -- we'll need it */
-	if (!cpu_clockrate[0]) {
+	if (!curcpu()->ci_cpu_clockrate[0]) {
 		/* Default to 200MHz clock XXXXX */
-		cpu_clockrate[0] = 200000000;
-		cpu_clockrate[1] = 200000000 / 1000000;
+		curcpu()->ci_cpu_clockrate[0] = 200000000;
+		curcpu()->ci_cpu_clockrate[1] = 200000000 / 1000000;
 	}
 	
 	/* Initialize the %tick register */
@@ -300,7 +336,7 @@ cpu_initclocks()
 	}
 #endif
 
-	counter_timecounter.tc_frequency = cpu_clockrate[0];
+	counter_timecounter.tc_frequency = curcpu()->ci_cpu_clockrate[0];
 	tc_init(&counter_timecounter);
 
 	/*
@@ -309,30 +345,16 @@ cpu_initclocks()
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
 
-		printf("No counter-timer -- using %%tick at %ldMHz as system clock.\n",
-			(long)cpu_clockrate[1]);
-		/* We don't have a counter-timer -- use %tick */
-		level0.ih_clr = 0;
-		/* 
-		 * Establish a level 10 interrupt handler 
-		 *
-		 * We will have a conflict with the softint handler,
-		 * so we set the ih_number to 1.
-		 */
-		level0.ih_number = 1;
-		intr_establish(10, &level0);
-		/* We only have one timer so we have no statclock */
-		stathz = 0;	
+		printf("No counter-timer -- using %%tick at %luMHz as "
+			"system clock.\n",
+			(unsigned long)curcpu()->ci_cpu_clockrate[1]);
 
-		/* set the next interrupt time */
-		tick_increment = cpu_clockrate[0] / hz;
-#ifdef DEBUG
-		printf("Using %%tick -- intr in %ld cycles...", tick_increment);
-#endif
-		next_tick(tick_increment);
-#ifdef DEBUG
-		printf("done.\n");
-#endif
+		/* We don't have a counter-timer -- use %tick */
+		tickintr_establish();
+
+		/* We only have one timer so we have no statclock */
+		stathz = 0;
+
 		return;
 	}
 
@@ -415,13 +437,13 @@ clockintr(void *cap)
 	microtime(&ctime);
 	if (!tick_base) {
 		tick_base = (ctime.tv_sec * 1000000LL + ctime.tv_usec) 
-			/ cpu_clockrate[1];
+			/ curcpu()->ci_cpu_clockrate[1];
 		tick_base -= t;
 	} else if (clockcheck) {
 		int64_t tk = t;
 		int64_t clk = (ctime.tv_sec * 1000000LL + ctime.tv_usec);
 		t -= tick_base;
-		t = t / cpu_clockrate[1];
+		t = t / curcpu()->ci_cpu_clockrate[1];
 		if (t - clk > hz) {
 			printf("Clock lost an interrupt!\n");
 			printf("Actual: %llx Expected: %llx tick %llx tick_base %llx\n",
@@ -434,8 +456,6 @@ clockintr(void *cap)
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
-
-int poll_console = 0;
 
 /*
  * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
@@ -450,18 +470,11 @@ tickintr(void *cap)
 {
 	int s;
 
-#if	NKBD	> 0
-	extern int cnrom(void);
-	extern int rom_console_input;
-#endif
-
 	hardclock((struct clockframe *)cap);
-	if (poll_console)
-		setsoftint();
 
 	s = splhigh();
 	/* Reset the interrupt */
-	next_tick(tick_increment);
+	next_tick(curcpu()->ci_tick_increment);
 	splx(s);
 
 	return (1);

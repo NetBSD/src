@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.5 2007/03/04 06:00:11 christos Exp $ */
+/* $Id: if_ae.c,v 1.5.10.1 2007/10/03 19:24:19 garbled Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.5 2007/03/04 06:00:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.5.10.1 2007/10/03 19:24:19 garbled Exp $");
 
 #include "bpfilter.h"
 
@@ -240,7 +240,7 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
 
-	callout_init(&sc->sc_tick_callout);
+	callout_init(&sc->sc_tick_callout, 0);
 
 	printf(": Atheros AR531X 10/100 Ethernet\n");
 
@@ -1179,7 +1179,7 @@ ae_rxintr(struct ae_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -1347,7 +1347,7 @@ ae_init(struct ifnet *ifp)
 	struct ae_softc *sc = ifp->if_softc;
 	struct ae_txsoft *txs;
 	struct ae_rxsoft *rxs;
-	uint8_t *enaddr;
+	const uint8_t *enaddr;
 	int i, error = 0;
 
 	if ((error = ae_enable(sc)) != 0)
@@ -1450,7 +1450,7 @@ ae_init(struct ifnet *ifp)
 	/*
 	 * Set the station address.
 	 */
-	enaddr = LLADDR(ifp->if_sadl);
+	enaddr = CLLADDR(ifp->if_sadl);
 	AE_WRITE(sc, CSR_MACHI, enaddr[5] << 16 | enaddr[4]);
 	AE_WRITE(sc, CSR_MACLO, enaddr[3] << 24 | enaddr[2] << 16 |
 		enaddr[1] << 8 | enaddr[0]);

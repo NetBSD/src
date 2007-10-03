@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194.10.1 2007/05/22 17:26:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194.10.2 2007/10/03 19:23:19 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.10.1 2007/05/22 17:26:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.10.2 2007/10/03 19:23:19 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -1046,7 +1046,7 @@ static void	candbtimer(void *);
 
 int crashandburn;
 
-struct callout candbtimer_ch = CALLOUT_INITIALIZER;
+callout_t candbtimer_ch;
 
 void
 candbtimer(void *arg)
@@ -1090,6 +1090,8 @@ nmihand(struct frame frame)
 #else
 #ifdef PANICBUTTON
 		if (panicbutton) {
+			/* XXX */
+			callout_init(&candbtimer_ch, 0);
 			if (crashandburn) {
 				crashandburn = 0;
 				printf(": CRASH AND BURN!\n");

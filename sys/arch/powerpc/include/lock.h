@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9.14.1 2007/09/11 21:45:51 macallan Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.14.2 2007/10/03 19:24:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.

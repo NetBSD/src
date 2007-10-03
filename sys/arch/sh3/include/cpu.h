@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43.14.1 2007/05/22 17:27:25 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43.14.2 2007/10/03 19:24:58 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -55,8 +55,10 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -102,19 +104,10 @@ struct clockframe {
  */
 #define	cpu_need_resched(ci, flags)					\
 do {									\
-	want_resched = 1;						\
+	ci->ci_want_resched = 1;					\
 	if (curlwp != ci->ci_data.cpu_idlelwp)				\
 		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
-
-/*
- * MI code calls this with proper locking.
- */
-#define	cpu_did_resched()						\
-do {									\
-	want_resched = 0;						\
-} while (0)
-
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -134,8 +127,6 @@ do {									\
 #define	cpu_signotify(l)	aston(l)
 
 #define	aston(l)		((l)->l_md.md_astpending = 1)
-
-extern int want_resched;		/* need_resched() was called */
 
 /*
  * We need a machine-independent name for this.

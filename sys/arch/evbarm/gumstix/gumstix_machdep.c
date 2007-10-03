@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.4 2007/04/20 13:00:08 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.4.2.1 2007/10/03 19:23:10 garbled Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -144,7 +144,6 @@
 #include "opt_md.h"
 #include "opt_com.h"
 #include "md.h"
-#include "lcd.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -292,7 +291,7 @@ int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
 extern void gxio_config_pin(void);
-extern void gxio_config_busheader(char *);
+extern void gxio_config_expansion(char *);
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -303,6 +302,7 @@ extern void gxio_config_busheader(char *);
 void
 cpu_reboot(int howto, char *bootstr)
 {
+
 #ifdef DIAGNOSTIC
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
@@ -429,7 +429,7 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		_S(4 * COM_NPORTS),
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
-	{0, 0, 0, 0,}
+	{0, 0, 0, 0, 0}
 };
 
 #undef	_A
@@ -515,10 +515,12 @@ initarm(void *arg)
 	 */
 	process_kernel_args((int)u_boot_args[r6], (char **)u_boot_args[r5]);
 
-	memstart = 0xa0000000;
-	memsize = 0x04000000;		/* 64MB */
+	memstart = 0xa0000000UL;
+	memsize = 0x04000000UL;		/* 64MB */
 
+#ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
+#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independent */
@@ -539,7 +541,7 @@ initarm(void *arg)
 	 * XXX pmap_bootstrap() needs an enema.
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
+	physical_end = physical_start + memsize;
 
 	physical_freestart = 0xa0009000UL;
 	physical_freeend = 0xa0200000UL;
@@ -599,8 +601,8 @@ initarm(void *arg)
 	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
-		if (((physical_freeend - L1_TABLE_SIZE) &
-		    (L1_TABLE_SIZE - 1)) == 0 && kernel_l1pt.pv_pa == 0) {
+		if ((physical_freeend & (L1_TABLE_SIZE - 1)) == 0 &&
+		    kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
 			valloc_pages(kernel_pt_table[loop1],
@@ -876,12 +878,13 @@ initarm(void *arg)
 	}
 #endif
 
-#ifdef DDB
-	db_machine_init();
-
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* Firmware doesn't load symbols. */
 	ddb_init(0, NULL, NULL);
+#endif
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -938,7 +941,7 @@ static void
 process_kernel_args(int argc, char *argv[])
 {
 	static const char busheader_name[] = "busheader=";
-	int i, j;
+	int gxio_configured = 0, i, j;
 
 	boothowto = 0;
 
@@ -952,7 +955,8 @@ process_kernel_args(int argc, char *argv[])
 	for (i = 1, j = 0; i < argc; i++) {
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
 			/* configure for GPIOs of busheader side */
-			gxio_config_busheader(argv[i] + strlen(busheader_name));
+			gxio_config_expansion(argv[i] + strlen(busheader_name));
+			gxio_configured = 1;
 			continue;
 		}
 		if (j == MAX_BOOT_STRING) {
@@ -967,17 +971,25 @@ process_kernel_args(int argc, char *argv[])
 	boot_args = bootargs;
 
 	parse_mi_bootargs(boot_args);
+
+	if (!gxio_configured)
+		gxio_config_expansion(NULL);
 }
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "ffuart"
+#define KGDB_DEVNAME	"ffuart"
 #endif
 const char kgdb_devname[] = KGDB_DEVNAME;
 
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE	CONSPEED
+#endif
+int kgdb_devrate = KGDB_DEVRATE;
+
 #if (NCOM > 0)
 #ifndef KGDB_DEVMODE
-#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /*8N1*/
+#define KGDB_DEVMODE	CONMODE
 #endif
 int comkgdbmode = KGDB_DEVMODE;
 #endif /* NCOM */
@@ -1091,7 +1103,7 @@ kgdb_port_init(void)
 
 	if (paddr &&
 	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
-		kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
+		kgdb_devrate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
 		ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN, ckenreg);
 

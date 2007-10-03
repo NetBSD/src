@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.10.4.1 2007/10/03 19:25:57 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10.4.1 2007/10/03 19:25:57 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp
 #include <sys/kcore.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <x86/cpu_msr.h>
 
@@ -112,20 +113,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
-}
-
-/*
- * Issue the pause instruction (rep; nop) which acts as a hint to
- * HyperThreading processors that we are spinning on a lock.
- *
- * Not defined as an inline, because even if the CPU does not support
- * HT the delay resulting from a function call is useful for spin lock
- * back off.
- */ 
-void
-x86_pause(void)
-{
-	__asm volatile("pause");
 }
 
 /*

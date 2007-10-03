@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105.10.1 2007/05/22 17:26:38 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105.10.2 2007/10/03 19:22:29 garbled Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.1 2007/05/22 17:26:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.2 2007/10/03 19:22:29 garbled Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -397,10 +397,8 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	 *
 	 * XXX - reserve these KVA space after UVM initialization.
 	 */
-
-	arc_init_wired_map();
-
 	(*platform->init)();
+
 	cpuspeed = platform->clock;
 	curcpu()->ci_cpu_freq = platform->clock * 1000000;
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;

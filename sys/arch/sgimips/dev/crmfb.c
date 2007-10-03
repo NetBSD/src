@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.5.2.1 2007/10/03 19:24:51 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.5.2.1 2007/10/03 19:24:51 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+
+#include <arch/sgimips/dev/crmfbreg.h>
 
 #define CRMFB_SHADOWFB
 
@@ -101,51 +103,6 @@ struct wsdisplay_accessops crmfb_accessops = {
  */
 #define CRMFB_TILESIZE	(512*128)
 
-#define CRMFB_DOTCLOCK		0x00000004
-#define		CRMFB_DOTCLOCK_CLKRUN_SHIFT	20
-#define CRMFB_VT_XY		0x00010000
-#define		CRMFB_VT_XY_FREEZE_SHIFT	31
-#define CRMFB_VT_INTR01		0x00010020
-#define		CRMFB_VT_INTR01_EN		0xffffffff
-#define CRMFB_VT_INTR23		0x00010024
-#define		CRMFB_VT_INTR23_EN		0xffffffff
-#define CRMFB_VT_VPIX_EN	0x00010038
-#define		CRMFB_VT_VPIX_EN_OFF_SHIFT	0
-#define CRMFB_VT_VCMAP		0x0001003c
-#define		CRMFB_VT_VCMAP_ON_SHIFT		12
-#define CRMFB_VT_HCMAP		0x00010040
-#define		CRMFB_VT_HCMAP_ON_SHIFT		12
-#define CRMFB_OVR_WIDTH_TILE	0x00020000
-#define CRMFB_OVR_CONTROL	0x00020008
-#define		CRMFB_OVR_CONTROL_DMAEN_SHIFT	0
-#define CRMFB_FRM_TILESIZE	0x00030000
-#define		CRMFB_FRM_TILESIZE_RHS_SHIFT	0
-#define		CRMFB_FRM_TILESIZE_WIDTH_SHIFT	5
-#define		CRMFB_FRM_TILESIZE_DEPTH_SHIFT	13
-#define			CRMFB_FRM_TILESIZE_DEPTH_8	0
-#define			CRMFB_FRM_TILESIZE_DEPTH_16	1
-#define			CRMFB_FRM_TILESIZE_DEPTH_32	2
-#define		CRMFB_FRM_TILESIZE_FIFOR_SHIFT	15
-#define CRMFB_FRM_PIXSIZE	0x00030004
-#define		CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT	16
-#define CRMFB_FRM_CONTROL	0x0003000c
-#define		CRMFB_FRM_CONTROL_DMAEN_SHIFT	0
-#define		CRMFB_FRM_CONTROL_LINEAR_SHIFT	1
-#define		CRMFB_FRM_CONTROL_TILEPTR_SHIFT	9
-#define CRMFB_DID_CONTROL	0x00040004
-#define		CRMFB_DID_CONTROL_DMAEN_SHIFT	0
-#define CRMFB_MODE		0x00048000
-#define		CRMFB_MODE_TYP_SHIFT		2
-#define			CRMFB_MODE_TYP_I8	0
-#define			CRMFB_MODE_TYP_ARGB5	4
-#define			CRMFB_MODE_TYP_RGB8	5
-#define		CRMFB_MODE_BUF_SHIFT		0
-#define			CRMFB_MODE_BUF_BOTH	3
-#define CRMFB_CMAP		0x00050000
-#define CRMFB_CMAP_FIFO		0x00058000
-#define CRMFB_GMAP		0x00060000
-#define CRMFB_CRS_CONTROL	0x00070004
-
 static int	crmfb_match(struct device *, struct cfdata *, void *);
 static void	crmfb_attach(struct device *, struct device *, void *);
 int		crmfb_probe(void);
@@ -167,6 +124,7 @@ struct crmfb_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
 	bus_dma_tag_t		sc_dmat;
 
 	struct crmfb_dma	sc_dma;
@@ -179,6 +137,13 @@ struct crmfb_softc {
 	uint8_t			*sc_shadowfb;
 
 	int			sc_wsmode;
+
+	/* cursor stuff */
+	int			sc_cur_x;
+	int			sc_cur_y;
+	int			sc_hot_x;
+	int			sc_hot_y;
+
 	u_char			sc_cmap_red[256];
 	u_char			sc_cmap_green[256];
 	u_char			sc_cmap_blue[256];
@@ -188,6 +153,14 @@ static int	crmfb_putcmap(struct crmfb_softc *, struct wsdisplay_cmap *);
 static int	crmfb_getcmap(struct crmfb_softc *, struct wsdisplay_cmap *);
 static void	crmfb_set_palette(struct crmfb_softc *,
 				  int, uint8_t, uint8_t, uint8_t);
+static int	crmfb_set_curpos(struct crmfb_softc *, int, int);
+static int	crmfb_gcursor(struct crmfb_softc *, struct wsdisplay_cursor *);
+static int	crmfb_scursor(struct crmfb_softc *, struct wsdisplay_cursor *);
+static inline void	crmfb_write_reg(struct crmfb_softc *, int, uint32_t);
+
+/* setup video hw in given colour depth */
+static int	crmfb_setup_video(struct crmfb_softc *, int);
+static void	crmfb_setup_palette(struct crmfb_softc *);
 
 CFATTACH_DECL(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
@@ -210,7 +183,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	unsigned long v;
 	long defattr;
 	const char *consdev;
-	int rv, i;
+	int rv, i, tiles_x, tiles_y;
 
 	sc = (struct crmfb_softc *)self;
 	ma = (struct mainbus_attach_args *)opaque;
@@ -246,20 +219,20 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		return;
 	}
 
-	printf("%s: initial resolution %dx%d %d bpp\n",
-	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height, sc->sc_depth);
+	printf("%s: initial resolution %dx%d\n",
+	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height);
 
-#if 0
-	/* Changing the colour depth is easy... */
-	sc->sc_depth = 32;
-	printf("%s: using resolution %dx%d %d bpp\n",
-	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height, sc->sc_depth);
-#endif
+	/*
+	 * first determine how many tiles we need
+	 * in 32bit each tile is 128x128 pixels
+	 */
+	tiles_x = (sc->sc_width + 127) >> 7;
+	tiles_y = (sc->sc_height + 127) >> 7;
+	sc->sc_fbsize = 0x10000 * tiles_x * tiles_y;
+	printf("so we need %d x %d tiles -> %08x\n", tiles_x, tiles_y,
+	    sc->sc_fbsize);
 
-	sc->sc_fbsize = sc->sc_width * sc->sc_height * sc->sc_depth / 8;
-	sc->sc_fbsize = (sc->sc_fbsize / CRMFB_TILESIZE) * CRMFB_TILESIZE;
-
-	sc->sc_dmai.size = 128 * sizeof(uint16_t);
+	sc->sc_dmai.size = 256 * sizeof(uint16_t);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmai.size, 65536, 0,
 	    sc->sc_dmai.segs,
 	    sizeof(sc->sc_dmai.segs) / sizeof(sc->sc_dmai.segs[0]),
@@ -334,106 +307,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_defaultscreen.capabilities = ri->ri_caps;
 	crmfb_defaultscreen.modecookie = NULL;
 
-	/* disable DMA */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL);
-	d &= ~(1 << CRMFB_OVR_CONTROL_DMAEN_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL, d);
-	DELAY(10000);
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
-	d &= ~(1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL, d);
-	DELAY(10000);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_DID_CONTROL, 0);
-	DELAY(10000);
-
-	/* ensure that CRM starts drawing at the top left of the screen
-	 * when we re-enable DMA later
-	 */
-	d = (1 << CRMFB_VT_XY_FREEZE_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_XY, d);
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
-	d &= ~(1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK, d);
-
-	/* reset FIFO */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE);
-	d |= (1 << CRMFB_FRM_TILESIZE_FIFOR_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE, d);
-	d &= ~(1 << CRMFB_FRM_TILESIZE_FIFOR_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE, d);
-
-	/* setup colour mode */
-	switch (sc->sc_depth) {
-	case 8:
-		h = CRMFB_MODE_TYP_I8;
-		break;
-	case 16:
-		h = CRMFB_MODE_TYP_ARGB5;
-		break;
-	case 32:
-		h = CRMFB_MODE_TYP_RGB8;
-		break;
-	default:
-		panic("Unsupported depth");
-	}
-	d = h << CRMFB_MODE_TYP_SHIFT;
-	d |= CRMFB_MODE_BUF_BOTH << CRMFB_MODE_BUF_SHIFT;
-	for (i = 0; i < (32 * 4); i += 4)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_MODE + i, d);
-
-	/* setup tile pointer, but don't turn on DMA yet! */
-	h = DMAADDR(sc->sc_dmai);
-	d = (h >> 9) << CRMFB_FRM_CONTROL_TILEPTR_SHIFT;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL, d);
-
-	/* init framebuffer width and pixel size */
-	d = (1 << CRMFB_FRM_TILESIZE_WIDTH_SHIFT);
-	switch (sc->sc_depth) {
-	case 8:
-		h = CRMFB_FRM_TILESIZE_DEPTH_8;
-		break;
-	case 16:
-		h = CRMFB_FRM_TILESIZE_DEPTH_16;
-		break;
-	case 32:
-		h = CRMFB_FRM_TILESIZE_DEPTH_32;
-		break;
-	default:
-		panic("Unsupported depth");
-	}
-	d |= (h << CRMFB_FRM_TILESIZE_DEPTH_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE, d);
-
-	/* init framebuffer height, we use the trick that the Linux
-	 * driver uses to fool the CRM out of tiled mode and into
-	 * linear mode
-	 */
-	h = sc->sc_width * sc->sc_height / (512 / (sc->sc_depth / 8));
-	d = h << CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_PIXSIZE, d);
-
-	/* turn off firmware overlay and hardware cursor */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_WIDTH_TILE, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CRS_CONTROL, 0);
-
-	/* enable drawing again */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
-	d |= (1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK, d);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_XY, 0);
-
-	/* turn on DMA for the framebuffer */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
-	d |= (1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL, d);
-
-	for (i = 0; i < 256; i++) {
-		crmfb_set_palette(sc, i, rasops_cmap[(i * 3) + 2],
-		    rasops_cmap[(i * 3) + 1], rasops_cmap[(i * 3) + 0]);
-		sc->sc_cmap_red[i] = rasops_cmap[(i * 3) + 2];
-		sc->sc_cmap_green[i] = rasops_cmap[(i * 3) + 1];
-		sc->sc_cmap_blue[i] = rasops_cmap[(i * 3) + 0];
-	}
+	crmfb_setup_video(sc, 8);
+	crmfb_setup_palette(sc);
 
 	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
@@ -446,6 +321,11 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	aa.accesscookie = &sc->sc_vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+
+	sc->sc_cur_x = 0;
+	sc->sc_cur_y = 0;
+	sc->sc_hot_x = 0;
+	sc->sc_hot_y = 0;
 
 	return;
 }
@@ -476,14 +356,15 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		/* not really, but who cares? */
-		*(u_int *)data = WSDISPLAY_TYPE_NEWPORT;
+		/* wsfb does */
+		*(u_int *)data = WSDISPLAY_TYPE_CRIME;
 		return 0;
 	case WSDISPLAYIO_GINFO:
 		if (vd->active != NULL) {
 			wdf = (void *)data;
 			wdf->height = sc->sc_height;
 			wdf->width = sc->sc_width;
-			wdf->depth = sc->sc_depth;
+			wdf->depth = 32;
 			wdf->cmsize = 256;
 			return 0;
 		} else
@@ -505,15 +386,60 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		nmode = *(int *)data;
 		if (nmode != sc->sc_wsmode) {
 			sc->sc_wsmode = nmode;
-			if (nmode == WSDISPLAYIO_MODE_EMUL)
+			if (nmode == WSDISPLAYIO_MODE_EMUL) {
+				crmfb_setup_video(sc, 8);
+				crmfb_setup_palette(sc);
 				vcons_redraw_screen(vd->active);
+			} else {
+				crmfb_setup_video(sc, 32);
+			}
 		}
 		return 0;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 		return ENODEV;	/* not supported yet */
-	}
 
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = sc->sc_cur_x;
+			pos->y = sc->sc_cur_y;
+		}
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			crmfb_set_curpos(sc, pos->x, pos->y);
+		}
+		return 0;
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = 32;
+			pos->y = 32;
+		}
+		return 0;
+	case WSDISPLAYIO_GCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return crmfb_gcursor(sc, cu);
+		}
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return crmfb_scursor(sc, cu);
+		}
+	}
 	return EPASSTHROUGH;
 }
 
@@ -527,13 +453,21 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	vd = (struct vcons_data *)v;
 	sc = (struct crmfb_softc *)vd->cookie;
 
+#if 1
 	if (offset >= 0 && offset < sc->sc_fbsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		    sc->sc_dma.nsegs, offset, prot,
 		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 		return pa;
 	}
-
+#else
+	if (offset >= 0 && offset < sc->sc_fbsize) {
+		pa = bus_space_mmap(SGIMIPS_BUS_SPACE_NORMAL, sc->sc_fbh,
+		    offset, prot, SGIMIPS_BUS_SPACE_NORMAL);
+		printf("%s: %08llx -> %llx\n", __func__, offset, pa);
+		return pa;
+	}
+#endif
 	return -1;
 }
 
@@ -666,7 +600,223 @@ crmfb_set_palette(struct crmfb_softc *sc, int reg, uint8_t r, uint8_t g,
 		DELAY(10);
 
 	val = (r << 24) | (g << 16) | (b << 8);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CMAP + (reg * 4), val);
+	crmfb_write_reg(sc, CRMFB_CMAP + (reg * 4), val);
 
 	return;
+}
+
+static int
+crmfb_set_curpos(struct crmfb_softc *sc, int x, int y)
+{
+	uint32_t val;
+
+	sc->sc_cur_x = x;
+	sc->sc_cur_y = y;
+
+	val = ((x - sc->sc_hot_x) & 0xffff) | ((y - sc->sc_hot_y) << 16);
+	crmfb_write_reg(sc, CRMFB_CURSOR_POS, val);
+
+	return 0;
+}
+
+static int
+crmfb_gcursor(struct crmfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	/* do nothing for now */
+	return 0;
+}
+
+static int
+crmfb_scursor(struct crmfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		crmfb_write_reg(sc, CRMFB_CURSOR_CONTROL, cur->enable ? 1 : 0);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		crmfb_set_curpos(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+		uint32_t val;
+	
+		for (i = 0; i < cur->cmap.count; i++) {
+			val = (cur->cmap.red[i] << 24) |
+			      (cur->cmap.green[i] << 16) |
+			      (cur->cmap.blue[i] << 8);
+			crmfb_write_reg(sc, CRMFB_CURSOR_CMAP0 + 
+			    ((i + cur->cmap.index) << 2), val);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+
+		int i, j, cnt = 0;
+		uint32_t latch = 0, omask;
+		uint8_t imask;
+		for (i = 0; i < 64; i++) {
+			omask = 0x80000000;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			crmfb_write_reg(sc, CRMFB_CURSOR_BITMAP + (i << 2),
+			    latch);
+			latch = 0;
+		}				
+	}
+	return 0;
+}
+
+static inline void
+crmfb_write_reg(struct crmfb_softc *sc, int offset, uint32_t val)
+{
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, offset, val);
+	wbflush();
+}
+
+static int
+crmfb_setup_video(struct crmfb_softc *sc, int depth)
+{
+	uint32_t d, h;
+	int i;
+	
+	/* disable DMA */
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL);
+	d &= ~(1 << CRMFB_OVR_CONTROL_DMAEN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_OVR_CONTROL, d);
+	DELAY(50000);
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
+	d &= ~(1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+	DELAY(50000);
+	crmfb_write_reg(sc, CRMFB_DID_CONTROL, 0);
+	DELAY(50000);
+
+	/* ensure that CRM starts drawing at the top left of the screen
+	 * when we re-enable DMA later
+	 */
+	d = (1 << CRMFB_VT_XY_FREEZE_SHIFT);
+	crmfb_write_reg(sc, CRMFB_VT_XY, d);
+	delay(1000);
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
+	d &= ~(1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_DOTCLOCK, d);
+	delay(1000);
+
+	/* reset FIFO */
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE);
+	d |= (1 << CRMFB_FRM_TILESIZE_FIFOR_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
+	d &= ~(1 << CRMFB_FRM_TILESIZE_FIFOR_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
+
+	/* setup colour mode */
+	switch (depth) {
+	case 8:
+		h = CRMFB_MODE_TYP_I8;
+		break;
+	case 16:
+		h = CRMFB_MODE_TYP_ARGB5;
+		break;
+	case 32:
+		h = CRMFB_MODE_TYP_RGB8;
+		break;
+	default:
+		panic("Unsupported depth");
+	}
+	d = h << CRMFB_MODE_TYP_SHIFT;
+	d |= CRMFB_MODE_BUF_BOTH << CRMFB_MODE_BUF_SHIFT;
+	for (i = 0; i < (32 * 4); i += 4)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_MODE + i, d);
+	wbflush();
+
+	/* setup tile pointer, but don't turn on DMA yet! */
+	h = DMAADDR(sc->sc_dmai);
+	d = (h >> 9) << CRMFB_FRM_CONTROL_TILEPTR_SHIFT;
+	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+
+	/* init framebuffer width and pixel size */
+	d = (1 << CRMFB_FRM_TILESIZE_WIDTH_SHIFT);
+	switch (depth) {
+	case 8:
+		h = CRMFB_FRM_TILESIZE_DEPTH_8;
+		break;
+	case 16:
+		h = CRMFB_FRM_TILESIZE_DEPTH_16;
+		break;
+	case 32:
+		h = CRMFB_FRM_TILESIZE_DEPTH_32;
+		break;
+	default:
+		panic("Unsupported depth");
+	}
+	d |= (h << CRMFB_FRM_TILESIZE_DEPTH_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
+
+	/* init framebuffer height, we use the trick that the Linux
+	 * driver uses to fool the CRM out of tiled mode and into
+	 * linear mode
+	 */
+	h = sc->sc_width * sc->sc_height / (512 / (depth >> 3));
+	d = h << CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT;
+	crmfb_write_reg(sc, CRMFB_FRM_PIXSIZE, d);
+
+	/* turn off firmware overlay and hardware cursor */
+	crmfb_write_reg(sc, CRMFB_OVR_WIDTH_TILE, 0);
+	crmfb_write_reg(sc, CRMFB_CURSOR_CONTROL, 0);
+
+	/* enable drawing again */
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
+	d |= (1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_DOTCLOCK, d);
+	crmfb_write_reg(sc, CRMFB_VT_XY, 0);
+
+	/* turn on DMA for the framebuffer */
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
+	d |= (1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+
+	sc->sc_depth = depth;
+	return 0;
+}
+
+static void
+crmfb_setup_palette(struct crmfb_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < 256; i++) {
+		crmfb_set_palette(sc, i, rasops_cmap[(i * 3) + 2],
+		    rasops_cmap[(i * 3) + 1], rasops_cmap[(i * 3) + 0]);
+		sc->sc_cmap_red[i] = rasops_cmap[(i * 3) + 2];
+		sc->sc_cmap_green[i] = rasops_cmap[(i * 3) + 1];
+		sc->sc_cmap_blue[i] = rasops_cmap[(i * 3) + 0];
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19.72.1 2007/06/21 18:49:40 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.72.2 2007/10/03 19:24:35 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -36,7 +36,7 @@
 #if defined(_KERNEL)
 #define	CPU_MAXNUM	1
 extern char bootpath[];
-#endif
+#endif /* _KERNEL */
 
 #include <powerpc/cpu.h>
 

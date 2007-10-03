@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.16.4.1 2007/05/22 17:26:58 matt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.16.4.2 2007/10/03 19:23:45 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16.4.1 2007/05/22 17:26:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16.4.2 2007/10/03 19:23:45 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -94,7 +94,6 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 #endif
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
-	pmap_do_tlb_shootdown,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
 	msr_write_ipi
@@ -103,11 +102,11 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
-	disable_intr();
+	x86_disable_intr();
 	x86_atomic_clearbits_l(&ci->ci_flags, CPUF_RUNNING);
 
 	for(;;) {
-		__asm volatile("hlt");
+		x86_hlt();
 	}
 }
 

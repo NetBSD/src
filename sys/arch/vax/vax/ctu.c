@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.25 2007/03/04 19:21:55 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.25.10.1 2007/10/03 19:25:40 garbled Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.25 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.25.10.1 2007/10/03 19:25:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,11 +110,13 @@ const struct cdevsw ctu_cdevsw = {
 };
 #endif
 
-static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
+static callout_t ctu_watch_ch;
 
 void
 ctuattach()
 {
+
+	callout_init(&ctu_watch_ch, 0);
 	bufq_alloc(&tu_sc.sc_bufq, "fcfs", 0);
 
 	tu_recv = idsptch;
@@ -282,7 +284,7 @@ cturintr(void *arg)
 
 	case TU_READING:
 		if (status != RSP_TYP_DATA)
-			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
 		tu_sc.sc_wto = 0;
 		for (i = 0; i < 131; i++) {
 			if ((c = readchr()) < 0) {
@@ -336,7 +338,7 @@ cturintr(void *arg)
 			    tu_sc.sc_state, tu_sc.sc_xbytes, status);
 #endif
 			
-			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
 		}
 		tu_sc.sc_wto = 0;
 		for (i = 0; i < 13; i++) {
@@ -351,7 +353,7 @@ cturintr(void *arg)
 #ifdef TUDEBUG
 				printf("end packet status bad: %d\n", c);
 #endif
-				bp->b_flags |= B_ERROR;
+				bp->b_error = EIO;
 			}
 		}
 		break;
@@ -390,7 +392,7 @@ cturintr(void *arg)
 		printf("bad rx state %d char %d\n", tu_sc.sc_state, status);
 		return;
 	}
-	if ((bp->b_flags & B_ERROR) == 0) {
+	if (bp->b_error == 0) {
 		(void)BUFQ_GET(tu_sc.sc_bufq);
 		biodone(bp);
 #ifdef TUDEBUG
@@ -403,7 +405,7 @@ cturintr(void *arg)
 		    tu_sc.sc_state, tu_sc.sc_xbytes, status);
 	}
 #endif
-	bp->b_flags &= ~B_ERROR;
+	bp->b_error = 0;
 	tu_sc.sc_state = TU_IDLE;
 	ctustart();
 	return;

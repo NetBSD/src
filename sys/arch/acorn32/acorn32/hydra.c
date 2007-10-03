@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.23.10.1 2007/05/22 17:26:26 matt Exp $	*/
+/*	$NetBSD: hydra.c,v 1.23.10.2 2007/10/03 19:21:51 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.23.10.1 2007/05/22 17:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.23.10.2 2007/10/03 19:21:51 garbled Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -491,7 +491,7 @@ cpu_boot_secondary_processors(void)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
-	callout_init(&sc->sc_prod);
+	callout_init(&sc->sc_prod, 0);
 	hydra_prod(sc);
 }
 

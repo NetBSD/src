@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11.36.1 2007/06/26 18:13:39 garbled Exp $
+$NetBSD: version,v 1.11.36.2 2007/10/03 19:25:19 garbled Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,5 @@ is taken as the current.
 1.8:	Fix booting from obscure partition bootstrings (e.g. "boot disk:e disk:e/netbsd")
 1.9:	Load kernel into permanently mapped memory, pass mappings to the kernel.
 1.10:	Optimize permanent kernel mappings
+1.11:	Improve partition handling and allow changing the device at the boot prompt
+1.12:	Add support to boot from newer Solaris UFS partitions

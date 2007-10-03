@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.21.2.1 2007/08/02 05:34:21 macallan Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.21.2.2 2007/10/03 19:24:45 garbled Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.21.2.1 2007/08/02 05:34:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.21.2.2 2007/10/03 19:24:45 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.1.40.1 2007/06/26 18:13:38 garbled Exp $	*/
+/*	$NetBSD: boot.h,v 1.1.40.2 2007/10/03 19:25:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -71,5 +71,8 @@ extern u_int	get_cpuid(void);
 #define LOADFILE_OFW_ALLOCATOR		0x1
 #define LOADFILE_MMU_ALLOCATOR		0x2
 extern void	loadfile_set_allocator(int);
+
+/* ofdev.c */
+char *filename(char*, char*);
 
 #endif /* _BOOT_H_ */
