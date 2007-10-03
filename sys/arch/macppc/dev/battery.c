@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.2.4.4 2007/08/02 05:34:31 macallan Exp $ */
+/*	$NetBSD: battery.c,v 1.2.4.5 2007/10/03 19:24:13 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.4 2007/08/02 05:34:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.5 2007/10/03 19:24:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ battery_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_pswitch_register(&sc->sc_sm_acpower) != 0)
 		printf("%s: unable to register AC power status with sysmon\n",
 		    sc->sc_dev.dv_xname);
+
 }
 
 static int

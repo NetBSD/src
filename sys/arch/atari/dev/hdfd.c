@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.55.10.1 2007/10/03 19:22:54 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.55.10.1 2007/10/03 19:22:54 garbled Exp $");
 
 #include "opt_ddb.h"
 
@@ -431,8 +431,8 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	if (intr_establish(22, USER_VEC|FAST_VEC, 0,
 			   (hw_ifun_t)(has_fifo ? mfp_hdfd_fifo : mfp_hdfd_nf),
@@ -525,8 +525,8 @@ fdattach(parent, self, aux)
 	struct fd_type		*type = fa->fa_deftype;
 	int			drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -614,7 +614,7 @@ fdstrategy(bp)
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -632,7 +632,7 @@ fdstrategy(bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -665,8 +665,6 @@ fdstrategy(bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -1324,7 +1322,6 @@ fdcretry(fdc)
 			       fdc->sc_status[4],
 			       fdc->sc_status[5]);
 		}
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
@@ -1573,8 +1570,7 @@ fdformat(dev, finfo, p)
 		/* timed out */
 		rv = EIO;
 		biodone(bp);
-	}
-	if(bp->b_flags & B_ERROR) {
+	} else if (bp->b_error != 0) {
 		rv = bp->b_error;
 	}
 	free(bp, M_TEMP);

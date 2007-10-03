@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.27 2007/01/27 07:21:32 cbiere Exp $
+# $NetBSD: Makefile.bootxx,v 1.27.14.1 2007/10/03 19:23:57 garbled Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -56,7 +56,6 @@ AFLAGS+=   -m32
 CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
-CPPFLAGS+= -DBOOT_ELF64
 .else
 .if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.38.10.1 2007/10/03 19:25:06 garbled Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.38.10.1 2007/10/03 19:25:06 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ extern BootConfig bootconfig;	/* temporary, I hope */
 
 #ifdef	DIAGNOSTIC
 /* NOTE: These variables will be removed, well some of them */
-extern u_int spl_mask;
 extern u_int current_mask;
 #endif
 
@@ -151,7 +150,9 @@ static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in this file. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 int console_ihandle = 0;
 static void reset_screen(void);
 #endif
@@ -336,7 +337,7 @@ ofw_boot(howto, bootstr)
 
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
-	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
+	printf("current_mask=%08x\n", current_mask);
 
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
@@ -2009,7 +2010,9 @@ ofw_initallocator(void)
     
 }
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in this file. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
 reset_screen()
 {

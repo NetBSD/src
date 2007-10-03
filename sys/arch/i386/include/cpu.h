@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.140.2.2 2007/06/26 18:12:44 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.140.2.3 2007/10/03 19:23:51 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include <x86/via_padlock.h>
 
 #include <sys/device.h>
-#include <sys/simplelock.h>			/* will also get LOCKDEBUG */
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
@@ -72,17 +71,19 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
-	void	*ci_self150;		/* self + 0x150, see lock_stubs.S */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
-	struct cpu_info *ci_next;	/* next cpu */
 
 	/*
-	 * Public members.
+	 * Will be accessed by other CPUs.
 	 */
+	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct simplelock ci_slock;	/* lock on this data structure */
+	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
+	int	ci_fpsaving;		/* save in progress */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	int	ci_cpumask;		/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
@@ -90,12 +91,9 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	ci_fpsaving;		/* save in progress */
-
-	volatile uint32_t	ci_tlb_ipi_mask;
-
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
@@ -115,9 +113,9 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
-	void *		ci_intrstack;
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
@@ -142,7 +140,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
@@ -193,18 +190,18 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#if defined(MULTIPROCESSOR)
-
 #define X86_MAXPROCS		32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-static struct cpu_info *curcpu(void);
+#if defined(__GNUC__) && defined(_KERNEL)
+static struct cpu_info *x86_curcpu(void);
+static lwp_t *x86_curlwp(void);
 
 __inline static struct cpu_info * __attribute__((__unused__))
-curcpu()
+x86_curcpu(void)
 {
 	struct cpu_info *ci;
 
@@ -214,6 +211,23 @@ curcpu()
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
 	return ci;
 }
+
+__inline static lwp_t * __attribute__((__unused__))
+x86_curlwp(void)
+{
+	lwp_t *l;
+
+	__asm volatile("movl %%fs:%1, %0" :
+	    "=r" (l) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
+	return l;
+}
+#else	/* __GNUC__ && _KERNEL */
+/* For non-GCC and LKMs */
+struct cpu_info	*x86_curcpu(void);
+lwp_t	*x86_curlwp(void);
+#endif	/* __GNUC__ && _KERNEL */
 
 #define cpu_number() 		(curcpu()->ci_cpuid)
 
@@ -226,25 +240,10 @@ extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 
-#else /* !MULTIPROCESSOR */
-
-#define	X86_MAXPROCS		1
-#define	curcpu()		(&cpu_info_primary)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()		0
-#define CPU_IS_PRIMARY(ci)	1
-
-#define aston(l)		((l)->l_md.md_astpending = 1)
-
-#endif /* MULTIPROCESSOR */
-
 extern uint32_t cpus_attached;
 
-#define	curlwp			curcpu()->ci_curlwp
+#define	curcpu()		x86_curcpu()
+#define	curlwp			x86_curlwp()
 #define	curpcb			(&curlwp->l_addr->u_pcb)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.3 2007/02/22 05:31:52 thorpej Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.3.12.1 2007/10/03 19:23:15 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.3 2007/02/22 05:31:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.3.12.1 2007/10/03 19:23:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,9 @@ void
 rom_cnputc(dev_t dev, int c)
 {
 	int i;
+	struct lwp *curlwp_save;
+
+	curlwp_save = curlwp;
 
 	switch (c) {
 	default:
@@ -155,6 +158,8 @@ rom_cnputc(dev_t dev, int c)
 		break;
 	}
 
+	curlwp = curlwp_save;
+
 	if (cons.y == CONS_HEIGHT)
 		cons.y = Y_INIT;
 }
@@ -162,8 +167,14 @@ rom_cnputc(dev_t dev, int c)
 int
 rom_cngetc(dev_t dev)
 {
+	int rval;
+	struct lwp *curlwp_save;
 
-	return ROM_GETC();
+	curlwp_save = curlwp;
+	rval = ROM_GETC();
+	curlwp = curlwp_save;
+
+	return rval;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11.10.4 2007/08/02 05:34:34 macallan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11.10.5 2007/10/03 19:24:16 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.

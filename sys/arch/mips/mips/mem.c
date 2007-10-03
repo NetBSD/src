@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33 2007/03/04 12:24:58 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.33.10.1 2007/10/03 19:24:23 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33 2007/03/04 12:24:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.10.1 2007/10/03 19:24:23 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33 2007/03/04 12:24:58 tsutsui Exp $");
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
+#include <sys/event.h>
 
 #include <machine/cpu.h>
 

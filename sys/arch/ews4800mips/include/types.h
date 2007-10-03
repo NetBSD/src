@@ -1,8 +1,7 @@
-/*	$NetBSD: types.h,v 1.4 2006/09/08 13:48:12 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.4.18.1 2007/10/03 19:23:16 garbled Exp $	*/
 
 #include <mips/types.h>
 
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_GENERIC_TODR
 #define	__HAVE_TIMECOUNTER
 

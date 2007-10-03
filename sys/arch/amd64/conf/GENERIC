@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.2 2007/06/26 18:12:00 garbled Exp $
+# $NetBSD: GENERIC,v 1.138.2.3 2007/10/03 19:22:11 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.2 $"
+#ident 		"GENERIC-$Revision: 1.138.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -134,11 +134,11 @@ file-system 	PROCFS		# /proc
 file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -162,7 +162,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -239,6 +239,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
+#IPMI support
+#ipmi0		at mainbus?
+
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
@@ -300,6 +303,9 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and Speedstep support.
+
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
 #agp* 	at pchb?
@@ -308,6 +314,7 @@ aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 isa0	at mainbus?
 isa0	at pcib?
 #isa0 	at amdpcib?
+#isa0 	at ichlpcib?
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
@@ -383,6 +390,12 @@ lpt1	at isa? port 0x278
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
+
+# NVIDIA nForce2/3/4 SMBus controller
+nfsmbc*	at pci? dev ? function ?
+nfsmb*	at nfsmbc?
+iic*	at nfsmb?
+
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
@@ -392,6 +405,12 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 # Abit uGuru Hardware system monitor
 #ug0	at isa? port 0xe0
+
+# Serial Presence Detect capable memory modules
+#spdmem* at iic? addr 0x50
+#spdmem* at iic? addr 0x51
+#spdmem* at iic? addr 0x52
+#spdmem* at iic? addr 0x53
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -584,6 +603,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+wpi* 	at pci? dev ? function ? 	# Intel PRO/Wireless 3945ABG
 xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # PCMCIA network interfaces
@@ -658,6 +678,9 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
@@ -714,6 +737,7 @@ irframe* at ustir?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ? 	# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
@@ -726,14 +750,23 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+uftdi*  at uhub? port ? 	# FTDI FT8U100AX serial adapter
+ucom*   at uftdi? portno ?
 
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
+uipaq*  at uhub? port ? 	# iPAQ PDAs
+ucom*   at uipaq? portno ?
+
+umct*   at uhub? port ? 	# MCT USB-RS232 serial adapter
+ucom*   at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*   at uplcom? portno ?
+
+uslsa*  at uhub? port ? 	# Silicon Labs USB-RS232 serial adapter
+ucom*   at uslsa? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
@@ -858,12 +891,14 @@ radio* at bktr?
 
 # Bluetooth PCMCIA Controllers
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbc?
 #bthub* at btuart?
 bthub* at ubt?
 
@@ -899,7 +934,7 @@ pseudo-device	swcrypto		# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

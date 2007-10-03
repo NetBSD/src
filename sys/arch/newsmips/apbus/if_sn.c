@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.23.10.1 2007/06/26 18:13:08 garbled Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.23.10.2 2007/10/03 19:24:31 garbled Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.23.10.1 2007/06/26 18:13:08 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.23.10.2 2007/10/03 19:24:31 garbled Exp $");
 
 #include "opt_inet.h"
 
@@ -88,21 +88,6 @@ static inline u_int	sonicput(struct sn_softc *sc, struct mbuf *m0,
     int mtd_next);
 static inline int	sonic_read(struct sn_softc *, void *, int);
 static inline struct mbuf *sonic_get(struct sn_softc *, void *, int);
-
-#undef assert
-#undef _assert
-
-#ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
-#else
-#define	_assert(e)	assert(e)
-#ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
-#endif
-#endif
 
 int sndebug = 0;
 
@@ -244,7 +229,6 @@ static int
 snioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	struct sn_softc *sc = ifp->if_softc;
 	int	s = splnet(), err = 0;
 	int	temp;
@@ -297,13 +281,7 @@ snioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *) data;
-		if (cmd == SIOCADDMULTI)
-			err = ether_addmulti(ifr, &sc->sc_ethercom);
-		else
-			err = ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (err == ENETRESET) {
+		if ((err = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!

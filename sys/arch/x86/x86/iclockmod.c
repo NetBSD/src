@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.7 2007/04/04 01:50:15 rmind Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.7.6.1 2007/10/03 19:25:53 garbled Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.7 2007/04/04 01:50:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.7.6.1 2007/10/03 19:25:53 garbled Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -153,7 +153,7 @@ clockmod_init_main(void)
 	char *freq_names;
 	int i;
 
-	CPUID(1, regs[0], regs[1], regs[2], regs[3]);
+	x86_cpuid(1, regs);
 
 	if ((regs[3] & (CPUID_ACPI|CPUID_TM)) != (CPUID_ACPI|CPUID_TM))
 		return;

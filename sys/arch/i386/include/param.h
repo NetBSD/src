@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62 2006/12/08 15:05:18 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.62.14.1 2007/10/03 19:23:53 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

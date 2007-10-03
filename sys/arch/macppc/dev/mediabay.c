@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.12.14.3 2007/08/02 05:34:32 macallan Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.12.14.4 2007/10/03 19:24:14 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.3 2007/08/02 05:34:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.4 2007/10/03 19:24:14 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,11 +1,8 @@
-/*	$NetBSD: powernow_common.c,v 1.4 2006/10/08 15:51:30 cube Exp $	*/
+/*	$NetBSD: powernow_common.c,v 1.4.18.1 2007/10/03 19:25:56 garbled Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
  *  All rights reserved.
- *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -15,11 +12,7 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. All advertising materials mentioning features or use of this software
- *     must display the following acknowledgement:
- *         This product includes software developed by the NetBSD
- *         Foundation, Inc. and its contributors.
- *  4. Neither the name of The NetBSD Foundation nor the names of its
+ *  3. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.4 2006/10/08 15:51:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.4.18.1 2007/10/03 19:25:56 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,12 +45,12 @@ powernow_probe(struct cpu_info *ci)
 	uint32_t regs[4];
 	char line[80];
 
-	CPUID(0x80000000, regs[0], regs[1], regs[2], regs[3]);
+	x86_cpuid(0x80000000, regs);
 
 	/* We need CPUID(0x80000007) */
 	if (regs[0] < 0x80000007)
 		return 0;
-	CPUID(0x80000007, regs[0], regs[1], regs[2], regs[3]);
+	x86_cpuid(0x80000007, regs);
 
 	bitmask_snprintf(regs[3], "\20\6STC\5TM\4TTP\3VID\2FID\1TS", line,
 	    sizeof line);

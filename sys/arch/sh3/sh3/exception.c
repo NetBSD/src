@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.37.4.1 2007/05/22 17:27:26 matt Exp $	*/
+/*	$NetBSD: exception.c,v 1.37.4.2 2007/10/03 19:25:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,24 +79,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.37.4.1 2007/05/22 17:27:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.37.4.2 2007/10/03 19:25:01 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/user.h>
+#include <sys/proc.h>
 #include <sys/signal.h>
-#include <sys/syscall.h>
 
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #ifdef DDB
 #include <sh3/db_machdep.h>
 #endif
@@ -438,12 +432,6 @@ ast(struct lwp *l, struct trapframe *tf)
 {
 
 	if (KERNELMODE(tf->tf_ssr)) {
-		extern char _lock_cas_ras_start[];
-		extern char _lock_cas_ras_end[];
-
-		if ((uintptr_t)tf->tf_spc > (uintptr_t)_lock_cas_ras_start
-		    && (uintptr_t)tf->tf_spc < (uintptr_t)_lock_cas_ras_end)
-			tf->tf_spc = (uintptr_t)_lock_cas_ras_start;
 		return;
 	}
 
@@ -459,58 +447,11 @@ ast(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 
-		if (want_resched) {
+		if (l->l_cpu->ci_want_resched) {
 			/* We are being preempted. */
 			preempt();
 		}
 
 		userret(l);
 	}
-}
-
-/*
- * void child_return(void *arg):
- *
- *	uvm_fork sets this routine to proc_trampoline's service function.
- *	when return from here, jump to user-land.
- */
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-	struct trapframe *tf = l->l_md.md_regs;
-
-	tf->tf_r0 = 0;
-	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
-
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
-}
-
-/*
- * void startlwp(void *arg):
- *
- *	Start a new LWP.
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (error)
-		printf("startlwp: error %d from cpu_setmcontext()", error);
-#endif
-	pool_put(&lwp_uc_pool, uc);
-
-	userret(l);
 }

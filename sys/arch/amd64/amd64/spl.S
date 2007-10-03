@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.14.1 2007/05/22 17:26:32 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.14.2 2007/10/03 19:22:10 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -83,30 +83,7 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
-
-#if 0
-#if defined(PROF) || defined(GPROF)
-/*
- * XXXX TODO
- */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	CPUVAR(ILEVEL), %eax
-	movl	$IPL_HIGH, CPUVAR(ILEVEL)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movq	%rdi, %rcx
-	SPLLOWER(_C_LABEL(Xspllower))
-	ret
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * int splraise(int s);

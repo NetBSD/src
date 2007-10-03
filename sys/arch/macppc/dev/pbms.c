@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.5.10.1 2007/09/14 22:34:46 macallan Exp $ */
+/* $Id: pbms.c,v 1.5.10.2 2007/10/03 19:24:15 garbled Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén

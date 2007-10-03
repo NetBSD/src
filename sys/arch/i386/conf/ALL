@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.95.2.2 2007/06/26 18:12:31 garbled Exp $
+# $NetBSD: ALL,v 1.95.2.3 2007/10/03 19:23:34 garbled Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.95.2.2 $"
+#ident 		"ALL-$Revision: 1.95.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# VIA PadLock
+options		VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
@@ -118,6 +121,7 @@ options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -171,13 +175,17 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/ptm support
-file-system	TMPFS		# Efficient memory file-system
-file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system	PUFFS		# experimental - Userspace file system support
-file-system	HFS		# experimental - Apple HFS+ file system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	SYSVBFS		# System V boot file system
+file-system 	PTYFS		# /dev/ptm support
+file-system 	TMPFS		# Efficient memory file-system
+file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	PUFFS		# experimental - Userspace file system support
+file-system 	HFS		# experimental - Apple HFS+ file system
+file-system 	EFS		# Silicon Graphics Extent File System
+file-system 	FILECORE	# Acorn filecore file system
+file-system 	ADOSFS		# AmigaDOS file system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -608,13 +616,26 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
-adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-adt7463c* at iic? addr 0x2D		# Tyan S2881
-adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# Intel ICH SMBus controller
+ichsmb*	at pci? dev ? function ?
+iic*	at ichsmb?
+
+# NVIDIA nForce2/3/4 SMBus controller
+nfsmbc*	at pci? dev ? function ?
+nfsmb*	at nfsmbc?
+iic*	at nfsmb?
 
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
+
+adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+adt7463c* at iic? addr 0x2D		# Tyan S2881
+adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# IBM Thinkpad Active Protection System
+aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
 it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
@@ -635,6 +656,8 @@ ug0    at isa? port 0xe0
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 viaenv* 	at pci? dev ? function ?
 
+# Serial Presence Detect capable memory modules
+spdmem*	at iic? addr 0x50
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -727,6 +750,8 @@ ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# SCSI NIC
+se* at scsibus? target ? lun ?
 
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
@@ -762,6 +787,7 @@ ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+gcscide* 	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
@@ -1018,6 +1044,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
@@ -1029,11 +1056,15 @@ uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
 # ISA USB controllers
 slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
+usb*	at gcscehci?
 usb*	at ohci?
-usb*	at uhci?
 usb*	at slhci?
+usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -1107,6 +1138,9 @@ upl*	at uhub? port ?
 # Serial adapters
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
@@ -1288,12 +1322,14 @@ radio* at bktr?
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 

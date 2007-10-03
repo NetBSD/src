@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.37 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: mem.c,v 1.37.10.1 2007/10/03 19:21:57 garbled Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.10.1 2007/10/03 19:21:57 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2007/03/04 05:59:10 christos Exp $");
 #include <sys/msgbuf.h>
 #include <sys/mman.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/cpu.h>
 #include <machine/alpha.h>

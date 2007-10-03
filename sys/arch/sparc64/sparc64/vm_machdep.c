@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70.10.2 2007/06/26 18:13:45 garbled Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.70.10.3 2007/10/03 19:25:29 garbled Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70.10.2 2007/06/26 18:13:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70.10.3 2007/10/03 19:25:29 garbled Exp $");
 
 #include "opt_coredump.h"
 
@@ -165,16 +165,16 @@ char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the process being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -313,7 +313,7 @@ save_and_clear_fpstate(struct lwp *l)
 			continue;
 		if (ci->ci_fplwp != l)
 			continue;
-		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_save_fpstate);
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_save_fpstate);
 		break;
 	}
 #endif
@@ -351,7 +351,7 @@ cpu_lwp_free(l, proc)
 			continue;
 		if (l == ci->ci_fplwp) {
 			/* drop the fplwp from the other fpu */
-			sparc64_send_ipi(ci->ci_upaid,
+			sparc64_send_ipi(ci->ci_cpuid,
 			    sparc64_ipi_drop_fpstate);
 			break;
 		}

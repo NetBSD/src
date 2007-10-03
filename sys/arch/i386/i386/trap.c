@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.10.1 2007/05/22 17:27:00 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.10.2 2007/10/03 19:23:49 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.10.1 2007/05/22 17:27:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.10.2 2007/10/03 19:23:49 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,7 +162,7 @@ const char * const trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+int	trap_types = __arraycount(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;
@@ -277,7 +277,7 @@ trap(frame)
 	}
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip, frame->tf_cs,
 		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
@@ -335,9 +335,9 @@ trap(frame)
 		else
 			printf("unknown trap %d", frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x ilevel %x\n",
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
 		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 
 		panic("trap");
 		/*NOTREACHED*/

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.24.6.2 2007/06/26 18:12:38 garbled Exp $
+# $NetBSD: XEN2_DOM0,v 1.24.6.3 2007/10/03 19:23:41 garbled Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -107,10 +107,10 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -205,16 +205,25 @@ xencons*	at hypervisor?		# Xen virtual console
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
 
+# PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
+
+# PCI bridges
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
 
-# XXX 'puc's aren't really bridges, but there's no better place for them here
-puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+# ISA bus support
+#isa0	at ichlpcib?
+isa0	at pcib?
+isa0	at hypervisor?
 
 # Serial Devices
 
@@ -452,10 +461,6 @@ ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
 
-# ISA bus support
-isa0	at pcib?
-isa0	at hypervisor?
-
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -648,13 +653,15 @@ midi*	at midibus?
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-# bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
+#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbh?
 bthub* at ubt?
 
 # Bluetooth HID support

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.233.2.2 2007/06/26 18:12:32 garbled Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.233.2.3 2007/10/03 19:23:36 garbled Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233.2.2 $"
+#ident 		"GENERIC-$Revision: 1.233.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -145,12 +145,12 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/ptm support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	PTYFS		# /dev/ptm support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -171,7 +171,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -357,8 +357,8 @@ options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -508,6 +508,9 @@ lpt2	at isa? port 0x3bc
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
+# IBM Thinkpad Active Protection System
+#aps0 	at isa? port 0x1600
+
 # iTE IT87xxF and compatible hardware monitors
 #it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
 
@@ -634,6 +637,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
@@ -692,6 +696,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
 # USB Controller and Devices
@@ -706,9 +711,13 @@ ehci*	at cardbus? function ?		# Enhanced Host Controller
 ohci*	at cardbus? function ?		# Open Host Controller
 uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
+usb*	at slhci?
 usb*	at uhci?
 
 # USB Hubs
@@ -908,12 +917,14 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 
@@ -968,7 +979,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/11/12 22:44:00 dyoung Exp $
+#	$NetBSD: Makefile,v 1.28.16.1 2007/10/03 19:23:33 garbled Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -21,7 +21,8 @@ DI386=	i386 eisa isa include pci
 
 tags:
 	-rm -f ${TI386}
-	-echo ${SI386} ${COMM} | xargs ctags -wadtf ${TI386}
+	-echo ${SI386} | xargs ctags -wadtf ${TI386}
+	-${FINDCOMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TI386}

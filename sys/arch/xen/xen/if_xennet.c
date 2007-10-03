@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.49 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.49.10.1 2007/10/03 19:26:14 garbled Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.10.1 2007/10/03 19:26:14 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -765,7 +765,7 @@ xen_network_handler(void *arg)
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh = pktp;
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				xennet_rx_push_buffer(sc, rx->id);
 				m_freem(m);
@@ -1304,9 +1304,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
-	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-	    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

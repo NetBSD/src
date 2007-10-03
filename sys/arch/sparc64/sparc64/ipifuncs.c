@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.8.16.1 2007/10/03 19:25:26 garbled Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.8.16.1 2007/10/03 19:25:26 garbled Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,9 +169,9 @@ sparc64_multicast_ipi(cpuset_t cpuset, ipifunc_t func)
 		return;
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (CPUSET_HAS(cpuset, ci->ci_number)) {
-			CPUSET_DEL(cpuset, ci->ci_number);
-			sparc64_send_ipi(ci->ci_upaid, func);
+		if (CPUSET_HAS(cpuset, ci->ci_index)) {
+			CPUSET_DEL(cpuset, ci->ci_index);
+			sparc64_send_ipi(ci->ci_cpuid, func);
 		}
 	}
 }

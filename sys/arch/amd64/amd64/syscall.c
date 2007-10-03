@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2007/03/04 14:36:12 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.10.1 2007/10/03 19:22:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2007/03/04 14:36:12 yamt Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.10.1 2007/10/03 19:22:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +63,6 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	tf->tf_rax = 0;
 	tf->tf_rflags &= ~PSL_C;
@@ -75,13 +70,7 @@ child_return(void *arg)
 	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 void
@@ -273,23 +262,19 @@ syscall_fancy(struct trapframe *frame)
 		}
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
-		goto out;
+	if ((error = trace_enter(l, code, code, NULL, argp)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+
+		if (callp->sy_flags & SYCALL_MPSAFE) {
+			error = (*callp->sy_call)(l, argp, rval);
+		} else {
+			KERNEL_LOCK(1, l);
+			error = (*callp->sy_call)(l, argp, rval);
+			KERNEL_UNLOCK_LAST(l);
+		}
 	}
 
-	rval[0] = 0;
-	rval[1] = 0;
-
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
-		error = (*callp->sy_call)(l, argp, rval);
-	} else {
-		error = (*callp->sy_call)(l, argp, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
-out:
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
