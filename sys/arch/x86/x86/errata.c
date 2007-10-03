@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.9 2007/09/26 19:48:43 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.10 2007/10/03 14:51:47 veego Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.9 2007/09/26 19:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10 2007/10/03 14:51:47 veego Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -267,6 +267,8 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 	wrmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE, val | e->e_data2);
+	aprint_debug("%s: erratum %d patched\n",
+	    ci->ci_dev->dv_xname, e->e_num);
 
 	return FALSE;
 }
