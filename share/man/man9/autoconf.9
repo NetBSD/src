@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.21 2007/07/14 10:52:47 ad Exp $
+.\"     $NetBSD: autoconf.9,v 1.22 2007/10/04 17:16:01 alc Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -275,7 +275,7 @@ structure if the device is attached,
 otherwise.
 Most callers can ignore this value, since the system will already have
 printed a diagnostic.
-.It Fn config_found_ia "parent "ia" "aux" "print" "submatch"
+.It Fn config_found_ia "parent" "ia" "aux" "print" "submatch"
 This function is equivalent to calling
 .Fn config_found_sm_loc "parent" "ia" "locs" "aux" "print" "submatch"
 with
@@ -318,7 +318,7 @@ returns the
 .Em softc .
 If unsuccessful, it returns
 .Dv NULL .
-.It Fn config_attach "parent" "cf" "aux" print"
+.It Fn config_attach "parent" "cf" "aux" "print"
 This function is equivalent to calling
 .Fn config_attach_loc "parent" "cf" "locs" "aux" "print"
 with
@@ -377,7 +377,7 @@ At this point, the function
 .Fa func
 is called with the argument
 .Fa dev .
-.It Fn config_interrupts "struct device *dev" "void (*func)(struct device *)"
+.It Fn config_interrupts "dev" "func"
 Called by the child to defer the remainder of its configuration until
 interrupts are enabled.
 At this point, the function
