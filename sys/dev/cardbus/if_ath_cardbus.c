@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.2 2007/08/23 16:19:46 joerg Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.3 2007/10/04 21:43:30 joerg Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.2 2007/08/23 16:19:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.3 2007/10/04 21:43:30 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -101,7 +101,6 @@ struct ath_cardbus_softc {
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
 	cardbustag_t sc_tag;		/* our CardBus tag */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
-	struct cardbus_conf_state	sc_cardbusconf;
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
@@ -122,7 +121,17 @@ void	ath_cardbus_setup(struct ath_cardbus_softc *);
 int	ath_cardbus_enable(struct ath_softc *);
 void	ath_cardbus_disable(struct ath_softc *);
 
-static pnp_status_t ath_cardbus_power(device_t, pnp_request_t, void *);
+static void
+ath_cardbus_resume(device_t dv)
+{
+	struct ath_cardbus_softc *csc = device_private(dv);
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+
+	cardbus_disable_retry(cc, cf, csc->sc_tag);
+	ath_resume(&csc->sc_ath);
+}
 
 int
 ath_cardbus_match(struct device *parent, struct cfdata *match,
@@ -149,6 +158,7 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t adr;
+	pnp_status_t pnp_status;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -191,9 +201,13 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	if (pnp_register(self, ath_cardbus_power) != PNP_STATUS_SUCCESS)
+	pnp_status = cardbus_net_generic_power_register(self,
+    	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->sc_if, NULL,
+	    ath_cardbus_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
+	}
 
 	/*
 	 * Finish off the attach.
@@ -218,7 +232,7 @@ ath_cardbus_detach(struct device *self, int flags)
 	if (rv)
 		return (rv);
 
-	pnp_deregister(self);
+	cardbus_net_generic_power_deregister(self);
 
 	/*
 	 * Unhook the interrupt handler.
@@ -320,16 +334,4 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
-}
-
-static pnp_status_t
-ath_cardbus_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct ath_cardbus_softc *csc = (struct ath_cardbus_softc *)dv;
-	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	return cardbus_net_generic_power(dv, req, opaque, cc, cf, csc->sc_tag,
-	    &csc->sc_cardbusconf, &csc->sc_ath.sc_if);
 }
