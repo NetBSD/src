@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: newgrp.c,v 1.1 2007/06/21 14:09:24 ginsbach Exp $");
+__RCSID("$NetBSD: newgrp.c,v 1.2 2007/10/04 14:05:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -211,7 +211,7 @@ newgrp(const char *group, struct passwd *pwd)
 	if (pwd->pw_gid == grp->gr_gid || getuid() == 0)
 		return grp->gr_gid;
 
-	for (p = grp->gr_mem; *p == NULL; p++)
+	for (p = grp->gr_mem; *p != NULL; p++)
 		if (strcmp(*p, pwd->pw_name) == 0)
 			return grp->gr_gid;
 
