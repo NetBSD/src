@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.3 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: mpt.h,v 1.3.4.1 2007/10/04 18:33:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -164,6 +164,7 @@ void mpt_free_reply(mpt_softc_t *, u_int32_t);
 void mpt_enable_ints(mpt_softc_t *);
 void mpt_disable_ints(mpt_softc_t *);
 u_int32_t mpt_pop_reply_queue(mpt_softc_t *);
+int mpt_hw_init(mpt_softc_t *);
 int mpt_init(mpt_softc_t *, u_int32_t);
 int mpt_reset(mpt_softc_t *);
 int mpt_send_handshake_cmd(mpt_softc_t *, size_t, void *);
@@ -180,7 +181,7 @@ void mpt_print_reply(void *);
 void mpt_print_db(u_int32_t);
 void mpt_print_config_reply(void *);
 char *mpt_ioc_diag(u_int32_t);
-char *mpt_req_state(enum mpt_req_state);
+const char *mpt_req_state(enum mpt_req_state);
 void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
 void mpt_print_config_request(void *);
 void mpt_print_request(void *);
