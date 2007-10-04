@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.1 2007/09/30 04:07:41 kiyohara Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.2 2007/10/04 14:43:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.1 2007/09/30 04:07:41 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.2 2007/10/04 14:43:06 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -794,7 +794,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 			errstr = "CRC";
 		} else
 			/* Shaves CRC */
-			m_adj(m, - sizeof(crc));
+			m_adj(m, (int)(0 - sizeof(crc)));
 	}
 
 	if (discard) {
@@ -852,9 +852,6 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 	DPRINTFN(2, ("%s: mux transmit: hci_flags=0x%x, choke=%d",
 	    sc->sc_dev.dv_xname, unit->hci_flags, sc->sc_mux_choke));
 
-	if (unit->hci_flags & BTF_XMIT)
-		return;
-
 	if (sc->sc_mux_choke) {
 		struct mbuf *_m = NULL;
 
@@ -898,7 +895,7 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 		if (m != NULL)
 			goto transmit;
 		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
-		++sc->sc_unit.hci_stats.err_tx;
+		++unit->hci_stats.err_tx;
 	}
 
 	/* Nothing to send */
@@ -921,7 +918,6 @@ transmit:
 #endif
 
 	sc->sc_txp = m;
-	unit->hci_flags |= BTF_XMIT;
 	bcsp_pktintegrity_transmit(sc);
 }
 
@@ -1446,7 +1442,7 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 		{ "conf",	conf },
 		{ "conf-resp",	confresp },
 
-		{ NULL }
+		{ NULL, 0 }
 	};
 
 	DPRINTFN(0, ("%s: le input: state %d, muzzled %d\n",
@@ -1627,11 +1623,15 @@ bcsp_start(struct hci_unit *unit)
 	struct bcsp_softc *sc = unit->hci_softc;
 	struct mbuf *m;
 
+	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
+	KASSERT(sc->sc_txp == NULL);
+
 	if (MBUFQ_FIRST(&unit->hci_acltxq)) {
 		MBUFQ_DEQUEUE(&unit->hci_acltxq, m);
 		unit->hci_stats.acl_tx++;
 		M_SETCTX(m, NULL);
 		m_adj(m, sizeof(uint8_t));
+		unit->hci_flags |= BTF_XMIT;
 		bcsp_tx_reliable_pkt(sc, m, BCSP_CHANNEL_HCI_ACL);
 	}
 
@@ -1640,6 +1640,7 @@ bcsp_start(struct hci_unit *unit)
 		unit->hci_stats.cmd_tx++;
 		M_SETCTX(m, NULL);
 		m_adj(m, sizeof(uint8_t));
+		unit->hci_flags |= BTF_XMIT;
 		bcsp_tx_reliable_pkt(sc, m, BCSP_CHANNEL_HCI_CMDEVT);
 	}
 
@@ -1648,6 +1649,7 @@ bcsp_start(struct hci_unit *unit)
 		unit->hci_stats.sco_tx++;
 		/* XXXX: We can transmit with reliable */
 		m_adj(m, sizeof(uint8_t));
+		unit->hci_flags |= BTF_XMIT;
 		bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_HCI_SCO);
 	}
 
