@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              $Revision: 1.3.22.1 $
+ *              $Revision: 1.3.22.2 $
  *
  *****************************************************************************/
 
@@ -565,6 +565,20 @@ AcpiEvAcquireGlobalLock (
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
+    }
+
+    /*
+     * Update the global lock handle and check for wraparound. The handle is
+     * only used for the external global lock interfaces, but it is updated
+     * here to properly handle the case where a single thread may acquire the
+     * lock via both the AML and the AcpiAcquireGlobalLock interfaces. The
+     * handle is therefore updated on the first acquire from a given thread
+     * regardless of where the acquisition request originated.
+     */
+    AcpiGbl_GlobalLockHandle++;
+    if (AcpiGbl_GlobalLockHandle == 0)
+    {
+        AcpiGbl_GlobalLockHandle = 1;
     }
 
     /*
