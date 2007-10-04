@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.22 2007/10/04 17:16:01 alc Exp $
+.\"     $NetBSD: autoconf.9,v 1.23 2007/10/04 17:28:48 alc Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@
 "void *aux" "cfprint_t print" "cfsubmatch_t submatch"
 .Ft device_t
 .Fn config_found_ia "device_t parent" "const char *ia" "void *aux" \
-"cfprint_t print" "cfsubmatch_t submatch"
+"cfprint_t print"
 .Ft device_t
 .Fn config_found "device_t parent" "void *aux" "cfprint_t print"
 .Ft int
@@ -275,11 +275,13 @@ structure if the device is attached,
 otherwise.
 Most callers can ignore this value, since the system will already have
 printed a diagnostic.
-.It Fn config_found_ia "parent" "ia" "aux" "print" "submatch"
+.It Fn config_found_ia "parent" "ia" "aux" "print"
 This function is equivalent to calling
 .Fn config_found_sm_loc "parent" "ia" "locs" "aux" "print" "submatch"
 with
 .Fa locs
+and
+.Fa submatch
 set to
 .Dv NULL .
 It is provided for better source code readability with locator-less device
