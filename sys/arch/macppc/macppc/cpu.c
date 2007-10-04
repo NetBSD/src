@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.16.5 2007/10/03 19:24:17 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.16.6 2007/10/04 18:35:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.5 2007/10/03 19:24:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.6 2007/10/04 18:35:25 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -84,6 +84,8 @@ extern struct cfdriver cpu_cd;
 #define GC_IPI_IRQ		30
 
 extern uint32_t ticks_per_intr;
+
+extern void openpic_set_priority(int, int);
 
 int
 cpumatch(parent, cf, aux)
@@ -143,11 +145,6 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 				break;
 			}
 		}
-	}
-	if (ci->ci_khz) {
-		aprint_normal("%s: %u.%02u MHz\n",
-			      self->dv_xname,
-			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
 	}
 }
 
@@ -232,7 +229,7 @@ cpu_spinup(self, ci)
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
-
+KASSERT(ci != curcpu());
 	/*
 	 * Allocate some contiguous pages for the intteup PCB and stack
 	 * from the lowest 256MB (because bat0 always maps it va == pa).
@@ -251,7 +248,7 @@ cpu_spinup(self, ci)
 	cpu_info[1].ci_intstk = cp;
 
 	/*
-	 * Initialize secondary cpu's initial lwp to it's idlelwp.
+	 * Initialize secondary cpu's initial lwp to its idlelwp.
 	 */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
@@ -262,8 +259,8 @@ cpu_spinup(self, ci)
 	h->self = self;
 	h->ci = ci;
 	h->pir = 1;
-	cpu_hatch_stack = ci->ci_curpcb->pcb_sp;
-	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
+	cpu_hatch_stack = (uint32_t)cp + INTSTK - sizeof(struct trapframe);
+	ci->ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
 	__asm volatile ("mfspr %0,%1" : "=r"(h->hid0) : "n"(SPR_HID0));
@@ -275,15 +272,15 @@ cpu_spinup(self, ci)
 
 	if (openpic_base) {
 		uint64_t tb;
-		u_int kl_base = 0x80000000;	/* XXX */
-		u_int gpio = kl_base + 0x5c;	/* XXX */
+		uint32_t kl_base = 0x80000000;	/* XXX */
+		uint32_t gpio = kl_base + 0x5c;	/* XXX */
 		u_int node, off;
 		char cpupath[32];
 
+		/* construct an absolute branch instruction */
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
 		__syncicache((void *)EXC_RST, 0x100);
-
 		h->running = -1;
 
 		/* see if there's an OF property for the reset register */
@@ -299,7 +296,7 @@ cpu_spinup(self, ci)
 
 		/* Start secondary CPU. */
 		out8(gpio, 4);
-		out8(gpio, 5);
+		out8(gpio, 0);
 
 		/* Sync timebase. */
 		tb = mftb();
@@ -368,7 +365,11 @@ cpu_hatch()
 	__asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
 	/* Set PIR (Processor Identification Register).  i.e. whoami */
+#if 0
 	__asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
+#else
+	mtspr(SPR_PIR, h->pir);
+#endif
 	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
 
 	/* Initialize MMU. */
@@ -422,7 +423,7 @@ cpu_hatch()
 		__asm volatile ("mttbl %0" :: "r"(tbl));
 	}
 
-	cpu_setup(h->self, h->ci);
+	cpu_setup(h->self, ci);
 
 	h->running = 1;
 	__asm volatile ("sync; isync");
@@ -442,6 +443,8 @@ cpu_hatch()
 
 	ci->ci_ipending = 0;
 	ci->ci_cpl = 0;
+
+	mtmsr(mfmsr() | PSL_EE);
 }
 
 void
@@ -491,7 +494,7 @@ cpuintr(v)
 	u_long ipi;
 
 	/* printf("cpuintr{%d}\n", cpu_id); */
-
+	curcpu()->ci_ev_ipi.ev_count++;
 	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
 	if (ipi & MACPPC_IPI_FLUSH_FPU) {
 		save_fpu_cpu();
