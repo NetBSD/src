@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.35.44.1 2007/08/23 14:22:38 joerg Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.35.44.2 2007/10/04 21:43:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -314,6 +314,9 @@ int cardbus_restore_bar(cardbus_devfunc_t);
 int cardbus_function_enable(struct cardbus_softc *, int);
 int cardbus_function_disable(struct cardbus_softc *, int);
 
+void cardbus_disable_retry(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t);
+
 int cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, int, int *, cardbusreg_t *);
 int cardbus_get_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t *);
@@ -326,9 +329,17 @@ void cardbus_conf_capture(cardbus_chipset_tag_t, cardbus_function_tag_t,
 void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, struct cardbus_conf_state *);
 
-pnp_status_t cardbus_net_generic_power(device_t, pnp_request_t, void *,
-    cardbus_chipset_tag_t, cardbus_function_tag_t, cardbustag_t,
-    struct cardbus_conf_state *, struct ifnet *);
+pnp_status_t cardbus_generic_power_register(device_t dv,
+   cardbus_chipset_tag_t, cardbus_function_tag_t, cardbustag_t,
+   void (*)(device_t), void (*)(device_t));
+void cardbus_generic_power_deregister(device_t);
+
+struct ifnet;
+
+pnp_status_t cardbus_net_generic_power_register(device_t,
+   cardbus_chipset_tag_t, cardbus_function_tag_t, cardbustag_t,
+   struct ifnet *, void (*)(device_t), void (*)(device_t));
+void cardbus_net_generic_power_deregister(device_t);
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
