@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.60.14.1 2007/10/04 19:10:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.14.1 2007/10/04 19:10:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static void	auvia_powerhook(int, void *);
+static void	auvia_resume(device_t);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -302,6 +302,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t pr;
 	int r;
 	const char *revnum;	/* VT823xx revision number */
+	pnp_status_t pnp_status;
 
 	pa = aux;
 	sc = (struct auvia_softc *)self;
@@ -453,10 +454,12 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Watch for power change */
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    auvia_powerhook, sc);
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    NULL, auvia_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+	}
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
@@ -1114,35 +1117,11 @@ auvia_intr(void *arg)
 }
 
 static void
-auvia_powerhook(int why, void *addr)
+auvia_resume(device_t dv)
 {
-	struct auvia_softc *sc;
+	struct auvia_softc *sc = device_private(dv);
 
-	sc = addr;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* Power down */
-		sc->sc_suspend = why;
-		break;
-
-	case PWR_RESUME:
-		/* Wake up */
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend.\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
-		auvia_reset_codec(sc);
-		DELAY(1000);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	auvia_reset_codec(sc);
+	DELAY(1000);
+	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 }
