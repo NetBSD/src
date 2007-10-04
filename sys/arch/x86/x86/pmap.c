@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.14 2007/10/01 14:47:30 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.15 2007/10/04 14:37:58 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.14 2007/10/01 14:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.15 2007/10/04 14:37:58 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -818,7 +818,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
-		panic("pmap_kenter_pa: PG_PS\n%p %p\n%p %p", (void *)va, (void *)pa, (void *)pte, (void *)opte);
+		panic("pmap_kenter_pa: PG_PS");
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 		/* This should not happen, so no need to batch updates. */
