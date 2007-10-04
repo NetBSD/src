@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.9 2007/09/21 21:28:11 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.10 2007/10/04 01:46:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.9 2007/09/21 21:28:11 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.10 2007/10/04 01:46:49 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -212,7 +212,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 
 	/* Spin for a while. */
 	count = pthread__nspins;
-	while (MUTEX_OWNER(owner) == 0 && --count > 0) {
+	while (MUTEX_OWNER(owner) != 0 && --count > 0) {
 		pthread__mutex_pause();
 		owner = ptm->ptm_owner;
 	}
