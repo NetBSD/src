@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75.16.2 2007/09/11 11:51:22 jmcneill Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.3 2007/10/04 21:43:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.2 2007/09/11 11:51:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.3 2007/10/04 21:43:28 joerg Exp $");
 
 #include "opt_cardbus.h"
 
@@ -904,18 +904,14 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
 /*
  * XXX: this is another reason why this code should be shared with PCI.
  */
-int
-cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t *state)
+static int
+cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t *state, int offset)
 {
+	cardbusreg_t value, now;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	int offset;
-	cardbusreg_t value, cap, now;
 
-	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
-		return EOPNOTSUPP;
-
-	cap = value >> PCI_PMCR_SHIFT;
 	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	switch (now) {
@@ -931,19 +927,30 @@ cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t *sta
 }
 
 int
-cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
+cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t *state)
+{
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	int offset;
+	cardbusreg_t value;
+
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
+		return EOPNOTSUPP;
+
+	return cardbus_get_powerstate_int(ct, tag, state, offset);
+}
+
+static int
+cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t state, int offset, cardbusreg_t cap_reg)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	int offset;
 	cardbusreg_t value, cap, now;
 
-	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
-	    &value))
-		return EOPNOTSUPP;
-
-	cap = value >> 16;
+	cap = cap_reg >> 16;
 	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	value &= ~PCI_PMCSR_STATE_MASK;	
@@ -955,17 +962,25 @@ cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t stat
 		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
-		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D1\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D1SUPP))
+		}
+		if (!(cap & PCI_PMCR_D1SUPP)) {
+			printf("D1 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
-		if (now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D2\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D2SUPP))
+		}
+		if (!(cap & PCI_PMCR_D2SUPP)) {
+			printf("D2 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
@@ -981,6 +996,21 @@ cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t stat
 	DELAY(1000);
 
 	return 0;
+}
+
+int
+cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
+{
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	int offset;
+	cardbusreg_t value;
+
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
+	    &value))
+		return EOPNOTSUPP;
+
+	return cardbus_set_powerstate_int(ct, tag, state, offset, value);
 }
 
 #ifdef CARDBUS_DEBUG
@@ -1066,18 +1096,51 @@ cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 	}
 }
 
+void
+cardbus_disable_retry(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag)
+{
+	cardbusreg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = cardbus_conf_read(cc, cf, tag, PCI_RETRY_TIMEOUT_REG);
+	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
+	cardbus_conf_write(cc, cf, tag, PCI_RETRY_TIMEOUT_REG, retry);
+}
+
+struct cardbus_generic_power {
+	struct cardbus_conf_state p_cardbusconf;
+	cardbus_chipset_tag_t p_cc;
+	cardbus_function_tag_t p_cf;
+	cardbustag_t p_tag;
+	bool p_has_pm;
+	int p_pm_offset;
+	pnp_state_t p_pm_states;
+	cardbusreg_t p_pm_cap;
+	void (*p_resume)(device_t);
+	void (*p_suspend)(device_t);
+};
+
+struct cardbus_net_generic_power {
+	struct cardbus_generic_power p_generic;
+	struct ifnet *p_ifp;
+	void (*p_resume)(device_t);
+	void (*p_suspend)(device_t);
+};
+
 #include <net/if.h>
 
-pnp_status_t
-cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
-    cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag_t tag,
-    struct cardbus_conf_state *cardbusconf, struct ifnet *ifp)
+static pnp_status_t
+cardbus_generic_power(device_t dv, pnp_request_t req, void *opaque)
 {
+        struct cardbus_generic_power *arg = device_power_private(dv);
 	pnp_status_t status;
 	pnp_state_t *state;
 	pnp_capabilities_t *caps;
 	cardbusreg_t val;
-	int off, s;
 
 	status = PNP_STATUS_UNSUPPORTED;
 
@@ -1085,9 +1148,7 @@ cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 	case PNP_REQUEST_GET_CAPABILITIES:
 		caps = opaque;
 
-		if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
+		caps->state = arg->p_pm_states;
 		status = PNP_STATUS_SUCCESS;
 		break;
 	case PNP_REQUEST_SET_STATE:
@@ -1098,37 +1159,36 @@ cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 			break;
 		case PNP_STATE_D3:
 			val = PCI_PMCSR_STATE_D3;
-			s = splnet();
-			(*ifp->if_stop)(ifp, 1);
-			cardbus_conf_capture(cc, cf, tag, cardbusconf);
-			splx(s);
+			if (arg->p_suspend)
+				(*arg->p_suspend)(dv);
+			cardbus_conf_capture(arg->p_cc, arg->p_cf,
+			    arg->p_tag, &arg->p_cardbusconf);
 			break;
 		default:
 			return PNP_STATUS_UNSUPPORTED;
 		}
 
-		if (cardbus_set_powerstate(cc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
+		if (arg->p_has_pm &&
+		    cardbus_set_powerstate_int(arg->p_cc,
+		    arg->p_tag, val, arg->p_pm_offset, arg->p_pm_cap))
+                        aprint_error_dev(dv, "unsupported state, continuing.\n");
 
-			s = splnet();
-			cardbus_conf_restore(cc, cf, tag, cardbusconf);
-
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				(*ifp->if_init)(ifp);
-				(*ifp->if_start)(ifp);
-			}
-			splx(s);
+		if (*state == PNP_STATE_D0) {
+			cardbus_conf_restore(arg->p_cc, arg->p_cf, arg->p_tag,
+			    &arg->p_cardbusconf);
+			if (arg->p_resume)
+				(*arg->p_resume)(dv);
 		}
+		status= PNP_STATUS_SUCCESS;
 		break;
 	case PNP_REQUEST_GET_STATE:
 		state = opaque;
-		if (cardbus_get_powerstate(cc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
+		if (arg->p_has_pm &&
+		    cardbus_get_powerstate_int(arg->p_cc, arg->p_tag, &val,
+					       arg->p_pm_offset) == 0)
+			*state = pci_pnp_powerstate(val);
+		else
+			*state = PNP_STATE_D0;
 		status = PNP_STATUS_SUCCESS;
 		break;
 	default:
@@ -1136,4 +1196,143 @@ cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
 	}
 
 	return status;
+}
+static pnp_status_t
+cardbus_generic_power_register_internal(device_t dv,
+    cardbus_chipset_tag_t p_cc, cardbus_function_tag_t p_cf,
+    cardbustag_t p_tag,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct cardbus_generic_power *arg = device_power_private(dv);
+	cardbusreg_t reg;
+	int off;
+
+	arg->p_cc = p_cc;
+	arg->p_cf = p_cf;
+	arg->p_tag = p_tag;
+	arg->p_resume = p_resume;
+	arg->p_suspend = p_suspend;
+
+	if (cardbus_get_capability(p_cc, p_cf, p_tag, PCI_CAP_PWRMGMT,
+				   &off, &reg)) {
+		arg->p_pm_states = pci_pnp_capabilities(reg);
+		arg->p_has_pm = true;
+		arg->p_pm_offset = off;
+		arg->p_pm_cap = reg;
+	} else {
+		arg->p_pm_states = PNP_STATE_D0 | PNP_STATE_D3;
+		arg->p_has_pm = false;
+		arg->p_pm_offset = -1;
+	}
+
+	return pnp_register(dv, cardbus_generic_power);
+}
+
+static void
+cardbus_generic_power_deregister_internal(device_t dv)
+{
+	pnp_deregister(dv);
+}
+
+pnp_status_t
+cardbus_generic_power_register(device_t dv,
+    cardbus_chipset_tag_t p_cc, cardbus_function_tag_t p_cf,
+    cardbustag_t p_tag,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct cardbus_generic_power *arg;
+	pnp_status_t status;
+
+	arg = malloc(sizeof(*arg), M_DEVBUF, M_ZERO | M_WAITOK);
+	device_power_set_private(dv, arg);
+
+	status = cardbus_generic_power_register_internal(dv, p_cc, p_cf, p_tag,
+	    p_suspend, p_resume);
+	if (status != PNP_STATUS_SUCCESS) {
+		free(arg, M_DEVBUF);
+		device_power_set_private(dv, NULL);
+	}
+	return status;
+}
+
+void
+cardbus_generic_power_deregister(device_t dv)
+{
+	struct cardbus_generic_power *arg = device_power_private(dv);
+
+	if (arg == NULL)
+		return;
+
+	cardbus_generic_power_deregister_internal(dv);
+	free(arg, M_DEVBUF);
+}
+
+static void
+cardbus_net_generic_power_resume(device_t dv)
+{
+	struct cardbus_net_generic_power *arg = device_power_private(dv);
+	struct ifnet *ifp = arg->p_ifp;
+	int s;
+
+	if (arg->p_resume)
+		(*arg->p_resume)(dv);
+
+	s = splnet();
+	if (ifp->if_flags & IFF_UP) {
+		ifp->if_flags &= ~IFF_RUNNING;
+		(*ifp->if_init)(ifp);
+		(*ifp->if_start)(ifp);
+	}
+	splx(s);
+}
+
+static void
+cardbus_net_generic_power_suspend(device_t dv)
+{
+	struct cardbus_net_generic_power *arg = device_power_private(dv);
+	struct ifnet *ifp = arg->p_ifp;
+	int s;
+
+	s = splnet();
+	(*ifp->if_stop)(ifp, 1);
+	splx(s);
+
+	if (arg->p_suspend)
+		(*arg->p_suspend)(dv);
+}
+
+pnp_status_t
+cardbus_net_generic_power_register(device_t dv,
+    cardbus_chipset_tag_t p_cc, cardbus_function_tag_t p_cf, cardbustag_t p_tag,
+    struct ifnet *p_ifp,
+    void (*p_suspend)(device_t), void (*p_resume)(device_t))
+{
+	struct cardbus_net_generic_power *arg;
+	pnp_status_t status;
+
+	arg = malloc(sizeof(*arg), M_DEVBUF, M_ZERO | M_WAITOK);
+	arg->p_resume = p_resume;
+	arg->p_suspend = p_suspend;
+	arg->p_ifp = p_ifp;
+	device_power_set_private(dv, arg);
+
+	status = cardbus_generic_power_register_internal(dv, p_cc, p_cf, p_tag,
+	    cardbus_net_generic_power_suspend, cardbus_net_generic_power_resume);
+	if (status != PNP_STATUS_SUCCESS) {
+		free(arg, M_DEVBUF);
+		device_power_set_private(dv, NULL);
+	}
+	return status;
+}
+
+void
+cardbus_net_generic_power_deregister(device_t dv)
+{
+	struct cardbus_net_generic_power *arg = device_power_private(dv);
+
+	if (arg == NULL)
+		return;
+
+	cardbus_generic_power_deregister_internal(dv);
+	free(arg, M_DEVBUF);
 }
