@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.41.8.1 2007/09/03 16:48:24 jmcneill Exp $	*/
+/*	$NetBSD: viaide.c,v 1.41.8.2 2007/10/04 15:44:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.41.8.1 2007/09/03 16:48:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.41.8.2 2007/10/04 15:44:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,6 +468,7 @@ unknown:
 		case PCI_PRODUCT_AMD_PBC8111_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
+		case PCI_PRODUCT_AMD_CS5536_IDE:
 		case PCI_PRODUCT_AMD_PBC766_IDE:
 		case PCI_PRODUCT_AMD_PBC768_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
