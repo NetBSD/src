@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.100 2007/09/23 18:54:49 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.101 2007/10/04 18:51:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3605,4 +3605,23 @@ sys/netinet6/ipcomp_output.c			1.22
 	Fix some possible mbuf leak in kame ipsec code.
 	Problem was reported by Wolfgang Stukenbrock in pr/36768.
 	[degroote, ticket #1846]
+
+sys/fs/msdosfs/msdosfs_denode.c			1.24
+
+	Release vnode being created in error branch instead of leaving it
+	locked.  fixes PR kern/37034
+	[pooka, ticket #1849]
+
+sys/dev/cardbus/if_re_cardbus.c			1.13
+sys/dev/cardbus/if_rtk_cardbus.c		1.32
+sys/dev/ic/rtl8169.c				1.84, 1.85
+sys/dev/ic/rtl81x9.c				1.72
+sys/dev/ic/rtl81x9reg.h				1.27
+sys/dev/ic/rtl81x9var.h				1.39
+sys/dev/pci/if_re_pci.c				1.27 via patch
+sys/dev/pci/if_rtk_pci.c			1.32
+
+	Cleanup handling of quikrs on each RealTek chip
+	Pull a fix for PCIe variants from FreeBSD
+	[tsutsui, ticket #1852]
 
