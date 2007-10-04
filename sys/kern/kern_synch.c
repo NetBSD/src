@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.3 2007/10/02 18:29:02 joerg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.4 2007/10/04 15:44:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.3 2007/10/02 18:29:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.4 2007/10/04 15:44:52 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -275,7 +275,7 @@ wakeup_one(wchan_t ident)
 /*
  * General yield call.  Puts the current process back on its run queue and
  * performs a voluntary context switch.  Should only be called when the
- * current process explicitly requests it (eg sched_yield(2) in compat code).
+ * current process explicitly requests it (eg sched_yield(2)).
  */
 void
 yield(void)
@@ -286,7 +286,8 @@ yield(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
-	l->l_priority = l->l_usrpri;
+	/* XXX Only do this for timeshared threads. */
+	l->l_priority = MAXPRI;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -432,10 +433,12 @@ mi_switch(struct lwp *l)
 			newl->l_stat = LSONPROC;
 			newl->l_flag |= LW_RUNNING;
 		}
-		spc->spc_curpriority = newl->l_usrpri;
-		newl->l_priority = newl->l_usrpri;
 		ci->ci_want_resched = 0;
 	}
+
+	spc->spc_curpriority = newl->l_usrpri;
+	/* XXX The following may be done unlocked if newl != NULL above. */
+	newl->l_priority = newl->l_usrpri;
 
 	if (l != newl) {
 		struct lwp *prevlwp;
