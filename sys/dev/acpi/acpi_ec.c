@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.8 2007/10/04 10:43:47 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.9 2007/10/04 13:26:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.8 2007/10/04 10:43:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.9 2007/10/04 13:26:09 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,9 +368,9 @@ acpiec_power(device_t dv, pnp_request_t req, void *opaque)
 	case PNP_REQUEST_GET_STATE:
 		pstate = opaque;
 		if (acpiec_cold)
-			*pstate = PNP_STATE_D0;
-		else
 			*pstate = PNP_STATE_D3;
+		else
+			*pstate = PNP_STATE_D0;
 		break;
 	case PNP_REQUEST_SET_STATE:
 		pstate = opaque;
