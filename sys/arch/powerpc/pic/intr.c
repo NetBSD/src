@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.18 2007/09/07 04:47:11 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.19 2007/10/04 18:17:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.18 2007/09/07 04:47:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.19 2007/10/04 18:17:08 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -588,9 +588,7 @@ pic_handle_intr(void *cookie)
 #ifdef MULTIPROCESSOR
 	/* Only cpu0 can handle interrupts. */
 	if (cpu_number() != 0) {
-		int realirq;
 
-		realirq = pic[0]->pic_get_irq(pic);
 		while (realirq == IPI_VECTOR) {
 			pic->pic_ack_irq(pic, realirq);
 			cpuintr(NULL);
@@ -604,18 +602,17 @@ pic_handle_intr(void *cookie)
 #endif
 
 start:
+
 #ifdef MULTIPROCESSOR
 	while (realirq == IPI_VECTOR) {
 		pic->pic_ack_irq(pic, realirq);
 		cpuintr(NULL);
-
 		realirq = pic->pic_get_irq(pic);
-		if (realirq == 255) {
-			return 0;
-		}
+	}
+	if (realirq == 255) {
+		return 0;
 	}
 #endif
-	//aprint_error("%s: %s realirq %d", __func__, pic->pic_name, realirq);
 
 	irq = virq[realirq + pic->pic_intrbase];
 #ifdef PIC_DEBUG
