@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.6 2007/10/02 23:37:18 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.7 2007/10/04 10:38:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.6 2007/10/02 23:37:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.7 2007/10/04 10:38:27 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.6 2007/10/02 23:37:18 jmcneill Ex
 
 #include <dev/acpi/acpivar.h>
 
+/* Maximum time to wait for global ACPI lock in ms */
 #define	EC_LOCK_TIMEOUT		5
+
+/* Maximum time to poll for completion of a command  in ms */
+#define	EC_POLL_TIMEOUT		5
 
 /* From ACPI 3.0b, chapter 12.3 */
 #define EC_COMMAND_READ		0x80
@@ -68,12 +72,13 @@ static const char *ec_hid[] = {
 
 enum ec_state_t {
 	EC_STATE_QUERY,
+	EC_STATE_QUERY_VAL,
 	EC_STATE_READ,
+	EC_STATE_READ_ADDR,
 	EC_STATE_READ_VAL,
-	EC_STATE_READ_WAIT,
 	EC_STATE_WRITE,
+	EC_STATE_WRITE_ADDR,
 	EC_STATE_WRITE_VAL,
-	EC_STATE_WRITE_WAIT,
 	EC_STATE_FREE
 };
 
@@ -530,7 +535,7 @@ static ACPI_STATUS
 acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int timeouts = 0;
+	int i, timeouts = 0;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -539,10 +544,18 @@ retry:
 	sc->sc_cur_addr = addr;
 	sc->sc_state = EC_STATE_READ;
 
-	acpiec_write_command(sc, EC_COMMAND_READ);
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_maschine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
+
 	if (cold || acpiec_cold) {
-		for (delay(1); sc->sc_state != EC_STATE_READ_WAIT; delay(1))
+		while (sc->sc_state != EC_STATE_FREE) {
+			delay(1);
 			acpiec_gpe_state_maschine(dv);
+		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
@@ -554,13 +567,9 @@ retry:
 		aprint_error_dev(dv, "command takes over 5sec...\n");
 		return AE_ERROR;
 	}
-	*val = acpiec_read_data(sc);
 
-	sc->sc_state = EC_STATE_FREE;
-
-	if (sc->sc_got_sci)
-		cv_signal(&sc->sc_cv_sci);
-
+done:
+	*val = sc->sc_cur_val;
 
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
@@ -571,7 +580,7 @@ static ACPI_STATUS
 acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int timeouts = 0;
+	int i, timeouts = 0;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -581,10 +590,18 @@ retry:
 	sc->sc_cur_val = val;
 	sc->sc_state = EC_STATE_WRITE;
 
-	acpiec_write_command(sc, EC_COMMAND_WRITE);
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_maschine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
+
 	if (cold || acpiec_cold) {
-		for (delay(1); sc->sc_state != EC_STATE_WRITE_WAIT; delay(1))
+		while (sc->sc_state != EC_STATE_FREE) {
+			delay(1);
 			acpiec_gpe_state_maschine(dv);
+		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
@@ -597,11 +614,7 @@ retry:
 		return AE_ERROR;
 	}
 
-	sc->sc_state = EC_STATE_FREE;
-
-	if (sc->sc_got_sci)
-		cv_signal(&sc->sc_cv_sci);
-
+done:
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
 	return AE_OK;
@@ -661,6 +674,7 @@ acpiec_gpe_query(void *arg)
 	uint8_t reg;
 	char qxx[5];
 	ACPI_STATUS rv;
+	int i;
 
 loop:
 	mutex_enter(&sc->sc_mtx);
@@ -672,20 +686,28 @@ loop:
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
 
-	acpiec_write_command(sc, EC_COMMAND_QUERY);
+	/* The Query command can always be issued, so be defensive here. */
+	sc->sc_got_sci = false;
 	sc->sc_state = EC_STATE_QUERY;
+
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_maschine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
 
 	cv_wait(&sc->sc_cv, &sc->sc_mtx);
 
-	reg = acpiec_read_data(sc);
-	sc->sc_state = EC_STATE_FREE;
-	sc->sc_got_sci = false;
+done:
+	reg = sc->sc_cur_val;
 
 	mutex_exit(&sc->sc_mtx);
 	acpiec_unlock(dv);
 
 	if (reg == 0)
 		goto loop; /* Spurious query result */
+
 	/*
 	 * Evaluate _Qxx to respond to the controller.
 	 */
@@ -712,13 +734,31 @@ acpiec_gpe_state_maschine(device_t dv)
 
 	switch (sc->sc_state) {
 	case EC_STATE_QUERY:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+		acpiec_write_command(sc, EC_COMMAND_QUERY);
+		sc->sc_state = EC_STATE_QUERY_VAL;
+		break;
+
+	case EC_STATE_QUERY_VAL:
 		if ((reg & EC_STATUS_OBF) == 0)
 			break; /* Nothing of interest here. */
+
+		sc->sc_cur_val = acpiec_read_data(sc);
+		sc->sc_state = EC_STATE_FREE;
 
 		cv_signal(&sc->sc_cv);
 		break;
 
 	case EC_STATE_READ:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+
+		acpiec_write_command(sc, EC_COMMAND_READ);
+		sc->sc_state = EC_STATE_READ_ADDR;
+		break;
+
+	case EC_STATE_READ_ADDR:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
 
@@ -729,14 +769,21 @@ acpiec_gpe_state_maschine(device_t dv)
 	case EC_STATE_READ_VAL:
 		if ((reg & EC_STATUS_OBF) == 0)
 			break; /* Nothing of interest here. */
+		sc->sc_cur_val = acpiec_read_data(sc);
+		sc->sc_state = EC_STATE_FREE;
+
 		cv_signal(&sc->sc_cv);
-		sc->sc_state = EC_STATE_READ_WAIT;
 		break;
 
-	case EC_STATE_READ_WAIT:
-		break; /* Nothing of interest here. */
-
 	case EC_STATE_WRITE:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+
+		acpiec_write_command(sc, EC_COMMAND_WRITE);
+		sc->sc_state = EC_STATE_WRITE_ADDR;
+		break;
+
+	case EC_STATE_WRITE_ADDR:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
 		acpiec_write_data(sc, sc->sc_cur_addr);
@@ -746,12 +793,10 @@ acpiec_gpe_state_maschine(device_t dv)
 	case EC_STATE_WRITE_VAL:
 		if ((reg & EC_STATUS_IBF) != 0)
 			break; /* Nothing of interest here. */
+		sc->sc_state = EC_STATE_FREE;
 		cv_signal(&sc->sc_cv);
-		acpiec_write_data(sc, sc->sc_cur_val);
-		sc->sc_state = EC_STATE_WRITE_WAIT;
-		break;
 
-	case EC_STATE_WRITE_WAIT:
+		acpiec_write_data(sc, sc->sc_cur_val);
 		break;
 
 	case EC_STATE_FREE:
