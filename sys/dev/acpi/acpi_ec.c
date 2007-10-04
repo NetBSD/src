@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.9 2007/10/04 13:26:09 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.10 2007/10/04 22:47:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.9 2007/10/04 13:26:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.10 2007/10/04 22:47:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,8 +508,8 @@ acpiec_lock(device_t dv)
 	if (sc->sc_need_global_lock) {
 		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT, &sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error("%s: failed to acquire global lock (continuing)\n",
-			    device_xname(dv));
+			aprint_error_dev(dv, "failed to acquire global lock: %s\n",
+			    AcpiFormatException(rv));
 			return;
 		}
 	}
@@ -524,8 +524,8 @@ acpiec_unlock(device_t dv)
 	if (sc->sc_need_global_lock) {
 		rv = AcpiReleaseGlobalLock(sc->sc_global_lock);
 		if (rv != AE_OK) {
-			aprint_error("%s: failed to release global lock (continuing)\n",
-			    device_xname(dv));
+			aprint_error_dev(dv, "failed to release global lock: %s\n",
+			    AcpiFormatException(rv));
 		}
 	}
 	mutex_exit(&sc->sc_access_mtx);
