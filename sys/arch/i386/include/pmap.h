@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.2 2007/09/24 10:56:49 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.3 2007/10/04 15:36:57 yamt Exp $	*/
 
 /*
  *
@@ -76,7 +76,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
-#include "opt_largepages.h"
 #endif
 
 #include <machine/cpufunc.h>
@@ -558,18 +557,14 @@ vtopte(vaddr_t va)
 static __inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
+	pd_entry_t *pde;
 
 	KASSERT(va >= (L2_SLOT_KERN * NBPD_L2));
 
-#ifdef LARGEPAGES
-	{
-		pd_entry_t *pde;
 
-		pde = L2_BASE + pl2_i(va);
-		if (*pde & PG_PS)
-			return ((pt_entry_t *)pde);
-	}
-#endif
+	pde = L2_BASE + pl2_i(va);
+	if (*pde & PG_PS)
+		return ((pt_entry_t *)pde);
 
 	return (PTE_BASE + pl1_i(va));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.16 2007/10/04 15:04:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.17 2007/10/04 15:36:58 yamt Exp $	*/
 
 /*
  *
@@ -108,13 +108,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.16 2007/10/04 15:04:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.17 2007/10/04 15:36:58 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
 #endif
 #include "opt_user_ldt.h"
-#include "opt_largepages.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #if !defined(__x86_64__)
@@ -379,14 +378,12 @@ struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 
 int pmap_pg_g = 0;
 
-#ifdef LARGEPAGES
 /*
  * pmap_largepages: if our processor supports PG_PS and we are
  * using it, this is set to true.
  */
 
 int pmap_largepages;
-#endif
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
@@ -815,7 +812,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	npte = pa | protection_codes[prot] | PG_V | pmap_pg_g;
 	opte = pmap_pte_set(pte, npte); /* zap! */
-#ifdef LARGEPAGES
+#if defined(DIAGNOSTIC)
 	/* XXX For now... */
 	if (opte & PG_PS)
 		panic("pmap_kenter_pa: PG_PS");
@@ -882,12 +879,10 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 		else
 			pte = kvtopte(va);
 		xpte |= pmap_pte_set(pte, 0); /* zap! */
-#ifdef LARGEPAGES
+#if defined(DIAGNOSTIC)
 		/* XXX For now... */
 		if (xpte & PG_PS)
 			panic("pmap_kremove: PG_PS");
-#endif
-#ifdef DIAGNOSTIC
 		if (xpte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx",
 			      va);
@@ -1003,7 +998,6 @@ pmap_bootstrap(vaddr_t kva_start)
 		}
 	}
 
-#ifdef LARGEPAGES
 	/*
 	 * enable large pages if they are supported.
 	 */
@@ -1045,7 +1039,6 @@ pmap_bootstrap(vaddr_t kva_start)
 		    NBPD_L1));
 #endif /* defined(DEBUG) */
 	}
-#endif /* LARGEPAGES */
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		/*
@@ -2454,13 +2447,11 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap, pmap2);
 
-#ifdef LARGEPAGES
 	if (pde & PG_PS) {
 		if (pap != NULL)
 			*pap = (pde & PG_LGFRAME) | (va & (NBPD_L2 - 1));
 		return (true);
 	}
-#endif
 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
@@ -3830,10 +3821,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 
 	KASSERT(eva == 0 || eva >= sva);
 
-#ifdef LARGEPAGES
 	if (pte & PG_PS)
 		sva &= PG_LGFRAME;
-#endif
 	pte &= PG_G;
 	self = curcpu();
 

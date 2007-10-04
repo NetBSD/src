@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.4 2007/09/30 15:32:24 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.5 2007/10/04 15:36:56 yamt Exp $	*/
 
 /*
  *
@@ -75,10 +75,6 @@
 #define	_AMD64_PMAP_H_
 
 #ifndef _LOCORE
-#if defined(_KERNEL_OPT)
-#include "opt_largepages.h"
-#endif
-
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
@@ -546,18 +542,13 @@ vtopte(vaddr_t va)
 static __inline pt_entry_t *
 kvtopte(vaddr_t va)
 {
+	pd_entry_t *pde;
 
 	KASSERT(va >= (L4_SLOT_KERN * NBPD_L4));
 
-#ifdef LARGEPAGES
-	{
-		pd_entry_t *pde;
-
-		pde = L2_BASE + pl2_i(va);
-		if (*pde & PG_PS)
-			return ((pt_entry_t *)pde);
-	}
-#endif
+	pde = L2_BASE + pl2_i(va);
+	if (*pde & PG_PS)
+		return ((pt_entry_t *)pde);
 
 	return (PTE_BASE + pl1_i(va));
 }

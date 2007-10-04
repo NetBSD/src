@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.43.2.1 2007/09/30 15:32:23 yamt Exp $
+#	$NetBSD: files.amd64,v 1.43.2.2 2007/10/04 15:36:55 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -10,9 +10,6 @@ maxusers 2 16 128
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
-
-# Large page size
-defflag			LARGEPAGES
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM

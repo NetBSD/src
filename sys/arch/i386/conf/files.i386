@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.314.2.1 2007/09/29 08:26:34 yamt Exp $
+#	$NetBSD: files.i386,v 1.314.2.2 2007/10/04 15:36:56 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -42,9 +42,6 @@ defflag			COMPAT_OLDBOOT
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
-
-# Large page size
-defflag			LARGEPAGES
 
 # No unmapped page below kernel stack
 defflag			NOREDZONE
