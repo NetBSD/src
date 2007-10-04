@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.307 2007/09/30 21:05:58 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.308 2007/10/04 21:51:27 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10024,4 +10024,15 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD-4.0_RC2.
+
+sys/arch/sparc64/sparc64/machdep.c		1.206 via patch
+
+	Fix printf format. Allows a 32-bit sparc64 kernel to build.
+	[martin, ticket #913]
+
+distrib/acorn32/cdroms/installcd/Makefile	1.2
+
+	Use the correct name for the acorn32 iso image. Fix the acorn32
+	part of PR 37033.
+	[bouyer, ticket #914]
 
