@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.23.6.1 2007/10/04 18:47:24 joerg Exp $ */
+/* $NetBSD: auixp.c,v 1.23.6.2 2007/10/04 18:57:48 joerg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.1 2007/10/04 18:47:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.2 2007/10/04 18:57:48 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1371,6 +1371,8 @@ auixp_detach(struct device *self, int flags)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+
+	pci_generic_power_deregister(self);
 
 	return 0;
 }
