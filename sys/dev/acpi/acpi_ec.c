@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.7 2007/10/04 10:38:27 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.8 2007/10/04 10:43:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.7 2007/10/04 10:38:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.8 2007/10/04 10:43:47 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,6 +642,7 @@ acpiec_space_handler(UINT32 func, ACPI_PHYSICAL_ADDRESS paddr,
 
 	switch (func) {
 	case ACPI_READ:
+		*value = 0;
 		for (i = 0; i < width; i += 8, ++addr) {
 			rv = acpiec_read(dv, addr, &reg);
 			if (rv != AE_OK)
