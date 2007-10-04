@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.11 2007/05/09 20:22:39 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.12 2007/10/04 18:18:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.11 2007/05/09 20:22:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.12 2007/10/04 18:18:36 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -100,5 +100,10 @@ void i8259_initialize(void);
 void i8259_enable_irq(struct pic_ops *, int, int);
 void i8259_disable_irq(struct pic_ops *, int);
 void i8259_ack_irq(struct pic_ops *, int);
+
+/* IPI handler */
+int cpuintr(void *);
+/* XXX - may need to be PIC specific */
+#define IPI_VECTOR 64
 
 #endif /* PIC_VAR_H */
