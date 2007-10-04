@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.15 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.15.52.1 2007/10/04 15:36:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,10 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15.52.1 2007/10/04 15:36:57 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_largepages.h"
 
 /*
  * Machine-dependent functions for remote KGDB.  Originally written
@@ -111,11 +110,9 @@ kgdb_acc(va, len)
 			pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
 			return (0);
-#ifdef LARGEPAGES
 		if (*pte & PG_PS)
-			va = (va & PG_LGFRAME) + NBPD;
+			va = (va & PG_LGFRAME) + NBPD_L2;
 		else
-#endif
 			va += PAGE_SIZE;
 	} while (va < last_va);
 
