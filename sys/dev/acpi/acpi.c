@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.19 2007/10/03 01:01:27 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.20 2007/10/04 15:05:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.19 2007/10/03 01:01:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.20 2007/10/04 15:05:45 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -724,7 +724,8 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 			TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
 
-			if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+			if (type == ACPI_TYPE_DEVICE &&
+			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 				goto out;
 
 #ifdef ACPI_EXTRA_DEBUG
