@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.8 2007/09/09 21:35:32 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.9 2007/10/04 18:37:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -104,4 +104,21 @@ sys/dev/ieee1394/fwohci.c:			patch
 	PR kern/36945 by Ross Philipson: Remove call to fwohci_desc_put() in
 	an error path where fwohci_desc_get() has not been called yet.
 	[christos, ticket #1835]
+
+sys/dev/ic/mpt.c				1.9, 1.10 via patch
+sys/dev/ic/mpt.h				1.6 via patch
+sys/dev/ic/mpt_debug.c				patch
+sys/dev/ic/mpt_mpilib.h				1.3 via patch
+sys/dev/ic/mpt_netbsd.c				1.12 via patch
+sys/dev/ic/mpt_netbsd.h				1.6 via patch
+sys/dev/pci/mpt_pci.c				1.11 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for newer SAS and similar devices to mpt(4). Tested with
+	the LSI SAS1064 in a Sun x4200 server.
+	These enhancements were developed by Garrett D'Amore and contributed
+	to NetBSD by the TELES AG.
+	[tron, ticket #1822]
 
