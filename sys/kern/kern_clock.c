@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.112 2007/10/03 14:49:24 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.113 2007/10/04 12:55:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.112 2007/10/03 14:49:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.113 2007/10/04 12:55:48 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -292,17 +292,6 @@ long pps_stbcnt = 0;		/* stability limit exceeded */
  */
 int clock_count = 0;		/* CPU clock counter */
 
-#ifdef HIGHBALL
-/*
- * The clock_offset and clock_cpu variables are used by the HIGHBALL
- * interface. The clock_offset variable defines the offset between
- * system time and the HIGBALL counters. The clock_cpu variable contains
- * the offset between the system clock and the HIGHBALL clock for use in
- * disciplining the kernel time variable.
- */
-extern struct timeval clock_offset; /* Highball clock offset */
-long clock_cpu = 0;		/* CPU clock adjust */
-#endif /* HIGHBALL */
 #endif /* EXT_CLOCK */
 #endif /* NTP */
 
@@ -591,35 +580,7 @@ hardclock(struct clockframe *frame)
 		time_phase -= ltemp << SHIFT_SCALE;
 		time_update += ltemp;
 	}
-
-#ifdef HIGHBALL
-	/*
-	 * If the HIGHBALL board is installed, we need to adjust the
-	 * external clock offset in order to close the hardware feedback
-	 * loop. This will adjust the external clock phase and frequency
-	 * in small amounts. The additional phase noise and frequency
-	 * wander this causes should be minimal. We also need to
-	 * discipline the kernel time variable, since the PLL is used to
-	 * discipline the external clock. If the Highball board is not
-	 * present, we discipline kernel time with the PLL as usual. We
-	 * assume that the external clock phase adjustment (time_update)
-	 * and kernel phase adjustment (clock_cpu) are less than the
-	 * value of tick.
-	 */
-	clock_offset.tv_usec += time_update;
-	if (clock_offset.tv_usec >= 1000000) {
-		clock_offset.tv_sec++;
-		clock_offset.tv_usec -= 1000000;
-	}
-	if (clock_offset.tv_usec < 0) {
-		clock_offset.tv_sec--;
-		clock_offset.tv_usec += 1000000;
-	}
-	time.tv_usec += clock_cpu;
-	clock_cpu = 0;
-#else
 	time.tv_usec += time_update;
-#endif /* HIGHBALL */
 
 	/*
 	 * On rollover of the second the phase adjustment to be used for
@@ -850,11 +811,7 @@ hardclock(struct clockframe *frame)
 				delta.tv_sec = 0;
 				delta.tv_usec = 0;
 			}
-#ifdef HIGHBALL
-			clock_cpu = delta.tv_usec;
-#else /* HIGHBALL */
 			hardupdate(delta.tv_usec);
-#endif /* HIGHBALL */
 		}
 #endif /* EXT_CLOCK */
 	}
