@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.55 2007/10/02 01:17:17 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.56 2007/10/04 21:20:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -53,16 +53,6 @@ extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
 extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
-
-#define PUFFS_SIZEOPREQ_UIO_IN 1
-#define PUFFS_SIZEOPREQ_UIO_OUT 2
-#define PUFFS_SIZEOPREQ_BUF_IN 3
-#define PUFFS_SIZEOPREQ_BUF_OUT 4
-
-#define PUFFS_SIZEOP_UIO(a)	\
-	(((a)==PUFFS_SIZEOPREQ_UIO_IN)||(a)==PUFFS_SIZEOPREQ_UIO_OUT)
-#define PUFFS_SIZEOP_BUF(a)	\
-	(((a)==PUFFS_SIZEOPREQ_BUF_IN)||(a)==PUFFS_SIZEOPREQ_BUF_OUT)
 
 /* XXX: alignment-optimization */
 struct puffs_sizepark {

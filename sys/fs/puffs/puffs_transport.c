@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.24 2007/09/27 21:44:12 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.25 2007/10/04 21:20:47 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.24 2007/09/27 21:44:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.25 2007/10/04 21:20:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -465,12 +465,6 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	case PUFFSPUTOP:
 		rv =  puffs_putop(pmp, data);
 		break;
-
-#if 0 /* bitrot */
-	case PUFFSSIZEOP:
-		rv = puffssizeop(pmp, data);
-		break;
-#endif
 
 	case PUFFSFLUSHOP:
 		rv = puffs_flush(pmp, data);

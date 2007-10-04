@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.43 2007/10/02 01:17:17 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.44 2007/10/04 21:20:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.43 2007/10/02 01:17:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.44 2007/10/04 21:20:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -968,83 +968,3 @@ puffs_userdead(struct puffs_mount *pmp)
 		}
 	}
 }
-
-/* this is probably going to die away at some point? */
-/*
- * XXX: currently bitrotted
- */
-#if 0
-static int
-puffssizeop(struct puffs_mount *pmp, struct puffs_sizeop *psop_user)
-{
-	struct puffs_sizepark *pspark;
-	void *kernbuf;
-	size_t copylen;
-	int error;
-
-	/* locate correct op */
-	mutex_enter(&pmp->pmp_lock);
-	TAILQ_FOREACH(pspark, &pmp->pmp_req_sizepark, pkso_entries) {
-		if (pspark->pkso_reqid == psop_user->pso_reqid) {
-			TAILQ_REMOVE(&pmp->pmp_req_sizepark, pspark,
-			    pkso_entries);
-			break;
-		}
-	}
-	mutex_exit(&pmp->pmp_lock);
-
-	if (pspark == NULL)
-		return EINVAL;
-
-	error = 0;
-	copylen = MIN(pspark->pkso_bufsize, psop_user->pso_bufsize);
-
-	/*
-	 * XXX: uvm stuff to avoid bouncy-bouncy copying?
-	 */
-	if (PUFFS_SIZEOP_UIO(pspark->pkso_reqtype)) {
-		kernbuf = malloc(copylen, M_PUFFS, M_WAITOK | M_ZERO);
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_UIO_IN) {
-			error = copyin(psop_user->pso_userbuf,
-			    kernbuf, copylen);
-			if (error) {
-				printf("psop ERROR1 %d\n", error);
-				goto escape;
-			}
-		}
-		error = uiomove(kernbuf, copylen, pspark->pkso_uio);
-		if (error) {
-			printf("uiomove from kernel %p, len %d failed: %d\n",
-			    kernbuf, (int)copylen, error);
-			goto escape;
-		}
-			
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_UIO_OUT) {
-			error = copyout(kernbuf,
-			    psop_user->pso_userbuf, copylen);
-			if (error) {
-				printf("psop ERROR2 %d\n", error);
-				goto escape;
-			}
-		}
- escape:
-		free(kernbuf, M_PUFFS);
-	} else if (PUFFS_SIZEOP_BUF(pspark->pkso_reqtype)) {
-		copylen = MAX(pspark->pkso_bufsize, psop_user->pso_bufsize);
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_BUF_IN) {
-			error = copyin(psop_user->pso_userbuf,
-			pspark->pkso_copybuf, copylen);
-		} else {
-			error = copyout(pspark->pkso_copybuf,
-			    psop_user->pso_userbuf, copylen);
-		}
-	}
-#ifdef DIAGNOSTIC
-	else
-		panic("puffssizeop: invalid reqtype %d\n",
-		    pspark->pkso_reqtype);
-#endif /* DIAGNOSTIC */
-
-	return error;
-}
-#endif
