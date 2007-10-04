@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.8 2007/09/12 13:09:46 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.9 2007/10/04 17:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.8 2007/09/12 13:09:46 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.9 2007/10/04 17:05:01 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -625,6 +625,10 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		if (strcmp(gmtoff, "-0000") != 0 &&
 		    sscanf(gmtoff, " %1[+-]%2d%2d ", sign, &hour, &min) == 3) {
 			time_t otime;
+			struct tm tm_old;
+			
+			tm->tm_isdst = -1;
+			tm_old = *tm;
 			if (sign[0] == '-') {
 				tm->tm_hour += hour;
 				tm->tm_min += min;
@@ -633,15 +637,13 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 				tm->tm_hour -= hour;
 				tm->tm_min -= min;
 			}
-			tm->tm_isdst = -1;
-			if ((time_t)(otime = timegm(tm)) == -1)
-				warn("timegm: %s", date);
-			
-			if(localtime_r(&otime, tm) == NULL)
-				warn("localtime: %s", date);
-			
-			/* extract the new gmtoff string */
-			gmtoff = mk_gmtoff(tm);
+			if ((otime = timegm(tm)) == (time_t)-1 ||
+			    localtime_r(&otime, tm) == NULL) {
+				warnx("invalid date: %s", date);
+				*tm = tm_old;
+			}
+			else	/* extract the new gmtoff string */
+				gmtoff = mk_gmtoff(tm);
 		}
 		else
 			tm->tm_gmtoff = 0;
