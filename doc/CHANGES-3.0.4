@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.9 2007/09/17 20:16:09 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.10 2007/10/04 18:37:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -112,4 +112,21 @@ sys/netinet/ip_input.c				1.253
 	Fix PR kern/36800: in FAST_IPSEC, spl level may not be restored
 	properly.
 	[degroote, ticket #1840]
+
+sys/dev/ic/mpt.c				1.9, 1.10 via patch
+sys/dev/ic/mpt.h				1.6 via patch
+sys/dev/ic/mpt_debug.c				patch
+sys/dev/ic/mpt_mpilib.h				1.3 via patch
+sys/dev/ic/mpt_netbsd.c				1.12 via patch
+sys/dev/ic/mpt_netbsd.h				1.6 via patch
+sys/dev/pci/mpt_pci.c				1.11 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for newer SAS and similar devices to mpt(4). Tested with
+	the LSI SAS1064 in a Sun x4200 server.
+	These enhancements were developed by Garrett D'Amore and contributed
+	to NetBSD by the TELES AG.
+	[tron, ticket #1822]
 
