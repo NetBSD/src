@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.30 2007/09/24 13:56:42 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.31 2007/10/04 21:04:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.30 2007/09/24 13:56:42 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.31 2007/10/04 21:04:32 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.30 2007/09/24 13:56:42 ad Exp $");
 #include "pthread_int.h"
 
 /* How many times to try acquiring spin locks on MP systems. */
-#define	PTHREAD__NSPINS		1024
+#define	PTHREAD__NSPINS		64
 
 static void pthread_spinlock_slow(pthread_spin_t *);
 
