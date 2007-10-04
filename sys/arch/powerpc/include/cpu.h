@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55.10.3 2007/08/02 05:34:16 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.10.4 2007/10/04 18:23:39 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -117,6 +117,7 @@ struct cpu_info {
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
 	struct evcnt ci_ev_umchk;	/* user MCHK events */
+	struct evcnt ci_ev_ipi;		/* IPIs received */
 };
 
 #ifdef MULTIPROCESSOR

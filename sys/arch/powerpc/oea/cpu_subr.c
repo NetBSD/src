@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28.16.4 2007/10/03 19:24:44 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.16.5 2007/10/04 18:23:39 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.4 2007/10/03 19:24:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.5 2007/10/04 18:23:39 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -599,6 +599,8 @@ cpu_setup(self, ci)
 		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
 #endif
+	evcnt_attach_dynamic(&ci->ci_ev_ipi, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "IPIs");
 }
 
 void
