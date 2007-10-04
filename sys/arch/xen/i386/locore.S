@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27 2007/09/05 19:30:01 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.27.2.1 2007/10/04 15:35:59 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -374,7 +374,7 @@ start:
  * Build initial page tables.
  */
 	/* Calculate end of text segment, rounded to a page. */
-	leal	(RELOC(etext)+PGOFSET),%edx
+	leal	(RELOC(__data_start)+PGOFSET),%edx
 	andl	$~PGOFSET,%edx
 
 	/* Skip over the first 1MB. */
