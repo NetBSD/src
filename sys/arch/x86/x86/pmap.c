@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.15 2007/10/04 14:37:58 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.16 2007/10/04 15:04:32 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.15 2007/10/04 14:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.16 2007/10/04 15:04:32 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1011,7 +1011,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	if (cpu_feature & CPUID_PSE) {
 		paddr_t pa;
 		pd_entry_t *pde;
-		extern char _etext;
+		extern char __data_start;
 
 		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
 		pmap_largepages = 1;	/* enable software */
@@ -1029,14 +1029,21 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * assume that the linker has properly aligned the
 		 * .data segment to a NBPD_L2 boundary.
 		 */
-		kva_end = roundup((vaddr_t)&_etext, NBPD_L2);
-		for (pa = 0, kva = KERNBASE; kva < kva_end;
+		kva_end = roundup((vaddr_t)&__data_start, NBPD_L1);
+		for (pa = 0, kva = KERNBASE; kva + NBPD_L2 <= kva_end;
 		     kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
 			*pde = pa | pmap_pg_g | PG_PS |
 			    PG_KR | PG_V;	/* zap! */
 			tlbflush();
 		}
+#if defined(DEBUG)
+		printf("kernel text is mapped with "
+		    "%lu large pages and %lu normal pages\n",
+		    (unsigned long)howmany(kva - KERNBASE, NBPD_L2),
+		    (unsigned long)howmany((vaddr_t)&__data_start - kva,
+		    NBPD_L1));
+#endif /* defined(DEBUG) */
 	}
 #endif /* LARGEPAGES */
 

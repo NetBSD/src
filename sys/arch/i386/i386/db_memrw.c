@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.20.2.1 2007/10/01 14:47:30 yamt Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.20.2.2 2007/10/04 15:04:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.20.2.1 2007/10/01 14:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.20.2.2 2007/10/04 15:04:31 yamt Exp $");
 
 #include "opt_largepages.h"
 
@@ -208,13 +208,13 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	extern char etext;
+	extern char __data_start;
 	char *dst;
 
 	dst = (char *)addr;
 
 	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
+	if (addr >= KERNBASE && addr < (vaddr_t)&__data_start) {
 		db_write_text(addr, size, data);
 		return;
 	}

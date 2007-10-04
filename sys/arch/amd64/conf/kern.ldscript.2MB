@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.2MB,v 1.1.2.1 2007/10/01 14:47:31 yamt Exp $	*/
+/*	$NetBSD: kern.ldscript.2MB,v 1.1.2.2 2007/10/04 15:04:32 yamt Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
@@ -13,15 +13,22 @@ SECTIONS
      *(.text)
      *(.text.*)
      *(.stub)
-     *(.rodata)
    } =0
    _etext = . ;
    PROVIDE (etext = .) ;
 
+   .rodata :
+   AT (LOADADDR(.text) + (ADDR(.rodata) - ADDR(.text)))
+   {
+     *(.rodata)
+     *(.rodata.*)
+   }
+ 
    /* Adjust the address for the data segment.  We push the data segment
       up to the next 2MB boundary so that we can map the text with large
       pages. */
    . = ALIGN(0x200000);
+   __data_start = . ;
    .data :
    AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
    {

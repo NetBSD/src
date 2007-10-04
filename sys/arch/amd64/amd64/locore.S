@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.2.1 2007/09/30 15:32:20 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.2 2007/10/04 15:04:31 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -425,11 +425,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 	/*
-	 * Compute etext - KERNBASE. This can't be > 4G, or we can't deal
-	 * with it anyway, since we can't load it in 32 bit mode. So use
-	 * the bottom 32 bits.
+ 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	 * or we can't deal with it anyway, since we can't load it in
+	 * 32 bit mode. So use the bottom 32 bits.
 	 */
-	movl	$RELOC(etext),%edx
+	movl	$RELOC(__data_start),%edx
 	addl	$PGOFSET,%edx
 	andl	$~PGOFSET,%edx
 
