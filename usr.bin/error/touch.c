@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.15 2007/07/19 05:43:23 lukem Exp $	*/
+/*	$NetBSD: touch.c,v 1.16 2007/10/05 07:27:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.15 2007/07/19 05:43:23 lukem Exp $");
+__RCSID("$NetBSD: touch.c,v 1.16 2007/10/05 07:27:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: touch.c,v 1.15 2007/07/19 05:43:23 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include <stdarg.h>
 #include "error.h"
 #include "pathnames.h"
@@ -696,14 +697,14 @@ mustwrite(char *base, int n, FILE *preciousfile)
 }
 
 void
-onintr(int dummy)
+onintr(int sig)
 {
 	switch(inquire(terse
 	    ? "\nContinue? "
 	    : "\nInterrupt: Do you want to continue? ")){
 	case Q_YES:
 	case Q_yes:
-		signal(SIGINT, onintr);
+		signal(sig, onintr);
 		return;
 	case Q_error:
 	default:
@@ -713,7 +714,8 @@ onintr(int dummy)
 			 */
 			writetouched(0);
 		}
-		exit(1);
+		(void)raise_default_signal(sig);
+		_exit(127);
 	}
 	/*NOTREACHED*/
 }
