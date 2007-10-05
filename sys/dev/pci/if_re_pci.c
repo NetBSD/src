@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.28.4.1 2007/08/09 02:37:11 jmcneill Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.28.4.2 2007/10/05 01:08:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -183,42 +183,13 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct rtk_type	*t;
 	uint32_t		hwrev;
 	int			error = 0;
-	pcireg_t		pmreg, memtype;
+	pcireg_t		memtype;
 	bool			ioh_valid, memh_valid;
 	pcireg_t		command;
 	bus_space_tag_t		iot, memt;
 	bus_space_handle_t	ioh, memh;
 	bus_size_t		iosize, memsize, bsize;
-
-
-	/*
-	 * Handle power management nonsense.
-	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		if (command & PCI_PMCSR_STATE_MASK) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
-
-			/* Reset the power state. */
-			aprint_normal("%s: chip is is in D%d power mode "
-		    	    "-- setting to D0\n", sc->sc_dev.dv_xname,
-		    	    command & PCI_PMCSR_STATE_MASK);
-
-			command &= ~PCI_PMCSR_STATE_MASK;
-			pci_conf_write(pc, pa->pa_tag,
-			    pmreg + PCI_PMCSR, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, PCI_INTERRUPT_REG, irq);
-		}
-	}
+	pnp_status_t		pnp_status;
 
 	/*
 	 * Map control/status registers.
@@ -328,5 +299,11 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 			if (memh_valid)
 				bus_space_unmap(memt, memh, memsize);
 		}
+	}
+
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, &sc->ethercom.ec_if, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 }
