@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.35 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: neo.c,v 1.35.22.1 2007/10/05 00:12:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.1 2007/10/05 00:12:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,6 @@ struct neo_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
-
-	void		*powerhook;
 };
 
 /* -------------------------------------------------------------------- */
@@ -207,7 +205,6 @@ static void	neo_free(void *, void *, struct malloc_type *);
 static size_t	neo_round_buffersize(void *, int, size_t);
 static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
-static void	neo_power(int, void *);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
@@ -553,15 +550,12 @@ neo_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-neo_power(int why, void *addr)
+neo_resume(device_t dv)
 {
-	struct neo_softc *sc;
+	struct neo_softc *sc = device_private(dv);
 
-	sc = (struct neo_softc *)addr;
-	if (why == PWR_RESUME) {
-		nm_init(sc);
-		sc->codec_if->vtbl->restore_ports(sc->codec_if);
-	}
+	nm_init(sc);
+	sc->codec_if->vtbl->restore_ports(sc->codec_if);	
 }
 
 static void
@@ -573,6 +567,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	pnp_status_t pnp_status;
 
 	sc = (struct neo_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -634,7 +629,12 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if, self) != 0)
 		return;
 
-	sc->powerhook = powerhook_establish(sc->dev.dv_xname, neo_power, sc);
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    NULL, neo_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+	}
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 }
