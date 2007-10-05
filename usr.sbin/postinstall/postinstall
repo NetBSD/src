@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.49 2007/07/29 13:17:38 plunky Exp $
+# $NetBSD: postinstall,v 1.50 2007/10/05 10:06:49 pavel Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,9 @@ err()
 	exitval=$1
 	shift
 	echo 1>&2 "${PROGNAME}: $@"
+	if [ -n "${SCRATCHDIR}" ]; then
+	    /bin/rm -rf ${SCRATCHDIR}
+	fi
 	exit ${exitval}
 }
 
@@ -452,7 +455,7 @@ obsolete_libs()
 
 	(
 
-	cd "${DEST_DIR}/${dir}" || exit 1
+	cd "${DEST_DIR}/${dir}" || err 1 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
 	| tr ' ' '\n' \
 	| awk -v LibDir="${dir}/" '
@@ -1419,7 +1422,7 @@ DEST_DIR="/"
 DIFF_STYLE=
 NOT_FIXED=" (FIX MANUALLY)"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
-trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 1 2 3 15	# HUP INT QUIT TERM
 
 umask 022
 exec 3>/dev/null
