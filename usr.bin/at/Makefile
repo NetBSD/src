@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:24 tls Exp $
+#	$NetBSD: Makefile,v 1.9 2007/10/05 07:24:44 lukem Exp $
 
 USE_FORT?=	yes	# setuid
 
@@ -13,6 +13,9 @@ MLINKS=		at.1 batch.1 \
 
 BINOWN=		root
 BINMODE=	4555
+
+DPADD+=		${LIBUTIL}
+LDADD+=		-lutil
 
 CWARNFLAGS+=	-Wno-format-y2k
 

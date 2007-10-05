@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.24 2007/07/18 01:13:42 lukem Exp $	*/
+/*	$NetBSD: at.c,v 1.25 2007/10/05 07:24:44 lukem Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -46,6 +46,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 #include <locale.h>
 
 /* Local headers */
@@ -70,7 +71,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.24 2007/07/18 01:13:42 lukem Exp $");
+__RCSID("$NetBSD: at.c,v 1.25 2007/10/05 07:24:44 lukem Exp $");
 #endif
 #endif
 
@@ -106,22 +107,13 @@ static void process_jobs (int, char **, int);
 static void 
 sigc(int signo)
 {
-	struct sigaction act;
-
 	/* If a signal interrupts us, remove the spool file and exit. */
 	if (fcreated) {
 		PRIV_START
 		(void)unlink(atfile);
 		PRIV_END
 	}
-	/* Raise the default signal handler for the signal that was invoked. */
-	memset(&act, 0, sizeof act);
-	act.sa_handler = SIG_DFL;
-	sigemptyset(&(act.sa_mask));
-	act.sa_flags = 0;
-	sigaction(signo, &act, NULL);
-	raise(signo);
-	/* Fall-back to exit */
+	(void)raise_default_signal(signo);
 	exit(EXIT_FAILURE);
 }
 
