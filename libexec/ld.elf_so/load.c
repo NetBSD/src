@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.33 2007/09/20 07:50:32 cube Exp $	 */
+/*	$NetBSD: load.c,v 1.34 2007/10/05 22:21:07 ad Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.33 2007/09/20 07:50:32 cube Exp $");
+__RCSID("$NetBSD: load.c,v 1.34 2007/10/05 22:21:07 ad Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -303,7 +303,7 @@ _rtld_preload(const char *preload_path)
 			else
 				dbg((" preloaded \"%s\"", path));
 		}
-		free(buf);
+		xfree(buf);
 	}
 
 	return (status);
