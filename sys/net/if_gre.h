@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.27 2007/10/05 03:28:12 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.28 2007/10/05 04:55:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,8 +101,6 @@ struct gre_softc {
 	struct evcnt		sc_error_ev;
 	struct evcnt		sc_pullup_ev;
 	struct evcnt		sc_unsupp_ev;
-	struct evcnt		sc_supcall_ev;
-	struct evcnt		sc_rupcall_ev;
 	struct evcnt		sc_oflow_ev;
 };
 
