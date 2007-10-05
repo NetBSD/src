@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.36 2007/09/27 17:52:16 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.37 2007/10/05 22:21:07 ad Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.36 2007/09/27 17:52:16 christos Exp $");
+__RCSID("$NetBSD: paths.c,v 1.37 2007/10/05 22:21:07 ad Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -328,8 +328,8 @@ no_more:
 
 cleanup:
 	if (hwptr->name)
-		free(hwptr->name);
-	free(hwptr);
+		xfree(hwptr->name);
+	xfree(hwptr);
 }
 
 void
@@ -454,12 +454,12 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 		goto bad;
 	r = SYSCTL_TYPE(result[i].sysctl_flags);
 
-	free(result);
+	xfree(result);
 	if (sysctl(mib, miblen, oldp, oldlen, NULL, 0) == -1)
 		return (-1);
 	return r;
 
 bad:
-	free(result);
+	xfree(result);
 	return (-1);
 }

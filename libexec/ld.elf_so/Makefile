@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2007/09/27 17:51:40 christos Exp $
+#	$NetBSD: Makefile,v 1.81 2007/10/05 22:21:07 ad Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -33,7 +33,7 @@ LDFLAGS+=	-Wl,-static
 
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
-SRCS+=		rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
+SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c
 
 .if ${USE_SSP:Uno} == "yes"

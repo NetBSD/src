@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.115 2007/09/21 13:57:09 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.116 2007/10/05 22:21:07 ad Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.115 2007/09/21 13:57:09 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.116 2007/10/05 22:21:07 ad Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -944,6 +944,6 @@ _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 	
 	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
 		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
-		free(elm);
+		xfree(elm);
 	}
 }
