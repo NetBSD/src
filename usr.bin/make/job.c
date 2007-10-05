@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.125 2007/10/01 22:14:09 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1343,6 +1343,8 @@ JobExec(Job *job, char **argv)
 	(void)setpgid(0, getpid());
 #endif
 
+	Var_ExportVars();
+
 	(void)execv(shellPath, argv);
 	execError("exec", shellPath);
 	_exit(1);
@@ -2057,14 +2059,14 @@ Shell_GetNewline(void)
 void
 Job_SetPrefix(void)
 {
-    char tmp[sizeof("${" MAKEJOBPREFIX "}") + 1];
+    char tmp[sizeof("${" MAKE_JOB_PREFIX "}") + 1];
     
     if (targPrefix) {
 	free(targPrefix);
-    } else if (!Var_Exists(MAKEJOBPREFIX, VAR_GLOBAL)) {
-	Var_Set(MAKEJOBPREFIX, "---", VAR_GLOBAL, 0);
+    } else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
+	Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL, 0);
     }
-    strncpy(tmp, "${" MAKEJOBPREFIX "}", sizeof(tmp));
+    strncpy(tmp, "${" MAKE_JOB_PREFIX "}", sizeof(tmp));
     targPrefix = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
 }
 

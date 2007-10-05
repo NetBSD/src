@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.135 2007/10/01 22:14:11 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1614,8 +1614,10 @@ Parse_DoVar(char *line, GNode *ctxt)
 	 */
 	Dir_InitCur(cp);
 	Dir_SetPATH();
-    } else if (strcmp(line, MAKEJOBPREFIX) == 0) {
+    } else if (strcmp(line, MAKE_JOB_PREFIX) == 0) {
 	Job_SetPrefix();
+    } else if (strcmp(line, MAKE_EXPORTED) == 0) {
+	Var_Export(cp, 0);
     }
     if (freeCp)
 	free(cp);
@@ -2434,6 +2436,11 @@ Parse_File(const char *name, int fd)
 			continue;
 		    *cp2 = '\0';
 		    Var_Delete(cp, VAR_GLOBAL);
+		    continue;
+		} else if (strncmp(cp, "export", 6) == 0) {
+		    for (cp += 6; isspace((unsigned char) *cp); cp++)
+			continue;
+		    Var_Export(cp, 1);
 		    continue;
 		}
 	    }
