@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2005/12/12 22:26:53 wiz Exp $
+#	$NetBSD: Makefile,v 1.57 2007/10/05 18:49:43 reed Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
@@ -14,12 +14,15 @@ MAN=	a.out.5 acct.5 ar.5 core.5 daily.conf.5 dir.5 disktab.5 elf.5 \
 	printcap.5 protocols.5 ranlib.5 rc.conf.5 remote.5 \
 	resolv.conf.5 route.conf.5 rpc.5 \
 	security.conf.5 services.5 shells.5 \
-	stab.5 statvfs.5 ttyaction.5 types.5 \
+	stab.5 statvfs.5 sysctl.conf.5 ttyaction.5 types.5 \
 	utmp.5 utmpx.5 weekly.conf.5 wscons.conf.5
 
 MLINKS=	dir.5 dirent.5 fs.5 inode.5 hosts.equiv.5 rhosts.5
 MLINKS+=utmp.5 wtmp.5 utmp.5 lastlog.5 passwd.5 master.passwd.5
 MLINKS+=utmpx.5 wtmpx.5 utmpx.5 lastlogx.5
+MLINKS+=daily.conf.5 daily.8 monthly.conf.5 monthly.8 weekly.conf.5 weekly.8
+# No symlink is done for security.conf.5 because we have a
+# different security.8 already.
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
