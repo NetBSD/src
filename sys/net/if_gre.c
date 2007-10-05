@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.112 2007/10/05 04:55:10 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.113 2007/10/05 05:15:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.112 2007/10/05 04:55:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.113 2007/10/05 05:15:58 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -445,7 +445,6 @@ gre_upcall_add(struct socket *so, void *arg)
 static void
 gre_upcall_remove(struct socket *so)
 {
-	/* XXX What if the kernel already set an upcall? */
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	so->so_upcallarg = NULL;
 	so->so_upcall = NULL;
@@ -902,9 +901,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
     const struct gre_h *gh)
 {
 	u_int16_t flags;
-#if NBPFILTER > 0
-	u_int32_t af = AF_INET;		/* af passed to BPF tap */
-#endif
+	u_int32_t af;		/* af passed to BPF tap */
 	int isr, s;
 	struct ifqueue *ifq;
 
@@ -933,23 +930,20 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 	case ETHERTYPE_IP:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
+		af = AF_INET;
 		break;
 #ifdef NETATALK
 	case ETHERTYPE_ATALK:
 		ifq = &atintrq1;
 		isr = NETISR_ATALK;
-#if NBPFILTER > 0
 		af = AF_APPLETALK;
-#endif
 		break;
 #endif
 #ifdef INET6
 	case ETHERTYPE_IPV6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
-#if NBPFILTER > 0
 		af = AF_INET6;
-#endif
 		break;
 #endif
 	default:	   /* others not yet supported */
@@ -1008,8 +1002,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-#if NBPFILTER >0
-	if (ifp->if_bpf)
+#if NBPFILTER > 0
+	if (ifp->if_bpf != NULL)
 		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 
