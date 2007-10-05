@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.13.8.1 2007/10/05 01:08:56 joerg Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.13.8.2 2007/10/05 18:12:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.8.1 2007/10/05 01:08:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.8.2 2007/10/05 18:12:17 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -232,8 +232,8 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, &sc->ethercom.ec_if, NULL, NULL);
+	pnp_status = cardbus_net_generic_power_register(self,
+	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->ethercom.ec_if, NULL, NULL);
 	if (pnp_status != PNP_STATUS_SUCCESS) {
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
