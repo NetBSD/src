@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: misc.c,v 1.18 2007/10/05 07:36:45 lukem Exp $	*/
 /*	$OpenBSD: misc.c,v 1.25 2001/10/10 11:17:37 espie Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.17 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2007/10/05 07:36:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: misc.c,v 1.17 2004/06/20 22:20:16 jmc Exp $");
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <util.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -241,6 +242,7 @@ onintr(signo)
 {
 #define intrmessage	"m4: interrupted.\n"
 	write(STDERR_FILENO, intrmessage, sizeof(intrmessage));
+	(void)raise_default_signal(signo);
 	_exit(1);
 }
 
