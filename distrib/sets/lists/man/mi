@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1026 2007/09/30 04:25:26 kiyohara Exp $
+# $NetBSD: mi,v 1.1027 2007/10/05 21:32:02 reed Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1732,6 +1732,7 @@
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
+./usr/share/man/cat5/sysctl.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/targets.0			man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
@@ -4220,6 +4221,7 @@
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
+./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/targets.5			man-iscsi-man		iscsi,.man
 ./usr/share/man/man5/termcap.5			man-sys-man		.man
