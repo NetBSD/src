@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.132 2007/10/01 22:14:10 sjg Exp $
+.\"	$NetBSD: make.1,v 1.133 2007/10/05 15:27:45 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1182,6 +1182,18 @@ Conditional expressions are also preceded by a single dot as the first
 character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
+.It Ic .export Ar variable
+Export the specified global variable.
+If no variable is provided, all globals are exported
+except for internal variables (those that start with
+.Ql \&.
+).
+This is not affected by the
+.Fl X
+flag, so should be used with caution.
+Appending a variable name to
+.Va .MAKE.EXPORTED
+is equivalent to exporting a variable.
 .It Ic .undef Ar variable
 Un-define the specified global variable.
 Only global variables may be un-defined.
