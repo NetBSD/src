@@ -1,3 +1,5 @@
+/*	$NetBSD: jemalloc.c,v 1.2 2007/10/05 23:42:23 ad Exp $	*/
+
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
  * All rights reserved.
@@ -93,29 +95,44 @@
  *******************************************************************************
  */
 
+/* LINTLIBRARY */
+
+#ifdef __NetBSD__
+#  define xutrace(a, b)		utrace("malloc", (a), (b))
+#  define __DECONST(x, y)	((x)__UNCONST(y))
+#  define NO_TLS
+#else
+#  define xutrace(a, b)		utrace((a), (b))
+#endif	/* __NetBSD__ */
+
 /*
  * MALLOC_PRODUCTION disables assertions and statistics gathering.  It also
  * defaults the A and J runtime options to off.  These settings are appropriate
  * for production systems.
  */
-/* #define MALLOC_PRODUCTION */
+#define MALLOC_PRODUCTION
 
 #ifndef MALLOC_PRODUCTION
 #  define MALLOC_DEBUG
 #endif
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $");
+/* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
+__RCSID("$NetBSD: jemalloc.c,v 1.2 2007/10/05 23:42:23 ad Exp $");
 
+#ifdef __FreeBSD__
 #include "libc_private.h"
 #ifdef MALLOC_DEBUG
 #  define _LOCK_DEBUG
 #endif
 #include "spinlock.h"
+#endif
 #include "namespace.h"
 #include <sys/mman.h>
 #include <sys/param.h>
+#ifdef __FreeBSD__
 #include <sys/stddef.h>
+#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -123,8 +140,10 @@ __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jas
 #include <sys/uio.h>
 #include <sys/ktrace.h> /* Must come after several other sys/ includes. */
 
+#ifdef __FreeBSD__
 #include <machine/atomic.h>
 #include <machine/cpufunc.h>
+#endif
 #include <machine/vmparam.h>
 
 #include <errno.h>
@@ -140,7 +159,17 @@ __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jas
 #include <strings.h>
 #include <unistd.h>
 
+#ifdef __NetBSD__
+#  include <reentrant.h>
+void	_malloc_prefork(void);
+void	_malloc_postfork(void);
+ssize_t	_write(int, const void *, size_t);
+const char	*_getprogname(void);
+#endif
+
+#ifdef __FreeBSD__
 #include "un-namespace.h"
+#endif
 
 /* MALLOC_STATS enables statistics calculation. */
 #ifndef MALLOC_PRODUCTION
@@ -197,6 +226,31 @@ __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jas
 #  define NO_TLS
 #endif
 #ifdef __powerpc__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __sparc__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __vax__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __sh__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __m68k__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __mips__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
@@ -261,6 +315,7 @@ __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jas
 
 /******************************************************************************/
 
+#ifdef __FreeBSD__
 /*
  * Mutexes based on spinlocks.  We can't use normal pthread mutexes, because
  * they require malloc()ed memory.
@@ -274,6 +329,15 @@ static bool malloc_initialized = false;
 
 /* Used to avoid initialization races. */
 static malloc_mutex_t init_lock = {_SPINLOCK_INITIALIZER};
+#else
+#define	malloc_mutex_t	mutex_t
+
+/* Set to true once the allocator has been initialized. */
+static bool malloc_initialized = false;
+
+/* Used to avoid initialization races. */
+static mutex_t init_lock = MUTEX_INITIALIZER;
+#endif
 
 /******************************************************************************/
 /*
@@ -649,9 +713,7 @@ static size_t		base_mapped;
  */
 static arena_t		**arenas;
 static unsigned		narenas;
-#ifndef NO_TLS
 static unsigned		next_arena;
-#endif
 static malloc_mutex_t	arenas_mtx; /* Protects arenas initialization. */
 
 #ifndef NO_TLS
@@ -660,6 +722,12 @@ static malloc_mutex_t	arenas_mtx; /* Protects arenas initialization. */
  * for allocations.
  */
 static __thread arena_t	*arenas_map;
+#define	get_arenas_map()	(arenas_map)
+#define	set_arenas_map(x)	(arenas_map = x)
+#else
+static thread_key_t arenas_map_key;
+#define	get_arenas_map()	thr_getspecific(arenas_map_key)
+#define	set_arenas_map(x)	thr_setspecific(arenas_map_key, x)
 #endif
 
 #ifdef MALLOC_STATS
@@ -699,8 +767,11 @@ typedef struct {
 
 #define	UTRACE(a, b, c)							\
 	if (opt_utrace) {						\
-		malloc_utrace_t ut = {a, b, c};				\
-		utrace(&ut, sizeof(ut));				\
+		malloc_utrace_t ut;					\
+		ut.p = a;						\
+		ut.s = b;						\
+		ut.r = c;						\
+		xutrace(&ut, sizeof(ut));				\
 	}
 
 /******************************************************************************/
@@ -708,7 +779,6 @@ typedef struct {
  * Begin function prototypes for non-inline static functions.
  */
 
-static void	malloc_mutex_init(malloc_mutex_t *a_mutex);
 static void	wrtmessage(const char *p1, const char *p2, const char *p3,
 		const char *p4);
 #ifdef MALLOC_STATS
@@ -726,9 +796,7 @@ static void	*pages_map(void *addr, size_t size);
 static void	pages_unmap(void *addr, size_t size);
 static void	*chunk_alloc(size_t size);
 static void	chunk_dealloc(void *chunk, size_t size);
-#ifndef NO_TLS
 static arena_t	*choose_arena_hard(void);
-#endif
 static void	arena_run_split(arena_t *arena, arena_run_t *run, size_t size);
 static arena_chunk_t *arena_chunk_alloc(arena_t *arena);
 static void	arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk);
@@ -766,7 +834,12 @@ static bool	malloc_init_hard(void);
  * Begin mutex.
  */
 
-static void
+#ifdef __NetBSD__
+#define	malloc_mutex_init(m)	mutex_init(m, NULL)
+#define	malloc_mutex_lock(m)	mutex_lock(m)
+#define	malloc_mutex_unlock(m)	mutex_unlock(m)
+#else	/* __NetBSD__ */
+static inline void
 malloc_mutex_init(malloc_mutex_t *a_mutex)
 {
 	static const spinlock_t lock = _SPINLOCK_INITIALIZER;
@@ -789,6 +862,7 @@ malloc_mutex_unlock(malloc_mutex_t *a_mutex)
 	if (__isthreaded)
 		_SPINUNLOCK(&a_mutex->lock);
 }
+#endif	/* __NetBSD__ */
 
 /*
  * End mutex.
@@ -889,8 +963,8 @@ umax2s(uintmax_t x, char *s)
 	s[i] = '\0';
 	do {
 		i--;
-		s[i] = "0123456789"[x % 10];
-		x /= 10;
+		s[i] = "0123456789"[(int)x % 10];
+		x /= (uintmax_t)10LL;
 	} while (x > 0);
 
 	return (&s[i]);
@@ -901,7 +975,7 @@ umax2s(uintmax_t x, char *s)
 static bool
 base_pages_alloc(size_t minsize)
 {
-	size_t csize;
+	size_t csize = 0;
 
 #ifdef USE_BRK
 	/*
@@ -1003,6 +1077,7 @@ base_chunk_node_alloc(void)
 	malloc_mutex_lock(&base_mtx);
 	if (base_chunk_nodes != NULL) {
 		ret = base_chunk_nodes;
+		/* LINTED */
 		base_chunk_nodes = *(chunk_node_t **)ret;
 		malloc_mutex_unlock(&base_mtx);
 	} else {
@@ -1018,6 +1093,7 @@ base_chunk_node_dealloc(chunk_node_t *node)
 {
 
 	malloc_mutex_lock(&base_mtx);
+	/* LINTED */
 	*(chunk_node_t **)node = base_chunk_nodes;
 	base_chunk_nodes = node;
 	malloc_mutex_unlock(&base_mtx);
@@ -1034,13 +1110,14 @@ stats_print(arena_t *arena)
 
 	malloc_printf(
 	    "          allocated/mapped            nmalloc      ndalloc\n");
-	malloc_printf("small: %12llu %-12s %12llu %12llu\n",
+
+	malloc_printf("small: %12zu %-12s %12llu %12llu\n",
 	    arena->stats.allocated_small, "", arena->stats.nmalloc_small,
 	    arena->stats.ndalloc_small);
-	malloc_printf("large: %12llu %-12s %12llu %12llu\n",
+	malloc_printf("large: %12zu %-12s %12llu %12llu\n",
 	    arena->stats.allocated_large, "", arena->stats.nmalloc_large,
 	    arena->stats.ndalloc_large);
-	malloc_printf("total: %12llu/%-12llu %12llu %12llu\n",
+	malloc_printf("total: %12zu/%-12zu %12llu %12llu\n",
 	    arena->stats.allocated_small + arena->stats.allocated_large,
 	    arena->stats.mapped,
 	    arena->stats.nmalloc_small + arena->stats.nmalloc_large,
@@ -1115,7 +1192,9 @@ chunk_comp(chunk_node_t *a, chunk_node_t *b)
 }
 
 /* Generate red-black tree code for chunks. */
+#ifndef lint
 RB_GENERATE_STATIC(chunk_tree_s, chunk_node_s, link, chunk_comp);
+#endif
 
 static void *
 pages_map(void *addr, size_t size)
@@ -1185,15 +1264,18 @@ chunk_alloc(size_t size)
 		 * to use them.
 		 */
 
+		/* LINTED */
 		tchunk = RB_MIN(chunk_tree_s, &old_chunks);
 		while (tchunk != NULL) {
 			/* Found an address range.  Try to recycle it. */
 
 			chunk = tchunk->chunk;
 			delchunk = tchunk;
+			/* LINTED */
 			tchunk = RB_NEXT(chunk_tree_s, &old_chunks, delchunk);
 
 			/* Remove delchunk from the tree. */
+			/* LINTED */
 			RB_REMOVE(chunk_tree_s, &old_chunks, delchunk);
 			base_chunk_node_dealloc(delchunk);
 
@@ -1295,12 +1377,15 @@ RETURN:
 		 * memory we just allocated.
 		 */
 		key.chunk = ret;
+		/* LINTED */
 		tchunk = RB_NFIND(chunk_tree_s, &old_chunks, &key);
 		while (tchunk != NULL
 		    && (uintptr_t)tchunk->chunk >= (uintptr_t)ret
 		    && (uintptr_t)tchunk->chunk < (uintptr_t)ret + size) {
 			delchunk = tchunk;
+			/* LINTED */
 			tchunk = RB_NEXT(chunk_tree_s, &old_chunks, delchunk);
+			/* LINTED */
 			RB_REMOVE(chunk_tree_s, &old_chunks, delchunk);
 			base_chunk_node_dealloc(delchunk);
 		}
@@ -1378,6 +1463,7 @@ chunk_dealloc(void *chunk, size_t size)
 				node->chunk = (void *)((uintptr_t)chunk
 				    + (uintptr_t)offset);
 				node->size = chunksize;
+				/* LINTED */
 				RB_INSERT(chunk_tree_s, &old_chunks, node);
 			}
 		}
@@ -1397,6 +1483,7 @@ chunk_dealloc(void *chunk, size_t size)
 			if (node != NULL) {
 				node->chunk = (void *)(uintptr_t)chunk;
 				node->size = chunksize;
+				/* LINTED */
 				RB_INSERT(chunk_tree_s, &old_chunks, node);
 			}
 		}
@@ -1432,7 +1519,6 @@ choose_arena(void)
 	 * library version, libc's malloc is used by TLS allocation, which
 	 * introduces a bootstrapping issue.
 	 */
-#ifndef NO_TLS
 	if (__isthreaded == false) {
 	    /*
 	     * Avoid the overhead of TLS for single-threaded operation.  If the
@@ -1443,58 +1529,14 @@ choose_arena(void)
 	    return (arenas[0]);
 	}
 
-	ret = arenas_map;
+	ret = get_arenas_map();
 	if (ret == NULL)
 		ret = choose_arena_hard();
-#else
-	if (__isthreaded) {
-		unsigned long ind;
-
-		/*
-		 * Hash _pthread_self() to one of the arenas.  There is a prime
-		 * number of arenas, so this has a reasonable chance of
-		 * working.  Even so, the hashing can be easily thwarted by
-		 * inconvenient _pthread_self() values.  Without specific
-		 * knowledge of how _pthread_self() calculates values, we can't
-		 * easily do much better than this.
-		 */
-		ind = (unsigned long) _pthread_self() % narenas;
-
-		/*
-		 * Optimistially assume that arenas[ind] has been initialized.
-		 * At worst, we find out that some other thread has already
-		 * done so, after acquiring the lock in preparation.  Note that
-		 * this lazy locking also has the effect of lazily forcing
-		 * cache coherency; without the lock acquisition, there's no
-		 * guarantee that modification of arenas[ind] by another thread
-		 * would be seen on this CPU for an arbitrary amount of time.
-		 *
-		 * In general, this approach to modifying a synchronized value
-		 * isn't a good idea, but in this case we only ever modify the
-		 * value once, so things work out well.
-		 */
-		ret = arenas[ind];
-		if (ret == NULL) {
-			/*
-			 * Avoid races with another thread that may have already
-			 * initialized arenas[ind].
-			 */
-			malloc_mutex_lock(&arenas_mtx);
-			if (arenas[ind] == NULL)
-				ret = arenas_extend((unsigned)ind);
-			else
-				ret = arenas[ind];
-			malloc_mutex_unlock(&arenas_mtx);
-		}
-	} else
-		ret = arenas[0];
-#endif
 
 	assert(ret != NULL);
 	return (ret);
 }
 
-#ifndef NO_TLS
 /*
  * Choose an arena based on a per-thread value (slow-path code only, called
  * only by choose_arena()).
@@ -1521,11 +1563,10 @@ choose_arena_hard(void)
 	}
 	next_arena = (next_arena + 1) % narenas;
 	malloc_mutex_unlock(&arenas_mtx);
-	arenas_map = ret;
+	set_arenas_map(ret);
 
 	return (ret);
 }
-#endif
 
 static inline int
 arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
@@ -1543,7 +1584,9 @@ arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 }
 
 /* Generate red-black tree code for arena chunks. */
+#ifndef lint
 RB_GENERATE_STATIC(arena_chunk_tree_s, arena_chunk_s, link, arena_chunk_comp);
+#endif
 
 static inline int
 arena_run_comp(arena_run_t *a, arena_run_t *b)
@@ -1561,7 +1604,9 @@ arena_run_comp(arena_run_t *a, arena_run_t *b)
 }
 
 /* Generate red-black tree code for arena runs. */
+#ifndef lint
 RB_GENERATE_STATIC(arena_run_tree_s, arena_run_s, link, arena_run_comp);
+#endif
 
 static inline void *
 arena_run_reg_alloc(arena_run_t *run, arena_bin_t *bin)
@@ -1768,6 +1813,7 @@ arena_chunk_alloc(arena_t *arena)
 		chunk = arena->spare;
 		arena->spare = NULL;
 
+		/* LINTED */
 		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
 	} else {
 		chunk = (arena_chunk_t *)chunk_alloc(chunksize);
@@ -1779,6 +1825,7 @@ arena_chunk_alloc(arena_t *arena)
 
 		chunk->arena = arena;
 
+		/* LINTED */
 		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
 
 		/*
@@ -1813,6 +1860,7 @@ arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk)
 	 * Remove chunk from the chunk tree, regardless of whether this chunk
 	 * will be cached, so that the arena does not use it.
 	 */
+	/* LINTED */
 	RB_REMOVE(arena_chunk_tree_s, &chunk->arena->chunks, chunk);
 
 	if (opt_hint == false) {
@@ -1850,6 +1898,7 @@ arena_run_alloc(arena_t *arena, size_t size)
 	need_npages = (size >> pagesize_2pow);
 	limit_pages = chunk_npages - arena_chunk_header_npages;
 	compl_need_npages = limit_pages - need_npages;
+	/* LINTED */
 	RB_FOREACH(chunk, arena_chunk_tree_s, &arena->chunks) {
 		/*
 		 * Avoid searching this chunk if there are not enough
@@ -1995,8 +2044,10 @@ arena_bin_nonfull_run_get(arena_t *arena, arena_bin_t *bin)
 	unsigned i, remainder;
 
 	/* Look for a usable run. */
+	/* LINTED */
 	if ((run = RB_MIN(arena_run_tree_s, &bin->runs)) != NULL) {
 		/* run is guaranteed to have available space. */
+		/* LINTED */
 		RB_REMOVE(arena_run_tree_s, &bin->runs, run);
 #ifdef MALLOC_STATS
 		bin->stats.reruns++;
@@ -2354,7 +2405,7 @@ arena_salloc(const void *ptr)
 	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
 	pageind = (((uintptr_t)ptr - (uintptr_t)chunk) >> pagesize_2pow);
 	mapelm = &chunk->map[pageind];
-	if (mapelm->pos != 0 || ptr != (void *)((uintptr_t)chunk) + (pageind <<
+	if (mapelm->pos != 0 || ptr != (char *)((uintptr_t)chunk) + (pageind <<
 	    pagesize_2pow)) {
 		arena_run_t *run;
 
@@ -2434,7 +2485,7 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 
 	pageind = (((uintptr_t)ptr - (uintptr_t)chunk) >> pagesize_2pow);
 	mapelm = &chunk->map[pageind];
-	if (mapelm->pos != 0 || ptr != (void *)((uintptr_t)chunk) + (pageind <<
+	if (mapelm->pos != 0 || ptr != (char *)((uintptr_t)chunk) + (pageind <<
 	    pagesize_2pow)) {
 		arena_run_t *run;
 		arena_bin_t *bin;
@@ -2467,6 +2518,7 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 				 * never gets inserted into the non-full runs
 				 * tree.
 				 */
+				/* LINTED */
 				RB_REMOVE(arena_run_tree_s, &bin->runs, run);
 			}
 #ifdef MALLOC_DEBUG
@@ -2487,12 +2539,15 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 				/* Switch runcur. */
 				if (bin->runcur->nfree > 0) {
 					/* Insert runcur. */
+					/* LINTED */
 					RB_INSERT(arena_run_tree_s, &bin->runs,
 					    bin->runcur);
 				}
 				bin->runcur = run;
-			} else
+			} else {
+				/* LINTED */
 				RB_INSERT(arena_run_tree_s, &bin->runs, run);
+			}
 		}
 #ifdef MALLOC_STATS
 		arena->stats.allocated_small -= size;
@@ -2523,7 +2578,7 @@ arena_new(arena_t *arena)
 {
 	unsigned i;
 	arena_bin_t *bin;
-	size_t pow2_size, prev_run_size;
+	size_t prev_run_size;
 
 	malloc_mutex_init(&arena->mtx);
 
@@ -2545,7 +2600,6 @@ arena_new(arena_t *arena)
 		RB_INIT(&bin->runs);
 
 		bin->reg_size = (1 << (TINY_MIN_2POW + i));
-
 		prev_run_size = arena_bin_run_size_calc(bin, prev_run_size);
 
 #ifdef MALLOC_STATS
@@ -2560,8 +2614,9 @@ arena_new(arena_t *arena)
 		RB_INIT(&bin->runs);
 
 		bin->reg_size = quantum * (i - ntbins + 1);
-
+/*
 		pow2_size = pow2_ceil(quantum * (i - ntbins + 1));
+*/
 		prev_run_size = arena_bin_run_size_calc(bin, prev_run_size);
 
 #ifdef MALLOC_STATS
@@ -2806,9 +2861,11 @@ huge_dalloc(void *ptr)
 
 	/* Extract from tree of huge allocations. */
 	key.chunk = ptr;
+	/* LINTED */
 	node = RB_FIND(chunk_tree_s, &huge, &key);
 	assert(node != NULL);
 	assert(node->chunk == ptr);
+	/* LINTED */
 	RB_REMOVE(chunk_tree_s, &huge, node);
 
 #ifdef MALLOC_STATS
@@ -2999,6 +3056,7 @@ isalloc(const void *ptr)
 
 		/* Extract from tree of huge allocations. */
 		key.chunk = __DECONST(void *, ptr);
+		/* LINTED */
 		node = RB_FIND(chunk_tree_s, &huge, &key);
 		assert(node != NULL);
 
@@ -3140,7 +3198,7 @@ malloc_print_stats(void)
 				arena = arenas[i];
 				if (arena != NULL) {
 					malloc_printf(
-					    "\narenas[%u]:\n", i);
+					    "\narenas[%u] @ %p\n", i, arena);
 					malloc_mutex_lock(&arena->mtx);
 					stats_print(arena);
 					malloc_mutex_unlock(&arena->mtx);
@@ -3173,7 +3231,7 @@ malloc_init_hard(void)
 	unsigned i, j;
 	int linklen;
 	char buf[PATH_MAX + 1];
-	const char *opts;
+	const char *opts = "";
 
 	malloc_mutex_lock(&init_lock);
 	if (malloc_initialized) {
@@ -3465,6 +3523,11 @@ malloc_init_hard(void)
 		opt_narenas_lshift += 2;
 	}
 
+#ifdef NO_TLS
+	/* Initialize arena key. */
+	(void)thr_keycreate(&arenas_map_key, NULL);
+#endif
+
 	/* Determine how many arenas to use. */
 	narenas = ncpus;
 	if (opt_narenas_lshift > 0) {
@@ -3484,36 +3547,7 @@ malloc_init_hard(void)
 			narenas = 1;
 	}
 
-#ifdef NO_TLS
-	if (narenas > 1) {
-		static const unsigned primes[] = {1, 3, 5, 7, 11, 13, 17, 19,
-		    23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83,
-		    89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149,
-		    151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211,
-		    223, 227, 229, 233, 239, 241, 251, 257, 263};
-		unsigned nprimes, parenas;
-
-		/*
-		 * Pick a prime number of hash arenas that is more than narenas
-		 * so that direct hashing of pthread_self() pointers tends to
-		 * spread allocations evenly among the arenas.
-		 */
-		assert((narenas & 1) == 0); /* narenas must be even. */
-		nprimes = (sizeof(primes) >> SIZEOF_INT_2POW);
-		parenas = primes[nprimes - 1]; /* In case not enough primes. */
-		for (i = 1; i < nprimes; i++) {
-			if (primes[i] > narenas) {
-				parenas = primes[i];
-				break;
-			}
-		}
-		narenas = parenas;
-	}
-#endif
-
-#ifndef NO_TLS
 	next_arena = 0;
-#endif
 
 	/* Allocate and initialize arenas. */
 	arenas = (arena_t **)base_alloc(sizeof(arena_t *) * narenas);
@@ -3588,6 +3622,9 @@ RETURN:
 	return (ret);
 }
 
+/* XXXAD */
+int	posix_memalign(void **memptr, size_t alignment, size_t size);
+
 int
 posix_memalign(void **memptr, size_t alignment, size_t size)
 {
@@ -3658,8 +3695,9 @@ calloc(size_t num, size_t size)
 	 * overflow during multiplication if neither operand uses any of the
 	 * most significant half of the bits in a size_t.
 	 */
-	} else if (((num | size) & (SIZE_T_MAX << (sizeof(size_t) << 2)))
-	    && (num_size / size != num)) {
+	} else if ((unsigned long long)((num | size) &
+	   ((unsigned long long)SIZE_T_MAX << (sizeof(size_t) << 2))) &&
+	   (num_size / size != num)) {
 		/* size_t overflow. */
 		ret = NULL;
 		goto RETURN;
@@ -3753,7 +3791,7 @@ free(void *ptr)
 /*
  * Begin non-standard functions.
  */
-
+#ifndef __NetBSD__
 size_t
 malloc_usable_size(const void *ptr)
 {
@@ -3762,6 +3800,7 @@ malloc_usable_size(const void *ptr)
 
 	return (isalloc(ptr));
 }
+#endif
 
 /*
  * End non-standard functions.
