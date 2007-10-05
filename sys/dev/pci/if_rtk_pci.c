@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.32 2007/03/21 12:17:32 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.32.8.1 2007/10/05 00:37:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32 2007/03/21 12:17:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.1 2007/10/05 00:37:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,11 +82,6 @@ struct rtk_pci_softc {
 
 	/* PCI-specific goo.*/
 	void *sc_ih;
-	pci_chipset_tag_t sc_pc; 	/* PCI chipset */
-	pcitag_t sc_pcitag;		/* PCI tag */
-
-	void *sc_powerhook;		/* powerhook ctxt. */
-	struct pci_conf_state sc_pciconf;
 };
 
 static const struct rtk_type rtk_pci_devs[] = {
@@ -111,7 +106,6 @@ static const struct rtk_type rtk_pci_devs[] = {
 
 static int	rtk_pci_match(struct device *, struct cfdata *, void *);
 static void	rtk_pci_attach(struct device *, struct device *, void *);
-static void	rtk_pci_powerhook(int, void *);
 
 CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
     rtk_pci_match, rtk_pci_attach, NULL, NULL);
@@ -161,9 +155,7 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct rtk_type *t;
 	int pmreg;
 	int ioh_valid, memh_valid;
-
-	psc->sc_pc = pa->pa_pc;
-	psc->sc_pcitag = pa->pa_tag;
+	pnp_status_t pnp_status;
 
 	t = rtk_pci_lookup(pa);
 	if (t == NULL) {
@@ -256,34 +248,11 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	psc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    rtk_pci_powerhook, psc);
-	if (psc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish pci power hook\n",
-			sc->sc_dev.dv_xname);
+	pnp_status = pci_net_generic_power_register(self,
+	    pa->pa_pc, pa->pa_tag, &sc->ethercom.ec_if, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 
 	rtk_attach(sc);
-}
-
-static void
-rtk_pci_powerhook(int why, void *arg)
-{
-	struct rtk_pci_softc *sc = (struct rtk_pci_softc *)arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
