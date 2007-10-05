@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_intr.c,v 1.1.2.1 2007/07/31 15:31:43 rjs Exp $	*/
+/*	$NetBSD: sa11x0_intr.c,v 1.1.2.2 2007/10/05 13:30:54 rjs Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_intr.c,v 1.1.2.1 2007/07/31 15:31:43 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_intr.c,v 1.1.2.2 2007/10/05 13:30:54 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ sa11x0_irq_handler(void *arg)
 	irqbits = read_icu(SAIPIC_IP);
 
 	for (irqno = 0 ; irqno < 32 ; irqno++) {
-		/* XXX: Shuould we handle IRQs in priority order? */
+		/* XXX: Should we handle IRQs in priority order? */
 		if (irqbits & (1 << irqno)) {
 
 			/* raise spl to stop interrupts of lower priorities */
