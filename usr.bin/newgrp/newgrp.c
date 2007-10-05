@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: newgrp.c,v 1.2 2007/10/04 14:05:45 christos Exp $");
+__RCSID("$NetBSD: newgrp.c,v 1.3 2007/10/05 14:48:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -218,10 +218,10 @@ newgrp(const char *group, struct passwd *pwd)
 	if (*grp->gr_passwd != '\0') {
 		ep = getpass("Password:");
 		if (strcmp(grp->gr_passwd, crypt(ep, grp->gr_passwd)) == 0) {
-			memset(p, '\0', _PASSWORD_LEN);
+			(void)memset(ep, '\0', _PASSWORD_LEN);
 			return grp->gr_gid;
 		}
-		memset(ep, '\0', _PASSWORD_LEN);
+		(void)memset(ep, '\0', _PASSWORD_LEN);
 	}
 
 	warnx("Sorry");
