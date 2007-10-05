@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.37.22.1 2007/10/05 00:04:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.1 2007/10/05 00:04:29 joerg Exp $");
 
 #include "mpu.h"
 
@@ -192,7 +192,6 @@ static uint32_t yds_get_lpfk(u_int);
 static struct yds_dma *yds_find_dma(struct yds_softc *, void *);
 
 static int	yds_init(struct yds_softc *);
-static void	yds_powerhook(int, void *);
 
 #ifdef AUDIO_DEBUG
 static void	yds_dump_play_slot(struct yds_softc *, int);
@@ -680,63 +679,43 @@ yds_init(struct yds_softc *sc)
 }
 
 static void
-yds_powerhook(int why, void *addr)
+yds_suspend(device_t dv)
 {
-	struct yds_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+	struct yds_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
+	sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+	sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
+	sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
+}
+
+static void
+yds_resume(device_t dv)
+{
+	struct yds_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
 	pcireg_t reg;
-	int s;
 
-	sc = (struct yds_softc *)addr;
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
+	/* Disable legacy mode */
+	reg = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+	pci_conf_write(pc, tag, YDS_PCI_LEGACY, reg & YDS_PCI_LEGACY_LAD);
 
-	s = splaudio();
-	switch (why) {
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-
-		sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
-		sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
-		sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
-		sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-
-		/* Disable legacy mode */
-		reg = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
-		pci_conf_write(pc, tag, YDS_PCI_LEGACY,
-		    reg & YDS_PCI_LEGACY_LAD);
-
-		/* Enable the device. */
-		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-		reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			PCI_COMMAND_MASTER_ENABLE);
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
-		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-		if (yds_init(sc)) {
-			printf("%s: reinitialize failed\n",
-				sc->sc_dev.dv_xname);
-			splx(s);
-			return;
-		}
-		pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
-		sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
-		break;
-	case PWR_SOFTRESUME:
-		pci_conf_write(pc, tag, YDS_PCI_LEGACY, sc->sc_legacy);
-		pci_conf_write(pc, tag, YDS_PCI_FM_BA, sc->sc_ba[0]);
-		pci_conf_write(pc, tag, YDS_PCI_MPU_BA, sc->sc_ba[1]);
-#if notyet
-		yds_configure_legacy(addr);
-#endif
-		break;
+	/* Enable the device. */
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+		PCI_COMMAND_MASTER_ENABLE);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (yds_init(sc)) {
+		aprint_error_dev(dv, "reinitialize failed\n");
+		return;
 	}
-	splx(s);
 
-	return;
+	pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
+	sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
 }
 
 static void
@@ -753,6 +732,7 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 	int i, r, to;
 	int revision;
 	int ac97_id2;
+	pnp_status_t pnp_status;
 
 	sc = (struct yds_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -929,7 +909,12 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	powerhook_establish(sc->sc_dev.dv_xname, yds_powerhook, sc);
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    yds_suspend, yds_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+	}
 }
 
 static int
