@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1069 2007/09/30 13:10:52 kiyohara Exp $
+#	$NetBSD: mi,v 1.1070 2007/10/05 03:28:13 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1400,7 +1400,7 @@
 ./usr/include/netinet/ip_encap.h		comp-c-include
 ./usr/include/netinet/ip_fil.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_frag.h			comp-ipf-include	ipfilter
-./usr/include/netinet/ip_gre.h			comp-c-include
+./usr/include/netinet/ip_gre.h			comp-obsolete		obsolete
 ./usr/include/netinet/ip_htable.h		comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_icmp.h			comp-c-include
 ./usr/include/netinet/ip_lookup.h		comp-ipf-include	ipfilter
