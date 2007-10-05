@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.20.6.2 2007/08/05 19:01:02 jmcneill Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.20.6.3 2007/10/05 02:23:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.2 2007/08/05 19:01:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.3 2007/10/05 02:23:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 	pckbc_slot_t peer;
 	pnp_status_t status;
 	struct acpi_resources res;
-	struct acpi_io *io0, *io1;
+	struct acpi_io *io0, *io1, *ioswap;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 
@@ -190,10 +190,21 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 	    (psc->sc_slot == PCKBC_KBD_SLOT)) {
 
 		io0 = acpi_res_io(&res, 0);
-		if (io0 == NULL) {
+		io1 = acpi_res_io(&res, 1);
+		if (io0 == NULL || io1 == NULL) {
 			aprint_error("%s: unable to find i/o resources\n",
 			    sc->sc_dv.dv_xname);
 			goto out;
+		}
+
+		/*
+		 * JDM: Some firmware doesn't report resources in the order we
+		 * expect; sort IO resources here (lowest first)
+		 */
+		if (io0->ar_base > io1->ar_base) {
+			ioswap = io0;
+			io0 = io1;
+			io1 = ioswap;
 		}
 
 		if (pckbc_is_console(aa->aa_iot, io0->ar_base)) {
@@ -203,12 +214,6 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 			pckbc_console_attached = 1;
 			/* t->t_cmdbyte was initialized by cnattach */
 		} else {
-			io1 = acpi_res_io(&res, 1);
-			if (io1 == NULL) {
-				aprint_error("%s: unable to find i/o resources\n",
-				    sc->sc_dv.dv_xname);
-				goto out;
-			}
 			if (bus_space_map(aa->aa_iot, io0->ar_base,
 					  io0->ar_length, 0, &ioh_d) ||
 			    bus_space_map(aa->aa_iot, io1->ar_base,
