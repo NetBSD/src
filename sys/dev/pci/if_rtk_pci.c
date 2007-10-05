@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.32.8.1 2007/10/05 00:37:20 joerg Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.32.8.2 2007/10/05 01:09:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.1 2007/10/05 00:37:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.2 2007/10/05 01:09:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
 	struct rtk_softc *sc = &psc->sc_rtk;
-	pcireg_t command;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -153,7 +152,6 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
-	int pmreg;
 	int ioh_valid, memh_valid;
 	pnp_status_t pnp_status;
 
@@ -163,35 +161,6 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 		panic("rtk_pci_attach: impossible");
 	}
 	printf(": %s (rev. 0x%02x)\n", t->rtk_name, PCI_REVISION(pa->pa_class));
-
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		if (command & PCI_PMCSR_STATE_MASK) {
-			pcireg_t iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & PCI_PMCSR_STATE_MASK);
-			command &= ~PCI_PMCSR_STATE_MASK;
-			pci_conf_write(pc, pa->pa_tag,
-			    pmreg + PCI_PMCSR, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, PCI_INTERRUPT_REG, irq);
-		}
-	}
 
 	/*
 	 * Map control/status registers.

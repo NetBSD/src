@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.32 2007/03/21 12:17:31 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.32.8.1 2007/10/05 01:08:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.32 2007/03/21 12:17:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.32.8.1 2007/10/05 01:08:57 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -188,6 +188,7 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct rtk_type *t;
 	bus_addr_t adr;
+	pnp_status_t pnp_status;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -206,7 +207,6 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	 */
 	sc->sc_enable = rtk_cardbus_enable;
 	sc->sc_disable = rtk_cardbus_disable;
-	sc->sc_power = rtk_cardbus_power;
 
 	/*
 	 * Map control/status registers.
@@ -249,6 +249,12 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	rtk_cardbus_setup(csc);
 
 	rtk_attach(sc);
+
+	pnp_status = cardbus_net_generic_power_register(self,
+	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->ethercom.ec_if, NULL, NULL);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 
 	/*
 	 * Power down the socket.
@@ -412,24 +418,4 @@ rtk_cardbus_disable(sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
-}
-
-void
-rtk_cardbus_power(sc, why)
-	struct rtk_softc *sc;
-	int why;
-{
-	struct rtk_cardbus_softc *csc = (void *) sc;
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (RTK_IS_ENABLED(sc) == 0)
-			panic("rtk_cardbus_power");
-#endif
-		rtk_cardbus_setup(csc);
-	}
 }
