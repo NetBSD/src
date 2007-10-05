@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.42 2007/03/04 06:02:18 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.42.14.1 2007/10/05 00:19:40 joerg Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42 2007/03/04 06:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42.14.1 2007/10/05 00:19:40 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ static void		esmch_set_format(struct esm_chinfo *,
 static void		esmch_combine_input(struct esm_softc *,
 			    struct esm_chinfo *);
 
-/* Power Management */
-void esm_powerhook(int, void *);
+static void		esm_suspend(device_t);
+static void		esm_resume(device_t);
 
 CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
@@ -1572,6 +1572,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t codec_data;
 	uint16_t pcmbar;
 	int error;
+	pnp_status_t pnp_status;
 
 	ess = (struct esm_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1700,39 +1701,18 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
 
-	ess->esm_suspend = PWR_RESUME;
-	ess->esm_powerhook = powerhook_establish(ess->sc_dev.dv_xname,
-	    esm_powerhook, ess);
-}
-
-/* Power Hook */
-void
-esm_powerhook(int why, void *v)
-{
-	struct esm_softc *ess;
-
-	ess = (struct esm_softc *)v;
-	DPRINTF(ESM_DEBUG_PARAM,
-	    ("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		ess->esm_suspend = why;
-		esm_suspend(ess);
-		DPRINTF(ESM_DEBUG_RESUME, ("esm_suspend\n"));
-		break;
-
-	case PWR_RESUME:
-		ess->esm_suspend = why;
-		esm_resume(ess);
-		DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
-		break;
+	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
+	    esm_suspend, esm_resume);
+	if (pnp_status != PNP_STATUS_SUCCESS) {
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 	}
 }
 
-int
-esm_suspend(struct esm_softc *ess)
+static void
+esm_suspend(device_t dv)
 {
+	struct esm_softc *ess = device_private(dv);
 	int x;
 
 	x = splaudio();
@@ -1748,13 +1728,12 @@ esm_suspend(struct esm_softc *ess)
 	delay(20);
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL, 0);
 	delay(1);
-
-	return 0;
 }
 
-int
-esm_resume(struct esm_softc *ess)
+static void
+esm_resume(device_t dv)
 {
+	struct esm_softc *ess = device_private(dv);
 	int x;
 	uint16_t pcmbar;
 
@@ -1787,21 +1766,4 @@ esm_resume(struct esm_softc *ess)
 		wp_starttimer(ess);
 	}
 	splx(x);
-	return 0;
 }
-
-#if 0
-int
-esm_shutdown(struct esm_softc *ess)
-{
-	int i;
-
-	wp_stoptimer(ess);
-	bus_space_write_2(ess->st, ess->sh, PORT_HOSTINT_CTRL, 0);
-
-	esm_halt_output(ess);
-	esm_halt_input(ess);
-
-	return 0;
-}
-#endif
