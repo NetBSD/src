@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.51 2007/10/05 10:17:13 pavel Exp $
+# $NetBSD: postinstall,v 1.52 2007/10/05 10:28:45 pavel Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -949,6 +949,32 @@ do_sendmail()
 	done | obsolete_paths ${op}
 	failed=$(( ${failed} + $? ))
 
+	return ${failed}
+}
+
+#
+#	mailerconf
+#
+adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
+do_mailerconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_mailterconf  fix|check"
+	op=$1
+
+	failed=0
+	mta_path=$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)
+	old_sendmail_path="/usr/libexec/sendmail/sendmail"
+	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
+	    if [ "$op" = check ]; then
+		msg "mailer.conf points to obsolete ${old_sendmail_path}"
+		failed=1;
+	    else
+		populate_dir ${op} false \
+		${SRC_DIR}/etc ${DEST_DIR}/etc 644 mailer.conf
+		failed=$?
+	    fi
+	fi
+	
 	return ${failed}
 }
 
