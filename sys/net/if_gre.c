@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.111 2007/10/05 03:28:12 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.112 2007/10/05 04:55:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.111 2007/10/05 03:28:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.112 2007/10/05 04:55:10 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -153,8 +153,8 @@ static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getnames(struct socket *, struct lwp *,
     struct sockaddr_storage *, struct sockaddr_storage *);
 static void gre_clearconf(struct gre_soparm *, int);
-static void gre_do_recv(struct gre_softc *, struct socket *);
-static void gre_do_send(struct gre_softc *, struct socket *, lwp_t *);
+static int gre_soreceive(struct socket *, struct mbuf **);
+static int gre_sosend(struct socket *, struct mbuf *, struct lwp *);
 
 static int
 nearest_pow2(size_t len0)
@@ -242,9 +242,22 @@ static void
 greintr(void *arg)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
+	struct socket *so = sc->sc_so;
+	lwp_t *l = curlwp;
+	int rc;
+	struct mbuf *m;
 
 	KASSERT(sc->sc_so != NULL);
-	gre_do_send(sc, sc->sc_so, curlwp);
+
+	sc->sc_send_ev.ev_count++;
+	GRE_DPRINTF(sc, "%s: enter\n", __func__);
+	while ((m = gre_bufq_dequeue(&sc->sc_snd)) != NULL) {
+		/* XXX handle ENOBUFS? */
+		if ((rc = gre_sosend(so, m, l)) != 0) {
+			GRE_DPRINTF(sc, "%s: gre_sosend failed %d\n", __func__,
+			    rc);
+		}
+	}
 }
 
 /* Caller must hold sc->sc_mtx. */
@@ -264,17 +277,6 @@ gre_join(struct gre_softc *sc)
 		cv_wait(&sc->sc_condvar, &sc->sc_mtx);
 }
 
-#if 0
-/* Caller must hold sc->sc_mtx. */
-static void
-gre_wakeup(struct gre_softc *sc)
-{
-	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	sc->sc_state = GRE_S_WORK;
-	cv_signal(&sc->sc_condvar);
-}
-#endif
-
 static void
 gre_evcnt_detach(struct gre_softc *sc)
 {
@@ -282,10 +284,8 @@ gre_evcnt_detach(struct gre_softc *sc)
 	evcnt_detach(&sc->sc_pullup_ev);
 	evcnt_detach(&sc->sc_error_ev);
 	evcnt_detach(&sc->sc_block_ev);
-	evcnt_detach(&sc->sc_rupcall_ev);
 	evcnt_detach(&sc->sc_recv_ev);
 
-	evcnt_detach(&sc->sc_supcall_ev);
 	evcnt_detach(&sc->sc_oflow_ev);
 	evcnt_detach(&sc->sc_send_ev);
 
@@ -300,23 +300,19 @@ gre_evcnt_attach(struct gre_softc *sc)
 
 	evcnt_attach_dynamic(&sc->sc_recv_ev, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_if.if_xname, "recv");
-	evcnt_attach_dynamic(&sc->sc_rupcall_ev, EVCNT_TYPE_MISC,
-	    &sc->sc_recv_ev, sc->sc_if.if_xname, "recv upcalls");
 	evcnt_attach_dynamic(&sc->sc_block_ev, EVCNT_TYPE_MISC,
 	    &sc->sc_recv_ev, sc->sc_if.if_xname, "would block");
 	evcnt_attach_dynamic(&sc->sc_error_ev, EVCNT_TYPE_MISC,
 	    &sc->sc_recv_ev, sc->sc_if.if_xname, "error");
 	evcnt_attach_dynamic(&sc->sc_pullup_ev, EVCNT_TYPE_MISC,
-	    &sc->sc_recv_ev, sc->sc_if.if_xname, "pullup");
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "pullup failed");
 	evcnt_attach_dynamic(&sc->sc_unsupp_ev, EVCNT_TYPE_MISC,
 	    &sc->sc_recv_ev, sc->sc_if.if_xname, "unsupported");
 
 	evcnt_attach_dynamic(&sc->sc_send_ev, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_if.if_xname, "send");
 	evcnt_attach_dynamic(&sc->sc_oflow_ev, EVCNT_TYPE_MISC,
-	    &sc->sc_send_ev, sc->sc_if.if_xname, "unsupported");
-	evcnt_attach_dynamic(&sc->sc_supcall_ev, EVCNT_TYPE_MISC,
-	    &sc->sc_recv_ev, sc->sc_if.if_xname, "send upcalls");
+	    &sc->sc_send_ev, sc->sc_if.if_xname, "overflow");
 }
 
 static int
@@ -399,10 +395,41 @@ static void
 gre_receive(struct socket *so, void *arg, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
+	int rc;
+	const struct gre_h *gh;
+	struct mbuf *m;
 
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	sc->sc_rupcall_ev.ev_count++;
-	gre_do_recv(sc, so);
+
+	sc->sc_recv_ev.ev_count++;
+
+	rc = gre_soreceive(so, &m);
+	/* TBD Back off if ECONNREFUSED (indicates
+	 * ICMP Port Unreachable)?
+	 */
+	if (rc == EWOULDBLOCK) {
+		GRE_DPRINTF(sc, "%s: EWOULDBLOCK\n", __func__);
+		sc->sc_block_ev.ev_count++;
+		return;
+	} else if (rc != 0 || m == NULL) {
+		GRE_DPRINTF(sc, "%s: rc %d m %p\n",
+		    sc->sc_if.if_xname, rc, (void *)m);
+		sc->sc_error_ev.ev_count++;
+		return;
+	}
+	if (m->m_len < sizeof(*gh) &&
+	    (m = m_pullup(m, sizeof(*gh))) == NULL) {
+		GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
+		sc->sc_pullup_ev.ev_count++;
+		return;
+	}
+	gh = mtod(m, const struct gre_h *);
+
+	if (gre_input(sc, m, 0, gh) == 0) {
+		sc->sc_unsupp_ev.ev_count++;
+		GRE_DPRINTF(sc, "%s: dropping unsupported\n", __func__);
+		m_freem(m);
+	}
 }
 
 static void
@@ -575,10 +602,10 @@ static int
 gre_soreceive(struct socket *so, struct mbuf **mp0)
 {
 	struct lwp *l = curlwp;
-	struct mbuf	*m, **mp;
-	int		flags, len, error, s, type;
+	struct mbuf *m, **mp;
+	int flags, len, error, s, type;
 	const struct protosw	*pr;
-	struct mbuf	*nextrecord;
+	struct mbuf *nextrecord;
 
 	KASSERT(mp0 != NULL);
 
@@ -772,61 +799,6 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	return error;
 }
 
-static void
-gre_do_recv(struct gre_softc *sc, struct socket *so)
-{
-	int rc;
-	const struct gre_h *gh;
-	struct mbuf *m;
-
-	sc->sc_recv_ev.ev_count++;
-
-	rc = gre_soreceive(so, &m);
-	/* TBD Back off if ECONNREFUSED (indicates
-	 * ICMP Port Unreachable)?
-	 */
-	if (rc == EWOULDBLOCK) {
-		GRE_DPRINTF(sc, "%s: EWOULDBLOCK\n", __func__);
-		sc->sc_block_ev.ev_count++;
-		return;
-	} else if (rc != 0 || m == NULL) {
-		GRE_DPRINTF(sc, "%s: rc %d m %p\n",
-		    sc->sc_if.if_xname, rc, (void *)m);
-		sc->sc_error_ev.ev_count++;
-		return;
-	}
-	if (m->m_len < sizeof(*gh) &&
-	    (m = m_pullup(m, sizeof(*gh))) == NULL) {
-		GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
-		sc->sc_pullup_ev.ev_count++;
-		return;
-	}
-	gh = mtod(m, const struct gre_h *);
-
-	if (gre_input(sc, m, 0, gh) == 0) {
-		sc->sc_unsupp_ev.ev_count++;
-		GRE_DPRINTF(sc, "%s: dropping unsupported\n", __func__);
-		m_freem(m);
-	}
-}
-
-static void
-gre_do_send(struct gre_softc *sc, struct socket *so, lwp_t *l)
-{
-	int rc;
-	struct mbuf *m;
-
-	sc->sc_send_ev.ev_count++;
-	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	while ((m = gre_bufq_dequeue(&sc->sc_snd)) != NULL) {
-		/* XXX handle ENOBUFS? */
-		if ((rc = gre_sosend(so, m, l)) != 0) {
-			GRE_DPRINTF(sc, "%s: gre_sosend failed %d\n", __func__,
-			    rc);
-		}
-	}
-}
-
 static struct socket *
 gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l)
 {
@@ -885,9 +857,6 @@ static void
 gre_thread1(struct gre_softc *sc, struct lwp *l)
 {
 	struct socket *so = NULL;
-#if 0
-	int upcalls;
-#endif
 
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
 
@@ -910,17 +879,6 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 
 		sc->sc_state = GRE_S_IDLE;
 		cv_signal(&sc->sc_condvar);
-
-#if 0
-		upcalls = sc->sc_upcalls;
-		sc->sc_upcalls = 0;
-		mutex_exit(&sc->sc_mtx);
-		if (so != NULL && upcalls != 0) {
-			gre_do_recv(sc, so);
-			gre_do_send(sc, so, l);
-		}
-		mutex_enter(&sc->sc_mtx);
-#endif
 	}
 	sc->sc_state = GRE_S_DEAD;
 	/* Wake all who wait. */
@@ -1098,25 +1056,11 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	ifp->if_obytes += m->m_pkthdr.len;
 
 	/* send it off */
-#if 1
 	if ((error = gre_bufq_enqueue(&sc->sc_snd, m)) != 0) {
 		sc->sc_oflow_ev.ev_count++;
 		m_freem(m);
-	} else {
-#if 0
-		mutex_enter(&sc->sc_mtx);
-		sc->sc_supcall_ev.ev_count++;
-		if (sc->sc_upcalls++ == 0)
-			gre_wakeup(sc);
-		mutex_exit(&sc->sc_mtx);
-#else
+	} else
 		softintr_schedule(sc->sc_si);
-#endif
-	}
-#else
-	if ((rc = gre_sosend(so, m, curlwp)) != 0)
-		GRE_DPRINTF(sc, "%s: gre_sosend failed %d\n", __func__, rc);
-#endif
   end:
 	if (error)
 		ifp->if_oerrors++;
