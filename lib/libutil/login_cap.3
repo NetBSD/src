@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.15 2004/12/11 16:50:56 wiz Exp $
+.\" $NetBSD: login_cap.3,v 1.16 2007/10/06 21:51:22 christos Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -179,6 +179,17 @@ The various bits available to be or-ed together to make up
 .Ar flags
 are:
 .Bl -tag -width LOGIN_SETRESOURCESXX
+.It LOGIN_SETGID
+Set the group id.
+Requires the
+.Ar pwd
+field be specified.
+.It LOGIN_SETGROUPS
+Set the group membership list by calling
+.Xr initgroups 3 .
+Requires the
+.Ar pwd
+field be specified.
 .It LOGIN_SETGROUP
 Set the group id and call
 .Xr initgroups 3 .
