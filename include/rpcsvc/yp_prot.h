@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.16 2006/04/24 19:00:30 snj Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.17 2007/10/06 16:17:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -63,12 +63,6 @@
  * YPPROC_ORDER		takes (struct ypreq_nokey), returns (ypresp_order).
  * YPPROC_MAPLIST	takes (char *), returns (struct ypmaplist *).
  */
-
-#ifndef BOOL_DEFINED
-typedef u_int bool;
-#define BOOL_DEFINED
-#endif
-
 
 /* Program and version symbols, magic numbers */
 #define YPPROG		((unsigned long)100004)
