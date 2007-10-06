@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.11 2007/09/27 18:11:05 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.12 2007/10/06 22:12:04 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -326,8 +326,6 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	argv[4] = prop_string_cstring_nocopy(obj);
 
 	argv[5] = NULL;
-
-	prop_object_release(dict);
 
 	run_script(argv);
 }
