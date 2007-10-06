@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.113 2007/10/05 05:15:58 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.114 2007/10/06 03:30:25 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.113 2007/10/05 05:15:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.114 2007/10/06 03:30:25 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -146,7 +146,6 @@ static int gre_is_nullconf(const struct gre_soparm *);
 static int gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, struct rtentry *);
 static int gre_ioctl(struct ifnet *, u_long, void *);
-static void gre_thread(void *);
 static void gre_closef(struct file **, struct lwp *);
 static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
@@ -155,6 +154,8 @@ static int gre_getnames(struct socket *, struct lwp *,
 static void gre_clearconf(struct gre_soparm *, int);
 static int gre_soreceive(struct socket *, struct mbuf **);
 static int gre_sosend(struct socket *, struct mbuf *, struct lwp *);
+static struct socket *gre_reconf(struct gre_softc *, struct socket *, lwp_t *,
+    const struct gre_soparm *);
 
 static int
 nearest_pow2(size_t len0)
@@ -273,7 +274,7 @@ gre_wait(struct gre_softc *sc)
 static void
 gre_join(struct gre_softc *sc)
 {
-	while (sc->sc_state != GRE_S_DEAD || sc->sc_waiters > 0)
+	while (sc->sc_waiters > 0)
 		cv_wait(&sc->sc_condvar, &sc->sc_mtx);
 }
 
@@ -288,16 +289,11 @@ gre_evcnt_detach(struct gre_softc *sc)
 
 	evcnt_detach(&sc->sc_oflow_ev);
 	evcnt_detach(&sc->sc_send_ev);
-
-	evcnt_detach(&sc->sc_wakeup_ev);
 }
 
 static void
 gre_evcnt_attach(struct gre_softc *sc)
 {
-	evcnt_attach_dynamic(&sc->sc_wakeup_ev, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_if.if_xname, "wakeups");
-
 	evcnt_attach_dynamic(&sc->sc_recv_ev, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_if.if_xname, "recv");
 	evcnt_attach_dynamic(&sc->sc_block_ev, EVCNT_TYPE_MISC,
@@ -342,7 +338,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sp.sp_type = SOCK_RAW;
 	sp.sp_bysock = 0;
 	sp.sp_fd = -1;
-	sc->sc_soparm = sc->sc_newsoparm = sp;
+	sc->sc_soparm = sp;
 
 	gre_evcnt_attach(sc);
 
@@ -353,10 +349,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif
+	sc->sc_lwp = &lwp0;
 	sc->sc_state = GRE_S_IDLE;
-	if (kthread_create(PRI_NONE, 0, NULL, gre_thread, sc,
-	    &sc->sc_lwp, sc->sc_if.if_xname) != 0)
-		sc->sc_state = GRE_S_DEAD;
 	return 0;
 }
 
@@ -380,6 +374,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	sc->sc_state = GRE_S_DIE;
 	cv_broadcast(&sc->sc_condvar);
 	gre_join(sc);
+	sc->sc_so = gre_reconf(sc, sc->sc_so, sc->sc_lwp, NULL);
 	mutex_exit(&sc->sc_mtx);
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 
@@ -799,7 +794,8 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 }
 
 static struct socket *
-gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l)
+gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l,
+    const struct gre_soparm *newsoparm)
 {
 	int rc;
 	struct file *fp;
@@ -821,12 +817,12 @@ shutdown:
 		so = NULL;
 	}
 
-	sc->sc_soparm = sc->sc_newsoparm;
-	sc->sc_newsoparm.sp_fd = -1;
-
-	if (sc->sc_state == GRE_S_DIE)
+	if (newsoparm != NULL) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-	else if (sc->sc_soparm.sp_fd != -1) {
+		sc->sc_soparm = *newsoparm;
+	}
+
+	if (sc->sc_soparm.sp_fd != -1) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		rc = getsock(l->l_proc->p_fd, sc->sc_soparm.sp_fd, &fp);
 		if (rc != 0)
@@ -850,50 +846,6 @@ shutdown:
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
 	}
 	return so;
-}
-
-static void
-gre_thread1(struct gre_softc *sc, struct lwp *l)
-{
-	struct socket *so = NULL;
-
-	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-
-	for (;;) {
-		if (sc->sc_state != GRE_S_DIE && sc->sc_state != GRE_S_WORK &&
-		    sc->sc_state != GRE_S_KCONF) {
-			GRE_DPRINTF(sc, "%s: sleeping\n", __func__);
-			gre_wait(sc);
-			continue;
-		}
-
-		GRE_DPRINTF(sc, "%s: awake\n", __func__);
-
-		sc->sc_wakeup_ev.ev_count++;
-
-		if (sc->sc_state == GRE_S_KCONF || sc->sc_state == GRE_S_DIE)
-			so = sc->sc_so = gre_reconf(sc, so, l);
-		if (sc->sc_state == GRE_S_DIE)
-			break;
-
-		sc->sc_state = GRE_S_IDLE;
-		cv_signal(&sc->sc_condvar);
-	}
-	sc->sc_state = GRE_S_DEAD;
-	/* Wake all who wait. */
-	cv_broadcast(&sc->sc_condvar);
-}
-
-static void
-gre_thread(void *arg)
-{
-	struct gre_softc *sc = (struct gre_softc *)arg;
-
-	mutex_enter(&sc->sc_mtx);
-	gre_thread1(sc, curlwp);
-	mutex_exit(&sc->sc_mtx);
-
-	kthread_exit(0);
 }
 
 static int
@@ -1280,8 +1232,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 
 	mutex_enter(&sc->sc_mtx);
 
-	while (sc->sc_state == GRE_S_CONF || sc->sc_state == GRE_S_KCONF ||
-	       sc->sc_state == GRE_S_WORK)
+	while (sc->sc_state == GRE_S_IOCTL)
 		gre_wait(sc);
 
 	if (sc->sc_state != GRE_S_IDLE) {
@@ -1290,7 +1241,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		goto out;
 	}
 
-	sc->sc_state = GRE_S_CONF;
+	sc->sc_state = GRE_S_IOCTL;
 	sp0 = sc->sc_soparm;
 	sp0.sp_fd = -1;
 	sp = &sp0;
@@ -1470,9 +1421,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		if (error == 0) {
 	sendconf:
 			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-			sc->sc_newsoparm = *sp;
 			ifp->if_flags &= ~IFF_RUNNING;
-			sc->sc_state = GRE_S_KCONF;
+			sc->sc_so = gre_reconf(sc, sc->sc_so, sc->sc_lwp, sp);
 		}
 
 		break;
@@ -1530,7 +1480,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	}
 out:
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-	if (sc->sc_state == GRE_S_CONF) {
+	if (sc->sc_state == GRE_S_IOCTL) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		sc->sc_state = GRE_S_IDLE;
 	}
