@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.27 2007/10/06 21:58:40 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.28 2007/10/06 22:07:42 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.27 2007/10/06 21:58:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.28 2007/10/06 22:07:42 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -766,7 +766,9 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 		/*
 		 * Create a dictionary for the new event.
 		 */
-		ped = kmem_zalloc(sizeof(*ped), KM_SLEEP);
+		ped = kmem_zalloc(sizeof(*ped), KM_NOSLEEP);
+		if (!ped)
+			return;
 		ped->dict = prop_dictionary_create();
 
 		if (sysmon_power_daemon_task(ped, pes, event) == 0)
@@ -886,7 +888,9 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		/*
 		 * Create a new dictionary for the event.
 		 */
-		ped = kmem_zalloc(sizeof(*ped), KM_SLEEP);
+		ped = kmem_zalloc(sizeof(*ped), KM_NOSLEEP);
+		if (!ped)
+			return;
 		ped->dict = prop_dictionary_create();
 
 		if (sysmon_power_daemon_task(ped, smpsw, event) == 0)
