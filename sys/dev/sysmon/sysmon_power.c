@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.25 2007/09/25 19:27:08 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.26 2007/10/06 02:49:46 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.25 2007/09/25 19:27:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.26 2007/10/06 02:49:46 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -260,6 +260,9 @@ sysmon_power_daemon_task(void *pev_data, int event)
 	int rv, error = 0;
 
 	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+	
+	if (!pev_data)
+		return EINVAL;
 
 	/*
 	 * If a power management daemon is connected, then simply
@@ -706,6 +709,8 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 {
 	const char *mystr = NULL;
 
+	KASSERT(pes != NULL);
+
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	if (sysmon_power_daemon != NULL)
 		if (sysmon_power_daemon_task(pes, event) == 0)
@@ -817,6 +822,9 @@ sysmon_pswitch_unregister(struct sysmon_pswitch *smpsw)
 void
 sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 {
+
+	KASSERT(smpsw != NULL);
+
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	if (sysmon_power_daemon != NULL)
 		if (sysmon_power_daemon_task(smpsw, event) == 0)
