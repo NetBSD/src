@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.29 2006/05/20 19:40:46 mrg Exp $	*/
+/*	$NetBSD: bootp.c,v 1.29.34.1 2007/10/06 15:43:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -250,16 +250,20 @@ bootp(sock)
 		gateip.s_addr = 0;
 	}
 
-	printf("net_open: client addr: %s\n", inet_ntoa(myip));
-	if (smask)
-		printf("net_open: subnet mask: %s\n", intoa(smask));
-	if (gateip.s_addr != 0)
-		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
-	printf("net_open: server addr: %s\n", inet_ntoa(rootip));
-	if (rootpath[0] != '\0')
-		printf("net_open: server path: %s\n", rootpath);
-	if (bootfile[0] != '\0')
-		printf("net_open: file name: %s\n", bootfile);
+#ifdef BOOTP_DEBUG
+	if (debug) {
+		printf("client addr: %s\n", inet_ntoa(myip));
+		if (smask)
+			printf("subnet mask: %s\n", intoa(smask));
+		if (gateip.s_addr != 0)
+			printf("net gateway: %s\n", inet_ntoa(gateip));
+		printf("server addr: %s\n", inet_ntoa(rootip));
+		if (rootpath[0] != '\0')
+			printf("server path: %s\n", rootpath);
+		if (bootfile[0] != '\0')
+			printf("file name: %s\n", bootfile);
+	}
+#endif
 
 	/* Bump xid so next request will be unique. */
 	++d->xid;
