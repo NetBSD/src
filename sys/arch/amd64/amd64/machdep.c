@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61.2.1 2007/09/30 15:32:21 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.2.2 2007/10/06 15:39:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.1 2007/09/30 15:32:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.2 2007/10/06 15:39:57 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1504,22 +1504,20 @@ init_x86_64(paddr_t first_avail)
 
 	softintr_init();
 	splraise(IPL_IPI);
-	enable_intr();
+	x86_enable_intr();
 
 	x86_init();
 
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
-
-	curlwp = &lwp0;
 }
 
 void
 cpu_reset(void)
 {
 
-	disable_intr();
+	x86_disable_intr();
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
@@ -1540,7 +1538,7 @@ cpu_reset(void)
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
-	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	breakpoint();
 
 #if 0
 	/*

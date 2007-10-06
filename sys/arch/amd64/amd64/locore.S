@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.2.2 2007/10/04 15:04:31 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.3 2007/10/06 15:39:38 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -634,40 +634,6 @@ longmode_hi:
 	call 	_C_LABEL(main)
 
 /*****************************************************************************/
-
-/*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Change the global descriptor table.
- */
-NENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movq	%rdi,%rax
-	lgdt	(%rax)
-	/* Flush the prefetch q. */
-	jmp	1f
-	nop
-1:	/* Reload "stale" selectors. */
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%ds
-	movl	%eax,%es
-	movl	%eax,%ss
-	/* Reload code selector by doing intersegment return. */
-	popq	%rax
-	pushq	$GSEL(GCODE_SEL, SEL_KPL)
-	pushq	%rax
-	lretq
-
-/*
- * void x86_flush()
- *
- * Flush instruction pipelines by doing an intersegment (far) return.
- */
-NENTRY(x86_flush)
-	popq	%rax
-	pushq	$GSEL(GCODE_SEL, SEL_KPL)
-	pushq	%rax
-	lretq
 
 /*
  * int setjmp(label_t *)
