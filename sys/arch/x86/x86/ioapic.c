@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.20 2007/09/26 19:48:43 ad Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.21 2007/10/06 04:37:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.20 2007/09/26 19:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.21 2007/10/06 04:37:06 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -431,8 +431,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 				redlo &= ~IOAPIC_REDLO_ACTLO;
 		}
 	}
-	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
+	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	if (mp_verbose)
 		ioapic_print_redir(sc, "int", pin);
 }
