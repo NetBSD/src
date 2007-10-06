@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.4.10.1 2007/10/06 15:28:42 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4.10.1 2007/10/06 15:28:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -46,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $");
 void
 idle_loop(void *dummy)
 {
-#if defined(DIAGNOSTIC)
 	struct cpu_info *ci = curcpu();
-#endif /* defined(DIAGNOSTIC) */
 	struct lwp *l = curlwp;
 
 	KERNEL_UNLOCK_ALL(l, NULL);
@@ -72,7 +70,8 @@ idle_loop(void *dummy)
 		}
 		if (!sched_curcpu_runnable_p()) {
 			cpu_idle();
-			if (!sched_curcpu_runnable_p()) {
+			if (!sched_curcpu_runnable_p() &&
+			    !ci->ci_want_resched) {
 				continue;
 			}
 		}

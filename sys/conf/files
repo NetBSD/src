@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.863 2007/09/07 20:17:37 plunky Exp $
+#	$NetBSD: files,v 1.863.2.1 2007/10/06 15:30:16 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1412,9 +1412,7 @@ file	kern/tty_tty.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
-file	net/link_proto.c		ether | fddi | netatalk | token |
-						wlan | inet | inet6 | iso |
-						natm | bluetooth
+file	net/link_proto.c
 file	kern/uipc_proto.c
 file	kern/uipc_sem.c			p1003_1b_semaphore
 file	kern/uipc_socket.c
@@ -1492,7 +1490,6 @@ file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_etherip.c		etherip & inet
-file	netinet/ip_gre.c		inet & gre
 file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 

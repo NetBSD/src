@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.63 2007/07/07 05:13:17 tsutsui Exp $
+#	$NetBSD: files.xen,v 1.63.12.1 2007/10/06 15:33:38 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -33,6 +33,8 @@ defflag opt_pcifixup.h  PCI_ADDR_FIXUP PCI_BUS_FIXUP
 defparam                PCI_CONF_MODE
 
 file	arch/xen/i386/autoconf.c
+file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
@@ -58,6 +60,7 @@ file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	arch/xen/i386/xen_machdep.c
 file	arch/xen/i386/xen_intr.c
+file	arch/xen/i386/xenfunc.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/xen/xen/xen_debug.c
@@ -98,7 +101,7 @@ file	dev/md_root.c			memory_disk_hooks
 
 file	arch/x86/x86/bus_dma.c		pci
 file	arch/xen/x86/xen_bus_dma.c	pci
-file	arch/xen/x86/bus_space.c	pci
+file	arch/x86/x86/bus_space.c	pci
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.13 2006/10/24 23:41:01 christos Exp $	*/
+/*	$NetBSD: boot1.c,v 1.13.30.1 2007/10/06 15:34:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.13 2006/10/24 23:41:01 christos Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.13.30.1 2007/10/06 15:34:58 yamt Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -75,7 +75,7 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	bios_sector = *sector;
 	d.dev = biosdev;
 
-        putstr("\r\nNetBSD/" MACHINE " " STR(FS) " Primary Bootstrap\r\n");
+        putstr("\r\nNetBSD/x86 " STR(FS) " Primary Bootstrap\r\n");
 
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.22 2007/07/23 11:05:47 pooka Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.22.8.1 2007/10/06 15:29:45 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22 2007/07/23 11:05:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22.8.1 2007/10/06 15:29:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ msdosfs_init()
 
 	malloc_type_attach(M_MSDOSFSMNT);
 	malloc_type_attach(M_MSDOSFSFAT);
+	malloc_type_attach(M_MSDOSFSTMP);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
@@ -145,6 +146,7 @@ msdosfs_done()
 {
 	hashdone(dehashtbl, M_MSDOSFSMNT);
 	pool_destroy(&msdosfs_denode_pool);
+	malloc_type_detach(M_MSDOSFSTMP);
 	malloc_type_detach(M_MSDOSFSFAT);
 	malloc_type_detach(M_MSDOSFSMNT);
 }
@@ -285,6 +287,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * need to it.
 	 */
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
+	genfs_node_init(nvp, &msdosfs_genfsops);
 	msdosfs_hashins(ldep);
 
 	ldep->de_pmp = pmp;
@@ -329,8 +332,12 @@ deget(pmp, dirclust, diroffset, depp)
 		/* leave the other fields as garbage */
 	} else {
 		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
-		if (error)
+		if (error) {
+			ldep->de_devvp = NULL;
+			ldep->de_Name[0] = SLOT_DELETED;
+			vput(nvp);
 			return (error);
+		}
 		DE_INTERNALIZE(ldep, direntptr);
 		brelse(bp);
 	}
@@ -359,7 +366,6 @@ deget(pmp, dirclust, diroffset, depp)
 		}
 	} else
 		nvp->v_type = VREG;
-	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
 	uvm_vnp_setsize(nvp, ldep->de_FileSize);

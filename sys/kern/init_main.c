@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.314 2007/09/07 18:56:08 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.314.2.1 2007/10/06 15:28:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.314 2007/09/07 18:56:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.314.2.1 2007/10/06 15:28:40 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -261,15 +261,22 @@ main(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	/*
-	 * Initialize the current LWP pointer (curlwp) before
-	 * any possible traps/probes to simplify trap processing.
-	 */
 	l = &lwp0;
-	curlwp = l;
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;
+
+	/*
+	 * XXX This is a temporary check to be removed before
+	 * NetBSD 5.0 is released.
+	 */
+#if !defined(__i386__ ) && !defined(__x86_64__)
+	if (curlwp != l) {
+		printf("NOTICE: curlwp should be set before main()\n");
+		DELAY(250000);
+		curlwp = l;
+	}
+#endif
 
 	/*
 	 * Attempt to find console and initialize

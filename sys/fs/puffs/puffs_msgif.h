@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.50 2007/08/23 14:36:46 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.50.4.1 2007/10/06 15:29:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -44,12 +44,13 @@
 
 #include <uvm/uvm_prot.h>
 
-#define PUFFSOP_VFS	1
-#define PUFFSOP_VN	2
-#define PUFFSOP_CACHE	3
+#define PUFFSOP_VFS	0x01
+#define PUFFSOP_VN	0x02
+#define PUFFSOP_CACHE	0x03
+#define PUFFSOP_ERROR	0x04
 #define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
 
-#define PUFFSOP_OPCMASK		0x03
+#define PUFFSOP_OPCMASK		0x07
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
 #define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
@@ -84,8 +85,18 @@ enum {
 };
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
+/*
+ * These signal invalid parameters the file system returned.
+ */
+enum {
+	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
+	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
+	PUFFS_ERR_VPTOFH,	PUFFS_ERR_ERROR
+};
+#define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
+
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	17
+#define PUFFSVERSION	19
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -96,6 +107,7 @@ enum {
 struct puffs_kargs {
 	unsigned int	pa_vers;
 	int		pa_fd;
+
 	uint32_t	pa_flags;
 
 	size_t		pa_maxreqlen;
@@ -110,7 +122,7 @@ struct puffs_kargs {
 	dev_t		pa_root_rdev;
 
 	struct statvfs	pa_svfsb;
-	
+
 	char		pa_typename[_VFS_NAMELEN];
 	char		pa_mntfromname[_VFS_MNAMELEN];
 
@@ -218,29 +230,23 @@ struct puffs_reqh_put {
 struct puffs_req {
 	uint64_t	preq_id;		/* get: cur, put: next */
 
-	union u {
-		struct {
-			uint8_t	opclass;	/* cur */
-			uint8_t	optype;		/* cur */
+	uint8_t		preq_opclass;		/* get, cur */
+	uint8_t		preq_optype;		/* get, cur */
+	int		preq_rv;		/* put, cur */
+	int		preq_setbacks;		/* put, cur */
 
-			/*
-			 * preq_cookie is the node cookie associated with
-			 * the request.  It always maps 1:1 to a vnode
-			 * and could map to a userspace struct puffs_node.
-			 * The cookie usually describes the first
-			 * vnode argument of the VOP_POP() in question.
-			 */
+	/*
+	 * preq_cookie is the node cookie associated with
+	 * the request.  It always maps 1:1 to a vnode
+	 * and could map to a userspace struct puffs_node.
+	 * The cookie usually describes the first
+	 * vnode argument of the VOP_POP() in question.
+	 */
+	void		*preq_cookie;		/* get, cur */
 
-			void	*cookie;	/* cur */
-		} out;
-		struct {
-			int	rv;		/* cur */
-			int	setbacks;	/* cur */
-			void	*buf;		/* next */
-		} in;
-	} u;
+	void		*preq_nextbuf;		/* put, next */
 
-	size_t  preq_buflen;			/* get: cur, put: next */
+	size_t  	preq_buflen;		/* get: cur, put: next */
 	/*
 	 * the following helper pads the struct size to md alignment
 	 * multiple (should size_t not cut it).  it makes sure that
@@ -248,30 +254,12 @@ struct puffs_req {
 	 */
 	uint8_t	preq_buf[0] __aligned(ALIGNBYTES+1);
 };
-#define preq_opclass	u.out.opclass
-#define preq_optype	u.out.optype
-#define preq_cookie	u.out.cookie
-#define preq_rv		u.in.rv
-#define preq_setbacks	u.in.setbacks
-#define preq_nextbuf	u.in.buf
 
 #define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
 #define PUFFS_SETBACK_INACT_N2	0x02	/* set VOP_INACTIVE for node 2 */
 #define PUFFS_SETBACK_NOREF_N1	0x04	/* set pn PN_NOREFS for node 1 */
 #define PUFFS_SETBACK_NOREF_N2	0x08	/* set pn PN_NOREFS for node 2 */
 #define PUFFS_SETBACK_MASK	0x0f
-
-/*
- * Some operations have unknown size requirements.  So as the first
- * stab at handling it, do an extra bounce between the kernel and
- * userspace.
- */
-struct puffs_sizeop {
-	uint64_t	pso_reqid;
-
-	uint8_t		*pso_userbuf;
-	size_t		pso_bufsize;
-};
 
 /*
  * Flush operation.  This can be used to invalidate:
@@ -306,7 +294,6 @@ struct puffs_flush {
  */
 #define PUFFSGETOP		_IOWR('p', 1, struct puffs_reqh_get)
 #define PUFFSPUTOP		_IOWR('p', 2, struct puffs_reqh_put)
-#define PUFFSSIZEOP		_IOWR('p', 3, struct puffs_sizeop)
 #define PUFFSFLUSHOP		_IOW ('p', 4, struct puffs_flush)
 #if 0
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
@@ -708,6 +695,16 @@ struct puffs_cacheinfo {
 };
 #define PCACHE_TYPE_READ	0
 #define PCACHE_TYPE_WRITE	1
+
+/*
+ * Error notification.  Always outgoing, no response, no remorse.
+ */
+struct puffs_error {
+	struct puffs_req	perr_pr;
+
+	int			perr_error;
+	char			perr_str[256];
+};
 
 /* notyet */
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.67 2007/09/16 22:35:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.67.2.1 2007/10/06 15:30:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -580,14 +580,14 @@ struct netbsd32_statvfs {
 	netbsd32_u_long	f_bsize;	/* system block size */
 	netbsd32_u_long	f_frsize;	/* system fragment size */
 	netbsd32_u_long	f_iosize;	/* optimal file system block size */
-	fsblkcnt_t	f_blocks;	/* number of blocks in file system */
-	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
-	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
-	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
-	fsfilcnt_t	f_files;	/* total file nodes in file system */
-	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
-	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
-	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
+	netbsd32_uint64	f_blocks;	/* number of blocks in file system */
+	netbsd32_uint64	f_bfree;	/* free blocks avail in file system */
+	netbsd32_uint64	f_bavail;	/* free blocks avail to non-root */
+	netbsd32_uint64	f_bresvd;	/* blocks reserved for root */
+	netbsd32_uint64	f_files;	/* total file nodes in file system */
+	netbsd32_uint64	f_ffree;	/* free file nodes in file system */
+	netbsd32_uint64	f_favail;	/* free file nodes avail to non-root */
+	netbsd32_uint64	f_fresvd;	/* file nodes reserved for root */
 	netbsd32_uint64	f_syncreads;	/* count of sync reads since mount */
 	netbsd32_uint64	f_syncwrites;	/* count of sync writes since mount */
 	netbsd32_uint64	f_asyncreads;	/* count of async reads since mount */

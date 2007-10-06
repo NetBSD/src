@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.607.4.1 2007/09/23 18:28:16 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.607.4.2 2007/10/06 15:34:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.607.4.1 2007/09/23 18:28:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.607.4.2 2007/10/06 15:34:53 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -906,7 +906,7 @@ haltsys:
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			for(;;) {
-				__asm volatile("hlt");
+				x86_hlt();
 			}
 		}
 		cnpollc(0);
@@ -2065,7 +2065,7 @@ init386(paddr_t first_avail)
 	softintr_init();
 
 	splraise(IPL_IPI);
-	enable_intr();
+	x86_enable_intr();
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
@@ -2181,7 +2181,7 @@ cpu_reset()
 {
 	struct region_descriptor region;
 
-	disable_intr();
+	x86_disable_intr();
 
 #ifdef XBOX
 	if (arch_i386_is_xbox) {
@@ -2213,7 +2213,7 @@ cpu_reset()
 	 * sections 6.3.1, 6.3.2, and 6.4.1.
 	 */
 	if (cpu_info_primary.ci_signature == 0x540) {
-		outl(0xcf8, 0x80009044ul);
+		outl(0xcf8, 0x80009044);
 		outl(0xcfc, 0xf);
 	}
 
@@ -2234,7 +2234,7 @@ cpu_reset()
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
+	breakpoint();
 
 #if 0
 	/*

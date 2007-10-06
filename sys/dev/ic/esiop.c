@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.39 2007/03/04 06:01:55 christos Exp $	*/
+/*	$NetBSD: esiop.c,v 1.39.18.1 2007/10/06 15:31:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.39 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.39.18.1 2007/10/06 15:31:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1223,7 +1223,8 @@ esiop_scsicmd_end(esiop_cmd, offset)
 		    esiop_cmd->cmd_c.dmamap_data);
 	}
 	bus_dmamap_unload(sc->sc_c.sc_dmat, esiop_cmd->cmd_c.dmamap_cmd);
-	callout_stop(&esiop_cmd->cmd_c.xs->xs_callout);
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
+		callout_stop(&xs->xs_callout);
 	esiop_cmd->cmd_c.status = CMDST_FREE;
 	TAILQ_INSERT_TAIL(&sc->free_list, esiop_cmd, next);
 #if 0

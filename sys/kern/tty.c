@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.197.10.1 2007/10/06 15:28:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.10.1 2007/10/06 15:28:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2652,6 +2652,8 @@ ttymalloc(void)
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
+	selinit(&tp->t_rsel);
+	selinit(&tp->t_wsel);
 	return (tp);
 }
 
@@ -2670,6 +2672,8 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	seldestroy(&tp->t_rsel);
+	seldestroy(&tp->t_wsel);
 	pool_put(&tty_pool, tp);
 }
 

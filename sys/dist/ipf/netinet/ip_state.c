@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.29 2007/09/17 06:56:15 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.29.2.1 2007/10/06 15:31:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.29 2007/09/17 06:56:15 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.29.2.1 2007/10/06 15:31:41 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.29.2.1 2007/10/06 15:31:41 yamt Exp $";
 #endif
 #endif
 
@@ -657,8 +657,8 @@ void *data;
 	int error;
 
 	error = fr_inobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
+	if (error != 0)
+		return error;
 
 	isn = ips.ips_next;
 	if (isn == NULL) {
@@ -687,9 +687,7 @@ void *data;
 		bcopy((char *)isn->is_rule, (char *)&ips.ips_fr,
 		      sizeof(ips.ips_fr));
 	error = fr_outobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
-	return 0;
+	return error;
 }
 
 
@@ -1444,7 +1442,7 @@ ipstate_t *is;
 			is->is_state[!source] = IPF_TCPS_CLOSED;
 			fr_movequeue(&is->is_sti, is->is_sti.tqe_ifq,
 				     &ips_deletetq);
-			MUTEX_ENTER(&is->is_lock);
+			MUTEX_EXIT(&is->is_lock);
 			return 0;
 		}
 	}
@@ -2308,8 +2306,6 @@ u_int hv;
 	ipstate_t **isp;
 	u_int hvm;
 
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
-
 	hvm = is->is_hv;
 	/*
 	 * Remove the hash from the old location...
@@ -2896,8 +2892,6 @@ static int fr_delstate(is, why)
 ipstate_t *is;
 int why;
 {
-
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
 
 	/*
 	 * Since we want to delete this, remove it from the state table,
@@ -4072,7 +4066,7 @@ ipfgeniter_t *itp;
 	if (itp->igi_data == NULL)
 		return EFAULT;
 
-	if (itp->igi_nitems == 0)
+	if (itp->igi_nitems < 1)
 		return ENOSPC;
 
 	if (itp->igi_type != IPFGENITER_STATE)
@@ -4094,31 +4088,27 @@ ipfgeniter_t *itp;
 		next = is->is_next;
 	}
 
-	for (count = itp->igi_nitems; count > 0; count--) {
+	count = itp->igi_nitems;
+	for (;;) {
 		if (next != NULL) {
 			/*
 			 * If we find a state entry to use, bump its
 			 * reference count so that it can be used for
 			 * is_next when we come back.
 			 */
-			MUTEX_ENTER(&next->is_lock);
-			next->is_ref++;
-			MUTEX_EXIT(&next->is_lock);
-			token->ipt_data = next;
+			if (count == 1) {
+				MUTEX_ENTER(&next->is_lock);
+				next->is_ref++;
+				MUTEX_EXIT(&next->is_lock);
+				token->ipt_data = next;
+			}
 		} else {
 			bzero(&zero, sizeof(zero));
 			next = &zero;
-			token->ipt_data = (void *)-1;
 			count = 1;
+			token->ipt_data = NULL;
 		}
 		RWLOCK_EXIT(&ipf_state);
-
-		/*
-		 * If we had a prior pointer to a state entry, release it.
-		 */
-		if (is != NULL) {
-			fr_statederef(&is);
-		}
 
 		/*
 		 * This should arguably be via fr_outobj() so that the state
@@ -4131,9 +4121,14 @@ ipfgeniter_t *itp;
 			break;
 
 		dst += sizeof(*next);
+		count--;
+
 		READ_ENTER(&ipf_state);
-		is = next;
-		next = is->is_next;
+		next = next->is_next;
+	}
+
+	if (is != NULL) {
+		fr_statederef(&is);
 	}
 
 	return error;

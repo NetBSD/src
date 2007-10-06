@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_gre.h,v 1.8 2005/12/10 23:36:23 elad Exp $ */
+/*	$NetBSD: cpufunc.S,v 1.1.4.2 2007/10/06 15:34:58 yamt Exp $	*/
 
-/*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Heiko W.Rupp <hwr@pilhuhn.de>
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,12 +36,124 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET_IP_GRE_H_
-#define _NETINET_IP_GRE_H_
+#include <machine/asm.h>
 
-#ifdef _KERNEL
-void gre_input(struct mbuf *, ...);
-void gre_mobile_input(struct mbuf *, ...);
-#endif /* _KERNEL */
+NENTRY(x86_read_psl)
+	pushfl
+	popl	%eax
+	ret
 
-#endif /* !_NETINET_IP_GRE_H_ */
+NENTRY(x86_write_psl)
+	movl	4(%esp), %eax
+	pushl	%eax
+	popfl
+	ret
+
+NENTRY(x86_disable_intr)
+	cli
+	ret
+
+NENTRY(x86_enable_intr)
+	sti
+	ret
+
+NENTRY(inb)
+	movl	4(%esp), %edx
+	xorl	%eax, %eax
+	inb	%dx, %al
+	ret
+
+NENTRY(insb)
+	pushl	%edi
+	movl	8(%esp), %edx
+	movl	12(%esp), %edi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	insb
+	popl	%edi
+	ret
+
+NENTRY(inw)
+	movl	4(%esp), %edx
+	xorl	%eax, %eax
+	inw	%dx, %ax
+	ret
+
+NENTRY(insw)
+	pushl	%edi
+	movl	8(%esp), %edx
+	movl	12(%esp), %edi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	insw
+	popl	%edi
+	ret
+
+NENTRY(inl)
+	movl	4(%esp), %edx
+	inl	%dx, %eax
+	ret
+
+NENTRY(insl)
+	pushl	%edi
+	movl	8(%esp), %edx
+	movl	12(%esp), %edi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	insl
+	popl	%edi
+	ret
+
+NENTRY(outb)
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	outb	%al, %dx
+	ret
+
+NENTRY(outsb)
+	pushl	%esi
+	movl	8(%esp), %edx
+	movl	12(%esp), %esi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	outsb
+	popl	%esi
+	ret
+
+NENTRY(outw)
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	outw	%ax, %dx
+	ret
+
+NENTRY(outsw)
+	pushl	%esi
+	movl	8(%esp), %edx
+	movl	12(%esp), %esi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	outsw
+	popl	%esi
+	ret
+
+NENTRY(outl)
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	outl	%eax, %dx
+	ret
+
+NENTRY(outsl)
+	pushl	%esi
+	movl	8(%esp), %edx
+	movl	12(%esp), %esi
+	movl	16(%esp), %ecx
+	cld
+	rep
+	outsl
+	popl	%esi
+	ret

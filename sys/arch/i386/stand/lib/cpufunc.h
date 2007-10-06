@@ -1,9 +1,11 @@
+/*	$NetBSD: cpufunc.h,v 1.1.4.2 2007/10/06 15:34:58 yamt Exp $	*/
+
 /*-
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Hamsik.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,44 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Mach Operating System
- * Copyright (c) 1991,1990 Carnegie Mellon University
- * All Rights Reserved.
- *
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
- * Carnegie Mellon requests users of this software to return to
- *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
- */
+void		x86_disable_intr(void);
+void		x86_enable_intr(void);
+u_long		x86_read_psl(void);
+void		x86_write_psl(u_long);
 
-#ifndef _DDB_COMMAND_LIST_
-#define _DDB_COMMAND_LIST_
+u_int8_t	inb(unsigned);
+void		insb(unsigned, void *, int);
+uint16_t	inw(unsigned);
+void		insw(unsigned, void *, int);
+uint32_t	inl(unsigned);
+void		insl(unsigned, void *, int);
 
-/**/
-TAILQ_HEAD(db_cmd_tbl_en_head, db_cmd_tbl_en);
-
-/*TAILQ entry used in default commands and show commands lists.*/
-struct db_cmd_tbl_en {
-	uint32_t db_cmd_num;    /*Number of commands in cmd table*/
-	const struct db_command *db_cmd;  /*pointer to static allocated cmd table*/
-	TAILQ_ENTRY(db_cmd_tbl_en) db_cmd_next; /*TAILQ pointers*/
-};
-
-
-#endif/*!_DDB_COMMAND_LIST_*/
+void		outb(unsigned, uint8_t);
+void		outsb(unsigned, void *, int);
+void		outw(unsigned, uint16_t);
+void		outsw(unsigned, void *, int);
+void		outl(unsigned, uint32_t);
+void		outsl(unsigned, void *, int);

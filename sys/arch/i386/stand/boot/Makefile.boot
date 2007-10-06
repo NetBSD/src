@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.28 2006/06/25 13:36:26 lukem Exp $
+# $NetBSD: Makefile.boot,v 1.28.36.1 2007/10/06 15:34:57 yamt Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -44,7 +44,6 @@ AFLAGS+=   -m32
 CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
-CPPFLAGS+= -DBOOT_ELF64
 .else
 .if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
@@ -134,7 +133,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.36 2007/08/06 16:08:55 pooka Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.36.4.1 2007/10/06 15:29:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36 2007/08/06 16:08:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.4.1 2007/10/06 15:29:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36 2007/08/06 16:08:55 pooka Exp $"
 #include <fs/tmpfs/tmpfs_fifoops.h>
 #include <fs/tmpfs/tmpfs_specops.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
+
+MALLOC_DECLARE(M_TMPFSTMP);
 
 /* --------------------------------------------------------------------- */
 
@@ -660,28 +662,31 @@ int
 tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 {
 	int error;
-	struct dirent dent;
+	struct dirent *dentp;
 
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOT);
 
-	dent.d_fileno = node->tn_id;
-	dent.d_type = DT_DIR;
-	dent.d_namlen = 1;
-	dent.d_name[0] = '.';
-	dent.d_name[1] = '\0';
-	dent.d_reclen = _DIRENT_SIZE(&dent);
+	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
 
-	if (dent.d_reclen > uio->uio_resid)
+	dentp->d_fileno = node->tn_id;
+	dentp->d_type = DT_DIR;
+	dentp->d_namlen = 1;
+	dentp->d_name[0] = '.';
+	dentp->d_name[1] = '\0';
+	dentp->d_reclen = _DIRENT_SIZE(dentp);
+
+	if (dentp->d_reclen > uio->uio_resid)
 		error = -1;
 	else {
-		error = uiomove(&dent, dent.d_reclen, uio);
+		error = uiomove(dentp, dentp->d_reclen, uio);
 		if (error == 0)
 			uio->uio_offset = TMPFS_DIRCOOKIE_DOTDOT;
 	}
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
+	free(dentp, M_TMPFSTMP);
 	return error;
 }
 
@@ -698,23 +703,25 @@ int
 tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 {
 	int error;
-	struct dirent dent;
+	struct dirent *dentp;
 
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dent.d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
-	dent.d_type = DT_DIR;
-	dent.d_namlen = 2;
-	dent.d_name[0] = '.';
-	dent.d_name[1] = '.';
-	dent.d_name[2] = '\0';
-	dent.d_reclen = _DIRENT_SIZE(&dent);
+	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
 
-	if (dent.d_reclen > uio->uio_resid)
+	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
+	dentp->d_type = DT_DIR;
+	dentp->d_namlen = 2;
+	dentp->d_name[0] = '.';
+	dentp->d_name[1] = '.';
+	dentp->d_name[2] = '\0';
+	dentp->d_reclen = _DIRENT_SIZE(dentp);
+
+	if (dentp->d_reclen > uio->uio_resid)
 		error = -1;
 	else {
-		error = uiomove(&dent, dent.d_reclen, uio);
+		error = uiomove(dentp, dentp->d_reclen, uio);
 		if (error == 0) {
 			struct tmpfs_dirent *de;
 
@@ -728,6 +735,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
+	free(dentp, M_TMPFSTMP);
 	return error;
 }
 
@@ -769,6 +777,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 {
 	int error;
 	off_t startcookie;
+	struct dirent *dentp;
 	struct tmpfs_dirent *de;
 
 	TMPFS_VALIDATE_DIR(node);
@@ -788,62 +797,62 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		return EINVAL;
 	}
 
+	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
+
 	/* Read as much entries as possible; i.e., until we reach the end of
 	 * the directory or we exhaust uio space. */
 	do {
-		struct dirent d;
-
 		/* Create a dirent structure representing the current
 		 * tmpfs_node and fill it. */
-		d.d_fileno = de->td_node->tn_id;
+		dentp->d_fileno = de->td_node->tn_id;
 		switch (de->td_node->tn_type) {
 		case VBLK:
-			d.d_type = DT_BLK;
+			dentp->d_type = DT_BLK;
 			break;
 
 		case VCHR:
-			d.d_type = DT_CHR;
+			dentp->d_type = DT_CHR;
 			break;
 
 		case VDIR:
-			d.d_type = DT_DIR;
+			dentp->d_type = DT_DIR;
 			break;
 
 		case VFIFO:
-			d.d_type = DT_FIFO;
+			dentp->d_type = DT_FIFO;
 			break;
 
 		case VLNK:
-			d.d_type = DT_LNK;
+			dentp->d_type = DT_LNK;
 			break;
 
 		case VREG:
-			d.d_type = DT_REG;
+			dentp->d_type = DT_REG;
 			break;
 
 		case VSOCK:
-			d.d_type = DT_SOCK;
+			dentp->d_type = DT_SOCK;
 			break;
 
 		default:
 			KASSERT(0);
 		}
-		d.d_namlen = de->td_namelen;
-		KASSERT(de->td_namelen < sizeof(d.d_name));
-		(void)memcpy(d.d_name, de->td_name, de->td_namelen);
-		d.d_name[de->td_namelen] = '\0';
-		d.d_reclen = _DIRENT_SIZE(&d);
+		dentp->d_namlen = de->td_namelen;
+		KASSERT(de->td_namelen < sizeof(dentp->d_name));
+		(void)memcpy(dentp->d_name, de->td_name, de->td_namelen);
+		dentp->d_name[de->td_namelen] = '\0';
+		dentp->d_reclen = _DIRENT_SIZE(dentp);
 
 		/* Stop reading if the directory entry we are treating is
 		 * bigger than the amount of data that can be returned. */
-		if (d.d_reclen > uio->uio_resid) {
+		if (dentp->d_reclen > uio->uio_resid) {
 			error = -1;
 			break;
 		}
 
 		/* Copy the new dirent structure into the output buffer and
 		 * advance pointers. */
-		error = uiomove(&d, d.d_reclen, uio);
+		error = uiomove(dentp, dentp->d_reclen, uio);
 
 		(*cntp)++;
 		de = TAILQ_NEXT(de, td_entries);
@@ -862,6 +871,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
+	free(dentp, M_TMPFSTMP);
 	return error;
 }
 

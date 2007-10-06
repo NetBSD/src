@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114.12.1 2007/10/06 15:34:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.12.1 2007/10/06 15:34:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $");
 #endif
 
 #include <sgimips/dev/int2reg.h>
+#include <sgimips/dev/crimevar.h>
 #include <sgimips/sgimips/arcemu.h>
 
 #include <dev/arcbios/arcbios.h>
@@ -100,6 +101,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2007/05/17 14:51:28 yamt Exp $");
 #endif
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
+#endif
+
+#include "mcclock_mace.h"
+#include "crime.h"
+
+#if NMCCLOCK_MACE > 0
+void mcclock_poweroff(void);
 #endif
 
 struct sgimips_intrhand intrtab[NINTR];
@@ -760,7 +768,12 @@ haltsys:
 
 		printf("powering off...\n\n");
 		delay(500000);
-		ARCBIOS->PowerDown();
+#if NMCCLOCK_MACE > 0
+		if (mach_type == MACH_SGI_IP32) {
+			mcclock_poweroff();
+		} else 
+#endif
+			ARCBIOS->PowerDown();
 		printf("WARNING: powerdown failed\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
@@ -773,7 +786,12 @@ haltsys:
 	}
 
 	printf("rebooting...\n\n");
-	ARCBIOS->Reboot();
+#if NCRIME > 0
+	if (mach_type == MACH_SGI_IP32) {
+		crime_reboot();
+	} else
+#endif	
+		ARCBIOS->Reboot();
 
 	for (;;);
 }

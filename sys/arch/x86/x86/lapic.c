@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.22 2007/08/29 23:38:06 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.22.2.1 2007/10/06 15:33:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.22 2007/08/29 23:38:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.22.2.1 2007/10/06 15:33:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -107,7 +107,7 @@ lapic_map(lapic_base)
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
 
-	disable_intr();
+	x86_disable_intr();
 	s = lapic_tpr;
 
 	/*
@@ -128,7 +128,7 @@ lapic_map(lapic_base)
 #endif
 
 	lapic_tpr = s;
-	enable_intr();
+	x86_enable_intr();
 }
 
 /*
