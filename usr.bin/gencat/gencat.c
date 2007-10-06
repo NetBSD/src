@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $	*/
+/*	$NetBSD: gencat.c,v 1.21 2007/10/06 02:55:56 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.21 2007/10/06 02:55:56 ginsbach Exp $");
 #endif
 
 /***********************************************************
@@ -439,7 +439,8 @@ MCParse(fd)
 	int     fd;
 {
 	char   *cptr, *str;
-	int     setid, msgid = 0;
+	int	msgid = 0;
+	int     setid = 0;
 	char    quote = 0;
 
 	/* XXX: init sethead? */
@@ -496,6 +497,14 @@ MCParse(fd)
 			} else {
 				warning(cptr, "neither blank line nor start of a message id");
 				continue;
+			}
+			/*
+			 * If no set directive specified, all messages
+			 * shall be in default message set NL_SETD.
+			 */
+			if (setid == 0) {
+				setid = NL_SETD;
+				MCAddSet(setid);
 			}
 			/*
 			 * If we have a message ID, but no message,
@@ -794,6 +803,15 @@ MCDelSet(setId)
 {
 	struct _setT *set;
 	struct _msgT *msg;
+
+	if (setId <= 0) {
+		error(NULL, "setId's must be greater than zero");
+		/* NOTREACHED */
+	}
+	if (setId > NL_SETMAX) {
+		error(NULL, "setId exceeds limit");
+		/* NOTREACHED */
+	}
 
 	set = sethead.lh_first;
 	for (; set != NULL && set->setId < setId; set = set->entries.le_next);
