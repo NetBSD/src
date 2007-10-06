@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.98 2007/08/22 17:54:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.98.4.1 2007/10/06 15:29:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.98 2007/08/22 17:54:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.98.4.1 2007/10/06 15:29:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -117,8 +117,6 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_setattr_desc, puffs_checkop },		/* setattr */
         { &vop_read_desc, puffs_checkop },		/* read */
         { &vop_write_desc, puffs_checkop },		/* write */
-        { &vop_fcntl_desc, puffs_checkop },		/* fcntl */
-        { &vop_ioctl_desc, puffs_checkop },		/* ioctl */
         { &vop_fsync_desc, puffs_fsync },		/* REAL fsync */
         { &vop_seek_desc, puffs_checkop },		/* seek */
         { &vop_remove_desc, puffs_checkop },		/* remove */
@@ -282,8 +280,6 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_setattr_desc, puffs_setattr },		/* setattr */
         { &vop_read_desc, puffs_read },			/* read */
         { &vop_write_desc, puffs_write },		/* write */
-        { &vop_fcntl_desc, puffs_fcntl },		/* fcntl */
-        { &vop_ioctl_desc, puffs_ioctl },		/* ioctl */
         { &vop_seek_desc, puffs_seek },			/* seek */
         { &vop_remove_desc, puffs_remove },		/* remove */
         { &vop_link_desc, puffs_link },			/* link */
@@ -405,6 +401,41 @@ puffs_checkop(void *v)
 	return rv;
 }
 
+static int puffs_callremove(struct puffs_mount *, void *, void *,
+			    struct componentname *);
+static int puffs_callrmdir(struct puffs_mount *, void *, void *,
+			   struct componentname *);
+static void puffs_callinactive(struct puffs_mount *, void *, int, struct lwp *);
+static void puffs_callreclaim(struct puffs_mount *, void *, struct lwp *);
+
+#define PUFFS_ABORT_LOOKUP	1
+#define PUFFS_ABORT_CREATE	2
+#define PUFFS_ABORT_MKNOD	3
+#define PUFFS_ABORT_MKDIR	4
+#define PUFFS_ABORT_SYMLINK	5
+
+/*
+ * Press the pani^Wabort button!  Kernel resource allocation failed.
+ */
+static void
+puffs_abortbutton(struct puffs_mount *pmp, int what,
+	void *dcookie, void *cookie, struct componentname *cnp)
+{
+
+	switch (what) {
+	case PUFFS_ABORT_CREATE:
+	case PUFFS_ABORT_MKNOD:
+	case PUFFS_ABORT_SYMLINK:
+		puffs_callremove(pmp, dcookie, cookie, cnp);
+		break;
+	case PUFFS_ABORT_MKDIR:
+		puffs_callrmdir(pmp, dcookie, cookie, cnp);
+		break;
+	}
+
+	puffs_callinactive(pmp, cookie, 0, cnp->cn_lwp);
+	puffs_callreclaim(pmp, cookie, cnp->cn_lwp);
+}
 
 int
 puffs_lookup(void *v)
@@ -475,6 +506,7 @@ puffs_lookup(void *v)
 	 * enter the component into the negative name cache (if desired).
 	 */
 	if (error) {
+		error = checkerr(pmp, error, __func__);
 		if (error == ENOENT) {
 			/* don't allow to create files on r/o fs */
 			if ((dvp->v_mount->mnt_flag & MNT_RDONLY)
@@ -494,8 +526,6 @@ puffs_lookup(void *v)
 				    && PUFFS_USE_NAMECACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
-		} else if (error < 0 || error > ELAST) {
-			error = EINVAL;
 		}
 		goto out;
 	}
@@ -506,22 +536,29 @@ puffs_lookup(void *v)
 	 */
 	dpn = dvp->v_data;
 	if (lookup_arg.pvnr_newnode == dpn->pn_cookie) {
-		error = EINVAL;
+		puffs_errnotify(pmp, PUFFS_ERR_LOOKUP, EINVAL,
+		    "lookup produced parent cookie", lookup_arg.pvnr_newnode);
+		error = EPROTO;
 		goto out;
 	}
 
-	/* XXX: race here */
-	/* XXX2: this check for node existence twice */
-	error = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1, &vp);
-	if (error) {
+	error = puffs_cookie2vnode(pmp, lookup_arg.pvnr_newnode, 1, 1, &vp);
+	if (error == PUFFS_NOSUCHCOOKIE) {
 		error = puffs_getvnode(dvp->v_mount,
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
 		    lookup_arg.pvnr_size, lookup_arg.pvnr_rdev, &vp);
 		if (error) {
+			puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
+			    lookup_arg.pvnr_newnode, ap->a_cnp);
 			goto out;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	} else if (error) {
+		puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
+		    lookup_arg.pvnr_newnode, ap->a_cnp);
+		goto out;
 	}
+
 	*ap->a_vpp = vp;
 
 	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
@@ -566,12 +603,15 @@ puffs_create(void *v)
 
 	error = puffs_vntouser(pmp, PUFFS_VN_CREATE,
 	    &create_arg, sizeof(create_arg), 0, ap->a_dvp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    create_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type, 0);
-	/* XXX: in case of error, need to uncommit userspace transaction */
+	if (error)
+		puffs_abortbutton(pmp, PUFFS_ABORT_CREATE, VPTOPNC(ap->a_dvp),
+		    create_arg.pvnr_newnode, ap->a_cnp);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
@@ -603,12 +643,16 @@ puffs_mknod(void *v)
 
 	error = puffs_vntouser(pmp, PUFFS_VN_MKNOD,
 	    &mknod_arg, sizeof(mknod_arg), 0, ap->a_dvp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    mknod_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type,
 	    ap->a_vap->va_rdev);
+	if (error)
+		puffs_abortbutton(pmp, PUFFS_ABORT_MKNOD, VPTOPNC(ap->a_dvp),
+		    mknod_arg.pvnr_newnode, ap->a_cnp);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
@@ -647,6 +691,7 @@ puffs_open(void *v)
 
 	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_OPEN,
 	    &open_arg, sizeof(open_arg), 0, vp, NULL);
+	error = checkerr(pmp, error, __func__);
 
  out:
 	DPRINTF(("puffs_open: returning %d\n", error));
@@ -690,6 +735,7 @@ puffs_access(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int mode = ap->a_mode;
+	int error;
 
 	PUFFS_VNREQ(access);
 
@@ -714,8 +760,9 @@ puffs_access(void *v)
 	puffs_credcvt(&access_arg.pvnr_cred, ap->a_cred);
 	puffs_cidcvt(&access_arg.pvnr_cid, ap->a_l);
 
-	return puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_ACCESS,
+	error = puffs_vntouser(pmp, PUFFS_VN_ACCESS,
 	    &access_arg, sizeof(access_arg), 0, vp, NULL);
+	return checkerr(pmp, error, __func__);
 }
 
 int
@@ -728,6 +775,7 @@ puffs_getattr(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct puffs_mount *pmp;
 	struct mount *mp;
 	struct vnode *vp;
 	struct vattr *vap, *rvap;
@@ -739,6 +787,7 @@ puffs_getattr(void *v)
 	vp = ap->a_vp;
 	mp = vp->v_mount;
 	vap = ap->a_vap;
+	pmp = MPTOPUFFSMP(mp);
 
 	vattr_null(&getattr_arg.pvnr_va);
 	puffs_credcvt(&getattr_arg.pvnr_cred, ap->a_cred);
@@ -746,6 +795,7 @@ puffs_getattr(void *v)
 
 	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_GETATTR,
 	    &getattr_arg, sizeof(getattr_arg), 0, vp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		return error;
 
@@ -833,6 +883,7 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 
 	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
 	    &setattr_arg, sizeof(setattr_arg), 0, vp, NULL);
+	error = checkerr(MPTOPUFFSMP(vp->v_mount), error, __func__);
 	if (error)
 		return error;
 
@@ -859,33 +910,19 @@ puffs_setattr(void *v)
 	return puffs_dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_l, 1);
 }
 
-int
-puffs_inactive(void *v)
+static void
+puffs_callinactive(struct puffs_mount *pmp, void *cookie, int iaflag,
+	struct lwp *l)
 {
-	struct vop_inactive_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct puffs_mount *pmp;
-	struct puffs_node *pnode;
-	int rv, call;
+	int call;
 
 	PUFFS_VNREQ(inactive);
 
-	/*
-	 * XXX: think about this after we really start unlocking
-	 * when going to userspace
-	 */
-	pnode = ap->a_vp->v_data;
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-
-	puffs_cidcvt(&inactive_arg.pvnr_cid, ap->a_l);
+	puffs_cidcvt(&inactive_arg.pvnr_cid, l);
 
 	if (EXISTSOP(pmp, INACTIVE))
 		if (pmp->pmp_flags & PUFFS_KFLAG_IAONDEMAND)
-			if ((pnode->pn_stat & PNODE_DOINACT) || ALLOPS(pmp))
+			if (iaflag || ALLOPS(pmp))
 				call = 1;
 			else
 				call = 0;
@@ -895,10 +932,25 @@ puffs_inactive(void *v)
 		call = 0;
 
 	if (call)
-		rv = puffs_vntouser(pmp, PUFFS_VN_INACTIVE,
-		    &inactive_arg, sizeof(inactive_arg), 0, ap->a_vp, NULL);
-	else
-		rv = 1; /* see below */
+		puffs_cookietouser(pmp, PUFFS_VN_INACTIVE,
+		    &inactive_arg, sizeof(inactive_arg), cookie, 0);
+}
+
+int
+puffs_inactive(void *v)
+{
+	struct vop_inactive_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pnode;
+
+	pnode = vp->v_data;
+
+	puffs_callinactive(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp),
+	    pnode->pn_stat & PNODE_DOINACT, ap->a_l);
 	pnode->pn_stat &= ~PNODE_DOINACT;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -915,6 +967,22 @@ puffs_inactive(void *v)
 	return 0;
 }
 
+static void
+puffs_callreclaim(struct puffs_mount *pmp, void *cookie, struct lwp *l)
+{
+	struct puffs_vnreq_reclaim *reclaim_argp;
+
+	if (!EXISTSOP(pmp, RECLAIM))
+		return;
+
+	reclaim_argp = malloc(sizeof(struct puffs_vnreq_reclaim),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	puffs_cidcvt(&reclaim_argp->pvnr_cid, l);
+
+	puffs_cookietouser(pmp, PUFFS_VN_RECLAIM,
+	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim), cookie, 1);
+}
+
 /*
  * always FAF, we don't really care if the server wants to fail to
  * reclaim the node or not
@@ -927,10 +995,8 @@ puffs_reclaim(void *v)
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
-	struct puffs_mount *pmp;
-	struct puffs_vnreq_reclaim *reclaim_argp;
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 
 	/*
 	 * first things first: check if someone is trying to reclaim the
@@ -938,7 +1004,7 @@ puffs_reclaim(void *v)
 	 * Note that we don't need to take the lock similarly to
 	 * puffs_root(), since there is only one of us.
 	 */
-	if (ap->a_vp->v_flag & VROOT) {
+	if (vp->v_flag & VROOT) {
 		mutex_enter(&pmp->pmp_lock);
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
@@ -946,20 +1012,12 @@ puffs_reclaim(void *v)
 		goto out;
 	}
 
-	if (!EXISTSOP(pmp, RECLAIM))
-		goto out;
-
-	reclaim_argp = malloc(sizeof(struct puffs_vnreq_reclaim),
-	    M_PUFFS, M_WAITOK | M_ZERO);
-	puffs_cidcvt(&reclaim_argp->pvnr_cid, ap->a_l);
-
-	puffs_vntouser_faf(pmp, PUFFS_VN_RECLAIM,
-	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim), ap->a_vp);
+	puffs_callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp), ap->a_l);
 
  out:
 	if (PUFFS_USE_NAMECACHE(pmp))
-		cache_purge(ap->a_vp);
-	puffs_putvnode(ap->a_vp);
+		cache_purge(vp);
+	puffs_putvnode(vp);
 
 	return 0;
 }
@@ -979,6 +1037,7 @@ puffs_readdir(void *v)
 	} */ *ap = v;
 	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	struct puffs_vnreq_readdir *readdir_argp;
+	struct vnode *vp = ap->a_vp;
 	size_t argsize, tomove, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
 	size_t howmuch, resid;
@@ -1027,16 +1086,23 @@ puffs_readdir(void *v)
 	readdir_argp->pvnr_eofflag = 0;
 	readdir_argp->pvnr_dentoff = cookiemem;
 
-	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-	    PUFFS_VN_READDIR, readdir_argp, argsize, tomove,
-	    ap->a_vp, NULL);
+	error = puffs_vntouser(pmp, PUFFS_VN_READDIR,
+	    readdir_argp, argsize, tomove, vp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
 	/* userspace is cheating? */
-	if (readdir_argp->pvnr_resid > resid
-	    || readdir_argp->pvnr_ncookies > cookiesmax)
-		ERROUT(EINVAL);
+	if (readdir_argp->pvnr_resid > resid) {
+		puffs_errnotify(pmp, PUFFS_ERR_READDIR, E2BIG,
+		    "resid grew", VPTOPNC(vp));
+		ERROUT(EPROTO);
+	}
+	if (readdir_argp->pvnr_ncookies > cookiesmax) {
+		puffs_errnotify(pmp, PUFFS_ERR_READDIR, E2BIG,
+		    "too many cookies", VPTOPNC(vp));
+		ERROUT(EPROTO);
+	}
 
 	/* check eof */
 	if (readdir_argp->pvnr_eofflag)
@@ -1225,6 +1291,7 @@ puffs_fsync(void *v)
 		error =  puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
 		    PUFFS_VN_FSYNC, fsync_argp, sizeof(*fsync_argp), 0,
 		    vp, NULL);
+		error = checkerr(pmp, error, __func__);
 	} else {
 		/* FAF is always "succesful" */
 		error = 0;
@@ -1245,6 +1312,8 @@ puffs_seek(void *v)
 		off_t a_newoff;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int error;
 
 	PUFFS_VNREQ(seek);
 
@@ -1256,8 +1325,26 @@ puffs_seek(void *v)
 	 * XXX: seems like seek is called with an unlocked vp, but
 	 * it can't hurt to play safe
 	 */
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_SEEK,
-	    &seek_arg, sizeof(seek_arg), 0, ap->a_vp, NULL);
+	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SEEK,
+	    &seek_arg, sizeof(seek_arg), 0, vp, NULL);
+	return checkerr(MPTOPUFFSMP(vp->v_mount), error, __func__);
+}
+
+static int
+puffs_callremove(struct puffs_mount *pmp, void *dcookie, void *cookie,
+	struct componentname *cnp)
+{
+	int error;
+
+	PUFFS_VNREQ(remove);
+
+	remove_arg.pvnr_cookie_targ = cookie;
+	puffs_makecn(&remove_arg.pvnr_cn, &remove_arg.pvnr_cn_cred,
+	    &remove_arg.pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+
+	error = puffs_cookietouser(pmp, PUFFS_VN_REMOVE,
+	    &remove_arg, sizeof(remove_arg), dcookie, 0);
+	return checkerr(pmp, error, __func__);
 }
 
 int
@@ -1269,23 +1356,18 @@ puffs_remove(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_dvp->v_mount);
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
 	int error;
 
-	PUFFS_VNREQ(remove);
+	error = puffs_callremove(pmp, VPTOPNC(dvp), VPTOPNC(vp), ap->a_cnp);
 
-	remove_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&remove_arg.pvnr_cn, &remove_arg.pvnr_cn_cred,
-	    &remove_arg.pvnr_cn_cid, ap->a_cnp, PUFFS_USE_FULLPNBUF(pmp));
-
-	error = puffs_vntouser(pmp, PUFFS_VN_REMOVE,
-	    &remove_arg, sizeof(remove_arg), 0, ap->a_dvp, ap->a_vp);
-
-	vput(ap->a_vp);
-	if (ap->a_dvp == ap->a_vp)
-		vrele(ap->a_dvp);
+	vput(vp);
+	if (dvp == vp)
+		vrele(dvp);
 	else
-		vput(ap->a_dvp);
+		vput(dvp);
 
 	return error;
 }
@@ -1311,17 +1393,38 @@ puffs_mkdir(void *v)
 
 	error = puffs_vntouser(pmp, PUFFS_VN_MKDIR,
 	    &mkdir_arg, sizeof(mkdir_arg), 0, ap->a_dvp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    mkdir_arg.pvnr_newnode, ap->a_cnp, VDIR, 0);
+	if (error)
+		puffs_abortbutton(pmp, PUFFS_ABORT_MKDIR, VPTOPNC(ap->a_dvp),
+		    mkdir_arg.pvnr_newnode, ap->a_cnp);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return error;
+}
+
+static int
+puffs_callrmdir(struct puffs_mount *pmp, void *dcookie, void *cookie,
+	struct componentname *cnp)
+{
+	int error;
+
+	PUFFS_VNREQ(rmdir);
+
+	rmdir_arg.pvnr_cookie_targ = cookie;
+	puffs_makecn(&rmdir_arg.pvnr_cn, &rmdir_arg.pvnr_cn_cred,
+	    &rmdir_arg.pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+
+	error = puffs_cookietouser(pmp, PUFFS_VN_RMDIR,
+	    &rmdir_arg, sizeof(rmdir_arg), dcookie, 0);
+	return checkerr(pmp, error, __func__);
 }
 
 int
@@ -1333,22 +1436,17 @@ puffs_rmdir(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_dvp->v_mount);
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
 	int error;
 
-	PUFFS_VNREQ(rmdir);
-
-	rmdir_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&rmdir_arg.pvnr_cn, &rmdir_arg.pvnr_cn_cred,
-	    &rmdir_arg.pvnr_cn_cid, ap->a_cnp, PUFFS_USE_FULLPNBUF(pmp));
-
-	error = puffs_vntouser(pmp, PUFFS_VN_RMDIR,
-	    &rmdir_arg, sizeof(rmdir_arg), 0, ap->a_dvp, ap->a_vp);
+	error = puffs_callrmdir(pmp, VPTOPNC(dvp), VPTOPNC(vp), ap->a_cnp);
 
 	/* XXX: some call cache_purge() *for both vnodes* here, investigate */
 
-	vput(ap->a_dvp);
-	vput(ap->a_vp);
+	vput(dvp);
+	vput(vp);
 
 	return error;
 }
@@ -1373,6 +1471,7 @@ puffs_link(void *v)
 
 	error = puffs_vntouser(pmp, PUFFS_VN_LINK,
 	    &link_arg, sizeof(link_arg), 0, ap->a_dvp, ap->a_vp);
+	error = checkerr(pmp, error, __func__);
 
 	/*
 	 * XXX: stay in touch with the cache.  I don't like this, but
@@ -1413,11 +1512,15 @@ puffs_symlink(void *v)
 
 	error =  puffs_vntouser(pmp, PUFFS_VN_SYMLINK,
 	    symlink_argp, sizeof(*symlink_argp), 0, ap->a_dvp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    symlink_argp->pvnr_newnode, ap->a_cnp, VLNK, 0);
+	if (error)
+		puffs_abortbutton(pmp, PUFFS_ABORT_SYMLINK, VPTOPNC(ap->a_dvp),
+		    symlink_argp->pvnr_newnode, ap->a_cnp);
 
  out:
 	free(symlink_argp, M_PUFFS);
@@ -1437,6 +1540,7 @@ puffs_readlink(void *v)
 		struct uio *a_uio;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	struct puffs_mount *pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	size_t linklen;
 	int error;
 
@@ -1449,12 +1553,16 @@ puffs_readlink(void *v)
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
 	    PUFFS_VN_READLINK, &readlink_arg, sizeof(readlink_arg), 0,
 	    ap->a_vp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		return error;
 
 	/* bad bad user file server */
-	if (readlink_arg.pvnr_linklen > linklen)
-		return EINVAL;
+	if (readlink_arg.pvnr_linklen > linklen) {
+		puffs_errnotify(pmp, PUFFS_ERR_READLINK, E2BIG,
+		    "linklen too big", VPTOPNC(ap->a_vp));
+		return EPROTO;
+	}
 
 	return uiomove(&readlink_arg.pvnr_link, readlink_arg.pvnr_linklen,
 	    ap->a_uio);
@@ -1497,6 +1605,7 @@ puffs_rename(void *v)
 
 	error = puffs_vntouser(pmp, PUFFS_VN_RENAME,
 	    rename_argp, sizeof(*rename_argp), 0, ap->a_fdvp, NULL); /* XXX */
+	error = checkerr(pmp, error, __func__);
 
 	/*
 	 * XXX: stay in touch with the cache.  I don't like this, but
@@ -1602,11 +1711,14 @@ puffs_read(void *v)
 			error = puffs_vntouser(pmp, PUFFS_VN_READ,
 			    read_argp, argsize, tomove,
 			    ap->a_vp, NULL);
+			error = checkerr(pmp, error, __func__);
 			if (error)
 				break;
 
 			if (read_argp->pvnr_resid > tomove) {
-				error = EINVAL;
+				puffs_errnotify(pmp, PUFFS_ERR_READ,
+				    E2BIG, "resid grew", VPTOPNC(ap->a_vp));
+				error = EPROTO;
 				break;
 			}
 
@@ -1757,11 +1869,14 @@ puffs_write(void *v)
 			error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
 			    PUFFS_VN_WRITE, write_argp, argsize, 0,
 			    ap->a_vp, NULL);
+			error = checkerr(pmp, error, __func__);
 			if (error)
 				break;
 
 			if (write_argp->pvnr_resid > tomove) {
-				error = EINVAL;
+				puffs_errnotify(pmp, PUFFS_ERR_WRITE,
+				    E2BIG, "resid grew", VPTOPNC(ap->a_vp));
+				error = EPROTO;
 				break;
 			}
 
@@ -1780,91 +1895,6 @@ puffs_write(void *v)
 	if (write_argp)
 		free(write_argp, M_PUFFS);
 	return error;
-}
-
-static int	puffs_fcnioctl(struct vop_ioctl_args * /*XXX*/, int);
-
-#define FCNIOCTL_ARG_MAX 1<<16
-int
-puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
-{
-
-	/* currently not supported */
-	return EOPNOTSUPP;
-#if 0
-	/* struct vop_ioctl_args {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		u_long a_command;
-		void *a_data;
-		int a_fflag;
-		kauth_cred_t a_cred;
-		struct lwp *a_l;
-	} *ap = v; */
-	struct puffs_mount *pmp;
-	struct puffs_sizepark pspark;
-	void *kernbuf;
-	size_t copylen;
-	int error;
-
-	PUFFS_VNREQ(fcnioctl);
-
-	/*
-	 * Since this op gives the filesystem (almost) complete control on
-	 * how much it is allowed to copy from the calling process
-	 * address space, do not enable it by default, since it would
-	 * be a whopping security hole.
-	 */
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-	if ((pmp->pmp_flags & PUFFS_KFLAG_ALLOWCTL) == 0)
-		return EINVAL; /* only shoe that fits */
-
-	/* fill in sizereq and store it */
-	pspark.pkso_reqid = puffs_getreqid(pmp);
-	pspark.pkso_reqtype = PUFFS_SIZEOPREQ_BUF_IN;
-	pspark.pkso_copybuf = ap->a_data;
-	pspark.pkso_bufsize = FCNIOCTL_ARG_MAX;
-	TAILQ_INSERT_TAIL(&pmp->pmp_req_sizepark, &pspark, pkso_entries);
-
-	/* then fill in actual request and shoot it off */
-	fcnioctl_arg.pvnr_command = ap->a_command;
-	fcnioctl_arg.pvnr_fflag = ap->a_fflag;
-	puffs_credcvt(&fcnioctl_arg.pvnr_cred, ap->a_cred);
-	fcnioctl_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
-
-	error = puffs_vntouser_req(MPTOPUFFSMP(ap->a_vp->v_mount), puffsop,
-	    &fcnioctl_arg, sizeof(fcnioctl_arg), 0, ap->a_vp,
-	    pspark.pkso_reqid, ap->a_vp, NULL);
-
-	/* if we don't need to copy data, we're done */
-	if (error || !fcnioctl_arg.pvnr_copyback)
-		return error;
-
-	copylen = MIN(FCNIOCTL_ARG_MAX, fcnioctl_arg.pvnr_datalen);
-	kernbuf = malloc(copylen, M_PUFFS, M_WAITOK);
-	error = copyin(fcnioctl_arg.pvnr_data, kernbuf, copylen);
-	if (error)
-		goto out;
-	error = copyout(kernbuf, ap->a_data, copylen);
-
- out:
-	free(kernbuf, M_PUFFS);
-	return error;
-#endif
-}
-
-int
-puffs_ioctl(void *v)
-{
-
-	return puffs_fcnioctl(v, PUFFS_VN_IOCTL);
-}
-
-int
-puffs_fcntl(void *v)
-{
-
-	return puffs_fcnioctl(v, PUFFS_VN_FCNTL);
 }
 
 int
@@ -1905,15 +1935,17 @@ puffs_pathconf(void *v)
 		int a_name;
 		register_t *a_retval;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error;
 
 	PUFFS_VNREQ(pathconf);
 
 	pathconf_arg.pvnr_name = ap->a_name;
 
-	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-	    PUFFS_VN_PATHCONF, &pathconf_arg, sizeof(pathconf_arg), 0,
-	    ap->a_vp, NULL);
+	error = puffs_vntouser(pmp, PUFFS_VN_PATHCONF,
+	    &pathconf_arg, sizeof(pathconf_arg), 0, vp, NULL);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		return error;
 
@@ -1933,6 +1965,8 @@ puffs_advlock(void *v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error;
 
 	PUFFS_VNREQ(advlock);
@@ -1944,8 +1978,9 @@ puffs_advlock(void *v)
 	advlock_arg.pvnr_op = ap->a_op;
 	advlock_arg.pvnr_flags = ap->a_flags;
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_ADVLOCK,
-	    &advlock_arg, sizeof(advlock_arg), 0, ap->a_vp, NULL);
+	error = puffs_vntouser(pmp, PUFFS_VN_ADVLOCK,
+	    &advlock_arg, sizeof(advlock_arg), 0, vp, NULL);
+	return checkerr(pmp, error, __func__);
 }
 
 #define BIOASYNC(bp) (bp->b_flags & B_ASYNC)
@@ -2039,11 +2074,15 @@ puffs_strategy(void *v)
 		} else {
 			error = puffs_vntouser(pmp, PUFFS_VN_READ,
 			    rw_argp, argsize, tomove, vp, NULL);
+			error = checkerr(pmp, error, __func__);
 			if (error)
 				goto out;
 
-			if (rw_argp->pvnr_resid > tomove)
-				ERROUT(EINVAL);
+			if (rw_argp->pvnr_resid > tomove) {
+				puffs_errnotify(pmp, PUFFS_ERR_READ,
+				    E2BIG, "resid grew", VPTOPNC(vp));
+				ERROUT(EPROTO);
+			}
 
 			moved = tomove - rw_argp->pvnr_resid;
 
@@ -2087,16 +2126,21 @@ puffs_strategy(void *v)
 			error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
 			    PUFFS_VN_WRITE, rw_argp, argsize + tomove,
 			    0, vp, NULL);
+			error = checkerr(pmp, error, __func__);
 			if (error)
 				goto out;
 
 			moved = tomove - rw_argp->pvnr_resid;
-			if (rw_argp->pvnr_resid > tomove)
-				ERROUT(EINVAL);
+			if (rw_argp->pvnr_resid > tomove) {
+				puffs_errnotify(pmp, PUFFS_ERR_WRITE,
+				    E2BIG, "resid grew", VPTOPNC(vp));
+				ERROUT(EPROTO);
+			}
 
 			bp->b_resid = bp->b_bcount - moved;
-			if (rw_argp->pvnr_resid != 0)
+			if (rw_argp->pvnr_resid != 0) {
 				ERROUT(EIO);
+			}
 		}
 	}
 
@@ -2142,6 +2186,7 @@ puffs_mmap(void *v)
 		error = puffs_vntouser(pmp, PUFFS_VN_MMAP,
 		    &mmap_arg, sizeof(mmap_arg), 0,
 		    ap->a_vp, NULL);
+		error = checkerr(pmp, error, __func__);
 	} else {
 		error = genfs_mmap(v);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.12 2007/09/14 11:28:46 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.12.2.1 2007/10/06 15:31:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.17 2007/05/11 10:19:11 darrenr Exp
+ * $Id: ip_nat.h,v 1.12.2.1 2007/10/06 15:31:40 yamt Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -363,6 +363,7 @@ typedef	struct	natstat	{
 	hostmap_t *ns_maplist;
 	u_long	*ns_bucketlen[2];
 	u_long	ns_ticks;
+	u_int	ns_orphans;
 } natstat_t;
 
 typedef	struct	natlog {
@@ -384,6 +385,7 @@ typedef	struct	natlog {
 #define	NL_NEWRDR	NAT_REDIRECT
 #define	NL_NEWBIMAP	NAT_BIMAP
 #define	NL_NEWBLOCK	NAT_MAPBLK
+#define	NL_DESTROY	0xfffc
 #define	NL_CLONE	0xfffd
 #define	NL_FLUSH	0xfffe
 #define	NL_EXPIRE	0xffff
@@ -447,6 +449,7 @@ extern	nat_t	*nat_maplookup __P((void *, u_int, struct in_addr,
 extern	nat_t	*nat_lookupredir __P((natlookup_t *));
 extern	nat_t	*nat_icmperrorlookup __P((fr_info_t *, int));
 extern	nat_t	*nat_icmperror __P((fr_info_t *, u_int *, int));
+extern	void	nat_delete __P((struct nat *, int));
 extern	int	nat_insert __P((nat_t *, int));
 
 extern	int	fr_checknatout __P((fr_info_t *, u_32_t *));

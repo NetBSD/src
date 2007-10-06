@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.5 2007/10/04 15:36:56 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.6 2007/10/06 15:37:50 yamt Exp $	*/
 
 /*
  *
@@ -75,10 +75,12 @@
 #define	_AMD64_PMAP_H_
 
 #ifndef _LOCORE
-#include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/atomic.h>
+#ifdef _KERNEL
+#include <machine/cpufunc.h>
+#endif
 
 #include <uvm/uvm_object.h>
 #endif
