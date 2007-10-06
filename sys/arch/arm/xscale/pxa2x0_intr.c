@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.11.20.1 2007/10/06 17:38:30 rjs Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11.20.1 2007/10/06 17:38:30 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,9 +464,15 @@ pxa2x0_intr_disestablish(void *cookie)
  * Glue for drivers of sa11x0 compatible integrated logics.
  */
 void *
-sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg)
+sa11x0_intr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg)
 {
 
 	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg);
+}
+
+void
+sa11x0_intr_disestablish(void *ih_arg)
+{
+
+	pxa2x0_intr_disestablish(ih_arg);
 }

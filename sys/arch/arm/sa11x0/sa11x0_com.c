@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.39.6.1 2007/10/06 17:38:29 rjs Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39.6.1 2007/10/06 17:38:29 rjs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -281,7 +281,7 @@ sacom_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	sa11x0_intr_establish(0, sa->sa_intr, 1, IPL_SERIAL, sacomintr, sc);
+	sa11x0_intr_establish(sa->sa_intr, IPL_SERIAL, sacomintr, sc);
 }
 
 void

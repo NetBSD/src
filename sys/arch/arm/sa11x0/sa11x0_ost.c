@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.20.24.1 2007/10/06 17:38:29 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.20.24.1 2007/10/06 17:38:29 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,8 +226,8 @@ cpu_initclocks(void)
 	sc->sc_clock_count = TIMER_FREQUENCY / hz;
 	sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
 
-	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
-	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+	sa11x0_intr_establish(26, IPL_CLOCK, clockintr, 0);
+	sa11x0_intr_establish(27, IPL_CLOCK, statintr, 0);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 0xf);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_IR, 3);

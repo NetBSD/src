@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_var.h,v 1.7 2006/04/12 12:42:27 simonb Exp $	*/
+/*	$NetBSD: sa11x0_var.h,v 1.7.34.1 2007/10/06 17:38:29 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -68,8 +68,8 @@ struct sa11x0_attach_args {
 	int			sa_gpio;
 };
 
-void *sa11x0_intr_establish(sa11x0_chipset_tag_t, int, int, int, 
-			    int (*)(void *), void *);
-void sa11x0_intr_disestablish(sa11x0_chipset_tag_t, void *);
+void *sa11x0_intr_establish(int, int, int (*)(void *), void *);
+void sa11x0_intr_disestablish(void *);
+typedef int (* sa11x0_irq_handler_t)(void *);
 
 #endif /* _SA11X0_VAR_H */
