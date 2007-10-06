@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.61 2007/01/08 16:21:46 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.61.20.1 2007/10/06 17:38:30 rjs Exp $
 #
 # hpcarm specific configuration info
 #
@@ -18,12 +18,11 @@ define todservice {}
 file	dev/md_root.c				memory_disk_hooks
 
 # Generic MD files
-file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/softintr.c
-file	arch/hpcarm/hpcarm/spl.S
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm/softintr.c
 
 # HPCARM specific files
+file	arch/hpcarm/hpcarm/autoconf.c
 file	arch/hpcarm/hpcarm/hpc_machdep.c
 
 # Workstation Console

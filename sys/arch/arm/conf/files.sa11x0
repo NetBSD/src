@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.6 2007/01/08 16:21:45 ichiro Exp $
+#	$NetBSD: files.sa11x0,v 1.6.20.1 2007/10/06 17:38:30 rjs Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -11,8 +11,12 @@ attach saip at mainbus
 file	arch/arm/sa11x0/sa11x0.c		saip needs-flag
 file	arch/arm/sa11x0/sa11x0_io.c		saip
 file	arch/arm/sa11x0/sa11x0_io_asm.S		saip
-file	arch/arm/sa11x0/sa11x0_irq.S		saip
-file	arch/arm/sa11x0/sa11x0_irqhandler.c	saip
+
+# INTC controller
+device	saintc
+attach	saintc at saip
+file arch/arm/sa11x0/sa11x0_intr.c		saintc needs-flag
+defflag  opt_sa11x0_gpio.h		SAGPIO_HAS_GPION_INTRS
 
 # clock device
 device	saost

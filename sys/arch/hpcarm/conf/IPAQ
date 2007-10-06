@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.50 2007/05/07 09:02:06 jnemeth Exp $
+#	$NetBSD: IPAQ,v 1.50.6.1 2007/10/06 17:38:30 rjs Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -126,6 +126,8 @@ options 	DDB		# in-kernel debugger
 config		netbsd	root on ? type ?
 #options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0
 
+options 	ARM_INTR_IMPL="<arch/arm/sa11x0/sa11x0_intr.h>"
+
 # The main bus device
 mainbus0 at root
 
@@ -133,6 +135,8 @@ mainbus0 at root
 cpu0 at mainbus?
 
 saip0	at mainbus?
+
+saintc0 at saip? addr 0x90050000 size 0x24	# interrupt controller
 
 # Serial
 options 	CONSPEED=19200

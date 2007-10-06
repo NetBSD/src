@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.16 2007/07/09 20:52:12 ad Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.16.6.1 2007/10/06 17:38:31 rjs Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.16 2007/07/09 20:52:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.16.6.1 2007/10/06 17:38:31 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,9 @@ ipaqpcic_attach(struct device *parent, struct device *self, void *aux)
 		    config_found_ia(&sc->sc_pc.sc_dev, "pcmciabus",
 		    &paa, ipaqpcic_print);
 
-		sa11x0_intr_establish((sa11x0_chipset_tag_t)psc,
-			    i ? IRQ_CD1 : IRQ_CD0,
-			    1, IPL_BIO, sapcic_intr,
-			    &sc->sc_socket[i]);
+		sa11x0_intr_establish(i ? IRQ_CD1 : IRQ_CD0,
+				      IPL_BIO, sapcic_intr,
+				      &sc->sc_socket[i]);
 
 		/* schedule kthread creation */
 		sapcic_kthread_create(&sc->sc_socket[i]);
@@ -267,12 +266,11 @@ ipaqpcic_intr_establish(struct sapcic_socket *so, int level,
 	int irq;
 
 	irq = so->socket ? IRQ_IRQ0 : IRQ_IRQ1;
-	return (sa11x0_intr_establish((sa11x0_chipset_tag_t)so->pcictag_cookie,
-				    irq-16, 1, level, ih_fun, ih_arg));
+	return (sa11x0_intr_establish(irq-16, level, ih_fun, ih_arg));
 }
 
 static void
 ipaqpcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 {
-	sa11x0_intr_disestablish((sa11x0_chipset_tag_t)so->pcictag_cookie, ih);
+	sa11x0_intr_disestablish(ih);
 }
