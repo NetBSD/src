@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.38 2007/07/20 16:39:06 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.39 2007/10/06 20:19:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -50,7 +50,7 @@
  *	across the network to save BandWidth
  *
  * Revision 1.20  92/09/09  22:05:00  mrt
- * 	Added Brad's change to make sendfile take a va_list.
+ * 	Added Brad's change to make send_file take a va_list.
  * 	Added support in login to accept an non-encrypted login
  * 	message if no user or password is being sent. This supports
  * 	a non-crypting version of sup. Also fixed to skip leading
@@ -351,10 +351,10 @@ void docrypt(void);
 void srvlogin(void);
 void listfiles(void);
 int denyone(TREE *, void *);
-void sendfiles(void);
-int sendone(TREE *, void *);
-int senddir(TREE *, void *);
-int sendfile(TREE *, va_list);
+void send_files(void);
+int send_one(TREE *, void *);
+int send_dir(TREE *, void *);
+int send_file(TREE *, va_list);
 void srvfinishup(time_t);
 void Hfree(HASH **);
 HASH *Hlookup(HASH **, int, int);
@@ -720,7 +720,7 @@ answer(void)
 			exit(0);
 		}
 		listfiles();
-		sendfiles();
+		send_files();
 	}
 	srvfinishup(starttime);
 	if (collname)
@@ -1220,7 +1220,7 @@ denyone(TREE * t, void *v __unused)
  *********************************/
 
 void
-sendfiles(void)
+send_files(void)
 {
 	TREELIST *tl;
 	int x;
@@ -1246,24 +1246,24 @@ sendfiles(void)
 			}
 		}
 #endif
-		(void) Tprocess(tl->TLtree, sendone, NULL);
+		(void) Tprocess(tl->TLtree, send_one, NULL);
 	}
 	/* send directories in reverse order */
 	for (tl = listTL; tl != NULL; tl = tl->TLnext) {
 		cdprefix(tl->TLprefix);
-		(void) Trprocess(tl->TLtree, senddir, NULL);
+		(void) Trprocess(tl->TLtree, send_dir, NULL);
 	}
 	x = msgsend();
 	if (x != SCMOK)
 		goaway("Error reading receive file request from client");
 	upgradeT = NULL;
-	x = msgrecv(sendfile, 0);
+	x = msgrecv(send_file, 0);
 	if (x != SCMOK)
 		goaway("Error sending file to client");
 }
 
 int
-sendone(TREE * t, void *v __unused)
+send_one(TREE * t, void *v __unused)
 {
 	int x, fd;
 	char temp_file[STRINGLENGTH];
@@ -1382,7 +1382,7 @@ sendone(TREE * t, void *v __unused)
 			t->Tgroup = estrdup(gconvert(t->Tgid));
 		}
 	}
-	x = msgrecv(sendfile, fd);
+	x = msgrecv(send_file, fd);
 	if (docompress)
 		unlink(temp_file);
 #ifdef RCS
@@ -1395,7 +1395,7 @@ sendone(TREE * t, void *v __unused)
 }
 
 int
-senddir(TREE * t, void *v __unused)
+send_dir(TREE * t, void *v __unused)
 {
 	int x;
 
@@ -1409,14 +1409,14 @@ senddir(TREE * t, void *v __unused)
 	upgradeT = t;		/* upgrade file pointer */
 	t->Tuser = estrdup(uconvert(t->Tuid));
 	t->Tgroup = estrdup(gconvert(t->Tgid));
-	x = msgrecv(sendfile, 0);
+	x = msgrecv(send_file, 0);
 	if (x != SCMOK)
 		goaway("Error sending file %s to client", t->Tname);
 	return (SCMOK);
 }
 
 int
-sendfile(TREE * t, va_list ap)
+send_file(TREE * t, va_list ap)
 {
 	int x, fd;
 
