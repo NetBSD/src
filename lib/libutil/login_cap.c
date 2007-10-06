@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.27 2007/02/04 08:19:26 elad Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.28 2007/10/06 21:51:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.27 2007/02/04 08:19:26 elad Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.28 2007/10/06 21:51:22 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -575,6 +575,12 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	if (pwd == NULL)
 		flags &= ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
 
+#ifdef LOGIN_OSETGROUP
+	if (pwd == NULL)
+		flags &= ~LOGIN_OSETGROUP;
+	if (flags & LOGIN_OSETGROUP)
+		flags = (flags & ~LOGIN_OSETGROUP) | LOGIN_SETGROUP;
+#endif
 	if (flags & LOGIN_SETRESOURCES)
 		for (i = 0; r_list[i].name; ++i) 
 			(void)gsetrl(lc, r_list[i].what, r_list[i].name,
@@ -583,24 +589,26 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	if (flags & LOGIN_SETPRIORITY) {
 		p = login_getcapnum(lc, "priority", (quad_t)0, (quad_t)0);
 
-		if (setpriority(PRIO_PROCESS, 0, (int)p) < 0)
+		if (setpriority(PRIO_PROCESS, 0, (int)p) == -1)
 			syslog(LOG_ERR, "%s: setpriority: %m", lc->lc_class);
 	}
 
 	if (flags & LOGIN_SETUMASK) {
 		p = login_getcapnum(lc, "umask", (quad_t) LOGIN_DEFUMASK,
-												   (quad_t) LOGIN_DEFUMASK);
+		    (quad_t)LOGIN_DEFUMASK);
 		umask((mode_t)p);
 	}
 
-	if (flags & LOGIN_SETGROUP) {
-		if (setgid(pwd->pw_gid) < 0) {
+	if (flags & LOGIN_SETGID) {
+		if (setgid(pwd->pw_gid) == -1) {
 			syslog(LOG_ERR, "setgid(%d): %m", pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
+	}
 
-		if (initgroups(pwd->pw_name, pwd->pw_gid) < 0) {
+	if (flags & LOGIN_SETGROUPS) {
+		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
 			syslog(LOG_ERR, "initgroups(%s,%d): %m",
 			    pwd->pw_name, pwd->pw_gid);
 			login_close(flc);
@@ -636,7 +644,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	errno = 0;
 
 	if (flags & LOGIN_SETLOGIN)
-		if (setlogin(pwd->pw_name) < 0) {
+		if (setlogin(pwd->pw_name) == -1) {
 			syslog(LOG_ERR, "setlogin(%s) failure: %m",
 			    pwd->pw_name);
 			login_close(flc);
@@ -644,7 +652,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 		}
 
 	if (flags & LOGIN_SETUSER)
-		if (setuid(uid) < 0) {
+		if (setuid(uid) == -1) {
 			syslog(LOG_ERR, "setuid(%d): %m", uid);
 			login_close(flc);
 			return (-1);
