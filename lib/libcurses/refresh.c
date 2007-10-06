@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.68 2007/09/19 22:00:43 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.69 2007/10/06 20:14:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.68 2007/09/19 22:00:43 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.69 2007/10/06 20:14:41 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -794,19 +794,6 @@ makech(int wy)
 		while (wx <= lch && memcmp(nsp, csp, sizeof(__LDATA)) != 0) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
-				/* Are we continuing a multircell character? */
-				if ((nsp->attr & __WCWIDTH) == __WCWIDTH) {
-#ifdef DEBUG
-					__CTRACE(__CTRACE_REFRESH,
-						"Skipping continuation cell\n");
-					wx++;
-					csp->ch = nsp->ch;
-					csp->attr = nsp->attr;
-					nsp++;
-					csp++;
-					continue;
-				}
-#endif
 #else
 		while (!cellcmp(nsp, csp) && wx <= lch) {
 			if (ce != NULL && wx >= nlsp
@@ -866,7 +853,13 @@ makech(int wy)
 				    nsp->attr & WA_ATTRIBUTES);
 #endif
 
-			off = (~nsp->attr & curscr->wattr) & WA_ATTRIBUTES;
+			off = (~nsp->attr & curscr->wattr)
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+				;
 
 			/*
 			 * Unset attributes as appropriate.  Unset first
@@ -914,7 +907,13 @@ makech(int wy)
 			if (__using_color)
 				__set_color(curscr, nsp->attr & __COLOR);
 
-			on = (nsp->attr & ~curscr->wattr) & WA_ATTRIBUTES;
+			on = (nsp->attr & ~curscr->wattr)
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+				 ;
 
 			/*
 			 * Enter standout mode if appropriate.
