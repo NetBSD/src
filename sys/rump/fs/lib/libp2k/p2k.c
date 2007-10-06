@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19.6.1 2007/10/06 15:29:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	extern int puffs_fakecc;
 	int rv, sverrno;
 
+	rv = -1;
 	ukfs_init();
 	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
 	if (ukfs == NULL)
@@ -143,6 +144,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	strlcat(typebuf, vfsname, sizeof(typebuf));
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
+	if (pu == NULL)
+		goto out;
 
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
@@ -194,6 +197,8 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	cred = cred_create(pcr);
 	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
 	cred_destroy(cred);
+
+	rump_bioops_sync();
 
 	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.144.2.1 2007/09/23 18:28:17 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.144.2.2 2007/10/06 15:34:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,7 +140,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
@@ -191,18 +190,18 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#if defined(MULTIPROCESSOR)
-
 #define X86_MAXPROCS		32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-static struct cpu_info *curcpu(void);
+#if defined(__GNUC__) && defined(_KERNEL)
+static struct cpu_info *x86_curcpu(void);
+static lwp_t *x86_curlwp(void);
 
 __inline static struct cpu_info * __attribute__((__unused__))
-curcpu()
+x86_curcpu(void)
 {
 	struct cpu_info *ci;
 
@@ -212,6 +211,23 @@ curcpu()
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
 	return ci;
 }
+
+__inline static lwp_t * __attribute__((__unused__))
+x86_curlwp(void)
+{
+	lwp_t *l;
+
+	__asm volatile("movl %%fs:%1, %0" :
+	    "=r" (l) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
+	return l;
+}
+#else	/* __GNUC__ && _KERNEL */
+/* For non-GCC and LKMs */
+struct cpu_info	*x86_curcpu(void);
+lwp_t	*x86_curlwp(void);
+#endif	/* __GNUC__ && _KERNEL */
 
 #define cpu_number() 		(curcpu()->ci_cpuid)
 
@@ -224,25 +240,10 @@ extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 
-#else /* !MULTIPROCESSOR */
-
-#define	X86_MAXPROCS		1
-#define	curcpu()		(&cpu_info_primary)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()		0
-#define CPU_IS_PRIMARY(ci)	1
-
-#define aston(l)		((l)->l_md.md_astpending = 1)
-
-#endif /* MULTIPROCESSOR */
-
 extern uint32_t cpus_attached;
 
-#define	curlwp			curcpu()->ci_curlwp
+#define	curcpu()		x86_curcpu()
+#define	curlwp			x86_curlwp()
 #define	curpcb			(&curlwp->l_addr->u_pcb)
 
 /*

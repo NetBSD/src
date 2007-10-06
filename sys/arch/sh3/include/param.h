@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.16.26.1 2007/10/06 15:34:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -43,7 +43,7 @@
 #define	_SH3_PARAM_H_
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-#include <sh3/cpu.h>
+#include <machine/cpu.h>
 #endif
 
 /* NetBSD/sh3 is 4KB page */

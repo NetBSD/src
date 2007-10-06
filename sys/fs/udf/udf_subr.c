@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.36 2007/07/29 13:31:11 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.36.8.1 2007/10/06 15:29:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.36 2007/07/29 13:31:11 ad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.36.8.1 2007/10/06 15:29:51 yamt Exp $");
 #endif /* not lint */
 
 
@@ -2443,7 +2443,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	struct fileid_desc *fid;
-	struct dirent dirent;
+	struct dirent *dirent;
 	uint64_t file_size, diroffset;
 	uint32_t lb_size;
 	int found, error;
@@ -2460,7 +2460,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 
 	/* allocate temporary space for fid */
 	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
-	fid = malloc(lb_size, M_TEMP, M_WAITOK);
+	fid = malloc(lb_size, M_UDFTEMP, M_WAITOK);
 
 	found = 0;
 	diroffset = dir_node->last_diroffset;
@@ -2473,20 +2473,22 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		diroffset = dir_node->last_diroffset = file_size;
 	}
 
+	dirent = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+
 	while (!found) {
 		/* if at the end, go trough zero */
 		if (diroffset >= file_size)
 			diroffset = 0;
 
 		/* transfer a new fid/dirent */
-		error = udf_read_fid_stream(vp, &diroffset, fid, &dirent);
+		error = udf_read_fid_stream(vp, &diroffset, fid, dirent);
 		if (error)
 			break;
 
 		/* skip deleted entries */
 		if ((fid->file_char & UDF_FILE_CHAR_DEL) == 0) {
-			if ((strlen(dirent.d_name) == namelen) &&
-			    (strncmp(dirent.d_name, name, namelen) == 0)) {
+			if ((strlen(dirent->d_name) == namelen) &&
+			    (strncmp(dirent->d_name, name, namelen) == 0)) {
 				found = 1;
 				*icb_loc = fid->icb;
 			}
@@ -2497,7 +2499,8 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 			break;
 		}
 	}
-	free(fid, M_TEMP);
+	free(fid, M_UDFTEMP);
+	free(dirent, M_UDFTEMP);
 	dir_node->last_diroffset = diroffset;
 
 	return found;
@@ -2777,7 +2780,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		return;
 	}
 
-	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_TEMP, M_WAITOK);
+	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_UDFTEMP, M_WAITOK);
 
 	error = 0;
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
@@ -2850,7 +2853,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	}
 out:
 	DPRINTF(READ, ("\tend of read_filebuf\n"));
-	free(mapping, M_TEMP);
+	free(mapping, M_UDFTEMP);
 	return;
 }
 #undef FILEBUFSECT

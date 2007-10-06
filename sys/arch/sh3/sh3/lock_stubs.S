@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.8 2007/03/14 06:42:46 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.8.18.1 2007/10/06 15:34:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -45,7 +45,7 @@
  *	Atomic compare-and-swap for kernel use.  SuperH machines are
  *	uniprocessor, so we need to be atomic only w.r.t. interrupts.
  *	Implement this as (the only in-kernel) RAS, with restart check
- *	done in ast() on return from interrupt.
+ *	done on return from interrupt.
  *
  *	Mutex stubs below depend on this function:
  *	    r4 - preserved, passed along to mutex_vector_{enter,exit}

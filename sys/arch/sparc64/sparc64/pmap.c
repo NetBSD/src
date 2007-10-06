@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2007/09/11 16:00:06 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.196.2.1 2007/10/06 15:34:30 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2007/09/11 16:00:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196.2.1 2007/10/06 15:34:30 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2044,6 +2044,7 @@ pmap_extract(pm, va, pap)
 	paddr_t *pap;
 {
 	paddr_t pa;
+	int64_t data = 0;
 
 	if (pm == pmap_kernel() && va >= kdata && va < roundup(ekdata, 4*MEG)) {
 		/* Need to deal w/locked TLB entry specially. */
@@ -2066,7 +2067,8 @@ pmap_extract(pm, va, pap)
 		if (pm != pmap_kernel()) {
 			simple_lock(&pm->pm_lock);
 		}
-		pa = pseg_get(pm, va) & TLB_PA_MASK;
+		data = pseg_get(pm, va);
+		pa = data & TLB_PA_MASK;
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			paddr_t npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)],
@@ -2100,7 +2102,7 @@ pmap_extract(pm, va, pap)
 			simple_unlock(&pm->pm_lock);
 		}
 	}
-	if (pa == 0)
+	if ((data & TLB_V) == 0)
 		return (FALSE);
 	if (pap != NULL)
 		*pap = pa + (va & PGOFSET);

@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.8 2006/11/16 01:32:47 christos Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.8.28.1 2007/10/06 15:31:05 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.8 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.8.28.1 2007/10/06 15:31:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <dev/acpi/acpi_timer.h>
@@ -111,7 +111,7 @@ acpitimer_test()
 	minl = 10000000;
 	maxl = 0;
 
-	disable_intr();
+	x86_disable_intr();
 	AcpiGetTimer(&last);
 	for (n = 0; n < N; n++) {
 		AcpiGetTimer(&this);
@@ -122,7 +122,7 @@ acpitimer_test()
 			minl = delta;
 		last = this;
 	}
-	enable_intr();
+	x86_enable_intr();
 
 	if (maxl - minl > 2 )
 		n = 0;

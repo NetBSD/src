@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.254 2007/09/07 18:56:12 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.254.2.1 2007/10/06 15:28:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -444,14 +444,15 @@ do {									\
 /*
  * Flags passed to fork1().
  */
-#define	FORK_PPWAIT	0x01		/* Block parent until child exit */
-#define	FORK_SHAREVM	0x02		/* Share vmspace with parent */
-#define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
-#define	FORK_SHAREFILES	0x08		/* Share file descriptors */
-#define	FORK_SHARESIGS	0x10		/* Share signal actions */
-#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
-#define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
-#define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
+#define	FORK_PPWAIT	0x0001		/* Block parent until child exit */
+#define	FORK_SHAREVM	0x0002		/* Share vmspace with parent */
+#define	FORK_SHARECWD	0x0004		/* Share cdir/rdir/cmask */
+#define	FORK_SHAREFILES	0x0008		/* Share file descriptors */
+#define	FORK_SHARESIGS	0x0010		/* Share signal actions */
+#define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
+#define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
+#define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
+#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 /*
  * Allow machine-dependent code to override curlwp in <machine/cpu.h> for

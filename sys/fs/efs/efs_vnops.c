@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.8 2007/09/08 18:17:59 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.8.2.1 2007/10/06 15:29:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.8 2007/09/08 18:17:59 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.8.2.1 2007/10/06 15:29:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ efs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
-	struct dirent d;
+	struct dirent *dp;
 	struct efs_dinode edi;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
@@ -321,6 +321,8 @@ efs_readdir(void *v)
 		    uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
  	}
+
+	dp = malloc(sizeof(struct dirent), M_EFSTMP, M_WAITOK | M_ZERO);
 
 	offset = 0;
 	efs_extent_iterator_init(&exi, ei, 0);
@@ -352,7 +354,7 @@ efs_readdir(void *v)
 				}
 
 				de = EFS_DIRBLK_TO_DIRENT(db, slot);
-				s = _DIRENT_RECLEN(&d, de->de_namelen);
+				s = _DIRENT_RECLEN(dp, de->de_namelen);
 
 				if (offset < uio->uio_offset) {
 					offset += s;
@@ -367,18 +369,18 @@ efs_readdir(void *v)
 				}
 
 				/* de_namelen is uint8_t, d.d_name is 512b */
-				KASSERT(sizeof(d.d_name) - de->de_namelen > 0);
-				d.d_fileno = be32toh(de->de_inumber);
-				d.d_reclen = s;
-				d.d_namlen = de->de_namelen;
-				memcpy(d.d_name, de->de_name,
+				KASSERT(sizeof(dp->d_name)-de->de_namelen > 0);
+				dp->d_fileno = be32toh(de->de_inumber);
+				dp->d_reclen = s;
+				dp->d_namlen = de->de_namelen;
+				memcpy(dp->d_name, de->de_name,
 				    de->de_namelen);
-				d.d_name[de->de_namelen] = '\0';
+				dp->d_name[de->de_namelen] = '\0';
 
 				/* look up inode to get type */
 				err = efs_read_inode(
 				    VFSTOEFS(ap->a_vp->v_mount),
-				    d.d_fileno, NULL, &edi);
+				    dp->d_fileno, NULL, &edi);
 				if (err) {
 					brelse(bp);
 					goto exit_err;
@@ -386,32 +388,32 @@ efs_readdir(void *v)
 
 				switch (be16toh(edi.di_mode) & EFS_IFMT) {
 				case EFS_IFIFO:
-					d.d_type = DT_FIFO;
+					dp->d_type = DT_FIFO;
 					break;
 				case EFS_IFCHR:
-					d.d_type = DT_CHR;
+					dp->d_type = DT_CHR;
 					break;
 				case EFS_IFDIR:
-					d.d_type = DT_DIR;
+					dp->d_type = DT_DIR;
 					break;
 				case EFS_IFBLK:
-					d.d_type = DT_BLK;
+					dp->d_type = DT_BLK;
 					break;
 				case EFS_IFREG:
-					d.d_type = DT_REG;
+					dp->d_type = DT_REG;
 					break;
 				case EFS_IFLNK:
-					d.d_type = DT_LNK;
+					dp->d_type = DT_LNK;
 					break;
 				case EFS_IFSOCK:
-					d.d_type = DT_SOCK;
+					dp->d_type = DT_SOCK;
 					break;
 				default:
-					d.d_type = DT_UNKNOWN;
+					dp->d_type = DT_UNKNOWN;
 					break;
 				}
 
-				err = uiomove(&d, s, uio);
+				err = uiomove(dp, s, uio);
 				if (err) {
 					brelse(bp);
 					goto exit_err;
@@ -448,11 +450,15 @@ efs_readdir(void *v)
 
 	uio->uio_offset = offset;
 
+	free(dp, M_EFSTMP);
+
 	return (0);
 
  exit_err:
 	if (cookies != NULL)
 		free(cookies, M_TEMP);
+
+	free(dp, M_EFSTMP);
 	
 	return (err);
 }

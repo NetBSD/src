@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.67 2007/09/09 12:28:08 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.67.2.1 2007/10/06 15:31:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.67 2007/09/09 12:28:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.67.2.1 2007/10/06 15:31:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -961,6 +961,7 @@ out:
 
 invalidate_sensor:
 	edata->flags |= ENVSYS_FNOTVALID;
+	prop_object_release(dict);
 	return sme_evdrv_t;
 }
 

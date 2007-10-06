@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.90 2007/09/19 18:52:55 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.90.2.1 2007/10/06 15:29:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.90 2007/09/19 18:52:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.90.2.1 2007/10/06 15:29:02 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -137,11 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.90 2007/09/19 18:52:55 dyoung Exp $")
 #ifdef EON
 #include <netiso/eonvar.h>
 #endif /* EON */
-
-#include "gre.h"
-#if NGRE > 0
-#include <netinet/ip_gre.h>
-#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -304,28 +299,6 @@ const struct protosw inetsw[] = {
 	.pr_usrreq = rip_usrreq,
 },
 #endif /* NCARP > 0 */
-#if NGRE > 0
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_GRE,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = gre_input, 
-	.pr_output = rip_output,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_usrreq = rip_usrreq,
-},
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_MOBILE,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = gre_mobile_input, 
-	.pr_output = rip_output,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_usrreq = rip_usrreq,
-},
-#endif /* NGRE > 0 */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IGMP,

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.13 2007/09/11 16:33:19 briggs Exp $	*/
+/*	$NetBSD: emul.c,v 1.13.2.1 2007/10/06 15:29:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -233,7 +233,6 @@ void
 wakeup(wchan_t ident)
 {
 
-	printf("%s: not implemented\n", __func__);
 }
 
 void

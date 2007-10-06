@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.3 2007/10/04 15:36:57 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.4 2007/10/06 15:34:55 yamt Exp $	*/
 
 /*
  *
@@ -78,10 +78,12 @@
 #include "opt_user_ldt.h"
 #endif
 
-#include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/atomic.h>
+#if defined(_KERNEL) || defined(_LKM)
+#include <machine/cpufunc.h>
+#endif
 
 #include <uvm/uvm_object.h>
 

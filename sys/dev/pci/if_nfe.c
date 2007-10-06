@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.17 2007/09/01 07:32:30 dyoung Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.17.2.1 2007/10/06 15:31:24 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.17 2007/09/01 07:32:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.17.2.1 2007/10/06 15:31:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -94,7 +94,7 @@ void	nfe_start(struct ifnet *);
 void	nfe_watchdog(struct ifnet *);
 int	nfe_init(struct ifnet *);
 void	nfe_stop(struct ifnet *, int);
-struct	nfe_jbuf *nfe_jalloc(struct nfe_softc *);
+struct	nfe_jbuf *nfe_jalloc(struct nfe_softc *, int);
 void	nfe_jfree(struct mbuf *, void *, size_t, void *);
 int	nfe_jpool_alloc(struct nfe_softc *);
 void	nfe_jpool_free(struct nfe_softc *);
@@ -765,18 +765,34 @@ nfe_rxeof(struct nfe_softc *sc)
 		}
 
 		if (sc->sc_flags & NFE_USE_JUMBO) {
-			if ((jbuf = nfe_jalloc(sc)) == NULL) {
-				m_freem(mnew);
-				ifp->if_ierrors++;
-				goto skip;
+			physaddr =
+			    sc->rxq.jbuf[sc->rxq.jbufmap[i]].physaddr;
+			if ((jbuf = nfe_jalloc(sc, i)) == NULL) {
+				if (len > MCLBYTES) {
+					m_freem(mnew);
+					ifp->if_ierrors++;
+					goto skip1;
+				}
+				MCLGET(mnew, M_DONTWAIT);
+				if ((mnew->m_flags & M_EXT) == 0) {
+					m_freem(mnew);
+					ifp->if_ierrors++;
+					goto skip1;
+				}
+
+				memcpy(mtod(mnew, void *),
+				    mtod(data->m, const void *), len);
+				m = mnew;
+				goto mbufcopied;
+			} else {
+				MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
+
+				bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
+				    mtod(data->m, char *) - (char *)sc->rxq.jpool,
+				    NFE_JBYTES, BUS_DMASYNC_POSTREAD);
+
+				physaddr = jbuf->physaddr;
 			}
-			MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
-
-			bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
-			    mtod(data->m, char *) - (char *)sc->rxq.jpool,
-			    NFE_JBYTES, BUS_DMASYNC_POSTREAD);
-
-			physaddr = jbuf->physaddr;
 		} else {
 			MCLGET(mnew, M_DONTWAIT);
 			if ((mnew->m_flags & M_EXT) == 0) {
@@ -789,14 +805,15 @@ nfe_rxeof(struct nfe_softc *sc)
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map,
-			    mnew, BUS_DMA_READ | BUS_DMA_NOWAIT);
+			error = bus_dmamap_load(sc->sc_dmat, data->map,
+			    mtod(mnew, void *), MCLBYTES, NULL,
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
 				m_freem(mnew);
 
 				/* try to reload the old mbuf */
-				error = bus_dmamap_load_mbuf(sc->sc_dmat,
-				    data->map, data->m,
+				error = bus_dmamap_load(sc->sc_dmat, data->map,
+				    mtod(data->m, void *), MCLBYTES, NULL,
 				    BUS_DMA_READ | BUS_DMA_NOWAIT);
 				if (error != 0) {
 					/* very unlikely that it will fail.. */
@@ -816,6 +833,7 @@ nfe_rxeof(struct nfe_softc *sc)
 		m = data->m;
 		data->m = mnew;
 
+mbufcopied:
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_pkthdr.rcvif = ifp;
@@ -853,6 +871,7 @@ nfe_rxeof(struct nfe_softc *sc)
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, m);
 
+skip1:
 		/* update mapping address in h/w descriptor */
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 #if defined(__LP64__)
@@ -1089,6 +1108,9 @@ nfe_start(struct ifnet *ifp)
 	struct nfe_softc *sc = ifp->if_softc;
 	int old = sc->txq.queued;
 	struct mbuf *m0;
+
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+		return;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -1368,7 +1390,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		}
 
 		if (sc->sc_flags & NFE_USE_JUMBO) {
-			if ((jbuf = nfe_jalloc(sc)) == NULL) {
+			if ((jbuf = nfe_jalloc(sc, i)) == NULL) {
 				printf("%s: could not allocate jumbo buffer\n",
 				    sc->sc_dev.dv_xname);
 				goto fail;
@@ -1489,13 +1511,15 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 }
 
 struct nfe_jbuf *
-nfe_jalloc(struct nfe_softc *sc)
+nfe_jalloc(struct nfe_softc *sc, int i)
 {
 	struct nfe_jbuf *jbuf;
 
 	jbuf = SLIST_FIRST(&sc->rxq.jfreelist);
 	if (jbuf == NULL)
 		return NULL;
+	sc->rxq.jbufmap[i] =
+	    ((char *)jbuf->buf - (char *)sc->rxq.jpool) / NFE_JBYTES;
 	SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
 	return jbuf;
 }

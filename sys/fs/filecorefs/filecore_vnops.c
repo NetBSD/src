@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.21 2007/07/29 21:17:41 rumble Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.21.8.1 2007/10/06 15:29:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.21 2007/07/29 21:17:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.21.8.1 2007/10/06 15:29:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ filecore_readdir(v)
 	struct filecore_node *dp;
 	struct filecore_mnt *fcmp;
 	struct buf *bp = NULL;
-	struct dirent de;
+	struct dirent *de;
 	struct filecore_direntry *dep = NULL;
 	int error = 0;
 	off_t *cookies = NULL;
@@ -321,42 +321,44 @@ filecore_readdir(v)
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
+	de = malloc(sizeof(struct dirent), M_FILECORETMP, M_WAITOK | M_ZERO);
+
 	for (; ; i++) {
 		switch (i) {
 		case 0:
 			/* Fake the '.' entry */
-			de.d_fileno = dp->i_number;
-			de.d_type = DT_DIR;
-			de.d_namlen = 1;
-			strlcpy(de.d_name, ".", sizeof(de.d_name));
+			de->d_fileno = dp->i_number;
+			de->d_type = DT_DIR;
+			de->d_namlen = 1;
+			strlcpy(de->d_name, ".", sizeof(de->d_name));
 			break;
 		case 1:
 			/* Fake the '..' entry */
-			de.d_fileno = filecore_getparent(dp);
-			de.d_type = DT_DIR;
-			de.d_namlen = 2;
-			strlcpy(de.d_name, "..", sizeof(de.d_name));
+			de->d_fileno = filecore_getparent(dp);
+			de->d_type = DT_DIR;
+			de->d_namlen = 2;
+			strlcpy(de->d_name, "..", sizeof(de->d_name));
 			break;
 		default:
-			de.d_fileno = dp->i_dirent.addr +
+			de->d_fileno = dp->i_dirent.addr +
 					((i - 2) << FILECORE_INO_INDEX);
 			dep = fcdirentry(bp->b_data, i - 2);
 			if (dep->attr & FILECORE_ATTR_DIR)
-				de.d_type = DT_DIR;
+				de->d_type = DT_DIR;
 			else
-				de.d_type = DT_REG;
-			if (filecore_fn2unix(dep->name, de.d_name,
+				de->d_type = DT_REG;
+			if (filecore_fn2unix(dep->name, de->d_name,
 /*###346 [cc] warning: passing arg 3 of `filecore_fn2unix' from incompatible pointer type%%%*/
-			    &de.d_namlen)) {
+			    &de->d_namlen)) {
 				*ap->a_eofflag = 1;
 				goto out;
 			}
 			break;
 		}
-		de.d_reclen = _DIRENT_SIZE(&de);
-		if (uio->uio_resid < de.d_reclen)
+		de->d_reclen = _DIRENT_SIZE(de);
+		if (uio->uio_resid < de->d_reclen)
 			goto out;
-		error = uiomove(&de, de.d_reclen, uio);
+		error = uiomove(de, de->d_reclen, uio);
 		if (error)
 			goto out;
 		uiooff += FILECORE_DIRENT_SIZE;
@@ -382,6 +384,8 @@ out:
 	printf("brelse(%p) vn3\n", bp);
 #endif
 	brelse (bp);
+
+	free(de, M_FILECORETMP);
 
 	return (error);
 }
