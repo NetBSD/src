@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.4 2006/10/07 14:04:09 peter Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.4.24.1 2007/10/06 17:38:31 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4 2006/10/07 14:04:09 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4.24.1 2007/10/06 17:38:31 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ j720kbd_attach(struct device *parent, struct device *self, void *aux)
 	j720kbd_ifsetup(sc->sc_chip);
 
 	/* Install interrupt handler. */
-	sa11x0_intr_establish(0, 0, 1, IPL_TTY, j720kbd_intr, sc);
+	sa11x0_intr_establish(0, IPL_TTY, j720kbd_intr, sc);
 
 	/* Attach hpckbd. */
 	haa.haa_ic = &sc->sc_chip->scc_if;

@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.8 2006/07/09 14:47:30 peter Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.8.30.1 2007/10/06 17:38:31 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.8 2006/07/09 14:47:30 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.8.30.1 2007/10/06 17:38:31 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ sacc_attach(struct device *parent, struct device *self, void *aux)
 			  SACCIC_INTSTATCLR1, 0xffffffff);
 
 	/* connect to SA-1110's GPIO intr */
-	sa11x0_intr_establish(0, gpiopin, 1, IPL_SERIAL, sacc_intr, sc);
+	sa11x0_intr_establish(gpiopin, IPL_SERIAL, sacc_intr, sc);
 
 	/* attach each devices */
 	config_search_ia(sa1111_search, self, "sacc", NULL);

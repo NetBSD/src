@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.9 2007/07/01 16:04:57 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9.6.1 2007/10/06 17:38:31 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,10 +36,14 @@
 #ifndef _HPCARM_INTR_H_
 #define _HPCARM_INTR_H_
 
+#ifdef _KERNEL
+
 /* Define the various Interrupt Priority Levels */
 
 /* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
+/* Interrupt priority "levels". */
+#if __OLD_INTERRUPT_CODE
 #define IPL_SOFTCLOCK	0
 #define IPL_SOFTNET	1
 #define IPL_BIO		2	/* block I/O */
@@ -58,11 +62,36 @@
 
 #define NIPL		13
 
+#else
+
+#define	IPL_NONE	0	/* nothing */
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	2	/* software clock interrupt */
+#define	IPL_SOFTNET	3	/* software network interrupt */
+#define	IPL_BIO		4	/* block I/O */
+#define	IPL_NET		5	/* network */
+#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
+#define	IPL_TTY		7	/* terminals */
+#define	IPL_VM		8	/* memory allocation */
+#define	IPL_AUDIO	9	/* audio device */
+#define	IPL_CLOCK	10	/* clock interrupt */
+#define	IPL_STATCLOCK	11	/* statistics clock interrupt */
+#define	IPL_HIGH	12	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
+#define	IPL_SERIAL	13	/* serial device */
+
+#define	NIPL		14
+
+#endif
+
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#define IST_EDGE_RISING	1
+#define IST_EDGE_FALLING	2
+#define IST_EDGE_BOTH	3
+
+#ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
 
 /* Software interrupt priority levels */
 
@@ -74,12 +103,109 @@
 
 #include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
+#include <arm/sa11x0/sa11x0_intr.h>
 
 #ifndef _LOCORE
 void *softintr_establish(int, void (*)(void *), void *);
 void softintr_disestablish(void *);
-void softintr_schedule(void *);
-void setsoftnet(void);
 #endif
+
+#else /* ! __OLD_INTERRUPT_CODE */
+
+#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
+
+#ifndef _LOCORE
+
+#include <sys/device.h>
+#include <sys/queue.h>
+
+#if defined(_LKM)
+
+int	_splraise(int);
+int	_spllower(int);
+void	splx(int);
+void	_setsoftintr(int);
+
+#else	/* _LKM */
+
+#include "opt_arm_intr_impl.h"
+
+#if defined(ARM_INTR_IMPL)
+
+/*
+ * Each board needs to define the following functions:
+ *
+ * int	_splraise(int);
+ * int	_spllower(int);
+ * void	splx(int);
+ * void	_setsoftintr(int);
+ *
+ * These may be defined as functions, static inline functions, or macros,
+ * but there must be a _spllower() and splx() defined as functions callable
+ * from assembly language (for cpu_switch()).  However, since it's quite
+ * useful to be able to inline splx(), you could do something like the
+ * following:
+ *
+ * in <boardtype>_intr.h:
+ * 	static inline int
+ *	boardtype_splx(int spl)
+ *	{...}
+ *
+ *	#define splx(nspl)	boardtype_splx(nspl)
+ *	...
+ * and in boardtype's machdep code:
+ *
+ *	...
+ *	#undef splx
+ *	int
+ *	splx(int spl)
+ *	{
+ *		return boardtype_splx(spl);
+ *	}
+ */
+
+#include ARM_INTR_IMPL
+
+#else /* ARM_INTR_IMPL */
+
+#error ARM_INTR_IMPL not defined.
+
+#endif	/* ARM_INTR_IMPL */
+
+#endif /* _LKM */
+
+#define	splsoft()	_splraise(IPL_SOFT)
+
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._ipl);
+}
+
+#define	spl0()		_spllower(IPL_NONE)
+
+#include <sys/spl.h>
+
+/* Use generic software interrupt support. */
+#include <arm/softintr.h>
+
+#endif /* ! _LOCORE */
+
+#endif /* __OLD_INTERRUPT_CODE XXX XXX XXX */
+
+#endif /* _KERNEL */
 
 #endif	/* _HPCARM_INTR_H */
