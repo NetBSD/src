@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29.8.1 2007/09/03 16:47:48 jmcneill Exp $	*/
+/*	$NetBSD: intr.c,v 1.29.8.2 2007/10/06 02:42:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.8.1 2007/09/03 16:47:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.8.2 2007/10/06 02:42:33 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -684,8 +684,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		    source->is_type, pic->pic_dev.dv_xname, pin);
 	}
 
-	if (!cold)
-		pic->pic_hwmask(pic, pin);
+	pic->pic_hwmask(pic, pin);
 
 	/*
 	 * Figure out where to put the handler.
@@ -731,8 +730,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	pic->pic_addroute(pic, ci, pin, idt_vec, type);
 
-	if (!cold)
-		pic->pic_hwunmask(pic, pin);
+	pic->pic_hwunmask(pic, pin);
 
 #ifdef INTRDEBUG
 	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
