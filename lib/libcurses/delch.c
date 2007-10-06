@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.20 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: delch.c,v 1.21 2007/10/06 18:31:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.20 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: delch.c,v 1.21 2007/10/06 18:31:33 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,13 +98,10 @@ wdelch(WINDOW *win)
 		temp1++, temp2++;
 	}
 	temp1->ch = win->bch;
-	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
-		return ERR;
 	if (__using_color && win != curscr)
 		temp1->attr = win->battr & __COLOR;
 	else
 		temp1->attr = 0;
-	SET_WCOL( *temp1, 1 );
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	return (OK);
 #else
