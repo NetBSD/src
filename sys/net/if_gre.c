@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.114 2007/10/06 03:30:25 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.115 2007/10/06 03:35:14 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.114 2007/10/06 03:30:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.115 2007/10/06 03:35:14 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -142,7 +142,7 @@ static struct if_clone gre_cloner =
 
 static int gre_input(struct gre_softc *, struct mbuf *, int,
     const struct gre_h *);
-static int gre_is_nullconf(const struct gre_soparm *);
+static bool gre_is_nullconf(const struct gre_soparm *);
 static int gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, struct rtentry *);
 static int gre_ioctl(struct ifnet *, u_long, void *);
@@ -151,7 +151,7 @@ static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getnames(struct socket *, struct lwp *,
     struct sockaddr_storage *, struct sockaddr_storage *);
-static void gre_clearconf(struct gre_soparm *, int);
+static void gre_clearconf(struct gre_soparm *, bool);
 static int gre_soreceive(struct socket *, struct mbuf **);
 static int gre_sosend(struct socket *, struct mbuf *, struct lwp *);
 static struct socket *gre_reconf(struct gre_softc *, struct socket *, lwp_t *,
@@ -812,7 +812,7 @@ shutdown:
 		mutex_exit(&sc->sc_mtx);
 		fdrelease(l, sc->sc_soparm.sp_fd);
 		mutex_enter(&sc->sc_mtx);
-		gre_clearconf(&sc->sc_soparm, 0);
+		gre_clearconf(&sc->sc_soparm, false);
 		sc->sc_soparm.sp_fd = -1;
 		so = NULL;
 	}
@@ -1176,7 +1176,7 @@ sockaddr_is_anyaddr(const struct sockaddr *sa)
 	return memcmp(anyaddr, addr, MIN(anylen, salen)) == 0;
 }
 
-static int
+static bool
 gre_is_nullconf(const struct gre_soparm *sp)
 {
 	return sockaddr_is_anyaddr(sstocsa(&sp->sp_src)) ||
@@ -1184,7 +1184,7 @@ gre_is_nullconf(const struct gre_soparm *sp)
 }
 
 static void
-gre_clearconf(struct gre_soparm *sp, int force)
+gre_clearconf(struct gre_soparm *sp, bool force)
 {
 	if (sp->sp_bysock || force) {
 		sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src),
@@ -1253,7 +1253,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		if ((ifp->if_flags & IFF_UP) != 0)
 			break;
-		gre_clearconf(sp, 0);
+		gre_clearconf(sp, false);
 		ifp->if_flags |= IFF_UP;
 		goto mksocket;
 	case SIOCSIFDSTADDR:
@@ -1280,7 +1280,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 			goto out;
 		}
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		gre_clearconf(sp, 0);
+		gre_clearconf(sp, false);
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING) &&
 		    (oproto == sp->sp_proto || sp->sp_proto == 0) &&
@@ -1328,7 +1328,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		}
 		break;
 	case GRESPROTO:
-		gre_clearconf(sp, 0);
+		gre_clearconf(sp, false);
 		oproto = sp->sp_proto;
 		otype = sp->sp_type;
 		sp->sp_proto = ifr->ifr_flags;
@@ -1367,7 +1367,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
-		gre_clearconf(sp, 0);
+		gre_clearconf(sp, false);
 		/*
 		 * set tunnel endpoints, compute a less specific route
 		 * to the remote end and mark if as up
@@ -1436,11 +1436,11 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		if (sp->sp_bysock)
 			ifp->if_flags &= ~IFF_UP;
-		gre_clearconf(sp, 0);
+		gre_clearconf(sp, false);
 		goto mksocket;
 	case GRESSOCK:
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		gre_clearconf(sp, 1);
+		gre_clearconf(sp, true);
 		fd = (int)ifr->ifr_value;
 		sp->sp_bysock = 1;
 		ifp->if_flags |= IFF_UP;
@@ -1459,7 +1459,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		goto checkaddr;
 	case SIOCDIFPHYADDR:
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		gre_clearconf(sp, 1);
+		gre_clearconf(sp, true);
 		ifp->if_flags &= ~IFF_UP;
 		goto mksocket;
 	case SIOCGLIFPHYADDR:
