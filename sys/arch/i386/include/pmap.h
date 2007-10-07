@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.4 2007/10/06 15:34:55 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.5 2007/10/07 12:13:56 yamt Exp $	*/
 
 /*
  *
@@ -321,9 +321,6 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 #define	pm_lock	pm_obj[0].vmobjlock
-#define pm_obj_l1 pm_obj[0]
-#define pm_obj_l2 pm_obj[1]
-#define pm_obj_l3 pm_obj[2]
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
