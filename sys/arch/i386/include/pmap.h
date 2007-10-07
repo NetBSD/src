@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.6 2007/10/07 13:22:14 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.7 2007/10/07 13:24:33 yamt Exp $	*/
 
 /*
  *
@@ -396,7 +396,6 @@ struct pv_page {
 extern u_long PDPpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
-extern int nkpde;			/* current # of PDEs for kernel */
 extern int pmap_pg_g;			/* do we support PG_G? */
 extern long nkptp[PTP_LEVELS];
 
