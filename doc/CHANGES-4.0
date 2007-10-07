@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.313 2007/10/07 14:28:27 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.314 2007/10/07 14:34:44 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10075,4 +10075,10 @@ sys/dev/acpi/pckbc_acpi.c			1.21
 	firmware that reports 0x64,0x60 instead of 0x60,0x64. Patch tested by
 	Greg A. Woods.
 	[jmcneill, ticket #924]
+
+sys/dev/pci/aac_pci.c				1.20
+sys/dev/pci/pcidevs				1.872
+
+	PR/35970: Todd Kover: Add support for HP ML110 G2 / Adaptec 2610SA
+	[christos, ticket #923]
 
