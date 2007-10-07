@@ -1,5 +1,4 @@
-#include "/usr/local/src/sys/dlog.h"
-/*	$NetBSD: vfs_trans.c,v 1.12 2007/10/07 13:39:03 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.13 2007/10/07 14:48:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.12 2007/10/07 13:39:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.13 2007/10/07 14:48:38 hannken Exp $");
 
 /*
  * File system transaction operations.
