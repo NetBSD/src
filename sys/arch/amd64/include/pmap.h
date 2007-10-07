@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.7 2007/10/07 11:52:04 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.8 2007/10/07 12:02:30 yamt Exp $	*/
 
 /*
  *
@@ -212,8 +212,6 @@
 #define NKL1_START_ENTRIES	0	/* XXX */
 
 #define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
-
-#define KERNSPACE		(NKL4_ENTRIES * NBPD_L4)
 
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
