@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.240.2.1 2007/01/21 16:44:23 bouyer Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.240.2.2 2007/10/07 14:21:11 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240.2.1 2007/01/21 16:44:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240.2.2 2007/10/07 14:21:11 xtraeme Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -138,7 +138,7 @@ ksiginfo_alloc(int prflags)
 	int s;
 	ksiginfo_t *ksi;
 
-	s = splsoftclock();
+	s = splvm();
 	ksi = pool_get(&ksiginfo_pool, prflags);
 	splx(s);
 	return ksi;
@@ -149,7 +149,7 @@ ksiginfo_free(ksiginfo_t *ksi)
 {
 	int s;
 
-	s = splsoftclock();
+	s = splvm();
 	pool_put(&ksiginfo_pool, ksi);
 	splx(s);
 }
@@ -164,7 +164,7 @@ ksiginfo_dequeue(struct proc *p, int signo)
 	ksiginfo_t *ksi;
 	int s;
 
-	s = splsoftclock();
+	s = splvm();
 	simple_lock(&p->p_sigctx.ps_silock);
 	CIRCLEQ_FOREACH(ksi, &p->p_sigctx.ps_siginfo, ksi_list) {
 		if (ksi->ksi_signo == signo) {
@@ -201,7 +201,7 @@ ksiginfo_queue(struct proc *p, const ksiginfo_t *ksi, ksiginfo_t **newkp)
 	if (KSI_EMPTY_P(ksi))
 		return;
 
-	s = splsoftclock();
+	s = splvm();
 	simple_lock(&p->p_sigctx.ps_silock);
 #ifdef notyet	/* XXX: QUEUING */
 	if (ksi->ksi_signo < SIGRTMIN)
@@ -243,7 +243,7 @@ ksiginfo_exithook(struct proc *p, void *v)
 {
 	int s;
 
-	s = splsoftclock();
+	s = splvm();
 	simple_lock(&p->p_sigctx.ps_silock);
 	while (!CIRCLEQ_EMPTY(&p->p_sigctx.ps_siginfo)) {
 		ksiginfo_t *ksi = CIRCLEQ_FIRST(&p->p_sigctx.ps_siginfo);
@@ -1067,6 +1067,13 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi)
 
 	SCHED_ASSERT_UNLOCKED();
 #endif
+
+	/*
+	 * If the process is being created by fork, is a zombie or is
+	 * exiting, then just drop the signal here and bail out.
+	 */
+	if (p->p_stat != SACTIVE && p->p_stat != SSTOP)
+	 	return;
 
 	/*
 	 * Notify any interested parties in the signal.
