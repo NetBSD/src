@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.10 2007/10/07 12:51:16 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.11 2007/10/07 13:27:40 yamt Exp $	*/
 
 /*
  *
@@ -379,9 +379,7 @@ extern u_long PTDpaddr;
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int pmap_pg_g;			/* do we support PG_G? */
 
-extern paddr_t ptp_masks[];
-extern int ptp_shifts[];
-extern long nkptp[], nbpd[], nkptpmax[];
+extern long nkptp[PTP_LEVELS];
 
 /*
  * macros
