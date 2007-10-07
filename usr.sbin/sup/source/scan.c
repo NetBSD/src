@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.24 2007/10/06 20:19:52 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.25 2007/10/07 05:25:19 taca Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -709,7 +709,6 @@ listdir(char *name, int always)
 	DIR *dirp;
 	char newname[STRINGLENGTH], filename[STRINGLENGTH];
 	char *p, *newp;
-	int i;
 
 	dirp = opendir(".");
 	if (dirp == 0)
