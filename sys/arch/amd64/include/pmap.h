@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.11 2007/10/07 13:27:40 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.12 2007/10/07 13:33:35 yamt Exp $	*/
 
 /*
  *
@@ -373,8 +373,8 @@ struct pv_page {
  * global kernel variables
  */
 
-/* PTDpaddr: is the physical address of the kernel's PDP */
-extern u_long PTDpaddr;
+/* PDPpaddr: is the physical address of the kernel's PDP */
+extern u_long PDPpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int pmap_pg_g;			/* do we support PG_G? */
