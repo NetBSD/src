@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.2 2007/10/07 13:48:03 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.3 2007/10/07 16:22:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.2 2007/10/07 13:48:03 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2007/10/07 16:22:37 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -324,7 +324,7 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 				  prop_dictionary_t csdict,
 				  const char *sensor)
 {
-	prop_object_t obj, obj2;
+	prop_object_t obj, obj2, obj3;
 	char *strval, *endptr;
 	double val;
 
@@ -352,7 +352,8 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 	obj = prop_dictionary_get(csdict, "critical-capacity");
 	if (obj) {
 		obj2 = prop_dictionary_get(ksdict, "want-percentage");
-		if (prop_bool_true(obj2)) {
+		obj3 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (prop_bool_true(obj2) && prop_bool_true(obj3)) {
 			strval = prop_string_cstring(obj);
 			val = strtod(strval, &endptr);
 			if ((*endptr != '\0') || (val < 0 || val > 100))
