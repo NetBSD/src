@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.h,v 1.8 2007/10/06 21:51:21 christos Exp $	*/
+/*	$NetBSD: login_cap.h,v 1.9 2007/10/07 00:37:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -50,8 +50,8 @@
 #define	LOGIN_SETUMASK		0x0020	/* Set umask */
 #define	LOGIN_SETUSER		0x0040	/* Set user */
 #define	LOGIN_SETENV		0x0080	/* Set user environment */
-#define	LOGIN_SETGID		0x0100	/* Set group membership (initgroups) */
-#define	LOGIN_SETGROUPS		0x0200	/* Set group id */
+#define	LOGIN_SETGID		0x0100	/* Set group id */
+#define	LOGIN_SETGROUPS		0x0200	/* Set group membership (initgroups) */
 #define	LOGIN_SETALL 		0x03ff	/* Set all. */
 #define	LOGIN_SETGROUP		(LOGIN_SETGID|LOGIN_SETGROUPS) /* Set group */
 
