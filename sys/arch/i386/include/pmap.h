@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.8 2007/10/07 13:44:34 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.9 2007/10/07 14:56:33 yamt Exp $	*/
 
 /*
  *
@@ -474,7 +474,7 @@ pmap_update_pg(vaddr_t va)
 		tlbflush();
 	else
 #endif
-		invlpg((u_int) va);
+		invlpg(va);
 }
 
 /*
@@ -490,8 +490,8 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
 	else
 #endif
 	{
-		invlpg((u_int) va);
-		invlpg((u_int) vb);
+		invlpg(va);
+		invlpg(vb);
 	}
 }
 
