@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.2.4 2007/10/07 12:51:15 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.5 2007/10/07 13:33:34 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -176,7 +176,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
@@ -194,7 +194,7 @@ _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.quad	0
-_C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
+_C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
 #else
@@ -514,7 +514,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 
 	/* Save phys. addr of PTD, for libkvm. */
-	movl	$RELOC(PTDpaddr),%ebp
+	movl	$RELOC(PDPpaddr),%ebp
 	movl	%esi,(%ebp)
 	movl	$0,4(%ebp)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61.2.2 2007/10/06 15:39:57 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.2.3 2007/10/07 13:33:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.2 2007/10/06 15:39:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.3 2007/10/07 13:33:35 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -648,7 +648,7 @@ cpu_dump(void)
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->ptdpaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
