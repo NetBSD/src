@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10.2.5 2007/10/07 13:17:12 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.10.2.6 2007/10/07 14:20:04 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ define	KERNBASE_LO		KERNBASE_LO
 define	KERNBASE_HI		KERNBASE_HI
 define	KERNBASE		KERNBASE
 define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
+define	KERNTEXTOFF		KERNTEXTOFF
 
 define	NBPG			NBPG
 
