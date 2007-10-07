@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.50.6.1 2007/10/06 17:38:30 rjs Exp $
+#	$NetBSD: IPAQ,v 1.50.6.2 2007/10/07 15:56:16 rjs Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -19,9 +19,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_SA1110	# Support the SA1110 core
 
-# Architecture options
-options 	SAEGPIO_BASE="0x49000000"
-				# we have Extended GPIO
 # FPA options
 #options 	ARMFPE		# ARM Ltd FPE
 
@@ -146,7 +143,7 @@ sacom*	at saip? addr 0x80050000 size 0x24	intr 17
 saost*	at saip? addr 0x90000000 size 0x20
 
 # iPAQ bus
-ipaqbus* at saip?
+ipaqbus* at saip? addr 0x49000000 size 0x04
 
 # Internal LCD controller
 #ipaqlcd* at ipaqbus?

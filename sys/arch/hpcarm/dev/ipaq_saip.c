@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.20 2006/09/29 16:39:27 cube Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.20.24.1 2007/10/07 15:56:16 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.20 2006/09/29 16:39:27 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.20.24.1 2007/10/07 15:56:16 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ ipaq_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipaq_softc *sc = (struct ipaq_softc*)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
+	struct sa11x0_attach_args *sa = aux;
 	
 	printf("\n");
 
@@ -96,7 +97,8 @@ ipaq_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpioh = psc->sc_gpioh;
 
 	/* Map the Extended GPIO registers */
-	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
+	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
+			  &sc->sc_egpioh))
 		panic("%s: unable to map Extended GPIO registers",
 			self->dv_xname);
 
