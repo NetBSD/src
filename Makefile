@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.249 2007/09/07 04:20:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.250 2007/10/07 16:35:21 pavel Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -158,7 +158,7 @@ _POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
 
 postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
-	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check
+	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN .PHONY
