@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.2.1 2007/09/30 15:32:22 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.2.2 2007/10/07 12:51:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,7 +76,6 @@
 #define ALIGN_TEXT	.align 16,0x90
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>

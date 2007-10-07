@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.9 2007/10/07 12:13:10 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.10 2007/10/07 12:51:16 yamt Exp $	*/
 
 /*
  *
@@ -74,7 +74,6 @@
 #ifndef	_AMD64_PMAP_H_
 #define	_AMD64_PMAP_H_
 
-#ifndef _LOCORE
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/atomic.h>
@@ -83,7 +82,6 @@
 #endif
 
 #include <uvm/uvm_object.h>
-#endif
 
 /*
  * The x86_64 pmap module closely resembles the i386 one. It uses
@@ -277,7 +275,7 @@
 #define NPTECL		8
 
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if defined(_KERNEL)
 /*
  * pmap data structures: see pmap.c for details of locking.
  */
@@ -576,5 +574,5 @@ struct pmap_mbox {
 	volatile uintptr_t	mb_global;
 };
 
-#endif /* _KERNEL && !_LOCORE */
+#endif /* _KERNEL */
 #endif	/* _AMD64_PMAP_H_ */

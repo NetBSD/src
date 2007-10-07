@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.12.1 2007/09/30 15:32:20 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.12.2 2007/10/07 12:51:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,6 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/frameasm.h>
 

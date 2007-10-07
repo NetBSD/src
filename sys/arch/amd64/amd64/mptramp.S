@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.3.12.2 2007/10/04 15:36:55 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.3.12.3 2007/10/07 12:51:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
 #include "assym.h"
-#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
