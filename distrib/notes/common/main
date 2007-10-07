@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.354 2007/09/29 16:53:13 pavel Exp $
+.\"	$NetBSD: main,v 1.355 2007/10/07 23:46:16 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -918,9 +918,24 @@ Besides this list, there there have also been innumerable bug fixes and other mi
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
 .(bullet
-Sushi ...
+Sushi was removed from the base system due to lack of interest and
+maintenance.
+If you really want it, it is available in the CVS repository at
+.Dq Me "othersrc/usr.sbin/sushi".
+However, be warned that it is unmaintained and is most likely out of date.
 .It
-Vinum ...
+Vinum was removed due to lack of interest and maintenance.
+At the time of removal, it had several known serious issues (including
+not being compilable).
+RAIDframe provides similar functionality.
+If you were using Vinum you will need to back up your data, delete
+the Vinum partitions, create RAIDframe partitions, and restore your
+data to them.
+Details about RAIDframe can be found in
+.Xr raid 4 ,
+.Xr raidctl 8 ,
+and the NetBSD Guide:
+.Lk http://www.NetBSD.org/docs/guide/en/chap-rf.html .
 .It
 Sendmail was removed. Postfix is the MTA and provides the
 .Xr sendmail 1
@@ -933,9 +948,17 @@ and
 .Pa mail/sendmail813
 packages.
 .It
-NETCCITT ...
+NETCCITT was removed due to lack of interest and maintenance.
+It had known serious issues (including being out of date with
+respect to other network code) and there were no known users at
+the time of its removal.
+Unfortunatly, there is no replacement or option for it.
 .It
-NETNS ...
+NETNS was removed due to lack of interest and maintenance.
+It had known serious issues (including being out of date with
+respect to other network code) and there were no known users at
+the time of its removal.
+Unfortunatly, there is no replacement or option for it.
 .It
 UUCP was removed. The NetBSD improvements were merged into the pkgsrc version. For those who use UUCP tools, they are available from pkgsrc in the
 .Pa net/uucp
