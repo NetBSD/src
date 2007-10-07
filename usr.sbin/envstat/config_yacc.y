@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_yacc.y,v 1.1 2007/10/07 04:16:48 xtraeme Exp $	*/
+/* 	$NetBSD: config_yacc.y,v 1.2 2007/10/07 13:46:22 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.1 2007/10/07 04:16:48 xtraeme Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.2 2007/10/07 13:46:22 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -64,9 +64,12 @@ static prop_dictionary_t kdict;
 
 %%
 
-main	:			{ exit(EXIT_SUCCESS); }
-     	|	device
-	|	main device
+main	:	devices
+     	|			{ exit(EXIT_SUCCESS); }
+     	;
+
+devices	:	device
+	|	devices device
 	;
 
 device	:	STRING LBRACE sensors RBRACE
