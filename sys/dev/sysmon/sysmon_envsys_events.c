@@ -1,11 +1,8 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.19.4.2 2007/10/02 18:28:40 joerg Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.19.4.3 2007/10/07 13:25:05 joerg Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -41,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19.4.2 2007/10/02 18:28:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19.4.3 2007/10/07 13:25:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +89,7 @@ sme_events_timeout_sysctl(SYSCTLFN_ARGS)
 	node.sysctl_data = &timo;
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
+	if (error || !newp)
 		return error;
 
 	/* min 1s */
@@ -180,7 +169,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 */
 	if (objkey && critval && critvalup) {
 		obj = prop_dictionary_get(sdict, objkey);
-		if (obj != NULL) {
+		if (obj) {
 			/* 
 			 * object is already in dictionary and value
 			 * provided is not the same than we have
@@ -266,7 +255,7 @@ sme_event_unregister_all(const char *sme_name)
 	DPRINTF(("%s: total events %d (%s)\n", __func__,
 	    evcounter, sme_name));
 
-	while ((see = LIST_FIRST(&sme_events_list)) != NULL) {
+	while ((see = LIST_FIRST(&sme_events_list))) {
 		if (evcounter == 0)
 			break;
 
@@ -302,9 +291,9 @@ sme_event_unregister(const char *sensor, int type)
 	sme_event_t *see;
 	bool found = false;
 
+	KASSERT(mutex_owned(&sme_mtx));
 	KASSERT(sensor != NULL);
 
-	mutex_enter(&sme_mtx);
 	LIST_FOREACH(see, &sme_events_list, see_list) {
 		if (strcmp(see->pes.pes_sensname, sensor) == 0) {
 			if (see->type == type) {
@@ -314,10 +303,8 @@ sme_event_unregister(const char *sensor, int type)
 		}
 	}
 
-	if (!found) {
-		mutex_exit(&sme_mtx);
+	if (!found)
 		return EINVAL;
-	}
 
 	while (see->see_flags & SME_EVENT_WORKING)
 		cv_wait(&sme_cv, &sme_mtx);
@@ -333,12 +320,10 @@ sme_event_unregister(const char *sensor, int type)
 	 */
 	if (LIST_EMPTY(&sme_events_list)) {
 		mutex_enter(&sme_event_init_mtx);
-		mutex_exit(&sme_mtx);
 		sme_events_destroy();
 		mutex_exit(&sme_event_init_mtx);
 		goto out;
 	}
-	mutex_exit(&sme_mtx);
 
 out:
 	kmem_free(see, sizeof(*see));
@@ -362,7 +347,7 @@ sme_event_drvadd(void *arg)
 #define SEE_REGEVENT(a, b, c)						\
 do {									\
 	if (sed_t->edata->flags & (a)) {				\
-		char str[32] = "monitoring-state-";			\
+		char str[ENVSYS_DESCLEN] = "monitoring-state-";		\
 									\
 		error = sme_event_register(sed_t->sdict,		\
 				      sed_t->edata,			\
@@ -512,7 +497,7 @@ sme_events_worker(struct work *wk, void *arg)
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
 		if (strcmp(sme->sme_name, see->pes.pes_dvname) == 0)
 			break;
-	if (sme == NULL)
+	if (!sme)
 		goto out;
 
 	/* get the sensor with the index specified in see->snum */

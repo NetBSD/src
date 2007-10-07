@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.856.4.4 2007/10/02 18:28:16 joerg Exp $
+#	$NetBSD: files,v 1.856.4.5 2007/10/07 13:25:02 joerg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1494,7 +1494,6 @@ file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_etherip.c		etherip & inet
-file	netinet/ip_gre.c		inet & gre
 file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 

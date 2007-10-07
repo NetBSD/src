@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.4 2007/07/09 21:00:53 ad Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.4.6.1 2007/10/07 13:25:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.4 2007/07/09 21:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.4.6.1 2007/10/07 13:25:04 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -100,9 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.4 2007/07/09 21:00:53 ad Exp $");
 
 #define RXC_BS_MSK	0x3f000000	/* burst size */
 #define RXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
-#define RXC_UCG		(1U<<18)	/* run UDP checksum */
-#define RXC_TCG		(1U<<17)	/* run TDP checksum */
-#define RXC_ICG		(1U<<16)	/* run IP checksum */
+#define RXC_IHAE	(1U<<19)	/* align IP frame XXX poor document */
+#define RXC_UCC		(1U<<18)	/* run UDP checksum */
+#define RXC_TCC		(1U<<17)	/* run TDP checksum */
+#define RXC_ICC		(1U<<16)	/* run IP checksum */
 #define RXC_FCE		(1U<<9)		/* enable flowcontrol */
 #define RXC_RB		(1U<<6)		/* receive broadcast frame */
 #define RXC_RM		(1U<<5)		/* receive multicast frame */
@@ -127,8 +128,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.4 2007/07/09 21:00:53 ad Exp $");
 #define R0_UDPE		(1U<<26)	/* UDP checksum error */
 #define R0_ES		(1U<<25)	/* error summary */
 #define R0_MF		(1U<<24)	/* multicast frame */
-#define R0_RE		(1U<<19)	/* framing error */
-#define R0_TL		(1U<<18)	/* too long frame */
+#define R0_SPN		0x00300000	/* 21:20 switch port 1/2 */
+#define R0_ALIGN	0x00300000	/* 21:20 (KSZ8692P) Rx align amount */
+#define R0_RE		(1U<<19)	/* MII reported error */
+#define R0_TL		(1U<<18)	/* frame too long, beyond 1518 */
 #define R0_RF		(1U<<17)	/* damaged runt frame */
 #define R0_CE		(1U<<16)	/* CRC error */
 #define R0_FT		(1U<<15)	/* frame type */
@@ -141,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.4 2007/07/09 21:00:53 ad Exp $");
 #define T1_TCPCKG	(1U<<27)	/* generate TCP checksum */
 #define T1_UDPCKG	(1U<<26)	/* generate UDP checksum */
 #define T1_TER		(1U<<25)	/* end of ring */
+#define T1_SPN		0x00300000	/* 21:20 switch port 1/2 */
 #define T1_TBS_MASK	0x7ff		/* segment size 10:0 */
 
 #define R1_RER		(1U<<25)	/* end of ring */
@@ -259,11 +263,6 @@ do {									\
 	struct rdes *__rxd = &(sc)->sc_rxdescs[(x)];			\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 									\
-	/*								\
-	 * Note: may be able to scoot the packet forward 2 bytes for	\
-	 * the alignment. Unclear KS8842 Rx DMA really mandates to have	\
-	 * 32-bit buffer boundary. Tx DMA has no alignment limitation.	\
-	 */								\
 	__m->m_data = __m->m_ext.ext_buf;				\
 	__rxd->r2 = __rxs->rxs_dmamap->dm_segs[0].ds_addr;		\
 	__rxd->r1 = R1_RBS_MASK /* __m->m_ext.ext_size */;		\
@@ -621,7 +620,7 @@ kse_init(struct ifnet *ifp)
 
 	sc->sc_t1csum = sc->sc_mcsum = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
-		sc->sc_rxc |= RXC_ICG;
+		sc->sc_rxc |= RXC_ICC;
 		sc->sc_mcsum |= M_CSUM_IPv4;
 	}
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
@@ -629,7 +628,7 @@ kse_init(struct ifnet *ifp)
 		sc->sc_t1csum |= T1_IPCKG;
 	}
 	if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
-		sc->sc_rxc |= RXC_TCG;
+		sc->sc_rxc |= RXC_TCC;
 		sc->sc_mcsum |= M_CSUM_TCPv4;
 	}
 	if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
@@ -637,7 +636,7 @@ kse_init(struct ifnet *ifp)
 		sc->sc_t1csum |= T1_TCPCKG;
 	}
 	if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
-		sc->sc_rxc |= RXC_UCG;
+		sc->sc_rxc |= RXC_UCC;
 		sc->sc_mcsum |= M_CSUM_UDPv4;
 	}
 	if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
@@ -846,7 +845,7 @@ kse_start(struct ifnet *ifp)
 		 * Without T1_IC NFS mbuf is left unack'ed for excessive
 		 * time and NFS stops to proceed until kse_watchdog()
 		 * calls txreap() to reclaim the unack'ed mbuf.
-		 * It's painful to tranverse every mbuf chain to determine
+		 * It's painful to traverse every mbuf chain to determine
 		 * whether someone is waiting for Tx completion.
 		 */
 		struct mbuf *m = m0;

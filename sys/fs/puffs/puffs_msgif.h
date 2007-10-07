@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.47.4.3 2007/10/02 18:28:52 joerg Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.47.4.4 2007/10/07 13:25:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -262,18 +262,6 @@ struct puffs_req {
 #define PUFFS_SETBACK_MASK	0x0f
 
 /*
- * Some operations have unknown size requirements.  So as the first
- * stab at handling it, do an extra bounce between the kernel and
- * userspace.
- */
-struct puffs_sizeop {
-	uint64_t	pso_reqid;
-
-	uint8_t		*pso_userbuf;
-	size_t		pso_bufsize;
-};
-
-/*
  * Flush operation.  This can be used to invalidate:
  * 1) name cache for one node
  * 2) name cache for all children 
@@ -306,7 +294,6 @@ struct puffs_flush {
  */
 #define PUFFSGETOP		_IOWR('p', 1, struct puffs_reqh_get)
 #define PUFFSPUTOP		_IOWR('p', 2, struct puffs_reqh_put)
-#define PUFFSSIZEOP		_IOWR('p', 3, struct puffs_sizeop)
 #define PUFFSFLUSHOP		_IOW ('p', 4, struct puffs_flush)
 #if 0
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)

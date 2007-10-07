@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.h,v 1.4.32.1 2007/10/02 22:56:20 joerg Exp $	*/
+/*	$NetBSD: mpacpi.h,v 1.4.32.2 2007/10/07 13:25:01 joerg Exp $	*/
 
 #ifndef _X86_MPACPI_H_
 #define _X86_MPACPI_H_
