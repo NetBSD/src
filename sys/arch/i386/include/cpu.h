@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.144.2.2 2007/10/06 15:34:55 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.144.2.3 2007/10/07 13:24:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -438,7 +438,6 @@ void x86_bus_space_mallocok(void);
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "biosbasemem", CTLTYPE_INT }, \
 	{ "biosextmem", CTLTYPE_INT }, \
-	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
 	{ "fpu_present", CTLTYPE_INT }, \
