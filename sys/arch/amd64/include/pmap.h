@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.12 2007/10/07 13:33:35 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.13 2007/10/07 13:44:27 yamt Exp $	*/
 
 /*
  *
@@ -249,9 +249,6 @@
  *   a PTP's index is the PD index of the PDE that points to it
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
- *
- * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
  */
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
@@ -273,7 +270,6 @@
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL		8
-
 
 #if defined(_KERNEL)
 /*
@@ -298,6 +294,9 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  * pm_lock is the same as the spinlock for vm object 0. Changes to
  * the other objects may only be made if that lock has been taken
  * (the other object locks are only used when uvm_pagealloc is called)
+ *
+ * XXX If we ever support processor numbers higher than 31, we'll have
+ * XXX to rethink the CPU mask.
  */
 
 struct pmap {
@@ -378,7 +377,6 @@ extern u_long PDPpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int pmap_pg_g;			/* do we support PG_G? */
-
 extern long nkptp[PTP_LEVELS];
 
 /*
