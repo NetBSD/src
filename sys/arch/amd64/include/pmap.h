@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.8 2007/10/07 12:02:30 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.9 2007/10/07 12:13:10 yamt Exp $	*/
 
 /*
  *
@@ -407,41 +407,36 @@ extern long nkptp[], nbpd[], nkptpmax[];
  * prototypes
  */
 
-void		pmap_activate __P((struct lwp *));
-void		pmap_bootstrap __P((vaddr_t));
-bool		pmap_clear_attrs __P((struct vm_page *, unsigned));
-void		pmap_deactivate __P((struct lwp *));
-static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
-void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-bool		pmap_test_attrs __P((struct vm_page *, unsigned));
-static void	pmap_update_pg __P((vaddr_t));
-static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_activate(struct lwp *);
+void		pmap_bootstrap(vaddr_t);
+bool		pmap_clear_attrs(struct vm_page *, unsigned);
+void		pmap_deactivate(struct lwp *);
+void		pmap_page_remove (struct vm_page *);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+bool		pmap_test_attrs(struct vm_page *, unsigned);
+void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_changeprot_local(vaddr_t, vm_prot_t);
 void		pmap_load(void);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, vaddr_t, pt_entry_t));
-void	pmap_tlb_shootwait __P((void));
-void	pmap_prealloc_lowmem_ptps __P((void));
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
+void	pmap_tlb_shootwait(void);
+void	pmap_prealloc_lowmem_ptps(void);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-bool		pmap_pageidlezero __P((paddr_t));
+bool	pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
  * inline functions
  */
 
+/*ARGSUSED*/
 static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
@@ -453,9 +448,8 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void
-pmap_update_pg(va)
-	vaddr_t va;
+__inline static void __attribute__((__unused__))
+pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
 }
@@ -464,9 +458,8 @@ pmap_update_pg(va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
+__inline static void __attribute__((__unused__))
+pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 	invlpg(va);
 	invlpg(vb);
@@ -481,7 +474,7 @@ pmap_update_2pg(va, vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+__inline static void __attribute__((__unused__))
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -501,11 +494,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+__inline static void __attribute__((__unused__))
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
@@ -527,7 +517,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t *
+static __inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
@@ -536,7 +526,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-static __inline pt_entry_t *
+static __inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
 	pd_entry_t *pde;
@@ -556,8 +546,8 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
 
-paddr_t vtophys __P((vaddr_t));
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
+paddr_t vtophys(vaddr_t);
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
 void	sse2_zero_page(void *);
