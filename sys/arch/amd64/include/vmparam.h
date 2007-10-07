@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13.2.4 2007/09/30 15:32:24 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.5 2007/10/07 14:30:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,7 +119,7 @@
 #define VM_MAXUSER_ADDRESS	0x00007f8000000000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffff8000000000
 
 #define VM_MAXUSER_ADDRESS32	0xfffff000
 
