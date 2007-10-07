@@ -1,11 +1,8 @@
-/* $NetBSD: envstat.c,v 1.55 2007/09/25 15:09:32 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.56 2007/10/07 04:16:48 xtraeme Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,33 +12,30 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * TODO:
+ * TODO
  *
- * 	o Some checks should be added to ensure that the user does not
- * 	  set unwanted values for the critical limits.
+ *  o Some checks should be added to ensure that the user does not
+ *    set unwanted values for the critical limits.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: envstat.c,v 1.56 2007/10/07 04:16:48 xtraeme Exp $");
+#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,8 +45,11 @@
 #include <fcntl.h>
 #include <err.h>
 #include <errno.h>
+#include <syslog.h>
 #include <prop/proplib.h>
 #include <sys/envsys.h>
+
+#include "envstat.h"
 
 #define _PATH_DEV_SYSMON	"/dev/sysmon"
 
@@ -61,18 +58,7 @@
 #define ENVSYS_LFLAG	0x00000004	/* list sensors */
 #define ENVSYS_XFLAG	0x00000008	/* externalize dictionary */
 #define ENVSYS_IFLAG 	0x00000010	/* skips invalid sensors */
-
-/*
- * Operation flags for -m.
- */
-#define USERF_SCRITICAL 0x00000001	/* set a critical limit */
-#define USERF_RCRITICAL 0x00000002	/* remove a critical limit */
-#define USERF_SCRITMAX	0x00000004	/* set a critical max limit */
-#define USERF_RCRITMAX	0x00000008	/* remove a critical max limit */
-#define USERF_SCRITMIN	0x00000010	/* set a critical min limit */
-#define USERF_RCRITMIN	0x00000020	/* remove a critical min limit */
-#define USERF_SRFACT	0x00000040	/* set a new rfact */
-#define USERF_SDESCR	0x00000080	/* set a new description */
+#define ENVSYS_SFLAG	0x00000020	/* removes all properties set */
 
 struct envsys_sensor {
 	bool	invalid;
@@ -92,13 +78,13 @@ struct envsys_sensor {
 	char 	dvname[ENVSYS_DESCLEN];
 };
 
-static int interval, flags, width;
-static char *mydevname, *sensors, *userreq;
+static unsigned int interval, flags, width;
+static char *mydevname, *sensors;
 static struct envsys_sensor *gesen;
 static size_t gnelems, newsize;
 
 static int parse_dictionary(int);
-static int send_dictionary(int);
+static int send_dictionary(FILE *, int);
 static int find_sensors(prop_array_t, const char *);
 static void print_sensors(struct envsys_sensor *, size_t, const char *);
 static int check_sensors(struct envsys_sensor *, char *, size_t);
@@ -109,7 +95,8 @@ int main(int argc, char **argv)
 {
 	prop_dictionary_t dict;
 	int c, fd, rval;
-	char *buf, *endptr;
+	char *endptr, *configfile = NULL;
+	FILE *cf;
 
 	rval = flags = interval = width = 0;
 	newsize = gnelems = 0;
@@ -117,8 +104,13 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "Dd:fIi:lm:rs:w:x")) != -1) {
+	while ((c = getopt(argc, argv, "c:Dd:fIi:lrSs:w:x")) != -1) {
 		switch (c) {
+		case 'c':	/* configuration file */
+			configfile = strdup(optarg);
+			if (configfile == NULL)
+				err(EXIT_FAILURE, "strdup");
+			break;
 		case 'D':	/* list registered devices */
 			flags |= ENVSYS_DFLAG;
 			break;
@@ -134,23 +126,21 @@ int main(int argc, char **argv)
 			flags |= ENVSYS_IFLAG;
 			break;
 		case 'i':	/* wait time between intervals */
-			interval = strtoul(optarg, &endptr, 10);
+			interval = (unsigned int)strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
 				errx(EXIT_FAILURE, "bad interval '%s'", optarg);
 			break;
 		case 'l':	/* list sensors */
 			flags |= ENVSYS_LFLAG;
 			break;
-		case 'm':
-			userreq = strdup(optarg);
-			if (userreq == NULL)
-				err(EXIT_FAILURE, "strdup");
-			break;
 		case 'r':
 			/* 
 			 * This flag doesn't do anything... it's only here for
 			 * compatibility with the old implementation.
 			 */
+			break;
+		case 'S':
+			flags |= ENVSYS_SFLAG;
 			break;
 		case 's':	/* only show specified sensors */
 			sensors = strdup(optarg);
@@ -188,19 +178,43 @@ int main(int argc, char **argv)
 		if (rval)
 			errx(EXIT_FAILURE, "%s", strerror(rval));
 
-		buf = prop_dictionary_externalize(dict);
-		(void)printf("%s", buf);
-		free(buf);
+		config_dict_dump(dict);
 
-	} else if (userreq) {
-		if (!sensors || !mydevname)
-			errx(EXIT_FAILURE, "-m requires -s and -d");
+	} else if (flags & ENVSYS_SFLAG) {
+		(void)close(fd);
 
-		rval = send_dictionary(fd);
+		if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1)
+			err(EXIT_FAILURE, "%s", _PATH_DEV_SYSMON);
 
-#define MISSING_FLAG() 							\
-do {									\
-	if (sensors && !mydevname)					\
+		dict = prop_dictionary_create();
+		if (!dict)
+			err(EXIT_FAILURE, "prop_dictionary_create");
+		
+		rval = prop_dictionary_set_bool(dict,
+						"envsys-remove-props",
+					        true);
+		if (!rval)
+			err(EXIT_FAILURE, "prop_dict_set_bool");
+
+		rval = prop_dictionary_send_ioctl(dict, fd, ENVSYS_REMOVEPROPS);
+		if (rval)
+			warnx("%s", strerror(rval));
+
+	} else if (configfile) {
+		/*
+		 * Parse the configuration file.
+		 */
+		if ((cf = fopen(configfile, "r")) == NULL) {
+			syslog(LOG_ERR, "fopen failed: %s", strerror(errno));
+			errx(EXIT_FAILURE, "%s", strerror(errno));
+		}
+
+		rval = send_dictionary(cf, fd);
+		(void)fclose(cf);
+
+#define MISSING_FLAG()					\
+do {							\
+	if (sensors && !mydevname)			\
 		errx(EXIT_FAILURE, "-s requires -d");	\
 } while (/* CONSTCOND */ 0)
 
@@ -221,280 +235,47 @@ do {									\
 
 	if (sensors)
 		free(sensors);
-	if (userreq)
-		free(userreq);
 	if (mydevname)
 		free(mydevname);
 	(void)close(fd);
 
-	return (rval == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+	return rval ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 static int
-send_dictionary(int fd)
+send_dictionary(FILE *cf, int fd)
 {
-	prop_dictionary_t dict, udict;
-	prop_object_t obj;
-	char *buf, *target, *endptr;
-	int error, i, uflag;
-	double val;
+	prop_dictionary_t kdict, udict;
+	int error = 0;
 
-	error = uflag = val = 0;
-
-	/* 
-	 * part 1: kernel dictionary.
-	 *
-	 * This part consists in parsing the kernel dictionary
-	 * to check for unknown devices or sensors. This is to 
-	 * know what type of sensor are we trying to set a
-	 * a critical limit.
-	 */
-	error = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
-	if (error)
+	error = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &kdict);
+      	if (error)
 		return error;
 
-	if (mydevname) {
-		obj = prop_dictionary_get(dict, mydevname);
-		if (prop_object_type(obj) != PROP_TYPE_ARRAY) {
-			warnx("unknown device `%s'", mydevname);
-			prop_object_release(dict);
-			return EINVAL;
-		}
-
-		if (find_sensors(obj, mydevname)) {
-			prop_object_release(dict);
-			return EINVAL;
-		}
-	}
-
-	/* find the type for selected sensor */
-	for (i = 0; i < gnelems; i++)
-		if (strcmp(sensors, gesen[i].desc) == 0)
-			break;
-
-	/* we know the type of the sensor now, release kernel dict */
-	prop_object_release(dict);
-	/* we don't need the rdonly fd */
-	(void)close(fd);
-
-
-	/* 
-	 * part 2: userland dictionary.
-	 *
-	 * This part consists in setting the values provided
-	 * by the user and convert when necesssary to send
-	 * them to the kernel again.
-	 */
-	udict = prop_dictionary_create();
-
-#define MKPROP(var, str)						\
-do {									\
-	obj = prop_string_create_cstring_nocopy(var);			\
-	if (obj == NULL || !prop_dictionary_set(udict, (str), obj)) {	\
-		error = EINVAL;						\
-		goto out;						\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-	/* create the driver-name object */
-	MKPROP(mydevname, "driver-name");
-	prop_object_release(obj);
-
-	/* create the sensor-name object */
-	MKPROP(sensors, "sensor-name");
-	prop_object_release(obj);
-
-#undef MKPROP
-
-	/* 
-	 * parse the -m argument; we understand the following ways:
-	 *
-	 * 	-m critical/crit{max,min}=value
-	 * 	-m critical/crit{max,min}=remove
-	 * 	-m desc="BLAH"
-	 * 	-m rfact=value
-	 */
-	if (userreq) {
-		buf = strtok(userreq, "=");
-		target = strdup(buf);
-		if (target == NULL) {
-			error = ENOMEM;
-			goto out;
-		}
-
-		while (buf != NULL) {
-			/* 
-			 * skip current string if it's the same
-			 * than target requested.
-			 */
-			if (strcmp(target, buf) == 0)
-				buf = strtok(NULL, "=");
-
-			/* check what target was requested */
-			if (strcmp(target, "desc") == 0) {
-				uflag |= USERF_SDESCR;
-				obj = prop_string_create_cstring_nocopy(buf);
-				break;
-#define SETNCHECKVAL(a, b)						\
-do {									\
-	if (strcmp(buf, "remove") == 0)					\
-		uflag |= (a);						\
-	else {								\
-		uflag |= (b);						\
-		val = strtod(buf, &endptr);				\
-		if (*endptr != '\0') {					\
-			warnx("invalid value");				\
-			error = EINVAL;					\
-			goto out;					\
-		}							\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-			} else if (strcmp(target, "critical") == 0) {
-				SETNCHECKVAL(USERF_RCRITICAL, USERF_SCRITICAL);
-				break;
-			} else if (strcmp(target, "critmax") == 0) {
-				SETNCHECKVAL(USERF_RCRITMAX, USERF_SCRITMAX);
-				break;
-			} else if (strcmp(target, "critmin") == 0) {
-				SETNCHECKVAL(USERF_RCRITMIN, USERF_SCRITMIN);
-				break;
-			} else if (strcmp(target, "rfact") == 0) {
-				uflag |= USERF_SRFACT;
-				val = strtod(buf, &endptr);
-				if (*endptr != '\0') {
-					warnx("invalid value");
-					error = EINVAL;
-					goto out;
-				}
-				break;
-			} else {
-				warnx("invalid target");
-				error =  EINVAL;
-				goto out;
-			}
-		}
-		free(target);
-	}
-
-#undef SETNCHECKVAL
-
-	/* critical capacity for percentage sensors */
-	if (uflag & USERF_SCRITICAL) {
-		/* sanity check */
-		if (val < 0 || val > 100) {
-			warnx("invalid value (0><100)");
-			error = EINVAL;
-			goto out;
-		}
-
-		/* ok... convert the value */
-		val = (val / 100) * gesen[i].max_value;
-		obj = prop_number_create_unsigned_integer(val);
-	}
+	config_parse(cf, kdict);
 
 	/*
-	 * conversions required to send a proper value to the kernel.
+	 * Dictionary built by the parser from the configuration file.
 	 */
-	if ((uflag & USERF_SCRITMAX) || (uflag & USERF_SCRITMIN)) {
-		/* temperatures */
-		if (strcmp(gesen[i].type, "Temperature") == 0) {
-			/* convert from farenheit to celsius */
-			if (flags & ENVSYS_FFLAG)
-				val = (val - 32.0) * (5.0 / 9.0);
+	udict = config_dict_parsed();
 
-			/* convert to microKelvin */
-			val = val * 1000000 + 273150000;
-			/* printf("val=%d\n", (int)val); */
-			obj = prop_number_create_unsigned_integer(val);
-		/* fans */
-		} else if (strcmp(gesen[i].type, "Fan") == 0) {
-			if (val < 0 || val > 10000) {
-				error = EINVAL;
-				goto out;
-			}
-			/* printf("val=%d\n", (int)val); */
-			obj = prop_number_create_unsigned_integer(val);
-
-		/* volts, watts, ohms, etc */
-		} else {
-			/* convert to m[V,W,Ohms] again */
-			val *= 1000000.0;
-			/* printf("val=%5.0f\n", val); */
-			obj = prop_number_create_integer(val);
-		}
-	}
-
-#define SETPROP(str)							\
-do {									\
-	if (!prop_dictionary_set(udict, (str), obj)) {			\
-		error = EINVAL;						\
-		goto out;						\
-	}								\
-} while ( /*CONSTCOND*/ 0)
-
-	/* user wanted to set a new description */	
-	if (uflag & USERF_SDESCR) {
-		SETPROP("new-description");
-
-	/* user wanted to set a new critical capacity */
-	} else if (uflag & USERF_SCRITICAL) {
-		SETPROP("critical-capacity");
-
-	} else if (uflag & USERF_RCRITICAL) {
-		obj = prop_bool_create(1);
-		SETPROP("remove-critical-cap");
-
-	/* user wanted to remove a critical min limit */
-	} else if (uflag & USERF_RCRITMIN) {
-		obj = prop_bool_create(1);
-		SETPROP("remove-cmin-limit");
-
-	/* user wanted to remove a critical max limit */
-	} else if (uflag & USERF_RCRITMAX) {
-		obj = prop_bool_create(1);
-		SETPROP("remove-cmax-limit");
-
-	/* user wanted to set a new critical min value */
-	} else if (uflag & USERF_SCRITMIN) {
-		SETPROP("critical-min-limit");
-
-	/* user wanted to set a new critical max value */
-	} else if (uflag & USERF_SCRITMAX) {
-		SETPROP("critical-max-limit");
-
-	/* user wanted to set a new rfact */
-	} else if (uflag & USERF_SRFACT) {
-		obj = prop_number_create_integer(val);
-		SETPROP("new-rfact");
-
-	} else {
-		warnx("unknown operation");
-		error = EINVAL;
-		goto out;
-	}
-
-#undef SETPROP
-
-	prop_object_release(obj);
-
-#ifdef DEBUG
-	printf("%s", prop_dictionary_externalize(udict));
-	return error;
-#endif
-
+	/*
+	 * Close the read only descriptor and open a new one read write.
+	 */
+	(void)close(fd);
 	if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1) {
 		error = errno;
 		warn("%s", _PATH_DEV_SYSMON);
-		goto out;
+		return error;
 	}
 
-	/* all done? send our dictionary now */
+	/* 
+	 * Send our dictionary to the kernel then.
+	 */
 	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
-
 	if (error)
 		warnx("%s", strerror(error));
-out:
+
 	prop_object_release(udict);
 	return error;
 }
@@ -531,12 +312,10 @@ parse_dictionary(int fd)
 		if (rval)
 			goto out;
 
-		if (userreq == NULL) {
-			if ((flags & ENVSYS_LFLAG) == 0)
-				print_sensors(gesen, gnelems, mydevname);
-			if (interval)
-				(void)printf("\n");
-		}
+		if ((flags & ENVSYS_LFLAG) == 0)
+			print_sensors(gesen, gnelems, mydevname);
+		if (interval)
+			(void)printf("\n");
 	} else {
 		iter = prop_dictionary_iterator(dict);
 		if (iter == NULL) {
@@ -566,12 +345,10 @@ parse_dictionary(int fd)
 					goto out;
 			}
 
-			if (userreq == NULL) {
-				if ((flags & ENVSYS_LFLAG) == 0)
-					print_sensors(gesen, gnelems, dnp);
-				if (interval)
-					(void)printf("\n");
-			}
+			if ((flags & ENVSYS_LFLAG) == 0)
+				print_sensors(gesen, gnelems, dnp);
+			if (interval)
+				(void)printf("\n");
 		}
 
 		prop_object_iterator_release(iter);
@@ -609,7 +386,7 @@ find_sensors(prop_array_t array, const char *dvname)
 	gesen = esen;
 
 	iter = prop_array_iterator(array);
-	if (iter == NULL)
+	if (!iter)
 		return EINVAL;
 
 	/* iterate over the array of dictionaries */
@@ -632,7 +409,7 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* description string */
 		desc = prop_dictionary_get(obj, "description");
-		if (desc != NULL) {
+		if (desc) {
 			/* copy description */
 			(void)strlcpy(gesen[gnelems].desc,
 			    prop_string_cstring_nocopy(desc),
@@ -649,14 +426,14 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get current drive state string */
 		obj1 = prop_dictionary_get(obj, "drive-state");
-		if (obj1 != NULL)
+		if (obj1)
 			(void)strlcpy(gesen[gnelems].drvstate,
 			    prop_string_cstring_nocopy(obj1),
 			    sizeof(gesen[gnelems].drvstate));
 
 		/* get current battery state string */
 		obj1 = prop_dictionary_get(obj, "battery-state");
-		if (obj1 != NULL)
+		if (obj1)
 			(void)strlcpy(gesen[gnelems].battstate,
 			    prop_string_cstring_nocopy(obj1),
 			    sizeof(gesen[gnelems].battstate));
@@ -667,7 +444,7 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get max value */
 		obj1 = prop_dictionary_get(obj, "max-value");
-		if (obj1 != NULL)
+		if (obj1)
 			gesen[gnelems].max_value =
 			    prop_number_integer_value(obj1);
 		else
@@ -675,7 +452,7 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get min value */
 		obj1 = prop_dictionary_get(obj, "min-value");
-		if (obj1 != NULL)
+		if (obj1)
 			gesen[gnelems].min_value =
 			    prop_number_integer_value(obj1);
 		else
@@ -683,7 +460,7 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get avg value */
 		obj1 = prop_dictionary_get(obj, "avg-value");
-		if (obj1 != NULL)
+		if (obj1)
 			gesen[gnelems].avg_value =
 			    prop_number_integer_value(obj1);
 		else
@@ -691,20 +468,20 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get percentage flag */
 		obj1 = prop_dictionary_get(obj, "want-percentage");
-		if (obj1 != NULL)
+		if (obj1)
 			gesen[gnelems].percentage = prop_bool_true(obj1);
 
 		/* get critical max value if available */
-		obj1 = prop_dictionary_get(obj, "critical-max-limit");
-		if (obj1 != NULL) {
+		obj1 = prop_dictionary_get(obj, "critical-max");
+		if (obj1) {
 			gesen[gnelems].critmax_value =
 			    prop_number_integer_value(obj1);
 		} else
 			gesen[gnelems].critmax_value = 0;
 
 		/* get critical min value if available */
-		obj1 = prop_dictionary_get(obj, "critical-min-limit");
-		if (obj1 != NULL) {
+		obj1 = prop_dictionary_get(obj, "critical-min");
+		if (obj1) {
 			gesen[gnelems].critmin_value =
 			    prop_number_integer_value(obj1);
 		} else
@@ -712,7 +489,7 @@ find_sensors(prop_array_t array, const char *dvname)
 
 		/* get critical capacity value if available */
 		obj1 = prop_dictionary_get(obj, "critical-capacity");
-		if (obj1 != NULL) {
+		if (obj1) {
 			gesen[gnelems].critcap_value =
 			    prop_number_integer_value(obj1);
 		} else
@@ -741,7 +518,7 @@ find_sensors(prop_array_t array, const char *dvname)
 	 */
 	if (sensors) {
 		str = strdup(sensors);
-		if (str == NULL)
+		if (!str)
 			return ENOMEM;
 
 		rval = check_sensors(gesen, str, gnelems);
@@ -758,7 +535,7 @@ check_sensors(struct envsys_sensor *es, char *str, size_t nelems)
 	char *sname;
 
 	sname = strtok(str, ",");
-	while (sname != NULL) {
+	while (sname) {
 		for (i = 0; i < nelems; i++) {
 			if (strcmp(sname, es[i].desc) == 0) {
 				es[i].visible = true;
@@ -948,9 +725,9 @@ do {								\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-DfIlrx] ", getprogname());
-	(void)fprintf(stderr, "[-d device] [-i interval] ");
-	(void)fprintf(stderr, "[-m key=value] [-s sensor,...] [-w width]\n");
+	(void)fprintf(stderr, "Usage: %s [-DfIlrSx] ", getprogname());
+	(void)fprintf(stderr, "[-c file] [-d device] [-i interval] ");
+	(void)fprintf(stderr, "[-s sensor,...] [-w width]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
