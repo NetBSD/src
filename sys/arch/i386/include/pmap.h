@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.7 2007/10/07 13:24:33 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.8 2007/10/07 13:44:34 yamt Exp $	*/
 
 /*
  *
@@ -294,7 +294,7 @@
  */
 #define NPTECL		8
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
 /*
  * pmap data structures: see pmap.c for details of locking.
  */
@@ -313,6 +313,10 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  *
  * note that the pm_obj contains the simple_lock, the reference count,
  * page list, and number of PTPs within the pmap.
+ *
+ * pm_lock is the same as the spinlock for vm object 0. Changes to
+ * the other objects may only be made if that lock has been taken
+ * (the other object locks are only used when uvm_pagealloc is called)
  *
  * XXX If we ever support processor numbers higher than 31, we'll have
  * XXX to rethink the CPU mask.
