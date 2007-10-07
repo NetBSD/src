@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.5 2007/10/07 12:13:56 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.6 2007/10/07 13:22:14 yamt Exp $	*/
 
 /*
  *
@@ -559,7 +559,6 @@ kvtopte(vaddr_t va)
 	pd_entry_t *pde;
 
 	KASSERT(va >= (L2_SLOT_KERN * NBPD_L2));
-
 
 	pde = L2_BASE + pl2_i(va);
 	if (*pde & PG_PS)
