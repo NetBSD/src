@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.48.12.3 2007/10/02 23:37:16 jmcneill Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.48.12.4 2007/10/07 13:25:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.12.3 2007/10/02 23:37:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.12.4 2007/10/07 13:25:02 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -302,7 +302,8 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 #endif
 		if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
 			mpacpi_sci_override = mpi;
-			
+
+		break;
 	default:
 		break;
 	}

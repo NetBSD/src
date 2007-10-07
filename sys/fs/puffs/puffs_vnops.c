@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.95.4.3 2007/10/02 18:28:54 joerg Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.95.4.4 2007/10/07 13:25:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95.4.3 2007/10/02 18:28:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95.4.4 2007/10/07 13:25:07 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -117,8 +117,6 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_setattr_desc, puffs_checkop },		/* setattr */
         { &vop_read_desc, puffs_checkop },		/* read */
         { &vop_write_desc, puffs_checkop },		/* write */
-        { &vop_fcntl_desc, puffs_checkop },		/* fcntl */
-        { &vop_ioctl_desc, puffs_checkop },		/* ioctl */
         { &vop_fsync_desc, puffs_fsync },		/* REAL fsync */
         { &vop_seek_desc, puffs_checkop },		/* seek */
         { &vop_remove_desc, puffs_checkop },		/* remove */
@@ -282,8 +280,6 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_setattr_desc, puffs_setattr },		/* setattr */
         { &vop_read_desc, puffs_read },			/* read */
         { &vop_write_desc, puffs_write },		/* write */
-        { &vop_fcntl_desc, puffs_fcntl },		/* fcntl */
-        { &vop_ioctl_desc, puffs_ioctl },		/* ioctl */
         { &vop_seek_desc, puffs_seek },			/* seek */
         { &vop_remove_desc, puffs_remove },		/* remove */
         { &vop_link_desc, puffs_link },			/* link */
@@ -1899,91 +1895,6 @@ puffs_write(void *v)
 	if (write_argp)
 		free(write_argp, M_PUFFS);
 	return error;
-}
-
-static int	puffs_fcnioctl(struct vop_ioctl_args * /*XXX*/, int);
-
-#define FCNIOCTL_ARG_MAX 1<<16
-int
-puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
-{
-
-	/* currently not supported */
-	return EOPNOTSUPP;
-#if 0
-	/* struct vop_ioctl_args {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		u_long a_command;
-		void *a_data;
-		int a_fflag;
-		kauth_cred_t a_cred;
-		struct lwp *a_l;
-	} *ap = v; */
-	struct puffs_mount *pmp;
-	struct puffs_sizepark pspark;
-	void *kernbuf;
-	size_t copylen;
-	int error;
-
-	PUFFS_VNREQ(fcnioctl);
-
-	/*
-	 * Since this op gives the filesystem (almost) complete control on
-	 * how much it is allowed to copy from the calling process
-	 * address space, do not enable it by default, since it would
-	 * be a whopping security hole.
-	 */
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-	if ((pmp->pmp_flags & PUFFS_KFLAG_ALLOWCTL) == 0)
-		return EINVAL; /* only shoe that fits */
-
-	/* fill in sizereq and store it */
-	pspark.pkso_reqid = puffs_getreqid(pmp);
-	pspark.pkso_reqtype = PUFFS_SIZEOPREQ_BUF_IN;
-	pspark.pkso_copybuf = ap->a_data;
-	pspark.pkso_bufsize = FCNIOCTL_ARG_MAX;
-	TAILQ_INSERT_TAIL(&pmp->pmp_req_sizepark, &pspark, pkso_entries);
-
-	/* then fill in actual request and shoot it off */
-	fcnioctl_arg.pvnr_command = ap->a_command;
-	fcnioctl_arg.pvnr_fflag = ap->a_fflag;
-	puffs_credcvt(&fcnioctl_arg.pvnr_cred, ap->a_cred);
-	fcnioctl_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
-
-	error = puffs_vntouser_req(MPTOPUFFSMP(ap->a_vp->v_mount), puffsop,
-	    &fcnioctl_arg, sizeof(fcnioctl_arg), 0, ap->a_vp,
-	    pspark.pkso_reqid, ap->a_vp, NULL);
-
-	/* if we don't need to copy data, we're done */
-	if (error || !fcnioctl_arg.pvnr_copyback)
-		return error;
-
-	copylen = MIN(FCNIOCTL_ARG_MAX, fcnioctl_arg.pvnr_datalen);
-	kernbuf = malloc(copylen, M_PUFFS, M_WAITOK);
-	error = copyin(fcnioctl_arg.pvnr_data, kernbuf, copylen);
-	if (error)
-		goto out;
-	error = copyout(kernbuf, ap->a_data, copylen);
-
- out:
-	free(kernbuf, M_PUFFS);
-	return error;
-#endif
-}
-
-int
-puffs_ioctl(void *v)
-{
-
-	return puffs_fcnioctl(v, PUFFS_VN_IOCTL);
-}
-
-int
-puffs_fcntl(void *v)
-{
-
-	return puffs_fcnioctl(v, PUFFS_VN_FCNTL);
 }
 
 int
