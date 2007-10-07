@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.309 2007/10/07 14:12:21 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.310 2007/10/07 14:15:38 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10042,4 +10042,19 @@ crypto/dist/openssl/ssl/ssl_lib.c		1.4
 	in an older security fix, see
 	http://www.securityfocus.com/archive/1/480855/30/0/threaded
 	[drochner, ticket #917]
+
+sys/dev/pci/if_bge.c				1.139
+
+	Fix three bugs.
+
+	1) Move a magic number writing code.
+	Fix a watchdog timeout and "block failed to stop" problem on BCM5701 B5 card.
+
+	2) Fix incorrect register write.
+	Fix a watchdog timeout "block failed to stop" problem on BCM5700 B2 card.
+
+	3) Wait more long time for PCISTATE register to return to its original
+	pre-reset state.
+	Fix "pcistate failed to revert" problem on BCM5703 A2 card.
+	[msaitoh, ticket #918]
 
