@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.2.3 2007/10/06 15:39:38 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.4 2007/10/07 12:51:15 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -126,9 +126,7 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <machine/param.h>
 #include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
