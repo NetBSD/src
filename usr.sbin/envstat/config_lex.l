@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_lex.l,v 1.1 2007/10/07 04:16:47 xtraeme Exp $	*/
+/* 	$NetBSD: config_lex.l,v 1.2 2007/10/07 05:11:08 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.1 2007/10/07 04:16:47 xtraeme Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.2 2007/10/07 05:11:08 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ int yylex(void);
 
 SENSOR		sensor[0-9]+
 SENSORPROP	critical-max|critical-min|critical-capacity|rfact|description
-SP_STRING	[\$A-Za-z\.\/_\-0-9 ]*
+SP_STRING	[(+|\-)\$A-Za-z\.\/_\-0-9 ]*
 STRING		[\$A-Za-z\.\/_\-0-9]*
 
 %%
