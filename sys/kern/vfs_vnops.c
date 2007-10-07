@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.140 2007/07/22 19:16:05 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.141 2007/10/07 13:39:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.140 2007/07/22 19:16:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.141 2007/10/07 13:39:04 hannken Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.140 2007/07/22 19:16:05 pooka Exp $"
 #include <sys/poll.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -709,61 +710,38 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 	lkp->lk_flags |= flags;
 }
 
+/*
+ * Obsolete: this function will be removed from 6.0
+ * Please use fscow_establish() instead.
+ */
 int
 vn_cow_establish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	int s;
-	struct spec_cow_entry *e;
+	static int firstrun = 1;
 
-	MALLOC(e, struct spec_cow_entry *, sizeof(struct spec_cow_entry),
-	    M_DEVBUF, M_WAITOK);
-	e->ce_func = func;
-	e->ce_cookie = cookie;
-
-	SPEC_COW_LOCK(vp->v_specinfo, s);
-	vp->v_spec_cow_req++;
-	while (vp->v_spec_cow_count > 0)
-		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_slock);
-
-	SLIST_INSERT_HEAD(&vp->v_spec_cow_head, e, ce_list);
-
-	vp->v_spec_cow_req--;
-	if (vp->v_spec_cow_req == 0)
-		wakeup(&vp->v_spec_cow_req);
-	SPEC_COW_UNLOCK(vp->v_specinfo, s);
-
-	return 0;
+	if (firstrun) {
+		printf("%s: this function is obsolete.\n", __FUNCTION__);
+		firstrun = 0;
+	}
+	if (vp->v_type == VBLK)
+		return fscow_establish(vp->v_specmountpoint, func, cookie);
+	else
+		return fscow_establish(vp->v_mount, func, cookie);
 }
 
+/*
+ * Obsolete: this function will be removed from 6.0
+ * Please use fscow_disestablish() instead.
+ */
 int
 vn_cow_disestablish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	int s;
-	struct spec_cow_entry *e;
-
-	SPEC_COW_LOCK(vp->v_specinfo, s);
-	vp->v_spec_cow_req++;
-	while (vp->v_spec_cow_count > 0)
-		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_slock);
-
-	SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
-		if (e->ce_func == func && e->ce_cookie == cookie) {
-			SLIST_REMOVE(&vp->v_spec_cow_head, e,
-			    spec_cow_entry, ce_list);
-			FREE(e, M_DEVBUF);
-			break;
-		}
-
-	vp->v_spec_cow_req--;
-	if (vp->v_spec_cow_req == 0)
-		wakeup(&vp->v_spec_cow_req);
-	SPEC_COW_UNLOCK(vp->v_specinfo, s);
-
-	return e ? 0 : EINVAL;
+	if (vp->v_type == VBLK)
+		return fscow_disestablish(vp->v_specmountpoint, func, cookie);
+	else
+		return fscow_disestablish(vp->v_mount, func, cookie);
 }
 
 /*

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.249 2007/09/24 20:44:23 wiz Exp $
+#       $NetBSD: Makefile,v 1.250 2007/10/07 13:39:02 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -245,7 +245,10 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fstrans_getstate.9 \
 	fstrans.9 fstrans_setstate.9 \
 	fstrans.9 fstrans_start.9 \
-	fstrans.9 fstrans_start_nowait.9
+	fstrans.9 fstrans_start_nowait.9 \
+	fstrans.9 fscow_establish.9 \
+	fstrans.9 fscow_disestablish.9 \
+	fstrans.9 fscow_run.9
 MLINKS+=getiobuf.9 getiobuf_nowait.9 \
 	getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
@@ -725,9 +728,7 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_setrecurse.9 \
 	vnsubr.9 vn_stat.9 \
 	vnsubr.9 vn_open.9 \
-	vnsubr.9 vn_writechk.9 \
-	vnsubr.9 vn_cow_establish.9 \
-	vnsubr.9 vn_cow_disestablish.9
+	vnsubr.9 vn_writechk.9
 MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
 	wsdisplay.9 wsdisplay_cnattach.9 \
 	wsdisplay.9 wsdisplaydevprint.9 \
