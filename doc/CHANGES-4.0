@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.312 2007/10/07 14:27:23 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.313 2007/10/07 14:28:27 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10068,4 +10068,11 @@ sys/compat/linux/common/linux_misc_notalpha.c	1.89
 
 	avoid zerodivide in linux emulation of statfs64. PR 36920.
 	[hauke, ticket #919]
+
+sys/dev/acpi/pckbc_acpi.c			1.21
+
+	Sort IO resources before attempting to attach; resolves issues on ACPI
+	firmware that reports 0x64,0x60 instead of 0x60,0x64. Patch tested by
+	Greg A. Woods.
+	[jmcneill, ticket #924]
 
