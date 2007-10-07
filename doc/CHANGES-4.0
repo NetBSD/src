@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.310 2007/10/07 14:15:38 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.311 2007/10/07 14:22:24 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10058,3 +10058,8 @@ sys/dev/pci/if_bge.c				1.139
 	Fix "pcistate failed to revert" problem on BCM5703 A2 card.
 	[msaitoh, ticket #918]
 
+sys/kern/kern_sig.c				patch
+
+	Fix two problems with signals that could cause kernel crashes.
+	Should fix PR kern/37004.
+	[ad, ticket #921]
