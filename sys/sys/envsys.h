@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.16 2007/09/04 16:54:02 xtraeme Exp $ */
+/* $NetBSD: envsys.h,v 1.17 2007/10/07 04:11:15 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct envsys_data {
 	int32_t		value_max;	/* max value */
 	int32_t		value_min;	/* min value */
 	int32_t		value_avg;	/* avg value */
+	int		upropset;	/* userland property set? */
 	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
 };
@@ -141,6 +142,7 @@ enum envsys_battery_states {
 
 #define ENVSYS_GETDICTIONARY		_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY		_IOWR('E', 1, struct plistref)
+#define ENVSYS_REMOVEPROPS		_IOWR('E', 2, struct plistref)
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA

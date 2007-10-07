@@ -1,11 +1,8 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.68 2007/09/24 19:46:38 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.69 2007/10/07 04:11:15 xtraeme Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*-
@@ -75,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.68 2007/09/24 19:46:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.69 2007/10/07 04:11:15 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,6 +102,17 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.68 2007/09/24 19:46:38 xtraeme E
 kmutex_t sme_mtx, sme_event_init_mtx;
 kcondvar_t sme_cv;
 
+/*
+ * Types of properties that can be set via userland.
+ */
+enum {
+	USERPROP_DESC 		= 0x0001,
+	USERPROP_BATTCAP	= 0x0002,
+	USERPROP_CRITMAX	= 0x0004,
+	USERPROP_CRITMIN	= 0x0008,
+	USERPROP_RFACT		= 0x0010
+};
+
 static prop_dictionary_t sme_propd;
 static uint32_t sysmon_envsys_next_sensor_index = 0;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
@@ -120,6 +120,7 @@ static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 static void sysmon_envsys_release(struct sysmon_envsys *);
 static void sysmon_envsys_destroy_plist(prop_array_t);
 static int sme_register_sensorname(struct sysmon_envsys *, envsys_data_t *);
+static void sme_remove_userprops(void);
 
 /*
  * sysmon_envsys_init:
@@ -206,7 +207,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    {
 		const struct plistref *plist = (const struct plistref *)data;
 		prop_dictionary_t udict;
-		prop_object_t obj;
+		prop_object_iterator_t iter, iter2;
+		prop_object_t obj, obj2;
+		prop_array_t array_u, array_k;
 		const char *devname = NULL;
 
 		if ((flag & FWRITE) == 0)
@@ -222,49 +225,116 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 		}
 
-		/*
-		 * Parse "driver-name" key to obtain the driver we
-		 * are searching for.
-		 */
-		obj = prop_dictionary_get(udict, "driver-name");
-		if (obj == NULL || prop_object_type(obj) != PROP_TYPE_STRING) {
-			DPRINTF(("%s: driver-name failed\n", __func__));
+		iter = prop_dictionary_iterator(udict);
+		if (!iter) {
 			prop_object_release(udict);
-			error = EINVAL;
-			break;
-		}
-
-		/* driver name */
-		devname = prop_string_cstring_nocopy(obj);
-
-		/* find the correct sme device */
-		sme = sysmon_envsys_find(devname);
-		if (sme == NULL) {
-			DPRINTF(("%s: NULL sme\n", __func__));
-			prop_object_release(udict);
-			error = EINVAL;
-			break;
+			return ENOMEM;
 		}
 
 		/*
-		 * Find the correct array object with the string supplied
-		 * by the userland dictionary.
+		 * Iterate over the userland dictionary and process
+		 * the list of devices.
 		 */
-		obj = prop_dictionary_get(sme_propd, devname);
-		if (prop_object_type(obj) != PROP_TYPE_ARRAY) {
-			DPRINTF(("%s: array device failed\n", __func__));
+		while ((obj = prop_object_iterator_next(iter))) {
+			array_u = prop_dictionary_get_keysym(udict, obj);
+			if (prop_object_type(array_u) != PROP_TYPE_ARRAY) {
+				prop_object_iterator_release(iter);
+				prop_object_release(udict);
+				return EINVAL;
+			}
+			
+			devname = prop_dictionary_keysym_cstring_nocopy(obj);
+			DPRINTF(("%s: processing the '%s' array requests\n",
+			    __func__, devname));
+
+			/*
+			 * find the correct sme device.
+			 */
+			sme = sysmon_envsys_find(devname);
+			if (!sme) {
+				DPRINTF(("%s: NULL sme\n", __func__));
+				prop_object_iterator_release(iter);
+				prop_object_release(udict);
+				return EINVAL;
+			}
+
+			/*
+			 * Find the correct array object with the string
+			 * supplied by the userland dictionary.
+			 */
+			array_k = prop_dictionary_get(sme_propd, devname);
+			if (prop_object_type(array_k) != PROP_TYPE_ARRAY) {
+				DPRINTF(("%s: array device failed\n",
+				    __func__));
+				sysmon_envsys_release(sme);
+				prop_object_iterator_release(iter);
+				prop_object_release(udict);
+				return EINVAL;
+			}
+
+			iter2 = prop_array_iterator(array_u);
+			if (!iter2) {
+				sysmon_envsys_release(sme);
+				prop_object_iterator_release(iter);
+				prop_object_release(udict);
+				return ENOMEM;
+			}
+
+			/*
+			 * Iterate over the array of dictionaries to
+			 * process the list of sensors.
+			 */
+			while ((obj2 = prop_object_iterator_next(iter2))) {
+				/* do the real work now */
+				error = sme_userset_dictionary(sme,
+							       obj2,
+							       array_k);
+				if (error) {
+					sysmon_envsys_release(sme);
+					prop_object_iterator_release(iter2);
+					prop_object_iterator_release(iter);
+					prop_object_release(udict);
+					return EINVAL;
+				}
+			}
+
 			sysmon_envsys_release(sme);
-			prop_object_release(udict);
-			error = EINVAL;
-			break;
+			prop_object_iterator_release(iter2);
 		}
 
-		/* do the real work now */
-		error = sme_userset_dictionary(sme, udict, obj);
-		sysmon_envsys_release(sme);
+		prop_object_iterator_release(iter);
 		prop_object_release(udict);
 		break;
 	    }
+	case ENVSYS_REMOVEPROPS:
+	    {
+		const struct plistref *plist = (const struct plistref *)data;
+		prop_dictionary_t udict;
+		prop_object_t obj;
+
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+
+		error = prop_dictionary_copyin_ioctl(plist, cmd, &udict);
+		if (error) {
+			DPRINTF(("%s: copyin_ioctl error=%d\n",
+			    __func__, error));
+			break;
+		}
+
+		obj = prop_dictionary_get(udict, "envsys-remove-props");
+		if (!obj || !prop_bool_true(obj)) {
+			DPRINTF(("%s: invalid 'envsys-remove-props'\n",
+			     __func__));
+			return EINVAL;
+		}
+
+		sme_remove_userprops();
+
+		prop_object_release(udict);
+		break;
+	    }
+
 	    /*
 	     * Compatibility functions with the old interface, only
 	     * implemented ENVSYS_GTREDATA and ENVSYS_GTREINFO; enough
@@ -278,7 +348,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		tred->validflags = 0;
 
 		sme = sysmon_envsys_find_40(tred->sensor);
-		if (sme == NULL)
+		if (!sme)
 			break;
 
 		mutex_enter(&sme_mtx);
@@ -347,7 +417,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		binfo->validflags = 0;
 
 		sme = sysmon_envsys_find_40(binfo->sensor);
-		if (sme == NULL)
+		if (!sme)
 			break;
 
 		mutex_enter(&sme_mtx);
@@ -418,14 +488,14 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * the sme_gtredata function callback must be non NULL.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-		if (sme->sme_gtredata == NULL)
+		if (!sme->sme_gtredata)
 			return EINVAL;
 	}
 
 
 	/* create the sysmon envsys device array. */
 	array = prop_array_create();
-	if (array == NULL)
+	if (!array)
 		return ENOMEM;
 
 	/* 
@@ -450,7 +520,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 			continue;
 
 		dict = prop_dictionary_create();
-		if (dict == NULL) {
+		if (!dict) {
 			error = ENOMEM;
 			goto out2;
 		}
@@ -532,7 +602,7 @@ out2:
 		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
 		kmem_free(sme_evdrv, sizeof(*sme_evdrv));
 	}
-	if (error == 0)
+	if (!error)
 		return 0;
 
 	DPRINTF(("%s: failed to register '%s' (%d)\n", __func__,
@@ -565,13 +635,13 @@ sysmon_envsys_destroy_plist(prop_array_t array)
 	    prop_array_count(array)));
 
 	iter = prop_array_iterator(array);
-	if (iter == NULL)
+	if (!iter)
 		return;
 
-	while ((dict = prop_object_iterator_next(iter)) != NULL) {
+	while ((dict = prop_object_iterator_next(iter))) {
 		KASSERT(prop_object_type(dict) == PROP_TYPE_DICTIONARY);
 		iter2 = prop_dictionary_iterator(dict);
-		if (iter2 == NULL)
+		if (!iter2)
 			goto out;
 		DPRINTFOBJ(("%s: iterating over dictionary\n", __func__));
 		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
@@ -647,7 +717,7 @@ sysmon_envsys_find(const char *name)
 
 	mutex_enter(&sme_mtx);
 again:
-	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
+	for (sme = LIST_FIRST(&sysmon_envsys_list); sme;
 	     sme = LIST_NEXT(sme, sme_list)) {
 			if (strcmp(sme->sme_name, name) == 0) {
 				if (sme->sme_flags & SME_FLAG_BUSY) {
@@ -685,7 +755,7 @@ sysmon_envsys_find_40(u_int idx)
 	struct sysmon_envsys *sme;
 
 	mutex_enter(&sme_mtx);
-	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
+	for (sme = LIST_FIRST(&sysmon_envsys_list); sme;
 	     sme = LIST_NEXT(sme, sme_list)) {
 		if (idx >= sme->sme_fsensor &&
 	    	    idx < (sme->sme_fsensor + sme->sme_nsensors))
@@ -695,6 +765,99 @@ sysmon_envsys_find_40(u_int idx)
 	return sme;
 }
 
+/*
+ * sme_sensor_dictionary_get:
+ *
+ * 	+ Returns a dictionary of a device specified by 'index'.
+ */
+prop_dictionary_t
+sme_sensor_dictionary_get(prop_array_t array, const char *index)
+{
+	prop_object_iterator_t iter;
+	prop_dictionary_t dict;
+	prop_object_t obj;
+
+	KASSERT(array != NULL || index != NULL);
+
+	iter = prop_array_iterator(array);
+	if (!iter)
+		return NULL;
+
+	while ((dict = prop_object_iterator_next(iter))) {
+		obj = prop_dictionary_get(dict, "index");
+		if (prop_string_equals_cstring(obj, index))
+			break;
+	}
+
+	prop_object_iterator_release(iter);
+	return dict;
+}
+
+/*
+ * sme_remove_userprops:
+ *
+ * 	+ Remove all properties from all devices that were set by
+ * 	  the userland.
+ */
+static void
+sme_remove_userprops(void)
+{
+	struct sysmon_envsys *sme;
+	prop_array_t array;
+	prop_dictionary_t sdict;
+	envsys_data_t *edata = NULL;
+	char tmp[ENVSYS_DESCLEN];
+	int i, ptype;
+
+	mutex_enter(&sme_mtx);
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		sme->sme_flags |= SME_FLAG_BUSY;
+		array = prop_dictionary_get(sme_propd, sme->sme_name);
+
+		for (i = 0; i < sme->sme_nsensors; i++) {
+			edata = &sme->sme_sensor_data[i];
+			(void)snprintf(tmp, sizeof(tmp), "sensor%d",
+				       edata->sensor);
+			sdict = sme_sensor_dictionary_get(array, tmp);
+
+			if (edata->upropset & USERPROP_BATTCAP) {
+				prop_dictionary_remove(sdict,
+				    "critical-capacity");
+				ptype = PENVSYS_EVENT_BATT_USERCAP;
+				sme_event_unregister(edata->desc, ptype);
+			}
+
+			if (edata->upropset & USERPROP_CRITMAX) {
+				prop_dictionary_remove(sdict,
+				    "critical-max");
+				ptype = PENVSYS_EVENT_USER_CRITMAX;
+				sme_event_unregister(edata->desc, ptype);
+			}
+
+			if (edata->upropset & USERPROP_CRITMIN) {
+				prop_dictionary_remove(sdict,
+				    "critical-min");
+				ptype = PENVSYS_EVENT_USER_CRITMIN;
+				sme_event_unregister(edata->desc, ptype);
+			}
+
+			if (edata->upropset & USERPROP_RFACT) {
+				(void)sme_sensor_upint32(sdict, "rfact", 0);
+				edata->rfact = 0;
+			}
+
+			if (edata->upropset & USERPROP_DESC)
+				(void)sme_sensor_upstring(sdict,
+			  	    "description", edata->desc);
+		}
+
+		if (edata->upropset)
+			edata->upropset = 0;
+	
+		sme->sme_flags &= ~SME_FLAG_BUSY;
+	}
+	mutex_exit(&sme_mtx);
+}
 /*
  * sme_register_sensorname:
  *
@@ -722,7 +885,7 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	snames = kmem_zalloc(sizeof(*snames), KM_NOSLEEP);
-	if (snames == NULL)
+	if (!snames)
 		return ENOMEM;
 
 	snames->assigned = true;
@@ -747,6 +910,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	const struct sme_description_table *sdt, *sdt_units;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	int i, j;
+	char indexstr[ENVSYS_DESCLEN];
 
 	i = j = 0;
 
@@ -761,6 +925,18 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    __func__, edata->sensor));
 		goto invalidate_sensor;
 	}
+
+	/*
+	 * Add the index sensor string.
+	 *
+	 * 		...
+	 * 		<key>index</key>
+	 * 		<string>sensor0</string>
+	 * 		...
+	 */
+	(void)snprintf(indexstr, sizeof(indexstr), "sensor%d", edata->sensor);
+	if (sme_sensor_upstring(dict, "index", indexstr))
+		goto invalidate_sensor;
 
 	/*
 	 * 		...
@@ -831,7 +1007,8 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	}
 
 	/*
-	 * add the percentage boolean object:
+	 * Add the percentage boolean object, true if ENVSYS_FPERCENT
+	 * is set or false otherwise.
 	 *
 	 * 		...
 	 * 		<key>want-percentage</key>
@@ -841,6 +1018,27 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	if (edata->flags & ENVSYS_FPERCENT)
 		if (sme_sensor_upbool(dict, "want-percentage", true))
 			goto out;
+
+	/*
+	 * Add the allow-rfact boolean object, true if
+	 * ENVSYS_FCHANGERFACT if set or false otherwise.
+	 *
+	 * 		...
+	 * 		<key>allow-rfact</key>
+	 * 		<true/>
+	 * 		...
+	 */
+	if (edata->units == ENVSYS_SVOLTS_DC ||
+	    edata->units == ENVSYS_SVOLTS_AC) {
+		if (edata->flags & ENVSYS_FCHANGERFACT) {
+			if (sme_sensor_upbool(dict, "allow-rfact", true))
+				goto out;
+		} else {
+			if (sme_sensor_upbool(dict, "allow-rfact", false))
+				goto out;
+		}
+	}
+
 
 	/*
 	 * Add the battery-state object for battery state sensors:
@@ -1159,8 +1357,8 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 /*
  * sme_userset_dictionary:
  *
- * 	+ Parse the userland dictionary and run the appropiate
- * 	  task that was requested.
+ * 	+ Parse the userland sensor's dictionary and run the appropiate
+ * 	  tasks that was requested.
  */
 int
 sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
@@ -1178,8 +1376,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	error = invalid = 0;
 	blah = sname = NULL;
 
-	/* get sensor's name from userland dictionary. */
-	obj = prop_dictionary_get(udict, "sensor-name");
+	/* get sensor's index from userland dictionary. */
+	obj = prop_dictionary_get(udict, "index");
 	if (prop_object_type(obj) != PROP_TYPE_STRING) {
 		DPRINTF(("%s: sensor-name failed\n", __func__));
 		return EINVAL;
@@ -1188,14 +1386,16 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	/* iterate over the sensors to find the right one */
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
-		/* skip sensors with duplicate description */
+		/* 
+		 * skip invalid sensors.
+		 */
 		if (edata->flags & ENVSYS_FNOTVALID) {
 			invalid++;
 			continue;
 		}
 
 		dict = prop_array_get(array, i - invalid);
-		obj1 = prop_dictionary_get(dict, "description");
+		obj1 = prop_dictionary_get(dict, "index");
 
 		/* is it our sensor? */
 		if (!prop_string_equals(obj1, obj))
@@ -1205,7 +1405,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		 * Check if a new description operation was
 		 * requested by the user and set new description.
 		 */
-		if ((obj2 = prop_dictionary_get(udict, "new-description"))) {
+		if ((obj2 = prop_dictionary_get(udict, "description"))) {
 			targetfound = true;
 			blah = prop_string_cstring_nocopy(obj2);
 			
@@ -1226,72 +1426,25 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			error = sme_sensor_upstring(dict,
 						    "description",
 						    blah);
-			if (!error)
-				(void)strlcpy(edata->desc,
-					      blah,
-					      sizeof(edata->desc));
-
-			break;
-		}
-
-		/* did the user want to remove a critical capacity limit? */
-		obj2 = prop_dictionary_get(udict, "remove-critical-cap");
-		if (obj2 != NULL) {
-			targetfound = true;
-			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-			    (edata->flags & ENVSYS_FPERCENT) == 0) {
-				    error = ENOTSUP;
-				    break;
-			}
-
-			sname = prop_string_cstring_nocopy(obj);
-			error = sme_event_unregister(sname,
-			    PENVSYS_EVENT_BATT_USERCAP);
 			if (error)
 				break;
 
-			prop_dictionary_remove(dict, "critical-capacity");
-			break;
+			edata->upropset |= USERPROP_DESC;
 		}
 
-		/* did the user want to remove a critical min limit? */
-		obj2 = prop_dictionary_get(udict, "remove-cmin-limit");
-		if (obj2 != NULL) {
+		/* 
+		 * did the user want to change the rfact?
+		 */
+		obj2 = prop_dictionary_get(udict, "rfact");
+		if (obj2) {
 			targetfound = true;
-			sname = prop_string_cstring_nocopy(obj);
-			error = sme_event_unregister(sname,
-			    PENVSYS_EVENT_USER_CRITMIN);
-			if (error)
-				break;
-
-			prop_dictionary_remove(dict, "critical-min-limit");
-			break;
-		}
-
-		/* did the user want to remove a critical max limit? */
-		obj2 = prop_dictionary_get(udict, "remove-cmax-limit");
-		if (obj2 != NULL) {
-			targetfound = true;
-			sname = prop_string_cstring_nocopy(obj);
-			error = sme_event_unregister(sname,
-			    PENVSYS_EVENT_USER_CRITMAX);
-			if (error)
-				break;
-
-			prop_dictionary_remove(dict, "critical-max-limit");
-			break;
-		}
-
-		/* did the user want to change rfact? */
-		obj2 = prop_dictionary_get(udict, "new-rfact");
-		if (obj2 != NULL) {
-			targetfound = true;
-			if (edata->flags & ENVSYS_FCHANGERFACT)
+			if (edata->flags & ENVSYS_FCHANGERFACT) {
 				edata->rfact = prop_number_integer_value(obj2);
-			else
+				edata->upropset |= USERPROP_RFACT;
+			} else {
 				error = ENOTSUP;
-
-			break;
+				break;
+			}
 		}
 
 		sdt = sme_get_description_table(SME_DESC_UNITS);
@@ -1299,9 +1452,16 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			if (sdt[i].type == edata->units)
 				break;
 
-		/* did the user want to set a critical capacity event? */
+
+		/* 
+		 * did the user want to set a critical capacity event?
+		 *
+		 * NOTE: if sme_event_register returns EEXIST that means
+		 * the object is already there, but this is not a real
+		 * error, because the object might be updated.
+		 */
 		obj2 = prop_dictionary_get(udict, "critical-capacity");
-		if (obj2 != NULL) {
+		if (obj2) {
 			targetfound = true;
 			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 			    (edata->flags & ENVSYS_FPERCENT) == 0) {
@@ -1317,12 +1477,17 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					      critval,
 					      PENVSYS_EVENT_BATT_USERCAP,
 					      sdt[i].crittype);
-			break;
+			if (error == EEXIST)
+				error = 0;
+			if (!error)
+				edata->upropset |= USERPROP_BATTCAP;
 		}
 
-		/* did the user want to set a critical max event? */
-		obj2 = prop_dictionary_get(udict, "critical-max-limit");
-		if (obj2 != NULL) {
+		/* 
+		 * did the user want to set a critical max event?
+		 */
+		obj2 = prop_dictionary_get(udict, "critical-max");
+		if (obj2) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
 			    edata->flags & ENVSYS_FMONNOTSUPP) {
@@ -1334,16 +1499,21 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			error = sme_event_register(dict,
 					      edata,
 					      sme->sme_name,
-					      "critical-max-limit",
+					      "critical-max",
 					      critval,
 					      PENVSYS_EVENT_USER_CRITMAX,
 					      sdt[i].crittype);
-			break;
+			if (error == EEXIST)
+				error = 0;
+			if (!error)
+				edata->upropset |= USERPROP_CRITMAX;
 		}
 
-		/* did the user want to set a critical min event? */
-		obj2 = prop_dictionary_get(udict, "critical-min-limit");
-		if (obj2 != NULL) {
+		/* 
+		 * did the user want to set a critical min event?
+		 */
+		obj2 = prop_dictionary_get(udict, "critical-min");
+		if (obj2) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
 			    edata->flags & ENVSYS_FMONNOTSUPP) {
@@ -1355,12 +1525,20 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			error = sme_event_register(dict,
 					      edata,
 					      sme->sme_name,
-					      "critical-min-limit",
+					      "critical-min",
 					      critval,
 					      PENVSYS_EVENT_USER_CRITMIN,
 					      sdt[i].crittype);
-			break;
+			if (error == EEXIST)
+				error = 0;
+			if (!error)
+				edata->upropset |= USERPROP_CRITMIN;
 		}
+
+		/*
+		 * All objects in dictionary were processed.
+		 */
+		break;
 	}
 
 	/* invalid target? return the error */
