@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.1 2007/10/07 04:16:48 xtraeme Exp $
+.\" $NetBSD: envsys.conf.5,v 1.2 2007/10/07 15:23:41 xtraeme Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007 Juan Romero Pardines.
@@ -152,7 +152,13 @@ on its dictionary. For example:
 	<true/>
 .Ed
 .Pp
-Only a value between 0 and 100 is allowed.
+Only a value between 0 and 100 is allowed. When the limit is reached in
+the sensor, a
+.Em user-capacity
+event will be sent to the
+.Xr powerd 8
+daemon (if running) and will execute the block for this event in the
+.Pa /etc/powerd/scripts/sensor_battery .
 .It critical-max = 70C;
 .Pp
 Sets a critical max limit property in a sensor. Note that in
@@ -178,14 +184,29 @@ Other sensors that are not of
 .Em temperature
 type, must not specify the final character for degrees. Also a dot
 is allowed in the value, if that corresponds to the range that the
-sensor is reporting.
+sensor is reporting. When the limit has been reached in the sensor,
+a
+.Em critical-over
+event will be sent to the
+.Xr powerd 8
+daemon (if running) and will execute the block for this event in
+the appropiate
+.Pa /etc/powerd/scripts/sensor_foo
+script (depending of sensor's type).
 .It critical-min = 1.230;
 .Pp
 Sets a critical min limit property in a sensor. The rules for
 .Em critical-max
 and
 .Em critical-min
-are the same.
+are the same. When the limit has been reached in the sensor, a
+.Em critical-under
+event will be sent to the
+.Xr powerd 8
+daemon (if running) and will execute the block for this event in
+the appropiate
+.Pa /etc/powerd/scripts/sensor_foo
+script (depending of sensor's type).
 .It description = string
 .Pp
 Sets a new description in a sensor. You can set this property in
