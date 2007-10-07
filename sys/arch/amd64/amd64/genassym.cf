@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10.2.3 2007/10/07 12:51:14 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.10.2.4 2007/10/07 13:08:37 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,25 +138,33 @@ include <x86/busdefs.h>
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+
+define	KERNBASE_LO		KERNBASE_LO
+define	KERNBASE_HI		KERNBASE_HI
+define	KERNBASE		KERNBASE
+define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
+
+define	NBPG			NBPG
+
+define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
 define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
+define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
+
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
-define	VM_MIN_KERNEL_ADDRESS	(unsigned long long)VM_MIN_KERNEL_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
@@ -167,9 +175,6 @@ define	MDP_IRET		MDP_IRET
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-
-define	PK_32			PK_32
 
 define	LW_SYSTEM		LW_SYSTEM
 
@@ -232,8 +237,8 @@ define	TLBSTATE_VALID		TLBSTATE_VALID
 define	TLBSTATE_LAZY		TLBSTATE_LAZY
 define	TLBSTATE_STALE		TLBSTATE_STALE
 define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
-define  CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define  CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 
@@ -284,6 +289,28 @@ define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
 
+define	IPL_CLOCK		IPL_CLOCK
+define	IPL_IPI			IPL_IPI
+
+define	IPL_SOFTNET		IPL_SOFTNET
+define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
+define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+
+define	LIR_IPI			LIR_IPI
+define	LIR_TIMER		LIR_TIMER
+
+define	SIR_NET			SIR_NET
+define	SIR_CLOCK		SIR_CLOCK
+define	SIR_SERIAL		SIR_SERIAL	
+
+define	IREENT_MAGIC		IREENT_MAGIC
+
+define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
+define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
+define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
+
+define	PSL_MBO			PSL_MBO
+
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, u.s.mtxs_lock)
 define	MTX_OWNER		offsetof(struct kmutex, u.mtxa_owner)
@@ -316,45 +343,5 @@ define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
 define	NKL3_KIMG_ENTRIES	NKL3_KIMG_ENTRIES
 define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
-define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
-ifdef L3_SLOT_KERNBASE
-define	L3_SLOT_KERNBASE	L3_SLOT_KERNBASE
-endif
-ifdef L2_SLOT_KERNBASE
-define	L2_SLOT_KERNBASE	L2_SLOT_KERNBASE
-endif
-
-define	KERNBASE_LO		KERNBASE_LO
-define	KERNBASE_HI		KERNBASE_HI
-define	KERNBASE		KERNBASE
-define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
-
-define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
-
-define	UPAGES			UPAGES
-define	USPACE			USPACE
-
-define	NBPG			NBPG
-define	PGSHIFT			PGSHIFT
 define	PGOFSET			PGOFSET
-
-define	PSL_MBO			PSL_MBO
-
-define	IPL_IPI			IPL_IPI
-define	IPL_CLOCK		IPL_CLOCK
-define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
-define	IPL_SOFTNET		IPL_SOFTNET
-define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
-
-define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
-define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
-define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
-
-define	LIR_IPI			LIR_IPI
-define	LIR_TIMER		LIR_TIMER
-
-define	SIR_SERIAL		SIR_SERIAL	
-define	SIR_NET			SIR_NET
-define	SIR_CLOCK		SIR_CLOCK
-
-define	IREENT_MAGIC		IREENT_MAGIC
+define	PGSHIFT			PGSHIFT
