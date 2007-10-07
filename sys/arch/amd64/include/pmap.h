@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.13 2007/10/07 13:44:27 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.14 2007/10/07 17:22:36 yamt Exp $	*/
 
 /*
  *
@@ -515,7 +515,7 @@ static __inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
-	KASSERT(va < (L4_SLOT_KERN * NBPD_L4));
+	KASSERT(va < VM_MIN_KERNEL_ADDRESS);
 
 	return (PTE_BASE + pl1_i(va));
 }
@@ -525,7 +525,7 @@ kvtopte(vaddr_t va)
 {
 	pd_entry_t *pde;
 
-	KASSERT(va >= (L4_SLOT_KERN * NBPD_L4));
+	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 
 	pde = L2_BASE + pl2_i(va);
 	if (*pde & PG_PS)
