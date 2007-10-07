@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.308 2007/10/04 21:51:27 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.309 2007/10/07 14:12:21 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10035,4 +10035,11 @@ distrib/acorn32/cdroms/installcd/Makefile	1.2
 	Use the correct name for the acorn32 iso image. Fix the acorn32
 	part of PR 37033.
 	[bouyer, ticket #914]
+
+crypto/dist/openssl/ssl/ssl_lib.c		1.4
+
+	apply a patch from openssl CVS to fix a remaining off-by-one error
+	in an older security fix, see
+	http://www.securityfocus.com/archive/1/480855/30/0/threaded
+	[drochner, ticket #917]
 
