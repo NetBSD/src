@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10.2.6 2007/10/07 14:20:04 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.10.2.7 2007/10/07 17:17:43 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -290,6 +290,7 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 
+define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_IPI			IPL_IPI
 
