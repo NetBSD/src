@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.1 2007/10/07 04:16:47 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.2 2007/10/07 13:48:03 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.1 2007/10/07 04:16:47 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.2 2007/10/07 13:48:03 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ enum {
 	DEV_ERR
 };
 
-static prop_dictionary_t cfdict;
+static prop_dictionary_t cfdict, sensordict;
 static void config_errmsg(int, const char *, const char *);
 
 static void
@@ -100,13 +100,13 @@ config_dict_add_prop(const char *key, char *value)
 	if (!key || !value)
 		return;
 
-	if (!cfdict) {
-		cfdict = prop_dictionary_create();
-		if (!cfdict)
+	if (!sensordict) {
+		sensordict = prop_dictionary_create();
+		if (!sensordict)
 			err(EXIT_FAILURE, "cfdict");
 	}
 
-	if (!prop_dictionary_set_cstring(cfdict, key, value))
+	if (!prop_dictionary_set_cstring(sensordict, key, value))
 		err(EXIT_FAILURE, "prop_dict_set_cstring");
 }
 
@@ -130,9 +130,9 @@ config_dict_mark(const char *key)
 	if (!sb->dict)
 		err(EXIT_FAILURE, "!sb->dict");
 
-	sb->dict = prop_dictionary_copy(cfdict);
+	sb->dict = prop_dictionary_copy(sensordict);
 	SLIST_INSERT_HEAD(&sensor_block_list, sb, sb_head);
-	config_dict_destroy(cfdict);
+	config_dict_destroy(sensordict);
 }
 
 /*
@@ -269,8 +269,15 @@ config_devblock_add(const char *key, prop_dictionary_t kdict)
 	 * Now the properties on the array has been parsed,
 	 * add it into the global dict.
 	 */
+	if (!cfdict) {
+		cfdict = prop_dictionary_create();
+		if (!cfdict)
+			err(EXIT_FAILURE, "prop_dictionary_create cfdict");
+	}
+
 	if (!prop_dictionary_set(cfdict, key, db->array))
 		err(EXIT_FAILURE, "prop_dictionary_set db->array");
+
 }
 
 /*
