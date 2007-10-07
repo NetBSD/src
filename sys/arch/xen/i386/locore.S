@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27.2.2 2007/10/06 15:33:41 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.27.2.3 2007/10/07 14:22:18 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -528,7 +528,7 @@ NENTRY(lwp_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -790,7 +790,7 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 	STIC(%eax)
 	jz	14f
