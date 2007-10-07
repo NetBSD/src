@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.77 2007/05/17 14:51:33 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.77.12.1 2007/10/07 08:33:21 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -138,7 +138,7 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	int ci_need_resched;		/* Should change process */
+	int ci_want_resched;		/* Should change process */
 	struct device *ci_dev;		/* device struct for this cpu */
 #if defined(MULTIPROCESSOR)
 	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
@@ -173,10 +173,9 @@ struct cpu_mp_softc {
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, flags)		\
 	do {					\
-		(ci)->ci_need_resched = 1;	\
+		(ci)->ci_want_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
-#define cpu_did_resched()	((void)(curcpu()->ci_need_resched = 0))
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
