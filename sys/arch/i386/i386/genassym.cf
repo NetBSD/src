@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50.2.3 2007/10/06 15:34:51 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.50.2.4 2007/10/07 13:17:12 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -319,19 +319,19 @@ endif
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 
-define        SIZEOF_ISOURCE          sizeof(struct intrsource)
-define        SIZEOF_ISTUB            sizeof(struct intrstub)
+define	SIZEOF_ISOURCE		sizeof(struct intrsource)
+define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
-define		IS_RECURSE	offsetof(struct intrsource, is_recurse)
-define		IS_RESUME	offsetof(struct intrsource, is_resume)
-define		IS_EVCNTLO	offsetof(struct intrsource, is_evcnt.ev_count)
-define		IS_EVCNTHI	offsetof(struct intrsource, is_evcnt.ev_count)+4
-define		IS_HANDLERS	offsetof(struct intrsource, is_handlers)
-define		IS_PIC		offsetof(struct intrsource, is_pic)
-define		IS_FLAGS	offsetof(struct intrsource, is_flags)
-define		IS_PIN		offsetof(struct intrsource, is_pin)
-define		IS_TYPE		offsetof(struct intrsource, is_type)
-define		IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
+define	IS_RESUME		offsetof(struct intrsource, is_resume)
+define	IS_EVCNTLO		offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_EVCNTHI		offsetof(struct intrsource, is_evcnt.ev_count)+4
+define	IS_HANDLERS		offsetof(struct intrsource, is_handlers)
+define	IS_PIC			offsetof(struct intrsource, is_pic)
+define	IS_FLAGS		offsetof(struct intrsource, is_flags)
+define	IS_PIN			offsetof(struct intrsource, is_pin)
+define	IS_TYPE			offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
