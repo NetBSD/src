@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.50 2007/08/21 09:27:33 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.51 2007/10/07 13:39:05 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.50 2007/08/21 09:27:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.51 2007/10/07 13:39:05 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -556,7 +556,7 @@ loop:
 		    (unsigned long long)ip->i_number);
 	TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 	if (xp == NULL)
-		vn_cow_establish(devvp, ffs_copyonwrite, devvp);
+		fscow_establish(mp, ffs_copyonwrite, devvp);
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
 	vp->v_flag |= VSYSTEM;
@@ -1461,7 +1461,7 @@ ffs_snapremove(struct vnode *vp)
 			mutex_exit(&si->si_lock);
 			lockmgr(lkp, LK_DRAIN, NULL);
 			lockmgr(lkp, LK_RELEASE, NULL);
-			vn_cow_disestablish(devvp, ffs_copyonwrite, devvp);
+			fscow_disestablish(mp, ffs_copyonwrite, devvp);
 			mutex_enter(&si->si_lock);
 		}
 		si->si_gen++;
@@ -1839,7 +1839,7 @@ ffs_snapshot_mount(struct mount *mp)
 	*/
 	xp = TAILQ_LAST(&si->si_snapshots, inodelst);
 	si->si_snapblklist = xp->i_snapblklist;
-	vn_cow_establish(devvp, ffs_copyonwrite, devvp);
+	fscow_establish(mp, ffs_copyonwrite, devvp);
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
 }
@@ -1874,7 +1874,7 @@ ffs_snapshot_unmount(struct mount *mp)
 		}
 	}
 	if (vp)
-		vn_cow_disestablish(devvp, ffs_copyonwrite, devvp);
+		fscow_disestablish(mp, ffs_copyonwrite, devvp);
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
 }

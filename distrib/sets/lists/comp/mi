@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1070 2007/10/05 03:28:13 dyoung Exp $
+#	$NetBSD: mi,v 1.1071 2007/10/07 13:38:53 hannken Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7120,6 +7120,9 @@
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/free.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_establish.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_run.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fsetown.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans_done.0		comp-sys-catman		.cat
@@ -7768,8 +7771,8 @@
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_close.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_fcntl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		obsolete
@@ -11697,6 +11700,9 @@
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/free.9			comp-sys-man		.man
+./usr/share/man/man9/fscow_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/fscow_establish.9		comp-sys-man		.man
+./usr/share/man/man9/fscow_run.9		comp-sys-man		.man
 ./usr/share/man/man9/fsetown.9			comp-sys-man		.man
 ./usr/share/man/man9/fstrans.9			comp-sys-man		.man
 ./usr/share/man/man9/fstrans_done.9		comp-sys-man		.man
@@ -12345,8 +12351,8 @@
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_close.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man		.man
-./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		.man
-./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		.man
+./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		obsolete
+./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		obsolete
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_fcntl.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_finished_write.9	comp-sys-man		obsolete

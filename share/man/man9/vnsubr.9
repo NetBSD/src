@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.30 2007/03/07 00:41:18 dogcow Exp $
+.\"     $NetBSD: vnsubr.9,v 1.31 2007/10/07 13:39:03 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,9 +51,7 @@
 .Nm vn_setrecurse ,
 .Nm vn_open ,
 .Nm vn_stat ,
-.Nm vn_writechk ,
-.Nm vn_cow_establish ,
-.Nm vn_cow_disestablish
+.Nm vn_writechk
 .Nd high-level convenience functions for vnode operations
 .Sh SYNOPSIS
 .In sys/param.h
@@ -91,10 +89,6 @@
 .Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct lwp *l"
 .Ft int
 .Fn vn_writechk "struct vnode *vp"
-.Ft int
-.Fn vn_cow_establish "struct vnode *vp" "int (*func)(void *, struct buf *)" "void *cookie"
-.Ft int
-.Fn vn_cow_disestablish "struct vnode *vp" "int (*func)(void *, struct buf *)" "void *cookie"
 .Sh DESCRIPTION
 The high-level functions described in this page are convenience
 functions for simplified access to the vnode operations described in
@@ -259,15 +253,6 @@ Common code to check for write permission on the vnode
 A vnode is read-only if it is in use as a process's text image.
 If the vnode is read-only ETEXTBSY is returned, otherwise zero is
 returned to indicate that the vnode can be written to.
-.It Fn vn_cow_establish "vp" "func" "cookie"
-Establish a copy-on-write callback on spec vnode
-.Fa vp .
-.Fa func
-will be called for every buffer written through the strategy routine of
-.Fa vp .
-.It Fn vn_cow_disestablish "vp" "func" "cookie"
-Disestablish a copy-on-write callback registered with
-.Fn vn_cow_establish .
 .El
 .Sh ERRORS
 .Bl -tag -width Er
