@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.10 2007/09/08 19:19:37 rumble Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.11 2007/10/08 18:04:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.10 2007/09/08 19:19:37 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.11 2007/10/08 18:04:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,11 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	if (err) {
 		EFS_DPRINTF(("superblock read failed\n"));
 		free(emp, M_EFSMNT);
-		brelse(bp);
+		brelse(bp, 0);
 		return (err);
 	}
 	memcpy(&emp->em_sb, bp->b_data, sizeof(emp->em_sb));
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* validate the superblock */
 	if (efs_sb_validate(&emp->em_sb, &why)) {
@@ -111,7 +111,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 				skip = true;
 			} else {
 				free(emp, M_EFSMNT);
-				brelse(rbp);
+				brelse(rbp, 0);
 				return (err);
 			}
 		}
@@ -122,13 +122,13 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 				printf("efs: superblock differs from "
 				    "replicant; please run fsck_efs(8)\n");
 				if (!(mp->mnt_flag & MNT_FORCE)) {
-					brelse(rbp);
+					brelse(rbp, 0);
 					free(emp, M_EFSMNT);
 					return (EIO);
 				}
 			}
 		}
-		brelse(rbp);
+		brelse(rbp, 0);
 	}
 
 	/* ensure we can read last block */
@@ -138,11 +138,11 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 		    "fsck_efs(8)\n");
 		if (!(mp->mnt_flag & MNT_FORCE)) {
 			free(emp, M_EFSMNT);
-			brelse(bp);
+			brelse(bp, 0);
 			return (err);
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	mp->mnt_data = emp;
 	mp->mnt_flag |= MNT_LOCAL;
