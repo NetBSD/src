@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.136 2007/10/05 15:27:45 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1915,6 +1915,48 @@ ParseSetParseFile(const char *filename)
     }
 }
 
+/*
+ * Track the makefiles we read - so makefiles can
+ * set dependencies on them.
+ * Avoid adding anything more than once.
+ */
+#define TRACK_INPUT_FMT "${.PARSEDIR}/${.PARSEFILE}"
+
+static void
+ParseTrackInput(const char *name)
+{
+    char tmp[sizeof(TRACK_INPUT_FMT) + 1];
+    char *val;
+    char *old;
+    char *cp;
+    char *fp = NULL;
+    
+    strncpy(tmp, TRACK_INPUT_FMT, sizeof(tmp));
+    val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
+    if (old) {
+	/* does it contain val? */
+	if ((cp = strstr(old, val))) {
+	    int n = strlen(val);
+
+	    /*
+	     * It only counts if at the start/end
+	     * or bounded by ' '
+	     */
+	    if ((cp[n] == '\0' || cp[n] == ' ') &&
+		(cp == old || cp[-1] == ' ')) {
+		goto cleanup;		/* we already have it */
+	    }
+	}
+    }
+    Var_Append (MAKE_MAKEFILES, val, VAR_GLOBAL);
+ cleanup:
+    free(val);
+    if (fp) {
+	free(fp);
+    }
+}
+
 
 /*-
  *---------------------------------------------------------------------
@@ -1962,6 +2004,7 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
     curFile->cond_depth = Cond_save_depth();
 
     ParseSetParseFile(name);
+    ParseTrackInput(name);
 
     if (buf == NULL) {
 	/*
