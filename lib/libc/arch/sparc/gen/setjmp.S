@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.10 2006/12/28 10:02:43 martin Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.11 2007/10/08 13:06:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.10 2006/12/28 10:02:43 martin Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.11 2007/10/08 13:06:00 uwe Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,34 +59,17 @@
 
 ENTRY(__setjmp14)
 	save	%sp, -CCFSZ, %sp
-#ifdef PIC
-	PIC_PROLOGUE(%l0,%o0)	! %l0 = _GLOBAL_OFFSET_TABLE
-#endif
 	/*
 	 * local vars on stack: struct sigstack foo @ offset 0x48
 	 * Note: sc_g1 is not used; sc_o0 is set in longjmp()
 	 */
-#ifdef PIC
-	ld	[%l0 + _C_LABEL(__sigprocmask14)], %g2
-#endif
 	mov	1, %o0		/* SIG_BLOCK */
 	add	%i0, 32, %o2	/* build sigcontext sc.sc_mask */
-#ifdef PIC
-	call	%g2
-#else
 	call	_C_LABEL(__sigprocmask14)
-#endif
 	 clr	%o1		/* sigprocmask(SIG_BLOCK, NULL, &sc.sc_mask) */
 
-#ifdef PIC
-	ld	[%l0 + _C_LABEL(__sigaltstack14)], %g2
-#endif
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
-#ifdef PIC
-	call	%g2
-#else
 	call	_C_LABEL(__sigaltstack14)
-#endif
 	 clr	%o0		/* sigstack(NULL, &foo) */
 
 	ld	[%sp + 0x48 + 8], %o0	/* foo.ss_flags */
