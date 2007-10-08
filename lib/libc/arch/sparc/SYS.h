@@ -33,7 +33,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.16 2005/05/20 23:56:15 uwe Exp $
+ *	$NetBSD: SYS.h,v 1.17 2007/10/08 13:06:00 uwe Exp $
  */
 
 #include <machine/asm.h>
@@ -60,7 +60,8 @@
 #ifdef PIC
 #define CALL(name)				\
 	PIC_PROLOGUE(%g1, %g2);			\
-	ld	[%g1 + name], %g2;		\
+	set	name, %g2;			\
+	ld	[%g1 + %g2], %g2;		\
 	jmp	%g2;				\
 	 nop
 #else
