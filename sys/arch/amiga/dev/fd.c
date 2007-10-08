@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.75 2007/10/08 18:02:54 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.76 2007/10/08 19:22:04 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.75 2007/10/08 18:02:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76 2007/10/08 19:22:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -917,7 +917,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	fdstrategy(bp);
 	error = biowait(bp);
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 
