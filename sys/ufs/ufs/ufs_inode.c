@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64.6.6 2007/09/16 19:02:49 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.6.7 2007/10/08 20:31:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.6 2007/09/16 19:02:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.7 2007/10/08 20:31:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -122,9 +122,10 @@ ufs_inactive(void *v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-	}
-
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		/*
+		 * Defer final inode free and update to ufs_reclaim().
+		 */
+	} else if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		UFS_UPDATE(vp, NULL, NULL, 0);
 	}
 out:
@@ -151,7 +152,9 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
 
 	/*
 	 * Remove the inode from its hash chain.  Only then can
-	 * we free the on disk inode.
+	 * we free the on disk inode.  The inode is at this point
+	 * unlocked, but if deleted no other threads will want to
+	 * touch it.
 	 */
 	ufs_ihashrem(ip);
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
