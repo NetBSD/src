@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.158 2007/07/22 13:37:13 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.159 2007/10/08 15:12:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158 2007/07/22 13:37:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.159 2007/10/08 15:12:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1400,7 +1400,7 @@ procfs_readdir(v)
 			/* check the descriptor exists */
 			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
