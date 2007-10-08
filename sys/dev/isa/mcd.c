@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.100 2007/07/29 12:50:21 ad Exp $	*/
+/*	$NetBSD: mcd.c,v 1.101 2007/10/08 16:41:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.100 2007/07/29 12:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.101 2007/10/08 16:41:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,7 @@ mcdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->sc_dk.dk_driver = &mcddkdriver;
-	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	disk_init(&sc->sc_dk, sc->sc_dev.dv_xname, &mcddkdriver);
 	disk_attach(&sc->sc_dk);
 
 	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
