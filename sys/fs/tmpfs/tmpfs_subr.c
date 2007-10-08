@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.7 2007/09/18 16:06:13 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.8 2007/10/08 20:19:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.7 2007/09/18 16:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.8 2007/10/08 20:19:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -96,7 +96,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
 {
 	struct tmpfs_node *nnode;
-	ino_t ino;
 
 	/* If the root directory of the 'tmp' file system is not yet
 	 * allocated, this must be the request to do it. */
@@ -109,40 +108,28 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 
 	nnode = NULL;
 	mutex_enter(&tmp->tm_lock);
-	if (LIST_EMPTY(&tmp->tm_nodes_avail)) {
-		KASSERT(tmp->tm_nodes_last <= tmp->tm_nodes_max);
-		if (tmp->tm_nodes_last == tmp->tm_nodes_max) {
-			mutex_exit(&tmp->tm_lock);
-			return ENOSPC;
-		}
-		ino = tmp->tm_nodes_last++;
+	if (tmp->tm_nodes_cnt >= tmp->tm_nodes_max) {
 		mutex_exit(&tmp->tm_lock);
-
-		nnode = (struct tmpfs_node *)
-		    TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
-		if (nnode == NULL) {
-			mutex_enter(&tmp->tm_lock);
-			if (ino == tmp->tm_nodes_last - 1)
-				tmp->tm_nodes_last--;
-			else {
-				/* XXX Oops, just threw away inode number */
-			}
-			mutex_exit(&tmp->tm_lock);
-			return ENOSPC;
-		}
-		nnode->tn_id = ino;
-		nnode->tn_gen = arc4random();
-		mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
-
-		mutex_enter(&tmp->tm_lock);
-	} else {
-		nnode = LIST_FIRST(&tmp->tm_nodes_avail);
-		LIST_REMOVE(nnode, tn_entries);
-		nnode->tn_gen++;
+		return ENOSPC;
 	}
-	KASSERT(nnode != NULL);
-	LIST_INSERT_HEAD(&tmp->tm_nodes_used, nnode, tn_entries);
+	tmp->tm_nodes_cnt++;
 	mutex_exit(&tmp->tm_lock);
+
+	nnode = (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
+	if (nnode == NULL) {
+		mutex_enter(&tmp->tm_lock);
+		tmp->tm_nodes_cnt--;
+		mutex_exit(&tmp->tm_lock);
+		return ENOSPC;
+	}
+
+	/*
+	 * XXX Where the pool is backed by a map larger than (4GB *
+	 * sizeof(*nnode)), this may produce duplicate inode numbers
+	 * for applications that do not understand 64-bit ino_t.
+	 */
+	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
+	nnode->tn_gen = arc4random();
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
@@ -191,8 +178,10 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			nnode->tn_type = VNON;
-			tmpfs_free_node(tmp, nnode);
+			mutex_enter(&tmp->tm_lock);
+			tmp->tm_nodes_cnt--;
+			mutex_exit(&tmp->tm_lock);
+			TMPFS_POOL_PUT(&tmp->tm_node_pool, nnode);
 			return ENOSPC;
 		}
 		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
@@ -207,6 +196,12 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	default:
 		KASSERT(0);
 	}
+
+	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
+
+	mutex_enter(&tmp->tm_lock);
+	LIST_INSERT_HEAD(&tmp->tm_nodes, nnode, tn_entries);
+	mutex_exit(&tmp->tm_lock);
 
 	*node = nnode;
 	return 0;
@@ -243,6 +238,7 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 
 	mutex_enter(&tmp->tm_lock);
 	tmp->tm_pages_used -= pages;
+	tmp->tm_nodes_cnt--;
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 
@@ -261,10 +257,8 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 		break;
 	}
 
-	mutex_enter(&tmp->tm_lock);
-	node->tn_type = VNON;
-	LIST_INSERT_HEAD(&tmp->tm_nodes_avail, node, tn_entries);
-	mutex_exit(&tmp->tm_lock);
+	mutex_destroy(&node->tn_vlock);
+	TMPFS_POOL_PUT(&tmp->tm_node_pool, node);
 }
 
 /* --------------------------------------------------------------------- */
