@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.11 2003/12/26 11:21:48 martin Exp $	*/
+/*	$NetBSD: brk.S,v 1.12 2007/10/08 13:06:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.11 2003/12/26 11:21:48 martin Exp $")
+	RCSID("$NetBSD: brk.S,v 1.12 2007/10/08 13:06:00 uwe Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -62,7 +62,8 @@ _C_LABEL(__minbrk):
 ENTRY(_brk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
-	ld	[%o5 + _C_LABEL(__minbrk)], %o4
+	set	_C_LABEL(__minbrk), %o4
+	ld	[%o5 + %o4], %o4
 	ld	[%o4], %o1		! %o1 = minbrk
 	cmp	%o1, %o0		! if (minbrk > %o0)
 	bgu,a	0f
