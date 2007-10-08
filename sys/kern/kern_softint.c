@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.2 2007/10/08 15:51:03 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.3 2007/10/08 20:06:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,10 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.2 2007/10/08 15:51:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3 2007/10/08 20:06:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
+
+u_int	softint_timing;
 
 /*
  * softint_init:

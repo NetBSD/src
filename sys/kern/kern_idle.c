@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.5 2007/10/01 22:14:23 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.6 2007/10/08 20:06:19 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.5 2007/10/01 22:14:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.6 2007/10/08 20:06:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,6 +48,9 @@ idle_loop(void *dummy)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
+
+	/* Update start time for this thread. */
+	microtime(&l->l_stime);
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_usrpri = PIDLELWP;
