@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.10 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.11 2007/10/08 21:39:49 ad Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -306,17 +306,19 @@ bwrite(struct ubuf * bp)
 	VOP_STRATEGY(bp);
 	bp->b_flags |= B_DONE;
 	reassignbuf(bp, bp->b_vp);
-	brelse(bp);
+	brelse(bp, 0);
 }
 
 /* Put a buffer back on its free list, clear B_BUSY. */
 void
-brelse(struct ubuf * bp)
+brelse(struct ubuf * bp, int set)
 {
 	int age;
 
 	assert(!(bp->b_flags & B_NEEDCOMMIT));
 	assert(bp->b_flags & B_BUSY);
+
+	bp->b_flags |= set;
 
 	age = bp->b_flags & B_AGE;
 	bp->b_flags &= ~(B_BUSY | B_AGE);
