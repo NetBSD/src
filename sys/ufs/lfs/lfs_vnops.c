@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.210 2007/07/29 13:31:15 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.211 2007/10/08 18:01:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.210 2007/07/29 13:31:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.211 2007/10/08 18:01:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1585,7 +1585,7 @@ lfs_fcntl(void *v)
 		    /* Mark a segment SEGUSE_INVAL */
 		    LFS_SEGENTRY(sup, fs, *(int *)ap->a_data, bp);
 		    if (sup->su_nbytes > 0) {
-			    brelse(bp);
+			    brelse(bp, 0);
 			    lfs_unset_inval_all(fs);
 			    return EBUSY;
 		    }
