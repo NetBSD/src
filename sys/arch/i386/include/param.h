@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62.26.1 2007/09/23 18:28:18 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.62.26.2 2007/10/08 06:58:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,7 @@
  */
 
 #ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
 #include <machine/cpu.h>
-#endif
 #endif
 
 #define	_MACHINE	i386
