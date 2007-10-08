@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.58 2007/05/13 08:14:06 dsl Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.59 2007/10/08 15:12:06 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.58 2007/05/13 08:14:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.59 2007/10/08 15:12:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,16 +238,18 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
+	bool revoke;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	simple_unlock(&fp->f_slock);
-	if (fp->f_type != DTYPE_VNODE)
+	if (fp->f_type != DTYPE_VNODE) {
+		mutex_exit(&fp->f_lock);
 		return EINVAL;
+	}
 
 	vp = (struct vnode *) fp->f_data;
-
+	FILE_USE(fp);
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
 		goto out;
@@ -261,10 +263,14 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
-	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+	simple_lock(&vp->v_interlock);
+	revoke = (vp->v_usecount > 1 || (vp->v_flag & VALIASED));
+	simple_unlock(&vp->v_interlock);
+	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -290,13 +296,16 @@ fd_truncate(l, fd, flp, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	simple_unlock(&fp->f_slock);
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		mutex_exit(&fp->f_lock);
 		return ESPIPE;
-
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	}
+	FILE_USE(fp);
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0) {
+		FILE_UNUSE(fp, l);
 		return error;
+	}
 
 	length = vattr.va_size;
 
@@ -314,18 +323,22 @@ fd_truncate(l, fd, flp, retval)
 		break;
 
 	default:
+		FILE_UNUSE(fp, l);
 		return EINVAL;
 	}
 
 	if (start + flp->l_len < length) {
 		/* We don't support free'ing in the middle of the file */
+		FILE_UNUSE(fp, l);
 		return EINVAL;
 	}
 
 	SCARG(&ft, fd) = fd;
 	SCARG(&ft, length) = start;
 
-	return sys_ftruncate(l, &ft, retval);
+	error = sys_ftruncate(l, &ft, retval);
+	FILE_UNUSE(fp, l);
+	return error;
 }
 
 
@@ -356,11 +369,14 @@ svr4_sys_open(l, v, retval)
 		struct file	*fp;
 
 		fp = fd_getfile(fdp, *retval);
-		simple_unlock(&fp->f_slock);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (void *) 0, l);
+		if (fp != NULL) {
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return 0;
 }

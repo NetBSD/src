@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.327 2007/09/01 23:40:23 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.328 2007/10/08 15:12:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.327 2007/09/01 23:40:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.328 2007/10/08 15:12:09 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -527,6 +527,7 @@ checkdirs(struct vnode *olddp)
 		cwdi = p->p_cwdi;
 		if (!cwdi)
 			continue;
+		rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
 			VREF(newdp);
@@ -537,6 +538,7 @@ checkdirs(struct vnode *olddp)
 			VREF(newdp);
 			cwdi->cwdi_rdir = newdp;
 		}
+		rw_exit(&cwdi->cwdi_lock);
 	}
 	mutex_exit(&proclist_lock);
 	if (rootvnode == olddp) {
@@ -820,8 +822,10 @@ done:
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
+		rw_enter(&cwdi->cwdi_lock, RW_READER);
 		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
+		rw_exit(&cwdi->cwdi_lock);
 		if (error) {
 			PNBUF_PUT(path);
 			return error;
@@ -1024,7 +1028,7 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
-	struct cwdinfo *cwdi = p->p_cwdi;
+	struct cwdinfo *cwdi;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
 	struct file *fp;
@@ -1062,14 +1066,17 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	 * Disallow changing to a directory not under the process's
 	 * current root directory (if there is one).
 	 */
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir && !vn_isunder(vp, NULL, l)) {
 		vrele(vp);
 		error = EPERM;	/* operation not permitted */
-		goto out;
+	} else {
+		vrele(cwdi->cwdi_cdir);
+		cwdi->cwdi_cdir = vp;
 	}
+	rw_exit(&cwdi->cwdi_lock);
 
-	vrele(cwdi->cwdi_cdir);
-	cwdi->cwdi_cdir = vp;
  out:
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -1085,7 +1092,7 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	struct sys_fchroot_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
-	struct cwdinfo *cwdi = p->p_cwdi;
+	struct cwdinfo *cwdi;
 	struct vnode	*vp;
 	struct file	*fp;
 	int		 error;
@@ -1112,6 +1119,8 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	 * the working directory.  Silently chdir to / if we aren't
 	 * already there.
 	 */
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (!vn_isunder(cwdi->cwdi_cdir, vp, l)) {
 		/*
 		 * XXX would be more failsafe to change directory to a
@@ -1125,6 +1134,8 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
 	cwdi->cwdi_rdir = vp;
+	rw_exit(&cwdi->cwdi_lock);
+
  out:
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -1141,7 +1152,7 @@ sys_chdir(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi = p->p_cwdi;
+	struct cwdinfo *cwdi;
 	int error;
 	struct nameidata nd;
 
@@ -1149,8 +1160,11 @@ sys_chdir(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, path), l);
 	if ((error = change_dir(&nd, l)) != 0)
 		return (error);
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	vrele(cwdi->cwdi_cdir);
 	cwdi->cwdi_cdir = nd.ni_vp;
+	rw_exit(&cwdi->cwdi_lock);
 	return (0);
 }
 
@@ -1165,7 +1179,7 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi = p->p_cwdi;
+	struct cwdinfo *cwdi;
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
@@ -1177,6 +1191,9 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, path), l);
 	if ((error = change_dir(&nd, l)) != 0)
 		return (error);
+
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
 	vp = nd.ni_vp;
@@ -1196,6 +1213,7 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 		VREF(vp);
 		cwdi->cwdi_cdir = vp;
 	}
+	rw_exit(&cwdi->cwdi_lock);
 
 	return (0);
 }
@@ -1252,12 +1270,15 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	/* falloc() will use the file descriptor for us */
 	if ((error = falloc(l, &fp, &indx)) != 0)
 		return (error);
+	/* We're going to read cwdi->cwdi_cmask unlocked here. */
 	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		rw_enter(&fdp->fd_lock, RW_WRITER);
 		FILE_UNUSE(fp, l);
 		fdp->fd_ofiles[indx] = NULL;
+		rw_exit(&fdp->fd_lock);
 		ffree(fp);
 		if ((error == EDUPFD || error == EMOVEFD) &&
 		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
@@ -1809,6 +1830,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		error = EEXIST;
 	else {
 		VATTR_NULL(&vattr);
+		/* We will read cwdi->cwdi_cmask unlocked. */
 		vattr.va_mode =
 		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
@@ -1908,6 +1930,7 @@ sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VFIFO;
+	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
@@ -1992,6 +2015,7 @@ sys_symlink(struct lwp *l, void *v, register_t *retval)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VLNK;
+	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
@@ -2124,37 +2148,43 @@ sys_lseek(struct lwp *l, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
-	FILE_USE(fp);
-
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
+		mutex_exit(&fp->f_lock);
 		goto out;
 	}
 
 	switch (SCARG(uap, whence)) {
 	case SEEK_CUR:
 		newoff = fp->f_offset + SCARG(uap, offset);
+		FILE_USE(fp);
 		break;
 	case SEEK_END:
+		FILE_USE(fp);
 		error = VOP_GETATTR(vp, &vattr, cred, l);
-		if (error)
+		if (error) {
+			FILE_UNUSE(fp, l);
 			goto out;
+		}
 		newoff = SCARG(uap, offset) + vattr.va_size;
 		break;
 	case SEEK_SET:
+		FILE_USE(fp);
 		newoff = SCARG(uap, offset);
 		break;
 	default:
+		mutex_exit(&fp->f_lock);
 		error = EINVAL;
 		goto out;
 	}
-	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) != 0)
-		goto out;
-
-	*(off_t *)retval = fp->f_offset = newoff;
- out:
+	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) == 0) {
+		mutex_enter(&fp->f_lock);
+		*(off_t *)retval = fp->f_offset = newoff;
+		mutex_exit(&fp->f_lock);
+	}
 	FILE_UNUSE(fp, l);
+ out:
 	return (error);
 }
 
@@ -2181,7 +2211,7 @@ sys_pread(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -2203,7 +2233,7 @@ sys_pread(struct lwp *l, void *v, register_t *retval)
 		goto out;
 
 	/* dofileread() will unuse the descriptor for us */
-	return (dofileread(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofileread(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, 0, retval));
 
  out:
@@ -2224,7 +2254,7 @@ sys_preadv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(off_t) offset;
 	} */ *uap = v;
 
-	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filereadv(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
@@ -2251,7 +2281,7 @@ sys_pwrite(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 
@@ -2273,7 +2303,7 @@ sys_pwrite(struct lwp *l, void *v, register_t *retval)
 		goto out;
 
 	/* dofilewrite() will unuse the descriptor for us */
-	return (dofilewrite(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofilewrite(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, 0, retval));
 
  out:
@@ -2294,7 +2324,7 @@ sys_pwritev(struct lwp *l, void *v, register_t *retval)
 		syscallarg(off_t) offset;
 	} */ *uap = v;
 
-	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	return do_filewritev(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
@@ -3363,6 +3393,7 @@ sys_mkdir(struct lwp *l, void *v, register_t *retval)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VDIR;
+	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode =
 	    (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
@@ -3467,9 +3498,19 @@ sys_umask(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 
+	/*
+	 * cwdi->cwdi_cmask will be read unlocked elsewhere.  What's
+	 * important is that we serialize changes to the mask.  The
+	 * rw_exit() will issue a write memory barrier on our behalf,
+	 * and force the changes out to other CPUs (as it must use an
+	 * atomic operation, draining the local CPU's store buffers).
+	 */
 	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	*retval = cwdi->cwdi_cmask;
 	cwdi->cwdi_cmask = SCARG(uap, newmask) & ALLPERMS;
+	rw_exit(&cwdi->cwdi_lock);
+
 	return (0);
 }
 

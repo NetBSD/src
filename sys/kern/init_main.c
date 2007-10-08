@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.318 2007/10/01 22:05:15 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.319 2007/10/08 15:12:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.318 2007/10/01 22:05:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.319 2007/10/08 15:12:06 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -381,6 +381,9 @@ main(void)
 
 	/* Initialize fstrans. */
 	fstrans_init();
+
+	/* Initialize the file descriptor system. */
+	filedesc_init();
 
 	/* Initialize the select()/poll() system calls. */
 	selsysinit();

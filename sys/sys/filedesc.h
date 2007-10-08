@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.40 2007/07/09 21:11:32 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.41 2007/10/08 15:12:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #ifndef _SYS_FILEDESC_H_
 #define	_SYS_FILEDESC_H_
 
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 
 /*
@@ -79,7 +79,7 @@ struct filedesc {
 					 * hash table for attached
 					 * non-fd knotes
 					 */
-	struct simplelock fd_slock;	/* mutex. Note on locking order:
+	krwlock_t	fd_lock;	/* lock. Note on locking order:
 					 * acquire this lock first when
 					 * also locking an associated
 					 * `struct file' lock.
@@ -130,6 +130,8 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
+void	filedesc_init(void);
+
 int	dupfdopen(struct lwp *, int, int, int, int);
 int	fdalloc(struct proc *, int, int *);
 void	fdexpand(struct proc *);
@@ -164,6 +166,9 @@ struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
 struct flock;
 int	do_fcntl_lock(struct lwp *, int, int, struct flock *);
+
+extern kmutex_t filelist_lock;
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_FILEDESC_H_ */

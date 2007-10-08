@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.65 2007/07/31 21:14:16 pooka Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.66 2007/10/08 15:12:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.65 2007/07/31 21:14:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.66 2007/10/08 15:12:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,13 +123,16 @@ portal_mount(
 	if ((error = getsock(p->p_fd, args->pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
-	FILE_UNUSE(fp, NULL);
-	if (so->so_proto->pr_domain->dom_family != AF_LOCAL)
+	if (so->so_proto->pr_domain->dom_family != AF_LOCAL) {
+		FILE_UNUSE(fp, NULL);
 		return (ESOCKTNOSUPPORT);
+	}
 
 	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
-	if (error)
+	if (error) {
+		FILE_UNUSE(fp, NULL);
 		return (error);
+	}
 	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
 		M_TEMP, M_WAITOK);
 
@@ -142,9 +145,6 @@ portal_mount(
 	VTOPORTAL(rvp)->pt_fileid = PORTAL_ROOTFILEID;
 	fmp->pm_root = rvp;
 	fmp->pm_server = fp;
-	simple_lock(&fp->f_slock);
-	fp->f_count++;
-	simple_unlock(&fp->f_slock);
 
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -190,7 +190,7 @@ portal_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
-	simple_lock(&VFSTOPORTAL(mp)->pm_server->f_slock);
+	mutex_enter(&VFSTOPORTAL(mp)->pm_server->f_lock);
 	FILE_USE(VFSTOPORTAL(mp)->pm_server);
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*

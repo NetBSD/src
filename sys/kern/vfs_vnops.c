@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.141 2007/10/07 13:39:04 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.142 2007/10/08 15:12:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.141 2007/10/07 13:39:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.142 2007/10/08 15:12:09 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -357,7 +357,9 @@ unionread:
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
+	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
+	mutex_exit(&fp->f_lock);
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
@@ -379,8 +381,10 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
+		mutex_enter(&fp->f_lock);
 		fp->f_data = vp;
 		fp->f_offset = 0;
+		mutex_exit(&fp->f_lock);
 		vrele(tvp);
 		goto unionread;
 	}
@@ -400,6 +404,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct lwp *l = curlwp;
 
 	VOP_LEASE(vp, l, cred, LEASE_READ);
+	mutex_enter(&fp->f_lock);
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
@@ -409,6 +414,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
+	mutex_exit(&fp->f_lock);
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -430,6 +436,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	int count, error, ioflag = IO_UNIT;
 	struct lwp *l = curlwp;
 
+	mutex_enter(&fp->f_lock);
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
@@ -443,6 +450,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
+	mutex_exit(&fp->f_lock);
 	VOP_LEASE(vp, l, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
