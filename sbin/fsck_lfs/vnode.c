@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.6 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: vnode.c,v 1.7 2007/10/08 21:39:50 ad Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,7 +93,7 @@ raw_vop_bwrite(struct ubuf * bp)
 {
 	bp->b_flags &= ~(B_READ | B_DELWRI | B_DONE | B_ERROR);
 	raw_vop_strategy(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	return 0;
 }
 
