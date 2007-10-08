@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.15 2007/10/08 06:35:49 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.16 2007/10/08 06:57:37 yamt Exp $	*/
 
 /*
  *
@@ -242,6 +242,8 @@
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
+
+#include <x86/pmap.h>
 
 void		pmap_changeprot_local(vaddr_t, vm_prot_t);
 
