@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.82 2007/09/24 16:50:58 pooka Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.83 2007/10/08 18:01:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.82 2007/09/24 16:50:58 pooka Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.83 2007/10/08 18:01:31 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -169,10 +169,10 @@ READ(void *v)
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (error)
 			break;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 
  out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
@@ -465,8 +465,7 @@ WRITE(void *v)
 		 * so we need to invalidate it.
 		 */
 		if (error && (flags & B_CLRBUF) == 0) {
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, BC_INVAL);
 			break;
 		}
 #ifdef LFS_READWRITE

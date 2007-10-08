@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.204 2007/08/09 08:51:21 pooka Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.205 2007/10/08 18:01:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.204 2007/08/09 08:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.205 2007/10/08 18:01:30 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -328,7 +328,7 @@ lfs_vflush(struct vnode *vp)
 				bp->b_flags |= B_DONE;
 				bp->b_error = 0;
 				reassignbuf(bp, vp);
-				brelse(bp);
+				brelse(bp, 0);
 			}
 		}
 		splx(s);
@@ -703,7 +703,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			if (dirty)
 				error = LFS_BWRITE_LOG(bp); /* Ifile */
 			else
-				brelse(bp);
+				brelse(bp, 0);
 			segleft -= fs->lfs_sepb;
 			curseg += fs->lfs_sepb;
 		}
@@ -1247,7 +1247,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Increment inode count in segment summary block. */
@@ -1686,7 +1686,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	for (sn = 0; sn < fs->lfs_nseg; ++sn) {
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
-		brelse(bp);
+		brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -1743,7 +1743,7 @@ lfs_initseg(struct lfs *fs)
 			fs->lfs_offset += btofsb(fs, LFS_SBPAD);
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
 		    fs->lfs_start < btofsb(fs, LFS_LABELPAD)) {
@@ -1828,7 +1828,7 @@ lfs_unset_inval_all(struct lfs *fs)
 			sup->su_flags &= ~SEGUSE_INVAL;
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		} else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 }
 
@@ -1897,7 +1897,7 @@ lfs_newseg(struct lfs *fs)
 		    !(sup->su_flags & SEGUSE_EMPTY))
 			LFS_WRITESEGENTRY(sup, fs, sn, bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 
 		if (!isdirty)
 			break;

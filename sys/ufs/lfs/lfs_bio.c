@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.103 2007/07/29 13:31:14 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.104 2007/10/08 18:01:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.103 2007/07/29 13:31:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.104 2007/10/08 18:01:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		if (LFS_IS_MALLOC_BUF(bp))
 			bp->b_flags &= ~B_BUSY;
 		else
-			brelse(bp);
+			brelse(bp, 0);
 		return (fs->lfs_ronly ? EROFS : 0);
 	}
 
@@ -505,7 +505,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	if (bp->b_flags & B_CALL)
 		bp->b_flags &= ~B_BUSY;
 	else
-		brelse(bp);
+		brelse(bp, 0);
 
 	return (0);
 }
