@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.22 2006/10/16 03:21:34 christos Exp $	 */
+/* $NetBSD: pass5.c,v 1.23 2007/10/08 21:39:49 ad Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ pass5(void)
 		if (diddirty)
 			VOP_BWRITE(bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 
 	/* Also may be available bytes in current seg */
