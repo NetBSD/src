@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.9 2007/07/09 21:00:51 ad Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.10 2007/10/08 20:12:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.9 2007/07/09 21:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.10 2007/10/08 20:12:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ lptclose(dev, flag, mode, l)
 	(sc->sc_funcs->lf_close) (sc);
 
 	sc->sc_state = 0;
-	brelse(sc->sc_inbuf);
+	brelse(sc->sc_inbuf, 0);
 
 	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
 	return (0);
