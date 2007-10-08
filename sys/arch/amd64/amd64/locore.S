@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.2.5 2007/10/07 13:33:34 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.2.6 2007/10/08 11:00:14 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -428,7 +428,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * 32 bit mode. So use the bottom 32 bits.
 	 */
 	movl	$RELOC(__data_start),%edx
-	addl	$PGOFSET,%edx
 	andl	$~PGOFSET,%edx
 
 	/*
