@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.6 2007/08/22 20:24:52 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.7 2007/10/08 20:19:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,11 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.6 2007/08/22 20:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.7 2007/10/08 20:19:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.6 2007/08/22 20:24:52 ad Exp
 #include <sys/proc.h>
 
 #include <fs/tmpfs/tmpfs.h>
-
-MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
 
 /* --------------------------------------------------------------------- */
 
@@ -153,14 +151,13 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
-	tmp = (struct tmpfs_mount *)malloc(sizeof(struct tmpfs_mount),
-	    M_TMPFSMNT, M_WAITOK);
-	KASSERT(tmp != NULL);
+	tmp = kmem_alloc(sizeof(struct tmpfs_mount), KM_SLEEP);
+	if (tmp == NULL)
+		return ENOMEM;
 
 	tmp->tm_nodes_max = nodes;
-	tmp->tm_nodes_last = 2;
-	LIST_INIT(&tmp->tm_nodes_used);
-	LIST_INIT(&tmp->tm_nodes_avail);
+	tmp->tm_nodes_cnt = 0;
+	LIST_INIT(&tmp->tm_nodes);
 
 	mutex_init(&tmp->tm_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -228,15 +225,10 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * a directory, we free all its directory entries.  Note that after
 	 * freeing a node, it will automatically go to the available list,
 	 * so we will later have to iterate over it to release its items. */
-	mutex_enter(&tmp->tm_lock);
-	node = LIST_FIRST(&tmp->tm_nodes_used);
-	while (node != NULL) {
-		struct tmpfs_node *next;
-
+	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
-			mutex_exit(&tmp->tm_lock);
 			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			while (de != NULL) {
 				struct tmpfs_dirent *nde;
@@ -247,26 +239,9 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
 			}
-			mutex_enter(&tmp->tm_lock);
 		}
 
-		next = LIST_NEXT(node, tn_entries);
-		mutex_exit(&tmp->tm_lock);
 		tmpfs_free_node(tmp, node);
-		mutex_enter(&tmp->tm_lock);
-		node = next;
-	}
-	mutex_exit(&tmp->tm_lock);
-
-	node = LIST_FIRST(&tmp->tm_nodes_avail);
-	while (node != NULL) {
-		struct tmpfs_node *next;
-
-		next = LIST_NEXT(node, tn_entries);
-		LIST_REMOVE(node, tn_entries);
-		mutex_destroy(&node->tn_vlock);
-		TMPFS_POOL_PUT(&tmp->tm_node_pool, node);
-		node = next;
 	}
 
 	tmpfs_pool_destroy(&tmp->tm_dirent_pool);
@@ -277,7 +252,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 	/* Throw away the tmpfs_mount structure. */
 	mutex_destroy(&tmp->tm_lock);
-	free(mp->mnt_data, M_TMPFSMNT);
+	kmem_free(tmp, sizeof(*tmp));
 	mp->mnt_data = NULL;
 
 	return 0;
@@ -338,7 +313,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	}
 
 	found = false;
-	LIST_FOREACH(node, &tmp->tm_nodes_used, tn_entries) {
+	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id &&
 		    node->tn_gen == tfh.tf_gen) {
 			found = true;
@@ -347,6 +322,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	}
 	mutex_exit(&tmp->tm_lock);
 
+	/* XXXAD nothing to prevent 'node' from being removed. */
 	return found ? tmpfs_alloc_vp(mp, node, vpp) : EINVAL;
 }
 
@@ -380,9 +356,8 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 static int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
-	fsfilcnt_t freenodes, usednodes;
+	fsfilcnt_t freenodes;
 	struct tmpfs_mount *tmp;
-	struct tmpfs_node *dummy;
 
 	tmp = VFS_TO_TMPFS(mp);
 
@@ -394,16 +369,10 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_bavail = sbp->f_bfree = TMPFS_PAGES_AVAIL(tmp);
 	sbp->f_bresvd = 0;
 
-	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_last,
+	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_cnt,
 	    TMPFS_PAGES_AVAIL(tmp) * PAGE_SIZE / sizeof(struct tmpfs_node));
-	LIST_FOREACH(dummy, &tmp->tm_nodes_avail, tn_entries)
-		freenodes++;
 
-	usednodes = 0;
-	LIST_FOREACH(dummy, &tmp->tm_nodes_used, tn_entries)
-		usednodes++;
-
-	sbp->f_files = freenodes + usednodes;
+	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
 
@@ -431,7 +400,6 @@ static void
 tmpfs_init(void)
 {
 
-	malloc_type_attach(M_TMPFSMNT);
 }
 
 /* --------------------------------------------------------------------- */
@@ -440,7 +408,6 @@ static void
 tmpfs_done(void)
 {
 
-	malloc_type_detach(M_TMPFSMNT);
 }
 
 /* --------------------------------------------------------------------- */

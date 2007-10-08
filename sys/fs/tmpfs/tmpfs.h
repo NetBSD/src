@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.26.4.1 2007/08/21 20:01:30 ad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.4.2 2007/10/08 20:19:28 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -325,23 +325,10 @@ struct tmpfs_mount {
 	/* Number of nodes currently allocated.  This number only grows.
 	 * When it reaches tm_nodes_max, no more new nodes can be allocated.
 	 * Of course, the old, unused ones can be reused. */
-	ino_t			tm_nodes_last;
+	ino_t			tm_nodes_cnt;
 
-	/* Nodes are organized in two different lists.  The used list
-	 * contains all nodes that are currently used by the file system;
-	 * i.e., they refer to existing files.  The available list contains
-	 * all nodes that are currently available for use by new files.
-	 * Nodes must be kept in this list (instead of deleting them)
-	 * because we need to keep track of their generation number (tn_gen
-	 * field).
-	 *
-	 * Note that nodes are lazily allocated: if the available list is
-	 * empty and we have enough space to create more nodes, they will be
-	 * created and inserted in the used list.  Once these are released,
-	 * they will go into the available list, remaining alive until the
-	 * file system is unmounted. */
-	struct tmpfs_node_list	tm_nodes_used;
-	struct tmpfs_node_list	tm_nodes_avail;
+	/* Node list. */
+	struct tmpfs_node_list	tm_nodes;
 
 	/* Pools used to store file system meta data.  These are not shared
 	 * across several instances of tmpfs for the reasons described in
