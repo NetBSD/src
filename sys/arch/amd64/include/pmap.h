@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.16 2007/10/08 06:57:37 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.17 2007/10/08 07:04:53 yamt Exp $	*/
 
 /*
  *
@@ -245,6 +245,7 @@
 
 #include <x86/pmap.h>
 
-void		pmap_changeprot_local(vaddr_t, vm_prot_t);
+void pmap_prealloc_lowmem_ptps(void);
+void pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 #endif	/* _AMD64_PMAP_H_ */
