@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.2.3 2007/10/07 12:51:15 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.2.4 2007/10/08 16:48:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -418,14 +418,14 @@ IDTVEC(intr_lapic_tlb_mcast)
 	 * invalidations for this pmap, then take the CPU out of
 	 * the pmap's bitmask.
 	 */
-	cmpq	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
 	jne	3f
 	movq	CPUVAR(PMAP), %rdx
 	movl	CPUVAR(CPUMASK), %ecx
 	notl	%ecx
 	lock
 	andl	%ecx, PM_CPUS(%rdx)
-	movq	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
+	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
 3:
 	/* Restore state and return. */
 	popq	%rdx
