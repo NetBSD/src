@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.124 2007/10/08 14:06:15 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.125 2007/10/08 14:14:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.124 2007/10/08 14:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.125 2007/10/08 14:14:55 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -159,15 +159,6 @@ static union {
 	kmutex_t	lock;
 	uint8_t		pad[32];
 } uvm_hashlocks[UVM_HASHLOCK_CNT] __aligned(32);
-
-/*
- * locks on the hash table.
- */
-
-#define	UVM_HASHLOCK_CNT	32
-#define	uvm_hashlock(hash)	(&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)])
-
-static kmutex_t uvm_hashlocks[UVM_HASHLOCK_CNT];
 
 /*
  * local prototypes
