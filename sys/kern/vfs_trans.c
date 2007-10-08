@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.8.4 2007/08/20 21:27:45 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.8.5 2007/10/08 20:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.4 2007/08/20 21:27:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.5 2007/10/08 20:28:11 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -74,7 +74,6 @@ struct fstrans_mount_info {
 };
 
 static specificdata_key_t lwp_data_key;
-static specificdata_key_t mount_data_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 static kmutex_t fstrans_init_lock;
 
@@ -82,7 +81,6 @@ POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
     "fstrans", NULL, IPL_NONE);
 
 static void fstrans_lwp_dtor(void *);
-static void fstrans_mount_dtor(void *);
 static struct fstrans_mount_info *fstrans_mount_init(struct mount *);
 
 /*
@@ -94,8 +92,6 @@ fstrans_init(void)
 	int error;
 
 	error = lwp_specific_key_create(&lwp_data_key, fstrans_lwp_dtor);
-	KASSERT(error == 0);
-	error = mount_specific_key_create(&mount_data_key, fstrans_mount_dtor);
 	KASSERT(error == 0);
 
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -121,10 +117,10 @@ fstrans_lwp_dtor(void *arg)
 /*
  * Deallocate mount state
  */
-static void
-fstrans_mount_dtor(void *arg)
+void
+fstrans_unmount(struct mount *mp)
 {
-	struct fstrans_mount_info *fmi = arg;
+	struct fstrans_mount_info *fmi = mp->mnt_transinfo;
 
 	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	rw_destroy(&fmi->fmi_lazy_lock);
@@ -142,7 +138,7 @@ fstrans_mount_init(struct mount *mp)
 
 	mutex_enter(&fstrans_init_lock);
 
-	if ((new = mount_getspecific(mp, mount_data_key)) != NULL) {
+	if ((new = mp->mnt_transinfo) != NULL) {
 		mutex_exit(&fstrans_init_lock);
 		return new;
 	}
@@ -152,7 +148,7 @@ fstrans_mount_init(struct mount *mp)
 	rw_init(&new->fmi_lazy_lock);
 	rw_init(&new->fmi_shared_lock);
 
-	mount_setspecific(mp, mount_data_key, new);
+	mp->mnt_transinfo = new;
 	mutex_exit(&fstrans_init_lock);
 
 	return new;
@@ -203,7 +199,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	KASSERT(new_fli->fli_mount == NULL);
 	KASSERT(new_fli->fli_count == 0);
 
-	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
+	if ((fmi = mp->mnt_transinfo) == NULL)
 		fmi = fstrans_mount_init(mp);
 
 	if (lock_type == FSTRANS_LAZY)
@@ -249,7 +245,7 @@ fstrans_done(struct mount *mp)
 	KASSERT(fli->fli_mount == mp);
 	KASSERT(fli->fli_count == 0);
 	fli->fli_mount = NULL;
-	fmi = mount_getspecific(mp, mount_data_key);
+	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
 	if (fli->fli_lock_type == FSTRANS_LAZY)
 		rw_exit(&fmi->fmi_lazy_lock);
@@ -290,7 +286,7 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 {
 	struct fstrans_mount_info *fmi;
 
-	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
+	if ((fmi = mp->mnt_transinfo) == NULL)
 		fmi = fstrans_mount_init(mp);
 
 	switch (new_state) {
@@ -338,7 +334,7 @@ fstrans_getstate(struct mount *mp)
 {
 	struct fstrans_mount_info *fmi;
 
-	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
+	if ((fmi = mp->mnt_transinfo) == NULL)
 		return FSTRANS_NORMAL;
 
 	return fmi->fmi_state;
@@ -426,7 +422,7 @@ fstrans_print_mount(struct mount *mp, int verbose)
 {
 	struct fstrans_mount_info *fmi;
 
-	fmi = mount_getspecific(mp, mount_data_key);
+	fmi = mp->mnt_transinfo;
 	if (!verbose && (fmi == NULL || fmi->fmi_state == FSTRANS_NORMAL))
 		return;
 
