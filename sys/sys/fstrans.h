@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.3.10.1 2007/06/08 14:18:10 ad Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.3.10.2 2007/10/08 20:34:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ do {									\
 int	_fstrans_start(struct mount *, enum fstrans_lock_type, int);
 void	fstrans_done(struct mount *);
 int	fstrans_is_owner(struct mount *);
+void	fstrans_unmount(struct mount *);
 
 int	fstrans_setstate(struct mount *, enum fstrans_state);
 enum fstrans_state fstrans_getstate(struct mount *);
