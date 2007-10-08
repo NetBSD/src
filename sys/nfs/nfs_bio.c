@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.166 2007/08/10 15:12:56 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.167 2007/10/08 18:04:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.166 2007/08/10 15:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.167 2007/10/08 18:04:06 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -187,7 +187,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			bp->b_flags |= B_READ;
 			error = nfs_doio(bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -238,7 +238,7 @@ diragain:
 			 * deal with it.
 			 */
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			/*
 			 * nfs_request maps NFSERR_BAD_COOKIE to EINVAL.
 			 */
@@ -265,8 +265,7 @@ diragain:
 			KASSERT(bp->b_bcount != bp->b_resid ||
 			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
-			bp->b_flags |= B_NOCACHE;
-			brelse(bp);
+			brelse(bp, BC_NOCACHE);
 			return 0;
 		}
 
@@ -302,7 +301,7 @@ diragain:
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			nfs_invaldircache(vp, 0);
 			nfs_vinvalbuf(vp, 0, cred, l, 0);
 			goto diragain;
@@ -398,11 +397,10 @@ diragain:
 				rabp->b_dcookie = nndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp)) {
-				    rabp->b_flags |= B_INVAL;
-				    brelse(rabp);
+				    brelse(rabp, BC_INVAL);
 				}
 			    } else
-				brelse(rabp);
+				brelse(rabp, 0);
 			}
 		}
 		nfs_putdircache(np, nndp);
@@ -433,7 +431,7 @@ diragain:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 	    }
 	    if (got_buf)
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n > 0);
 	return (error);
 }

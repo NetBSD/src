@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.37 2007/09/24 00:42:15 rumble Exp $ */
+/* $NetBSD: udf_subr.c,v 1.38 2007/10/08 18:04:05 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.37 2007/09/24 00:42:15 rumble Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.38 2007/10/08 18:04:05 ad Exp $");
 #endif /* not lint */
 
 
@@ -359,7 +359,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			if (i == sector_size) {
 				/* return no error but with no dscrptr */
 				/* dispose first block */
-				brelse(bp);
+				brelse(bp, 0);
 				return 0;
 			}
 		}
@@ -372,8 +372,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		memcpy(dst, src, sector_size);
 	}
 	/* dispose first block */
-	bp->b_flags |= B_AGE;
-	brelse(bp);
+	brelse(bp, BC_AGE);
 
 	if (!error && (dscrlen > sector_size)) {
 		DPRINTF(DESCRIPTOR, ("multi block descriptor read\n"));
@@ -386,15 +385,14 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		for (blk = 1; blk < blks; blk++) {
 			error = udf_bread(ump, sector + blk, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				break;
 			}
 			pos = (uint8_t *) dst + blk*sector_size;
 			memcpy(pos, bp->b_data, sector_size);
 
 			/* dispose block */
-			bp->b_flags |= B_AGE;
-			brelse(bp);
+			brelse(bp, BC_AGE);
 		}
 		DPRINTFIF(DESCRIPTOR, error, ("read error on multi (%d)\n",
 		    error));

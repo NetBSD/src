@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2007/10/08 18:02:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2007/10/08 18:02:54 ad Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -242,7 +242,7 @@ writedisklabel(dev, strat, lp, clp)
 		(*strat)(bp);
 		rv = biowait(bp);
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return(rv);
 }
 
@@ -307,7 +307,7 @@ bsd_label(dev, strat, label, blkno, offsetp)
 			}
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return(rv);
 }
 
@@ -605,7 +605,7 @@ ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
 	apt->at_bslend = root->ar_bslst + root->ar_bslsize - 1;
 	rv = 0;
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return(rv);
 }
 #endif /* DISKLABEL_AHDI */

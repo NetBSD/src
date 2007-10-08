@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.5 2007/10/08 15:12:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.6 2007/10/08 18:04:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.5 2007/10/08 15:12:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.6 2007/10/08 18:04:05 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -259,7 +259,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		simple_unlock(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -292,7 +292,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		simple_unlock(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 #ifdef DIAGNOSTIC
@@ -344,7 +344,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		simple_unlock(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -364,7 +364,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		simple_unlock(&bp->b_interlock);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	splx(s);

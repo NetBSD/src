@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
+/*	$NetBSD: sector.c,v 1.4 2007/10/08 18:02:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.4 2007/10/08 18:02:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ sector_fini(void *self)
 {
 	struct sector_rw *rw = self;
 
-	brelse(rw->buf);
+	brelse(rw->buf, 0);
 	rw->busy = false;
 }
 

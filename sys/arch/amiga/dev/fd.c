@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.74 2007/10/08 16:41:06 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.75 2007/10/08 18:02:54 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.74 2007/10/08 16:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.75 2007/10/08 18:02:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,11 +808,11 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	bcopy(dlp, lp, sizeof(struct disklabel));
 	if (lp->d_trkseek > FDSTEPDELAY)
 		sc->stepdelay = lp->d_trkseek;
-	brelse(bp);
+	brelse(bp, 0);
 	return(0);
 nolabel:
 	fdgetdefaultlabel(sc, lp, part);
-	brelse(bp);
+	brelse(bp, 0);
 	return(0);
 }
 

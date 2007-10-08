@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.106 2007/10/07 13:39:04 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.107 2007/10/08 18:04:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.106 2007/10/07 13:39:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.107 2007/10/08 18:04:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -296,11 +296,11 @@ spec_read(void *v)
 			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			brelse(bp);
+			brelse(bp, 0);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
 
@@ -371,20 +371,19 @@ spec_write(void *v)
 			else
 				error = bread(vp, bn, bsize, NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			n = min(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			if (error)
-				brelse(bp);
+				brelse(bp, 0);
 			else {
 				if (n + on == bsize)
 					bawrite(bp);
 				else
 					bdwrite(bp);
-				if (bp->b_error != 0)
-					error = bp->b_error;
+				error = bp->b_error;
 			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -436,12 +435,6 @@ spec_ioctl(void *v)
 		    ap->a_fflag, ap->a_l);
 
 	case VBLK:
-		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
-			if (bdev_type(dev) == D_TAPE)
-				return (0);
-			else
-				return (1);
-		}
 		return bdev_ioctl(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, ap->a_l);
 

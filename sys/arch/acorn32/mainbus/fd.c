@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 2007/10/08 16:41:05 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 2007/10/08 18:02:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.31 2007/10/08 16:41:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2007/10/08 18:02:53 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1605,7 +1605,7 @@ load_memory_disc_from_floppy(md, dev)
 	s = spl0();
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
-		brelse(bp);		
+		brelse(bp, 0);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
 	}
@@ -1634,7 +1634,7 @@ load_memory_disc_from_floppy(md, dev)
         
 	fdclose(bp->b_dev, 0, 0, curlwp);
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	splx(s);
 	return(0);

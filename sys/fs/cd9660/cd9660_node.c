@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.16 2007/06/30 09:37:55 pooka Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.17 2007/10/08 18:04:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.16 2007/06/30 09:37:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.17 2007/10/08 18:04:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ cd9660_defattr(isodir, inop, bp)
 		inop->inode.iso_gid = (gid_t)0;
 	}
 	if (bp2)
-		brelse(bp2);
+		brelse(bp2, 0);
 }
 
 /*
@@ -443,7 +443,7 @@ cd9660_deftstamp(isodir,inop,bp)
 		inop->inode.iso_mtime = inop->inode.iso_ctime;
 	}
 	if (bp2)
-		brelse(bp2);
+		brelse(bp2, 0);
 }
 
 int
