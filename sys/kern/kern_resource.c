@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.122 2007/09/29 12:22:31 dsl Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.123 2007/10/08 20:06:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.122 2007/09/29 12:22:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123 2007/10/08 20:06:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,12 +421,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			sec++;
 			usec -= 1000000;
 		}
-		if (l->l_cpu == curcpu()) {
-			struct schedstate_percpu *spc;
-
-			KDASSERT(l->l_cpu != NULL);
-			spc = &l->l_cpu->ci_schedstate;
-
+		if ((l->l_flag & LW_RUNNING) != 0) {
 			/*
 			 * Adjust for the current time slice.  This is
 			 * actually fairly important since the error
@@ -435,8 +430,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			 * error.
 			 */
 			microtime(&tv);
-			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
-			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
+			sec += tv.tv_sec - l->l_stime.tv_sec;
+			usec += tv.tv_usec - l->l_stime.tv_usec;
 			if (usec >= 1000000) {
 				sec++;
 				usec -= 1000000;
@@ -1047,7 +1042,8 @@ again:
 		mutex_exit(&uihashtbl_lock);
 		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
-		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_SOFTNET);
+		/* XXX this could be IPL_SOFTNET */
+		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_VM);
 		goto again;
 	}
 	uip = newuip;

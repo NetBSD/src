@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.319 2007/10/08 15:12:06 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.320 2007/10/08 20:06:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.319 2007/10/08 15:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.320 2007/10/08 20:06:18 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -627,13 +627,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_cpu->ci_schedstate.spc_runtime = time;
 			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
+	curlwp->l_stime = time;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;

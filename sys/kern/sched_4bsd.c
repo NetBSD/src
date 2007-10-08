@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.5 2007/10/08 20:06:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.5 2007/10/08 20:06:19 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -136,6 +137,9 @@ int rrticks;
 /*
  * Force switch among equal priority processes every 100ms.
  * Called from hardclock every hz/10 == rrticks hardclock ticks.
+ *
+ * There's no need to lock anywhere in this routine, as it's
+ * CPU-local and runs at IPL_SCHED (called from clock interrupt).
  */
 /* ARGSUSED */
 void
@@ -145,7 +149,6 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	spc_lock(ci);
 	if (!CURCPU_IDLE_P()) {
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
@@ -158,7 +161,6 @@ sched_tick(struct cpu_info *ci)
 			spc->spc_flags |= SPCF_SEENRR;
 	}
 	cpu_need_resched(curcpu(), 0);
-	spc_unlock(ci);
 }
 
 #define	NICE_WEIGHT 2			/* priorities per nice level */
@@ -706,8 +708,9 @@ sched_lwp_exit(struct lwp *l)
 
 }
 
-/* SysCtl */
-
+/*
+ * sysctl setup.  XXX This should be split with kern_synch.c.
+ */
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
 	const struct sysctlnode *node = NULL;
@@ -724,13 +727,19 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
-	if (node != NULL) {
-		sysctl_createv(clog, 0, &node, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_STRING, "name", NULL,
-			NULL, 0, __UNCONST("4.4BSD"), 0,
-			CTL_CREATE, CTL_EOL);
-	}
+	KASSERT(node != NULL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_STRING, "name", NULL,
+		NULL, 0, __UNCONST("4.4BSD"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_READWRITE,
+		CTLTYPE_INT, "timesoftints",
+		SYSCTL_DESCR("Track CPU time for soft interrupts"),
+		NULL, 0, &softint_timing, 0,
+		CTL_CREATE, CTL_EOL);
 }
 
 #if defined(DDB)

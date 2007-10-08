@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.37 2007/09/21 01:50:36 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.38 2007/10/08 20:06:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -125,18 +125,20 @@ struct sched_param {
  * c:	cpu_lock
  */
 struct schedstate_percpu {
-	void		*spc_sched_info;/* (: scheduler-specific structure */
+	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
-	struct timeval	spc_runtime;	/* s: time curlwp started running */
-	volatile int	spc_flags;	/* m: flags; see below */
+	pri_t		spc_curpriority;/* m: usrpri of curlwp */
+	time_t		spc_lastmod;	/* c: time of last cpu state change */
+
+	/* For the most part, this set of data is CPU-private. */
+	void		*spc_sched_info;/* (: scheduler-specific structure */
+	volatile int	spc_flags;	/* s: flags; see below */
 	u_int		spc_schedticks;	/* s: ticks for schedclock() */
 	uint64_t	spc_cp_time[CPUSTATES];/* s: CPU state statistics */
-	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	int		spc_ticks;	/* s: ticks until sched_tick() */
 	int		spc_pscnt;	/* s: prof/stat counter */
 	int		spc_psdiv;	/* s: prof/stat divisor */
-	time_t		spc_lastmod;	/* c: time of last cpu state change */
 };
 
 /* spc_flags */
@@ -212,6 +214,7 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 void		preempt(void);
 int		mi_switch(struct lwp *);
 inline void	resched_cpu(struct lwp *);
+void		updatertime(lwp_t *, const struct timeval *);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */
