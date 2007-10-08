@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.10 2007/08/20 18:09:11 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.11 2007/10/08 20:23:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.10 2007/08/20 18:09:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.11 2007/10/08 20:23:35 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -857,13 +857,11 @@ _kernel_lock(int nlocks, struct lwp *l)
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
 	l = curlwp;
-	s = splbiglock();
 
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
 		ci->ci_biglock_count += nlocks;
 		l->l_blcnt += nlocks;
-		splx(s);
 		return;
 	}
 
@@ -871,6 +869,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	LOCKDEBUG_WANTLOCK(kernel_lock_id,
 	    (uintptr_t)__builtin_return_address(0), 0);
 
+	s = splbiglock();
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
@@ -896,15 +895,16 @@ _kernel_lock(int nlocks, struct lwp *l)
 #endif
 
 	do {
+		splx(s);
 		while (kernel_lock == __SIMPLELOCK_LOCKED) {
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
 				_KERNEL_LOCK_ABORT("spinout");
 #endif
-			splx(s);
+			SPINLOCK_BACKOFF_HOOK;
 			SPINLOCK_SPIN_HOOK;
-			(void)splbiglock();
 		}
+		(void)splbiglock();
 	} while (!__cpu_simple_lock_try(&kernel_lock));
 
 	ci->ci_biglock_wanted = owant;
@@ -961,14 +961,16 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 
 	_KERNEL_LOCK_ASSERT(ci->ci_biglock_count >= l->l_blcnt);
 
-	s = splbiglock();
 	l->l_blcnt -= nlocks;
-	if ((ci->ci_biglock_count -= nlocks) == 0) {
+	if (ci->ci_biglock_count == nlocks) {
+		s = splbiglock();
 		LOCKDEBUG_UNLOCKED(kernel_lock_id,
 		    (uintptr_t)__builtin_return_address(0), 0);
+		ci->ci_biglock_count = 0;
 		__cpu_simple_unlock(&kernel_lock);
-	}
-	splx(s);
+		splx(s);
+	} else
+		ci->ci_biglock_count -= nlocks;
 
 	if (countp != NULL)
 		*countp = olocks;
