@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.18 2007/09/16 19:02:47 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.19 2007/10/08 20:31:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.18 2007/09/16 19:02:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.19 2007/10/08 20:31:13 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1225,6 +1225,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
+	fstrans_unmount(mp);
 	return (0);
 }
 
