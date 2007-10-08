@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/18 10:34:17 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2007/10/08 16:04:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,3 +124,28 @@ NESTED(_swapcontext_u,2,0,ra,0,0)
 	GETC(a0)
 	SETC(a1)
 	END(_swapcontext_u)
+
+	.align 2
+LEAF(pthread__ras_simple_lock_init, 1)
+	stl	zero, 0(a0)
+	nop
+	RET
+END(pthread__ras_simple_lock_init)
+
+	.align 2
+LEAF(pthread__ras_simple_lock_try, 1)
+	ldiq	t0, 1
+pthread__lock_ras_start:	.globl	pthread__lock_ras_start
+	ldl	v0, 0(a0)
+	stl	t0, 0(a0)
+pthread__lock_ras_end:		.globl	pthread__lock_ras_end
+	cmpeq	v0, 0, v0
+	RET	
+END(pthread__ras_simple_lock_try)
+
+	.align 2
+LEAF(pthread__ras_simple_unlock, 1)
+	stl	zero, 0(a0)
+	nop
+	RET
+END(pthread__ras_simple_unlock)
