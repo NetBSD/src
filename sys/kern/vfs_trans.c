@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.13 2007/10/07 14:48:38 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.14 2007/10/08 09:09:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.13 2007/10/07 14:48:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.14 2007/10/08 09:09:47 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -593,6 +593,8 @@ fscow_run(struct buf *bp)
 		mp = bp->b_vp->v_specmountpoint;
 	else
 		mp = bp->b_vp->v_mount;
+	if (mp == NULL)
+		return 0;
 
 	if ((cmi = mount_getspecific(mp, mount_cow_key)) == NULL)
 		return 0;
