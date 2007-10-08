@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.24 2007/09/28 19:48:42 pooka Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.25 2007/10/08 18:04:04 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.24 2007/09/28 19:48:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.25 2007/10/08 18:04:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ deget(pmp, dirclust, diroffset, depp)
 			return (error);
 		}
 		DE_INTERNALIZE(ldep, direntptr);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/*
@@ -459,7 +459,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
 			    pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 #ifdef MSDOSFS_DEBUG
 				printf("detrunc(): bread fails %d\n", error);
 #endif

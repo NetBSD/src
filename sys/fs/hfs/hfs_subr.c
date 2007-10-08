@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.3 2007/03/22 13:21:28 dillo Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.4 2007/10/08 18:04:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.3 2007/03/22 13:21:28 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.4 2007/10/08 18:04:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 				(off - start), min(len - curoff, MAXBSIZE - (off - start)));
 		
 		if (bp != NULL)
-			brelse(bp);
+			brelse(bp, 0);
 		if (error != 0)
 			return error;
 			

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.51 2007/09/24 00:42:13 rumble Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.52 2007/10/08 18:04:04 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.51 2007/09/24 00:42:13 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.52 2007/10/08 18:04:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -514,7 +514,6 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 */
 	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
 		goto error_exit;
-	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
@@ -721,7 +720,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	/*
 	 * Release the bootsector buffer.
 	 */
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/*
@@ -746,7 +745,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 			pmp->pm_nxtfree = getulong(fp->fsinxtfree);
 		else
 			pmp->pm_fsinfo = 0;
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 
@@ -822,7 +821,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 
 error_exit:;
 	if (bp)
-		brelse(bp);
+		brelse(bp, BC_AGE);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
