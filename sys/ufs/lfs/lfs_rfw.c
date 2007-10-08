@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.3 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.4 2007/10/08 18:01:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.3 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.4 2007/10/08 18:01:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -159,7 +159,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 	LFS_IENTRY(ifp, fs, ino, bp);
 	oldnext = ifp->if_nextfree;
 	ifp->if_version = vers;
-	brelse(bp);
+	brelse(bp, 0);
 
 	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
 	if (ino) {
@@ -172,10 +172,10 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 			    ifp->if_nextfree == LFS_UNUSED_INUM)
 				break;
 			tino = ifp->if_nextfree;
-			brelse(bp);
+			brelse(bp, 0);
 		}
 		if (ifp->if_nextfree == LFS_UNUSED_INUM) {
-			brelse(bp);
+			brelse(bp, 0);
 			return ENOENT;
 		}
 		ifp->if_nextfree = oldnext;
@@ -253,8 +253,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 		LFS_UNLOCK_BUF(bp);
 		fs->lfs_avail += btofsb(fs, bp->b_bcount);
 	}
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	brelse(bp, BC_INVAL);
 
 	/*
 	 * Extend the file, if it is not large enough already.
@@ -390,8 +389,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			}
 		}
 	}
-	dbp->b_flags |= B_AGE;
-	brelse(dbp);
+	brelse(dbp, BC_AGE);
 
 	return 0;
 }
@@ -423,7 +421,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 		LFS_SEGENTRY(sup, fs, dtosn(fs, offset), bp);
 		if (sup->su_flags & SEGUSE_SUPERBLOCK)
 			offset += btofsb(fs, LFS_SBPAD);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Read in the segment summary */
@@ -506,8 +504,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 					goto err2;
 				}
 				(*dp++) = ((u_long *)(dbp->b_data))[0];
-				dbp->b_flags |= B_AGE;
-				brelse(dbp);
+				brelse(dbp, BC_AGE);
 			}
 			if (flags & CHECK_UPDATE) {
 				if ((error = update_inoblk(fs, offset, cred, l))
@@ -533,8 +530,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 					goto err2;
 				}
 				(*dp++) = ((u_long *)(dbp->b_data))[0];
-				dbp->b_flags |= B_AGE;
-				brelse(dbp);
+				brelse(dbp, BC_AGE);
 			}
 			/* Account for and update any direct blocks */
 			if ((flags & CHECK_UPDATE) &&
@@ -685,7 +681,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 					panic("lfs_mountfs: no clean segments");
 				LFS_SEGENTRY(sup, fs, sn, bp);
 				dirty = (sup->su_flags & SEGUSE_DIRTY);
-				brelse(bp);
+				brelse(bp, 0);
 				if (!dirty)
 					break;
 			}
