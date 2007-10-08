@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4 2007/08/14 13:51:31 pooka Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.5 2007/10/08 15:12:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4 2007/08/14 13:51:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.5 2007/10/08 15:12:09 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -807,8 +807,10 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
+			rw_enter(&cwdi->cwdi_lock, RW_READER);
 			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
 			    path, MAXPATHLEN / 2, 0, l);
+			rw_exit(&cwdi->cwdi_lock);
 			if (error) {
 				free(path, M_TEMP);
 				return error;

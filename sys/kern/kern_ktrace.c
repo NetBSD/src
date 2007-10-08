@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.126 2007/08/27 13:33:45 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.127 2007/10/08 15:12:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.126 2007/08/27 13:33:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.127 2007/10/08 15:12:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,16 +1085,16 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, struct file *fp)
 			if (fp->f_type == DTYPE_PIPE)
 				ktd->ktd_flags |= KTDF_INTERACTIVE;
 
-			error = kthread_create(PRI_NONE, 0, NULL,
+			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 			    ktrace_thread, ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));
 				goto done;
 			}
 
-			simple_lock(&fp->f_slock);
+			mutex_enter(&fp->f_lock);
 			fp->f_count++;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 			ktd->ktd_fp = fp;
 
 			mutex_enter(&ktrace_lock);
@@ -1420,7 +1420,7 @@ next:
 	    auio.uio_iovcnt < sizeof(aiov) / sizeof(aiov[0]) - 1);
 
 again:
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
 	    fp->f_cred, FOF_UPDATE_OFFSET);
@@ -1499,7 +1499,7 @@ ktrace_thread(void *arg)
 	TAILQ_REMOVE(&ktdq, ktd, ktd_list);
 	mutex_exit(&ktrace_lock);
 
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 
 	/*
