@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.33 2007/07/14 21:02:36 ad Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.34 2007/10/08 16:18:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.33 2007/07/14 21:02:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.34 2007/10/08 16:18:03 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.33 2007/07/14 21:02:36 ad Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/param.h>
 
 #include <dev/ic/clmpccreg.h>
@@ -308,7 +308,7 @@ clmpcc_attach(sc)
 		(clmpcc_rd_msvr(sc) & CLMPCC_MSVR_PORT_ID) ? '0' : '1');
 
 	sc->sc_softintr_cookie =
-	    softintr_establish(IPL_SOFTSERIAL, clmpcc_softintr, sc);
+	    softint_establish(SOFTINT_SERIAL, clmpcc_softintr, sc);
 	if (sc->sc_softintr_cookie == NULL)
 		panic("clmpcc_attach: softintr_establish");
 	memset(&(sc->sc_chans[0]), 0, sizeof(sc->sc_chans));
@@ -1240,7 +1240,7 @@ rx_done:
 		}
 
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, 0);
-		softintr_schedule(sc->sc_softintr_cookie);
+		softint_schedule(sc->sc_softintr_cookie);
 	} else
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
 
@@ -1360,7 +1360,7 @@ clmpcc_txintr(arg)
 		 * Request Tx processing in the soft interrupt handler
 		 */
 		ch->ch_tx_done = 1;
-		softintr_schedule(sc->sc_softintr_cookie);
+		softint_schedule(sc->sc_softintr_cookie);
 	}
 
 	clmpcc_wrreg(sc, CLMPCC_REG_IER, tir);
@@ -1397,8 +1397,7 @@ clmpcc_mdintr(arg)
 		clmpcc_rd_msvr(sc) & CLMPCC_MSVR_CD;
 
 	clmpcc_wrreg(sc, CLMPCC_REG_MEOIR, 0);
-
-	softintr_schedule(sc->sc_softintr_cookie);
+	softint_schedule(sc->sc_softintr_cookie);
 
 	return 1;
 }
