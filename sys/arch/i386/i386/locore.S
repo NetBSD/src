@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.7 2007/10/06 15:34:53 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.8 2007/10/08 11:00:14 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -502,7 +502,6 @@ try586:	/* Use the `cpuid' instruction. */
 	 * 32 bit mode. So use the bottom 32 bits.
  	 */
  	movl	$RELOC(__data_start),%edx
- 	addl	$PGOFSET,%edx
 	andl	$~PGOFSET,%edx
 
  	/*
