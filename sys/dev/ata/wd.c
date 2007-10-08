@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.345 2007/09/16 18:41:47 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.346 2007/10/08 16:41:11 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.345 2007/09/16 18:41:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.346 2007/10/08 16:41:11 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -408,9 +408,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	wd->sc_dk.dk_driver = &wddkdriver;
-	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	/* we fill in dk_info later */
+	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);

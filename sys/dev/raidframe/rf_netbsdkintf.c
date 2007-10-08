@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.231 2007/10/05 01:40:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.232 2007/10/08 16:41:12 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.231 2007/10/05 01:40:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.232 2007/10/08 16:41:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -856,7 +856,8 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			free(cf, M_RAIDFRAME);
 			
 			/* Detach the disk. */
-			pseudo_disk_detach(&rs->sc_dkdev);
+			disk_detach(&rs->sc_dkdev);
+			disk_destroy(&rs->sc_dkdev);
 		}
 	}
 
@@ -1200,7 +1201,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		free(cf, M_RAIDFRAME);
 
 		/* Detach the disk. */
-		pseudo_disk_detach(&rs->sc_dkdev);
+		disk_detach(&rs->sc_dkdev);
+		disk_destroy(&rs->sc_dkdev);
 
 		raidunlock(rs);
 
@@ -1850,8 +1852,6 @@ raidinit(RF_Raid_t *raidPtr)
 	/* XXX doesn't check bounds. */
 	snprintf(rs->sc_xname, sizeof(rs->sc_xname), "raid%d", unit);
 
-	rs->sc_dkdev.dk_name = rs->sc_xname;
-
 	/* attach the pseudo device */
 	cf = malloc(sizeof(*cf), M_RAIDFRAME, M_WAITOK);
 	cf->cf_name = raid_cd.cd_name;
@@ -1870,6 +1870,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
+	disk_init(&rs->sc_dkdev, rs->sc_xname, NULL);
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
@@ -2650,9 +2651,6 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct lwp *l;
-
-	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2661,7 +2659,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, curlwp->l_cred, curlwp);
 		}
 	}
 }

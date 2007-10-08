@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.35 2007/07/29 12:15:44 ad Exp $	*/
+/*	$NetBSD: rl.c,v 1.36 2007/10/08 16:41:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.35 2007/07/29 12:15:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.36 2007/10/08 16:41:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,8 +253,7 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	struct disklabel *dl;
 
 	rc->rc_hwid = ra->hwid;
-	rc->rc_disk.dk_name = rc->rc_dev.dv_xname;
-	rc->rc_disk.dk_driver = &rldkdriver;
+	disk_init(&rc->rc_disk, rc->rc_dev.dv_xname, &rldkdriver);
 	disk_attach(&rc->rc_disk);
 	dl = rc->rc_disk.dk_label;
 	dl->d_npartitions = 3;
