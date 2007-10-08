@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.4 2006/05/19 14:46:17 christos Exp $	 */
+/* $NetBSD: fdfs.c,v 1.5 2007/10/08 21:41:13 ad Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ fd_vop_bwrite(struct ubuf * bp)
 {
 	bp->b_flags |= B_DELWRI;
 	reassignbuf(bp, bp->b_vp);
-	brelse(bp);
+	brelse(bp, 0);
 	return 0;
 }
 

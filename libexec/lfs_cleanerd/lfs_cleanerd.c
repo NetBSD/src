@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.12 2006/11/18 18:43:25 tls Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.13 2007/10/08 21:41:13 ad Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -449,7 +449,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 #ifndef REPAIR_ZERO_FINFO
 				lfs_ientry(&ifp, fs, dip[i].di_inumber, &ifbp);
 				idaddr = ifp->if_daddr;
-				brelse(ifbp);
+				brelse(ifbp, 0);
 				if (idaddr != daddr)
 #endif
 					continue;
@@ -522,7 +522,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 #else
 		lfs_ientry(&ifp, fs, fip->fi_ino, &ifbp);
 		vers = ifp->if_version;
-		brelse(ifbp);
+		brelse(ifbp, 0);
 #endif
 		if (vers != fip->fi_version) {
 			size_t size;
@@ -1017,7 +1017,7 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			if (fs->clfs_segtab[i + j].priority > 0)
 				++npos;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Sort segments based on cleanliness, fulness, and condition */
@@ -1198,8 +1198,7 @@ needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
 		return -1;
 	}
 	*cip = *(CLEANERINFO *)bp->b_data; /* Structure copy */
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	brelse(bp, B_INVAL);
 	cleaner_stats.bytes_read += fs->lfs_bsize;
 
 	/*
