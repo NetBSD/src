@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.71 2007/09/16 18:09:51 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.72 2007/10/08 16:18:05 ad Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.71 2007/09/16 18:09:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.72 2007/10/08 16:18:05 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -49,9 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.71 2007/09/16 18:09:51 dyoung Exp $");
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/kauth.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -327,7 +326,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 	splx(s);
 
-	softintr_schedule(sc->gif_si);
+	softint_schedule(sc->gif_si);
 	error = 0;
 
   end:
@@ -767,7 +766,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 
@@ -786,7 +785,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
-	sc->gif_si = softintr_establish(IPL_SOFTNET, gifintr, sc);
+	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
 		goto bad;
@@ -837,7 +836,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
  bad:
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 	if (sc->gif_psrc && sc->gif_pdst)
@@ -858,7 +857,7 @@ gif_delete_tunnel(struct ifnet *ifp)
 	s = splsoftnet();
 
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 	if (sc->gif_psrc) {

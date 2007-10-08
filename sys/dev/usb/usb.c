@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.99 2007/08/15 04:00:34 kiyohara Exp $	*/
+/*	$NetBSD: usb.c,v 1.100 2007/10/08 16:18:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.99 2007/08/15 04:00:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.100 2007/10/08 16:18:04 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.99 2007/08/15 04:00:34 kiyohara Exp $");
 #include <sys/select.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -206,7 +207,7 @@ USB_ATTACH(usb)
 
 #ifdef USB_USE_SOFTINTR
 	/* XXX we should have our own level */
-	sc->sc_bus->soft = softintr_establish(IPL_SOFTUSB,
+	sc->sc_bus->soft = softint_establish(SOFTINT_NET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
@@ -875,7 +876,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
-		softintr_schedule(bus->soft);
+		softint_schedule(bus->soft);
 	}
 #else
 	bus->methods->soft_intr(bus);
@@ -925,7 +926,7 @@ usb_detach(device_ptr_t self, int flags)
 
 #ifdef USB_USE_SOFTINTR
 	if (sc->sc_bus->soft != NULL) {
-		softintr_disestablish(sc->sc_bus->soft);
+		softint_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
 #endif
