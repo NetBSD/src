@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.36 2007/09/29 21:54:13 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.37 2007/10/08 00:21:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -912,13 +912,13 @@ message Logging {Logging}
 
 message Status  {  Status: }
 message Command {Kommando: }
-message Running {Wird ausgeführt}
-message Finished {Beendet}
-message Command_failed {Kommando fehlgeschlagen}
-message Command_ended_on_signal {Kommando wurde von einem Signal abgebrochen}
+message Running {ausführen}
+message Finished {fertig}
+message Command_failed {fehlgeschlagen}
+message Command_ended_on_signal {abgebrochen}
 
-message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationssystem}
-message Exit_Install_System {Installationssystem beenden}
+message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationsprogramm}
+message Exit_Install_System {Installationsprogramm beenden}
 message Install_NetBSD_to_hard_disk {NetBSD auf die Festplatte installieren}
 message Upgrade_NetBSD_on_a_hard_disk {Aktualisierung einer bestehenden NetBSD-Installation}
 message Re_install_sets_or_install_additional_sets {Erneute Installation oder zusätzliche Pakete installieren}
