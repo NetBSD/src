@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.21 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: disksubr.c,v 1.22 2007/10/08 18:02:56 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2007/10/08 18:02:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ readdisklabel(dev, strat, lp, clp)
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	if (error)
 		return ("disk label read error");
 
@@ -316,7 +316,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 
 	return (error);
 }

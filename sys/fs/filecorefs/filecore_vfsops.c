@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.41 2007/09/24 00:42:13 rumble Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.42 2007/10/08 18:04:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.41 2007/09/24 00:42:13 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.42 2007/10/08 18:04:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -333,11 +333,10 @@ filecore_mountfs(devvp, mp, l, argp)
 	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
 	    << fcdr->log2bpmb) >> fcdr->log2secsize;
 	log2secsize = fcdr->log2secsize;
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf1\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/* Read the bootblock in the map */
@@ -367,11 +366,10 @@ filecore_mountfs(devvp, mp, l, argp)
 		fcmp->nblks=fcdr->disc_size / fcmp->blksize;
 	}
 
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf2\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	mp->mnt_data = fcmp;
@@ -401,7 +399,7 @@ out:
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf3\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
@@ -635,7 +633,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vf4\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}
@@ -646,7 +644,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf5\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	ip->i_mnt = fcmp;

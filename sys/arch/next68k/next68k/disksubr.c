@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:57 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 2007/10/08 18:02:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2006/11/25 11:59:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/10/08 18:02:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ readdisklabel(dev, strat, lp, osdep)
 		osdep->od_version = 0;
 
 	if (biowait(bp)) {
-		brelse(bp);
+		brelse(bp, 0);
 		return("I/O error");
 	}
 	dlp = (struct disklabel *)
@@ -370,14 +370,14 @@ readdisklabel(dev, strat, lp, osdep)
 			*lp = *dlp;
 			msg = NULL;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		return msg;
 	}
 	if (IS_DISKLABEL ((struct next68k_disklabel *)bp->b_data)) {
 		/* got a NeXT disklabel */
 		msg = parse_nextstep_label
 			((struct next68k_disklabel *)bp->b_data, lp, osdep);
-		brelse(bp);
+		brelse(bp, 0);
 		return msg;
 	}
 	/*
@@ -403,7 +403,7 @@ readdisklabel(dev, strat, lp, osdep)
 			}
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -494,6 +494,6 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	error = biowait(bp);
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }
