@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.59 2007/10/08 15:12:11 ad Exp $	*/
+/*	$NetBSD: file.h,v 1.60 2007/10/08 23:20:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@ struct file {
 #define	DTYPE_CRYPTO	6		/* crypto */
 #define	DTYPE_MQUEUE	7		/* message queue */
 #define DTYPE_NAMES \
-    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto"
+    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue"
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
