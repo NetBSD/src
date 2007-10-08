@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.105 2007/10/02 08:47:26 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.106 2007/10/08 15:06:26 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.105 2007/10/02 08:47:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.106 2007/10/08 15:06:26 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -552,6 +552,7 @@ db_command_loop(void)
 	/*Execute default ddb start commands*/
 	db_execute_commandlist(db_cmd_on_enter);
 
+	(void) setjmp(&db_jmpbuf);
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)
 			db_printf("\n");
