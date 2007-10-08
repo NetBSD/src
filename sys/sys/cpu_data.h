@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.12 2007/08/18 00:21:10 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.13 2007/10/08 15:12:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,9 @@
 
 struct callout;
 struct lwp;
+
 #include <sys/sched.h>	/* for schedstate_percpu */
+#include <sys/condvar.h>
 
 /*
  * MI per-cpu data
@@ -67,7 +69,9 @@ struct cpu_data {
 	void		*cpu_callout_cancel;	/* callout to be cancelled */
 	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
-		
+	kcondvar_t	cpu_xcall;		/* cross-call support */
+	bool		cpu_xcall_pending;	/* cross-call support */
+	
 	/*
 	 * This section is mostly CPU-private.
 	 */
