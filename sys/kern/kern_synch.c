@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.198 2007/10/03 11:20:09 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.199 2007/10/08 20:06:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.198 2007/10/03 11:20:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.199 2007/10/08 20:06:19 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.198 2007/10/03 11:20:09 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/evcnt.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -315,23 +316,18 @@ preempt(void)
  * Compute the amount of time during which the current lwp was running.
  *
  * - update l_rtime unless it's an idle lwp.
- * - update spc_runtime for the next lwp.
  */
 
-static inline void
-updatertime(struct lwp *l, struct schedstate_percpu *spc)
+void
+updatertime(lwp_t *l, const struct timeval *tv)
 {
-	struct timeval tv;
 	long s, u;
 
-	if ((l->l_flag & LW_IDLE) != 0) {
-		microtime(&spc->spc_runtime);
+	if ((l->l_flag & LW_IDLE) != 0)
 		return;
-	}
 
-	microtime(&tv);
-	u = l->l_rtime.tv_usec + (tv.tv_usec - spc->spc_runtime.tv_usec);
-	s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
+	u = l->l_rtime.tv_usec + (tv->tv_usec - l->l_stime.tv_usec);
+	s = l->l_rtime.tv_sec + (tv->tv_sec - l->l_stime.tv_sec);
 	if (u < 0) {
 		u += 1000000;
 		s--;
@@ -341,8 +337,6 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
 	}
 	l->l_rtime.tv_usec = u;
 	l->l_rtime.tv_sec = s;
-
-	spc->spc_runtime = tv;
 }
 
 /*
@@ -351,12 +345,14 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
  * Returns 1 if another LWP was actually run.
  */
 int
-mi_switch(struct lwp *l)
+mi_switch(lwp_t *l)
 {
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
 	struct cpu_info *ci;
+	struct timeval tv;
+	bool returning;
 
 	KASSERT(lwp_locked(l, NULL));
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
@@ -364,6 +360,8 @@ mi_switch(struct lwp *l)
 #ifdef KSTACK_CHECK_MAGIC
 	kstack_check_magic(l);
 #endif
+
+	microtime(&tv);
 
 	/*
 	 * It's safe to read the per CPU schedstate unlocked here, as all we
@@ -378,32 +376,47 @@ mi_switch(struct lwp *l)
 	 * scheduling flags.
 	 */
 	spc = &ci->ci_schedstate;
+	returning = false;
 	newl = NULL;
 
+	/*
+	 * If we have been asked to switch to a specific LWP, then there
+	 * is no need to inspect the run queues.  If a soft interrupt is
+	 * blocking, then return to the interrupted thread without adjusting
+	 * VM context or its start time: neither have been changed in order
+	 * to take the interrupt.
+	 */
 	if (l->l_switchto != NULL) {
+		if ((l->l_flag & LW_INTR) != 0) {
+			returning = true;
+			softint_block(l);
+			if ((l->l_flag & LW_TIMEINTR) != 0)
+				updatertime(l, &tv);
+		}
 		newl = l->l_switchto;
 		l->l_switchto = NULL;
 	}
 
 	/* Count time spent in current system call */
-	SYSCALL_TIME_SLEEP(l);
+	if (!returning) {
+		SYSCALL_TIME_SLEEP(l);
 
-	/*
-	 * XXXSMP If we are using h/w performance counters,
-	 * save context.
-	 */
+		/*
+		 * XXXSMP If we are using h/w performance counters,
+		 * save context.
+		 */
 #if PERFCTRS
-	if (PMC_ENABLED(l->l_proc)) {
-		pmc_save_context(l->l_proc);
-	}
+		if (PMC_ENABLED(l->l_proc)) {
+			pmc_save_context(l->l_proc);
+		}
 #endif
-	updatertime(l, spc);
+		updatertime(l, &tv);
+	}
 
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
 	mutex_spin_enter(spc->spc_mutex);
-	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &spc->spc_lwplock));
@@ -434,11 +447,20 @@ mi_switch(struct lwp *l)
 			newl->l_flag |= LW_RUNNING;
 		}
 		ci->ci_want_resched = 0;
+		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
+	}
+
+	/* Update the new LWP's start time while it is still locked. */
+	if (!returning) {
+		newl->l_stime = tv;
+		/*
+		 * XXX The following may be done unlocked if newl != NULL
+		 * above.
+		 */
+		newl->l_priority = newl->l_usrpri;
 	}
 
 	spc->spc_curpriority = newl->l_usrpri;
-	/* XXX The following may be done unlocked if newl != NULL above. */
-	newl->l_priority = newl->l_usrpri;
 
 	if (l != newl) {
 		struct lwp *prevlwp;
@@ -460,8 +482,12 @@ mi_switch(struct lwp *l)
 		/* Unlocked, but for statistics only. */
 		uvmexp.swtch++;
 
-		/* Save old VM context. */
-		pmap_deactivate(l);
+		/*
+		 * Save old VM context, unless a soft interrupt
+		 * handler is blocking.
+		 */
+		if (!returning)
+			pmap_deactivate(l);
 
 		/* Switch to the new LWP.. */
 		l->l_ncsw++;
@@ -492,6 +518,7 @@ mi_switch(struct lwp *l)
 
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(l->l_cpu == curcpu());
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, restore context.
