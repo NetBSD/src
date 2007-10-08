@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.18 2007/10/07 17:06:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.19 2007/10/08 11:02:42 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.18 2007/10/07 17:06:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.19 2007/10/08 11:02:42 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1023,7 +1023,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * assume that the linker has properly aligned the
 		 * .data segment to a NBPD_L2 boundary.
 		 */
-		kva_end = roundup((vaddr_t)&__data_start, NBPD_L1);
+		kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
 		for (pa = 0, kva = KERNBASE; kva + NBPD_L2 <= kva_end;
 		     kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
