@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 2007/07/29 12:15:35 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 2007/10/08 16:41:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30 2007/07/29 12:15:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.31 2007/10/08 16:41:05 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -519,8 +519,7 @@ fdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */

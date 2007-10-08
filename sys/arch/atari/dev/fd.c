@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 2007/07/29 12:15:36 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.59 2007/10/08 16:41:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2007/07/29 12:15:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2007/10/08 16:41:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,8 +406,7 @@ void		*auxp;
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->dkdev.dk_name = sc->sc_dv.dv_xname;
-	sc->dkdev.dk_driver = &fddkdriver;
+	disk_init(&sc->dkdev, fd->sc_dv.dv_xname, &fddkdriver);
 	disk_attach(&sc->dkdev);
 }
 
