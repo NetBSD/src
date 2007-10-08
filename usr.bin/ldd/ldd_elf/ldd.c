@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.29 2007/10/08 00:15:05 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.30 2007/10/08 12:51:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.29 2007/10/08 00:15:05 christos Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.30 2007/10/08 12:51:21 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,9 +153,9 @@ main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	}
-	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	_rtld_pagesz = sysconf(_SC_PAGESIZE);
+	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	for (; argc != 0; argc--, argv++) {
 		int fd = open(*argv, O_RDONLY);
