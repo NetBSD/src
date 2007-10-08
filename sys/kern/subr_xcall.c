@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.2 2007/10/08 15:12:08 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.3 2007/10/08 17:26:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.2 2007/10/08 15:12:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.3 2007/10/08 17:26:40 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.2 2007/10/08 15:12:08 ad Exp $");
 #include <sys/condvar.h>
 #include <sys/evcnt.h>
 #include <sys/kthread.h>
+#include <sys/cpu.h>
 
 #define	PRI_XCALL	0
 
