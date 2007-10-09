@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.12 2007/04/14 20:34:22 martin Exp $	*/
+/*	$NetBSD: sock.c,v 1.13 2007/10/09 01:23:21 mrg Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -14,6 +14,7 @@ static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.6 2007/02/17 12:41:51 darren
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 #if defined(__NetBSD__) && defined(__vax__)
 /*
  * XXX need to declare boolean_t for _KERNEL <sys/files.h>
@@ -33,6 +34,7 @@ typedef int     boolean_t;
 #if !defined(__osf__)
 # ifdef __NetBSD__ 
 #  include <machine/lock.h>
+#  include <sys/mutex.h>
 # endif
 # define _KERNEL
 # define	KERNEL
