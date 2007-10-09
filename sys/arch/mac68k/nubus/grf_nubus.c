@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.73 2007/03/05 21:13:36 he Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.73.2.1 2007/10/09 13:38:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.73 2007/03/05 21:13:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.73.2.1 2007/10/09 13:38:08 ad Exp $");
 
 #include <sys/param.h>
 
@@ -220,7 +220,7 @@ bad:
 		 * This is the Toby card, but apparently some manufacturers
 		 * (like Cornerstone) didn't bother to get/use their own
 		 * value here, even though the cards are different, so we
-		 * so we try to differentiate here.
+		 * try to differentiate here.
 		 */
 		if (strncmp(cardname, "Samsung 768", 11) == 0)
 			sc->card_id = NUBUS_DRHW_SAM768;

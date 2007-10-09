@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37.2.1 2007/07/15 13:16:00 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37.2.2 2007/10/09 13:37:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.2.1 2007/07/15 13:16:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.2.2 2007/10/09 13:37:42 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -154,7 +154,7 @@ void *msgbufaddr;
 /*
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on cofigured CPU types in the kernel
+ * on configured CPU types in the kernel
  */
 int icache_stride, icache_line_mask;
 int dcache_stride, dcache_line_mask;

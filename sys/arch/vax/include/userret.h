@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.5.4.1 2007/05/27 14:26:56 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.5.4.2 2007/10/09 13:38:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -47,7 +47,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 	for (;;) {
 		if ((l->l_flag & LW_USERRET) != 0)
 			lwp_userret(l);
-		if (!curcpu()->ci_need_resched)
+		if (!curcpu()->ci_want_resched)
 			break;
 		preempt();
 	}

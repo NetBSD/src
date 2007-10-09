@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.189.2.9 2007/08/26 15:01:16 yamt Exp $ */
+/* $NetBSD: init_sysent.c,v 1.189.2.10 2007/10/09 13:44:22 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.9 2007/08/26 15:01:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.10 2007/10/09 13:44:22 ad Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -743,26 +743,26 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 256 = unimplemented sys__ksem_timedwait */
 #endif
-	{ 0, 0, 0,
-	    sys_nosys },			/* 257 = unimplemented sys_mq_open */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 258 = unimplemented sys_mq_close */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 259 = unimplemented sys_mq_unlink */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 260 = unimplemented sys_mq_getattr */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 261 = unimplemented sys_mq_setattr */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 262 = unimplemented sys_mq_notify */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 263 = unimplemented sys_mq_send */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 264 = unimplemented sys_mq_receive */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 265 = unimplemented sys_mq_timedsend */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 266 = unimplemented sys_mq_timedreceive */
+	{ 4, s(struct sys_mq_open_args), 0,
+	    sys_mq_open },			/* 257 = mq_open */
+	{ 1, s(struct sys_mq_close_args), 0,
+	    sys_mq_close },			/* 258 = mq_close */
+	{ 1, s(struct sys_mq_unlink_args), 0,
+	    sys_mq_unlink },			/* 259 = mq_unlink */
+	{ 2, s(struct sys_mq_getattr_args), 0,
+	    sys_mq_getattr },			/* 260 = mq_getattr */
+	{ 3, s(struct sys_mq_setattr_args), 0,
+	    sys_mq_setattr },			/* 261 = mq_setattr */
+	{ 2, s(struct sys_mq_notify_args), 0,
+	    sys_mq_notify },			/* 262 = mq_notify */
+	{ 4, s(struct sys_mq_send_args), 0,
+	    sys_mq_send },			/* 263 = mq_send */
+	{ 4, s(struct sys_mq_receive_args), 0,
+	    sys_mq_receive },			/* 264 = mq_receive */
+	{ 5, s(struct sys_mq_timedsend_args), 0,
+	    sys_mq_timedsend },			/* 265 = mq_timedsend */
+	{ 5, s(struct sys_mq_timedreceive_args), 0,
+	    sys_mq_timedreceive },		/* 266 = mq_timedreceive */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 267 = unimplemented */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.9.6.3 2007/07/01 21:50:47 ad Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.9.6.4 2007/10/09 13:44:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.9.6.3 2007/07/01 21:50:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.9.6.4 2007/10/09 13:44:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,9 +96,9 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 		memo = hci_memo_find(unit, bdaddr);
 		if (memo != NULL) {
-			cp.page_scan_rep_mode = memo->response.page_scan_rep_mode;
-			cp.page_scan_mode = memo->response.page_scan_mode;
-			cp.clock_offset = htole16(memo->response.clock_offset);
+			cp.page_scan_rep_mode = memo->page_scan_rep_mode;
+			cp.page_scan_mode = memo->page_scan_mode;
+			cp.clock_offset = memo->clock_offset;
 		}
 
 		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)
@@ -989,6 +989,18 @@ hci_link_free(struct hci_link *link, int err)
 	callout_stop(&link->hl_expire);
 	if (callout_invoking(&link->hl_expire))
 		return;
+
+	/*
+	 * If we made a note of clock offset, keep it in a memo
+	 * to facilitate reconnections to this device
+	 */
+	if (link->hl_clock != 0) {
+		struct hci_memo *memo;
+
+		memo = hci_memo_new(link->hl_unit, &link->hl_bdaddr);
+		if (memo != NULL)
+			memo->clock_offset = link->hl_clock;
+	}
 
 	TAILQ_REMOVE(&link->hl_unit->hci_links, link, hl_next);
 	free(link, M_BLUETOOTH);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.6 2007/08/23 13:19:00 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.7 2007/10/09 13:38:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.6 2007/08/23 13:19:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.7 2007/10/09 13:38:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -688,8 +688,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		    source->is_type, pic->pic_dev.dv_xname, pin);
 	}
 
-	if (!cold)
-		pic->pic_hwmask(pic, pin);
+	pic->pic_hwmask(pic, pin);
 
 	/*
 	 * Figure out where to put the handler.
@@ -735,8 +734,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	pic->pic_addroute(pic, ci, pin, idt_vec, type);
 
-	if (!cold)
-		pic->pic_hwunmask(pic, pin);
+	pic->pic_hwunmask(pic, pin);
 
 #ifdef INTRDEBUG
 	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
@@ -855,6 +853,16 @@ struct intrhand fake_ipi_intrhand;
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
+static inline int
+redzone_const_or_zero(int x)
+{
+#ifdef DIAGNOSTIC
+	return x;
+#else
+	return 0;
+#endif /* !DIAGNOSTIC */
+}
+
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
  * for each CPU.
@@ -867,7 +875,7 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 #endif
 #if defined(INTRSTACKSIZE)
-	char *cp;
+	vaddr_t istack;
 #endif /* defined(INTRSTACKSIZE) */
 	static bool again;
 

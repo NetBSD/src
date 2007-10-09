@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.10 2007/08/24 21:28:36 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.11 2007/10/09 13:44:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.10 2007/08/24 21:28:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.11 2007/10/09 13:44:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.10 2007/08/24 21:28:36 ad Exp 
 #include <sys/lockf.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>

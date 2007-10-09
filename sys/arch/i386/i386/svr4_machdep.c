@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.83.2.3 2007/07/15 13:16:11 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.83.2.4 2007/10/09 13:37:56 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.3 2007/07/15 13:16:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.4 2007/10/09 13:37:56 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -517,7 +517,6 @@ svr4_fasttrap(frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct schedstate_percpu *spc;
 	struct timeval tv;
 	struct timespec ts;
 	uint64_t tm;

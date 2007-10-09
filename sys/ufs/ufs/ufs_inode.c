@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64.6.7 2007/10/08 20:31:54 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.6.8 2007/10/09 13:45:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.7 2007/10/08 20:31:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.8 2007/10/09 13:45:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.6.7 2007/10/08 20:31:54 ad Exp $"
 #include <sys/namei.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -200,7 +201,8 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
 	int ppb = MAX(bsize >> PAGE_SHIFT, 1);
-	struct vm_page *pgs[ppb];
+	struct vm_page **pgs;
+	size_t pgssize;
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_size);
@@ -210,7 +212,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 
 	error = 0;
 	uobj = &vp->v_uobj;
-	pgs[0] = NULL;
 
 	/*
 	 * read or create pages covering the range of the allocation and
@@ -221,13 +222,15 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
 	npages = MIN(ppb, (round_page(neweob) - pagestart) >> PAGE_SHIFT);
-	memset(pgs, 0, npages * sizeof(struct vm_page *));
+	pgssize = npages * sizeof(struct vm_page *);
+	pgs = kmem_zalloc(pgssize, KM_SLEEP);
+
 	mutex_enter(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
 	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
-		return error;
+		goto out;
 	}
 	mutex_enter(&uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
@@ -279,5 +282,8 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		uvm_page_unbusy(pgs, npages);
 	}
 	mutex_exit(&uobj->vmobjlock);
+
+ out:
+ 	kmem_free(pgs, pgssize);
 	return error;
 }

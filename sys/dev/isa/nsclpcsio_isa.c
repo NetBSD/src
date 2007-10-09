@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.16.4.1 2007/07/15 13:21:18 ad Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.16.4.2 2007/10/09 13:41:38 ad Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.1 2007/07/15 13:21:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.2 2007/10/09 13:41:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,9 +36,17 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.1 2007/07/15 13:21:18 ad Ex
 #include <sys/gpio.h>
 #include <machine/bus.h>
 
+/* Don't use gpio for now in the LKM */
+#ifdef _LKM
+#undef NGPIO
+#endif
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#ifndef _LKM
 #include "gpio.h"
+#endif
 #if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
 #endif
@@ -46,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.1 2007/07/15 13:21:18 ad Ex
 
 static int nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
 static void nsclpcsio_isa_attach(struct device *, struct device *, void *);
+static int nsclpcsio_isa_detach(struct device *, int);
 
 #define GPIO_NPINS 29
 #define	SIO_GPIO_CONF_OUTPUTEN	(1 << 0)
@@ -76,7 +85,7 @@ struct nsclpcsio_softc {
 	    (sc)->sc_gpio_ioh, (reg), (val))
 
 CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
-    nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
+    nsclpcsio_isa_match, nsclpcsio_isa_attach, nsclpcsio_isa_detach, NULL);
 
 static u_int8_t nsread(bus_space_tag_t, bus_space_handle_t, int);
 static void nswrite(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
@@ -296,6 +305,16 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self,
 	return;
 }
 
+static int
+nsclpcsio_isa_detach(struct device *self, int flags)
+{
+	struct nsclpcsio_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(&sc->sc_sysmon);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	return 0;
+}
+
 static void
 tms_update(sc, chan)
 	struct nsclpcsio_softc *sc;
@@ -321,11 +340,6 @@ tms_update(sc, chan)
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
-
-	/* enable monitoring */
-	sc->sc_data[chan].monitor = true;
-	sc->sc_data[chan].flags = 
-	    (ENVSYS_FMONWARNUNDER|ENVSYS_FMONWARNOVER|ENVSYS_FMONCRITOVER);
 
 	/*
 	 * If the channel is enabled, it is considered valid.

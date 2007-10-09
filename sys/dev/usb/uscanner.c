@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.55.2.1 2007/03/13 16:51:06 ad Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.55.2.2 2007/10/09 13:42:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.55.2.1 2007/03/13 16:51:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.55.2.2 2007/10/09 13:42:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ USB_ATTACH(uscanner)
 			break;
 	}
 
-	/* Verify that we goething sensible */
+	/* Verify that we got something sensible */
 	if (ed_bulkin == NULL || ed_bulkout == NULL) {
 		printf("%s: bulk-in and/or bulk-out endpoint not found\n",
 			USBDEVNAME(sc->sc_dev));

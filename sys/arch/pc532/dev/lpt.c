@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.48.2.1 2007/07/15 13:16:38 ad Exp $	*/
+/*	$NetBSD: lpt.c,v 1.48.2.2 2007/10/09 13:38:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.48.2.1 2007/07/15 13:16:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.48.2.2 2007/10/09 13:38:18 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -591,7 +591,7 @@ plipioctl(struct ifnet *ifp, u_long cmd, void *data)
 				LLADDR(sdl)[0] = 0xfd;
 				LLADDR(sdl)[1] = 0xfd;
 				for (i = sc->sc_adrcksum = 0; i < 5; i++)
-					sc->sc_adrcksum += LLADDR(sdl)[i];
+					sc->sc_adrcksum += CLLADDR(sdl)[i];
 				sc->sc_adrcksum *= 2;
 			}
 #endif

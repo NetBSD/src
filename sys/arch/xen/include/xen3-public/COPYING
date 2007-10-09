@@ -1,9 +1,20 @@
+$NetBSD: COPYING,v 1.1.1.1.34.1 2007/10/09 13:38:53 ad Exp $
 XEN NOTICE
 ==========
 
-This copyright applies to all files within this subdirectory. All
-other files in the Xen source distribution are covered by version 2 of
-the GNU General Public License.
+This copyright applies to all files within this subdirectory and its
+subdirectories:
+  include/public/*.h
+  include/public/hvm/*.h
+  include/public/io/*.h
+
+The intention is that these files can be freely copied into the source
+tree of an operating system when porting that OS to run on Xen. Doing
+so does *not* cause the OS to become subject to the terms of the GPL.
+
+All other files in the Xen source distribution are covered by version
+2 of the GNU General Public License except where explicitly stated
+otherwise within individual source files.
 
  -- Keir Fraser (on behalf of the Xen team)
 

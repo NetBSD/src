@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.35.2.2 2007/08/20 18:38:06 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.35.2.3 2007/10/09 13:37:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35.2.2 2007/08/20 18:38:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35.2.3 2007/10/09 13:37:47 ad Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -157,8 +157,8 @@ enter_s4_with_bios(void)
 
 	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
 
-	ef = read_eflags();
-	disable_intr();
+	ef = x86_read_psl();
+	x86_disable_intr();
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -183,7 +183,7 @@ enter_s4_with_bios(void)
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllRuntimeGpes();
 
-	write_eflags(ef);
+	x86_write_psl(ef);
 
 	return (AE_OK);
 }
@@ -342,7 +342,7 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
-	ef = read_eflags();
+	ef = x86_read_psl();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
@@ -360,7 +360,7 @@ acpi_md_sleep(int state)
 	cr3 = rcr3();
 
 	ret_addr = 0;
-	disable_intr();
+	x86_disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -458,7 +458,7 @@ acpi_md_sleep(int state)
 	}
 
 out:
-	enable_intr();
+	x86_enable_intr();
 
 	lcr3(cr3);
 	if (pm != pmap_kernel()) {
@@ -472,7 +472,7 @@ out:
 		pmap_update(pm);
 	}
 
-	write_eflags(ef);
+	x86_write_psl(ef);
 
 	return (ret);
 #undef WAKECODE_FIXUP

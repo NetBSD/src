@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38.6.1 2007/05/27 12:28:23 ad Exp $ */
+/*	$NetBSD: param.h,v 1.38.6.2 2007/10/09 13:38:32 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,11 +167,8 @@ extern int nbpg, pgofset, pgshift;
  *			and panicstack (32KB)
  * KERNEND+0x018000:	CPUINFO_VA -- cpu_info structure
  * KERNEND+0x020000:	unmapped space (top of panicstack)
- * KERNEND+0x030000:	KSTACK_VA -- per-cpu 64K locked TTE
- *			bottom of kernel stack
- * KERNEND+0x040000:	INITSTACK_VA -- initial kernel stack pointer
- * KERNEND+0x040000:	IODEV_BASE -- begin mapping IO devices here.
- * 0x00000000fe000000:	IODEV_END -- end of device mapping space.
+ * KERNEND+0x022000:	IODEV_BASE -- begin mapping IO devices here.
+ * 0x00000000f0000000:	IODEV_END -- end of device mapping space.
  *
  */
 #define	KERNBASE	0x001000000	/* start of kernel virtual space */
@@ -186,14 +183,12 @@ extern int nbpg, pgofset, pgshift;
 /*
  * Here's the location of the interrupt stack and CPU structure.
  */
-#define	INTSTACK	(      KERNEND +  8*_MAXNBPG)
-#define	EINTSTACK	(     INTSTACK +  4*_MAXNBPG)
+#define	INTSTACK	(      KERNEND + 8*_MAXNBPG)
+#define	EINTSTACK	(     INTSTACK + 4*_MAXNBPG)
 #define	CPUINFO_VA	(    EINTSTACK              )
-#define	PANICSTACK	(     INTSTACK +  8*_MAXNBPG)
-#define	KSTACK_VA	(     INTSTACK + 16*_MAXNBPG)	/* make this 16 to have a redzone */
-#define	INITSTACK_VA	(    KSTACK_VA +  8*_MAXNBPG)
-#define	IODEV_BASE	( INITSTACK_VA +  0*_MAXNBPG)
-#define	IODEV_END	0x0f0000000UL		/* 16 MB of iospace */
+#define	PANICSTACK	(     INTSTACK + 8*_MAXNBPG)
+#define	IODEV_BASE	(     INTSTACK + 9*_MAXNBPG)	/* 1 page redzone */
+#define	IODEV_END	0x0f0000000UL			/* ~16 MB of iospace */
 
 /*
  * Constants related to network buffer management.

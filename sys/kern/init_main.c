@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.22 2007/10/09 13:44:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.22 2007/10/09 13:44:22 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -85,10 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Ex
 #include "opt_ktrace.h"
 #include "opt_pax.h"
 
-#include "sysmon_taskq.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
+#include "sysmon_taskq.h"
+#include "sysmon_wdog.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -128,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Ex
 #include <sys/uuid.h>
 #include <sys/extent.h>
 #include <sys/disk.h>
+#include <sys/mqueue.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -186,7 +188,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Ex
 
 #include <dev/cons.h>
 
-#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
+#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0 || NSYSMON_WDOG > 0
 #include <dev/sysmon/sysmonvar.h>
 #endif
 
@@ -259,15 +261,22 @@ main(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	/*
-	 * Initialize the current LWP pointer (curlwp) before
-	 * any possible traps/probes to simplify trap processing.
-	 */
 	l = &lwp0;
-	curlwp = l;
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;
+
+	/*
+	 * XXX This is a temporary check to be removed before
+	 * NetBSD 5.0 is released.
+	 */
+#if !defined(__i386__ ) && !defined(__x86_64__)
+	if (curlwp != l) {
+		printf("NOTICE: curlwp should be set before main()\n");
+		DELAY(250000);
+		curlwp = l;
+	}
+#endif
 
 	/*
 	 * Attempt to find console and initialize
@@ -376,12 +385,19 @@ main(void)
 	/* Initialize the file descriptor system. */
 	filedesc_init();
 
+	/* Initialize the file descriptor system. */
+	filedesc_init();
+
 	/* Initialize the select()/poll() system calls. */
 	selsysinit();
 
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+	/* Initialize message queues. */
+	mqueue_sysinit();
+
+	/* Initialize the system monitor subsystems. */
 #if NSYSMON_TASKQ > 0
 	sysmon_task_queue_preinit();
 #endif
@@ -393,6 +409,11 @@ main(void)
 #if NSYSMON_POWER > 0
 	sysmon_power_init();
 #endif
+
+#if NSYSMON_WDOG > 0
+	sysmon_wdog_init();
+#endif
+
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
@@ -615,13 +636,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_stime = time;
 			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
+	curlwp->l_stime = time;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;

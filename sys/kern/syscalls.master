@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168.2.9 2007/08/26 15:00:03 yamt Exp $
+	$NetBSD: syscalls.master,v 1.168.2.10 2007/10/09 13:44:31 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -541,16 +541,28 @@
 255	EXCL		sys__ksem_destroy
 256	UNIMPL		sys__ksem_timedwait
 #endif
-257	UNIMPL		sys_mq_open
-258	UNIMPL		sys_mq_close
-259	UNIMPL		sys_mq_unlink
-260	UNIMPL		sys_mq_getattr
-261	UNIMPL		sys_mq_setattr
-262	UNIMPL		sys_mq_notify
-263	UNIMPL		sys_mq_send
-264	UNIMPL		sys_mq_receive
-265	UNIMPL		sys_mq_timedsend
-266	UNIMPL		sys_mq_timedreceive
+257	STD		{ mqd_t sys_mq_open(const char * name, int oflag, \
+			    mode_t mode, struct mq_attr *attr); }
+258	STD		{ int sys_mq_close(mqd_t mqdes); }
+259	STD		{ int sys_mq_unlink(const char *name); }
+260	STD		{ int sys_mq_getattr(mqd_t mqdes, \
+			    struct mq_attr *mqstat); }
+261	STD		{ int sys_mq_setattr(mqd_t mqdes, \
+			    const struct mq_attr *mqstat, \
+			    struct mq_attr *omqstat); }
+262	STD		{ int sys_mq_notify(mqd_t mqdes, \
+			    const struct sigevent *notification); }
+263	STD		{ int sys_mq_send(mqd_t mqdes, const char *msg_ptr, \
+			    size_t msg_len, unsigned msg_prio); }
+264	STD		{ ssize_t sys_mq_receive(mqd_t mqdes, char *msg_ptr, \
+			    size_t msg_len, unsigned *msg_prio); }
+265	STD		{ int sys_mq_timedsend(mqd_t mqdes, \
+			    const char *msg_ptr, size_t msg_len, \
+			    unsigned msg_prio, \
+			    const struct timespec *abs_timeout); }
+266	STD		{ ssize_t sys_mq_timedreceive(mqd_t mqdes, \
+			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
+			    const struct timespec *abs_timeout); }
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL

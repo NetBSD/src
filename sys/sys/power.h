@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.4.30.2 2007/08/20 21:28:19 ad Exp $	*/
+/*	$NetBSD: power.h,v 1.4.30.3 2007/10/09 13:45:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -178,12 +178,12 @@ struct pswitch_state {
 #define PENVSYS_EVENT_BATT_USERCAP	170
 
 /*
- * The following events apply for drive sensors:
+ * The following event apply for battery state and drive sensors:
  *
- * 	PENVSYS_EVENT_DRIVE_STCHANGED	Drive state changed.
+ * 	PENVSYS_EVENT_STATE_CHANGED	State has changed.
  *
  */
-#define PENVSYS_EVENT_DRIVE_STCHANGED	180
+#define PENVSYS_EVENT_STATE_CHANGED	180
 
 
 /*

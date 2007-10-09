@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.9.6.1 2007/03/21 20:11:51 ad Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.9.6.2 2007/10/09 13:44:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.9.6.1 2007/03/21 20:11:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.9.6.2 2007/10/09 13:44:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -117,7 +117,7 @@ uuid_node(uint16_t *node)
 			if (sdl != NULL && sdl->sdl_family == AF_LINK &&
 			    sdl->sdl_type == IFT_ETHER) {
 				/* Got a MAC address. */
-				memcpy(node, LLADDR(sdl), UUID_NODE_LEN);
+				memcpy(node, CLLADDR(sdl), UUID_NODE_LEN);
 				splx(s);
 				return;
 			}

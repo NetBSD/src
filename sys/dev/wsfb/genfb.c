@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.2.2.4 2007/08/20 18:38:05 ad Exp $ */
+/*	$NetBSD: genfb.c,v 1.2.2.5 2007/10/09 13:42:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2.2.4 2007/08/20 18:38:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.2.2.5 2007/10/09 13:42:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,13 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
 	long defattr;
-	int console, i, j;
- 
+	int i, j;
+	bool console;
+
+	aprint_verbose("%s: framebuffer at %p, size %dx%d, depth %d, "
+	    "stride %d\n", sc->sc_dev.dv_xname, sc->sc_fbaddr,
+	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
+
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
 		0, 0,
@@ -145,6 +150,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    &genfb_accessops);
 	sc->vd.init_screen = genfb_init_screen;
 
+	/* Do not print anything between this point and the screen
+	 * clear operation below.  Otherwise it will be lost. */
+
 	ri = &sc->sc_console_screen.scr_ri;
 
 	if (console) {
@@ -163,10 +171,14 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
+		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
+	/* Clear the whole screen to bring it to a known state. */
+	(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
+
 	j = 0;
-	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
+	for (i = 0; i < (1 << sc->sc_depth); i++) {
 
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
@@ -353,7 +365,7 @@ genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
+	for (i = 0; i < (1 << sc->sc_depth); i++) {
 		genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
 	}

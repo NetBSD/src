@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.41.2.3 2007/06/08 14:17:45 ad Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.41.2.4 2007/10/09 13:44:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.41.2.3 2007/06/08 14:17:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.41.2.4 2007/10/09 13:44:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,9 +220,8 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	rtcache_check(&ipf->ipf_ro);
-	rt = ipf->ipf_ro.ro_rt;
-	if (rt == NULL || (rt->rt_ifp->if_flags & IFF_UP) == 0)
+	if (rtcache_down(&ipf->ipf_ro) || (rt = ipf->ipf_ro.ro_rt) == NULL ||
+	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
 	/*
@@ -293,8 +292,7 @@ ipflow_fastforward(struct mbuf *m)
 static void
 ipflow_addstats(struct ipflow *ipf)
 {
-	rtcache_check(&ipf->ipf_ro);
-	if (ipf->ipf_ro.ro_rt != NULL)
+	if (!rtcache_down(&ipf->ipf_ro) && ipf->ipf_ro.ro_rt != NULL)
 		ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
 	ipstat.ips_total += ipf->ipf_uses;
@@ -335,8 +333,8 @@ ipflow_reap(int just_one)
 			 * If this no longer points to a valid route
 			 * reclaim it.
 			 */
-			rtcache_check(&ipf->ipf_ro);
-			if (ipf->ipf_ro.ro_rt == NULL)
+			if (rtcache_down(&ipf->ipf_ro) ||
+			    ipf->ipf_ro.ro_rt == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -377,9 +375,8 @@ ipflow_slowtimo(void)
 
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
-		rtcache_check(&ipf->ipf_ro);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
-		    ipf->ipf_ro.ro_rt == NULL) {
+		    rtcache_down(&ipf->ipf_ro) || ipf->ipf_ro.ro_rt == NULL) {
 			ipflow_free(ipf);
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;

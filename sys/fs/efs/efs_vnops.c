@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.3.2.5 2007/09/16 19:04:28 ad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.3.2.6 2007/10/09 13:44:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.5 2007/09/16 19:04:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.6 2007/10/09 13:44:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ efs_lookup(void *v)
 				cache_enter(ap->a_dvp, NULL, cnp);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
-				err = VOP_ACCESS(vp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				err = VOP_ACCESS(ap->a_dvp, VWRITE,
+				    cnp->cn_cred, cnp->cn_lwp);
 				if (err)
 					return (err);
 				cnp->cn_flags |= SAVENAME;
@@ -296,11 +296,11 @@ efs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
+	struct dirent *dp;
 	struct efs_dinode edi;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
 	struct buf *bp;
-	struct dirent *dp;
 	struct efs_dirent *de;
 	struct efs_dirblk *db;
 	struct uio *uio = ap->a_uio;
@@ -321,6 +321,8 @@ efs_readdir(void *v)
 		    uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
  	}
+
+	dp = malloc(sizeof(struct dirent), M_EFSTMP, M_WAITOK | M_ZERO);
 
 	offset = 0;
 	efs_extent_iterator_init(&exi, ei, 0);
@@ -449,11 +451,15 @@ efs_readdir(void *v)
 
 	uio->uio_offset = offset;
 
+	free(dp, M_EFSTMP);
+
 	return (0);
 
  exit_err:
 	if (cookies != NULL)
 		free(cookies, M_TEMP);
+
+	free(dp, M_EFSTMP);
 	
 	return (err);
 }

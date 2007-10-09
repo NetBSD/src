@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11.2.13 2007/08/31 14:44:36 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11.2.14 2007/10/09 13:44:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.13 2007/08/31 14:44:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.14 2007/10/09 13:44:27 ad Exp $");
 
 #define	__MUTEX_PRIVATE
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.13 2007/08/31 14:44:36 ad Exp 
     LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    mutex_abort(mtx, __FUNCTION__, msg)
+    mutex_abort(mtx, __func__, msg)
 
 #if defined(LOCKDEBUG)
 
@@ -228,16 +228,16 @@ MUTEX_SPIN_UNLOCK(kmutex_t *mtx)
 static bool
 MUTEX_SPIN_LOCK(kmutex_t *mtx)
 {
-	if (mtx->mtx_lock == __SIMPLELOCK_LOCKED)
+	if (__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock))
 		return false;
-	mtx->mtx_lock = __SIMPLELOCK_LOCKED;
+	__cpu_simple_lock_set(&mtx->mtx_lock);
 	return true;
 }
 
 static void
 MUTEX_SPIN_UNLOCK(kmutex_t *mtx)
 {
-	mtx->mtx_lock = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(&mtx->mtx_lock);
 }
 #endif
 
@@ -393,7 +393,7 @@ mutex_destroy(kmutex_t *mtx)
 		MUTEX_ASSERT(mtx, !MUTEX_OWNED(mtx->mtx_owner) &&
 		    !MUTEX_HAS_WAITERS(mtx));
 	} else {
-		MUTEX_ASSERT(mtx, mtx->mtx_lock != __SIMPLELOCK_LOCKED);
+		MUTEX_ASSERT(mtx, !__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock));
 	}
 
 	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
@@ -471,7 +471,7 @@ mutex_spin_retry(kmutex_t *mtx)
 	do {
 		if (panicstr != NULL)
 			break;
-		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+		while (__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock)) {
 			SPINLOCK_BACKOFF(count); 
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
@@ -722,7 +722,7 @@ mutex_vector_exit(kmutex_t *mtx)
 	uintptr_t curthread;
 
 	if (MUTEX_SPIN_P(mtx)) {
-		MUTEX_ASSERT(mtx, mtx->mtx_lock == __SIMPLELOCK_LOCKED);
+		MUTEX_ASSERT(mtx, __SIMPLELOCK_LOCKED_P(&mtx->mtx_lock);
 		MUTEX_UNLOCKED(mtx);
 		MUTEX_SPIN_UNLOCK(mtx);
 		MUTEX_SPIN_SPLRESTORE(mtx);
@@ -808,7 +808,7 @@ mutex_owned(kmutex_t *mtx)
 
 	if (MUTEX_ADAPTIVE_P(mtx))
 		return MUTEX_OWNER(mtx->mtx_owner) == (uintptr_t)curlwp;
-	return mtx->mtx_lock == __SIMPLELOCK_LOCKED;
+	return __SIMPLELOCK_LOCKED_P(&mtx->mtx_lock);
 }
 
 /*

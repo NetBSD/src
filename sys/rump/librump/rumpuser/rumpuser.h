@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.4.2.2 2007/08/20 22:07:37 ad Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.4.2.3 2007/10/09 13:45:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/vnode.h>
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -46,12 +45,13 @@ void rumpuser_free(void *);
 
 int rumpuser_open(const char *, int, int *);
 int rumpuser_ioctl(int, u_long, void *, int *);
-void rumpuser_close(int);
+int rumpuser_close(int, int *);
+int rumpuser_fsync(int, int *);
 
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
 
-int rumpuser_gettimeofday(struct timeval *);
+int rumpuser_gettimeofday(struct timeval *, int *);
 
 uint16_t rumpuser_bswap16(uint16_t);
 uint32_t rumpuser_bswap32(uint32_t);

@@ -1,11 +1,10 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.11 2007/09/16 19:04:30 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.12 2007/10/09 13:44:19 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Google Summer of Code program and the Ulla Tuominen Foundation.
- * The Google SoC project was mentored by Bill Studenmund.
+ * Ulla Tuominen Foundation and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.11 2007/09/16 19:04:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.12 2007/10/09 13:44:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -503,77 +502,15 @@ puffs_cidcvt(struct puffs_kcid *pkcid, const struct lwp *l)
 	}
 }
 
-static void
-puffs_gop_size(struct vnode *vp, off_t size, off_t *eobp,
-	int flags)
-{
-
-	*eobp = size;
-}
-
-static void
-puffs_gop_markupdate(struct vnode *vp, int flags)
-{
-	int uflags = 0;
-
-	if (flags & GOP_UPDATE_ACCESSED)
-		uflags |= PUFFS_UPDATEATIME;
-	if (flags & GOP_UPDATE_MODIFIED)
-		uflags |= PUFFS_UPDATEMTIME;
-
-	puffs_updatenode(vp, uflags);
-}
-
 void
-puffs_updatenode(struct vnode *vp, int flags)
-{
-	struct puffs_node *pn;
-	struct timespec ts;
-
-	if (flags == 0)
-		return;
-
-	pn = VPTOPP(vp);
-	nanotime(&ts);
-
-	if (flags & PUFFS_UPDATEATIME) {
-		pn->pn_mc_atime = ts;
-		pn->pn_stat |= PNODE_METACACHE_ATIME;
-	}
-	if (flags & PUFFS_UPDATECTIME) {
-		pn->pn_mc_ctime = ts;
-		pn->pn_stat |= PNODE_METACACHE_CTIME;
-	}
-	if (flags & PUFFS_UPDATEMTIME) {
-		pn->pn_mc_mtime = ts;
-		pn->pn_stat |= PNODE_METACACHE_MTIME;
-	}
-	if (flags & PUFFS_UPDATESIZE) {
-		pn->pn_mc_size = vp->v_size;
-		pn->pn_stat |= PNODE_METACACHE_SIZE;
-	}
-}
-
-void
-puffs_updatevpsize(struct vnode *vp)
-{
-	struct vattr va;
-
-	if (VOP_GETATTR(vp, &va, FSCRED, NULL))
-		return;
-
-	if (va.va_size != VNOVAL)
-		vp->v_size = va.va_size;
-}
-
-void
-puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
+puffs_parkdone_asyncbioread(struct puffs_mount *pmp,
+	struct puffs_req *preq, void *arg)
 {
 	struct puffs_vnreq_read *read_argp = (void *)preq;
 	struct buf *bp = arg;
 	size_t moved;
 
-	bp->b_error = preq->preq_rv;
+	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
 	if (bp->b_error == 0) {
 		moved = bp->b_bcount - read_argp->pvnr_resid;
 		bp->b_resid = read_argp->pvnr_resid;
@@ -587,13 +524,14 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 
 /* XXX: userspace can leak kernel resources */
 void
-puffs_parkdone_poll(struct puffs_req *preq, void *arg)
+puffs_parkdone_poll(struct puffs_mount *pmp, struct puffs_req *preq, void *arg)
 {
 	struct puffs_vnreq_poll *poll_argp = (void *)preq;
 	struct puffs_node *pn = arg;
-	int revents;
+	int revents, error;
 
-	if (preq->preq_rv == 0)
+	error = checkerr(pmp, preq->preq_rv, __func__);
+	if (error)
 		revents = poll_argp->pvnr_events;
 	else
 		revents = POLLERR;
@@ -623,4 +561,25 @@ puffs_mp_release(struct puffs_mount *pmp)
 	KASSERT(mutex_owned(&pmp->pmp_lock));
 	if (--pmp->pmp_refcount == 0)
 		cv_broadcast(&pmp->pmp_refcount_cv);
+}
+
+void
+puffs_gop_size(struct vnode *vp, off_t size, off_t *eobp,
+	int flags)
+{
+
+	*eobp = size;
+}
+
+void
+puffs_gop_markupdate(struct vnode *vp, int flags)
+{
+	int uflags = 0;
+
+	if (flags & GOP_UPDATE_ACCESSED)
+		uflags |= PUFFS_UPDATEATIME;
+	if (flags & GOP_UPDATE_MODIFIED)
+		uflags |= PUFFS_UPDATEMTIME;
+
+	puffs_updatenode(vp, uflags);
 }

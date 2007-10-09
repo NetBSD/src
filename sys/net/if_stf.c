@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.58.2.2 2007/06/08 14:17:36 ad Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.58.2.3 2007/10/09 13:44:41 ad Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.58.2.2 2007/06/08 14:17:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.58.2.3 2007/10/09 13:44:41 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -703,7 +703,8 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
-		if (ifr != NULL && ifr->ifr_addr.sa_family == AF_INET6)
+		if (ifr != NULL &&
+		    ifreq_getaddr(cmd, ifr)->sa_family == AF_INET6)
 			;
 		else
 			error = EAFNOSUPPORT;

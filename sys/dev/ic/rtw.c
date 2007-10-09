@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.85.2.2 2007/07/01 21:47:54 ad Exp $ */
+/* $NetBSD: rtw.c,v 1.85.2.3 2007/10/09 13:41:30 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.85.2.2 2007/07/01 21:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.85.2.3 2007/10/09 13:41:30 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -1621,7 +1621,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			bpf_mtap2(sc->sc_radiobpf, (void *)rr,
 			    sizeof(sc->sc_rxtapu), m);
 		}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		ieee80211_input(&sc->sc_ic, m, ni, rssi, htsftl);
 		ieee80211_free_node(ni);
@@ -3338,7 +3338,7 @@ rtw_start(struct ifnet *ifp)
 			bpf_mtap2(sc->sc_radiobpf, (void *)rt,
 			    sizeof(sc->sc_txtapu), m0);
 		}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		for (i = 0, lastdesc = desc = ts->ts_first;
 		     i < dmamap->dm_nsegs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $ */
+/*	$NetBSD: if_ie.c,v 1.46.2.1 2007/10/09 13:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46.2.1 2007/10/09 13:38:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1461,7 +1461,7 @@ ieinit(struct ie_softc *sc)
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
 		(sc->sc_memcpy)((void *)&cmd->ie_address,
-		    LLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
+		    CLLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
@@ -1515,7 +1515,6 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1591,11 +1590,7 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

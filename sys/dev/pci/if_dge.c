@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.15.2.1 2007/09/01 13:14:31 ad Exp $ */
+/*	$NetBSD: if_dge.c,v 1.15.2.2 2007/10/09 13:41:44 ad Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.15.2.1 2007/09/01 13:14:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.15.2.2 2007/10/09 13:41:44 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2224,7 +2224,7 @@ dge_set_filter(struct dge_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	dge_set_ral(sc, LLADDR(ifp->if_sadl), 0);
+	dge_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
 	for (i = 1; i < RA_TABSIZE; i++)
 		dge_set_ral(sc, NULL, i);
 

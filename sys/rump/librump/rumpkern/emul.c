@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.10.2.2 2007/08/20 22:07:26 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.10.2.3 2007/10/09 13:45:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,10 +48,14 @@
 
 #include <uvm/uvm_map.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
+#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
+#else
+volatile struct timeval time = { 1, 0 };
+#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;
@@ -212,8 +216,9 @@ device_class(device_t dev)
 void
 getmicrouptime(struct timeval *tvp)
 {
+	int error;
 
-	rumpuser_gettimeofday(tvp);
+	rumpuser_gettimeofday(tvp, &error);
 }
 
 int
@@ -228,7 +233,6 @@ void
 wakeup(wchan_t ident)
 {
 
-	printf("%s: not implemented\n", __func__);
 }
 
 void
@@ -261,8 +265,9 @@ void
 nanotime(struct timespec *ts)
 {
 	struct timeval tv;
+	int error;
 
-	rumpuser_gettimeofday(&tv);
+	rumpuser_gettimeofday(&tv, &error);
 	TIMEVAL_TO_TIMESPEC(&tv, ts);
 }
 
@@ -277,15 +282,17 @@ getnanotime(struct timespec *ts)
 void
 microtime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void
 getmicrotime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void
@@ -314,4 +321,24 @@ void
 workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
 
+}
+
+void
+callout_init(callout_t *c, u_int flags)
+{
+
+}
+
+void
+callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+bool
+callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
 }

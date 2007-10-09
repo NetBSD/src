@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.2.2 2007/08/19 19:24:18 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.3 2007/10/09 13:38:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.2 2007/08/19 19:24:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.3 2007/10/09 13:38:40 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -243,7 +243,7 @@ dobadsect:
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -458,7 +458,7 @@ dodospart:
 #endif
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }
 

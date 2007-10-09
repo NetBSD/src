@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.6 2007/08/24 23:28:39 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.7 2007/10/09 13:44:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.6 2007/08/24 23:28:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.7 2007/10/09 13:44:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.6 2007/08/24 23:28:39 ad Exp 
 #include <sys/proc.h>
 #include <sys/once.h>
 #include <sys/workqueue.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -146,7 +147,7 @@ physio_done(struct work *wk, void *dummy)
 	struct buf *bp = (void *)wk;
 	size_t todo = bp->b_bufsize;
 	size_t done = bp->b_bcount - bp->b_resid;
-	struct buf *mbp = bp->b_private;
+	struct physio_stat *ps = bp->b_private;
 
 	KASSERT(&bp->b_work == wk);
 	KASSERT(bp->b_bcount <= todo);
@@ -200,10 +201,10 @@ static void
 physio_biodone(struct buf *bp)
 {
 #if defined(DIAGNOSTIC)
-	struct buf *mbp = bp->b_private;
+	struct physio_stat *ps = bp->b_private;
 	size_t todo = bp->b_bufsize;
 
-	KASSERT(mbp->b_running > 0);
+	KASSERT(ps->ps_running > 0);
 	KASSERT(bp->b_bcount <= todo);
 	KASSERT(bp->b_resid <= bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
@@ -265,6 +266,15 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 	flags &= B_READ | B_WRITE;
 
+	if ((ps = kmem_zalloc(sizeof(*ps), KM_SLEEP)) == NULL)
+		return ENOMEM;
+	/* ps->ps_running = 0; */
+	/* ps->ps_error = 0; */
+	/* ps->ps_failed = 0; */
+	ps->ps_endoffset = -1;
+	mutex_init(&ps->ps_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&ps->ps_cv, "physio");
+
 	/* Make sure we have a buffer, creating one if necessary. */
 	if (obp != NULL) {
 		mutex_enter(&bufcache_lock);
@@ -276,10 +286,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 		concurrency = 0; /* see "XXXkludge" comment below */
 	}
-
-	mbp = getphysbuf();
-	mbp->b_running = 0;
-	mbp->b_endoffset = -1;
 
 	uvm_lwp_hold(l);
 
@@ -308,7 +314,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			}
 			bp->b_dev = dev;
 			bp->b_proc = p;
-			bp->b_private = mbp;
+			bp->b_private = ps;
 			bp->b_vp = NULL;
 
 			/*

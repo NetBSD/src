@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.9.6.1 2007/08/20 18:37:30 ad Exp $ */
+/* $NetBSD: bt3c.c,v 1.9.6.2 2007/10/09 13:41:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.9.6.1 2007/08/20 18:37:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.9.6.2 2007/10/09 13:41:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,11 +129,10 @@ struct bt3c_softc {
 static int bt3c_match(struct device *, struct cfdata *, void *);
 static void bt3c_attach(struct device *, struct device *, void *);
 static int bt3c_detach(struct device *, int);
-static int bt3c_activate(struct device *, enum devact);
 static void bt3c_power(int, void *);
 
 CFATTACH_DECL(bt3c, sizeof(struct bt3c_softc),
-    bt3c_match, bt3c_attach, bt3c_detach, bt3c_activate);
+    bt3c_match, bt3c_attach, bt3c_detach, NULL);
 
 static void bt3c_start(struct hci_unit *);
 static int bt3c_enable(struct hci_unit *);
@@ -921,25 +920,6 @@ bt3c_detach(struct device *self, int flags)
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_iow);
 		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 		sc->sc_iow = -1;
-	}
-
-	return err;
-}
-
-static int
-bt3c_activate(struct device *self, enum devact act)
-{
-	// struct bt3c_softc *sc = (struct bt3c_softc *)self;
-	int err = 0;
-
-	switch(act) {
-	case DVACT_ACTIVATE:
-		err = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		// could notify unit somehow?
-		break;
 	}
 
 	return err;

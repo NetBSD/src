@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.24.2.1 2007/03/13 16:49:55 ad Exp $ */
+/*	$NetBSD: cbsc.c,v 1.24.2.2 2007/10/09 13:37:21 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.24.2.1 2007/03/13 16:49:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.24.2.2 2007/10/09 13:37:21 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.24.2.1 2007/03/13 16:49:55 ad Exp $");
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/cbscvar.h>
 #include <amiga/dev/zbusvar.h>
+
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
 
 void	cbscattach(struct device *, struct device *, void *);
 int	cbscmatch(struct device *, struct cfdata *, void *);

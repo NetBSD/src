@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.63 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.63.2.1 2007/10/09 13:41:22 ad Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.63 2007/03/04 06:01:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.63.2.1 2007/10/09 13:41:22 ad Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -350,7 +350,7 @@ dp8390_init(sc)
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		NIC_PUT(regt, regh, ED_P1_PAR0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
 	dp8390_getmcaf(&sc->sc_ec, mcaf);
@@ -928,11 +928,7 @@ dp8390_ioctl(ifp, cmd, data)
 		}
 
 		/* Update our multicast list. */
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.7.2.6 2007/08/20 18:37:53 ad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.7.2.7 2007/10/09 13:42:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.6 2007/08/20 18:37:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.7 2007/10/09 13:42:08 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -1982,7 +1982,7 @@ rum_init(struct ifnet *ifp)
 	/* clear STA registers */
 	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
 
 	/* initialize ASIC */

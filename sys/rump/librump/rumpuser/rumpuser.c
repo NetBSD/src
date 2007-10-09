@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.6.2.2 2007/08/20 22:07:37 ad Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.6.2.3 2007/10/09 13:45:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,13 +29,30 @@
 
 #define malloc(a) __real_malloc(a)
 
+/* thank the maker for this */
+#ifdef __linux__
+#define _XOPEN_SOURCE 500
+#define _BSD_SOURCE
+#define _FILE_OFFSET_BITS 64
+#include <features.h>
+
+#include <byteswap.h>
+#define bswap16 bswap_16
+#define bswap32 bswap_32
+#define bswap64 bswap_64
+#endif
+
+
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,11 +138,18 @@ rumpuser_ioctl(int fd, u_long cmd, void *data, int *error)
 	DOCALL(int, (ioctl(fd, cmd, data)));
 }
 
-void
-rumpuser_close(int fd)
+int
+rumpuser_close(int fd, int *error)
 {
 
-	close(fd);
+	DOCALL(int, close(fd));
+}
+
+int
+rumpuser_fsync(int fd, int *error)
+{
+
+	DOCALL(int, fsync(fd));
 }
 
 ssize_t
@@ -143,10 +167,10 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 }
 
 int
-rumpuser_gettimeofday(struct timeval *tv)
+rumpuser_gettimeofday(struct timeval *tv, int *error)
 {
 
-	return gettimeofday(tv, NULL);
+	DOCALL(int, gettimeofday(tv, NULL));
 }
 
 int
@@ -156,7 +180,6 @@ rumpuser_gethostname(char *name, size_t namelen, int *error)
 	DOCALL(int, (gethostname(name, namelen)));
 }
 
-/* urgh */
 uint16_t
 rumpuser_bswap16(uint16_t value)
 {
@@ -191,3 +214,25 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 
 	return rv;
 }
+
+#ifdef __linux__
+/* eewww */
+size_t strlcpy(char *, const char *, size_t);
+uint32_t arc4random(void);
+size_t
+strlcpy(char *dest, const char *src, size_t size)
+{
+
+	strncpy(dest, src, size-1);
+	dest[size-1] = '\0';
+
+	return strlen(dest);
+}
+
+uint32_t
+arc4random()
+{
+
+	return (uint32_t)random();
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.12 2007/09/16 19:02:48 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.13 2007/10/09 13:45:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.12 2007/09/16 19:02:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.13 2007/10/09 13:45:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,6 +723,9 @@ ffs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
+	struct lock *lkp;
+	int flags = ap->a_flags;
+	int result;
 
 	/*
 	 * Fake lock during file system suspension.
@@ -730,11 +733,34 @@ ffs_lock(void *v)
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
+		if ((flags & LK_INTERLOCK) != 0)
 			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
+
+	if ((flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (lockmgr(vp->v_vnlock, flags, &vp->v_interlock));
+
+	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
+	    LK_INTERLOCK | LK_NOWAIT | LK_SETRECURSE | LK_CANRECURSE)) == 0);
+	for (;;) {
+		if ((flags & LK_INTERLOCK) == 0) {
+			mutex_enter(&vp->v_interlock);
+			flags |= LK_INTERLOCK;
+		}
+		lkp = vp->v_vnlock;
+		result = lockmgr(lkp, flags, &vp->v_interlock);
+		if (lkp == vp->v_vnlock || result != 0)
+			return result;
+		/*
+		 * Apparent success, except that the vnode mutated between
+		 * snapshot file vnode and regular file vnode while this
+		 * thread slept.  The lock currently held is not the right
+		 * lock.  Release it, and try to get the new lock.
+		 */
+		(void) lockmgr(lkp, LK_RELEASE, NULL);
+		flags &= ~LK_INTERLOCK;
+	}
 }
 
 /*

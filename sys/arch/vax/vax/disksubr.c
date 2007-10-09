@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.42.2.1 2007/05/27 14:26:56 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.42.2.2 2007/10/09 13:38:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42.2.1 2007/05/27 14:26:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42.2.2 2007/10/09 13:38:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 			*lp = *dlp;
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 #ifdef COMPAT_ULTRIX
 	/*
@@ -196,7 +196,7 @@ compat_label(dev, strat, lp, osdep)
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 #endif /* COMPAT_ULTRIX */
@@ -269,7 +269,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	error = biowait(bp);
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }
 

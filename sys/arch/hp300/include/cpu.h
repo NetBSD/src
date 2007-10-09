@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51.2.2 2007/08/20 18:38:03 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51.2.3 2007/10/09 13:37:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -188,7 +188,7 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 
 #ifdef _KERNEL
-extern	char *intiobase, *intiolimit, *extiobase;
+extern	uint8_t *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
 struct fpframe;
@@ -233,10 +233,10 @@ int	badbaddr(void *);
  * conversion between physical and kernel virtual addresses is easy.
  */
 #define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
-#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
+	((uint8_t *)(va) >= intiobase && (uint8_t *)(va) < intiolimit)
+#define	IIOV(pa)	((paddr_t)(pa)-INTIOBASE+(vaddr_t)intiobase)
+#define	IIOP(va)	((vaddr_t)(va)-(vaddr_t)intiobase+INTIOBASE)
+#define	IIOPOFF(pa)	((paddr_t)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
 
 /*

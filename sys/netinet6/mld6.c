@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.37.2.2 2007/07/01 21:50:53 ad Exp $	*/
+/*	$NetBSD: mld6.c,v 1.37.2.3 2007/10/09 13:44:56 ad Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37.2.2 2007/07/01 21:50:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37.2.3 2007/10/09 13:44:56 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -670,10 +670,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		memset(&ifr.ifr_addr, 0, sizeof(struct sockaddr_in6));
-		ifr.ifr_addr.sin6_family = AF_INET6;
-		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-		ifr.ifr_addr.sin6_addr = *maddr6;
+		sockaddr_in6_init(&ifr.ifr_addr, maddr6, 0, 0, 0);
 		if (ifp->if_ioctl == NULL)
 			*errorp = ENXIO; /* XXX: appropriate? */
 		else
@@ -752,10 +749,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		memset(&ifr.ifr_addr, 0, sizeof(struct sockaddr_in6));
-		ifr.ifr_addr.sin6_family = AF_INET6;
-		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-		ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
+		sockaddr_in6_init(&ifr.ifr_addr, &in6m->in6m_addr, 0, 0, 0);
 		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
 		    SIOCDELMULTI, (void *)&ifr);
 		free(in6m->in6m_timer_ch, M_IPMADDR);

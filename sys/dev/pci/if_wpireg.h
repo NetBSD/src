@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.3.6.2 2007/08/20 18:37:17 ad Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.3.6.3 2007/10/09 13:41:48 ad Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,6 @@
  */
 
 #define WPI_TX_RING_COUNT	256
-#define WPI_SVC_RING_COUNT	256
 #define WPI_CMD_RING_COUNT	256
 #define WPI_RX_RING_COUNT	64
 

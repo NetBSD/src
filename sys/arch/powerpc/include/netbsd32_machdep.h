@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2003/04/16 08:58:18 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2.60.1 2007/10/09 13:38:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -40,6 +40,9 @@ typedef	u_int32_t netbsd32_pointer_t;
  * Convert a pointer in the 32-bit world to a valid 64-bit pointer.
  */
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
+
+/* ppc32 has 32bit aligned 64bit integers */
+#define NETBSD32_INT64_ALIGN __attribute__((__aligned__(4)))
 
 #include <compat/netbsd32/netbsd32.h>
 #include <powerpc/frame.h>

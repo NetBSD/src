@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.185.2.6 2007/08/26 15:01:16 yamt Exp $ */
+/* $NetBSD: syscalls.c,v 1.185.2.7 2007/10/09 13:44:30 ad Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.6 2007/08/26 15:01:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.7 2007/10/09 13:44:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -370,16 +370,16 @@ const char *const syscallnames[] = {
 	"#255 (excluded sys__ksem_destroy)",		/* 255 = excluded sys__ksem_destroy */
 	"#256 (unimplemented sys__ksem_timedwait)",		/* 256 = unimplemented sys__ksem_timedwait */
 #endif
-	"#257 (unimplemented sys_mq_open)",		/* 257 = unimplemented sys_mq_open */
-	"#258 (unimplemented sys_mq_close)",		/* 258 = unimplemented sys_mq_close */
-	"#259 (unimplemented sys_mq_unlink)",		/* 259 = unimplemented sys_mq_unlink */
-	"#260 (unimplemented sys_mq_getattr)",		/* 260 = unimplemented sys_mq_getattr */
-	"#261 (unimplemented sys_mq_setattr)",		/* 261 = unimplemented sys_mq_setattr */
-	"#262 (unimplemented sys_mq_notify)",		/* 262 = unimplemented sys_mq_notify */
-	"#263 (unimplemented sys_mq_send)",		/* 263 = unimplemented sys_mq_send */
-	"#264 (unimplemented sys_mq_receive)",		/* 264 = unimplemented sys_mq_receive */
-	"#265 (unimplemented sys_mq_timedsend)",		/* 265 = unimplemented sys_mq_timedsend */
-	"#266 (unimplemented sys_mq_timedreceive)",		/* 266 = unimplemented sys_mq_timedreceive */
+	"mq_open",			/* 257 = mq_open */
+	"mq_close",			/* 258 = mq_close */
+	"mq_unlink",			/* 259 = mq_unlink */
+	"mq_getattr",			/* 260 = mq_getattr */
+	"mq_setattr",			/* 261 = mq_setattr */
+	"mq_notify",			/* 262 = mq_notify */
+	"mq_send",			/* 263 = mq_send */
+	"mq_receive",			/* 264 = mq_receive */
+	"mq_timedsend",			/* 265 = mq_timedsend */
+	"mq_timedreceive",			/* 266 = mq_timedreceive */
 	"#267 (unimplemented)",		/* 267 = unimplemented */
 	"#268 (unimplemented)",		/* 268 = unimplemented */
 	"#269 (unimplemented)",		/* 269 = unimplemented */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.45.2.2 2007/08/20 21:28:09 ad Exp $	*/
+/*	$NetBSD: esis.c,v 1.45.2.3 2007/10/09 13:44:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.45.2.2 2007/08/20 21:28:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.45.2.3 2007/10/09 13:44:58 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -415,7 +415,7 @@ esis_rdoutput(
 
 	/* Insert the snpa of better next hop */
 	*cp++ = sdl->sdl_alen;
-	bcopy(LLADDR(sdl), cp, sdl->sdl_alen);
+	bcopy(CLLADDR(sdl), cp, sdl->sdl_alen);
 	cp += sdl->sdl_alen;
 	len += (sdl->sdl_alen + 1);
 
@@ -1134,7 +1134,8 @@ isis_output(struct mbuf *m, ...)
 	sn_len = sdl->sdl_alen;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISISOUTPUT]) {
-		u_char *cp = (u_char *) LLADDR(sdl), *cplim = cp + sn_len;
+		const u_char *cp = (const u_char *)CLLADDR(sdl),
+		             *cplim = cp + sn_len;
 		printf("isis_output: ifp %p (%s), to: ",
 		    ifp, ifp->if_xname);
 		while (cp < cplim) {
@@ -1152,7 +1153,7 @@ isis_output(struct mbuf *m, ...)
 	else {
 		siso.siso_data[0] = AFI_SNA;
 		siso.siso_nlen = sn_len + 1;
-		bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+		bcopy(CLLADDR(sdl), siso.siso_data + 1, sn_len);
 	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {

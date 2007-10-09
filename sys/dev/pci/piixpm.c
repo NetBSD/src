@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.13.2.1 2007/08/20 18:37:27 ad Exp $ */
+/* $NetBSD: piixpm.c,v 1.13.2.2 2007/10/09 13:41:51 ad Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -38,9 +38,7 @@
 
 #include <dev/i2c/i2cvar.h>
 
-#ifdef __HAVE_TIMECOUNTER
 #include <dev/ic/acpipmtimer.h>
-#endif
 
 #ifdef PIIXPM_DEBUG
 #define DPRINTF(x) printf x
@@ -66,7 +64,7 @@ struct piixpm_softc {
 	pcitag_t		sc_pcitag;
 
 	struct i2c_controller	sc_i2c_tag;
-	struct lock		sc_i2c_lock;
+	krwlock_t		sc_i2c_rwlock;
 	struct {
 		i2c_op_t     op;
 		void *      buf;
@@ -138,9 +136,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t base, conf;
-#ifdef __HAVE_TIMECOUNTER
 	pcireg_t pmmisc;
-#endif
 	pci_intr_handle_t ih;
 	char devinfo[256];
 	const char *intrstr = NULL;
@@ -164,7 +160,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
 	DPRINTF((": conf 0x%x", conf));
 
-#ifdef __HAVE_TIMECOUNTER
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
 		goto nopowermanagement;
@@ -194,8 +189,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
 
 nopowermanagement:
-#endif
-
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
 		aprint_normal("%s: SMBus disabled\n", sc->sc_dev.dv_xname);
 		return;
@@ -234,7 +227,7 @@ nopowermanagement:
 	aprint_normal("\n");
 
 	/* Attach I2C bus */
-	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	rw_init(&sc->sc_i2c_rwlock);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
@@ -278,7 +271,8 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
+	return 0;
 }
 
 void
@@ -289,7 +283,7 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_i2c_rwlock);
 }
 
 int

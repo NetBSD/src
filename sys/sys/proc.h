@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.243.2.6 2007/08/20 21:28:19 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.243.2.7 2007/10/09 13:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/aio.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
+#include <sys/mqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/lwp.h>
@@ -232,6 +233,8 @@ struct proc {
 	struct vmspace	*p_vmspace;	/*    Address space */
 	struct sigacts	*p_sigacts;	/*    Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
+
+	u_int		p_mqueue_cnt;	/* (: Count of open mqueues */
 
 	specificdata_reference
 			p_specdataref;	/* subsystem proc-specific data */
@@ -441,14 +444,15 @@ do {									\
 /*
  * Flags passed to fork1().
  */
-#define	FORK_PPWAIT	0x01		/* Block parent until child exit */
-#define	FORK_SHAREVM	0x02		/* Share vmspace with parent */
-#define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
-#define	FORK_SHAREFILES	0x08		/* Share file descriptors */
-#define	FORK_SHARESIGS	0x10		/* Share signal actions */
-#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
-#define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
-#define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
+#define	FORK_PPWAIT	0x0001		/* Block parent until child exit */
+#define	FORK_SHAREVM	0x0002		/* Share vmspace with parent */
+#define	FORK_SHARECWD	0x0004		/* Share cdir/rdir/cmask */
+#define	FORK_SHAREFILES	0x0008		/* Share file descriptors */
+#define	FORK_SHARESIGS	0x0010		/* Share signal actions */
+#define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
+#define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
+#define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
+#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 /*
  * Allow machine-dependent code to override curlwp in <machine/cpu.h> for

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.2.4 2007/08/23 12:12:50 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.5 2007/10/09 13:38:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.4 2007/08/23 12:12:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.5 2007/10/09 13:38:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,28 @@ x86_bus_space_init()
 	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
+
+#ifdef XEN
+	/* We are privileged guest os - should have IO privileges. */
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+#ifdef XEN3
+		struct physdev_op physop;
+		physop.cmd = PHYSDEVOP_SET_IOPL;
+		physop.u.set_iopl.iopl = 1;
+		if (HYPERVISOR_physdev_op(&physop) != 0)
+			panic("Unable to obtain IOPL, "
+			    "despite being SIF_PRIVILEGED");
+#else
+		dom0_op_t op;
+		op.cmd = DOM0_IOPL;
+		op.u.iopl.domain = DOMID_SELF;
+		op.u.iopl.iopl = 1;
+		if (HYPERVISOR_dom0_op(&op) != 0)
+			panic("Unable to obtain IOPL, "
+			    "despite being SIF_PRIVILEGED");
+#endif
+	}
+#endif	/* XEN */
 }
 
 void
@@ -104,7 +126,7 @@ x86_bus_space_mallocok()
 }
 
 int
-x86_memio_map(t, bpa, size, flags, bshp)
+bus_space_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -143,10 +165,12 @@ x86_memio_map(t, bpa, size, flags, bshp)
 		return (0);
 	}
 
+#ifndef XEN
 	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
 		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
 		return(0);
 	}
+#endif	/* !XEN */
 
 	/*
 	 * For memory space, map the bus physical address to
@@ -194,7 +218,7 @@ _x86_memio_map(t, bpa, size, flags, bshp)
 }
 
 int
-x86_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
@@ -381,7 +405,7 @@ _x86_memio_unmap(t, bsh, size, adrp)
 }
 
 void
-x86_memio_unmap(t, bsh, size)
+bus_space_unmap(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -436,18 +460,18 @@ ok:
 }
 
 void
-x86_memio_free(t, bsh, size)
+bus_space_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
 
-	/* x86_memio_unmap() does all that we need to do. */
-	x86_memio_unmap(t, bsh, size);
+	/* bus_space_unmap() does all that we need to do. */
+	bus_space_unmap(t, bsh, size);
 }
 
 int
-x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
@@ -456,7 +480,7 @@ x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 }
 
 paddr_t
-x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
     int flags)
 {
 
@@ -472,4 +496,221 @@ x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 	 * the upper layers want to map.
 	 */
 	return (x86_btop(addr + off));
+}
+
+void
+bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		      u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	if (t == X86_BUS_SPACE_IO)
+		while (c--)
+			outb(addr, v);
+	else
+		while (c--)
+			*(volatile u_int8_t *)(addr) = v;
+}
+
+void
+bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		      u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	BUS_SPACE_ADDRESS_SANITY(addr, u_int16_t, "bus addr");
+
+	if (t == X86_BUS_SPACE_IO)
+		while (c--)
+			outw(addr, v);
+	else
+		while (c--)
+			*(volatile u_int16_t *)(addr) = v;
+}
+
+void
+bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		      u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	BUS_SPACE_ADDRESS_SANITY(addr, u_int32_t, "bus addr");
+
+	if (t == X86_BUS_SPACE_IO)
+		while (c--)
+			outl(addr, v);
+	else
+		while (c--)
+			*(volatile u_int32_t *)(addr) = v;
+}
+
+void
+bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		      u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	if (t == X86_BUS_SPACE_IO)
+		for (; c != 0; c--, addr++)
+			outb(addr, v);
+	else
+		for (; c != 0; c--, addr++)
+			*(volatile u_int8_t *)(addr) = v;
+}
+
+void
+bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		       u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	BUS_SPACE_ADDRESS_SANITY(addr, u_int16_t, "bus addr");
+
+	if (t == X86_BUS_SPACE_IO)
+		for (; c != 0; c--, addr += 2)
+			outw(addr, v);
+	else
+		for (; c != 0; c--, addr += 2)
+			*(volatile u_int16_t *)(addr) = v;
+}
+
+void
+bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+		       u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	BUS_SPACE_ADDRESS_SANITY(addr, u_int32_t, "bus addr");
+
+	if (t == X86_BUS_SPACE_IO)
+		for (; c != 0; c--, addr += 4)
+			outl(addr, v);
+	else
+		for (; c != 0; c--, addr += 4)
+			*(volatile u_int32_t *)(addr) = v;
+}
+
+void
+bus_space_copy_region_1(bus_space_tag_t t, bus_space_handle_t h1,
+			bus_size_t o1, bus_space_handle_t h2,
+			bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (t == X86_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1++, addr2++)
+				outb(addr2, inb(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += (c - 1), addr2 += (c - 1);
+			    c != 0; c--, addr1--, addr2--)
+				outb(addr2, inb(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1++, addr2++)
+				*(volatile u_int8_t *)(addr2) =
+				    *(volatile u_int8_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += (c - 1), addr2 += (c - 1);
+			    c != 0; c--, addr1--, addr2--)
+				*(volatile u_int8_t *)(addr2) =
+				    *(volatile u_int8_t *)(addr1);
+		}
+	}
+}
+
+void
+bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
+			bus_size_t o1, bus_space_handle_t h2,
+			bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	BUS_SPACE_ADDRESS_SANITY(addr1, u_int16_t, "bus addr 1");
+	BUS_SPACE_ADDRESS_SANITY(addr2, u_int16_t, "bus addr 2");
+
+	if (t == X86_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 2, addr2 += 2)
+				outw(addr2, inw(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+			    c != 0; c--, addr1 -= 2, addr2 -= 2)
+				outw(addr2, inw(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 2, addr2 += 2)
+				*(volatile u_int16_t *)(addr2) =
+				    *(volatile u_int16_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+			    c != 0; c--, addr1 -= 2, addr2 -= 2)
+				*(volatile u_int16_t *)(addr2) =
+				    *(volatile u_int16_t *)(addr1);
+		}
+	}
+}
+
+void
+bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
+			bus_size_t o1, bus_space_handle_t h2,
+			bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	BUS_SPACE_ADDRESS_SANITY(addr1, u_int32_t, "bus addr 1");
+	BUS_SPACE_ADDRESS_SANITY(addr2, u_int32_t, "bus addr 2");
+
+	if (t == X86_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 4, addr2 += 4)
+				outl(addr2, inl(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+			    c != 0; c--, addr1 -= 4, addr2 -= 4)
+				outl(addr2, inl(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 4, addr2 += 4)
+				*(volatile u_int32_t *)(addr2) =
+				    *(volatile u_int32_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+			    c != 0; c--, addr1 -= 4, addr2 -= 4)
+				*(volatile u_int32_t *)(addr2) =
+				    *(volatile u_int32_t *)(addr1);
+		}
+	}
+}
+
+void
+bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
+		  bus_size_t offset, bus_size_t len, int flags)
+{
+
+	/* Function call is enough to prevent reordering of loads. */
+}
+void *
+bus_space_vaddr(bus_space_tag_t tag, bus_space_handle_t bsh)
+{
+
+	return tag == X86_BUS_SPACE_MEM ? (void *)bsh : NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.13 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_token.h,v 1.13.2.1 2007/10/09 13:44:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -116,8 +116,6 @@ struct token_rif {
 #define	tokenbroadcastaddr	etherbroadcastaddr
 #define	token_ipmulticast_min	ether_ipmulticast_min
 #define	token_ipmulticast_max	ether_ipmulticast_max
-#define	token_addmulti		ether_addmulti
-#define	token_delmulti		ether_delmulti
 #define	token_sprintf		ether_sprintf
 
 void    token_ifattach(struct ifnet *, void *);

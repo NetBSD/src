@@ -1,8 +1,26 @@
-/* $NetBSD: tpmif.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
+/* $NetBSD: tpmif.h,v 1.3.20.1 2007/10/09 13:38:57 ad Exp $ */
 /******************************************************************************
  * tpmif.h
  *
  * TPM I/O interface for Xen guest OSes.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Copyright (c) 2005, IBM Corporation
  *
@@ -19,12 +37,13 @@
 
 #include "../grant_table.h"
 
-typedef struct {
+struct tpmif_tx_request {
     unsigned long addr;   /* Machine address of packet.   */
     grant_ref_t ref;      /* grant table access reference */
     uint16_t unused;
     uint16_t size;        /* Packet size in bytes.        */
-} tpmif_tx_request_t;
+};
+typedef struct tpmif_tx_request tpmif_tx_request_t;
 
 /*
  * The TPMIF_TX_RING_SIZE defines the number of pages the
@@ -32,17 +51,19 @@ typedef struct {
  */
 typedef uint32_t TPMIF_RING_IDX;
 
-#define TPMIF_TX_RING_SIZE 10
+#define TPMIF_TX_RING_SIZE 1
 
 /* This structure must fit in a memory page. */
 
-typedef struct {
-    tpmif_tx_request_t req;
-} tpmif_ring_t;
+struct tpmif_ring {
+    struct tpmif_tx_request req;
+};
+typedef struct tpmif_ring tpmif_ring_t;
 
-typedef struct {
-    tpmif_ring_t ring[TPMIF_TX_RING_SIZE];
-} tpmif_tx_interface_t;
+struct tpmif_tx_interface {
+    struct tpmif_ring ring[TPMIF_TX_RING_SIZE];
+};
+typedef struct tpmif_tx_interface tpmif_tx_interface_t;
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.30 2007/03/08 23:17:56 he Exp $ */
+/*	$NetBSD: if_ni.c,v 1.30.2.1 2007/10/09 13:41:15 ad Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.30 2007/03/08 23:17:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.30.2.1 2007/10/09 13:41:15 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -701,7 +701,6 @@ niioctl(ifp, cmd, data)
 	void *data;
 {
 	struct ni_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -749,11 +748,7 @@ niioctl(ifp, cmd, data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

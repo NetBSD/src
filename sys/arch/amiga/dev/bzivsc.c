@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.22.2.1 2007/03/13 16:49:54 ad Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.22.2.2 2007/10/09 13:37:20 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22.2.1 2007/03/13 16:49:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22.2.2 2007/10/09 13:37:20 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22.2.1 2007/03/13 16:49:54 ad Exp $");
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/bzivscvar.h>
 #include <amiga/dev/zbusvar.h>
+
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
 
 void	bzivscattach(struct device *, struct device *, void *);
 int	bzivscmatch(struct device *, struct cfdata *, void *);

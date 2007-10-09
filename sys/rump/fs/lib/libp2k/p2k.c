@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.16.2.2 2007/08/20 22:07:21 ad Exp $	*/
+/*	$NetBSD: p2k.c,v 1.16.2.3 2007/10/09 13:45:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,36 +28,63 @@
  */
 
 #include <sys/types.h>
-#define __UIO_EXPOSE
-#include <sys/uio.h>
-#undef __UIO_EXPOSE
 #define __VFSOPS_EXPOSE
 #include <sys/mount.h>
-#undef __VFSOPS_EXPOSE
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
-#include <sys/vnode.h>
-#include <sys/vnode_if.h>
-
-#include <stdbool.h>
 
 #include <assert.h>
-#include <err.h>
-#define _KERNEL /* XXX */
 #include <errno.h>
-#undef _KERNEL
 #include <puffs.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "rump.h"
 #include "p2k.h"
 #include "ukfs.h"
 
 PUFFSOP_PROTOS(p2k)
+
+static kauth_cred_t
+cred_create(const struct puffs_cred *pcr)
+{
+	gid_t groups[NGROUPS];
+	uid_t uid;
+	gid_t gid;
+	short ngroups = 0;
+
+	if (puffs_cred_getuid(pcr, &uid) == -1)
+		uid = 0;
+	if (puffs_cred_getgid(pcr, &gid) == -1)
+		gid = 0;
+	puffs_cred_getgroups(pcr, groups, &ngroups);
+
+	return rump_cred_create(uid, gid, ngroups, groups);
+}
+
+static __inline void
+cred_destroy(kauth_cred_t cred)
+{
+
+	rump_cred_destroy(cred);
+}
+
+static struct componentname *
+makecn(const struct puffs_cn *pcn)
+{
+	kauth_cred_t cred;
+
+	cred = cred_create(pcn->pcn_cred);
+	return rump_makecn(pcn->pcn_nameiop, pcn->pcn_flags, pcn->pcn_name,
+	    pcn->pcn_namelen, cred, curlwp);
+}
+
+static __inline void
+freecn(struct componentname *cnp, int flags)
+{
+
+	rump_freecn(cnp, flags | RUMPCN_FREECRED);
+}
 
 int
 p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
@@ -71,6 +98,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	extern int puffs_fakecc;
 	int rv, sverrno;
 
+	rv = -1;
 	ukfs_init();
 	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
 	if (ukfs == NULL)
@@ -81,6 +109,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, fs, statvfs);
 	PUFFSOP_SET(pops, p2k, fs, unmount);
 	PUFFSOP_SET(pops, p2k, fs, sync);
+	PUFFSOP_SET(pops, p2k, fs, fhtonode);
+	PUFFSOP_SET(pops, p2k, fs, nodetofh);
 
 	PUFFSOP_SET(pops, p2k, node, lookup);
 	PUFFSOP_SET(pops, p2k, node, create);
@@ -114,9 +144,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	strlcat(typebuf, vfsname, sizeof(typebuf));
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
+	if (pu == NULL)
+		goto out;
 
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
+	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_fakecc = 1;
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
@@ -158,8 +191,48 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
+	kauth_cred_t cred;
+	int rv;
 
-	return VFS_SYNC(mp, waitfor, NULL, curlwp);
+	cred = cred_create(pcr);
+	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
+	cred_destroy(cred);
+
+	rump_bioops_sync();
+
+	return rv;
+}
+
+int
+p2k_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+	struct puffs_newinfo *pni)
+{
+	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct vnode *vp;
+	enum vtype vtype;
+	voff_t vsize;
+	dev_t rdev;
+	int rv;
+
+	rv = VFS_FHTOVP(mp, fid, &vp);
+	if (rv)
+		return rv;
+
+	puffs_newinfo_setcookie(pni, vp);
+	rump_getvninfo(vp, &vtype, &vsize, &rdev);
+	puffs_newinfo_setvtype(pni, vtype);
+	puffs_newinfo_setsize(pni, vsize);
+	puffs_newinfo_setrdev(pni, rdev);
+
+	return 0;
+}
+
+int
+p2k_fs_nodetofh(struct puffs_cc *pcc, void *cookie, void *fid, size_t *fidsize)
+{
+	struct vnode *vp = cookie;
+
+	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
@@ -374,8 +447,8 @@ p2k_node_rename(struct puffs_cc *pcc, void *src_dir, void *src,
 	struct componentname *cn_src, *cn_targ;
 	int rv;
 
-	cn_src = P2K_MAKECN(pcn_src);
-	cn_targ = P2K_MAKECN(pcn_targ);
+	cn_src = makecn(pcn_src);
+	cn_targ = makecn(pcn_targ);
 	VLE(targ_dir);
 	if (targ)
 		VLE(targ);
@@ -383,8 +456,8 @@ p2k_node_rename(struct puffs_cc *pcc, void *src_dir, void *src,
 	AUL(targ_dir);
 	if (targ)
 		AUL(targ);
-	rump_freecn(cn_src, 0);
-	rump_freecn(cn_targ, 0);
+	freecn(cn_src, 0);
+	freecn(cn_targ, 0);
 
 	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.7.2.4 2007/08/20 21:27:24 ad Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.7.2.5 2007/10/09 13:44:11 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -184,14 +184,14 @@ typedef	union	i6addr	{
 			      HI63(a) < HI63(b)))))))
 #define	NLADD(n,x)	htonl(ntohl(n) + (x))
 #define	IP6_INC(a)	\
-		{ i6addr_t *_i6 = (i6addr_t *)(a); \
-		  _i6->i6[0] = NLADD(_i6->i6[0], 1); \
-		  if (_i6->i6[0] == 0) { \
-			_i6->i6[0] = NLADD(_i6->i6[1], 1); \
-			if (_i6->i6[1] == 0) { \
-				_i6->i6[0] = NLADD(_i6->i6[2], 1); \
-				if (_i6->i6[2] == 0) { \
-					_i6->i6[0] = NLADD(_i6->i6[3], 1); \
+		{ u_32_t *_i6 = (u_32_t *)(a); \
+		  _i6[3] = NLADD(_i6[3], 1); \
+		  if (_i6[3] == 0) { \
+			_i6[2] = NLADD(_i6[2], 1); \
+			if (_i6[2] == 0) { \
+				_i6[1] = NLADD(_i6[1], 1); \
+				if (_i6[1] == 0) { \
+					_i6[0] = NLADD(_i6[0], 1); \
 				} \
 			} \
 		  } \
@@ -270,6 +270,7 @@ typedef	struct	fr_ip	{
 #define	FI_WITH		0xeffe	/* Not FI_TCPUDP */
 #define	FI_V6EXTHDR	0x10000
 #define	FI_COALESCE	0x20000
+#define	FI_NEWNAT	0x40000
 #define	FI_NOCKSUM	0x20000000	/* don't do a L4 checksum validation */
 #define	FI_DONTCACHE	0x40000000	/* don't cache the result */
 #define	FI_IGNORE	0x80000000
@@ -1203,6 +1204,8 @@ typedef	struct	ipftable {
 } ipftable_t;
 
 #define	IPFTABLE_BUCKETS	1
+#define	IPFTABLE_BUCKETS_NATIN	2
+#define	IPFTABLE_BUCKETS_NATOUT	3
 
 
 /*
@@ -1401,6 +1404,13 @@ extern	int	iplwrite __P((dev_t, struct uio *));
 #   endif /* BSD >= 199306 */
 #  endif /* __ sgi */
 # endif /* MENTAT */
+
+# if defined(__FreeBSD_version)
+extern	int	ipf_pfil_hook __P((void));
+extern	int	ipf_pfil_unhook __P((void));
+extern	void	ipf_event_reg __P((void));
+extern	void	ipf_event_dereg __P((void));
+# endif
 
 #endif /* #ifndef _KERNEL */
 

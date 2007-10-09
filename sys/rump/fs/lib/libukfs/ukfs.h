@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.5.2.2 2007/08/20 22:07:24 ad Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.5.2.3 2007/10/09 13:45:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/vnode.h>
+
+#include <stdint.h>
+
+struct vnode;
 
 struct ukfs;
 
@@ -41,6 +44,10 @@ int		ukfs_init(void);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
 void		ukfs_release(struct ukfs *, int);
+
+int		ukfs_ll_namei(struct vnode *, const char **, u_long,
+			   struct vnode **, struct vnode **);
+void		ukfs_ll_recycle(struct vnode *);
 
 int		ukfs_getdents(struct ukfs *, const char *, off_t,
 			      uint8_t *, size_t);

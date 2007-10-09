@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.13.2.2 2007/08/20 22:07:31 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.13.2.3 2007/10/09 13:45:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@
 
 #include <machine/pmap.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 /* dumdidumdum */
@@ -106,6 +106,36 @@ rumpvm_freepage(struct vm_page *pg)
 	TAILQ_REMOVE(&uobj->memq, pg, listq);
 	rumpuser_free((void *)pg->uanon);
 	rumpuser_free(pg);
+}
+
+struct rumpva {
+	vaddr_t addr;
+	struct vm_page *pg;
+
+	LIST_ENTRY(rumpva) entries;
+};
+static LIST_HEAD(, rumpva) rvahead = LIST_HEAD_INITIALIZER(rvahead);
+
+void
+rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
+{
+	struct rumpva *rva;
+
+	rva = rumpuser_malloc(sizeof(struct rumpva), 0);
+	rva->addr = addr;
+	rva->pg = pg;
+	LIST_INSERT_HEAD(&rvahead, rva, entries);
+}
+
+void
+rumpvm_flushva()
+{
+	struct rumpva *rva;
+
+	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
+		LIST_REMOVE(rva, entries);
+		rumpuser_free(rva);
+	}
 }
 
 /*
@@ -205,18 +235,19 @@ uao_detach(struct uvm_object *uobj)
 int
 rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 {
+	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, n);
-	struct vm_page *pgs[npages];
 	int i, rv;
 
 	if (ubc_winvalid == 0)
 		panic("%s: ubc window not allocated", __func__);
 
+	pgs = rumpuser_malloc(npages * sizeof(pgs), 0);
 	memset(pgs, 0, sizeof(pgs));
 	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset,
 	    pgs, &npages, 0, 0, 0, 0);
 	if (rv)
-		return rv;
+		goto out;
 
 	for (i = 0; i < npages; i++) {
 		size_t xfersize;
@@ -231,7 +262,9 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 		n -= xfersize;
 	}
 
-	return 0;
+ out:
+	rumpuser_free(pgs);
+	return rv;
 }
 
 void *
@@ -346,6 +379,18 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	return NULL;
 }
 
+struct vm_page *
+uvm_pageratop(vaddr_t va)
+{
+	struct rumpva *rva;
+
+	LIST_FOREACH(rva, &rvahead, entries)
+		if (rva->addr == va)
+			return rva->pg;
+
+	panic("%s: va %llu", __func__, (unsigned long long)va);
+}
+
 void
 uvm_estimatepageable(int *active, int *inactive)
 {
@@ -366,7 +411,15 @@ void
 uvm_aio_biodone(struct buf *bp)
 {
 
-	panic("%s: unimplemented", __func__);
+	uvm_aio_aiodone(bp);
+}
+
+void
+uvm_aio_aiodone(struct buf *bp)
+{
+
+	if ((bp->b_flags & (B_READ | B_NOCACHE)) == 0 && bioopsp)
+		bioopsp->io_pageiodone(bp);
 }
 
 void
@@ -386,11 +439,12 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
-	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
-	struct vm_page *pgs[maxpages];
 	struct uvm_object *uobj = &vp->v_uobj;
+	struct vm_page **pgs;
+	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
 	int rv, npages, i;
 
+	pgs = rumpuser_malloc(maxpages * sizeof(pgs), 0);
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
@@ -412,6 +466,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			len -= chunklen;
 		}
 	}
+	rumpuser_free(pgs);
 
 	return;
 }

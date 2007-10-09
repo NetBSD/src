@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.33.6.2 2007/04/10 13:24:34 ad Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.33.6.3 2007/10/09 13:42:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.6.2 2007/04/10 13:24:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.33.6.3 2007/10/09 13:42:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,8 @@ USB_MATCH(uhidev)
 	USB_IFMATCH_START(uhidev, uaa);
 
 	if (uaa->class != UICLASS_HID)
+		return (UMATCH_NONE);
+	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_HID_IGNORE)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_GENERIC);
 }

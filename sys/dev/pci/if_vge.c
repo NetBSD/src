@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.34.2.2 2007/07/15 15:52:47 ad Exp $ */
+/* $NetBSD: if_vge.c,v 1.34.2.3 2007/10/09 13:41:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.34.2.2 2007/07/15 15:52:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.34.2.3 2007/10/09 13:41:47 ad Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -2085,11 +2085,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

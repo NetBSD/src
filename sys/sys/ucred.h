@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.32.4.1 2007/07/15 13:28:13 ad Exp $	*/
+/*	$NetBSD: ucred.h,v 1.32.4.2 2007/10/09 13:45:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 
 /* Userland's view of credentials. This should not change */
 struct uucred {
-	u_short		cr_unused;		/* not used, compat */
+	unsigned short	cr_unused;		/* not used, compat */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	short		cr_ngroups;		/* number of groups */

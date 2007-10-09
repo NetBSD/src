@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.10 2007/08/30 09:55:14 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.11 2007/10/09 13:45:15 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.10 2007/08/30 09:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.11 2007/10/09 13:45:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -517,7 +517,6 @@ loop:
 		vp->v_vnlock = lkp;
 	}
 	vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-	transferlockers(&vp->v_lock, vp->v_vnlock);
 	lockmgr(&vp->v_lock, LK_RELEASE, NULL);
 	/*
 	 * If this is the first snapshot on this filesystem, then we need
@@ -560,7 +559,7 @@ loop:
 	TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 	VI_UNLOCK(devvp);
 	if (xp == NULL)
-		vn_cow_establish(devvp, ffs_copyonwrite, devvp);
+		fscow_establish(devvp, ffs_copyonwrite, devvp);
 	vp->v_vflag |= VV_SYSTEM;
 out1:
 	/*
@@ -1447,7 +1446,7 @@ ffs_snapremove(struct vnode *vp)
 			si->si_snapblklist = 0;
 			lockmgr(lkp, LK_DRAIN|LK_INTERLOCK, VI_MTX(devvp));
 			lockmgr(lkp, LK_RELEASE, NULL);
-			vn_cow_disestablish(devvp, ffs_copyonwrite, devvp);
+			fscow_disestablish(devvp, ffs_copyonwrite, devvp);
 			FREE(lkp, M_UFSMNT);
 		}
 		FREE(ip->i_snapblklist, M_UFSMNT);
@@ -1814,7 +1813,6 @@ ffs_snapshot_mount(struct mount *mp)
 			vp->v_vnlock = lkp;
 		}
 		vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-		transferlockers(&vp->v_lock, vp->v_vnlock);
 		lockmgr(&vp->v_lock, LK_RELEASE, NULL);
 		/*
 		 * Link it onto the active snapshot list.
@@ -1842,7 +1840,7 @@ ffs_snapshot_mount(struct mount *mp)
 	VI_LOCK(devvp);
 	si->si_snapblklist = xp->i_snapblklist;
 	VI_UNLOCK(devvp);
-	vn_cow_establish(devvp, ffs_copyonwrite, devvp);
+	fscow_establish(devvp, ffs_copyonwrite, devvp);
 }
 
 /*
@@ -1876,7 +1874,7 @@ ffs_snapshot_unmount(struct mount *mp)
 	}
 	VI_UNLOCK(devvp);
 	if (lkp != NULL) {
-		vn_cow_disestablish(devvp, ffs_copyonwrite, devvp);
+		fscow_disestablish(devvp, ffs_copyonwrite, devvp);
 		FREE(lkp, M_UFSMNT);
 	}
 }

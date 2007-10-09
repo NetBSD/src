@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.24.6.1 2007/06/08 14:18:09 ad Exp $	*/
+/*	$NetBSD: domain.h,v 1.24.6.2 2007/10/09 13:45:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
  * Structure per communications domain.
  */
 #include <sys/mbuf.h>
+#include <sys/socket.h>
 
 /*
  * Forward structure declarations for function prototypes [sic].
@@ -69,13 +70,15 @@ struct	domain {
 			(struct ifnet *);
 	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
 			(struct ifnet *, void *);
+	const void *(*dom_sockaddr_const_addr)(const struct sockaddr *,
+					       socklen_t *);
+	void	*(*dom_sockaddr_addr)(struct sockaddr *, socklen_t *);
 	int	(*dom_sockaddr_cmp)(const struct sockaddr *,
 	                            const struct sockaddr *);
+	const struct sockaddr *dom_sa_any;
 	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
-	struct pool	*dom_sa_pool;
-	uint_fast8_t	dom_sa_len;
 	uint_fast8_t	dom_sa_cmpofs;
 	uint_fast8_t	dom_sa_cmplen;
 	struct dom_rtlist dom_rtcache;

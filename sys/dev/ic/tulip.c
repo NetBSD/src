@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.149.2.1 2007/07/01 21:47:56 ad Exp $	*/
+/*	$NetBSD: tulip.c,v 1.149.2.2 2007/10/09 13:41:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.149.2.1 2007/07/01 21:47:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.149.2.2 2007/10/09 13:41:33 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -1416,7 +1416,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		/*
 		 * We sometimes have to run the 21140 in Hash-Only
@@ -1427,7 +1427,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY &&
 		    (ifp->if_flags & IFF_PROMISC) == 0 &&
 		    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			   ETHER_ADDR_LEN) != 0) {
 			m_freem(m);
 			continue;
@@ -1913,7 +1913,7 @@ tlp_init(struct ifnet *ifp)
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			bus_space_write_1(sc->sc_st, sc->sc_sh,
-			    cpa + i, LLADDR(ifp->if_sadl)[i]);
+			    cpa + i, CLLADDR(ifp->if_sadl)[i]);
 		}
 		break;
 	    }
@@ -1923,7 +1923,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AN985:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
@@ -1941,7 +1941,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AX88141:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
@@ -2643,7 +2643,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	DPRINTF(sc, ("%s: tlp_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
-	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	memcpy(enaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	/*
 	 * If there are transmissions pending, wait until they have

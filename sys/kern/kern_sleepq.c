@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.12 2007/09/09 23:12:20 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.13 2007/10/09 13:44:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.12 2007/09/09 23:12:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.13 2007/10/09 13:44:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -107,6 +107,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
+	pri_t pri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(sq->sq_waiters > 0);
@@ -267,7 +268,7 @@ sleepq_block(int timo, bool catch)
 		lwp_unsleep(l);
 	} else {
 		if (timo)
-			callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
+			callout_schedule(&l->l_timeout_ch, timo);
 
 		mi_switch(l);
 		l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
@@ -280,7 +281,7 @@ sleepq_block(int timo, bool catch)
 			 * Even if the callout appears to have fired, we need to
 			 * stop it in order to synchronise with other CPUs.
 			 */
-			if (callout_stop(&l->l_tsleep_ch))
+			if (callout_stop(&l->l_timeout_ch))
 				error = EWOULDBLOCK;
 		}
 	}

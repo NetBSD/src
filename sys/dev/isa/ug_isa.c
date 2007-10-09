@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.1.6.3 2007/07/15 13:21:19 ad Exp $ */
+/* $NetBSD: ug_isa.c,v 1.1.6.4 2007/10/09 13:41:38 ad Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.3 2007/07/15 13:21:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.4 2007/10/09 13:41:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.3 2007/07/15 13:21:19 ad Exp $");
 /* autoconf(9) functions */
 static int  ug_isa_match(struct device *, struct cfdata *, void *);
 static void ug_isa_attach(struct device *, struct device *, void *);
+static int  ug_isa_detach(struct device *, int);
 
 CFATTACH_DECL(ug_isa, sizeof(struct ug_softc),
-    ug_isa_match, ug_isa_attach, NULL, NULL);
+    ug_isa_match, ug_isa_attach, ug_isa_detach, NULL);
 
 extern uint8_t ug_ver;
 
@@ -162,3 +163,14 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 }
+
+static int
+ug_isa_detach(struct device *self, int flags)
+{
+	struct ug_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(&sc->sc_sysmon);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
+	return 0;
+}
+

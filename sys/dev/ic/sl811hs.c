@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.11.8.1 2007/08/20 18:36:53 ad Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.8.2 2007/10/09 13:41:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.8.1 2007/08/20 18:36:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.8.2 2007/10/09 13:41:32 ad Exp $");
 
 #include "opt_slhci.h"
 
@@ -2625,10 +2625,10 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 
 #ifdef SLHCI_DEBUG
 	ssc = sc;
-#endif
 #ifdef USB_DEBUG
 	if (slhci_usbdebug >= 0)
 		usbdebug = slhci_usbdebug;
+#endif
 #endif
 
 	if (t->sltype == SLTYPE_SL811HS_R12)

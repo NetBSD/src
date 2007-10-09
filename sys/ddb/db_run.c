@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.30 2007/02/22 06:41:01 thorpej Exp $	*/
+/*	$NetBSD: db_run.c,v 1.30.4.1 2007/10/09 13:44:10 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.30 2007/02/22 06:41:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.30.4.1 2007/10/09 13:44:10 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -270,7 +270,7 @@ db_single_step_cmd(db_expr_t addr, bool have_addr,
 	db_load_count = 0;
 	db_store_count = 0;
 
-	db_cmd_loop_done = 1;
+	db_cmd_loop_done = true;
 }
 
 /* trace and print until call/return */
@@ -290,7 +290,7 @@ db_trace_until_call_cmd(db_expr_t addr, bool have_addr,
 	db_load_count = 0;
 	db_store_count = 0;
 
-	db_cmd_loop_done = 1;
+	db_cmd_loop_done = true;
 }
 
 /*ARGSUSED*/
@@ -310,7 +310,7 @@ db_trace_until_matching_cmd(db_expr_t addr, bool have_addr,
 	db_load_count = 0;
 	db_store_count = 0;
 
-	db_cmd_loop_done = 1;
+	db_cmd_loop_done = true;
 }
 
 /* continue */
@@ -328,7 +328,7 @@ db_continue_cmd(db_expr_t addr, bool have_addr,
 	db_load_count = 0;
 	db_store_count = 0;
 
-	db_cmd_loop_done = 1;
+	db_cmd_loop_done = true;
 }
 #endif /* DDB */
 

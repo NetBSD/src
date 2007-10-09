@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.106.2.1 2007/05/27 14:30:10 ad Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.106.2.2 2007/10/09 13:41:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.106.2.1 2007/05/27 14:30:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.106.2.2 2007/10/09 13:41:35 ad Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1291,6 +1291,7 @@ fwohci_db_free(struct fwohci_dbch *dbch)
 	free(db_tr, M_FW);
 	STAILQ_INIT(&dbch->db_trq);
 	dbch->flags &= ~FWOHCI_DBCH_INIT;
+	seldestroy(&dbch->xferq.rsel);
 }
 
 static void
@@ -1370,6 +1371,7 @@ out:
 	dbch->top = STAILQ_FIRST(&dbch->db_trq);
 	dbch->bottom = dbch->top;
 	dbch->flags = FWOHCI_DBCH_INIT;
+	selinit(&dbch->xferq.rsel);
 }
 
 static int

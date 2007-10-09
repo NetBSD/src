@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.24.2.1 2007/04/10 13:23:06 ad Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.24.2.2 2007/10/09 13:37:56 ad Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.24.2.1 2007/04/10 13:23:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.24.2.2 2007/10/09 13:37:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -219,7 +219,7 @@ k7_powernow_setperf(unsigned int freq)
 	ctl |= PN7_CTR_SGTC(cstate->sgtc);
 
 	if (k7pnow_flag & PN7_FLAG_ERRATA_A0)
-		disable_intr();
+		x86_disable_intr();
 
 	if (k7pnow_fid_to_mult[fid] < k7pnow_fid_to_mult[cfid]) {
 		wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
@@ -232,7 +232,7 @@ k7_powernow_setperf(unsigned int freq)
 	}
 
 	if (k7pnow_flag & PN7_FLAG_ERRATA_A0)
-		enable_intr();
+		x86_enable_intr();
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cfid = PN7_STA_CFID(status);

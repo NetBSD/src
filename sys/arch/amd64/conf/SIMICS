@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.30.6.2 2007/07/15 13:15:23 ad Exp $
+#	$NetBSD: SIMICS,v 1.30.6.3 2007/10/09 13:37:17 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -103,7 +103,7 @@ file-system 	FFS		# UFS
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
-#file-system	PTYFS		# /dev/pts/N support
+#file-system 	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas

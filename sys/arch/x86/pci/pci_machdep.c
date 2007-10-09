@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22.4.2 2007/08/20 18:39:16 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22.4.3 2007/10/09 13:38:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.4.2 2007/08/20 18:39:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.4.3 2007/10/09 13:38:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -501,8 +501,7 @@ pci_mode_detect()
 	/*
 	 * catch some known buggy implementations of mode 1
 	 */
-	for (i = 0; i < sizeof(pcim1_quirk_tbl) / sizeof(pcim1_quirk_tbl[0]);
-	     i++) {
+	for (i = 0; i < __arraycount(pcim1_quirk_tbl); i++) {
 		pcitag_t t;
 
 		if (!pcim1_quirk_tbl[i].tag)

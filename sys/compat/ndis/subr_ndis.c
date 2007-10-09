@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8 2007/03/05 21:05:02 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8.2.1 2007/10/09 13:44:05 ad Exp $");
 #endif
 
 /*
@@ -1665,7 +1665,7 @@ NdisReadNetworkAddress(status, addr, addrlen, adapter)
 #ifdef __FreeBSD__
 	if (bcmp(sc->arpcom.ac_enaddr, empty, ETHER_ADDR_LEN) == 0)
 #else
-	if (bcmp(LLADDR(sc->arpcom.ec_if.if_sadl), 
+	if (bcmp(CLLADDR(sc->arpcom.ec_if.if_sadl), 
 		 empty, ETHER_ADDR_LEN) == 0)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.25.2.1 2007/07/15 13:15:42 ad Exp $ */
+/*	$NetBSD: lpt.c,v 1.25.2.2 2007/10/09 13:37:35 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25.2.1 2007/07/15 13:15:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25.2.2 2007/10/09 13:37:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ lpclose(dev, flag, mode, l)
 	}
 
 	sc->sc_state = 0;
-	brelse(sc->sc_inbuf);
+	brelse(sc->sc_inbuf, 0);
 
 	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
 	return 0;

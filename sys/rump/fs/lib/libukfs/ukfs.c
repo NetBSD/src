@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.5.2.2 2007/08/20 22:07:23 ad Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.5.2.3 2007/10/09 13:45:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,14 +33,8 @@
  * involving system calls.
  */
 
-#define __UIO_EXPOSE
-#define __VFSOPS_EXPOSE
 #include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/namei.h>
 #include <sys/time.h>
-#include <sys/vnode.h>
-#include <sys/vnode_if.h>
 
 #include <assert.h>
 #include <err.h>
@@ -72,9 +66,8 @@ ukfs_getrvp(struct ukfs *ukfs)
 	struct vnode *rvp;
 	int rv;
 
-	rv = VFS_ROOT(ukfs->ukfs_mp, &rvp);
+	rv = rump_vfs_root(ukfs->ukfs_mp, &rvp, 0);
 	assert(rv == 0);
-	assert(rvp->v_flag & VROOT);
 
 	return rvp;
 }
@@ -101,41 +94,26 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	if (vfsops == NULL)
 		return NULL;
 
-	rump_mountinit(&mp, vfsops);
+	mp = rump_mnt_init(vfsops, mntflags);
 
 	fs = malloc(sizeof(struct ukfs));
 	if (fs == NULL)
 		return NULL;
 	memset(fs, 0, sizeof(struct ukfs));
 
-	mp->mnt_flag = mntflags;
 	rump_fakeblk_register(devpath);
-	rv = VFS_MOUNT(mp, mountpath, arg, &alen, curlwp);
+	rv = rump_mnt_mount(mp, mountpath, arg, &alen, curlwp);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
-		goto out;
-	}
-
-	/* XXX: this doesn't belong here, but it'll be gone soon altogether */
-	if ((1<<mp->mnt_fs_bshift) < getpagesize()
-	    && (mntflags & MNT_RDONLY) == 0) {
-		rv = EOPNOTSUPP;
-		warnx("Sorry, fs bsize < PAGE_SIZE not yet supported for rw");
 		goto out;
 	}
 	fs->ukfs_mp = mp;
 	rump_fakeblk_deregister(devpath);
 
-	rv = VFS_STATVFS(mp, &mp->mnt_stat, NULL);
-	if (rv) {
-		warnx("VFS_STATVFS %d", rv);
-		goto out;
-	}
-
  out:
 	if (rv) {
 		if (fs->ukfs_mp)
-			rump_mountdestroy(fs->ukfs_mp);
+			rump_mnt_destroy(fs->ukfs_mp);
 		free(fs);
 		errno = rv;
 		fs = NULL;
@@ -189,8 +167,8 @@ recycle(struct vnode *vp)
  * it would require a wrapping due to the name collision in
  * librump vfs.c
  */
-static int
-ukfs_namei(struct vnode *rvp, const char **pnp, u_long op,
+int
+ukfs_ll_namei(struct vnode *rvp, const char **pnp, u_long op,
 	struct vnode **dvpp, struct vnode **vpp)
 {
 	struct vnode *dvp, *vp;

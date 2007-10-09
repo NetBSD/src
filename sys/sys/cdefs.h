@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.64 2006/11/13 05:44:37 dyoung Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.64.8.1 2007/10/09 13:45:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -92,8 +92,8 @@
 #define	__const		const		/* define reserved names to standard */
 #define	__signed	signed
 #define	__volatile	volatile
-#if defined(__cplusplus)
-#define	__inline	inline		/* convert to C++ keyword */
+#if defined(__cplusplus) || defined(__PCC__)
+#define	__inline	inline		/* convert to C++/C99 keyword */
 #else
 #if !defined(__GNUC__) && !defined(__lint__)
 #define	__inline			/* delete GCC keyword */
@@ -201,6 +201,10 @@
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
+#elif defined(__PCC__)
+#define	__packed	/* XXX ignore for now */
+#define	__aligned(x)   	/* XXX ignore for now */
+#define	__section(x)   	/* XXX ignore for now */
 #elif defined(__lint__)
 #define	__packed	/* delete */
 #define	__aligned(x)	/* delete */
@@ -245,7 +249,7 @@
 #endif /* _KERNEL */
 
 #if !defined(_STANDALONE) && !defined(_KERNEL)
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
 #else
 #ifdef __lint__
