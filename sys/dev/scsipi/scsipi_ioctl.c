@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.62.2.5 2007/08/20 18:37:47 ad Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.62.2.6 2007/10/09 15:22:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.62.2.5 2007/08/20 18:37:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.62.2.6 2007/10/09 15:22:12 ad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -283,7 +283,7 @@ scsistrategy(struct buf *bp)
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | XS_CTL_USERCMD);
 
- done:
+done:
 	bp->b_error = error;
 	biodone(bp);
 	return;

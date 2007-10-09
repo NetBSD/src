@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.3 2007/10/09 13:37:15 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.4 2007/10/09 15:22:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -103,8 +103,6 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
  *
  * Acquire a spin mutex and post a load fence.
  */
-	.align	64
-
 NENTRY(mutex_spin_enter)
 	movq	CPUVAR(SELF), %r8
 #if defined(FULL)
@@ -130,8 +128,6 @@ NENTRY(mutex_spin_enter)
  *
  * Release a spin mutex and post a load fence.
  */
-	.align	64
-
 NENTRY(mutex_spin_exit)
 #ifdef DIAGNOSTIC
 

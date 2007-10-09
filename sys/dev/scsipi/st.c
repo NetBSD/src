@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.196.2.5 2007/10/09 13:42:04 ad Exp $ */
+/*	$NetBSD: st.c,v 1.196.2.6 2007/10/09 15:22:13 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.5 2007/10/09 13:42:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.6 2007/10/09 15:22:13 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -1240,9 +1240,8 @@ ststart(struct scsipi_periph *periph)
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
-			if (st->flags & ST_EIO_PENDING) {
+			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
-			}
 			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
 			biodone(bp);
 			continue;	/* seek more work */

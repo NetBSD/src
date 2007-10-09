@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.4.6.2 2007/10/09 13:44:18 ad Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.4.6.3 2007/10/09 15:22:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.6.2 2007/10/09 13:44:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.6.3 2007/10/09 15:22:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -136,9 +136,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	 */
 
 	/* So mp is not dead yet.. good.. inform new vnode of its master */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	vp->v_mount = mp;
 
 	/*
@@ -166,8 +166,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			 * old (well, actually, new) node
 			 */
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
-			vrele(vp);
+			vp->v_iflag &= ~VI_LOCKSWORK;
 			vgone(vp); /* cya */
 
 			/* init "new" vnode */
@@ -374,7 +373,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	mutex_enter(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		mutex_exit(&pmp->pmp_lock);
 		if (vget(vp, LK_INTERLOCK) == 0)
 			return 0;
@@ -401,7 +400,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	} 
 
 	/* store cache */
-	vp->v_flag = VROOT;
+	vp->v_vflag |= VV_ROOT;
 	pmp->pmp_root = vp;
 	mutex_exit(&pmp->pmp_lock);
 
@@ -452,7 +451,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 		return PUFFS_NOSUCHCOOKIE;
 	}
 	vp = pnode->pn_vp;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
 
 	vgetflags = LK_INTERLOCK;

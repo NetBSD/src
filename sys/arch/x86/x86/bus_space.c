@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.2.5 2007/10/09 13:38:44 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.6 2007/10/09 15:22:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.5 2007/10/09 13:38:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.6 2007/10/09 15:22:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,38 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.5 2007/10/09 13:38:44 ad Exp $")
 #include <dev/isa/isareg.h>
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include <machine/isa_machdep.h>
 #include <machine/atomic.h>
+
+#ifdef XEN
+#include <machine/hypervisor.h>
+#include <machine/xenpmap.h>
+
+#define	pmap_extract(a, b, c)	pmap_extract_ma(a, b, c)
+#endif
+
+/*
+ * Macros for sanity-checking the aligned-ness of pointers passed to
+ * bus space ops.  These are not strictly necessary on the x86, but
+ * could lead to performance improvements, and help catch problems
+ * with drivers that would creep up on other architectures.
+ */
+#ifdef BUS_SPACE_DEBUG 
+#define	BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
+	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+
+#define	BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
+({									\
+	if (BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
+		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
+	}								\
+	(void) 0;							\
+})
+#else
+#define	BUS_SPACE_ADDRESS_SANITY(p,t,d)	(void) 0
+#endif /* BUS_SPACE_DEBUG */
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
@@ -298,6 +328,9 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va, sva;
 	pt_entry_t *pte, xpte;
+#ifdef XEN
+	int32_t cpumask = 0;
+#endif
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -307,18 +340,23 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
-	sva = uvm_km_alloc(kernel_map, endpa - pa, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-	if (sva == 0)
-		return (ENOMEM);
+#ifdef XEN
+	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+		sva = (vaddr_t)ISA_HOLE_VADDR(pa);
+	} else
+#endif	/* XEN */
+	{
+		sva = uvm_km_alloc(kernel_map, endpa - pa, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+		if (sva == 0)
+			return (ENOMEM);
+	}
 
 	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
 	va = sva;
 	xpte = 0;
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
 		 * the mainboard has wired up device space non-cacheable
@@ -327,6 +365,24 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
 		 */
+#ifdef XEN
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		if (pmap_cpu_has_pg_n()) {
+			pte = kvtopte(va);
+			pt_entry_t *maptp;
+			maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+			if (cacheable)
+				PTE_CLEARBITS(pte, maptp, PG_N);
+			else
+				PTE_SETBITS(pte, maptp, PG_N);
+			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
+			    &cpumask);
+		}
+	}
+	pmap_tlb_shootnow(cpumask);
+#else	/* XEN */
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
 			if (cacheable)
@@ -336,8 +392,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 			xpte |= *pte;
 		}
 	}
-
 	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
+#endif	/* XEN */
 	pmap_update(pmap_kernel());
 
 	return 0;

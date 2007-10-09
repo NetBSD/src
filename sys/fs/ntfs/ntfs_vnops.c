@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.33.2.2 2007/08/19 19:24:51 ad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.33.2.3 2007/10/09 15:22:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.33.2.2 2007/08/19 19:24:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.33.2.3 2007/10/09 15:22:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ ntfs_strategy(void *v)
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
 	struct ntfsmount *ntmp = ip->i_mp;
-	int error = 0;
+	int error;
 
 #ifdef __FreeBSD__
 	dprintf(("ntfs_strategy: offset: %d, blkno: %d, lblkno: %d\n",
@@ -370,6 +370,7 @@ ntfs_strategy(void *v)
 
 			if (error) {
 				printf("ntfs_strategy: ntfs_readattr failed\n");
+				bp->b_error = error;
 			}
 
 			memset((char *)bp->b_data + toread, 0,
@@ -381,7 +382,7 @@ ntfs_strategy(void *v)
 
 		if (ntfs_cntob(bp->b_blkno) + bp->b_bcount >= fp->f_size) {
 			printf("ntfs_strategy: CAN'T EXTEND FILE\n");
-			error = EFBIG;
+			bp->b_error = error = EFBIG;
 		} else {
 			towrite = MIN(bp->b_bcount,
 				fp->f_size - ntfs_cntob(bp->b_blkno));
@@ -700,9 +701,6 @@ ntfs_readdir(void *v)
 #endif
 
 		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
-		if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
-		    uio->uio_iovcnt != 1)
-			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
 		     ((char *)uio->uio_iov->iov_base -
 			 (uio->uio_offset - off));

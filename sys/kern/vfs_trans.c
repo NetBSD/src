@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.8.6 2007/10/09 13:44:33 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.8.7 2007/10/09 15:22:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.6 2007/10/09 13:44:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.7 2007/10/09 15:22:23 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -76,6 +76,7 @@ struct fstrans_mount_info {
 };
 
 static specificdata_key_t lwp_data_key;
+static specificdata_key_t mount_cow_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 static kmutex_t fstrans_init_lock;
 
@@ -94,8 +95,6 @@ fstrans_init(void)
 	int error;
 
 	error = lwp_specific_key_create(&lwp_data_key, fstrans_lwp_dtor);
-	KASSERT(error == 0);
-	error = mount_specific_key_create(&mount_cow_key, fscow_mount_dtor);
 	KASSERT(error == 0);
 
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -488,19 +487,6 @@ struct fscow_mount_info {
 	krwlock_t cmi_lock;
 	SLIST_HEAD(, fscow_handler) cmi_handler;
 };
-
-/*
- * Deallocate mount state
- */
-static void
-fscow_mount_dtor(void *arg)
-{
-	struct fscow_mount_info *cmi = arg;
-
-	KASSERT(SLIST_EMPTY(&cmi->cmi_handler));
-	rw_destroy(&cmi->cmi_lock);
-	kmem_free(cmi, sizeof(*cmi));
-}
 
 /*
  * Create mount info for this mount

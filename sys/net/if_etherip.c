@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5.2.6 2007/10/09 13:44:40 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.2.7 2007/10/09 15:22:25 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -527,13 +527,13 @@ etherip_set_tunnel(struct ifnet *ifp,
 	osrc = sc->sc_src; sc->sc_src = NULL;
 	odst = sc->sc_dst; sc->sc_dst = NULL;
 
-	sc->sc_src = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
-	memcpy(sc->sc_src, src, src->sa_len);
-	if (osrc) FREE(osrc, M_IFADDR);
+	sc->sc_src = sockaddr_dup(src, M_WAITOK);
+	if (osrc)
+		sockaddr_free(osrc);
 
-	sc->sc_dst = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
-	memcpy(sc->sc_dst, dst, dst->sa_len);
-	if (odst) FREE(odst, M_IFADDR);
+	sc->sc_dst = sockaddr_dup(dst, M_WAITOK);
+	if (odst)
+		sockaddr_free(odst);
 
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -561,11 +561,11 @@ etherip_delete_tunnel(struct ifnet *ifp)
 	}
 
 	if (sc->sc_src) {
-		FREE(sc->sc_src, M_IFADDR);
+		sockaddr_free(sc->sc_src);
 		sc->sc_src = NULL;
 	}
 	if (sc->sc_dst) {
-		FREE(sc->sc_dst, M_IFADDR);
+		sockaddr_free(sc->sc_dst);
 		sc->sc_dst = NULL;
 	}
 

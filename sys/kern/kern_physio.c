@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.7 2007/10/09 13:44:27 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.8 2007/10/09 15:22:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.7 2007/10/09 13:44:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.8 2007/10/09 15:22:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,16 @@ struct workqueue *physio_workqueue;
 #define	DPRINTF(a)	/* nothing */
 #endif /* defined(PHYSIO_DEBUG) */
 
-/* abuse these members/flags of struct buf */
-#define	b_running	b_freelistindex
-#define	b_endoffset	b_lblkno
+struct physio_stat {
+	int ps_running;
+	int ps_error;
+	int ps_failed;
+	off_t ps_endoffset;
+	kmutex_t ps_lock;
+	kcondvar_t ps_cv;
+};
+
+/* abuse these flags of struct buf */
 #define	BC_DONTFREE	BC_AGE
 
 /*
@@ -136,8 +143,8 @@ putphysbuf(struct buf *bp)
 		return;
 	}
 
-	if (__predict_false((bp->b_cflags & BC_WANTED) != 0))
-		panic("putphysbuf: private buf wanted");
+	if (__predict_false(bp->b_cflags & BC_WANTED))
+		panic("putphysbuf: private buf BC_WANTED");
 	putiobuf(bp);
 }
 
@@ -158,7 +165,7 @@ physio_done(struct work *wk, void *dummy)
 	vunmapbuf(bp, todo);
 	uvm_vsunlock(bp->b_proc->p_vmspace, bp->b_data, todo);
 
-	mutex_enter(mbp->b_objlock);
+	mutex_enter(&ps->ps_lock);
 	if (__predict_false(done != todo)) {
 		off_t endoffset = dbtob(bp->b_blkno) + done;
 
@@ -169,30 +176,30 @@ physio_done(struct work *wk, void *dummy)
 		 * ie. the one at the lowest offset.
 		 */
 
-		KASSERT(mbp->b_endoffset != endoffset);
+		KASSERT(ps->ps_endoffset != endoffset);
 		DPRINTF(("%s: error=%d at %" PRIu64 " - %" PRIu64
 		    ", blkno=%" PRIu64 ", bcount=%d, flags=0x%x\n",
 		    __func__, bp->b_error, dbtob(bp->b_blkno), endoffset,
 		    bp->b_blkno, bp->b_bcount, bp->b_flags));
 
-		mbp->b_flags = EIO;
-		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
-			DPRINTF(("%s: mbp=%p, error %d -> %d, endoff %" PRIu64
+		if (ps->ps_endoffset == -1 || endoffset < ps->ps_endoffset) {
+			DPRINTF(("%s: ps=%p, error %d -> %d, endoff %" PRIu64
 			    " -> %" PRIu64 "\n",
-			    __func__, mbp,
-			    mbp->b_error, bp->b_error,
-			    mbp->b_endoffset, endoffset));
+			    __func__, ps,
+			    ps->ps_error, bp->b_error,
+			    ps->ps_endoffset, endoffset));
 
-			mbp->b_endoffset = endoffset;
-			mbp->b_error = bp->b_error;
+			ps->ps_endoffset = endoffset;
+			ps->ps_error = bp->b_error;
 		}
+		ps->ps_failed++;
 	} else {
 		KASSERT(bp->b_error == 0);
 	}
 
-	mbp->b_running--;
-	cv_broadcast(&mbp->b_done);
-	mutex_exit(mbp->b_objlock);
+	ps->ps_running--;
+	cv_signal(&ps->ps_cv);
+	mutex_exit(&ps->ps_lock);
 
 	putphysbuf(bp);
 }
@@ -213,13 +220,13 @@ physio_biodone(struct buf *bp)
 }
 
 static void
-physio_wait(struct buf *bp, int n)
+physio_wait(struct physio_stat *ps, int n)
 {
 
-	KASSERT(mutex_owned(bp->b_objlock));
+	KASSERT(mutex_owned(&ps->ps_lock));
 
-	while ((bp->b_oflags & BO_DONE) == 0 && bp->b_running > n)
-		cv_wait(&bp->b_done, bp->b_objlock);
+	while (ps->ps_running > n)
+		cv_wait(&ps->ps_cv, &ps->ps_lock);
 }
 
 static int
@@ -230,7 +237,7 @@ physio_init(void)
 	KASSERT(physio_workqueue == NULL);
 
 	error = workqueue_create(&physio_workqueue, "physiod",
-	    physio_done, NULL, PRIBIO, IPL_NONE, 0);
+	    physio_done, NULL, PRIBIO, IPL_BIO, 0);
 
 	return error;
 }
@@ -250,10 +257,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	struct iovec *iovp;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int i;
-	int error;
+	int i, error;
 	struct buf *bp = NULL;
-	struct buf *mbp;
+	struct physio_stat *ps;
 	int concurrency = PHYSIO_CONCURRENCY - 1;
 
 	error = RUN_ONCE(&physio_initialized, physio_init);
@@ -277,13 +283,13 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if (obp != NULL) {
+		/* [raise the processor priority level to splbio;] */
 		mutex_enter(&bufcache_lock);
 		while (bbusy(obp, false, 0) == EPASSTHROUGH)
 			;
 		/* Mark it busy, so nobody else will use it. */
-		obp->b_cflags = BC_DONTFREE;
+		obp->b_cflags |= BC_DONTFREE;
 		mutex_exit(&bufcache_lock);
-
 		concurrency = 0; /* see "XXXkludge" comment below */
 	}
 
@@ -297,12 +303,12 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			size_t todo;
 			vaddr_t endp;
 
-			mutex_enter(mbp->b_objlock);
-			physio_wait(mbp, sync ? 0 : concurrency);
-			if (mbp->b_error != 0) {
+			mutex_enter(&ps->ps_lock);
+			if (ps->ps_failed != 0) {
 				goto done_locked;
 			}
-			mutex_exit(mbp->b_objlock);
+			physio_wait(ps, sync ? 0 : concurrency);
+			mutex_exit(&ps->ps_lock);
 			if (obp != NULL) {
 				/*
 				 * XXXkludge
@@ -377,9 +383,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
-			mutex_enter(mbp->b_objlock);
-			mbp->b_running++;
-			mutex_exit(mbp->b_objlock);
+			mutex_enter(&ps->ps_lock);
+			ps->ps_running++;
+			mutex_exit(&ps->ps_lock);
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);
@@ -393,28 +399,30 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	}
 
 done:
-	mutex_enter(mbp->b_objlock);
+	mutex_enter(&ps->ps_lock);
 done_locked:
-	physio_wait(mbp, 0);
-	mutex_exit(mbp->b_objlock);
+	physio_wait(ps, 0);
+	mutex_exit(&ps->ps_lock);
 
-	if (mbp->b_error != 0) {
+	if (ps->ps_failed != 0) {
 		off_t delta;
 
-		delta = uio->uio_offset - mbp->b_endoffset;
+		delta = uio->uio_offset - ps->ps_endoffset;
 		KASSERT(delta > 0);
 		uio->uio_resid += delta;
-		/* uio->uio_offset = mbp->b_endoffset; */
+		/* uio->uio_offset = ps->ps_endoffset; */
 	} else {
-		KASSERT(mbp->b_endoffset == -1);
+		KASSERT(ps->ps_endoffset == -1);
 	}
 	if (bp != NULL) {
 		putphysbuf(bp);
 	}
 	if (error == 0) {
-		error = mbp->b_error;
+		error = ps->ps_error;
 	}
-	putphysbuf(mbp);
+	mutex_destroy(&ps->ps_lock);
+	cv_destroy(&ps->ps_cv);
+	kmem_free(ps, sizeof(*ps));
 
 	/*
 	 * [clean up the state of the buffer]
@@ -430,7 +438,7 @@ done_locked:
 		 *    wake up processes waiting to do physical I/O;
 		 */
 		mutex_enter(&bufcache_lock);
-		obp->b_cflags &= ~(BC_DONTFREE | BC_BUSY);
+		obp->b_cflags &= ~(BC_DONTFREE | BC_BUSY | BC_WANTED);
 		obp->b_flags &= ~(B_PHYS | B_RAW);
 		obp->b_iodone = NULL;
 		cv_broadcast(&obp->b_busy);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.6 2007/08/23 13:18:21 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.7 2007/10/09 15:22:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ ENTRY(spllower)
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(spllower_end)
 
 /*
@@ -101,8 +101,6 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-	.align	64
-
 ENTRY(i686_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
@@ -127,7 +125,7 @@ ENTRY(i686_spllower)
 	popl	%ebx
 LABEL(i686_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(i686_spllower_end)
 
 /*
@@ -148,8 +146,7 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop
-	.align	4	/* Don't get confused with i686_spllower_end */
+	nop	/* Don't get confused with i686_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)

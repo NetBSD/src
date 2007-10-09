@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.74.2.5 2007/08/20 21:27:54 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.74.2.6 2007/10/09 15:22:27 ad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74.2.5 2007/08/20 21:27:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74.2.6 2007/10/09 15:22:27 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -778,12 +778,10 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
                 dldst = CLLADDR(satocsdl(rt->rt_gateway));
                 break;
 
 	case AF_LINK:
-		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
 		dldst = CLLADDR(satocsdl(dst));
 		break;
 
@@ -1225,7 +1223,7 @@ stripintr(void *arg)
 #endif
 		m->m_data = (void *) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
-#if NPBFILTER > 0
+#if NBPFILTER > 0
 		if (sc->sc_if.if_bpf) {
 			bpf_mtap_sl_in(sc->sc_if.if_bpf, chdr, &m);
 			if (m == NULL)
@@ -1302,7 +1300,7 @@ stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 
 #ifdef INET
 		case AF_INET:

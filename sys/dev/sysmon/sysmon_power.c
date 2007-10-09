@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.17.2.7 2007/10/09 13:42:06 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17.2.8 2007/10/09 15:22:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.7 2007/10/09 13:42:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.8 2007/10/09 15:22:13 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -80,13 +80,20 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.7 2007/10/09 13:42:06 ad Exp
 #include <sys/vnode.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <prop/proplib.h>
 
-static kmutex_t sysmon_power_event_queue_mtx;
-static kcondvar_t sysmon_power_event_queue_cv;
-static lwp_t *sysmon_power_daemon;
-static prop_dictionary_t sysmon_power_dict;
+/*
+ * Singly linked list for dictionaries to be stored/sent.
+ */
+struct power_event_dictionary {
+	SLIST_ENTRY(power_event_dictionary) pev_dict_head;
+	prop_dictionary_t dict;
+	int flags;
+};
 
 struct power_event_description {
 	int type;

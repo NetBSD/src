@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.35.2.3 2007/08/20 18:16:13 ad Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.35.2.4 2007/10/09 15:22:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.35.2.3 2007/08/20 18:16:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.35.2.4 2007/10/09 15:22:11 ad Exp $");
 
 #include "rnd.h"
 
@@ -350,9 +350,7 @@ edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	mutex_exit(&wd->sc_dk.dk_openlock);
-	return 0;
-
+	error = 0;
  bad1:
 	mutex_exit(&wd->sc_dk.dk_openlock);
 	return (error);

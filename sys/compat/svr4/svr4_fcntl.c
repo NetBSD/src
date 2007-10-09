@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.55.2.6 2007/10/09 13:44:07 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.55.2.7 2007/10/09 15:22:08 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.6 2007/10/09 13:44:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.7 2007/10/09 15:22:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,13 +242,14 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
-	mutex_exit(&fp->f_lock);
 
-	if (fp->f_type != DTYPE_VNODE)
+	if (fp->f_type != DTYPE_VNODE) {
+		mutex_exit(&fp->f_lock);
 		return EINVAL;
+	}
 
 	vp = (struct vnode *) fp->f_data;
-
+	FILE_USE(fp);
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
 		goto out;
@@ -269,6 +270,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -294,13 +296,16 @@ fd_truncate(l, fd, flp, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	mutex_exit(&fp->f_lock);
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		mutex_exit(&fp->f_lock);
 		return ESPIPE;
-
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	}
+	FILE_USE(fp);
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0) {
+		FILE_UNUSE(fp, l);
 		return error;
+	}
 
 	length = vattr.va_size;
 
@@ -367,13 +372,10 @@ svr4_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL) {
-			if (fp->f_type == DTYPE_VNODE) {
-				FILE_USE(fp);
-				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY,
-				    (void *) 0, l);
-				FILE_UNUSE(fp, l);
-			} else
-				mutex_exit(&fp->f_lock);
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
+			FILE_UNUSE(fp, l);
 		}
 	}
 	return 0;

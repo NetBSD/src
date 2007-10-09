@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.12.2.8 2007/09/09 23:12:20 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12.2.9 2007/10/09 15:22:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.8 2007/09/09 23:12:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.9 2007/10/09 15:22:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ sleeptab_t	lwp_park_tab;
 void
 lwp_sys_init(void)
 {
-
 	sleeptab_init(&lwp_park_tab);
 }
 

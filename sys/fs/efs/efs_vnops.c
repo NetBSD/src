@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.3.2.6 2007/10/09 13:44:15 ad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.3.2.7 2007/10/09 15:22:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.6 2007/10/09 13:44:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.7 2007/10/09 15:22:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,8 @@ efs_getattr(void *v)
 	vap->va_ctime.tv_sec	= eip->ei_ctime;
 /*	vap->va_birthtime 	= */
 	vap->va_gen		= eip->ei_gen;
-	vap->va_flags		= ap->a_vp->v_vflag | ap->a_vp->v_iflag;
+	vap->va_flags		= ap->a_vp->v_vflag |
+	    ap->a_vp->v_iflag | ap->a_vp->v_uflag;
 
 	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
 		uint32_t dmaj, dmin;
@@ -368,7 +369,8 @@ efs_readdir(void *v)
 					goto exit_ok;
 				}
 
-				dp = malloc(s, M_EFSTMP, M_ZERO | M_WAITOK);
+				/* de_namelen is uint8_t, d.d_name is 512b */
+				KASSERT(sizeof(dp->d_name)-de->de_namelen > 0);
 				dp->d_fileno = be32toh(de->de_inumber);
 				dp->d_reclen = s;
 				dp->d_namlen = de->de_namelen;
@@ -382,7 +384,6 @@ efs_readdir(void *v)
 				    dp->d_fileno, NULL, &edi);
 				if (err) {
 					brelse(bp, 0);
-					free(dp, M_EFSTMP);
 					goto exit_err;
 				}
 
@@ -414,7 +415,6 @@ efs_readdir(void *v)
 				}
 
 				err = uiomove(dp, s, uio);
-				free(dp, M_EFSTMP);
 				if (err) {
 					brelse(bp, 0);
 					goto exit_err;	

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.114.2.4 2007/07/15 15:52:59 ad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.114.2.5 2007/10/09 15:22:26 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114.2.4 2007/07/15 15:52:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114.2.5 2007/10/09 15:22:26 ad Exp $");
 
 #include "ppp.h"
 
@@ -809,11 +809,11 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 
     case SIOCADDMULTI:
     case SIOCDELMULTI:
-	if (ifr == 0) {
+	if (ifr == NULL) {
 	    error = EAFNOSUPPORT;
 	    break;
 	}
-	switch (ifr->ifr_addr.sa_family) {
+	switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 	case AF_INET:
 	    break;

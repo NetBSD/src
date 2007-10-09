@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.9 2007/08/24 23:28:36 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.10 2007/10/09 15:22:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.9 2007/08/24 23:28:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.10 2007/10/09 15:22:10 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1103,7 +1103,8 @@ dkiodone(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
 
-	obp->b_error = bp->b_error;
+	if (bp->b_error != 0)
+		obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
 

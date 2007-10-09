@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.9 2007/08/20 21:28:34 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.10 2007/10/09 15:22:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.9 2007/08/20 21:28:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.10 2007/10/09 15:22:28 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -350,14 +350,14 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	if (vp->v_writesize != VSIZENOTSET) {
-		KASSERT(vp->v_size <= vp->v_writesize);
-		KASSERT(vp->v_size == vp->v_writesize ||
-		    newsize == vp->v_writesize || newsize <= vp->v_size);
-		oldsize = vp->v_writesize;
-	} else {
-		oldsize = vp->v_size;
-	}
+	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(vp->v_size <= vp->v_writesize);
+	KASSERT(vp->v_size == vp->v_writesize ||
+	    newsize == vp->v_writesize || newsize <= vp->v_size);
+
+	oldsize = vp->v_writesize;
+	KASSERT(oldsize != VSIZENOTSET || pgend > oldsize);
+
 	if (oldsize > pgend) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 		mutex_enter(&uobj->vmobjlock);
@@ -371,6 +371,7 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
 	mutex_enter(&vp->v_interlock);
+	KASSERT(newsize != VSIZENOTSET);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
 	KASSERT(vp->v_size <= vp->v_writesize);

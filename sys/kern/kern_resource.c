@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.6 2007/08/28 12:32:03 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.7 2007/10/09 15:22:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.6 2007/08/28 12:32:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.7 2007/10/09 15:22:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,6 @@ int
 dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
-	struct plimit *oldplim;
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
@@ -265,12 +264,6 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
 		return (EINVAL);
 
-	alimp = &p->p_rlimit[which];
-	/* if we don't change the value, no need to limcopy() */
-	if (limp->rlim_cur == alimp->rlim_cur &&
-	    limp->rlim_max == alimp->rlim_max)
-		return 0;
-
 	if (limp->rlim_cur > limp->rlim_max) {
 		/*
 		 * This is programming error. According to SUSv2, we should
@@ -278,19 +271,21 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 */
 		return (EINVAL);
 	}
+
+	alimp = &p->p_rlimit[which];
+	/* if we don't change the value, no need to limcopy() */
+	if (limp->rlim_cur == alimp->rlim_cur &&
+	    limp->rlim_max == alimp->rlim_max)
+		return 0;
+
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
 	    p, limp, KAUTH_ARG(which), NULL);
 	if (error)
-			return (error);
+		return (error);
 
-	mutex_enter(&p->p_mutex);
-	if (p->p_limit->p_refcnt > 1 &&
-	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-	    	oldplim = p->p_limit;
-		p->p_limit = limcopy(p);
-		limfree(oldplim);
-		alimp = &p->p_rlimit[which];
-	}
+	lim_privatise(p, false);
+	/* p->p_limit is now unchangeable */
+	alimp = &p->p_rlimit[which];
 
 	switch (which) {
 
@@ -315,7 +310,6 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 */
 		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE
 		    || limp->rlim_max < p->p_vmspace->vm_ssize * PAGE_SIZE) {
-			mutex_exit(&p->p_mutex);
 			return (EINVAL);
 		}
 
@@ -366,8 +360,10 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 			limp->rlim_max = maxproc;
 		break;
 	}
+
+	mutex_enter(&p->p_limit->pl_lock);
 	*alimp = *limp;
-	mutex_exit(&p->p_mutex);
+	mutex_exit(&p->p_limit->pl_lock);
 	return (0);
 }
 
@@ -526,77 +522,126 @@ ruadd(struct rusage *ru, struct rusage *ru2)
  * We share these structures copy-on-write after fork,
  * and copy when a limit is changed.
  *
- * XXXSMP This is atrocious, need to simplify.
+ * Unfortunately (due to PL_SHAREMOD) it is possibly for the structure
+ * we are copying to change beneath our feet!
  */
 struct plimit *
-limcopy(struct proc *p)
+lim_copy(struct plimit *lim)
+{
+	struct plimit *newlim;
+	char *corename;
+	size_t alen, len;
+
+	newlim = pool_get(&plimit_pool, PR_WAITOK);
+	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
+	newlim->pl_flags = 0;
+	newlim->pl_refcnt = 1;
+	newlim->pl_sv_limit = NULL;
+
+	mutex_enter(&lim->pl_lock);
+	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
+	    sizeof(struct rlimit) * RLIM_NLIMITS);
+
+	alen = 0;
+	corename = NULL;
+	for (;;) {
+		if (lim->pl_corename == defcorename) {
+			newlim->pl_corename = defcorename;
+			break;
+		}
+		len = strlen(lim->pl_corename) + 1;
+		if (len <= alen) {
+			newlim->pl_corename = corename;
+			memcpy(corename, lim->pl_corename, len);
+			corename = NULL;
+			break;
+		}
+		mutex_exit(&lim->pl_lock);
+		if (corename != NULL)
+			free(corename, M_TEMP);
+		alen = len;
+		corename = malloc(alen, M_TEMP, M_WAITOK);
+		mutex_enter(&lim->pl_lock);
+	}
+	mutex_exit(&lim->pl_lock);
+	if (corename != NULL)
+		free(corename, M_TEMP);
+	return newlim;
+}
+
+void
+lim_addref(struct plimit *lim)
+{
+	mutex_enter(&lim->pl_lock);
+	lim->pl_refcnt++;
+	mutex_exit(&lim->pl_lock);
+}
+
+/*
+ * Give a process it's own private plimit structure.
+ * This will only be shared (in fork) if modifications are to be shared.
+ */
+void
+lim_privatise(struct proc *p, bool set_shared)
 {
 	struct plimit *lim, *newlim;
-	char *corename;
-	size_t l;
 
-	KASSERT(mutex_owned(&p->p_mutex));
-
-	mutex_exit(&p->p_mutex);
-	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	mutex_init(&newlim->p_lock, MUTEX_DEFAULT, IPL_NONE);
-	newlim->p_lflags = 0;
-	newlim->p_refcnt = 1;
-	mutex_enter(&p->p_mutex);
-
-	for (;;) {
-		lim = p->p_limit;
-		mutex_enter(&lim->p_lock);
-		if (lim->pl_corename != defcorename) {
-			l = strlen(lim->pl_corename) + 1;
-
-			mutex_exit(&lim->p_lock);
-			mutex_exit(&p->p_mutex);
-			corename = malloc(l, M_TEMP, M_WAITOK);
-			mutex_enter(&p->p_mutex);
-			mutex_enter(&lim->p_lock);
-
-			if (l != strlen(lim->pl_corename) + 1) {
-				mutex_exit(&lim->p_lock);
-				mutex_exit(&p->p_mutex);
-				free(corename, M_TEMP);
-				mutex_enter(&p->p_mutex);
-				continue;
-			}
-		} else
-			l = 0;
-			
-		memcpy(newlim->pl_rlimit, lim->pl_rlimit,
-		    sizeof(struct rlimit) * RLIM_NLIMITS);
-		if (l != 0)
-			strlcpy(newlim->pl_corename, lim->pl_corename, l);
-		else
-			newlim->pl_corename = defcorename;
-		mutex_exit(&lim->p_lock);
-		break;
+	lim = p->p_limit;
+	if (lim->pl_flags & PL_WRITEABLE) {
+		if (set_shared)
+			lim->pl_flags |= PL_SHAREMOD;
+		return;
 	}
 
-	return (newlim);
+	if (set_shared && lim->pl_flags & PL_SHAREMOD)
+		return;
+
+	newlim = lim_copy(lim);
+
+	mutex_enter(&p->p_mutex);
+	if (p->p_limit->pl_flags & PL_WRITEABLE) {
+		/* Someone crept in while we were busy */
+		mutex_exit(&p->p_mutex);
+		limfree(newlim);
+		if (set_shared)
+			p->p_limit->pl_flags |= PL_SHAREMOD;
+		return;
+	}
+
+	/*
+	 * Since most accesses to p->p_limit aren't locked, we must not
+	 * delete the old limit structure yet.
+	 */
+	newlim->pl_sv_limit = p->p_limit;
+	newlim->pl_flags |= PL_WRITEABLE;
+	if (set_shared)
+		newlim->pl_flags |= PL_SHAREMOD;
+	p->p_limit = newlim;
+	mutex_exit(&p->p_mutex);
 }
 
 void
 limfree(struct plimit *lim)
 {
+	struct plimit *sv_lim;
 	int n;
 
-	mutex_enter(&lim->p_lock);
-	n = --lim->p_refcnt;
-	mutex_exit(&lim->p_lock);
-	if (n > 0)
-		return;
+	do {
+		mutex_enter(&lim->pl_lock);
+		n = --lim->pl_refcnt;
+		mutex_exit(&lim->pl_lock);
+		if (n > 0)
+			return;
 #ifdef DIAGNOSTIC
-	if (n < 0)
-		panic("limfree");
+		if (n < 0)
+			panic("limfree");
 #endif
-	if (lim->pl_corename != defcorename)
-		free(lim->pl_corename, M_TEMP);
-	mutex_destroy(&lim->p_lock);
-	pool_put(&plimit_pool, lim);
+		if (lim->pl_corename != defcorename)
+			free(lim->pl_corename, M_TEMP);
+		sv_lim = lim->pl_sv_limit;
+		mutex_destroy(&lim->pl_lock);
+		pool_put(&plimit_pool, lim);
+	} while ((lim = sv_lim) != NULL);
 }
 
 struct pstats *
@@ -660,6 +705,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	struct plimit *lim;
 	int error = 0, len;
 	char *cname;
+	char *ocore;
 	char *tmp;
 	struct sysctlnode node;
 
@@ -684,12 +730,16 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
-	cname = PNBUF_GET();
 	/*
 	 * let them modify a temporary copy of the core name
 	 */
+	cname = PNBUF_GET();
+	lim = ptmp->p_limit;
+	mutex_enter(&lim->pl_lock);
+	strlcpy(cname, lim->pl_corename, MAXPATHLEN);
+	mutex_exit(&lim->pl_lock);
+
 	node = *rnode;
-	strlcpy(cname, ptmp->p_limit->pl_corename, MAXPATHLEN);
 	node.sysctl_data = cname;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -697,10 +747,15 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * if that failed, or they have nothing new to say, or we've
 	 * heard it before...
 	 */
-	if (error || newp == NULL ||
-	    strcmp(cname, ptmp->p_limit->pl_corename) == 0) {
+	if (error || newp == NULL)
 		goto done;
-	}
+	lim = ptmp->p_limit;
+	mutex_enter(&lim->pl_lock);
+	error = strcmp(cname, lim->pl_corename);
+	mutex_exit(&lim->pl_lock);
+	if (error == 0)
+		/* Unchanged */
+		goto done;
 
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
 	    ptmp, cname, NULL, NULL);
@@ -732,19 +787,17 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		error = ENOMEM;
 		goto done;
 	}
-	strlcpy(tmp, cname, len + 1);
+	memcpy(tmp, cname, len + 1);
 
-	mutex_enter(&ptmp->p_mutex);
+	lim_privatise(ptmp, false);
 	lim = ptmp->p_limit;
-	if (lim->p_refcnt > 1 && (lim->p_lflags & PL_SHAREMOD) == 0) {
-		ptmp->p_limit = limcopy(ptmp);
-		limfree(lim);
-		lim = ptmp->p_limit;
-	}
-	if (lim->pl_corename != defcorename)
-		free(lim->pl_corename, M_TEMP);
+	mutex_enter(&lim->pl_lock);
+	ocore = lim->pl_corename;
 	lim->pl_corename = tmp;
-	mutex_exit(&ptmp->p_mutex);
+	mutex_exit(&lim->pl_lock);
+	if (ocore != defcorename)
+		free(ocore, M_TEMP);
+
 done:
 	PNBUF_PUT(cname);
 	return error;
@@ -980,8 +1033,8 @@ again:
 		if (uip->ui_uid == uid) {
 			mutex_exit(&uihashtbl_lock);
 			if (newuip) {
-				free(newuip, M_PROC);
 				mutex_destroy(&newuip->ui_lock);
+				free(newuip, M_PROC);
 			}
 			return uip;
 		}

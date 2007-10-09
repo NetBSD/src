@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.16 2007/09/01 15:23:58 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.17 2007/10/09 15:22:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.16 2007/09/01 15:23:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.17 2007/10/09 15:22:21 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -276,7 +276,7 @@ wakeup_one(wchan_t ident)
 /*
  * General yield call.  Puts the current process back on its run queue and
  * performs a voluntary context switch.  Should only be called when the
- * current process explicitly requests it (eg sched_yield(2) in compat code).
+ * current process explicitly requests it (eg sched_yield(2)).
  */
 void
 yield(void)
@@ -287,7 +287,8 @@ yield(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
-	l->l_priority = l->l_usrpri;
+	/* XXX Only do this for timeshared threads. */
+	l->l_priority = 0;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -349,6 +350,7 @@ mi_switch(lwp_t *l)
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
+	struct cpu_info *ci;
 	struct timeval tv;
 	bool returning;
 
@@ -366,13 +368,14 @@ mi_switch(lwp_t *l)
 	 * are after is the run time and that's guarenteed to have been last
 	 * updated by this CPU.
 	 */
-	KDASSERT(l->l_cpu == curcpu());
+	ci = l->l_cpu;
+	KDASSERT(ci == curcpu());
 
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
-	spc = &l->l_cpu->ci_schedstate;
+	spc = &ci->ci_schedstate;
 	returning = false;
 	newl = NULL;
 
@@ -394,8 +397,8 @@ mi_switch(lwp_t *l)
 		l->l_switchto = NULL;
 	}
 
+	/* Count time spent in current system call */
 	if (!returning) {
-		/* Count time spent in current system call */
 		SYSCALL_TIME_SLEEP(l);
 
 		/*
@@ -435,23 +438,29 @@ mi_switch(lwp_t *l)
 			sched_dequeue(newl);
 			KASSERT(lwp_locked(newl, spc->spc_mutex));
 			newl->l_stat = LSONPROC;
-			newl->l_cpu = l->l_cpu;
+			newl->l_cpu = ci;
 			newl->l_flag |= LW_RUNNING;
 			lwp_setlock(newl, &spc->spc_lwplock);
 		} else {
-			newl = l->l_cpu->ci_data.cpu_idlelwp;
+			newl = ci->ci_data.cpu_idlelwp;
 			newl->l_stat = LSONPROC;
 			newl->l_flag |= LW_RUNNING;
 		}
-		spc->spc_curpriority = newl->l_usrpri;
-		newl->l_priority = newl->l_usrpri;
-		cpu_did_resched();
+		ci->ci_want_resched = 0;
 		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	}
 
 	/* Update the new LWP's start time while it is still locked. */
-	if (!returning)
+	if (!returning) {
 		newl->l_stime = tv;
+		/*
+		 * XXX The following may be done unlocked if newl != NULL
+		 * above.
+		 */
+		newl->l_priority = newl->l_usrpri;
+	}
+
+	spc->spc_curpriority = newl->l_usrpri;
 
 	if (l != newl) {
 		struct lwp *prevlwp;
@@ -483,14 +492,13 @@ mi_switch(lwp_t *l)
 		/* Switch to the new LWP.. */
 		l->l_ncsw++;
 		l->l_flag &= ~LW_RUNNING;
-		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
+		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		prevlwp = cpu_switchto(l, newl, returning);
 
 		/*
 		 * .. we have switched away and are now back so we must
 		 * be the new curlwp.  prevlwp is who we replaced.
 		 */
-		curlwp = l;
 		if (prevlwp != NULL) {
 			curcpu()->ci_mtx_oldspl = oldspl;
 			lwp_unlock(prevlwp);
@@ -521,7 +529,14 @@ mi_switch(lwp_t *l)
 	}
 #endif
 
+	/*
+	 * We're running again; record our new start time.  We might
+	 * be running on a new CPU now, so don't use the cached
+	 * schedstate_percpu pointer.
+	 */
 	SYSCALL_TIME_WAKEUP(l);
+	KASSERT(curlwp == l);
+	KDASSERT(l->l_cpu == curcpu());
 	LOCKDEBUG_BARRIER(NULL, 1);
 
 	return retval;
@@ -823,6 +838,9 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * Update process statistics and check CPU resource allocation.
  * Call scheduler-specific hook to eventually adjust process/LWP
  * priorities.
+ *
+ *	XXXSMP This needs to be reorganised in order to reduce the locking
+ *	burden.
  */
 /* ARGSUSED */
 void

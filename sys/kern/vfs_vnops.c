@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.8 2007/10/09 13:44:34 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.9 2007/10/09 15:22:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.8 2007/10/09 13:44:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.9 2007/10/09 15:22:23 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -734,59 +734,38 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 	mutex_exit(&lkp->lk_interlock);
 }
 
+/*
+ * Obsolete: this function will be removed from 6.0
+ * Please use fscow_establish() instead.
+ */
 int
 vn_cow_establish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	struct spec_cow_entry *e;
+	static int firstrun = 1;
 
-	MALLOC(e, struct spec_cow_entry *, sizeof(struct spec_cow_entry),
-	    M_DEVBUF, M_WAITOK);
-	e->ce_func = func;
-	e->ce_cookie = cookie;
-
-	mutex_enter(&vp->v_spec_cow_lock);
-	vp->v_spec_cow_req++;
-	while (vp->v_spec_cow_count > 0)
-		mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_lock);
-
-	SLIST_INSERT_HEAD(&vp->v_spec_cow_head, e, ce_list);
-
-	vp->v_spec_cow_req--;
-	if (vp->v_spec_cow_req == 0)
-		wakeup(&vp->v_spec_cow_req);
-	mutex_exit(&vp->v_spec_cow_lock);
-
-	return 0;
+	if (firstrun) {
+		printf("%s: this function is obsolete.\n", __FUNCTION__);
+		firstrun = 0;
+	}
+	if (vp->v_type == VBLK)
+		return fscow_establish(vp->v_specmountpoint, func, cookie);
+	else
+		return fscow_establish(vp->v_mount, func, cookie);
 }
 
+/*
+ * Obsolete: this function will be removed from 6.0
+ * Please use fscow_disestablish() instead.
+ */
 int
 vn_cow_disestablish(struct vnode *vp,
     int (*func)(void *, struct buf *), void *cookie)
 {
-	struct spec_cow_entry *e;
-
-	mutex_enter(&vp->v_spec_cow_lock);
-	vp->v_spec_cow_req++;
-	while (vp->v_spec_cow_count > 0)
-		mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-		    &vp->v_spec_cow_lock);
-
-	SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
-		if (e->ce_func == func && e->ce_cookie == cookie) {
-			SLIST_REMOVE(&vp->v_spec_cow_head, e,
-			    spec_cow_entry, ce_list);
-			FREE(e, M_DEVBUF);
-			break;
-		}
-
-	vp->v_spec_cow_req--;
-	if (vp->v_spec_cow_req == 0)
-		wakeup(&vp->v_spec_cow_req);
-	mutex_exit(&vp->v_spec_cow_lock);
-
-	return e ? 0 : EINVAL;
+	if (vp->v_type == VBLK)
+		return fscow_disestablish(vp->v_specmountpoint, func, cookie);
+	else
+		return fscow_disestablish(vp->v_mount, func, cookie);
 }
 
 /*

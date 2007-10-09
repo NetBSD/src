@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.83.2.4 2007/10/09 13:37:56 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.83.2.5 2007/10/09 15:22:05 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.4 2007/10/09 13:37:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.5 2007/10/09 15:22:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -556,8 +556,6 @@ svr4_fasttrap(frame)
 		 * using the LWP's real time augmented with its current
 		 * runtime is the best we can do.
 		 */
-		spc = &curcpu()->ci_schedstate;
-
 		microtime(&tv);
 
 		tm = (l->l_rtime.tv_sec + tv.tv_sec -

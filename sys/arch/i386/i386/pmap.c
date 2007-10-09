@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.26 2007/09/10 00:07:08 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.27 2007/10/09 15:22:04 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.26 2007/09/10 00:07:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.27 2007/10/09 15:22:04 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -184,9 +184,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.26 2007/09/10 00:07:08 ad Exp $");
  *		=> success: we have an unmapped VA, continue to [b]
  *		=> failure: unable to lock kmem_map or out of VA in it.
  *			move on to plan 3.
- *		[b] allocate a page in kmem_object for the VA
+ *		[b] allocate a page for the VA
  *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: kmem_object locked, no free vm_pages, etc.
+ *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
@@ -399,7 +399,7 @@ static struct pool_cache pmap_cache;
 
 #ifdef MULTIPROCESSOR
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((char *)(va)+(id)*NPTECL*PAGE_SIZE)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
 #else
 #define PTESLEW(pte, id) (pte)
 #define VASLEW(va,id) (va)
@@ -409,7 +409,7 @@ static struct pool_cache pmap_cache;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static void *csrcp, *cdstp, *zerop, *ptpp;
+static char *csrcp, *cdstp, *zerop, *ptpp;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -1908,7 +1908,7 @@ pmap_load(void)
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
-	KASSERT((read_psl() & PSL_I) != 0);
+	KASSERT((x86_read_psl() & PSL_I) != 0);
 
 	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
@@ -3474,14 +3474,17 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
+#ifdef MULTIPROCESSOR
 	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
-	struct cpu_info *ci, *self;
+	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
 	CPU_INFO_ITERATOR cii;
 	uintptr_t head;
 	u_int count;
 	int s;
+#endif	/* MULTIPROCESSOR */
+	struct cpu_info *self;
 	bool kernel;
 
 	KASSERT(eva == 0 || eva >= sva);
@@ -3511,6 +3514,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		eva = sva;
 	}
 
+#ifdef MULTIPROCESSOR
 	if (ncpu > 1 && x86_mp_online) {
 		selfmb = &self->ci_pmap_cpu->pc_mbox;
 
@@ -3597,6 +3601,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			splx(s);
 		}
 	}
+#endif	/* MULTIPROCESSOR */
 
 	/* Update the current CPU before waiting for others. */
 	if (!pmap_is_active(pm, self, kernel))

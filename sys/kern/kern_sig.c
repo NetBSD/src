@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.251.2.7 2007/08/28 12:53:28 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.251.2.8 2007/10/09 15:22:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.251.2.7 2007/08/28 12:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.251.2.8 2007/10/09 15:22:20 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -144,7 +144,7 @@ static	const char lognocoredump[] =
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
-    NULL, IPL_TTY);
+    NULL, IPL_VM);
 
 /*
  * signal_init:
