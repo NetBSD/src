@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.30.18.2 2007/08/20 21:27:51 ad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.30.18.3 2007/10/09 15:22:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,10 +50,6 @@ struct specinfo {
 	struct	mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
-	kmutex_t si_cow_lock;
-	SLIST_HEAD(, spec_cow_entry) si_cow_head;
-	int si_cow_req;
-	int si_cow_count;
 };
 /*
  * Exported shorthand
@@ -63,20 +59,6 @@ struct specinfo {
 #define v_specnext	v_specinfo->si_specnext
 #define v_speclockf	v_specinfo->si_lockf
 #define v_specmountpoint v_specinfo->si_mountpoint
-#define v_spec_cow_lock v_specinfo->si_cow_lock
-#define v_spec_cow_head	v_specinfo->si_cow_head
-#define v_spec_cow_req	v_specinfo->si_cow_req
-#define v_spec_cow_count v_specinfo->si_cow_count
-
-#define SPEC_COW_LOCK(si) \
-	do { \
-		mutex_enter(&(si)->si_cow_lock) ; \
-	} while (/*CONSTCOND*/0)
-
-#define SPEC_COW_UNLOCK(si) \
-	do { \
-		mutex_exit(&(si)->si_cow_lock) ; \
-	} while (/*CONSTCOND*/0)
 
 /*
  * Special device management

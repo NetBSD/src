@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.19.2.5 2007/08/24 23:28:35 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.19.2.6 2007/10/09 15:22:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.5 2007/08/24 23:28:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.6 2007/10/09 15:22:09 ad Exp $");
 
 #include "rnd.h"
 
@@ -496,7 +496,8 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			 */
 			;
 		else {
-			bp->b_error = cbp->cb_buf.b_error;
+			bp->b_error = cbp->cb_buf.b_error ?
+			    cbp->cb_buf.b_error : EIO;
 		}
 
 		/* XXX Update component config blocks. */

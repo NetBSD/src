@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.9 2007/10/09 13:44:21 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.10 2007/10/09 15:22:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.9 2007/10/09 13:44:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.10 2007/10/09 15:22:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
 #include <sys/event.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/time.h>
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.9 2007/10/09 13:44:21 ad Exp $
 #include <fs/tmpfs/tmpfs_fifoops.h>
 #include <fs/tmpfs/tmpfs_specops.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
-
-MALLOC_DECLARE(M_TMPFSTMP);
 
 /* --------------------------------------------------------------------- */
 
@@ -661,7 +659,7 @@ tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOT);
 
-	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
+	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 
 	dentp->d_fileno = node->tn_id;
 	dentp->d_type = DT_DIR;
@@ -680,7 +678,7 @@ tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	free(dentp, M_TMPFSTMP);
+	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 
@@ -702,7 +700,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
+	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 
 	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 	dentp->d_type = DT_DIR;
@@ -729,7 +727,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	free(dentp, M_TMPFSTMP);
+	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 
@@ -791,7 +789,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		return EINVAL;
 	}
 
-	dentp = malloc(sizeof(struct dirent), M_TMPFSTMP, M_WAITOK | M_ZERO);
+	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 
 	/* Read as much entries as possible; i.e., until we reach the end of
 	 * the directory or we exhaust uio space. */
@@ -865,7 +863,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	free(dentp, M_TMPFSTMP);
+	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.3.2.6 2007/08/24 23:28:38 ad Exp $ */
+/* $NetBSD: spiflash.c,v 1.3.2.7 2007/10/09 15:22:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.6 2007/08/24 23:28:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.7 2007/10/09 15:22:13 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

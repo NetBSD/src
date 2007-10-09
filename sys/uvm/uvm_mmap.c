@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108.2.7 2007/10/09 13:45:18 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.8 2007/10/09 15:22:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.7 2007/10/09 13:45:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.8 2007/10/09 15:22:28 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -389,27 +389,32 @@ sys_mmap(l, v, retval)
 
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return (EBADF);
-
-		mutex_exit(&fp->f_lock);
-
-		if (fp->f_type != DTYPE_VNODE)
+		if (fp->f_type != DTYPE_VNODE) {
+			mutex_exit(&fp->f_lock);
 			return (ENODEV);		/* only mmap vnodes! */
+		}
 		vp = (struct vnode *)fp->f_data;	/* convert to vnode */
 
 		if (vp->v_type != VREG && vp->v_type != VCHR &&
-		    vp->v_type != VBLK)
+		    vp->v_type != VBLK) {
+			mutex_exit(&fp->f_lock);
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
-
-		if (vp->v_type != VCHR && pos < 0)
+		}
+		if (vp->v_type != VCHR && pos < 0) {
+			mutex_exit(&fp->f_lock);
 			return (EINVAL);
-
-		if (vp->v_type != VCHR && (pos + size) < pos)
+		}
+		if (vp->v_type != VCHR && (pos + size) < pos) {
+			mutex_exit(&fp->f_lock);
 			return (EOVERFLOW);		/* no offset wrapping */
+		}
 
 		/* special case: catch SunOS style /dev/zero */
 		if (vp->v_type == VCHR
 		    && (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
 			flags |= MAP_ANON;
+			mutex_exit(&fp->f_lock);
+			fp = NULL;
 			goto is_anon;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.11 2007/10/09 13:44:20 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.12 2007/10/09 15:22:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.11 2007/10/09 13:44:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.12 2007/10/09 15:22:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -910,33 +910,19 @@ puffs_setattr(void *v)
 	return puffs_dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_l, 1);
 }
 
-int
-puffs_inactive(void *v)
+static void
+puffs_callinactive(struct puffs_mount *pmp, void *cookie, int iaflag,
+	struct lwp *l)
 {
-	struct vop_inactive_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		bool *a_recycle;
-	} */ *ap = v;
-	struct puffs_mount *pmp;
-	struct puffs_node *pnode;
-	int rv, call;
+	int call;
 
 	PUFFS_VNREQ(inactive);
 
-	/*
-	 * XXX: think about this after we really start unlocking
-	 * when going to userspace
-	 */
-	pnode = ap->a_vp->v_data;
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-
-	puffs_cidcvt(&inactive_arg.pvnr_cid, curlwp);
+	puffs_cidcvt(&inactive_arg.pvnr_cid, l);
 
 	if (EXISTSOP(pmp, INACTIVE))
 		if (pmp->pmp_flags & PUFFS_KFLAG_IAONDEMAND)
-			if ((pnode->pn_stat & PNODE_DOINACT) || ALLOPS(pmp))
+			if (iaflag || ALLOPS(pmp))
 				call = 1;
 			else
 				call = 0;
@@ -964,7 +950,7 @@ puffs_inactive(void *v)
 	pnode = vp->v_data;
 
 	puffs_callinactive(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp),
-	    pnode->pn_stat & PNODE_DOINACT, ap->a_l);
+	    pnode->pn_stat & PNODE_DOINACT, curlwp);
 	pnode->pn_stat &= ~PNODE_DOINACT;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -1015,7 +1001,7 @@ puffs_reclaim(void *v)
 	 * Note that we don't need to take the lock similarly to
 	 * puffs_root(), since there is only one of us.
 	 */
-	if (ap->a_vp->v_vflag & VV_ROOT) {
+	if (vp->v_vflag & VV_ROOT) {
 		mutex_enter(&pmp->pmp_lock);
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
@@ -2149,9 +2135,8 @@ puffs_strategy(void *v)
 	if (rw_argp && !dofaf)
 		free(rw_argp, M_PUFFS);
 
-	if (error) {
+	if (error)
 		bp->b_error = error;
-	}
 
 	if (error || !(BIOREAD(bp) && BIOASYNC(bp)))
 		biodone(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.88.2.8 2007/10/09 13:44:40 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.88.2.9 2007/10/09 15:22:25 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.8 2007/10/09 13:44:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.9 2007/10/09 15:22:25 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.8 2007/10/09 13:44:40 ad Exp $");
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <sys/intr.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -807,7 +808,7 @@ shutdown:
 	if (sc->sc_soparm.sp_fd != -1) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		gre_upcall_remove(so);
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 		mutex_exit(&sc->sc_mtx);
 		fdrelease(l, sc->sc_soparm.sp_fd);
@@ -830,7 +831,7 @@ shutdown:
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		FILE_UNUSE(fp, NULL);
 		so = (struct socket *)fp->f_data;
-		sc->sc_si = softintr_establish(IPL_SOFTNET, greintr, sc);
+		sc->sc_si = softint_establish(SOFTINT_NET, greintr, sc);
 		gre_upcall_add(so, sc);
 		if ((ifp->if_flags & IFF_UP) == 0) {
 			GRE_DPRINTF(sc, "%s: down\n", __func__);
@@ -1006,7 +1007,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		sc->sc_oflow_ev.ev_count++;
 		m_freem(m);
 	} else
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -1072,35 +1073,145 @@ gre_closef(struct file **fpp, struct lwp *l)
 	*fpp = NULL;
 }
 
+/* Caller must hold sc->sc_mtx. */
 static int
-gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 {
-	u_char oproto;
+	int error, kfd;
+	const struct protosw *pr;
 	struct file *fp;
+	struct filedesc	*fdp;
+	struct gre_softc *sc = ifp->if_softc;
+	struct lwp *l = curlwp;
+	struct proc *kp, *p = curproc;
 	struct socket *so;
-	struct sockaddr_in dst, src;
-	struct proc *p = curproc;	/* XXX */
-	struct lwp *l = curlwp;	/* XXX */
+	struct sockaddr_storage dst, src;
+
+	/* getsock() will FILE_USE() and unlock the descriptor for us */
+	if ((error = getsock(p->p_fd, fd, &fp)) != 0) {
+		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+		return EINVAL;
+	}
+
+	/* Increase reference count.  Now that our reference to
+	 * the file descriptor is counted, this thread can release
+	 * our "use" of the descriptor, but it will not be destroyed
+	 * by some other thread's action.  This thread needs to
+	 * release its use, too, because one and only one thread
+	 * can have use of the descriptor at once.  The kernel
+	 * thread will pick up the use if it needs it.
+	 */
+	fp->f_count++;
+	GRE_DPRINTF(sc, "%s: l.%d f_count %d\n", __func__, __LINE__,
+	    fp->f_count);
+	FILE_UNUSE(fp, NULL);
+
+	kp = sc->sc_lwp->l_proc;
+	while ((error = fdalloc(kp, 0, &kfd)) != 0 && error == ENOSPC)
+		fdexpand(kp);
+	if (error != 0)
+		goto closef;
+	fdp = kp->p_fd;
+	rw_enter(&fdp->fd_lock, RW_WRITER);
+	fdp->fd_ofiles[kfd] = fp;
+	rw_exit(&fdp->fd_lock);
+
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+
+	so = (struct socket *)fp->f_data;
+	pr = so->so_proto;
+	if ((pr->pr_flags & PR_ATOMIC) == 0 ||
+	    (sp->sp_type != 0 && pr->pr_type != sp->sp_type) ||
+	    (sp->sp_proto != 0 && pr->pr_protocol != 0 &&
+	     pr->pr_protocol != sp->sp_proto)) {
+		GRE_DPRINTF(sc, "%s: l.%d, type %d, proto %d\n", __func__,
+		    __LINE__, pr->pr_type, pr->pr_protocol);
+		error = EINVAL;
+		goto release;
+	}
+
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+
+	/* check address */
+	if ((error = gre_getnames(so, l, &src, &dst)) != 0)
+		goto release;
+
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+
+	if (error != 0)
+		goto release;
+
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+
+	sp->sp_src = src;
+	sp->sp_dst = dst;
+	/* fp does not any longer belong to this thread. */
+	sp->sp_fd = kfd;
+
+	/* XXX print src & dst */
+
+	return 0;
+release:
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+	fdrelease(sc->sc_lwp, kfd);
+	return error;
+closef:
+	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+	gre_closef(&fp, l);
+	return error;
+}
+
+static bool
+sockaddr_is_anyaddr(const struct sockaddr *sa)
+{
+	socklen_t anylen, salen;
+	const void *anyaddr, *addr;
+
+	if ((anyaddr = sockaddr_anyaddr(sa, &anylen)) == NULL ||
+	    (addr = sockaddr_const_addr(sa, &salen)) == NULL)
+		return false;
+
+	if (salen > anylen)
+		return false;
+
+	return memcmp(anyaddr, addr, MIN(anylen, salen)) == 0;
+}
+
+static bool
+gre_is_nullconf(const struct gre_soparm *sp)
+{
+	return sockaddr_is_anyaddr(sstocsa(&sp->sp_src)) ||
+	       sockaddr_is_anyaddr(sstocsa(&sp->sp_dst));
+}
+
+static void
+gre_clearconf(struct gre_soparm *sp, bool force)
+{
+	if (sp->sp_bysock || force) {
+		sockaddr_copy(sstosa(&sp->sp_src), sizeof(sp->sp_src),
+		    sockaddr_any(sstosa(&sp->sp_src)));
+		sockaddr_copy(sstosa(&sp->sp_dst), sizeof(sp->sp_dst),
+		    sockaddr_any(sstosa(&sp->sp_dst)));
+		sp->sp_bysock = 0;
+	}
+	sp->sp_fd = -1;
+}
+
+static int
+gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
+{
+	struct lwp *l = curlwp;
 	struct ifreq *ifr;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
-	struct sockaddr_in si;
-	struct sockaddr *sa = NULL;
-	int error = 0;
-#ifdef COMPAT_OIFREQ
-	u_long ocmd = cmd;
-	struct oifreq *oifr = NULL;
-	struct ifreq ifrb;
+	struct gre_soparm *sp;
+	int fd, error = 0, oproto, otype;
+	struct gre_soparm sp0;
 
-	cmd = compat_cvtcmd(cmd);
-	if (cmd != ocmd) {
-		oifr = data;
-		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
-	} else
-#endif
-		ifr = data;
-	
+	ifr = data;
+
+	GRE_DPRINTF(sc, "%s: l.%d, cmd %lu\n", __func__, __LINE__, cmd);
+
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSIFMTU:

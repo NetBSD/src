@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.7 2007/10/09 13:45:06 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.8 2007/10/09 15:22:27 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -221,11 +221,6 @@ struct buf {
     "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\10DELWRI" \
     "\12DONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\23PHYS\24RAW\25READ\32DEVPRIVATE\33VFLUSH"
-
-/* XXX Compat for vmlocking branch. */
-#define	BC_AGE		B_AGE
-#define	BC_INVAL	B_INVAL
-#define	BC_NOCACHE	B_NOCACHE
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.6 2007/08/23 13:19:00 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.7 2007/10/09 15:22:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,7 +113,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
@@ -147,17 +146,45 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#if defined(MULTIPROCESSOR)
-
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define curcpu()	({struct cpu_info *__ci;                  \
-			__asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
-			__ci;})
+#if defined(__GNUC__) && defined(_KERNEL)
+static struct cpu_info *x86_curcpu(void);
+static lwp_t *x86_curlwp(void);
+
+__inline static struct cpu_info * __attribute__((__unused__))
+x86_curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (ci) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
+	return ci;
+}
+
+__inline static lwp_t * __attribute__((__unused__))
+x86_curlwp(void)
+{
+	lwp_t *l;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (l) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
+	return l;
+}
+#else	/* __GNUC__ && _KERNEL */
+/* For non-GCC and LKMs */
+struct cpu_info	*x86_curcpu(void);
+lwp_t	*x86_curlwp(void);
+#endif	/* __GNUC__ && _KERNEL */
+
 #define cpu_number()	(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
@@ -167,29 +194,12 @@ extern struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);    
 
-
-#else /* !MULTIPROCESSOR */
-
-#define X86_MAXPROCS		1
-
-extern struct cpu_info cpu_info_primary;
-
-#define curcpu()		(&cpu_info_primary)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()		0
-#define CPU_IS_PRIMARY(ci)	1
-
-#endif
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curlwp		curcpu()->ci_curlwp
+#define curcpu()	x86_curcpu()
+#define curlwp		x86_curlwp()
 #define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*

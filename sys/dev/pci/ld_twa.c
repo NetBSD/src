@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.5.6.3 2007/08/19 19:24:31 ad Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.5.6.4 2007/10/09 15:22:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.5.6.3 2007/08/19 19:24:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.5.6.4 2007/10/09 15:22:11 ad Exp $");
 
 #include "rnd.h"
 
@@ -106,8 +106,7 @@ static const struct twa_callbacks ld_twa_callbacks = {
 };
 
 static int
-ld_twa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ld_twa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);

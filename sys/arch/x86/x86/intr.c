@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.7 2007/10/09 13:38:45 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.8 2007/10/09 15:22:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.7 2007/10/09 13:38:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.8 2007/10/09 15:22:08 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -157,7 +157,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.7 2007/10/09 13:38:45 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/intr.h>
 #include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/cpu.h>
@@ -198,9 +197,6 @@ static int intr_scan_bus(int, int, int *);
 static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
 #endif
 #endif
-
-kmutex_t x86_intr_lock;
-bool x86_intr_lock_initted;
 
 kmutex_t x86_intr_lock;
 bool x86_intr_lock_initted;
@@ -874,10 +870,8 @@ cpu_intr_init(struct cpu_info *ci)
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
-#if defined(INTRSTACKSIZE)
-	vaddr_t istack;
-#endif /* defined(INTRSTACKSIZE) */
 	static bool again;
+	char *cp;
 
 	if (!again) {
 		again = 0;

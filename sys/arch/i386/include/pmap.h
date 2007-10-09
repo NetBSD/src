@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.4.5 2007/08/23 12:11:08 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.6 2007/10/09 15:22:06 ad Exp $	*/
 
 /*
  *
@@ -44,10 +44,12 @@
 #include "opt_largepages.h"
 #endif
 
-#include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/atomic.h>
+#if defined(_KERNEL) || defined(_LKM)
+#include <machine/cpufunc.h>
+#endif
 
 #include <uvm/uvm_object.h>
 

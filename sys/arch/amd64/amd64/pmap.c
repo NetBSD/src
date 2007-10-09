@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.11 2007/10/09 15:22:02 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.11 2007/10/09 15:22:02 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
 
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
+
 
 /*
  * general info:
@@ -218,6 +219,24 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
  * kernel memory (at uvm_map time) we check to see if we've grown
  * the kernel pmap.   if so, we call the optional function
  * pmap_growkernel() to grow the kernel PTPs in advance.
+ *
+ * [C] pv_entry structures
+ *	- plan 1: try to allocate one off the free list
+ *		=> success: done!
+ *		=> failure: no more free pv_entrys on the list
+ *	- plan 2: try to allocate a new pv_page to add a chunk of
+ *	pv_entrys to the free list
+ *		[a] obtain a free, unmapped, VA in kmem_map.  either
+ *		we have one saved from a previous call, or we allocate
+ *		one now using a "vm_map_lock_try" in uvm_map
+ *		=> success: we have an unmapped VA, continue to [b]
+ *		=> failure: unable to lock kmem_map or out of VA in it.
+ *			move on to plan 3.
+ *		[b] allocate a page for the VA
+ *		=> success: map it in, free the pv_entry's, DONE!
+ *		=> failure: no free vm_pages, etc.
+ *			save VA for later call to [a], go to plan 3.
+ *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
 
 /*
@@ -240,6 +259,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
  *    pmap_main_lock before locking.    since only one thread
  *    can write-lock a lock at a time, this provides mutex.
  *
+ * mutexes:
+ *
  * - pmap lock (per pmap, part of uvm_object)
  *   this lock protects the fields in the pmap structure including
  *   the non-kernel PDEs in the PDP, and the PTEs.  it also locks
@@ -252,11 +273,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
  *   when traversing the list (e.g. adding/removing mappings,
  *   syncing R/M bits, etc.)
  *
+ * - pmap_cpu::pc_pv_lock
+ *   this lock protects the data structures which are used to manage
+ *   the free list of pv_entry structures.
+ *
  * - pmaps_lock
  *   this lock protects the list of active pmaps (headed by "pmaps").
  *   we lock it when adding or removing pmaps from this list.
- *
- * XXX: would be nice to have per-CPU VAs for the above 4
  *
  * tlb shootdown
  *
@@ -445,7 +468,6 @@ int	pmap_pdp_ctor(void *, void *, int);
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
-
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
@@ -482,10 +504,10 @@ static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t,
-					 int, struct pv_entry **);
+					 int);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t,
-					  int, struct pv_entry **);
+					  int);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
@@ -497,7 +519,7 @@ static void		pmap_alloc_level(pd_entry_t **, vaddr_t, int,
 					 long *);
 
 /*
- * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
+ * p m a p   h e l p e r   f u n c t i o n s
  */
 
 /*
@@ -508,6 +530,7 @@ static void		pmap_alloc_level(pd_entry_t **, vaddr_t, int,
 inline static bool
 pmap_is_curpmap(struct pmap *pmap)
 {
+
 	return((pmap == pmap_kernel()) ||
 	       (pmap->pm_pdirpa == (paddr_t) rcr3()));
 }
@@ -524,7 +547,7 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci)
 	    (pmap->pm_cpus & ci->ci_cpumask) != 0);
 }
 
-inline static void
+static void
 pmap_apte_flush(struct pmap *pmap)
 {
 
@@ -546,7 +569,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-inline static void
+static void
 pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 {
 	pd_entry_t opde, npde;
@@ -598,9 +621,10 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-inline static void
+static void
 pmap_unmap_ptes(struct pmap *pmap)
 {
+
 	if (pmap == pmap_kernel()) {
 		/* re-enable preemption */
 		crit_exit();
@@ -699,6 +723,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
  * => we assume the va is page aligned and the len is a multiple of PAGE_SIZE
  * => we assume kernel only unmaps valid addresses and thus don't bother
  *    checking the valid bit before doing TLB flushing
+ * => must be followed by call to pmap_update() before reuse of page
  */
 
 void
@@ -908,7 +933,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.
 	 */
-	csrcp = (void *) virtual_avail;  csrc_pte = pte;
+	csrcp = (char *) virtual_avail;  csrc_pte = pte;
 
 	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
 
@@ -3115,14 +3140,17 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
+#ifdef MULTIPROCESSOR
 	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
-	struct cpu_info *ci, *self;
+	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
 	CPU_INFO_ITERATOR cii;
 	uintptr_t head;
 	u_int count;
 	int s;
+#endif	/* MULTIPROCESSOR */
+	struct cpu_info *self;
 	bool kernel;
 
 	KASSERT(eva == 0 || eva >= sva);
@@ -3152,6 +3180,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		eva = sva;
 	}
 
+#ifdef MULTIPROCESSOR
 	if (ncpu > 1 && x86_mp_online) {
 		selfmb = &self->ci_pmap_cpu->pc_mbox;
 		if (pm == pmap_kernel()) {
@@ -3229,6 +3258,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			splx(s);
 		}
 	}
+#endif	/* MULTIPROCESSOR */
 
 	/* Update the current CPU before waiting for others. */
 	if (!pmap_is_active(pm, self))

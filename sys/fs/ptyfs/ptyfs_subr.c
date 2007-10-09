@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.7.18.4 2007/09/16 19:04:29 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.7.18.5 2007/10/09 15:22:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.4 2007/09/16 19:04:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.5 2007/10/09 15:22:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.4 2007/09/16 19:04:29 ad Exp $
 #include <sys/tty.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
-#include <sys/proc.h>
+#include <sys/lwp.h>
 
 #include <fs/ptyfs/ptyfs.h>
-
 #include <miscfs/specfs/specdev.h>
 
 static struct lock ptyfs_hashlock;

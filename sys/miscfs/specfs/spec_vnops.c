@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.11 2007/10/09 13:44:37 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.12 2007/10/09 15:22:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.11 2007/10/09 13:44:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.12 2007/10/09 15:22:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -562,36 +562,18 @@ spec_strategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	int error;
-	struct spec_cow_entry *e;
 
 	error = 0;
 	bp->b_dev = vp->v_rdev;
-	if (!(bp->b_flags & B_READ) && bioops != NULL)
-		(*bioops->io_start)(bp);
+	if (!(bp->b_flags & B_READ) &&
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioopsp)
+		bioopsp->io_start(bp);
 
-	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
-		mutex_enter(&vp->v_spec_cow_lock);
-		while (vp->v_spec_cow_req > 0)
-			mtsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-			    &vp->v_spec_cow_lock);
-		vp->v_spec_cow_count++;
-		mutex_exit(&vp->v_spec_cow_lock);
-
-		SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list) {
-			if ((error = (*e->ce_func)(e->ce_cookie, bp)) != 0)
-				break;
-		}
-
-		mutex_enter(&vp->v_spec_cow_lock);
-		vp->v_spec_cow_count--;
-		if (vp->v_spec_cow_req && vp->v_spec_cow_count == 0)
-			wakeup(&vp->v_spec_cow_req);
-		mutex_exit(&vp->v_spec_cow_lock);
-	}
+	if (!(bp->b_flags & B_READ))
+		error = fscow_run(bp);
 
 	if (error) {
 		bp->b_error = error;
-		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return (error);
 	}

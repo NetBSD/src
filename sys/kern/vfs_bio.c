@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.21 2007/09/01 12:55:49 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.22 2007/10/09 15:22:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.21 2007/09/01 12:55:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.22 2007/10/09 15:22:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ static void brele(buf_t *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-struct bio_ops *bioops;	/* I/O operation notification */
+struct bio_ops *bioopsp;	/* I/O operation notification */
 
 /*
  * Definitions for the buffer free lists.
@@ -1015,8 +1015,8 @@ brelsel(buf_t *bp, int set)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (bioops != NULL)
-			(*bioops->io_deallocate)(bp);
+		if (bioopsp != NULL)
+			(*bioopsp->io_deallocate)(bp);
 
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE|BO_DELWRI);
@@ -1056,8 +1056,8 @@ brelsel(buf_t *bp, int set)
 			/* stale but valid data */
 			int has_deps;
 
-			if (bioops != NULL)
-				has_deps = (*bioops->io_countdeps)(bp, 0);
+			if (bioopsp != NULL)
+				has_deps = (*bioopsp->io_countdeps)(bp, 0);
 			else
 				has_deps = 0;
 			bufq = has_deps ? &bufqueues[BQ_LRU] :
@@ -1348,8 +1348,8 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	}
 
 	vp = bp->b_vp;
-	if (bioops != NULL)
-		(*bioops->io_deallocate)(bp);
+	if (bioopsp != NULL)
+		(*bioopsp->io_deallocate)(bp);
 
 	/* clear out various other fields */
 	bp->b_cflags = BC_BUSY;
@@ -1478,8 +1478,8 @@ biodone2(buf_t *bp)
 {
 	void (*callout)(buf_t *);
 
-	if (bioops != NULL)
-		(*bioops->io_complete)(bp);
+	if (bioopsp != NULL)
+		(*bioopsp->io_complete)(bp);
 
 	mutex_enter(bp->b_objlock);
 	/* Note that the transfer is done. */

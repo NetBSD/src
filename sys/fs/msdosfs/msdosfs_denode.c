@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.19.2.8 2007/10/09 13:44:16 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.19.2.9 2007/10/09 15:22:15 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.8 2007/10/09 13:44:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.9 2007/10/09 15:22:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,8 +332,12 @@ deget(pmp, dirclust, diroffset, depp)
 		/* leave the other fields as garbage */
 	} else {
 		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
-		if (error)
+		if (error) {
+			ldep->de_devvp = NULL;
+			ldep->de_Name[0] = SLOT_DELETED;
+			vput(nvp);
 			return (error);
+		}
 		DE_INTERNALIZE(ldep, direntptr);
 		brelse(bp, 0);
 	}
