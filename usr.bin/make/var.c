@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.118 2007/10/05 15:27:46 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.118 2007/10/05 15:27:46 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.118 2007/10/05 15:27:46 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2229,6 +2229,10 @@ ApplyModifiers(char *nstr, const char *tstr,
 		free(freeIt);
 	    if (*tstr == ':')
 		tstr++;
+	    else if (!*tstr && endc) {
+		Error("Unclosed variable specification for %s", v->name);
+		goto out;
+	    }
 	    continue;
 	}
 	if (DEBUG(VAR)) {
@@ -3492,10 +3496,13 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	nstr = ApplyModifiers(nstr, tstr, startc, endc,
 			      v, ctxt, errnum, &used, freePtr);
 	tstr += used;
+    } else {
+	*WR(tstr) = endc;
+    }
+    if (*tstr) {
 	*lengthPtr = tstr - start + 1;
     } else {
-	*lengthPtr = tstr - start + 1;
-	*WR(tstr) = endc;
+	*lengthPtr = tstr - start;
     }
 
     if (v->flags & VAR_FROM_ENV) {
