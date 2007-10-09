@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.37 2007/10/08 00:21:47 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.38 2007/10/09 18:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,9 @@ message hello
 Dieses Programm wird Ihnen helfen, NetBSD auf eine Festplatte zu installieren
 oder aber eine bereits bestehende Installation von NetBSD zu aktualisieren.
 In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
-die verschiedenen Menüeinträge wählen oder durch Drücken von CTRL+N/CTRL+P
+die verschiedenen Menüeinträge wählen oder durch Drücken von Strg-N/Strg-P
 die Markierung auf- oder abbewegen. Die Cursor- und Bildlauftasten
-(Page-up/Page-down) sollten ebenfalls funktionieren. 
+(Seite vor/zurück) sollten ebenfalls funktionieren. 
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 }
 
