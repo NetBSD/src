@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.199 2007/10/08 20:06:19 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.200 2007/10/09 19:00:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.199 2007/10/08 20:06:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.200 2007/10/09 19:00:14 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -849,9 +849,6 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * Update process statistics and check CPU resource allocation.
  * Call scheduler-specific hook to eventually adjust process/LWP
  * priorities.
- *
- *	XXXSMP This needs to be reorganised in order to reduce the locking
- *	burden.
  */
 /* ARGSUSED */
 void
@@ -888,6 +885,7 @@ sched_pstats(void *arg)
 				minslp = min(minslp, l->l_slptime);
 			} else
 				minslp = 0;
+			sched_pstats_hook(l);
 			lwp_unlock(l);
 
 			/*
@@ -909,8 +907,21 @@ sched_pstats(void *arg)
 				l->l_cpticks = 0;
 			}
 		}
+
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
-		sched_pstats_hook(p, minslp);
+#ifdef SCHED_4BSD
+		/*
+		 * XXX: Workaround - belongs to sched_4bsd.c
+		 * If the process has slept the entire second,
+		 * stop recalculating its priority until it wakes up.
+		 */
+		if (minslp <= 1) {
+			extern fixpt_t decay_cpu(fixpt_t, fixpt_t);
+
+			fixpt_t loadfac = 2 * (averunnable.ldavg[0]);
+			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
+		}
+#endif
 		mutex_spin_exit(&p->p_stmutex);
 
 		/*
