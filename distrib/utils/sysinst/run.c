@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.63 2006/09/29 09:29:12 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.64 2007/10/09 18:43:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -654,6 +654,7 @@ run_program(int flags, const char *cmd, ...)
 				standend();
 			}
 		}
+		clrtoeol();
 		refresh();
 		if ((ret != 0 && !(flags & RUN_ERROR_OK)) ||
 		    (y + x != 0 && !(flags & RUN_PROGRESS))) {
