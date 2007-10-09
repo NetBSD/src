@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.13 2007/10/01 21:10:50 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.14 2007/10/09 21:04:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.13 2007/10/01 21:10:50 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.14 2007/10/09 21:04:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -911,45 +911,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			break;
 		}
 
-/* holy bitrot, ryydman! */
-#if 0
-		case PUFFS_VN_IOCTL:
-			error = pops->puffs_node_ioctl1(pcc, opcookie,
-			     (struct puffs_vnreq_ioctl *)auxbuf, &pop);
-			if (error != 0)
-				break;
-			pop.pso_reqid = preq->preq_id;
-
-			/* let the kernel do it's intermediate duty */
-			error = ioctl(pu->pu_kargs.pa_fd, PUFFSSIZEOP, &pop);
-			/*
-			 * XXX: I don't actually know what the correct
-			 * thing to do in case of an error is, so I'll
-			 * just ignore it for the time being.
-			 */
-			error = pops->puffs_node_ioctl2(pcc, opcookie,
-			    (struct puffs_vnreq_ioctl *)auxbuf, &pop);
-			break;
-
-		case PUFFS_VN_FCNTL:
-			error = pops->puffs_node_fcntl1(pcc, opcookie,
-			     (struct puffs_vnreq_fcntl *)auxbuf, &pop);
-			if (error != 0)
-				break;
-			pop.pso_reqid = preq->preq_id;
-
-			/* let the kernel do it's intermediate duty */
-			error = ioctl(pu->pu_kargs.pa_fd, PUFFSSIZEOP, &pop);
-			/*
-			 * XXX: I don't actually know what the correct
-			 * thing to do in case of an error is, so I'll
-			 * just ignore it for the time being.
-			 */
-			error = pops->puffs_node_fcntl2(pcc, opcookie,
-			    (struct puffs_vnreq_fcntl *)auxbuf, &pop);
-			break;
-#endif
-
 		default:
 			printf("inval op %d\n", preq->preq_optype);
 			error = EINVAL;
@@ -1005,98 +966,3 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 	if (pcc->pcc_flags & PCC_BORROWED)
 		puffs_cc_yield(pcc); /* back to borrow source */
 }
-
-
-#if 0
-		case PUFFS_VN_KQFILTER:
-		{
-			struct puffs_vnreq_kqfilter *auxt = auxbuf;
-			if (pops->puffs_node_kqfilter == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_node_kqfilter(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_CLOSEEXTATTR:
-		{
-			struct puffs_vnreq_closeextattr *auxt = auxbuf;
-			if (pops->puffs_closeextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_closeextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_GETEXTATTR:
-		{
-			struct puffs_vnreq_getextattr *auxt = auxbuf;
-			if (pops->puffs_getextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_getextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_LISTEXTATTR:
-		{
-			struct puffs_vnreq_listextattr *auxt = auxbuf;
-			if (pops->puffs_listextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_listextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_OPENEXTATTR:
-		{
-			struct puffs_vnreq_openextattr *auxt = auxbuf;
-			if (pops->puffs_openextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_openextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_DELETEEXTATTR:
-		{
-			struct puffs_vnreq_deleteextattr *auxt = auxbuf;
-			if (pops->puffs_deleteextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_deleteextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-		case PUFFS_VN_SETEXTATTR:
-		{
-			struct puffs_vnreq_setextattr *auxt = auxbuf;
-			if (pops->puffs_setextattr == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_setextattr(pcc,
-			    opcookie, );
-			break;
-		}
-
-#endif
