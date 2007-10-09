@@ -73,6 +73,7 @@ Expect: Unclosed variable specification for VAR
 make: Unclosed variable specification for VAR
 VAR:S,V,v,=Thevariable
 Expect: Unclosed variable specification for VAR
+make: Unclosed variable specification for VAR
 VAR:S,V,v,=Thevariable
 Expect: Unclosed substitution for VAR (, missing)
 make: Unclosed substitution for VAR (, missing)
