@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.9 2007/07/23 22:47:15 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.10 2007/10/09 18:57:34 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.9 2007/07/23 22:47:15 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.10 2007/10/09 18:57:34 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -366,6 +366,7 @@ cpu_reboot(int howto, char *what)
 	while (1);
 }
 
+#if 0
 void
 mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
@@ -373,4 +374,4 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
   *mem = physmemr;
   *avail = availmemr;
 }
-
+#endif
