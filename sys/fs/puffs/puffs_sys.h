@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.57 2007/10/09 15:49:34 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.58 2007/10/09 20:57:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -53,18 +53,6 @@ extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
 extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
-
-/* XXX: alignment-optimization */
-struct puffs_sizepark {
-	uint64_t	pkso_reqid;
-	uint8_t		pkso_reqtype;
-
-	struct uio	*pkso_uio;
-	void		*pkso_copybuf;
-	size_t		pkso_bufsize;
-
-	TAILQ_ENTRY(puffs_sizepark) pkso_entries;
-};
 
 #ifdef DEBUG
 #ifndef PUFFSDEBUG
@@ -127,7 +115,6 @@ struct puffs_mount {
 	size_t				pmp_req_maxsize;
 
 	struct puffs_wq			pmp_req_replywait;
-	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
 
 	struct puffs_node_hashlist	*pmp_pnodehash;
 	int				pmp_npnodehash;
