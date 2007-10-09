@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.4 2007/10/09 02:29:37 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.5 2007/10/09 08:00:46 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.4 2007/10/09 02:29:37 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.5 2007/10/09 08:00:46 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -417,10 +417,20 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 {
 	prop_object_t obj;
 	prop_number_t num;
-	double val;
+	double val, max, min;
 	char *strval, *tmp, *endptr;
 	bool celsius;
 	size_t len;
+
+	val = max = min = 0;
+
+	/*
+	 * critical-max and critical-min are not allowed in
+	 * battery sensors.
+	 */
+	obj = prop_dictionary_get(kdict, "want-percentage");
+	if (prop_bool_true(obj))
+		config_errmsg(PROP_ERR, prop, sensor);
 
 	/*
 	 * Make the conversion for sensor's type.
@@ -465,12 +475,35 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 		num = prop_number_create_unsigned_integer(val);
 
 	} else {
+		obj = prop_dictionary_get(kdict, "max-value");
+		if (obj)
+			max = prop_number_integer_value(obj);
+
+		obj = prop_dictionary_get(kdict, "min-value");
+		if (obj)
+			min = prop_number_integer_value(obj);
+
 		val = strtod(value, &endptr);
 		if (*endptr != '\0')
 			config_errmsg(VALUE_ERR, prop, sensor);
 
 		/* convert to m[V,W,Ohms] again */
 		val *= 1000000.0;
+
+		/* 
+		 * trying to set a value higher than the max
+		 * assigned?
+		 */
+		if (max && val > max)
+			config_errmsg(VALUE_ERR, prop, sensor);
+
+		/* 
+		 * trying to set a value lower than the min
+		 * assigned?
+		 */
+		if (min && val < min)
+			config_errmsg(VALUE_ERR, prop, sensor);
+
 		num = prop_number_create_integer(val);
 	}
 

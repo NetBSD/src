@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.3 2007/10/07 15:37:30 xtraeme Exp $
+.\" $NetBSD: envsys.conf.5,v 1.4 2007/10/09 08:00:46 xtraeme Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007 Juan Romero Pardines.
@@ -196,6 +196,13 @@ daemon (if running) and will execute the block for this event in
 the appropiate
 .Pa /etc/powerd/scripts/sensor_foo
 script (depending of sensor's type).
+.Pp
+Please note that this property cannot be set in battery sensors
+(those that have the
+.Em want-percentage
+object on its dictionary), this same rule must be applied for the
+.Ql critical-min
+property.
 .It critical-min = 1.230;
 .Pp
 Sets a critical min limit property in a sensor. The rules for
