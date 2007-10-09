@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.72 2007/10/08 18:11:11 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.73 2007/10/09 19:00:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.72 2007/10/08 18:11:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.73 2007/10/09 19:00:13 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -587,8 +587,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
-	lwp_initspecific(l2);
-	sched_lwp_fork(l2);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -596,8 +594,14 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		 * swapping.
 		 */
 		l2->l_flag |= LW_SYSTEM;
+	} else {
+		/* Look for a CPU to start */
+		l2->l_cpu = sched_takecpu(l2);
+		l2->l_mutex = l2->l_cpu->ci_schedstate.spc_mutex;
 	}
 
+	lwp_initspecific(l2);
+	sched_lwp_fork(l2);
 	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);

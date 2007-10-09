@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.5 2007/10/08 20:06:19 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.6 2007/10/09 19:00:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.5 2007/10/08 20:06:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.6 2007/10/09 19:00:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -125,6 +125,8 @@ static runqueue_t global_queue;
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
 static void resetprocpriority(struct proc *);
+
+fixpt_t decay_cpu(fixpt_t, fixpt_t);
 
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
@@ -236,7 +238,7 @@ sched_tick(struct cpu_info *ci)
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
 
-static fixpt_t
+fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 {
 
@@ -284,27 +286,11 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
 void
-sched_pstats_hook(struct proc *p, int minslp)
+sched_pstats_hook(struct lwp *l)
 {
-	struct lwp *l;
-	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
-	/*
-	 * If the process has slept the entire second,
-	 * stop recalculating its priority until it wakes up.
-	 */
-	if (minslp <= 1) {
-		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
-		
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & LW_IDLE) != 0)
-				continue;
-			lwp_lock(l);
-			if (l->l_slptime <= 1 && l->l_priority >= PUSER)
-				resetpriority(l);
-			lwp_unlock(l);
-		}
-	}
+	if (l->l_slptime <= 1 && l->l_priority >= PUSER)
+		resetpriority(l);
 }
 
 /*
@@ -695,7 +681,29 @@ sched_nextlwp(void)
 		return l1;
 }
 
-/* Dummy */
+/*
+ * Dummy.
+ */
+
+struct cpu_info *
+sched_takecpu(struct lwp *l)
+{
+
+	return l->l_cpu;
+}
+
+void
+sched_wakeup(struct lwp *l)
+{
+
+}
+
+void
+sched_slept(struct lwp *l)
+{
+
+}
+
 void
 sched_lwp_fork(struct lwp *l)
 {

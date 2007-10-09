@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.38 2007/10/08 20:06:20 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.39 2007/10/09 19:00:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -183,12 +183,12 @@ void		sched_rqinit(void);
 void		sched_cpuattach(struct cpu_info *);
 void		sched_setup(void);
 
-/* Time-driven enevents */
+/* Time-driven events */
 void		sched_tick(struct cpu_info *);
 void		schedclock(struct lwp *);
 void		sched_schedclock(struct lwp *);
 void		sched_pstats(void *);
-void		sched_pstats_hook(struct proc *, int);
+void		sched_pstats_hook(struct lwp *);
 
 /* Runqueue-related functions */
 bool		sched_curcpu_runnable_p(void);
@@ -206,8 +206,13 @@ void		sched_proc_exit(struct proc *, struct proc *);
 void		sched_lwp_fork(struct lwp *);
 void		sched_lwp_exit(struct lwp *);
 
+void		sched_slept(struct lwp *);
+void		sched_wakeup(struct lwp *);
+
 void		setrunnable(struct lwp *);
 void		sched_setrunnable(struct lwp *);
+
+struct cpu_info *sched_takecpu(struct lwp *);
 void		sched_print_runqueue(void (*pr)(const char *, ...));
 
 /* Dispatching */
