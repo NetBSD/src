@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.18 2007/05/04 22:39:43 rmind Exp $
+#	$NetBSD: ROADMAP,v 1.19 2007/10/09 19:32:19 rmind Exp $
 
 A high-level roadmap for NetBSD
 
@@ -77,14 +77,14 @@ FOR MORE INFORMATION.
 aa. Scheduler works
     Separation of context switching and thread scheduling.
 	Responsible: yamt
-	ETA: 5.0? (yamt-idlelwp branch)
+	ETA: 5.0 (yamt-idlelwp branch)
     Generic scheduler API for modular implementations.
 	Responsible: Daniel Sieger
-	ETA: 5.0? (merged in yamt-idlelwp branch)
+	ETA: 5.0 (merged in yamt-idlelwp branch)
     New scheduler supporting POSIX Real-time features, CPU affinity and
     having a better support for MP systems.
 	Responsible: rmind
-	ETA: 5.0?
+	ETA: 5.0
 
 ab. Reduction of the giant lock
     There are several proposals for the best way forward on this, but
@@ -222,6 +222,13 @@ aw. Run-time changeable limits to SysV IPC
     configuration--these should be changable via sysctl.
 	Responsible: rmind
 	ETA: 4.0
+
+ax. NUMA support
+    To achieve this goal, the CPU scheduler should be modified to take into
+    account the distances and grouping of CPUs.  Also, support of memory
+    blocks should be implemented in the VM subsystem.
+	Responsible: TBD
+	ETA: ?
 
 2. Platform independent userland
 ================================
