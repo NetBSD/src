@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.8 2007/10/09 15:22:08 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.9 2007/10/09 16:34:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.8 2007/10/09 15:22:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.9 2007/10/09 16:34:42 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -871,7 +871,9 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 #endif
 	static bool again;
+#ifdef INTRSTACKSIZE
 	char *cp;
+#endif
 
 	if (!again) {
 		again = 0;

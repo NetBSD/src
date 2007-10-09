@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.4.5 2007/10/09 15:22:03 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.4.6 2007/10/09 16:34:42 ad Exp $	*/
 
 /*
  *
@@ -606,19 +606,6 @@ struct pmap_mbox {
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
-
-/*
- * TLB shootdown mailbox.
- */
-
-struct pmap_mbox {
-	volatile void		*mb_pointer;
-	volatile uintptr_t	mb_addr1;
-	volatile uintptr_t	mb_addr2;
-	volatile uintptr_t	mb_head;
-	volatile uintptr_t	mb_tail;
-	volatile uintptr_t	mb_global;
-};
 
 #endif /* _KERNEL && !_LOCORE */
 #endif	/* _AMD64_PMAP_H_ */

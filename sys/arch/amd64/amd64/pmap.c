@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.11 2007/10/09 15:22:02 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.12 2007/10/09 16:34:42 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.11 2007/10/09 15:22:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.12 2007/10/09 16:34:42 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -504,10 +504,10 @@ static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t,
-					 int);
+					 int, struct pv_entry **);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t,
-					  int);
+					  int, struct pv_entry **);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
