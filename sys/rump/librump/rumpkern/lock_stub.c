@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.6.2.2 2007/08/20 22:07:28 ad Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.6.2.3 2007/10/09 13:45:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,74 +28,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
-
-/* oh sweet crackmgr, what would I do without you? */
-int
-lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
-{
-	u_int lktype = flags & LK_TYPE_MASK;
-
-	switch (lktype) {
-	case LK_SHARED:
-	case LK_EXCLUSIVE:
-		lock->lk_flags = lktype;
-		break;
-
-	case LK_RELEASE:
-		assert(lock->lk_flags != 0);
-		lock->lk_flags = 0;
-		break;
-
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-		assert(lock->lk_flags == LK_SHARED);
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-
-	case LK_DOWNGRADE:
-		assert(lock->lk_flags == LK_EXCLUSIVE);
-		lock->lk_flags = LK_SHARED;
-		break;
-
-	case LK_DRAIN:
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-	}
-
-	return 0;
-}
-
-void
-lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
-	int flags)
-{
-
-	lock->lk_flags = 0;
-}
-
-int
-lockstatus(struct lock *lock)
-{
-
-	return lock->lk_flags;
-}
-
-void
-lockmgr_printinfo(volatile struct lock *lock)
-{
-
-	return;
-}
-
-void
-transferlockers(struct lock *from, struct lock *to)
-{
-
-	return;
-}
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
@@ -132,10 +66,13 @@ mutex_owned(kmutex_t *mtx)
 	return 1;
 }
 
+#define RW_UNLOCKED -1 /* XXX */
+
 void
 rw_init(krwlock_t *rw)
 {
 
+	rw->rw_locked = RW_UNLOCKED;
 }
 
 void
@@ -148,10 +85,31 @@ void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
+	KASSERT(rw->rw_locked == RW_UNLOCKED);
+	rw->rw_locked = op;
 }
 
 void
 rw_exit(krwlock_t *rw)
 {
 
+	KASSERT(rw->rw_locked != RW_UNLOCKED);
+	rw->rw_locked = RW_UNLOCKED;
+}
+
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	return rw->rw_locked != RW_UNLOCKED;
+}
+
+int
+rw_tryupgrade(krwlock_t *rw)
+{
+
+	KASSERT(rw->rw_locked == RW_READER);
+	rw->rw_locked = RW_WRITER;
+
+	return 1;
 }

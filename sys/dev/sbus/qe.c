@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.41 2007/03/04 07:54:11 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.41.2.1 2007/10/09 13:42:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.41 2007/03/04 07:54:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.41.2.1 2007/10/09 13:42:04 ad Exp $");
 
 #define QEDEBUG
 
@@ -977,11 +977,7 @@ qeioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom):
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

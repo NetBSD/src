@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.71 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.71.8.1 2007/10/09 13:41:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.71 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.71.8.1 2007/10/09 13:41:49 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.71 2006/11/16 01:33:09 christos Exp $
 #include <machine/intr.h>
 #else
 #include <pci.h>
+#include <stdbool.h>
 #include <stdio.h>
 #endif
 
@@ -778,6 +779,99 @@ pci_conf_print_type0(
 }
 
 static void
+pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
+{
+	bool check_slot = false;
+
+	printf("\n  PCI Express Capabilities Register\n");
+	printf("    Capability version: %x\n",
+	    (unsigned int)((regs[o2i(capoff)] & 0x000f0000) >> 16));
+	printf("    Device type: ");
+	switch ((regs[o2i(capoff)] & 0x00f00000) >> 20) {
+	case 0x0:
+		printf("PCI Express Endpoint device\n");
+		break;
+	case 0x1:
+		printf("Legcay PCI Express Endpoint device\n");
+		break;
+	case 0x4:
+		printf("Root Port of PCI Express Root Complex\n");
+		check_slot = true;
+		break;
+	case 0x5:
+		printf("Upstream Port of PCI Express Switch\n");
+		break;
+	case 0x6:
+		printf("Downstream Port of PCI Express Switch\n");
+		check_slot = true;
+		break;
+	case 0x7:
+		printf("PCI Express to PCI/PCI-X Bridge\n");
+		break;
+	case 0x8:
+		printf("PCI/PCI-X to PCI Express Bridge\n");
+		break;
+	default:
+		printf("unknown\n");
+		break;
+	}
+	if (check_slot && (regs[o2i(capoff)] & 0x01000000) != 0)
+		printf("    Slot implemented\n");
+	printf("    Interrupt Message Number: %x\n",
+	    (unsigned int)((regs[o2i(capoff)] & 0x4e000000) >> 27));
+	if ((regs[o2i(capoff + 0x18)] & 0x07ff) != 0) {
+		printf("    Slot Control Register:\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0001) != 0)
+			printf("      Attention Button Pressed Enabled\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0002) != 0)
+			printf("      Power Fault Detected Enabled\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0004) != 0)
+			printf("      MRL Sensor Changed Enabled\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0008) != 0)
+			printf("      Presense Detected Changed Enabled\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0010) != 0)
+			printf("      Command Completed Interrupt Enabled\n");
+		if ((regs[o2i(capoff + 0x18)] & 0x0020) != 0)
+			printf("      Hot-Plug Interrupt Enabled\n");
+		printf("      Attention Indictor Control: ");
+		switch ((regs[o2i(capoff + 0x18)] & 0x00a0) >> 6) {
+		case 0x0:
+			printf("reserved\n");
+			break;
+		case 0x1:
+			printf("on\n");
+			break;
+		case 0x2:
+			printf("blink\n");
+			break;
+		case 0x3:
+			printf("off\n");
+			break;
+		}
+		printf("      Power Indictor Control: ");
+		switch ((regs[o2i(capoff + 0x18)] & 0x0300) >> 8) {
+		case 0x0:
+			printf("reserved\n");
+			break;
+		case 0x1:
+			printf("on\n");
+			break;
+		case 0x2:
+			printf("blink\n");
+			break;
+		case 0x3:
+			printf("off\n");
+			break;
+		}
+		printf("      Power Controller Control: ");
+		if ((regs[o2i(capoff + 0x18)] & 0x0400) != 0)
+			printf("off\n");
+		else
+			printf("on\n");
+	}
+}
+
+static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
@@ -790,6 +884,7 @@ pci_conf_print_caplist(
 	};
 	int off;
 	pcireg_t rval;
+	int pcie_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
@@ -849,6 +944,7 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_PCIEXPRESS:
 			printf("PCI Express");
+			pcie_off = off;
 			break;
 		case PCI_CAP_MSIX:
 			printf("MSI-X");
@@ -858,6 +954,8 @@ pci_conf_print_caplist(
 		}
 		printf(")\n");
 	}
+	if (pcie_off != -1)
+		pci_conf_print_pcie_cap(regs, pcie_off);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.3.6.1 2007/05/27 12:27:17 ad Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.3.6.2 2007/10/09 13:37:38 ad Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -78,8 +78,10 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
 
+#include <arch/arm/xscale/pxa2x0cpu.h>
 #include <arch/arm/xscale/pxa2x0var.h>
 #include <arch/arm/xscale/pxa2x0reg.h>
+#include <arch/arm/xscale/pxa2x0_gpio.h>
 #include <arch/arm/xscale/pxa2x0_pcic.h>
 #include <arch/evbarm/gumstix/gumstixvar.h>
 
@@ -137,37 +139,22 @@ static struct {
 static int
 gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct {
-		int gpio;
-		u_int fn;
-	} pcic_gpiomodes[] = {
-		{ 48, GPIO_ALT_FN_2_OUT },		/* nPOE */
-		{ 49, GPIO_ALT_FN_2_OUT },		/* nPWE */
-		{ 50, GPIO_ALT_FN_2_OUT },		/* nPIOR */
-		{ 51, GPIO_ALT_FN_2_OUT },		/* nPIOW */
-		{ 52, GPIO_ALT_FN_2_OUT },		/* nPCE1 */
-		{ 53, GPIO_ALT_FN_2_OUT },		/* nPCE2 */
-		{ 54, GPIO_ALT_FN_2_OUT },		/* pSKTSEL */
-		{ 55, GPIO_ALT_FN_2_OUT },		/* nPREG */
-		{ 56, GPIO_ALT_FN_1_IN },		/* nPWAIT */
-		{ 57, GPIO_ALT_FN_1_IN },		/* nIOIS16 */
-		{ -1 }
-	};
+	struct pxa2x0_gpioconf *gpioconf;
 	u_int reg;
 	int i;
 
 	/*
 	 * Check GPIO configuration.  If you use these, it is sure already
-	 * to have been set by gxio. 
+	 * to have been set by gxio.
 	 */
-	for (i = 0; pcic_gpiomodes[i].gpio != -1; i++) {
-		reg = pxa2x0_gpio_get_function(pcic_gpiomodes[i].gpio);
-		if (GPIO_FN(reg) != GPIO_FN(pcic_gpiomodes[i].fn) ||
-		    GPIO_FN_IS_OUT(reg) != GPIO_FN_IS_OUT(pcic_gpiomodes[i].fn))
-			break;
+	gpioconf = CPU_IS_PXA250 ? pxa25x_pcic_gpioconf :
+	    pxa27x_pcic_gpioconf;
+	for (i = 0; gpioconf[i].pin != -1; i++) {
+		reg = pxa2x0_gpio_get_function(gpioconf[i].pin);
+		if (GPIO_FN(reg) != GPIO_FN(gpioconf[i].value) ||
+		    GPIO_FN_IS_OUT(reg) != GPIO_FN_IS_OUT(gpioconf[i].value))
+			return (0);
 	}
-	if (pcic_gpiomodes[i].gpio != -1)
-		return 0;
 
 	return	1;	/* match */
 }

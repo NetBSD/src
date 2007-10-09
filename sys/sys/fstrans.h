@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.3.10.2 2007/10/08 20:34:08 ad Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.3.10.3 2007/10/09 13:45:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -76,6 +76,11 @@ void	fstrans_unmount(struct mount *);
 
 int	fstrans_setstate(struct mount *, enum fstrans_state);
 enum fstrans_state fstrans_getstate(struct mount *);
+
+int	fscow_establish(struct mount *, int (*)(void *, struct buf *), void *);
+int	fscow_disestablish(struct mount *, int (*)(void *, struct buf *),
+	    void *);
+int	fscow_run(struct buf *);
 
 int	vfs_suspend(struct mount *, int);
 void	vfs_resume(struct mount *);

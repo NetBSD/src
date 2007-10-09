@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88.2.2 2007/07/15 13:16:30 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.88.2.3 2007/10/09 13:38:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88.2.2 2007/07/15 13:16:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88.2.3 2007/10/09 13:38:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -189,10 +189,10 @@ short	exframesize[] = {
 #define	KDFAULT_040(c)	(cputype == CPU_68040 && \
 			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
 #define	WRFAULT_040(c)	(cputype == CPU_68040 && \
-			 ((c) & SSW4_RW) == 0)
+			 ((c) & (SSW4_LK|SSW4_RW)) != SSW4_RW)
 #else
 #define	KDFAULT_040(c)	(((c) & SSW4_TMMASK) == SSW4_TMKD)
-#define	WRFAULT_040(c)	(((c) & SSW4_RW) == 0)
+#define	WRFAULT_040(c)	(((c) & (SSW4_LK|SSW4_RW)) != SSW4_RW)
 #endif
 #else
 #define	KDFAULT_040(c)	0
@@ -204,10 +204,12 @@ short	exframesize[] = {
 #define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
 			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
 #define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
-			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+			 (((c) & SSW_DF) != 0 && \
+			 ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0))))
 #else
 #define	KDFAULT_OTH(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
-#define	WRFAULT_OTH(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#define	WRFAULT_OTH(c)	(((c) & SSW_DF) != 0 && \
+			    ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0)))
 #endif
 #else
 #define	KDFAULT_OTH(c)	0

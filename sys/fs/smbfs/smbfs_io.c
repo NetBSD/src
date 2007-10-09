@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.24.8.5 2007/10/09 13:44:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.5 2007/10/09 13:44:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $")
 #include <sys/fcntl.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
+#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
@@ -87,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $")
 static int
 smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 {
-	struct dirent de;
+	struct dirent *de;
 	struct smb_cred scred;
 	struct smbfs_fctx *ctx;
 	struct smbnode *np = VTOSMB(vp);
@@ -99,6 +100,8 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 	if (uio->uio_resid < DE_SIZE || uio->uio_offset < 0)
 		return EINVAL;
 
+	de = malloc(DE_SIZE, M_SMBFSDATA, M_WAITOK | M_ZERO);
+
 	SMBVDEBUG("dirname='%.*s'\n", (int) np->n_nmlen, np->n_name);
 	smb_makescred(&scred, curlwp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
@@ -106,35 +109,35 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 
 	/* Simulate . */
 	if (offset < 1) {
-		memset(&de, 0, sizeof(de));
-		de.d_fileno = np->n_ino;
-		de.d_reclen = DE_SIZE;
-		de.d_type = DT_DIR;
-		de.d_namlen = 1;
-		strncpy(de.d_name, ".", 2);
-		error = uiomove(&de, sizeof(struct dirent), uio);
+		memset(de, 0, DE_SIZE);
+		de->d_fileno = np->n_ino;
+		de->d_reclen = DE_SIZE;
+		de->d_type = DT_DIR;
+		de->d_namlen = 1;
+		strncpy(de->d_name, ".", 2);
+		error = uiomove(de, DE_SIZE, uio);
 		if (error)
-			return error;
+			goto out;
 		limit--;
 		offset++;
 	}
 	/* Simulate .. */
 	if (limit > 0 && offset < 2) {
-		memset(&de, 0, sizeof(de));
-		de.d_fileno = (np->n_parent ? VTOSMB(np->n_parent)->n_ino : 2);
-		de.d_reclen = DE_SIZE;
-		de.d_type = DT_DIR;
-		de.d_namlen = 2;
-		strncpy(de.d_name, "..", 3);
-		error = uiomove(&de, sizeof(struct dirent), uio);
+		memset(de, 0, DE_SIZE);
+		de->d_fileno = (np->n_parent ? VTOSMB(np->n_parent)->n_ino : 2);
+		de->d_reclen = DE_SIZE;
+		de->d_type = DT_DIR;
+		de->d_namlen = 2;
+		strncpy(de->d_name, "..", 3);
+		error = uiomove(de, DE_SIZE, uio);
 		if (error)
-			return error;
+			goto out;
 		limit--;
 		offset++;
 	}
 
 	if (limit == 0)
-		return (0);
+		goto out;
 
 	if (offset != np->n_dirofs || np->n_dirseq == NULL) {
 		SMBVDEBUG("Reopening search %ld:%ld\n", offset, np->n_dirofs);
@@ -148,7 +151,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 		    &scred, &ctx);
 		if (error) {
 			SMBVDEBUG("can not open search, error = %d", error);
-			return error;
+			goto out;
 		}
 		np->n_dirseq = ctx;
 	} else
@@ -160,7 +163,8 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 		if (error) {
 			smbfs_findclose(np->n_dirseq, &scred);
 			np->n_dirseq = NULL;
-			return (error == ENOENT) ? 0 : error;
+			error = (error == ENOENT) ? 0 : error;
+			goto out;
 		}
 	}
 
@@ -172,18 +176,21 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 			break;
 		}
 		np->n_dirofs++;
-		memset(&de, 0, DE_SIZE);
-		de.d_reclen = DE_SIZE;
-		de.d_fileno = ctx->f_attr.fa_ino;
-		de.d_type = (ctx->f_attr.fa_attr & SMB_FA_DIR) ? DT_DIR : DT_REG;
-		de.d_namlen = ctx->f_nmlen;
-		memcpy(de.d_name, ctx->f_name, de.d_namlen);
-		de.d_name[de.d_namlen] = '\0';
-		error = uiomove(&de, DE_SIZE, uio);
+		memset(de, 0, DE_SIZE);
+		de->d_reclen = DE_SIZE;
+		de->d_fileno = ctx->f_attr.fa_ino;
+		de->d_type = (ctx->f_attr.fa_attr & SMB_FA_DIR) ?
+		    DT_DIR : DT_REG;
+		de->d_namlen = ctx->f_nmlen;
+		memcpy(de->d_name, ctx->f_name, de->d_namlen);
+		de->d_name[de->d_namlen] = '\0';
+		error = uiomove(de, DE_SIZE, uio);
 		if (error)
 			break;
 	}
 
+out:
+	free(de, M_SMBFSDATA);
 	return (error);
 }
 

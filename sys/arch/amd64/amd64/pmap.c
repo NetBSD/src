@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.9 2007/09/01 12:57:57 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.9 2007/09/01 12:57:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.10 2007/10/09 13:37:15 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -185,8 +185,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.9 2007/09/01 12:57:57 ad Exp $");
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
@@ -227,7 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.9 2007/09/01 12:57:57 ad Exp $");
  *
  * we have the following locks that we must contend with:
  *
- * "normal" locks:
+ * RW locks:
  *
  *  - pmap_main_lock
  *    this lock is used to prevent deadlock and/or provide mutex
@@ -1780,7 +1778,6 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	return false;
 }
 
-
 /*
  * vtophys: virtual address to physical address.  For use by
  * machine-dependent code only.
@@ -1803,9 +1800,7 @@ vtophys(vaddr_t va)
  */
 
 void
-pmap_virtual_space(startp, endp)
-	vaddr_t *startp;
-	vaddr_t *endp;
+pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
@@ -1815,7 +1810,6 @@ pmap_virtual_space(startp, endp)
  * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
- * => does not do TLB shootdowns
  * => XXX: pmap_map() should be phased out?
  */
 
@@ -1839,7 +1833,6 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 	return va;
 }
 
-
 /*
  * pmap_zero_page: zero a page
  */
@@ -1861,7 +1854,10 @@ pmap_zero_page(paddr_t pa)
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
-	memset(zerova, 0, PAGE_SIZE);			/* zero */
+	if (cpu_feature & CPUID_SSE2)
+		sse2_zero_page(zerova);
+	else
+		memset(zerova, 0, PAGE_SIZE);		/* zero */
 #ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
 #endif
@@ -1935,7 +1931,10 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
 	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
-	memcpy(cdstva, csrcva, PAGE_SIZE);
+	if (cpu_feature & CPUID_SSE2)
+		sse2_copy_page(csrcva, cdstva);
+	else
+		memcpy(cdstva, csrcva, PAGE_SIZE);
 #ifdef DIAGNOSTIC
 	*spte = *dpte = 0;			/* zap! */
 #endif

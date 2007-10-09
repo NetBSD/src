@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.27.2.1 2007/07/01 21:48:11 ad Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.27.2.2 2007/10/09 13:41:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.27.2.1 2007/07/01 21:48:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.27.2.2 2007/10/09 13:41:46 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -1272,7 +1272,7 @@ ste_init(struct ifnet *ifp)
 	/* Set the station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		bus_space_write_1(st, sh, STE_StationAddress0 + 1,
-		    LLADDR(ifp->if_sadl)[i]);
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	/* Set up the receive filter. */
 	ste_set_filter(sc);

@@ -1,0 +1,12 @@
+	$NetBSD: TODO,v 1.1.6.2 2007/10/09 13:45:00 ad Exp $
+
+* fix the build structure to work better on non-NetBSD
+* finish fs/bin/fsconsole
+  + figure out how to handle mount parameters in fs-independent
+    fashion (requires kernel changes)
+* compile more components directly out of the kernel source tree
+  + whole of vfs_subr?
+  + kern_lock?
+* support ltsleep + locking primitives which might need to sleep
+  (only lfs needs this currently)
+* support nfs

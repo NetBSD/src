@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.165.2.6 2007/08/26 15:01:15 yamt Exp $ */
+/* $NetBSD: syscallargs.h,v 1.165.2.7 2007/10/09 13:45:12 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -1143,6 +1143,67 @@ struct sys__ksem_destroy_args {
 #else
 #endif
 
+struct sys_mq_open_args {
+	syscallarg(const char *) name;
+	syscallarg(int) oflag;
+	syscallarg(mode_t) mode;
+	syscallarg(struct mq_attr *) attr;
+};
+
+struct sys_mq_close_args {
+	syscallarg(mqd_t) mqdes;
+};
+
+struct sys_mq_unlink_args {
+	syscallarg(const char *) name;
+};
+
+struct sys_mq_getattr_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(struct mq_attr *) mqstat;
+};
+
+struct sys_mq_setattr_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(const struct mq_attr *) mqstat;
+	syscallarg(struct mq_attr *) omqstat;
+};
+
+struct sys_mq_notify_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(const struct sigevent *) notification;
+};
+
+struct sys_mq_send_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(const char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned) msg_prio;
+};
+
+struct sys_mq_receive_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned *) msg_prio;
+};
+
+struct sys_mq_timedsend_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(const char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned) msg_prio;
+	syscallarg(const struct timespec *) abs_timeout;
+};
+
+struct sys_mq_timedreceive_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned *) msg_prio;
+	syscallarg(const struct timespec *) abs_timeout;
+};
+
 struct sys___posix_rename_args {
 	syscallarg(const char *) from;
 	syscallarg(const char *) to;
@@ -2276,6 +2337,26 @@ int	sys__ksem_destroy(struct lwp *, void *, register_t *);
 
 #else
 #endif
+int	sys_mq_open(struct lwp *, void *, register_t *);
+
+int	sys_mq_close(struct lwp *, void *, register_t *);
+
+int	sys_mq_unlink(struct lwp *, void *, register_t *);
+
+int	sys_mq_getattr(struct lwp *, void *, register_t *);
+
+int	sys_mq_setattr(struct lwp *, void *, register_t *);
+
+int	sys_mq_notify(struct lwp *, void *, register_t *);
+
+int	sys_mq_send(struct lwp *, void *, register_t *);
+
+int	sys_mq_receive(struct lwp *, void *, register_t *);
+
+int	sys_mq_timedsend(struct lwp *, void *, register_t *);
+
+int	sys_mq_timedreceive(struct lwp *, void *, register_t *);
+
 int	sys___posix_rename(struct lwp *, void *, register_t *);
 
 int	sys_swapctl(struct lwp *, void *, register_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13.2.1 2007/03/13 16:49:57 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13.2.2 2007/10/09 13:37:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.2.1 2007/03/13 16:49:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.2.2 2007/10/09 13:37:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.2.1 2007/03/13 16:49:57 ad Exp $"
 
 #include <uvm/uvm_extern.h>
 
-extern char *extiobase;
 extern int *nofault;
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.19.2.6 2007/09/01 12:56:47 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.19.2.7 2007/10/09 13:44:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.19.2.6 2007/09/01 12:56:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.19.2.7 2007/10/09 13:44:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -320,6 +320,25 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
 	return rv;
 }
 
+int
+puffs_cookietouser(struct puffs_mount *pmp, int optype,
+	void *kbuf, size_t buflen, void *cookie, int faf)
+{
+	struct puffs_park *park;
+
+	park = puffs_park_alloc(1);
+	park->park_preq = kbuf;
+
+	park->park_preq->preq_opclass = PUFFSOP_VN |(faf ? PUFFSOPFLAG_FAF : 0);
+	park->park_preq->preq_optype = optype;
+	park->park_preq->preq_cookie = cookie;
+
+	park->park_copylen = park->park_maxlen = buflen;
+	park->park_flags = 0;
+
+	return touser(pmp, park, puffs_getreqid(pmp));
+}
+
 /*
  * vnode level request, caller-controller req id
  */
@@ -413,6 +432,31 @@ puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *park,
 	park->park_flags = 0;
 
 	(void)touser(pmp, park, 0); 
+}
+
+void
+puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error,
+	const char *str, void *cookie)
+{
+	struct puffs_park *park;
+	struct puffs_error *perr;
+
+	park = puffs_park_alloc(1);
+	MALLOC(perr, struct puffs_error *, sizeof(struct puffs_error),
+	    M_PUFFS, M_ZERO | M_WAITOK);
+
+	perr->perr_error = error;
+	strlcpy(perr->perr_str, str, sizeof(perr->perr_str));
+
+	park->park_preq = (struct puffs_req *)perr;
+	park->park_preq->preq_opclass = PUFFSOP_ERROR | PUFFSOPFLAG_FAF;
+	park->park_preq->preq_optype = type;
+	park->park_preq->preq_cookie = cookie;
+
+	park->park_maxlen = park->park_copylen = sizeof(struct puffs_error);
+	park->park_flags = 0;
+
+	(void)touser(pmp, park, 0);
 }
 
 /*
@@ -811,7 +855,7 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 		if (park->park_flags & PARKFLAG_CALL) {
 			DPRINTF(("puffsputopt: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
-			park->park_done(park->park_preq, park->park_donearg);
+			park->park_done(pmp,park->park_preq,park->park_donearg);
 			release = 1;
 		}
 
@@ -878,7 +922,7 @@ puffs_userdead(struct puffs_mount *pmp)
 			park->park_preq->preq_rv = ENXIO;
 
 			if (park->park_flags & PARKFLAG_CALL) {
-				park->park_done(park->park_preq,
+				park->park_done(pmp, park->park_preq,
 				    park->park_donearg);
 				puffs_park_release(park, 1);
 			} else if ((park->park_flags & PARKFLAG_WANTREPLY)==0) {
@@ -912,7 +956,7 @@ puffs_userdead(struct puffs_mount *pmp)
 		} else {
 			park->park_preq->preq_rv = ENXIO;
 			if (park->park_flags & PARKFLAG_CALL) {
-				park->park_done(park->park_preq,
+				park->park_done(pmp, park->park_preq,
 				    park->park_donearg);
 				puffs_park_release(park, 1);
 			} else {
@@ -922,83 +966,3 @@ puffs_userdead(struct puffs_mount *pmp)
 		}
 	}
 }
-
-/* this is probably going to die away at some point? */
-/*
- * XXX: currently bitrotted
- */
-#if 0
-static int
-puffssizeop(struct puffs_mount *pmp, struct puffs_sizeop *psop_user)
-{
-	struct puffs_sizepark *pspark;
-	void *kernbuf;
-	size_t copylen;
-	int error;
-
-	/* locate correct op */
-	mutex_enter(&pmp->pmp_lock);
-	TAILQ_FOREACH(pspark, &pmp->pmp_req_sizepark, pkso_entries) {
-		if (pspark->pkso_reqid == psop_user->pso_reqid) {
-			TAILQ_REMOVE(&pmp->pmp_req_sizepark, pspark,
-			    pkso_entries);
-			break;
-		}
-	}
-	mutex_exit(&pmp->pmp_lock);
-
-	if (pspark == NULL)
-		return EINVAL;
-
-	error = 0;
-	copylen = MIN(pspark->pkso_bufsize, psop_user->pso_bufsize);
-
-	/*
-	 * XXX: uvm stuff to avoid bouncy-bouncy copying?
-	 */
-	if (PUFFS_SIZEOP_UIO(pspark->pkso_reqtype)) {
-		kernbuf = malloc(copylen, M_PUFFS, M_WAITOK | M_ZERO);
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_UIO_IN) {
-			error = copyin(psop_user->pso_userbuf,
-			    kernbuf, copylen);
-			if (error) {
-				printf("psop ERROR1 %d\n", error);
-				goto escape;
-			}
-		}
-		error = uiomove(kernbuf, copylen, pspark->pkso_uio);
-		if (error) {
-			printf("uiomove from kernel %p, len %d failed: %d\n",
-			    kernbuf, (int)copylen, error);
-			goto escape;
-		}
-			
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_UIO_OUT) {
-			error = copyout(kernbuf,
-			    psop_user->pso_userbuf, copylen);
-			if (error) {
-				printf("psop ERROR2 %d\n", error);
-				goto escape;
-			}
-		}
- escape:
-		free(kernbuf, M_PUFFS);
-	} else if (PUFFS_SIZEOP_BUF(pspark->pkso_reqtype)) {
-		copylen = MAX(pspark->pkso_bufsize, psop_user->pso_bufsize);
-		if (pspark->pkso_reqtype == PUFFS_SIZEOPREQ_BUF_IN) {
-			error = copyin(psop_user->pso_userbuf,
-			pspark->pkso_copybuf, copylen);
-		} else {
-			error = copyout(pspark->pkso_copybuf,
-			    psop_user->pso_userbuf, copylen);
-		}
-	}
-#ifdef DIAGNOSTIC
-	else
-		panic("puffssizeop: invalid reqtype %d\n",
-		    pspark->pkso_reqtype);
-#endif /* DIAGNOSTIC */
-
-	return error;
-}
-#endif

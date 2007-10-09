@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.32 2007/03/04 15:35:20 yamt Exp $ */
+/* $NetBSD: lemac.c,v 1.32.2.1 2007/10/09 13:41:27 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.32 2007/03/04 15:35:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.32.2.1 2007/10/09 13:41:27 ad Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -788,12 +788,7 @@ lemac_ifioctl(
 	    /*
 	     * Update multicast listeners
 	     */
-	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ec);
-	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
-
-	    if (error == ENETRESET) {
+	    if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		/* reset multicast filtering */
 		if (ifp->if_flags & IFF_RUNNING)
 		    lemac_init(sc);

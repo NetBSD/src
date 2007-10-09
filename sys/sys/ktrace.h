@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.46.6.3 2007/08/20 21:28:17 ad Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.46.6.4 2007/10/09 13:45:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -286,7 +286,7 @@ extern kmutex_t ktrace_lock;
 extern int ktrace_on;
 
 int ktruser(const char *, void *, size_t, int);
-bool ktrpoint(int);
+bool ktr_point(int);
 
 void ktr_csw(int, int);
 void ktr_emul(void);
@@ -305,6 +305,12 @@ void ktr_mib(const int *a , u_int b);
 void ktr_mool(const void *, size_t, const void *);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
+
+static inline bool
+ktrpoint(int fac)
+{
+    return __predict_false(ktrace_on) && __predict_false(ktr_point(1 << fac));
+}
 
 static inline void
 ktrcsw(int a, int b)

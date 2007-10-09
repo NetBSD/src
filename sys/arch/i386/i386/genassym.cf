@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.5 2007/08/21 10:36:50 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.6 2007/10/09 13:37:54 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,8 @@ include <machine/isa_machdep.h>
 endif
 
 include <machine/tlog.h>
+
+include <x86/busdefs.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -384,6 +386,21 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
+
+define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
+define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
+define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
+define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
+define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
+define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
+
+define	PM_CPUS			offsetof(struct pmap, pm_cpus)
+
+define	EV_COUNT		offsetof(struct evcnt, ev_count)
+
+define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
+
+define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 
 define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
 define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.153.2.7 2007/09/01 12:57:53 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.153.2.8 2007/10/09 13:44:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.7 2007/09/01 12:57:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.8 2007/10/09 13:44:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,6 +279,25 @@ filedesc_init(void)
 	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0), 0, 0, 0,
 	    "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(filedesc0_cache != NULL);
+}
+
+/*
+ * Initialize the descriptor system.
+ */
+void
+filedesc_init(void)
+{
+
+	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	pool_init(&file_pool, sizeof(struct file), 0, 0, 0,
+	    "filepl", &pool_allocator_nointr, IPL_NONE);
+
+	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0,
+	    "cwdipl", &pool_allocator_nointr, IPL_NONE);
+
+	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0,
+	    "fdescpl", &pool_allocator_nointr, IPL_NONE);
 }
 
 /*
@@ -2050,7 +2069,41 @@ fnullop_kqfilter(struct file *fp, struct knote *kn)
 
 /* ARGSUSED */
 int
+fbadop_read(struct file *fp, off_t *offset, struct uio *uio,
+    kauth_cred_t cred, int flags)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_write(struct file *fp, off_t *offset, struct uio *uio,
+    kauth_cred_t cred, int flags)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
 fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
+{
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fbadop_close(struct file *fp, struct lwp *l)
 {
 
 	return EOPNOTSUPP;

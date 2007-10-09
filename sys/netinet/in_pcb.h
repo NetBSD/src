@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.42 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.42.14.1 2007/10/09 13:44:48 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,6 +111,13 @@ struct inpcb {
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF)
 #define INP_ESPINUDP_ALL	(INP_ESPINUDP|INP_ESPINUDP_NON_IKE)
+#define INP_NOHEADER		0x400	/* Kernel removes IP header
+					 * before feeding a packet
+					 * to the raw socket user.
+					 * The socket user will
+					 * not supply an IP header.
+					 * Cancels INP_HDRINCL.
+					 */
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 

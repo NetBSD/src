@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.15.2.1 2007/05/27 14:30:01 ad Exp $ */
+/* $NetBSD: i82596.c,v 1.15.2.2 2007/10/09 13:41:26 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.15.2.1 2007/05/27 14:30:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.15.2.2 2007/10/09 13:41:26 ad Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -420,7 +420,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 	case IEE_CB_CMD_NOP:	/* NOP CMD */
 		break;
 	case IEE_CB_CMD_IAS:	/* Individual Address Setup */
-		memcpy(__UNVOLATILE(cb->cb_ind_addr), LLADDR(ifp->if_sadl),
+		memcpy(__UNVOLATILE(cb->cb_ind_addr), CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN);
 		break;
 	case IEE_CB_CMD_CONF:	/* Configure */

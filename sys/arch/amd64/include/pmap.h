@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.4.3 2007/09/01 12:57:57 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.4.4 2007/10/09 13:37:19 ad Exp $	*/
 
 /*
  *
@@ -341,6 +341,7 @@ struct pv_entry {                       /* locked by its list's pvh_lock */
         struct pmap *pv_pmap;           /* the pmap */
         vaddr_t pv_va;                  /* the virtual address */
         struct vm_page *pv_ptp;         /* the vm_page of the PTP */
+	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };    
 
 /*
@@ -585,6 +586,19 @@ void	sse2_copy_page(void *, void *);
 void	pmap_ldt_cleanup __P((struct lwp *));
 #define	PMAP_FORK
 #endif /* USER_LDT */
+
+/*
+ * TLB shootdown mailbox.
+ */
+
+struct pmap_mbox {
+	volatile void		*mb_pointer;
+	volatile uintptr_t	mb_addr1;
+	volatile uintptr_t	mb_addr2;
+	volatile uintptr_t	mb_head;
+	volatile uintptr_t	mb_tail;
+	volatile uintptr_t	mb_global;
+};
 
 /* 
  * Hooks for the pool allocator.

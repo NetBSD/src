@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.13.2.2 2007/07/15 13:21:46 ad Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.13.2.3 2007/10/09 13:42:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,9 +36,6 @@
 #ifndef _DEV_SYSMON_SYSMONVAR_H_
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
-#ifndef _LKM
-#include "opt_compat_netbsd.h"
-#endif
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/power.h>
@@ -57,9 +54,16 @@ struct uio;
  * Environmental sensor support
  *****************************************************************************/
 
+struct sme_sensor_names {
+	SLIST_ENTRY(sme_sensor_names) sme_names;
+	int 	assigned;
+	char 	desc[ENVSYS_DESCLEN];
+};
+
 struct sysmon_envsys {
 	const char *sme_name;			/* envsys device name */
 	uint32_t sme_nsensors;			/* sensor count, from driver */
+	uint32_t sme_uniqsensors;
 	int sme_flags;				/* additional flags */
 #define SME_FLAG_BUSY 		0x00000001 	/* sme is busy */
 #define SME_FLAG_WANTED 	0x00000002 	/* someone waiting for this */
@@ -69,16 +73,18 @@ struct sysmon_envsys {
 
 	/* linked list for the sysmon envsys devices */
 	LIST_ENTRY(sysmon_envsys) sme_list;
+	/* 
+	 * Singly linked list for the sysmon envsys sensor descriptions.
+	 */
+	SLIST_HEAD(, sme_sensor_names) sme_names_list;
 
 	void *sme_cookie;			/* for ENVSYS back-end */
 
 	/* Function callback to recieve data from device */
 	int (*sme_gtredata)(struct sysmon_envsys *, envsys_data_t *);
 
-#ifdef COMPAT_40
-	u_int sme_fsensor;		/* sensor index base, from sysmon */
+	uint32_t sme_fsensor;		/* sensor index base, from sysmon */
 #define SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
-#endif
 };
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
@@ -115,6 +121,8 @@ int	sysmonioctl_wdog(dev_t, u_long, void *, int, struct lwp *);
 
 int     sysmon_wdog_register(struct sysmon_wdog *);
 void    sysmon_wdog_unregister(struct sysmon_wdog *);
+
+void	sysmon_wdog_init(void);
 
 /*****************************************************************************
  * Power management support

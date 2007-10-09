@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.6.2.6 2007/08/20 18:08:55 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.6.2.7 2007/10/09 13:44:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.6 2007/08/20 18:08:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.7 2007/10/09 13:44:28 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.6 2007/08/20 18:08:55 ad Exp $
 #define	RW_DASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		rw_abort(rw, __FUNCTION__, "assertion failed: " #cond);	\
+		rw_abort(rw, __func__, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0);
 
 #else	/* LOCKDEBUG */
@@ -99,7 +99,7 @@ do {									\
 #define	RW_ASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		rw_abort(rw, __FUNCTION__, "assertion failed: " #cond);	\
+		rw_abort(rw, __func__, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0)
 
 #else
@@ -293,7 +293,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		if (panicstr != NULL)
 			return;
 		if (RW_OWNER(rw) == curthread)
-			rw_abort(rw, __FUNCTION__, "locking against myself");
+			rw_abort(rw, __func__, "locking against myself");
 
 		/*
 		 * Grab the turnstile chain lock.  Once we have that, we

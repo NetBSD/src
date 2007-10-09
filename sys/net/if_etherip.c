@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5.2.5 2007/07/15 15:52:58 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.2.6 2007/10/09 13:44:40 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -32,9 +32,6 @@
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
  *  All rights reserved.
  *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier
- *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -43,11 +40,7 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. All advertising materials mentioning features or use of this software
- *     must display the following acknowledgement:
- *         This product includes software developed by the NetBSD
- *         Foundation, Inc. and its contributors.
- *  4. Neither the name of The NetBSD Foundation nor the names of its
+ *  3. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -679,11 +672,12 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	int error;
 	size_t len;
 	char addr[3 * ETHER_ADDR_LEN];
+	char enaddr[ETHER_ADDR_LEN];
 
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), CLLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -694,7 +688,9 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
+	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	                        enaddr, ETHER_ADDR_LEN) == NULL)
 		return EINVAL;
 
 	return error;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.311.2.4 2007/08/20 18:36:53 ad Exp $
+# $NetBSD: GENERIC,v 1.311.2.5 2007/10/09 13:37:13 ad Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.311.2.4 $"
+ident		"GENERIC-$Revision: 1.311.2.5 $"
 
 maxusers 32
 
@@ -535,10 +535,14 @@ fd*	at	fdc? drive ?
 ld*	at	cac? unit ?
 ld*	at	mlx? unit ?
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?			# ScanLogic SL811HS
+
 # USB bus support
-usb*	at uhci?
-usb*	at ohci?
 usb*	at ehci?
+usb*	at ohci?
+usb*	at slhci?
+usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.116.2.1 2007/06/08 14:17:43 ad Exp $	*/
+/*	$NetBSD: in.c,v 1.116.2.2 2007/10/09 13:44:47 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.116.2.1 2007/06/08 14:17:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.116.2.2 2007/10/09 13:44:47 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -451,30 +451,30 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	switch (cmd) {
 
 	case SIOCGIFADDR:
-		*satosin(&ifr->ifr_addr) = ia->ia_addr;
+		ifreq_setaddr(cmd, ifr, sintocsa(&ia->ia_addr));
 		break;
 
 	case SIOCGIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return (EINVAL);
-		*satosin(&ifr->ifr_dstaddr) = ia->ia_broadaddr;
+		ifreq_setdstaddr(cmd, ifr, sintocsa(&ia->ia_broadaddr));
 		break;
 
 	case SIOCGIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		*satosin(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
+		ifreq_setdstaddr(cmd, ifr, sintocsa(&ia->ia_dstaddr));
 		break;
 
 	case SIOCGIFNETMASK:
-		*satosin(&ifr->ifr_addr) = ia->ia_sockmask;
+		ifreq_setaddr(cmd, ifr, sintocsa(&ia->ia_sockmask));
 		break;
 
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
-		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
+		ia->ia_dstaddr = *satocsin(ifreq_getdstaddr(cmd, ifr));
 		if (ifp->if_ioctl != NULL &&
 		    (error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
 		                              (void *)ia)) != 0) {
@@ -492,11 +492,12 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return EINVAL;
-		ia->ia_broadaddr = *satosin(&ifr->ifr_broadaddr);
+		ia->ia_broadaddr = *satocsin(ifreq_getbroadaddr(cmd, ifr));
 		break;
 
 	case SIOCSIFADDR:
-		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
+		    1);
 #ifdef PFIL_HOOKS
 		if (error == 0)
 			(void)pfil_run_hooks(&if_pfil,
@@ -506,7 +507,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 
 	case SIOCSIFNETMASK:
 		in_ifscrub(ifp, ia);
-		ia->ia_sockmask = *satosin(&ifr->ifr_addr);
+		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		error = in_ifinit(ifp, ia, NULL, 0);
 		break;
@@ -885,13 +886,13 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
-    struct sockaddr_in *sin, int scrub)
+    const struct sockaddr_in *sin, int scrub)
 {
 	u_int32_t i;
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
 
-	if (!sin)
+	if (sin == NULL)
 		sin = &ia->ia_addr;
 
 	/*
@@ -1133,6 +1134,7 @@ in_broadcast(struct in_addr in, struct ifnet *ifp)
 struct in_multi *
 in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 {
+	struct sockaddr_in sin;
 	struct in_multi *inm;
 	struct ifreq ifr;
 	int s = splsoftnet();
@@ -1166,9 +1168,8 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = *ap;
+		sockaddr_in_init(&sin, ap, 0);
+		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
 		if ((ifp->if_ioctl == NULL) ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(void *)&ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
@@ -1197,6 +1198,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 void
 in_delmulti(struct in_multi *inm)
 {
+	struct sockaddr_in sin;
 	struct ifreq ifr;
 	int s = splsoftnet();
 
@@ -1215,8 +1217,8 @@ in_delmulti(struct in_multi *inm)
 		 * Notify the network driver to update its multicast reception
 		 * filter.
 		 */
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+		sockaddr_in_init(&sin, &inm->inm_addr, 0);
+		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
 		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
 							     (void *)&ifr);
 		pool_put(&inmulti_pool, inm);

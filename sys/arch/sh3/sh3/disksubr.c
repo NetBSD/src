@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23.2.1 2007/08/19 19:24:14 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.2.2 2007/10/09 13:38:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.2.1 2007/08/19 19:24:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.2.2 2007/10/09 13:38:25 ad Exp $");
 
 #include "opt_mbr.h"
 
@@ -515,7 +515,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
  done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -687,6 +687,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	error = biowait(bp);
 
  done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3.4.3 2007/08/20 18:39:21 ad Exp $
+#	$NetBSD: GENERIC,v 1.3.4.4 2007/10/09 13:39:00 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -239,8 +239,12 @@ wd* at atabus? drive ? flags 0x0000
 pxaudc0 at pxaip?	# USB Device Controller
 #ohci0 at pxaip?	# USB Host Controller
 
+# PCMCIA USB controllers
+#slhci* at pcmcia? function ?	# ScanLogic SL811HS
+
 # USB bus support
 #usb* at ohci?
+#usb* at slhci?
 
 # USB Hubs
 #uhub* at usb?

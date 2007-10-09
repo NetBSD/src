@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.14.2.1 2007/07/01 21:47:53 ad Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.14.2.2 2007/10/09 13:41:30 ad Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14.2.1 2007/07/01 21:47:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14.2.2 2007/10/09 13:41:30 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -494,7 +494,7 @@ rt2661_attach(void *xsc, int id)
 	ic->ic_newstate = rt2661_newstate;
 	ieee80211_media_init(ic, rt2661_media_change, ieee80211_media_status);
 
-#if NPBFILTER > 0
+#if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
@@ -2028,7 +2028,6 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rt2661_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -2048,13 +2047,8 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-
-
-		if (error == ENETRESET)
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
 
@@ -2342,10 +2336,11 @@ rt2661_set_chan(struct rt2661_softc *sc, struct ieee80211_channel *c)
 	}
 
 	/*
-	 * If we are switching from the 2GHz band to the 5GHz band or
-	 * vice-versa, BBP registers need to be reprogrammed.
+	 * If we've yet to select a channel, or we are switching from the
+	 * 2GHz band to the 5GHz band or vice-versa, BBP registers need to
+	 * be reprogrammed.
 	 */
-	if (c->ic_flags != sc->sc_curchan->ic_flags) {
+	if (sc->sc_curchan == NULL || c->ic_flags != sc->sc_curchan->ic_flags) {
 		rt2661_select_band(sc, c);
 		rt2661_select_antenna(sc);
 	}
@@ -2745,7 +2740,7 @@ rt2661_init(struct ifnet *ifp)
 	for (i = 0; i < N(rt2661_def_mac); i++)
 		RAL_WRITE(sc, rt2661_def_mac[i].reg, rt2661_def_mac[i].val);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rt2661_set_macaddr(sc, ic->ic_myaddr);
 
 	/* set host ready */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.62.2.1 2007/07/15 13:16:57 ad Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.62.2.2 2007/10/09 13:38:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.62.2.1 2007/07/15 13:16:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.62.2.2 2007/10/09 13:38:26 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -232,7 +232,7 @@ sh_proc0_init()
 
 	sf = &curpcb->pcb_sf;
 	sf->sf_r6_bank = u + PAGE_SIZE;
-	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
+	sf->sf_r7_bank = sf->sf_r15 = u + USPACE;
 	__asm volatile("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
 	__asm volatile("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
@@ -634,7 +634,7 @@ cpu_setmcontext(l, mcp, flags)
 		/* Check for security violations. */
 		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
 			return (EINVAL);
-	
+
 		/* _REG_EXPEVT not restored */
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];

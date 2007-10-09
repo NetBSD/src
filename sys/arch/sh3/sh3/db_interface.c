@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42.4.1 2007/05/27 12:28:08 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.42.4.2 2007/10/09 13:38:25 ad Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42.4.1 2007/05/27 12:28:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42.4.2 2007/10/09 13:38:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,13 +90,13 @@ static void db_stackcheck_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 
 const struct db_command db_machine_command_table[] = {
-	{ "tlb",	db_tlbdump_cmd,		0,	NULL },
-	{ "cache",	db_cachedump_cmd,	0,	NULL },
-	{ "frame",	db_frame_cmd,		0,	NULL },
+	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,	NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("cache",	db_cachedump_cmd,	0,	NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("frame",	db_frame_cmd,		0,	NULL, NULL,NULL) },
 #ifdef KSTACK_DEBUG
-	{ "stack",	db_stackcheck_cmd,	0,	NULL },
+	{ DDB_ADD_CMD("stack",	db_stackcheck_cmd,	0,	NULL, NULL,NULL) },
 #endif
-	{ NULL }
+	{  DDB_ADD_CMD(NULL,     NULL,              0,  NULL, NULL,NULL) }
 };
 
 int db_active;

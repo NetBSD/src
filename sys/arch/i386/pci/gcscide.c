@@ -1,11 +1,8 @@
-/*	$NetBSD: gcscide.c,v 1.4.4.2 2007/07/15 13:21:04 ad Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.4.4.3 2007/10/09 13:37:59 ad Exp $	*/
 
-/*
- * Copyright (c) 2007 The NetBSD Foundation.
+/*-
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to the NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Juan Romero Pardines
- *        for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -47,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.4.4.2 2007/07/15 13:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.4.4.3 2007/10/09 13:37:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.4.4.2 2007/07/15 13:21:04 ad Exp $");
 
 #include <machine/cpufunc.h>
 
+/* 
+ * 6.4 - ATA-5 Controller Register Definitions.
+ */
 #define GCSCIDE_MSR_ATAC_BASE 		0x51300000
 #define GCSCIDE_ATAC_GLD_MSR_CAP 	(GCSCIDE_MSR_ATAC_BASE + 0)
 #define GCSCIDE_ATAC_GLD_MSR_CONFIG 	(GCSCIDE_MSR_ATAC_BASE + 0x01)
@@ -76,7 +68,19 @@ __KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.4.4.2 2007/07/15 13:21:04 ad Exp $");
 #define GCSCIDE_ATAC_BM0_CMD_PRIM 	0x00
 #define GCSCIDE_ATAC_BM0_STS_PRIM 	0x02
 #define GCSCIDE_ATAC_BM0_PRD 		0x04
-#define GCSCIDE_PIO_FORMAT		0x80000000UL
+/*
+ * ATAC_CH0D0_DMA registers:
+ *
+ * PIO Format (bit 31): Format 1 allows independent control of command
+ * and data per drive, while Format 0 selects the slowest speed
+ * of the two drives.
+ */
+#define GCSCIDE_ATAC_PIO_FORMAT		(1 << 31) /* PIO Mode Format 1 */
+/*
+ * DMA_SEL (bit 20): sets Ultra DMA mode (if enabled) or Multi-word
+ * DMA mode (if disabled).
+ */
+#define GCSCIDE_ATAC_DMA_SEL		(1 << 20)
 
 static int	gcscide_match(struct device *, struct cfdata *, void *);
 static void	gcscide_attach(struct device *, struct device *, void *);
@@ -84,7 +88,7 @@ static void	gcscide_attach(struct device *, struct device *, void *);
 static void	gcscide_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	gcscide_setup_channel(struct ata_channel *);
 
-/* PIO Format 1 timings */
+/* PIO Format 1 settings */
 static const uint32_t gcscide_pio_timings[] = {
 	0xf7f4f7f4,	/* PIO Mode 0 */
 	0x53f3f173,	/* PIO Mode 1 */
@@ -195,46 +199,37 @@ gcscide_setup_channel(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		if ((drvp->drive_flags & DRIVE_UDMA) ||
-		    (drvp->drive_flags & DRIVE_DMA)) {
-			reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
-			    GCSCIDE_ATAC_CH0D0_DMA);
-			/* Preserve PIO Format bit */
-			reg &= ~GCSCIDE_PIO_FORMAT;
-		}
+
+		reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
+		    GCSCIDE_ATAC_CH0D0_DMA);
 
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
-			/* Set UDMA and MDMA timings */
+			/* Enable the Ultra DMA mode bit */
+			reg |= GCSCIDE_ATAC_DMA_SEL;
+			/* set the Ultra DMA mode */
 			reg |= gcscide_udma_timings[drvp->UDMA_mode];
-			reg |= gcscide_mdma_timings[drvp->DMA_mode];
 
 			wrmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
 			    GCSCIDE_ATAC_CH0D0_DMA, reg);
 
 		} else if (drvp->drive_flags & DRIVE_DMA) {
-			/*
-			 * Disable Ultra DMA and set a MDMA mode.
-			 */
-			if (reg & gcscide_udma_timings[drvp->UDMA_mode])
-				reg &= ~gcscide_udma_timings[drvp->UDMA_mode];
-
+			/* Enable the Multi-word DMA bit */
+			reg &= ~GCSCIDE_ATAC_DMA_SEL;
+			/* set the Multi-word DMA mode */
 			reg |= gcscide_mdma_timings[drvp->DMA_mode];
 
 			wrmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
 			    GCSCIDE_ATAC_CH0D0_DMA, reg);
-		} else {
-			/*
-			 * Set PIO Format 1 timings.
-			 */
-			reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
-		    	    GCSCIDE_ATAC_CH0D0_DMA);
-			wrmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
-		    	    GCSCIDE_ATAC_CH0D0_DMA, reg | GCSCIDE_PIO_FORMAT);
 		}
-		/* Set PIO mode and timing */
+
+		/* Always use PIO Format 1. */
+		wrmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
+		    GCSCIDE_ATAC_CH0D0_DMA, reg | GCSCIDE_ATAC_PIO_FORMAT);
+
+		/* Set PIO mode */
 		wrmsr(drive ? GCSCIDE_ATAC_CH0D1_PIO : GCSCIDE_ATAC_CH0D0_PIO,
 		    gcscide_pio_timings[drvp->PIO_mode]);
 	}

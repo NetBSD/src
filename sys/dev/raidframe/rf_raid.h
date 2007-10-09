@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.36 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.36.2.1 2007/10/09 13:42:02 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -204,9 +204,8 @@ struct RF_Raid_s {
 	/*
          * Statistics
          */
-	int     parity_rewrite_stripes_done;
-	int     recon_stripes_done;
-	int     copyback_stripes_done;
+	RF_StripeCount_t     parity_rewrite_stripes_done;
+	RF_StripeCount_t     copyback_stripes_done;
 
 	int     recon_in_progress;
 	int     parity_rewrite_in_progress;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.55.2.5 2007/07/15 22:27:59 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.55.2.6 2007/10/09 13:44:07 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.5 2007/07/15 22:27:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.6 2007/10/09 13:44:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,18 +318,22 @@ fd_truncate(l, fd, flp, retval)
 		break;
 
 	default:
+		FILE_UNUSE(fp, l);
 		return EINVAL;
 	}
 
 	if (start + flp->l_len < length) {
 		/* We don't support free'ing in the middle of the file */
+		FILE_UNUSE(fp, l);
 		return EINVAL;
 	}
 
 	SCARG(&ft, fd) = fd;
 	SCARG(&ft, length) = start;
 
-	return sys_ftruncate(l, &ft, retval);
+	error = sys_ftruncate(l, &ft, retval);
+	FILE_UNUSE(fp, l);
+	return error;
 }
 
 

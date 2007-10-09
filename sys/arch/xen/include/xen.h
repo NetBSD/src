@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.21 2006/03/06 19:55:47 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.21.22.1 2007/10/09 13:38:52 ad Exp $	*/
 
 /*
  *
@@ -136,23 +136,23 @@ void xpq_flush_cache(void);
 
 #define __save_flags(x)							\
 do {									\
-	(x) = HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask;	\
+	(x) = HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;	\
 } while (0)
 
 #define __restore_flags(x)						\
 do {									\
 	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
-	if ((_shared->vcpu_data[0].evtchn_upcall_mask = (x)) == 0) {	\
+	if ((_shared->vcpu_info[0].evtchn_upcall_mask = (x)) == 0) {	\
 		x86_lfence();					\
-		if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
+		if (__predict_false(_shared->vcpu_info[0].evtchn_upcall_pending)) \
 			hypervisor_force_callback();			\
 	}								\
 } while (0)
 
 #define __cli()								\
 do {									\
-	HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = 1;	\
+	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = 1;	\
 	x86_lfence();						\
 } while (0)
 
@@ -160,9 +160,9 @@ do {									\
 do {									\
 	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
-	_shared->vcpu_data[0].evtchn_upcall_mask = 0;			\
+	_shared->vcpu_info[0].evtchn_upcall_mask = 0;			\
 	x86_lfence(); /* unmask then check (avoid races) */		\
-	if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
+	if (__predict_false(_shared->vcpu_info[0].evtchn_upcall_pending)) \
 		hypervisor_force_callback();				\
 } while (0)
 
@@ -296,11 +296,7 @@ xen_atomic_clear_bit(volatile void *ptr, int bitno)
 
 #undef XATOMIC_T
 
-static __inline void
-wbinvd(void)
-{
-	xpq_flush_cache();
-}
+void	wbinvd(void);
 
 #endif /* !__ASSEMBLY__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.314.2.2 2007/06/09 23:55:17 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314.2.3 2007/10/09 13:38:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.2 2007/06/09 23:55:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.3 2007/10/09 13:38:07 ad Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -159,6 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.2 2007/06/09 23:55:17 ad Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+#include <machine/video.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -208,19 +209,8 @@ u_long	nblog[NBMAXRANGES];	/* Start logical addr of this range */
 long	nblen[NBMAXRANGES];	/* Length of this range If the length is */
 				/* negative, all phys addrs are the same. */
 
-/* From Booter via locore */
-long	videoaddr;		/* Addr used in kernel for video */
-long	videorowbytes;		/* Length of row in video RAM */
-long	videobitdepth;		/* Number of bits per pixel */
-u_long	videosize;		/* height = 31:16, width = 15:0 */
-
-/*
- * Values for IIvx-like internal video
- * -- should be zero if it is not used (usual case).
- */
-u_int32_t mac68k_vidlog;	/* logical addr */
-u_int32_t mac68k_vidphys;	/* physical addr */
-u_int32_t mac68k_vidlen;	/* mem length */
+/* Definitions for the variables defined in machine/video.h */
+struct mac68k_video mac68k_video;
 
 /* Callback and cookie to run bell */
 int	(*mac68k_bell_callback)(void *, int, int, int);
@@ -980,16 +970,13 @@ getenvvars(u_long flag, char *buf)
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
 	/* only on MacII or LC.  --  XXX */
-	/* videoaddr = getenv("MACOS_VIDEO"); */
+	/* mac68k_video.mv_kvaddr = getenv("MACOS_VIDEO"); */
 
-	/*
-	 * The following are not in a structure so that they can be
-	 * accessed more quickly.
-	 */
-	videoaddr = getenv("VIDEO_ADDR");
-	videorowbytes = getenv("ROW_BYTES");
-	videobitdepth = getenv("SCREEN_DEPTH");
-	videosize = getenv("DIMENSIONS");
+	mac68k_video.mv_kvaddr = getenv("VIDEO_ADDR");
+	mac68k_video.mv_stride = getenv("ROW_BYTES");
+	mac68k_video.mv_depth = getenv("SCREEN_DEPTH");
+	mac68k_video.mv_width = getenv("DIMENSIONS") & 0xffff;
+	mac68k_video.mv_height = (getenv("DIMENSIONS") >> 16) & 0xffff;
 
 	/*
 	 * More misc stuff from booter.
@@ -2309,12 +2296,14 @@ gray_bar(void)
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
-		/* MF the 10*rowbytes/4 is done lots, but we want this to be
+		/* MF the 10*stride/4 is done lots, but we want this to be
 		 * slow */
-		for (i = 0; i < 10 * videorowbytes / 4; i++)
-			((u_long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
-		for (i = 0; i < 2 * videorowbytes / 4; i++)
-			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
+		for (i = 0; i < 10 * mac68k_video.mv_stride / 4; i++)
+			((u_long *)mac68k_video.mv_kvaddr)
+			    [gray_nextaddr++] = 0xaaaaaaaa;
+		for (i = 0; i < 2 * mac68k_video.mv_stride / 4; i++)
+			((u_long *)mac68k_video.mv_kvaddr)
+			    [gray_nextaddr++] = 0x00000000;
 	}
 
 	__asm volatile (
@@ -2398,19 +2387,19 @@ check_video(const char *id, u_long limit, u_long maxm)
 {
 	u_long addr, phys;
 
-	if (!get_physical(videoaddr, &phys)) {
+	if (!get_physical(mac68k_video.mv_kvaddr, &phys)) {
 		if (mac68k_machine.do_graybars)
 			printf("get_mapping(): %s.  False start.\n", id);
 	} else {
-		mac68k_vidlog = videoaddr;
-		mac68k_vidphys = phys;
-		mac68k_vidlen = 32768;
-		addr = videoaddr + 32768;
+		mac68k_video.mv_log = mac68k_video.mv_kvaddr;
+		mac68k_video.mv_phys = phys;
+		mac68k_video.mv_len = 32768;
+		addr = mac68k_video.mv_kvaddr + 32768;
 		while (get_physical(addr, &phys)) {
-			if ((phys - mac68k_vidphys)
-			    != mac68k_vidlen)
+			if ((phys - mac68k_video.mv_phys)
+			    != mac68k_video.mv_len)
 				break;
-			if (mac68k_vidlen + 32768 > limit) {
+			if (mac68k_video.mv_len + 32768 > limit) {
 				if (mac68k_machine.do_graybars) {
 					printf("mapping: %s.  Does it never end?\n",
 					    id);
@@ -2418,16 +2407,17 @@ check_video(const char *id, u_long limit, u_long maxm)
 					printf("to a conservative %ldK.\n",
 					    maxm/1024);
 				}
-				mac68k_vidlen = maxm;
+				mac68k_video.mv_len = maxm;
 				break;
 			}
-			mac68k_vidlen += 32768;
+			mac68k_video.mv_len += 32768;
 			addr += 32768;
 		}
 		if (mac68k_machine.do_graybars) {
-			printf("  %s internal video at addr 0x%x (phys 0x%x), ",
-			    id, mac68k_vidlog, mac68k_vidphys);
-			printf("len 0x%x.\n", mac68k_vidlen);
+			printf("  %s internal video at addr 0x%p (phys 0x%p), ",
+			    id, (void *)mac68k_video.mv_log,
+			    (void *)mac68k_video.mv_phys);
+			printf("len 0x%x.\n", mac68k_video.mv_len);
 		}
 	}
 }
@@ -2526,8 +2516,8 @@ get_mapping(void)
 	 * address.  This is the case on several of the PowerBook 1xx
 	 * series, in particular.
 	 */
-	if (!get_physical(videoaddr, &phys))
-		phys = videoaddr;
+	if (!get_physical(mac68k_video.mv_kvaddr, &phys))
+		phys = mac68k_video.mv_kvaddr;
 
 	/*
 	 * Find on-board video, if we have an idea of where to look
@@ -2540,36 +2530,40 @@ get_mapping(void)
 	if (mac68k_machine.machineid == iip->machineid &&
 	    (phys & ~iip->fbmask) >= iip->fbbase &&
 	    (phys & ~iip->fbmask) < (iip->fbbase + iip->fblen)) {
-		mac68k_vidphys = phys & ~iip->fbmask;
-		mac68k_vidlen = 32768 - (phys & 0x7fff);
+		mac68k_video.mv_phys = phys & ~iip->fbmask;
+		mac68k_video.mv_len = 32768 - (phys & 0x7fff);
 
-		limit = iip->fbbase + iip->fblen - mac68k_vidphys;
-		if (mac68k_vidlen > limit) {
-			mac68k_vidlen = limit;
+		limit = iip->fbbase + iip->fblen - mac68k_video.mv_phys;
+		if (mac68k_video.mv_len > limit) {
+			mac68k_video.mv_len = limit;
 		} else {
-			addr = videoaddr + mac68k_vidlen;
+			addr = mac68k_video.mv_kvaddr + mac68k_video.mv_len;
 			while (get_physical(addr, &phys)) {
 				phys &= ~iip->fbmask;
-				if ((phys - mac68k_vidphys) != mac68k_vidlen)
+				if ((phys - mac68k_video.mv_phys) !=
+				    mac68k_video.mv_len)
 					break;
-				if ((mac68k_vidphys + 32768) > limit) {
-					mac68k_vidlen = limit;
+				if ((mac68k_video.mv_phys + 32768) > limit) {
+					mac68k_video.mv_len = limit;
 					break;
 				}
-				mac68k_vidlen += 32768;
+				mac68k_video.mv_len += 32768;
 				addr += 32768;
 			}
 		}
 	}
 
-	if (mac68k_vidlen > 0) {
+	if (mac68k_video.mv_len > 0) {
 		/*
 		 * We've already figured out where internal video is.
 		 * Tell the user what we know.
 		 */
 		if (mac68k_machine.do_graybars)
-			printf("On-board video at addr 0x%lx (phys 0x%x), len 0x%x.\n",
-			    videoaddr, mac68k_vidphys, mac68k_vidlen);
+			printf("On-board video at addr 0x%p (phys 0x%p), "
+			    "len 0x%x.\n",
+			    (void *)mac68k_video.mv_kvaddr,
+			    (void *)mac68k_video.mv_phys,
+			    mac68k_video.mv_len);
 	} else {
 		/*
 		 * We should now look through all of NuBus space to find where
@@ -2651,14 +2645,15 @@ get_mapping(void)
 			if (nblen[i] > 0
 			    && nbphys[i] <= 32768
 			    && 32768 <= nbphys[i] + nblen[i]) {
-				mac68k_vidlog = nblog[i] - nbphys[i];
-				mac68k_vidlen = nblen[i] + nbphys[i];
-				mac68k_vidphys = 0;
+				mac68k_video.mv_log = nblog[i] - nbphys[i];
+				mac68k_video.mv_len = nblen[i] + nbphys[i];
+				mac68k_video.mv_phys = 0;
 				break;
 			}
 		}
 		if (i == nbnumranges) {
-			if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
+			if (0x60000000 <= mac68k_video.mv_kvaddr
+			    && mac68k_video.mv_kvaddr < 0x70000000) {
 				if (mac68k_machine.do_graybars)
 					printf("Checking for Internal Video ");
 				/*
@@ -2667,15 +2662,15 @@ get_mapping(void)
 				 */
 				check_video("PB/IIvx (0x60?00000)",
 				    1 * 1024 * 1024, 1 * 1024 * 1024);
-			} else if (0x50F40000 <= videoaddr
-			    && videoaddr < 0x50FBFFFF) {
+			} else if (0x50F40000 <= mac68k_video.mv_kvaddr
+			    && mac68k_video.mv_kvaddr < 0x50FBFFFF) {
 				/*
 				 * Kludge for LC internal video
 				 */
 				check_video("LC video (0x50f40000)",
 				    512 * 1024, 512 * 1024);
-			} else if (0x50100100 <= videoaddr
-			    && videoaddr < 0x50400000) {
+			} else if (0x50100100 <= mac68k_video.mv_kvaddr
+			    && mac68k_video.mv_kvaddr < 0x50400000) {
 				/*
 				 * Kludge for AV internal video
 				 */
@@ -2683,15 +2678,19 @@ get_mapping(void)
 				    1 * 1024 * 1024, 1 * 1024 * 1024);
 			} else {
 				if (mac68k_machine.do_graybars)
-					printf( "  no internal video at address 0 -- "
-					    "videoaddr is 0x%lx.\n", videoaddr);
+					printf("  no internal video at "
+					    "address 0 -- "
+					    "mac68k_video.mv_kvaddr is "
+					    "0x%lx.\n",
+					    mac68k_video.mv_kvaddr);
 			}
 		} else if (mac68k_machine.do_graybars) {
-			printf("  Video address = 0x%lx\n", videoaddr);
-			printf("  Int video starts at 0x%x\n",
-			    mac68k_vidlog);
+			printf("  Video address = 0x%p\n",
+			    (void *)mac68k_video.mv_kvaddr);
+			printf("  Int video starts at 0x%p\n",
+			    (void *)mac68k_video.mv_log);
 			printf("  Length = 0x%x (%d) bytes\n",
-			    mac68k_vidlen, mac68k_vidlen);
+			    mac68k_video.mv_len, mac68k_video.mv_len);
 		}
 	}
 

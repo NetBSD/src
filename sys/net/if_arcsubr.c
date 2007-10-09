@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.55 2007/02/19 21:18:23 dyoung Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.55.4.1 2007/10/09 13:44:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.55 2007/02/19 21:18:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.55.4.1 2007/10/09 13:44:38 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -135,7 +135,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	m = m0;
 	mcopy = m1 = NULL;
 
-	myself = *LLADDR(ifp->if_sadl);
+	myself = *CLLADDR(ifp->if_sadl);
 
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -622,8 +622,8 @@ arc_sprintf(uint8_t *ap)
 void
 arc_storelladdr(struct ifnet *ifp, uint8_t lla)
 {
-
-	*(LLADDR(ifp->if_sadl)) = lla;
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, &lla,
+	    sizeof(lla));
 	ifp->if_mtu = ARC_PHDS_MAXMTU;
 }
 

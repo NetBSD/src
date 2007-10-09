@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.98.2.5 2007/08/20 21:28:05 ad Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.98.2.6 2007/10/09 13:44:55 ad Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.5 2007/08/20 21:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.6 2007/10/09 13:44:55 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -810,7 +810,6 @@ ip6_input(struct mbuf *m)
 			/* XXX error stat??? */
 			error = EINVAL;
 			DPRINTF(("ip6_input: no SP, packet discarded\n"));/*XXX*/
-			goto bad;
 		}
 		splx(s);
 		if (error)

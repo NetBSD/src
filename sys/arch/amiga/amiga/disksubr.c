@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.53 2007/03/05 18:43:30 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.53.2.1 2007/10/09 13:37:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.53 2007/03/05 18:43:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.53.2.1 2007/10/09 13:37:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ readdisklabel(dev, strat, lp, clp)
 			else {
 				/* remember block and continue searching? */
 				*lp = *dlp;
-				brelse(bp);
+				brelse(bp, 0);
 				return(msg);
 			}
 		}
@@ -490,7 +490,7 @@ readdisklabel(dev, strat, lp, clp)
 done:
 	if (clp->valid == 0)
 		clp->rdblock = RDBNULL;
-	brelse(bp);
+	brelse(bp, 0);
 	return(msg);
 }
 
@@ -577,7 +577,7 @@ writedisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error); 
 
 	/*
@@ -708,7 +708,7 @@ getrdbmap(dev, strat, lp, clp)
 
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	/* XXX finish */
-	brelse(bp);
+	brelse(bp, 0);
 	return(NULL);
 }
 

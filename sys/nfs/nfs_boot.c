@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.64.2.3 2007/08/20 21:28:10 ad Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.64.2.4 2007/10/09 13:44:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.64.2.3 2007/08/20 21:28:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.64.2.4 2007/10/09 13:44:59 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -306,8 +306,9 @@ nfs_boot_deladdress(ifp, lwp, addr)
 	u_int32_t addr;
 {
 	struct socket *so;
-	struct ifreq ireq;
-	struct sockaddr_in *sin;
+	struct ifreq ifr;
+	struct sockaddr_in sin;
+	struct in_addr ia = {.s_addr = addr};
 	int error;
 
 	/*
@@ -320,15 +321,13 @@ nfs_boot_deladdress(ifp, lwp, addr)
 		return (error);
 	}
 
-	memset(&ireq, 0, sizeof(ireq));
-	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
+	memset(&ifr, 0, sizeof(ifr));
+	memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
 
-	sin = (struct sockaddr_in *)&ireq.ifr_addr;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = addr;
+	sockaddr_in_init(&sin, &ia, 0);
+	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin)); 
 
-	error = ifioctl(so, SIOCDIFADDR, (void *)&ireq, lwp);
+	error = ifioctl(so, SIOCDIFADDR, &ifr, lwp);
 	if (error) {
 		printf("deladdress, error=%d\n", error);
 		goto out;

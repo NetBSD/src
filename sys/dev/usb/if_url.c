@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.25.2.1 2007/03/13 16:50:33 ad Exp $	*/
+/*	$NetBSD: if_url.c,v 1.25.2.2 2007/10/09 13:42:09 ad Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.25.2.1 2007/03/13 16:50:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.25.2.2 2007/10/09 13:42:09 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.25.2.1 2007/03/13 16:50:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -202,7 +202,7 @@ USB_ATTACH(url)
 	}
 
 	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
-	lockinit(&sc->sc_mii_lock, PZERO, "urlmii", 0, 0);
+	rw_init(&sc->sc_mii_rwlock);
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
 
 	/* get control interface */
@@ -374,6 +374,7 @@ USB_DETACH(url)
 
 	splx(s);
 
+	rw_destroy(&sc->sc_mii_rwlock);
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
@@ -504,7 +505,7 @@ url_init(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
 	struct mii_data *mii = GET_MII(sc);
-	u_char *eaddr;
+	const u_char *eaddr;
 	int i, s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -517,7 +518,7 @@ url_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	url_stop(ifp, 1);
 
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		url_csr_write_1(sc, URL_IDR0 + i, eaddr[i]);
 
@@ -1358,7 +1359,7 @@ url_lock_mii(struct url_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&sc->sc_mii_rwlock, RW_WRITER);
 }
 
 Static void
@@ -1367,7 +1368,7 @@ url_unlock_mii(struct url_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-	lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_mii_rwlock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }

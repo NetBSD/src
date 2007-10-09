@@ -1,17 +1,42 @@
-/* $NetBSD: event_channel.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
+/* $NetBSD: event_channel.h,v 1.3.20.1 2007/10/09 13:38:54 ad Exp $ */
 /******************************************************************************
  * event_channel.h
  * 
  * Event channels between domains.
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2003-2004, K A Fraser.
  */
 
 #ifndef __XEN_PUBLIC_EVENT_CHANNEL_H__
 #define __XEN_PUBLIC_EVENT_CHANNEL_H__
 
+/*
+ * Prototype for this hypercall is:
+ *  int event_channel_op(int cmd, void *args)
+ * @cmd  == EVTCHNOP_??? (event-channel operation).
+ * @args == Operation-specific extra arguments (NULL if none).
+ */
+
 typedef uint32_t evtchn_port_t;
-DEFINE_GUEST_HANDLE(evtchn_port_t);
+DEFINE_XEN_GUEST_HANDLE(evtchn_port_t);
 
 /*
  * EVTCHNOP_alloc_unbound: Allocate a port in domain <dom> and mark as
@@ -22,12 +47,13 @@ DEFINE_GUEST_HANDLE(evtchn_port_t);
  *  2. <rdom> may be DOMID_SELF, allowing loopback connections.
  */
 #define EVTCHNOP_alloc_unbound    6
-typedef struct evtchn_alloc_unbound {
+struct evtchn_alloc_unbound {
     /* IN parameters */
     domid_t dom, remote_dom;
     /* OUT parameters */
     evtchn_port_t port;
-} evtchn_alloc_unbound_t;
+};
+typedef struct evtchn_alloc_unbound evtchn_alloc_unbound_t;
 
 /*
  * EVTCHNOP_bind_interdomain: Construct an interdomain event channel between
@@ -39,30 +65,36 @@ typedef struct evtchn_alloc_unbound {
  *  2. <remote_dom> may be DOMID_SELF, allowing loopback connections.
  */
 #define EVTCHNOP_bind_interdomain 0
-typedef struct evtchn_bind_interdomain {
+struct evtchn_bind_interdomain {
     /* IN parameters. */
     domid_t remote_dom;
     evtchn_port_t remote_port;
     /* OUT parameters. */
     evtchn_port_t local_port;
-} evtchn_bind_interdomain_t;
+};
+typedef struct evtchn_bind_interdomain evtchn_bind_interdomain_t;
 
 /*
  * EVTCHNOP_bind_virq: Bind a local event channel to VIRQ <irq> on specified
  * vcpu.
  * NOTES:
- *  1. A virtual IRQ may be bound to at most one event channel per vcpu.
- *  2. The allocated event channel is bound to the specified vcpu. The binding
- *     may not be changed.
+ *  1. Virtual IRQs are classified as per-vcpu or global. See the VIRQ list
+ *     in xen.h for the classification of each VIRQ.
+ *  2. Global VIRQs must be allocated on VCPU0 but can subsequently be
+ *     re-bound via EVTCHNOP_bind_vcpu.
+ *  3. Per-vcpu VIRQs may be bound to at most one event channel per vcpu.
+ *     The allocated event channel is bound to the specified vcpu and the
+ *     binding cannot be changed.
  */
 #define EVTCHNOP_bind_virq        1
-typedef struct evtchn_bind_virq {
+struct evtchn_bind_virq {
     /* IN parameters. */
     uint32_t virq;
     uint32_t vcpu;
     /* OUT parameters. */
     evtchn_port_t port;
-} evtchn_bind_virq_t;
+};
+typedef struct evtchn_bind_virq evtchn_bind_virq_t;
 
 /*
  * EVTCHNOP_bind_pirq: Bind a local event channel to PIRQ <irq>.
@@ -71,14 +103,15 @@ typedef struct evtchn_bind_virq {
  *  2. Only a sufficiently-privileged domain may bind to a physical IRQ.
  */
 #define EVTCHNOP_bind_pirq        2
-typedef struct evtchn_bind_pirq {
+struct evtchn_bind_pirq {
     /* IN parameters. */
     uint32_t pirq;
 #define BIND_PIRQ__WILL_SHARE 1
     uint32_t flags; /* BIND_PIRQ__* */
     /* OUT parameters. */
     evtchn_port_t port;
-} evtchn_bind_pirq_t;
+};
+typedef struct evtchn_bind_pirq evtchn_bind_pirq_t;
 
 /*
  * EVTCHNOP_bind_ipi: Bind a local event channel to receive events.
@@ -87,11 +120,12 @@ typedef struct evtchn_bind_pirq {
  *     may not be changed.
  */
 #define EVTCHNOP_bind_ipi         7
-typedef struct evtchn_bind_ipi {
+struct evtchn_bind_ipi {
     uint32_t vcpu;
     /* OUT parameters. */
     evtchn_port_t port;
-} evtchn_bind_ipi_t;
+};
+typedef struct evtchn_bind_ipi evtchn_bind_ipi_t;
 
 /*
  * EVTCHNOP_close: Close a local event channel <port>. If the channel is
@@ -99,20 +133,22 @@ typedef struct evtchn_bind_ipi {
  * (EVTCHNSTAT_unbound), awaiting a new connection.
  */
 #define EVTCHNOP_close            3
-typedef struct evtchn_close {
+struct evtchn_close {
     /* IN parameters. */
     evtchn_port_t port;
-} evtchn_close_t;
+};
+typedef struct evtchn_close evtchn_close_t;
 
 /*
  * EVTCHNOP_send: Send an event to the remote end of the channel whose local
  * endpoint is <port>.
  */
 #define EVTCHNOP_send             4
-typedef struct evtchn_send {
+struct evtchn_send {
     /* IN parameters. */
     evtchn_port_t port;
-} evtchn_send_t;
+};
+typedef struct evtchn_send evtchn_send_t;
 
 /*
  * EVTCHNOP_status: Get the current status of the communication channel which
@@ -123,7 +159,7 @@ typedef struct evtchn_send {
  *     channel for which <dom> is not DOMID_SELF.
  */
 #define EVTCHNOP_status           5
-typedef struct evtchn_status {
+struct evtchn_status {
     /* IN parameters */
     domid_t  dom;
     evtchn_port_t port;
@@ -147,51 +183,74 @@ typedef struct evtchn_status {
         uint32_t pirq;      /* EVTCHNSTAT_pirq        */
         uint32_t virq;      /* EVTCHNSTAT_virq        */
     } u;
-} evtchn_status_t;
+};
+typedef struct evtchn_status evtchn_status_t;
 
 /*
  * EVTCHNOP_bind_vcpu: Specify which vcpu a channel should notify when an
  * event is pending.
  * NOTES:
- *  1. IPI- and VIRQ-bound channels always notify the vcpu that initialised
- *     the binding. This binding cannot be changed.
- *  2. All other channels notify vcpu0 by default. This default is set when
+ *  1. IPI-bound channels always notify the vcpu specified at bind time.
+ *     This binding cannot be changed.
+ *  2. Per-VCPU VIRQ channels always notify the vcpu specified at bind time.
+ *     This binding cannot be changed.
+ *  3. All other channels notify vcpu0 by default. This default is set when
  *     the channel is allocated (a port that is freed and subsequently reused
  *     has its binding reset to vcpu0).
  */
 #define EVTCHNOP_bind_vcpu        8
-typedef struct evtchn_bind_vcpu {
+struct evtchn_bind_vcpu {
     /* IN parameters. */
     evtchn_port_t port;
     uint32_t vcpu;
-} evtchn_bind_vcpu_t;
+};
+typedef struct evtchn_bind_vcpu evtchn_bind_vcpu_t;
 
 /*
  * EVTCHNOP_unmask: Unmask the specified local event-channel port and deliver
  * a notification to the appropriate VCPU if an event is pending.
  */
 #define EVTCHNOP_unmask           9
-typedef struct evtchn_unmask {
+struct evtchn_unmask {
     /* IN parameters. */
     evtchn_port_t port;
-} evtchn_unmask_t;
+};
+typedef struct evtchn_unmask evtchn_unmask_t;
 
-typedef struct evtchn_op {
+/*
+ * EVTCHNOP_reset: Close all event channels associated with specified domain.
+ * NOTES:
+ *  1. <dom> may be specified as DOMID_SELF.
+ *  2. Only a sufficiently-privileged domain may specify other than DOMID_SELF.
+ */
+#define EVTCHNOP_reset           10
+struct evtchn_reset {
+    /* IN parameters. */
+    domid_t dom;
+};
+typedef struct evtchn_reset evtchn_reset_t;
+
+/*
+ * Argument to event_channel_op_compat() hypercall. Superceded by new
+ * event_channel_op() hypercall since 0x00030202.
+ */
+struct evtchn_op {
     uint32_t cmd; /* EVTCHNOP_* */
     union {
-        evtchn_alloc_unbound_t    alloc_unbound;
-        evtchn_bind_interdomain_t bind_interdomain;
-        evtchn_bind_virq_t        bind_virq;
-        evtchn_bind_pirq_t        bind_pirq;
-        evtchn_bind_ipi_t         bind_ipi;
-        evtchn_close_t            close;
-        evtchn_send_t             send;
-        evtchn_status_t           status;
-        evtchn_bind_vcpu_t        bind_vcpu;
-        evtchn_unmask_t           unmask;
+        struct evtchn_alloc_unbound    alloc_unbound;
+        struct evtchn_bind_interdomain bind_interdomain;
+        struct evtchn_bind_virq        bind_virq;
+        struct evtchn_bind_pirq        bind_pirq;
+        struct evtchn_bind_ipi         bind_ipi;
+        struct evtchn_close            close;
+        struct evtchn_send             send;
+        struct evtchn_status           status;
+        struct evtchn_bind_vcpu        bind_vcpu;
+        struct evtchn_unmask           unmask;
     } u;
-} evtchn_op_t;
-DEFINE_GUEST_HANDLE(evtchn_op_t);
+};
+typedef struct evtchn_op evtchn_op_t;
+DEFINE_XEN_GUEST_HANDLE(evtchn_op_t);
 
 #endif /* __XEN_PUBLIC_EVENT_CHANNEL_H__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.53 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.53.2.1 2007/10/09 13:44:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.53 2007/03/04 06:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.53.2.1 2007/10/09 13:44:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -338,7 +338,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		/*
 		 * We inherit the parent's Ethernet address.
 		 */
-		ether_ifattach(ifp, LLADDR(p->if_sadl));
+		ether_ifattach(ifp, CLLADDR(p->if_sadl));
 		ifp->if_hdrlen = sizeof(struct ether_vlan_header); /* XXX? */
 		break;
 	    }
@@ -498,7 +498,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:
@@ -584,14 +584,15 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
+	const struct sockaddr *sa = ifreq_getaddr(SIOCADDMULTI, ifr);
 	struct vlan_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
-	if (ifr->ifr_addr.sa_len > sizeof(struct sockaddr_storage))
+	if (sa->sa_len > sizeof(struct sockaddr_storage))
 		return (EINVAL);
 
-	error = ether_addmulti(ifr, &ifv->ifv_ec);
+	error = ether_addmulti(sa, &ifv->ifv_ec);
 	if (error != ENETRESET)
 		return (error);
 
@@ -611,9 +612,9 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 * As ether_addmulti() returns ENETRESET, following two
 	 * statement shouldn't fail.
 	 */
-	(void)ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	(void)ether_multiaddr(sa, addrlo, addrhi);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, mc->mc_enm);
-	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
+	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&ifv->ifv_mc_listhead, mc, mc_entries);
 
 	error = (*ifv->ifv_p->if_ioctl)(ifv->ifv_p, SIOCADDMULTI,
@@ -626,13 +627,14 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	LIST_REMOVE(mc, mc_entries);
 	FREE(mc, M_DEVBUF);
  alloc_failed:
-	(void)ether_delmulti(ifr, &ifv->ifv_ec);
+	(void)ether_delmulti(sa, &ifv->ifv_ec);
 	return (error);
 }
 
 static int
 vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
+	const struct sockaddr *sa = ifreq_getaddr(SIOCDELMULTI, ifr);
 	struct ether_multi *enm;
 	struct vlan_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
@@ -642,11 +644,11 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 * Find a key to lookup vlan_mc_entry.  We have to do this
 	 * before calling ether_delmulti for obvious reason.
 	 */
-	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
+	if ((error = ether_multiaddr(sa, addrlo, addrhi)) != 0)
 		return (error);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, enm);
 
-	error = ether_delmulti(ifr, &ifv->ifv_ec);
+	error = ether_delmulti(sa, &ifv->ifv_ec);
 	if (error != ENETRESET)
 		return (error);
 
@@ -665,7 +667,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		}
 		KASSERT(mc != NULL);
 	} else
-		(void)ether_addmulti(ifr, &ifv->ifv_ec);
+		(void)ether_addmulti(sa, &ifv->ifv_ec);
 	return (error);
 }
 
@@ -689,7 +691,8 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
-		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
+		ifreq_setaddr(SIOCDELMULTI, ifr,
+		    (const struct sockaddr *)&mc->mc_addr);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);

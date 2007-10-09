@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.7 2007/08/20 21:27:30 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.8 2007/10/09 13:44:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.7 2007/08/20 21:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.8 2007/10/09 13:44:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -215,6 +215,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     struct proc **rnewprocp)
 {
 	struct proc	*p1, *p2, *parent;
+	struct plimit   *p1_lim;
 	uid_t		uid;
 	struct lwp	*l2;
 	int		count;
@@ -352,20 +353,20 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_cwdi = cwdinit(p1);
 
 	/*
-	 * If p_limit is still copy-on-write, bump refcnt,
-	 * otherwise get a copy that won't be modified.
-	 * (If PL_SHAREMOD is clear, the structure is shared
-	 * copy-on-write.)
+	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
+	 * to bump pl_refcnt.
+	 * However in some cases (see compat irix, and plausibly from clone)
+	 * the parent and child share limits - in which case nothing else
+	 * must have a copy of the limits (PL_SHAREMOD is set).
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD) {
-		mutex_enter(&p1->p_mutex);
-		p2->p_limit = limcopy(p1);
-		mutex_exit(&p1->p_mutex);
-	} else {
-		mutex_enter(&p1->p_limit->p_lock);
-		p1->p_limit->p_refcnt++;
-		mutex_exit(&p1->p_limit->p_lock);
-		p2->p_limit = p1->p_limit;
+	if (__predict_false(flags & FORK_SHARELIMIT))
+		lim_privatise(p1, 1);
+	p1_lim = p1->p_limit;
+	if (p1_lim->pl_flags & PL_WRITEABLE && !(flags & FORK_SHARELIMIT))
+		p2->p_limit = lim_copy(p1_lim);
+	else {
+		lim_addref(p1_lim);
+		p2->p_limit = p1_lim;
 	}
 
 	p2->p_sflag = ((flags & FORK_PPWAIT) ? PS_PPWAIT : 0);

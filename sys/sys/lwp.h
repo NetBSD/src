@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.14 2007/08/20 21:28:17 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.15 2007/10/09 13:45:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ struct lwp {
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
-	callout_t	l_tsleep_ch;	/* !: callout for tsleep */
+	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */

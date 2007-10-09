@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.32.2.1 2007/08/19 19:24:05 ad Exp $ */
+/* $NetBSD: disksubr.c,v 1.32.2.2 2007/10/09 13:37:13 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.2.1 2007/08/19 19:24:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.2.2 2007/10/09 13:37:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ readdisklabel(dev, strat, lp, clp)
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -250,6 +250,6 @@ writedisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error); 
 }

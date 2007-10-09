@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.33.2.5 2007/08/23 12:13:56 ad Exp $
+#	$NetBSD: files.amd64,v 1.33.2.6 2007/10/09 13:37:17 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -27,6 +27,8 @@ defflag			VM86
 defflag eisa.h EISA
 
 file	arch/amd64/amd64/autoconf.c
+file	arch/amd64/amd64/busfunc.S
+file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
@@ -118,7 +120,7 @@ file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib | amdpcib
+file	arch/amd64/pci/pcib.c			pcib | amdpcib | ichlpcib
 
 device 	amdpcib {} : isabus
 attach 	amdpcib at pci
@@ -126,6 +128,10 @@ file 	arch/amd64/pci/amdpcib.c		amdpcib
 
 attach 	hpet at amdpcib with amdpcib_hpet
 file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
+
+device  ichlpcib: acpipmtimer, isabus, sysmon_wdog
+attach  ichlpcib at pci
+file    arch/x86/pci/ichlpcib.c 		ichlpcib
 
 device 	aapic
 attach 	aapic at pci

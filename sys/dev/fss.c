@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.9 2007/08/24 23:28:34 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.10 2007/10/09 13:41:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.9 2007/08/24 23:28:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.10 2007/10/09 13:41:12 ad Exp $");
 
 #include "fss.h"
 
@@ -524,7 +524,7 @@ fss_copy_on_write(void *v, struct buf *bp)
  * sc_bs_vp and sc_time.
  *
  * Otherwise returns dev and size of the underlying block device.
- * Initializes sc_mntname, sc_mount_vp, sc_bdev, sc_bs_vp and sc_mount
+ * Initializes sc_mntname, sc_mount, sc_bdev, sc_bs_vp and sc_mount
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
@@ -615,7 +615,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return error;
 	}
 
-	sc->sc_mount_vp = nd.ni_vp;
 	sc->sc_bdev = nd.ni_vp->v_rdev;
 	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
@@ -747,7 +746,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	microtime(&sc->sc_time);
 
 	if (error == 0)
-		error = vn_cow_establish(sc->sc_mount_vp,
+		error = fscow_establish(sc->sc_mount,
 		    fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
@@ -788,7 +787,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 	int s;
 
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
-		vn_cow_disestablish(sc->sc_mount_vp, fss_copy_on_write, sc);
+		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 
 	FSS_LOCK(sc, s);
 	sc->sc_flags &= ~(FSS_ACTIVE|FSS_ERROR);

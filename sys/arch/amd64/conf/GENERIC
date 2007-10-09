@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134.2.6 2007/08/20 18:37:07 ad Exp $
+# $NetBSD: GENERIC,v 1.134.2.7 2007/10/09 13:37:16 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134.2.6 $"
+#ident 		"GENERIC-$Revision: 1.134.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -134,11 +134,11 @@ file-system 	PROCFS		# /proc
 file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -303,6 +303,9 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and Speedstep support.
+
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
 #agp* 	at pchb?
@@ -311,6 +314,7 @@ aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 isa0	at mainbus?
 isa0	at pcib?
 #isa0 	at amdpcib?
+#isa0 	at ichlpcib?
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
@@ -391,6 +395,10 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
+
+# Intel ICH SMBus controller
+ichsmb*	at pci? dev ? function ?
+iic*	at ichsmb?
 
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
@@ -674,6 +682,9 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
@@ -730,6 +741,7 @@ irframe* at ustir?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ? 	# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
@@ -742,14 +754,23 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+uftdi*  at uhub? port ? 	# FTDI FT8U100AX serial adapter
+ucom*   at uftdi? portno ?
 
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
+uipaq*  at uhub? port ? 	# iPAQ PDAs
+ucom*   at uipaq? portno ?
+
+umct*   at uhub? port ? 	# MCT USB-RS232 serial adapter
+ucom*   at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*   at uplcom? portno ?
+
+uslsa*  at uhub? port ? 	# Silicon Labs USB-RS232 serial adapter
+ucom*   at uslsa? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
@@ -917,7 +938,7 @@ pseudo-device	swcrypto		# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

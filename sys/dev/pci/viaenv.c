@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.20.4.1 2007/07/15 13:21:40 ad Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.20.4.2 2007/10/09 13:41:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,17 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.20.4.1 2007/07/15 13:21:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.20.4.2 2007/10/09 13:41:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#ifdef __HAVE_TIMECOUNTER
 #include <machine/bus.h>
 #include <dev/ic/acpipmtimer.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -368,7 +366,6 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 nohwm:
-#ifdef __HAVE_TIMECOUNTER
 	/* Check if power management I/O space is enabled */
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_GENCFG);
 	if ((control & VIAENV_GENCFG_PMEN) == 0) {
@@ -392,7 +389,6 @@ nohwm:
 	    ((control & VIAENV_GENCFG_TMR32) ? ACPIPMT_32BIT : 0));
 
 nopm:
-#endif /* __HAVE_TIMECOUNTER */
 	return;
 }
 

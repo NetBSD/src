@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.23.6.2 2007/08/20 21:26:08 ad Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.23.6.3 2007/10/09 13:44:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23.6.2 2007/08/20 21:26:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23.6.3 2007/10/09 13:44:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23.6.2 2007/08/20 21:26:08 ad Exp
 #include <miscfs/specfs/specdev.h>
 
 MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
+MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
 
 VFS_PROTOS(ptyfs);
 
@@ -180,6 +181,7 @@ ptyfs_init(void)
 {
 
 	malloc_type_attach(M_PTYFSMNT);
+	malloc_type_attach(M_PTYFSTMP);
 	ptyfs_hashinit();
 }
 
@@ -194,6 +196,7 @@ ptyfs_done(void)
 {
 
 	ptyfs_hashdone();
+	malloc_type_detach(M_PTYFSTMP);
 	malloc_type_detach(M_PTYFSMNT);
 }
 
@@ -237,7 +240,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	if (args->version != PTYFS_ARGSVERSION)
 		return EINVAL;
 
-	pmnt = malloc(sizeof(struct ptyfsmount), M_UFSMNT, M_WAITOK);
+	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
 
 	mp->mnt_data = pmnt;
 	pmnt->pmnt_gid = args->gid;

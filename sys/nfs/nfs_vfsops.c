@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.7 2007/09/16 19:04:39 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.8 2007/10/09 13:44:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.7 2007/09/16 19:04:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.8 2007/10/09 13:44:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -653,16 +653,16 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
 	error = copyin(args->fh, nfh, args->fhsize);
 	if (error)
-		return (error);
+		goto free_nfh;
 	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(path, pth, MNAMELEN - 1, &len);
 	if (error)
-		goto free_nfh;
+		goto free_pth;
 	memset(&pth[len], 0, MNAMELEN - len);
 	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(args->hostname, hst, MNAMELEN - 1, &len);
 	if (error)
-		goto free_pth;
+		goto free_hst;
 	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
 	error = sockargs(&nam, args->addr, args->addrlen, MT_SONAME);

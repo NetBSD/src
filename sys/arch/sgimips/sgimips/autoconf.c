@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35.4.1 2007/05/27 12:28:05 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35.4.2 2007/10/09 13:38:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35.4.1 2007/05/27 12:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35.4.2 2007/10/09 13:38:23 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -229,7 +229,13 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 	}
-		
+
+	if (device_is_a(dev, "ahc")) {
+
+		prop_dictionary_set_bool(device_properties(dev),
+		    "override_ultra", true);
+	}
+
 	if (found)
 		return;
 

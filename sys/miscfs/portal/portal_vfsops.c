@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.60.6.5 2007/09/16 19:04:36 ad Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.60.6.6 2007/10/09 13:44:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60.6.5 2007/09/16 19:04:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60.6.6 2007/10/09 13:44:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,13 +123,16 @@ portal_mount(
 	if ((error = getsock(p->p_fd, args->pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
-	FILE_UNUSE(fp, NULL);
-	if (so->so_proto->pr_domain->dom_family != AF_LOCAL)
+	if (so->so_proto->pr_domain->dom_family != AF_LOCAL) {
+		FILE_UNUSE(fp, NULL);
 		return (ESOCKTNOSUPPORT);
+	}
 
 	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
-	if (error)
+	if (error) {
+		FILE_UNUSE(fp, NULL);
 		return (error);
+	}
 	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
 		M_TEMP, M_WAITOK);
 

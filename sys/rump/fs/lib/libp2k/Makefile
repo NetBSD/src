@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2007/08/20 22:07:20 ad Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2007/10/09 13:45:01 ad Exp $
 #
+
+.include <bsd.own.mk>
 
 LIB=		p2k
 

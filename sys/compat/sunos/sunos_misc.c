@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.146.2.3 2007/08/20 21:26:02 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.146.2.4 2007/10/09 13:44:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.146.2.3 2007/08/20 21:26:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.146.2.4 2007/10/09 13:44:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -832,11 +832,14 @@ sunos_sys_open(l, v, retval)
 		struct file *fp;
 
 		fp = fd_getfile(fdp, *retval);
-		simple_unlock(&fp->f_slock);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (void *)0, l);
+		if (fp != NULL) {
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return ret;
 }

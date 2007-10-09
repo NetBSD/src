@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13.14.1 2007/06/09 23:55:26 ad Exp $	*/
+/*	$NetBSD: boot.c,v 1.13.14.2 2007/10/09 13:38:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -111,10 +111,12 @@ prom2boot(char *dev)
 #endif
 
 static int
-bootoptions(const char *ap, char *kernel, char *options)
+bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 {
 	int v = 0;
-	const char *cp;
+	const char *start1 = NULL, *end1 = NULL, *start2 = NULL, *end2 = NULL;
+	const char *path;
+	char partition, *pp;
 
 	*kernel  = '\0';
 	*options = '\0';
@@ -127,18 +129,62 @@ bootoptions(const char *ap, char *kernel, char *options)
 		ap++;
 	}
 
-	cp = ap;
 	if (*ap != '-') {
+		start1 = ap;
 		while (*ap != '\0' && *ap != ' ') {
 			ap++;
 		}
-
-		memcpy(kernel, cp, (ap - cp));
-		kernel[ap - cp] = '\0';
+		end1 = ap;
 
 		while (*ap != '\0' && *ap == ' ') {
 			ap++;
 		}
+
+		if (*ap != '-') {
+			start2 = ap;
+			while (*ap != '\0' && *ap != ' ') {
+				ap++;
+			}
+			end2 = ap;
+			while (*ap != '\0' && *ap == ' ') {
+				ap++;
+			}
+		}
+	}
+	if (end2 == start2) {
+		start2 = end2 = NULL;
+	}
+	if (end1 == start1) {
+		start1 = end1 = NULL;
+	}
+
+	if (start1 == NULL) {
+		/* only options */
+	} else if (start2 == NULL) {
+		memcpy(kernel, start1, (end1 - start1));
+		kernel[end1 - start1] = '\0';
+		path = filename(kernel, &partition);
+		if (path == NULL) {
+			strcpy(loaddev, kernel);
+			kernel[0] = '\0';
+		} else if (path != kernel) {
+			/* copy device part */
+			memcpy(loaddev, kernel, path-kernel);
+			loaddev[path-kernel] = '\0';
+			if (partition) {
+				pp = loaddev + strlen(loaddev);
+				pp[0] = ':';
+				pp[1] = partition;
+				pp[2] = '\0';
+			}
+			/* and kernel path */
+			strcpy(kernel, path);
+		}
+	} else {
+		memcpy(loaddev, start1, (end1-start1));
+		loaddev[end1-start1] = '\0';
+		memcpy(kernel, start2, (end2 - start2));
+		kernel[end2 - start2] = '\0';
 	}
 
 	strcpy(options, ap);
@@ -160,7 +206,8 @@ bootoptions(const char *ap, char *kernel, char *options)
 		debug = 1;
 	}
 
-	DPRINTF(("bootoptions: kernel='%s', options='%s'\n", kernel, options));
+	DPRINTF(("bootoptions: device='%s', kernel='%s', options='%s'\n",
+	    loaddev, kernel, options));
 	return (v);
 }
 
@@ -318,6 +365,23 @@ start_kernel(char *kernel, char *bootline, void *ofw)
 	(void)printf("Failed to load '%s'.\n", kernel);
 }
 
+static void
+help(void)
+{
+	printf( "enter a special command\n"
+		"  halt\n"
+		"  exit\n"
+		"    to return to OpenFirmware\n"
+		"  ?\n"
+		"  help\n"
+		"    to display this message\n"
+		"or a boot specification:\n"
+		"  [device] [kernel] [options]\n"
+		"\n"
+		"for example:\n"
+		"  disk:a netbsd -s\n");
+}
+
 void
 main(void *ofw)
 {
@@ -331,12 +395,11 @@ main(void *ofw)
 	prom_init();
 
 	printf("\r>> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	DPRINTF((">> (%s, %s)\n", bootprog_maker, bootprog_date));
 
 	/* Figure boot arguments */
-	boothowto = bootoptions(prom_getbootargs(), kernel, bootline);
 	strncpy(bootdev, prom_getbootpath(), sizeof(bootdev) - 1);
-	strncpy(bootline, prom_getbootargs(), sizeof(bootline) - 1);
+	boothowto = bootoptions(prom_getbootargs(), bootdev, kernel, bootline);
 
 	for (;; *kernel = '\0') {
 		if (boothowto & RB_ASKNAME) {
@@ -345,12 +408,19 @@ main(void *ofw)
 			printf("Boot: ");
 			gets(cmdline);
 
-			boothowto  = bootoptions(cmdline, kernel, bootline);
-			boothowto |= RB_ASKNAME;
-
-			if (!strcmp(kernel,"exit") || !strcmp(kernel,"halt")) {
+			if (!strcmp(cmdline,"exit") ||
+			    !strcmp(cmdline,"halt")) {
 				prom_halt();
+			} else if (!strcmp(cmdline, "?") ||
+				   !strcmp(cmdline, "help")) {
+				help();
+				continue;
 			}
+
+			boothowto  = bootoptions(cmdline, bootdev, kernel,
+			    bootline);
+			boothowto |= RB_ASKNAME;
+			i = 0;
 		}
 
 		if (*kernel == '\0') {

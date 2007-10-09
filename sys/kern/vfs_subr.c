@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.19 2007/10/03 19:11:15 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.20 2007/10/09 13:44:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.19 2007/10/03 19:11:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.20 2007/10/09 13:44:33 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -779,10 +779,6 @@ loop:
 		nvp->v_specmountpoint = NULL;
 		mutex_exit(&spechash_lock);
 		nvp->v_speclockf = NULL;
-		mutex_init(&nvp->v_spec_cow_lock, MUTEX_DEFAULT, IPL_NONE);
-		SLIST_INIT(&nvp->v_spec_cow_head);
-		nvp->v_spec_cow_req = 0;
-		nvp->v_spec_cow_count = 0;
 
 		*vpp = nvp;
 		if (vp != NULL) {
@@ -1291,7 +1287,6 @@ vclean(vnode_t *vp, int flags)
 				}
 			}
 			mutex_exit(&spechash_lock);
-			mutex_destroy(&vp->v_spec_cow_lock);
 			FREE(vp->v_specinfo, M_VNODE);
 			vp->v_specinfo = NULL;
 		}

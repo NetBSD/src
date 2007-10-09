@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2.4.2 2007/08/20 22:07:25 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.4.3 2007/10/09 13:45:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
 #define spllower(x) ((void)0)
 #define splraise(x) 0
 #define splsoftnet() 0
+#define splclock() 0
 #define splbio() 0
 #define splvm() 0
 #define splx(x) ((void)x)

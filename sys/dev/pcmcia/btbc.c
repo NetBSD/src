@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.1.2.2 2007/08/20 22:42:52 ad Exp $	*/
+/*	$NetBSD: btbc.c,v 1.1.2.3 2007/10/09 13:41:58 ad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.2.2 2007/08/20 22:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.2.3 2007/10/09 13:41:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -96,7 +96,6 @@ struct btbc_softc {
 static int btbc_match(struct device *, struct cfdata *, void *);
 static void btbc_attach(struct device *, struct device *, void *);
 static int btbc_detach(struct device *, int);
-static int btbc_activate(struct device *, enum devact);
 static void btbc_power(int, void *);
 
 static void btbc_activity_led_timeout(void *);
@@ -113,7 +112,7 @@ static int btbc_enable(struct hci_unit *);
 static void btbc_disable(struct hci_unit *);
 
 CFATTACH_DECL(btbc, sizeof(struct btbc_softc),
-    btbc_match, btbc_attach, btbc_detach, btbc_activate);
+    btbc_match, btbc_attach, btbc_detach, NULL);
 
 
 /* ARGSUSED */
@@ -200,25 +199,6 @@ btbc_detach(struct device *self, int flags)
 	hci_detach(&sc->sc_unit);
 
 	pcmcia_function_unconfigure(sc->sc_pf);
-
-	return err;
-}
-
-/* ARGSUSED */
-static int
-btbc_activate(struct device *self, enum devact act)
-{
-	int err = 0;
-
-	switch(act) {
-	case DVACT_ACTIVATE:
-		err = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		// could notify unit somehow?
-		break;
-	}
 
 	return err;
 }
@@ -361,8 +341,6 @@ btbc_set_baudrate(struct btbc_softc *sc, int baud)
 	uint8_t param;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 
 	switch (baud) {
 	case 460800:

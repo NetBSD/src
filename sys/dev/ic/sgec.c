@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.28.2.1 2007/05/27 14:30:07 ad Exp $ */
+/*      $NetBSD: sgec.c,v 1.28.2.2 2007/10/09 13:41:31 ad Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.28.2.1 2007/05/27 14:30:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.28.2.2 2007/10/09 13:41:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -539,7 +539,6 @@ zeioctl(ifp, cmd, data)
 	void *data;
 {
 	struct ze_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -588,11 +587,7 @@ zeioctl(ifp, cmd, data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -672,7 +667,7 @@ ze_setup(sc)
 	struct ether_multistep step;
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 	int j, idx, reg;
 
 	if (sc->sc_inq == (TXDESCS - 1)) {

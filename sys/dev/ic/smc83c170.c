@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.64.2.1 2007/07/01 21:47:55 ad Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.64.2.2 2007/10/09 13:41:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.64.2.1 2007/07/01 21:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.64.2.2 2007/10/09 13:41:32 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -929,7 +929,7 @@ epic_init(ifp)
 	struct epic_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint8_t *enaddr = LLADDR(ifp->if_sadl);
+	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
 	uint32_t genctl, reg0;

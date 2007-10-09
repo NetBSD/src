@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.4.2.2 2007/08/20 22:07:13 ad Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.4.2.3 2007/10/09 13:45:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,10 +33,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/mount.h>
-#include <sys/dirent.h>
-
-#include <ufs/ufs/ufsmount.h>
+#include <dirent.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -72,13 +69,17 @@ main(int argc, char *argv[])
 
 	rv = ukfs_getdents(fs, "/", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
+	if (rv == -1)
+		rv = 0;
 
+#ifdef __NetBSD__
 	dent = (void *)buf;
 	while (rv) {
 		printf("%s\n", dent->d_name);
 		rv -= _DIRENT_SIZE(dent);
 		dent = _DIRENT_NEXT(dent);
 	}
+#endif
 
 	rv = ukfs_read(fs, "/etc/passwd", 0, buf, sizeof(buf));
 	printf("rv %d\n%s\n", rv, buf);
@@ -103,13 +104,17 @@ main(int argc, char *argv[])
 
 	rv = ukfs_getdents(fs, "/etc", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
+	if (rv == -1)
+		rv = 0;
 
+#ifdef __NetBSD__
 	dent = (void *)buf;
 	while (rv) {
 		printf("%s\n", dent->d_name);
 		rv -= _DIRENT_SIZE(dent);
 		dent = _DIRENT_NEXT(dent);
 	}
+#endif
 
 	ukfs_release(fs, 1);
 }

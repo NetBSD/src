@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.42.4.2 2007/06/08 14:17:14 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.42.4.3 2007/10/09 13:44:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.2 2007/06/08 14:17:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.3 2007/10/09 13:44:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.42.4.2 2007/06/08 14:17:14 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/mqueue.h>
 
 #include <machine/db_machdep.h>
 
@@ -119,6 +120,13 @@ db_show_aio_jobs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	aio_print_jobs(db_printf);
+}
+
+void
+db_show_mqueue_cmd(db_expr_t addr, bool haddr,
+    db_expr_t count, const char *modif)
+{
+	mqueue_print_list(db_printf);
 }
 
 void

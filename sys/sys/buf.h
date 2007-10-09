@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.6 2007/08/24 23:26:39 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.7 2007/10/09 13:45:06 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -222,6 +222,10 @@ struct buf {
     "\12DONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\23PHYS\24RAW\25READ\32DEVPRIVATE\33VFLUSH"
 
+/* XXX Compat for vmlocking branch. */
+#define	BC_AGE		B_AGE
+#define	BC_INVAL	B_INVAL
+#define	BC_NOCACHE	B_NOCACHE
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
@@ -263,7 +267,7 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	struct bio_ops *bioops;
+extern	struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 __BEGIN_DECLS

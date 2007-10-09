@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.3.4.2 2007/08/20 22:07:12 ad Exp $	*/
+/*	$NetBSD: ffs.c,v 1.3.4.3 2007/10/09 13:45:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,21 @@
 
 #include "p2k.h"
 
+/* XXX: figure out a proper way to share code/integrate with mount_ffs */
+static const struct mntopt ffsmopts[] = {
+	MOPT_STDOPTS,
+	MOPT_ASYNC,
+	MOPT_SYNC,
+	MOPT_UPDATE,
+	MOPT_RELOAD,
+	MOPT_NOATIME,
+	MOPT_NODEVMTIME,
+	MOPT_FORCE,
+	MOPT_SOFTDEP,
+	MOPT_GETARGS,
+	MOPT_NULL,
+};
+
 static void
 usage(void)
 {
@@ -55,14 +70,18 @@ main(int argc, char *argv[])
 	int rv, ch;
 
 	setprogname(argv[0]);
+	getmnt_silent = 1;
 
 	mntflags = pflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
-			if (mp == NULL)
-				err(1, "getmntops");
+			if (mp == NULL) {
+				mp = getmntopts(optarg, ffsmopts, &mntflags, 0);
+				if (mp == NULL)
+					err(1, "getmntops");
+			}
 			freemntopts(mp);
 			break;
 		default:

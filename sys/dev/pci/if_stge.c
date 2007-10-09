@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.36.2.1 2007/07/01 21:48:11 ad Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.36.2.2 2007/10/09 13:41:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.36.2.1 2007/07/01 21:48:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.36.2.2 2007/10/09 13:41:46 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -1543,7 +1543,7 @@ stge_init(struct ifnet *ifp)
 	/* Set the station address. */
 	for (i = 0; i < 6; i++)
 		bus_space_write_1(st, sh, STGE_StationAddress0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,

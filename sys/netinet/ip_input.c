@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.245.2.4 2007/08/20 21:27:59 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.245.2.5 2007/10/09 13:44:50 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.245.2.4 2007/08/20 21:27:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.245.2.5 2007/10/09 13:44:50 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1013,7 +1013,6 @@ found:
 			/* XXX error stat??? */
 			error = EINVAL;
 DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
-			goto bad;
 		}
 		splx(s);
 		if (error)
@@ -1777,32 +1776,6 @@ ip_srcroute(void)
 	return (m);
 }
 
-/*
- * Strip out IP options, at higher
- * level protocol in the kernel.
- * Second argument is buffer to which options
- * will be moved, and return value is their length.
- * XXX should be deleted; last arg currently ignored.
- */
-void
-ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
-{
-	int i;
-	struct ip *ip = mtod(m, struct ip *);
-	void *opts;
-	int olen;
-
-	olen = (ip->ip_hl << 2) - sizeof (struct ip);
-	opts = (void *)(ip + 1);
-	i = m->m_len - (sizeof (struct ip) + olen);
-	memmove(opts, (char *)opts + olen, (unsigned)i);
-	m->m_len -= olen;
-	if (m->m_flags & M_PKTHDR)
-		m->m_pkthdr.len -= olen;
-	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
-	ip->ip_hl = sizeof (struct ip) >> 2;
-}
-
 const int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
@@ -2079,8 +2052,11 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inp->inp_flags & INP_RECVIF) {
 		struct sockaddr_dl sdl;
 
-		sockaddr_dl_init(&sdl, (m->m_pkthdr.rcvif != NULL) ?
-		    m->m_pkthdr.rcvif->if_index : 0, 0, NULL, 0, NULL, 0);
+		sockaddr_dl_init(&sdl, sizeof(sdl),
+		    (m->m_pkthdr.rcvif != NULL)
+		        ?  m->m_pkthdr.rcvif->if_index
+			: 0,
+			0, NULL, 0, NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;

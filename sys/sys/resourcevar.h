@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.35.2.4 2007/07/15 13:28:12 ad Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.35.2.5 2007/10/09 13:45:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -67,14 +67,19 @@ struct pstats {
  * ("threads") share modifications, the PL_SHAREMOD flag is set,
  * and a copy must be made for the child of a new fork that isn't
  * sharing modifications to the limits.
+ *
+ * The PL_xxx flags are never cleared, once either is set p->p_limit
+ * will never be changed again.
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
 	char	*pl_corename;
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
-	int	p_lflags;
-	int	p_refcnt;		/* number of references */
-	kmutex_t p_lock;		/* mutex for p_refcnt */
+#define	PL_WRITEABLE	0x02		/* private to this process */
+	int	pl_flags;
+	int	pl_refcnt;		/* number of references */
+	kmutex_t pl_lock;		/* mutex for pl_refcnt */
+	struct plimit *pl_sv_limit;	/* saved when PL_WRITEABLE set */
 };
 
 /* add user profiling from AST XXXSMP */
@@ -121,8 +126,12 @@ void	 addupc_intr(struct lwp *, u_long);
 void	 addupc_task(struct lwp *, u_long, u_int);
 void	 calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
-struct plimit *limcopy(struct proc *);
+
+struct plimit *lim_copy(struct plimit *lim);
+void lim_addref(struct plimit *lim);
+void lim_privatise(struct proc *p, bool set_shared);
 void limfree(struct plimit *);
+
 void	ruadd(struct rusage *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);
 void 	pstatsfree(struct pstats *);

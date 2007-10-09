@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108.2.6 2007/08/20 21:28:32 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.7 2007/10/09 13:45:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.6 2007/08/20 21:28:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.7 2007/10/09 13:45:18 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -89,21 +89,21 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.6 2007/08/20 21:28:32 ad Exp $"
 #define COMPAT_ZERODEV(dev)	(0)
 #endif
 
-#define RANGE_TEST(addr, size, ismmap)				\
-	do {							\
-		vaddr_t vm_min_address = VM_MIN_ADDRESS;	\
-		vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;	\
-		vaddr_t eaddr = addr + size;			\
-								\
-		if (addr < vm_min_address)			\
-			return EINVAL;				\
-		if (eaddr > vm_max_address)			\
-			return /*CONSTCOND*/			\
-			    ismmap ? EFBIG : EINVAL;		\
-		if (addr > eaddr) /* no wrapping! */		\
-			return /*CONSTCOND*/			\
-			    ismmap ? EOVERFLOW : EINVAL;	\
-	} while (/*CONSTCOND*/0)
+static int
+range_test(vaddr_t addr, vsize_t size, bool ismmap)
+{
+	vaddr_t vm_min_address = VM_MIN_ADDRESS;
+	vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;
+	vaddr_t eaddr = addr + size;
+
+	if (addr < vm_min_address)
+		return EINVAL;
+	if (eaddr > vm_max_address)
+		return ismmap ? EFBIG : EINVAL;
+	if (addr > eaddr) /* no wrapping! */
+		return ismmap ? EOVERFLOW : EINVAL;
+	return 0;
+}
 
 /*
  * unimplemented VM system calls:
@@ -315,7 +315,7 @@ sys_mmap(l, v, retval)
 	int flags, fd;
 	vaddr_t defaddr;
 	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
+	struct file *fp = NULL;
 	struct vnode *vp;
 	void *handle;
 	int error;
@@ -359,8 +359,9 @@ sys_mmap(l, v, retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 
-		RANGE_TEST(addr, size, 1);
-
+		error = range_test(addr, size, true);
+		if (error)
+			return error;
 	} else if (addr == 0 || !(flags & MAP_TRYFIXED)) {
 
 		/*
@@ -449,8 +450,11 @@ sys_mmap(l, v, retval)
 		/* check read access */
 		if (fp->f_flag & FREAD)
 			maxprot |= VM_PROT_READ;
-		else if (prot & PROT_READ)
+		else if (prot & PROT_READ) {
+			mutex_exit(&fp->f_lock);
 			return (EACCES);
+		}
+		FILE_USE(fp);
 
 		/* check write access, shared case first */
 		if (flags & MAP_SHARED) {
@@ -462,16 +466,22 @@ sys_mmap(l, v, retval)
 			 */
 			if (fp->f_flag & FWRITE) {
 				if ((error =
-				    VOP_GETATTR(vp, &va, l->l_cred, l)))
+				    VOP_GETATTR(vp, &va, l->l_cred, l))) {
+				    	FILE_UNUSE(fp, l);
 					return (error);
+				}
 				if ((va.va_flags &
 				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
 					maxprot |= VM_PROT_WRITE;
-				else if (prot & PROT_WRITE)
+				else if (prot & PROT_WRITE) {
+				    	FILE_UNUSE(fp, l);
 					return (EPERM);
+				}
 			}
-			else if (prot & PROT_WRITE)
+			else if (prot & PROT_WRITE) {
+			    	FILE_UNUSE(fp, l);
 				return (EACCES);
+			}
 		} else {
 			/* MAP_PRIVATE mappings can always write to */
 			maxprot |= VM_PROT_WRITE;
@@ -503,6 +513,8 @@ sys_mmap(l, v, retval)
 		if (size >
 		    (p->p_rlimit[RLIMIT_DATA].rlim_cur -
 		     ctob(p->p_vmspace->vm_dsize))) {
+		     	if (fp != NULL)
+			    	FILE_UNUSE(fp, l);
 			return (ENOMEM);
 		}
 	}
@@ -522,8 +534,11 @@ sys_mmap(l, v, retval)
 			 * Don't allow executable mappings if we can't
 			 * indirectly execute the file.
 			 */
-			if (prot & VM_PROT_EXECUTE)
+			if (prot & VM_PROT_EXECUTE) {
+			     	if (fp != NULL)
+				    	FILE_UNUSE(fp, l);
 				return (EPERM);
+			}
 
 			/*
 			 * Strip the executable bit from 'maxprot' to make sure
@@ -548,6 +563,9 @@ sys_mmap(l, v, retval)
 	if (error == 0)
 		/* remember to add offset */
 		*retval = (register_t)(addr + pageoff);
+
+     	if (fp != NULL)
+	    	FILE_UNUSE(fp, l);
 
 	return (error);
 }
@@ -595,7 +613,9 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	/*
 	 * get map
@@ -658,6 +678,7 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	vsize_t size, pageoff;
 	struct vm_map *map;
 	struct vm_map_entry *dead_entries;
+	int error;
 
 	/*
 	 * get syscall args.
@@ -678,7 +699,9 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
 	if (size == 0)
 		return (0);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	map = &p->p_vmspace->vm_map;
 
@@ -736,7 +759,9 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				false);
@@ -774,7 +799,9 @@ sys_minherit(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
 				inherit);
@@ -812,7 +839,9 @@ sys_madvise(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	switch (advice) {
 	case MADV_NORMAL:
@@ -914,7 +943,9 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
@@ -962,7 +993,9 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	RANGE_TEST(addr, size, 0);
+	error = range_test(addr, size, false);
+	if (error)
+		return error;
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.69.2.3 2007/08/20 18:16:04 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.69.2.4 2007/10/09 13:37:21 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69.2.3 2007/08/20 18:16:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69.2.4 2007/10/09 13:37:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ fdcattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct fdcargs args;
 
-	printf(": dmabuf pa 0x%x", kvtop(fdc_dmap));
+	printf(": dmabuf pa 0x%x", (unsigned)kvtop(fdc_dmap));
 	printf(": dmabuf ka %p\n", fdc_dmap);
 	args.unit = 0;
 	args.type = fdcgetfdtype(args.unit);
@@ -808,11 +808,11 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	bcopy(dlp, lp, sizeof(struct disklabel));
 	if (lp->d_trkseek > FDSTEPDELAY)
 		sc->stepdelay = lp->d_trkseek;
-	brelse(bp);
+	brelse(bp, 0);
 	return(0);
 nolabel:
 	fdgetdefaultlabel(sc, lp, part);
-	brelse(bp);
+	brelse(bp, 0);
 	return(0);
 }
 
@@ -917,7 +917,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	fdstrategy(bp);
 	error = biowait(bp);
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 

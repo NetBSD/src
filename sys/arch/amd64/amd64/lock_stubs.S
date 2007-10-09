@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.2 2007/08/21 23:58:49 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.3 2007/10/09 13:37:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -91,8 +91,6 @@ NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-	.align	32
-
 NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
@@ -190,8 +188,6 @@ NENTRY(mutex_spin_exit)
  *
  * Acquire one hold on a RW lock.
  */
-	.align	64
-
 NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 	cmpl	$RW_READER, %esi
 	jne	2f
@@ -224,8 +220,6 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
  *
  * Release one hold on a RW lock.
  */
-	.align	64
-
 NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
@@ -264,8 +258,6 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
  *
  * Perform an atomic compare-and-set operation.
  */
-	.align	32
-
 NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 	movq	%rsi, %rax
 	LOCK
@@ -277,9 +269,6 @@ NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 /*
  * Memory barrier operations.
  */
-
-	.align	8
-
 NENTRY(mb_read)
 	lfence
 	ret

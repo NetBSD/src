@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.119.2.10 2007/08/20 21:27:30 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119.2.11 2007/10/09 13:44:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.10 2007/08/20 21:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.11 2007/10/09 13:44:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -898,12 +898,9 @@ ktr_csw(int out, int user)
 }
 
 bool
-ktrpoint(int fac)
+ktr_point(int fac_bit)
 {
-
-	if (__predict_false(ktrace_on))
-		return false;
-	return KTRPOINT(curlwp->l_proc, fac);
+	return curlwp->l_proc->p_traceflag & fac_bit;
 }
 
 int
