@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.3 2007/10/07 16:22:37 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.4 2007/10/09 02:29:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.3 2007/10/07 16:22:37 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.4 2007/10/09 02:29:37 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -366,7 +366,7 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 			obj = prop_dictionary_get(ksdict, "max-value");
 			val = (val / 100) * prop_number_integer_value(obj);
 
-			if (!prop_dictionary_set_uint8(csdict,
+			if (!prop_dictionary_set_uint32(csdict,
 						       "critical-capacity",
 						       val))
 				err(EXIT_FAILURE, "dict_set critcap");
