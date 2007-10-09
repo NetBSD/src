@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.276 2007/10/07 13:39:04 hannken Exp $	*/
+/*	$NetBSD: param.h,v 1.277 2007/10/09 19:00:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -346,6 +346,12 @@
 	(__predict_false((ms) >= 0x20000) ? \
 	    ((ms +0u) / 1000u) * hz : \
 	    ((ms +0u) * hz) / 1000u)
+#endif
+#ifndef hztoms
+#define hztoms(t) \
+	(__predict_false((t) >= 0x20000) ? \
+	    ((t +0u) / hz) * 1000u : \
+	    ((t +0u) * 1000u) / hz)
 #endif
 #endif /* _KERNEL */
 
