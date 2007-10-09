@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.44 2007/10/04 21:20:47 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.45 2007/10/09 15:49:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.44 2007/10/04 21:20:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.45 2007/10/09 15:49:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -209,7 +209,7 @@ puffs_reqtofaf(struct puffs_park *park)
  * kernel-user-kernel waitqueues
  */
 
-static int touser(struct puffs_mount *, struct puffs_park *, uint64_t);
+static int touser(struct puffs_mount *, struct puffs_park *);
 
 uint64_t
 puffs_getreqid(struct puffs_mount *pmp)
@@ -238,7 +238,7 @@ puffs_vfstouser(struct puffs_mount *pmp, int optype, void *kbuf, size_t buflen)
 	park->park_maxlen = park->park_copylen = buflen;
 	park->park_flags = 0;
 
-	return touser(pmp, park, puffs_getreqid(pmp));
+	return touser(pmp, park);
 }
 
 void
@@ -261,7 +261,7 @@ puffs_suspendtouser(struct puffs_mount *pmp, int status)
 	    = sizeof(struct puffs_vfsreq_suspend);
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0);
+	(void)touser(pmp, park);
 }
 
 /*
@@ -289,7 +289,7 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
 	park->park_maxlen = buflen + maxdelta;
 	park->park_flags = 0;
 
-	rv = touser(pmp, park, puffs_getreqid(pmp));
+	rv = touser(pmp, park);
 
 	/*
 	 * Check if the user server requests that inactive be called
@@ -338,32 +338,7 @@ puffs_cookietouser(struct puffs_mount *pmp, int optype,
 	park->park_copylen = park->park_maxlen = buflen;
 	park->park_flags = 0;
 
-	return touser(pmp, park, puffs_getreqid(pmp));
-}
-
-/*
- * vnode level request, caller-controller req id
- */
-int
-puffs_vntouser_req(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, size_t maxdelta,
-	uint64_t reqid, struct vnode *vp_opc, struct vnode *vp_aux)
-{
-	struct puffs_park *park;
-	void *cookie = VPTOPNC(vp_opc);
-
-	park = puffs_park_alloc(1);
-	park->park_preq = kbuf;
-
-	park->park_preq->preq_opclass = PUFFSOP_VN; 
-	park->park_preq->preq_optype = optype;
-	park->park_preq->preq_cookie = cookie;
-
-	park->park_copylen = buflen;
-	park->park_maxlen = buflen + maxdelta;
-	park->park_flags = 0;
-
-	return touser(pmp, park, reqid);
+	return touser(pmp, park);
 }
 
 void
@@ -388,7 +363,7 @@ puffs_vntouser_call(struct puffs_mount *pmp, int optype,
 	park->park_donearg = donearg;
 	park->park_flags = PARKFLAG_CALL;
 
-	(void) touser(pmp, park, puffs_getreqid(pmp));
+	(void) touser(pmp, park);
 }
 
 /*
@@ -417,7 +392,7 @@ puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
 	park->park_maxlen = park->park_copylen = buflen;
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0);
+	(void)touser(pmp, park);
 }
 
 void
@@ -433,7 +408,7 @@ puffs_cacheop(struct puffs_mount *pmp, struct puffs_park *park,
 	park->park_maxlen = park->park_copylen = pcilen;
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0); 
+	(void)touser(pmp, park); 
 }
 
 void
@@ -458,7 +433,7 @@ puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error,
 	park->park_maxlen = park->park_copylen = sizeof(struct puffs_error);
 	park->park_flags = 0;
 
-	(void)touser(pmp, park, 0);
+	(void)touser(pmp, park);
 }
 
 /*
@@ -472,7 +447,7 @@ puffs_errnotify(struct puffs_mount *pmp, uint8_t type, int error,
  * there's a slight ugly-factor also, but let's not worry about that.
  */
 static int
-touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid)
+touser(struct puffs_mount *pmp, struct puffs_park *park)
 {
 	struct lwp *l = curlwp;
 	struct mount *mp;
@@ -481,11 +456,12 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, uint64_t reqid)
 
 	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
-	preq->preq_id = park->park_id = reqid;
 	preq->preq_buflen = ALIGN(park->park_maxlen);
-
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
+	KASSERT(preq->preq_id == 0);
+	if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
 		park->park_flags |= PARKFLAG_WANTREPLY;
+		preq->preq_id = park->park_id = puffs_getreqid(pmp);
+	}
 
 	/*
 	 * To support PCATCH, yet another movie: check if there are signals
