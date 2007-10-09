@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.9.2.4 2007/08/20 21:25:57 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.9.2.5 2007/10/09 20:38:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.9.2.4 2007/08/20 21:25:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.9.2.5 2007/10/09 20:38:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 	long count, maxcount, error;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
-	sfsp = (void *)NETBSD32PTR64(SCARG(uap, buf));
+	sfsp = SCARG_P32(uap, buf);
 	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
