@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.60 2007/10/01 21:09:08 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.61 2007/10/09 20:57:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.60 2007/10/01 21:09:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.61 2007/10/09 20:57:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -244,7 +244,6 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	cv_init(&pmp->pmp_unmounting_cv, "puffsum");
 	TAILQ_INIT(&pmp->pmp_req_touser);
 	TAILQ_INIT(&pmp->pmp_req_replywait);
-	TAILQ_INIT(&pmp->pmp_req_sizepark);
 
 	DPRINTF(("puffs_mount: mount point at %p, puffs specific at %p\n",
 	    mp, MPTOPUFFSMP(mp)));
