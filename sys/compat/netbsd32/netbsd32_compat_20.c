@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.14 2007/07/18 13:53:34 briggs Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.15 2007/10/10 22:00:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.14 2007/07/18 13:53:34 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.15 2007/10/10 22:00:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,10 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
 	sfsp = SCARG_P32(uap, buf);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -127,7 +127,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			    (SCARG(uap, flags) == MNT_WAIT ||
 			     SCARG(uap, flags) == 0) &&
 			    (error = VFS_STATVFS(mp, sp, l)) != 0) {
-				simple_lock(&mountlist_slock);
+				mutex_enter(&mountlist_lock);
 				nmp = mp->mnt_list.cqe_next;
 				vfs_unbusy(mp);
 				continue;
@@ -142,11 +142,11 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			sfsp = (char *)sfsp + sizeof(sb32);
 		}
 		count++;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	if (sfsp && count > maxcount)
 		*retval = maxcount;
 	else
