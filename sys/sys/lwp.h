@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.15 2007/10/09 13:45:09 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.16 2007/10/10 23:03:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct lwp {
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	int		l_policy;	/* l: scheduling policy */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 
 	/* Synchronisation */
