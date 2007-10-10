@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.1 2007/08/26 23:49:42 pooka Exp $	*/
+/*	$NetBSD: lock.c,v 1.2 2007/10/10 18:51:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -85,13 +85,6 @@ lockstatus(struct lock *lock)
 
 void
 lockmgr_printinfo(volatile struct lock *lock)
-{
-
-	return;
-}
-
-void
-transferlockers(struct lock *from, struct lock *to)
 {
 
 	return;
