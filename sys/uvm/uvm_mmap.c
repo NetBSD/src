@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.116 2007/10/08 15:12:11 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.117 2007/10/10 20:42:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.116 2007/10/08 15:12:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.117 2007/10/10 20:42:41 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1162,8 +1162,11 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * If the vnode is being mapped with PROT_EXEC,
 			 * then mark it as text.
 			 */
-			if (prot & PROT_EXEC)
+			if (prot & PROT_EXEC) {
+				simple_lock(&uobj->vmobjlock);
 				vn_markexec(vp);
+				simple_unlock(&uobj->vmobjlock);
+			}
 		} else {
 			int i = maxprot;
 
@@ -1192,19 +1195,22 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 * with direct I/O.
 		 */
 
-		needwritemap = (vp->v_flag & VWRITEMAP) == 0 &&
+		simple_lock(&vp->v_interlock);
+		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
-		if ((vp->v_flag & VMAPPED) == 0 || needwritemap) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
 			simple_lock(&vp->v_interlock);
-			vp->v_flag |= VMAPPED;
+			vp->v_iflag |= VI_MAPPED;
+			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
-				vp->v_flag |= VWRITEMAP;
+				vp->v_iflag |= VI_WRMAP;
 			}
 			simple_unlock(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
-		}
+		} else
+			simple_unlock(&vp->v_interlock);
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

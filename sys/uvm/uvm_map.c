@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.240 2007/08/20 13:34:52 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.241 2007/10/10 20:42:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.240 2007/08/20 13:34:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.241 2007/10/10 20:42:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2987,8 +2987,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 				    current->object.uvm_obj;
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
-				    (current->protection & VM_PROT_EXECUTE))
+				    (current->protection & VM_PROT_EXECUTE)) {
+				    	simple_lock(&uobj->vmobjlock);
 					vn_markexec((struct vnode *) uobj);
+				    	simple_unlock(&uobj->vmobjlock);
+				}
 			}
 		}
 

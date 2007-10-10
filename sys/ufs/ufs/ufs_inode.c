@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.68 2007/09/25 15:13:14 pooka Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.69 2007/10/10 20:42:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.68 2007/09/25 15:13:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.69 2007/10/10 20:42:40 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -121,7 +121,7 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		simple_lock(&vp->v_interlock);
-		vp->v_flag |= VFREEING;
+		vp->v_iflag |= VI_FREEING;
 		simple_unlock(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);

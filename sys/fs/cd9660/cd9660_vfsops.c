@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.48 2007/10/08 18:04:02 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.49 2007/10/10 20:42:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.48 2007/10/08 18:04:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.49 2007/10/10 20:42:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,12 +147,12 @@ cd9660_mountroot()
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -911,7 +911,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		uvm_vnp_setsize(vp, 0);
 
 	if (ip->iso_extent == imp->root_extent)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	/*
 	 * XXX need generation number?

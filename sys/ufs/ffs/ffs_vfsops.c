@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.209 2007/10/08 18:01:29 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.210 2007/10/10 20:42:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.209 2007/10/08 18:01:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.210 2007/10/10 20:42:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -163,12 +163,12 @@ ffs_mountroot(void)
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
@@ -1458,7 +1458,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		goto retry;
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we

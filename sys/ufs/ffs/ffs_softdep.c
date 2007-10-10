@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.98 2007/10/08 18:01:29 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.99 2007/10/10 20:42:33 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.98 2007/10/08 18:01:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.99 2007/10/10 20:42:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4717,7 +4717,7 @@ softdep_fsync(vp, f)
 		 * not now, but then the user was not asking to have it
 		 * written, so we are not breaking any promises.
 		 */
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			break;
 		/*
 		 * We prevent deadlock by always fetching inodes from the
@@ -5728,7 +5728,7 @@ drain_output(vp, islocked)
 	while (vp->v_numoutput) {
 		int s;
 
-		vp->v_flag |= VBWAIT;
+		vp->v_iflag |= VI_BWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
 		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
 			&global_v_numoutput_slock);

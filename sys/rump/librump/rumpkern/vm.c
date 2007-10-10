@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.17 2007/09/12 10:24:23 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.18 2007/10/10 20:42:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -490,7 +490,7 @@ uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (void *)uobj;
 
-	return (vp->v_flag & VONWORKLST) == 0;
+	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 /*
