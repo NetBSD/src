@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.159 2007/10/08 15:12:10 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.160 2007/10/10 20:42:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.159 2007/10/08 15:12:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.160 2007/10/10 20:42:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ procfs_inactive(v)
 	VOP_UNLOCK(vp, 0);
 
 	error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH);
-	if (error != 0 && (vp->v_flag & VXLOCK) == 0)
+	if (error != 0 && (vp->v_iflag & VI_XLOCK) == 0)
 		vgone(vp);
 	else
 		procfs_proc_unlock(p);
@@ -566,7 +566,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 	struct vnode *vp, *rvp = caller->l_proc->p_cwdi->cwdi_rdir;
 	char *bp;
 
-	LOCK_ASSERT(mutex_owned(&target->p_mutex));
+	KASSERT(mutex_owned(&target->p_mutex));
 
 	bp = bpp ? *bpp : NULL;
 

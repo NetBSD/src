@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.17 2007/04/07 15:08:12 hannken Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.18 2007/10/10 20:42:30 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.17 2007/04/07 15:08:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.18 2007/10/10 20:42:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -153,8 +153,8 @@ sync_fsync(v)
 	 * Walk the list of vnodes pushing all that are dirty and
 	 * not already on the sync list.
 	 */
-	simple_lock(&mountlist_slock);
-	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock) == 0) {
+	mutex_enter(&mountlist_lock);
+	if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
@@ -162,7 +162,7 @@ sync_fsync(v)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp);
 	} else
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 	return (0);
 }
 

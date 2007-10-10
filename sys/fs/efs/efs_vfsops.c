@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.11 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.12 2007/10/10 20:42:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.11 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.12 2007/10/10 20:42:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		pool_put(&efs_inode_pool, eip);
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 	eip->ei_mode = 0;
 	eip->ei_lockf = NULL;
 	eip->ei_number = ino;
@@ -419,7 +419,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	case S_IFDIR:
 		vp->v_type = VDIR;
 		if (ino == EFS_ROOTINO)
-			vp->v_flag |= VROOT;
+			vp->v_vflag |= VV_ROOT;
 		break;
 	case S_IFBLK:
 		vp->v_type = VBLK;

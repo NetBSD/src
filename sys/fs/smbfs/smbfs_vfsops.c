@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.71 2007/09/21 01:33:04 rmind Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.72 2007/10/10 20:42:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.71 2007/09/21 01:33:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72 2007/10/10 20:42:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -286,7 +286,7 @@ smbfs_setroot(struct mount *mp)
 	if (smp->sm_root)
 		vput(vp);
 	else {
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 		smp->sm_root = VTOSMB(vp);
 
 		/* Keep reference, but unlock */

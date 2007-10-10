@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.7 2007/10/08 21:39:50 ad Exp $ */
+/* $NetBSD: vnode.c,v 1.8 2007/10/10 20:42:20 ad Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -181,7 +181,7 @@ vget(void *fs, ino_t ino)
 		}
 		if (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    vp->v_usecount == 0 &&
-		    !(vp->v_flag & VDIROP))
+		    !(vp->v_uflag & VU_DIROP))
 			tossvp = vp;
 	}
 	/* Don't let vnode list grow arbitrarily */

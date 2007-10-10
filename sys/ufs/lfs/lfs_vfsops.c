@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.245 2007/10/08 18:01:30 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.246 2007/10/10 20:42:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.245 2007/10/08 18:01:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.246 2007/10/10 20:42:35 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -212,10 +212,10 @@ lfs_writerd(void *arg)
 		 * Look through the list of LFSs to see if any of them
 		 * have requested pageouts.
 		 */
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
@@ -243,11 +243,11 @@ lfs_writerd(void *arg)
 					simple_unlock(&fs->lfs_interlock);
 			}
 
-			simple_lock(&mountlist_slock);
+			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
 		}
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 
 		/*
 		 * If global state wants a flush, flush everything.
@@ -349,9 +349,9 @@ lfs_mountroot()
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
@@ -1379,7 +1379,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VXLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};

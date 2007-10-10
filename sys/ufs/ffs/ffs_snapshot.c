@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.52 2007/10/08 18:01:28 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.53 2007/10/10 20:42:33 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.52 2007/10/08 18:01:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.53 2007/10/10 20:42:33 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -442,7 +442,7 @@ loop:
 		VI_LOCK(xvp);
 		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
 		MNT_IUNLOCK(mp);
-		if ((xvp->v_flag & VXLOCK) ||
+		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
 			VI_UNLOCK(xvp);
@@ -558,7 +558,7 @@ loop:
 		fscow_establish(mp, ffs_copyonwrite, devvp);
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
-	vp->v_flag |= VSYSTEM;
+	vp->v_vflag |= VV_SYSTEM;
 out1:
 	/*
 	 * Resume operation on filesystem.
@@ -724,7 +724,7 @@ out:
 		}
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			ltsleep((void *)&vp->v_numoutput, PRIBIO+1,
 			    "snapflushbuf", 0, &global_v_numoutput_slock);
 		}
@@ -1822,7 +1822,7 @@ ffs_snapshot_mount(struct mount *mp)
 			    (unsigned long long)ip->i_number);
 		else
 			TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
-		vp->v_flag |= VSYSTEM;
+		vp->v_vflag |= VV_SYSTEM;
 		VOP_UNLOCK(vp, 0);
 	}
 	/*
