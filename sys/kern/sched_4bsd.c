@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.6 2007/10/09 19:00:15 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.7 2007/10/10 21:24:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.6 2007/10/09 19:00:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.7 2007/10/10 21:24:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -151,18 +151,20 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	if (!CURCPU_IDLE_P()) {
-		if (spc->spc_flags & SPCF_SEENRR) {
-			/*
-			 * The process has already been through a roundrobin
-			 * without switching and may be hogging the CPU.
-			 * Indicate that the process should yield.
-			 */
-			spc->spc_flags |= SPCF_SHOULDYIELD;
-		} else
-			spc->spc_flags |= SPCF_SEENRR;
-	}
-	cpu_need_resched(curcpu(), 0);
+	if (CURCPU_IDLE_P())
+		return;
+
+	if (spc->spc_flags & SPCF_SEENRR) {
+		/*
+		 * The process has already been through a roundrobin
+		 * without switching and may be hogging the CPU.
+		 * Indicate that the process should yield.
+		 */
+		spc->spc_flags |= SPCF_SHOULDYIELD;
+	} else
+		spc->spc_flags |= SPCF_SEENRR;
+
+	cpu_need_resched(ci, 0);
 }
 
 #define	NICE_WEIGHT 2			/* priorities per nice level */

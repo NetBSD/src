@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.1 2007/10/09 19:00:15 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.2 2007/10/10 21:24:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.1 2007/10/09 19:00:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.2 2007/10/10 21:24:53 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -809,28 +809,31 @@ sched_tick(struct cpu_info *ci)
 	struct lwp *l = curlwp;
 	sched_info_lwp_t *sil = l->l_sched_info;
 
-	/* Decrease the priority, and run with a higher time-quantum */
-	if (!CURCPU_IDLE_P() && l->l_policy == SCHED_OTHER) {
-		if (l->l_usrpri >= PRI_REALTIME) {
-			l->l_usrpri = min(l->l_usrpri + 1, PRI_MAX);
-			l->l_priority = l->l_usrpri;
-		}
-	}
+	if (CURCPU_IDLE_P())
+		return;
 
-	/*
-	 * Update the time-quantum, and continue running,
-	 * if thread runs on FIFO real-time policy.
-	 */
-	if (l->l_policy == SCHED_FIFO) {
+	switch (l->l_policy) {
+	case SCHED_FIFO:
+		/*
+		 * Update the time-quantum, and continue running,
+		 * if thread runs on FIFO real-time policy.
+		 */
 		spc->spc_ticks = sil->sl_timeslice;
 		return;
+	case SCHED_OTHER:
+		/* Decrease the priority, and run with a higher time-quantum */
+		if (l->l_usrpri < PRI_REALTIME)
+			break;
+		l->l_usrpri = min(l->l_usrpri + 1, PRI_MAX);
+		l->l_priority = l->l_usrpri;
+		break;
 	}
 
 	/*
-	 * If there are higher priority threads with or threads in the same
-	 * queue, mark that thread should yield, otherwise, continue running.
+	 * If there are higher priority threads or threads in the same queue,
+	 * mark that thread should yield, otherwise, continue running.
 	 */
-	if (CURCPU_IDLE_P() || lwp_eprio(l) >= ci_rq->r_highest_pri) {
+	if (lwp_eprio(l) >= ci_rq->r_highest_pri) {
 		spc->spc_flags |= SPCF_SHOULDYIELD;
 		cpu_need_resched(ci, 0);
 	} else
