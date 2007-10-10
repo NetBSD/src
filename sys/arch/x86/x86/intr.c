@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.10 2007/10/10 21:25:57 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.11 2007/10/10 23:08:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.10 2007/10/10 21:25:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.11 2007/10/10 23:08:12 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -154,12 +154,12 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.10 2007/10/10 21:25:57 ad Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/i8259.h>
-#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include "ioapic.h"
