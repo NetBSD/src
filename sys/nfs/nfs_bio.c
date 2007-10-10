@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.167 2007/10/08 18:04:06 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.168 2007/10/10 20:42:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.167 2007/10/08 18:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.168 2007/10/10 20:42:31 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -140,7 +140,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	    /*
 	     * Don't cache symlinks.
 	     */
-	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
+	    if ((vp->v_vflag & VV_ROOT) && vp->v_type == VLNK) {
 		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
 	    baddr = (void *)0;
@@ -518,7 +518,7 @@ nfs_write(v)
 		}
 		overwrite = false;
 		if ((uio->uio_offset & PAGE_MASK) == 0) {
-			if ((vp->v_flag & VMAPPED) == 0 &&
+			if ((vp->v_vflag & VV_MAPPED) == 0 &&
 			    bytelen > PAGE_SIZE) {
 				bytelen = trunc_page(bytelen);
 				overwrite = true;

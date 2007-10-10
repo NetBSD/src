@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.50 2007/07/31 09:29:52 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.51 2007/10/10 20:42:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.50 2007/07/31 09:29:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.51 2007/10/10 20:42:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -436,7 +436,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	ump->um_qflags[type] |= QTF_OPENING;
 	mutex_exit(&dqlock);
 	mp->mnt_flag |= MNT_QUOTA;
-	vp->v_flag |= VSYSTEM;
+	vp->v_vflag |= VV_SYSTEM;	/* XXXSMP */
 	*vpp = vp;
 	/*
 	 * Save the credential of the process that turned on quotas.
@@ -533,7 +533,7 @@ again:
 #ifdef DIAGNOSTIC
 	dqflush(qvp);
 #endif
-	qvp->v_flag &= ~VSYSTEM;
+	qvp->v_vflag &= ~VV_SYSTEM;
 	error = vn_close(qvp, FREAD|FWRITE, l->l_cred, l);
 	mutex_enter(&dqlock);
 	ump->um_quotas[type] = NULLVP;

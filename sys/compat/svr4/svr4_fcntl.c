@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.59 2007/10/08 15:12:06 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.60 2007/10/10 20:42:22 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.59 2007/10/08 15:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60 2007/10/10 20:42:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 
 	simple_lock(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_flag & VALIASED));
+	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED));
 	simple_unlock(&vp->v_interlock);
 	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);

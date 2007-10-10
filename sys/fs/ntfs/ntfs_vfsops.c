@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.57 2007/10/08 18:04:04 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.58 2007/10/10 20:42:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.57 2007/10/08 18:04:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.58 2007/10/10 20:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,13 +158,13 @@ ntfs_mountroot()
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -495,7 +495,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 			error = VFS_VGET(mp, pi[i], &(ntmp->ntm_sysvn[pi[i]]));
 			if(error)
 				goto out1;
-			ntmp->ntm_sysvn[pi[i]]->v_flag |= VSYSTEM;
+			ntmp->ntm_sysvn[pi[i]]->v_vflag |= VV_SYSTEM;
 			VREF(ntmp->ntm_sysvn[pi[i]]);
 			vput(ntmp->ntm_sysvn[pi[i]]);
 		}
@@ -966,7 +966,7 @@ ntfs_vgetex(
 		vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	if (lkflags & LK_TYPE_MASK) {
 		error = vn_lock(vp, lkflags);
