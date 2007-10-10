@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.165 2007/09/15 09:25:21 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166 2007/10/10 17:44:39 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2007/09/15 09:25:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2007/10/10 17:44:39 ad Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -318,7 +318,7 @@ bool pmap_initialized;
  * Misc. locking data structures
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 static struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
@@ -3988,9 +3988,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * init the static-global locks and global pmap list.
 	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-#endif
+	/* spinlockinit(&pmap_main_lock, "pmaplk", 0); */
 
 	/*
 	 * We can now initialise the first L1's metadata.
