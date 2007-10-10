@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.120 2007/09/17 21:33:34 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.121 2007/10/10 17:37:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.120 2007/09/17 21:33:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.121 2007/10/10 17:37:40 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -427,26 +427,6 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 #endif
 	);
 }
-
-/*
- * Transfer any waiting processes from one lock to another.
- */
-void
-transferlockers(struct lock *from, struct lock *to)
-{
-
-	KASSERT(from != to);
-	KASSERT((from->lk_flags & LK_WAITDRAIN) == 0);
-	if (from->lk_waitcount == 0)
-		return;
-	from->lk_newlock = to;
-	wakeup((void *)from);
-	tsleep((void *)&from->lk_newlock, from->lk_prio, "lkxfer", 0);
-	from->lk_newlock = NULL;
-	from->lk_flags &= ~(LK_WANT_EXCL | LK_WANT_UPGRADE);
-	KASSERT(from->lk_waitcount == 0);
-}
-
 
 /*
  * Initialize a lock; required before use.
