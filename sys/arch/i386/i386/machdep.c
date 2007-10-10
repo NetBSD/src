@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.8 2007/10/09 13:37:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.9 2007/10/10 21:25:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.8 2007/10/09 13:37:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.9 2007/10/10 21:25:53 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2540,11 +2540,4 @@ cpu_maxproc(void)
 #else
 	return (MAXGDTSIZ - NGDT);
 #endif
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return (curcpu()->ci_idepth >= 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52.2.7 2007/10/09 16:34:41 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.8 2007/10/10 21:25:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.7 2007/10/09 16:34:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.8 2007/10/10 21:25:52 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1887,11 +1887,4 @@ cpu_maxproc(void)
 #else
 	return (MAXGDTSIZ - DYNSEL_START) / 16;
 #endif
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return (curcpu()->ci_idepth >= 0);
 }
