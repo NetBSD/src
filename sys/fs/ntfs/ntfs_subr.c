@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.32 2007/10/08 18:04:04 ad Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.33 2007/10/10 20:42:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.32 2007/10/08 18:04:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.33 2007/10/10 20:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ ntfs_loadntnode(
 			goto out;
 		}
 		memcpy(mfrp, bp->b_data, ntfs_bntob(ntmp->ntm_bpmftrec));
-		brelse(bp, 0);
+		bqrelse(bp);
 	} else {
 		struct vnode   *vp;
 

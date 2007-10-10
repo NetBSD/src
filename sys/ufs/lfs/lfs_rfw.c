@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.4 2007/10/08 18:01:30 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.4 2007/10/08 18:01:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -200,7 +200,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		/* The dirop-nature of this vnode is past */
 		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
-		vp->v_flag &= ~VDIROP;
+		vp->v_uflag &= ~VU_DIROP;
 		simple_lock(&fs->lfs_interlock);
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;

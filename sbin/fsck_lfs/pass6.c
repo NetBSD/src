@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.19 2007/10/08 21:39:50 ad Exp $	 */
+/* $NetBSD: pass6.c,v 1.20 2007/10/10 20:42:20 ad Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -769,7 +769,7 @@ pass6(void)
 				       sizeof(ufs_daddr_t));
 				VTOD(vp)->di_blocks = 0;
 
-				vp->v_flag |= VDIROP;
+				vp->v_uflag |= VU_DIROP;
 				inodirty(VTOI(vp));
 			}
 			free(inums);
@@ -813,7 +813,7 @@ pass6(void)
 	idesc.id_func = pass6check;
 	idesc.id_lblkno = 0;
 	LIST_FOREACH(vp, &vnodelist, v_mntvnodes) {
-		if ((vp->v_flag & VDIROP) == 0)
+		if ((vp->v_uflag & VU_DIROP) == 0)
 			--n_files; /* Don't double count */
 		checkinode(VTOI(vp)->i_number, &idesc);
 	}

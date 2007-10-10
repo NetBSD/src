@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.93 2007/10/08 18:01:31 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.94 2007/10/10 20:42:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.93 2007/10/08 18:01:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.94 2007/10/10 20:42:40 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.93 2007/10/08 18:01:31 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
-#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>

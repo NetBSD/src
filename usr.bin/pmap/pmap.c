@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2007/07/21 20:54:12 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.38 2007/10/10 20:42:21 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.37 2007/07/21 20:54:12 ad Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.38 2007/10/10 20:42:21 ad Exp $");
 #endif
 
 #include <string.h>
@@ -827,5 +827,5 @@ search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 		return (2);
 
 	KDEREF(kd, &svp);
-	return (D(&svp, vnode)->v_flag & VROOT);
+	return (D(&svp, vnode)->v_vflag & VV_ROOT);
 }

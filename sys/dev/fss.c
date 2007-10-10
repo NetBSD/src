@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.35 2007/10/07 13:39:03 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.36 2007/10/10 20:42:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.35 2007/10/07 13:39:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.36 2007/10/10 20:42:22 ad Exp $");
 
 #include "fss.h"
 
@@ -544,7 +544,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	if ((error = namei(&nd)) != 0)
 		return error;
 
-	if ((nd.ni_vp->v_flag & VROOT) != VROOT) {
+	if ((nd.ni_vp->v_vflag & VV_ROOT) != VV_ROOT) {
 		vrele(nd.ni_vp);
 		return EINVAL;
 	}

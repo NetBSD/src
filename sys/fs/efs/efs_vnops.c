@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.10 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.11 2007/10/10 20:42:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.10 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.11 2007/10/10 20:42:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,8 @@ efs_getattr(void *v)
 	vap->va_ctime.tv_sec	= eip->ei_ctime;
 /*	vap->va_birthtime 	= */
 	vap->va_gen		= eip->ei_gen;
-	vap->va_flags		= ap->a_vp->v_flag;
+	vap->va_flags		= ap->a_vp->v_vflag |
+	    ap->a_vp->v_iflag | ap->a_vp->v_uflag;
 
 	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
 		uint32_t dmaj, dmin;

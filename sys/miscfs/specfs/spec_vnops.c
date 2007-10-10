@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.107 2007/10/08 18:04:05 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.108 2007/10/10 20:42:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.107 2007/10/08 18:04:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.108 2007/10/10 20:42:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -196,7 +196,7 @@ spec_open(void *v)
 			return (error);
 
 		if (cdev_type(dev) == D_TTY)
-			vp->v_flag |= VISTTY;
+			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
 		error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -420,7 +420,7 @@ spec_ioctl(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	simple_lock(&vp->v_interlock);
-	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
 	simple_unlock(&vp->v_interlock);
@@ -464,7 +464,7 @@ spec_poll(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	simple_lock(&vp->v_interlock);
-	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
 	simple_unlock(&vp->v_interlock);
@@ -637,7 +637,7 @@ spec_close(void *v)
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
-	flags = vp->v_flag;
+	flags = vp->v_iflag;
 
 	switch (vp->v_type) {
 
@@ -679,7 +679,7 @@ spec_close(void *v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VI_XLOCK) == 0)
 			return (0);
 		mode = S_IFCHR;
 		break;
@@ -702,7 +702,7 @@ spec_close(void *v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VI_XLOCK) == 0)
 			return (0);
 		mode = S_IFBLK;
 		break;
@@ -714,16 +714,16 @@ spec_close(void *v)
 	flags1 = ap->a_fflag;
 
 	/*
-	 * if VXLOCK is set, then we're going away soon, so make this
+	 * if VI_XLOCK is set, then we're going away soon, so make this
 	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
 	 */
-	if (flags & VXLOCK)
+	if (flags & VI_XLOCK)
 		flags1 |= FNONBLOCK;
 
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
 	 * might end up sleeping for someone else who wants our queues. They
-	 * won't get them if we hold the vnode locked. Also, if VXLOCK is
+	 * won't get them if we hold the vnode locked. Also, if VI_XLOCK is
 	 * set, don't release the lock as we won't be able to regain it.
 	 */
 	if (!(flags1 & FNONBLOCK))

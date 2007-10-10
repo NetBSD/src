@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.4 2007/10/02 01:17:17 pooka Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.5 2007/10/10 20:42:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4 2007/10/02 01:17:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.5 2007/10/10 20:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -166,7 +166,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			 * old (well, actually, new) node
 			 */
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			vrele(vp);
 			vgone(vp); /* cya */
 
@@ -401,7 +401,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	} 
 
 	/* store cache */
-	vp->v_flag = VROOT;
+	vp->v_vflag |= VV_ROOT;
 	pmp->pmp_root = vp;
 	mutex_exit(&pmp->pmp_lock);
 

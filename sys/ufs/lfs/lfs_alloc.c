@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.102 2007/10/08 18:01:29 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.103 2007/10/10 20:42:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.102 2007/10/08 18:01:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103 2007/10/10 20:42:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -456,8 +456,8 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	lfs_unmark_vnode(vp);
-	if (vp->v_flag & VDIROP) {
-		vp->v_flag &= ~VDIROP;
+	if (vp->v_uflag & VU_DIROP) {
+		vp->v_uflag &= ~VU_DIROP;
 		simple_lock(&fs->lfs_interlock);
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.142 2007/10/08 15:12:09 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.143 2007/10/10 20:42:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.142 2007/10/08 15:12:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143 2007/10/10 20:42:27 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -203,8 +203,11 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 	if ((error = VOP_OPEN(vp, fmode, cred, l)) != 0)
 		goto bad;
-	if (fmode & FWRITE)
+	if (fmode & FWRITE) {
+		simple_lock(&vp->v_interlock);
 		vp->v_writecount++;
+		simple_unlock(&vp->v_interlock);
+	}
 
 bad:
 	if (error)
@@ -226,7 +229,7 @@ vn_writechk(struct vnode *vp)
 	 * If the vnode is in use as a process's text,
 	 * we can't allow writing.
 	 */
-	if (vp->v_flag & VTEXT)
+	if (vp->v_iflag & VI_TEXT)
 		return (ETXTBSY);
 	return (0);
 }
@@ -237,11 +240,15 @@ vn_writechk(struct vnode *vp)
 void
 vn_markexec(struct vnode *vp)
 {
-	if ((vp->v_flag & VEXECMAP) == 0) {
+
+	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+
+	if ((vp->v_iflag & VI_EXECMAP) == 0) {
+		/* XXXSMP should be atomic */
 		uvmexp.filepages -= vp->v_uobj.uo_npages;
 		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag |= VEXECMAP;
+	vp->v_iflag |= VI_EXECMAP;
 }
 
 /*
@@ -252,12 +259,15 @@ int
 vn_marktext(struct vnode *vp)
 {
 
+	simple_lock(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
-		KASSERT((vp->v_flag & VTEXT) == 0);
+		KASSERT((vp->v_iflag & VI_TEXT) == 0);
+		simple_unlock(&vp->v_interlock);
 		return (ETXTBSY);
 	}
-	vp->v_flag |= VTEXT;
+	vp->v_iflag |= VI_TEXT;
 	vn_markexec(vp);
+	simple_unlock(&vp->v_interlock);
 	return (0);
 }
 
@@ -271,9 +281,10 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 
+	simple_lock(&vp->v_interlock);
 	if (flags & FWRITE)
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
 	error = VOP_CLOSE(vp, flags, cred, l);
 	vput(vp);
 	return (error);
@@ -376,7 +387,7 @@ unionread:
 	}
 #endif /* UNION || LKM */
 
-	if (count == auio.uio_resid && (vp->v_flag & VROOT) &&
+	if (count == auio.uio_resid && (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
@@ -652,7 +663,7 @@ vn_lock(struct vnode *vp, int flags)
 
 #if 0
 	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
-	    || (vp->v_flag & VONWORKLST) != 0);
+	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
 	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_DRAIN|LK_NOWAIT|LK_RETRY|
@@ -662,12 +673,12 @@ vn_lock(struct vnode *vp, int flags)
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK) {
+		if (vp->v_iflag & VI_XLOCK) {
 			if (flags & LK_NOWAIT) {
 				simple_unlock(&vp->v_interlock);
 				return EBUSY;
 			}
-			vp->v_flag |= VXWANT;
+			vp->v_iflag |= VI_XWANT;
 			ltsleep(vp, PINOD | PNORELOCK,
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
@@ -700,9 +711,13 @@ u_int
 vn_setrecurse(struct vnode *vp)
 {
 	struct lock *lkp = &vp->v_lock;
-	u_int retval = lkp->lk_flags & LK_CANRECURSE;
+	u_int retval;
 
+	simple_lock(&lkp->lk_interlock);
+	retval = lkp->lk_flags & LK_CANRECURSE;
 	lkp->lk_flags |= LK_CANRECURSE;
+	simple_unlock(&lkp->lk_interlock);
+
 	return retval;
 }
 
@@ -714,8 +729,10 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 {
 	struct lock *lkp = &vp->v_lock;
 
+	simple_lock(&lkp->lk_interlock);
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
+	simple_unlock(&lkp->lk_interlock);
 }
 
 /*

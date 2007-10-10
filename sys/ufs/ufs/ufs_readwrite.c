@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.83 2007/10/08 18:01:31 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.84 2007/10/10 20:42:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.83 2007/10/08 18:01:31 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.84 2007/10/10 20:42:40 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -342,7 +342,7 @@ WRITE(void *v)
 		 */
 		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
-		if (!overwrite && (vp->v_flag & VMAPPED) == 0 &&
+		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 &&
 		    blkoff(fs, uio->uio_offset) == 0 &&
 		    (uio->uio_offset & PAGE_MASK) == 0) {
 			vsize_t len;

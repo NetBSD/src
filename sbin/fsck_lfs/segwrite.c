@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.16 2007/10/08 21:39:50 ad Exp $ */
+/* $NetBSD: segwrite.c,v 1.17 2007/10/10 20:42:20 ad Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -216,7 +216,7 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *) (sp->segsum))->ss_nfinfo;
 
-	if (vp->v_flag & VDIROP)
+	if (vp->v_uflag & VU_DIROP)
 		((SEGSUM *) (sp->segsum))->ss_flags |= (SS_DIROP | SS_CONT);
 
 	fip = sp->fip;
@@ -980,8 +980,8 @@ lfs_writevnodes(struct lfs *fs, struct segment *sp, int op)
 
 		ip = VTOI(vp);
 
-		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
-		    (op != VN_DIROP && (vp->v_flag & VDIROP))) {
+		if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
+		    (op != VN_DIROP && (vp->v_uflag & VU_DIROP))) {
 			continue;
 		}
 		/*

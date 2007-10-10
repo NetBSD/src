@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.104 2007/10/04 21:20:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.105 2007/10/10 20:42:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.104 2007/10/04 21:20:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.105 2007/10/10 20:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1004,7 +1004,7 @@ puffs_reclaim(void *v)
 	 * Note that we don't need to take the lock similarly to
 	 * puffs_root(), since there is only one of us.
 	 */
-	if (vp->v_flag & VROOT) {
+	if (vp->v_vflag & VV_ROOT) {
 		mutex_enter(&pmp->pmp_lock);
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
@@ -1261,7 +1261,7 @@ puffs_fsync(void *v)
 	 */
 	if (dofaf == 0) {
 		simple_lock(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
 		simple_unlock(&vp->v_interlock);
 	}
@@ -2041,7 +2041,7 @@ puffs_strategy(void *v)
 	 */
 	if (BIOWRITE(bp)) {
 		simple_lock(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
 		if (pn->pn_stat & PNODE_SUSPEND)
 			dofaf = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.13 2007/09/08 15:40:51 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.14 2007/10/10 20:42:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -344,7 +344,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 }
 
 int
-vfs_busy(struct mount *mp, int flags, struct simplelock *interlck)
+vfs_busy(struct mount *mp, int flags, kmutex_t *interlck)
 {
 
 	return 0;

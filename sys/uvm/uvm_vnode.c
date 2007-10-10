@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.85 2007/08/04 09:42:58 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.86 2007/10/10 20:42:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.85 2007/08/04 09:42:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.86 2007/10/10 20:42:41 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -413,7 +413,7 @@ uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VEXECMAP) != 0;
+	return (vp->v_iflag & VI_EXECMAP) != 0;
 }
 
 bool
@@ -421,7 +421,7 @@ uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VONWORKLST) == 0;
+	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 bool
@@ -430,5 +430,5 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
 	struct vnode *vp = (struct vnode *)uobj;
 
 	return uvn_clean_p(uobj) ||
-	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
+	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
 }
