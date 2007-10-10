@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.12 2007/10/04 18:18:36 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.13 2007/10/10 00:13:40 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.12 2007/10/04 18:18:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.13 2007/10/10 00:13:40 garbled Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -91,8 +91,10 @@ const char *intr_typename(int);
 void	dummy_pic_establish_intr(struct pic_ops *, int, int, int);
 
 /* address, enable passthrough */
+#define PIC_IVR_IBM	0
+#define PIC_IVR_MOT	1
 struct pic_ops *setup_openpic(void *, int);
-struct pic_ops *setup_prepivr(void);
+struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
 
 /* i8259 common decls */
@@ -100,6 +102,7 @@ void i8259_initialize(void);
 void i8259_enable_irq(struct pic_ops *, int, int);
 void i8259_disable_irq(struct pic_ops *, int);
 void i8259_ack_irq(struct pic_ops *, int);
+int i8259_get_irq(struct pic_ops *);
 
 /* IPI handler */
 int cpuintr(void *);

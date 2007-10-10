@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.8 2007/10/10 00:13:40 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.8 2007/10/10 00:13:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.7 2007/05/09 20:22:38 garbled 
 #include <dev/isa/isavar.h>
 
 static int  prepivr_get_irq(struct pic_ops *);
+static int  motivr_get_irq(struct pic_ops *);
 static void prepivr_establish_irq(struct pic_ops *, int, int, int);
 
 vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
@@ -69,7 +70,7 @@ uint32_t prep_intr_reg_off;	/* IVR offset within the mapped page */
  */
 
 struct pic_ops *
-setup_prepivr(void)
+setup_prepivr(int ivrtype)
 {
 	struct i8259_ops *prepivr;
 	struct pic_ops *pic;
@@ -85,7 +86,10 @@ setup_prepivr(void)
 	pic->pic_enable_irq = i8259_enable_irq;
 	pic->pic_reenable_irq = i8259_enable_irq;
 	pic->pic_disable_irq = i8259_disable_irq;
-	pic->pic_get_irq = prepivr_get_irq;
+	if (ivrtype == PIC_IVR_MOT)
+		pic->pic_get_irq = motivr_get_irq;
+	else
+		pic->pic_get_irq = prepivr_get_irq;
 	pic->pic_ack_irq = i8259_ack_irq;
 	pic->pic_establish_irq = prepivr_establish_irq;
 	strcpy(pic->pic_name, "prepivr");
@@ -94,6 +98,9 @@ setup_prepivr(void)
 	prepivr->enable_mask = 0xffffffff;
 	prepivr->irqs = 0;
 
+	/* initialize the ELCR */
+	isa_outb(IO_ELCR1, (0 >> 0) & 0xff);
+	isa_outb(IO_ELCR2, (0 >> 8) & 0xff);
 	i8259_initialize();
 
 	return pic;
@@ -120,14 +127,38 @@ prepivr_establish_irq(struct pic_ops *pic, int irq, int type, int maxlevel)
 }
 
 static int
+motivr_get_irq(struct pic_ops *pic)
+{
+	static int lirq;
+	int irq;
+
+	irq = i8259_get_irq(pic);
+	/* read the IVR to ack it */
+	(void)inb(pic->pic_cookie);
+
+	if (lirq == 7 && irq == lirq) {
+		lirq = -1;
+		return 255;
+	}
+
+	lirq = irq;
+	if (irq == 0)
+		return 255;
+
+	return irq;
+}
+
+static int
 prepivr_get_irq(struct pic_ops *pic)
 {
 	static int lirq;
 	int irq;
 
 	irq = inb(pic->pic_cookie);
-	if (lirq == 7 && irq == lirq)
+	if (lirq == 7 && irq == lirq) {
+		lirq = -1;
 		return 255;
+	}
 
 	lirq = irq;
 	if (irq == 0)

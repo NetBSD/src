@@ -1,4 +1,4 @@
-/* $NetBSD: pic_i8259.c,v 1.1.2.3 2007/05/09 20:22:38 garbled Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.1.2.4 2007/10/10 00:13:40 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.3 2007/05/09 20:22:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.4 2007/10/10 00:13:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.3 2007/05/09 20:22:38 garbled Ex
 #include <dev/isa/isavar.h>
 
 void i8259_initialize(void);
-static int  i8259_get_irq(struct pic_ops *);
 
 struct pic_ops *
 setup_i8259(void)
@@ -83,22 +82,4 @@ setup_i8259(void)
 	i8259_initialize();
 
 	return pic;
-}
-
-static int
-i8259_get_irq(struct pic_ops *pic)
-{
-	int irq;
-
-	isa_outb(IO_ICU1, 0x0c);
-	irq = isa_inb(IO_ICU1) & 0x07;
-	if (irq == IRQ_SLAVE) {
-		isa_outb(IO_ICU2, 0x0c);
-		irq = (isa_inb(IO_ICU2) & 0x07) + 8;
-	}
-
-	if (irq == 0)
-		return 255;
-
-	return irq;
 }
