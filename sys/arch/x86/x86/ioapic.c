@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.18.2.2 2007/10/09 13:38:46 ad Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.18.2.3 2007/10/10 23:28:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.18.2.2 2007/10/09 13:38:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.18.2.3 2007/10/10 23:28:29 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -358,7 +358,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		 * level triggered on low.
 		 */  
 		if (i >= 16)
-			redlo = IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
+			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
 	}
 	
