@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.19 2007/10/04 18:17:08 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.20 2007/10/10 18:41:34 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.19 2007/10/04 18:17:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.20 2007/10/10 18:41:34 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,6 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.19 2007/10/04 18:17:08 macallan Exp $
 #include "opt_interrupt.h"
 #if defined(PIC_I8259) || defined (PIC_PREPIVR)
 #include <machine/isa_machdep.h>
+#endif
+
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/ipivar.h>
+extern struct ipi_ops ipiops;
 #endif
 
 #define MAX_PICS	8	/* 8 PICs ought to be enough for everyone */
@@ -589,9 +594,10 @@ pic_handle_intr(void *cookie)
 	/* Only cpu0 can handle interrupts. */
 	if (cpu_number() != 0) {
 
-		while (realirq == IPI_VECTOR) {
+		/* THIS IS WRONG XXX */
+		while (realirq == ipiops.ppc_ipi_vector) {
 			pic->pic_ack_irq(pic, realirq);
-			cpuintr(NULL);
+			ppcipi_intr(NULL);
 			realirq = pic->pic_get_irq(pic);
 		}
 		if (realirq == 255) {
@@ -604,9 +610,10 @@ pic_handle_intr(void *cookie)
 start:
 
 #ifdef MULTIPROCESSOR
-	while (realirq == IPI_VECTOR) {
+	/* THIS IS WRONG XXX */
+	while (realirq == ipiops.ppc_ipi_vector) {
 		pic->pic_ack_irq(pic, realirq);
-		cpuintr(NULL);
+		ppcipi_intr(NULL);
 		realirq = pic->pic_get_irq(pic);
 	}
 	if (realirq == 255) {
