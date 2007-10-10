@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.72 2007/07/29 12:40:37 pooka Exp $	*/
+/*	$NetBSD: lock.h,v 1.73 2007/10/10 17:37:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -311,7 +311,6 @@ int	_lockmgr(volatile struct lock *, u_int, struct simplelock *,
 #else
 int	lockmgr(volatile struct lock *, u_int flags, struct simplelock *);
 #endif /* LOCKDEBUG */
-void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(volatile struct lock *);
 
