@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.44.1 2007/04/10 13:26:18 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.44.2 2007/10/10 21:18:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/types.h>
@@ -112,11 +113,24 @@ struct simplelock {
 
 #ifdef _KERNEL
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
 #define	simple_lock_held(alp)	((alp)->lock_data == __SIMPLELOCK_LOCKED)
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
+#else
+#define	simple_lock_nothing() 	\
+do {				\
+	(void)0;		\
+} while (0);
+#define	simple_lock_init(alp)	simple_lock_nothing()
+#define	simple_lock(alp)	simple_lock_nothing()
+#define	simple_lock_held(alp)	1
+#define	simple_lock_try(alp)	1
+#define	simple_unlock(alp)	simple_lock_nothing()
+#endif
+
 #define	simple_lock_only_held(x,y)			/* nothing */
 #define simple_lock_assert_locked(alp,lockname)		/* nothing */
 #define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
