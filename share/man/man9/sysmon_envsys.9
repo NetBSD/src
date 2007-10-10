@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.9 2007/09/14 09:20:49 xtraeme Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.10 2007/10/10 23:25:39 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 14, 2007
+.Dd October 11, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -75,6 +75,7 @@ struct sysmon_envsys {
 	const char 	*sme_name;
 	uint32_t 	sme_nsensors;
 	int		sme_flags;
+	int		sme_class;
 	envsys_data_t 	*sme_sensor_data;
 	void 		*sme_cookie;
 	int (*sme_gtredata)(struct sysmon_envsys *sme, envsys_data_t *edata);
@@ -105,6 +106,40 @@ Pointer to the first
 .Sy envsys_data_t
 structure specified in the driver.
 .El
+.Pp
+The
+.Fa sme_class
+member is an optional flag that specifies the class of the
+sysmon envsys device. Currently there are two classes:
+.Sy SME_CLASS_ACADAPTER
+and
+.Sy SME_CLASS_BATTERY.
+A system with both an AC Adapter and a battery device, will be
+able to report a
+.Em low-power
+event to
+.Xr powerd 8
+if the condition is met: all AC Adapters registered
+are disconnected and all batteries are in critical or low charge state.
+If
+.Xr powerd 8
+is not running, the system will be powered off via the
+.Xr cpu_reboot 9
+call.
+.Pp
+.Sy NOTES:
+A
+.Sy SME_CLASS_ACADAPTER
+device must have an
+.Sy Indicator
+sensor that reports the current state. A
+.Sy SME_CLASS_BATTERY
+device must have a
+.Sy Battery state
+sensor to report its state to the framework. If any of this requirements
+are not there, the event won't be sent to
+.Xr powerd 8
+and the system won't be powered off automatically.
 .Pp
 If the driver wants to refresh sensors data via the
 .Nm
@@ -511,6 +546,9 @@ framework is implemented within the files:
 .Pa sys/dev/sysmon/sysmon_envsys.c
 .Pp
 .Pa sys/dev/sysmon/sysmon_envsys_events.c .
+.Sh SEE ALSO
+.Xr envsys 4 ,
+.Xr envstat 8
 .Sh AUTHORS
 The
 .Sy envsys
@@ -522,6 +560,3 @@ Many useful comments for this framework were from
 Jason R. Thorpe, Tim Rightnour and Michael Lorenz. The previous
 framework was implemented by Jason R. Thorpe, Tim Rightnour
 and Bill Squier.
-.Sh SEE ALSO
-.Xr envsys 4 ,
-.Xr envstat 8
