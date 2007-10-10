@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.37 2007/10/07 14:07:21 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.38 2007/10/10 23:25:39 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.37 2007/10/07 14:07:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.38 2007/10/10 23:25:39 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,6 +66,7 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
+static bool sysmon_low_power = false;
 kmutex_t sme_mtx, sme_event_init_mtx;
 kcondvar_t sme_cv;
 
@@ -73,6 +74,8 @@ kcondvar_t sme_cv;
 static int sme_events_timeout = 10;
 static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
 #define SME_EVTIMO 	(sme_events_timeout * hz)
+
+static int sme_event_check_low_power(void);
 
 /*
  * sysctl(9) stuff to handle the refresh value in the callout
@@ -462,7 +465,8 @@ sme_events_check(void *arg)
 		    see->type));
 		workqueue_enqueue(seewq, &see->see_wk, NULL);
 	}
-	callout_schedule(&seeco, SME_EVTIMO);
+	if (!sysmon_low_power)
+		callout_schedule(&seeco, SME_EVTIMO);
 }
 
 /*
@@ -526,6 +530,20 @@ do {									\
 	see->evsent = true;						\
 	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
+
+	/*
+	 * Check if the system is running in low power and send the
+	 * event to powerd (if running) or shutdown the system otherwise.
+	 */
+	if (!sysmon_low_power && sme_event_check_low_power()) {
+		struct penvsys_state pes;
+
+		pes.pes_type = PENVSYS_TYPE_BATTERY;
+		sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
+		sysmon_low_power = true;
+		callout_stop(&seeco);
+		goto out;
+	}
 
 	switch (see->type) {
 	/*
@@ -620,4 +638,73 @@ out:
 	see->see_flags &= ~SME_EVENT_WORKING;
 	cv_broadcast(&sme_cv);
 	mutex_exit(&sme_mtx);
+}
+
+static int
+sme_event_check_low_power(void)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *edata;
+	int i, batteries_cnt, batteries_discharged;
+	bool acadapter_on, acadapter_sensor_found;
+
+	acadapter_on = acadapter_sensor_found = false;
+	batteries_cnt = batteries_discharged = 0;
+
+	KASSERT(mutex_owned(&sme_mtx));
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
+		if (sme->sme_class == SME_CLASS_ACADAPTER)
+			break;
+
+	/*
+	 * No AC Adapter devices were found, do nothing.
+	 */
+	if (!sme)
+		return 0;
+
+	for (i = 0; i < sme->sme_nsensors; i++) {
+		edata = &sme->sme_sensor_data[i];
+		if (edata->units == ENVSYS_INDICATOR) {
+			acadapter_sensor_found = true;
+			if (edata->value_cur) {
+				acadapter_on = true;
+				break;
+			}
+		}
+	}
+	/*
+	 * There's an AC Adapter device connected or there wasn't
+	 * any sensor capable of returning its state.
+	 */
+	if (acadapter_on || !acadapter_sensor_found)
+		return 0;
+
+#define IS_BATTERY_DISCHARGED()						\
+do {									\
+	if (((edata->units == ENVSYS_BATTERY_STATE) &&			\
+	    ((edata->value_cur == ENVSYS_BATTERY_STATE_CRITICAL) ||	\
+	     (edata->value_cur == ENVSYS_BATTERY_STATE_LOW)))) {	\
+		batteries_discharged++;					\
+		break;							\
+	}								\
+} while (/* CONSTCOND */ 0)
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		if (sme->sme_class == SME_CLASS_BATTERY) {
+			batteries_cnt++;
+			for (i = 0; i < sme->sme_nsensors; i++) {
+				edata = &sme->sme_sensor_data[i];
+				IS_BATTERY_DISCHARGED();
+			}
+		}
+	}
+
+	/*
+	 * All batteries are discharged?
+	 */
+	if (batteries_cnt == batteries_discharged)
+		return 1;
+
+	return 0;
 }

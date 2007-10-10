@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.18 2007/09/08 00:21:43 xtraeme Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.19 2007/10/10 23:25:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -64,6 +64,11 @@ struct sysmon_envsys {
 	const char *sme_name;			/* envsys device name */
 	uint32_t sme_nsensors;			/* sensor count, from driver */
 	uint32_t sme_uniqsensors;
+
+	int sme_class;				/* class of device */
+#define SME_CLASS_BATTERY	1		/* device is a battery */
+#define SME_CLASS_ACADAPTER	2		/* device is an AC adapter */
+
 	int sme_flags;				/* additional flags */
 #define SME_FLAG_BUSY 		0x00000001 	/* sme is busy */
 #define SME_FLAG_WANTED 	0x00000002 	/* someone waiting for this */
@@ -73,6 +78,7 @@ struct sysmon_envsys {
 
 	/* linked list for the sysmon envsys devices */
 	LIST_ENTRY(sysmon_envsys) sme_list;
+
 	/* 
 	 * Singly linked list for the sysmon envsys sensor descriptions.
 	 */
