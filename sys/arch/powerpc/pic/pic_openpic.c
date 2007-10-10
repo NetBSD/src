@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.9 2007/10/04 18:14:39 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.10 2007/10/10 22:19:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.9 2007/10/04 18:14:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.10 2007/10/10 22:19:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -126,13 +126,9 @@ setup_openpic(void *addr, int passthrough)
 	openpic_set_priority(0, 0);
 #endif
 
-#ifdef MULTIPROCESSOR
-	x = openpic_read(OPENPIC_IPI_VECTOR(1));
-	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
-	x |= (15 << OPENPIC_PRIORITY_SHIFT) | IPI_VECTOR;
-	openpic_write(OPENPIC_IPI_VECTOR(1), x);
+#if 0
+	printf("timebase freq=%d\n", openpic_read(0x10f0));
 #endif
-
 	return pic;
 }
 
