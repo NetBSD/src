@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.13 2007/10/10 21:21:21 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.14 2007/10/10 23:43:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.13 2007/10/10 21:21:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.14 2007/10/10 23:43:24 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -246,35 +246,25 @@ static void
 lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 {
 	char s[150], b[150];
-#ifdef LOCKDEBUG
 	static const char *locktype[] = {
 	    "*0*", "shared", "exclusive", "upgrade", "exclupgrade",
 	    "downgrade", "release", "drain", "exclother", "*9*",
 	    "*10*", "*11*", "*12*", "*13*", "*14*", "*15*"
 	};
-#endif
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(s, sizeof(s), fmt, ap);
 	va_end(ap);
 	bitmask_snprintf(lkp->lk_flags, __LK_FLAG_BITS, b, sizeof(b));
 	panic("%s ("
-#ifdef LOCKDEBUG
-	    "type %s "
-#endif
-	    "flags %s, sharecount %d, exclusivecount %d, "
+	    "type %s flags %s, sharecount %d, exclusivecount %d, "
 	    "recurselevel %d, waitcount %d, wmesg %s"
 	    ", lock_addr %p, unlock_addr %p"
 	    ")\n",
-	    s, 
-#ifdef LOCKDEBUG
-	    locktype[lkp->lk_flags & LK_TYPE_MASK],
-#endif
+	    s, locktype[lkp->lk_flags & LK_TYPE_MASK],
 	    b, lkp->lk_sharecount, lkp->lk_exclusivecount,
-	    lkp->lk_recurselevel, lkp->lk_waitcount, lkp->lk_wmesg
-#ifdef LOCKDEBUG
-	    , (void *)lkp->lk_lock_addr, (void *)lkp->lk_unlock_addr
-#endif
+	    lkp->lk_recurselevel, lkp->lk_waitcount, lkp->lk_wmesg,
+	    (void *)lkp->lk_lock_addr, (void *)lkp->lk_unlock_addr
 	);
 }
 
