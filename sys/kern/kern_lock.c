@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.12 2007/10/09 13:44:26 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.13 2007/10/10 21:21:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.12 2007/10/09 13:44:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.13 2007/10/10 21:21:21 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -264,9 +264,7 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 #endif
 	    "flags %s, sharecount %d, exclusivecount %d, "
 	    "recurselevel %d, waitcount %d, wmesg %s"
-#ifdef LOCKDEBUG
-	    ", lock_file %s, unlock_file %s, lock_line %d, unlock_line %d"
-#endif
+	    ", lock_addr %p, unlock_addr %p"
 	    ")\n",
 	    s, 
 #ifdef LOCKDEBUG
@@ -275,8 +273,7 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 	    b, lkp->lk_sharecount, lkp->lk_exclusivecount,
 	    lkp->lk_recurselevel, lkp->lk_waitcount, lkp->lk_wmesg
 #ifdef LOCKDEBUG
-	    , lkp->lk_lock_file, lkp->lk_unlock_file, lkp->lk_lock_line,
-	    lkp->lk_unlock_line
+	    , (void *)lkp->lk_lock_addr, (void *)lkp->lk_unlock_addr
 #endif
 	);
 }
@@ -316,10 +313,8 @@ lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 	lkp->lk_prio = prio;
 	lkp->lk_timo = timo;
 	lkp->lk_wmesg = wmesg;
-#if defined(LOCKDEBUG)
-	lkp->lk_lock_file = NULL;
-	lkp->lk_unlock_file = NULL;
-#endif
+	lkp->lk_lock_addr = 0;
+	lkp->lk_unlock_addr = 0;
 }
 
 void
@@ -388,13 +383,8 @@ lockstatus(struct lock *lkp)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
-#if defined(LOCKDEBUG)
-_lockmgr(volatile struct lock *lkp, u_int flags,
-    kmutex_t *interlkp, const char *file, int line)
-#else
 lockmgr(volatile struct lock *lkp, u_int flags,
     kmutex_t *interlkp)
-#endif
 {
 	int error;
 	pid_t pid;
@@ -503,8 +493,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, 0, LK_NOCPU);
 #if defined(LOCKDEBUG)
-		lkp->lk_unlock_file = file;
-		lkp->lk_unlock_line = line;
+		lkp->lk_unlock_addr = RETURN_ADDRESS;
 #endif
 		WAKEUP_WAITER(lkp);
 		break;
@@ -566,8 +555,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 			lkp->lk_flags |= LK_HAVE_EXCL;
 			SETHOLDER(lkp, pid, lid, cpu_num);
 #if defined(LOCKDEBUG)
-			lkp->lk_lock_file = file;
-			lkp->lk_lock_line = line;
+			lkp->lk_lock_addr = RETURN_ADDRESS;
 #endif
 			if (lkp->lk_exclusivecount != 0)
 				lockpanic(lkp, "lockmgr: non-zero exclusive count");
@@ -637,8 +625,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		lkp->lk_flags |= LK_HAVE_EXCL;
 		SETHOLDER(lkp, pid, lid, cpu_num);
 #if defined(LOCKDEBUG)
-		lkp->lk_lock_file = file;
-		lkp->lk_lock_line = line;
+		lkp->lk_lock_addr = RETURN_ADDRESS;
 #endif
 		if (lkp->lk_exclusivecount != 0)
 			lockpanic(lkp, "lockmgr: non-zero exclusive count");
@@ -665,8 +652,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 				lkp->lk_flags &= ~LK_HAVE_EXCL;
 				SETHOLDER(lkp, LK_NOPROC, 0, LK_NOCPU);
 #if defined(LOCKDEBUG)
-				lkp->lk_unlock_file = file;
-				lkp->lk_unlock_line = line;
+				lkp->lk_unlock_addr = RETURN_ADDRESS;
 #endif
 			}
 		} else if (lkp->lk_sharecount != 0) {
@@ -711,8 +697,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 			lkp->lk_flags |= LK_DRAINING;
 		SETHOLDER(lkp, pid, lid, cpu_num);
 #if defined(LOCKDEBUG)
-		lkp->lk_lock_file = file;
-		lkp->lk_lock_line = line;
+		lkp->lk_lock_addr = RETURN_ADDRESS;
 #endif
 		lkp->lk_exclusivecount = 1;
 		/* XXX unlikely that we'd want this */
@@ -819,7 +804,7 @@ _kernel_lock_init(void)
 
 	__cpu_simple_lock_init(&kernel_lock);
 	kernel_lock_id = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops,
-	    (uintptr_t)__builtin_return_address(0));
+	    RETURN_ADDRESS);
 }
 
 /*
@@ -866,15 +851,13 @@ _kernel_lock(int nlocks, struct lwp *l)
 	}
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
-	LOCKDEBUG_WANTLOCK(kernel_lock_id,
-	    (uintptr_t)__builtin_return_address(0), 0);
+	LOCKDEBUG_WANTLOCK(kernel_lock_id, RETURN_ADDRESS, 0);
 
 	s = splbiglock();
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_id,
-		    (uintptr_t)__builtin_return_address(0), 0);
+		LOCKDEBUG_LOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
 		splx(s);
 		return;
 	}
@@ -911,8 +894,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_id,
-	    (uintptr_t)__builtin_return_address(0), 0);
+	LOCKDEBUG_LOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
 	splx(s);
 
 	/*
@@ -964,8 +946,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	l->l_blcnt -= nlocks;
 	if (ci->ci_biglock_count == nlocks) {
 		s = splbiglock();
-		LOCKDEBUG_UNLOCKED(kernel_lock_id,
-		    (uintptr_t)__builtin_return_address(0), 0);
+		LOCKDEBUG_UNLOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
 		ci->ci_biglock_count = 0;
 		__cpu_simple_unlock(&kernel_lock);
 		splx(s);

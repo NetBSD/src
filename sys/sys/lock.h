@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.5 2007/08/20 18:10:11 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.6 2007/10/10 21:21:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -106,12 +106,8 @@ struct lock {
 	pri_t	lk_prio;		/* priority at which to sleep */
 	int	lk_timo;		/* max sleep time */
 	struct	lock *lk_newlock;	/* lock taking over this lock */
-#if defined(LOCKDEBUG)
-	const char *lk_lock_file;
-	const char *lk_unlock_file;
-	int	lk_lock_line;
-	int	lk_unlock_line;
-#endif
+	uintptr_t lk_lock_addr;
+	uintptr_t lk_unlock_addr;
 };
 
 /*
@@ -237,13 +233,7 @@ struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
-#if defined(LOCKDEBUG)
-int	_lockmgr(volatile struct lock *, u_int, kmutex_t *,
-	    const char *, int);
-#define	lockmgr(l, f, i)	_lockmgr((l), (f), (i), __FILE__, __LINE__)
-#else
 int	lockmgr(volatile struct lock *, u_int flags, kmutex_t *);
-#endif /* LOCKDEBUG */
 void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(volatile struct lock *);
