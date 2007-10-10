@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.317 2007/07/16 16:36:06 macallan Exp $ */
+/*	$NetBSD: pmap.c,v 1.318 2007/10/10 17:44:40 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2007/07/16 16:36:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2007/10/10 17:44:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -211,9 +211,9 @@ psize_t vm_num_phys;
  *	with the pmap already locked by the caller (which will be
  *	an interface function).
  */
-struct lock pmap_main_lock;
+/* struct lock pmap_main_lock; */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */ 
 #define	PMAP_MAP_TO_HEAD_LOCK() \
 	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define	PMAP_MAP_TO_HEAD_UNLOCK() \
@@ -3054,7 +3054,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	/*
 	 * Initialize the locks.
 	 */
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
+	/* spinlockinit(&pmap_main_lock, "pmaplk", 0); */
 	simple_lock_init(&kernel_pmap_store.pm_lock);
 
 	/*
