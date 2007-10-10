@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.10 2007/05/10 17:23:07 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.11 2007/10/10 00:13:40 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.10 2007/05/10 17:23:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.11 2007/10/10 00:13:40 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -103,6 +103,7 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 paddr_t avail_end;			/* XXX temporary */
 struct pic_ops *isa_pic;
 int isa_pcmciamask = 0x8b28;
+uint32_t busfreq;
 
 extern int primary_pic;
 extern struct platform_quirkdata platform_quirks[];
@@ -158,6 +159,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	{
 		struct btinfo_clock *clockinfo;
 		extern u_long ticks_per_sec, ns_per_tick;
+		VPD *vpd;
 
 		clockinfo =
 		    (struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
@@ -166,6 +168,9 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
+
+		vpd = &res->VitalProductData;
+		busfreq = be32toh(vpd->ProcessorBusHz);
 	}
 
 	prep_initppc(startkernel, endkernel, args);
@@ -207,6 +212,7 @@ cpu_startup(void)
 	 * Gather the pci interrupt routings.
          */
 	setup_pciroutinginfo();
+
 }
 
 /*
@@ -300,11 +306,13 @@ prep_setup_openpic(PPC_DEVICE *dev)
 	uint32_t l;
 	uint8_t *p;
 	void *v;
-	int tag, size, item;
+	int tag, size, item, i;
 	unsigned char *baseaddr = NULL;
 
 	l = be32toh(dev->AllocatedOffset);
 	p = res->DevicePnPHeap + l;
+
+        i = find_platform_quirk(res->VitalProductData.PrintableModel);
 
 	/* look for the large vendor item that describes the MPIC's memory
 	 * range */
@@ -334,8 +342,15 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		if (baseaddr == NULL)
 			return 0;
 		pic_init();
-		isa_pic = setup_prepivr();
+        	if (i != -1 &&
+		    (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+                     platform_quirks[i].isa_intr_handler == EXT_INTR_I8259)) {
+			isa_pic = setup_prepivr(PIC_IVR_MOT);
+                } else
+			isa_pic = setup_prepivr(PIC_IVR_IBM);
 		(void)setup_openpic(baseaddr, 0);
+		/* set the timebase frequency to 1/8th busfreq */
+		openpic_write(OPENPIC_TIMER_FREQ, busfreq/8);
 		primary_pic = 1;
 		/* set up the IVR as a cascade on openpic 0 */
 		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
@@ -446,9 +461,9 @@ init_intr(void)
         if (i != -1)
                 if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
                     platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
-			isa_pic = setup_i8259();
+			isa_pic = setup_prepivr(PIC_IVR_MOT);
                         return;
                 }
-	isa_pic = setup_prepivr();
+	isa_pic = setup_prepivr(PIC_IVR_IBM);
         oea_install_extint(pic_ext_intr);
 }

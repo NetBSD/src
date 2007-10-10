@@ -1,4 +1,4 @@
-/* $NetBSD: i8259_common.c,v 1.1.2.1 2007/05/09 20:22:38 garbled Exp $ */
+/* $NetBSD: i8259_common.c,v 1.1.2.2 2007/10/10 00:13:40 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.1.2.1 2007/05/09 20:22:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.1.2.2 2007/10/10 00:13:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -103,4 +103,22 @@ i8259_ack_irq(struct pic_ops *pic, int irq)
 		isa_outb(IO_ICU2, 0xe0 | (irq & 7));
 		isa_outb(IO_ICU1, 0xe0 | IRQ_SLAVE);
 	}
+}
+
+int
+i8259_get_irq(struct pic_ops *pic)
+{
+	int irq;
+
+	isa_outb(IO_ICU1, 0x0c);
+	irq = isa_inb(IO_ICU1) & 0x07;
+	if (irq == IRQ_SLAVE) {
+		isa_outb(IO_ICU2, 0x0c);
+		irq = (isa_inb(IO_ICU2) & 0x07) + 8;
+	}
+
+	if (irq == 0)
+		return 255;
+
+	return irq;
 }
