@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.1.2.2 2007/10/10 22:19:45 macallan Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.1.2.2 2007/10/10 22:19:45 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
@@ -62,40 +62,56 @@ static void openpic_establish_ipi(int, int, void *);
 void
 setup_openpic_ipi(void)
 {
+	uint32_t x;
+
 	ipiops.ppc_send_ipi = openpic_send_ipi;
 	ipiops.ppc_establish_ipi = openpic_establish_ipi;
-	ipiops.ppc_ipi_vector = 64;
+	ipiops.ppc_ipi_vector = IPI_VECTOR;
+
+	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+	x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
+	openpic_write(OPENPIC_IPI_VECTOR(1), x);
 }
 
 static void
 openpic_send_ipi(int target, u_long mesg)
 {
-	int cpumask=0, i;
+	int cpumask = 0, i;
 
-	if (target == IPI_T_ALL) {
-		for (i=0; i < ncpu; i++) {
-			cpumask += 1 << i;
-			atomic_setbits_ulong(&IPI[i], mesg);
-		}
-	} else if (target == IPI_T_NOTME) {
-		for (i=0; i < ncpu; i++) {
-			if (i != cpu_number())
-				cpumask += 1 << i;
-			atomic_setbits_ulong(&IPI[i], mesg);
-		}
-	} else {
-		cpumask = 1 << target;
-		atomic_setbits_ulong(&IPI[target], mesg);
+	switch(target) {
+		case IPI_T_ALL:
+			for (i = 0; i < ncpu; i++) {
+				cpumask |= 1 << i;
+				atomic_setbits_ulong(&IPI[i], mesg);
+			}
+			break;
+		case IPI_T_NOTME:
+			for (i = 0; i < ncpu; i++) {
+				if (i != cpu_number())
+					cpumask |= 1 << i;
+				atomic_setbits_ulong(&IPI[i], mesg);
+			}
+			break;
+		default:
+			cpumask = 1 << target;
+			atomic_setbits_ulong(&IPI[target], mesg);
 	}
-
-	openpic_write(OPENPIC_IPI(cpu_number(), 0), cpumask);
+	openpic_write(OPENPIC_IPI(cpu_number(), 1), cpumask);
 }
 
 static void
 openpic_establish_ipi(int type, int level, void *ih_args)
 {
+/*
+ * XXX
+ * for now we catch IPIs early in pic_handle_intr() so no need to do anything
+ * here
+ */
+#if 0
 	intr_establish(ipiops.ppc_ipi_vector, type, level, ppcipi_intr,
 	    ih_args);
+#endif
 }
 
 #endif /*MULTIPROCESSOR*/
