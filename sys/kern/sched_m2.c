@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.2 2007/10/10 21:24:53 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.3 2007/10/10 22:21:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.2 2007/10/10 21:24:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3 2007/10/10 22:21:17 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -632,7 +632,7 @@ sched_catchlwp(void)
 	/*
 	 * Double-lock the runqueues.
 	 */
-	if (curci->ci_schedstate.spc_mutex < ci->ci_schedstate.spc_mutex) {
+	if (curci < ci) {
 		spc_lock(ci);
 	} else if (!mutex_tryenter(ci->ci_schedstate.spc_mutex)) {
 		const runqueue_t *cur_rq = curci->ci_schedstate.spc_sched_info;
