@@ -1,11 +1,10 @@
-/*	$NetBSD: intr.h,v 1.24.14.6 2007/10/10 18:41:31 garbled Exp $	*/
-
+/* $NetBSD: ipi.c,v 1.1.2.1 2007/10/10 18:41:34 garbled Exp $ */
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,29 +35,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACPPC_INTR_H_
-#define _MACPPC_INTR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.1.2.1 2007/10/10 18:41:34 garbled Exp $");
 
-#include <powerpc/intr.h>
-
-#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
-#endif
+#include "opt_pic.h"
+#include "opt_interrupt.h"
+#include "opt_altivec.h"
 
-#ifndef _LOCORE
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
 
-#define ICU_LEN		64
+#include <powerpc/atomic.h>
+#include <powerpc/fpu.h>
+#include <powerpc/altivec.h>
+
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+#include "opt_ipi.h"
 
 #ifdef MULTIPROCESSOR
-struct cpu_info;
-#endif /* MULTIPROCESSOR */
 
-#endif /* _LOCORE */
+struct ipi_ops ipiops;
+volatile u_long IPI[CPU_MAXNUM];
 
-/* probe for a PIC and set it up, return TRUE on success */
-int init_ohare(void);
-int init_heathrow(void);
-int init_grandcentral(void);
-void setup_hammerhead_ipi(void);
+/* Process an actual IPI */
 
-#endif /* _MACPPC_INTR_H_ */
+int
+ppcipi_intr(void *v)
+{
+	int cpu_id = cpu_number();
+	int msr;
+	u_long ipi;
+
+	curcpu()->ci_ev_ipi.ev_count++;
+	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
+
+	if (ipi == PPC_IPI_NOMESG)
+		return 1;
+
+	if (ipi & PPC_IPI_FLUSH_FPU)
+		save_fpu_cpu();
+
+#ifdef ALTIVEC
+	if (ipi & PPC_IPI_FLUSH_VEC)
+		save_vec_cpu();
+#endif
+
+	if (ipi & PPC_IPI_HALT) {
+		aprint_normal("halting CPU %d\n", cpu_id);
+		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
+		for (;;) {
+			__asm volatile ("sync; isync");
+			mtmsr(msr);
+		}
+	}
+	return 1;
+}
+
+#endif /*MULTIPROCESSOR*/

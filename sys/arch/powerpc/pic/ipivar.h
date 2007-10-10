@@ -1,11 +1,10 @@
-/*	$NetBSD: intr.h,v 1.24.14.6 2007/10/10 18:41:31 garbled Exp $	*/
-
+/* $NetBSD: ipivar.h,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $ */
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,29 +35,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACPPC_INTR_H_
-#define _MACPPC_INTR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $");
 
-#include <powerpc/intr.h>
+#ifndef _IPI_VAR_H_
+#define _IPI_VAR_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
+#include <machine/intr.h>
 
-#ifndef _LOCORE
+struct ipi_ops {
+	void (*ppc_send_ipi)(int, u_long);
+	/* type, level, arg */
+	void (*ppc_establish_ipi)(int, int, void *);
+	int ppc_ipi_vector;
+};
 
-#define ICU_LEN		64
+/* target macros, 0+ are real cpu numbers */
+#define IPI_T_ALL	-2
+#define IPI_T_NOTME	-1
 
-#ifdef MULTIPROCESSOR
-struct cpu_info;
-#endif /* MULTIPROCESSOR */
+#define PPC_IPI_NOMESG		0x0000
+#define PPC_IPI_HALT		0x0001
+#define PPC_IPI_FLUSH_FPU	0x0002
+#define PPC_IPI_FLUSH_VEC	0x0004
 
-#endif /* _LOCORE */
+/* OpenPIC */
+void setup_openpic_ipi(void);
 
-/* probe for a PIC and set it up, return TRUE on success */
-int init_ohare(void);
-int init_heathrow(void);
-int init_grandcentral(void);
-void setup_hammerhead_ipi(void);
+/* IPI Handler */
+int ppcipi_intr(void *);
 
-#endif /* _MACPPC_INTR_H_ */
+#endif /*_IPI_VAR_H_*/

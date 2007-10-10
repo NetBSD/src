@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.1.2.4 2007/05/04 06:00:28 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.1.2.5 2007/10/10 18:41:32 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.4 2007/05/04 06:00:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.5 2007/10/10 18:41:32 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -41,12 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.1.2.4 2007/05/04 06:00:28 macallan 
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 #include <powerpc/pic/picvar.h>
+#include <powerpc/pic/ipivar.h>
 #include <dev/ofw/openfirm.h>
 
 #include "opt_interrupt.h"
 #include "pic_openpic.h"
 #include "pic_ohare.h"
 #include "pic_heathrow.h"
+#include "opt_ipi.h"
+#include "ipi_openpic.h"
+#include "ipi_hammerhead.h"
 
 #if NPIC_OPENPIC > 0
 static int init_openpic(int);
@@ -123,4 +127,13 @@ init_interrupt(void)
 	panic("%s: no supported interrupt controller found", __func__);
 done:
 	oea_install_extint(pic_ext_intr);
+
+#ifdef MULTIPROCESSOR
+#if NPIC_OPENPIC > 0
+	setup_openpic_ipi();
+#else /*NPIC_OPENPIC*/
+	if (OF_finddevice("/hammerhead") != -1)
+		setup_hammerhead_ipi();
+#endif /*NPIC_OPENPIC*/
+#endif /*MULTIPROCESSOR*/
 }

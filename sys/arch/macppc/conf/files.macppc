@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.12 2007/08/14 21:55:22 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.13 2007/10/10 18:41:31 garbled Exp $
 #
 # macppc-specific configuration info
 
@@ -9,6 +9,7 @@ maxusers 2 8 64
 
 include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
+include "arch/powerpc/pic/files.ipi"
 
 file arch/macppc/macppc/autoconf.c
 file arch/powerpc/powerpc/clock.c
@@ -30,6 +31,11 @@ defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
 
 file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
 file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
+
+# IPI interface
+define ipi_hammerhead
+defflag opt_ipi.h IPI_HAMMERHEAD: ipi_hammerhead
+file arch/macppc/macppc/ipi_hammerhead.c	ipi_hammerhead	needs-flag
 
 file arch/powerpc/powerpc/bus_dma.c
 file arch/powerpc/powerpc/bus_space.c

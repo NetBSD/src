@@ -1,11 +1,10 @@
-/*	$NetBSD: intr.h,v 1.24.14.6 2007/10/10 18:41:31 garbled Exp $	*/
-
+/* $NetBSD: ipi_openpic.c,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $ */
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,29 +35,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACPPC_INTR_H_
-#define _MACPPC_INTR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $");
 
-#include <powerpc/intr.h>
-
-#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
-#endif
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
 
-#ifndef _LOCORE
+#include <uvm/uvm_extern.h>
 
-#define ICU_LEN		64
+#include <machine/pio.h>
+#include <powerpc/openpic.h>
+#include <powerpc/atomic.h>
+
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
 
 #ifdef MULTIPROCESSOR
-struct cpu_info;
-#endif /* MULTIPROCESSOR */
 
-#endif /* _LOCORE */
+extern struct ipi_ops ipiops;
+extern volatile u_long IPI[CPU_MAXNUM];
+static void openpic_send_ipi(int, u_long);
+static void openpic_establish_ipi(int, int, void *);
 
-/* probe for a PIC and set it up, return TRUE on success */
-int init_ohare(void);
-int init_heathrow(void);
-int init_grandcentral(void);
-void setup_hammerhead_ipi(void);
+void
+setup_openpic_ipi(void)
+{
+	ipiops.ppc_send_ipi = openpic_send_ipi;
+	ipiops.ppc_establish_ipi = openpic_establish_ipi;
+	ipiops.ppc_ipi_vector = 64;
+}
 
-#endif /* _MACPPC_INTR_H_ */
+static void
+openpic_send_ipi(int target, u_long mesg)
+{
+	int cpumask=0, i;
+
+	if (target == IPI_T_ALL) {
+		for (i=0; i < ncpu; i++) {
+			cpumask += 1 << i;
+			atomic_setbits_ulong(&IPI[i], mesg);
+		}
+	} else if (target == IPI_T_NOTME) {
+		for (i=0; i < ncpu; i++) {
+			if (i != cpu_number())
+				cpumask += 1 << i;
+			atomic_setbits_ulong(&IPI[i], mesg);
+		}
+	} else {
+		cpumask = 1 << target;
+		atomic_setbits_ulong(&IPI[target], mesg);
+	}
+
+	openpic_write(OPENPIC_IPI(cpu_number(), 0), cpumask);
+}
+
+static void
+openpic_establish_ipi(int type, int level, void *ih_args)
+{
+	intr_establish(ipiops.ppc_ipi_vector, type, level, ppcipi_intr,
+	    ih_args);
+}
+
+#endif /*MULTIPROCESSOR*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.16.6 2007/10/04 18:35:25 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.16.7 2007/10/10 18:41:32 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.6 2007/10/04 18:35:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.7 2007/10/10 18:41:32 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -57,6 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.6 2007/10/04 18:35:25 macallan Exp $
 #include <powerpc/altivec.h>
 #endif
 
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+extern struct ipi_ops ipiops;
+#endif
+
 #include <machine/autoconf.h>
 #include <machine/fpu.h>
 #include <machine/pcb.h>
@@ -78,10 +84,8 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 
 extern struct cfdriver cpu_cd;
 
-#define HH_ARBCONF		0xf8000090
 #define HH_INTR_SECONDARY	0xf80000c0
-#define HH_INTR_PRIMARY		0xf3019000
-#define GC_IPI_IRQ		30
+#define HH_ARBCONF		0xf8000090
 
 extern uint32_t ticks_per_intr;
 
@@ -315,8 +319,7 @@ KASSERT(ci != curcpu());
 	} else {
 		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
-		out32(HH_INTR_SECONDARY, ~0);
-		out32(HH_INTR_SECONDARY, 0);
+		ipiops.ppc_send_ipi(1, PPC_IPI_NOMESG);
 
 		/* sync timebase (XXX shouldn't be zero'ed) */
 		__asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
@@ -332,8 +335,7 @@ KASSERT(ci != curcpu());
 
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
-		out32(HH_INTR_SECONDARY, ~0);
-		out32(HH_INTR_SECONDARY, 0);
+		ipiops.ppc_send_ipi(1, PPC_IPI_NOMESG);
 	}
 
 	delay(200000);		/* wait for secondary printf */
@@ -343,11 +345,9 @@ KASSERT(ci != curcpu());
 		return -1;
 	}
 
-	if (!openpic_base) {
-		/* Register IPI. */
-		intr_establish(GC_IPI_IRQ, IST_LEVEL, IPL_HIGH, cpuintr, NULL);
-	}
-
+	/* Register IPI Interrupt */
+	ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+	
 	return 0;
 }
 
@@ -453,65 +453,5 @@ cpu_boot_secondary_processors()
 
 	start_secondary_cpu = 1;
 	__asm volatile ("sync");
-}
-
-static volatile u_long IPI[CPU_MAXNUM];
-
-void
-macppc_send_ipi(ci, mesg)
-	volatile struct cpu_info *ci;
-	u_long mesg;
-{
-	int cpu_id = ci->ci_cpuid;
-
-	/* printf("send_ipi(%d, 0x%lx)\n", cpu_id, mesg); */
-	atomic_setbits_ulong(&IPI[cpu_id], mesg);
-
-	if (openpic_base) {
-		openpic_write(OPENPIC_IPI(cpu_number(), 1), 1 << cpu_id);
-	} else {
-		switch (cpu_id) {
-		case 0:
-			in32(HH_INTR_PRIMARY);
-			break;
-		case 1:
-			out32(HH_INTR_SECONDARY, ~0);
-			out32(HH_INTR_SECONDARY, 0);
-			break;
-		}
-	}
-}
-
-/*
- * Process IPIs.  External interrupts are blocked.
- */
-int
-cpuintr(v)
-	void *v;
-{
-	int cpu_id = cpu_number();
-	int msr;
-	u_long ipi;
-
-	/* printf("cpuintr{%d}\n", cpu_id); */
-	curcpu()->ci_ev_ipi.ev_count++;
-	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
-	if (ipi & MACPPC_IPI_FLUSH_FPU) {
-		save_fpu_cpu();
-	}
-#ifdef ALTIVEC
-	if (ipi & MACPPC_IPI_FLUSH_VEC) {
-		save_vec_cpu();
-	}
-#endif
-	if (ipi & MACPPC_IPI_HALT) {
-		printf("halt{%d}\n", cpu_id);
-		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
-		for (;;) {
-			__asm volatile ("sync; isync");
-			mtmsr(msr);
-		}
-	}
-	return 1;
 }
 #endif /* MULTIPROCESSOR */
