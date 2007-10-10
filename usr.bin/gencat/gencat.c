@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.21 2007/10/06 02:55:56 ginsbach Exp $	*/
+/*	$NetBSD: gencat.c,v 1.22 2007/10/10 02:34:18 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.21 2007/10/06 02:55:56 ginsbach Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.22 2007/10/10 02:34:18 ginsbach Exp $");
 #endif
 
 /***********************************************************
@@ -124,11 +124,11 @@ static long lineno = 0;
 static	void	corrupt __P((void));
 #endif
 static	char   *cskip __P((char *));
-static	void	error __P((char *, char *));
+static	void	error __P((const char *));
 static	void	nomem __P((void));
 static	char   *getline __P((int));
 static	char   *getmsg __P((int, char *, char));
-static	void	warning __P((char *, char *));
+static	void	warning __P((const char *, const char *));
 static	char   *wskip __P((char *));
 static	char   *xstrdup __P((const char *));
 static	void   *xmalloc __P((size_t));
@@ -193,8 +193,8 @@ main(argc, argv)
 
 static void
 warning(cptr, msg)
-	char   *cptr;
-	char   *msg;
+	const char   *cptr;
+	const char   *msg;
 {
 	fprintf(stderr, "%s: %s on line %ld\n", getprogname(), msg, lineno);
 	fprintf(stderr, "%s\n", curline);
@@ -207,11 +207,10 @@ warning(cptr, msg)
 }
 
 static void
-error(cptr, msg)
-	char   *cptr;
-	char   *msg;
+error(msg)
+	const char   *msg;
 {
-	warning(cptr, msg);
+	warning(NULL, msg);
 	exit(1);
 }
 
@@ -219,14 +218,14 @@ error(cptr, msg)
 static void
 corrupt()
 {
-	error(NULL, "corrupt message catalog");
+	error("corrupt message catalog");
 }
 #endif
 
 static void
 nomem()
 {
-	error(NULL, "out of memory");
+	error("out of memory");
 }
 
 static void *
@@ -373,7 +372,7 @@ getmsg(fd, cptr, quote)
 				case '\0':
 					cptr = getline(fd);
 					if (!cptr)
-						error(NULL, "premature end of file");
+						error("premature end of file");
 					msglen += strlen(cptr);
 					i = tptr - msg;
 					msg = xrealloc(msg, msglen);
@@ -541,9 +540,9 @@ MCReadCat(fd)
 	if (strncmp(mcHead.magic, MCMagic, MCMagicLen) != 0)
 		corrupt();
 	if (mcHead.majorVer != MCMajorVer)
-		error(NULL, "unrecognized catalog version");
+		error("unrecognized catalog version");
 	if ((mcHead.flags & MCGetByteOrder()) == 0)
-		error(NULL, "wrong byte order");
+		error("wrong byte order");
 
 	if (lseek(fd, mcHead.firstSet, SEEK_SET) == -1)
 		corrupt();
@@ -726,11 +725,11 @@ MCAddSet(setId)
 	struct _setT *p, *q;
 
 	if (setId <= 0) {
-		error(NULL, "setId's must be greater than zero");
+		error("setId's must be greater than zero");
 		/* NOTREACHED */
 	}
 	if (setId > NL_SETMAX) {
-		error(NULL, "setId exceeds limit");
+		error("setId exceeds limit");
 		/* NOTREACHED */
 	}
 
@@ -765,14 +764,14 @@ MCAddMsg(msgId, str)
 	struct _msgT *p, *q;
 
 	if (!curSet)
-		error(NULL, "can't specify a message when no set exists");
+		error("can't specify a message when no set exists");
 
 	if (msgId <= 0) {
-		error(NULL, "msgId's must be greater than zero");
+		error("msgId's must be greater than zero");
 		/* NOTREACHED */
 	}
 	if (msgId > NL_MSGMAX) {
-		error(NULL, "msgID exceeds limit");
+		error("msgID exceeds limit");
 		/* NOTREACHED */
 	}
 
@@ -805,11 +804,11 @@ MCDelSet(setId)
 	struct _msgT *msg;
 
 	if (setId <= 0) {
-		error(NULL, "setId's must be greater than zero");
+		error("setId's must be greater than zero");
 		/* NOTREACHED */
 	}
 	if (setId > NL_SETMAX) {
-		error(NULL, "setId exceeds limit");
+		error("setId exceeds limit");
 		/* NOTREACHED */
 	}
 
@@ -836,7 +835,7 @@ MCDelMsg(msgId)
 	struct _msgT *msg;
 
 	if (!curSet)
-		error(NULL, "you can't delete a message before defining the set");
+		error("you can't delete a message before defining the set");
 
 	msg = curSet->msghead.lh_first;
 	for (; msg != NULL && msg->msgId < msgId; msg = msg->entries.le_next);
