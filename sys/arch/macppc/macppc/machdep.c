@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.14.8 2007/10/03 19:24:18 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.9 2007/10/10 18:41:33 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.8 2007/10/03 19:24:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.9 2007/10/10 18:41:33 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,6 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.8 2007/10/03 19:24:18 garbled E
 #include "pmu.h"
 #include "cuda.h"
 
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/ipivar.h>
+extern struct ipi_ops ipiops;
+#endif
+
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
@@ -154,8 +159,8 @@ cpu_reboot(int howto, char *what)
 	}
 
 #ifdef MULTIPROCESSOR
-	/* Halt other CPU.  XXX for now... */
-	macppc_send_ipi(&cpu_info[1 - cpu_number()], MACPPC_IPI_HALT);
+	/* Halt other CPU */
+	ipiops.ppc_send_ipi(IPI_T_NOTME, PPC_IPI_HALT);
 	delay(100000);	/* XXX */
 #endif
 
@@ -257,7 +262,7 @@ mp_save_fpu_lwp(struct lwp *l)
 	if (fpcpu == NULL) {
 		return;
 	}
-	macppc_send_ipi(fpcpu, MACPPC_IPI_FLUSH_FPU);
+	ipiops.ppc_send_ipi(fpcpu->ci_cpuid, PPC_IPI_FLUSH_FPU);
 
 	/* Wait for flush. */
 #if 0
@@ -299,7 +304,7 @@ mp_save_vec_lwp(struct lwp *l)
 	if (veccpu == NULL) {
 		return;
 	}
-	macppc_send_ipi(veccpu, MACPPC_IPI_FLUSH_VEC);
+	ipiops.ppc_send_ipi(veccpu->ci_cpuid, PPC_IPI_FLUSH_VEC);
 
 	/* Wait for flush. */
 #if 0
