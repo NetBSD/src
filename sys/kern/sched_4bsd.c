@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.9 2007/10/08 20:26:13 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.10 2007/10/10 23:03:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.9 2007/10/08 20:26:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.10 2007/10/10 23:03:24 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -129,6 +129,8 @@ static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
 static void resetprocpriority(struct proc *);
 
+fixpt_t decay_cpu(fixpt_t, fixpt_t);
+
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
 /* The global scheduler state */
@@ -154,17 +156,19 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	if (!CURCPU_IDLE_P()) {
-		if (spc->spc_flags & SPCF_SEENRR) {
-			/*
-			 * The process has already been through a roundrobin
-			 * without switching and may be hogging the CPU.
-			 * Indicate that the process should yield.
-			 */
-			spc->spc_flags |= SPCF_SHOULDYIELD;
-		} else
-			spc->spc_flags |= SPCF_SEENRR;
-	}
+	if (CURCPU_IDLE_P())
+		return;
+
+	if (spc->spc_flags & SPCF_SEENRR) {
+		/*
+		 * The process has already been through a roundrobin
+		 * without switching and may be hogging the CPU.
+		 * Indicate that the process should yield.
+		 */
+		spc->spc_flags |= SPCF_SHOULDYIELD;
+	} else
+		spc->spc_flags |= SPCF_SEENRR;
+
 	cpu_need_resched(ci, 0);
 }
 
@@ -241,7 +245,7 @@ sched_tick(struct cpu_info *ci)
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
 
-static fixpt_t
+fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 {
 
@@ -289,27 +293,11 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
 void
-sched_pstats_hook(struct proc *p, int minslp)
+sched_pstats_hook(struct lwp *l)
 {
-	struct lwp *l;
-	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
-	/*
-	 * If the process has slept the entire second,
-	 * stop recalculating its priority until it wakes up.
-	 */
-	if (minslp <= 1) {
-		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
-		
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & LW_IDLE) != 0)
-				continue;
-			lwp_lock(l);
-			if (l->l_slptime <= 1 && l->l_priority < PRI_KERNEL)
-				resetpriority(l);
-			lwp_unlock(l);
-		}
-	}
+	if (l->l_slptime <= 1 && l->l_priority < PRI_KERNEL)
+		resetpriority(l);
 }
 
 /*
@@ -726,6 +714,25 @@ sched_nextlwp(void)
 		return l2;
 	else
 		return l1;
+}
+
+struct cpu_info *
+sched_takecpu(struct lwp *l)
+{
+
+	return l->l_cpu;
+}
+
+void
+sched_wakeup(struct lwp *l)
+{
+
+}
+
+void
+sched_slept(struct lwp *l)
+{
+
 }
 
 void
