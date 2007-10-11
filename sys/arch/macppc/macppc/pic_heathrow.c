@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.1.2.5 2007/05/11 00:18:05 macallan Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.1.2.6 2007/10/11 06:20:56 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.1.2.5 2007/05/11 00:18:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.1.2.6 2007/10/11 06:20:56 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -125,6 +125,8 @@ setup_heathrow(uint32_t addr)
 	pic->pic_get_irq = heathrow_get_irq;
 	pic->pic_ack_irq = heathrow_ack_irq;
 	pic->pic_establish_irq = heathrow_establish_irq;
+	pic->pic_finish_setup = NULL;
+
 	strcpy(pic->pic_name, "heathrow");
 	pic_add(pic);
 	heathrow->pending_events_l = 0;
