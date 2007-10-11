@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.1.2.8 2007/10/10 00:13:40 garbled Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.1.2.9 2007/10/11 06:19:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.8 2007/10/10 00:13:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.1.2.9 2007/10/11 06:19:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -92,6 +92,7 @@ setup_prepivr(int ivrtype)
 		pic->pic_get_irq = prepivr_get_irq;
 	pic->pic_ack_irq = i8259_ack_irq;
 	pic->pic_establish_irq = prepivr_establish_irq;
+	pic->pic_finish_setup = NULL;
 	strcpy(pic->pic_name, "prepivr");
 	pic_add(pic);
 	prepivr->pending_events = 0;
