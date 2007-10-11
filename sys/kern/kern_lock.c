@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.15 2007/10/11 11:08:17 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.16 2007/10/11 11:21:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.15 2007/10/11 11:08:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.16 2007/10/11 11:21:16 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.15 2007/10/11 11:08:17 ad Exp 
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-static int acquire(volatile struct lock **, int *, int, int, int, uintptr_t);
+static int acquire(struct lock **, int *, int, int, int, uintptr_t);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 int	kernel_lock_id;
@@ -118,11 +118,11 @@ __cpu_simple_lock_t kernel_lock;
  * Acquire a resource.
  */
 static int
-acquire(volatile struct lock **lkpp, int *s, int extflags,
+acquire(struct lock **lkpp, int *s, int extflags,
 	int drain, int wanted, uintptr_t ra)
 {
 	int error;
-	volatile struct lock *lkp = *lkpp;
+	struct lock *lkp = *lkpp;
 	LOCKSTAT_TIMER(slptime);
 	LOCKSTAT_FLAG(lsflag);
 
@@ -137,12 +137,9 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 			lkp->lk_waitcount++;
 			lkp->lk_flags |= LK_WAIT_NONZERO;
 		}
-		/* XXX Cast away volatile. */
 		LOCKSTAT_START_TIMER(lsflag, slptime);
-		error = mtsleep(drain ?
-		    (volatile const void *)&lkp->lk_flags :
-		    (volatile const void *)lkp, lkp->lk_prio,
-		    lkp->lk_wmesg, lkp->lk_timo,
+		error = mtsleep(drain ? (void *)&lkp->lk_flags : (void *)lkp,
+		    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo,
 		    __UNVOLATILE(&lkp->lk_interlock));
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_EVENT_RA(lsflag, (void *)(uintptr_t)lkp,
@@ -204,7 +201,7 @@ lock_printf(const char *fmt, ...)
 #endif /* LOCKDEBUG */
 
 static void
-lockpanic(volatile struct lock *lkp, const char *fmt, ...)
+lockpanic(struct lock *lkp, const char *fmt, ...)
 {
 	char s[150], b[150];
 	static const char *locktype[] = {
@@ -286,7 +283,7 @@ lockstatus(struct lock *lkp)
 		lock_type = LK_SHARED;
 	else if (lkp->lk_flags & (LK_WANT_EXCL | LK_WANT_UPGRADE))
 		lock_type = LK_EXCLOTHER;
-	mutex_exit(__UNVOLATILE(&lkp->lk_interlock));
+	mutex_exit(&lkp->lk_interlock);
 	return (lock_type);
 }
 
@@ -313,7 +310,7 @@ lockstatus(struct lock *lkp)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
-lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
+lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 {
 	int error;
 	pid_t pid;
@@ -322,19 +319,17 @@ lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
 	cpuid_t cpu_num;
 	struct lwp *l = curlwp;
 	int lock_shutdown_noblock = 0;
-	kmutex_t *mutex;
 	int s = 0;
 
 	error = 0;
-	mutex = __UNVOLATILE(&lkp->lk_interlock);
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
 	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
 
-	mutex_enter(mutex);
+	mutex_enter(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
-		mutex_exit(__UNVOLATILE(interlkp));
+		mutex_exit(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
 
 	if (l == NULL) {
@@ -636,7 +631,7 @@ lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
 		break;
 
 	default:
-		mutex_exit(mutex);
+		mutex_exit(&lkp->lk_interlock);
 		lockpanic(lkp, "lockmgr: unknown locktype request %d",
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
@@ -655,7 +650,7 @@ lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
 	if (error && lock_shutdown_noblock)
 		lockpanic(lkp, "lockmgr: deadlock (see previous panic)");
 
-	mutex_exit(mutex);
+	mutex_exit(&lkp->lk_interlock);
 	return (error);
 }
 
@@ -664,7 +659,7 @@ lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
  * routines to display ststus about contained locks.
  */
 void
-lockmgr_printinfo(volatile struct lock *lkp)
+lockmgr_printinfo(struct lock *lkp)
 {
 
 	if (lkp->lk_sharecount)
