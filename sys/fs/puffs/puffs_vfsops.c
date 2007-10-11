@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.64 2007/10/11 22:06:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.65 2007/10/11 23:04:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.64 2007/10/11 22:06:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65 2007/10/11 23:04:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -724,26 +724,36 @@ puffs_suspendctl(struct mount *mp, int cmd)
 	int error;
 
 	pmp = MPTOPUFFSMP(mp);
-	PUFFS_MSG_ALLOC(vfs, suspend);
-	puffs_msg_setfaf(park_suspend);
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
 		DPRINTF(("puffs_suspendctl: suspending\n"));
 		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			break;
-		puffs_msg_vfs(pmp, park_suspend, PUFFS_SUSPEND_START);
+		PUFFS_MSG_ALLOC(vfs, suspend);
+		puffs_msg_setfaf(park_suspend);
+		suspend_msg->pvfsr_status = PUFFS_SUSPEND_START;
+		puffs_msg_vfs(pmp, park_suspend, PUFFS_VFS_SUSPEND);
+		PUFFS_MSG_RELEASE(suspend);
 
 		error = pageflush(mp, FSCRED, 0, 1, curlwp);
 		if (error == 0)
 			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 
 		if (error != 0) {
-			puffs_msg_vfs(pmp, park_suspend, PUFFS_SUSPEND_ERROR);
+			PUFFS_MSG_ALLOC(vfs, suspend);
+			puffs_msg_setfaf(park_suspend);
+			suspend_msg->pvfsr_status = PUFFS_SUSPEND_ERROR;
+			puffs_msg_vfs(pmp, park_suspend, PUFFS_VFS_SUSPEND);
+			PUFFS_MSG_RELEASE(suspend);
 			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 			break;
 		}
 
-		puffs_msg_vfs(pmp, park_suspend, PUFFS_SUSPEND_SUSPENDED);
+		PUFFS_MSG_ALLOC(vfs, suspend);
+		puffs_msg_setfaf(park_suspend);
+		suspend_msg->pvfsr_status = PUFFS_SUSPEND_SUSPENDED;
+		puffs_msg_vfs(pmp, park_suspend, PUFFS_VFS_SUSPEND);
+		PUFFS_MSG_RELEASE(suspend);
 
 		break;
 
@@ -751,7 +761,11 @@ puffs_suspendctl(struct mount *mp, int cmd)
 		DPRINTF(("puffs_suspendctl: resume\n"));
 		error = 0;
 		(void) fstrans_setstate(mp, FSTRANS_NORMAL);
-		puffs_msg_vfs(pmp, park_suspend, PUFFS_SUSPEND_RESUME);
+		PUFFS_MSG_ALLOC(vfs, suspend);
+		puffs_msg_setfaf(park_suspend);
+		suspend_msg->pvfsr_status = PUFFS_SUSPEND_RESUME;
+		puffs_msg_vfs(pmp, park_suspend, PUFFS_VFS_SUSPEND);
+		PUFFS_MSG_RELEASE(suspend);
 		break;
 
 	default:
@@ -760,7 +774,6 @@ puffs_suspendctl(struct mount *mp, int cmd)
 	}
 
 	DPRINTF(("puffs_suspendctl: return %d\n", error));
-	PUFFS_MSG_RELEASE(suspend);
 	return error;
 }
 
