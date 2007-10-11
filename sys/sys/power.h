@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.9 2007/10/10 23:25:39 xtraeme Exp $	*/
+/*	$NetBSD: power.h,v 1.10 2007/10/11 17:31:06 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -197,7 +197,6 @@ struct penvsys_state {
 	char	pes_sensname[32];	/* sensor name */
 	char	pes_statedesc[64];	/* sensor state description */
 	int32_t	pes_type;		/* envsys power type */
-	int32_t	pes_state;		/* state for the event */
 };
 
 /*
