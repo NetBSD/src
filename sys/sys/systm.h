@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.198 2007/09/24 20:01:03 joerg Exp $	*/
+/*	$NetBSD: systm.h,v 1.199 2007/10/11 19:45:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -475,28 +475,23 @@ void scdebug_call(struct lwp *, register_t, register_t[]);
 void scdebug_ret(struct lwp *, register_t, int, register_t[]);
 #endif /* SYSCALL_DEBUG */
 
-#if defined(MULTIPROCESSOR)
-void	_kernel_lock_init(void);
+void	kernel_lock_init(void);
 void	_kernel_lock(int, struct lwp *);
 void	_kernel_unlock(int, struct lwp *, int *);
 
-#define	KERNEL_LOCK_INIT()		_kernel_lock_init()
+#if defined(MULTIPROCESSOR) || defined(_LKM)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
 		_kernel_lock((count), (lwp));	\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (lwp), (p))
-
-#else /* ! MULTIPROCESSOR */
-
-#define	KERNEL_LOCK_INIT()		/* nothing */
+#else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
+#endif
 
-#endif /* MULTIPROCESSOR */
-
-#if defined(MULTIPROCESSOR) && defined(DEBUG)
+#if defined(DEBUG)
 #define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
 #define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
 void _kernel_lock_assert_locked(void);
@@ -509,5 +504,9 @@ void _kernel_lock_assert_unlocked(void);
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
 #define	KERNEL_UNLOCK_ALL(l, p)		KERNEL_UNLOCK(0, (l), (p))
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
+
+/* Preemption control. */
+void	crit_enter(void);
+void	crit_exit(void);
 
 #endif	/* !_SYS_SYSTM_H_ */
