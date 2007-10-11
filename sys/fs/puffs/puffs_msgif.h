@@ -1,7 +1,7 @@
-/*	$NetBSD: puffs_msgif.h,v 1.55 2007/10/04 21:20:47 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.56 2007/10/11 19:41:13 pooka Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Google Summer of Code program and the Ulla Tuominen Foundation.
@@ -44,11 +44,19 @@
 
 #include <uvm/uvm_prot.h>
 
-#define PUFFSOP_VFS	0x01
-#define PUFFSOP_VN	0x02
-#define PUFFSOP_CACHE	0x03
-#define PUFFSOP_ERROR	0x04
-#define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
+/* XXX: sanitize */
+struct puffs_frame {
+	uint32_t	pfr_len;
+	uint32_t	pfr_type;
+};
+
+#define PUFFSOP_VFS		0x01	/* read/write	*/
+#define PUFFSOP_VN		0x02	/* read/write	*/
+#define PUFFSOP_CACHE		0x03	/* read 	*/
+#define PUFFSOP_ERROR		0x04	/* read		*/
+#define PUFFSOP_FLUSH		0x05	/* write	*/
+#define PUFFSOP_SUSPEND		0x06	/* write	*/
+#define PUFFSOPFLAG_FAF		0x10	/* fire-and-forget */
 
 #define PUFFSOP_OPCMASK		0x07
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
@@ -96,7 +104,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	19
+#define PUFFSVERSION	20
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -110,7 +118,7 @@ struct puffs_kargs {
 
 	uint32_t	pa_flags;
 
-	size_t		pa_maxreqlen;
+	size_t		pa_maxmsglen;
 	int		pa_nhashbuckets;
 
 	size_t		pa_fhsize;
@@ -153,6 +161,28 @@ struct puffs_kargs {
  */
 #define PUFFS_CLONER 0x7ffff
 
+struct puffs_req {
+	struct puffs_frame	preq_frhdr;
+
+	uint16_t		preq_opclass;
+	uint16_t		preq_optype;
+
+	uint64_t		preq_id;
+	void			*preq_cookie;
+
+	int			preq_rv;
+
+	uint32_t		preq_setbacks;
+
+	/*
+	 * the following helper pads the struct size to md alignment
+	 * multiple (should size_t not cut it).  it makes sure that
+	 * whatever comes after this struct is aligned
+	 */
+	size_t  		preq_buflen;
+	uint8_t	preq_buf[0] __aligned(ALIGNBYTES+1);
+};
+
 struct puffs_reqh_get {
 	void	*phg_buf;	/* user buffer		*/
 	size_t	phg_buflen;	/* user buffer length	*/
@@ -168,91 +198,6 @@ struct puffs_reqh_put {
 	uint64_t	php_id;		/* request id */
 	void		*php_buf;	/* user buffer address */
 	size_t		php_buflen;	/* user buffer length, hdr NOT incl. */
-};
-
-/*
- * The requests work as follows:
- *
- *  + GETOP: When fetching operations from the kernel, the user server
- *           supplies a flat buffer into which operations are written.
- *           The number of operations written to the buffer is
- *           MIN(prhg_nops, requests waiting, space in buffer).
- *           
- *           Operations follow each other and each one is described
- *           by the puffs_req structure, which is immediately followed
- *           by the aligned request data buffer in preq_buf.  The next
- *           puffs_req can be found at preq + preq_buflen.
- *
- *           Visually, the server should expect:
- *
- *           |<-- preq_buflen -->|
- *           ---------------------------------------------------------------
- *           |hdr|  buffer |align|hdr| buffer |hdr| ....   |buffer|        |
- *           ---------------------------------------------------------------
- *           ^ start       ^ unaligned        ^ aligned    ^ always aligned
- *
- *           The server is allowed to modify the contents of the buffers.
- *           Since the headers are the same size for both get and put, it
- *           is possible to handle all operations simply by doing in-place
- *           modification.  Where more input is expected that what was put
- *           out, the kernel leaves a hole in the buffer.  This hole size
- *           is derived from the operational semantics known by the vnode
- *           layer.  The hole size is included in preq_buflen.  The
- *           amount of relevant information in the buffer is call-specific
- *           and can be deduced by the server from the call type.
- *
- *  + PUTOP: When returning the results of an operation to the kernel, the
- *           user server is allowed to input results in a scatter-gather
- *           fashion.  Each request is made up of a header and the buffer.
- *           The header describes the *NEXT* request for copyin, *NOT* the
- *           current one.  The first request is described in puffs_reqh_put
- *           and the last one is left uninterpreted.  This is to halve the
- *           amount of copyin's required.
- *
- *           Fans of my ascii art, rejoice:
- *               /-------------------->| preq_buflen     |
- *           ---^----------------------------------------------------------
- *           |hdr|buffer| empty spaces |hdr|    buffer   |                |
- *           --v-----------------------^-v---------------------------------
- *             \------- preq_buf -----/  \------- preq_buf ....
- *
- *           This scheme also allows for better in-place modification of the
- *           request buffer when handling requests.  The vision is that
- *           operations which can be immediately satisfied will be edited
- *           in-place while ones which can't will be left blank.  Also,
- *           requests from async operations which have been satisfied
- *           meanwhile can be included.
- *
- *           The total number of operations is given by the ioctl control
- *           structure puffs_reqh.  The values in the header in the final
- *           are not used.
- */
-struct puffs_req {
-	uint64_t	preq_id;		/* get: cur, put: next */
-
-	uint8_t		preq_opclass;		/* get, cur */
-	uint8_t		preq_optype;		/* get, cur */
-	int		preq_rv;		/* put, cur */
-	int		preq_setbacks;		/* put, cur */
-
-	/*
-	 * preq_cookie is the node cookie associated with
-	 * the request.  It always maps 1:1 to a vnode
-	 * and could map to a userspace struct puffs_node.
-	 * The cookie usually describes the first
-	 * vnode argument of the VOP_POP() in question.
-	 */
-	void		*preq_cookie;		/* get, cur */
-
-	void		*preq_nextbuf;		/* put, next */
-
-	size_t  	preq_buflen;		/* get: cur, put: next */
-	/*
-	 * the following helper pads the struct size to md alignment
-	 * multiple (should size_t not cut it).  it makes sure that
-	 * whatever comes after this struct is aligned
-	 */
-	uint8_t	preq_buf[0] __aligned(ALIGNBYTES+1);
 };
 
 #define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
@@ -276,11 +221,13 @@ struct puffs_req {
 
 /* XXX: needs restructuring */
 struct puffs_flush {
-	void		*pf_cookie;
+	struct puffs_frame	pf_frhdr;
 
-	int		pf_op;
-	off_t		pf_start;
-	off_t		pf_end;
+	void			*pf_cookie;
+
+	int			pf_op;
+	off_t			pf_start;
+	off_t			pf_end;
 };
 #define PUFFS_INVAL_NAMECACHE_NODE		0
 #define PUFFS_INVAL_NAMECACHE_DIR		1
@@ -288,7 +235,7 @@ struct puffs_flush {
 #define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
 #define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	4
 
-
+#if 0
 /*
  * Available ioctl operations
  */
@@ -299,7 +246,9 @@ struct puffs_flush {
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
 #endif
 #define PUFFSSUSPENDOP		_IO  ('p', 6)
-#define PUFFSREQSIZEOP		_IOR ('p', 7, size_t)
+
+#define PUFFSREQSIZEOP		_IOR ('p', 1, size_t)
+#endif
 
 
 /*
@@ -322,10 +271,10 @@ struct puffs_kcred {
  * 2*MAXPHYS is the max size the system will attempt to copy,
  * else treated as garbage
  */
-#define PUFFS_REQ_MAXSIZE	2*MAXPHYS
-#define PUFFS_REQSTRUCT_MAX	4096 /* XXX: approxkludge */
+#define PUFFS_MSG_MAXSIZE	2*MAXPHYS
+#define PUFFS_MSGSTRUCT_MAX	4096 /* XXX: approxkludge */
 
-#define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX))
+#define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX))
 
 /* caller id */
 struct puffs_kcid {
@@ -362,21 +311,21 @@ struct puffs_kcn {
 /*
  * aux structures for vfs operations.
  */
-struct puffs_vfsreq_unmount {
+struct puffs_vfsmsg_unmount {
 	struct puffs_req	pvfsr_pr;
 
 	int			pvfsr_flags;
 	struct puffs_kcid	pvfsr_cid;
 };
 
-struct puffs_vfsreq_statvfs {
+struct puffs_vfsmsg_statvfs {
 	struct puffs_req	pvfsr_pr;
 
 	struct statvfs		pvfsr_sb;
 	struct puffs_kcid	pvfsr_cid;
 };
 
-struct puffs_vfsreq_sync {
+struct puffs_vfsmsg_sync {
 	struct puffs_req	pvfsr_pr;
 
 	struct puffs_kcred	pvfsr_cred;
@@ -384,7 +333,7 @@ struct puffs_vfsreq_sync {
 	int			pvfsr_waitfor;
 };
 
-struct puffs_vfsreq_fhtonode {
+struct puffs_vfsmsg_fhtonode {
 	struct puffs_req	pvfsr_pr;
 
 	void			*pvfsr_fhcookie;	/* IN	*/
@@ -397,7 +346,7 @@ struct puffs_vfsreq_fhtonode {
 				    __aligned(ALIGNBYTES+1);
 };
 
-struct puffs_vfsreq_nodetofh {
+struct puffs_vfsmsg_nodetofh {
 	struct puffs_req	pvfsr_pr;
 
 	void			*pvfsr_fhcookie;	/* OUT	*/
@@ -407,7 +356,7 @@ struct puffs_vfsreq_nodetofh {
 				    __aligned(ALIGNBYTES+1);
 };
 
-struct puffs_vfsreq_suspend {
+struct puffs_vfsmsg_suspend {
 	struct puffs_req	pvfsr_pr;
 
 	int			pvfsr_status;
@@ -421,7 +370,7 @@ struct puffs_vfsreq_suspend {
  * aux structures for vnode operations.
  */
 
-struct puffs_vnreq_lookup {
+struct puffs_vnmsg_lookup {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -434,7 +383,7 @@ struct puffs_vnreq_lookup {
 	dev_t			pvnr_rdev;		/* IN	*/
 };
 
-struct puffs_vnreq_create {
+struct puffs_vnmsg_create {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -445,7 +394,7 @@ struct puffs_vnreq_create {
 	void			*pvnr_newnode;		/* IN	*/
 };
 
-struct puffs_vnreq_mknod {
+struct puffs_vnmsg_mknod {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -456,7 +405,7 @@ struct puffs_vnreq_mknod {
 	void			*pvnr_newnode;		/* IN	*/
 };
 
-struct puffs_vnreq_open {
+struct puffs_vnmsg_open {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -464,7 +413,7 @@ struct puffs_vnreq_open {
 	int			pvnr_mode;		/* OUT	*/
 };
 
-struct puffs_vnreq_close {
+struct puffs_vnmsg_close {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -472,7 +421,7 @@ struct puffs_vnreq_close {
 	int			pvnr_fflag;		/* OUT	*/
 };
 
-struct puffs_vnreq_access {
+struct puffs_vnmsg_access {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -480,9 +429,9 @@ struct puffs_vnreq_access {
 	int			pvnr_mode;		/* OUT	*/
 };
 
-#define puffs_vnreq_setattr puffs_vnreq_setgetattr
-#define puffs_vnreq_getattr puffs_vnreq_setgetattr
-struct puffs_vnreq_setgetattr {
+#define puffs_vnmsg_setattr puffs_vnmsg_setgetattr
+#define puffs_vnmsg_getattr puffs_vnmsg_setgetattr
+struct puffs_vnmsg_setgetattr {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -490,9 +439,9 @@ struct puffs_vnreq_setgetattr {
 	struct vattr		pvnr_va;		/* IN/OUT (op depend) */
 };
 
-#define puffs_vnreq_read puffs_vnreq_readwrite
-#define puffs_vnreq_write puffs_vnreq_readwrite
-struct puffs_vnreq_readwrite {
+#define puffs_vnmsg_read puffs_vnmsg_rw
+#define puffs_vnmsg_write puffs_vnmsg_rw
+struct puffs_vnmsg_rw {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	  */
@@ -503,9 +452,9 @@ struct puffs_vnreq_readwrite {
 	uint8_t			pvnr_data[0];		/* IN/OUT (wr/rd) */
 };
 
-#define puffs_vnreq_ioctl puffs_vnreq_fcnioctl
-#define puffs_vnreq_fcntl puffs_vnreq_fcnioctl
-struct puffs_vnreq_fcnioctl {
+#define puffs_vnmsg_ioctl puffs_vnreq_fcnioctl
+#define puffs_vnmsg_fcntl puffs_vnreq_fcnioctl
+struct puffs_vnmsg_fcnioctl {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;
@@ -518,14 +467,14 @@ struct puffs_vnreq_fcnioctl {
 	int			pvnr_copyback;
 };
 
-struct puffs_vnreq_poll {
+struct puffs_vnmsg_poll {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_events;		/* IN/OUT */
 	struct puffs_kcid	pvnr_cid;		/* OUT    */
 };
 
-struct puffs_vnreq_fsync {
+struct puffs_vnmsg_fsync {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -535,7 +484,7 @@ struct puffs_vnreq_fsync {
 	int			pvnr_flags;		/* OUT	*/
 };
 
-struct puffs_vnreq_seek {
+struct puffs_vnmsg_seek {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
@@ -543,7 +492,7 @@ struct puffs_vnreq_seek {
 	off_t			pvnr_newoff;		/* OUT	*/
 };
 
-struct puffs_vnreq_remove {
+struct puffs_vnmsg_remove {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -553,7 +502,7 @@ struct puffs_vnreq_remove {
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
 
-struct puffs_vnreq_mkdir {
+struct puffs_vnmsg_mkdir {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -564,7 +513,7 @@ struct puffs_vnreq_mkdir {
 	void			*pvnr_newnode;		/* IN	*/
 };
 
-struct puffs_vnreq_rmdir {
+struct puffs_vnmsg_rmdir {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -574,7 +523,7 @@ struct puffs_vnreq_rmdir {
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
 
-struct puffs_vnreq_link {
+struct puffs_vnmsg_link {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -584,7 +533,7 @@ struct puffs_vnreq_link {
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
 
-struct puffs_vnreq_rename {
+struct puffs_vnmsg_rename {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn_src;		/* OUT	*/
@@ -599,7 +548,7 @@ struct puffs_vnreq_rename {
 	void			*pvnr_cookie_targdir;	/* OUT	*/
 };
 
-struct puffs_vnreq_symlink {
+struct puffs_vnmsg_symlink {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
@@ -611,7 +560,7 @@ struct puffs_vnreq_symlink {
 	char			pvnr_link[MAXPATHLEN];	/* OUT	*/
 };
 
-struct puffs_vnreq_readdir {
+struct puffs_vnmsg_readdir {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	  */
@@ -625,7 +574,7 @@ struct puffs_vnreq_readdir {
 				    __aligned(ALIGNBYTES+1);
 };
 
-struct puffs_vnreq_readlink {
+struct puffs_vnmsg_readlink {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT */
@@ -633,32 +582,32 @@ struct puffs_vnreq_readlink {
 	char			pvnr_link[MAXPATHLEN];	/* IN, XXX  */
 };
 
-struct puffs_vnreq_reclaim {
+struct puffs_vnmsg_reclaim {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
-struct puffs_vnreq_inactive {
+struct puffs_vnmsg_inactive {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
-struct puffs_vnreq_print {
+struct puffs_vnmsg_print {
 	struct puffs_req	pvn_pr;
 
 	/* empty */
 };
 
-struct puffs_vnreq_pathconf {
+struct puffs_vnmsg_pathconf {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_name;		/* OUT	*/
 	int			pvnr_retval;		/* IN	*/
 };
 
-struct puffs_vnreq_advlock {
+struct puffs_vnmsg_advlock {
 	struct puffs_req	pvn_pr;
 
 	struct flock		pvnr_fl;		/* OUT	*/
@@ -667,7 +616,7 @@ struct puffs_vnreq_advlock {
 	int			pvnr_flags;		/* OUT	*/
 };
 
-struct puffs_vnreq_mmap {
+struct puffs_vnmsg_mmap {
 	struct puffs_req	pvn_pr;
 
 	vm_prot_t		pvnr_prot;		/* OUT	*/
@@ -705,24 +654,5 @@ struct puffs_error {
 	int			perr_error;
 	char			perr_str[256];
 };
-
-/* notyet */
-#if 0
-struct puffs_vnreq_kqfilter { };
-struct puffs_vnreq_islocked { };
-#endif
-struct puffs_vnreq_getextattr { };
-struct puffs_vnreq_setextattr { };
-struct puffs_vnreq_listextattr { };
-
-#ifdef _KERNEL
-#define PUFFS_VFSREQ(a)							\
-	struct puffs_vfsreq_##a a##_arg;				\
-	memset(&a##_arg, 0, sizeof(struct puffs_vfsreq_##a))
-
-#define PUFFS_VNREQ(a)							\
-	struct puffs_vnreq_##a a##_arg;					\
-	memset(&a##_arg, 0, sizeof(struct puffs_vnreq_##a))
-#endif
 
 #endif /* _FS_PUFFS_PUFFS_MSGIF_H_ */

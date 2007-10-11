@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.85 2007/10/01 21:10:51 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.86 2007/10/11 19:41:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -228,12 +228,6 @@ struct puffs_ops {
 	    void *, int, int *);
 	int (*puffs_node_advlock)(struct puffs_cc *,
 	    void *, void *, int, struct flock *, int);
-	int (*puffs_node_getextattr)(struct puffs_cc *,
-	    void *, struct puffs_vnreq_getextattr *);
-	int (*puffs_node_setextattr)(struct puffs_cc *,
-	    void *, struct puffs_vnreq_setextattr *);
-	int (*puffs_node_listextattr)(struct puffs_cc *,
-	    void *, struct puffs_vnreq_listextattr *);
 	int (*puffs_node_read)(struct puffs_cc *, void *,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 	int (*puffs_node_write)(struct puffs_cc *, void *,
@@ -367,12 +361,6 @@ enum {
 	    void *, int, int *);					\
 	int fsname##_node_advlock(struct puffs_cc *,			\
 	    void *, void *, int, struct flock *, int);			\
-	int fsname##_node_getextattr(struct puffs_cc *,			\
-	    void *, struct puffs_vnreq_getextattr *);			\
-	int fsname##_node_setextattr(struct puffs_cc *,			\
-	    void *, struct puffs_vnreq_setextattr *);			\
-	int fsname##_node_listextattr(struct puffs_cc *,		\
-	    void *, struct puffs_vnreq_listextattr *);			\
 	int fsname##_node_read(struct puffs_cc *, void *,		\
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);\
 	int fsname##_node_write(struct puffs_cc *, void *,		\
@@ -391,7 +379,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 27
+#define PUFFS_DEVEL_LIBVERSION 28
 #define puffs_init(a,b,c,d,e) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 

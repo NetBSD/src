@@ -1,4 +1,4 @@
-/*	$NetBSD: suspend.c,v 1.5 2007/07/19 12:52:28 pooka Exp $	*/
+/*	$NetBSD: suspend.c,v 1.6 2007/10/11 19:41:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: suspend.c,v 1.5 2007/07/19 12:52:28 pooka Exp $");
+__RCSID("$NetBSD: suspend.c,v 1.6 2007/10/11 19:41:15 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -36,15 +36,27 @@ __RCSID("$NetBSD: suspend.c,v 1.5 2007/07/19 12:52:28 pooka Exp $");
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <puffs.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "puffs_priv.h"
 
+/*ARGSUSED*/
 int
 puffs_fs_suspend(struct puffs_usermount *pu)
 {
+	struct puffs_frame pfr;
+	size_t n;
 
-	return ioctl(pu->pu_fd, PUFFSSUSPENDOP);
+	pfr.pfr_len = sizeof(struct puffs_frame);
+	pfr.pfr_type = PUFFSOP_SUSPEND;
+
+	n = write(pu->pu_fd, &pfr, sizeof(pfr));
+
+	/* XXX */
+	assert(n == sizeof(pfr));
+	return 0;
 }

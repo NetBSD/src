@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.7 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.8 2007/10/11 19:41:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.7 2007/06/06 01:55:00 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.8 2007/10/11 19:41:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -152,8 +152,6 @@ void
 puffs_cc_destroy(struct puffs_cc *pcc)
 {
 
-	if (pcc->pcc_preq)
-		free(pcc->pcc_preq);
 	free(pcc->pcc_stack);
 	free(pcc);
 }

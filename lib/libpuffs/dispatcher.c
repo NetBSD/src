@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.14 2007/10/09 21:04:55 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.15 2007/10/11 19:41:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.14 2007/10/09 21:04:55 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.15 2007/10/11 19:41:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -100,12 +100,7 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 		pcc->pcc_flags = PCC_FAKECC;
 	} else {
 		pcc = puffs_cc_create(pu);
-
-		/* XXX: temporary kludging */
-		pcc->pcc_preq = malloc(preq->preq_buflen);
-		if (pcc->pcc_preq == NULL)
-			return -1;
-		(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
+		pcc->pcc_preq = preq;
 	}
 
 	puffs_docc(pcc, ppr);
@@ -162,7 +157,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		switch (preq->preq_optype) {
 		case PUFFS_VFS_UNMOUNT:
 		{
-			struct puffs_vfsreq_unmount *auxt = auxbuf;
+			struct puffs_vfsmsg_unmount *auxt = auxbuf;
 			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
 			PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTING);
@@ -177,7 +172,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VFS_STATVFS:
 		{
-			struct puffs_vfsreq_statvfs *auxt = auxbuf;
+			struct puffs_vfsmsg_statvfs *auxt = auxbuf;
 			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
 			error = pops->puffs_fs_statvfs(pcc,
@@ -187,7 +182,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VFS_SYNC:
 		{
-			struct puffs_vfsreq_sync *auxt = auxbuf;
+			struct puffs_vfsmsg_sync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvfsr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
@@ -198,7 +193,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VFS_FHTOVP:
 		{
-			struct puffs_vfsreq_fhtonode *auxt = auxbuf;
+			struct puffs_vfsmsg_fhtonode *auxt = auxbuf;
 			struct puffs_newinfo pni;
 
 			pni.pni_cookie = &auxt->pvfsr_fhcookie;
@@ -214,7 +209,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VFS_VPTOFH:
 		{
-			struct puffs_vfsreq_nodetofh *auxt = auxbuf;
+			struct puffs_vfsmsg_nodetofh *auxt = auxbuf;
 
 			error = pops->puffs_fs_nodetofh(pcc,
 			    auxt->pvfsr_fhcookie, auxt->pvfsr_data,
@@ -225,7 +220,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VFS_SUSPEND:
 		{
-			struct puffs_vfsreq_suspend *auxt = auxbuf;
+			struct puffs_vfsmsg_suspend *auxt = auxbuf;
 
 			error = 0;
 			if (pops->puffs_fs_suspend == NULL)
@@ -249,7 +244,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 		{
-			struct puffs_vnreq_lookup *auxt = auxbuf;
+			struct puffs_vnmsg_lookup *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
@@ -295,7 +290,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_CREATE:
 		{
-			struct puffs_vnreq_create *auxt = auxbuf;
+			struct puffs_vnmsg_create *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
@@ -336,7 +331,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_MKNOD:
 		{
-			struct puffs_vnreq_mknod *auxt = auxbuf;
+			struct puffs_vnmsg_mknod *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
@@ -377,7 +372,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_OPEN:
 		{
-			struct puffs_vnreq_open *auxt = auxbuf;
+			struct puffs_vnmsg_open *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -393,7 +388,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_CLOSE:
 		{
-			struct puffs_vnreq_close *auxt = auxbuf;
+			struct puffs_vnmsg_close *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -410,7 +405,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_ACCESS:
 		{
-			struct puffs_vnreq_access *auxt = auxbuf;
+			struct puffs_vnmsg_access *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -427,7 +422,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_GETATTR:
 		{
-			struct puffs_vnreq_getattr *auxt = auxbuf;
+			struct puffs_vnmsg_getattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -444,7 +439,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_SETATTR:
 		{
-			struct puffs_vnreq_setattr *auxt = auxbuf;
+			struct puffs_vnmsg_setattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -461,7 +456,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_MMAP:
 		{
-			struct puffs_vnreq_mmap *auxt = auxbuf;
+			struct puffs_vnmsg_mmap *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -478,7 +473,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_FSYNC:
 		{
-			struct puffs_vnreq_fsync *auxt = auxbuf;
+			struct puffs_vnmsg_fsync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
@@ -496,7 +491,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_SEEK:
 		{
-			struct puffs_vnreq_seek *auxt = auxbuf;
+			struct puffs_vnmsg_seek *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
 			if (pops->puffs_node_seek == NULL) {
@@ -512,7 +507,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_REMOVE:
 		{
-			struct puffs_vnreq_remove *auxt = auxbuf;
+			struct puffs_vnmsg_remove *auxt = auxbuf;
 			struct puffs_cn pcn;
 			if (pops->puffs_node_remove == NULL) {
 				error = 0;
@@ -530,7 +525,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_LINK:
 		{
-			struct puffs_vnreq_link *auxt = auxbuf;
+			struct puffs_vnmsg_link *auxt = auxbuf;
 			struct puffs_cn pcn;
 			if (pops->puffs_node_link == NULL) {
 				error = 0;
@@ -557,7 +552,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RENAME:
 		{
-			struct puffs_vnreq_rename *auxt = auxbuf;
+			struct puffs_vnmsg_rename *auxt = auxbuf;
 			struct puffs_cn pcn_src, pcn_targ;
 			struct puffs_node *pn_src;
 
@@ -625,7 +620,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_MKDIR:
 		{
-			struct puffs_vnreq_mkdir *auxt = auxbuf;
+			struct puffs_vnmsg_mkdir *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
@@ -666,7 +661,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RMDIR:
 		{
-			struct puffs_vnreq_rmdir *auxt = auxbuf;
+			struct puffs_vnmsg_rmdir *auxt = auxbuf;
 			struct puffs_cn pcn;
 			if (pops->puffs_node_rmdir == NULL) {
 				error = 0;
@@ -684,7 +679,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_SYMLINK:
 		{
-			struct puffs_vnreq_symlink *auxt = auxbuf;
+			struct puffs_vnmsg_symlink *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
@@ -726,7 +721,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_READDIR:
 		{
-			struct puffs_vnreq_readdir *auxt = auxbuf;
+			struct puffs_vnmsg_readdir *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			struct dirent *dent;
 			off_t *cookies;
@@ -759,14 +754,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			assert(auxt->pvnr_ncookies <= origcookies);
 
 			/* need to move a bit more */
-			preq->preq_buflen = sizeof(struct puffs_vnreq_readdir) 
+			preq->preq_buflen = sizeof(struct puffs_vnmsg_readdir) 
 			    + auxt->pvnr_dentoff + (res - auxt->pvnr_resid);
 			break;
 		}
 
 		case PUFFS_VN_READLINK:
 		{
-			struct puffs_vnreq_readlink *auxt = auxbuf;
+			struct puffs_vnmsg_readlink *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
 			if (pops->puffs_node_readlink == NULL) {
@@ -782,7 +777,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RECLAIM:
 		{
-			struct puffs_vnreq_reclaim *auxt = auxbuf;
+			struct puffs_vnmsg_reclaim *auxt = auxbuf;
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_reclaim == NULL) {
@@ -796,7 +791,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_INACTIVE:
 		{
-			struct puffs_vnreq_inactive *auxt = auxbuf;
+			struct puffs_vnmsg_inactive *auxt = auxbuf;
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_inactive == NULL) {
@@ -810,7 +805,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_PATHCONF:
 		{
-			struct puffs_vnreq_pathconf *auxt = auxbuf;
+			struct puffs_vnmsg_pathconf *auxt = auxbuf;
 			if (pops->puffs_node_pathconf == NULL) {
 				error = 0;
 				break;
@@ -824,7 +819,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_ADVLOCK:
 		{
-			struct puffs_vnreq_advlock *auxt = auxbuf;
+			struct puffs_vnmsg_advlock *auxt = auxbuf;
 			if (pops->puffs_node_advlock == NULL) {
 				error = 0;
 				break;
@@ -850,7 +845,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_READ:
 		{
-			struct puffs_vnreq_read *auxt = auxbuf;
+			struct puffs_vnmsg_read *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 			size_t res;
 
@@ -866,14 +861,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    pcr, auxt->pvnr_ioflag);
 
 			/* need to move a bit more */
-			preq->preq_buflen = sizeof(struct puffs_vnreq_read)
+			preq->preq_buflen = sizeof(struct puffs_vnmsg_read)
 			    + (res - auxt->pvnr_resid);
 			break;
 		}
 
 		case PUFFS_VN_WRITE:
 		{
-			struct puffs_vnreq_write *auxt = auxbuf;
+			struct puffs_vnmsg_write *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
 			if (pops->puffs_node_write == NULL) {
@@ -887,13 +882,13 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    pcr, auxt->pvnr_ioflag);
 
 			/* don't need to move data back to the kernel */
-			preq->preq_buflen = sizeof(struct puffs_vnreq_write);
+			preq->preq_buflen = sizeof(struct puffs_vnmsg_write);
 			break;
 		}
 
 		case PUFFS_VN_POLL:
 		{
-			struct puffs_vnreq_poll *auxt = auxbuf;
+			struct puffs_vnmsg_poll *auxt = auxbuf;
 			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_poll == NULL) {

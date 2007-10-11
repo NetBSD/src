@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.65 2007/10/01 21:10:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.66 2007/10/11 19:41:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.65 2007/10/01 21:10:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.66 2007/10/11 19:41:15 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -94,11 +94,6 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
-
-	/* XXX: not implemented in the kernel */
-	FILLOP(getextattr, GETEXTATTR);
-	FILLOP(setextattr, SETEXTATTR);
-	FILLOP(listextattr, LISTEXTATTR);
 }
 #undef FILLOP
 
@@ -223,7 +218,7 @@ puffs_setmaxreqlen(struct puffs_usermount *pu, size_t reqlen)
 		warnx("puffs_setmaxreqlen: call has effect only "
 		    "before mount\n");
 
-	pu->pu_kargp->pa_maxreqlen = reqlen;
+	pu->pu_kargp->pa_maxmsglen = reqlen;
 }
 
 void
@@ -349,8 +344,10 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
 	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
 		goto out;
+#if 0
 	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
 		goto out;
+#endif
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
@@ -408,7 +405,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_root_vtype = VDIR;
 	pargs->pa_root_vsize = 0;
 	pargs->pa_root_rdev = 0;
-	pargs->pa_maxreqlen = 0;
+	pargs->pa_maxmsglen = 0;
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
