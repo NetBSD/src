@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.320 2007/10/08 20:06:18 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.321 2007/10/11 19:45:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.320 2007/10/08 20:06:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.321 2007/10/11 19:45:24 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -284,7 +284,7 @@ main(void)
 	 */
 	consinit();
 
-	KERNEL_LOCK_INIT();
+	kernel_lock_init();
 
 	uvm_init();
 
