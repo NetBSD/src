@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.1.2.13 2007/10/10 00:13:40 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.1.2.14 2007/10/11 06:15:20 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.13 2007/10/10 00:13:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.1.2.14 2007/10/11 06:15:20 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -52,6 +52,8 @@ struct pic_ops {
 	void (*pic_ack_irq)(struct pic_ops *, int); /* IRQ numbner */
 	/* IRQ number, type, priority */
 	void (*pic_establish_irq)(struct pic_ops *, int, int, int);
+	/* finish setup after CPUs are attached */
+	void (*pic_finish_setup)(struct pic_ops *);
 	char pic_name[16];
 };
 
@@ -89,6 +91,9 @@ void	pic_ext_intr(void);
 void	pic_init(void);
 const char *intr_typename(int);
 void	dummy_pic_establish_intr(struct pic_ops *, int, int, int);
+
+/* this is called after attaching CPUs so PICs can setup interrupt routing */
+void pic_finish_setup(void);
 
 /* address, enable passthrough */
 #define PIC_IVR_IBM	0
