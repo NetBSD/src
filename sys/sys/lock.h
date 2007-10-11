@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.7 2007/10/11 11:08:17 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.8 2007/10/11 11:21:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -232,10 +232,10 @@ struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
-int	lockmgr(volatile struct lock *, u_int flags, kmutex_t *);
+int	lockmgr(struct lock *, u_int flags, kmutex_t *);
 void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
-void	lockmgr_printinfo(volatile struct lock *);
+void	lockmgr_printinfo(struct lock *);
 
 /*
  * From <machine/lock.h>.
