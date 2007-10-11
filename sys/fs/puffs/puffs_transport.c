@@ -1,10 +1,10 @@
-/* $NetBSD: puffs_transport.c,v 1.25 2007/10/04 21:20:47 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.26 2007/10/11 19:41:14 pooka Exp $ */
 
 /*
- * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Ulla Tuominen Foundation.
+ * Ulla Tuominen Foundation and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.25 2007/10/04 21:20:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.26 2007/10/11 19:41:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/fstrans.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
@@ -120,16 +121,76 @@ static int
 puffs_fop_read(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
+	struct puffs_mount *pmp = FPTOPMP(fp);
+	size_t origres, moved;
+	int error;
 
-	return ENODEV;
+	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
+		printf("puffs_fop_read: puffs %p, not mounted\n", pmp);
+		return ENOENT;
+	}
+
+	if (pmp->pmp_curput == NULL) {
+		error = puffs_msgif_getout(pmp, uio->uio_resid,
+		    fp->f_flag & O_NONBLOCK, &pmp->pmp_curput,
+		    &pmp->pmp_curres, &pmp->pmp_curopaq);
+		if (error)
+			return error;
+	}
+
+	origres = uio->uio_resid;
+	error = uiomove(pmp->pmp_curput, pmp->pmp_curres, uio);
+	moved = origres - uio->uio_resid;
+	DPRINTF(("puffs_fop_read (%p): moved %zu bytes from %p, error %d\n",
+	    pmp, moved, pmp->pmp_curput, error));
+
+	KASSERT(pmp->pmp_curres >= moved);
+	pmp->pmp_curres -= moved;
+	pmp->pmp_curput += moved;
+
+	if (pmp->pmp_curres == 0) {
+		puffs_msgif_releaseout(pmp, pmp->pmp_curopaq, error);
+		pmp->pmp_curput = NULL;
+	}
+
+	return error;
 }
 
 static int
 puffs_fop_write(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
+	struct puffs_mount *pmp = FPTOPMP(fp);
+	struct puffs_frame pfr;
+	uint8_t *buf;
+	size_t frsize;
+	int error;
 
-	return ENODEV;
+	DPRINTF(("puffs_fop_write (%p): writing response, resid %zu\n",
+	    pmp, uio->uio_resid));
+
+	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
+		printf("puffs_fop_write: puffs %p, not mounted\n", pmp);
+		return ENOENT;
+	}
+
+	error = uiomove(&pfr, sizeof(struct puffs_frame), uio);
+	if (error)
+		return error;
+
+	/* Sorry mate, the kernel doesn't buffer. */
+	frsize = pfr.pfr_len - sizeof(struct puffs_frame);
+	if (uio->uio_resid < frsize)
+		return EINVAL;
+		
+	buf = kmem_alloc(frsize + sizeof(struct puffs_frame), KM_SLEEP);
+	memcpy(buf, &pfr, sizeof(pfr));
+	error = uiomove(buf+sizeof(struct puffs_frame), frsize, uio);
+	if (error == 0)
+		puffs_msgif_incoming(pmp, buf);
+	kmem_free(buf, frsize + sizeof(struct puffs_frame));
+
+	return error;
 }
 
 /*
@@ -154,7 +215,7 @@ puffs_fop_poll(struct file *fp, int events, struct lwp *l)
 
 	/* check queue */
 	mutex_enter(&pmp->pmp_lock);
-	if (!TAILQ_EMPTY(&pmp->pmp_req_touser))
+	if (!TAILQ_EMPTY(&pmp->pmp_msg_touser))
 		revents |= PUFFPOLL_EVSET;
 	else
 		selrecord(l, pmp->pmp_sel);
@@ -442,8 +503,6 @@ dosuspendresume(void *arg)
 static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	struct puffs_mount *pmp = FPTOPMP(fp);
-	int rv;
 
 	/*
 	 * work already done in sys_ioctl().  skip sanity checks to enable
@@ -451,6 +510,16 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	 */
 	if (cmd == FIONBIO)
 		return 0;
+
+	return EINVAL;
+
+		puffs_flush(NULL, data);
+		kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
+		    NULL, NULL, "puffsusp");
+
+#if 0
+	struct puffs_mount *pmp = FPTOPMP(fp);
+	int rv;
 
 	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
 		printf("puffs_fop_ioctl: puffs %p, not mounted\n", pmp);
@@ -501,6 +570,7 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	}
 
 	return rv;
+#endif
 }
 
 /* kqueue stuff */
@@ -532,7 +602,7 @@ filt_puffsioctl(struct knote *kn, long hint)
 		return 0;
 
 	mutex_enter(&pmp->pmp_lock);
-	kn->kn_data = pmp->pmp_req_touser_count;
+	kn->kn_data = pmp->pmp_msg_touser_count;
 	mutex_exit(&pmp->pmp_lock);
 
 	return kn->kn_data != 0;
@@ -563,7 +633,8 @@ puffs_fop_kqfilter(struct file *fp, struct knote *kn)
 
 
 /*
- * Device routines
+ * Device routines.  These are for when /dev/puffs is initially
+ * opened before it has been cloned.
  */
 
 dev_type_open(puffscdopen);
