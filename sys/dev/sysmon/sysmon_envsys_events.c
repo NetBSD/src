@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.38 2007/10/10 23:25:39 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.39 2007/10/11 16:51:48 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.38 2007/10/10 23:25:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.39 2007/10/11 16:51:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -531,19 +531,6 @@ do {									\
 	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
 
-	/*
-	 * Check if the system is running in low power and send the
-	 * event to powerd (if running) or shutdown the system otherwise.
-	 */
-	if (!sysmon_low_power && sme_event_check_low_power()) {
-		struct penvsys_state pes;
-
-		pes.pes_type = PENVSYS_TYPE_BATTERY;
-		sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
-		sysmon_low_power = true;
-		callout_stop(&seeco);
-		goto out;
-	}
 
 	switch (see->type) {
 	/*
@@ -630,6 +617,20 @@ do {									\
 			/* save current drive state */
 			see->evsent = edata->value_cur;
 			sysmon_penvsys_event(&see->pes, see->type);
+		}
+
+		/*
+		 * Check if the system is running in low power and send the
+		 * event to powerd (if running) or shutdown the system
+		 * otherwise.
+		 */
+		if (!sysmon_low_power && sme_event_check_low_power()) {
+			struct penvsys_state pes;
+
+			pes.pes_type = PENVSYS_TYPE_BATTERY;
+			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
+			sysmon_low_power = true;
+			callout_stop(&seeco);
 		}
 
 		break;
