@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $ */
+/* $NetBSD: ipivar.h,v 1.1.2.2 2007/10/11 00:11:07 macallan Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.1.2.1 2007/10/10 18:41:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.1.2.2 2007/10/11 00:11:07 macallan Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
@@ -64,5 +64,15 @@ void setup_openpic_ipi(void);
 
 /* IPI Handler */
 int ppcipi_intr(void *);
+
+/* convenience */
+extern struct ipi_ops ipiops;
+
+static inline void
+ppc_send_ipi(int cpuid, u_long msg)
+{
+	ipiops.ppc_send_ipi(cpuid, msg);
+}
+
 
 #endif /*_IPI_VAR_H_*/
