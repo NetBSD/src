@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.21 2007/10/11 00:11:31 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.22 2007/10/11 06:17:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.21 2007/10/11 00:11:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.22 2007/10/11 06:17:10 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,6 +98,19 @@ pic_add(struct pic_ops *pic)
 	num_pics++;
 	
 	return pic->pic_intrbase;
+}
+
+void
+pic_finish_setup(void)
+{
+	struct pic_ops *pic;
+	int i;
+
+	for (i = 0; i < num_pics; i++) {
+		pic = pics[i];
+		if (pic->pic_finish_setup != NULL)
+			pic->pic_finish_setup(pic);
+	}
 }
 
 static struct pic_ops *
@@ -480,9 +493,6 @@ pic_do_pending_int(void)
 	pcpl = ci->ci_cpl;
 again:
 
-#ifdef MULTIPROCESSOR
-	if (ci->ci_cpuid == 0) {
-#endif
 	/* Do now unmasked pendings */
 	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
 		irq = 31 - cntlzw(hwpend);
@@ -518,9 +528,6 @@ again:
 		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
 		    is->is_type);
 	}
-#ifdef MULTIPROCESSOR
-	}
-#endif
 
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_SERIAL)) {
 		ci->ci_ipending &= ~(1 << SIR_SERIAL);
@@ -589,30 +596,13 @@ pic_handle_intr(void *cookie)
 	msr = mfmsr();
 	pcpl = ci->ci_cpl;
 
-#ifdef MULTIPROCESSOR
-	/* Only cpu0 can handle interrupts. */
-	if (cpu_number() != 0) {
-
-		/* THIS IS WRONG XXX */
-		while (realirq == ipiops.ppc_ipi_vector) {
-			pic->pic_ack_irq(pic, realirq);
-			ppcipi_intr(NULL);
-			realirq = pic->pic_get_irq(pic);
-		}
-		if (realirq == 255) {
-			return 0;
-		}
-		panic("non-IPI intr %d on cpu%d", realirq, cpu_number());
-	}
-#endif
-
 start:
 
 #ifdef MULTIPROCESSOR
 	/* THIS IS WRONG XXX */
 	while (realirq == ipiops.ppc_ipi_vector) {
-		pic->pic_ack_irq(pic, realirq);
 		ppcipi_intr(NULL);
+		pic->pic_ack_irq(pic, realirq);
 		realirq = pic->pic_get_irq(pic);
 	}
 	if (realirq == 255) {
@@ -693,6 +683,7 @@ splraise(int ncpl)
 	int ocpl;
 
 	__asm volatile("sync; eieio");	/* don't reorder.... */
+	
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ocpl | ncpl;
 	__asm volatile("sync; eieio");	/* reorder protect */
@@ -702,8 +693,8 @@ splraise(int ncpl)
 void
 splx(int ncpl)
 {
-
 	struct cpu_info *ci = curcpu();
+	
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
 	if (ci->ci_ipending & ~ncpl)
