@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.302 2007/10/10 20:42:27 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.303 2007/10/11 19:53:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.302 2007/10/10 20:42:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.303 2007/10/11 19:53:42 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1111,7 +1111,6 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 			vp->v_specinfo = NULL;
 		}
 	}
-	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 
 	/*
 	 * If purging an active vnode, it must be closed and

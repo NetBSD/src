@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.86 2007/10/10 20:42:41 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.87 2007/10/11 19:53:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.86 2007/10/10 20:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.87 2007/10/11 19:53:43 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -152,7 +152,6 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
-	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 	return error;
 }
 
@@ -194,8 +193,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	LOCK_ASSERT(((flags & PGO_LOCKED) != 0 &&
 		     simple_lock_held(&vp->v_interlock)) ||
-		    ((flags & PGO_LOCKED) == 0 &&
-		     !simple_lock_held(&vp->v_interlock)));
+		    (flags & PGO_LOCKED) == 0);
 	return error;
 }
 

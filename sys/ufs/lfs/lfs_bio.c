@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.105 2007/10/10 20:42:34 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.106 2007/10/11 19:53:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.105 2007/10/10 20:42:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.106 2007/10/11 19:53:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,6 @@ lfs_flush_fs(struct lfs *fs, int flags)
 {
 	ASSERT_NO_SEGLOCK(fs);
 	LOCK_ASSERT(simple_lock_held(&fs->lfs_interlock));
-	LOCK_ASSERT(!simple_lock_held(&lfs_subsys_lock));
 	if (fs->lfs_ronly)
 		return;
 
@@ -641,7 +640,6 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	fs = ip->i_lfs;
 
 	ASSERT_NO_SEGLOCK(fs);
-	LOCK_ASSERT(!simple_lock_held(&fs->lfs_interlock));
 
 	/*
 	 * If we would flush below, but dirops are active, sleep.

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.132 2007/10/11 19:45:25 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.133 2007/10/11 19:53:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.132 2007/10/11 19:45:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133 2007/10/11 19:53:37 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2353,8 +2353,6 @@ pool_allocator_alloc(struct pool *pp, int flags)
 	struct pool_allocator *pa = pp->pr_alloc;
 	void *res;
 
-	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
-
 	res = (*pa->pa_alloc)(pp, flags);
 	if (res == NULL && (flags & PR_WAITOK) == 0) {
 		/*
@@ -2374,8 +2372,6 @@ static void
 pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
-
-	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
 
 	(*pa->pa_free)(pp, v);
 }
