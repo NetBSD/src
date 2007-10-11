@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.127 2007/10/11 21:19:28 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.127 2007/10/11 21:19:28 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.126 2007/10/05 15:27:45 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.127 2007/10/11 21:19:28 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2028,13 +2028,17 @@ Shell_Init(void)
 {
     if (shellPath == NULL) {
 	/*
-	 * The user didn't specify a shell to use, so we are using the
-	 * default one... Both the absolute path and the last component
-	 * must be set. The last component is taken from the 'name' field
-	 * of the default shell description pointed-to by commandShell.
-	 * All default shells are located in _PATH_DEFSHELLDIR.
+	 * We are using the default shell, which may be an absolute
+	 * path if _BASENAME_DEFSHELL is defined.
 	 */
 	shellName = commandShell->name;
+#ifdef _BASENAME_DEFSHELL
+	if (*shellName == '/') {
+	    shellPath = shellName;
+	    shellName = strrchr(shellPath, '/');
+	    shellName++;
+	} else
+#endif
 	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
     }
     if (commandShell->exit == NULL) {
