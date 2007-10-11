@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.63 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.64 2007/10/11 22:06:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.63 2007/10/11 19:41:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.64 2007/10/11 22:06:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -100,7 +100,9 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
 	/* devel phase */
 	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
-		printf("puffs_mount: development version mismatch\n");
+		printf("puffs_mount: development version mismatch: "
+		    "kernel %d, lib %d\n",
+		    PUFFSVERSION, args->pa_vers & ~PUFFSDEVELVERS);
 		error = EINVAL;
 		goto out;
 	}
