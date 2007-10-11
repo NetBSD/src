@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.20 2007/07/22 13:19:38 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.21 2007/10/11 13:50:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -212,6 +212,8 @@ dtfs_freenode(struct puffs_node *pn)
 		assert(dtm->dtm_fsizes >= pn->pn_va.va_size);
 		dtm->dtm_fsizes -= pn->pn_va.va_size;
 		for (i = 0; i < BLOCKNUM(df->df_datalen, DTFS_BLOCKSHIFT); i++)
+			free(df->df_blocks[i]);
+		if (df->df_datalen > i << DTFS_BLOCKSHIFT)
 			free(df->df_blocks[i]);
 		break;
 	case VLNK:
