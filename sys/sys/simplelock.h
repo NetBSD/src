@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.4 2007/10/11 19:45:26 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.5 2007/10/11 19:49:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct simplelock {
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
-#define	simple_lock_held(alp)	((alp)->lock_data == __SIMPLELOCK_LOCKED)
+#define	simple_lock_held(alp)	(__SIMPLELOCK_LOCKED_P(&(alp)->lock_data))
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
 #else
