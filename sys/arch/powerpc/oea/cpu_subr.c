@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28.16.6 2007/10/11 18:51:55 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.16.7 2007/10/11 19:41:16 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.6 2007/10/11 18:51:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.7 2007/10/11 19:41:16 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -209,9 +209,8 @@ static const struct cputab models[] = {
 	{ "",		0,		REVFMT_HEX }
 };
 
-
 #ifdef MULTIPROCESSOR
-struct cpu_info cpu_info[CPU_MAXNUM];
+struct cpu_info cpu_info[CPU_MAXNUM] = { { .ci_curlwp = &lwp0, }, }; 
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 extern int ticks_per_intr;
@@ -220,7 +219,7 @@ extern int ticks_per_intr;
 #include <arch/powerpc/pic/ipivar.h>
 extern struct bat battable[];
 #else
-struct cpu_info cpu_info[1];
+struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, }; 
 #endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
