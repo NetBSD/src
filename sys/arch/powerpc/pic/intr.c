@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.20 2007/10/10 18:41:34 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.1.2.21 2007/10/11 00:11:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.20 2007/10/10 18:41:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.21 2007/10/11 00:11:31 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.20 2007/10/10 18:41:34 garbled Exp $"
 
 #ifdef MULTIPROCESSOR
 #include <arch/powerpc/pic/ipivar.h>
-extern struct ipi_ops ipiops;
 #endif
 
 #define MAX_PICS	8	/* 8 PICs ought to be enough for everyone */
