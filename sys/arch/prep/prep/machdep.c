@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66.14.11 2007/10/10 00:13:40 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.12 2007/10/11 18:51:58 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.11 2007/10/10 00:13:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.12 2007/10/11 18:51:58 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -74,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.11 2007/10/10 00:13:40 garbled E
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
 #include <arch/powerpc/pic/picvar.h>
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/ipivar.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -259,6 +262,12 @@ cpu_reboot(int howto, char *what)
 	/* Disable intr */
 	splhigh();
 
+#ifdef MULTIPROCESSOR
+	/* Halt other CPUs */
+	ppc_send_ipi(IPI_T_NOTME, PPC_IPI_HALT);
+	delay(100000);  /* XXX */
+#endif
+
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		oea_dumpsys();
@@ -356,6 +365,9 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
 		    isa_pic);
 		oea_install_extint(pic_ext_intr);
+#ifdef MULTIPROCESSOR
+		setup_openpic_ipi();
+#endif
 		return 1;
 	}
 	return 0;

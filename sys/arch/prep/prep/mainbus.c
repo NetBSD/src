@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.16.6 2007/05/10 15:46:09 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.16.7 2007/10/11 18:51:58 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.6 2007/05/10 15:46:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.16.7 2007/10/11 18:51:58 garbled Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -97,6 +97,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 	struct confargs ca;
+	int i;
 #if NPCI > 0
 	struct genppc_pci_chipset_businfo *pbi;
 #ifdef PCI_NETBSD_CONFIGURE
@@ -112,9 +113,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	print_residual_device_info();
 #endif
 
-	ca.ca_name = "cpu";
-	ca.ca_node = 0;
-	config_found_ia(self, "mainbus", &ca, mainbus_print);
+	for (i = 0; i < CPU_MAXNUM; i++) {
+		ca.ca_name = "cpu";
+		ca.ca_node = i;
+		config_found_ia(self, "mainbus", &ca, mainbus_print);
+	}
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should

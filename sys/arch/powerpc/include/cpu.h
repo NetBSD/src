@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55.10.4 2007/10/04 18:23:39 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.10.5 2007/10/11 18:51:53 garbled Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -121,6 +121,19 @@ struct cpu_info {
 };
 
 #ifdef MULTIPROCESSOR
+
+struct cpu_hatch_data {
+	struct device *self;
+	struct cpu_info *ci;
+	int running;
+	int pir;
+	int hid0;
+	int sdr1;
+	int sr[16];
+	int batu[4], batl[4];
+	int tbu, tbl;
+};
+
 static __inline int
 cpu_number(void)
 {
@@ -310,6 +323,17 @@ void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
 void *mapiodev(paddr_t, psize_t);
 void unmapiodev(vaddr_t, vsize_t);
+
+#ifdef MULTIPROCESSOR
+int md_setup_trampoline(volatile struct cpu_hatch_data *, struct cpu_info *);
+void md_presync_timebase(volatile struct cpu_hatch_data *);
+void md_start_timebase(volatile struct cpu_hatch_data *);
+void md_sync_timebase(volatile struct cpu_hatch_data *);
+void md_setup_interrupts(void);
+int cpu_spinup(struct device *, struct cpu_info *);
+void cpu_hatch(void);
+void cpu_spinup_trampoline(void);
+#endif
 
 #define	DELAY(n)		delay(n)
 
