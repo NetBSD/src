@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.201 2007/10/06 12:52:43 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.202 2007/10/11 16:42:52 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.201 2007/10/06 12:52:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202 2007/10/11 16:42:52 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1934,6 +1934,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	struct scsi_rewind cmd;
 	int error;
 	int nmarks;
+	int timeout;
 
 	error = st_check_eod(st, FALSE, &nmarks, flags);
 	if (error) {
@@ -1942,6 +1943,9 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 		return (error);
 	}
 	st->flags &= ~ST_PER_ACTION;
+
+	/* If requestor asked for immediate response, set a short timeout */
+	timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
 	/*
 	 * ATAPI tapes always need immediate to be set
@@ -1954,7 +1958,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.byte2 = immediate;
 
 	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    ST_RETRIES, immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+	    ST_RETRIES, timeout, NULL, flags);
 	if (error) {
 		printf("%s: error %d trying to rewind\n",
 		    st->sc_dev.dv_xname, error);
