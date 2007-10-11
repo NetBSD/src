@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.14 2007/10/10 23:43:24 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.15 2007/10/11 11:08:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,65 +76,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.14 2007/10/10 23:43:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.15 2007/10/11 11:08:17 ad Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_ddb.h"
-
-#define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
+#include <sys/cpu.h>
+#include <sys/syslog.h>
 
-#include <machine/cpu.h>
 #include <machine/stdarg.h>
 
 #include <dev/lockstat.h>
 
-#if defined(LOCKDEBUG)
-#include <sys/syslog.h>
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
  * ansi and traditional c compiles.
  * XXX: this requires that stdarg.h define: va_alist and va_dcl
  */
-#include <machine/stdarg.h>
-
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
 static int acquire(volatile struct lock **, int *, int, int, int, uintptr_t);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
-
-#ifdef DDB
-#include <ddb/ddbvar.h>
-#include <machine/db_machdep.h>
-#include <ddb/db_command.h>
-#include <ddb/db_interface.h>
-#endif
-#endif /* defined(LOCKDEBUG) */
-
-#if defined(MULTIPROCESSOR)
-/*
- * IPL_BIGLOCK: block IPLs which need to grab kernel_mutex.
- * XXX IPL_VM or IPL_AUDIO should be enough.
- */
-#if !defined(__HAVE_SPLBIGLOCK)
-#define	splbiglock	splclock
-#endif
-int kernel_lock_id;
-#endif
-
+int	kernel_lock_id;
 __cpu_simple_lock_t kernel_lock;
-
-/*
- * Locking primitives implementation.
- * Locks provide shared/exclusive synchronization.
- */
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #define	COUNT(lkp, l, cpu_id, x)	(l)->l_locks += (x)
@@ -149,7 +119,7 @@ __cpu_simple_lock_t kernel_lock;
  */
 static int
 acquire(volatile struct lock **lkpp, int *s, int extflags,
-    int drain, int wanted, uintptr_t ra)
+	int drain, int wanted, uintptr_t ra)
 {
 	int error;
 	volatile struct lock *lkp = *lkpp;
@@ -187,15 +157,6 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 		if (extflags & LK_SLEEPFAIL) {
 			error = ENOLCK;
 			break;
-		}
-		if (lkp->lk_newlock != NULL) {
-			mutex_enter(__UNVOLATILE
-			    (&lkp->lk_newlock->lk_interlock));
-			mutex_exit(__UNVOLATILE
-			    (&lkp->lk_interlock));
-			if (lkp->lk_waitcount == 0)
-				wakeup(&lkp->lk_newlock);
-			*lkpp = lkp = lkp->lk_newlock;
 		}
 	}
 
@@ -269,26 +230,6 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 }
 
 /*
- * Transfer any waiting processes from one lock to another.
- */
-void
-transferlockers(struct lock *from, struct lock *to)
-{
-
-	KASSERT(from != to);
-	KASSERT((from->lk_flags & LK_WAITDRAIN) == 0);
-	if (from->lk_waitcount == 0)
-		return;
-	from->lk_newlock = to;
-	wakeup((void *)from);
-	tsleep((void *)&from->lk_newlock, from->lk_prio, "lkxfer", 0);
-	from->lk_newlock = NULL;
-	from->lk_flags &= ~(LK_WANT_EXCL | LK_WANT_UPGRADE);
-	KASSERT(from->lk_waitcount == 0);
-}
-
-
-/*
  * Initialize a lock; required before use.
  */
 void
@@ -299,7 +240,6 @@ lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
 	mutex_init(&lkp->lk_interlock, MUTEX_DEFAULT, IPL_NONE);
 	lkp->lk_lockholder = LK_NOPROC;
-	lkp->lk_newlock = NULL;
 	lkp->lk_prio = prio;
 	lkp->lk_timo = timo;
 	lkp->lk_wmesg = wmesg;
@@ -373,8 +313,7 @@ lockstatus(struct lock *lkp)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
-lockmgr(volatile struct lock *lkp, u_int flags,
-    kmutex_t *interlkp)
+lockmgr(volatile struct lock *lkp, u_int flags, kmutex_t *interlkp)
 {
 	int error;
 	pid_t pid;
@@ -756,8 +695,6 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 }
 #endif
 
-#if defined(MULTIPROCESSOR)
-
 /*
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
@@ -789,7 +726,7 @@ lockops_t _kernel_lock_ops = {
  * Initialize the kernel lock.
  */
 void
-_kernel_lock_init(void)
+kernel_lock_init(void)
 {
 
 	__cpu_simple_lock_init(&kernel_lock);
@@ -843,7 +780,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
 	LOCKDEBUG_WANTLOCK(kernel_lock_id, RETURN_ADDRESS, 0);
 
-	s = splbiglock();
+	s = splvm();
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
@@ -877,7 +814,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 			SPINLOCK_BACKOFF_HOOK;
 			SPINLOCK_SPIN_HOOK;
 		}
-		(void)splbiglock();
+		(void)splvm();
 	} while (!__cpu_simple_lock_try(&kernel_lock));
 
 	ci->ci_biglock_wanted = owant;
@@ -935,7 +872,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 
 	l->l_blcnt -= nlocks;
 	if (ci->ci_biglock_count == nlocks) {
-		s = splbiglock();
+		s = splvm();
 		LOCKDEBUG_UNLOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
 		ci->ci_biglock_count = 0;
 		__cpu_simple_unlock(&kernel_lock);
@@ -968,5 +905,3 @@ _kernel_lock_assert_unlocked()
 		_KERNEL_LOCK_ABORT("locked");
 }
 #endif
-
-#endif	/* MULTIPROCESSOR || LOCKDEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.6 2007/10/10 21:21:20 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.7 2007/10/11 11:08:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@ struct lock {
 	lwpid_t	lk_locklwp;		/* lid of exclusive holder */
 	pri_t	lk_prio;		/* priority at which to sleep */
 	int	lk_timo;		/* max sleep time */
-	struct	lock *lk_newlock;	/* lock taking over this lock */
 	uintptr_t lk_lock_addr;
 	uintptr_t lk_unlock_addr;
 };
