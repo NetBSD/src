@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.44.2 2007/10/10 21:18:13 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.44.3 2007/10/11 11:08:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -120,15 +120,15 @@ struct simplelock {
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
 #else
-#define	simple_lock_nothing() 	\
-do {				\
-	(void)0;		\
+#define	simple_lock_nothing(alp) 	\
+do {					\
+	(void)alp;			\
 } while (0);
-#define	simple_lock_init(alp)	simple_lock_nothing()
-#define	simple_lock(alp)	simple_lock_nothing()
+#define	simple_lock_init(alp)	simple_lock_nothing(alp)
+#define	simple_lock(alp)	simple_lock_nothing(alp)
 #define	simple_lock_held(alp)	1
 #define	simple_lock_try(alp)	1
-#define	simple_unlock(alp)	simple_lock_nothing()
+#define	simple_unlock(alp)	simple_lock_nothing(alp)
 #endif
 
 #define	simple_lock_only_held(x,y)			/* nothing */
