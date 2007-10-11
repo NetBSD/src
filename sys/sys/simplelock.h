@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.44.3 2007/10/11 11:08:17 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.44.4 2007/10/11 11:56:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -134,6 +134,12 @@ do {					\
 #define	simple_lock_only_held(x,y)			/* nothing */
 #define simple_lock_assert_locked(alp,lockname)		/* nothing */
 #define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
+
+#ifdef LOCKDEBUG
+#define	LOCK_ASSERT(x)		KASSERT(x)
+#else
+#define	LOCK_ASSERT(x)		/* nothing */
+#endif
 
 #endif	/* _KERNEL */
 
