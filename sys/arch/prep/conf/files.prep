@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.11 2007/06/26 18:38:11 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.12 2007/10/11 18:51:56 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -7,6 +7,7 @@ maxpartitions 8
 maxusers 2 8 64
 
 include	"arch/powerpc/pic/files.pic"
+include	"arch/powerpc/pic/files.ipi"
 
 defflag	opt_residual.h	RESIDUAL_DATA_DUMP
 defflag opt_nvram.h	NVRAM_DUMP

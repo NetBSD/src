@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57.20.3 2007/10/03 19:24:18 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.57.20.4 2007/10/11 18:51:51 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,19 +137,6 @@ __start:
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
-
-#if defined(MULTIPROCESSOR)
-ENTRY(cpu_spinup_trampoline)
-	li	0,0
-	mtmsr	0
-	isync
-
-	lis	3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
-
-	bl	_C_LABEL(cpu_hatch)
-	b       _C_LABEL(idle_loop)
-#endif
 
 #if defined (PPC_OEA64_BRIDGE)
 /* Return all 64 bits of HID4 */
