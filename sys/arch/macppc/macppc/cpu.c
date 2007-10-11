@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.16.7 2007/10/10 18:41:32 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.16.8 2007/10/11 00:17:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.7 2007/10/10 18:41:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.8 2007/10/11 00:17:19 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.16.7 2007/10/10 18:41:32 garbled Exp $"
 #ifdef MULTIPROCESSOR
 #include <arch/powerpc/pic/picvar.h>
 #include <arch/powerpc/pic/ipivar.h>
-extern struct ipi_ops ipiops;
 #endif
 
 #include <machine/autoconf.h>
@@ -299,9 +298,12 @@ KASSERT(ci != curcpu());
 		}
 
 		/* Start secondary CPU. */
+#if 1
 		out8(gpio, 4);
 		out8(gpio, 0);
-
+#else
+		openpic_write(OPENPIC_PROC_INIT, (1 << 1));
+#endif
 		/* Sync timebase. */
 		tb = mftb();
 		tb += 100000;  /* 3ms @ 33MHz */
@@ -319,7 +321,7 @@ KASSERT(ci != curcpu());
 	} else {
 		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
-		ipiops.ppc_send_ipi(1, PPC_IPI_NOMESG);
+		ppc_send_ipi(1, PPC_IPI_NOMESG);
 
 		/* sync timebase (XXX shouldn't be zero'ed) */
 		__asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
@@ -335,7 +337,7 @@ KASSERT(ci != curcpu());
 
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
-		ipiops.ppc_send_ipi(1, PPC_IPI_NOMESG);
+		ppc_send_ipi(1, PPC_IPI_NOMESG);
 	}
 
 	delay(200000);		/* wait for secondary printf */
