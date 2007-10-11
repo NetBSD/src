@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.10 2007/10/10 22:19:45 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.11 2007/10/11 06:17:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.10 2007/10/10 22:19:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.11 2007/10/11 06:17:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,6 +49,7 @@ static void opic_disable_irq(struct pic_ops *, int);
 static int  opic_get_irq(struct pic_ops *);
 static void opic_ack_irq(struct pic_ops *, int);
 static void opic_establish_irq(struct pic_ops*, int, int, int);
+static void opic_finish_setup(struct pic_ops *);
 
 volatile unsigned char *openpic_base;
 
@@ -76,6 +77,7 @@ setup_openpic(void *addr, int passthrough)
 	pic->pic_get_irq = opic_get_irq;
 	pic->pic_ack_irq = opic_ack_irq;
 	pic->pic_establish_irq = opic_establish_irq;
+	pic->pic_finish_setup = opic_finish_setup;
 	strcpy(pic->pic_name, "openpic");
 	pic_add(pic);
 
@@ -133,6 +135,21 @@ setup_openpic(void *addr, int passthrough)
 }
 
 static void
+opic_finish_setup(struct pic_ops *pic)
+{
+	uint32_t cpumask = 0;
+	int i;
+
+	for (i = 0; i < ncpu; i++)
+		cpumask |= (1 << cpu_info[i].ci_cpuid);
+
+	for (i = 0; i < pic->pic_numintrs; i++) {
+		/* send all interrupts to all active CPUs */
+		openpic_write(OPENPIC_IDEST(i), cpumask);
+	}
+}
+
+static void
 opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
 	int realpri = max(1, min(15, pri));
@@ -145,8 +162,7 @@ opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	x |= (type == IST_EDGE) ? OPENPIC_SENSE_EDGE : OPENPIC_SENSE_LEVEL;
 	x |= realpri << OPENPIC_PRIORITY_SHIFT;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-	/* send all interrupts to CPU 0 */
-	openpic_write(OPENPIC_IDEST(irq), 1 << 0);
+
 	aprint_debug("%s: setting IRQ %d to priority %d\n", __func__, irq, realpri);
 }
 
