@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.56 2007/10/11 19:41:13 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.57 2007/10/11 23:46:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -235,21 +235,8 @@ struct puffs_flush {
 #define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
 #define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	4
 
-#if 0
-/*
- * Available ioctl operations
- */
-#define PUFFSGETOP		_IOWR('p', 1, struct puffs_reqh_get)
-#define PUFFSPUTOP		_IOWR('p', 2, struct puffs_reqh_put)
-#define PUFFSFLUSHOP		_IOW ('p', 4, struct puffs_flush)
-#if 0
-#define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
-#endif
-#define PUFFSSUSPENDOP		_IO  ('p', 6)
-
+/* keep this for now */
 #define PUFFSREQSIZEOP		_IOR ('p', 1, size_t)
-#endif
-
 
 /*
  * Credentials for an operation.  Can be either struct uucred for
