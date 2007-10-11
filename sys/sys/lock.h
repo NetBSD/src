@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.73 2007/10/10 17:37:40 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.74 2007/10/11 19:45:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -6,10 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey.
+ * NASA Ames Research Center, by Ross Harvey, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,96 +86,24 @@
 #include <machine/lock.h>
 
 /*
- * The general lock structure.  Provides for multiple shared locks,
- * upgrading from shared to exclusive, and sleeping/spinning until the
- * lock can be gained.
+ * The general lock structure.  Provides for multiple shared locks
+ * and upgrading from shared to exclusive.
  */
 struct lock {
-	struct  simplelock lk_interlock;/* lock on remaining fields */
+	struct	simplelock lk_interlock;/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_recurselevel;	/* lvl above which recursion ok */
-	int	lk_waitcount;		/* # of sleepers/spinners */
-
-	/*
-	 * This is the sleep message for sleep locks, and a simple name
-	 * for spin locks.
-	 */
-	const char *lk_wmesg;
-
-	union {
-		struct {
-			/* pid of exclusive lock holder */
-			pid_t lk_sleep_lockholder;
-			lwpid_t lk_sleep_locklwp;
-
-			/* priority at which to sleep */
-			pri_t lk_sleep_prio;
-
-			/* maximum sleep time (for tsleep) */
-			int lk_sleep_timo;
-
-			/* lock taking over this lock */
-			struct lock *lk_newlock;
-		} lk_un_sleep;
-		struct {
-			/* CPU ID of exclusive lock holder */
-			cpuid_t lk_spin_cpu;
-#if defined(LOCKDEBUG)
-			_TAILQ_ENTRY(struct lock, volatile) lk_spin_list;
-#endif
-		} lk_un_spin;
-	} lk_un;
-
-#define	lk_lockholder	lk_un.lk_un_sleep.lk_sleep_lockholder
-#define	lk_locklwp	lk_un.lk_un_sleep.lk_sleep_locklwp
-#define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
-#define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
-#define	lk_newlock	lk_un.lk_un_sleep.lk_newlock
-
-#define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
-#if defined(LOCKDEBUG)
-#define	lk_list		lk_un.lk_un_spin.lk_spin_list
-#endif
-
-#if defined(LOCKDEBUG)
-	const char *lk_lock_file;
-	const char *lk_unlock_file;
-	int lk_lock_line;
-	int lk_unlock_line;
-#endif
+	int	lk_waitcount;		/* # of sleepers */
+	const char *lk_wmesg;		/* sleep wait channel */
+	pid_t	lk_lockholder;		/* pid of exclusive holder */
+	lwpid_t	lk_locklwp;		/* lid of exclusive holder */
+	pri_t	lk_prio;		/* priority at which to sleep */
+	int	lk_timo;		/* max sleep time */
+	uintptr_t lk_lock_addr;
+	uintptr_t lk_unlock_addr;
 };
-
-#ifndef LOCKDEBUG
-#define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
-	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
-	  (flags),			/* flags */			\
-	  0,				/* sharecount */		\
-	  0,				/* exclusivecount */		\
-	  0,				/* recurselevel */		\
-	  0,				/* waitcount */			\
-	  (wmesg),			/* waitmesg */			\
-	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
-	}
-#else
-#define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
-	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
-	  (flags),			/* flags */			\
-	  0,				/* sharecount */		\
-	  0,				/* exclusivecount */		\
-	  0,				/* recurselevel */		\
-	  0,				/* waitcount */			\
-	  (wmesg),			/* waitmesg */			\
-	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
-	  NULL,				/* lk_lock_file */		\
-	  NULL,				/* lk_unlock_file */		\
-	  0,				/* lk_lock_line */		\
-	  0,				/* lk_unlock_line */		\
-	}
-#endif
-
-
 
 /*
  * Lock request types:
@@ -236,7 +161,6 @@ struct lock {
 #define	LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
 #define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
-#define	LK_SPIN		0x00400000	/* lock spins instead of sleeps */
 #define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
  * Internal lock flags.
@@ -265,7 +189,6 @@ struct lock {
 
 #define __LK_FLAG_BITS \
 	"\20" \
-	"\23LK_SPIN" \
 	"\22LK_RECURSEFAIL" \
 	"\21LK_SETRECURSE" \
 	"\20LK_WAIT_NOZERO" \
@@ -304,43 +227,11 @@ struct lock {
 struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
-#if defined(LOCKDEBUG)
-int	_lockmgr(volatile struct lock *, u_int, struct simplelock *,
-	    const char *, int);
-#define	lockmgr(l, f, i)	_lockmgr((l), (f), (i), __FILE__, __LINE__)
-#else
-int	lockmgr(volatile struct lock *, u_int flags, struct simplelock *);
-#endif /* LOCKDEBUG */
+void	lockdestroy(struct lock *);
+int	lockmgr(struct lock *, u_int flags, struct simplelock *);
+void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
-void	lockmgr_printinfo(volatile struct lock *);
-
-#if defined(LOCKDEBUG)
-void	spinlock_switchcheck(void);
-#endif
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	spinlockinit(lkp, name, flags)					\
-	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
-#define	spinlockmgr(lkp, flags, intrlk)					\
-	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
-#else
-#define	spinlockinit(lkp, name, flags)		(void)(lkp)
-#define	spinlockmgr(lkp, flags, intrlk)		(0)
-#endif
-
-#if defined(LOCKDEBUG)
-int	_spinlock_release_all(volatile struct lock *, const char *, int);
-void	_spinlock_acquire_count(volatile struct lock *, int, const char *,
-	    int);
-
-#define	spinlock_release_all(l)	_spinlock_release_all((l), __FILE__, __LINE__)
-#define	spinlock_acquire_count(l, c) _spinlock_acquire_count((l), (c),	\
-					__FILE__, __LINE__)
-
-#else
-int	spinlock_release_all(volatile struct lock *);
-void	spinlock_acquire_count(volatile struct lock *, int);
-#endif
+void	lockmgr_printinfo(struct lock *);
 
 /*
  * From <machine/lock.h>.
