@@ -1,4 +1,4 @@
-/* $NetBSD: pic_i8259.c,v 1.1.2.4 2007/10/10 00:13:40 garbled Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.1.2.5 2007/10/11 06:19:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.4 2007/10/10 00:13:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.1.2.5 2007/10/11 06:19:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -73,6 +73,7 @@ setup_i8259(void)
 	pic->pic_get_irq = i8259_get_irq;
 	pic->pic_ack_irq = i8259_ack_irq;
 	pic->pic_establish_irq = dummy_pic_establish_intr;
+	pic->pic_finish_setup = NULL;
 	strcpy(pic->pic_name, "i8259");
 	pic_add(pic);
 	i8259->pending_events = 0;
