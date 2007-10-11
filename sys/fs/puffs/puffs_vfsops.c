@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.61 2007/10/09 20:57:07 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.62 2007/10/11 12:31:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.61 2007/10/09 20:57:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.62 2007/10/11 12:31:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -529,6 +529,7 @@ int
 puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 	struct lwp *l)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error, rv;
 
 	PUFFS_VFSREQ(sync);
@@ -540,9 +541,8 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 	puffs_credcvt(&sync_arg.pvfsr_cred, cred);
 	puffs_cidcvt(&sync_arg.pvfsr_cid, l);
 
-	rv = puffs_vfstouser(MPTOPUFFSMP(mp), PUFFS_VFS_SYNC,
-	    &sync_arg, sizeof(sync_arg));
-	rv = checkerr(MPTOPUFFSMP(mp), rv, __func__);
+	rv = puffs_vfstouser(pmp, PUFFS_VFS_SYNC, &sync_arg, sizeof(sync_arg));
+	rv = checkerr(pmp, rv, __func__);
 	if (rv)
 		error = rv;
 
