@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.14 2007/09/29 22:07:32 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.15 2007/10/11 19:41:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.14 2007/09/29 22:07:32 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.15 2007/10/11 19:41:15 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -227,28 +227,28 @@ puffsdump_cn(struct puffs_kcn *pkcn)
 void
 puffsdump_lookup(struct puffs_req *preq)
 {
-	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
-	puffsdump_cn(&lookup_vnreq->pvnr_cn);
+	puffsdump_cn(&lookup_msg->pvnr_cn);
 }
 
 void
 puffsdump_lookup_rv(struct puffs_req *preq)
 {
-	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
 	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%x\n",
-	    lookup_vnreq->pvnr_newnode, lookup_vnreq->pvnr_vtype,
-	    lookup_vnreq->pvnr_size, lookup_vnreq->pvnr_rdev);
+	    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
+	    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev);
 }
 
 void
 puffsdump_readwrite(struct puffs_req *preq)
 {
-	struct puffs_vnreq_readwrite *rw_vnreq = (void *)preq;
+	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
 	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
-	    rw_vnreq->pvnr_offset, rw_vnreq->pvnr_resid, rw_vnreq->pvnr_ioflag);
+	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.22 2007/09/27 21:14:49 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.23 2007/10/11 19:41:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -170,31 +170,13 @@ do {									\
 struct puffs_getreq {
 	struct puffs_usermount	*pgr_pu;
 
-	struct puffs_reqh_get	pgr_phg;
-	struct puffs_reqh_get	pgr_phg_orig;
-
-	struct puffs_req	*pgr_nextpreq;
-	size_t			pgr_advance;
-
-	/* diagnostics */
-	int			pgr_nppr;
+	void			*pgr_buf;
 };
 
 struct puffs_putreq {
 	struct puffs_usermount *ppr_pu;
 
-	struct puffs_reqh_put	ppr_php;
-
-	/* to adjust next request info */
-	void			**ppr_buf;
-	size_t			*ppr_buflen;
-	uint64_t 		*ppr_id;
-
-	/* for delayed action freeing of preq's */
 	TAILQ_HEAD(, puffs_cc)	ppr_pccq;
-
-	/* diagnostics */
-	struct puffs_getreq	*ppr_pgr;
 };
 
 struct puffs_newinfo {
