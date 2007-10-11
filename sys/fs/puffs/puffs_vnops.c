@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.105 2007/10/10 20:42:24 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.106 2007/10/11 12:31:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.105 2007/10/10 20:42:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.106 2007/10/11 12:31:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -841,6 +841,7 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 	struct lwp *l, int chsize)
 {
 	struct puffs_node *pn = vp->v_data;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error;
 
 	PUFFS_VNREQ(setattr);
@@ -881,9 +882,9 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 	puffs_credcvt(&setattr_arg.pvnr_cred, cred);
 	puffs_cidcvt(&setattr_arg.pvnr_cid, l);
 
-	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
+	error = puffs_vntouser(pmp, PUFFS_VN_SETATTR,
 	    &setattr_arg, sizeof(setattr_arg), 0, vp, NULL);
-	error = checkerr(MPTOPUFFSMP(vp->v_mount), error, __func__);
+	error = checkerr(pmp, error, __func__);
 	if (error)
 		return error;
 
@@ -1313,6 +1314,7 @@ puffs_seek(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error;
 
 	PUFFS_VNREQ(seek);
@@ -1325,9 +1327,9 @@ puffs_seek(void *v)
 	 * XXX: seems like seek is called with an unlocked vp, but
 	 * it can't hurt to play safe
 	 */
-	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SEEK,
+	error = puffs_vntouser(pmp, PUFFS_VN_SEEK,
 	    &seek_arg, sizeof(seek_arg), 0, vp, NULL);
-	return checkerr(MPTOPUFFSMP(vp->v_mount), error, __func__);
+	return checkerr(pmp, error, __func__);
 }
 
 static int
