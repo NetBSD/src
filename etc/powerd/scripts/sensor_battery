@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sensor_battery,v 1.4 2007/10/10 23:25:39 xtraeme Exp $
+#	$NetBSD: sensor_battery,v 1.5 2007/10/11 19:47:26 xtraeme Exp $
 #
 # Generic script for battery sensors.
 #
@@ -30,6 +30,7 @@ user-capacity)
 # It is not recommended to remove the shutdown call.
 #
 low-power)
+	logger -p warning "${0}: LOW POWER! SHUTTING DOWN." >&1
 	/sbin/shutdown -p now "${0}: LOW POWER! SHUTTING DOWN."
 	exit 0
 	;;
