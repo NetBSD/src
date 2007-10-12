@@ -55,6 +55,7 @@
 /*
  * XXX this code is unsafe and is not used. It should be made safe.
  */
+#ifdef WARMSTART
 
 
 /* These files keep the pmap_list and rpcb_list in XDR format */
@@ -73,8 +74,9 @@ write_struct(const char *filename, xdrproc_t structproc, void *list)
 	int fd;
 	XDR xdrs;
 
-	fd = open(filename, O_RDWR|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
-	if (fd == -1 || (fp = fdopen(fd, "r+")) == NULL) {
+	(void)unlink(filename);
+	fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	if (fd == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		syslog(LOG_ERR, "Cannot open `%s' (%m)", filename);
 		syslog(LOG_ERR, "Cannot save any registration");
 		return FALSE;
@@ -164,3 +166,4 @@ read_warmstart(void)
 	list_pml = tmp_pmapl;
 #endif
 }
+#endif
