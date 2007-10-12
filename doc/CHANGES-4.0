@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.317 2007/10/11 21:56:13 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.318 2007/10/12 16:54:05 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10103,3 +10103,8 @@ sys/dev/pci/viaide.c				1.45
 	patch from Andreas Wrede in PR kern/37059.
 	[xtraeme, ticket #922]
 
+sys/dist/ipf/netinet/ip_nat.c			patch
+
+	Fix PR kern/37037 "ipnat: Data modified on freelist", verified by
+	the submitter.
+	[martti, ticket #916]
