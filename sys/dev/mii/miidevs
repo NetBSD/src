@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.70.4.2 2007/10/09 13:41:39 ad Exp $
+$NetBSD: miidevs,v 1.70.4.3 2007/10/12 17:03:09 ad Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -217,8 +217,8 @@ model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RealTek PHYs */
 model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
-model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S 1000BASE-T media interface
-model REALTEK RTL8169S		0x0011 RTL8169S/8110S 1000BASE-T media interface
+model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
+model REALTEK RTL8169S		0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
 
 /* Seeq PHYs */
 model SEEQ 80220		0x0003 Seeq 80220 10/100 media interface

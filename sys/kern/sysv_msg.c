@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.48.6.1 2007/03/13 16:51:57 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.48.6.2 2007/10/12 17:03:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.48.6.1 2007/03/13 16:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.48.6.2 2007/10/12 17:03:20 ad Exp $");
 
 #define SYSVMSG
 
@@ -105,57 +105,51 @@ msginit(void)
 	i = 8;
 	while (i < 1024 && i != msginfo.msgssz)
 		i <<= 1;
-    	if (i != msginfo.msgssz) {
-		MSG_PRINTF(("msginfo.msgssz=%d (0x%x)\n", msginfo.msgssz,
-		    msginfo.msgssz));
-		panic("msginfo.msgssz not a small power of 2");
+	if (i != msginfo.msgssz) {
+		panic("msginfo.msgssz = %d, not a small power of 2",
+		    msginfo.msgssz);
 	}
 
 	if (msginfo.msgseg > 32767) {
-		MSG_PRINTF(("msginfo.msgseg=%d\n", msginfo.msgseg));
-		panic("msginfo.msgseg > 32767");
+		panic("msginfo.msgseg = %d > 32767", msginfo.msgseg);
 	}
 
 	/* Allocate pageable memory for our structures */
-	sz = msginfo.msgmax
-		+ msginfo.msgseg * sizeof(struct msgmap)
-		+ msginfo.msgtql * sizeof(struct __msg)
-		+ msginfo.msgmni * sizeof(kmsq_t);
+	sz = msginfo.msgmax +
+	    msginfo.msgseg * sizeof(struct msgmap) +
+	    msginfo.msgtql * sizeof(struct __msg) +
+	    msginfo.msgmni * sizeof(kmsq_t);
 	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
-	msgmaps = (void *) (msgpool + msginfo.msgmax);
-	msghdrs = (void *) (msgmaps + msginfo.msgseg);
-	msqs = (void *) (msghdrs + msginfo.msgtql);
+	msgmaps = (void *)(msgpool + msginfo.msgmax);
+	msghdrs = (void *)(msgmaps + msginfo.msgseg);
+	msqs = (void *)(msghdrs + msginfo.msgtql);
 
-	for (i = 0; i < msginfo.msgseg; i++) {
-		if (i > 0)
-			msgmaps[i-1].next = i;
-		msgmaps[i].next = -1;	/* implies entry is available */
-	}
+	for (i = 0; i < (msginfo.msgseg - 1); i++)
+		msgmaps[i].next = i + 1;
+	msgmaps[msginfo.msgseg - 1].next = -1;
+
 	free_msgmaps = 0;
 	nfree_msgmaps = msginfo.msgseg;
 
-	if (msghdrs == NULL)
-		panic("msghdrs is NULL");
-
-	for (i = 0; i < msginfo.msgtql; i++) {
+	for (i = 0; i < (msginfo.msgtql - 1); i++) {
 		msghdrs[i].msg_type = 0;
-		if (i > 0)
-			msghdrs[i-1].msg_next = &msghdrs[i];
-		msghdrs[i].msg_next = NULL;
-    	}
+		msghdrs[i].msg_next = &msghdrs[i + 1];
+	}
+	i = msginfo.msgtql - 1;
+	msghdrs[i].msg_type = 0;
+	msghdrs[i].msg_next = NULL;
 	free_msghdrs = &msghdrs[0];
 
-	if (msqs == NULL)
-		panic("msqs is NULL");
-
 	for (i = 0; i < msginfo.msgmni; i++) {
-		msqs[i].msq_u.msg_qbytes = 0;	/* implies entry is available */
-		msqs[i].msq_u.msg_perm._seq = 0;/* reset to a known value */
 		cv_init(&msqs[i].msq_cv, "msgwait");
+		/* Implies entry is available */
+		msqs[i].msq_u.msg_qbytes = 0;
+		/* Reset to a known value */
+		msqs[i].msq_u.msg_perm._seq = 0;
 	}
 
 	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
@@ -169,8 +163,9 @@ msg_freehdr(struct __msg *msghdr)
 
 	while (msghdr->msg_ts > 0) {
 		short next;
-		if (msghdr->msg_spot < 0 || msghdr->msg_spot >= msginfo.msgseg)
-			panic("msghdr->msg_spot out of range");
+		KASSERT(msghdr->msg_spot >= 0);
+		KASSERT(msghdr->msg_spot < msginfo.msgseg);
+
 		next = msgmaps[msghdr->msg_spot].next;
 		msgmaps[msghdr->msg_spot].next = free_msgmaps;
 		free_msgmaps = msghdr->msg_spot;
@@ -181,8 +176,7 @@ msg_freehdr(struct __msg *msghdr)
 		else
 			msghdr->msg_ts = 0;
 	}
-	if (msghdr->msg_spot != -1)
-		panic("msghdr->msg_spot != -1");
+	KASSERT(msghdr->msg_spot == -1);
 	msghdr->msg_next = free_msghdrs;
 	free_msghdrs = msghdr;
 }
@@ -268,14 +262,11 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 			msghdr = msghdr->msg_next;
 			msg_freehdr(msghdr_tmp);
 		}
+		KASSERT(msqptr->_msg_cbytes == 0);
+		KASSERT(msqptr->msg_qnum == 0);
 
-		if (msqptr->_msg_cbytes != 0)
-			panic("msg_cbytes is screwed up");
-		if (msqptr->msg_qnum != 0)
-			panic("msg_qnum is screwed up");
-
-		msqptr->msg_qbytes = 0;	/* Mark it as free */
-
+		/* Mark it as free */
+		msqptr->msg_qbytes = 0;
 		cv_broadcast(&msq->msq_cv);
 	}
 		break;
@@ -322,7 +313,7 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		break;
 	}
 
- unlock:
+unlock:
 	mutex_exit(&msgmutex);
 	return (error);
 }
@@ -415,12 +406,12 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		goto unlock;
 	}
 
- found:
+found:
 	/* Construct the unique msqid */
 	*retval = IXSEQ_TO_IPCID(msqid, msqptr->msg_perm);
 
- unlock:
-  	mutex_exit(&msgmutex);
+unlock:
+	mutex_exit(&msgmutex);
 	return (error);
 }
 
@@ -568,22 +559,17 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	 * Make sure!
 	 */
 
-	if (msqptr->msg_perm.mode & MSG_LOCKED)
-		panic("msg_perm.mode & MSG_LOCKED");
-	if (segs_needed > nfree_msgmaps)
-		panic("segs_needed > nfree_msgmaps");
-	if (msgsz + msqptr->_msg_cbytes > msqptr->msg_qbytes)
-		panic("msgsz + msg_cbytes > msg_qbytes");
-	if (free_msghdrs == NULL)
-		panic("no more msghdrs");
+	KASSERT((msqptr->msg_perm.mode & MSG_LOCKED) == 0);
+	KASSERT(segs_needed <= nfree_msgmaps);
+	KASSERT(msgsz + msqptr->_msg_cbytes <= msqptr->msg_qbytes);
+	KASSERT(free_msghdrs != NULL);
 
 	/*
 	 * Re-lock the msqid_ds in case we page-fault when copying in the
 	 * message
 	 */
 
-	if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0)
-		panic("msqid_ds is already locked");
+	KASSERT((msqptr->msg_perm.mode & MSG_LOCKED) == 0);
 	msqptr->msg_perm.mode |= MSG_LOCKED;
 
 	/*
@@ -600,15 +586,11 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	 */
 
 	while (segs_needed > 0) {
-		if (nfree_msgmaps <= 0)
-			panic("not enough msgmaps");
-		if (free_msgmaps == -1)
-			panic("nil free_msgmaps");
+		KASSERT(nfree_msgmaps > 0);
+		KASSERT(free_msgmaps != -1);
+		KASSERT(free_msgmaps < msginfo.msgseg);
+
 		next = free_msgmaps;
-		if (next <= -1)
-			panic("next too low #1");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #1");
 		MSG_PRINTF(("allocating segment %d to message\n", next));
 		free_msgmaps = msgmaps[next].next;
 		nfree_msgmaps--;
@@ -651,14 +633,13 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	next = msghdr->msg_spot;
 	while (msgsz > 0) {
 		size_t tlen;
+		KASSERT(next > -1);
+		KASSERT(next < msginfo.msgseg);
+
 		if (msgsz > msginfo.msgssz)
 			tlen = msginfo.msgssz;
 		else
 			tlen = msgsz;
-		if (next <= -1)
-			panic("next too low #2");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #2");
 		mutex_exit(&msgmutex);
 		error = copyin(user_msgp, &msgpool[next * msginfo.msgssz], tlen);
 		mutex_enter(&msgmutex);
@@ -674,8 +655,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 		user_msgp += tlen;
 		next = msgmaps[next].next;
 	}
-	if (next != -1)
-		panic("didn't use all the msg segments");
+	KASSERT(next == -1);
 
 	/*
 	 * We've got the message.  Unlock the msqid_ds.
@@ -714,8 +694,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	cv_broadcast(&msq->msq_cv);
 
- unlock:
- 	mutex_exit(&msgmutex);
+unlock:
+	mutex_exit(&msgmutex);
 	return error;
 }
 
@@ -780,15 +760,6 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		goto unlock;
 	}
 
-#if 0
-	/* cannot happen, msgsz is unsigned */
-	if (msgsz < 0) {
-		MSG_PRINTF(("msgsz < 0\n"));
-		error = EINVAL;
-		goto unlock;
-	}
-#endif
-
 	msghdr = NULL;
 	while (msghdr == NULL) {
 		if (msgtyp == 0) {
@@ -796,9 +767,8 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 			if (msghdr != NULL) {
 				if (msgsz < msghdr->msg_ts &&
 				    (msgflg & MSG_NOERROR) == 0) {
-					MSG_PRINTF(("first message on the "
-					    "queue is too big "
-					    "(want %lld, got %d)\n",
+					MSG_PRINTF(("first msg on the queue "
+					    "is too big (want %lld, got %d)\n",
 					    (long long)msgsz, msghdr->msg_ts));
 					error = E2BIG;
 					goto unlock;
@@ -808,9 +778,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 					msqptr->_msg_last = NULL;
 				} else {
 					msqptr->_msg_first = msghdr->msg_next;
-					if (msqptr->_msg_first == NULL)
-						panic("msg_first/last screwed "
-						    "up #1");
+					KASSERT(msqptr->_msg_first != NULL);
 				}
 			}
 		} else {
@@ -829,41 +797,32 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 				 * msg_type is always positive!
 				 */
 
-				if (msgtyp == msghdr->msg_type ||
-				    msghdr->msg_type <= -msgtyp) {
-					MSG_PRINTF(("found message type %ld, "
-					    "requested %ld\n",
-					    msghdr->msg_type, msgtyp));
-					if (msgsz < msghdr->msg_ts &&
-					    (msgflg & MSG_NOERROR) == 0) {
-						MSG_PRINTF(("requested message "
-						    "on the queue is too big "
-						    "(want %lld, got %d)\n",
-						    (long long)msgsz,
-						    msghdr->msg_ts));
-						error = E2BIG;
-						goto unlock;
-					}
-					*prev = msghdr->msg_next;
-					if (msghdr == msqptr->_msg_last) {
-						if (previous == NULL) {
-							if (prev !=
-							    &msqptr->_msg_first)
-								panic("msg_first/last screwed up #2");
-							msqptr->_msg_first =
-							    NULL;
-							msqptr->_msg_last =
-							    NULL;
-						} else {
-							if (prev ==
-							    &msqptr->_msg_first)
-								panic("msg_first/last screwed up #3");
-							msqptr->_msg_last =
-							    previous;
-						}
-					}
-					break;
+				if (msgtyp != msghdr->msg_type &&
+				    msghdr->msg_type > -msgtyp)
+					continue;
+
+				MSG_PRINTF(("found message type %ld, requested %ld\n",
+				    msghdr->msg_type, msgtyp));
+				if (msgsz < msghdr->msg_ts &&
+				     (msgflg & MSG_NOERROR) == 0) {
+					MSG_PRINTF(("requested message on the queue "
+					    "is too big (want %lld, got %d)\n",
+					    (long long)msgsz, msghdr->msg_ts));
+					error = E2BIG;
+					goto unlock;
 				}
+				*prev = msghdr->msg_next;
+				if (msghdr != msqptr->_msg_last)
+					break;
+				if (previous == NULL) {
+					KASSERT(prev == &msqptr->_msg_first);
+					msqptr->_msg_first = NULL;
+					msqptr->_msg_last = NULL;
+				} else {
+					KASSERT(prev != &msqptr->_msg_first);
+					msqptr->_msg_last = previous;
+				}
+				break;
 			}
 		}
 
@@ -872,7 +831,6 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		 * message or there isn't one.
 		 * If there is one then bail out of this loop.
 		 */
-
 		if (msghdr != NULL)
 			break;
 
@@ -883,13 +841,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		if ((msgflg & IPC_NOWAIT) != 0) {
 			MSG_PRINTF(("no appropriate message found (msgtyp=%ld)\n",
 			    msgtyp));
-			/* The SVID says to return ENOMSG. */
-#ifdef ENOMSG
 			error = ENOMSG;
-#else
-			/* Unfortunately, BSD doesn't define that code yet! */
-			error = EAGAIN;
-#endif
 			goto unlock;
 		}
 
@@ -962,15 +914,13 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	next = msghdr->msg_spot;
 	for (len = 0; len < msgsz; len += msginfo.msgssz) {
 		size_t tlen;
+		KASSERT(next > -1);
+		KASSERT(next < msginfo.msgseg);
 
 		if (msgsz - len > msginfo.msgssz)
 			tlen = msginfo.msgssz;
 		else
 			tlen = msgsz - len;
-		if (next <= -1)
-			panic("next too low #3");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #3");
 		mutex_exit(&msgmutex);
 		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
@@ -994,7 +944,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	cv_broadcast(&msq->msq_cv);
 	*retval = msgsz;
 
- unlock:
- 	mutex_exit(&msgmutex);
+unlock:
+	mutex_exit(&msgmutex);
 	return error;
 }

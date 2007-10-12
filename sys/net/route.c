@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87.2.6 2007/10/09 13:44:43 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.87.2.7 2007/10/12 17:03:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.6 2007/10/09 13:44:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.7 2007/10/12 17:03:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -267,13 +267,6 @@ rtflush(struct route *ro)
 
 	LIST_REMOVE(ro, ro_rtcache_next);
 	splx(s);
- 
-#if 0
-	if (rtcache_debug()) {
-		printf("%s: flushing %s\n", __func__,
-		    inet_ntoa((satocsin(rtcache_getdst(ro)))->sin_addr));
-	}
-#endif
 }
 
 void

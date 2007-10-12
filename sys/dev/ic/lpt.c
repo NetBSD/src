@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.69.2.1 2007/07/01 21:47:51 ad Exp $	*/
+/*	$NetBSD: lpt.c,v 1.69.2.2 2007/10/12 17:03:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.1 2007/07/01 21:47:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.2 2007/10/12 17:03:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.1 2007/07/01 21:47:51 ad Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
@@ -104,6 +104,8 @@ const struct cdevsw lpt_cdevsw = {
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
 
+static void	lptsoftintr(void *);
+
 void
 lpt_attach_subr(sc)
 	struct lpt_softc *sc;
@@ -119,6 +121,7 @@ lpt_attach_subr(sc)
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 
 	callout_init(&sc->sc_wakeup_ch, 0);
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL, lptsoftintr, sc);
 
 	sc->sc_dev_ok = 1;
 }
@@ -402,10 +405,17 @@ lptintr(arg)
 
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */
-		wakeup((void *)sc);
+		softint_schedule(sc->sc_sih);
 	}
 
 	return 1;
+}
+
+static void
+lptsoftintr(void *cookie)
+{
+
+	wakeup(cookie);
 }
 
 int
