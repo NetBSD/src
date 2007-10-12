@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.871.2.7 2007/10/09 13:41:49 ad Exp $
+$NetBSD: pcidevs,v 1.871.2.8 2007/10/12 17:03:10 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1946,25 +1946,47 @@ product HITACHI SH7751R	0x350e	SH7751R PCI Controller
 product IBM MCABRIDGE 	0x0002	MCA Bridge
 product IBM ALTALITE 	0x0005	CPU Bridge - Alta Lite
 product IBM ALTAMP 	0x0007	CPU Bridge - Alta MP
-product IBM ISABRIDGE	0x000a	ISA Bridge w/PnP
+product IBM ISABRIDGE	0x000a	Fire Coral ISA Bridge w/PnP
+product IBM POWERWAVE	0x0013	PowerWave Graphics Adapter
+product IBM IDAHO	0x0015	Idaho PCI Bridge
 product IBM CPUBRIDGE 	0x0017	CPU Bridge
 product IBM LANSTREAMER	0x0018	Auto LANStreamer
 product IBM GXT150P	0x001b	GXT-150P 2D Accelerator
+product IBM CARRERA	0x001c	Carrera PCI Bridge
+product IBM 82G2675	0x001d	82G2675 SCSI-2 Fast Controller
 product IBM MCABRIDGE2	0x0020	MCA Bridge
 product IBM 82351	0x0022	82351 PCI-PCI Bridge
+product IBM MONNAV	0x002c	Montana/Nevada PCI Bridge and Memory Controller
+product IBM PYTHON	0x002d	Python PCI-PCI Bridge
 product IBM SERVERAID	0x002e	ServeRAID
-product IBM GXT250P	0x003c	GXT-250P
+product IBM GXT250P	0x003c	GXT-250P Graphics Adapter
 product IBM OLYMPIC	0x003e	16/4 Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
 product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM GXT800P	0x005e	GXT-800P
+product IBM GXT500P	0x0054	GXT-500P/GXT550P Graphics Adapter
+product IBM I82557B	0x005c	i82557B 10/100 Ethernet
+product IBM GXT800P	0x005e	GXT-800P Graphics Adapter
+product IBM EADSPCI	0x008b	EADS PCI-PCI Bridge
+product IBM GXT3000P	0x008e	GXT-3000P Graphics Adapter
+product IBM GXT3000P2	0x0090	GXT-3000P Graphics Adapter(2)
+product IBM GXT2000P	0x00b8	GXT-2000P Graphics Adapter
 product IBM OLYMPIC2	0x00ce	Olympic 2 Token Ring
+product IBM CPC71064	0x00fc	CPC710 Dual Bridge and Memory Controller (PCI64)
+product IBM CPC71032	0x0105	CPC710 Dual Bridge and Memory Controller (PCI32)
 product IBM TPAUDIO	0x0153	ThinkPad 600X/A20/T20/T22 Audio
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
+product IBM GXT4000P	0x016e	GXT-4000P Graphics Adapter
+product IBM GXT6000P	0x0170	GXT-6000P Graphics Adapter
+product IBM GXT300P	0x017d	GXT-300P Graphics Adapter
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM SERVERAID4	0x01bd	ServeRAID 4/5
+product IBM 440GP	0x01ef	PPC 440GP PCI Bridge
+product IBM IBMETHER	0x01ff	10/100 Ethernet
+product IBM GXT6500P	0x021b	GXT-6500P Graphics Adapter
+product IBM GXT4500P	0x021c	GXT-4500P Graphics Adapter
+product IBM GXT135P	0x0233	GXT-135P Graphics Adapter
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IC Ensemble / VIA Technologies products */

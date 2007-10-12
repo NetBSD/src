@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.183.2.6 2007/10/09 13:44:38 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.183.2.7 2007/10/12 17:03:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183.2.6 2007/10/09 13:44:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183.2.7 2007/10/12 17:03:21 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -1708,12 +1708,12 @@ ifreq_setaddr(const u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	else
 #endif /* INET6 */
 	if ((ncmd = compat_cvtcmd(cmd)) != cmd)
-		len = MIN(sockspace, sa->sa_len);
-	else
 		len = MIN(osockspace, sa->sa_len);
-	sockaddr_copy(&ifr->ifr_addr, len, sa);
+	else
+		len = MIN(sockspace, sa->sa_len);
 	if (len < sa->sa_len)
 		return EFBIG;
+	sockaddr_copy(&ifr->ifr_addr, len, sa);
 	return 0;
 }
 

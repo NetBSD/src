@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.871.2.7 2007/10/09 13:41:50 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.871.2.8 2007/10/12 17:03:11 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1953,25 +1953,47 @@
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
 #define	PCI_PRODUCT_IBM_ALTALITE	0x0005		/* CPU Bridge - Alta Lite */
 #define	PCI_PRODUCT_IBM_ALTAMP	0x0007		/* CPU Bridge - Alta MP */
-#define	PCI_PRODUCT_IBM_ISABRIDGE	0x000a		/* ISA Bridge w/PnP */
+#define	PCI_PRODUCT_IBM_ISABRIDGE	0x000a		/* Fire Coral ISA Bridge w/PnP */
+#define	PCI_PRODUCT_IBM_POWERWAVE	0x0013		/* PowerWave Graphics Adapter */
+#define	PCI_PRODUCT_IBM_IDAHO	0x0015		/* Idaho PCI Bridge */
 #define	PCI_PRODUCT_IBM_CPUBRIDGE	0x0017		/* CPU Bridge */
 #define	PCI_PRODUCT_IBM_LANSTREAMER	0x0018		/* Auto LANStreamer */
 #define	PCI_PRODUCT_IBM_GXT150P	0x001b		/* GXT-150P 2D Accelerator */
+#define	PCI_PRODUCT_IBM_CARRERA	0x001c		/* Carrera PCI Bridge */
+#define	PCI_PRODUCT_IBM_82G2675	0x001d		/* 82G2675 SCSI-2 Fast Controller */
 #define	PCI_PRODUCT_IBM_MCABRIDGE2	0x0020		/* MCA Bridge */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
+#define	PCI_PRODUCT_IBM_MONNAV	0x002c		/* Montana/Nevada PCI Bridge and Memory Controller */
+#define	PCI_PRODUCT_IBM_PYTHON	0x002d		/* Python PCI-PCI Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
-#define	PCI_PRODUCT_IBM_GXT250P	0x003c		/* GXT-250P */
+#define	PCI_PRODUCT_IBM_GXT250P	0x003c		/* GXT-250P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* 16/4 Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
 #define	PCI_PRODUCT_IBM_MPIC	0x0046		/* MPIC */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
-#define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
+#define	PCI_PRODUCT_IBM_GXT500P	0x0054		/* GXT-500P/GXT550P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_I82557B	0x005c		/* i82557B 10/100 Ethernet */
+#define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_EADSPCI	0x008b		/* EADS PCI-PCI Bridge */
+#define	PCI_PRODUCT_IBM_GXT3000P	0x008e		/* GXT-3000P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_GXT3000P2	0x0090		/* GXT-3000P Graphics Adapter(2) */
+#define	PCI_PRODUCT_IBM_GXT2000P	0x00b8		/* GXT-2000P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_OLYMPIC2	0x00ce		/* Olympic 2 Token Ring */
+#define	PCI_PRODUCT_IBM_CPC71064	0x00fc		/* CPC710 Dual Bridge and Memory Controller (PCI64) */
+#define	PCI_PRODUCT_IBM_CPC71032	0x0105		/* CPC710 Dual Bridge and Memory Controller (PCI32) */
 #define	PCI_PRODUCT_IBM_TPAUDIO	0x0153		/* ThinkPad 600X/A20/T20/T22 Audio */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
+#define	PCI_PRODUCT_IBM_GXT4000P	0x016e		/* GXT-4000P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_GXT6000P	0x0170		/* GXT-6000P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_GXT300P	0x017d		/* GXT-300P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID4	0x01bd		/* ServeRAID 4/5 */
+#define	PCI_PRODUCT_IBM_440GP	0x01ef		/* PPC 440GP PCI Bridge */
+#define	PCI_PRODUCT_IBM_IBMETHER	0x01ff		/* 10/100 Ethernet */
+#define	PCI_PRODUCT_IBM_GXT6500P	0x021b		/* GXT-6500P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_GXT4500P	0x021c		/* GXT-4500P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_GXT135P	0x0233		/* GXT-135P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IC Ensemble / VIA Technologies products */

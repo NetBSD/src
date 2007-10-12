@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.46.2.3 2007/10/09 13:38:46 ad Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.46.2.4 2007/10/12 17:03:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46.2.3 2007/10/09 13:38:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46.2.4 2007/10/12 17:03:04 ad Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -238,6 +238,8 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
 			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
 			break;
+		if (isa_ovr->Source > 13)
+			isa_ovr->TriggerMode = MPS_INTTR_LEVEL;
 		pic = intr_findpic(isa_ovr->Interrupt);
 		if (pic == NULL)
 			break;

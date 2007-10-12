@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.5 2007/10/09 13:45:08 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.6 2007/10/12 17:03:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #ifdef _KERNEL
 
+struct cpu_info;
+
 /* Boot-time initalization. */
 void	softint_init(struct cpu_info *);
 
@@ -72,7 +74,7 @@ extern u_int softint_timing;
 #endif	/* _KERNEL */
 
 #endif	/* _SYS_INTR_H_ */
-/*	$NetBSD: intr.h,v 1.1.2.5 2007/10/09 13:45:08 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.6 2007/10/12 17:03:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
