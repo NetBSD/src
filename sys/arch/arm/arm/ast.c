@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10.24.1 2007/08/28 18:31:20 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.10.24.2 2007/10/12 02:22:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.1 2007/08/28 18:31:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.2 2007/10/12 02:22:21 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,11 +74,22 @@ void ast __P((struct trapframe *));
 void
 userret(struct lwp *l)
 {
+	struct cpu_info * const ci = curcpu();
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+#ifdef CPU_ARM11
+	/*
+	 * This is a hack to work around an unknown cache bug on the ARM11
+	 * Before returning we clean the data cache.
+	 */
+	if (ci->ci_arm_cputype == CPU_ID_ARM1136JS
+	    || ci->ci_arm_cputype == CPU_ID_ARM1136JSR1) {
+                __asm("mcr\tp15, 0, %0, c7, c10, 0" :: "r"(0));
+	}
+#endif
 }
 
 

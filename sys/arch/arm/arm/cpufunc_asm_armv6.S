@@ -1,7 +1,8 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.2.2 2007/09/11 23:07:28 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.2.3 2007/10/12 02:22:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
+ * Portions Copyright (c) 2007 Danger Inc
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
