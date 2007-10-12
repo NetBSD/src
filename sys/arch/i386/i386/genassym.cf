@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.7 2007/10/09 15:22:04 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.8 2007/10/12 13:48:49 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -400,14 +400,3 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
-
-define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
-define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
-define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
-define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
-define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
-define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
-
-define	PM_CPUS			offsetof(struct pmap, pm_cpus)
-
-define	EV_COUNT		offsetof(struct evcnt, ev_count)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.3 2007/10/09 13:45:03 ad Exp $
+#	$NetBSD: Makefile,v 1.12.2.4 2007/10/12 13:48:57 ad Exp $
 #
 
 .include <bsd.own.mk>
@@ -26,12 +26,48 @@ SRCS+=	clock_subr.c kern_stub.c param.c subr_hash.c subr_prf2.c	\
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
 
+SRCS+=	rumpvnode_if.c
+
 RUMUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMUSEROBJDIR}/rumpuser.o
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
+
+# Create a few files.  We can't include them directly, because that
+# would create hideous namespace lossage.  So just do some clever
+# (or less clever) renaming.
+#
+# Yes, this is borderline disgusting not to mention seriously
+# labile, but what are you gonna do for a quick hack?
+#
+VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
+VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
+VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
+RVNH=\#include \"rump.h\"
+rumpvnode_if.c: vnode_if.c
+	sed ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
+	    < ${NETBSDSRCDIR}/sys/sys/vnode_if.h > rumpvnode_if.h
+	# XXX: some creative kludging to simulate 'a\' (I have no
+	# clue how to make it work in a Makefile
+	sed ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
+	    < ${NETBSDSRCDIR}/sys/kern/vnode_if.c > rumpvnode_if.c
+	sed -n '/define/s/NAMEI_/RUMP_NAMEI_/p'				\
+	    < ${NETBSDSRCDIR}/sys/sys/namei.h > rumpdefs.h
+	printf "#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n"	\
+	    >> rumpdefs.h
+	sed -n '/enum vtype.*{/p'					\
+	    < ${NETBSDSRCDIR}/sys/sys/vnode.h >> rumpdefs.h
+	printf "#endif /* __VTYPE_DEFINED */\n" >> rumpdefs.h
+	printf "#ifndef EJUSTRETURN\n" >> rumpdefs.h
+	sed -n '/EJUSTRETURN/p'						\
+	    < ${NETBSDSRCDIR}/sys/sys/errno.h >> rumpdefs.h
+	printf "#endif /* EJUSTRETURN */\n" >> rumpdefs.h
+
+CLEANFILES+=	rumpvnode_if.c rumpvnode_if.h rumpdefs.h
+
+beforedepend: rumpvnode_if.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

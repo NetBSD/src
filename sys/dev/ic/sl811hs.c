@@ -1,63 +1,107 @@
-/*	$NetBSD: sl811hs.c,v 1.11.8.2 2007/10/09 13:41:32 ad Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.8.3 2007/10/12 13:48:53 ad Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Tetsuya Isaki.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Not (c) 2007 Matthew Orgass
+ * This file is public domain, meaning anyone can make any use of part or all 
+ * of this file including copying into other works without credit.  Any use, 
+ * modified or not, is solely the responsibility of the user.  If this file is 
+ * part of a collection then use in the collection is governed by the terms of 
+ * the collection.
  */
 
 /*
- * ScanLogic SL811HS/T USB Host Controller
+ * Cypress/ScanLogic SL811HS/T USB Host Controller
+ * Datasheet, Errata, and App Note available at www.cypress.com
+ *
+ * Uses: Ratoc CFU1U PCMCIA USB Host Controller, Nereid Mac 68k USB HC, ISA 
+ * HCs.  The Ratoc CFU2 uses a different chip.
+ *
+ * This chip puts the serial in USB.  It implements USB by means of an eight 
+ * bit I/O interface.  It can be used for ISA, PCMCIA/CF, parallel port, 
+ * serial port, or any eight bit interface.  It has 256 bytes of memory, the 
+ * first 16 of which are used for register access.  There are two sets of 
+ * registers for sending individual bus transactions.  Because USB is polled, 
+ * this organization means that some amount of card access must often be made 
+ * when devices are attached, even if when they are not directly being used.  
+ * A per-ms frame interrupt is necessary and many devices will poll with a 
+ * per-frame bulk transfer.
+ *
+ * It is possible to write a little over two bytes to the chip (auto 
+ * incremented) per full speed byte time on the USB.  Unfortunately, 
+ * auto-increment does not work reliably so write and bus speed is 
+ * approximately the same for full speed devices.
+ *
+ * In addition to the 240 byte packet size limit for isochronous transfers, 
+ * this chip has no means of determining the current frame number other than 
+ * getting all 1ms SOF interrupts, which is not always possible even on a fast 
+ * system.  Isochronous transfers guarantee that transfers will never be 
+ * retried in a later frame, so this can cause problems with devices beyond 
+ * the difficulty in actually performing the transfer most frames.  I tried 
+ * implementing isoc transfers and was able to play CD-derrived audio via an 
+ * iMic on a 2GHz PC, however it would still be interrupted at times and
+ * once interrupted, would stay out of sync.  All isoc support has been 
+ * removed.
+ *
+ * BUGS: all chip revisions have problems with low speed devices through hubs.  
+ * The chip stops generating SOF with hubs that send SE0 during SOF.  See 
+ * comment in dointr().  All performance enhancing features of this chip seem 
+ * not to work properly, most confirmed buggy in errata doc.
+ *
  */
+
 /*
- * !! HIGHLY EXPERIMENTAL CODE !!
+ * The hard interrupt is the main entry point.  Start, callbacks, and repeat 
+ * are the only others called frequently.
+ *
+ * Since this driver attaches to pcmcia, card removal at any point should be 
+ * expected and not cause panics or infinite loops.
+ *
+ * This driver does fine grained locking for its own data structures, however 
+ * the general USB code does not yet have locks, some of which would need to 
+ * be used in this driver.  This is mostly for debug use on single processor 
+ * systems.  Actual MP use of this driver would be unreliable on ports where 
+ * splipi is above splhigh unless splipi can be safely blocked when 
+ * calculating remaining bus time prior to transfers.
+ *
+ * The theory of the wait lock is that start is the only function that would 
+ * be frequently called from arbitrary processors, so it should not need to 
+ * wait for the rest to be completed.  However, once entering the lock as much 
+ * device access as possible is done, so any other CPU that tries to service
+ * an interrupt would be blocked.  Ideally, the hard and soft interrupt could 
+ * be assigned to the same CPU and start would normally just put work on the 
+ * wait queue and generate a soft interrupt.
+ * 
+ * Any use of the main lock must check the wait lock before returning.  The 
+ * aquisition order is main lock then wait lock, but the wait lock must be 
+ * released last when clearing the wait queue.
+ */
+
+/* XXX TODO:
+ *   copy next output packet while transfering
+ *   usb suspend
+ *   could keep track of known values of all buffer space?
+ *   combined print/log function for errors
+ *
+ *   use_polling support is untested and may not work
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.8.2 2007/10/09 13:41:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.8.3 2007/10/12 13:48:53 ad Exp $");
 
-#include "opt_slhci.h"
-
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
+#include <sys/gcq.h>
+#include <sys/lock.h>
 #include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.5.2.3 2007/10/09 13:45:02 ad Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.5.2.4 2007/10/12 13:48:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,8 @@
 
 #include "rump.h"
 #include "ukfs.h"
+
+#define UKFS_MODE_DEFAULT 0555
 
 struct ukfs {
 	struct mount *ukfs_mp;
@@ -128,33 +130,33 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv = VFS_SYNC(fs->ukfs_mp, MNT_WAIT, rump_cred, curlwp);
-		rv += VFS_UNMOUNT(fs->ukfs_mp, 0, curlwp);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
+		rv += rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
 		assert(rv == 0);
 	}
 
-	rump_mountdestroy(fs->ukfs_mp);
+	rump_mnt_destroy(fs->ukfs_mp);
 
 	free(fs);
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) VOP_LOCK(a, LK_EXCLUSIVE)
-#define VLS(a) VOP_LOCK(a, LK_SHARED)
-#define VUL(a) VOP_UNLOCK(a, 0);
-#define AUL(a) assert(VOP_ISLOCKED(a) == 0)
+#define VLE(a) rump_vp_lock_exclusive(a)
+#define VLS(a) rump_vp_lock_shared(a)
+#define VUL(a) rump_vp_unlock(a)
+#define AUL(a) assert(rump_vp_islocked(a) == 0)
 
-static void
-recycle(struct vnode *vp)
+void
+ukfs_ll_recycle(struct vnode *vp)
 {
 
 	/* XXXXX */
-	if (vp == NULL || vp->v_usecount != 0)
+	if (vp == NULL || rump_vp_getref(vp))
 		return;
 
 	VLE(vp);
-	VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
-	VOP_INACTIVE(vp, curlwp);
+	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
+	RUMP_VOP_INACTIVE(vp, curlwp);
 	rump_recyclenode(vp);
 	rump_putnode(vp);
 }
@@ -211,32 +213,32 @@ ukfs_ll_namei(struct vnode *rvp, const char **pnp, u_long op,
 		p_next = strchr(pn, '/');
 		if (p_next == NULL || p_next == p_end) {
 			p_next = p_end;
-			flags |= NAMEI_ISLASTCN;
+			flags |= RUMP_NAMEI_ISLASTCN;
 		}
 		pnlen = p_next - pn;
 
 		if (pnlen == 2 && strcmp(pn, "..") == 0)
-			flags |= NAMEI_ISDOTDOT;
+			flags |= RUMP_NAMEI_ISDOTDOT;
 
 		VLE(dvp);
-		cnp = rump_makecn(op, flags, pn, pnlen, curlwp);
-		rv = VOP_LOOKUP(dvp, &vp, cnp);
-		rump_freecn(cnp, 1);
+		cnp = rump_makecn(op, flags, pn, pnlen, RUMPCRED_SUSER, curlwp);
+		rv = RUMP_VOP_LOOKUP(dvp, &vp, cnp);
+		rump_freecn(cnp, RUMPCN_ISLOOKUP | RUMPCN_FREECRED);
 		VUL(dvp);
 		if (rv == 0)
 			VUL(vp);
 
-		if (!((flags & NAMEI_ISLASTCN) && dvpp))
-			recycle(dvp);
+		if (!((flags & RUMP_NAMEI_ISLASTCN) && dvpp))
+			ukfs_ll_recycle(dvp);
 
-		if (rv || (flags & NAMEI_ISLASTCN))
+		if (rv || (flags & RUMP_NAMEI_ISLASTCN))
 			break;
 
 		pn += pnlen;
 	}
-	assert(flags & NAMEI_ISLASTCN);
+	assert((rv != 0) || (flags & RUMP_NAMEI_ISLASTCN));
 	if (vp && vpp == NULL)
-		recycle(vp);
+		ukfs_ll_recycle(vp);
 
 	if (dvpp)
 		*dvpp = dvp;
@@ -251,61 +253,74 @@ int
 ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	struct vnode *vp;
+	size_t resid;
 	int rv, eofflag;
 
-	UKFS_UIOINIT(uio, iov, buf, bufsize, off, UIO_READ);
-
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &dirname, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &dirname, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 		
+	uio = rump_uio_setup(buf, bufsize, off, RUMPUIO_READ);
 	VLE(vp);
-	rv = VOP_READDIR(vp, &uio, NULL, &eofflag, NULL, NULL);
+	rv = RUMP_VOP_READDIR(vp, uio, NULL, &eofflag, NULL, NULL);
 	VUL(vp);
+	resid = rump_uio_free(uio);
 
  out:
-	recycle(vp);
+	ukfs_ll_recycle(vp);
 
 	if (rv) {
 		errno = rv;
 		return -1;
 	}
 
-	return bufsize - uio.uio_resid;
+	return bufsize - resid;
 }
+
+enum ukfs_rw {UKFS_READ, UKFS_WRITE, UKFS_READLINK};
 
 static ssize_t
 readwrite(struct ukfs *ukfs, const char *filename, off_t off,
-	uint8_t *buf, size_t bufsize, enum uio_rw rw,
-	int (*do_fn)(struct vnode *, struct uio *, int, kauth_cred_t))
+	uint8_t *buf, size_t bufsize, enum rump_uiorw rw, enum ukfs_rw ukrw)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	struct vnode *vp;
+	size_t resid;
 	int rv;
 
-	UKFS_UIOINIT(uio, iov, buf, bufsize, off, rw);
-
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 
+	uio = rump_uio_setup(buf, bufsize, off, rw);
 	VLS(vp);
-	rv = do_fn(vp, &uio, 0, NULL);
+	switch (ukrw) {
+	case UKFS_READ:
+		rv = RUMP_VOP_READ(vp, uio, 0, NULL);
+		break;
+	case UKFS_WRITE:
+		rv = RUMP_VOP_WRITE(vp, uio, 0, NULL);
+		break;
+	case UKFS_READLINK:
+		rv = RUMP_VOP_READLINK(vp, uio, NULL);
+		break;
+	}
 	VUL(vp);
+	resid = rump_uio_free(uio);
 
  out:
-	recycle(vp);
+	ukfs_ll_recycle(vp);
 
 	if (rv) {
 		errno = rv;
 		return -1;
 	}
 
-	return bufsize - uio.uio_resid;
+	return bufsize - resid;
 }
 
 ssize_t
@@ -313,7 +328,8 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 
-	return readwrite(ukfs, filename, off, buf, bufsize, UIO_READ, VOP_READ);
+	return readwrite(ukfs, filename, off, buf, bufsize,
+	    RUMPUIO_READ, UKFS_READ);
 }
 
 ssize_t
@@ -321,41 +337,64 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 
-	return readwrite(ukfs, filename, off, buf, bufsize,UIO_WRITE,VOP_WRITE);
+	return readwrite(ukfs, filename, off, buf, bufsize,
+	    RUMPUIO_WRITE, UKFS_WRITE);
 }
 
 static int
-create(struct ukfs *ukfs, const char *filename, mode_t mode, dev_t dev,
-	int (*do_fn)(struct vnode *, struct vnode **,
-		     struct componentname *, struct vattr *))
+create(struct ukfs *ukfs, const char *filename, mode_t mode,
+	enum vtype vt, dev_t dev)
 {
 	struct componentname *cnp;
 	struct vnode *dvp = NULL, *vp = NULL;
-	struct vattr va;
-	struct timeval tv_now;
+	struct vattr *vap;
 	int rv;
+	int (*do_fn)(struct vnode *, struct vnode **,
+		     struct componentname *, struct vattr *);
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_CREATE, &dvp, NULL);
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
 	if (rv == 0)
 		rv = EEXIST;
 	if (rv != EJUSTRETURN)
 		goto out;
 
-	gettimeofday(&tv_now, NULL);
+	switch (vt) {
+	case VDIR:
+		do_fn = RUMP_VOP_MKDIR;
+		break;
+	case VREG:
+	case VSOCK:
+		do_fn = RUMP_VOP_CREATE;
+		break;
+	case VBLK:
+	case VCHR:
+		do_fn = RUMP_VOP_MKNOD;
+		break;
+	default:
+		rv = EINVAL;
+		goto out;
+	}
 
-	rump_vattr_null(&va);
-	va.va_mode = mode;
-	va.va_rdev = dev;
+	vap = rump_vattr_init();
+	rump_vattr_settype(vap, vt);
+	rump_vattr_setmode(vap, mode);
+	rump_vattr_setrdev(vap, dev);
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
 
-	cnp = rump_makecn(NAMEI_CREATE, NAMEI_HASBUF|NAMEI_SAVENAME, filename,
-	    strlen(filename), curlwp);
 	VLE(dvp);
-	rv = do_fn(dvp, &vp, cnp, &va);
-	rump_freecn(cnp, 0);
+	rv = do_fn(dvp, &vp, cnp, vap);
+	if (rv == 0)
+		VUL(vp);
+
+	rump_freecn(cnp, RUMPCN_FREECRED);
+	rump_vattr_free(vap);
 
  out:
-	recycle(dvp);
-	recycle(vp);
+	ukfs_ll_recycle(dvp);
+	ukfs_ll_recycle(vp);
 
 	if (rv) {
 		errno = rv;
@@ -368,22 +407,46 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode, dev_t dev,
 int
 ukfs_create(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
+	enum vtype vt;
 
-	return create(ukfs, filename, mode, /*XXX*/(dev_t)-1, VOP_CREATE);
+	switch (mode & S_IFMT) {
+	case S_IFREG:
+		vt = VREG;
+		break;
+	case S_IFSOCK:
+		vt = VSOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return create(ukfs, filename, mode, vt, /*XXX*/(dev_t)-1);
 }
 
 int
 ukfs_mknod(struct ukfs *ukfs, const char *filename, mode_t mode, dev_t dev)
 {
+	enum vtype vt;
 
-	return create(ukfs, filename, mode, dev, VOP_MKNOD);
+	switch (mode & S_IFMT) {
+	case S_IFBLK:
+		vt = VBLK;
+		break;
+	case S_IFCHR:
+		vt = VCHR;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return create(ukfs, filename, mode, vt, dev);
 }
 
 int
 ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
 
-	return create(ukfs, filename, mode, (dev_t)-1, VOP_MKDIR);
+	return create(ukfs, filename, mode, VDIR, (dev_t)-1);
 }
 
 static int
@@ -394,19 +457,21 @@ doremove(struct ukfs *ukfs, const char *filename,
 	struct vnode *dvp = NULL, *vp = NULL;
 	int rv;
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_DELETE, &dvp, &vp);
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_DELETE,
+	    &dvp, &vp);
 	if (rv)
 		goto out;
 
-	cnp = rump_makecn(NAMEI_DELETE, 0, filename, strlen(filename), curlwp);
+	cnp = rump_makecn(RUMP_NAMEI_DELETE, 0, filename,
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
 	VLE(dvp);
 	VLE(vp);
 	rv = do_fn(dvp, vp, cnp);
-	rump_freecn(cnp, 0);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 
  out:
-	recycle(dvp);
-	recycle(vp);
+	ukfs_ll_recycle(dvp);
+	ukfs_ll_recycle(vp);
 
 	if (rv) {
 		errno = rv;
@@ -420,14 +485,14 @@ int
 ukfs_remove(struct ukfs *ukfs, const char *filename)
 {
 
-	return doremove(ukfs, filename, VOP_REMOVE);
+	return doremove(ukfs, filename, RUMP_VOP_REMOVE);
 }
 
 int
 ukfs_rmdir(struct ukfs *ukfs, const char *filename)
 {
 
-	return doremove(ukfs, filename, VOP_RMDIR);
+	return doremove(ukfs, filename, RUMP_VOP_RMDIR);
 }
 
 int
@@ -437,28 +502,31 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	struct componentname *cnp;
 	int rv;
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 
-	vp->v_usecount = 1; /* XXX kludge of the year */
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &f_create, NAMEI_CREATE, &dvp, NULL);
-	vp->v_usecount = 0; /* XXX */
+	rump_vp_incref(vp); /* XXX kludge of the year */
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &f_create, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
+	rump_vp_decref(vp); /* XXX */
 
 	if (rv == 0)
 		rv = EEXIST;
 	if (rv != EJUSTRETURN)
 		goto out;
 
-	cnp = rump_makecn(NAMEI_CREATE, NAMEI_HASBUF | NAMEI_SAVENAME,
-	    f_create, strlen(f_create), curlwp);
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF | RUMP_NAMEI_SAVENAME,
+	    f_create, strlen(f_create), RUMPCRED_SUSER, curlwp);
 	VLE(dvp);
-	rv = VOP_LINK(dvp, vp, cnp);
-	rump_freecn(cnp, 0);
+	rv = RUMP_VOP_LINK(dvp, vp, cnp);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 
  out:
-	recycle(dvp);
-	recycle(vp);
+	ukfs_ll_recycle(dvp);
+	ukfs_ll_recycle(vp);
 
 	if (rv) {
 		errno = rv;
@@ -466,4 +534,55 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	}
 
 	return 0;
+}
+
+int
+ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
+{
+	struct componentname *cnp;
+	struct vnode *dvp = NULL, *vp = NULL;
+	struct vattr *vap;
+	int rv;
+
+	rv = ukfs_ll_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
+	if (rv == 0)
+		rv = EEXIST;
+	if (rv != EJUSTRETURN)
+		goto out;
+
+	vap = rump_vattr_init();
+	rump_vattr_setmode(vap, UKFS_MODE_DEFAULT);
+	rump_vattr_settype(vap, VLNK);
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
+
+	VLE(dvp);
+	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, vap, linkname);
+	if (rv == 0)
+		VUL(vp);
+
+	rump_freecn(cnp, RUMPCN_FREECRED);
+	rump_vattr_free(vap);
+
+ out:
+	ukfs_ll_recycle(dvp);
+	ukfs_ll_recycle(vp);
+
+	if (rv) {
+		errno = rv;
+		return -1;
+	}
+
+	return 0;
+}
+
+ssize_t
+ukfs_readlink(struct ukfs *ukfs, const char *filename,
+	char *linkbuf, size_t buflen)
+{
+
+	return readwrite(ukfs, filename, 0,
+	    (uint8_t *)linkbuf, buflen, RUMPUIO_READ, UKFS_READLINK);
 }

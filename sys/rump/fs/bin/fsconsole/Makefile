@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2007/08/20 22:07:13 ad Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2007/10/12 13:48:55 ad Exp $
 #
 
 PROG=		fsconsole
 RUMPFS_NOFSLIB=	# defined
 
-LDADD+=		${RUMPFSLD_ALL} -L${NETBSDSRCDIR}/sys/rump/fs/lib/libukfs -lukfs
+LDADD+=		${RUMPFSLD_ALL}
 DPADD+=		${RUMPFSDP_ALL}
 CPPFLAGS+=      -I${NETBSDSRCDIR}/sys/rump/librump/rumpkern		\
 		-I${NETBSDSRCDIR}/sys/rump/fs/lib/libukfs
 
-RUMPFS_WANT=	${RUMPFSLIST} ufs
+RUMPFS_WANT=	${RUMPFSLIST} ufs ukfs
 
 .include <bsd.prog.mk>
