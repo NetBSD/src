@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2007/09/26 19:48:37 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.216 2007/10/12 13:38:08 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2007/09/26 19:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2007/10/12 13:38:08 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -266,8 +266,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2007/09/26 19:48:37 ad Exp $");
 #define	mutex_init(a, b, c)	simple_lock_init(a)
 #define	mutex_owned(a)		(1)
 #define	mutex_destroy(a)	/* nothing */
-#define	crit_enter()		/* nothing */
-#define	crit_exit()		/* nothing */
 #define kmutex_t		struct simplelock
 
 static kmutex_t pmaps_lock;
