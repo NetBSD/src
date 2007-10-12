@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.85.12.1 2007/08/29 04:55:52 matt Exp $
+#	$NetBSD: files.arm,v 1.85.12.2 2007/10/12 02:23:35 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -43,7 +43,8 @@ file	arch/arm/fpe-arm/armfpe.S		armfpe
 defflag				PMAP_DEBUG
 
 # New PMAP options
-defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT
+defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT PMAPCOUNTERS
+				PMAP_STEAL_MEMORY
 
 # MI console support
 file	dev/cons.c
@@ -98,6 +99,7 @@ file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11
+file	arch/arm/arm/cpufunc_asm_arm1136.S	cpu_arm1136
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_arm10 |
 							cpu_sa110 |
@@ -151,6 +153,10 @@ file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
 file	arch/arm/arm32/vm_machdep.c		arm32
 file	arch/arm/arm32/atomic.S			arm32
+
+# files less common to arm32 implementations...
+file	kern/kern_cctr.c			arm11
+file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32
