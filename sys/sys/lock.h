@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.74 2007/10/11 19:45:26 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.75 2007/10/12 09:15:37 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#include <sys/stdint.h>
 #include <sys/queue.h>
 #include <sys/simplelock.h>
 
