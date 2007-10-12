@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.106 2007/10/08 15:06:26 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.107 2007/10/12 09:53:07 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.106 2007/10/08 15:06:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.107 2007/10/12 09:53:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -335,7 +335,7 @@ static const struct db_command db_command_table[] = {
 	    "[/bhl] address value [mask] [,count]",NULL) },
 	{ DDB_ADD_CMD("set",	db_set_cmd,		CS_OWN,
 	    "Set the named variable","$variable [=] expression",NULL) },
-	{ DDB_ADD_CMD("show",	NULL ,CS_SHOW,
+	{ DDB_ADD_CMD("show",	NULL, CS_SHOW,
 	    "Show kernel stats.", NULL,NULL) },
 	{ DDB_ADD_CMD("sifting",	db_sifting_cmd,		CS_OWN,
 	    "Search the symbol tables ","[/F] string",NULL) },
@@ -590,20 +590,19 @@ db_cmd_search(const char *name,const struct db_command *table,
 	for (cmd = table; cmd->name != 0; cmd++) {
 		const char *lp;
 		const char *rp;
-		int  c;
 
 		lp = name;
 		rp = cmd->name;
-		while ((c = *lp) == *rp) {
-			if (c == 0) {
-				/* complete match */
-				*cmdp = cmd;
-				return (CMD_UNIQUE);
-			}
-			lp++;
+		while (*lp == *rp) {
 			rp++;
+			lp++;
 		}
-		if (c == 0) {
+		if (*rp == '\0' && *lp == '\0') {
+			/* complete match */
+			*cmdp = cmd;
+			return (CMD_UNIQUE);
+		}
+		if (*lp == '\0') {
 			/* end of name, not end of command -
 			   partial match */
 			if (result == CMD_FOUND) {
@@ -789,13 +788,14 @@ db_command(const struct db_command **last_cmdp)
 		switch(db_get_list_type(db_tok_string)) {
 
 		case DDB_BASE_CMD:
-			list=&db_base_cmd_list;
+			list = &db_base_cmd_list;
 			break;
+
 		case DDB_SHOW_CMD:
-			list=&db_show_cmd_list;
+			list = &db_show_cmd_list;
 			/* need to read show subcommand if show command list
 			   is used. */
-			t = db_read_token(); 
+			t = db_read_token();
 
 			if (t != tIDENT) {
 				/* if only show command is executed, print
@@ -806,7 +806,7 @@ db_command(const struct db_command **last_cmdp)
 			}
 			break;
 		case DDB_MACH_CMD:
-			list=&db_mach_cmd_list;
+			list = &db_mach_cmd_list;
 			/* need to read machine subcommand if
 			  machine level 2 command list is used. */
 			t = db_read_token();
@@ -826,7 +826,7 @@ db_command(const struct db_command **last_cmdp)
 		}
 
  COMPAT_RET:
-		TAILQ_FOREACH(list_ent,list,db_cmd_next) {
+		TAILQ_FOREACH(list_ent, list, db_cmd_next) {
 			result = db_cmd_search(db_tok_string, list_ent->db_cmd,
 			    &command);
 
@@ -837,7 +837,7 @@ db_command(const struct db_command **last_cmdp)
 
 		}
 
-                /*check compatibility flag*/
+                /* check compatibility flag */
 		if (command && command->flag & CS_COMPAT){
 			t = db_read_token();
 			if (t != tIDENT) {
@@ -916,7 +916,8 @@ db_command(const struct db_command **last_cmdp)
 		/*
 		 * Execute the command.
 		 */
-		(*command->fcn)(addr, have_addr, count, modif);
+		if (command->fcn != NULL)
+			(*command->fcn)(addr, have_addr, count, modif);
 
 		if (command->flag & CS_SET_DOT) {
 			/*
