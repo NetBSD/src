@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2.52.1 2007/08/29 04:46:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2.52.2 2007/10/12 02:22:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -34,6 +34,7 @@
  * architecture or physically tagged cache.
  */
  
+#include "assym.h"
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
@@ -44,9 +45,11 @@
  * addresses that are about to change.
  */
 ENTRY(arm11_setttb)
+#ifdef PMAP_CACHE_VIVT
 	stmfd	sp!, {r0, lr}
 	bl	_C_LABEL(armv6_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
+#endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
@@ -123,6 +126,7 @@ ENTRY(arm11_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 
-ENTRY(arm11_cpu_sleep)
+ENTRY_NP(arm11_sleep)
+	mov	r0, #0
 	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
 	RET

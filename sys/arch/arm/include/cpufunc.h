@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.40.22.1 2007/08/29 04:42:10 matt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40.22.2 2007/10/12 02:22:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -352,27 +352,6 @@ void	arm10_context_switch	(void);
 void	arm10_setup		(char *);
 #endif
 
-#if defined(CPU_ARM11)
-void	arm11_setttb		(u_int);
-
-void	arm11_tlb_flushID_SE	(u_int);
-void	arm11_tlb_flushI_SE	(u_int);
-
-void	arm11_context_switch	(void);
-
-void	arm11_cpu_sleep		(int);
-void	arm11_setup		(char *string);
-void	arm11_tlb_flushID	(void);
-void	arm11_tlb_flushI	(void);
-void	arm11_tlb_flushD	(void);
-void	arm11_tlb_flushD_SE	(u_int va);
-
-void	armv11_dcache_wbinv_all (void);
-void	armv11_idcache_wbinv_all(void);
-
-void	arm11_drain_writebuf	(void);
-#endif
-
 #if defined(CPU_ARM9E) || defined (CPU_ARM10)
 void	armv5_ec_setttb			(u_int);
 
@@ -409,6 +388,26 @@ extern unsigned armv5_dcache_index_inc;
 #endif
 
 #if defined(CPU_ARM11)
+void	arm11_setttb		(u_int);
+
+void	arm11_tlb_flushID_SE	(u_int);
+void	arm11_tlb_flushI_SE	(u_int);
+
+void	arm11_context_switch	(void);
+
+void	arm11_cpu_sleep		(int);
+void	arm11_setup		(char *string);
+void	arm11_tlb_flushID	(void);
+void	arm11_tlb_flushI	(void);
+void	arm11_tlb_flushD	(void);
+void	arm11_tlb_flushD_SE	(u_int va);
+
+void	armv11_dcache_wbinv_all (void);
+void	armv11_idcache_wbinv_all(void);
+
+void	arm11_drain_writebuf	(void);
+void	arm11_sleep		(int);
+
 void	armv6_setttb		(u_int);
 
 void	armv6_icache_sync_all	(void);
@@ -422,6 +421,19 @@ void	armv6_dcache_wb_range	(vaddr_t, vsize_t);
 void	armv6_idcache_wbinv_all	(void);
 void	armv6_idcache_wbinv_range (vaddr_t, vsize_t);
 #endif
+
+#if defined(CPU_ARM1136)
+void	arm1136_setttb			(u_int);
+void	arm1136_idcache_wbinv_all	(void);
+void	arm1136_dcache_wbinv_all	(void);
+void	arm1136_icache_sync_all		(void);
+void	arm1136_flush_prefetchbuf	(void);
+void	arm1136_icache_sync_range	(vaddr_t, vsize_t);
+void	arm1136_idcache_wbinv_range	(vaddr_t, vsize_t);
+void	arm1136_setup			(char *string);
+void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
+#endif
+
 
 #if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
