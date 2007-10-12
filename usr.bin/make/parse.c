@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1920,37 +1920,27 @@ ParseSetParseFile(const char *filename)
  * set dependencies on them.
  * Avoid adding anything more than once.
  */
-#define TRACK_INPUT_FMT "${.PARSEDIR}/${.PARSEFILE}"
 
 static void
 ParseTrackInput(const char *name)
 {
-    static const char track_input_fmt[] = TRACK_INPUT_FMT;
-    char *val;
     char *old;
-    char *cp;
     char *fp = NULL;
+    int name_len = strlen(name);
     
-    val = Var_Subst(NULL, track_input_fmt, VAR_GLOBAL, 0);
     old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
     if (old) {
-	/* does it contain val? */
-	if ((cp = strstr(old, val))) {
-	    int n = strlen(val);
-
-	    /*
-	     * It only counts if at the start/end
-	     * or bounded by ' '
-	     */
-	    if ((cp[n] == '\0' || cp[n] == ' ') &&
-		(cp == old || cp[-1] == ' ')) {
-		goto cleanup;		/* we already have it */
-	    }
+	/* does it contain name? */
+	for (; old != NULL; old = strchr(old, ' ')) {
+	    if (*old == ' ')
+		old++;
+	    if (memcmp(old, name, name_len) == 0
+		    && (old[name_len] == 0 || old[name_len] == ' '))
+		goto cleanup;
 	}
     }
-    Var_Append (MAKE_MAKEFILES, val, VAR_GLOBAL);
+    Var_Append (MAKE_MAKEFILES, name, VAR_GLOBAL);
  cleanup:
-    free(val);
     if (fp) {
 	free(fp);
     }
@@ -1975,6 +1965,8 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 {
     if (name == NULL)
 	name = curFile->fname;
+    else
+	ParseTrackInput(name);
 
     if (DEBUG(PARSE))
 	fprintf(debug_file, "Parse_SetInput: file %s, line %d, fd %d, buf %p\n",
@@ -2003,7 +1995,6 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
     curFile->cond_depth = Cond_save_depth();
 
     ParseSetParseFile(name);
-    ParseTrackInput(name);
 
     if (buf == NULL) {
 	/*
