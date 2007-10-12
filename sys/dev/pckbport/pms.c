@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.17.2.3 2007/05/13 17:36:27 ad Exp $ */
+/* $NetBSD: pms.c,v 1.17.2.4 2007/10/12 13:48:54 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -25,10 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_pms.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.17.2.3 2007/05/13 17:36:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.17.2.4 2007/10/12 13:48:54 ad Exp $");
+
+#include "opt_pms.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

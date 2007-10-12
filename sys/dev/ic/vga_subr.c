@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.20 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: vga_subr.c,v 1.20.30.1 2007/10/12 13:48:54 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,11 +26,11 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.20.30.1 2007/10/12 13:48:54 ad Exp $");
+
 /* for WSDISPLAY_BORDER_COLOR */
 #include "opt_wsdisplay_border.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.20 2005/12/11 12:21:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

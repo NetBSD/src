@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.5.2.3 2007/10/09 13:45:02 ad Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.5.2.4 2007/10/12 13:48:57 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,16 +55,17 @@ ssize_t		ukfs_read(struct ukfs *, const char *, off_t,
 			      uint8_t *, size_t);
 ssize_t		ukfs_write(struct ukfs *, const char *, off_t,
 			       uint8_t *, size_t);
+ssize_t		ukfs_readlink(struct ukfs *, const char *, char *, size_t);
 
 int		ukfs_create(struct ukfs *, const char *, mode_t);
 int		ukfs_mkdir(struct ukfs *, const char *, mode_t);
 int		ukfs_mknod(struct ukfs *, const char *, mode_t, dev_t);
+int		ukfs_symlink(struct ukfs *, const char *, char *);
 
 int		ukfs_remove(struct ukfs *, const char *);
 int		ukfs_rmdir(struct ukfs *, const char *);
 
 int		ukfs_link(struct ukfs *, const char *, const char *);
-
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
