@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.318 2007/10/12 16:54:05 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.319 2007/10/12 22:40:33 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10108,3 +10108,21 @@ sys/dist/ipf/netinet/ip_nat.c			patch
 	Fix PR kern/37037 "ipnat: Data modified on freelist", verified by
 	the submitter.
 	[martti, ticket #916]
+
+sys/uvm/uvm_map.c				1.242
+
+	Don't restrict the offset when allocating a map entry for in-kernel
+	map - use UVM_UNKNOWN_OFFSET in the call to uvm_map_prepare.
+	Fixes PR#35887.
+	[skrll, ticket #928]
+
+sys/uvm/uvm_meter.c				1.45
+
+	Fix load average calculation.
+	[ad, ticket #929]
+
+sys/conf/copyright				1.4
+
+	Update the copyright year.
+	[martin, ticket #927]
+
