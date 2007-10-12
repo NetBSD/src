@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.137 2007/10/08 20:26:36 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.138 2007/10/12 23:13:16 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1925,14 +1925,13 @@ ParseSetParseFile(const char *filename)
 static void
 ParseTrackInput(const char *name)
 {
-    char tmp[sizeof(TRACK_INPUT_FMT) + 1];
+    static const char track_input_fmt[] = TRACK_INPUT_FMT;
     char *val;
     char *old;
     char *cp;
     char *fp = NULL;
     
-    strncpy(tmp, TRACK_INPUT_FMT, sizeof(tmp));
-    val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    val = Var_Subst(NULL, track_input_fmt, VAR_GLOBAL, 0);
     old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
     if (old) {
 	/* does it contain val? */
