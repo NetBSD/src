@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.43 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.43.2.1 2007/10/12 22:36:07 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.43 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.43.2.1 2007/10/12 22:36:07 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,9 +102,13 @@ uvm_loadav(struct loadavg *avg)
 	proclist_lock_read();
 	nrun = 0;
 	LIST_FOREACH(l, &alllwp, l_list) {
+		if ((l->l_flag & L_SINTR) != 0)
+			continue;
+		if ((l->l_proc->p_flag & P_SYSTEM) != 0)
+			continue;
 		switch (l->l_stat) {
 		case LSSLEEP:
-			if (l->l_priority > PZERO || l->l_slptime > 1)
+			if (l->l_slptime > 1)
 				continue;
 		/* fall through */
 		case LSRUN:
