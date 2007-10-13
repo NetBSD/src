@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.3 2007/10/10 22:21:17 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.4 2007/10/13 12:05:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3 2007/10/10 22:21:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.4 2007/10/13 12:05:32 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -481,7 +481,6 @@ sched_wakeup(struct lwp *l)
 	/* If thread was sleeping a second or more - set a high priority */
 	if (l->l_slptime > 1 || (hardclock_ticks - sil->sl_slept) >= hz)
 		l->l_usrpri = l->l_priority = high_pri[l->l_usrpri];
-	KASSERT(sil->sl_slept > 0);
 
 	/* Also, consider looking for a better CPU to wake up */
 	if ((l->l_flag & (LW_BOUND | LW_SYSTEM)) == 0)
