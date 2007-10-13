@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.15 2007/10/10 23:03:23 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.16 2007/10/13 01:16:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.15 2007/10/10 23:03:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.16 2007/10/13 01:16:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -127,12 +127,6 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_sleepq = NULL;
 	l->l_flag &= ~LW_SINTR;
 
-	/*
-	 * Call the wake-up handler of scheduler.
-	 * It might change the CPU for this thread.
-	 */
-	sched_wakeup(l);
-
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
 
@@ -141,7 +135,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * holds it stopped set it running again.
 	 */
 	if (l->l_stat != LSSLEEP) {
-	 	KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
+		KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
 		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
@@ -156,6 +150,14 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
+
+	/*
+	 * Call the wake-up handler of scheduler.
+	 * It might change the CPU for this thread.
+	 */
+	sched_wakeup(l);
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
 
 	/*
 	 * Set it running.  We'll try to get the last CPU that ran
