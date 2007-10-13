@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.139 2007/10/12 23:38:27 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1745,16 +1745,19 @@ static void
 Parse_include_file(char *file, Boolean isSystem, int silent)
 {
     char          *fullname;	/* full pathname of file */
+    char          *newName;
+    char          *prefEnd, *incdir;
     int           fd;
+    int           i;
 
     /*
      * Now we know the file's name and its search path, we attempt to
      * find the durn thing. A return of NULL indicates the file don't
      * exist.
      */
-    fullname = NULL;
+    fullname = file[0] == '/' ? estrdup(file) : NULL;
 
-    if (!isSystem) {
+    if (fullname == NULL && !isSystem) {
 	/*
 	 * Include files contained in double-quotes are first searched for
 	 * relative to the including file's location. We don't want to
@@ -1762,30 +1765,26 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	 * leading path components and call Dir_FindFile to see if
 	 * we can locate the beast.
 	 */
-	char	  *prefEnd, *Fname;
 
-	/* Make a temporary copy of this, to be safe. */
-	Fname = estrdup(curFile->fname);
-
-	prefEnd = strrchr(Fname, '/');
+	incdir = estrdup(curFile->fname);
+	prefEnd = strrchr(incdir, '/');
 	if (prefEnd != NULL) {
-	    char  	*newName;
-
 	    *prefEnd = '\0';
-	    if (file[0] == '/')
-		newName = estrdup(file);
-	    else
-		newName = str_concat(Fname, file, STR_ADDSLASH);
-	    fullname = Dir_FindFile(newName, parseIncPath);
-	    if (fullname == NULL) {
-		fullname = Dir_FindFile(newName, dirSearchPath);
+	    /* Now do lexical processing of leading "../" on the filename */
+	    for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
+		prefEnd = strrchr(incdir + 1, '/');
+		if (prefEnd == NULL || strcmp(prefEnd, "/..") == 0)
+		    break;
+		*prefEnd = '\0';
 	    }
+	    newName = str_concat(incdir, file + i, STR_ADDSLASH);
+	    fullname = Dir_FindFile(newName, parseIncPath);
+	    if (fullname == NULL)
+		fullname = Dir_FindFile(newName, dirSearchPath);
 	    free(newName);
-	    *prefEnd = '/';
-	} else {
-	    fullname = NULL;
 	}
-	free(Fname);
+	free(incdir);
+
         if (fullname == NULL) {
 	    /*
     	     * Makefile wasn't found in same directory as included makefile.
@@ -1820,6 +1819,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
     if (fd == -1) {
 	if (!silent)
 	    Parse_Error(PARSE_FATAL, "Cannot open %s", fullname);
+	free(fullname);
 	return;
     }
 
