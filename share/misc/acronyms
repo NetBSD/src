@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.170 2007/10/12 00:14:20 pooka Exp $
+$NetBSD: acronyms,v 1.171 2007/10/13 22:55:52 christos Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -230,6 +230,7 @@ TBOMK	the best of my knowledge
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
+TIAVP	this is a volunteer project
 TINC	there is no cabal
 TLA	three letter acronym
 TLC	tender loving care
