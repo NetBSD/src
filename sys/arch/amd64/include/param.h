@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2007/10/13 14:46:54 joerg Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -64,7 +64,7 @@
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	4*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
 #endif
 
 /*
