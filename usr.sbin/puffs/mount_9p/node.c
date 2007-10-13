@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.16 2007/07/02 10:26:50 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.17 2007/10/13 17:21:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.16 2007/07/02 10:26:50 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.17 2007/10/13 17:21:39 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -49,6 +49,36 @@ nodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 		return pn;
 
 	return NULL;
+}
+
+static int
+do_getattr(struct puffs_cc *pcc, struct puffs_node *pn, struct vattr *vap)
+{
+	AUTOVAR(pcc);
+	struct p9pnode *p9n = pn->pn_data;
+
+	p9pbuf_put_1(pb, P9PROTO_T_STAT);
+	p9pbuf_put_2(pb, tag);
+	p9pbuf_put_4(pb, p9n->fid_base);
+	GETRESPONSE(pb);
+
+	rv = proto_expect_stat(pb, vap);
+
+ out:
+	RETURN(rv);
+}
+
+int
+puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+{
+	struct puffs_node *pn = opc;
+	int rv;
+
+	rv = do_getattr(pcc, pn, &pn->pn_va);
+	if (rv == 0)
+		memcpy(vap, &pn->pn_va, sizeof(struct vattr));
+	return rv;
 }
 
 int
@@ -88,6 +118,14 @@ puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		pn = newp9pnode_qid(pu, &newqid, tfid);
 	else
 		proto_cc_clunkfid(pcc, tfid, 0);
+
+	rv = do_getattr(pcc, pn, &pn->pn_va);
+	if (rv) {
+		/* XXX */
+		free(pn->pn_data);
+		puffs_pn_put(pn);
+		goto out;
+	}
 		
 	puffs_newinfo_setcookie(pni, pn);
 	puffs_newinfo_setvtype(pni, pn->pn_va.va_type);
@@ -164,29 +202,6 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
 	storedf(p9n, dfp);
-
- out:
-	RETURN(rv);
-}
-
-int
-puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
-{
-	AUTOVAR(pcc);
-	struct puffs_node *pn = opc;
-	struct p9pnode *p9n = pn->pn_data;
-
-	p9pbuf_put_1(pb, P9PROTO_T_STAT);
-	p9pbuf_put_2(pb, tag);
-	p9pbuf_put_4(pb, p9n->fid_base);
-	GETRESPONSE(pb);
-
-	rv = proto_expect_stat(pb, &pn->pn_va);
-	if (rv)
-		goto out;
-
-	memcpy(vap, &pn->pn_va, sizeof(struct vattr));
 
  out:
 	RETURN(rv);
