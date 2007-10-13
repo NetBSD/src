@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.16 2007/10/13 15:33:23 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.17 2007/10/13 15:36:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.16 2007/10/13 15:33:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.17 2007/10/13 15:36:47 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.16 2007/10/13 15:33:23 joerg 
 #include <machine/acpi_machdep.h>
 #include <machine/cpu.h>
 #include <machine/npx.h>
+#include <machine/mtrr.h>
 
 #include "acpi_wakecode.h"
 
@@ -292,6 +293,9 @@ acpi_md_sleep(int state)
 out:
 	x86_enable_intr();
 	splx(s);
+
+	if (mtrr_funcs != NULL)
+		mtrr_commit();
 
 	return (ret);
 #undef WAKECODE_FIXUP
