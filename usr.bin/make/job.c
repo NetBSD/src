@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.130 2007/10/12 23:07:04 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.131 2007/10/13 08:58:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.130 2007/10/12 23:07:04 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.131 2007/10/13 08:58:48 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.130 2007/10/12 23:07:04 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.131 2007/10/13 08:58:48 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2063,7 +2063,7 @@ Shell_GetNewline(void)
 void
 Job_SetPrefix(void)
 {
-    static const char job_prefix[] = "${" MAKE_JOB_PREFIX "}";
+    static char job_prefix[] = "${" MAKE_JOB_PREFIX "}";
     
     if (targPrefix) {
 	free(targPrefix);
