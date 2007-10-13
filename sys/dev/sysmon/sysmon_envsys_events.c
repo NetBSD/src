@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.40 2007/10/13 02:44:19 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.41 2007/10/13 16:00:46 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.40 2007/10/13 02:44:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.41 2007/10/13 16:00:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -363,11 +363,9 @@ do {									\
 			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
 			(void)strlcat(str, (c), sizeof(str));		\
-			mutex_enter(&sme_mtx);			\
 			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
-			mutex_exit(&sme_mtx);			\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
