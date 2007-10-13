@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.3.2.3 2007/10/11 20:43:32 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.3.2.4 2007/10/13 08:46:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.3 2007/10/11 20:43:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.4 2007/10/13 08:46:58 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -496,29 +496,31 @@ void
 sched_pstats_hook(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
-	const bool batch = (sil->sl_rtsum > sil->sl_slpsum);
+	bool batch;
+
+	/*
+	 * Set that thread is more CPU-bound, if sum of run time exceeds the
+	 * sum of sleep time.  Check if thread is CPU-bound a first time.
+	 */
+	batch = (sil->sl_rtsum > sil->sl_slpsum);
+	if (batch) {
+		if ((sil->sl_flags & SL_BATCH) == 0)
+			batch = false;
+		sil->sl_flags |= SL_BATCH;
+	} else
+		sil->sl_flags &= ~SL_BATCH;
 
 	/* Reset the time sums */
 	sil->sl_slpsum = 0;
 	sil->sl_rtsum = 0;
 
 	/* Estimate threads on time-sharing queue only */
-	if (l->l_usrpri > PRI_HIGHEST_TS)
+	if (l->l_usrpri >= PRI_HIGHEST_TS)
 		return;
-	KASSERT(l->l_policy == SCHED_OTHER);
 
-	/*
-	 * Set that thread is more CPU-bound, if sum of run time exceeds the
-	 * sum of sleep time.  If it is CPU-bound not a first time - decrease
-	 * the priority.
-	 */
-	if (batch) {
-		if ((sil->sl_flags & SL_BATCH) && l->l_usrpri)
-			l->l_usrpri--;
-		sil->sl_flags |= SL_BATCH;
-	} else {
-		sil->sl_flags &= ~SL_BATCH;
-	}
+	/* If it is CPU-bound not a first time - decrease the priority */
+	if (batch && l->l_usrpri != 0)
+		l->l_usrpri--;
 
 	/* If thread was not ran a second or more - set a high priority */
 	if (l->l_stat == LSRUN && sil->sl_lrtime &&
@@ -830,9 +832,11 @@ sched_tick(struct cpu_info *ci)
 		 * If thread is in time-sharing queue, decrease the priority,
 		 * and run with a higher time-quantum.
 		 */
-		if (l->l_usrpri > PRI_HIGHEST_TS || l->l_usrpri == 0)
+		if (l->l_usrpri > PRI_HIGHEST_TS)
 			break;
-		l->l_priority = --l->l_usrpri;
+		if (l->l_usrpri != 0)
+			l->l_usrpri--;
+		l->l_priority = l->l_usrpri;
 		break;
 	}
 
