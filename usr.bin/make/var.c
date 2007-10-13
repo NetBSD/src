@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.120 2007/10/13 13:54:06 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.120 2007/10/13 13:54:06 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.119 2007/10/09 05:55:03 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.120 2007/10/13 13:54:06 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3192,7 +3192,7 @@ ApplyModifiers(char *nstr, const char *tstr,
  *	ctxt		The context for the variable
  *	errnum		TRUE if undefined variables are an error
  *	lengthPtr	OUT: The length of the specification
- *	freePtr		OUT: TRUE if caller should free result
+ *	freePtr		OUT: Non-NULL if caller should free *freePtr 
  *
  * Results:
  *	The (possibly-modified) value of the variable or var_Error if the
