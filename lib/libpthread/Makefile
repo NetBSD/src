@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2007/10/04 21:08:35 ad Exp $
+#	$NetBSD: Makefile,v 1.45 2007/10/13 20:36:43 jnemeth Exp $
 #
 
 WARNS=	4
@@ -83,6 +83,8 @@ COPTS.pthread_lock.c+=	-fomit-frame-pointer -falign-functions=32
 pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
+
+COPTS.pthread.c += -Wno-stack-protector
 
 _context_u.po: _context_u.o
 	${_MKTARGET_CREATE}
