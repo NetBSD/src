@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.107 2007/10/08 18:09:37 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.108 2007/10/13 10:04:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.107 2007/10/08 18:09:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.108 2007/10/13 10:04:08 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1699,7 +1699,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 					if (l2 == l3)
 						break;
 				}
-				if (l2 == NULL) {
+				if (l3 == NULL) {
 					mutex_exit(&p->p_smutex);
 					error = EAGAIN;
 					goto cleanup;
