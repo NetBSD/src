@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.143 2007/10/05 15:27:45 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.144 2007/10/13 16:16:41 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.143 2007/10/05 15:27:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.144 2007/10/13 16:16:41 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.143 2007/10/05 15:27:45 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.144 2007/10/13 16:16:41 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -939,7 +939,7 @@ main(int argc, char **argv)
 	if (syspath == NULL || *syspath == '\0')
 		syspath = defsyspath;
 	else
-		syspath = strdup(syspath);
+		syspath = estrdup(syspath);
 
 	for (start = syspath; *start != '\0'; start = cp) {
 		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
@@ -1684,6 +1684,20 @@ estrdup(const char *str)
 	char *p;
 
 	if ((p = strdup(str)) == NULL)
+		enomem();
+	return(p);
+}
+
+/*
+ * estrndup --
+ *	strndup, but die on error.
+ */
+char *
+estrndup(const char *str, size_t len)
+{
+	char *p;
+
+	if ((p = strndup(str, len)) == NULL)
 		enomem();
 	return(p);
 }
