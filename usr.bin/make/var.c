@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.121 2007/10/13 14:32:18 apb Exp $	*/
+/*	$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.121 2007/10/13 14:32:18 apb Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.121 2007/10/13 14:32:18 apb Exp $");
+__RCSID("$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1643,7 +1643,7 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
     	av = emalloc((ac + 1) * sizeof(char *));
-	as = strdup(str);
+	as = estrdup(str);
 	av[0] = as;
 	av[1] = NULL;
     } else {
@@ -1736,7 +1736,7 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
     	av = emalloc((ac + 1) * sizeof(char *));
-	as = strdup(str);
+	as = estrdup(str);
 	av[0] = as;
 	av[1] = NULL;
     } else {
@@ -2259,11 +2259,11 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    ++tstr;
 		    if (v->flags & VAR_JUNK) {
 			/*
-			 * We need to strdup() it incase
+			 * We need to estrdup() it incase
 			 * VarGetPattern() recurses.
 			 */
 			sv_name = v->name;
-			v->name = strdup(v->name);
+			v->name = estrdup(v->name);
 		    } else if (ctxt != VAR_GLOBAL) {
 			Var *gv = VarFind(v->name, ctxt, 0);
 			if (gv == (Var *)NIL)
@@ -2423,7 +2423,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    {
 		if ((v->flags & VAR_JUNK) != 0)
 		    v->flags |= VAR_KEEP;
-		newStr = strdup(v->name);
+		newStr = estrdup(v->name);
 		cp = ++tstr;
 		termc = *tstr;
 		break;
@@ -2438,12 +2438,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 		if (gn == NILGNODE || gn->type & OP_NOPATH) {
 		    newStr = NULL;
 		} else if (gn->path) {
-		    newStr = strdup(gn->path);
+		    newStr = estrdup(gn->path);
 		} else {
 		    newStr = Dir_FindFile(v->name, Suff_FindPath(gn));
 		}
 		if (!newStr) {
-		    newStr = strdup(v->name);
+		    newStr = estrdup(v->name);
 		}
 		cp = ++tstr;
 		termc = *tstr;
@@ -3436,9 +3436,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		*lengthPtr = tstr - start + 1;
 		*WR(tstr) = endc;
 		if (dynamic) {
-		    char *pstr = emalloc(*lengthPtr + 1);
-		    strncpy(pstr, start, *lengthPtr);
-		    pstr[*lengthPtr] = '\0';
+		    char *pstr = estrndup(start, *lengthPtr);
 		    *freePtr = pstr;
 		    Buf_Destroy(buf, TRUE);
 		    return(pstr);
@@ -3530,9 +3528,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = emalloc(*lengthPtr + 1);
-		strncpy(nstr, start, *lengthPtr);
-		nstr[*lengthPtr] = '\0';
+		nstr = estrndup(start, *lengthPtr);
 		*freePtr = nstr;
 	    } else {
 		nstr = var_Error;
