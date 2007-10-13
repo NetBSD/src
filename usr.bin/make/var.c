@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $	*/
+/*	$NetBSD: var.c,v 1.123 2007/10/13 19:59:52 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.123 2007/10/13 19:59:52 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.122 2007/10/13 16:16:41 apb Exp $");
+__RCSID("$NetBSD: var.c,v 1.123 2007/10/13 19:59:52 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -308,8 +308,6 @@ static char *VarOrder(const char *, const char);
 static char *VarUniq(const char *);
 static int VarWordCompare(const void *, const void *);
 static void VarPrintVar(ClientData);
-
-#define WR(a)	((char *)UNCONST(a))
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -2178,8 +2176,8 @@ ApplyModifiers(char *nstr, const char *tstr,
     const char 	   *start;
     const char     *cp;    	/* Secondary pointer into str (place marker
 				 * for tstr) */
-    char	*newStr;	/* New value to return */
-    char	termc;		/* Character which terminated scan */
+    char	   *newStr;	/* New value to return */
+    char	    termc;	/* Character which terminated scan */
     int             cnt;	/* Used to count brace pairs when variable in
 				 * in parens or braces */
     char	delim;
@@ -2721,8 +2719,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'M':
 	    {
 		char    *pattern;
+		const char *endpat; /* points just after end of pattern */
 		char    *cp2;
-		Boolean copy;
+		Boolean copy;	/* pattern should be, or has been, copied */
 		int nest;
 
 		copy = FALSE;
@@ -2753,7 +2752,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			}
 		    }
 		termc = *cp;
-		*WR(cp) = '\0';
+		endpat = cp;
 		if (copy) {
 		    /*
 		     * Need to compress the \:'s out of the pattern, so
@@ -2764,20 +2763,30 @@ ApplyModifiers(char *nstr, const char *tstr,
 		     */
 		    pattern = emalloc(cp - tstr);
 		    for (cp2 = pattern, cp = tstr + 1;
-			 *cp != '\0';
+			 cp < endpat;
 			 cp++, cp2++)
 			{
-			    if ((*cp == '\\') &&
+			    if ((*cp == '\\') && (cp+1 < endpat) &&
 				(cp[1] == ':' || cp[1] == endc)) {
 				cp++;
 			    }
 			    *cp2 = *cp;
 			}
 		    *cp2 = '\0';
+		    endpat = cp2;
 		} else {
-		    pattern = UNCONST(&tstr[1]);
+		    /*
+		     * Either Var_Subst or VarModify will need a
+		     * nul-terminated string soon, so construct one now.
+		     */
+		    pattern = estrndup(tstr+1, endpat - (tstr + 1));
+		    copy = TRUE;
 		}
-		if ((cp2 = strchr(pattern, '$'))) {
+		if (strchr(pattern, '$') != NULL) {
+		    /*
+		     * pattern contains embedded '$', so use Var_Subst to
+		     * expand it.
+		     */
 		    cp2 = pattern;
 		    pattern = Var_Subst(NULL, cp2, ctxt, errnum);
 		    if (copy)
@@ -3152,10 +3161,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	if (termc == '\0' && endc != '\0') {
 	    Error("Unclosed variable specification for %s", v->name);
 	} else if (termc == ':') {
-	    *WR(cp) = termc;
 	    cp++;
-	} else {
-	    *WR(cp) = termc;
 	}
 	tstr = cp;
     }
@@ -3220,8 +3226,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     char	    startc=0;	/* Starting character when variable in parens
 				 * or braces */
     int		    vlen;	/* Length of variable name */
-    const char 	   *start;
-    char	   *nstr;
+    const char 	   *start;	/* Points to original start of str */
+    char	   *nstr;	/* New string, used during expansion */
     Boolean 	    dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
 				 * is done to support dynamic sources. The
@@ -3282,7 +3288,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     } else if (str[1] == '\0') {
 	*lengthPtr = 1;
 	return (errnum ? var_Error : varNoError);
-    } else { 
+    } else {
 	Buffer buf;	/* Holds the variable name */
 
 	startc = str[1];
@@ -3327,10 +3333,20 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	    Buf_Destroy(buf, TRUE);
 	    return (var_Error);
 	}
-	*WR(tstr) = '\0';
 	Buf_AddByte(buf, (Byte)'\0');
 	str = Buf_GetAll(buf, NULL);
 	vlen = strlen(str);
+
+	/*
+	 * At this point, str points into newly allocated memory from
+	 * buf, containing only the name of the variable.
+	 *
+	 * start and tstr point into the const string that was pointed
+	 * to by the original value of the str parameter.  start points
+	 * to the '$' at the beginning of the string, while tstr points
+	 * to the char just after the end of the variable name -- this
+	 * will be '\0', ':', PRCLOSE, or BRCLOSE.
+	 */
 
 	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
@@ -3379,7 +3395,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 			 */
 			*freePtr = val;
 			*lengthPtr = tstr-start+1;
-			*WR(tstr) = endc;
 			Buf_Destroy(buf, TRUE);
 			VarFreeEnv(v, TRUE);
 			return(val);
@@ -3434,7 +3449,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		 * now.
 		 */
 		*lengthPtr = tstr - start + 1;
-		*WR(tstr) = endc;
 		if (dynamic) {
 		    char *pstr = estrndup(start, *lengthPtr);
 		    *freePtr = pstr;
@@ -3458,7 +3472,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	} else
 	    Buf_Destroy(buf, TRUE);
     }
-
 
     if (v->flags & VAR_IN_USE) {
 	Fatal("Variable %s is recursive.", v->name);
@@ -3486,16 +3499,13 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     if ((nstr != NULL) && haveModifier) {
 	int used;
 	/*
-	 * Skip initial colon while putting it back.
+	 * Skip initial colon.
 	 */
-	*WR(tstr) = ':';
 	tstr++;
 
 	nstr = ApplyModifiers(nstr, tstr, startc, endc,
 			      v, ctxt, errnum, &used, freePtr);
 	tstr += used;
-    } else {
-	*WR(tstr) = endc;
     }
     if (*tstr) {
 	*lengthPtr = tstr - start + 1;
