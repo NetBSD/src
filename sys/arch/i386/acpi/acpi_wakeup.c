@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.15 2007/10/02 23:37:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.16 2007/10/13 15:33:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.15 2007/10/02 23:37:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.16 2007/10/13 15:33:23 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -198,7 +198,7 @@ acpi_md_sleep(int state)
 
 	ACPI_STATUS			status;
 	ACPI_TABLE_FACS			*facs;
-	int				ret = 0;
+	int				s, ret = 0;
 	paddr_t				tmp_pdir;
 
 	KASSERT(acpi_wakeup_paddr != 0);
@@ -235,6 +235,7 @@ acpi_md_sleep(int state)
 
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
+	s = splhigh();
 	x86_disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
@@ -284,10 +285,13 @@ acpi_md_sleep(int state)
 
 		initrtclock(TIMER_FREQ);
 		inittodr(time_second);
+
+		AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 	}
 
 out:
 	x86_enable_intr();
+	splx(s);
 
 	return (ret);
 #undef WAKECODE_FIXUP
