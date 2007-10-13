@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.140 2007/10/13 11:08:05 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1926,7 +1926,7 @@ ParseTrackInput(const char *name)
 {
     char *old;
     char *fp = NULL;
-    int name_len = strlen(name);
+    size_t name_len = strlen(name);
     
     old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
     if (old) {
