@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.6 2007/10/14 11:49:39 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.6 2007/10/14 11:49:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $");
 
 #include "bpfilter.h"
 
@@ -77,10 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.6 2007/10/14 11:49:39 nisimura Exp $");
 #define MDRSC	0x00c	/* DMA receive start */
 #define TDLB	0x010	/* transmit descriptor list base */
 #define RDLB	0x014	/* receive descriptor list base */
+#define MTR0	0x020	/* multicast table 31:0 */
+#define MTR1	0x024	/* multicast table 63:32 */
 #define INTEN	0x028	/* interrupt enable */
 #define INTST	0x02c	/* interrupt status */
-#define MTR0	0x100	/* multicast table 31:0 */
-#define MTR1	0x104	/* multicast table 63:32 */
 #define MARL	0x200	/* MAC address low */
 #define MARM	0x202	/* MAC address middle */
 #define MARH	0x204	/* MAC address high */
