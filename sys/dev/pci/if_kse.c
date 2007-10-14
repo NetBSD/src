@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.6 2007/10/14 11:49:39 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.6 2007/10/14 11:49:39 nisimura Exp $");
 
 #include "bpfilter.h"
 
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $");
 #define RDLB	0x014	/* receive descriptor list base */
 #define INTEN	0x028	/* interrupt enable */
 #define INTST	0x02c	/* interrupt status */
+#define MTR0	0x100	/* multicast table 31:0 */
+#define MTR1	0x104	/* multicast table 63:32 */
 #define MARL	0x200	/* MAC address low */
 #define MARM	0x202	/* MAC address middle */
 #define MARH	0x204	/* MAC address high */
@@ -100,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $");
 
 #define RXC_BS_MSK	0x3f000000	/* burst size */
 #define RXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
-#define RXC_IHAE	(1U<<19)	/* align IP frame XXX poor document */
+#define RXC_IHAE	(1U<<19)	/* IP header alignment enable */
 #define RXC_UCC		(1U<<18)	/* run UDP checksum */
 #define RXC_TCC		(1U<<17)	/* run TDP checksum */
 #define RXC_ICC		(1U<<16)	/* run IP checksum */
@@ -110,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $");
 #define RXC_RU		(1U<<4)		/* receive unicast frame */
 #define RXC_RE		(1U<<3)		/* accept error frame */
 #define RXC_RA		(1U<<2)		/* receive all frame */
-#define RXC_MA		(1U<<1)		/* receive through hash filter */
+#define RXC_MHTE	(1U<<1)		/* use multicast hash table */
 #define RXC_REN		(1)		/* enable DMA to run */
 
 #define INT_DMLCS	(1U<<31)	/* link status change */
@@ -148,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.5 2007/10/07 07:23:56 nisimura Exp $");
 #define T1_TBS_MASK	0x7ff		/* segment size 10:0 */
 
 #define R1_RER		(1U<<25)	/* end of ring */
-#define R1_RBS_MASK	0x7ff		/* segment size 10:0 */
+#define R1_RBS_MASK	0x7fd		/* segment size 10:0 */
 
 #define KSE_NTXSEGS		16
 #define KSE_TXQUEUELEN		64
@@ -540,7 +542,8 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			kse_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				kse_set_filter(sc);
 			error = 0;
 		}
 		break;
@@ -617,7 +620,6 @@ kse_init(struct ifnet *ifp)
 		sc->sc_rxc |= RXC_RA;
 	if (ifp->if_flags & IFF_BROADCAST)
 		sc->sc_rxc |= RXC_RB;
-
 	sc->sc_t1csum = sc->sc_mcsum = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 		sc->sc_rxc |= RXC_ICC;
@@ -645,6 +647,9 @@ kse_init(struct ifnet *ifp)
 	}
 	sc->sc_txc |= (kse_burstsize << TXC_BS_SFT);
 	sc->sc_rxc |= (kse_burstsize << RXC_BS_SFT);
+
+	/* build multicast hash filter if necessary */
+	kse_set_filter(sc);
 
 	/* set current media */
 	(void)ifmedia_upd(ifp);
@@ -750,8 +755,7 @@ kse_start(struct ifnet *ifp)
 	struct kse_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, ofree, seg;
-
-	lasttx = -1;
+	uint32_t tdes0;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -816,6 +820,7 @@ kse_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
+		lasttx = -1; tdes0 = 0;
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = KSE_NEXTTX(nexttx)) {
@@ -829,8 +834,8 @@ kse_start(struct ifnet *ifp)
 			tdes->t2 = dmamap->dm_segs[seg].ds_addr;
 			tdes->t1 = sc->sc_t1csum
 			     | (dmamap->dm_segs[seg].ds_len & T1_TBS_MASK);
-			if (nexttx != sc->sc_txnext)
-				tdes->t0 = T0_OWN;
+			tdes->t0 = tdes0;
+			tdes0 |= T0_OWN;
 			lasttx = nexttx;
 		}
 #if 0
@@ -899,23 +904,43 @@ kse_start(struct ifnet *ifp)
 static void
 kse_set_filter(struct kse_softc *sc)
 {
-#if 0 /* later */
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int cnt = 0;
+	uint32_t h, hashes[2];
+
+	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC)
+		return;
 
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo,
-		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			;
+	if (enm == NULL)
+		return;
+	hashes[0] = hashes[1] = 0;
+	do {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
 		}
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
+		hashes[h >> 5] |= 1 << (h & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
-		cnt++;
-	}
+	} while (enm != NULL);
+	sc->sc_rxc |= RXC_MHTE;
+	CSR_WRITE_4(sc, MTR0, hashes[0]);
+	CSR_WRITE_4(sc, MTR1, hashes[1]);
 	return;
-#endif
+ allmulti:
+	sc->sc_rxc |= RXC_RM;
+	ifp->if_flags |= IFF_ALLMULTI;
 }
 
 static int
