@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.20 2007/10/14 11:51:46 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.21 2007/10/14 12:05:06 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.20 2007/10/14 11:51:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.2.21 2007/10/14 12:05:06 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3627,7 +3627,6 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 	return true;
 }
 
-#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_masks[(lvl)-1], (lvl))
 /*
  * Allocate the amount of specified ptps for a ptp level, and populate
  * all levels below accordingly, mapping virtual addresses starting at
