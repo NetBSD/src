@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $	*/
+/*	$NetBSD: server.c,v 1.1.4.2 2007/10/14 04:13:02 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $
+ * $Id: server.c,v 1.1.4.2 2007/10/14 04:13:02 riz Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.c,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $");
+__RCSID("$NetBSD: server.c,v 1.1.4.2 2007/10/14 04:13:02 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $");
 #include <assert.h>
 #include <bluetooth.h>
 #include <errno.h>
+#include <grp.h>
 #include <pwd.h>
 #include <sdp.h>
 #include <stdio.h>
@@ -89,13 +90,14 @@ static int32_t	server_process_request		(server_p srv, int32_t fd);
 static int32_t	server_send_error_response	(server_p srv, int32_t fd,
 						 uint16_t error);
 static void	server_close_fd			(server_p srv, int32_t fd);
+static int	server_auth_check		(server_p srv, struct sockcred *cred);
 
 /*
  * Initialize server
  */
 
 int32_t
-server_init(server_p srv, char const *control)
+server_init(server_p srv, char const *control, char const *sgroup)
 {
 	struct sockaddr_un	un;
 	struct sockaddr_bt	l2;
@@ -108,6 +110,7 @@ server_init(server_p srv, char const *control)
 	assert(control != NULL);
 
 	memset(srv, 0, sizeof(srv));
+	srv->sgroup = sgroup;
 
 	/* Open control socket */
 	if (unlink(control) < 0 && errno != ENOENT) {
@@ -423,7 +426,6 @@ server_process_request(server_p srv, int32_t fd)
 	struct iovec	iov;
 	int32_t		len, error;
 	struct cmsghdr	*cmsg;
-	struct sockcred *cred;
 
 	assert(srv->imtu > 0);
 	assert(srv->req != NULL);
@@ -463,10 +465,9 @@ server_process_request(server_p srv, int32_t fd)
 	if ((cmsg = CMSG_FIRSTHDR(&msg)) != NULL
 	    && cmsg->cmsg_level == SOL_SOCKET
 	    && cmsg->cmsg_type == SCM_CREDS
-	    && cmsg->cmsg_len >= CMSG_LEN(SOCKCREDSIZE(0))
-	    && (cred = (struct sockcred *)CMSG_DATA(cmsg)) != NULL
-	    && (cred->sc_uid == 0 || cred->sc_euid == 0))
-		srv->fdidx[fd].priv = 1;
+	    && cmsg->cmsg_len >= CMSG_LEN(SOCKCREDSIZE(0)))
+	    	srv->fdidx[fd].priv =
+		    server_auth_check(srv, (struct sockcred *)CMSG_DATA(cmsg));
 
 	if (len >= sizeof(*pdu)
 	    && (sizeof(*pdu) + (pdu->len = ntohs(pdu->len))) == len) {
@@ -621,4 +622,37 @@ server_close_fd(server_p srv, int32_t fd)
 		if (provider->fd == fd)
 			provider_unregister(provider);
 	}
+}
+
+static int
+server_auth_check(server_p srv, struct sockcred *cred)
+{
+	struct group *grp;
+	int n;
+
+	if (cred == NULL)
+		return 0;
+
+	if (cred->sc_uid == 0 || cred->sc_euid == 0)
+		return 1;
+
+	if (srv->sgroup == NULL)
+		return 0;
+
+	grp = getgrnam(srv->sgroup);
+	if (grp == NULL) {
+		log_err("No gid for group '%s'", srv->sgroup);
+		srv->sgroup = NULL;
+		return 0;
+	}
+
+	if (cred->sc_gid == grp->gr_gid || cred->sc_egid == grp->gr_gid)
+		return 1;
+
+	for (n = 0 ; n < cred->sc_ngroups ; n++) {
+		if (cred->sc_groups[n] == grp->gr_gid)
+			return 1;
+	}
+
+	return 0;
 }
