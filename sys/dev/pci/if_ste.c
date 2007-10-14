@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.29 2007/08/26 22:45:58 dyoung Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.30 2007/10/14 00:40:17 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.29 2007/08/26 22:45:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.30 2007/10/14 00:40:17 xtraeme Exp $");
 
 #include "bpfilter.h"
 
@@ -266,6 +266,9 @@ static const struct ste_product {
 	pci_product_id_t	ste_product;
 	const char		*ste_name;
 } ste_products[] = {
+	{ PCI_VENDOR_SUNDANCETI, 	PCI_PRODUCT_SUNDANCETI_IP100A,
+	  "IC Plus Corp. IP00A 10/100 Fast Ethernet Adapter" },
+
 	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_ST201,
 	  "Sundance ST-201 10/100 Ethernet" },
 
