@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.4 2007/10/13 12:05:32 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.5 2007/10/14 13:56:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.4 2007/10/13 12:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.5 2007/10/14 13:56:32 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.4 2007/10/13 12:05:32 yamt Exp $");
 #include <machine/cpu.h>
 
 /*
- * XXX: Some defintions below will dissapear
+ * XXX: Some definitions below will disappear
  * XXX: with the merge of vmlocking branch.
  */
 #define	PRI_MAX		MAXPRI
