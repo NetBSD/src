@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90.2.11 2007/10/08 06:35:50 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90.2.12 2007/10/14 11:58:18 yamt Exp $	*/
 
 /*
  *
@@ -267,6 +267,8 @@
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
 #include <x86/pmap.h>
+
+struct trapframe;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);
