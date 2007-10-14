@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.107 2007/10/12 09:53:07 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.107 2007/10/12 09:53:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -574,10 +574,10 @@ db_command_loop(void)
 
 /*
  * Search for command table for command prefix
- * ret: CMD_UNIQUE -> completly match cmd prefix
- *      CMD_FOUND  -> partialy match cmd prefix
- *      CMD_AMBIGIOUS ->more partialy matches
- *      CMD_NONE   -> command not found
+ * ret: CMD_UNIQUE    -> completely matches command
+ *      CMD_FOUND     -> matches prefix of single command
+ *      CMD_AMBIGIOUS -> matches prefix of more than one command
+ *      CMD_NONE      -> command not found
  */
 static int
 db_cmd_search(const char *name,const struct db_command *table,
@@ -585,36 +585,39 @@ db_cmd_search(const char *name,const struct db_command *table,
 {
   
 	const struct db_command	*cmd;
-	int			result = CMD_NONE;
+	int result;
 
+	result = CMD_NONE;
 	for (cmd = table; cmd->name != 0; cmd++) {
 		const char *lp;
 		const char *rp;
 
 		lp = name;
 		rp = cmd->name;
-		while (*lp == *rp) {
+		while (*lp != '\0' && *lp == *rp) {
 			rp++;
 			lp++;
 		}
-		if (*rp == '\0' && *lp == '\0') {
-			/* complete match */
+
+		if (*lp != '\0') /* mismatch or extra chars in name */
+			continue;
+
+		if (*rp == '\0') { /* complete match */
 			*cmdp = cmd;
 			return (CMD_UNIQUE);
 		}
-		if (*lp == '\0') {
-			/* end of name, not end of command -
-			   partial match */
-			if (result == CMD_FOUND) {
-				result = CMD_AMBIGUOUS;
-				/* but keep looking for a full match -
-				   this lets us match single letters */
-			} else {
-				*cmdp = cmd;
-				result = CMD_FOUND;
-			}
+
+		/* prefix match: end of name, not end of command */
+		if (result == CMD_NONE) {
+			result = CMD_FOUND;
+			*cmdp = cmd;
+		}
+		else if (result == CMD_FOUND) {
+			result = CMD_AMBIGUOUS;
+			*cmdp = NULL;
 		}
 	}
+
 	return (result);
 }
 
