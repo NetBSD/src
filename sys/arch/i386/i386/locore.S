@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.8 2007/10/08 11:00:14 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.9 2007/10/14 11:18:41 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -464,10 +464,11 @@ try586:	/* Use the `cpuid' instruction. */
 	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 
-	/* nkptp = (esi + ~L2_FRAME) >> L2_SHIFT; */
+	/* nkptp[1] = (esi + ~L2_FRAME) >> L2_SHIFT + 1; */
 	movl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
+	incl	%eax		/* one more ptp for VAs stolen by bootstrap */
 1:	movl	%eax,RELOC(nkptp)+1*4
 
 	/* tablesize = (1 + UPAGES + nkptp) << PGSHIFT; */
@@ -479,6 +480,7 @@ try586:	/* Use the `cpuid' instruction. */
 	addl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
+	incl	%eax
 	cmpl	%eax,RELOC(nkptp)+1*4
 	jnz	1b
 
