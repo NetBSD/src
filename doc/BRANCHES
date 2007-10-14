@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.209 2007/09/24 10:55:20 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.210 2007/10/14 14:40:35 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -587,7 +587,7 @@ Description:	merge i386 and amd64 pmap
 Status:		Active
 Start Date:	Mon Sep 24 2007
 End Date:	
-Base Tag:	yamt-x86pmap-base
+Base Tag:	yamt-x86pmap-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
