@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.41 2007/07/31 21:14:16 pooka Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.41.6.1 2007/10/14 11:48:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.41 2007/07/31 21:14:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.41.6.1 2007/10/14 11:48:25 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -220,11 +220,11 @@ adosfs_mountfs(devvp, mp, l)
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
 			   amp->bsize, NOCRED, &bp)) != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		goto fail;
 	}
 	amp->dostype = adoswordn(bp, 0);
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* basic sanity checks */
 	if (amp->dostype < 0x444f5300 || amp->dostype > 0x444f5305) {
@@ -407,7 +407,7 @@ adosfs_vget(mp, an, vpp)
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
 			   amp->bsize, NOCRED, &bp)) != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		vput(vp);
 		return (error);
 	}
@@ -418,7 +418,7 @@ adosfs_vget(mp, an, vpp)
 	switch (ap->type = adosfs_getblktype(amp, bp)) {
 	case AROOT:
 		vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 		ap->mtimev.days = adoswordn(bp, ap->nwords - 10);
 		ap->mtimev.mins = adoswordn(bp, ap->nwords - 9);
 		ap->mtimev.ticks = adoswordn(bp, ap->nwords - 8);
@@ -464,7 +464,7 @@ adosfs_vget(mp, an, vpp)
 		ap->fsize = namlen;
 		break;
 	default:
-		brelse(bp);
+		brelse(bp, 0);
 		vput(vp);
 		return (EINVAL);
 	}
@@ -484,7 +484,7 @@ adosfs_vget(mp, an, vpp)
 		printf("adosfs: aget: name length too long blk %llu\n",
 		    (unsigned long long)an);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 		vput(vp);
 		return (EINVAL);
 	}
@@ -523,12 +523,12 @@ adosfs_vget(mp, an, vpp)
 			ap->linkto = ap->block;
 	} else if (ap->type == ALFILE) {
 		ap->lastindblk = ap->linkto;
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
 		    amp->bsize, NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			vput(vp);
 			return (error);
 		}
@@ -585,7 +585,7 @@ adosfs_vget(mp, an, vpp)
 
 	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
-	brelse(bp);
+	brelse(bp, 0);
 	uvm_vnp_setsize(vp, ap->fsize);
 	return (0);
 }
@@ -610,7 +610,7 @@ adosfs_loadbitmap(amp)
 	bn = amp->rootb;
 	if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE, amp->bsize,
 	    NOCRED, &bp)) != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	blkix = amp->nwords - 49;
@@ -624,7 +624,7 @@ adosfs_loadbitmap(amp)
 		if (adoswordn(bp, blkix) == 0)
 			break;
 		if (mapbp != NULL)
-			brelse(mapbp);
+			brelse(mapbp, 0);
 		if ((error = bread(amp->devvp,
 		    adoswordn(bp, blkix) * amp->bsize / DEV_BSIZE, amp->bsize,
 		     NOCRED, &mapbp)) != 0)
@@ -652,7 +652,7 @@ adosfs_loadbitmap(amp)
 		++blkix;
 		if (mapix < bmsize && blkix == endix) {
 			bn = adoswordn(bp, blkix);
-			brelse(bp);
+			brelse(bp, 0);
 			if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE,
 			    amp->bsize, NOCRED, &bp)) != 0)
 				break;
@@ -664,9 +664,9 @@ adosfs_loadbitmap(amp)
 		}
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	if (mapbp)
-		brelse(mapbp);
+		brelse(mapbp, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.4.6.1 2007/10/14 11:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.4.6.1 2007/10/14 11:48:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.4 2007/08/04 11:03:02 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -125,6 +126,8 @@ static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
 static void resetprocpriority(struct proc *);
 
+fixpt_t decay_cpu(fixpt_t, fixpt_t);
+
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
 /* The global scheduler state */
@@ -136,6 +139,9 @@ int rrticks;
 /*
  * Force switch among equal priority processes every 100ms.
  * Called from hardclock every hz/10 == rrticks hardclock ticks.
+ *
+ * There's no need to lock anywhere in this routine, as it's
+ * CPU-local and runs at IPL_SCHED (called from clock interrupt).
  */
 /* ARGSUSED */
 void
@@ -145,20 +151,20 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	spc_lock(ci);
-	if (!CURCPU_IDLE_P()) {
-		if (spc->spc_flags & SPCF_SEENRR) {
-			/*
-			 * The process has already been through a roundrobin
-			 * without switching and may be hogging the CPU.
-			 * Indicate that the process should yield.
-			 */
-			spc->spc_flags |= SPCF_SHOULDYIELD;
-		} else
-			spc->spc_flags |= SPCF_SEENRR;
-	}
-	cpu_need_resched(curcpu(), 0);
-	spc_unlock(ci);
+	if (CURCPU_IDLE_P())
+		return;
+
+	if (spc->spc_flags & SPCF_SEENRR) {
+		/*
+		 * The process has already been through a roundrobin
+		 * without switching and may be hogging the CPU.
+		 * Indicate that the process should yield.
+		 */
+		spc->spc_flags |= SPCF_SHOULDYIELD;
+	} else
+		spc->spc_flags |= SPCF_SEENRR;
+
+	cpu_need_resched(ci, 0);
 }
 
 #define	NICE_WEIGHT 2			/* priorities per nice level */
@@ -234,7 +240,7 @@ sched_tick(struct cpu_info *ci)
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
 
-static fixpt_t
+fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 {
 
@@ -282,27 +288,11 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
 void
-sched_pstats_hook(struct proc *p, int minslp)
+sched_pstats_hook(struct lwp *l)
 {
-	struct lwp *l;
-	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
-	/*
-	 * If the process has slept the entire second,
-	 * stop recalculating its priority until it wakes up.
-	 */
-	if (minslp <= 1) {
-		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
-		
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & LW_IDLE) != 0)
-				continue;
-			lwp_lock(l);
-			if (l->l_slptime <= 1 && l->l_priority >= PUSER)
-				resetpriority(l);
-			lwp_unlock(l);
-		}
-	}
+	if (l->l_slptime <= 1 && l->l_priority >= PUSER)
+		resetpriority(l);
 }
 
 /*
@@ -693,7 +683,29 @@ sched_nextlwp(void)
 		return l1;
 }
 
-/* Dummy */
+/*
+ * Dummy.
+ */
+
+struct cpu_info *
+sched_takecpu(struct lwp *l)
+{
+
+	return l->l_cpu;
+}
+
+void
+sched_wakeup(struct lwp *l)
+{
+
+}
+
+void
+sched_slept(struct lwp *l)
+{
+
+}
+
 void
 sched_lwp_fork(struct lwp *l)
 {
@@ -706,8 +718,9 @@ sched_lwp_exit(struct lwp *l)
 
 }
 
-/* SysCtl */
-
+/*
+ * sysctl setup.  XXX This should be split with kern_synch.c.
+ */
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
 	const struct sysctlnode *node = NULL;
@@ -724,13 +737,19 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
-	if (node != NULL) {
-		sysctl_createv(clog, 0, &node, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_STRING, "name", NULL,
-			NULL, 0, __UNCONST("4.4BSD"), 0,
-			CTL_CREATE, CTL_EOL);
-	}
+	KASSERT(node != NULL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_STRING, "name", NULL,
+		NULL, 0, __UNCONST("4.4BSD"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_READWRITE,
+		CTLTYPE_INT, "timesoftints",
+		SYSCTL_DESCR("Track CPU time for soft interrupts"),
+		NULL, 0, &softint_timing, 0,
+		CTL_CREATE, CTL_EOL);
 }
 
 #if defined(DDB)

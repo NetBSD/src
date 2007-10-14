@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.4.4.2 2007/10/06 15:29:48 yamt Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.4.4.3 2007/10/14 11:48:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.4.2 2007/10/06 15:29:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.4.3 2007/10/14 11:48:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -79,12 +79,12 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 
 	error = EPROTO;
 	if (type <= VNON || type >= VBAD) {
-		puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
+		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
 		    "bad node type", cookie);
 		goto bad;
 	}
 	if (vsize == VSIZENOTSET) {
-		puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
+		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
 		    "VSIZENOTSET is not a valid size", cookie);
 		goto bad;
 	}
@@ -166,7 +166,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			 * old (well, actually, new) node
 			 */
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			vrele(vp);
 			vgone(vp); /* cya */
 
@@ -273,7 +273,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
 		mutex_exit(&pmp->pmp_lock);
-		puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
+		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
 		    "cookie exists", cookie);
 		return EPROTO;
 	}
@@ -281,7 +281,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	LIST_FOREACH(pnc, &pmp->pmp_newcookie, pnc_entries) {
 		if (pnc->pnc_cookie == cookie) {
 			mutex_exit(&pmp->pmp_lock);
-			puffs_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
+			puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
 			    "cookie exists", cookie);
 			return EPROTO;
 		}
@@ -401,7 +401,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	} 
 
 	/* store cache */
-	vp->v_flag = VROOT;
+	vp->v_vflag |= VV_ROOT;
 	pmp->pmp_root = vp;
 	mutex_exit(&pmp->pmp_lock);
 

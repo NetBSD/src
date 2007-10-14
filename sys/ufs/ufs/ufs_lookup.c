@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.91.8.1 2007/10/06 15:43:46 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.91.8.2 2007/10/14 11:49:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.8.1 2007/10/06 15:43:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.8.2 2007/10/14 11:49:22 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.8.1 2007/10/06 15:43:46 yamt Exp
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
-#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
@@ -266,7 +266,7 @@ searchloop:
 		 */
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
@@ -410,7 +410,7 @@ notfound:
 		goto searchloop;
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -495,7 +495,7 @@ found:
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.
@@ -1357,7 +1357,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
 	    run - 1, NOCRED, &bp);
 	if (error != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		*bpp = NULL;
 		goto out;
 	}

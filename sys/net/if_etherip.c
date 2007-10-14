@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.13 2007/09/16 02:19:44 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.13.2.1 2007/10/14 11:48:58 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -102,6 +102,7 @@
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/socket.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -348,7 +349,7 @@ etherip_start(struct ifnet *ifp)
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 
 	if(sc->sc_si)
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
 }
 
 static void
@@ -517,7 +518,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 	}
 
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 
@@ -536,7 +537,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 
 	ifp->if_flags |= IFF_RUNNING;
 
-	sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
 
@@ -555,7 +556,7 @@ etherip_delete_tunnel(struct ifnet *ifp)
 	s = splsoftnet();
 
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 
@@ -578,7 +579,7 @@ etherip_init(struct ifnet *ifp)
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
-		sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+		sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);

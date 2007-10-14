@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.164 2007/08/15 12:07:34 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.164.4.1 2007/10/14 11:48:43 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.164 2007/08/15 12:07:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.164.4.1 2007/10/14 11:48:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -157,12 +157,15 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
+	size_t on;
 	char *cp = buf;
 #ifdef MULTIPROCESSOR
 	int hold_count;
 #endif
 
-	KERNEL_UNLOCK_ALL(NULL, &hold_count);
+	if ((on = n) >= 1024) {
+		KERNEL_UNLOCK_ALL(NULL, &hold_count);
+	}
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -205,7 +208,10 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
-	KERNEL_LOCK(hold_count, NULL);
+
+	if (on >= 1024) {
+		KERNEL_LOCK(hold_count, NULL);
+	}
 	return (error);
 }
 
@@ -823,6 +829,8 @@ setroot(struct device *bootdv, int bootpartition)
 			rootspec = (const char *)ifp->if_xname;
 		}
 	}
+	if (vops != NULL)
+		vfs_delref(vops);
 
 	/*
 	 * If wildcarded root and we the boot device wasn't determined,
@@ -953,6 +961,7 @@ setroot(struct device *bootdv, int bootpartition)
 				printf(" halt reboot\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
+				vfs_delref(vops);
 				break;
 			}
 		}
@@ -1417,4 +1426,22 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
+}
+
+/*
+ * Disable kernel preemption.
+ */
+void
+crit_enter(void)
+{
+	/* nothing */
+}
+
+/*
+ * Reenable kernel preemption.
+ */
+void
+crit_exit(void)
+{
+	/* nothing */
 }

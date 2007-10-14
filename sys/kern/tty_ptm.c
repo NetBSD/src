@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.19 2007/03/26 22:52:44 hubertf Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.19.12.1 2007/10/14 11:48:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.19 2007/03/26 22:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.19.12.1 2007/10/14 11:48:48 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -195,6 +195,7 @@ int
 pty_grant_slave(struct lwp *l, dev_t dev)
 {
 	int error;
+	bool revoke;
 	struct vnode *vp;
 
 	/*
@@ -223,9 +224,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 			return error;
 		}
 	}
+	simple_lock(&vp->v_interlock);
+	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED) ||
+	    (vp->v_iflag & VI_LAYER));
+	simple_unlock(&vp->v_interlock);
 	VOP_UNLOCK(vp, 0);
-	if (vp->v_usecount > 1 ||
-	    (vp->v_flag & (VALIASED | VLAYER)))
+	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 
 	/*

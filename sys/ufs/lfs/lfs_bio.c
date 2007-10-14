@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.103 2007/07/29 13:31:14 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.103.8.1 2007/10/14 11:49:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.103 2007/07/29 13:31:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.103.8.1 2007/10/14 11:49:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		if (LFS_IS_MALLOC_BUF(bp))
 			bp->b_flags &= ~B_BUSY;
 		else
-			brelse(bp);
+			brelse(bp, 0);
 		return (fs->lfs_ronly ? EROFS : 0);
 	}
 
@@ -505,7 +505,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	if (bp->b_flags & B_CALL)
 		bp->b_flags &= ~B_BUSY;
 	else
-		brelse(bp);
+		brelse(bp, 0);
 
 	return (0);
 }
@@ -519,7 +519,6 @@ lfs_flush_fs(struct lfs *fs, int flags)
 {
 	ASSERT_NO_SEGLOCK(fs);
 	LOCK_ASSERT(simple_lock_held(&fs->lfs_interlock));
-	LOCK_ASSERT(!simple_lock_held(&lfs_subsys_lock));
 	if (fs->lfs_ronly)
 		return;
 
@@ -573,7 +572,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	if (only_onefs) {
 		KASSERT(fs != NULL);
 		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT,
-			     &mountlist_slock))
+			     &mountlist_lock))
 			goto errout;
 		simple_lock(&fs->lfs_interlock);
 		lfs_flush_fs(fs, flags);
@@ -581,10 +580,10 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		vfs_unbusy(fs->lfs_ivnode->v_mount);
 	} else {
 		locked_fakequeue_count = 0;
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
@@ -596,11 +595,11 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				lfs_flush_fs(tfs, flags);
 				simple_unlock(&tfs->lfs_interlock);
 			}
-			simple_lock(&mountlist_slock);
+			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
 		}
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 	}
 	LFS_DEBUG_COUNTLOCKED("flush");
 	wakeup(&lfs_subsys_pages);
@@ -641,7 +640,6 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	fs = ip->i_lfs;
 
 	ASSERT_NO_SEGLOCK(fs);
-	LOCK_ASSERT(!simple_lock_held(&fs->lfs_interlock));
 
 	/*
 	 * If we would flush below, but dirops are active, sleep.

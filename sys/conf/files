@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.863.2.1 2007/10/06 15:30:16 yamt Exp $
+#	$NetBSD: files,v 1.863.2.2 2007/10/14 11:47:57 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -36,6 +36,7 @@ defflag				BUFQ_READPRIO
 defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
 
 defflag	opt_sched.h		SCHED_4BSD
+defflag	opt_sched.h		SCHED_M2
 
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
@@ -1347,6 +1348,7 @@ file	kern/kern_resource.c
 file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
+file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_systrace.c		systrace
@@ -1361,6 +1363,7 @@ file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
+file	kern/sched_m2.c			sched_m2
 file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
@@ -1387,6 +1390,7 @@ file	kern/subr_time.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
+file	kern/subr_xcall.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_mqueue.c
