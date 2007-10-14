@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.485 2007/09/22 08:37:01 mlelstv Exp $
+$NetBSD: usbdevs,v 1.486 2007/10/14 01:08:35 xtraeme Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1884,10 +1884,13 @@ product ROLAND UA1000		0x0044	EDIROL UA-1000 USB audio I/F
 product ROLAND UA3FXA		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
 product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
+product ROLAND UA25 		0x0074	EDIROL UA-25
 product ROLAND UA101		0x007d	EDIROL UA-101
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
 product ROLAND UA1EX		0x0096	EDIROL UA-1EX
 product ROLAND UM3		0x009A	EDIROL UM-3
+product ROLAND UA4FX 		0x00A3	EDIROL UA-4FX
+product ROLAND SONICCELL	0x00C2	SonicCell
 
 /* Sagem products */
 product SAGEM XG760A		0x004a	XG-760A
