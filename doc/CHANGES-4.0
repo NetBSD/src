@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.319 2007/10/12 22:40:33 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.320 2007/10/14 00:32:34 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10125,4 +10125,21 @@ sys/conf/copyright				1.4
 
 	Update the copyright year.
 	[martin, ticket #927]
+
+sys/arch/x86/include/mpacpi.h			1.5
+sys/arch/x86/x86/acpi_machdep.c			1.16
+sys/arch/x86/x86/mpacpi.c			1.50
+
+	Merge from mpacpi.h 1.4.32.1, acpi_machdep.c 1.13.22.5 and
+	mpacpi.c 1.48.12.2 from jmcneill-pm:
+
+	Don't process the MADT and modify the interrupt config at one moment and
+	later trying to figure out if an entry was overriden and matches the
+	ACPI SCI. This is brain-dead and breaks in various situations.
+
+	Just check for each ISA override entry, if it matches the SCI. If it
+	does, remember it and use it for the interrupt setup. If there's no such
+	override assume that it is not changed, but override the polarity and
+	level from ISA settings to PCI settings.
+	[joerg, ticket #925]
 
