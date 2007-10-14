@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.132 2007/10/13 20:01:33 apb Exp $	*/
+/*	$NetBSD: job.c,v 1.133 2007/10/14 20:22:53 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.132 2007/10/13 20:01:33 apb Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.133 2007/10/14 20:22:53 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.132 2007/10/13 20:01:33 apb Exp $");
+__RCSID("$NetBSD: job.c,v 1.133 2007/10/14 20:22:53 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -201,14 +201,35 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 /*
  * Descriptions for various shells.
  *
- * DEFSHELL in config.h is usually 0, so shells[0] describes the
- * default shell.  If _BASENAME_DEFSHELL is not defined, then shells[0]
- * describes "sh".  If _BASENAME_DEFSHELL is defined, then shells[0]
- * decsribes whatever shell is named by _BASENAME_DEFSHELL, but this
- * shell is assumed to be sh-compatible.
+ * The build environment may set DEFSHELL_INDEX to one of
+ * DEFSHELL_INDEX_SH, DEFSHELL_INDEX_KSH, or DEFSHELL_INDEX_CSH, to
+ * select one of the prefedined shells as the default shell.
+ *
+ * Alternatively, the build environment may set DEFSHELL_CUSTOM to the
+ * name or the full path of a sh-compatible shell, which will be used as
+ * the default shell.
+ *
+ * ".SHELL" lines in Makefiles can choose the default shell from the
+ # set defined here, or add additional shells.
  */
+
+#ifdef DEFSHELL_CUSTOM
+#define DEFSHELL_INDEX_CUSTOM 0
+#define DEFSHELL_INDEX_SH     1
+#define DEFSHELL_INDEX_KSH    2
+#define DEFSHELL_INDEX_CSH    3
+#else /* !DEFSHELL_CUSTOM */
+#define DEFSHELL_INDEX_SH     0
+#define DEFSHELL_INDEX_KSH    1
+#define DEFSHELL_INDEX_CSH    2
+#endif /* !DEFSHELL_CUSTOM */
+
+#ifndef DEFSHELL_INDEX
+#define DEFSHELL_INDEX 0	/* DEFSHELL_INDEX_CUSTOM or DEFSHELL_INDEX_SH */
+#endif /* !DEFSHELL_INDEX */
+
 static Shell    shells[] = {
-#ifdef _BASENAME_DEFSHELL
+#ifdef DEFSHELL_CUSTOM
     /*
      * An sh-compatible shell with a non-standard name.
      *
@@ -217,18 +238,16 @@ static Shell    shells[] = {
      * sh-compatible shells.
      */
 {
-    _BASENAME_DEFSHELL,
+    DEFSHELL_CUSTOM,
     FALSE, "", "", "", 0,
     FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
     "",
     "",
 },
-#endif /* _BASENAME_DEFSHELL */
+#endif /* DEFSHELL_CUSTOM */
     /*
      * SH description. Echo control is also possible and, under
      * sun UNIX anyway, one can even control error checking.
-     *
-     * This entry will be shells[0] if _BASENAME_DEFSHELL is not defined.
      */
 {
     "sh",
@@ -272,7 +291,7 @@ static Shell    shells[] = {
     NULL, NULL,
 }
 };
-static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
+static Shell *commandShell = &shells[DEFSHELL_INDEX]; /* this is the shell to
 						   * which we pass all
 						   * commands in the Makefile.
 						   * It is set by the
@@ -2029,10 +2048,10 @@ Shell_Init(void)
     if (shellPath == NULL) {
 	/*
 	 * We are using the default shell, which may be an absolute
-	 * path if _BASENAME_DEFSHELL is defined.
+	 * path if DEFSHELL_CUSTOM is defined.
 	 */
 	shellName = commandShell->name;
-#ifdef _BASENAME_DEFSHELL
+#ifdef DEFSHELL_CUSTOM
 	if (*shellName == '/') {
 	    shellPath = shellName;
 	    shellName = strrchr(shellPath, '/');
