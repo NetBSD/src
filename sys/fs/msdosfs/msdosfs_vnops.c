@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.40.8.1 2007/10/06 15:29:46 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.40.8.2 2007/10/14 11:48:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.40.8.1 2007/10/06 15:29:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.40.8.2 2007/10/14 11:48:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,11 +530,11 @@ msdosfs_read(v)
 		    NOCRED, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		error = uiomove((char *)bp->b_data + on, (int) n, uio);
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -1131,7 +1131,7 @@ abortit:
 		    pmp->pm_bpcluster, NOCRED, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
-			brelse(bp);
+			brelse(bp, 0);
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
@@ -1541,7 +1541,7 @@ msdosfs_readdir(v)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			free(dirbuf, M_MSDOSFSTMP);
 			return (error);
 		}
@@ -1563,7 +1563,7 @@ msdosfs_readdir(v)
 			 * If this is an unused entry, we can stop.
 			 */
 			if (dentp->deName[0] == SLOT_EMPTY) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			/*
@@ -1627,12 +1627,12 @@ msdosfs_readdir(v)
 			chksum = -1;
 			dirbuf->d_reclen = _DIRENT_SIZE(dirbuf);
 			if (uio->uio_resid < dirbuf->d_reclen) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			error = uiomove(dirbuf, dirbuf->d_reclen, uio);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			uio_off = offset + sizeof(struct direntry);
@@ -1640,12 +1640,12 @@ msdosfs_readdir(v)
 				*cookies++ = offset + sizeof(struct direntry);
 				ncookies++;
 				if (ncookies >= nc) {
-					brelse(bp);
+					brelse(bp, 0);
 					goto out;
 				}
 			}
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 out:

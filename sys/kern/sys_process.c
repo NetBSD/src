@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.128 2007/09/21 19:14:13 dsl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.128.2.1 2007/10/14 11:48:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.128 2007/09/21 19:14:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.128.2.1 2007/10/14 11:48:47 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -632,6 +632,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			}
 			lt = LIST_NEXT(lt, l_sibling);
 		}
+		while (lt != NULL && lt->l_stat == LSZOMB)
+			lt = LIST_NEXT(lt, l_sibling);
 		pl.pl_lwpid = 0;
 		pl.pl_event = 0;
 		if (lt) {

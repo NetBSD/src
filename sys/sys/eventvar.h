@@ -1,4 +1,4 @@
-/*	$NetBSD: eventvar.h,v 1.6 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: eventvar.h,v 1.6.48.1 2007/10/14 11:49:06 yamt Exp $	*/
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -29,6 +29,8 @@
 
 #ifndef _SYS_EVENTVAR_H_
 #define	_SYS_EVENTVAR_H_
+
+#include <sys/simplelock.h>
 
 #define	KQ_NEVENTS	8		/* minimize copy{in,out} calls */
 #define	KQ_EXTENT	256		/* linear growth by this amount */

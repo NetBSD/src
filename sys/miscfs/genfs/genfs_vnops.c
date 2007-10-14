@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.156 2007/07/29 12:15:46 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.156.8.1 2007/10/14 11:48:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.156 2007/07/29 12:15:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.156.8.1 2007/10/14 11:48:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,13 +241,13 @@ genfs_revoke(void *v)
 	vp = ap->a_vp;
 	simple_lock(&vp->v_interlock);
 
-	if (vp->v_flag & VALIASED) {
+	if (vp->v_iflag & VI_ALIASED) {
 		/*
 		 * If a vgone (or vclean) is already in progress,
 		 * wait until it is done and return.
 		 */
-		if (vp->v_flag & VXLOCK) {
-			vp->v_flag |= VXWANT;
+		if (vp->v_iflag & VI_XLOCK) {
+			vp->v_iflag |= VI_XWANT;
 			ltsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
 				&vp->v_interlock);
 			return (0);
@@ -256,9 +256,9 @@ genfs_revoke(void *v)
 		 * Ensure that vp will not be vgone'd while we
 		 * are eliminating its aliases.
 		 */
-		vp->v_flag |= VXLOCK;
+		vp->v_iflag |= VI_XLOCK;
 		simple_unlock(&vp->v_interlock);
-		while (vp->v_flag & VALIASED) {
+		while (vp->v_iflag & VI_ALIASED) {
 			simple_lock(&spechash_slock);
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
@@ -277,7 +277,7 @@ genfs_revoke(void *v)
 		 * vgone will awaken any sleepers.
 		 */
 		simple_lock(&vp->v_interlock);
-		vp->v_flag &= ~VXLOCK;
+		vp->v_iflag &= ~VI_XLOCK;
 	}
 	vgonel(vp, l);
 	return (0);
@@ -519,11 +519,11 @@ startover:
 
 	if (write) {
 		gp->g_dirtygen++;
-		if ((vp->v_flag & VONWORKLST) == 0) {
+		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
 			vn_syncer_add_to_worklist(vp, filedelay);
 		}
-		if ((vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP) {
-			vp->v_flag |= VWRITEMAPDIRTY;
+		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
+			vp->v_iflag |= VI_WRMAPDIRTY;
 		}
 	}
 
@@ -1084,12 +1084,12 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
-	KASSERT((vp->v_flag & VONWORKLST) != 0 ||
-	    (vp->v_flag & VWRITEMAPDIRTY) == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
+	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
 	if (uobj->uo_npages == 0) {
 		s = splbio();
-		if (vp->v_flag & VONWORKLST) {
-			vp->v_flag &= ~VWRITEMAPDIRTY;
+		if (vp->v_iflag & VI_ONWORKLST) {
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
@@ -1133,7 +1133,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	 * don't bother to clean it out.
 	 */
 
-	if ((vp->v_flag & VONWORKLST) == 0) {
+	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
 		if ((flags & (PGO_FREE|PGO_DEACTIVATE)) == 0) {
 			goto skip_scan;
 		}
@@ -1150,7 +1150,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	cleanall = (flags & PGO_CLEANIT) != 0 && wasclean &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
-	    (vp->v_flag & VONWORKLST) != 0;
+	    (vp->v_iflag & VI_ONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	if (by_list) {
@@ -1217,7 +1217,13 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 					*busypg = pg;
 				break;
 			}
-			KASSERT(!pagedaemon);
+			if (pagedaemon) {
+				/*
+				 * someone has taken the page while we
+				 * dropped the lock for fstrans_start.
+				 */
+				break;
+			}
 			if (by_list) {
 				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
 				UVMHIST_LOG(ubchist, "curmp next %p",
@@ -1290,7 +1296,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 */
 
 		if (needs_clean) {
-			KDASSERT((vp->v_flag & VONWORKLST));
+			KDASSERT((vp->v_iflag & VI_ONWORKLST));
 			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
@@ -1430,7 +1436,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		uvm_lwp_rele(l);
 	}
 
-	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
+	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
 	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
@@ -1444,8 +1450,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	s = splbio();
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
-	    (vp->v_flag & VONWORKLST) != 0) {
-		vp->v_flag &= ~VWRITEMAPDIRTY;
+	    (vp->v_iflag & VI_ONWORKLST) != 0) {
+		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			vn_syncer_remove_from_worklist(vp);
 	}
@@ -1463,7 +1469,7 @@ skip_scan:
 		 *	 must think of something better.
 		 */
 		while (vp->v_numoutput != 0) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, false,
 			    "genput2", hz);
 			simple_lock(slock);
@@ -1701,7 +1707,7 @@ genfs_compat_getpages(void *v)
 	orignpages = *ap->a_count;
 	pgs = ap->a_m;
 
-	if (write && (vp->v_flag & VONWORKLST) == 0) {
+	if (write && (vp->v_iflag & VI_ONWORKLST) == 0) {
 		vn_syncer_add_to_worklist(vp, filedelay);
 	}
 	if (ap->a_flags & PGO_LOCKED) {
@@ -1842,7 +1848,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	 * buffered I/O if the vnode is mapped to avoid this mess.
 	 */
 
-	if (vp->v_flag & VMAPPED) {
+	if (vp->v_vflag & VV_MAPPED) {
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.126 2007/08/27 13:33:45 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.126.4.1 2007/10/14 11:48:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.126 2007/08/27 13:33:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.126.4.1 2007/10/14 11:48:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1092,9 +1092,9 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, struct file *fp)
 				goto done;
 			}
 
-			simple_lock(&fp->f_slock);
+			mutex_enter(&fp->f_lock);
 			fp->f_count++;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 			ktd->ktd_fp = fp;
 
 			mutex_enter(&ktrace_lock);
@@ -1420,7 +1420,7 @@ next:
 	    auio.uio_iovcnt < sizeof(aiov) / sizeof(aiov[0]) - 1);
 
 again:
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
 	    fp->f_cred, FOF_UPDATE_OFFSET);
@@ -1499,7 +1499,7 @@ ktrace_thread(void *arg)
 	TAILQ_REMOVE(&ktdq, ktd, ktd_list);
 	mutex_exit(&ktrace_lock);
 
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 
 	/*

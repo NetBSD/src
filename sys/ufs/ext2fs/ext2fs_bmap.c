@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.21 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.21.48.1 2007/10/14 11:49:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21.48.1 2007/10/14 11:49:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 * or we have a disk address for it, go fetch it.
 		 */
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
@@ -243,7 +243,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -259,7 +259,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				++bn, ++*runp);
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	daddr = blkptrtodb(ump, daddr);
 	*bnp = daddr == 0 ? -1 : daddr;

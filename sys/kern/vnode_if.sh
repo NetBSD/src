@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.44 2007/07/22 21:26:53 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.44.8.1 2007/10/14 11:48:52 yamt Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -365,7 +365,7 @@ function doit() {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
 		if (lockstate[i] != -1) {
 			printf("#ifdef VNODE_LOCKDEBUG\n");
-			printf("\tislocked_%s = (%s->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
+			printf("\tislocked_%s = (%s->v_vflag & VV_LOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
 			    argname[i], argname[i], argname[i], lockstate[i]);
 			printf("\tif (islocked_%s != %d)\n", argname[i],
 			    lockstate[i]);

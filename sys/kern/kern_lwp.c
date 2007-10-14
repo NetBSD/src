@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.70.2.1 2007/10/06 15:28:42 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.70.2.2 2007/10/14 11:48:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -158,12 +158,12 @@
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSZOMB, LSONPROC:
+ *	LSONPROC, LSZOMB:
  *
  *		Always covered by spc_lwplock, which protects running LWPs.
  *		This is a per-CPU lock.
  *
- *	LSRUN:
+ *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
  *		This may be a per-CPU lock, depending on the scheduler.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.70.2.1 2007/10/06 15:28:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.70.2.2 2007/10/14 11:48:40 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -587,8 +587,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
-	lwp_initspecific(l2);
-	sched_lwp_fork(l2);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -596,8 +594,14 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		 * swapping.
 		 */
 		l2->l_flag |= LW_SYSTEM;
+	} else {
+		/* Look for a CPU to start */
+		l2->l_cpu = sched_takecpu(l2);
+		l2->l_mutex = l2->l_cpu->ci_schedstate.spc_mutex;
 	}
 
+	lwp_initspecific(l2);
+	sched_lwp_fork(l2);
 	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
@@ -758,6 +762,8 @@ lwp_exit(struct lwp *l)
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(&p->p_smutex);
+			l->l_refcnt++;
+			lwp_drainrefs(l);
 		}
 		p->p_zomblwp = l;
 	}
@@ -1302,6 +1308,8 @@ lwp_delref(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(&p->p_smutex);
+	KASSERT(l->l_stat != LSZOMB);
+	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_refcv);
 	mutex_exit(&p->p_smutex);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.81.8.1 2007/10/06 15:43:46 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.81.8.2 2007/10/14 11:49:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81.8.1 2007/10/06 15:43:46 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81.8.2 2007/10/14 11:49:23 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -169,10 +169,10 @@ READ(void *v)
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (error)
 			break;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 
  out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
@@ -342,7 +342,7 @@ WRITE(void *v)
 		 */
 		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
-		if (!overwrite && (vp->v_flag & VMAPPED) == 0 &&
+		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 &&
 		    blkoff(fs, uio->uio_offset) == 0 &&
 		    (uio->uio_offset & PAGE_MASK) == 0) {
 			vsize_t len;
@@ -465,8 +465,7 @@ WRITE(void *v)
 		 * so we need to invalidate it.
 		 */
 		if (error && (flags & B_CLRBUF) == 0) {
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, BC_INVAL);
 			break;
 		}
 #ifdef LFS_READWRITE

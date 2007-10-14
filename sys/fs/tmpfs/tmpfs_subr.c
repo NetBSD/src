@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.36.4.1 2007/10/06 15:29:51 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.36.4.2 2007/10/14 11:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.4.1 2007/10/06 15:29:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.4.2 2007/10/14 11:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -403,9 +403,9 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 
 			/* XXX spec_vnodeops has no locking, so we have to
 			 * do it explicitly. */
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
 			vrele(vp);
 			vgone(vp);
 
@@ -421,7 +421,8 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_flag = node->tn_spec.tn_dir.tn_parent == node ? VROOT : 0;
+		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
+		    VV_ROOT : 0;
 		break;
 
 	case VFIFO:

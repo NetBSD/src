@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.32 2007/07/30 14:32:40 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.32.8.1 2007/10/14 11:47:32 yamt Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2007/07/30 14:32:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32.8.1 2007/10/14 11:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,8 +355,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Establish a mountroot hook. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.15 2007/07/29 12:15:44 ad Exp $	*/
+/*	$NetBSD: rf.c,v 1.15.8.1 2007/10/14 11:48:15 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.15 2007/07/29 12:15:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.15.8.1 2007/10/14 11:48:15 yamt Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -452,8 +452,7 @@ rf_attach(struct device *parent, struct device *self, void *aux)
 	rfc_sc = (struct rfc_softc *)device_parent(&rf_sc->sc_dev);
 	rf_sc->sc_dnum = rfc_aa->dnum;
 	rf_sc->sc_state = 0;
-	rf_sc->sc_disk.dk_name = rf_sc->sc_dev.dv_xname;
-	rf_sc->sc_disk.dk_driver = &rfdkdriver;
+	disk_init(&rf_sc->sc_disk, rf_sc->sc_dev.dv_xname, &rfdkdriver);
 	disk_attach(&rf_sc->sc_disk);
 	dl = rf_sc->sc_disk.dk_label;
 	dl->d_type = DTYPE_FLOPPY;		/* drive type */

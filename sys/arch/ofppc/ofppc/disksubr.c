@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2007/03/06 13:54:44 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19.22.1 2007/10/14 11:47:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2007/03/06 13:54:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19.22.1 2007/10/14 11:47:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,12 +113,12 @@ get_netbsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		    && dlp->d_npartitions <= MAXPARTITIONS
 		    && dkcksum(dlp) == 0) {
 			*lp = *dlp;
-			brelse(bp);
+			brelse(bp, 0);
 			return 1;
 		}
 	}
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return 0;
 }
 
@@ -211,7 +211,7 @@ mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
 	}
 done:
 	recursion--;
-	brelse(bp);
+	brelse(bp, 0);
 	return found;
 }
 
@@ -318,7 +318,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	(*strat)(bp);
 	error = biowait(bp);
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	return error;
 }

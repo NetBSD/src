@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.11 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.11.10.1 2007/10/14 11:48:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11.10.1 2007/10/14 11:48:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -793,6 +793,10 @@ cdev_tty(dev_t dev)
 	struct tty * rv;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
+		return NULL;
+
+	/* XXX Check if necessary. */
+	if (d->d_tty == NULL)
 		return NULL;
 
 	DEV_LOCK(d);

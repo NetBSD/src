@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.26.2.1 2007/10/06 15:29:01 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.26.2.2 2007/10/14 11:48:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,11 +60,9 @@ struct gre_soparm {
 
 enum gre_state {
 	  GRE_S_IDLE = 0
-	, GRE_S_CONF
-	, GRE_S_WORK
-	, GRE_S_KCONF
+	, GRE_S_IOCTL
+	, GRE_S_DOCONF
 	, GRE_S_DIE
-	, GRE_S_DEAD
 };
 
 #define	__cacheline_aligned	__attribute__((__aligned__(CACHE_LINE_SIZE)))
@@ -86,7 +84,6 @@ struct gre_softc {
 	kcondvar_t		sc_condvar;
 	struct gre_bufq		sc_snd;
 	struct gre_soparm	sc_soparm;
-	struct gre_soparm	sc_newsoparm;
 	struct lwp		*sc_lwp;
 	volatile enum gre_state	sc_state;
 	volatile int		sc_waiters;
@@ -96,7 +93,6 @@ struct gre_softc {
 
 	struct evcnt		sc_recv_ev;
 	struct evcnt		sc_send_ev;
-	struct evcnt		sc_wakeup_ev;
 
 	struct evcnt		sc_block_ev;
 	struct evcnt		sc_error_ev;

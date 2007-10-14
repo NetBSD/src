@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2006/11/25 11:59:57 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.30.30.1 2007/10/14 11:47:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2006/11/25 11:59:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30.30.1 2007/10/14 11:47:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ readdisklabel(dev, strat, lp, clp)
 		memcpy(clp, bp->b_data, sizeof (struct cpu_disklabel));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	if (msg || clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
 		return (msg); 
@@ -218,7 +218,7 @@ writedisklabel(dev, strat, lp, clp)
 		memcpy(clp, bp->b_data, sizeof(struct cpu_disklabel));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	if (error) {
 		return (error);
@@ -249,7 +249,7 @@ writedisklabel(dev, strat, lp, clp)
 
 		error = biowait(bp);
 
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	return (error); 
 }

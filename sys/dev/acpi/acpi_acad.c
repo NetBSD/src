@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25.10.1 2007/10/14 11:48:03 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.10.1 2007/10/14 11:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,6 +282,7 @@ acpiacad_init_envsys(struct acpiacad_softc *sc)
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = acpiacad_gtredata;
 	sc->sc_sysmon.sme_nsensors = 1;
+	sc->sc_sysmon.sme_class = SME_CLASS_ACADAPTER;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.10.1 2007/10/14 11:48:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.10.1 2007/10/14 11:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,6 @@ acpitz_get_status(void *opaque)
 	sc->sc_data[ATZ_SENSOR_TEMP].value_cur =
 	    sc->sc_zone.tmp * 100000 - 50000;
 	sc->sc_data[ATZ_SENSOR_TEMP].state = ENVSYS_SVALID;
-	sc->sc_data[ATZ_SENSOR_TEMP].monitor = true;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -585,6 +584,7 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 	for (i = 0; i < ATZ_NUMSENSORS; i++) {
 		sc->sc_data[i].sensor = i;
 		sc->sc_data[i].state = ENVSYS_SVALID;
+		sc->sc_data[i].monitor = true;
 		sc->sc_data[i].flags = 
 		    (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
 	}

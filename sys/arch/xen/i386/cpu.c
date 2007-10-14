@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11.12.1 2007/10/06 15:33:39 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11.12.2 2007/10/14 11:47:53 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.12.1 2007/10/06 15:33:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.12.2 2007/10/14 11:47:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -708,7 +708,6 @@ cpu_hatch(void *v)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 #endif
-	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 
