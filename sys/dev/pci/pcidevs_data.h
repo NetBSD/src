@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.42 2007/09/13 19:47:16 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.43 2007/10/14 05:01:00 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.43 2007/03/31 15:25:36 bouyer Exp
+ *	NetBSD
  */
 
 /*
@@ -6100,6 +6100,14 @@ const struct pci_product pci_products[] = {
 	    "i80003 Gigabit Ethernet (SERDES)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
+	    "i82801H IFE (GT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G,
+	    "i82801H IFE (G) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -11100,4 +11108,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2192;
+const int pci_nproducts = 2194;
