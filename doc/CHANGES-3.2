@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.101 2007/10/04 18:51:57 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.102 2007/10/14 05:40:17 riz Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3624,4 +3624,28 @@ sys/dev/pci/if_rtk_pci.c			1.32
 	Cleanup handling of quikrs on each RealTek chip
 	Pull a fix for PCIe variants from FreeBSD
 	[tsutsui, ticket #1852]
+
+sys/dev/pci/pcidevs				1.876-1.877
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add: Intel i82801H IFE G and GT LAN Controllers
+	[bouyer, ticket #1769]
+
+share/man/man4/wm.4				1.17
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_wm.c				1.139-1.140 via patch
+sys/dev/pci/if_wmreg.h				1.22
+
+	Add support for ICH8 (i82801H) LAN, from FreeBSD:
+	i82801H IFE (GT) LAN Controller
+	i82801H IFE (G) LAN Controller
+	i82801H (M_AMT) LAN Controller
+	i82801H (AMT) LAN Controller
+	i82801H LAN Controller
+	i82801H (IFE) LAN Controller
+	i82801H (M) LAN Controller
+	[bouyer, ticket #1770]
 
