@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.321 2007/10/14 04:14:37 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.322 2007/10/14 22:09:42 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10159,4 +10159,10 @@ usr.sbin/sdpd/server.h				1.2
 	devices which may need to query services on the local host.
 	change default user/group from nobody/nobody to _sdpd/_sdpd
 	[xtraeme, ticket #930]
+
+distrib/sets/lists/comp/mi			1.990 (via patch)
+sys/net/Makefile				1.22  (via patch)
+
+	Install <net/if_pflog.h>.
+	[tron, ticket #932]
 
