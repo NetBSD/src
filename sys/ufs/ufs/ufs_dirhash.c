@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.19 2007/07/22 21:12:27 rumble Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.19.8.1 2007/10/14 11:49:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.19 2007/07/22 21:12:27 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.19.8.1 2007/10/14 11:49:22 yamt Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -216,7 +216,7 @@ ufsdirhash_build(struct inode *ip)
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			if (ufs_blkatoff(vp, (off_t)pos, NULL, &bp) != 0)
 				goto fail;
 		}
@@ -226,7 +226,7 @@ ufsdirhash_build(struct inode *ip)
 		if (ep->d_reclen == 0 || ep->d_reclen >
 		    dirblksiz - (pos & (dirblksiz - 1))) {
 			/* Corrupted directory. */
-			brelse(bp);
+			brelse(bp, 0);
 			goto fail;
 		}
 		if (ep->d_ino != 0) {
@@ -243,7 +243,7 @@ ufsdirhash_build(struct inode *ip)
 	}
 
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	DIRHASHLIST_LOCK();
 	TAILQ_INSERT_TAIL(&ufsdirhash_list, dh, dh_list);
 	dh->dh_onlist = 1;
@@ -412,7 +412,7 @@ restart:
 			panic("ufsdirhash_lookup: bad offset in hash array");
 		if ((offset & ~bmask) != blkoff) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			blkoff = offset & ~bmask;
 			if (ufs_blkatoff(vp, (off_t)blkoff, NULL, &bp) != 0)
 				return (EJUSTRETURN);
@@ -421,7 +421,7 @@ restart:
 		if (dp->d_reclen == 0 || dp->d_reclen >
 		    dirblksiz - (offset & (dirblksiz - 1))) {
 			/* Corrupted directory. */
-			brelse(bp);
+			brelse(bp, 0);
 			return (EJUSTRETURN);
 		}
 		if (dp->d_namlen == namelen &&
@@ -432,7 +432,7 @@ restart:
 					prevoff = ufsdirhash_getprev(dp,
 					    offset, dirblksiz);
 					if (prevoff == -1) {
-						brelse(bp);
+						brelse(bp, 0);
 						return (EJUSTRETURN);
 					}
 				} else
@@ -454,7 +454,7 @@ restart:
 		if (dh->dh_hash == NULL) {
 			DIRHASH_UNLOCK(dh);
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			ufsdirhash_free(ip);
 			return (EJUSTRETURN);
 		}
@@ -469,7 +469,7 @@ restart:
 	}
 	DIRHASH_UNLOCK(dh);
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	return (ENOENT);
 }
 
@@ -529,7 +529,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	/* Find the first entry with free space. */
 	for (i = 0; i < dirblksiz; ) {
 		if (dp->d_reclen == 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (-1);
 		}
 		if (dp->d_ino == 0 || dp->d_reclen > DIRSIZ(0, dp, needswap))
@@ -538,7 +538,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
 	}
 	if (i > dirblksiz) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (-1);
 	}
 	slotstart = pos + i;
@@ -550,19 +550,19 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 		if (dp->d_ino != 0)
 			freebytes -= DIRSIZ(0, dp, needswap);
 		if (dp->d_reclen == 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (-1);
 		}
 		i += dp->d_reclen;
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
 	}
 	if (i > dirblksiz) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (-1);
 	}
 	if (freebytes < slotneeded)
 		panic("ufsdirhash_findfree: free mismatch");
-	brelse(bp);
+	brelse(bp, 0);
 	*slotsize = pos + i - slotstart;
 	return (slotstart);
 }

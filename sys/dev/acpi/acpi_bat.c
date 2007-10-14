@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.56 2007/09/04 16:56:30 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.56.2.1 2007/10/14 11:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.56 2007/09/04 16:56:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.56.2.1 2007/10/14 11:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,6 +723,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = acpibat_gtredata;
 	sc->sc_sysmon.sme_nsensors = ACPIBAT_NSENSORS;
+	sc->sc_sysmon.sme_class = SME_CLASS_BATTERY;
 
 	sc->sc_updateinterval.tv_sec = 1;
 	sc->sc_updateinterval.tv_usec = 0;

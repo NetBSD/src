@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.14 2007/09/06 23:59:01 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.14.2.1 2007/10/14 11:48:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.14 2007/09/06 23:59:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.14.2.1 2007/10/14 11:48:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -135,7 +135,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * holds it stopped set it running again.
 	 */
 	if (l->l_stat != LSSLEEP) {
-	 	KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
+		KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
 		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
@@ -150,6 +150,14 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		lwp_setlock(l, &spc->spc_lwplock);
 		return 0;
 	}
+
+	/*
+	 * Call the wake-up handler of scheduler.
+	 * It might change the CPU for this thread.
+	 */
+	sched_wakeup(l);
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
 
 	/*
 	 * Set it running.  We'll try to get the last CPU that ran
@@ -233,6 +241,7 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 
 	sq->sq_waiters++;
 	sleepq_insert(sq, l, sobj);
+	sched_slept(l);
 }
 
 /*

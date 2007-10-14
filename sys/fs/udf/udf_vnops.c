@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.10.10.1 2007/10/06 15:29:52 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.10.10.2 2007/10/14 11:48:36 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.10.10.1 2007/10/06 15:29:52 yamt Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.10.10.2 2007/10/14 11:48:36 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1004,7 +1004,7 @@ udf_link(void *v)
 
 	/* error out */
 	/* XXX or just VOP_ABORTOP(dvp, a_cnp); ? */
-	if (VOP_ISLOCKED(vp))
+	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
 		VOP_UNLOCK(vp, 0);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);

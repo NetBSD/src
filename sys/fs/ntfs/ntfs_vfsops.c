@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.56 2007/07/31 21:14:18 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.56.6.1 2007/10/14 11:48:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56 2007/07/31 21:14:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56.6.1 2007/10/14 11:48:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,13 +158,13 @@ ntfs_mountroot()
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -444,7 +444,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );
 	bzero( ntmp, sizeof *ntmp );
 	bcopy( bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile) );
-	brelse( bp );
+	brelse( bp , 0 );
 	bp = NULL;
 
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
@@ -495,7 +495,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 			error = VFS_VGET(mp, pi[i], &(ntmp->ntm_sysvn[pi[i]]));
 			if(error)
 				goto out1;
-			ntmp->ntm_sysvn[pi[i]]->v_flag |= VSYSTEM;
+			ntmp->ntm_sysvn[pi[i]]->v_vflag |= VV_SYSTEM;
 			VREF(ntmp->ntm_sysvn[pi[i]]);
 			vput(ntmp->ntm_sysvn[pi[i]]);
 		}
@@ -587,7 +587,7 @@ out1:
 out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	if (error) {
 		if (ntmp) {
@@ -966,7 +966,7 @@ ntfs_vgetex(
 		vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	if (lkflags & LK_TYPE_MASK) {
 		error = vn_lock(vp, lkflags);

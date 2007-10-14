@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.1 2007/10/06 15:33:42 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.2 2007/10/14 11:47:53 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.1 2007/10/06 15:33:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2007/10/14 11:47:53 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -257,7 +257,7 @@ void xpmap_find_pte(paddr_t);
 static struct simplelock pvalloc_lock;
 static struct simplelock pmaps_lock;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */ 
 static struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
@@ -1238,9 +1238,7 @@ pmap_bootstrap(kva_start)
 	 * init the static-global locks and global lists.
 	 */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-#endif
+	/* spinlockinit(&pmap_main_lock, "pmaplk", 0); */
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	LIST_INIT(&pmaps);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.38 2007/07/29 12:15:38 ad Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.38.8.1 2007/10/14 11:47:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.38 2007/07/29 12:15:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.38.8.1 2007/10/14 11:47:39 yamt Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -488,8 +488,7 @@ fd_attach(struct device *parent, struct device *self, void *auxp)
 		}
 		splx(spl);
 	}
-	fd->diskInfo.dk_name = fd->devInfo.dv_xname;
-	fd->diskInfo.dk_driver = &fd_dkDriver;
+	disk_init(&fd->diskInfo, fd->devInfo.dv_xname, &fd_dkDriver);
 	disk_attach(&fd->diskInfo);
 }
 
@@ -560,6 +559,7 @@ fd_mod_free(void)
 			 */
 			callout_stop(&iwm->fd[unit]->motor_ch);
 			disk_detach(&iwm->fd[unit]->diskInfo);
+			disk_destroy(&iwm->fd[unit]->diskInfo);
 			free(iwm->fd[unit], M_DEVBUF);
 			iwm->fd[unit] = NULL;
 		}

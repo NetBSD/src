@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.8 2007/04/04 02:30:43 wrstuden Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.8.12.1 2007/10/14 11:48:37 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.8 2007/04/04 02:30:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.8.12.1 2007/10/14 11:48:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 		} else if (prio->bq_write_next == NULL) {
 			bp = prio->bq_next = TAILQ_FIRST(&prio->bq_read);
 			prio->bq_read_burst = 0;
-			KASSERT((bp == NULL)
-					|| ((bp->b_flags & B_READ) == B_READ));
+			KASSERT((bp == NULL) ||
+			    ((bp->b_flags & B_READ) == B_READ));
 		} else {
 			/*
 			 * Both list have requests.  Select the read list up

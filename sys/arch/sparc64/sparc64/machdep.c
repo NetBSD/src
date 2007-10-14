@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202.2.1 2007/10/06 15:34:30 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.202.2.2 2007/10/14 11:47:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.2.1 2007/10/06 15:34:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.2.2 2007/10/14 11:47:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -688,7 +688,7 @@ cpu_dumpconf()
 	dumpsize = physmem;
 }
 
-#define	BYTES_PER_DUMP	(PAGE_SIZE)	/* must be a multiple of pagesize */
+#define	BYTES_PER_DUMP	MAXPHYS		/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
 void *
@@ -743,9 +743,8 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	psize = (*bdev->d_psize)(dumpdev);
-	printf("dump 000000 ");
 	if (psize == -1) {
-		printf("area unavailable\n");
+		printf("dump area unavailable\n");
 		return;
 	}
 	blkno = dumplo;
@@ -760,7 +759,7 @@ dumpsys()
 
 	for (mp = &phys_installed[0], j = 0; j < phys_installed_size;
 			j++, mp = &phys_installed[j]) {
-		uint64_t i = 0, n;
+		uint64_t i = 0, n, off;
 		paddr_t maddr = mp->start;
 
 		for (; i < mp->size; i += n) {
@@ -770,14 +769,15 @@ dumpsys()
 
 			/* print out how many MBs we still have to dump */
 			if ((todo % (1024*1024)) == 0)
-				printf("\b\b\b\b\b\b\b%6" PRIu64 " ",
+				printf("\r%6" PRIu64 " M ",
 				    todo / (1024*1024));
-			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
+			for (off = 0; off < n; off += PAGE_SIZE)
+				pmap_kenter_pa(dumpspace+off, maddr+off,
+				    VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(void *)dumpspace, (size_t)n);
 			pmap_kremove(dumpspace, n);
-			pmap_update(pmap_kernel());
 			if (error)
 				break;
 			maddr += n;
@@ -785,6 +785,7 @@ dumpsys()
 			blkno += btodb(n);
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	switch (error) {
 
@@ -805,7 +806,7 @@ dumpsys()
 		break;
 
 	case 0:
-		printf("- succeeded\n");
+		printf("\rdump succeeded\n");
 		break;
 
 	default:

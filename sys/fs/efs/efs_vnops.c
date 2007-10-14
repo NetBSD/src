@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.8.2.1 2007/10/06 15:29:44 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.8.2.2 2007/10/14 11:48:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.8.2.1 2007/10/06 15:29:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.8.2.2 2007/10/14 11:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,8 @@ efs_getattr(void *v)
 	vap->va_ctime.tv_sec	= eip->ei_ctime;
 /*	vap->va_birthtime 	= */
 	vap->va_gen		= eip->ei_gen;
-	vap->va_flags		= ap->a_vp->v_flag;
+	vap->va_flags		= ap->a_vp->v_vflag |
+	    ap->a_vp->v_iflag | ap->a_vp->v_uflag;
 
 	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
 		uint32_t dmaj, dmin;
@@ -331,7 +332,7 @@ efs_readdir(void *v)
 			err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 			    ex.ex_bn + i, NULL, &bp);
 			if (err) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto exit_err;
 			}
 
@@ -339,7 +340,7 @@ efs_readdir(void *v)
 
 			if (be16toh(db->db_magic) != EFS_DIRBLK_MAGIC) {
 				printf("efs_readdir: bad dirblk\n");
-				brelse(bp);
+				brelse(bp, 0);
 				continue;
 			}
 
@@ -361,10 +362,10 @@ efs_readdir(void *v)
 					continue;
 				}
 
-				/* XXX - latter shouldn't happen, right? */
-				if (s > uio->uio_resid ||
-				    offset > uio->uio_offset) {
-					brelse(bp);
+				/* XXX - shouldn't happen, right? */
+				if (offset > uio->uio_offset ||
+				    s > uio->uio_resid) {
+					brelse(bp, 0);
 					goto exit_ok;
 				}
 
@@ -382,7 +383,7 @@ efs_readdir(void *v)
 				    VFSTOEFS(ap->a_vp->v_mount),
 				    dp->d_fileno, NULL, &edi);
 				if (err) {
-					brelse(bp);
+					brelse(bp, 0);
 					goto exit_err;
 				}
 
@@ -415,8 +416,8 @@ efs_readdir(void *v)
 
 				err = uiomove(dp, s, uio);
 				if (err) {
-					brelse(bp);
-					goto exit_err;
+					brelse(bp, 0);
+					goto exit_err;	
 				}
 
 				offset += s;
@@ -424,13 +425,13 @@ efs_readdir(void *v)
 				if (cookies != NULL && maxcookies != 0) {
 					cookies[ncookies++] = offset;
 					if (ncookies == maxcookies) {
-						brelse(bp);
+						brelse(bp, 0);
 						goto exit_ok;
 					}
 				}
 			}
 
-			brelse(bp);
+			brelse(bp, 0);
 		}
 	}
 
@@ -511,14 +512,14 @@ efs_readlink(void *v)
 				err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 				    ex.ex_bn + i, NULL, &bp);
 				if (err) {
-					brelse(bp);
+					brelse(bp, 0);
 					free(buf, M_EFSTMP);
 					return (err);
 				}
 
 				len = MIN(resid, bp->b_bcount);
 				memcpy(buf + off, bp->b_data, len);
-				brelse(bp);
+				brelse(bp, 0);
 
 				off += len;
 				resid -= len;

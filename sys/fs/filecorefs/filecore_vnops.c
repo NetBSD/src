@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.21.8.1 2007/10/06 15:29:45 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.21.8.2 2007/10/14 11:48:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.21.8.1 2007/10/06 15:29:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.21.8.2 2007/10/14 11:48:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ filecore_read(v)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vn1\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 
@@ -259,7 +259,7 @@ filecore_read(v)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vn2\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -309,7 +309,7 @@ filecore_readdir(v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return error;
 	}
 
@@ -383,7 +383,7 @@ out:
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vn3\n", bp);
 #endif
-	brelse (bp);
+	brelse (bp, 0);
 
 	free(de, M_FILECORETMP);
 

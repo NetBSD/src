@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.178 2007/09/16 15:17:36 dsl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.178.2.1 2007/10/14 11:48:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.178 2007/09/16 15:17:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.178.2.1 2007/10/14 11:48:48 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -599,7 +599,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		/* Pay for the read. */
 		curproc->p_stats->p_ru.ru_inblock++;
 	} else if (async) {
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	if (vp->v_type == VBLK)
@@ -762,7 +762,7 @@ bwrite(struct buf *bp)
 		rv = biowait(bp);
 
 		/* Release the buffer. */
-		brelse(bp);
+		brelse(bp, 0);
 
 		return (rv);
 	} else {
@@ -824,7 +824,7 @@ bdwrite(struct buf *bp)
 	simple_unlock(&bp->b_interlock);
 	splx(s);
 
-	brelse(bp);
+	brelse(bp, 0);
 }
 
 /*
@@ -872,7 +872,7 @@ bdirty(struct buf *bp)
  * Described in Bach (p. 46).
  */
 void
-brelse(struct buf *bp)
+brelse(struct buf *bp, int set)
 {
 	struct bqueue *bufq;
 	int s;
@@ -881,6 +881,8 @@ brelse(struct buf *bp)
 	s = splbio();
 	simple_lock(&bqueue_slock);
 	simple_lock(&bp->b_interlock);
+
+	bp->b_flags |= set;
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
 	KASSERT(!ISSET(bp->b_flags, B_CALL));
@@ -1313,7 +1315,7 @@ buf_trim(void)
 		bp->b_bcount = bp->b_bufsize = 0;
 	}
 	/* brelse() will return the buffer to the global buffer pool */
-	brelse(bp);
+	brelse(bp, 0);
 	simple_lock(&bqueue_slock);
 	return size;
 }
@@ -1401,7 +1403,7 @@ biodone(struct buf *bp)
 	} else {
 		if (ISSET(bp->b_flags, B_ASYNC)) {	/* if async, release */
 			simple_unlock(&bp->b_interlock);
-			brelse(bp);
+			brelse(bp, 0);
 		} else {			/* or just wakeup the buffer */
 			CLR(bp->b_flags, B_WANTED);
 			wakeup(bp);

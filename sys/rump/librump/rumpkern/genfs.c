@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.18 2007/09/01 21:45:19 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.18.4.1 2007/10/14 11:49:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,7 +141,7 @@ genfs_getpages(void *v)
 		panic("%s: centeridx != not supported", __func__);
 
 	if (ap->a_access_type & VM_PROT_WRITE)
-		vp->v_flag |= VONWORKLST;
+		vp->v_iflag |= VI_ONWORKLST;
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
@@ -282,7 +282,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
-		vp->v_flag &= ~VONWORKLST;
+		vp->v_iflag &= ~VI_ONWORKLST;
 		return 0;
 	}
 

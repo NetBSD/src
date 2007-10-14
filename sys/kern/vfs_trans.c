@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.11 2007/07/26 22:57:36 pooka Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.11.8.1 2007/10/14 11:48:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.11 2007/07/26 22:57:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.11.8.1 2007/10/14 11:48:51 yamt Exp $");
 
 /*
  * File system transaction operations.
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.11 2007/07/26 22:57:36 pooka Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/rwlock.h>
 #include <sys/vnode.h>
@@ -59,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.11 2007/07/26 22:57:36 pooka Exp $")
 #include <sys/fstrans.h>
 #include <sys/proc.h>
 
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
 struct fstrans_lwp_info {
@@ -75,6 +77,7 @@ struct fstrans_mount_info {
 
 static specificdata_key_t lwp_data_key;
 static specificdata_key_t mount_data_key;
+static specificdata_key_t mount_cow_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 static kmutex_t fstrans_init_lock;
 
@@ -83,6 +86,7 @@ POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
 
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(void *);
+static void fscow_mount_dtor(void *);
 static struct fstrans_mount_info *fstrans_mount_init(struct mount *);
 
 /*
@@ -96,6 +100,8 @@ fstrans_init(void)
 	error = lwp_specific_key_create(&lwp_data_key, fstrans_lwp_dtor);
 	KASSERT(error == 0);
 	error = mount_specific_key_create(&mount_data_key, fstrans_mount_dtor);
+	KASSERT(error == 0);
+	error = mount_specific_key_create(&mount_cow_key, fscow_mount_dtor);
 	KASSERT(error == 0);
 
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -476,3 +482,128 @@ fstrans_dump(int full)
 		fstrans_print_mount(mp, full == 1);
 }
 #endif /* defined(DDB) */
+
+
+struct fscow_handler {
+	SLIST_ENTRY(fscow_handler) ch_list;
+	int (*ch_func)(void *, struct buf *);
+	void *ch_arg;
+};
+
+struct fscow_mount_info {
+	krwlock_t cmi_lock;
+	SLIST_HEAD(, fscow_handler) cmi_handler;
+};
+
+/*
+ * Deallocate mount state
+ */
+static void
+fscow_mount_dtor(void *arg)
+{
+	struct fscow_mount_info *cmi = arg;
+
+	KASSERT(SLIST_EMPTY(&cmi->cmi_handler));
+	rw_destroy(&cmi->cmi_lock);
+	kmem_free(cmi, sizeof(*cmi));
+}
+
+/*
+ * Create mount info for this mount
+ */
+static struct fscow_mount_info *
+fscow_mount_init(struct mount *mp)
+{
+	struct fscow_mount_info *new;
+
+	mutex_enter(&fstrans_init_lock);
+
+	if ((new = mount_getspecific(mp, mount_cow_key)) != NULL) {
+		mutex_exit(&fstrans_init_lock);
+		return new;
+	}
+
+	if ((new = kmem_alloc(sizeof(*new), KM_SLEEP)) != NULL) {
+		SLIST_INIT(&new->cmi_handler);
+		rw_init(&new->cmi_lock);
+		mount_setspecific(mp, mount_cow_key, new);
+	}
+
+	mutex_exit(&fstrans_init_lock);
+
+	return new;
+}
+
+int
+fscow_establish(struct mount *mp, int (*func)(void *, struct buf *), void *arg)
+{
+	struct fscow_mount_info *cmi;
+	struct fscow_handler *new;
+
+	if ((cmi = mount_getspecific(mp, mount_cow_key)) == NULL)
+		cmi = fscow_mount_init(mp);
+	if (cmi == NULL)
+		return ENOMEM;
+
+	if ((new = kmem_alloc(sizeof(*new), KM_SLEEP)) == NULL)
+		return ENOMEM;
+	new->ch_func = func;
+	new->ch_arg = arg;
+	rw_enter(&cmi->cmi_lock, RW_WRITER);
+	SLIST_INSERT_HEAD(&cmi->cmi_handler, new, ch_list);
+	rw_exit(&cmi->cmi_lock);
+
+	return 0;
+}
+
+int
+fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *),
+    void *arg)
+{
+	struct fscow_mount_info *cmi;
+	struct fscow_handler *hp = NULL;
+
+	if ((cmi = mount_getspecific(mp, mount_cow_key)) == NULL)
+		return EINVAL;
+
+	rw_enter(&cmi->cmi_lock, RW_WRITER);
+	SLIST_FOREACH(hp, &cmi->cmi_handler, ch_list)
+		if (hp->ch_func == func && hp->ch_arg == arg)
+			break;
+	if (hp != NULL) {
+		SLIST_REMOVE(&cmi->cmi_handler, hp, fscow_handler, ch_list);
+		kmem_free(hp, sizeof(*hp));
+	}
+	rw_exit(&cmi->cmi_lock);
+
+	return hp ? 0 : EINVAL;
+}
+
+int
+fscow_run(struct buf *bp)
+{
+	int error = 0;
+	struct mount *mp;
+	struct fscow_mount_info *cmi;
+	struct fscow_handler *hp;
+
+	if (bp->b_vp == NULL)
+		return 0;
+	if (bp->b_vp->v_type == VBLK)
+		mp = bp->b_vp->v_specmountpoint;
+	else
+		mp = bp->b_vp->v_mount;
+	if (mp == NULL)
+		return 0;
+
+	if ((cmi = mount_getspecific(mp, mount_cow_key)) == NULL)
+		return 0;
+
+	rw_enter(&cmi->cmi_lock, RW_READER);
+	SLIST_FOREACH(hp, &cmi->cmi_handler, ch_list)
+		if ((error = (*hp->ch_func)(hp->ch_arg, bp)) != 0)
+			break;
+	rw_exit(&cmi->cmi_lock);
+
+	return error;
+}
