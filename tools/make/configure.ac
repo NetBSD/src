@@ -1,6 +1,25 @@
-#	$NetBSD: configure.ac,v 1.7 2006/10/09 20:51:05 apb Exp $
+#	$NetBSD: configure.ac,v 1.8 2007/10/14 20:25:35 apb Exp $
 #
 # Autoconf definition file for make.
+#
+# When you edit configure.ac:
+# 0. Create the tools version of autoconf:
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#    (This might not work if you try it after editing configure.ac.)
+# 1. edit configure.ac
+# 2. Regenerate "configure" from "configure.ac":
+#        cd ${SRCDIR}/tools/make && \
+#        ${TOOLDIR}/bin/nbmake-${MACHINE} -f Makefile.regen
+#    (Please don't use a non-tools version of autoconf).
+# 3. Test that nbmake still builds
+#        mv ${TOOLDIR}/nbmake ${TOOLDIR}/bin/nbmake.bak
+#        cd ${SRCDIR} && build.sh makewrapper
+# 4. cvs commit files that you edited.
+# 5. Regen again, to pick up changed RCS IDs from the above commit:
+#        cd ${SRCDIR}/tools/make && \
+#        ${TOOLDIR}/bin/nbmake-${MACHINE} -f Makefile.regen
+# 6. cvs commit files that were generated.
+#
 #
 
 AC_INIT([make], [noversion], [bin-bug-people@NetBSD.org])
