@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.102 2007/10/14 05:40:17 riz Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.103 2007/10/14 05:56:59 riz Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3648,4 +3648,11 @@ sys/dev/pci/if_wmreg.h				1.22
 	i82801H (IFE) LAN Controller
 	i82801H (M) LAN Controller
 	[bouyer, ticket #1770]
+
+sbin/ifconfig/ifconfig.c			1.173 via patch
+
+	If the kernel does not set the interface up after we set an address,
+	do it explicitly, unless we (previously) set it down on user request
+	(i.e. "ifconfig <name> x.x.x.x down").  PR#30694.
+	[msaitoh, ticket #1801]
 
