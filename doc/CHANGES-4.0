@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.323 2007/10/15 02:37:49 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.324 2007/10/15 15:52:58 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10172,3 +10172,7 @@ sys/netisdn/i4b_global.h			1.8
 	idle timeouts as well.
 	[martin, ticket #933]
 
+sys/dev/pci/if_bge.c				patch
+
+	Shut up a debug message.
+	[msaitoh, ticket #934]
