@@ -15,9 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <dev/sysmon/sysmonvar.h>
+#include <sys/envsys.h>
+
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-/* #define MFI_DEBUG */
+// #define MFI_DEBUG
 #ifdef MFI_DEBUG
 extern uint32_t			mfi_debug;
 #define DPRINTF(x...)		do { if (mfi_debug) printf(x); } while(0)
@@ -141,7 +144,11 @@ struct mfi_softc {
 
 	struct mfi_ccb_list	sc_ccb_freeq;
 
-	struct sensor		*sc_sensors;
+	struct sysmon_envsys    sc_envsys;
+#define sc_ranges       sc_envsys.sme_ranges
+#define sc_sensor_info  sc_envsys.sme_sensor_info
+#define sc_sensor_data  sc_envsys.sme_sensor_data
+
 };
 
 int	mfi_attach(struct mfi_softc *sc);

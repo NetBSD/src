@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.40 2007/03/03 23:30:17 bouyer Exp $
+# $NetBSD: mi,v 1.768.2.41 2007/10/15 05:09:50 riz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -678,6 +678,7 @@
 ./usr/share/man/cat4/bge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bha.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bicc.0			man-sys-catman		.cat
+./usr/share/man/cat4/bio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bktr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bmtphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bnx.0			man-sys-catman		.cat
@@ -1657,6 +1658,7 @@
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/bioctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bootparamd.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpef.0			man-bootserver-catman	.cat
@@ -2923,6 +2925,7 @@
 ./usr/share/man/man4/bge.4			man-sys-man		.man
 ./usr/share/man/man4/bha.4			man-sys-man		.man
 ./usr/share/man/man4/bicc.4			man-sys-man		.man
+./usr/share/man/man4/bio.4			man-sys-man		.man
 ./usr/share/man/man4/bktr.4			man-sys-man		.man
 ./usr/share/man/man4/bmtphy.4			man-sys-man		.man
 ./usr/share/man/man4/bnx.4			man-sys-man		.man
@@ -3905,6 +3908,7 @@
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/bioctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/bootparamd.8		man-bootserver-man	.man
 ./usr/share/man/man8/bootpd.8			man-bootserver-man	.man
 ./usr/share/man/man8/bootpef.8			man-bootserver-man	.man
