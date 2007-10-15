@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.41 2007/10/13 16:16:41 apb Exp $	*/
+/*	$NetBSD: util.c,v 1.42 2007/10/15 01:07:36 sjg Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.41 2007/10/13 16:16:41 apb Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.42 2007/10/15 01:07:36 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.41 2007/10/13 16:16:41 apb Exp $");
+__RCSID("$NetBSD: util.c,v 1.42 2007/10/15 01:07:36 sjg Exp $");
 #endif
 #endif
 
@@ -61,7 +61,7 @@ strdup(const char *str)
 }
 #endif
 
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRNDUP)
+#if !defined(HAVE_EMALLOC) && !defined(HAVE_STRNDUP)
 #include <string.h>
 
 /* strndup
