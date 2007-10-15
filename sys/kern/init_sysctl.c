@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.108 2007/10/13 10:04:08 rmind Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.109 2007/10/15 14:12:55 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.108 2007/10/13 10:04:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.109 2007/10/15 14:12:55 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -197,7 +197,6 @@ static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
 static int sysctl_hw_cnmagic(SYSCTLFN_PROTO);
-static int sysctl_hw_ncpu(SYSCTLFN_PROTO);
 
 static u_int sysctl_map_flags(const u_int *, u_int);
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
@@ -924,8 +923,8 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "ncpu",
-		       SYSCTL_DESCR("Number of active CPUs"),
-		       sysctl_hw_ncpu, 0, NULL, 0,
+		       SYSCTL_DESCR("Number of CPUs configured"),
+		       NULL, 0, &ncpu, 0,
 		       CTL_HW, HW_NCPU, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -985,6 +984,12 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Bytes of non-kernel memory"),
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM64, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ncpuonline",
+		       SYSCTL_DESCR("Number of CPUs online"),
+		       NULL, 0, &ncpuonline, 0,
+		       CTL_HW, HW_NCPUONLINE, CTL_EOL);
 }
 
 #ifdef DEBUG
@@ -2615,18 +2620,6 @@ sysctl_hw_cnmagic(SYSCTLFN_ARGS)
 
 	return (cn_set_magic(magic));
 }
-
-static int
-sysctl_hw_ncpu(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-
-	node = *rnode;
-	node.sysctl_data = &ncpu;
-
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
 
 /*
  * ********************************************************************

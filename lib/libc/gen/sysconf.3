@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.32 2006/08/14 18:14:19 rpaulo Exp $
+.\"	$NetBSD: sysconf.3,v 1.33 2007/10/15 14:12:56 ad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -264,6 +264,10 @@ passed to
 .Xr getpwnam_r 3
 and
 .Xr getpwuid_r 3 .
+.It Li _SC_NPROCESSORS_CONF
+The number of processors configured.
+.It Li _SC_NPROCESSORS_ONLN
+The number of processors online (capable of running processes).
 .El
 .Sh RETURN VALUES
 If the call to
@@ -297,6 +301,11 @@ The
 .Fn sysconf
 function conforms to
 .St -p1003.1-90 .
+The constants
+.Li _SC_NPROCESSORS_CONF
+and
+.Li _SC_NPROCESSORS_ONLN
+are not part of the standard, but are provided by many systems.
 .Sh HISTORY
 The
 .Nm sysconf
