@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.321 2007/10/11 19:45:24 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.322 2007/10/15 14:12:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.321 2007/10/11 19:45:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.322 2007/10/15 14:12:55 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -211,7 +211,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
-int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
