@@ -1,4 +1,4 @@
-/* $NetBSD: grant_table.h,v 1.2.2.2 2006/04/07 12:51:26 tron Exp $ */
+/* $NetBSD: grant_table.h,v 1.2.2.3 2007/10/15 04:34:16 riz Exp $ */
 /******************************************************************************
  * grant_table.h
  * 
@@ -238,6 +238,24 @@ typedef struct {
     /* OUT parameters. */
     int16_t       status;
 } gnttab_transfer_t;
+
+/*
+ * GNTTABOP_query_size: Query the current and maximum sizes of the shared
+ * grant table.
+ * NOTES:
+ *  1. <dom> may be specified as DOMID_SELF.
+ *  2. Only a sufficiently-privileged domain may specify <dom> != DOMID_SELF.
+ */
+#define GNTTABOP_query_size		6
+typedef struct gnttab_query_size {
+	/* IN parameters. */
+	domid_t  dom;
+	/* OUT parameters. */
+	uint32_t nr_frames;
+	uint32_t max_nr_frames;
+	int16_t  status;		/* GNTST_* */
+} gnttab_query_size_t;
+
 
 /*
  * Bitfield values for update_pin_status.flags.
