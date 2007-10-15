@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.6 2007/10/15 10:28:10 yamt Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.7 2007/10/15 10:30:56 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.6 2007/10/15 10:28:10 yamt Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.7 2007/10/15 10:30:56 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -964,6 +964,7 @@ umax2s(uintmax_t x, char *s)
 	unsigned i;
 
 	/* Make sure UMAX2S_BUFSIZE is large enough. */
+	/* LINTED */
 	assert(sizeof(uintmax_t) <= 8);
 
 	i = UMAX2S_BUFSIZE - 1;
@@ -1183,6 +1184,7 @@ stats_print(arena_t *arena)
  * Begin chunk management functions.
  */
 
+#ifndef lint
 static inline int
 chunk_comp(chunk_node_t *a, chunk_node_t *b)
 {
@@ -1199,7 +1201,6 @@ chunk_comp(chunk_node_t *a, chunk_node_t *b)
 }
 
 /* Generate red-black tree code for chunks. */
-#ifndef lint
 RB_GENERATE_STATIC(chunk_tree_s, chunk_node_s, link, chunk_comp);
 #endif
 
@@ -1563,6 +1564,7 @@ choose_arena_hard(void)
 	return (ret);
 }
 
+#ifndef lint
 static inline int
 arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 {
@@ -1579,10 +1581,10 @@ arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 }
 
 /* Generate red-black tree code for arena chunks. */
-#ifndef lint
 RB_GENERATE_STATIC(arena_chunk_tree_s, arena_chunk_s, link, arena_chunk_comp);
 #endif
 
+#ifndef lint
 static inline int
 arena_run_comp(arena_run_t *a, arena_run_t *b)
 {
@@ -1599,7 +1601,6 @@ arena_run_comp(arena_run_t *a, arena_run_t *b)
 }
 
 /* Generate red-black tree code for arena runs. */
-#ifndef lint
 RB_GENERATE_STATIC(arena_run_tree_s, arena_run_s, link, arena_run_comp);
 #endif
 
@@ -1658,6 +1659,7 @@ arena_run_reg_alloc(arena_run_t *run, arena_bin_t *bin)
 		}
 	}
 	/* Not reached. */
+	/* LINTED */
 	assert(0);
 	return (NULL);
 }
@@ -1700,6 +1702,7 @@ arena_run_reg_dalloc(arena_run_t *run, arena_bin_t *bin, void *ptr, size_t size)
 	};
 	unsigned diff, regind, elm, bit;
 
+	/* LINTED */
 	assert(run->magic == ARENA_RUN_MAGIC);
 	assert(((sizeof(size_invs)) / sizeof(unsigned)) + 3
 	    >= (SMALL_MAX_DEFAULT >> QUANTUM_2POW_MIN));
@@ -3314,6 +3317,7 @@ malloc_init_hard(void)
 			break;
 		default:
 			/* NOTREACHED */
+			/* LINTED */
 			assert(false);
 		}
 
