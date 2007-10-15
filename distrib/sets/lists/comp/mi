@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1071 2007/10/07 13:38:53 hannken Exp $
+#	$NetBSD: mi,v 1.1072 2007/10/15 14:00:49 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7642,6 +7642,7 @@
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ucom.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uiomove.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
@@ -7702,7 +7703,7 @@
 ./usr/share/man/cat9/uvmspace_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvmspace_share.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvmspace_unshare.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvn_attach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvn_attach.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvn_findpages.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vaccess.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
@@ -12222,6 +12223,7 @@
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
+./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man
 ./usr/share/man/man9/ucom.9			comp-sys-man		.man
 ./usr/share/man/man9/uiomove.9			comp-sys-man		.man
 ./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
@@ -12282,7 +12284,7 @@
 ./usr/share/man/man9/uvmspace_free.9		comp-sys-man		.man
 ./usr/share/man/man9/uvmspace_share.9		comp-sys-man		.man
 ./usr/share/man/man9/uvmspace_unshare.9		comp-sys-man		.man
-./usr/share/man/man9/uvn_attach.9		comp-sys-man		.man
+./usr/share/man/man9/uvn_attach.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvn_findpages.9		comp-sys-man		.man
 ./usr/share/man/man9/vaccess.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
