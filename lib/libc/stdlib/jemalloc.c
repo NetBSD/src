@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.5 2007/10/15 00:05:00 yamt Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.6 2007/10/15 10:28:10 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.5 2007/10/15 00:05:00 yamt Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.6 2007/10/15 10:28:10 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3185,8 +3185,7 @@ malloc_print_stats(void)
 			malloc_printf(
 			    "huge: nmalloc      ndalloc    allocated\n");
 			malloc_printf(" %12llu %12llu %12zu\n",
-			    huge_nmalloc, huge_ndalloc, huge_allocated
-			    * chunksize);
+			    huge_nmalloc, huge_ndalloc, huge_allocated);
 
 			/* Print stats for each arena. */
 			for (i = 0; i < narenas; i++) {
