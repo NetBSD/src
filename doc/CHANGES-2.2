@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.118 2007/09/17 19:57:52 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.119 2007/10/15 23:09:47 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1319,4 +1319,14 @@ etc/security					1.104
 	/etc/security.conf.
 	The default remains as /usr/sbin/pkg_info.  This should fix PR# 36746.
 	[adrianp, ticket #11367]
+
+sys/dev/ata/wd.c				1.345
+
+	Add a workaround for drives with the LBA48 bug:
+	if we get a "ID not found" error for a transfer crossing
+	LBA48_THRESHOLD, and the drive is larger than 128GB,
+	automatically add WD_QUIRK_FORCE_LBA48 to the drive's quirks
+	and retry the transfers.  Hopefully this will obsolete the
+	WD_QUIRK_FORCE_LBA48 quirk list ...
+	[bouyer, ticket #11369]
 
