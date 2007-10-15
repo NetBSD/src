@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.45 2007/10/13 16:16:41 apb Exp $	*/
+/*	$NetBSD: nonints.h,v 1.46 2007/10/15 01:07:34 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,6 +118,7 @@ int PrintAddr(ClientData, ClientData);
 void Finish(int);
 #ifndef HAVE_EMALLOC
 char *estrdup(const char *);
+char *strndup(const char *, size_t);
 char *estrndup(const char *, size_t);
 void *emalloc(size_t);
 void *erealloc(void *, size_t);
