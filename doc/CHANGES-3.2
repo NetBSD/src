@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.103 2007/10/14 05:56:59 riz Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.104 2007/10/15 05:12:04 riz Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3655,4 +3655,46 @@ sbin/ifconfig/ifconfig.c			1.173 via patch
 	do it explicitly, unless we (previously) set it down on user request
 	(i.e. "ifconfig <name> x.x.x.x down").  PR#30694.
 	[msaitoh, ticket #1801]
+
+sys/arch/xen/include/granttables.h		1.2 via patch
+sys/arch/xen/include/xen3-public/grant_table.h	1.4 via patch
+sys/arch/xen/xen/xengnt.c			1.3 via patch
+
+	Switch to dynamically-sized grant tables, available since Xen-3.1.0.
+	This removes a hard limit that would prevent a guest from running
+	with more than 7 virtual network interface.
+	[bouyer, ticket #1836]
+
+distrib/sets/lists/base/mi			1.704 via patch
+distrib/sets/lists/comp/mi			1.1022 via patch
+distrib/sets/lists/man/mi			1.997 via patch
+etc/MAKEDEV.tmpl				1.86 via patch
+sbin/Makefile					1.105 via patch
+sbin/bioctl/Makefile				1.1 via patch
+sbin/bioctl/bioctl.8				1.1,1.3-1.4 via patch
+sbin/bioctl/bioctl.c				1.1 via patch
+sbin/bioctl/strtonum.c				1.1 via patch
+sbin/bioctl/strtonum.h				1.1 via patch
+share/man/man4/Makefile				1.426 via patch
+share/man/man4/bio.4				1.1 via patch
+sys/arch/amd64/conf/GENERIC			1.139 via patch
+sys/arch/i386/conf/GENERIC			1.825 via patch
+sys/arch/i386/conf/XEN2_DOM0			1.25 via patch
+sys/conf/files					1.839 via patch
+sys/conf/majors					1.34 via patch
+sys/dev/Makefile				1.25 via patch
+sys/dev/bio.c					1.1 via patch
+sys/dev/biovar.h				1.1 via patch
+sys/dev/ic/mfi.c				1.4 via patch
+sys/dev/ic/mfivar.h				1.4 via patch
+sys/sys/envsys.h				1.11 via patch
+usr.sbin/envstat/envstat.c			1.24 via patch
+
+	Add bio(4) and associated bioctl(8) from OpenBSD, a driver control block
+	device controllers, and more specifically raid controllers.
+	Add a new sensor type, ENVSYS_DRIVE, to report drive status. From
+	OpenBSD.  Add bio and sysmon support to mfi(4). This allow userland
+	to query status for drives and logical volumes attached to a mfi(4)
+	controller.
+	[bouyer, ticket #1838]
 
