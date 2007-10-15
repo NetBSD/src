@@ -32,7 +32,7 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
 .\"
-.Dd June 15, 2007
+.Dd October 15, 2007
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -153,14 +153,10 @@ system call.
 Each byte of new memory allocated by
 .Fn malloc ,
 .Fn realloc
-or
-.Fn reallocf
 will be initialized to 0xa5.
 All memory returned by
 .Fn free ,
 .Fn realloc
-or
-.Fn reallocf
 will be initialized to 0x5a.
 This is intended for debugging and will impact performance negatively.
 .It K
@@ -225,14 +221,10 @@ _malloc_options = "X";
 Each byte of new memory allocated by
 .Fn malloc ,
 .Fn realloc
-or
-.Fn reallocf
 will be initialized to 0.
 Note that this initialization only happens once for each byte, so
 .Fn realloc
-and
-.Fn reallocf
-calls do not zero memory that was previously allocated.
+call do not zero memory that was previously allocated.
 This is intended for debugging and will impact performance negatively.
 .El
 .Pp
@@ -388,9 +380,7 @@ if the error was the result of an allocation failure.
 The
 .Fn realloc
 function always leaves the original buffer intact
-when an error occurs, whereas
-.Fn reallocf
-deallocates it in this case.
+when an error occurs.
 .Pp
 The
 .Fn free
