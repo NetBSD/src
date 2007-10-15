@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.4 2007/10/09 00:59:52 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.5 2007/10/15 00:05:00 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.4 2007/10/09 00:59:52 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.5 2007/10/15 00:05:00 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -642,6 +642,7 @@ static size_t		quantum_mask; /* (quantum - 1). */
 /* Various chunk-related settings. */
 static size_t		chunksize;
 static size_t		chunksize_mask; /* (chunksize - 1). */
+static int		chunksize_2pow;
 static unsigned		chunk_npages;
 static unsigned		arena_chunk_header_npages;
 static size_t		arena_maxclass; /* Max size class for arenas. */
@@ -798,6 +799,7 @@ static void	base_chunk_node_dealloc(chunk_node_t *node);
 static void	stats_print(arena_t *arena);
 #endif
 static void	*pages_map(void *addr, size_t size);
+static void	*pages_map_align(void *addr, size_t size, int align);
 static void	pages_unmap(void *addr, size_t size);
 static void	*chunk_alloc(size_t size);
 static void	chunk_dealloc(void *chunk, size_t size);
@@ -1202,7 +1204,7 @@ RB_GENERATE_STATIC(chunk_tree_s, chunk_node_s, link, chunk_comp);
 #endif
 
 static void *
-pages_map(void *addr, size_t size)
+pages_map_align(void *addr, size_t size, int align)
 {
 	void *ret;
 
@@ -1210,8 +1212,8 @@ pages_map(void *addr, size_t size)
 	 * We don't use MAP_FIXED here, because it can cause the *replacement*
 	 * of existing mappings, and we only want to create new mappings.
 	 */
-	ret = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON,
-	    -1, 0);
+	ret = mmap(addr, size, PROT_READ | PROT_WRITE,
+	    MAP_PRIVATE | MAP_ANON | MAP_ALIGNED(align), -1, 0);
 	assert(ret != NULL);
 
 	if (ret == MAP_FAILED)
@@ -1235,6 +1237,13 @@ pages_map(void *addr, size_t size)
 	assert(ret == NULL || (addr == NULL && ret != addr)
 	    || (addr != NULL && ret == addr));
 	return (ret);
+}
+
+static void *
+pages_map(void *addr, size_t size)
+{
+
+	return pages_map_align(addr, size, 0);
 }
 
 static void
@@ -1304,27 +1313,8 @@ chunk_alloc(size_t size)
 	 * anywhere.  Beware of size_t wrap-around.
 	 */
 	if (size + chunksize > size) {
-		if ((ret = pages_map(NULL, size + chunksize)) != NULL) {
-			size_t offset = CHUNK_ADDR2OFFSET(ret);
-
-			/*
-			 * Success.  Clean up unneeded leading/trailing space.
-			 */
-			if (offset != 0) {
-				/* Leading space. */
-				pages_unmap(ret, chunksize - offset);
-
-				ret = (void *)((uintptr_t)ret + (chunksize -
-				    offset));
-
-				/* Trailing space. */
-				pages_unmap((void *)((uintptr_t)ret + size),
-				    offset);
-			} else {
-				/* Trailing space only. */
-				pages_unmap((void *)((uintptr_t)ret + size),
-				    chunksize);
-			}
+		if ((ret = pages_map_align(NULL, size, chunksize_2pow))
+		    != NULL) {
 			goto RETURN;
 		}
 	}
@@ -3464,6 +3454,7 @@ malloc_init_hard(void)
 	/* Set variables according to the value of opt_chunk_2pow. */
 	chunksize = (1LU << opt_chunk_2pow);
 	chunksize_mask = chunksize - 1;
+	chunksize_2pow = opt_chunk_2pow;
 	chunk_npages = (chunksize >> pagesize_2pow);
 	{
 		unsigned header_size;
