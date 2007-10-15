@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.17 2007/08/28 13:49:40 ghen Exp $
+# $NetBSD: GENERIC,v 1.42.2.18 2007/10/15 05:09:53 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.17 $"
+#ident 		"GENERIC-$Revision: 1.42.2.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -802,6 +802,7 @@ include	"arch/amd64/conf/GENERIC.local"
 pseudo-device 	crypto			# opencrypto framework
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.1.2.11 2007/03/31 15:25:34 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.1.2.12 2007/10/15 05:09:55 riz Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -645,6 +645,7 @@ include	"arch/i386/conf/GENERIC.local"
 pseudo-device 	crypto		# /dev/crypto device
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
