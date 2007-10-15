@@ -1,3 +1,7 @@
+2007-10-15  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/libipsec/pfkey.c: Try to increase the buffer size of the
+	  pfkey socket, this may help things when we have a huge SPD.
+
 2007-09-19  Matthew Grooms <mgrooms@shrew.net>
 	From Joy Latten <latten@austin.ibm.com>
 	* configure.ac: Fix autoconf check for selinux support.
