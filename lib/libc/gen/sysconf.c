@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.24 2007/09/07 18:56:05 rmind Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.25 2007/10/15 14:12:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.24 2007/09/07 18:56:05 rmind Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.25 2007/10/15 14:12:56 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -339,6 +339,17 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		return (value);
 		/*NOTREACHED*/
 		break;
+
+/* Extensions */
+	case _SC_NPROCESSORS_CONF:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPU;
+		break;
+	case _SC_NPROCESSORS_ONLN:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPUONLINE;
+		break;
+
 	default:
 		errno = EINVAL;
 		return (-1);
