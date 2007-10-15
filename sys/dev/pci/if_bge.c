@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.122.2.7 2007/10/07 14:15:20 xtraeme Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.122.2.8 2007/10/15 15:52:44 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.7 2007/10/07 14:15:20 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.8 2007/10/15 15:52:44 xtraeme Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1272,7 +1272,7 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
 		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					   BGE_PCI_CONF_DEV_CTRL);
-		printf("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl);
+		DPRINTFN(1,("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl));
 
 		if ((device_ctl & 0x00e0) && 0) {
 			/*
