@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.199 2007/10/11 19:45:26 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.200 2007/10/15 14:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -92,6 +92,7 @@ extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
+extern int ncpuonline;		/* number of CPUs online */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
