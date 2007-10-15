@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.104 2007/10/15 05:12:04 riz Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.105 2007/10/15 22:03:53 riz Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3697,4 +3697,25 @@ usr.sbin/envstat/envstat.c			1.24 via patch
 	to query status for drives and logical volumes attached to a mfi(4)
 	controller.
 	[bouyer, ticket #1838]
+
+sys/arch/x86/x86/ipmi.c				1.13
+
+	Don't attach ipmi if GETID failed. From Nicolas Joly.
+	[bouyer, ticket #1847]
+
+sys/dev/ata/wd.c				1.345
+
+	Add a workaround for drives with the LBA48 bug:
+	if we get a "ID not found" error for a transfer crossing
+	LBA48_THRESHOLD, and the drive is larger than 128GB,
+	automatically add WD_QUIRK_FORCE_LBA48 to the drive's
+	quirks and retry the transfers.  Hopefully this will
+	obsolete the WD_QUIRK_FORCE_LBA48 quirk list ...
+	[bouyer, ticket #1848]
+
+usr.sbin/rpcbind/rpcbind.c			1.12
+
+	PR/36319: Michael van Elst: rpcinfo -p requires root privileges
+	Explicitly chmod 777 the local socket.
+	[christos, ticket #1861]
 
