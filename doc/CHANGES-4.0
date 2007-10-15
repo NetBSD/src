@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.322 2007/10/14 22:09:42 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.323 2007/10/15 02:37:49 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10165,4 +10165,10 @@ sys/net/Makefile				1.22  (via patch)
 
 	Install <net/if_pflog.h>.
 	[tron, ticket #932]
+
+sys/netisdn/i4b_global.h			1.8
+
+	We count last activity in time_update nowadays, so use that to compare
+	idle timeouts as well.
+	[martin, ticket #933]
 
