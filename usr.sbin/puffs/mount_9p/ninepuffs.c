@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.17 2007/09/01 16:43:10 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.18 2007/10/15 17:28:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.17 2007/09/01 16:43:10 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.18 2007/10/15 17:28:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -57,8 +57,9 @@ static void
 usage(void)
 {
 
-	errx(1, "usage: %s [-o mntopts] [-p port] [-u user] [-s] server mount",
-	    getprogname());
+	fprintf(stderr, "usage: %s [-o mntopts] [-p port] [-s] "
+	    "[user@]server[:path] mountpoint\n", getprogname());
+	exit(1);
 }
 
 /*
