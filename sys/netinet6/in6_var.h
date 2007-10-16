@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.53 2007/09/11 19:54:51 gdt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.54 2007/10/16 20:31:33 joerg Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ struct	in6_multi {
 	u_int	in6m_state;		/* state of the membership */
 	int	in6m_timer;		/* delay to send the 1st report */
 	struct timeval in6m_timer_expire; /* when the timer expires */
-	struct callout *in6m_timer_ch;
+	callout_t in6m_timer_ch;
 };
  
 #define IN6M_TIMER_UNDEF -1
