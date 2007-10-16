@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1028 2007/10/07 04:17:15 xtraeme Exp $
+# $NetBSD: mi,v 1.1029 2007/10/16 02:47:13 tls Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2004,6 +2004,7 @@
 ./usr/share/man/cat8/hprop.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/htable.0			man-obsolete		obsolete
+./usr/share/man/cat8/httpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/apm.0			man-obsolete		obsolete
 ./usr/share/man/cat8/i386/apmd.0		man-obsolete		obsolete
@@ -4493,6 +4494,7 @@
 ./usr/share/man/man8/hprop.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/hpropd.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/htable.8			man-obsolete		obsolete
+./usr/share/man/man8/httpd.8			man-netutil-man		.man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/apm.8			man-obsolete		obsolete
 ./usr/share/man/man8/i386/apmd.8		man-obsolete		obsolete

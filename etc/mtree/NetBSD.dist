@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.340 2007/06/09 11:20:56 kiyohara Exp $
+#	$NetBSD: NetBSD.dist,v 1.341 2007/10/16 02:47:15 tls Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1134,5 +1134,6 @@
 ./var/spool/sockets		mode=0777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
+./var/www
 ./var/yp
 ./var/yp/binding

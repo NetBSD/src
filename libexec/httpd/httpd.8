@@ -1,3 +1,5 @@
+.\"	$NetBSD: httpd.8,v 1.2 2007/10/16 02:47:15 tls Exp $
+.\"
 .\"	$eterna: bozohttpd.8,v 1.74 2006/05/17 08:19:10 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2006 Matthew R. Green
@@ -27,10 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd March 22, 2005
-.Dt BOZOHTTPD 8
-.Os BOZOS
+.Dt HTTPD 8
 .Sh NAME
-.Nm bozohttpd
+.Nm httpd
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
@@ -252,7 +253,7 @@ to
 .Ar index .
 .It Fl Z Ar certificate_path privatekey_path
 This option sets the path to the server certificate file and the private key file
-in pem format.  It also causes bozohttpd to start SSL mode.
+in pem format.  It also causes httpd to start SSL mode.
 .El
 .Pp
 Note that in
@@ -282,8 +283,8 @@ A typical
 .Xr inetd.conf 5
 entry would be:
 .Bd -literal
-www stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd /var/www
-www stream tcp6 nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd /var/www
+http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd /var/www
+http stream tcp6 nowait:600 _httpd /usr/libexec/httpd httpd /var/www
 .Ed
 .Pp
 This would serve web pages from
@@ -304,7 +305,7 @@ listening ports with different configurations.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an entry like:
 .Bd -literal
-www stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd -v /var/vroot /var/www
+httpd stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
 .Ed
 .Pp
 and inside
@@ -320,7 +321,7 @@ with PHP, one must use the
 option to specify a CGI handler for a particular file type.
 Typically this, this will be like:
 .Bd -literal
-bozohttpd -C .php /usr/pkg/bin/php /var/www
+httpd -C .php /usr/pkg/bin/php /var/www
 .Ed
 .Sh NOTES
 This server supports the
@@ -345,15 +346,7 @@ macros when building
 .Nm .
 .Sh HTTP BASIC AUTHORISATION
 .Nm
-has support for HTTP Basic Authorisation that is excluded by default.
-Compile
-.Nm
-with
-.Dq -DDO_HTPASSWD
-on the compiler command line to enable this support.  It may require
-linking with the crypt library, using
-.Dq -lcrypt .
-.Nm .
+has support for HTTP Basic Authorisation.
 .Sh FILES
 .Nm
 looks for a couple of special files in directories that allow certain features
@@ -400,11 +393,15 @@ program was first written in perl, based on another perl http server
 called
 .Dq tinyhttpd .
 It was then rewritten from scratch in perl, and then once again in C.
+It was known for many years as
+.Dq bozohttpd .
+.Dq bozohttpd
+version 20060517 was integrated into
+.Nx 5.0 .
+as
+.Nm .
 The focus has always been simplicity and security, with minimal features
 and regular code audits.
-This manual documents
-.Nm
-version 20050410.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
