@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.58 2007/10/16 15:07:02 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.59 2007/10/16 15:21:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,6 +34,11 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * NOTE: when changing anything in this file, please ensure that
+ * libpthread_dbg still compiles.
  */
 
 #ifndef _LIB_PTHREAD_INT_H
