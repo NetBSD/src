@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.110 2007/10/16 16:05:50 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.111 2007/10/16 16:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.110 2007/10/16 16:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.111 2007/10/16 16:10:59 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2364,6 +2364,15 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		} else
 #endif
 			base = (vaddr_t)argv[i];
+
+		/*
+		 * The program has messed around with its arguments,
+		 * possibly deleting some, and replacing them with
+		 * NULL's. Treat this as the last argument and not
+		 * a failure.
+		 */
+		if (base == 0)
+			break;
 
 		while (!finished) {
 			xlen = PAGE_SIZE - (base & PAGE_MASK);
