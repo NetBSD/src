@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12.4.2 2007/08/02 21:59:35 macallan Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12.4.3 2007/10/16 22:04:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.2 2007/08/02 21:59:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.3 2007/10/16 22:04:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.2 2007/08/02 21:59:35 macallan 
 #include <powerpc/oea/sr_601.h>
 #include <powerpc/spr.h>
 #endif
-
-#define DEBUG
 
 /* read_N */
 u_int8_t bsr1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
