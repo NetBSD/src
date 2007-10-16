@@ -29,12 +29,9 @@
  * SUCH DAMAGE.
  *
  */
-
+#include <sys/queue.h>
 #include <sys/stat.h>
-
 #include <stdio.h>
-
-#include "queue.h"
 
 /* headers */
 struct headers {

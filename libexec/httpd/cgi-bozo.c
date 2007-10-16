@@ -314,7 +314,7 @@ finish_cgi_output(http_req *request, int in, int nph)
 	/* much of this code is like read_request()'s header loop. hmmm... */
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
-	while (nph == 0 && (str = dgetln(in, &len, read)) != NULL) {
+	while (nph == 0 && (str = dgetln(in, (ssize_t *)&len, read)) != NULL) {
 		str = bozostrdup(str);	/* we use this copy */
 
 		if (*str == '\0') {
@@ -322,7 +322,7 @@ finish_cgi_output(http_req *request, int in, int nph)
 			break;
 		}
 
-		val = strnsep(&str, ":", &len);
+		val = strnsep(&str, ":", (ssize_t *)&len);
 		debug((DEBUG_EXPLODING,
 		    "read_req2: after strnsep: str ``%s'' val ``%s''",
 		    str, val));
