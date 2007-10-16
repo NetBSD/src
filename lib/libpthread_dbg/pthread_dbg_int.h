@@ -23,7 +23,6 @@ struct td_proc_st {
 	struct fpreg *fpregbuf;
 
 	struct thread_queue_t threads;
-	struct sync_queue_t syncs;
 };
 
 
