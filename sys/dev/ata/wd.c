@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.4.1 2007/10/02 18:28:19 joerg Exp $ */
+/*	$NetBSD: wd.c,v 1.343.4.2 2007/10/16 13:04:59 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.1 2007/10/02 18:28:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.2 2007/10/16 13:04:59 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -139,6 +139,8 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
+static pnp_status_t	wd_power(device_t, pnp_request_t, void *);
+
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
     wdprobe, wdattach, wddetach, wdactivate);
 
@@ -191,7 +193,6 @@ void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_standby(struct wd_softc *, int);
 int   wd_flushcache(struct wd_softc *, int);
-void  wd_shutdown(void *);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
@@ -413,10 +414,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/* we fill in dk_info later */
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
-	if (wd->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    wd->sc_dev.dv_xname);
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
@@ -424,7 +421,56 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
+
+	wd->sc_device_down = false;
+	if (pnp_register(self, wd_power) != PNP_STATUS_SUCCESS)
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
+
+static pnp_status_t
+wd_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct wd_softc *sc = device_private(dv);
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+		caps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			sc->sc_device_down = false;
+			break;
+		case PNP_STATE_D3:
+			sc->sc_device_down = true;
+			wd_flushcache(sc, AT_POLL);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (sc->sc_device_down)
+			*state = PNP_STATE_D3;
+		else
+			*state = PNP_STATE_D0;
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
+}
+
 
 int
 wdactivate(struct device *self, enum devact act)
@@ -488,9 +534,7 @@ wddetach(struct device *self, int flags)
 	sc->sc_bscount = 0;
 #endif
 
-	/* Get rid of the shutdown hook. */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
+	pnp_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -1925,13 +1969,6 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		return EIO;
 	}
 	return 0;
-}
-
-void
-wd_shutdown(void *arg)
-{
-	struct wd_softc *wd = arg;
-	wd_flushcache(wd, AT_POLL);
 }
 
 /*
