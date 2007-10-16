@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2007/05/10 16:23:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.4 2007/10/16 21:45:51 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2007/05/10 16:23:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.4 2007/10/16 21:45:51 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -176,7 +176,12 @@ void setleds(int leds);
  * Force cpu_info to be in the data segment to avoid the
  * memset() blowing away the data set up by locore.S.
  */
-struct cpu_info cpu_info[1] = {{{{{1}}}}};
+#if 0
+ /* this is defined in powerpc/oea/cpu_subr.c, I don't understand the above
+  * comment however.
+  */
+struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, };
+#endif
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
