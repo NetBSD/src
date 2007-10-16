@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.721 2007/09/30 11:29:43 kleink Exp $
+# $NetBSD: mi,v 1.722 2007/10/16 02:47:12 tls Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -931,6 +931,7 @@
 ./usr/libexec/getty				base-sysutil-bin
 ./usr/libexec/hprop				base-obsolete		obsolete
 ./usr/libexec/hpropd				base-krb5-bin		kerberos
+./usr/libexec/httpd				base-netutil-bin
 ./usr/libexec/identd				base-netutil-bin
 ./usr/libexec/kadmind				base-krb5-bin		kerberos
 ./usr/libexec/kdc				base-obsolete		obsolete
@@ -4103,5 +4104,6 @@
 ./var/spool/uucppublic				base-obsolete		obsolete
 ./var/tmp					base-sys-root
 ./var/tmp/vi.recover				base-util-root
+./var/www					base-netutil-root
 ./var/yp					base-nis-root
 ./var/yp/binding				base-nis-root
