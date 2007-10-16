@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.16 2007/10/13 01:16:57 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.17 2007/10/16 10:53:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.16 2007/10/13 01:16:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.17 2007/10/16 10:53:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -172,7 +172,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		sched_enqueue(l, false);
 		pri = lwp_eprio(l);
 		/* XXX This test is not good enough! */
-		if ((pri < spc->spc_curpriority && pri < PUSER) ||
+		if ((pri < spc->spc_curpriority && pri >= PRI_KERNEL) ||
 #ifdef MULTIPROCESSOR
 		   ci->ci_curlwp == ci->ci_data.cpu_idlelwp) {
 #else
@@ -200,7 +200,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
-			if (lwp_eprio(l2) > pri) {
+			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
