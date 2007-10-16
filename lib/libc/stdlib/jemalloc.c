@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.7 2007/10/15 10:30:56 yamt Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.8 2007/10/16 15:12:16 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.7 2007/10/15 10:30:56 yamt Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.8 2007/10/16 15:12:16 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -680,6 +680,7 @@ static void		*brk_max;
 /* Huge allocation statistics. */
 static uint64_t		huge_nmalloc;
 static uint64_t		huge_ndalloc;
+static uint64_t		huge_nralloc;
 static size_t		huge_allocated;
 #endif
 
@@ -2825,6 +2826,71 @@ huge_ralloc(void *ptr, size_t size, size_t oldsize)
 		return (ptr);
 	}
 
+	if (CHUNK_ADDR2BASE(ptr) == ptr
+#ifdef USE_BRK
+	    && ((uintptr_t)ptr < (uintptr_t)brk_base
+	    || (uintptr_t)ptr >= (uintptr_t)brk_max)
+#endif
+	    ) {
+		chunk_node_t *node, key;
+		void *newptr;
+		size_t oldcsize;
+		size_t newcsize;
+
+		newcsize = CHUNK_CEILING(size);
+		oldcsize = CHUNK_CEILING(oldsize);
+		assert(oldcsize != newcsize);
+		if (newcsize == 0) {
+			/* size_t wrap-around */
+			return (NULL);
+		}
+		newptr = mremap(ptr, oldcsize, NULL, newcsize,
+		    MAP_ALIGNED(chunksize_2pow));
+		if (newptr != MAP_FAILED) {
+			assert(CHUNK_ADDR2BASE(newptr) == newptr);
+
+			/* update tree */
+			malloc_mutex_lock(&chunks_mtx);
+			key.chunk = __DECONST(void *, ptr);
+			/* LINTED */
+			node = RB_FIND(chunk_tree_s, &huge, &key);
+			assert(node != NULL);
+			assert(node->chunk == ptr);
+			assert(node->size == oldcsize);
+			node->size = newcsize;
+			if (ptr != newptr) {
+				RB_REMOVE(chunk_tree_s, &huge, node);
+				node->chunk = newptr;
+				RB_INSERT(chunk_tree_s, &huge, node);
+			}
+#ifdef MALLOC_STATS
+			huge_nralloc++;
+			huge_allocated += newcsize - oldcsize;
+			if (newcsize > oldcsize) {
+				stats_chunks.curchunks +=
+				    (newcsize - oldcsize) / chunksize;
+				if (stats_chunks.curchunks >
+				    stats_chunks.highchunks)
+					stats_chunks.highchunks =
+					    stats_chunks.curchunks;
+			} else {
+				stats_chunks.curchunks -=
+				    (oldcsize - newcsize) / chunksize;
+			}
+#endif
+			malloc_mutex_unlock(&chunks_mtx);
+
+			if (opt_junk && size < oldsize) {
+				memset((void *)((uintptr_t)newptr + size), 0x5a,
+				    newcsize - size);
+			} else if (opt_zero && size > oldsize) {
+				memset((void *)((uintptr_t)newptr + oldsize), 0,
+				    size - oldsize);
+			}
+			return (newptr);
+		}
+	}
+
 	/*
 	 * If we get here, then size and oldsize are different enough that we
 	 * need to use a different size class.  In that case, fall back to
@@ -3186,9 +3252,11 @@ malloc_print_stats(void)
 
 			/* Print chunk stats. */
 			malloc_printf(
-			    "huge: nmalloc      ndalloc    allocated\n");
-			malloc_printf(" %12llu %12llu %12zu\n",
-			    huge_nmalloc, huge_ndalloc, huge_allocated);
+			    "huge: nmalloc      ndalloc      "
+			    "nralloc    allocated\n");
+			malloc_printf(" %12llu %12llu %12llu %12zu\n",
+			    huge_nmalloc, huge_ndalloc, huge_nralloc,
+			    huge_allocated);
 
 			/* Print stats for each arena. */
 			for (i = 0; i < narenas; i++) {
@@ -3495,6 +3563,7 @@ malloc_init_hard(void)
 #ifdef MALLOC_STATS
 	huge_nmalloc = 0;
 	huge_ndalloc = 0;
+	huge_nralloc = 0;
 	huge_allocated = 0;
 #endif
 	RB_INIT(&old_chunks);
