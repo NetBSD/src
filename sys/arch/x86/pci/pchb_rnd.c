@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.4 2007/10/16 22:29:08 joerg Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.5 2007/10/16 22:53:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.4 2007/10/16 22:29:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.5 2007/10/16 22:53:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.4 2007/10/16 22:29:08 joerg Exp $");
 static void pchb_rnd_callout(void *v);
 
 #define	PCHB_RNG_RETRIES	1000
+#define	PCHB_RNG_MIN_SAMPLES	10
 
 void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 {
-	int i;
+	int i, j, count_ff;
 	uint8_t reg8;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
@@ -125,22 +126,33 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 	}
 
 	/* Check to see if we can read data from the RNG. */
-	for (i = 0; i < PCHB_RNG_RETRIES; i++) {
-		reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST);
-		if (!(reg8 & I82802_RNG_RNGST_DATAV)) {
-			delay(10);
-			continue;
-		}
-		if (bus_space_read_1(sc->sc_st, sc->sc_sh,
-		    I82802_RNG_DATA) != 0xff) {
+	count_ff = 0;
+	for (j = 0; j < PCHB_RNG_MIN_SAMPLES; ++j) {
+		for (i = 0; i < PCHB_RNG_RETRIES; i++) {
+			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    I82802_RNG_RNGST);
+			if (!(reg8 & I82802_RNG_RNGST_DATAV)) {
+				delay(10);
+				continue;
+			}
+			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    I82802_RNG_DATA);
 			break;
 		}
+		if (i == PCHB_RNG_RETRIES) {
+			bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+			aprint_verbose_dev(&sc->sc_dev,
+			    "timeout reading test samples, RNG disabled.\n");
+			return;
+		}
+		if (reg8 == 0xff)
+			++count_ff;
 	}
 
-	if (i == PCHB_RNG_RETRIES) {
+	if (count_ff == PCHB_RNG_MIN_SAMPLES) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
-		aprint_verbose_dev(&sc->sc_dev, "unable to read from "
-		    "random number generator.\n");
+		aprint_verbose_dev(&sc->sc_dev,
+		    "returns constant 0xff stream, RNG disabled.\n");
 		return;
 	}
 
