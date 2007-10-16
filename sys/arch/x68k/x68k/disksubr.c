@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.10.2 2007/10/03 19:25:46 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.10.3 2007/10/16 18:23:57 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.10.2 2007/10/03 19:25:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.10.3 2007/10/16 18:23:57 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -243,7 +243,7 @@ dobadsect:
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -458,7 +458,7 @@ dodospart:
 #endif
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }
 

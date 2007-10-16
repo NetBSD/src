@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12.16.1 2007/10/03 19:24:40 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12.16.2 2007/10/16 18:23:46 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.16.1 2007/10/03 19:24:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.16.2 2007/10/16 18:23:46 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ nombrpart:
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -386,6 +386,6 @@ nombrpart:
 	error = ESRCH;
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }

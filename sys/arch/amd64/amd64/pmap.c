@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33.8.3 2007/10/03 19:22:09 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.8.4 2007/10/16 18:23:32 garbled Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.8.3 2007/10/03 19:22:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.8.4 2007/10/16 18:23:32 garbled Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -324,8 +324,6 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 #define	mutex_init(a, b, c)	simple_lock_init(a)
 #define	mutex_owned(a)		(1)
 #define	mutex_destroy(a)	/* nothing */
-#define	crit_enter()		/* nothing */
-#define	crit_exit()		/* nothing */
 #define kmutex_t		struct simplelock
 
 static kmutex_t pmaps_lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.62.10.1 2007/10/03 19:25:03 garbled Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.62.10.2 2007/10/16 18:23:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.62.10.1 2007/10/03 19:25:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.62.10.2 2007/10/16 18:23:50 garbled Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -231,17 +231,20 @@ sh_proc0_init()
 	curupte = lwp0.l_md.md_upte;
 
 	sf = &curpcb->pcb_sf;
+
+#ifdef KSTACK_DEBUG
+	memset((char *)(u + sizeof(struct user)), 0x5a,
+	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)(u + PAGE_SIZE), 0xa5, USPACE - PAGE_SIZE);
+	memset(sf, 0xb4, sizeof(struct switchframe));
+#endif /* KSTACK_DEBUG */
+
 	sf->sf_r6_bank = u + PAGE_SIZE;
 	sf->sf_r7_bank = sf->sf_r15 = u + USPACE;
 	__asm volatile("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
 	__asm volatile("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
 
 	lwp0.l_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
-#ifdef KSTACK_DEBUG
-	memset((char *)(u + sizeof(struct user)), 0x5a,
-	    PAGE_SIZE - sizeof(struct user));
-	memset((char *)(u + PAGE_SIZE), 0xa5, USPACE - PAGE_SIZE);
-#endif /* KSTACK_DEBUG */
 }
 
 void

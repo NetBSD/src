@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24.10.1 2007/10/03 19:22:29 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24.10.2 2007/10/16 18:23:34 garbled Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24.10.1 2007/10/03 19:22:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24.10.2 2007/10/16 18:23:34 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ nombrpart:
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return msg;
 }
 
@@ -499,6 +499,6 @@ nombrpart:
 	error = ESRCH;
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return error;
 }

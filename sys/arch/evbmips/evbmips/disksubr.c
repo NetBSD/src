@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.12.10.2 2007/10/03 19:23:13 garbled Exp $ */
+/* $NetBSD: disksubr.c,v 1.12.10.3 2007/10/16 18:23:38 garbled Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.10.2 2007/10/03 19:23:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.10.3 2007/10/16 18:23:38 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -222,6 +222,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	error = biowait(bp);
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }

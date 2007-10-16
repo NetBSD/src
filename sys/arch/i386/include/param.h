@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62.14.1 2007/10/03 19:23:53 garbled Exp $	*/
+/*	$NetBSD: param.h,v 1.62.14.2 2007/10/16 18:23:43 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,7 +115,7 @@
 #define	INTRSTACKSIZE	8192
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	4*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
 #endif
 
 /*
