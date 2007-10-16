@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.28 2007/03/16 22:24:49 dsl Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.28.4.1 2007/10/16 18:23:53 garbled Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.28 2007/03/16 22:24:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.28.4.1 2007/10/16 18:23:53 garbled Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -592,7 +592,6 @@ svr4_32_trap(int type, struct lwp *l)
 	int n;
 	struct proc *p = l->l_proc;
 	struct trapframe64 *tf = l->l_md.md_tf;
-	struct schedstate_percpu *spc;
 	struct timespec ts;
 	struct timeval tv;
 	uint64_t tm;
@@ -640,15 +639,13 @@ svr4_32_trap(int type, struct lwp *l)
 		 * for now using the process's real time augmented with its
 		 * current runtime is the best we can do.
 		 */
-		spc = &curcpu()->ci_schedstate;
-
 		microtime(&tv);
 
-		tm = (p->p_rtime.tv_sec + tv.tv_sec -
-			spc->spc_runtime.tv_sec) * (uint64_t)1000000u;
-		tm += p->p_rtime.tv_usec + tv.tv_usec;
-		tm -= spc->spc_runtime.tv_usec;
-		tm *= 1000;
+		tm = (l->l_rtime.tv_sec + tv.tv_sec -
+		    l->l_stime.tv_sec) * 1000000ull;
+		tm += l->l_rtime.tv_usec + tv.tv_usec;
+		tm -= l->l_stime.tv_usec;
+		tm *= 1000u;
 		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
 		tf->tf_out[1] = tm & 0x00000000ffffffffffUL;
 		break;

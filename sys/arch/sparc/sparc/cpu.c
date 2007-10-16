@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.200.10.3 2007/10/03 19:25:15 garbled Exp $ */
+/*	$NetBSD: cpu.c,v 1.200.10.4 2007/10/16 18:23:51 garbled Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200.10.3 2007/10/03 19:25:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200.10.4 2007/10/16 18:23:51 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -579,12 +579,6 @@ cpu_boot_secondary_processors(void)
 		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
 			(cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
-
-		/*
-		 * XXX - the first process run on this CPU will be charged
-		 *	 with the leading idle time.
-		 */
-		getmicrotime(&cpi->ci_schedstate.spc_runtime);
 
 		printf(" cpu%d", cpi->ci_cpuid);
 		cpi->flags |= CPUFLG_READY;
