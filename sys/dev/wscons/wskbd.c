@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.105 2007/08/06 03:07:52 macallan Exp $ */
+/* $NetBSD: wskbd.c,v 1.106 2007/10/16 21:06:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.105 2007/08/06 03:07:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.106 2007/10/16 21:06:09 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -415,6 +415,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_repeat_ch, 0);
+	callout_setfunc(&sc->sc_repeat_ch, wskbd_repeat, sc);
 
 	sc->id->t_sc = sc;
 
@@ -531,8 +532,7 @@ wskbd_repeat(void *v)
 				    sc->sc_repeat_value);
 #endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
 	}
-	callout_reset(&sc->sc_repeat_ch,
-	    (hz * sc->sc_keyrepeat_data.delN) / 1000, wskbd_repeat, sc);
+	callout_schedule(&sc->sc_repeat_ch, mstohz(sc->sc_keyrepeat_data.delN));
 	splx(s);
 }
 
@@ -567,6 +567,9 @@ wskbd_detach(struct device  *self, int flags)
 	if (sc->sc_base.me_parent != NULL)
 		wsmux_detach_sc(&sc->sc_base);
 #endif
+
+	callout_stop(&sc->sc_repeat_ch);
+	callout_destroy(&sc->sc_repeat_ch);
 
 	if (sc->sc_isconsole) {
 		KASSERT(wskbd_console_device == sc);
@@ -639,9 +642,8 @@ wskbd_input(struct device *dev, u_int type, int value)
 
 			if (sc->sc_keyrepeat_data.del1 != 0) {
 				sc->sc_repeating = num;
-				callout_reset(&sc->sc_repeat_ch,
-				    (hz * sc->sc_keyrepeat_data.del1) / 1000,
-				    wskbd_repeat, sc);
+				callout_schedule(&sc->sc_repeat_ch,
+				    mstohz(sc->sc_keyrepeat_data.del1));
 			}
 		}
 		return;
@@ -656,9 +658,8 @@ wskbd_input(struct device *dev, u_int type, int value)
 		sc->sc_repeat_type = type;
 		sc->sc_repeat_value = value;
 		sc->sc_repeating = 1;
-		callout_reset(&sc->sc_repeat_ch,
-		    (hz * sc->sc_keyrepeat_data.del1) / 1000,
-		    wskbd_repeat, sc);
+		callout_schedule(&sc->sc_repeat_ch,
+		    mstohz(sc->sc_keyrepeat_data.del1));
 	}
 #endif /* defined(WSKBD_EVENT_AUTOREPEAT) */
 }
