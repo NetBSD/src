@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.10.1 2007/10/03 19:22:35 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.10.2 2007/10/16 18:23:35 garbled Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.10.1 2007/10/03 19:22:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.10.2 2007/10/16 18:23:35 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (msg);
 }
 
@@ -401,7 +401,7 @@ writedisklabel(dev, strat, lp, osdep)
 	error = ESRCH;
 
 done:
-	brelse(bp);
+	brelse(bp, 0);
 	return (error);
 }
 

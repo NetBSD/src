@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2007/03/07 09:18:56 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.10.1 2007/10/16 18:23:41 garbled Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/03/07 09:18:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21.10.1 2007/10/16 18:23:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		*lp = fallbacklabel;
 
 	if (bp) {
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		brelse(bp, BC_INVAL);
 	}
 	return (msg);
 }
@@ -240,15 +239,13 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		if (biowait(dbp)) {
 			if (partoffp)
 				*partoffp = -1;
-			dbp->b_flags |= B_INVAL;
-			brelse(dbp);
+			brelse(dbp, BC_INVAL);
 
 			return "LIF directory I/O error";
 		}
 
 		memcpy(osdep->lifdir, dbp->b_data, HP700_LIF_DIRSIZE);
-		dbp->b_flags |= B_INVAL;
-		brelse(dbp);
+		brelse(dbp, BC_INVAL);
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->lifdir[0];
 		     fsoff < 0 && p < &osdep->lifdir[HP700_LIF_NUMDIR]; p++)
@@ -374,7 +371,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	(*strat)(bp);
 	error = biowait(bp);
 
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	brelse(bp, BC_INVAL);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.10.2 2007/10/03 19:25:58 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.10.3 2007/10/16 18:23:59 garbled Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.10.2 2007/10/03 19:25:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.10.3 2007/10/16 18:23:59 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -708,7 +708,6 @@ cpu_hatch(void *v)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 #endif
-	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 

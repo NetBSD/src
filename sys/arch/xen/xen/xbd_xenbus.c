@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.18.10.1 2007/10/03 19:26:15 garbled Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.18.10.2 2007/10/16 18:24:00 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.18.10.1 2007/10/03 19:26:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.18.10.2 2007/10/16 18:24:00 garbled Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -227,7 +227,7 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_xbusd->xbusd_otherend_changed = xbd_backend_changed;
 
 	dk_sc_init(&sc->sc_dksc, sc, sc->sc_dev.dv_xname);
-	sc->sc_dksc.sc_dkdev.dk_driver = &xbddkdriver;
+	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dev.dv_xname, &xbddkdriver);
 	sc->sc_di = &dkintf_esdi;
 	/* initialize free requests list */
 	SLIST_INIT(&sc->sc_xbdreq_head);

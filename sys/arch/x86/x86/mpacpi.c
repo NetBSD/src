@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.48.4.1 2007/10/03 19:25:55 garbled Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.48.4.2 2007/10/16 18:23:59 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.4.1 2007/10/03 19:25:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.48.4.2 2007/10/16 18:23:59 garbled Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -134,6 +134,8 @@ static int mpacpi_npci;
 static int mpacpi_maxpci;
 static int mpacpi_npciroots;
 #endif
+
+struct mp_intr_map *mpacpi_sci_override;
 
 static int mpacpi_intr_index;
 static paddr_t mpacpi_lapic_base = LAPIC_BASE;
@@ -236,6 +238,8 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
 			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
 			break;
+		if (isa_ovr->Source > 13)
+			isa_ovr->TriggerMode = MPS_INTTR_LEVEL;
 		pic = intr_findpic(isa_ovr->Interrupt);
 		if (pic == NULL)
 			break;
@@ -289,6 +293,9 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		if (pic->pic_type == PIC_IOAPIC)
 			((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
 #endif
+		if (isa_ovr->Source == AcpiGbl_FADT->SciInt)
+			mpacpi_sci_override = mpi;
+			
 	default:
 		break;
 	}
