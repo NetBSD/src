@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.1.2.11 2007/10/11 06:17:53 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.1.2.12 2007/10/16 06:34:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.11 2007/10/11 06:17:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.12 2007/10/16 06:34:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.1.2.11 2007/10/11 06:17:53 macalla
 #include <powerpc/openpic.h>
 
 #include <arch/powerpc/pic/picvar.h>
+
+#include "opt_interrupt.h"
 
 void openpic_set_priority(int cpu, int pri);
 static void opic_enable_irq(struct pic_ops *, int, int);
@@ -140,9 +142,12 @@ opic_finish_setup(struct pic_ops *pic)
 	uint32_t cpumask = 0;
 	int i;
 
+#ifdef OPENPIC_DISTRIBUTE
 	for (i = 0; i < ncpu; i++)
 		cpumask |= (1 << cpu_info[i].ci_cpuid);
-
+#else
+	cpumask = 1;
+#endif
 	for (i = 0; i < pic->pic_numintrs; i++) {
 		/* send all interrupts to all active CPUs */
 		openpic_write(OPENPIC_IDEST(i), cpumask);
