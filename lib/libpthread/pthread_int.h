@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.56 2007/09/24 12:19:39 skrll Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.57 2007/10/16 13:41:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include "pthread_queue.h"
 #include "pthread_debug.h"
 #include "pthread_md.h"
+
+#include <sys/tree.h>
 
 #include <lwp.h>
 #include <signal.h>
@@ -101,7 +103,7 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	PTQ_ENTRY(__pthread_st)	pt_allq;
+	RB_ENTRY(__pthread_st) pt_alltree;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
 	/*

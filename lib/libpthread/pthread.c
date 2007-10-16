@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.83 2007/09/11 18:08:10 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.84 2007/10/16 13:41:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.83 2007/09/11 18:08:10 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.84 2007/10/16 13:41:18 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -66,6 +66,15 @@ __RCSID("$NetBSD: pthread.c,v 1.83 2007/09/11 18:08:10 ad Exp $");
 #define SDPRINTF(x)
 #endif
 
+
+pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
+RB_HEAD(__pthread__alltree, __pthread_st) pthread__alltree;
+
+#ifndef lint
+static int	pthread__cmp(struct __pthread_st *, struct __pthread_st *);
+RB_PROTOTYPE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
+#endif
+
 static void	pthread__create_tramp(void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
 static void	pthread__scrubthread(pthread_t, char *, int);
@@ -75,9 +84,7 @@ static void	pthread__initmain(pthread_t *);
 
 int pthread__started;
 
-pthread_rwlock_t pthread__allqueue_lock = PTHREAD_RWLOCK_INITIALIZER;
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_queue_t pthread__allqueue;
 pthread_queue_t pthread__deadqueue;
 
 static pthread_attr_t pthread_default_attr;
@@ -106,7 +113,7 @@ int pthread__osrev;
 int	pthread__stacksize_lg = _STACKSIZE_LG;
 size_t	pthread__stacksize = 1 << _STACKSIZE_LG;
 vaddr_t	pthread__stackmask = (1 << _STACKSIZE_LG) - 1;
-vaddr_t pthread__threadmask = ~((1 << _STACKSIZE_LG) - 1);
+vaddr_t pthread__threadmask = (vaddr_t)~((1 << _STACKSIZE_LG) - 1);
 #undef	_STACKSIZE_LG
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
@@ -174,8 +181,8 @@ pthread_init(void)
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
-	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
+	RB_INIT(&pthread__alltree);
 
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
@@ -183,7 +190,7 @@ pthread_init(void)
 	pthread__scrubthread(first, NULL, 0);
 
 	first->pt_lid = _lwp_self();
-	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
+	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
@@ -369,9 +376,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		newthread->pt_uc.uc_link = NULL;
 
 		/* Add to list of all threads. */
-		pthread_rwlock_wrlock(&pthread__allqueue_lock);
-		PTQ_INSERT_TAIL(&pthread__allqueue, newthread, pt_allq);
-		pthread_rwlock_unlock(&pthread__allqueue_lock);
+		pthread_rwlock_wrlock(&pthread__alltree_lock);
+		RB_INSERT(__pthread__alltree, &pthread__alltree, newthread);
+		pthread_rwlock_unlock(&pthread__alltree_lock);
 
 		/* Will be reset by the thread upon exit. */
 		pthread__initthread(newthread);
@@ -803,11 +810,10 @@ pthread__find(pthread_t id)
 {
 	pthread_t target;
 
-	pthread_rwlock_rdlock(&pthread__allqueue_lock);
-	PTQ_FOREACH(target, &pthread__allqueue, pt_allq)
-	    if (target == id)
-		    break;
-	pthread_rwlock_unlock(&pthread__allqueue_lock);
+	pthread_rwlock_rdlock(&pthread__alltree_lock);
+	/* LINTED */
+	target = RB_FIND(__pthread__alltree, &pthread__alltree, id);
+	pthread_rwlock_unlock(&pthread__alltree_lock);
 
 	if (target == NULL || target->pt_state == PT_STATE_DEAD)
 		return ESRCH;
@@ -1313,3 +1319,13 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 	*tp = t;
 	return 0;
 }
+
+#ifndef lint
+static int
+pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
+{
+	return b - a;
+}
+RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
+#endif
+
