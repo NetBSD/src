@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.7 2007/09/09 20:52:15 christos Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.8 2007/10/16 13:26:08 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,16 +33,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.7 2007/09/09 20:52:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.8 2007/10/16 13:26:08 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/buf.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/pnp.h>
 #include <sys/queue.h>
+#include <sys/syscallargs.h> /* for sys_sync */
 #include <prop/proplib.h>
 
 /* #define PNP_DEBUG */
@@ -729,6 +731,19 @@ pnp_global_transition(pnp_state_t newstate)
 		int maxdepth, curdepth;
 
 		maxdepth = 0;
+
+		/*
+		 * Flush buffers only if the shutdown didn't do so
+		 * already and if there was no panic.
+		 */
+		if (doing_shutdown == 0 && panicstr == NULL) {
+			printf("Flushing disk caches: ");
+			sys_sync(NULL, NULL, NULL);
+			if (buf_syncwait() != 0)
+				printf("giving up\n");
+			else
+				printf("done\n");
+		}
 
 		printf("Suspending devices:");
 
