@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.57 2007/10/16 13:41:18 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.58 2007/10/16 15:07:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct	__pthread_st {
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
 	RB_ENTRY(__pthread_st) pt_alltree;
+	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
 	/*

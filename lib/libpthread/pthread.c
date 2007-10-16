@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.84 2007/10/16 13:41:18 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.85 2007/10/16 15:07:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.84 2007/10/16 13:41:18 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.85 2007/10/16 15:07:02 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -86,6 +86,7 @@ int pthread__started;
 
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
+pthread_queue_t pthread__allqueue;
 
 static pthread_attr_t pthread_default_attr;
 
@@ -181,6 +182,7 @@ pthread_init(void)
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
+	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
 	RB_INIT(&pthread__alltree);
 
@@ -190,6 +192,7 @@ pthread_init(void)
 	pthread__scrubthread(first, NULL, 0);
 
 	first->pt_lid = _lwp_self();
+	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
 	/* Start subsystems */
@@ -377,6 +380,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 		/* Add to list of all threads. */
 		pthread_rwlock_wrlock(&pthread__alltree_lock);
+		PTQ_INSERT_TAIL(&pthread__allqueue, newthread, pt_allq);
 		RB_INSERT(__pthread__alltree, &pthread__alltree, newthread);
 		pthread_rwlock_unlock(&pthread__alltree_lock);
 
