@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.5.2.8 2007/10/16 10:53:25 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.5.2.9 2007/10/16 11:08:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5.2.8 2007/10/16 10:53:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5.2.9 2007/10/16 11:08:51 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -143,7 +143,7 @@ aio_init(struct proc *p)
 	lwp_lock(l);
 	l->l_stat = LSRUN;
 	l->l_usrpri = PRI_KERNEL - 1;
-	l->l_priority = l->l_usrpri.
+	l->l_priority = l->l_usrpri;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
