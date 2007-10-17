@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.26.10.2 2007/06/21 18:49:37 garbled Exp $
+#	$NetBSD: files.ofppc,v 1.26.10.3 2007/10/17 17:23:58 garbled Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -76,7 +76,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfb/files.wsfb"
 
 define mainbus {}
-device mainbus: mainbus
+device mainbus: mainbus, ofbus
 attach mainbus at root
 file	arch/ofppc/ofppc/mainbus.c		mainbus
 
