@@ -1,3 +1,0 @@
-.\"	$NetBSD: upgrade,v 1.2 2002/05/21 07:12:18 pooka Exp $
-.
-.so ../common/upgrade

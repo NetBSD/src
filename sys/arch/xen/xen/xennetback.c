@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.25 2007/08/26 22:32:46 dyoung Exp $      */
+/*      $NetBSD: xennetback.c,v 1.25.6.1 2007/10/17 21:08:27 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -59,14 +59,14 @@
 #include <net/if_ether.h>
 
 
-#include <machine/xen.h>
-#include <machine/xen_shm.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/xen_shm.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
 #ifdef XEN3
 #else
-#include <machine/xen-public/io/domain_controller.h>
+#include <xen/xen-public/io/domain_controller.h>
 #endif
 
 #include <uvm/uvm.h>

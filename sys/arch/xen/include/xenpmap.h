@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15 2006/10/17 18:53:04 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.32.1 2007/10/17 21:08:19 bouyer Exp $	*/
 
 /*
  *
@@ -290,6 +290,14 @@ MULTI_update_va_mapping_otherdomain(
 #define MULTI_UVMFLAGS_INDEX 3
 #define MULTI_UVMDOMID_INDEX 4
 #endif
+
+#if defined(__x86_64__)
+void xen_pgd_pin(paddr_t);
+void xen_pgd_unpin(paddr_t);
+void xen_set_user_pgd(paddr_t);
+#endif
+
+
 
 #endif /* XEN3 */
 
