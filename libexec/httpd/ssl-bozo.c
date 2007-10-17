@@ -1,3 +1,5 @@
+/*	$NetBSD: ssl-bozo.c,v 1.2 2007/10/17 18:48:01 tls Exp $	*/
+
 /*	$eterna: ssl-bozo.c,v 1.6 2006/05/17 08:19:10 mrg Exp $	*/
 
 /*
