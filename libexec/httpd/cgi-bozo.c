@@ -179,8 +179,8 @@ process_cgi(http_req *request)
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
 	curenvp = envp;
-	for (headp = SIMPLEQ_FIRST(&request->hr_headers); headp;
-	    headp = SIMPLEQ_NEXT(headp, h_next)) {
+
+	SIMPLEQ_FOREACH(headp, &request->hr_headers, h_next) {
 		const char *s2;
 		env = bozomalloc(6 + strlen(headp->h_header) + 1 +
 		    strlen(headp->h_value));
@@ -369,10 +369,9 @@ finish_cgi_output(http_req *request, int in, int nph)
 	if (nheaders) {
 		debug((DEBUG_OBESE, "process_cgi:  writing delayed HTTP "
 				    "headers .."));
-		for (hdr = SIMPLEQ_FIRST(&headers); hdr;
-		    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
-			bozoprintf("%s: %s\r\n", hdr->h_header,
-					 hdr->h_value);
+		SIMPLEQ_FOREACH(hdr, &headers, h_next) {
+			bozoprintf("%s: %s\r\n", hdr->h_header, hdr->h_value);
+			free(hdr->h_value);
 		}
 		bozoflush(stdout);
 	}
