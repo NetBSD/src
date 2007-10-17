@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.128 2007/09/28 19:40:24 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.129 2007/10/17 22:59:27 garbled Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -588,7 +588,6 @@ everything described below.
 .if \n[next68k] .setsize 16 45
 .if \n[ofppc] .setsize 19 52
 .if \n[pmax] .setsize 20 73
-.if \n[pmppc] .setsize 19 52
 .if \n[prep] .setsize 19 53
 .if \n[sandpoint] .setsize 19 52
 .if \n[sbmips] .setsize 20 72
@@ -653,7 +652,6 @@ system call and library manual pages.
 .if \n[next68k] .setsize 18 69
 .if \n[ofppc] .setsize 23 83
 .if \n[pmax] .setsize 21 88
-.if \n[pmppc] .setsize 23 83
 .if \n[prep] .setsize 23 83
 .if \n[sandpoint] .setsize 23 83
 .if \n[sbmips] .setsize 21 88
@@ -723,7 +721,6 @@ This set includes the games and their manual pages.
 .if \n[next68k] .setsize 3 7
 .if \n[ofppc] .setsize 3 8
 .if \n[pmax] .setsize 4 9
-.if \n[pmppc] .setsize 3 8
 .if \n[prep] .setsize 3 8
 .if \n[sandpoint] .setsize 3 8
 .if \n[sbmips] .setsize 4 9
@@ -1069,7 +1066,6 @@ all related programs, and their manual pages.
 .if \n[next68k] .setsize 2 7
 .if \n[ofppc] .setsize 2 7
 .if \n[pmax] .setsize 3 9
-.if \n[pmppc] .setsize 2 7
 .if \n[prep] .setsize 2 7
 .if \n[sandpoint] .setsize 2 7
 .if \n[sbmips] .setsize 3 9
@@ -1148,7 +1144,6 @@ This does not include the X servers.
 .if \n[next68k] .setsize 6 17
 .if \n[ofppc] .setsize 7 19
 .if \n[pmax] .setsize 7 24
-.if \n[pmppc] .setsize 7 19
 .if \n[prep] .setsize 7 19
 .if \n[sandpoint] .setsize 7 19
 .if \n[sbmips] .setsize 7 24
@@ -1204,7 +1199,6 @@ The extra libraries and include files needed to compile X source code.
 .if \n[next68k] .setsize 10 37
 .if \n[ofppc] .setsize 13 44
 .if \n[pmax] .setsize 10 40
-.if \n[pmppc] .setsize 13 44
 .if \n[prep] .setsize 13 44
 .if \n[sandpoint] .setsize 13 44
 .if \n[sbmips] .setsize 10 39
@@ -1259,7 +1253,6 @@ Fonts needed by the X server and by X clients.
 .if \n[next68k] .setsize 31 39
 .if \n[ofppc] .setsize 31 39
 .if \n[pmax] .setsize 31 39
-.if \n[pmppc] .setsize 31 39
 .if \n[prep] .setsize 31 39
 .if \n[sandpoint] .setsize 31 39
 .if \n[sbmips] .setsize 31 39
@@ -1370,7 +1363,6 @@ servers with man pages and the runtime configuration file.
 .if \n[next68k] .setsize 3 7
 .if \n[ofppc] .setsize 4 10
 .if \n[pmax] .setsize 5 15
-.if \n[pmppc] .setsize 4 10
 .if \n[prep] .setsize 4 10
 .if \n[sandpoint] .setsize 4 10
 .if \n[sbmips] .setsize 4 14

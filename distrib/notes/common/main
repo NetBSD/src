@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.355 2007/10/07 23:46:16 jnemeth Exp $
+.\"	$NetBSD: main,v 1.356 2007/10/17 22:59:27 garbled Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@
 .as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
 .as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " pc532 pdp10 playstation2 pmax pmppc prep sandpoint sbmips
+.as MACHINE_LIST " pc532 pdp10 playstation2 pmax prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
