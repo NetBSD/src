@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.10 2007/10/03 14:51:47 veego Exp $	*/
+/*	$NetBSD: errata.c,v 1.10.2.1 2007/10/17 21:38:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10 2007/10/03 14:51:47 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.1 2007/10/17 21:38:19 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386

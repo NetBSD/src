@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2007/09/26 19:48:40 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.2.1 2007/10/17 21:38:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_xen.h"
 #endif
 
 /*
@@ -81,7 +82,11 @@ struct cpu_info {
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	u_int64_t ci_scratch;
+#ifdef XEN
+	struct iplsource *ci_isources[NIPL];
+#else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+#endif
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
@@ -270,6 +275,9 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
+#ifdef XEN
+void	lgdt_finish(void);
+#endif
 void	fillw(short, void *, size_t);
 
 struct pcb;
@@ -277,12 +285,18 @@ void	savectx(struct pcb *);
 void	lwp_trampoline(void);
 void	child_trampoline(void);
 
+#ifdef XEN
+void	startrtclock(void);
+void	xen_delay(int);
+void	xen_initclocks(void);
+#else
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+#endif
 
 void cpu_init_msrs(struct cpu_info *);
 
