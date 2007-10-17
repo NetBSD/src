@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.9 2007/10/15 14:12:55 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.10 2007/10/17 17:50:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.9 2007/10/15 14:12:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.10 2007/10/17 17:50:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_CPU_GETSTATE:
 		cs = data;
 		id = cs->cs_id;
-		memset(cs, sizeof(*cs), 0);
+		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
 		if ((ci = cpu_lookup(id)) == NULL) {
 			error = ESRCH;
