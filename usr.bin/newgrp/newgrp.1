@@ -1,8 +1,8 @@
-.\"	$NetBSD: newgrp.1,v 1.1 2007/06/21 14:09:24 ginsbach Exp $
+.\"	$NetBSD: newgrp.1,v 1.2 2007/10/17 21:07:49 christos Exp $
 .\"
 .\" Copyright (c) 2007, The NetBSD Foundation.
 .\" All Rights Reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Brian Ginsbach.
 .\"
@@ -21,7 +21,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -72,7 +72,7 @@ The real and effective group IDs are set to
 .Ar group
 or the group ID associated with the group name.
 .Pp
-If 
+If
 .Ar group
 is not specified,
 .Nm
@@ -83,6 +83,9 @@ for the user in the group database.
 .Pp
 If the user is not a member of the specified group, and the group
 requires a password, the user will be prompted for the group password.
+.Sh EXIT STATUS
+If a new shell is started the exit status is the exit status of the shell.
+Otherwise the exit status will be \*[Gt]0.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/group
@@ -92,9 +95,6 @@ The user database
 .It Pa /etc/passwd
 A Version 7 format password file
 .El
-.Sh EXIT STATUS
-If a new shell is started the exit status is the exit status of the shell.
-Otherwise the exit status will be \*[Gt]0.
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr groups 1 ,
