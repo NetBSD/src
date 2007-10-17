@@ -1,4 +1,4 @@
-.\"	$NetBSD: httpd.8,v 1.3 2007/10/16 22:50:01 reed Exp $
+.\"	$NetBSD: httpd.8,v 1.4 2007/10/17 13:33:18 reed Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.74 2006/05/17 08:19:10 mrg Exp $
 .\"
@@ -303,9 +303,11 @@ Using the
 you can provide multiple IP-address based HTTP servers by having multiple
 listening ports with different configurations.
 .Sh EXAMPLES
-To configure set of virtual hosts, one would use an entry like:
+To configure set of virtual hosts, one would use an
+.Xr inetd.conf 5
+entry like:
 .Bd -literal
-httpd stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
+http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
 .Ed
 .Pp
 and inside
