@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3.54.1 2007/10/17 21:38:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -58,9 +58,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3.54.1 2007/10/17 21:38:13 bouyer Exp $");
 
 #include "opt_largepages.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,7 +157,11 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		size -= limit;
 
 		tmppte = (oldpte & ~PG_KR) | PG_KW;
+#ifdef XEN
+		xpmap_update(pte, tmppte);
+#else
 		*pte = tmppte;
+#endif
 		pmap_update_pg(pgva);
 
 		/*
@@ -169,7 +174,11 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Restore the old PTE.
 		 */
+#ifdef XEN
+		xpmap_update(pte, oldpte);
+#else
 		*pte = oldpte;
+#endif
 
 		pmap_update_pg(pgva);
 		

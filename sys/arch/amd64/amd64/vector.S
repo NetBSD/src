@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12 2007/09/17 21:41:54 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.1 2007/10/17 21:38:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -108,12 +108,20 @@
 
 /*****************************************************************************/
 
+#ifndef	XEN
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
+#else
+#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
+#define	POST_TRAP(a)	pushq $(a) ; jmp _C_LABEL(alltraps)
+#define	TRAP(a)		PRE_TRAP ; POST_TRAP(a)
+#define ZTRAP(a)	PRE_TRAP ; pushq $0 ; POST_TRAP(a)
+#endif
 
 #define	BPTTRAP(a)	ZTRAP(a)
 
 	.text
+
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
@@ -132,7 +140,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-	sti
+  	STI(%rsi,%rdi)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -221,7 +229,7 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
-	sti
+  	STI(%rsi,%rdi)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -230,13 +238,13 @@ calltrap:
 	call	_C_LABEL(trap)
 	movq	CPUVAR(CURLWP),%r14
 2:	/* Check for ASTs on exit to user mode. */
-	cli
+  	CLI(%rsi,%rdi)							;\
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	1f
 	CLEAR_ASTPENDING(%r14)
-	sti
+  	STI(%rsi,%rdi)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -247,7 +255,7 @@ calltrap:
 1:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
-3:	sti
+3:  	STI(%rsi,%rdi)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -372,6 +380,7 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
+#ifndef XEN
 /*
  * Multicast TLB shootdown handler for !kernel_pmap.
  */
@@ -471,8 +480,11 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movq	%rax, %cr3
 	jmp	2b
 
+#endif /* !XEN */
+
 #define voidop(num)
 
+#ifndef XEN
 
 /*
  * This macro defines the generic stub code. Its arguments modifiy it
@@ -828,19 +840,127 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xresume_ioapic_level31)
 #endif
 
+#else	/* !XEN */
+/* Resume/recurse procedures for spl() */
+#define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+IDTVEC(recurse_/**/name/**/num)						;\
+  	INTR_RECURSE_HWFRAME						;\
+  	subq	$8,%rsp							;\
+  	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
+  	INTRENTRY							;\
+IDTVEC(resume_/**/name/**/num)						\
+  	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
+  	movl	%ebx,%r13d						;\
+  	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
+1:									\
+  	pushq	%r13							;\
+  	movl	$num,CPUVAR(ILEVEL)					;\
+  	STI(%rsi,%rdi)							;\
+  	incl	CPUVAR(IDEPTH)						;\
+  	movq	IS_HANDLERS(%r14),%rbx					;\
+6:									\
+  	movq	IH_ARG(%rbx),%rdi					;\
+  	movq	%rsp,%rsi						;\
+  	call	*IH_FUN(%rbx)		/* call it */			;\
+  	movq	IH_IPL_NEXT(%rbx),%rbx	/* next handler in chain */	;\
+  	testq	%rbx,%rbx						;\
+  	jnz	6b							;\
+5:									\
+  	CLI(%rsi,%rdi)							;\
+  	unmask(num)			/* unmask it in hardware */	;\
+  	late_ack(num)							;\
+  	CLI(%rsi,%rdi)							;\
+  	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
+  
+# The unmask func for Xen events
+#define hypervisor_asm_unmask(num)			\
+  	movq $num, %rdi					;\
+  	call _C_LABEL(hypervisor_enable_ipl)
+  
+XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,1,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,2,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,3,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,4,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,5,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,6,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,7,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,8,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,9,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,10,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,11,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,12,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,13,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,14,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,15,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,16,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,17,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,18,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,19,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,20,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,21,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,22,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,23,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,24,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,25,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,26,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,27,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,28,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+  
+.globl _C_LABEL(xenev_stubs)
+_C_LABEL(xenev_stubs):
+  	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
+  	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
+  	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
+  	.quad _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
+  	.quad _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
+  	.quad _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
+  	.quad _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
+  	.quad _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
+  	.quad _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
+  	.quad _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
+  	.quad _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
+  	.quad _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
+  	.quad _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
+  	.quad _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
+  	.quad _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
+  	.quad _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
+  	.quad _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
+  	.quad _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
+  	.quad _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
+  	.quad _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
+  	.quad _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
+  	.quad _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
+  	.quad _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
+  	.quad _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
+  	.quad _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
+  	.quad _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
+  	.quad _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
+  	.quad _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
+  	.quad _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
+  	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
+  	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
+  	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+#endif	/* !XEN */
+
 /*
  * Soft interrupt handlers
  */
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-	sti
+  	STI(%rsi,%rdi)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
+#ifndef XEN
 	incq	IS_EVCNT(%r12)
+#endif
 	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
 	call	_C_LABEL(softintr_dispatch)
 #ifdef MULTIPROCESSOR	
@@ -851,13 +971,15 @@ IDTVEC(softserial)
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-	sti
+  	STI(%rsi,%rdi)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
+#ifndef XEN
 	incq    IS_EVCNT(%r12)
+#endif
 
 	xorq	%r12,%r12
 	xchgl	_C_LABEL(netisr),%r12d
@@ -881,13 +1003,15 @@ IDTVEC(softnet)
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-	sti
+  	STI(%rsi,%rdi)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
+#ifndef XEN
 	incq	IS_EVCNT(%r12)
+#endif
 
 	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
 	call	_C_LABEL(softintr_dispatch)
@@ -896,3 +1020,38 @@ IDTVEC(softclock)
 #endif
 	decl	CPUVAR(IDEPTH)
 	jmp	*%r13
+
+#ifdef XEN
+
+# Xen callbacks
+
+# Hypervisor callback
+NENTRY(hypervisor_callback)
+	movq (%rsp),%rcx
+	movq 8(%rsp),%r11
+	addq $0x10,%rsp
+	pushq	$0	# Dummy error code
+	pushq	$T_ASTFLT
+	INTRENTRY
+	# sti??
+	movq	%rsp, %rdi
+	call	do_hypervisor_callback
+  	STI(%rsi,%rdi)
+	# Mmm well AST... one day
+	INTRFASTEXIT
+
+# Panic?
+NENTRY(failsafe_callback)
+	movq (%rsp),%rcx
+	movq 8(%rsp),%r11
+	addq $0x10,%rsp
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	movq	%rsp, %rdi
+	call xen_failsafe_handler
+	INTRFASTEXIT
+#	jmp	HYPERVISOR_iret
+
+#endif
+
