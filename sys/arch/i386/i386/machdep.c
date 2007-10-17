@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.608 2007/09/26 19:48:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.609 2007/10/17 19:54:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.608 2007/09/26 19:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.609 2007/10/17 19:54:45 garbled Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"

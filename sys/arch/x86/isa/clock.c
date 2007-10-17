@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2007/09/26 19:48:42 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2007/10/17 19:58:15 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2007/09/26 19:48:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2007/10/17 19:58:15 garbled Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */

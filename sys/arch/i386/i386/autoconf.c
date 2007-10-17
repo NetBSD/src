@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 2007/05/17 14:51:20 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.87 2007/10/17 19:54:44 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2007/05/17 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2007/10/17 19:54:44 garbled Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.15 2007/08/13 02:04:51 tsutsui Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.16 2007/10/17 19:57:09 garbled Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.15 2007/08/13 02:04:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.16 2007/10/17 19:57:09 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.3 2007/09/05 19:15:42 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.4 2007/10/17 19:58:33 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

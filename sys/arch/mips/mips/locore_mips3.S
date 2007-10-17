@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.92 2007/06/27 08:16:58 uebayasi Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93 2007/10/17 19:55:38 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)

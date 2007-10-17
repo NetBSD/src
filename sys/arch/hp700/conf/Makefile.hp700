@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.10 2007/05/17 14:51:18 yamt Exp $
+# $NetBSD: Makefile.hp700,v 1.11 2007/10/17 19:54:25 garbled Exp $
 
 # Makefile for NetBSD
 #

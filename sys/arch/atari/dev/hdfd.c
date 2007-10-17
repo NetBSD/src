@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.58 2007/10/08 16:41:06 ad Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.59 2007/10/17 19:53:47 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.58 2007/10/08 16:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.59 2007/10/17 19:53:47 garbled Exp $");
 
 #include "opt_ddb.h"
 

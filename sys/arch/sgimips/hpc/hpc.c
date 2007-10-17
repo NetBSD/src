@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.59 2007/07/23 22:28:23 he Exp $	*/
+/*	$NetBSD: hpc.c,v 1.60 2007/10/17 19:57:04 garbled Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.59 2007/07/23 22:28:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.60 2007/10/17 19:57:04 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

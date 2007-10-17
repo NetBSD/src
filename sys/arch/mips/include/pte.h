@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2007/07/17 03:53:56 macallan Exp $	*/
+/*	$NetBSD: pte.h,v 1.18 2007/10/17 19:55:37 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

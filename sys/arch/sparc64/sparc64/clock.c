@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.87 2007/09/09 22:37:39 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.88 2007/10/17 19:57:30 garbled Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.87 2007/09/09 22:37:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88 2007/10/17 19:57:30 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 

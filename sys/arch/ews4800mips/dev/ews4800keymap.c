@@ -1,4 +1,4 @@
-/*	$NetBSD: ews4800keymap.c,v 1.2 2007/06/02 06:24:56 tsutsui Exp $	*/
+/*	$NetBSD: ews4800keymap.c,v 1.3 2007/10/17 19:54:21 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ews4800keymap.c,v 1.2 2007/06/02 06:24:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ews4800keymap.c,v 1.3 2007/10/17 19:54:21 garbled Exp $");
 
 #include <sys/param.h>
 #include <dev/wscons/wsksymdef.h>

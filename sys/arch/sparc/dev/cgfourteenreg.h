@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.5 2007/07/30 23:28:13 macallan Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.6 2007/10/17 19:57:12 garbled Exp $ */
 
 /*
  * Copyright (c) 1996

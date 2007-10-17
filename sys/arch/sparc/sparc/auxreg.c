@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.37 2007/07/09 20:52:31 ad Exp $ */
+/*	$NetBSD: auxreg.c,v 1.38 2007/10/17 19:57:14 garbled Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.37 2007/07/09 20:52:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.38 2007/10/17 19:57:14 garbled Exp $");
 
 #include "opt_blink.h"
 

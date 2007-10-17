@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.21 2007/10/17 19:54:30 garbled Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.21 2007/10/17 19:54:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

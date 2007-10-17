@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2007/07/03 10:11:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2007/10/17 19:55:55 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/07/03 10:11:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2007/10/17 19:55:55 garbled Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2007/05/17 14:51:35 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.3 2007/10/17 19:58:17 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2007/05/17 14:51:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2007/10/17 19:58:17 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

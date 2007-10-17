@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16 2007/05/21 17:00:32 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.17 2007/10/17 19:57:47 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16 2007/05/21 17:00:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17 2007/10/17 19:57:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

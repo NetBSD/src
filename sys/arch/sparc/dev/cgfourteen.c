@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.51 2007/08/19 09:18:45 jdc Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52 2007/10/17 19:57:11 garbled Exp $ */
 
 /*
  * Copyright (c) 1996

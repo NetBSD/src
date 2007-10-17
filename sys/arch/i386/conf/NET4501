@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.56 2007/09/06 11:10:31 martti Exp $
+# $NetBSD: NET4501,v 1.57 2007/10/17 19:54:43 garbled Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.56 $"
+#ident 		"NET4501-$Revision: 1.57 $"
 
 maxusers	32		# estimated number of users
 

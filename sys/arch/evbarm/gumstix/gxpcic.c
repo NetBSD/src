@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.5 2007/08/21 11:39:12 kiyohara Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.6 2007/10/17 19:54:12 garbled Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.

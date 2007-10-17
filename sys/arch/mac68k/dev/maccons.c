@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.8 2007/08/29 16:09:31 jmmv Exp $	*/
+/*	$NetBSD: maccons.c,v 1.9 2007/10/17 19:55:13 garbled Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.8 2007/08/29 16:09:31 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.9 2007/10/17 19:55:13 garbled Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"

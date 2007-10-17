@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.72 2007/10/16 12:19:19 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.73 2007/10/17 19:55:36 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

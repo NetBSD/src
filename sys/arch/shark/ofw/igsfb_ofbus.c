@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.5 2007/07/30 13:02:01 jmmv Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.6 2007/10/17 19:57:10 garbled Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.5 2007/07/30 13:02:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.6 2007/10/17 19:57:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

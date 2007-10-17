@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.8 2007/06/08 17:08:46 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.9 2007/10/17 19:53:29 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.8 2007/06/08 17:08:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.9 2007/10/17 19:53:29 garbled Exp $");
 
 #include "bpfilter.h"
 

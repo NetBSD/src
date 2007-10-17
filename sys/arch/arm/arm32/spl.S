@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2007/08/13 02:04:50 tsutsui Exp $	*/
+/*	$NetBSD: spl.S,v 1.6 2007/10/17 19:53:31 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.

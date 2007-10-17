@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.40 2007/08/20 19:23:46 is Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.41 2007/10/17 19:53:15 garbled Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.40 2007/08/20 19:23:46 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.41 2007/10/17 19:53:15 garbled Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0

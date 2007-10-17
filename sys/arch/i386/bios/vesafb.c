@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.23 2007/09/26 19:48:40 ad Exp $ */
+/* $NetBSD: vesafb.c,v 1.24 2007/10/17 19:54:41 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.23 2007/09/26 19:48:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.24 2007/10/17 19:54:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

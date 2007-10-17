@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.8 2007/05/17 14:51:17 yamt Exp $	*/
+/*	$NetBSD: yamon.c,v 1.9 2007/10/17 19:54:15 garbled Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.8 2007/05/17 14:51:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.9 2007/10/17 19:54:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

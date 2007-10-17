@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.16 2007/07/09 20:52:12 ad Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.17 2007/10/17 19:54:28 garbled Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.16 2007/07/09 20:52:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.17 2007/10/17 19:54:28 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

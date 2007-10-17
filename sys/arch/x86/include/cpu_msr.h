@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_msr.h,v 1.5 2007/10/06 07:21:03 xtraeme Exp $ */
+/* $NetBSD: cpu_msr.h,v 1.6 2007/10/17 19:58:14 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.

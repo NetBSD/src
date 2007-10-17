@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2007/08/22 12:43:00 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.150 2007/10/17 19:53:27 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.149 $"
+#ident		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32		# estimated number of users
 

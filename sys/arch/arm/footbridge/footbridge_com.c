@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.25 2007/10/17 19:53:40 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.25 2007/10/17 19:53:40 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"

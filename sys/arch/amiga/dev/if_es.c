@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.41 2007/09/03 11:29:43 he Exp $ */
+/*	$NetBSD: if_es.c,v 1.42 2007/10/17 19:53:16 garbled Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.41 2007/09/03 11:29:43 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42 2007/10/17 19:53:16 garbled Exp $");
 
 #include "bpfilter.h"
 

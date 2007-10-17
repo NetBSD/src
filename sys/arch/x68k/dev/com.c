@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.48 2007/07/14 14:13:21 isaki Exp $	*/
+/*	$NetBSD: com.c,v 1.49 2007/10/17 19:58:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.48 2007/07/14 14:13:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.49 2007/10/17 19:58:01 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.30 2007/10/02 11:07:19 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.31 2007/10/17 19:53:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.30 2007/10/02 11:07:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.31 2007/10/17 19:53:30 garbled Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>

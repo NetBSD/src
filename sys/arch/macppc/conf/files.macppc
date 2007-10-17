@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84 2007/04/12 22:28:05 dogcow Exp $
+#	$NetBSD: files.macppc,v 1.85 2007/10/17 19:55:17 garbled Exp $
 #
 # macppc-specific configuration info
 
@@ -8,16 +8,37 @@ maxpartitions 16
 maxusers 2 8 64
 
 include "arch/powerpc/conf/files.ofw"
+include "arch/powerpc/pic/files.pic"
+include "arch/powerpc/pic/files.ipi"
 
 file arch/macppc/macppc/autoconf.c
-file arch/macppc/macppc/bus_dma.c
-file arch/macppc/macppc/clock.c
+file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
-file arch/macppc/macppc/extintr.c
+file arch/macppc/macppc/interrupts.c
+file arch/powerpc/oea/ofwoea_machdep.c
+file arch/powerpc/oea/ofw_consinit.c
 file arch/macppc/macppc/machdep.c
 file arch/macppc/dev/ofb_cons.c
 file arch/macppc/dev/dbdma.c
 
+# interrupt controllers
+define pic_ohare
+define pic_heathrow
+
+defflag opt_interrupt.h PIC_OHARE: pic_ohare
+defflag opt_interrupt.h OHARE_DEBUG
+defflag opt_interrupt.h PIC_HEATHROW: pic_heathrow
+
+file arch/macppc/macppc/pic_ohare.c		pic_ohare	needs-flag
+file arch/macppc/macppc/pic_heathrow.c		pic_heathrow	needs-flag
+
+# IPI interface
+define ipi_hammerhead
+defflag opt_ipi.h IPI_HAMMERHEAD: ipi_hammerhead
+file arch/macppc/macppc/ipi_hammerhead.c	ipi_hammerhead	needs-flag
+
+file arch/powerpc/powerpc/bus_dma.c
+file arch/powerpc/powerpc/bus_space.c
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
 file dev/cons.c
@@ -64,21 +85,27 @@ file arch/macppc/macppc/cpu.c
 
 include "dev/wsfb/files.wsfb"
 
+# ISA stuff
+# we don't need it but some of the shared code needs isa.h
+include "dev/isa/files.isa"
+
 # PCI bus support
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/agp_machdep.c		agp
+file arch/powerpc/pci/pciconf_indirect.c	pci
+file arch/powerpc/pci/pci_machdep_common.c	pci
 
-device bandit: pcibus
+device bandit: pcibus, pic_ohare
 attach bandit at mainbus
 file arch/macppc/pci/bandit.c			bandit
 
-device grackle: pcibus
+device grackle: pcibus, pic_heathrow
 attach grackle at mainbus
 file arch/macppc/pci/grackle.c			grackle
 
-device uninorth: pcibus
+device uninorth: pcibus, pic_openpic
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
@@ -104,7 +131,7 @@ file arch/macppc/dev/ofb.c			ofb needs-flag
 # PCI-Host bridge chipsets
 device pchb: agpbus, agp_apple
 attach pchb at pci
-file arch/macppc/pci/pchb.c			pchb
+file arch/powerpc/pci/pchb.c			pchb
 
 device gm: ifnet, ether, arp, mii
 attach gm at pci
@@ -117,6 +144,7 @@ define obio {}
 device obio: obio
 attach obio at pci
 file arch/macppc/dev/obio.c			obio
+defflag opt_obio.h OBIO_DEBUG OBIO_SPEED_CONTROL
 
 device mediabay: obio
 attach mediabay at obio

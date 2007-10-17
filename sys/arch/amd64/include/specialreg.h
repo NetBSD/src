@@ -1,3 +1,3 @@
-/*	$NetBSD: specialreg.h,v 1.4 2007/06/06 20:40:11 njoly Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.5 2007/10/17 19:53:04 garbled Exp $	*/
 
 #include <x86/specialreg.h>

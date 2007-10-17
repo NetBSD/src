@@ -1,10 +1,10 @@
-/*	$NetBSD: kbdmap.c,v 1.6 2007/05/12 06:31:19 isaki Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.7 2007/10/17 19:58:02 garbled Exp $	*/
 
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki and Makoto MINOURA */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.6 2007/05/12 06:31:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.7 2007/10/17 19:58:02 garbled Exp $");
 
 #include "kbdmap.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.7 2007/08/13 02:00:14 tsutsui Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.8 2007/10/17 19:53:42 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

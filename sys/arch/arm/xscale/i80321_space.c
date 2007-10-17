@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.10 2007/05/12 14:34:03 gavan Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.11 2007/10/17 19:53:43 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.10 2007/05/12 14:34:03 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.11 2007/10/17 19:53:43 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

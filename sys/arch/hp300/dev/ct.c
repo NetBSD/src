@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.50 2007/10/08 18:02:55 ad Exp $	*/
+/*	$NetBSD: ct.c,v 1.51 2007/10/17 19:54:22 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.50 2007/10/08 18:02:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.51 2007/10/17 19:54:22 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

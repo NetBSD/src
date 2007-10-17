@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.12 2007/05/21 16:37:03 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.13 2007/10/17 19:55:05 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

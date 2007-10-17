@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.6 2007/07/21 01:47:58 nonaka Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.7 2007/10/17 19:58:34 garbled Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.6 2007/07/21 01:47:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.7 2007/10/17 19:58:34 garbled Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"

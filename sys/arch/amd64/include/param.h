@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2007/10/13 14:46:54 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2007/10/17 19:53:04 garbled Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE

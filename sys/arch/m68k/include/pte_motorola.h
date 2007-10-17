@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.4 2007/06/05 04:52:07 mhitch Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.5 2007/10/17 19:55:05 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

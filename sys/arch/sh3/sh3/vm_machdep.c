@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2007/08/27 00:22:21 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 2007/10/17 19:57:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2007/08/27 00:22:21 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2007/10/17 19:57:09 garbled Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"

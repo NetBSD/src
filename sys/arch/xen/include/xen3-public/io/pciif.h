@@ -1,4 +1,4 @@
-/* $NetBSD: pciif.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
+/* $NetBSD: pciif.h,v 1.3 2007/10/17 19:58:31 garbled Exp $ */
 /*
  * PCI Backend/Frontend Common Data Structures & Macros
  *

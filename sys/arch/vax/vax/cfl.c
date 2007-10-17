@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.15 2007/10/08 18:02:58 ad Exp $	*/
+/*	$NetBSD: cfl.c,v 1.16 2007/10/17 19:57:59 garbled Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.15 2007/10/08 18:02:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.16 2007/10/17 19:57:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

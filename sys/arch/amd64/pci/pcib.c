@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 2007/06/04 23:24:14 xtraeme Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 2007/10/17 19:53:12 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2007/06/04 23:24:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2007/10/17 19:53:12 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

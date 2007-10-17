@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.10 2007/10/08 16:41:09 ad Exp $	*/
+/*	$NetBSD: bmd.c,v 1.11 2007/10/17 19:58:01 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.10 2007/10/08 16:41:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.11 2007/10/17 19:58:01 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

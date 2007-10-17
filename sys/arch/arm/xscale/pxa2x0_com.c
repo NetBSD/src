@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.8 2007/08/21 11:39:11 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.9 2007/10/17 19:53:44 garbled Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.8 2007/08/21 11:39:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.9 2007/10/17 19:53:44 garbled Exp $");
 
 #include "opt_com.h"
 

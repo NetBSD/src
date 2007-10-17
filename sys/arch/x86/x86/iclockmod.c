@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.8 2007/09/26 19:48:43 ad Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.9 2007/10/17 19:58:16 garbled Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.8 2007/09/26 19:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.9 2007/10/17 19:58:16 garbled Exp $");
 
 #include "opt_intel_odcm.h"
 

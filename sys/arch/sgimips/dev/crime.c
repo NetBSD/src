@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.26 2007/09/26 05:48:37 macallan Exp $	*/
+/*	$NetBSD: crime.c,v 1.27 2007/10/17 19:57:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.26 2007/09/26 05:48:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.27 2007/10/17 19:57:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

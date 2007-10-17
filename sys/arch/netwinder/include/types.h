@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2007/07/14 21:48:22 ad Exp $ */
+/* $NetBSD: types.h,v 1.9 2007/10/17 19:55:52 garbled Exp $ */
 
 #ifndef _ARM32_TYPES_H_
 #define	_ARM32_TYPES_H_

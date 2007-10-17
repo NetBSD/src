@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.7 2007/08/26 22:28:52 dyoung Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.7 2007/08/26 22:28:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>

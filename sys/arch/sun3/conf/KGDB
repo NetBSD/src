@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.52 2007/07/18 15:35:06 tsutsui Exp $
+#	$NetBSD: KGDB,v 1.53 2007/10/17 19:57:44 garbled Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
