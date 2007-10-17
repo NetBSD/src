@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.125 2007/10/10 22:41:15 ad Exp $
+# $NetBSD: ALL,v 1.126 2007/10/17 19:54:41 garbled Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.125 $"
+#ident 		"ALL-$Revision: 1.126 $"
 
 maxusers	32		# estimated number of users
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9 2007/09/24 01:17:15 uwe Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10 2007/10/17 19:57:08 garbled Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov

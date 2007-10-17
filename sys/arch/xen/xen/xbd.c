@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.39 2007/10/08 16:41:09 ad Exp $ */
+/* $NetBSD: xbd.c,v 1.40 2007/10/17 19:58:33 garbled Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.39 2007/10/08 16:41:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.40 2007/10/17 19:58:33 garbled Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"

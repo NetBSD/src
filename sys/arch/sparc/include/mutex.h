@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2007/05/28 22:56:19 mrg Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2007/10/17 19:57:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.

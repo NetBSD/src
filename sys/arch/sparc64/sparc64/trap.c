@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2007/05/17 14:51:32 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.144 2007/10/17 19:57:32 garbled Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2007/05/17 14:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2007/10/17 19:57:32 garbled Exp $");
 
 #define NEW_FPSTATE
 

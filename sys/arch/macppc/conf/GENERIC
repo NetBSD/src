@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.259 2007/08/21 02:48:16 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.260 2007/10/17 19:55:16 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.259 $"
+#ident 		"GENERIC-$Revision: 1.260 $"
 
 maxusers	32
 
@@ -214,6 +214,12 @@ grackle* at mainbus?
 uninorth* at mainbus?
 uni_n*	at mainbus?
 
+# interrupt controller support
+options PIC_OHARE
+options PIC_HEATHROW
+#options PIC_GRANDCENTRAL
+options PIC_OPENPIC
+
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
 pci*	at uninorth? bus ?
@@ -273,7 +279,7 @@ siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # Display devices
-ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+# ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
 # not be enabled on some older machines, such as the rev. A-D iMacs or any
 # O'Hare based machine that uses external cache like the PowerBook 3400c
@@ -286,6 +292,7 @@ radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
 options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+genfb*		at pci? function ?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
@@ -355,13 +362,22 @@ nvram*	at obio?			# nvram
 
 # the traditional ADB subsystem
 
-adb*	at obio?			# Apple Desktop Bus
-apm0	at adb?				# APM emulation
-aed*	at adb?				# ADB Event Device
-akbd*	at adb?				# ADB keyboard
-ams*	at adb?				# ADB mouse
-abtn*	at adb?
-wskbd0	at akbd? console ?
+#adb*	at obio?			# Apple Desktop Bus
+#apm0	at adb?				# APM emulation
+#aed*	at adb?				# ADB Event Device
+#akbd*	at adb?				# ADB keyboard
+#ams*	at adb?				# ADB mouse
+#abtn*	at adb?
+
+cuda*	at obio?			# Apple CUDA
+pmu*	at obio?			# Apple CUDA
+nadb*	at adb_bus?				# new ADB Bus abstraction
+adbkbd* at nadb?			# ADB keyboard
+adbms*	at nadb?			# ADB mice and touchpads
+adbbt*	at nadb?			# button device found on *Books
+
+wskbd*		at wskbddev? console ?
+wsmouse*	at wsmousedev?
 
 # the new, improved, experimental ADB subsystem
 

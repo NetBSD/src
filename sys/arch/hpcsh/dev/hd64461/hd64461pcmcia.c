@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.37 2007/07/11 22:13:30 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.38 2007/10/17 19:54:30 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.37 2007/07/11 22:13:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.38 2007/10/17 19:54:30 garbled Exp $");
 
 #include "opt_hd64461pcmcia.h"
 

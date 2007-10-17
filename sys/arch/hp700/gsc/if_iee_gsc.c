@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.5 2007/05/18 08:49:36 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.6 2007/10/17 19:54:25 garbled Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.5 2007/05/18 08:49:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.6 2007/10/17 19:54:25 garbled Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>

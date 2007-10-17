@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.7 2007/10/17 19:53:04 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

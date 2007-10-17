@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.27 2007/10/08 18:02:55 ad Exp $ */
+/*	$NetBSD: lpt.c,v 1.28 2007/10/17 19:53:47 garbled Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.27 2007/10/08 18:02:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.28 2007/10/17 19:53:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

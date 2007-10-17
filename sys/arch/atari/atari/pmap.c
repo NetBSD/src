@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2007/07/23 23:13:04 he Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2007/10/17 19:53:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2007/07/23 23:13:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2007/10/17 19:53:45 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

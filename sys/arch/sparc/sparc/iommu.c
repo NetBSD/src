@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.88 2007/08/01 00:06:32 macallan Exp $ */
+/*	$NetBSD: iommu.c,v 1.89 2007/10/17 19:57:14 garbled Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.88 2007/08/01 00:06:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89 2007/10/17 19:57:14 garbled Exp $");
 
 #include "opt_sparc_arch.h"
 

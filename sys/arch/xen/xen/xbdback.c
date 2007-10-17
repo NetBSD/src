@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.25 2007/07/29 12:15:42 ad Exp $      */
+/*      $NetBSD: xbdback.c,v 1.26 2007/10/17 19:58:33 garbled Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

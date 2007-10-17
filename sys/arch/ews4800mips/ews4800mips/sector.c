@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.c,v 1.4 2007/10/08 18:02:55 ad Exp $	*/
+/*	$NetBSD: sector.c,v 1.5 2007/10/17 19:54:21 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.4 2007/10/08 18:02:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.5 2007/10/17 19:54:21 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

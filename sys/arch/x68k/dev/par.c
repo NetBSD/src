@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.34 2007/07/14 14:13:21 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.34 2007/07/14 14:13:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

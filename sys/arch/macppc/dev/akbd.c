@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.37 2007/08/08 04:06:27 macallan Exp $	*/
+/*	$NetBSD: akbd.c,v 1.38 2007/10/17 19:55:17 garbled Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.37 2007/08/08 04:06:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.38 2007/10/17 19:55:17 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

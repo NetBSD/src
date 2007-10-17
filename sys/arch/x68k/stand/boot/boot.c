@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2007/05/12 06:28:41 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2007/10/17 19:58:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto

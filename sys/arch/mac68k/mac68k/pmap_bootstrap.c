@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.73 2007/08/29 16:09:32 jmmv Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.74 2007/10/17 19:55:15 garbled Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.73 2007/08/29 16:09:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.74 2007/10/17 19:55:15 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

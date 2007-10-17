@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2007/05/17 14:51:22 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40 2007/10/17 19:55:36 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/06/09 01:34:05 dyoung Exp $
+#	$NetBSD: Makefile,v 1.16 2007/10/17 19:57:27 garbled Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 

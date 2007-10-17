@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.14 2007/06/08 22:06:18 jld Exp $      */
+/*      $NetBSD: xenevt.c,v 1.15 2007/10/17 19:58:33 garbled Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

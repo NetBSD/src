@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.9 2007/09/06 11:10:32 martti Exp $
+# $NetBSD: XEN2_DOMU,v 1.10 2007/10/17 19:54:44 garbled Exp $
 
 include 	"arch/xen/conf/std.xen"
 

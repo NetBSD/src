@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2007/05/18 10:18:24 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.9 2007/10/17 19:57:43 garbled Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.11 2007/08/13 02:04:51 tsutsui Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.12 2007/10/17 19:53:42 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.11 2007/08/13 02:04:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.12 2007/10/17 19:53:42 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

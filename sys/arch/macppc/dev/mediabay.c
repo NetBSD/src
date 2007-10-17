@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.13 2007/07/09 20:52:22 ad Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.14 2007/10/17 19:55:19 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.13 2007/07/09 20:52:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.14 2007/10/17 19:55:19 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.13 2007/07/09 20:52:22 ad Exp $");
 
 struct mediabay_softc {
 	struct device sc_dev;
+	bus_space_tag_t sc_tag;
 	int sc_node;
 	u_int *sc_addr;
 	u_int *sc_fcr;
@@ -111,11 +112,12 @@ mediabay_attach(parent, self, aux)
 	sc->sc_fcr = sc->sc_addr + 1;
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
+	sc->sc_tag = ca->ca_tag;
 	irq = ca->ca_intr[0];
-	itype = IST_LEVEL;
+	itype = IST_EDGE;
 
-	if (ca->ca_nintr == 8 && ca->ca_intr[1] == 0)
-		itype = IST_EDGE;
+	if (ca->ca_nintr == 8 && ca->ca_intr[1] != 0)
+		itype = IST_LEVEL;
 
 	printf(" irq %d %s\n", irq, intr_typename(itype));
 
@@ -172,6 +174,7 @@ mediabay_attach_content(sc)
 		ca.ca_name = name;
 		ca.ca_node = child;
 		ca.ca_baseaddr = sc->sc_baseaddr;
+		ca.ca_tag = sc->sc_tag;
 
 		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
 		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,

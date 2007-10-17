@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.27 2007/09/26 19:48:37 ad Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.28 2007/10/17 19:54:46 garbled Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.27 2007/09/26 19:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.28 2007/10/17 19:54:46 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

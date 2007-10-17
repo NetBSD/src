@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.15 2007/08/31 16:24:27 drochner Exp $	*/
+/*	$NetBSD: limits.h,v 1.16 2007/10/17 19:57:48 garbled Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.

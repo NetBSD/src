@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.51 2007/08/26 22:32:46 dyoung Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.52 2007/10/17 19:58:32 garbled Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.51 2007/08/26 22:32:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.52 2007/10/17 19:58:32 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"

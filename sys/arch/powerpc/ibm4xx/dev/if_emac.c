@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.29 2007/08/26 22:32:06 dyoung Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.30 2007/10/17 19:56:39 garbled Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.29 2007/08/26 22:32:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.30 2007/10/17 19:56:39 garbled Exp $");
 
 #include "bpfilter.h"
 

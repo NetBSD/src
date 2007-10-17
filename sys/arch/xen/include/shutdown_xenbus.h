@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_xenbus.h,v 1.2 2007/09/23 15:57:36 bouyer Exp $	*/
+/*	$NetBSD: shutdown_xenbus.h,v 1.3 2007/10/17 19:58:29 garbled Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,

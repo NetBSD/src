@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2007/10/02 13:49:45 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2007/10/17 19:54:31 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2007/10/02 13:49:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2007/10/17 19:54:31 garbled Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */

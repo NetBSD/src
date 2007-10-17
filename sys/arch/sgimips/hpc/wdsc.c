@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.22 2007/05/06 23:49:57 rumble Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.23 2007/10/17 19:57:04 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.22 2007/05/06 23:49:57 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.23 2007/10/17 19:57:04 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

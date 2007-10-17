@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_40.h,v 1.9 2007/06/08 15:57:16 tsutsui Exp $	*/
+/*	$NetBSD: cacheops_40.h,v 1.10 2007/10/17 19:55:05 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

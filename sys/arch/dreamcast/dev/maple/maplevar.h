@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.10 2007/07/09 20:52:09 ad Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.11 2007/10/17 19:54:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

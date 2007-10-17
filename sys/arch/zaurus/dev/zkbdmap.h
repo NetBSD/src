@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbdmap.h,v 1.3 2007/06/28 15:37:32 nonaka Exp $	*/
+/*	$NetBSD: zkbdmap.h,v 1.4 2007/10/17 19:58:34 garbled Exp $	*/
 /* $OpenBSD: zaurus_kbdmap.h,v 1.19 2005/05/10 08:26:12 espie Exp $ */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.51 2007/10/02 11:07:20 ad Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.52 2007/10/17 19:53:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.51 2007/10/02 11:07:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.52 2007/10/17 19:53:30 garbled Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"

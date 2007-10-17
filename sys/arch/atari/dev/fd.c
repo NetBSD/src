@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.60 2007/10/17 17:58:56 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.61 2007/10/17 19:53:47 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.60 2007/10/17 17:58:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2007/10/17 19:53:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

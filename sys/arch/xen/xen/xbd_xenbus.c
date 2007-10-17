@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.21 2007/10/08 16:41:09 ad Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.22 2007/10/17 19:58:33 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.21 2007/10/08 16:41:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.22 2007/10/17 19:58:33 garbled Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"

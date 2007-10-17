@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.8 2007/10/08 16:18:02 ad Exp $	*/
+/*	$NetBSD: dt.c,v 1.9 2007/10/17 19:56:16 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.8 2007/10/08 16:18:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.9 2007/10/17 19:56:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

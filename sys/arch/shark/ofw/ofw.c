@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.40 2007/08/13 02:04:51 tsutsui Exp $	*/
+/*	$NetBSD: ofw.c,v 1.41 2007/10/17 19:57:10 garbled Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.40 2007/08/13 02:04:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.41 2007/10/17 19:57:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

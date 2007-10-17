@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.10 2007/07/09 20:52:14 ad Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.11 2007/10/17 19:54:30 garbled Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.

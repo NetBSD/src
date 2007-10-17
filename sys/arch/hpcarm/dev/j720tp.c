@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.6 2007/07/12 22:02:39 he Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.7 2007/10/17 19:54:28 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.6 2007/07/12 22:02:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.7 2007/10/17 19:54:28 garbled Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"

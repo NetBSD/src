@@ -1,4 +1,4 @@
-/* $NetBSD: hvm_info_table.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
+/* $NetBSD: hvm_info_table.h,v 1.3 2007/10/17 19:58:31 garbled Exp $ */
 /******************************************************************************
  * hvm/hvm_info_table.h
  * 

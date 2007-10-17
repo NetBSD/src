@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.29 2007/09/01 07:32:22 dyoung Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.30 2007/10/17 19:52:54 garbled Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.29 2007/09/01 07:32:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.30 2007/10/17 19:52:54 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2007/08/10 22:36:59 dyoung Exp $
+#	$NetBSD: Makefile,v 1.30 2007/10/17 19:54:41 garbled Exp $
 
 # Makefile for i386 tags file and boot blocks
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.15 2007/10/04 00:00:42 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.16 2007/10/17 19:53:03 garbled Exp $
 
 # Makefile for NetBSD
 #

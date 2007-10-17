@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.3 2007/07/29 14:29:38 nonaka Exp $	*/
+/*	$NetBSD: scoop.c,v 1.4 2007/10/17 19:58:34 garbled Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.3 2007/07/29 14:29:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.4 2007/10/17 19:58:34 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

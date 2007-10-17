@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.44 2007/09/26 19:48:40 ad Exp $
+#	$NetBSD: files.amd64,v 1.45 2007/10/17 19:53:03 garbled Exp $
 #
 # new style config file for amd64 architecture
 #

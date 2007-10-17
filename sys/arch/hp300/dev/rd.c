@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.83 2007/10/08 16:41:07 ad Exp $	*/
+/*	$NetBSD: rd.c,v 1.84 2007/10/17 19:54:23 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.83 2007/10/08 16:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.84 2007/10/17 19:54:23 garbled Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.19 2007/09/26 19:48:38 ad Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.20 2007/10/17 19:58:15 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

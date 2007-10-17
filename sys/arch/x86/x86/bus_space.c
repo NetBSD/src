@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2007/09/26 19:48:42 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2007/10/17 19:58:16 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2007/09/26 19:48:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2007/10/17 19:58:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

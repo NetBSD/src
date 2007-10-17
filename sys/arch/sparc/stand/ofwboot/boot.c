@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2007/09/20 09:25:00 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2007/10/17 19:57:16 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.

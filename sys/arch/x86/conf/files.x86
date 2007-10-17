@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.30 2007/06/03 19:32:26 xtraeme Exp $
+#	$NetBSD: files.x86,v 1.31 2007/10/17 19:58:14 garbled Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI

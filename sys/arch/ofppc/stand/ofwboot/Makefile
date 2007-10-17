@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2007/05/21 13:14:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20 2007/10/17 19:56:13 garbled Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 

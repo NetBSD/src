@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.4 2007/08/03 13:15:56 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.5 2007/10/17 19:54:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

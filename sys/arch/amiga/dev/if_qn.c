@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.30 2007/09/03 11:29:43 he Exp $ */
+/*	$NetBSD: if_qn.c,v 1.31 2007/10/17 19:53:16 garbled Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.30 2007/09/03 11:29:43 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31 2007/10/17 19:53:16 garbled Exp $");
 
 #include "qn.h"
 #if NQN > 0

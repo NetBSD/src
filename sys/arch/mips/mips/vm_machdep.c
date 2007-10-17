@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.119 2007/08/17 23:58:46 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.120 2007/10/17 19:55:39 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.119 2007/08/17 23:58:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120 2007/10/17 19:55:39 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

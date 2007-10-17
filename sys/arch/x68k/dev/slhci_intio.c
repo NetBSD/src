@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.8 2007/08/15 03:53:09 kiyohara Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.9 2007/10/17 19:58:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.8 2007/08/15 03:53:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.9 2007/10/17 19:58:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

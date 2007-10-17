@@ -1,4 +1,4 @@
-/*     $NetBSD: bswap.h,v 1.2 2007/09/19 20:31:34 he Exp $   */
+/*     $NetBSD: bswap.h,v 1.3 2007/10/17 19:57:43 garbled Exp $   */
 
 #ifndef _MACHINE_BSWAP_H_
 #define	_MACHINE_BSWAP_H_
