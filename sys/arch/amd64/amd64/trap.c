@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.14.1 2007/10/17 21:38:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.14.1 2007/10/17 21:38:15 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,7 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $");
 #include <machine/db_machdep.h>
 #endif
 
+#ifndef XEN
 #include "isa.h"
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -625,6 +627,9 @@ startlwp(void *arg)
 static void
 frame_dump(struct trapframe *tf)
 {
+	int i;
+	unsigned long *p;
+
 	printf("rip %p  rsp %p  rfl %p\n",
 	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
 	printf("rdi %p  rsi %p  rdx %p\n",
@@ -637,5 +642,14 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
+	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+	printf("\n");
 }
 #endif

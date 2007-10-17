@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2007/09/27 01:10:11 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.2.1 2007/10/17 21:38:17 bouyer Exp $	*/
 
 /*
  *
@@ -76,6 +76,7 @@
 
 #ifndef _LOCORE
 #if defined(_KERNEL_OPT)
+#include "opt_xen.h"
 #include "opt_largepages.h"
 #endif
 
@@ -87,6 +88,10 @@
 #endif
 
 #include <uvm/uvm_object.h>
+#ifdef XEN
+#include <xen/xenfunc.h>
+#include <xen/xenpmap.h>
+#endif /* XEN */
 #endif
 
 /*
@@ -160,7 +165,12 @@
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 #define L4_SLOT_PTE		255
+#ifndef XEN
 #define L4_SLOT_KERN		256
+#else
+/* Xen use slots 256-272, let's move farther */
+#define L4_SLOT_KERN		320
+#endif
 #define L4_SLOT_KERNBASE	511
 #define L4_SLOT_APTE		510
 
@@ -329,6 +339,7 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
+#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s
@@ -447,6 +458,13 @@ void	pmap_tlb_shootwait __P((void));
 void	pmap_prealloc_lowmem_ptps __P((void));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+#ifdef XEN
+int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
+	    vm_prot_t, int, int);
+bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+paddr_t vtomach(vaddr_t);
+#endif
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
@@ -583,6 +601,59 @@ void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
 void	sse2_zero_page(void *);
 void	sse2_copy_page(void *, void *);
+
+#ifdef XEN
+
+#define XPTE_MASK	L1_FRAME
+#define XPTE_SHIFT	9
+
+/* PTE access inline fuctions */
+
+/*
+ * Get the machine address of the pointed pte
+ * We use hardware MMU to get value so works only for levels 1-3
+ */
+
+static __inline paddr_t
+xpmap_ptetomach(pt_entry_t *pte)
+{
+	pt_entry_t *up_pte;
+	vaddr_t va = (vaddr_t) pte;
+
+	va = ((va & XPTE_MASK) >> XPTE_SHIFT) | (vaddr_t) PTE_BASE;
+	up_pte = (pt_entry_t *) va;
+
+	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
+}
+
+/*
+ * xpmap_update()
+ * Update an active pt entry with Xen
+ * Equivalent to *pte = npte
+ */
+
+static __inline void
+xpmap_update (pt_entry_t *pte, pt_entry_t npte)
+{
+        int s = splvm();
+
+        xpq_queue_pte_update((pt_entry_t *) xpmap_ptetomach(pte), npte);
+        xpq_flush_queue();
+        splx(s);
+}
+
+
+/* Xen helpers to change bits of a pte */
+#define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
+__inline void xpmap_set_bits(vaddr_t, pt_entry_t);
+__inline void xpmap_clear_bits(vaddr_t, pt_entry_t);
+#define xpmap_set_ro(va)	xpmap_clear_bits(va, PG_RW)
+#define xpmap_set_rw(va)	xpmap_set_bits(va, PG_RW)
+
+/* Enter a machine address (we can't always reverse a MA to a PA) */
+void pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
+
+#endif	/* XEN */
 
 #if 0   /* XXXfvdl was USER_LDT, need to check if that can be supported */
 void	pmap_ldt_cleanup __P((struct lwp *));

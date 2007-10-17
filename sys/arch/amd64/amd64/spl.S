@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.4.1 2007/10/17 21:38:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -85,6 +85,7 @@
 
 	.text
 
+#ifndef XEN
 /*
  * int splraise(int s);
  */
@@ -96,6 +97,7 @@ ENTRY(splraise)
 	cmoval	%eax,%edi
 	movl	%edi,CPUVAR(ILEVEL)
 	ret
+#endif
 
 /*
  * void softintr(int sir);
@@ -111,6 +113,7 @@ ENTRY(softintr)
 	orl	%eax,CPUVAR(IPENDING)
 	ret
 
+#ifndef XEN
 /*
  * void spllower(int s);
  *
@@ -138,6 +141,8 @@ ENTRY(spllower)
 	jmp	_C_LABEL(Xspllower)
 	.align	64
 LABEL(spllower_end)
+
+#endif
 
 /*
  * void	amd64_spllower(int s);
@@ -205,7 +210,7 @@ IDTVEC(spllower)
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(%rsi,%rdi)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -214,7 +219,7 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%rax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	sti
+	STI(%rsi,%rdi)
 	popq	%r12
 	popq	%r13
 	popq	%rbx
@@ -233,7 +238,7 @@ IDTVEC(doreti)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(%rsi,%rdi)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -248,11 +253,19 @@ IDTVEC(doreti)
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	3f
 	CLEAR_ASTPENDING(%r14)
-	sti
+	STI(%rsi,%rdi)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	cli
+	CLI(%rsi,%rdi)
 	jmp	5b
 3: 	INTRFASTEXIT
+
+#ifdef XEN
+NENTRY(call_evtchn_do_event)
+	incl	CPUVAR(IDEPTH)
+	call    _C_LABEL(evtchn_do_event)
+	decl	CPUVAR(IDEPTH)
+	ret
+#endif

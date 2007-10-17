@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4.4.1 2007/10/17 21:38:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include "opt_lockdebug.h"
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 #include <machine/intrdefs.h>
 
 #include "assym.h"
@@ -141,11 +142,11 @@ NENTRY(mutex_spin_exit)
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
-	cli	
+	CLI(%r9, %r10)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
-	sti
+	STI(%r9, %r10)
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 

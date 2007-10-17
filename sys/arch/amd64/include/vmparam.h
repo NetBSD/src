@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2007/08/29 23:38:03 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.4.1 2007/10/17 21:38:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,9 @@
 #define _VMPARAM_H_
 
 #include <sys/tree.h>
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 
 /*
  * Machine dependent constants for 386.
@@ -118,8 +121,13 @@
 #define VM_MIN_ADDRESS		0
 #define VM_MAXUSER_ADDRESS	0x00007f8000000000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
+#ifndef XEN
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
 #define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
+#else /* XEN */
+#define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffa00100000000
+#endif
 
 #define VM_MAXUSER_ADDRESS32	0xfffff000
 
