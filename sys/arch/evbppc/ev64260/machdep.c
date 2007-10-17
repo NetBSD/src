@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19.38.1 2007/05/22 15:59:26 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.38.2 2007/10/17 17:16:25 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.38.1 2007/05/22 15:59:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.38.2 2007/10/17 17:16:25 garbled Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.38.1 2007/05/22 15:59:26 matt Exp $
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/marvell/watchdog.h>
-#include <powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
 
@@ -128,7 +127,6 @@ void gt_bus_space_init(void);
 void gt_find_memory(bus_space_tag_t, bus_space_handle_t, paddr_t);
 void gt_halt(bus_space_tag_t, bus_space_handle_t);
 void return_to_dink(int);
-void calc_delayconst(void);
 
 void kcomcnputs(dev_t, const char *);
 
@@ -204,9 +202,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	void *btinfo;
 {
 	oea_batinit(0xf0000000, BAT_BL_256M);
-	oea_init(pic_ext_intr);
-
-	calc_delayconst();			/* Set CPU clock */
+	oea_init((void (*)(void))ext_intr);
 
 	DELAY(100000);
 
