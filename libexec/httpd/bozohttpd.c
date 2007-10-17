@@ -1,3 +1,5 @@
+/*	$NetBSD: bozohttpd.c,v 1.3 2007/10/17 18:48:00 tls Exp $	*/
+
 /*	$eterna: bozohttpd.c,v 1.137 2006/05/17 08:37:36 mrg Exp $	*/
 
 /*
