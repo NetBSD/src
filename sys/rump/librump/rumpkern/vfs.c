@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.14 2007/10/10 20:42:32 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.15 2007/10/17 16:48:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -153,6 +153,13 @@ vput(struct vnode *vp)
 
 void
 vgone(struct vnode *vp)
+{
+
+	vgonel(vp, curlwp);
+}
+
+void
+vgonel(struct vnode *vp, struct lwp *l)
 {
 
 }
