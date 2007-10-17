@@ -1,4 +1,4 @@
-/* $NetBSD: granttables.h,v 1.2 2007/09/05 19:15:42 bouyer Exp $ */
+/* $NetBSD: granttables.h,v 1.2.4.1 2007/10/17 21:08:17 bouyer Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -30,7 +30,7 @@
  */
 
 /* Interface to the Xen Grant tables */
-#include <machine/xen3-public/grant_table.h>
+#include <xen/xen3-public/grant_table.h>
 
 void xengnt_init(void);
 

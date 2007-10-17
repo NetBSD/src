@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.5 2006/05/07 21:49:56 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.5.46.1 2007/10/17 21:08:28 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5 2006/05/07 21:49:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5.46.1 2007/10/17 21:08:28 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5 2006/05/07 21:49:56 bouyer Exp $"
 #include <miscfs/kernfs/kernfs.h>
 #include <machine/kernfs_machdep.h>
 
-#include <machine/hypervisor.h>
-#include <machine/xenbus.h>
+#include <xen/hypervisor.h>
+#include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
 static int xenbus_dev_read(void *);

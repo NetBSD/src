@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.6 2007/07/29 12:15:43 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.6.10.1 2007/10/17 21:08:25 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -43,10 +43,10 @@
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
-#include <machine/xen.h>
-#include <machine/xen_shm.h>
-#include <machine/evtchn.h>
-#include <machine/xenbus.h>
+#include <xen/xen.h>
+#include <xen/xen_shm.h>
+#include <xen/evtchn.h>
+#include <xen/xenbus.h>
 
 /* #define XENDEBUG_VBD */
 #ifdef XENDEBUG_VBD

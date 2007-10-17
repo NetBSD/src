@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2007/09/25 17:08:09 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.2.1 2007/10/17 21:08:17 bouyer Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -121,6 +121,9 @@ struct cpu_info {
 	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
+	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
+	u_int32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
@@ -306,6 +309,8 @@ struct cpu_cpuid_nameclass {
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
+extern unsigned int cpu_feature2;
+extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpu_class;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];

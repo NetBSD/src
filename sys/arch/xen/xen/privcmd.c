@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.18 2007/07/22 08:50:26 ad Exp $ */
+/* $NetBSD: privcmd.c,v 1.18.10.1 2007/10/17 21:08:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18 2007/07/22 08:50:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18.10.1 2007/10/17 21:08:24 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18 2007/07/22 08:50:26 ad Exp $");
 #include <miscfs/kernfs/kernfs.h>
 
 #include <machine/kernfs_machdep.h>
-#include <machine/xenio.h>
+#include <xen/xenio.h>
 
 #define	PRIVCMD_MODE	(S_IRUSR)
 
