@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.211 2007/10/17 22:02:35 bouyer Exp $
+#	$NetBSD: BRANCHES,v 1.212 2007/10/17 23:54:09 garbled Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -444,9 +444,9 @@ Notes:		A more flexible infrastructure for third-party packages by
 
 Branch:		ppcoea-renovation
 Description:	General renovation and cleanup of all OEA PowerPC ports.
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	30 April 2007
-End Date:
+End Date:	15 October 2007
 Base Tag:	ppcoea-renovation-base
 Maintainer:	Tim Rightnour <garbled@netbsd.org>
 Scope:		src/sys/arch
