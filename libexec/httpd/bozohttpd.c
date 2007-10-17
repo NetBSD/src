@@ -767,10 +767,10 @@ addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 	static char space[2] = { ' ', 0 };
 
 	/* do we exist already? */
-	for (hdr = SIMPLEQ_FIRST(&request->hr_headers); hdr;
-	    hdr = SIMPLEQ_NEXT(hdr, h_next))
+	SIMPLEQ_FOREACH(hdr, &request->hr_headers, h_next) {
 		if (strcasecmp(val, hdr->h_header) == 0)
 			break;
+	}
 
 	if (hdr) {
 		/* yup, merge it in */
@@ -883,6 +883,7 @@ process_request(http_req *request)
 	/* If SSL enabled cleanup SSL structure. */
 	ssl_destroy();
 	close(fd);
+	free(file);
 }
 
 /*
