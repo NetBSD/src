@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.64 2007/09/26 19:48:44 ad Exp $
+#	$NetBSD: files.xen,v 1.64.2.1 2007/10/17 21:08:14 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -32,7 +32,7 @@ defflag opt_pcifixup.h  PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 defparam                PCI_CONF_MODE
 
-file	arch/xen/i386/autoconf.c
+file	arch/xen/x86/autoconf.c
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
@@ -42,13 +42,13 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/i386/gdt.c
-file	arch/xen/i386/hypervisor_machdep.c
-file	arch/xen/i386/idle_machdep.c
+file	arch/xen/x86/hypervisor_machdep.c
+file	arch/xen/x86/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/xen/i386/machdep.c
-file	arch/xen/i386/identcpu.c
+file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
@@ -58,11 +58,12 @@ file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
 file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
-file	arch/xen/i386/xen_machdep.c
-file	arch/xen/i386/xen_intr.c
-file	arch/xen/i386/xenfunc.c
+file	arch/xen/i386/xpmap.c
+file	arch/xen/x86/xen_intr.c
+file	arch/xen/x86/xenfunc.c
 file	arch/i386/i386/lock_stubs.S
 
+file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
@@ -133,7 +134,7 @@ define ipmibus {}
 
 device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus
 attach	mainbus at root
-file	arch/xen/i386/mainbus.c		mainbus
+file	arch/xen/x86/mainbus.c		mainbus
 
 # Xen hypervisor
 device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
@@ -262,7 +263,7 @@ attach cpu at cpubus
 device vcpu
 attach vcpu at xendevbus
 
-file	arch/xen/i386/cpu.c		cpu | vcpu
+file	arch/xen/x86/cpu.c		cpu | vcpu
 
 #
 # Compatibility modules
@@ -339,7 +340,7 @@ include	"dev/pcmcia/files.pcmcia"
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
 file	arch/xen/xen/privcmd.c		dom0ops
-file 	arch/xen/i386/xen_shm_machdep.c	dom0ops | xen3
+file 	arch/xen/x86/xen_shm_machdep.c	dom0ops | xen3
 file	arch/xen/xen/xbdback.c		dom0ops & !xen3
 file	arch/xen/xen/xennetback.c	dom0ops & !xen3
 file	arch/xen/xen/pci_machdep.c	hypervisor & pci & !xen3

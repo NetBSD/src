@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.6 2006/09/28 18:53:15 bouyer Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.6.32.1 2007/10/17 21:08:18 bouyer Exp $	*/
 /*	NetBSD intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp 	*/
 
 #ifndef _XEN_INTRDEFS_H
@@ -61,5 +61,7 @@
 
 #define NUM_LEGACY_IRQS	16
 #define MAX_INTR_SOURCES 32
+
+#define X86_NIPI		7
 
 #endif /* _XEN_INTRDEFS_H */

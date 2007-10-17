@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arch.inc,v 1.2 2005/12/11 12:19:47 christos Exp $
+#	$NetBSD: Makefile.arch.inc,v 1.2.54.1 2007/10/17 21:08:14 bouyer Exp $
 
 .if defined(MACHINE) && ${MACHINE} != "xen"
 XEN_BUILD?=	${MACHINE}
@@ -7,7 +7,7 @@ XEN_BUILD?=	${MACHINE_ARCH:Ui386}
 .endif
 
 .if ${XEN_BUILD} == "i386"
-XEN_MACHINE_ARCHS=	i386 x86
+XEN_MACHINE_ARCHS=	i386 x86 xen
 .else
 XEN_MACHINE_ARCHS=	${XEN_BUILD}
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.75 2007/09/26 19:48:36 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.75.2.1 2007/10/17 21:08:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.75 2007/09/26 19:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.75.2.1 2007/10/17 21:08:14 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,9 +587,9 @@ cyrix6x86_cpu_setup(ci)
 	 * model device is detected. Ideally, this work-around should not
 	 * even be in here, it should be in there. XXX
 	 */
-
-	extern int clock_broken_latch;
 	u_char c3;
+#ifndef XEN
+	extern int clock_broken_latch;
 
 	switch (ci->ci_signature) {
 	case 0x440:     /* Cyrix MediaGX */
@@ -596,6 +597,7 @@ cyrix6x86_cpu_setup(ci)
 		clock_broken_latch = 1;
 		break;
 	}
+#endif
 
 	/* set up various cyrix registers */
 	/*
@@ -1400,6 +1402,7 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
+#ifndef XEN
 #if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * If we have a cycle counter, compute the approximate
@@ -1415,6 +1418,25 @@ identifycpu(struct cpu_info *ci)
 	}
 	/* XXX end XXX */
 #endif
+#else /* XEN */
+#ifdef XEN3
+	{
+	const volatile vcpu_time_info_t *tinfo =
+		   &HYPERVISOR_shared_info->vcpu_info[0].time;
+	delay(1000000);
+	uint64_t freq = 1000000000ULL << 32;
+	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
+	if ( tinfo->tsc_shift < 0 )
+		freq = freq << -tinfo->tsc_shift;
+	else
+		freq = freq >> tinfo->tsc_shift;
+	ci->ci_tsc_freq = freq;
+	}
+#else
+	/* XXX this needs to read the shared_info of the CPU being probed.. */
+	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
+#endif /* XEN3 */
+#endif /* XEN */
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
@@ -1651,7 +1673,9 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
+#ifndef XEN
 	x86_errata(ci, cpu_vendor);
 	x86_patch();
+#endif
 
 }
