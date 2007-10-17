@@ -1,3 +1,5 @@
+/*	$NetBSD: dir-index-bozo.c,v 1.2 2007/10/17 18:48:01 tls Exp $	*/
+
 /*	$eterna: dir-index-bozo.c,v 1.7 2006/05/17 08:18:44 mrg Exp $	*/
 
 /*

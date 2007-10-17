@@ -1,3 +1,5 @@
+/*	$NetBSD: auth-bozo.c,v 1.3 2007/10/17 18:47:59 tls Exp $	*/
+
 /*	$eterna: auth-bozo.c,v 1.7 2006/05/17 08:19:10 mrg Exp $	*/
 
 /*
