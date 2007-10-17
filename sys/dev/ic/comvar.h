@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.56 2007/10/08 16:50:45 ad Exp $	*/
+/*	$NetBSD: comvar.h,v 1.57 2007/10/17 17:44:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -232,9 +232,7 @@ int com_detach(struct device *, int);
 int com_activate(struct device *, enum devact);
 void com_cleanup(void *);
 
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
+#ifndef IPL_SERIAL
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()
-#define	IPL_SOFTSERIAL	IPL_TTY
-#define	splsoftserial()	spltty()
 #endif
