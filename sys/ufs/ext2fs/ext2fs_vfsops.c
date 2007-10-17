@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.119 2007/10/10 20:42:33 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.120 2007/10/17 17:34:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.119 2007/10/10 20:42:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.120 2007/10/17 17:34:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -936,7 +936,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-
+retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
@@ -948,11 +948,11 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 
 	mutex_enter(&ufs_hashlock);
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+	if ((*vpp = ufs_ihashget(dev, ino, 0)) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
 		pool_put(&ext2fs_inode_pool, ip);
-		return (0);
+		goto retry;
 	}
 
 	vp->v_vflag |= VV_LOCKSWORK;
