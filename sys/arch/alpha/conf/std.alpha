@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.24 2007/07/07 17:03:28 tsutsui Exp $
+# $NetBSD: std.alpha,v 1.25 2007/10/17 19:52:57 garbled Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 

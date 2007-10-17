@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.71 2007/08/05 13:37:31 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.72 2007/10/17 19:57:09 garbled Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.71 $"
+#ident		"GENERIC-$Revision: 1.72 $"
 
 # estimated number of users
 maxusers	32

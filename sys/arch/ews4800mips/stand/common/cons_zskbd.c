@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_zskbd.c,v 1.2 2007/06/02 06:27:12 tsutsui Exp $	*/
+/*	$NetBSD: cons_zskbd.c,v 1.3 2007/10/17 19:54:22 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.

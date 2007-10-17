@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.9 2007/09/06 11:10:31 martti Exp $
+# $NetBSD: XBOX,v 1.10 2007/10/17 19:54:44 garbled Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2007/10/17 19:55:01 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,7 +79,7 @@ consinit(void)
 	if (!strcmp(CONSOLE, "fb")) {
 		pfb_cnattach(CONSOLE_ADDR);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bus_space_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -89,12 +89,12 @@ consinit(void)
 #if (NVGA > 0)
 	if (!strcmp(CONSOLE, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(&io_bus_space_tag, &mem_bus_space_tag, -1, 1))
+		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1))
 			goto dokbd;
 #endif
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bus_space_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -103,7 +103,7 @@ dokbd:
 
 #if (NCOM > 0)
  	if (!strcmp(CONSOLE, "com")) {
-		if (comcnattach(&isa_io_bus_space_tag, CONSOLE_ADDR,
+		if (comcnattach(&genppc_isa_io_space_tag, CONSOLE_ADDR,
 			    CONSOLE_SPEED, COM_FREQ, COM_TYPE_NORMAL,
 			    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8))
 			panic("can't init serial console");

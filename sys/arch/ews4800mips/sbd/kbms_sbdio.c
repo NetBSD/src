@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.6 2007/06/29 16:09:04 tsutsui Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.7 2007/10/17 19:54:22 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.6 2007/06/29 16:09:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.7 2007/10/17 19:54:22 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

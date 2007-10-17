@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.17 2007/08/07 04:42:49 dyoung Exp $ */
+/* $NetBSD: if_xb.c,v 1.18 2007/10/17 19:52:54 garbled Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.17 2007/08/07 04:42:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.18 2007/10/17 19:52:54 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.17 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.18 $", xbi.if_mtu);
 }
 
 static void

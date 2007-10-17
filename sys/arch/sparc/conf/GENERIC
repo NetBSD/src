@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200 2007/08/06 21:26:56 adrianp Exp $
+# $NetBSD: GENERIC,v 1.201 2007/10/17 19:57:11 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.201 $"
 
 maxusers	32
 

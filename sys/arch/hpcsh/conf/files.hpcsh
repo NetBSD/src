@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.48 2007/09/25 17:40:29 kiyohara Exp $
+#	$NetBSD: files.hpcsh,v 1.49 2007/10/17 19:54:30 garbled Exp $
 #
 maxpartitions 8
 

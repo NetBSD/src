@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.72 2007/09/27 01:57:23 ad Exp $
+#	$NetBSD: Makefile.booters,v 1.73 2007/10/17 19:54:58 garbled Exp $
 
 .include <bsd.own.mk>
 

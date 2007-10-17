@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.65 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.66 2007/10/17 19:53:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2007/05/17 14:51:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2007/10/17 19:53:30 garbled Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>

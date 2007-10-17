@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.80 2007/07/16 16:36:06 macallan Exp $ */
+/*	$NetBSD: pmap.h,v 1.81 2007/10/17 19:57:13 garbled Exp $ */
 
 /*
  * Copyright (c) 1996

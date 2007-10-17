@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.26 2007/06/09 14:40:19 tsutsui Exp $ */
+/* $NetBSD: bus_dma.c,v 1.27 2007/10/17 19:55:11 garbled Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2007/06/09 14:40:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27 2007/10/17 19:55:11 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

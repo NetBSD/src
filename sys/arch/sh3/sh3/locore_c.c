@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.24 2007/10/01 21:26:03 ad Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.25 2007/10/17 19:57:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.24 2007/10/01 21:26:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.25 2007/10/17 19:57:08 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

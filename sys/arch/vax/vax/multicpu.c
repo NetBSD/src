@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.22 2007/06/22 20:24:09 mhitch Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.23 2007/10/17 19:57:59 garbled Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.22 2007/06/22 20:24:09 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.23 2007/10/17 19:57:59 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 

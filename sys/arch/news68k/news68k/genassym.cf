@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2007/05/18 10:13:25 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.21 2007/10/17 19:55:53 garbled Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993

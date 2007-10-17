@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.12 2007/05/12 06:31:18 isaki Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.13 2007/10/17 19:58:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.12 2007/05/12 06:31:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.13 2007/10/17 19:58:01 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

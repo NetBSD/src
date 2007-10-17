@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2007/05/21 08:17:41 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 2007/10/17 19:53:03 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.6 2007/09/26 05:48:37 macallan Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.7 2007/10/17 19:57:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA

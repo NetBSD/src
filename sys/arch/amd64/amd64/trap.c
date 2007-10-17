@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2007/10/17 19:53:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2007/06/04 23:15:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2007/10/17 19:53:02 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

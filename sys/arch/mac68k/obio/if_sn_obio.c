@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.26 2007/06/10 05:59:43 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.27 2007/10/17 19:55:16 garbled Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.26 2007/06/10 05:59:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.27 2007/10/17 19:55:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

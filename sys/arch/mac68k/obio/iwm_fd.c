@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.39 2007/10/08 16:41:07 ad Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.40 2007/10/17 19:55:16 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.39 2007/10/08 16:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.40 2007/10/17 19:55:16 garbled Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0

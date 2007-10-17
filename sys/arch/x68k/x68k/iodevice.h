@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.10 2007/05/12 06:31:19 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.11 2007/10/17 19:58:04 garbled Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki

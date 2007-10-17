@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.33 2007/09/01 14:27:56 jmmv Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.34 2007/10/17 19:55:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.33 2007/09/01 14:27:56 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34 2007/10/17 19:55:13 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"

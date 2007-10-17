@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.15 2007/09/14 09:34:56 njoly Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.16 2007/10/17 19:53:01 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.15 2007/09/14 09:34:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.16 2007/10/17 19:53:01 garbled Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"

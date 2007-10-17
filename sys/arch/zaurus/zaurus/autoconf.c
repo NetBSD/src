@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2007/10/17 19:58:41 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2007/10/17 19:58:41 garbled Exp $");
 
 #include "opt_md.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.10 2007/10/02 13:49:45 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.11 2007/10/17 19:54:31 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.10 2007/10/02 13:49:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.11 2007/10/17 19:54:31 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

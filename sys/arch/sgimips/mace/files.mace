@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.9 2007/09/26 05:50:02 macallan Exp $
+#	$NetBSD: files.mace,v 1.10 2007/10/17 19:57:05 garbled Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus

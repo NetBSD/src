@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.49 2007/09/06 08:55:34 he Exp $ */
+/*	$NetBSD: if_ie.c,v 1.50 2007/10/17 19:57:45 garbled Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.49 2007/09/06 08:55:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.50 2007/10/17 19:57:45 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: scoopreg.h,v 1.3 2007/07/29 14:29:38 nonaka Exp $	*/
+/*	$NetBSD: scoopreg.h,v 1.4 2007/10/17 19:58:34 garbled Exp $	*/
 /*	$OpenBSD: zaurus_scoopreg.h,v 1.7 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*

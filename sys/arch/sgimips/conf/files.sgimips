@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.44 2007/07/15 23:27:55 macallan Exp $
+#	$NetBSD: files.sgimips,v 1.45 2007/10/17 19:57:03 garbled Exp $
 
 maxpartitions 16
 

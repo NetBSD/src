@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.4 2007/09/16 13:47:19 kiyohara Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.5 2007/10/17 19:54:12 garbled Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.

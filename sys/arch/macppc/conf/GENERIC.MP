@@ -1,7 +1,9 @@
-# $NetBSD: GENERIC.MP,v 1.1 2002/07/28 07:40:13 chs Exp $
+# $NetBSD: GENERIC.MP,v 1.2 2007/10/17 19:55:16 garbled Exp $
 #
 #	GENERIC kernel, plus multiprocessor support.
 
 include	"arch/macppc/conf/GENERIC"
 
 options 	MULTIPROCESSOR
+options		IPI_HAMMERHEAD
+options		IPI_OPENPIC

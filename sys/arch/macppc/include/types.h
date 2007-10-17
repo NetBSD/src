@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2007/07/14 21:48:21 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2007/10/17 19:55:31 garbled Exp $	*/
 
 #include <powerpc/types.h>
 

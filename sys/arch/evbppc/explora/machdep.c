@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2007/07/20 13:41:53 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2007/10/17 19:54:17 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2007/07/20 13:41:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2007/10/17 19:54:17 garbled Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"

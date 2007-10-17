@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.86 2007/10/08 20:06:18 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.87 2007/10/17 19:54:47 garbled Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.86 2007/10/08 20:06:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.87 2007/10/17 19:54:47 garbled Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"

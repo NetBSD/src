@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36 2007/08/15 12:07:24 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37 2007/10/17 19:53:30 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36 2007/08/15 12:07:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37 2007/10/17 19:53:30 garbled Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>

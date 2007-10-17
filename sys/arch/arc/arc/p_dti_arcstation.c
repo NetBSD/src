@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.11 2007/08/08 17:26:57 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.12 2007/10/17 19:53:27 garbled Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.11 2007/08/08 17:26:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.12 2007/10/17 19:53:27 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

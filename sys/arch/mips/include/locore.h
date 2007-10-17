@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.77 2007/06/17 06:04:28 tsutsui Exp $ */
+/* $NetBSD: locore.h,v 1.78 2007/10/17 19:55:36 garbled Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford

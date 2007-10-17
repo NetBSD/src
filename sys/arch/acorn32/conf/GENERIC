@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.80 2007/08/06 21:26:53 adrianp Exp $
+# 	$NetBSD: GENERIC,v 1.81 2007/10/17 19:52:53 garbled Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.80 $"
+#ident		"GENERIC-$Revision: 1.81 $"
 
 # estimated number of users
 maxusers	32

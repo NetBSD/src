@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.13 2007/07/09 20:52:24 ad Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.14 2007/10/17 19:55:46 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.13 2007/07/09 20:52:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.14 2007/10/17 19:55:46 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

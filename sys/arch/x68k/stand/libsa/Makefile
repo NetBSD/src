@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2007/06/23 10:50:25 isaki Exp $
+#	$NetBSD: Makefile,v 1.21 2007/10/17 19:58:03 garbled Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa

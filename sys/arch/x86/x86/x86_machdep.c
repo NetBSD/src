@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.12 2007/09/26 19:48:44 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.13 2007/10/17 19:58:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.12 2007/09/26 19:48:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.13 2007/10/17 19:58:18 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

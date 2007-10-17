@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.10 2007/07/30 13:02:01 jmmv Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.11 2007/10/17 19:57:10 garbled Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.10 2007/07/30 13:02:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.11 2007/10/17 19:57:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

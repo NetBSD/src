@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.42 2007/10/01 21:26:03 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.43 2007/10/17 19:57:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.42 2007/10/01 21:26:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.43 2007/10/17 19:57:07 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

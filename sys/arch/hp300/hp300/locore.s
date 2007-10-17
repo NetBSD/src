@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 2007/06/12 03:34:29 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 2007/10/17 19:54:24 garbled Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.54 2007/09/03 11:30:04 he Exp $ */
+/*	$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.54 2007/09/03 11:30:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $");
 
 #include "bpfilter.h"
 

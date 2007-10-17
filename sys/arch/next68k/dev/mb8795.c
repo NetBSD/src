@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.41 2007/09/01 07:32:24 dyoung Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.42 2007/10/17 19:56:03 garbled Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.41 2007/09/01 07:32:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.42 2007/10/17 19:56:03 garbled Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

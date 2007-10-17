@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.9 2007/09/26 19:48:38 ad Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.10 2007/10/17 19:58:14 garbled Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-

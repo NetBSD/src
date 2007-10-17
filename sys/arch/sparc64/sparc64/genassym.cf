@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2007/09/11 16:00:06 martin Exp $
+#	$NetBSD: genassym.cf,v 1.49 2007/10/17 19:57:30 garbled Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.

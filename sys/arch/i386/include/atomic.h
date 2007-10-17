@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.12 2007/10/03 12:24:48 ad Exp $	*/
+/*	$NetBSD: atomic.h,v 1.13 2007/10/17 19:54:56 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.

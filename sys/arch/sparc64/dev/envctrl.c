@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.6 2007/07/16 17:57:41 xtraeme Exp $ */
+/*	$NetBSD: envctrl.c,v 1.7 2007/10/17 19:57:28 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.6 2007/07/16 17:57:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.7 2007/10/17 19:57:28 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

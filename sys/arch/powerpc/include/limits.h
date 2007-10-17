@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.14 2007/08/31 16:24:26 drochner Exp $	*/
+/*	$NetBSD: limits.h,v 1.15 2007/10/17 19:56:40 garbled Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
