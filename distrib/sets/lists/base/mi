@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.722 2007/10/16 02:47:12 tls Exp $
+# $NetBSD: mi,v 1.723 2007/10/17 23:20:01 garbled Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2608,6 +2608,7 @@
 ./usr/share/man/cat4/dreamcast			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
 ./usr/share/man/cat4/evbmips			base-man-share
+./usr/share/man/cat4/evbppc			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-man-share
 ./usr/share/man/cat4/hpcarm			base-man-share
@@ -2619,7 +2620,7 @@
 ./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
-./usr/share/man/cat4/pmppc			base-man-share
+./usr/share/man/cat4/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat4/prep			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
@@ -2675,7 +2676,7 @@
 ./usr/share/man/cat8/pc532			base-man-share
 ./usr/share/man/cat8/playstation2		base-man-share
 ./usr/share/man/cat8/pmax			base-man-share
-./usr/share/man/cat8/pmppc			base-man-share
+./usr/share/man/cat8/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat8/prep			base-man-share
 ./usr/share/man/cat8/sandpoint			base-man-share
 ./usr/share/man/cat8/sbmips			base-man-share
@@ -2726,6 +2727,7 @@
 ./usr/share/man/html4/dreamcast			base-man-share
 ./usr/share/man/html4/evbarm			base-man-share
 ./usr/share/man/html4/evbmips			base-man-share
+./usr/share/man/html4/evbppc			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
 ./usr/share/man/html4/hp700			base-man-share
 ./usr/share/man/html4/hpcarm			base-man-share
@@ -2737,7 +2739,7 @@
 ./usr/share/man/html4/mvme68k			base-man-share
 ./usr/share/man/html4/pc532			base-man-share
 ./usr/share/man/html4/pmax			base-man-share
-./usr/share/man/html4/pmppc			base-man-share
+./usr/share/man/html4/pmppc			base-obsolete		obsolete
 ./usr/share/man/html4/prep			base-man-share
 ./usr/share/man/html4/sgimips			base-man-share
 ./usr/share/man/html4/sparc			base-man-share
@@ -2793,7 +2795,7 @@
 ./usr/share/man/html8/playstation		base-obsolete		obsolete
 ./usr/share/man/html8/playstation2		base-man-share
 ./usr/share/man/html8/pmax			base-man-share
-./usr/share/man/html8/pmppc			base-man-share
+./usr/share/man/html8/pmppc			base-obsolete		obsolete
 ./usr/share/man/html8/prep			base-man-share
 ./usr/share/man/html8/sandpoint			base-man-share
 ./usr/share/man/html8/sbmips			base-man-share
@@ -2845,6 +2847,7 @@
 ./usr/share/man/man4/dreamcast			base-man-share
 ./usr/share/man/man4/evbarm			base-man-share
 ./usr/share/man/man4/evbmips			base-man-share
+./usr/share/man/man4/evbppc			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
 ./usr/share/man/man4/hp700			base-man-share
 ./usr/share/man/man4/hpcarm			base-man-share
@@ -2856,7 +2859,7 @@
 ./usr/share/man/man4/mvme68k			base-man-share
 ./usr/share/man/man4/pc532			base-man-share
 ./usr/share/man/man4/pmax			base-man-share
-./usr/share/man/man4/pmppc			base-man-share
+./usr/share/man/man4/pmppc			base-obsolete		obsolete
 ./usr/share/man/man4/prep			base-man-share
 ./usr/share/man/man4/sgimips			base-man-share
 ./usr/share/man/man4/sparc			base-man-share
@@ -2912,7 +2915,7 @@
 ./usr/share/man/man8/pc532			base-man-share
 ./usr/share/man/man8/playstation2		base-man-share
 ./usr/share/man/man8/pmax			base-man-share
-./usr/share/man/man8/pmppc			base-man-share
+./usr/share/man/man8/pmppc			base-obsolete		obsolete
 ./usr/share/man/man8/prep			base-man-share
 ./usr/share/man/man8/sandpoint			base-man-share
 ./usr/share/man/man8/sbmips			base-man-share
