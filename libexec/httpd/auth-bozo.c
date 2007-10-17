@@ -113,11 +113,11 @@ auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
 	if (strcasecmp(val, "authorization") == 0 &&
 	    strncasecmp(str, "Basic ", 6) == 0) {
 		char	authbuf[BUFSIZ];
-		char	*pass;
+		char	*pass = NULL;
 		ssize_t	alen;
 
-		alen = base64_decode(str + 6, len - 6,
-		    authbuf, sizeof(authbuf) - 1);
+		alen = base64_decode((unsigned char *)str + 6, len - 6,
+		    (unsigned char *)authbuf, sizeof(authbuf) - 1);
 		if (alen != -1)
 			authbuf[alen] = '\0';
 		if (alen == -1 ||
