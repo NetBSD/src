@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.210 2007/10/14 14:40:35 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.211 2007/10/17 22:02:35 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -253,6 +253,15 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
+
+Branch:		bouyer-xenamd64
+Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
+Status:		Active
+Start Date:	18 Oct 2007
+End Date:	
+Base Tag:	bouyer-xenamd64-base
+Scope:		kernel
+Notes:		
 
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
