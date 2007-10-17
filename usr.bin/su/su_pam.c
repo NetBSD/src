@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.12 2006/05/14 21:18:31 mlelstv Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.13 2007/10/17 21:05:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.12 2006/05/14 21:18:31 mlelstv Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.13 2007/10/17 21:05:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,18 +61,18 @@ __RCSID("$NetBSD: su_pam.c,v 1.12 2006/05/14 21:18:31 mlelstv Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 #include <login_cap.h>
 
 #include <security/pam_appl.h>
 #include <security/openpam.h>   /* for openpam_ttyconv() */
- 
+
+#ifdef ALLOW_GROUP_CHANGE
+#include "grutil.h"
+#endif
+#include "suutil.h"
+
 static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
-
-static void logit(const char *, ...);
-static int chshell(const char *);
-static char *ontty(void);
-
-int main(int, char **);
 
 #define	ARGSTRX	"-dflm"
 
@@ -82,6 +82,8 @@ int main(int, char **);
 #define ARGSTR ARGSTRX
 #endif
 
+static void logit(const char *, ...);
+
 int
 main(int argc, char **argv)
 {
@@ -89,10 +91,12 @@ main(int argc, char **argv)
 	struct passwd *pwd, pwres;
 	char *p;
 	uid_t ruid;
-	int asme, ch, asthem, fastlogin, prio, gohome, setwhat;
+	int asme, ch, asthem, fastlogin, prio, gohome;
+	u_int setwhat;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *avshell, *username, **np;
-	char *class;
+	const char *user, *shell, *avshell;
+	char *username, *class;
+	char **np;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 	int pam_err;
 	char hostname[MAXHOSTNAMELEN];
@@ -106,6 +110,9 @@ main(int argc, char **argv)
 	extern int _openpam_debug;
 
 	_openpam_debug = 1;
+#endif
+#ifdef ALLOW_GROUP_CHANGE
+	char *gname;
 #endif
 
 	asme = asthem = fastlogin = 0;
@@ -136,7 +143,11 @@ main(int argc, char **argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
+#ifdef ALLOW_GROUP_CHANGE
+			    "Usage: %s [%s] [login[:group] [shell arguments]]\n",
+#else
 			    "Usage: %s [%s] [login [shell arguments]]\n",
+#endif
 			    getprogname(), ARGSTR);
 			exit(EXIT_FAILURE);
 		}
@@ -154,7 +165,7 @@ main(int argc, char **argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
-	if (username == NULL || 
+	if (username == NULL ||
 	    getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
 	    pwd == NULL || pwd->pw_uid != ruid) {
 		if (getpwuid_r(ruid, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
@@ -162,12 +173,11 @@ main(int argc, char **argv)
 	}
 	if (pwd == NULL)
 		errx(EXIT_FAILURE, "who are you?");
-	if ((username = strdup(pwd->pw_name)) == NULL)
-		err(EXIT_FAILURE, "strdup");
+	username = estrdup(pwd->pw_name);
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			(void)estrlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
 			shell = shellbuf;
 		} else {
 			shell = _PATH_BSHELL;
@@ -178,6 +188,19 @@ main(int argc, char **argv)
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv - 1;
 
+#ifdef ALLOW_GROUP_CHANGE
+	if ((p = strchr(user, ':')) != NULL) {
+		*p = '\0';
+		gname = ++p;
+	}
+	else
+		gname = NULL;
+
+#ifdef ALLOW_EMPTY_USER
+	if (user[0] == '\0')
+		user = username;
+#endif
+#endif
 	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
 	    pwd == NULL)
 		errx(EXIT_FAILURE, "unknown login %s", user);
@@ -185,7 +208,7 @@ main(int argc, char **argv)
 	/*
 	 * PAM initialization
 	 */
-#define PAM_END(msg) do { func = msg; goto done; } while (/*CONSTCOND*/0)
+#define PAM_END(msg) do { func = msg; goto done;} /* NOTREACHED */ while (/*CONSTCOND*/0)
 
 	if ((pam_err = pam_start("su", user, &pamc, &pamh)) != PAM_SUCCESS) {
 		if (pamh != NULL)
@@ -211,13 +234,13 @@ main(int argc, char **argv)
 	if ((tty = ttyname(STDERR_FILENO)) != NULL)
 		PAM_SET_ITEM(PAM_TTY, tty);
 
-	/* 
-	 * Authentication 
+	/*
+	 * Authentication
 	 */
 	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
 		syslog(LOG_WARNING, "BAD SU %s to %s%s: %s",
 		    username, user, ontty(), pam_strerror(pamh, pam_err));
-		pam_end(pamh, pam_err);
+		(void)pam_end(pamh, pam_err);
 		errx(EXIT_FAILURE, "Sorry: %s", pam_strerror(pamh, pam_err));
 	}
 
@@ -238,7 +261,7 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * pam_authenticate might have changed the target user. 
+	 * pam_authenticate might have changed the target user.
 	 * refresh pwd and user
 	 */
 	pam_err = pam_get_item(pamh, PAM_USER, &newuser);
@@ -246,28 +269,28 @@ main(int argc, char **argv)
 		syslog(LOG_WARNING,
 		    "pam_get_item(PAM_USER): %s", pam_strerror(pamh, pam_err));
 	} else {
-		user = (char *)newuser;
+		user = (char *)__UNCONST(newuser);
 		if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
 		    pwd == NULL) {
-			pam_end(pamh, pam_err);
+			(void)pam_end(pamh, pam_err);
 			syslog(LOG_ERR, "unknown login: %s", username);
 			errx(EXIT_FAILURE, "unknown login: %s", username);
 		}
 	}
 
 #define ERRX_PAM_END(args) do {			\
-	pam_end(pamh, pam_err);			\
+	(void)pam_end(pamh, pam_err);		\
 	errx args;				\
-} while (/* CONSTOCOND */0)
+} while (/* CONSTCOND */0)
 
 #define ERR_PAM_END(args) do {			\
-	pam_end(pamh, pam_err);			\
+	(void)pam_end(pamh, pam_err);		\
 	err args;				\
-} while (/* CONSTOCOND */0)
-	
+} while (/* CONSTCOND */0)
+
 	/* force the usage of specified class */
 	if (class) {
-		if (ruid) 
+		if (ruid)
 			ERRX_PAM_END((EXIT_FAILURE, "Only root may use -c"));
 
 		pwd->pw_class = class;
@@ -279,7 +302,7 @@ main(int argc, char **argv)
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
-		if (!chshell(pwd->pw_shell) && ruid)
+		if (chshell(pwd->pw_shell) == 0 && ruid)
 			ERRX_PAM_END((EXIT_FAILURE,
 			    "permission denied (shell)."));
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
@@ -304,14 +327,19 @@ main(int argc, char **argv)
 	 * so that other pam modules get a chance to add more when
 	 * we do setcred. Note, we don't relinguish our set-userid yet
 	 */
-	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) < 0)   
+	/* if we aren't changing users, keep the current group members */
+	if (ruid != pwd->pw_uid &&
+	    setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) == -1)
 		ERR_PAM_END((EXIT_FAILURE, "setting user context"));
 
+#ifdef ALLOW_GROUP_CHANGE
+	addgroup(lc, gname, pwd, ruid, "Group Password:");
+#endif
 	if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS)
 		PAM_END("pam_setcred");
 
 	/*
-	 * Manage session. 
+	 * Manage session.
 	 */
 	if (asthem) {
 		pid_t pid, xpid;
@@ -324,11 +352,11 @@ main(int argc, char **argv)
 
 		/*
 		 * In order to call pam_close_session after the
-		 * command terminates, we need to fork. 
+		 * command terminates, we need to fork.
 		 */
 		sa.sa_flags = SA_RESTART;
 		sa.sa_handler = SIG_IGN;
-		sigemptyset(&sa.sa_mask);
+		(void)sigemptyset(&sa.sa_mask);
 		(void)sigaction(SIGINT, &sa, &sa_int);
 		(void)sigaction(SIGQUIT, &sa, &sa_quit);
 		(void)sigaction(SIGPIPE, &sa, &sa_pipe);
@@ -342,7 +370,7 @@ main(int argc, char **argv)
 			warn("pipe failed");
 			goto out;
 		}
-		
+
 		switch (pid = fork()) {
 		case -1:
 			logit("fork failed (%s)", strerror(errno));
@@ -394,21 +422,21 @@ main(int argc, char **argv)
 out:
 			pam_err = pam_setcred(pamh, PAM_DELETE_CRED);
 			if (pam_err != PAM_SUCCESS)
-				logit("pam_setcred: %s", 
+				logit("pam_setcred: %s",
 				    pam_strerror(pamh, pam_err));
 			pam_err = pam_close_session(pamh, 0);
 			if (pam_err != PAM_SUCCESS)
-				logit("pam_close_session: %s", 
+				logit("pam_close_session: %s",
 				    pam_strerror(pamh, pam_err));
-			pam_end(pamh, pam_err);
+			(void)pam_end(pamh, pam_err);
 			exit(WEXITSTATUS(status));
-			break;	
+			break;
 		}
 	}
 
-	/* 
+	/*
 	 * The child: starting here, we don't have to care about
-	 * handling PAM issues if we exit, the parent will do the 
+	 * handling PAM issues if we exit, the parent will do the
 	 * job when we exit.
 	 */
 #undef PAM_END
@@ -420,14 +448,13 @@ out:
 			char **pamenv;
 
 			p = getenv("TERM");
-			/* 
-			 * Create an empty environment 
+			/*
+			 * Create an empty environment
 			 */
-			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(EXIT_FAILURE, NULL);
+			environ = emalloc(sizeof(char *));
 			environ[0] = NULL;
 
-			/* 
+			/*
 			 * Add PAM environement, before the LOGIN_CAP stuff:
 			 * if the login class is unspecified, we'll get the
 			 * same data from PAM, if -c was used, the specified
@@ -436,27 +463,27 @@ out:
 			if ((pamenv = pam_getenvlist(pamh)) != NULL) {
 				char **envitem;
 
-				/* 
-				 * XXX Here FreeBSD filters out 
+				/*
+				 * XXX Here FreeBSD filters out
 				 * SHELL, LOGNAME, MAIL, CDPATH, IFS, PATH
 				 * how could we get untrusted data here?
 				 */
 				for (envitem = pamenv; *envitem; envitem++) {
-					putenv(*envitem);
-					free(*envitem); 
+					(void)putenv(*envitem);
+					free(*envitem);
 				}
 
 				free(pamenv);
 			}
 
-			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH|
-			    LOGIN_SETENV|LOGIN_SETUMASK))
+			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH |
+				LOGIN_SETENV | LOGIN_SETUMASK) == -1)
 				err(EXIT_FAILURE, "setting user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (gohome && chdir(pwd->pw_dir) < 0)
+			if (gohome && chdir(pwd->pw_dir) == -1)
 				errx(EXIT_FAILURE, "no directory");
-		} 
+		}
 
 		if (asthem || pwd->pw_uid) {
 			(void)setenv("LOGNAME", pwd->pw_name, 1);
@@ -469,25 +496,25 @@ out:
 
 	if (iscsh == YES) {
 		if (fastlogin)
-			*np-- = "-f";
+			*np-- = __UNCONST("-f");
 		if (asme)
-			*np-- = "-m";
+			*np-- = __UNCONST("-m");
 	} else {
 		if (fastlogin)
-			unsetenv("ENV");
+			(void)unsetenv("ENV");
 	}
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		(void)estrlcpy(avshellbuf + 1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		(void)estrlcpy(avshellbuf + 1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}
-	*np = avshell;
+	*np = __UNCONST(avshell);
 
 	if (ruid != 0)
 		syslog(LOG_NOTICE, "%s to %s%s",
@@ -500,15 +527,15 @@ out:
 	 * Set user context, except for umask, and the stuff
 	 * we have done before.
 	 */
-	setwhat = LOGIN_SETALL & ~(LOGIN_SETENV|LOGIN_SETUMASK|
-	    LOGIN_SETLOGIN|LOGIN_SETPATH|LOGIN_SETGROUP);
+	setwhat = LOGIN_SETALL & ~(LOGIN_SETENV | LOGIN_SETUMASK |
+	    LOGIN_SETLOGIN | LOGIN_SETPATH | LOGIN_SETGROUP);
 
 	/*
 	 * Don't touch resource/priority settings if -m has been used
 	 * or -l and -c hasn't, and we're not su'ing to root.
 	 */
 	if ((asme || (!asthem && class == NULL)) && pwd->pw_uid)
-		setwhat &= ~(LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
+		setwhat &= ~(LOGIN_SETPRIORITY | LOGIN_SETRESOURCES);
 
 	if (setusercontext(lc, pwd, pwd->pw_uid, setwhat) == -1)
 		err(EXIT_FAILURE, "setusercontext");
@@ -517,7 +544,7 @@ out:
 	err(EXIT_FAILURE, "%s", shell);
 done:
 	logit("%s: %s", func, pam_strerror(pamh, pam_err));
-	pam_end(pamh, pam_err);
+	(void)pam_end(pamh, pam_err);
 	return EXIT_FAILURE;
 }
 
@@ -530,29 +557,4 @@ logit(const char *fmt, ...)
 	vwarnx(fmt, ap);
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-}
-
-
-static int
-chshell(const char *sh)
-{
-	const char *cp;
-
-	setusershell();
-	while ((cp = getusershell()) != NULL)
-		if (!strcmp(cp, sh))
-			return 1;
-	return 0;
-}
-
-static char *
-ontty(void)
-{
-	char *p;
-	static char buf[MAXPATHLEN + 4];
-
-	buf[0] = 0;
-	if ((p = ttyname(STDERR_FILENO)) != NULL)
-		(void)snprintf(buf, sizeof buf, " on %s", p);
-	return buf;
 }
