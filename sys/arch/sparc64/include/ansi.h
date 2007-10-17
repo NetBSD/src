@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.13 2007/09/03 20:31:58 drochner Exp $ */
+/*	$NetBSD: ansi.h,v 1.14 2007/10/17 19:57:29 garbled Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

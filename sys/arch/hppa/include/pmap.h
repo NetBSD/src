@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2007/07/12 14:15:38 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2007/10/17 19:54:41 garbled Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 

@@ -1,3 +1,3 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2007/10/01 20:31:41 ad Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.4 2007/10/17 19:53:04 garbled Exp $	 */
 
 #include <x86/loadfile_machdep.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321reg.h,v 1.5 2007/06/22 04:50:47 simonb Exp $	*/
+/*	$NetBSD: iq80321reg.h,v 1.6 2007/10/17 19:54:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

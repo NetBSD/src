@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.29 2007/09/01 20:11:40 hauke Exp $
+#	$NetBSD: SMALLRAM,v 1.30 2007/10/17 19:55:13 garbled Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a

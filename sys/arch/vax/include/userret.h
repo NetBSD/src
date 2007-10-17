@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.7 2007/10/01 21:23:02 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.8 2007/10/17 19:57:48 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

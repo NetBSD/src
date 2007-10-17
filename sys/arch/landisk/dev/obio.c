@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2007/09/24 22:55:13 uwe Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2007/10/17 19:55:03 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2 2007/09/24 22:55:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2007/10/17 19:55:03 garbled Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"

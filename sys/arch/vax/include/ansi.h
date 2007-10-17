@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.21 2007/09/03 20:31:58 drochner Exp $	*/
+/*	$NetBSD: ansi.h,v 1.22 2007/10/17 19:57:48 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.5 2007/06/29 16:09:04 tsutsui Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.6 2007/10/17 19:54:21 garbled Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.5 2007/06/29 16:09:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.6 2007/10/17 19:54:21 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

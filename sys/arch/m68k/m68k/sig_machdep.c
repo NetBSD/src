@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.35 2007/07/08 10:19:22 pooka Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.36 2007/10/17 19:55:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35 2007/07/08 10:19:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36 2007/10/17 19:55:12 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 

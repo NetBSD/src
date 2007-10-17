@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2007/08/29 22:14:00 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28 2007/10/17 19:58:15 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2007/08/29 22:14:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2007/10/17 19:58:15 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

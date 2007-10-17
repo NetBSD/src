@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 2007/09/15 09:25:22 scw Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16 2007/10/17 19:53:41 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.

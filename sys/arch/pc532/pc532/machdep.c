@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2007/07/08 10:19:23 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2007/10/17 19:56:14 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2007/07/08 10:19:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2007/10/17 19:56:14 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

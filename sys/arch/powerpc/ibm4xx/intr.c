@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2007/07/24 15:22:18 hannken Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2007/10/17 19:56:39 garbled Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2007/07/24 15:22:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2007/10/17 19:56:39 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

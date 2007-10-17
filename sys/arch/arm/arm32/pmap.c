@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2007/10/10 17:44:39 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167 2007/10/17 19:53:31 garbled Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2007/10/10 17:44:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2007/10/17 19:53:31 garbled Exp $");
 
 #ifdef PMAP_DEBUG
 

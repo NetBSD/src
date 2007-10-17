@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $ */
+/* $NetBSD: machdep.c,v 1.300 2007/10/17 19:52:55 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2007/10/17 19:52:55 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

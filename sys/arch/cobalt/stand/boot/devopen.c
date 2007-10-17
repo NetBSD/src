@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2007/08/03 13:15:56 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2007/10/17 19:54:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

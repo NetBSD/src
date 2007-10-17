@@ -1,4 +1,4 @@
-/* $NetBSD: physdev.h,v 1.4 2007/09/23 16:19:37 bouyer Exp $ */
+/* $NetBSD: physdev.h,v 1.5 2007/10/17 19:58:30 garbled Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

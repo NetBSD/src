@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.103 2007/09/24 08:20:16 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.104 2007/10/17 19:57:30 garbled Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.103 2007/09/24 08:20:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.104 2007/10/17 19:57:30 garbled Exp $");
 
 #include "opt_ddb.h"
 

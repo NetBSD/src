@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.22 2007/07/09 20:52:01 ad Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.23 2007/10/17 19:53:15 garbled Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.22 2007/07/09 20:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.23 2007/10/17 19:53:15 garbled Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 

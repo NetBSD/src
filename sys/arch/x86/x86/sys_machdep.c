@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2007/08/29 23:38:06 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 2007/10/17 19:58:17 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2007/08/29 23:38:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2007/10/17 19:58:17 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"

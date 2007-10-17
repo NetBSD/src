@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.3 2007/07/09 20:52:22 ad Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.4 2007/10/17 19:55:35 garbled Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.3 2007/07/09 20:52:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4 2007/10/17 19:55:35 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2007/07/09 20:52:25 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 2007/10/17 19:56:39 garbled Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,10 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2007/07/09 20:52:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2007/10/17 19:56:39 garbled Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -81,6 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2007/07/09 20:52:25 ad Exp $");
 #include <sys/pool.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
+
+#if defined(KGDB)
+#include <sys/kgdb.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -342,7 +347,7 @@ trap(struct trapframe *frame)
 	default:
  brain_damage:
 		printf("trap type 0x%x at 0x%lx\n", type, frame->srr0);
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		if (kdb_trap(type, frame))
 			goto done;
 #endif

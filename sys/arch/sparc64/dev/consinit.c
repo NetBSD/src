@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.23 2007/10/01 14:18:52 martin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.24 2007/10/17 19:57:28 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.23 2007/10/01 14:18:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.24 2007/10/17 19:57:28 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"

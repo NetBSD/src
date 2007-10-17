@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2007/10/02 11:07:20 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2007/10/17 19:53:41 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.

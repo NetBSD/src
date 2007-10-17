@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.18 2007/10/17 19:57:29 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

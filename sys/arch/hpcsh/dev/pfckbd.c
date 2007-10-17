@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.22 2007/09/24 16:16:42 kiyohara Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.23 2007/10/17 19:54:30 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.22 2007/09/24 16:16:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.23 2007/10/17 19:54:30 garbled Exp $");
 
 #include "debug_hpcsh.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.64 2007/07/09 20:52:16 ad Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.65 2007/10/17 19:54:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.64 2007/07/09 20:52:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.65 2007/10/17 19:54:46 garbled Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"

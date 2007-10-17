@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.8 2007/06/04 04:53:44 chs Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.9 2007/10/17 19:57:28 garbled Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on

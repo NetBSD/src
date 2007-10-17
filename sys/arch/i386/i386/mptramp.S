@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.9 2007/05/17 14:51:21 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.10 2007/10/17 19:54:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

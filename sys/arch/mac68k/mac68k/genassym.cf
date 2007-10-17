@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.30 2007/05/17 22:15:23 rjs Exp $
+#	$NetBSD: genassym.cf,v 1.31 2007/10/17 19:55:14 garbled Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.25 2007/09/26 19:48:35 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.26 2007/10/17 19:53:00 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25 2007/09/26 19:48:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.26 2007/10/17 19:53:00 garbled Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"

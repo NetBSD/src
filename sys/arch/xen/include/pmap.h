@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2007/09/04 21:19:11 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2007/10/17 19:58:29 garbled Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*

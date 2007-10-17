@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.6 2007/07/12 22:02:38 he Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.7 2007/10/17 19:54:13 garbled Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.6 2007/07/12 22:02:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.7 2007/10/17 19:54:13 garbled Exp $");
 
 /*
  * LED support for NAPPI.

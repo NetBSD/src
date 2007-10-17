@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2007/07/26 14:54:09 he Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2007/10/17 19:55:46 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

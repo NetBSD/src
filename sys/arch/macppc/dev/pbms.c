@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.6 2007/09/14 07:49:29 aymeric Exp $ */
+/* $Id: pbms.c,v 1.7 2007/10/17 19:55:19 garbled Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén

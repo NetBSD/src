@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2007/08/06 21:26:55 adrianp Exp $
+# $NetBSD: GENERIC,v 1.142 2007/10/17 19:54:22 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	32		# estimated number of users
 

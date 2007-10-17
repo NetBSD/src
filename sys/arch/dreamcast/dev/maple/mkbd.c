@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.24 2007/07/16 12:46:03 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.25 2007/10/17 19:54:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.24 2007/07/16 12:46:03 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.25 2007/10/17 19:54:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

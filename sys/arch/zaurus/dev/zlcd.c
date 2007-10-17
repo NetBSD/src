@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.6 2007/06/28 15:41:09 nonaka Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.7 2007/10/17 19:58:35 garbled Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.6 2007/06/28 15:41:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.7 2007/10/17 19:58:35 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

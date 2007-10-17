@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.39 2007/07/29 12:15:37 ad Exp $	*/
+/*	$NetBSD: mt.c,v 1.40 2007/10/17 19:54:23 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.39 2007/07/29 12:15:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.40 2007/10/17 19:54:23 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

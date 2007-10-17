@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2007/06/17 06:04:27 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2007/10/17 19:54:21 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2004 The NetBSD Foundation, Inc.

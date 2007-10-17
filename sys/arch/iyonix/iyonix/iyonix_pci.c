@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.4 2007/05/12 15:03:08 gavan Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.5 2007/10/17 19:55:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.4 2007/05/12 15:03:08 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.5 2007/10/17 19:55:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.15 2007/07/16 12:22:53 marcus Exp $	*/
+/*	$NetBSD: aica.c,v 1.16 2007/10/17 19:54:10 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.15 2007/07/16 12:22:53 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.16 2007/10/17 19:54:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

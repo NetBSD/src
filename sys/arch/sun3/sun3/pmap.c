@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2007/05/18 10:18:25 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2007/10/17 19:57:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2007/05/18 10:18:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2007/10/17 19:57:46 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

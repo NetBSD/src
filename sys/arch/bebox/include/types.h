@@ -1,5 +1,8 @@
-/*	$NetBSD: types.h,v 1.8 2006/09/15 08:25:02 gdamore Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2007/10/17 19:54:00 garbled Exp $	*/
+
+#define __HAVE_DEVICE_REGISTER
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_TIMECOUNTER
+#define __HAVE_GENERIC_TODR
 
 #include <powerpc/types.h>
-
-#define	__HAVE_GENERIC_TODR

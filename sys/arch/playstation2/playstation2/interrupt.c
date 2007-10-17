@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2007/06/17 06:04:29 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2007/10/17 19:56:14 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2007/06/17 06:04:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2007/10/17 19:56:14 garbled Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR

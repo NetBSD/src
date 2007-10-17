@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.27 2007/09/24 14:16:54 pooka Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.28 2007/10/17 19:55:54 garbled Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.27 2007/09/24 14:16:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.28 2007/10/17 19:55:54 garbled Exp $");
 
 #include "opt_inet.h"
 

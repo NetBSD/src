@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2007/10/08 18:02:57 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2007/10/17 19:55:47 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2007/10/08 18:02:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2007/10/17 19:55:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

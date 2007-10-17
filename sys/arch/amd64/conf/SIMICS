@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.33 2007/09/06 11:05:33 martti Exp $
+#	$NetBSD: SIMICS,v 1.34 2007/10/17 19:53:03 garbled Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #

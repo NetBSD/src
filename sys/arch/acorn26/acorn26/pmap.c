@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.18 2007/07/16 23:48:03 macallan Exp $ */
+/* $NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2007/07/16 23:48:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2007/10/17 19:52:52 garbled Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>

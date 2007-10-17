@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.7 2007/07/26 02:25:14 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.8 2007/10/17 19:57:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.7 2007/07/26 02:25:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.8 2007/10/17 19:57:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

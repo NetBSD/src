@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.44 2007/07/09 20:52:29 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.45 2007/10/17 19:57:12 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.44 2007/07/09 20:52:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.45 2007/10/17 19:57:12 garbled Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"

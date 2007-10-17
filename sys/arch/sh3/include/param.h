@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2007/09/23 23:07:27 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2007/10/17 19:57:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.

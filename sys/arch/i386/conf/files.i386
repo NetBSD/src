@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.315 2007/09/26 19:48:40 ad Exp $
+#	$NetBSD: files.i386,v 1.316 2007/10/17 19:54:44 garbled Exp $
 #
 # new style config file for i386 architecture
 #

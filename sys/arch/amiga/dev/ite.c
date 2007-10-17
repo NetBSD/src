@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.78 2007/07/11 18:59:18 he Exp $ */
+/*	$NetBSD: ite.c,v 1.79 2007/10/17 19:53:17 garbled Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.78 2007/07/11 18:59:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.79 2007/10/17 19:53:17 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

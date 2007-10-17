@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.4 2007/07/09 20:52:37 ad Exp $ */
+/* $NetBSD: ipmivar.h,v 1.5 2007/10/17 19:58:15 garbled Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave

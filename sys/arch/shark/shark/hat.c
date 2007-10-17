@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.5 2007/08/03 16:02:17 jmmv Exp $	*/
+/*	$NetBSD: hat.c,v 1.6 2007/10/17 19:57:10 garbled Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.5 2007/08/03 16:02:17 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.6 2007/10/17 19:57:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

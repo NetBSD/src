@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/09 16:08:58 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3 2007/10/17 19:58:34 garbled Exp $
 
 # Makefile for zaurus tags file and boot blocks
 

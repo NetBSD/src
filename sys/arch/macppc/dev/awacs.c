@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.30 2007/08/14 16:18:20 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.31 2007/10/17 19:55:17 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.30 2007/08/14 16:18:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.31 2007/10/17 19:55:17 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -349,7 +349,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		cirq = ca->ca_intr[0];
 		oirq = ca->ca_intr[1];
 		iirq = ca->ca_intr[2];
-		cirq_type = oirq_type = iirq_type = IST_LEVEL;
+		cirq_type = oirq_type = iirq_type = IST_EDGE;
 	}
 
 	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
@@ -1064,7 +1064,7 @@ awacs_trigger_output(void *h, void *start, void *end, int bsize,
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
 
 	dbdma_start(sc->sc_odma, sc->sc_odmacmd);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.23 2007/09/26 19:48:43 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.24 2007/10/17 19:58:17 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.23 2007/09/26 19:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.24 2007/10/17 19:58:17 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */

@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.13 2007/05/12 06:17:38 isaki Exp $
+|	$NetBSD: vectors.s,v 1.14 2007/10/17 19:58:05 garbled Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993

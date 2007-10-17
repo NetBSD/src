@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.118 2007/06/10 05:59:42 tsutsui Exp $
+#	$NetBSD: files.mac68k,v 1.119 2007/10/17 19:55:13 garbled Exp $
 
 # mac68k-specific configuration info
 

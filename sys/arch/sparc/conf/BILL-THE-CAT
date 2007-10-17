@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.41 2007/06/02 17:16:12 uwe Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.42 2007/10/17 19:57:10 garbled Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"

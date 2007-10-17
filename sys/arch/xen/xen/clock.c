@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2007/07/10 16:27:58 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.40 2007/10/17 19:58:32 garbled Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2007/07/10 16:27:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2007/10/17 19:58:32 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

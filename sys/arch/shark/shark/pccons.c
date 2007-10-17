@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.33 2007/07/29 18:01:11 jmmv Exp $       */
+/*      $NetBSD: pccons.c,v 1.34 2007/10/17 19:57:10 garbled Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.33 2007/07/29 18:01:11 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.34 2007/10/17 19:57:10 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"

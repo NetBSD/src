@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.15 2007/09/01 14:27:56 jmmv Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.16 2007/10/17 19:55:15 garbled Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.15 2007/09/01 14:27:56 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.16 2007/10/17 19:55:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

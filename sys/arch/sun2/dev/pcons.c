@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.14 2007/07/09 20:52:33 ad Exp $	*/
+/*	$NetBSD: pcons.c,v 1.15 2007/10/17 19:57:43 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.14 2007/07/09 20:52:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.15 2007/10/17 19:57:43 garbled Exp $");
 
 #include "opt_ddb.h"
 

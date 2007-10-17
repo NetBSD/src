@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 2007/05/26 00:08:32 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 2007/10/17 19:55:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2007/05/26 00:08:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 2007/10/17 19:55:12 garbled Exp $");
 
 #include "opt_coredump.h"
 

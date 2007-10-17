@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.2 2007/05/12 20:59:19 christos Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.3 2007/10/17 19:53:03 garbled Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")

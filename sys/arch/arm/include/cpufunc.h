@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.41 2007/09/15 09:25:22 scw Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.42 2007/10/17 19:53:41 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

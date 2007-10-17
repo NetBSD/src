@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.17 2007/09/26 19:48:44 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2007/10/17 19:58:29 garbled Exp $	*/
 
 #include <x86/cpufunc.h>
 

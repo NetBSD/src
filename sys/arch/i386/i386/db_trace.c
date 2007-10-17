@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.57 2007/08/05 19:27:45 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.58 2007/10/17 19:54:45 garbled Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57 2007/08/05 19:27:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.58 2007/10/17 19:54:45 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

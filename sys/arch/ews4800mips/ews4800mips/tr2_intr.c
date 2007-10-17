@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.5 2007/06/26 13:20:19 tsutsui Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.6 2007/10/17 19:54:21 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.5 2007/06/26 13:20:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.6 2007/10/17 19:54:21 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23 2007/07/29 12:15:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.24 2007/10/17 19:53:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.14 2007/07/01 20:12:35 xtraeme Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.15 2007/10/17 19:58:14 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

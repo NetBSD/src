@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.23 2007/07/10 16:23:26 he Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.24 2007/10/17 19:58:20 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

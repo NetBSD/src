@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5 2007/05/17 14:51:13 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.6 2007/10/17 19:53:00 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

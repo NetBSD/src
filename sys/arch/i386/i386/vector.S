@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.26 2007/09/17 21:41:53 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.27 2007/10/17 19:54:47 garbled Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.

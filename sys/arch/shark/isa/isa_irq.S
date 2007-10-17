@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.8 2007/08/13 01:55:31 tsutsui Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.9 2007/10/17 19:57:09 garbled Exp $	*/
 
 /*
  * Copyright 1997

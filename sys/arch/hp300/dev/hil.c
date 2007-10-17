@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.77 2007/09/30 12:24:48 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.78 2007/10/17 19:54:23 garbled Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.77 2007/09/30 12:24:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.78 2007/10/17 19:54:23 garbled Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"

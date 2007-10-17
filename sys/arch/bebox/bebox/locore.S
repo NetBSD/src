@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2007/10/17 19:53:58 garbled Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -141,8 +141,8 @@ __start_cpu1_loop:
 	bne	__start_cpu1_loop
 	lis	8, 0x8000
 	ori	8, 8, 0x0c00
-	lis	9,_C_LABEL(cpl)@ha
-	lwz	9,_C_LABEL(cpl)@l(9)
+	lis	9,_C_LABEL(cpu_info)+CI_CPL@ha
+	lwz	9,_C_LABEL(cpu_info)+CI_CPL@l(9)
 	stb	9, 0(8)
 #endif
 	b	__start_cpu1

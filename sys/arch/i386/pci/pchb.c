@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
+/*	$NetBSD: pchb.c,v 1.66 2007/10/17 19:54:58 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.66 2007/10/17 19:54:58 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.36 2007/07/12 20:39:01 he Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.37 2007/10/17 19:54:23 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.36 2007/07/12 20:39:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.37 2007/10/17 19:54:23 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

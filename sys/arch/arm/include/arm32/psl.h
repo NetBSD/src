@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 2007/08/08 10:30:50 tsutsui Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 2007/10/17 19:53:42 garbled Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

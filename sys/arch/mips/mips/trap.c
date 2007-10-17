@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.213 2007/08/15 12:07:25 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.214 2007/10/17 19:55:39 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213 2007/08/15 12:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.214 2007/10/17 19:55:39 garbled Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"

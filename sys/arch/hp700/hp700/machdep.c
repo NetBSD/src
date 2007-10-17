@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2007/09/24 10:51:11 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2007/10/17 19:54:27 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2007/09/24 10:51:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2007/10/17 19:54:27 garbled Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"

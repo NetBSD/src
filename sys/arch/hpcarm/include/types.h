@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.11 2007/07/14 21:48:19 ad Exp $ */
+/* $NetBSD: types.h,v 1.12 2007/10/17 19:54:28 garbled Exp $ */
 
 #ifndef _HPCARM_TYPES_H_
 #define	_HPCARM_TYPES_H_

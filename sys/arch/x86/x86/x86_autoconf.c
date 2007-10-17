@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.29 2007/08/27 14:41:03 xtraeme Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.30 2007/10/17 19:58:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.29 2007/08/27 14:41:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.30 2007/10/17 19:58:18 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

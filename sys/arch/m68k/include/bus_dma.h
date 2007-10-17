@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.9 2007/06/07 15:54:08 tsutsui Exp $ */
+/* $NetBSD: bus_dma.h,v 1.10 2007/10/17 19:55:05 garbled Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h

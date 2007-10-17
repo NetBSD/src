@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2007/05/17 14:51:17 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2007/10/17 19:54:14 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2007/05/17 14:51:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2007/10/17 19:54:14 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

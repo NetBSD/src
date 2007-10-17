@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.29 2007/06/16 20:06:52 dsl Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.29 2007/06/16 20:06:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.30 2007/10/17 19:53:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

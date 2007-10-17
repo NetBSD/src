@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.34 2007/07/09 20:52:09 ad Exp $	*/
+/*	$NetBSD: maple.c,v 1.35 2007/10/17 19:54:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.34 2007/07/09 20:52:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35 2007/10/17 19:54:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

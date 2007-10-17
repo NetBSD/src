@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.22 2007/08/26 22:30:23 dyoung Exp $ */
+/* $NetBSD: if_aumac.c,v 1.23 2007/10/17 19:55:35 garbled Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.22 2007/08/26 22:30:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.23 2007/10/17 19:55:35 garbled Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2007/05/21 15:06:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2007/10/17 19:54:07 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2007/05/21 15:06:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2007/10/17 19:54:07 garbled Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"

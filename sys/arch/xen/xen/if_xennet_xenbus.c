@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.18 2007/08/26 22:32:46 dyoung Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.19 2007/10/17 19:58:32 garbled Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.18 2007/08/26 22:32:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.19 2007/10/17 19:58:32 garbled Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"

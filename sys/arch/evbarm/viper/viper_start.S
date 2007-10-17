@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_start.S,v 1.4 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: viper_start.S,v 1.5 2007/10/17 19:54:14 garbled Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.

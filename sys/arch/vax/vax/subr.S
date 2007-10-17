@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.17 2007/05/17 14:51:34 yamt Exp $	   */
+/*	$NetBSD: subr.S,v 1.18 2007/10/17 19:58:00 garbled Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.

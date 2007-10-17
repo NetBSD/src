@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.34 2007/06/01 14:23:50 nisimura Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.35 2007/10/17 19:56:48 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.34 2007/06/01 14:23:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.35 2007/10/17 19:56:48 garbled Exp $");
 
 #include "opt_altivec.h"
 

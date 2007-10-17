@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 2007/06/04 23:15:01 xtraeme Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12 2007/10/17 19:53:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 2007/06/04 23:15:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 2007/10/17 19:53:02 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

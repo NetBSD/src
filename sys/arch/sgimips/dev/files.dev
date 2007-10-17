@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.8 2007/09/26 05:49:09 macallan Exp $
+#	$NetBSD: files.dev,v 1.9 2007/10/17 19:57:04 garbled Exp $
 
 define giobus {}
 

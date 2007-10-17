@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2007/05/11 01:40:18 rumble Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10 2007/10/17 19:57:04 garbled Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

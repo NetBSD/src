@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.5 2007/09/23 16:54:08 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.6 2007/10/17 19:58:29 garbled Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser

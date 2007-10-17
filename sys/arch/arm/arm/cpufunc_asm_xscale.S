@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.17 2007/09/15 09:25:21 scw Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.18 2007/10/17 19:53:29 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.

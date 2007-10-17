@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.8 2007/09/29 18:33:51 scw Exp $ */
+/* $Id: if_ae.c,v 1.9 2007/10/17 19:55:35 garbled Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.8 2007/09/29 18:33:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.9 2007/10/17 19:55:35 garbled Exp $");
 
 #include "bpfilter.h"
 

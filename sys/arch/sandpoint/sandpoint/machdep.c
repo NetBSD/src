@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2007/10/17 19:57:00 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/10/17 19:57:00 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>
@@ -66,158 +64,161 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/09 21:55:11 ad Exp $");
 #include <net/netisr.h>
 
 #include <machine/bus.h>
-#include <machine/db_machdep.h>
 #include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/bootinfo.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
+#include <powerpc/pic/picvar.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
 
 #include <dev/cons.h>
-
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-
-#include "isa.h"
-#if (NISA > 0)
-void isa_intr_init(void);
-#endif
+#include <sys/termios.h>
 
 #include "com.h"
 #if (NCOM > 0)
-#include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
 
+#include "com_eumb.h"
+#if (NCOM_EUMB > 0)
+#include <sandpoint/sandpoint/eumbvar.h>
+#endif
+
+#include "pcib.h"
 #include "ksyms.h"
 
-/*
- * Global variables used here and there
- */
+char bootinfo[BOOTINFO_MAXSIZE];
+
+void initppc(u_int, u_int, u_int, void *);
+void consinit(void);
+void sandpoint_bus_space_init(void);
+size_t mpc107memsize(void);
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
-char *bootpath;
-unsigned char *eumb_base;
-
-paddr_t avail_end;			/* XXX temporary */
-
-void initppc __P((u_int, u_int, u_int, void *)); /* Called from locore */
-void strayintr __P((int));
-void lcsplx __P((int));
+paddr_t avail_end;
+struct pic_ops *isa_pic = NULL;
+extern int primary_pic;
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 extern void *startsym, *endsym;
 #endif
-void consinit(void);
-void ext_intr(void);
-void sandpoint_bus_space_init(void);
+
+#if 1
+extern struct consdev kcomcons;
+#endif
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
+	struct btinfo_magic *bi_magic = btinfo;
 
-#if 1
-	{ extern unsigned char *edata, *end;
-	  memset(&edata, 0, (u_int) &end - (u_int) &edata);
-	}
-#endif
-
+	if ((unsigned)btinfo != 0 && (unsigned)btinfo < startkernel
+	    && bi_magic->magic == BOOTINFO_MAGIC)
+		memcpy(bootinfo, btinfo, sizeof(bootinfo));
+	else
+		args = RB_SINGLE;	/* boot via S-record loader */
+		
 	/*
-	 * Hardcode 32MB for now--we should probe for this or get it
-	 * from a boot loader, but for now, we are booting via an
-	 * S-record loader.
+	 * Determine real size by analysing SDRAM control registers. 
 	 */
-	{	/* XXX AKB */
-		u_int32_t	physmemsize;
+	{
+		struct btinfo_memory *meminfo;
+		size_t memsize;
 
-		physmemsize = 32 * 1024 * 1024;
+		meminfo = lookup_bootinfo(BTINFO_MEMORY);
+		if (meminfo)
+			memsize = meminfo->memsize & ~PGOFSET;
+		else
+			memsize = mpc107memsize();
 		physmemr[0].start = 0;
-		physmemr[0].size = physmemsize;
-		physmemr[1].size = 0;
+		physmemr[0].size = memsize;
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-		availmemr[0].size = physmemsize - availmemr[0].start;
-		availmemr[1].size = 0;
+		availmemr[0].size = memsize - availmemr[0].start;
 	}
 	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
 	 * Get CPU clock
 	 */
-	{	/* XXX AKB */
+	{
+		struct btinfo_clock *clockinfo;
+		u_long ticks;
 		extern u_long ticks_per_sec, ns_per_tick;
 
-		ticks_per_sec = 100000000;	/* 100 MHz */
-		/* ticks_per_sec = 66000000;	* 66 MHz */
-		ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
-		cpu_timebase = ticks_per_sec;
+		ticks = 1000000000;	/* 100 MHz */
+		ticks /= 4;		/* 4 cycles per DEC tick */
+		clockinfo = lookup_bootinfo(BTINFO_CLOCK);
+		if (clockinfo)
+			ticks = clockinfo->ticks_per_sec;
+		ticks_per_sec = ticks;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
 	/*
 	 * boothowto
 	 */
-	boothowto = RB_SINGLE;
-
-	sandpoint_bus_space_init();
-
-consinit();
-printf("avail_end %x\n", (unsigned) avail_end);
-printf("availmemr[0].start %x\n", (unsigned) availmemr[0].start);
-printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
+	boothowto = args;
 
 	/*
-	 * Initialize BAT registers.  Map the EUMB MEMORY 1M area to the
-	 * end of the address space This includes the PCI/ISA 16M I/O space,
-	 * PCI configuration registers, etc.
+	 * Now setup fixed bat registers
+	 * We setup a pair of BAT to have "Map B" layout, one for the
+	 * PCI memory space, another to cover many; MPC107/MPC824x EUMB,
+	 * ISA mem, PCI/ISA I/O, PCI configuration, PCI interrupt
+	 * acknowledge and flash/ROM space.
 	 */
 	oea_batinit(
-	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_64M,
-	    SANDPOINT_BUS_SPACE_MEM,  BAT_BL_256M,
+	    0x80000000, BAT_BL_256M,	/* SANDPOINT_BUS_SPACE_MEM */
+	    0xfc000000, BAT_BL_64M,	/* _EUMB|_IO */
 	    0);
 
-	eumb_base = (unsigned char *) SANDPOINT_BUS_SPACE_EUMB;
-
-
+#if 0 /* found harmful in mystery. assume bootloader has done well. */
 	/*
-	 * Set up trap vectors and interrupt handler
-	 */
-	oea_init(ext_intr);
-
-	/*
-	 * Set EUMB base address
+	 * Set EUMB base address.
 	 */
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0x80000078);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, SANDPOINT_BUS_SPACE_EUMB);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
-
-	openpic_init(eumb_base + 0x40000);
-#if (NISA > 0)
-	isa_intr_init();
 #endif
 
-        /*
-	 * Set the page size.
-	 */
+	/* Install vectors and interrupt handler */
+	oea_init(NULL);
+
+#if 1 /* bumpy ride in pre-dawn time, for people knows what he/she is doing */
+	cn_tab = &kcomcons;
+	(*cn_tab->cn_init)(&kcomcons);
+
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
+
+	out32rb(0xfec00000, (1U<<31) | 0x78);
+	printf("00:00:00 0x78 = %08x\n", in32rb(0xfee00000));
+#endif
+
+	/* Initialize bus_space */
+	sandpoint_bus_space_init();
+
+	/* Initialize the console */
+	consinit();
+
+	/* Set the page size */
 	uvm_setpagesize();
 
-	/*
-	 * Initialize pmap module.
-	 */
+	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if 0 /* NKSYMS || defined(DDB) || defined(LKM) */
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB
@@ -233,6 +234,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 void
 mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
+
 	*mem = physmemr;
 	*avail = availmemr;
 }
@@ -244,8 +246,32 @@ void
 cpu_startup(void)
 {
 	int msr;
+	void *baseaddr;
 
+	/*
+	 * Do common startup.
+	 */
 	oea_startup(NULL);
+
+	/*
+	 * Prepare EPIC and install external interrupt handler.
+	 *  0..15	used by South bridge i8259 PIC if exists.
+	 *  16..39/41	EPIC interrupts, 24 source or 26 source.
+	 */
+	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
+	pic_init();
+#if NPCIB > 0
+	/* set up i8259 as a cascade on EPIC irq 0 */
+	isa_pic = setup_i8259();
+	(void)setup_openpic(baseaddr, 0);
+	primary_pic = 1;
+	/* XXX exceptional SP2 has 17 XXX */
+	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
+#else
+	primary_pic = 0;
+	(void)setup_openpic(baseaddr, 0);
+#endif
+	oea_install_extint(pic_ext_intr);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -262,42 +288,71 @@ cpu_startup(void)
 }
 
 /*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(int type)
+{
+	struct btinfo_common *bt;
+	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
+
+	if (help->next == 0)
+		return (NULL);	/* bootinfo[] was not made */ 
+	do {
+		bt = help;
+		if (bt->type == type)
+			return (help);
+		help = (struct btinfo_common *)((char*)help + bt->next);
+	} while (bt->next &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_MAXSIZE);
+
+	return (NULL);
+}
+
+/*
  * consinit
  * Initialize system console.
  */
 void
 consinit(void)
 {
+	struct btinfo_console *consinfo;
+	struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
 	static int initted;
-#if (NCOM > 0)
-	bus_space_tag_t tag;
-#endif
 
 	if (initted)
 		return;
 	initted = 1;
 
+	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
+	if (consinfo == NULL)
+		consinfo = &bi_cons;
+
 #if (NCOM > 0)
-	tag = &sandpoint_isa_io_bs_tag;
-
-	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ, COM_TYPE_NORMAL,
-	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
-		panic("can't init serial console");
-	else
+	if (strcmp(consinfo->devname, "com") == 0) {
+		bus_space_tag_t tag = &genppc_isa_io_space_tag;
+		if (comcnattach(tag, consinfo->addr, consinfo->speed,
+		    COM_FREQ, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init com serial console");
 		return;
+	}
 #endif
+#if (NCOM_EUMB > 0)
+	if (strcmp(consinfo->devname, "eumb") == 0) {
+		bus_space_tag_t tag = &sandpoint_eumb_space_tag;
+		extern u_long ticks_per_sec;
 
+		if (eumbcnattach(tag, consinfo->addr, consinfo->speed,
+		    4 * ticks_per_sec, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init eumb serial console");
+		return;
+	}
+#endif
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
-}
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
 }
 
 /*
@@ -307,74 +362,64 @@ void
 cpu_reboot(int howto, char *what)
 {
 	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
+	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
+		syncing = 1; 
 		vfs_shutdown();		/* sync */
 		resettodr();		/* set wall clock */
-	}
-	splhigh();
-	if (howto & RB_HALT) {
-		doshutdownhooks();
-		printf("halted\n\n");
-		while(1);
-	}
-	if (!cold && (howto & RB_DUMP))
+	}	    
+	
+	/* Disable intr */
+	splhigh();	
+	
+	/* Do dump if requested */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		oea_dumpsys();
+	
 	doshutdownhooks();
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
+	 
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		cngetc();  
+		cnpollc(0);
 	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
+    
+	printf("rebooting...\n\n");
+
 #if 1
-{ extern void sandpoint_reboot __P((void));
+{ extern void sandpoint_reboot(void);
 	sandpoint_reboot();
 }
 #endif
 	while (1);
 }
 
-void
-lcsplx(int ipl)
-{
-	splx(ipl);
-}
-
-struct powerpc_bus_space sandpoint_io_bs_tag = {
+struct powerpc_bus_space sandpoint_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0xfe000000, 0x00000000, 0x00c00000,
 };
-struct powerpc_bus_space sandpoint_isa_io_bs_tag = {
+struct powerpc_bus_space genppc_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0xfe000000, 0x00000000, 0x00010000,
 };
-struct powerpc_bus_space sandpoint_mem_bs_tag = {
+struct powerpc_bus_space sandpoint_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0x80000000, 0xfe000000,
+	0x00000000, 0x80000000, 0xfbffffff,
 };
-struct powerpc_bus_space sandpoint_isa_mem_bs_tag = {
+struct powerpc_bus_space genppc_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0xfd000000, 0xfe000000,
 };
+struct powerpc_bus_space sandpoint_eumb_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xfc000000, 0x00000000, 0x00100000,
+};
 
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+static char ex_storage[5][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
 void
@@ -382,31 +427,198 @@ sandpoint_bus_space_init(void)
 {
 	int error;
 
-	error = bus_space_init(&sandpoint_io_bs_tag, "ioport",
+	error = bus_space_init(&sandpoint_io_space_tag, "ioport",
 	    ex_storage[0], sizeof(ex_storage[0]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init ioport tag");
+		panic("sandpoint_bus_space_init: can't init io tag");
 
-	error = extent_alloc_region(sandpoint_io_bs_tag.pbs_extent,
-	    0x00010000, 0x7F0000, EX_NOWAIT);
+	error = extent_alloc_region(sandpoint_io_space_tag.pbs_extent,
+	    0x10000, 0x7fffff, EX_NOWAIT);
 	if (error)
-		panic("sandpoint_bus_space_init: can't block out reserved"
-		    " I/O space 0x10000-0x7fffff: error=%d", error);
+		panic("sandpoint_bus_space_init: can't block out reserved I/O"
+		    " space 0x10000-0x7fffff: error=%d", error);
 
-	sandpoint_isa_io_bs_tag.pbs_extent = sandpoint_io_bs_tag.pbs_extent;
-	error = bus_space_init(&sandpoint_isa_io_bs_tag, "isa-iomem",
+	error = bus_space_init(&sandpoint_mem_space_tag, "iomem",
 	    ex_storage[1], sizeof(ex_storage[1]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init isa iomem tag");
+		panic("sandpoint_bus_space_init: can't init mem tag");
 
-	error = bus_space_init(&sandpoint_mem_bs_tag, "iomem",
+	error = bus_space_init(&genppc_isa_io_space_tag, "isa-ioport",
 	    ex_storage[2], sizeof(ex_storage[2]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init iomem tag");
+		panic("sandpoint_bus_space_init: can't init isa io tag");
 
-	sandpoint_isa_mem_bs_tag.pbs_extent = sandpoint_mem_bs_tag.pbs_extent;
-	error = bus_space_init(&sandpoint_isa_mem_bs_tag, "isa-iomem",
+	error = bus_space_init(&genppc_isa_mem_space_tag, "isa-iomem",
 	    ex_storage[3], sizeof(ex_storage[3]));
 	if (error)
-		panic("sandpoint_bus_space_init: can't init isa iomem tag");
+		panic("sandpoint_bus_space_init: can't init isa mem tag");
+
+	error = bus_space_init(&sandpoint_eumb_space_tag, "eumb",
+	    ex_storage[4], sizeof(ex_storage[4]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init eumb tag");
+}
+
+#define MPC107_EUMBBAR		0x78	/* Eumb base address */
+#define MPC107_MEMENDADDR1	0x90	/* Memory ending address 1 */
+#define MPC107_EXTMEMENDADDR1	0x98	/* Extd. memory ending address 1 */
+#define MPC107_MEMEN		0xa0	/* Memory enable */
+
+size_t
+mpc107memsize(void)
+{
+	/*
+	 * assumptions here;
+	 * - first 4 sets of SDRAM controlling register have been
+	 * set right in the ascending order.
+	 * - total SDRAM size is the last valid SDRAM address +1.
+	 */
+	unsigned val, n, bankn, end;
+
+	out32rb(0xfec00000, (1U<<31) | MPC107_MEMEN);
+	val = in32rb(0xfee00000);
+	if ((val & 0xf) == 0)
+		return 32 * 1024 * 1024; /* eeh? */
+
+	bankn = 0;
+	for (n = 0; n < 4; n++) {
+		if ((val & (1U << n)) == 0)
+			break;
+		bankn = n;
+	}
+	bankn = bankn * 8;
+
+	/* the format is "00 xx xxxxxxxx << 20" */
+	out32rb(0xfec00000, (1U<<31) | MPC107_EXTMEMENDADDR1); /* bit 29:28 */
+	val = in32rb(0xfee00000);
+	end =  ((val >> bankn) & 0x03) << 28;
+	out32rb(0xfec00000, (1U<<31) | MPC107_MEMENDADDR1);    /* bit 27:20 */
+	val = in32rb(0xfee00000);
+	end |= ((val >> bankn) & 0xff) << 20;
+	end |= 0xfffff;					       /* bit 19:00 */
+
+	return (end + 1); /* recongize this as the amount of SDRAM */
+}
+
+/* XXX needs to make openpic.c implementation-neutral XXX */
+
+unsigned epicsteer[] = {
+	0x10200,	/* external irq 0 direct/serial */
+	0x10220,	/* external irq 1 direct/serial */
+	0x10240,	/* external irq 2 direct/serial */
+	0x10260,	/* external irq 3 direct/serial */
+	0x10280,	/* external irq 4 direct/serial */
+	0x102a0,	/* external irq 5 serial mode */
+	0x102c0,	/* external irq 6 serial mode */
+	0x102e0,	/* external irq 7 serial mode */
+	0x10300,	/* external irq 8 serial mode */
+	0x10320,	/* external irq 9 serial mode */
+	0x10340,	/* external irq 10 serial mode */
+	0x10360,	/* external irq 11 serial mode */
+	0x10380,	/* external irq 12 serial mode */
+	0x103a0,	/* external irq 13 serial mode */
+	0x103c0,	/* external irq 14 serial mode */
+	0x103e0,	/* external irq 15 serial mode */
+	0x11020,	/* I2C */
+	0x11040,	/* DMA 0 */
+	0x11060,	/* DMA 1 */
+	0x110c0,	/* MU/I2O */
+	0x01120,	/* Timer 0 */
+	0x01160,	/* Timer 1 */
+	0x011a0,	/* Timer 2 */
+	0x011e0,	/* Timer 3 */
+	0x11120,	/* DUART 0, MPC8245 */
+	0x11140,	/* DUART 1, MPC8245 */
+};
+
+/* XXX XXX debug purpose only XXX XXX */
+
+static dev_type_cninit(kcomcninit);
+static dev_type_cngetc(kcomcngetc);
+static dev_type_cnputc(kcomcnputc);
+static dev_type_cnpollc(kcomcnpollc);
+
+struct consdev kcomcons = {
+	NULL, kcomcninit, kcomcngetc, kcomcnputc, kcomcnpollc, NULL,
+	NULL, NULL, NODEV, CN_NORMAL
+};
+
+static unsigned uartbase = 0xfe0003f8;
+#define THR		0
+#define RBR		0
+#define LSR		5
+#define LSR_THRE	0x20
+#define UART_READ(r)		*(volatile char *)(uartbase + (r))
+#define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
+#define LSR_RFE		0x80
+#define LSR_TXEMPTY		0x20
+#define LSR_BE			0x10
+#define LSR_FE			0x08
+#define LSR_PE			0x04
+#define LSR_OE			0x02
+#define LSR_RXREADY		0x01
+#define LSR_ANYE		(LSR_OE|LSR_PE|LSR_FE|LSR_BE)
+
+static void
+kcomcninit(struct consdev *cn)
+{
+	struct btinfo_console *bi = lookup_bootinfo(BTINFO_CONSOLE);
+
+	if (bi != NULL) {
+		if (strcmp(bi->devname, "com") == 0)
+			uartbase = 0xfe000000 + bi->addr;
+		else if (strcmp(bi->devname, "eumb") == 0)
+			uartbase = 0xfc000000 + bi->addr;
+	}
+	/*
+	 * we do not touch UART operating parameters since bootloader
+	 * is supposed to have done well.
+	 */
+}
+
+static int
+kcomcngetc(dev_t dev)
+{
+	unsigned lsr;
+	int s, c;
+
+	s = splserial();
+#if 1
+	do {
+		lsr = UART_READ(LSR);
+	} while ((lsr & LSR_ANYE) || (lsr & LSR_RXREADY) == 0);
+#else
+    again:
+	do {
+		lsr = UART_READ(LSR);
+	} while ((lsr & LSR_RXREADY) == 0);
+	if (lsr & (LSR_BE | LSR_FE | LSR_PE)) {
+		(void)UART_READ(RBR);
+		goto again;
+	}
+#endif
+	c = UART_READ(RBR);
+	splx(s);
+	return c & 0xff;
+}
+
+static void
+kcomcnputc(dev_t dev, int c)
+{
+	unsigned lsr, timo;
+	int s;
+
+	s = splserial();
+	timo = 150000;
+	do {
+		lsr = UART_READ(LSR);
+	} while (timo-- > 0 && (lsr & LSR_TXEMPTY) == 0);
+	if (timo > 0)
+		UART_WRITE(THR, c);
+	splx(s);
+}
+
+static void
+kcomcnpollc(dev_t dev, int on)
+{
 }

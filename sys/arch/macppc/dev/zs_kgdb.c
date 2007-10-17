@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.6 2007/06/23 15:32:56 hauke Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7 2007/10/17 19:55:20 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2007/06/23 15:32:56 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.7 2007/10/17 19:55:20 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

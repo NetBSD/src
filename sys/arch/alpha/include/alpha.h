@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.21 2007/05/17 14:51:13 yamt Exp $ */
+/* $NetBSD: alpha.h,v 1.22 2007/10/17 19:52:57 garbled Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993

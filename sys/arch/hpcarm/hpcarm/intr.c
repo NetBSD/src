@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2007/08/08 10:43:03 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 2007/10/17 19:54:28 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/08/08 10:43:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2007/10/17 19:54:28 garbled Exp $");
 
 #include "opt_irqstats.h"
 

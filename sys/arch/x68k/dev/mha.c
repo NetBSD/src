@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.45 2007/05/12 06:31:19 isaki Exp $	*/
+/*	$NetBSD: mha.c,v 1.46 2007/10/17 19:58:02 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.45 2007/05/12 06:31:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.46 2007/10/17 19:58:02 garbled Exp $");
 
 #include "opt_ddb.h"
 

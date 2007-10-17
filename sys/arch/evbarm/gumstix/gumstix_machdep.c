@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.6 2007/09/16 14:04:16 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.7 2007/10/17 19:54:12 garbled Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.

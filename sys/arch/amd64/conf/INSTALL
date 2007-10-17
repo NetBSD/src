@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.72 2007/09/06 10:24:14 martti Exp $
+# $NetBSD: INSTALL,v 1.73 2007/10/17 19:53:03 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.72 $"
+#ident 		"INSTALL-$Revision: 1.73 $"
 
 maxusers	32		# estimated number of users
 

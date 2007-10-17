@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6 2007/08/03 13:15:56 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.7 2007/10/17 19:54:09 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

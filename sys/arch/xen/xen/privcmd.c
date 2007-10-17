@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.18 2007/07/22 08:50:26 ad Exp $ */
+/* $NetBSD: privcmd.c,v 1.19 2007/10/17 19:58:33 garbled Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18 2007/07/22 08:50:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.19 2007/10/17 19:58:33 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.6 2007/07/22 02:14:39 tsutsui Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.7 2007/10/17 19:52:57 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2007/07/22 02:14:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7 2007/10/17 19:52:57 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

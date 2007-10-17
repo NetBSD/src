@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2007/08/15 12:07:27 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.7 2007/10/17 19:58:00 garbled Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2007/08/15 12:07:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2007/10/17 19:58:00 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 

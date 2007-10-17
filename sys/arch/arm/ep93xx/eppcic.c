@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.2 2007/07/09 20:52:05 ad Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.3 2007/10/17 19:53:40 garbled Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.2 2007/07/09 20:52:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.3 2007/10/17 19:53:40 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

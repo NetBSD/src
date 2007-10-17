@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.4 2007/09/16 18:37:34 ragge Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.5 2007/10/17 19:58:15 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

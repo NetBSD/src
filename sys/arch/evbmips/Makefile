@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/06/24 01:03:35 dyoung Exp $
+#	$NetBSD: Makefile,v 1.6 2007/10/17 19:54:14 garbled Exp $
 
 # Makefile for evbmips tags file and boot blocks
 

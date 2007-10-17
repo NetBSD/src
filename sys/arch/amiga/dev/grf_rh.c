@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.49 2007/08/20 19:23:50 is Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.50 2007/10/17 19:53:16 garbled Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.49 2007/08/20 19:23:50 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.50 2007/10/17 19:53:16 garbled Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.3 2007/05/19 14:26:08 tsutsui Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.4 2007/10/17 19:56:54 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.11 2007/07/21 11:59:56 tsutsui Exp $ */
+/* $NetBSD: mcclock.c,v 1.12 2007/10/17 19:52:56 garbled Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.11 2007/07/21 11:59:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.12 2007/10/17 19:52:56 garbled Exp $");
 
 #include "opt_clock_compat_osf1.h"
 

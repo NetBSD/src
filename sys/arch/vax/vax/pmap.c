@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2007/05/17 14:51:34 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.151 2007/10/17 19:57:59 garbled Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2007/05/17 14:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2007/10/17 19:57:59 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

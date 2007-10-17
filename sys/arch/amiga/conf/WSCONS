@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.61 2007/09/07 10:08:35 lukem Exp $
+# $NetBSD: WSCONS,v 1.62 2007/10/17 19:53:14 garbled Exp $
 
 # GENERIC with wscons(4)
 #

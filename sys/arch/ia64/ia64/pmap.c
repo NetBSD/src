@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2007/07/16 23:48:04 macallan Exp $ */
+/* $NetBSD: pmap.c,v 1.10 2007/10/17 19:54:59 garbled Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2007/07/16 23:48:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2007/10/17 19:54:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

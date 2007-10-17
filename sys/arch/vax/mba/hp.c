@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.44 2007/10/08 16:41:09 ad Exp $ */
+/*	$NetBSD: hp.c,v 1.45 2007/10/17 19:57:58 garbled Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.44 2007/10/08 16:41:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.45 2007/10/17 19:57:58 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

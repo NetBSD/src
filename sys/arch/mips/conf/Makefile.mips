@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.46 2007/05/25 10:44:27 tsutsui Exp $
+#	$NetBSD: Makefile.mips,v 1.47 2007/10/17 19:55:35 garbled Exp $
 
 # Makefile for NetBSD
 #

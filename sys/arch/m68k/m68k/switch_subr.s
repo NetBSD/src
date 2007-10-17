@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.20 2007/06/02 23:51:37 tsutsui Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.21 2007/10/17 19:55:12 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.

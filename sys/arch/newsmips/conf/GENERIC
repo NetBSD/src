@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2007/07/18 15:19:07 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.100 2007/10/17 19:55:54 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.100 $"
 
 maxusers	16
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.14 2007/06/07 15:54:08 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.15 2007/10/17 19:55:05 garbled Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993

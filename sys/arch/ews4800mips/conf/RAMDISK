@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.7 2007/10/15 13:34:06 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.8 2007/10/17 19:54:20 garbled Exp $
 #
 # kernel config file with memory disk for installation
 #

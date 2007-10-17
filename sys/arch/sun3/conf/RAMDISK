@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.46 2007/07/18 15:49:09 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.47 2007/10/17 19:57:45 garbled Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:

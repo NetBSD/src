@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.18 2007/08/29 16:09:32 jmmv Exp $ */
+/* $NetBSD: macfb.c,v 1.19 2007/10/17 19:55:14 garbled Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.18 2007/08/29 16:09:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.19 2007/10/17 19:55:14 garbled Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.30 2007/09/01 07:32:23 dyoung Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.31 2007/10/17 19:55:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.30 2007/09/01 07:32:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.31 2007/10/17 19:55:18 garbled Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"

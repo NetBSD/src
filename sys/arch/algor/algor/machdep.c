@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2007/05/17 14:51:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2007/10/17 19:52:54 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/05/17 14:51:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/10/17 19:52:54 garbled Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 

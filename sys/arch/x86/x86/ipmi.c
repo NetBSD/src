@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.13 2007/09/23 19:17:51 bouyer Exp $ */
+/*	$NetBSD: ipmi.c,v 1.14 2007/10/17 19:58:17 garbled Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.13 2007/09/23 19:17:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.14 2007/10/17 19:58:17 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

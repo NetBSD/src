@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.8 2007/10/03 20:19:47 ad Exp $	*/
+/*	$NetBSD: atomic.h,v 1.9 2007/10/17 19:53:03 garbled Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.

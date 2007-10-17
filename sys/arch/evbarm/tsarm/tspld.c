@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.12 2007/07/09 20:52:11 ad Exp $	*/
+/*	$NetBSD: tspld.c,v 1.13 2007/10/17 19:54:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.12 2007/07/09 20:52:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.13 2007/10/17 19:54:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

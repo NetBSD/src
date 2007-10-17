@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.59 2007/10/08 16:41:08 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.60 2007/10/17 19:57:45 garbled Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.59 2007/10/08 16:41:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.60 2007/10/17 19:57:45 garbled Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */

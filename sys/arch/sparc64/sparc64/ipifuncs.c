@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.9 2007/09/11 16:00:06 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10 2007/10/17 19:57:31 garbled Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.9 2007/09/11 16:00:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2007/10/17 19:57:31 garbled Exp $");
 
 #include "opt_ddb.h"
 

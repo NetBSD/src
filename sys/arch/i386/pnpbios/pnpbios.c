@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.60 2007/09/26 19:48:42 ad Exp $ */
+/* $NetBSD: pnpbios.c,v 1.61 2007/10/17 19:54:58 garbled Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.60 2007/09/26 19:48:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.61 2007/10/17 19:54:58 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

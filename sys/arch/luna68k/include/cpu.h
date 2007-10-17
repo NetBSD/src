@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.23 2007/08/04 09:49:52 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.24 2007/10/17 19:55:03 garbled Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2007/09/26 19:48:39 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2007/10/17 19:58:19 garbled Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2007/09/26 19:48:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2007/10/17 19:58:19 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

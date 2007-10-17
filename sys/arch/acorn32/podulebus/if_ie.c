@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.18 2007/08/26 22:28:52 dyoung Exp $ */
+/* $NetBSD: if_ie.c,v 1.19 2007/10/17 19:52:54 garbled Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.18 2007/08/26 22:28:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.19 2007/10/17 19:52:54 garbled Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 

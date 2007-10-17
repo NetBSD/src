@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.9 2007/10/17 19:53:02 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 2007/09/11 16:00:07 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.77 2007/10/17 19:57:32 garbled Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76 2007/09/11 16:00:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2007/10/17 19:57:32 garbled Exp $");
 
 #include "opt_coredump.h"
 

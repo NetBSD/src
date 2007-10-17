@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.23 2007/09/26 19:48:44 ad Exp $	*/
+/*	$NetBSD: xen.h,v 1.24 2007/10/17 19:58:29 garbled Exp $	*/
 
 /*
  *

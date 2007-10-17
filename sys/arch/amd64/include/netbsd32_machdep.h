@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.13 2007/09/16 22:35:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.14 2007/10/17 19:53:04 garbled Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.17 2007/06/01 07:21:26 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.18 2007/10/17 19:52:52 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.17 2007/06/01 07:21:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18 2007/10/17 19:52:52 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

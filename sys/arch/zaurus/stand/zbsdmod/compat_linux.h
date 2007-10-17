@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_linux.h,v 1.3 2007/06/28 15:33:08 nonaka Exp $	*/
+/*	$NetBSD: compat_linux.h,v 1.4 2007/10/17 19:58:41 garbled Exp $	*/
 /*	$OpenBSD: compat_linux.h,v 1.5 2006/01/15 17:58:27 deraadt Exp $	*/
 
 /*

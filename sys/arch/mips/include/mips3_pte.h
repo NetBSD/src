@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.22 2007/07/17 03:53:56 macallan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23 2007/10/17 19:55:37 garbled Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

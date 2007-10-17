@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 2007/07/14 21:48:23 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2007/10/17 19:56:50 garbled Exp $	*/
 
 #define __HAVE_DEVICE_REGISTER
 #define __HAVE_TIMECOUNTER

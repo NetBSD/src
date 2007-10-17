@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.8 2007/07/09 20:52:34 ad Exp $ */
+/*	$NetBSD: lcspx.c,v 1.9 2007/10/17 19:58:00 garbled Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.8 2007/07/09 20:52:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.9 2007/10/17 19:58:00 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

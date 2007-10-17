@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175 2007/07/17 04:01:34 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.176 2007/10/17 19:55:39 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2007/07/17 04:01:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2007/10/17 19:55:39 garbled Exp $");
 
 /*
  *	Manages physical address maps.

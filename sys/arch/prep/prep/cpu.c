@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2007/10/17 19:56:53 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2006/05/08 17:08:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2007/10/17 19:56:53 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2006/05/08 17:08:34 garbled Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/platform.h>
+
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+#include <powerpc/openpic.h>
+#include <powerpc/trap.h>
+
+extern void openpic_set_priority(int, int);
+#endif
 
 int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
@@ -63,8 +72,10 @@ cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
+#if 0
 	if (cpu_info[0].ci_dev != NULL)
 		return (0);
+#endif
 	return (1);
 }
 
@@ -72,10 +83,91 @@ void
 cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_info *ci;
+	struct confargs *ca = aux;
+	int id = ca->ca_node;
 
-	ci = cpu_attach_common(self, 0);
+	ci = cpu_attach_common(self, id);
 	if (ci == NULL)
 		return;
 
+#ifdef MULTIPROCESSOR
+	if (id > 0) {
+		cpu_spinup(self, ci);
+		return;
+	}
+#endif
+
 	cpu_setup_prep_generic(self);
 }
+
+#ifdef MULTIPROCESSOR
+
+int
+md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
+{
+	if (!openpic_base)
+		return -1;
+
+	/* construct an absolute branch instruction */
+	/* ba cpu_spinup_trampoline */
+	*(u_int *)EXC_RST = 0x48000002 | (u_int)cpu_spinup_trampoline;
+	__syncicache((void *)EXC_RST, 0x100);
+	h->running = -1;
+
+	/* Start secondary CPU. */
+	openpic_write(OPENPIC_PROC_INIT, (1 << 1));
+	return 1;
+}
+
+void
+md_presync_timebase(volatile struct cpu_hatch_data *h)
+{
+	uint64_t tb;
+
+	/* Sync timebase. */
+	tb = mftb();
+	tb += 100000;  /* 3ms @ 33MHz */
+
+	h->tbu = tb >> 32;
+	h->tbl = tb & 0xffffffff;
+
+	while (tb > mftb())
+		;
+
+	__asm volatile ("sync; isync");
+	h->running = 0;
+
+	delay(500000);
+}
+
+void
+md_start_timebase(volatile struct cpu_hatch_data *h)
+{
+	/* do nada */
+}
+
+void
+md_sync_timebase(volatile struct cpu_hatch_data *h)
+{
+	u_int tbu = h->tbu;
+	u_int tbl = h->tbl;
+
+	while (h->running == -1)
+		;
+
+	__asm volatile ("sync; isync");
+	__asm volatile ("mttbl %0" :: "r"(0));
+	__asm volatile ("mttbu %0" :: "r"(tbu));
+	__asm volatile ("mttbl %0" :: "r"(tbl));
+}
+
+void
+md_setup_interrupts(void)
+{
+	if (!openpic_base)
+		return;
+	/* clear the reset on all CPU's */
+	openpic_write(OPENPIC_PROC_INIT, 0);
+	openpic_set_priority(cpu_number(), 0);
+}
+#endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15 2007/09/10 11:34:08 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.16 2007/10/17 19:54:41 garbled Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 

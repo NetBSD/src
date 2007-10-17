@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.21 2007/07/11 21:57:29 dsl Exp $	*/
+/*	$NetBSD: pdc.c,v 1.22 2007/10/17 19:54:25 garbled Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.21 2007/07/11 21:57:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.22 2007/10/17 19:54:25 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

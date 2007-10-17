@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.4 2007/07/09 20:52:41 ad Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.5 2007/10/17 19:58:34 garbled Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*

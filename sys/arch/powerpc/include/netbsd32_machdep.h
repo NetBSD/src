@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.3 2007/09/16 22:35:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.4 2007/10/17 19:56:41 garbled Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

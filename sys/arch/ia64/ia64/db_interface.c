@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.3 2007/09/22 18:40:23 martin Exp $ */
+/* $NetBSD: db_interface.c,v 1.4 2007/10/17 19:54:59 garbled Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.3 2007/09/22 18:40:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2007/10/17 19:54:59 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

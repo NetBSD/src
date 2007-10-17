@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.72 2007/08/17 23:58:46 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2007/08/17 23:58:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"

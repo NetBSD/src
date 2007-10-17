@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.8 2007/08/13 02:04:51 tsutsui Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.9 2007/10/17 19:53:42 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

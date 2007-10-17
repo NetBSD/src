@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.5 2007/06/05 08:52:20 martin Exp $	*/
+/*	$NetBSD: srt0.s,v 1.6 2007/10/17 19:57:16 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

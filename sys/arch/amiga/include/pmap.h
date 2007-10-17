@@ -1,3 +1,3 @@
-/*	$NetBSD: pmap.h,v 1.44 2007/06/05 04:46:27 mhitch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45 2007/10/17 19:53:26 garbled Exp $	*/
 
 #include <m68k/pmap_motorola.h>

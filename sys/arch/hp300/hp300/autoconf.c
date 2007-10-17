@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.85 2007/09/30 12:30:09 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.86 2007/10/17 19:54:23 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2007/09/30 12:30:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2007/10/17 19:54:23 garbled Exp $");
 
 #include "hil.h"
 #include "dvbox.h"

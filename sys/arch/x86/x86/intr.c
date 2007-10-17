@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2007/10/07 14:23:42 joerg Exp $	*/
+/*	$NetBSD: intr.c,v 1.34 2007/10/17 19:58:16 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2007/10/07 14:23:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2007/10/17 19:58:16 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"

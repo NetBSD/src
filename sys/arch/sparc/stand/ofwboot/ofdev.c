@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.17 2007/09/20 09:23:54 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.18 2007/10/17 19:57:16 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

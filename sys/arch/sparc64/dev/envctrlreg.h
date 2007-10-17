@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrlreg.h,v 1.3 2007/05/02 11:40:44 tnn Exp $ */
+/*	$NetBSD: envctrlreg.h,v 1.4 2007/10/17 19:57:28 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

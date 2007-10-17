@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.11 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.12 2007/10/17 19:56:42 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -440,11 +440,14 @@ spllower(int ncpl)
  * see also intrnames[] in locore.S
  */
 #define SIR_BASE	(NIRQ-32)
+#define SIXBIT(ipl)	((ipl) - SIR_BASE) /* XXX rennovate later */
 #define SIR_SOFTCLOCK	(NIRQ-5)
+#define SIR_CLOCK	SIXBIT(SIR_SOFTCLOCK) /* XXX rennovate later */
 #define SIR_SOFTNET	(NIRQ-4)
 #define SIR_SOFTI2C	(NIRQ-3)
 #define SIR_SOFTSERIAL	(NIRQ-2)
 #define SIR_HWCLOCK	(NIRQ-1)
+#define SPL_CLOCK	SIXBIT(SIR_HWCLOCK) /* XXX rennovate later */
 #define SIR_RES		~(SIBIT(SIR_SOFTCLOCK)|\
 			  SIBIT(SIR_SOFTNET)|\
 			  SIBIT(SIR_SOFTI2C)|\
@@ -510,6 +513,11 @@ const char * intr_typename(int);
 const char * intr_string(int);
 const struct evcnt * intr_evcnt(int);
 void	ext_intr(struct intrframe *);
+
+/* the following are needed to compile until this port is properly
+ * converted to ppcoea-rennovation.
+ */
+void genppc_cpu_configure(void);
 
 #if 0
 void	softserial(void);

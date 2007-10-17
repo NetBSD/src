@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.12 2007/06/08 15:44:35 tsutsui Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.13 2007/10/17 19:55:12 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.12 2007/06/08 15:44:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.13 2007/10/17 19:55:12 garbled Exp $");
 
 #include <sys/types.h>
 #include <machine/cpu.h>

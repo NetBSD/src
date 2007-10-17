@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.9 2007/08/29 23:38:05 ad Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.10 2007/10/17 19:58:15 garbled Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_

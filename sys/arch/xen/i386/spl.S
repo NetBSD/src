@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.10 2007/06/28 20:50:30 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.11 2007/10/17 19:58:19 garbled Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.16 2007/10/06 04:39:10 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.17 2007/10/17 19:58:16 garbled Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.16 2007/10/06 04:39:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.17 2007/10/17 19:58:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

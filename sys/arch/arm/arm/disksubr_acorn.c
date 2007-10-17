@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.6 2007/10/08 18:02:54 ad Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.7 2007/10/17 19:53:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.6 2007/10/08 18:02:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.7 2007/10/17 19:53:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

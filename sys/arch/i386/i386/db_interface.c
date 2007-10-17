@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53 2007/09/26 19:48:36 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.54 2007/10/17 19:54:44 garbled Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53 2007/09/26 19:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2007/10/17 19:54:44 garbled Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

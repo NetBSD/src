@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.10 2007/10/06 07:21:03 xtraeme Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.10 2007/10/06 07:21:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 

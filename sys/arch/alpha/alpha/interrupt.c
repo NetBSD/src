@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.74 2007/07/21 11:59:56 tsutsui Exp $ */
+/* $NetBSD: interrupt.c,v 1.75 2007/10/17 19:52:55 garbled Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.74 2007/07/21 11:59:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.75 2007/10/17 19:52:55 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

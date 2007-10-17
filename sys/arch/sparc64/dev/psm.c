@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.5 2007/07/09 20:52:32 ad Exp $ */
+/* $NetBSD: psm.c,v 1.6 2007/10/17 19:57:29 garbled Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.5 2007/07/09 20:52:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.6 2007/10/17 19:57:29 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

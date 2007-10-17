@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.56 2007/08/29 16:09:32 jmmv Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.57 2007/10/17 19:55:16 garbled Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.56 2007/08/29 16:09:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.57 2007/10/17 19:55:16 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
