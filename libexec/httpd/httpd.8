@@ -1,4 +1,4 @@
-.\"	$NetBSD: httpd.8,v 1.4 2007/10/17 13:33:18 reed Exp $
+.\"	$NetBSD: httpd.8,v 1.5 2007/10/17 13:55:46 reed Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.74 2006/05/17 08:19:10 mrg Exp $
 .\"
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 22, 2005
+.Dd October 17, 2007
 .Dt HTTPD 8
 .Sh NAME
 .Nm httpd
@@ -349,6 +349,34 @@ macros when building
 .Sh HTTP BASIC AUTHORISATION
 .Nm
 has support for HTTP Basic Authorisation.
+If a file named
+.Pa .htpasswd
+exists in the directory of the current request,
+.Nm
+will restrict access to documents in that directory
+using the RFC 2617 HTTP
+.Dq Basic
+authentication scheme.
+.Pp
+Note:
+This does not recursively protect any sub-directories.
+.Pp
+The
+.Pa .htpasswd
+file contains lines delimited with a colon containing
+usernames and passwords hashed with
+.Xr crypt 3 ,
+for example:
+.Bd -literal
+heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1 
+jeremy:A.xewbx2DpQ8I
+.Ed
+.Pp
+On
+.Nx ,
+the
+.Xr pwhash 1
+utility may be used to generate hashed passwords.
 .Sh FILES
 .Nm
 looks for a couple of special files in directories that allow certain features
