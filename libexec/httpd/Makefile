@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/10/16 01:31:03 tls Exp $
+#	$NetBSD: Makefile,v 1.3 2007/10/17 13:27:19 reed Exp $
 #
 #	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
 
@@ -11,7 +11,7 @@
 #	NO_DYNAMIC_CONTENT	/* don't support dynamic content updates */
 #	NO_SSL_SUPPORT		/* don't support ssl (https) */
 #	DO_HTPASSWD		/* support .htpasswd files */
-COPTS+=	-DDO_HTTPASSWD
+COPTS+=	-DDO_HTPASSWD
 PROG=	httpd
 MAN=	httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
