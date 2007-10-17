@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.54 2007/10/16 20:31:33 joerg Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.55 2007/10/17 04:35:34 jld Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_VAR_H_
 #define _NETINET6_IN6_VAR_H_
+
+#include <sys/callout.h>
 
 /*
  * Interface address, Internet version.  One of these structures
