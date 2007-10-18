@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.6 2007/10/08 20:19:29 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.7 2007/10/18 23:24:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.6 2007/10/08 20:19:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.7 2007/10/18 23:24:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1025,7 +1025,6 @@ tmpfs_rmdir(void *v)
 		error = ENOTEMPTY;
 		goto out;
 	}
-	KASSERT(node->tn_links == 1);
 
 	/* This invariant holds only if we are not trying to remove "..".
 	 * We checked for that above so this is safe now. */
@@ -1062,6 +1061,7 @@ tmpfs_rmdir(void *v)
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
+	KASSERT(node->tn_links == 1);
  out:
 	/* Release the nodes. */
 	vput(dvp);
