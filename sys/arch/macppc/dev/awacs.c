@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.31 2007/10/17 19:55:17 garbled Exp $	*/
+/*	$NetBSD: awacs.c,v 1.32 2007/10/18 04:59:54 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.31 2007/10/17 19:55:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.32 2007/10/18 04:59:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -278,23 +278,27 @@ static const char *detect_reversed[] = {"AAPL,3400/2400",
 					"AAPL,3500",
 					NULL};
 
+static const char *use_gpio4[] = {	"PowerMac3,3",
+					NULL};
+
 static int
 awacs_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca;
 
 	ca = aux;
-	if (strcmp(ca->ca_name, "i2s") == 0)
-		return 1;
 
-	if (strcmp(ca->ca_name, "awacs") != 0 &&
-	    strcmp(ca->ca_name, "davbus") != 0)
-		return 0;
+	if (strcmp(ca->ca_name, "awacs") == 0 ||
+	    strcmp(ca->ca_name, "davbus") == 0)
+		return 100;
 
 	if (ca->ca_nreg < 24 || ca->ca_nintr < 12)
 		return 0;
 
-	return 1;
+	if (strcmp(ca->ca_name, "i2s") == 0)
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -430,10 +434,12 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_headphones_mask = 0x8;
 		sc->sc_headphones_in = 0x0;
-	} else if (perch != -1) {
+	} else if ((perch != -1) ||
+	    (of_compatible(root_node, use_gpio4) != -1)) {
 		/*
 		 * this is for the beige G3's 'personality card' which uses
 		 * yet another wiring of the headphone detect GPIOs
+		 * some G4s use it as well
 		 */
 		sc->sc_headphones_mask = 0x04;
 		sc->sc_headphones_in = 0x04;
