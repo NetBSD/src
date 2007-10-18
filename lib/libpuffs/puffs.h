@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.86 2007/10/11 19:41:15 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.87 2007/10/18 13:48:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@
 #include <fs/puffs/puffs_msgif.h>
 
 #include <mntopts.h>
+#include <stdbool.h>
 #include <string.h>
 
 /* forwards */
@@ -520,16 +521,17 @@ int	puffs_cred_getgid(const struct puffs_cred *, gid_t *);
 int	puffs_cred_getgroups(const struct puffs_cred *, gid_t *, short *);
 
 /* Credential check */
-int	puffs_cred_isuid(const struct puffs_cred *, uid_t);
-int	puffs_cred_hasgroup(const struct puffs_cred *, gid_t);
-int	puffs_cred_isregular(const struct puffs_cred *);
-int	puffs_cred_iskernel(const struct puffs_cred *);
-int	puffs_cred_isfs(const struct puffs_cred *);
-int	puffs_cred_isjuggernaut(const struct puffs_cred *);
+bool	puffs_cred_isuid(const struct puffs_cred *, uid_t);
+bool	puffs_cred_hasgroup(const struct puffs_cred *, gid_t);
+bool	puffs_cred_isregular(const struct puffs_cred *);
+bool	puffs_cred_iskernel(const struct puffs_cred *);
+bool	puffs_cred_isfs(const struct puffs_cred *);
+bool	puffs_cred_isjuggernaut(const struct puffs_cred *);
 
 /* Caller ID */
 int	puffs_cid_getpid(const struct puffs_cid *, pid_t *);
 int	puffs_cid_getlwpid(const struct puffs_cid *, lwpid_t *);
+bool	puffs_cid_isequal(const struct puffs_cid *, const struct puffs_cid *);
 
 /* misc */
 int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
