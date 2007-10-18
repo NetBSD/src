@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46 2006/11/07 02:23:27 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.30.1 2007/10/18 08:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46 2006/11/07 02:23:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.30.1 2007/10/18 08:32:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46 2006/11/07 02:23:27 macallan Exp $
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -74,6 +75,7 @@ struct wdc_obio_softc {
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
+	bus_space_handle_t sc_dmaregh;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
@@ -94,6 +96,13 @@ static void ata4_adjust_timing __P((struct ata_channel *));
 CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_probe, wdc_obio_attach, wdc_obio_detach, wdcactivate);
 
+static const char *ata_names[] = {
+    "heathrow-ata",
+    "keylargo-ata",
+    "ohare-ata",
+    NULL
+};
+
 int
 wdc_obio_probe(parent, match, aux)
 	struct device *parent;
@@ -101,7 +110,6 @@ wdc_obio_probe(parent, match, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	char compat[32];
 
 	/* XXX should not use name */
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
@@ -110,10 +118,7 @@ wdc_obio_probe(parent, match, aux)
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
-	memset(compat, 0, sizeof(compat));
-	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
-	if (strcmp(compat, "heathrow-ata") == 0 ||
-	    strcmp(compat, "keylargo-ata") == 0)
+	if (of_compatible(ca->ca_node, ata_names) >= 0)
 		return 1;
 
 	return 0;
@@ -128,11 +133,9 @@ wdc_obio_attach(parent, self, aux)
 	struct wdc_regs *wdr;
 	struct confargs *ca = aux;
 	struct ata_channel *chp = &sc->sc_channel;
-	int intr, i;
+	int intr, i, type = IST_EDGE;
 	int use_dma = 0;
-	char path[80], compat[32];
-
-	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	char path[80];
 
 	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    WDC_OPTIONS_DMA) {
@@ -143,6 +146,10 @@ wdc_obio_attach(parent, self, aux)
 	if (ca->ca_nintr >= 4 && ca->ca_nreg >= 8) {
 		intr = ca->ca_intr[0];
 		printf(" irq %d", intr);
+		if (ca->ca_nintr > 8) {
+			type = ca->ca_intr[1] ? IST_LEVEL : IST_EDGE;
+		}
+		printf(", %s triggered", (type == IST_EDGE) ? "edge" : "level");
 	} else if (ca->ca_nintr == -1) {
 		intr = WDC_DEFAULT_PIO_IRQ;
 		printf(" irq property not found; using %d", intr);
@@ -158,22 +165,22 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	wdr->cmd_iot = wdr->ctl_iot =
-		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
+	wdr->cmd_iot = wdr->ctl_iot = ca->ca_tag;
 
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
-	    &wdr->cmd_baseioh) ||
+	if (bus_space_map(wdr->cmd_iot, ca->ca_baseaddr + ca->ca_reg[0],
+	    WDC_REG_NPORTS << 4, 0, &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
+			WDC_AUXREG_OFFSET << 4, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
+
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i << 4,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-			    WDC_REG_NPORTS);
+			    WDC_REG_NPORTS << 4);
 			printf("%s: couldn't subregion registers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
@@ -184,12 +191,30 @@ wdc_obio_attach(parent, self, aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, type, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
-		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
-					 ca->ca_reg[3]);
+		/*
+		 * XXX
+		 * we don't use ca->ca_reg[3] for size here because at least
+		 * on the PB3400c it says 0x200 for both IDE channels ( the
+		 * one on the mainboard and the other on the mediabay ) but
+		 * their start addresses are only 0x100 apart. Since those
+		 * DMA registers are always 0x100 or less we don't really 
+		 * have to care though
+		 */
+		if (bus_space_map(wdr->cmd_iot, ca->ca_baseaddr + ca->ca_reg[2],
+		    0x100, BUS_SPACE_MAP_LINEAR, &sc->sc_dmaregh)) {
+
+			aprint_error("%s: unable to map DMA registers (%08x)\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    ca->ca_reg[2]);
+			/* should unmap stuff here */
+			return;
+		}
+		sc->sc_dmareg = bus_space_vaddr(wdr->cmd_iot, sc->sc_dmaregh);
+
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
@@ -280,7 +305,7 @@ static struct ide_timings udma_timing[5] = {
 
 #define ATA4_TIME_TO_TICK(time)  howmany((time), 15) /* 15 ns clock */
 
-#define CONFIG_REG (0x200 >> 4)		/* IDE access timing register */
+#define CONFIG_REG (0x200)		/* IDE access timing register */
 
 void
 wdc_obio_select(chp, drive)
@@ -443,7 +468,7 @@ wdc_obio_detach(self, flags)
 
 	/* Unmap our i/o space. */
 	bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot,
-			sc->sc_wdcdev.regs->cmd_ioh, WDC_REG_NPORTS);
+			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS << 4);
 
 	/* Unmap DMA registers. */
 	/* XXX unmapiodev(sc->sc_dmareg); */

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.26.26.1 2007/10/18 08:32:09 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26.26.1 2007/10/18 08:32:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -46,24 +47,46 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2007/01/18 00:19:30 macallan Exp $");
 
 #include <machine/autoconf.h>
 
-static void obio_attach __P((struct device *, struct device *, void *));
-static int obio_match __P((struct device *, struct cfdata *, void *));
-static int obio_print __P((void *, const char *));
+#include "opt_obio.h"
+
+#ifdef OBIO_DEBUG
+# define DPRINTF printf
+#else
+# define DPRINTF while (0) printf
+#endif
+
+static void obio_attach(struct device *, struct device *, void *);
+static int obio_match(struct device *, struct cfdata *, void *);
+static int obio_print(void *, const char *);
 
 struct obio_softc {
 	struct device sc_dev;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_bh;
 	int sc_node;
+#ifdef OBIO_SPEED_CONTROL
+	int sc_voltage;
+	int sc_busspeed;
+#endif
 };
 
+#ifdef OBIO_SPEED_CONTROL
+static void obio_setup_gpios(struct obio_softc *, int);
+static void obio_set_cpu_speed(struct obio_softc *, int);
+static int  obio_get_cpu_speed(struct obio_softc *);
+static int  sysctl_cpuspeed_temp(SYSCTLFN_ARGS);
+
+static const char *keylargo[] = {"Keylargo",
+				 "AAPL,Keylargo",
+				 NULL};
+
+#endif
 
 CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -87,18 +110,22 @@ obio_match(parent, cf, aux)
  * Attach all the sub-devices we can find
  */
 void
-obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct confargs ca;
-	int node, child, namelen;
+	bus_space_handle_t bsh;
+	int node, child, namelen, error;
 	u_int reg[20];
 	int intr[6], parent_intr = 0, parent_nintr = 0;
 	char name[32];
 	char compat[32];
+
+#ifdef OBIO_SPEED_CONTROL
+	sc->sc_voltage = -1;
+	sc->sc_busspeed = -1;
+#endif
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
@@ -117,14 +144,14 @@ obio_attach(parent, self, aux)
 		break;
 	case PCI_PRODUCT_APPLE_K2:
 		node = OF_finddevice("mac-io");
-		if (node == -1)
-			panic("macio not found");
 		break;
 
 	default:
-		printf("obio_attach: unknown obio controller\n");
-		return;
+		node = -1;
+		break;
 	}
+	if (node == -1)
+		panic("macio not found or unknown");
 
 	sc->sc_node = node;
 
@@ -139,21 +166,31 @@ obio_attach(parent, self, aux)
 #endif /* PMAC_G5 */
 
 	ca.ca_baseaddr = reg[2];
+	ca.ca_tag = pa->pa_memt;
+	sc->sc_tag = pa->pa_memt;
+	error = bus_space_map (pa->pa_memt, ca.ca_baseaddr, 0x80, 0, &bsh);
+	if (error)
+		panic(": failed to map mac-io %#x", ca.ca_baseaddr);
+	sc->sc_bh = bsh;
 
 	printf(": addr 0x%x\n", ca.ca_baseaddr);
 
 	/* Enable internal modem (KeyLargo) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
-		printf("enabling KeyLargo internal modem\n");
-		out32rb(ca.ca_baseaddr + 0x40,
-			in32rb(ca.ca_baseaddr + 0x40) & ~((u_int32_t)1<<25));
+		aprint_normal("%s: enabling KeyLargo internal modem\n",
+		    self->dv_xname);
+		bus_space_write_4(ca.ca_tag, bsh, 0x40, 
+		    bus_space_read_4(ca.ca_tag, bsh, 0x40) & ~(1<<25));
 	}
 
 	/* Enable internal modem (Pangea) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_MACIO) {
-		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x04); /* set reset */
-		out8(ca.ca_baseaddr + 0x006a + 0x02, 0x04); /* power modem on */
-		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x05); /* unset reset */ 
+		/* set reset */
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x03, 0x04);
+		/* power modem on */
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x02, 0x04);
+		/* unset reset */
+		bus_space_write_1(ca.ca_tag, bsh, 0x006a + 0x03, 0x05);
 	}
 
 	/* Gatwick and Paddington use same product ID */
@@ -166,15 +203,23 @@ obio_attach(parent, self, aux)
 	} else {
   		/* Enable CD and microphone sound input. */
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
-			out8(ca.ca_baseaddr + 0x37, 0x03);
+			bus_space_write_1(ca.ca_tag, bsh, 0x37, 0x03);
 	}
-  
+
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
 			continue;
 		if (namelen >= sizeof(name))
 			continue;
+
+#ifdef OBIO_SPEED_CONTROL
+		if (strcmp(name, "gpio") == 0) {
+
+			obio_setup_gpios(sc, child);
+			continue;
+		}
+#endif
 
 		name[namelen] = 0;
 		ca.ca_name = name;
@@ -200,14 +245,16 @@ obio_attach(parent, self, aux)
 	}
 }
 
-static const char *skiplist[] = {
+static const char * const skiplist[] = {
 	"interrupt-controller",
 	"gpio",
 	"escc-legacy",
 	"timer",
 	"i2c",
 	"power-mgt",
-	"escc"
+	"escc",
+	"battery",
+	"backlight"
 	
 };
 
@@ -233,3 +280,117 @@ obio_print(aux, obio)
 
 	return UNCONF;
 }
+
+#ifdef OBIO_SPEED_CONTROL
+
+static void
+obio_setup_gpios(struct obio_softc *sc, int node)
+{
+	uint32_t reg[6];
+	struct sysctlnode *sysctl_node = NULL;
+	char name[32];
+	int gpio_base, child;
+
+	if (of_compatible(sc->sc_node, keylargo) == -1)
+		return;
+
+	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 4)
+		return;
+
+	gpio_base = reg[0];
+	DPRINTF("gpio_base: %02x\n", gpio_base);
+
+	/* now look for voltage and bus speed gpios */
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+
+		if (OF_getprop(child, "name", name, sizeof(name)) < 1)
+			continue;
+
+		if (OF_getprop(child, "reg", reg, sizeof(reg)) < 4)
+			continue;
+
+		if (strcmp(name, "frequency-gpio") == 0) {
+			DPRINTF("found frequency_gpio at %02x\n", reg[0]);
+			sc->sc_busspeed = gpio_base + reg[0];
+		}
+		if (strcmp(name, "voltage-gpio") == 0) {
+			DPRINTF("found voltage_gpio at %02x\n", reg[0]);
+			sc->sc_voltage = gpio_base + reg[0];
+		}
+	}
+
+	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+		return;
+
+	printf("%s: enabling Intrepid CPU speed control\n",
+	    sc->sc_dev.dv_xname);
+
+	sysctl_createv(NULL, 0, NULL, 
+	    (const struct sysctlnode **)&sysctl_node, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
+	    CTLTYPE_INT, "cpu_speed", "CPU speed", sysctl_cpuspeed_temp, 
+	    (unsigned long)sc, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	if (sysctl_node != NULL) {
+		sysctl_node->sysctl_data = (void *)sc;
+	}
+}
+
+static void
+obio_set_cpu_speed(struct obio_softc *sc, int fast)
+{
+
+	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+		return;
+
+	if (fast) {
+		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_voltage, 5);
+		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed, 5);
+	} else {
+		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed, 4);
+		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_voltage, 4);
+	}
+}
+
+static int
+obio_get_cpu_speed(struct obio_softc *sc)
+{
+	
+	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+		return 0;
+
+	if (bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed) & 1)
+		return 1;
+
+	return 0;
+}
+
+static int
+sysctl_cpuspeed_temp(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct obio_softc *sc = node.sysctl_data;
+	const int *np = newp;
+	int speed, nd = 0;
+
+	speed = obio_get_cpu_speed(sc);	
+	node.sysctl_idata = speed;
+	if (np) {
+		/* we're asked to write */	
+		nd = *np;
+		node.sysctl_data = &speed;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			int new_reg;
+			
+			new_reg = (max(0, min(1, node.sysctl_idata)));
+			obio_set_cpu_speed(sc, new_reg);
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_size = 4;
+		return(sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+}
+
+#endif /* OBIO_SPEEDCONTROL */
+

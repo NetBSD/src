@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.240.4.1 2007/10/14 11:49:25 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.240.4.2 2007/10/18 08:33:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.240.4.1 2007/10/14 11:49:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.240.4.2 2007/10/18 08:33:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2324,7 +2324,7 @@ uvm_unmap_detach(struct vm_map_entry *first_entry, int flags)
 int
 uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
-    vsize_t align	/* alignment hint */,
+    vsize_t align	/* alignment */,
     vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
     uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
 {
@@ -2339,7 +2339,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 	 * reserve some virtual space.
 	 */
 
-	if (uvm_map(map, raddr, size, NULL, offset, 0,
+	if (uvm_map(map, raddr, size, NULL, offset, align,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE|flags)) != 0) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);

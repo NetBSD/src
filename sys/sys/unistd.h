@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.38 2007/09/07 18:56:13 rmind Exp $	*/
+/*	$NetBSD: unistd.h,v 1.38.2.1 2007/10/18 08:33:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -206,6 +206,12 @@
 #define	_SC_MESSAGE_PASSING	53
 #define	_SC_MQ_OPEN_MAX		54
 #define	_SC_MQ_PRIO_MAX		55
+
+#ifdef _NETBSD_SOURCE
+/* Commonly provided sysconf() extensions */
+#define	_SC_NPROCESSORS_CONF	1001
+#define	_SC_NPROCESSORS_ONLN	1002
+#endif	/* _NETBSD_SOURCE */
 
 /* configurable system strings */
 #define	_CS_PATH		 1

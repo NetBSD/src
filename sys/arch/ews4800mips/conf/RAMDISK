@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.6 2007/02/16 19:15:15 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.6.26.1 2007/10/18 08:31:59 yamt Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -63,5 +63,6 @@ no pseudo-device	gre
 no pseudo-device	gif
 no pseudo-device	vlan
 no pseudo-device	bridge
+no pseudo-device	agr
 no pseudo-device	clockctl
 no pseudo-device	ksyms

@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.7 2006/06/07 22:34:04 kardel Exp $
+ *	$Id: i4b_global.h,v 1.7.34.1 2007/10/18 08:33:14 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -72,7 +72,7 @@
 #if defined(__NetBSD__) /* after timecounter merge */
 
 #define TIMEOUT_FUNC_T	void *
-#define SECOND		time_second
+#define SECOND		time_uptime
 #define MICROTIME(x)	getmicrotime(&(x))
 
 #endif /* __NetBSD__ */
