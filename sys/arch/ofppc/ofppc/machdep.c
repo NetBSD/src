@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2007/10/17 19:56:10 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2007/10/18 21:12:54 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2007/10/17 19:56:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2007/10/18 21:12:54 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,7 +67,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 {
 	/* Initialize the bootstrap console. */
 	ofppc_bootstrap_console();
-	printf( "\n\nHallo Welt!\n\n");
 	ofwoea_initppc(startkernel, endkernel, args);
 	map_isa_ioregs();
 }
