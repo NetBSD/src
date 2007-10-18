@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.51 2007/02/04 08:03:18 elad Exp $	*/
+/*	$NetBSD: create.c,v 1.52 2007/10/18 02:28:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.51 2007/02/04 08:03:18 elad Exp $");
+__RCSID("$NetBSD: create.c,v 1.52 2007/10/18 02:28:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ statf(FTSENT *p)
 		    p->fts_statp->st_mtimespec.tv_nsec);
 #else
 		output(&indent, "time=%ld.%ld",
-		    p->fts_statp->st_mtime, 0);
+		    (long)p->fts_statp->st_mtime, (long)0);
 #endif
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
