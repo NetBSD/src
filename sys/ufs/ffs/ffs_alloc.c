@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.102 2007/10/10 20:42:33 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.103 2007/10/18 17:39:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.102 2007/10/10 20:42:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.103 2007/10/18 17:39:04 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1585,14 +1585,15 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	dev_t dev;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
-	ump = VFSTOUFS(devvp->v_specmountpoint);
 	cg = dtog(fs, bno);
 	if (devvp->v_type != VBLK) {
 		/* devvp is a snapshot */
 		dev = VTOI(devvp)->i_devvp->v_rdev;
+		ump = VFSTOUFS(devvp->v_mount);
 		cgblkno = fragstoblks(fs, cgtod(fs, cg));
 	} else {
 		dev = devvp->v_rdev;
+		ump = VFSTOUFS(devvp->v_specmountpoint);
 		cgblkno = fsbtodb(fs, cgtod(fs, cg));
 		if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 			return;
@@ -1800,13 +1801,14 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 #endif
 
 	cg = ino_to_cg(fs, ino);
-	ump = VFSTOUFS(devvp->v_specmountpoint);
 	if (devvp->v_type != VBLK) {
 		/* devvp is a snapshot */
 		dev = VTOI(devvp)->i_devvp->v_rdev;
+		ump = VFSTOUFS(devvp->v_mount);
 		cgbno = fragstoblks(fs, cgtod(fs, cg));
 	} else {
 		dev = devvp->v_rdev;
+		ump = VFSTOUFS(devvp->v_specmountpoint);
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	}
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
