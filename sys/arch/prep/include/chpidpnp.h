@@ -1,4 +1,4 @@
-/* $NetBSD: chpidpnp.h,v 1.2 2006/06/23 03:08:41 garbled Exp $ */
+/* $NetBSD: chpidpnp.h,v 1.2.40.1 2007/10/18 08:32:50 yamt Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@ FireCoral = 0x8101,		/* IBM8101: IBM FireCoral */
 
 /* PCI Bridge chips */
 Python = 0x8102,		/* IBM8102: IBM Python */
-DEC21050 = 0x8102,		/* IBM8103: PCI-PCI (dec 21050) */
+DEC21050 = 0x8103,		/* IBM8103: PCI-PCI (dec 21050) */
 IBM2782351 = 0x8106,		/* IBM8106: PCI-PCI */
 IBM2782352 = 0x8109,		/* IBM8109: PCI-PCI352 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.52.1 2007/10/18 08:31:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.52.1 2007/10/18 08:31:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,10 @@ void
 cpu_configure()
 {
         extern void init_interrupt __P((void));
-        extern void calc_delayconst __P((void));
 
 	extintr_disable();
 
         init_interrupt();
-        calc_delayconst();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

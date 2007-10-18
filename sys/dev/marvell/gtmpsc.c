@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.23.18.1 2007/10/14 11:48:10 yamt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.23.18.2 2007/10/18 08:33:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.23.18.1 2007/10/14 11:48:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.23.18.2 2007/10/18 08:33:07 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.23.18.1 2007/10/14 11:48:10 yamt Exp $"
 #include <sys/tty.h>
 #include <sys/callout.h>
 #include <sys/fcntl.h>
+#include <sys/intr.h>
 #ifdef KGDB
 #include <sys/kernel.h>
 #include <sys/kgdb.h>

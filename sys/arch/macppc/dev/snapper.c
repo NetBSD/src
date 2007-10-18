@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.21.2.1 2007/10/06 15:35:09 yamt Exp $	*/
+/*	$NetBSD: snapper.c,v 1.21.2.2 2007/10/18 08:32:10 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -77,7 +77,8 @@ struct snapper_softc {
 	u_int sc_record_source;		/* recording source mask */
 	u_int sc_output_mask;		/* output source mask */
 
-	u_char *sc_reg;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_bsh;
 	i2c_addr_t sc_deqaddr;
 	i2c_tag_t sc_i2c;
 
@@ -91,6 +92,8 @@ struct snapper_softc {
 	u_int sc_bass;
 	u_int mixer[6]; /* s1_l, s2_l, an_l, s1_r, s2_r, an_r */
 
+	bus_space_handle_t sc_odmah;
+	bus_space_handle_t sc_idmah;
 	dbdma_regmap_t *sc_odma;
 	dbdma_regmap_t *sc_idma;
 	unsigned char	dbdma_cmdspace[sizeof(struct dbdma_command) * 40 + 15];
@@ -141,6 +144,8 @@ struct snapper_codecvar {
 static stream_filter_t *snapper_factory
 	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
 static void snapper_dtor(stream_filter_t *);
+
+#define SNAPPER_FCR	((volatile uint32_t *)0x8000003c)
 
 
 /* XXX We can't access the hw device softc from our audio
@@ -701,9 +706,14 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	ca->ca_reg[4] += ca->ca_baseaddr;
 
 	sc->sc_node = ca->ca_node;
-	sc->sc_reg = (void *)ca->ca_reg[0];
-	sc->sc_odma = (void *)ca->ca_reg[2];
-	sc->sc_idma = (void *)ca->ca_reg[4];
+	sc->sc_tag = ca->ca_tag;
+	bus_space_map(sc->sc_tag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->sc_bsh);
+	bus_space_map(sc->sc_tag, ca->ca_reg[2], ca->ca_reg[3],
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_odmah);
+	bus_space_map(sc->sc_tag, ca->ca_reg[4], ca->ca_reg[5],
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_idmah);
+	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
+	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
 
 	OF_getprop(soundbus, "interrupts", intr, sizeof intr);
 	cirq = intr[0];
@@ -767,8 +777,8 @@ snapper_intr(void *v)
 	count = sc->sc_opages;
 	/* Fill used buffer(s). */
 	while (count-- > 0) {
-		if ((dbdma_ld16(&cmd->d_command) & 0x30) == 0x30) {
-			status = dbdma_ld16(&cmd->d_status);
+		if ((in16rb(&cmd->d_command) & 0x30) == 0x30) {
+			status = in16rb(&cmd->d_status);
 			cmd->d_status = 0;
 			if (status)	/* status == 0x8400 */
 				if (sc->sc_ointr)
@@ -780,8 +790,8 @@ snapper_intr(void *v)
 	cmd = sc->sc_idmacmd;
 	count = sc->sc_ipages;
 	while (count-- > 0) {
-		if ((dbdma_ld16(&cmd->d_command) & 0x30) == 0x30) {
-			status = dbdma_ld16(&cmd->d_status);
+		if ((in16rb(&cmd->d_command) & 0x30) == 0x30) {
+			status = in16rb(&cmd->d_status);
 			cmd->d_status = 0;
 			if (status)	/* status == 0x8400 */
 				if (sc->sc_iintr)
@@ -1280,7 +1290,7 @@ snapper_trigger_output(void *h, void *start, void *end, int bsize,
 	    0/*vtophys((vaddr_t)sc->sc_odmacmd)*/, 0, DBDMA_WAIT_NEVER,
 	    DBDMA_BRANCH_ALWAYS);
 
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
 
 	dbdma_start(sc->sc_odma, sc->sc_odmacmd);
 
@@ -1335,7 +1345,7 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	    0/*vtophys((vaddr_t)sc->sc_odmacmd)*/, 0, DBDMA_WAIT_NEVER,
 	    DBDMA_BRANCH_ALWAYS);
 
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_idmacmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_idmacmd));
 
 	dbdma_start(sc->sc_idma, sc->sc_idmacmd);
 
@@ -1566,41 +1576,42 @@ snapper_set_rate(struct snapper_softc *sc)
 	if (sc->sc_flags & SNAPPER_IS_TAS3001)
 		mcr1 |= DEQ_MCR1_ISM_I2S;
 
-	ows = in32rb(sc->sc_reg + I2S_WORDSIZE);
+	ows = bus_space_read_4(sc->sc_tag, sc->sc_bsh, I2S_WORDSIZE);
+
 	DPRINTF("I2SSetDataWordSizeReg 0x%08x -> 0x%08x\n",
 	    ows, wordsize);
 	if (ows != wordsize) {
-		out32rb(sc->sc_reg + I2S_WORDSIZE, wordsize);
+		bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_WORDSIZE, wordsize);
 		tas3004_write(sc, DEQ_MCR1, &mcr1);
 	}
 
-	x = in32rb(sc->sc_reg + I2S_FORMAT);
+	x = bus_space_read_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT);
 	if (x == reg)
 		return 0;        /* No change; do nothing. */
 
 	DPRINTF("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
-	    in32rb(sc->sc_reg + I2S_FORMAT), reg);
+	    bus_space_read_4(sc->sc_tag, sc->sc_bsh, + I2S_FORMAT), reg);
 
 	/* Clear CLKSTOPPEND. */
-	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
+	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_INT, I2S_INT_CLKSTOPPEND);
 
-	x = in32rb(0x8000003c);                /* FCR */
+	x = in32rb(SNAPPER_FCR);                /* FCR */
 	x &= ~I2S0CLKEN;                /* XXX I2S0 */
-	out32rb(0x8000003c, x);
+	out32rb(SNAPPER_FCR, x);
 
 	/* Wait until clock is stopped. */
 	for (timo = 1000; timo > 0; timo--) {
-		if (in32rb(sc->sc_reg + I2S_INT) & I2S_INT_CLKSTOPPEND)
+		if (bus_space_read_4(sc->sc_tag, sc->sc_bsh, I2S_INT) & I2S_INT_CLKSTOPPEND)
 			goto done;
 		delay(1);
 	}
 	DPRINTF("snapper_set_rate: timeout\n");
 done:
-	out32rb(sc->sc_reg + I2S_FORMAT, reg);
+	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT, reg);
 
-	x = in32rb(0x8000003c);
+	x = in32rb(SNAPPER_FCR);
 	x |= I2S0CLKEN;
-	out32rb(0x8000003c, x);
+	out32rb(SNAPPER_FCR, x);
 
 	return 0;
 }
