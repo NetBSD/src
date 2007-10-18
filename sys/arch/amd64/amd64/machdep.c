@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2007/10/17 19:53:01 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2007/10/18 15:28:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2007/10/17 19:53:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2007/10/18 15:28:32 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -648,7 +648,7 @@ cpu_dump(void)
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->ptdpaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
@@ -1838,7 +1838,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 			dt = ldtp;
 			len = llen;
 		} else if (pmap->pm_flags & PMF_USER_LDT) {
-			len = pmap->pm_ldt_len;
+			len = pmap->pm_ldt_len; /* XXX broken */
 			dt = (char *)pmap->pm_ldt;
 		} else {
 			dt = ldtstore;

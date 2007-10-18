@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.18 2007/10/17 19:54:47 garbled Exp $	*/
+/*	$NetBSD: spl.S,v 1.19 2007/10/18 15:28:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ IDTVEC(doreti)
 .Ldoreti_checkast:
 	CHECK_ASTPENDING(%eax)
 	jz	3f
-4:	CLEAR_ASTPENDING(%eax)
+	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
@@ -259,7 +259,7 @@ IDTVEC(doreti)
 	cli
 	jmp	5b
 3:
-	CHECK_DEFERRED_SWITCH(%eax)
+	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:
 	INTRFASTEXIT

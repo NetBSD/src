@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2007/10/17 19:58:18 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.17 2007/10/18 15:28:38 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -151,9 +151,6 @@ define	KERNTEXTOFF		KERNTEXTOFF
 
 define	PGSHIFT			PGSHIFT
 define	PGOFSET			PGOFSET
-define	PDSHIFT			PDSHIFT
-define	PDOFSET			PDOFSET
-define	NBPD			NBPD
 
 define	PG_RW			PG_RW
 define	PG_V			PG_V

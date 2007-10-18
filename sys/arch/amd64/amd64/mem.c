@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2007/03/04 14:36:11 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 2007/10/18 15:28:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/04 14:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11 2007/10/18 15:28:32 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/04 14:36:11 yamt Exp $");
 
 extern char *vmmap;            /* poor name! */
 void *zeropage;
-extern int start, end, etext;
+extern int start, end, __data_start;
 extern vaddr_t kern_end;
 #ifdef LKM
 extern vaddr_t lkm_start, lkm_end;
@@ -174,7 +174,7 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v >= (vaddr_t)&start && v <
 			    (vaddr_t)kern_end) {
-				if (v < (vaddr_t)&etext &&
+				if (v < (vaddr_t)&__data_start &&
 				    uio->uio_rw == UIO_WRITE)
 					return EFAULT;
 			}
