@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.5.2.9 2007/10/16 11:08:51 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.5.2.10 2007/10/18 22:45:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5.2.9 2007/10/16 11:08:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5.2.10 2007/10/18 22:45:53 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -120,7 +120,7 @@ aio_init(struct proc *p)
 	}
 	if (newlwp(curlwp, p, uaddr, inmem, 0, NULL, 0,
 	    aio_worker, NULL, &l)) {
-		uvm_uarea_free(uaddr);
+		uvm_uarea_free(uaddr, curcpu());
 		aio_exit(p, aio);
 		return EAGAIN;
 	}
