@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.110 2007/10/18 18:55:00 joerg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.111 2007/10/18 21:08:18 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.110 2007/10/18 18:55:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.111 2007/10/18 21:08:18 joerg Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1389,7 +1389,7 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
-	dv = device_private(device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev)));
+	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 	sc = device_private(dv);
 
 	if (ISWSDISPLAYSTAT(dev))
