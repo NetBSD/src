@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.22 2005/05/24 17:36:29 kleink Exp $	*/
+/*	$NetBSD: grp.h,v 1.23 2007/10/18 02:23:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -69,7 +69,7 @@ struct group	*getgrent(void);
 void		 setgrent(void);
 void		 endgrent(void);
 #endif
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(_NETBSD_TOOLS)
 void		 setgrfile(const char *);
 int		 setgroupent(int);
 int		 getgrent_r(struct group *, char *, size_t, struct group **);
