@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.2.1 2007/10/17 21:38:15 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.2.2 2007/10/18 21:49:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.1 2007/10/17 21:38:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.2 2007/10/18 21:49:59 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2586,7 +2586,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 #ifndef XEN
 			*pap = (pte & PG_FRAME) | (va & 0xfff);
 #else
-			*pap = xpmap_mtop(pte) | (va & 0xfff);
+			*pap = xpmap_mtop_masked(pte) | (va & 0xfff);
 #endif
 		return (true);
 	}
@@ -2897,7 +2897,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 			if (vm_physseg_find(btop(opte & PG_FRAME), &off)
 #else
 			/* UVM want a PA */
-			if (vm_physseg_find(atop(xpmap_mtop(opte & PG_FRAME)),
+			if (vm_physseg_find(atop(xpmap_mtop_masked(opte)),
 			    &off)
 #endif
 			    != -1)
@@ -2910,7 +2910,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #ifndef XEN
 		bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
 #else
-		bank = vm_physseg_find(atop(xpmap_mtop(opte & PG_FRAME)), &off);
+		bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off);
 #endif
 #ifdef DIAGNOSTIC
 		if (bank == -1)
@@ -2999,7 +2999,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		if (vm_physseg_find(btop(opte & PG_FRAME), &off) != -1)
 #else
 		/* UVM want a PA */
-		if (vm_physseg_find(atop(xpmap_mtop(opte & PG_FRAME)), &off) != -1)
+		if (vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off) != -1)
 #endif
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
@@ -3011,7 +3011,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
 #else
 	/* UVM want a PA */
-	bank = vm_physseg_find(atop(xpmap_mtop(opte & PG_FRAME)), &off);
+	bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off);
 #endif
 #ifdef DIAGNOSTIC
 	if (bank == -1)
@@ -3743,7 +3743,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifndef XEN
 			bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #else
-			bank = vm_physseg_find(atop(xpmap_mtop(opte & PG_FRAME)),
+			bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)),
 				&off);
 #endif
 #ifdef DIAGNOSTIC
