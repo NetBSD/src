@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.10 2007/10/10 23:03:24 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.11 2007/10/18 15:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.10 2007/10/10 23:03:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.11 2007/10/18 15:47:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -533,11 +533,17 @@ bool
 sched_curcpu_runnable_p(void)
 {
 	struct schedstate_percpu *spc;
+	struct cpu_info *ci;
 	runqueue_t *rq;
 
-	spc = &curcpu()->ci_schedstate;
+	ci = curcpu();
+	spc = &ci->ci_schedstate;
 	rq = spc->spc_sched_info;
 
+#ifndef __HAVE_FAST_SOFTINTS
+	if (ci->ci_data.cpu_softints != 0)
+		return true;
+#endif
 	if (__predict_true((spc->spc_flags & SPCF_OFFLINE) == 0))
 		return (global_queue.rq_count | rq->rq_count) != 0;
 	return rq->rq_count != 0;

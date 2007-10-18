@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.16 2007/10/11 11:21:16 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.17 2007/10/18 15:47:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.16 2007/10/11 11:21:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.17 2007/10/18 15:47:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -325,7 +325,7 @@ lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
-	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
+	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	mutex_enter(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
