@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.2.2 2007/10/14 12:05:06 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.2.3 2007/10/18 11:24:50 yamt Exp $	*/
 
 /*
  *
@@ -144,7 +144,9 @@ struct pmap {
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
+#if !defined(__x86_64__)
 	vaddr_t pm_hiexec;		/* highest executable mapping */
+#endif /* !defined(__x86_64__) */
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
