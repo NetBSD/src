@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.72.6.3 2007/10/18 17:49:10 ad Exp $ */
+/* $NetBSD: interrupt.c,v 1.72.6.4 2007/10/18 18:12:59 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.3 2007/10/18 17:49:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.4 2007/10/18 18:12:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,21 +530,9 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 const static uint8_t ipl2psl_table[] = {
 	[IPL_NONE] = ALPHA_PSL_IPL_0,
 	[IPL_SOFT] = ALPHA_PSL_IPL_SOFT,
-	[IPL_SOFTCLOCK] = IPL_SOFT,
-	[IPL_SOFTNET] = IPL_SOFT,
-	[IPL_SOFTSERIAL] = IPL_SOFT,
-	[IPL_BIO] = ALPHA_PSL_IPL_IO,
-	[IPL_NET] = ALPHA_PSL_IPL_IO,
-	[IPL_TTY] = ALPHA_PSL_IPL_IO,
-	/* IPL_LPT == IPL_TTY */
 	[IPL_VM] = ALPHA_PSL_IPL_IO,
 	[IPL_CLOCK] = ALPHA_PSL_IPL_CLOCK,
-	/* IPL_STATCLOCK == IPL_CLOCK */
-	/* IPL_IPI == IPL_CLOCK */
 	[IPL_HIGH] = ALPHA_PSL_IPL_HIGH,
-	/* IPL_SCHED == IPL_HIGH */
-	/* IPL_LOCK == IPL_HIGH */
-	[IPL_SERIAL] = ALPHA_PSL_IPL_IO,
 };
 
 ipl_cookie_t

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.59.6.2 2007/10/18 17:49:10 ad Exp $ */
+/* $NetBSD: intr.h,v 1.59.6.3 2007/10/18 18:13:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -116,21 +116,21 @@ struct scbvec {
 
 #define	IPL_NONE	0	/* no interrupt level */
 #define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-#define	IPL_BIO		5	/* block I/O interrupts */
-#define	IPL_NET		6	/* network interrupts */
-#define	IPL_TTY		7	/* terminal interrupts */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		8	/* interrupts that can alloc mem */
-#define	IPL_CLOCK	9	/* clock interrupts */
-#define	IPL_IPI		IPL_CLOCK /* AARM, 5-2, II-B */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	10	/* all interrupts */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	11	/* serial interrupts */
+#define	IPL_VM		2	/* interrupts that can alloc mem */
+#define	IPL_SCHED	3	/* clock interrupts */
+#define	IPL_HIGH	4	/* all interrupts */
+
+/* Aliases */
+#define	IPL_SOFTCLOCK	IPL_SOFT/* clock software interrupts */
+#define	IPL_SOFTNET	IPL_SOFT/* network software interrupts */
+#define	IPL_SOFTSERIAL	IPL_SOFT/* serial software interrupts */
+#define	IPL_BIO		IPL_VM	/* block I/O interrupts */
+#define	IPL_NET		IPL_VM	/* network interrupts */
+#define	IPL_TTY		IPL_VM	/* terminal interrupts */
+#define	IPL_LPT		IPL_VM	/* printer interrupts */
+#define	IPL_SERIAL	IPL_VM	/* serial interrupts */
+#define	IPL_IPI		IPL_SCHED/* AARM, 5-2, II-B */
+#define	IPL_CLOCK	IPL_SCHED/* clock interrupt */
 
 typedef int ipl_t;
 typedef struct {
@@ -138,20 +138,6 @@ typedef struct {
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
-
-#define	SI_SOFTSERIAL	0
-#define	SI_SOFTNET	1
-#define	SI_SOFTCLOCK	2
-#define	SI_SOFT		3
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"serial",							\
-	"net",								\
-	"clock",							\
-	"misc",								\
-}
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
