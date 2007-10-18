@@ -1,8 +1,19 @@
-/*	$NetBSD: compat_defs.h,v 1.62 2007/10/18 02:27:10 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.63 2007/10/18 16:04:24 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
+
+/* Work around some complete brain damage. */
+/*
+ * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
+ * program (not the OS) should do that.  Preload <features.h> to keep any
+ * of this crap from being pulled in, and undefine _POSIX_SOURCE.
+ */
+
+#if defined(__linux__) && HAVE_FEATURES_H
+#include <features.h>
+#endif
 
 /* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
    defs. Other platforms may need similiar defines. */
@@ -16,18 +27,6 @@
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
-
-/* Work around some complete brain damage. */
-/*
- * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
- * program (not the OS) should do that.  Preload <features.h> to keep any
- * of this crap from being pulled in, and undefine _POSIX_SOURCE.
- */
-
-#if defined(__linux__) && HAVE_FEATURES_H
-#include <features.h>
-#endif
-
 
 /* System headers needed for (re)definitions below. */
 
