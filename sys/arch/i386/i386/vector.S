@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.27 2007/10/17 19:54:47 garbled Exp $	*/
+/*	$NetBSD: vector.S,v 1.28 2007/10/18 15:28:36 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -980,7 +980,7 @@ calltrap:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH(%eax)
+3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 #ifndef DIAGNOSTIC
 6:	INTRFASTEXIT
