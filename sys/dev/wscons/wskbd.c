@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.106 2007/10/16 21:06:09 joerg Exp $ */
+/* $NetBSD: wskbd.c,v 1.107 2007/10/18 14:51:25 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.106 2007/10/16 21:06:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.107 2007/10/18 14:51:25 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -318,9 +318,7 @@ struct wssrcops wskbd_srcops = {
 };
 #endif
 
-#if NWSDISPLAY > 0
 static void wskbd_repeat(void *v);
-#endif
 
 static int wskbd_console_initted;
 static struct wskbd_softc *wskbd_console_device;
