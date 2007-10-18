@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.109 2007/10/18 18:09:53 joerg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.110 2007/10/18 18:55:00 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.109 2007/10/18 18:09:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.110 2007/10/18 18:55:00 joerg Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1473,8 +1473,7 @@ wsdisplaystart(struct tty *tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, (hz > 128) ? (hz / 128) : 1,
-		    ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, (hz > 128) ? (hz / 128) : 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -1978,8 +1977,7 @@ wsdisplay_kbdholdscreen(device_t dv, int hold)
 		scr->scr_hold_screen = 1;
 	else {
 		scr->scr_hold_screen = 0;
-		callout_reset(&scr->scr_tty->t_rstrt_ch, 0,
-		    ttrstrt, scr->scr_tty);		/* "immediate" */
+		callout_schedule(&scr->scr_tty->t_rstrt_ch, 0);
 	}
 }
 
