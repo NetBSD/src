@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.147 2007/10/17 19:54:56 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.148 2007/10/18 15:28:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -414,7 +414,7 @@ void x86_bus_space_mallocok(void);
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BIOSBASEMEM		2	/* int: bios-reported base mem (K) */
 #define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
-#define	CPU_NKPDE		4	/* int: number of kernel PDEs */
+/* 	CPU_NKPDE		4	obsolete: int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
 #define CPU_DISKINFO		6	/* struct disklist *:
 					 * disk geometry information */
@@ -438,7 +438,6 @@ void x86_bus_space_mallocok(void);
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "biosbasemem", CTLTYPE_INT }, \
 	{ "biosextmem", CTLTYPE_INT }, \
-	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
 	{ "fpu_present", CTLTYPE_INT }, \

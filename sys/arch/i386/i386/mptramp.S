@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.10 2007/10/17 19:54:46 garbled Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.11 2007/10/18 15:28:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -163,6 +163,14 @@ _TRMP_LABEL(mp_startup)
 	pushl   $PSL_MBO
 	popfl
 	
+	movl	RELOC(pmap_largepages),%eax
+	orl	%eax,%eax
+	jz	1f
+	movl	%cr4,%eax
+	orl	$CR4_PSE,%eax
+	movl	%eax,%cr4
+1:
+
 	movl	RELOC(mp_pdirpa),%ecx
 	HALTT(0x5,%ecx)
 	

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.45 2007/10/17 19:53:03 garbled Exp $
+#	$NetBSD: files.amd64,v 1.46 2007/10/18 15:28:33 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -10,9 +10,6 @@ maxusers 2 16 128
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
-
-# Large page size
-defflag			LARGEPAGES
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
@@ -47,7 +44,7 @@ file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
-file	arch/amd64/amd64/pmap.c
+file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/syscall.c
