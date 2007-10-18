@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.17 2006/10/09 11:03:43 peter Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.18 2007/10/18 18:09:52 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -40,24 +40,24 @@ void wsdisplay_set_console_kbd(struct wsevsrc *);
 /*
  * Calls to the display interface from the keyboard interface.
  */
-void	wsdisplay_kbdinput(struct device *, keysym_t);
-int	wsdisplay_switch(struct device *, int, int);
+void	wsdisplay_kbdinput(device_t , keysym_t);
+int	wsdisplay_switch(device_t, int, int);
 enum wsdisplay_resetops {
 	WSDISPLAY_RESETEMUL,
 	WSDISPLAY_RESETCLOSE
 };
-void	wsdisplay_reset(struct device *, enum wsdisplay_resetops);
-void	wsdisplay_kbdholdscreen(struct device *, int);
+void	wsdisplay_reset(device_t, enum wsdisplay_resetops);
+void	wsdisplay_kbdholdscreen(device_t, int);
 
 void	wsdisplay_set_cons_kbd(int (*get)(dev_t),
 			       void (*poll)(dev_t, int),
 			       void (*bell)(dev_t, u_int, u_int, u_int));
 void	wsdisplay_unset_cons_kbd(void);
 struct wsdisplay_param;
-int	wsdisplay_param(struct device *, u_long, struct wsdisplay_param *);
+int	wsdisplay_param(device_t, u_long, struct wsdisplay_param *);
 
 /*
  * Calls to the keyboard interface from the glue code.
  */
-struct wsevsrc *wskbd_set_console_display(struct device *, struct wsevsrc *);
+struct wsevsrc *wskbd_set_console_display(device_t, struct wsevsrc *);
 int wskbd_pickfree(void);
