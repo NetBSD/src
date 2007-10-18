@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.213 2007/10/18 08:32:35 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.214 2007/10/18 15:31:17 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -590,16 +590,6 @@ Notes:
 		amd64		DONE
 		other ports should work as the trunk does.
 		(conditionalized by __HAVE_LAZY_MBUF macro)
-
-Branch:		yamt-x86pmap
-Description:	merge i386 and amd64 pmap
-Status:		Active
-Start Date:	Mon Sep 24 2007
-End Date:	
-Base Tag:	yamt-x86pmap-base4
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys  (src/common is tagged but not branched)
-Notes:		
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
@@ -1479,6 +1469,16 @@ Base Tag:	yamt-vop-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		http://mail-index.NetBSD.org/tech-kern/2005/09/27/0000.html
+
+Branch:		yamt-x86pmap
+Description:	merge i386 and amd64 pmap
+Status:		Terminated; merged to -current
+Start Date:	Mon Sep 24 2007
+End Date:	Fri Oct 19 2007
+Base Tag:	yamt-x86pmap-base4
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
 
 Branch:		gdamore-uart
 Description:	Add register table support to com driver.
