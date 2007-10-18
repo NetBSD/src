@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.39 2005/05/24 17:36:29 kleink Exp $	*/
+/*	$NetBSD: pwd.h,v 1.40 2007/10/18 02:23:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -132,7 +132,7 @@ struct passwd	*getpwent(void);
 void		 setpwent(void);
 void		 endpwent(void);
 #endif
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(_NETBSD_TOOLS)
 int		 pw_gensalt(char *, size_t, const char *, const char *);
 int		 pw_scan(char *, struct passwd *, int *);
 int		 setpassent(int);
