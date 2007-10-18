@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15.32.1 2007/10/17 21:08:19 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.32.2 2007/10/18 21:49:29 bouyer Exp $	*/
 
 /*
  *
@@ -230,6 +230,13 @@ xpmap_mtop(paddr_t mpa)
 {
 	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
 	    XPMAP_OFFSET) | (mpa & ~PG_FRAME);
+}
+
+static __inline paddr_t
+xpmap_mtop_masked(paddr_t mpa)
+{
+	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
+	    XPMAP_OFFSET);
 }
 
 static __inline paddr_t
