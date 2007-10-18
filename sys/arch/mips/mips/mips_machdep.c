@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.193.2.1 2007/05/27 12:27:48 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.193.2.2 2007/10/18 15:36:08 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193.2.1 2007/05/27 12:27:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193.2.2 2007/10/18 15:36:08 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1774,12 +1774,10 @@ cpu_setmcontext(l, mcp, flags)
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
-	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (ci->ci_want_resched && !immed)
+	if (ci->ci_want_resched)
 		return;
 	ci->ci_want_resched = 1;
-
 	if (curlwp != ci->ci_data.cpu_idlelwp)
 		aston(curlwp);
 }
