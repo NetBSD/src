@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.22 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.23 2007/10/18 23:54:54 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.23 2007/10/18 23:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22 2006/11/16 01:32:47 christos Ex
 #include <dev/sysmon/sysmonvar.h>
 
 struct acpibut_softc {
-	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 	int sc_flags;			/* see below */
@@ -71,10 +70,10 @@ static const char * const sleep_button_hid[] = {
 
 #define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
 
-static int	acpibut_match(struct device *, struct cfdata *, void *);
-static void	acpibut_attach(struct device *, struct device *, void *);
+static int	acpibut_match(device_t, struct cfdata *, void *);
+static void	acpibut_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
+CFATTACH_DECL_NEW(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, NULL, NULL);
 
 static void	acpibut_pressed_event(void *);
@@ -86,8 +85,7 @@ static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpibut_match(struct device *parent, struct cfdata *match,
-    void *aux)
+acpibut_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -109,14 +107,14 @@ acpibut_match(struct device *parent, struct cfdata *match,
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpibut_attach(struct device *parent, struct device *self, void *aux)
+acpibut_attach(device_t parent, device_t self, void *aux)
 {
-	struct acpibut_softc *sc = (void *) self;
+	struct acpibut_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	const char *desc;
 	ACPI_STATUS rv;
 
-	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_name = device_xname(self);
 
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
@@ -125,7 +123,6 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
 		desc = "Sleep";
 	} else {
-		printf("\n");
 		panic("acpibut_attach: impossible");
 	}
 
@@ -135,16 +132,16 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		return;
 	}
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, sc);
+	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, self);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+		aprint_error_dev(self,
+		    "unable to register DEVICE NOTIFY handler: %s\n",
+		    AcpiFormatException(rv));
 		return;
 	}
 
@@ -164,10 +161,11 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 static void
 acpibut_pressed_event(void *arg)
 {
-	struct acpibut_softc *sc = arg;
+	device_t dv = arg;
+	struct acpibut_softc *sc = device_private(dv);
 
 	if (sc->sc_flags & ACPIBUT_F_VERBOSE)
-		printf("%s: button pressed\n", sc->sc_dev.dv_xname);
+		aprint_verbose_dev(dv, "button pressed\n");
 
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
@@ -178,10 +176,10 @@ acpibut_pressed_event(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify,
-    void *context)
+acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
-	struct acpibut_softc *sc = context;
+	device_t dv = context;
+	struct acpibut_softc *sc = device_private(dv);
 	int rv;
 
 	switch (notify) {
@@ -190,21 +188,20 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 	case ACPI_NOTIFY_S0SleepButtonPressed: /* same as above */
 #endif
 #ifdef ACPI_BUT_DEBUG
-		printf("%s: received ButtonPressed message\n",
-		    sc->sc_dev.dv_xname);
+		aprint_debug_dev(dv, "received ButtonPressed message\n");
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpibut_pressed_event, sc);
 		if (ACPI_FAILURE(rv))
-			printf("%s: WARNING: unable to queue button pressed "
-			    "callback: %s\n", sc->sc_dev.dv_xname,
+			aprint_error_dev(dv,
+			    "WARNING: unable to queue button pressed callback: %s\n",
 			    AcpiFormatException(rv));
 		break;
 
 	/* XXX ACPI_NOTIFY_DeviceWake?? */
 
 	default:
-		printf("%s: received unknown notify message: 0x%x\n",
-		    sc->sc_dev.dv_xname, notify);
+		aprint_error_dev(dv, "received unknown notify message: 0x%x\n",
+		    notify);
 	}
 }
