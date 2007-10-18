@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.8.2 2007/10/06 15:33:35 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.2.8.3 2007/10/18 11:23:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.8.2 2007/10/06 15:33:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.8.3 2007/10/18 11:23:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -646,11 +646,10 @@ cpu_hatch(void *v)
 
 #ifdef i386
 	npxinit(ci);
-	lldt(GSEL(GLDT_SEL, SEL_KPL));
 #else
 	fpuinit(ci);
-	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 #endif
+	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
 
