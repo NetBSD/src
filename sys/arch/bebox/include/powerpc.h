@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.6 2005/12/11 12:17:03 christos Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.6.52.1 2007/10/18 08:31:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,7 +38,7 @@ struct mem_region {
 	psize_t size;
 };
 
-void mem_regions __P((struct mem_region **, struct mem_region **));
+void mem_regions(struct mem_region **, struct mem_region **);
 
 /*
  * These two functions get used solely in boot() in machdep.c.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.14.2.1 2007/10/14 11:48:42 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.14.2.2 2007/10/18 08:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.14.2.1 2007/10/14 11:48:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.14.2.2 2007/10/18 08:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -160,8 +160,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	spc = &ci->ci_schedstate;
 
 	/*
-	 * Set it running.  We'll try to get the last CPU that ran
-	 * this LWP to pick it up again.
+	 * Set it running.
 	 */
 	spc_lock(ci);
 	lwp_setlock(l, spc->spc_mutex);
