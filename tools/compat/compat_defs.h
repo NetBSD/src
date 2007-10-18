@@ -1,10 +1,23 @@
-/*	$NetBSD: compat_defs.h,v 1.61 2007/09/28 09:11:11 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.62 2007/10/18 02:27:10 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
-/* Work around some complete brain damage. */
 
+/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
+   defs. Other platforms may need similiar defines. */
+#ifdef __NetBSD__
+#define	_ISOC99_SOURCE
+#define _POSIX_SOURCE	1
+#define _POSIX_C_SOURCE	200112L
+#define _XOPEN_SOURCE 600
+#define _NETBSD_TOOLS
+#else
+#undef _POSIX_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
+/* Work around some complete brain damage. */
 /*
  * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
  * program (not the OS) should do that.  Preload <features.h> to keep any
@@ -15,17 +28,6 @@
 #include <features.h>
 #endif
 
-/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
-   defs. Other platforms may need similiar defines. */
-#ifdef __NetBSD__
-#define	_ISOC99_SOURCE
-#define _POSIX_SOURCE	1
-#define _POSIX_C_SOURCE	200112L
-#define _XOPEN_SOURCE 600
-#else
-#undef _POSIX_SOURCE
-#undef _POSIX_C_SOURCE
-#endif
 
 /* System headers needed for (re)definitions below. */
 
@@ -346,10 +348,14 @@ int gid_from_group(const char *, gid_t *);
 int pwcache_groupdb(int (*)(int), void (*)(void),
 		struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
+#if !HAVE_USER_FROM_UID
 /* Make them use our version */
 #  define user_from_uid __nbcompat_user_from_uid
+#endif
+#if !HAVE_GROUP_FROM_GID
 /* Make them use our version */
 #  define group_from_gid __nbcompat_group_from_gid
+#endif
 
 #if !HAVE_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
