@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.42 2007/10/16 21:06:09 joerg Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.43 2007/10/18 18:09:53 joerg Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.42 2007/10/16 21:06:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.43 2007/10/18 18:09:53 joerg Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -289,9 +289,10 @@ usl_attachtimeout(void *arg)
 }
 
 int
-wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
+wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
+	struct wsdisplay_softc *sc = device_private(dv);
 	int idx, maxidx;
 
 	switch (cmd) {
@@ -320,7 +321,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
 		idx = *(long *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
-		return (wsdisplay_switch((struct device *)sc, idx, 1));
+		return (wsdisplay_switch(dv, idx, 1));
 	    case VT_WAITACTIVE:
 		idx = *(long *)data - 1;
 		if (idx < 0)
