@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.4.1 2007/10/17 21:38:16 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.2 2007/10/18 21:52:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1029,12 +1029,13 @@ IDTVEC(softclock)
 NENTRY(hypervisor_callback)
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11
-	addq $0x10,%rsp
+	addq $16,%rsp
 	pushq	$0	# Dummy error code
 	pushq	$T_ASTFLT
 	INTRENTRY
 	# sti??
 	movq	%rsp, %rdi
+	addq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
   	STI(%rsi,%rdi)
 	# Mmm well AST... one day
@@ -1044,11 +1045,12 @@ NENTRY(hypervisor_callback)
 NENTRY(failsafe_callback)
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11
-	addq $0x10,%rsp
+	addq $16,%rsp
 	pushq	$0
 	pushq	$T_ASTFLT
 	INTRENTRY
 	movq	%rsp, %rdi
+	addq	$8, %rdi; /* don't forget if_ppl */
 	call xen_failsafe_handler
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
