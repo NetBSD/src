@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4.14.1 2007/10/17 21:38:17 bouyer Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4.14.2 2007/10/18 21:53:11 bouyer Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -13,7 +13,7 @@
 #define HYPERVISOR_iret hypercall_page + (__HYPERVISOR_iret * 32)
 /* Xen do not need swapgs, done by hypervisor */
 #define swapgs
-#define iretq	subq $8,%rsp ; jmp HYPERVISOR_iret
+#define iretq	pushq $0 ; jmp HYPERVISOR_iret
 #endif
 
 /*
