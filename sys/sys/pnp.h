@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.3 2007/09/09 20:52:15 christos Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.4 2007/10/18 02:07:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -111,6 +111,8 @@ typedef struct pnp_device {
 	int			pnp_depth;
 } pnp_device_t;
 
+void		pnp_init(void);
+
 pnp_status_t		pnp_set_platform(const char *, const char *);
 const char *		pnp_get_platform(const char *);
 
@@ -131,5 +133,7 @@ pnp_status_t	pnp_power_input(device_t, pnp_action_t);
 pnp_status_t	pnp_power_display(device_t, pnp_action_t);
 
 pnp_status_t	pnp_global_transition(pnp_state_t);
+
+void		pnp_active(device_t);
 
 #endif /* !_SYS_PNP_H */

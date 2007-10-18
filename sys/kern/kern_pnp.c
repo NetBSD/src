@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.8 2007/10/16 13:26:08 joerg Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.9 2007/10/18 02:07:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.8 2007/10/16 13:26:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.9 2007/10/18 02:07:19 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.8 2007/10/16 13:26:08 joerg Exp $
 #include <sys/device.h>
 #include <sys/pnp.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <prop/proplib.h>
 
@@ -107,6 +108,14 @@ static int pnp_displaydev_suspend = 900;
 static int pnp_displaydev_off = 1200;
 
 static int pnp_audiodev_idle = 30;
+
+static kmutex_t pnp_mutex;
+
+void
+pnp_init(void)
+{
+	mutex_init(&pnp_mutex, MUTEX_DEFAULT, IPL_SCHED);
+}
 
 #ifdef PNP_DEBUG
 static const char *
@@ -225,12 +234,23 @@ pnp_status_t
 pnp_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	pnp_device_t *pnp;
+	pnp_status_t status;
+	int owned;
 
 	pnp = device_pnp(dv);
 	if (pnp->pnp_power == NULL)
 		return PNP_STATUS_UNSUPPORTED;
 
-	return pnp->pnp_power(dv, req, opaque);
+	/* XXXJDM: I'm not supposed to use mutex_owned for this purpose.. */
+
+	owned = mutex_owned(&pnp_mutex);
+	if (!owned)
+		mutex_enter(&pnp_mutex);
+	status = pnp->pnp_power(dv, req, opaque);
+	if (!owned)
+		mutex_exit(&pnp_mutex);
+
+	return status;
 }
 
 pnp_state_t
@@ -333,6 +353,10 @@ pnp_register(device_t dv,
 
 	caps = pnp_get_capabilities(dv);
 	pnp->pnp_state = pnp_get_state(dv);
+#ifdef PNP_DEBUG
+	printf("%s: current device state: %s\n", device_xname(dv),
+	    pnp_statename(pnp->pnp_state));
+#endif
 
 	/* determine depth in device tree of instance */
 	curdev = dv;
@@ -483,8 +507,12 @@ pnp_power_audio(device_t dv, pnp_action_t act)
 
 	caps = pnp_get_capabilities(dv);
 	curstate = pnp->pnp_state;
-	if (curstate == PNP_STATE_UNKNOWN)
+	if (curstate == PNP_STATE_UNKNOWN) {
+#ifdef PNP_DEBUG
+		printf("%s: couldn't determine state\n", device_xname(dv));
+#endif
 		return PNP_STATUS_UNSUPPORTED;
+	}
 
 	switch (act) {
 	case PNP_ACTION_OPEN:
@@ -701,6 +729,31 @@ pnp_idle_display(void *opaque)
 	KASSERT(device_class(dv) == DV_DISPLAYDEV);
 
 	pnp_power_display(dv, PNP_ACTION_IDLE);
+
+	return;
+}
+
+void
+pnp_active(device_t dv)
+{
+	pnp_device_t *pnp;
+	struct callout *c;
+
+	pnp = device_pnp(dv);
+	c = &pnp->pnp_idle;
+
+	switch (device_class(dv)) {
+	case DV_AUDIODEV:
+		pnp_power_audio(dv, PNP_ACTION_OPEN); /* XXX */
+		callout_schedule(c, hz * pnp_audiodev_idle);
+		break;
+	default:
+#ifdef PNP_DEBUG
+		aprint_error("%s: active called with unsupported devclass\n",
+		    device_xname(dv));
+#endif
+		break;
+	}
 
 	return;
 }

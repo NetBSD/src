@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.39.16.1 2007/08/03 22:17:13 jmcneill Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.39.16.2 2007/10/18 02:07:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -227,6 +227,9 @@ struct audio_softc {
 
 	pnp_state_t sc_pmstate;
 	u_int	sc_lastgain;
+
+	mixer_ctrl_t	*sc_mixer_state;
+	int		sc_nmixer_states;
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */

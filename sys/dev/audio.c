@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.4 2007/09/13 04:45:12 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.5 2007/10/18 02:07:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.4 2007/09/13 04:45:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.5 2007/10/18 02:07:20 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -173,6 +173,9 @@ int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
 
 pnp_status_t audio_power(device_t, pnp_request_t, void *);
+
+static void	audio_mixer_capture(struct audio_softc *);
+static void	audio_mixer_restore(struct audio_softc *);
 
 static void	audio_softintr_rd(void *);
 static void	audio_softintr_wr(void *);
@@ -950,7 +953,7 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	if (sc->sc_dying)
 		return EIO;
 
-	pnp_power_audio(&sc->dev, PNP_ACTION_OPEN);
+	pnp_active(&sc->dev);
 
 	sc->sc_opencnt++;
 
@@ -984,6 +987,9 @@ audioclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	unit = AUDIOUNIT(dev);
 	sc = audio_cd.cd_devs[unit];
+
+	pnp_active(&sc->dev);
+
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
@@ -1001,8 +1007,6 @@ audioclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 
 	sc->sc_opencnt--;
-	if (sc->sc_opencnt == 0)
-		pnp_power_audio(&sc->dev, PNP_ACTION_CLOSE);
 
 	return error;
 }
@@ -1019,6 +1023,8 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->sc_dying)
 		return EIO;
+
+	pnp_active(&sc->dev);
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -1051,6 +1057,8 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->sc_dying)
 		return EIO;
+
+	pnp_active(&sc->dev);
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -1086,9 +1094,11 @@ audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 	case AUDIOCTL_DEVICE:
+		pnp_active(&sc->dev);
 		error = audio_ioctl(sc, cmd, addr, flag, l);
 		break;
 	case MIXER_DEVICE:
+		/* pnp_active may be called in mixer_ioctl */
 		error = mixer_ioctl(sc, cmd, addr, flag, l);
 		break;
 	default:
@@ -1109,6 +1119,8 @@ audiopoll(dev_t dev, int events, struct lwp *l)
 	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
 	if (sc->sc_dying)
 		return POLLHUP;
+
+	pnp_active(&sc->dev);
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -1139,6 +1151,8 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	if (sc->sc_dying)
 		return 1;
 
+	pnp_active(&sc->dev);
+
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -1166,6 +1180,8 @@ audiommap(dev_t dev, off_t off, int prot)
 	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
 	if (sc->sc_dying)
 		return -1;
+
+	pnp_active(&sc->dev); /* XXXJDM */
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -3714,12 +3730,18 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	    struct lwp *l)
 {
 	const struct audio_hw_if *hw;
+	mixer_ctrl_t *mc;
 	int error;
 
 	DPRINTF(("mixer_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 	hw = sc->hw_if;
 	error = EINVAL;
+
+	/* we can return cached values if we are sleeping */
+	if (cmd != AUDIO_MIXER_READ)
+		pnp_active(&sc->dev);
+
 	switch (cmd) {
 	case FIOASYNC:
 		mixer_remove(sc, l);	/* remove old entry */
@@ -3747,7 +3769,19 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_MIXER_READ:
 		DPRINTF(("AUDIO_MIXER_READ\n"));
-		error = hw->get_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
+		mc = (mixer_ctrl_t *)addr;
+
+		if (pnp_get_state(&sc->dev) != PNP_STATE_D3 ||
+		    sc->sc_mixer_state == NULL)
+			error = hw->get_port(sc->hw_hdl, mc);
+		else if (mc->dev >= sc->sc_nmixer_states)
+			error = ENXIO;
+		else {
+			int dev = mc->dev;
+			memcpy(mc, &sc->sc_mixer_state[dev],
+			    sizeof(mixer_ctrl_t));
+			error = 0;
+		}
 		break;
 
 	case AUDIO_MIXER_WRITE:
@@ -3815,6 +3849,71 @@ audioprint(void *aux, const char *pnp)
 #endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
 
 #if NAUDIO > 0
+static void
+audio_mixer_capture(struct audio_softc *sc)
+{
+	mixer_devinfo_t mi;
+	mixer_ctrl_t *mc;
+
+	for (mi.index = 0; ; mi.index++)
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			break;
+
+#ifdef DIAGNOSTIC
+	if (sc->sc_mixer_state != NULL && sc->sc_nmixer_states != mi.index) {
+		free(sc->sc_mixer_state);
+		sc->sc_mixer_state = NULL;
+	}
+#endif
+
+	sc->sc_nmixer_states = mi.index;
+	if (sc->sc_mixer_state == NULL)
+		sc->sc_mixer_state = malloc(
+		    sizeof(mixer_ctrl_t) * sc->sc_nmixer_states,
+		    M_DEVBUF, M_NOWAIT);
+	if (sc->sc_mixer_state == NULL) {
+		aprint_error("%s: couldn't allocate memory for mixer state\n",
+		    device_xname(&sc->dev));
+		return;
+	}
+
+	for (mi.index = 0; ; mi.index++) {
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			break;
+		if (mi.type == AUDIO_MIXER_CLASS)
+			continue;
+		mc = &sc->sc_mixer_state[mi.index];
+		mc->dev = mi.index;
+		mc->type = mi.type;
+		(void)sc->hw_if->get_port(sc->hw_hdl, mc);
+	}
+
+	return;
+}
+
+static void
+audio_mixer_restore(struct audio_softc *sc)
+{
+	mixer_devinfo_t mi;
+	mixer_ctrl_t *mc;
+
+	if (sc->sc_mixer_state == NULL)
+		return;
+
+	for (mi.index = 0; ; mi.index++) {
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			break;
+		if (mi.type == AUDIO_MIXER_CLASS)
+			continue;
+		mc = &sc->sc_mixer_state[mi.index];
+		(void)sc->hw_if->set_port(sc->hw_hdl, mc);
+	}
+	if (sc->hw_if->commit_settings)
+		sc->hw_if->commit_settings(sc->hw_hdl);
+
+	return;
+}
+
 pnp_status_t
 audio_power(device_t dv, pnp_request_t req, void *aux)
 {
@@ -3837,7 +3936,7 @@ audio_power(device_t dv, pnp_request_t req, void *aux)
 		break;
 	case PNP_REQUEST_GET_STATE:
 		state = (pnp_state_t *)aux;
-		return sc->sc_pmstate;
+		*state = sc->sc_pmstate;
 		break;
 	case PNP_REQUEST_SET_STATE:
 		state = (pnp_state_t *)aux;
@@ -3847,6 +3946,8 @@ audio_power(device_t dv, pnp_request_t req, void *aux)
 		switch (*state) {
 		case PNP_STATE_D0:
 			sc->sc_pmstate = *state;
+			pnp_power(sc->sc_dev, req, state);
+			audio_mixer_restore(sc);
 			if (sc->sc_pbus == true)
 				audiostartp(sc);
 			if (sc->sc_rbus == true)
@@ -3854,6 +3955,8 @@ audio_power(device_t dv, pnp_request_t req, void *aux)
 			break;
 		case PNP_STATE_D3:
 			sc->sc_pmstate = *state;
+			audio_mixer_capture(sc);
+			pnp_power(sc->sc_dev, req, state);
 			if (sc->sc_pbus == true)
 				hwp->halt_output(sc->hw_hdl);
 			if (sc->sc_rbus == true)
