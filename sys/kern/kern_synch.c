@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.18 2007/10/10 23:03:24 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.19 2007/10/18 15:47:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.18 2007/10/10 23:03:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.19 2007/10/18 15:47:33 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -163,6 +163,8 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sleepq_t *sq;
 	int error;
 
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
 		if ((priority & PNORELOCK) != 0)
@@ -194,6 +196,8 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 	int error;
+
+	KASSERT((l->l_pflag & LP_INTR) == 0);
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(mtx, (priority & PNORELOCK) != 0);
@@ -387,7 +391,7 @@ mi_switch(lwp_t *l)
 	 * to take the interrupt.
 	 */
 	if (l->l_switchto != NULL) {
-		if ((l->l_flag & LW_INTR) != 0) {
+		if ((l->l_pflag & LP_INTR) != 0) {
 			returning = true;
 			softint_block(l);
 			if ((l->l_flag & LW_TIMEINTR) != 0)
@@ -396,6 +400,14 @@ mi_switch(lwp_t *l)
 		newl = l->l_switchto;
 		l->l_switchto = NULL;
 	}
+#ifndef __HAVE_FAST_SOFTINTS
+	else if (ci->ci_data.cpu_softints != 0) {
+		/* There are pending soft interrupts, so pick one. */
+		newl = softint_picklwp();
+		newl->l_stat = LSONPROC;
+		newl->l_flag |= LW_RUNNING;
+	}
+#endif	/* !__HAVE_FAST_SOFTINTS */
 
 	/* Count time spent in current system call */
 	if (!returning) {
@@ -418,7 +430,7 @@ mi_switch(lwp_t *l)
 	 */
 	mutex_spin_enter(spc->spc_mutex);
 	KASSERT(l->l_stat != LSRUN);
-	if (l->l_stat == LSONPROC) {
+	if (l->l_stat == LSONPROC && l != newl) {
 		KASSERT(lwp_locked(l, &spc->spc_lwplock));
 		if ((l->l_flag & LW_IDLE) == 0) {
 			l->l_stat = LSRUN;
@@ -446,7 +458,11 @@ mi_switch(lwp_t *l)
 			newl->l_stat = LSONPROC;
 			newl->l_flag |= LW_RUNNING;
 		}
-		ci->ci_want_resched = 0;
+		/*
+		 * Only clear want_resched if there are no
+		 * pending (slow) software interrupts.
+		 */
+		ci->ci_want_resched = ci->ci_data.cpu_softints;
 		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	}
 
@@ -708,6 +724,15 @@ pri_t
 sched_kpri(struct lwp *l)
 {
 	pri_t pri;
+
+#ifndef __HAVE_FAST_SOFTINTS
+	/*
+	 * Hack: if a user thread is being used to run a soft
+	 * interrupt, we need to boost the priority here.
+	 */
+	if ((l->l_pflag & LP_INTR) != 0 && l->l_priority < PRI_KERNEL_RT)
+		return softint_kpri(l);
+#endif
 
 	/*
 	 * Scale user priorities (0 -> 63) up to kernel priorities

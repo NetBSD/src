@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.16 2007/10/10 23:03:25 rmind Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.17 2007/10/18 15:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -192,7 +192,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
-#define	LW_INTR		0x40000000 /* Soft interrupt handler */
 #define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
@@ -202,6 +201,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
+#define	LP_INTR		0x00000040 /* Soft interrupt handler */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */

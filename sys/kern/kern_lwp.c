@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.21 2007/10/10 23:03:23 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.22 2007/10/18 15:47:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.21 2007/10/10 23:03:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.22 2007/10/18 15:47:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -223,6 +223,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.21 2007/10/10 23:03:23 rmind Exp
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1258,6 +1259,12 @@ lwp_userret(struct lwp *l)
 			(*hook)();
 		}
 	}
+
+#ifndef __HAVE_FAST_SOFTINTS
+	/* If there are pending soft interrupts, then run them. */
+	if (l->l_cpu->ci_data.cpu_softints != 0)
+		softint_overlay();
+#endif
 }
 
 /*

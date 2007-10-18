@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.6.7 2007/10/09 15:22:18 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.8 2007/10/18 15:47:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.7 2007/10/09 15:22:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.8 2007/10/18 15:47:32 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1016,7 +1016,7 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
+		if (CLKF_INTR(frame) || (l->l_pflag & LP_INTR) != 0) {
 			if (p != NULL) {
 				p->p_iticks++;
 			}
