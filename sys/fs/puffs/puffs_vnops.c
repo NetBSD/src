@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.107 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.108 2007/10/18 17:07:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.107 2007/10/11 19:41:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.108 2007/10/18 17:07:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -494,7 +494,7 @@ puffs_lookup(void *v)
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
 
-	error = puffs_msg_vn(pmp, park_lookup, 0, PUFFS_VN_LOOKUP, dvp, NULL);
+	error = puffs_msg_vn(pmp, park_lookup, PUFFS_VN_LOOKUP, 0, dvp, NULL);
 	DPRINTF(("puffs_lookup: return of the userspace, part %d\n", error));
 
 	/*
