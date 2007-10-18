@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.58 2007/10/17 23:30:58 joerg Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.59 2007/10/18 23:54:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.58 2007/10/17 23:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.59 2007/10/18 23:54:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.58 2007/10/17 23:30:58 joerg Exp $");
 #define ACPIBAT_NSENSORS	13  /* number of sensors */
 
 struct acpibat_softc {
-	device_t sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
 	int sc_available;		/* available information level */
@@ -181,14 +180,14 @@ CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
 static void acpibat_clear_presence(struct acpibat_softc *);
 static void acpibat_clear_info(struct acpibat_softc *);
 static void acpibat_clear_stat(struct acpibat_softc *);
-static int acpibat_battery_present(struct acpibat_softc *);
-static ACPI_STATUS acpibat_get_status(struct acpibat_softc *);
-static ACPI_STATUS acpibat_get_info(struct acpibat_softc *);
-static void acpibat_print_info(struct acpibat_softc *);
-static void acpibat_print_stat(struct acpibat_softc *);
+static int acpibat_battery_present(device_t);
+static ACPI_STATUS acpibat_get_status(device_t);
+static ACPI_STATUS acpibat_get_info(device_t);
+static void acpibat_print_info(device_t);
+static void acpibat_print_stat(device_t);
 static void acpibat_update(void *);
 
-static void acpibat_init_envsys(struct acpibat_softc *);
+static void acpibat_init_envsys(device_t);
 static void acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
 static int acpibat_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
@@ -223,13 +222,12 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": ACPI Battery (Control Method)\n");
 	aprint_normal(": ACPI Battery (Control Method)\n");
 
-	sc->sc_dev = self;
 	sc->sc_node = aa->aa_node;
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_ALL_NOTIFY,
-				      acpibat_notify_handler, sc);
+				      acpibat_notify_handler, self);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(self,
 		    "unable to register DEVICE/SYSTEM NOTIFY handler: %s\n",
@@ -241,7 +239,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	ABAT_SET(sc, ABAT_F_VERBOSE);
 #endif
 
-	acpibat_init_envsys(sc);
+	acpibat_init_envsys(self);
 }
 
 /*
@@ -290,15 +288,16 @@ acpibat_clear_stat(struct acpibat_softc *sc)
  * returns 0 for no battery, 1 for present, and -1 on error
  */
 static int
-acpibat_battery_present(struct acpibat_softc *sc)
+acpibat_battery_present(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	uint32_t sta;
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _STA: %s\n",
+		aprint_error_dev(dv, "failed to evaluate _STA: %s\n",
 		    AcpiFormatException(rv));
 		return -1;
 	}
@@ -326,8 +325,9 @@ acpibat_battery_present(struct acpibat_softc *sc)
  */
 
 static ACPI_STATUS
-acpibat_get_info(struct acpibat_softc *sc)
+acpibat_get_info(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -335,19 +335,18 @@ acpibat_get_info(struct acpibat_softc *sc)
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BIF", &buf);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _BIF: %s\n",
+		aprint_error_dev(dv, "failed to evaluate _BIF: %s\n",
 		    AcpiFormatException(rv));
 		return rv;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
-		aprint_error_dev(sc->sc_dev, "expected PACKAGE, got %d\n",
-		    p1->Type);
+		aprint_error_dev(dv, "expected PACKAGE, got %d\n", p1->Type);
 		goto out;
 	}
 	if (p1->Package.Count < 13) {
-		aprint_error_dev(sc->sc_dev, "expected 13 elements, got %d\n",
+		aprint_error_dev(dv, "expected 13 elements, got %d\n",
 		    p1->Package.Count);
 		goto out;
 	}
@@ -395,7 +394,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 
 	mutex_exit(&sc->sc_mtx);
 
-	aprint_verbose_dev(sc->sc_dev, "battery info: %s, %s, %s",
+	aprint_verbose_dev(dv, "battery info: %s, %s, %s",
 	    p2[12].String.Pointer, p2[11].String.Pointer, p2[9].String.Pointer);
 	if (p2[10].String.Pointer)
 		aprint_verbose(" %s", p2[10].String.Pointer);
@@ -415,8 +414,9 @@ out:
  *	Get, and possibly display, the current battery line status.
  */
 static ACPI_STATUS
-acpibat_get_status(struct acpibat_softc *sc)
+acpibat_get_status(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	int status, battrate;
 	ACPI_OBJECT *p1, *p2;
 	ACPI_STATUS rv;
@@ -424,20 +424,20 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _BST: %s\n",
+		aprint_error_dev(dv, "failed to evaluate _BST: %s\n",
 		    AcpiFormatException(rv));
 		return rv;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
-		aprint_error_dev(sc->sc_dev, "expected PACKAGE, got %d\n",
+		aprint_error_dev(dv, "expected PACKAGE, got %d\n",
 		    p1->Type);
 		rv = AE_ERROR;
 		goto out;
 	}
 	if (p1->Package.Count < 4) {
-		aprint_error_dev(sc->sc_dev, "expected 4 elts, got %d\n",
+		aprint_error_dev(dv, "expected 4 elts, got %d\n",
 		    p1->Package.Count);
 		rv = AE_ERROR;
 		goto out;
@@ -511,8 +511,9 @@ out:
 #define CAPUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"Ah":"Wh")
 #define RATEUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"A":"W")
 static void
-acpibat_print_info(struct acpibat_softc *sc)
+acpibat_print_info(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	const char *tech;
 
 	if (sc->sc_data[ACPIBAT_TECHNOLOGY].value_cur)
@@ -520,7 +521,7 @@ acpibat_print_info(struct acpibat_softc *sc)
 	else
 		tech = "primary";
 
-	aprint_debug_dev(sc->sc_dev, "%s battery, Design %d.%03d%s "
+	aprint_debug_dev(dv, "%s battery, Design %d.%03d%s "
 	    "Last full %d.%03d%s Warn %d.%03d%s Low %d.%03d%s\n",
 	    tech, SCALE(sc->sc_data[ACPIBAT_DCAPACITY].value_cur), CAPUNITS(sc),
 	    SCALE(sc->sc_data[ACPIBAT_LFCCAPACITY].value_cur),CAPUNITS(sc),
@@ -529,8 +530,9 @@ acpibat_print_info(struct acpibat_softc *sc)
 }
 
 static void
-acpibat_print_stat(struct acpibat_softc *sc)
+acpibat_print_stat(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	const char *capstat, *chargestat;
 	int percent, denom;
 	int32_t value;
@@ -559,7 +561,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	if (denom > 0)
 		percent = (sc->sc_data[ACPIBAT_CAPACITY].value_cur) / denom;
 
-	aprint_debug_dev(sc->sc_dev, "%s%s: %d.%03dV cap %d.%03d%s (%d%%) "
+	aprint_debug_dev(dv, "%s%s: %d.%03dV cap %d.%03d%s (%d%%) "
 	    "rate %d.%03d%s\n", capstat, chargestat,
 	    SCALE(sc->sc_data[ACPIBAT_VOLTAGE].value_cur),
 	    SCALE(sc->sc_data[ACPIBAT_CAPACITY].value_cur), CAPUNITS(sc),
@@ -569,7 +571,8 @@ acpibat_print_stat(struct acpibat_softc *sc)
 static void
 acpibat_update(void *arg)
 {
-	struct acpibat_softc *sc = arg;
+	device_t dv = arg;
+	struct acpibat_softc *sc = device_private(dv);
 
 	if (sc->sc_available < ABAT_ALV_INFO) {
 		/* current information is invalid */
@@ -582,9 +585,9 @@ acpibat_update(void *arg)
 		if (sc->sc_available < ABAT_ALV_PRESENCE)
 #endif
 			/* presence is invalid */
-			if (acpibat_battery_present(sc) < 0) {
+			if (acpibat_battery_present(dv) < 0) {
 				/* error */
-				aprint_debug_dev(sc->sc_dev,
+				aprint_debug_dev(dv,
 				    "cannot get battery presence.\n");
 				return;
 			}
@@ -592,16 +595,16 @@ acpibat_update(void *arg)
 		if (ABAT_ISSET(sc, ABAT_F_PRESENT)) {
 			/* the battery is present. */
 			if (ABAT_ISSET(sc, ABAT_F_VERBOSE))
-				aprint_debug_dev(sc->sc_dev,
+				aprint_debug_dev(dv,
 				    "battery is present.\n");
-			if (ACPI_FAILURE(acpibat_get_info(sc)))
+			if (ACPI_FAILURE(acpibat_get_info(dv)))
 				return;
 			if (ABAT_ISSET(sc, ABAT_F_VERBOSE))
-				acpibat_print_info(sc);
+				acpibat_print_info(dv);
 		} else {
 			/* the battery is not present. */
 			if (ABAT_ISSET(sc, ABAT_F_VERBOSE))
-				aprint_debug_dev(sc->sc_dev,
+				aprint_debug_dev(dv,
 				    "battery is not present.\n");
 			return;
 		}
@@ -613,11 +616,11 @@ acpibat_update(void *arg)
 		}
  	}
 
-	if (ACPI_FAILURE(acpibat_get_status(sc)))
+	if (ACPI_FAILURE(acpibat_get_status(dv)))
 		return;
 
 	if (ABAT_ISSET(sc, ABAT_F_VERBOSE))
-		acpibat_print_stat(sc);
+		acpibat_print_stat(dv);
 }
 
 /*
@@ -628,11 +631,12 @@ acpibat_update(void *arg)
 static void
 acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
-	struct acpibat_softc *sc = context;
+	device_t dv = context;
+	struct acpibat_softc *sc = device_private(dv);
 	int rv;
 
 #ifdef ACPI_BAT_DEBUG
-	aprint_debug_dev(sc->sc_dev, "received notify message: 0x%x\n", notify);
+	aprint_debug_dev(dv, "received notify message: 0x%x\n", notify);
 #endif
 
 	switch (notify) {
@@ -645,9 +649,9 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		acpibat_clear_presence(sc);
 		mutex_exit(&sc->sc_mtx);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, sc);
+					     acpibat_update, dv);
 		if (ACPI_FAILURE(rv))
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",
 			    AcpiFormatException(rv));
 		break;
@@ -657,22 +661,23 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		acpibat_clear_stat(sc);
 		mutex_exit(&sc->sc_mtx);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, sc);
+					     acpibat_update, dv);
 		if (ACPI_FAILURE(rv))
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",
 			    AcpiFormatException(rv));
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(dv,
 		    "received unknown notify message: 0x%x\n", notify);
 	}
 }
 
 static void
-acpibat_init_envsys(struct acpibat_softc *sc)
+acpibat_init_envsys(device_t dv)
 {
+	struct acpibat_softc *sc = device_private(dv);
 	int capunit, rateunit;
 
 	if (sc->sc_flags & ABAT_F_PWRUNIT_MA) {
@@ -688,7 +693,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_data[index].units = unit;     				\
 	sc->sc_data[index].state = ENVSYS_SVALID;			\
 	snprintf(sc->sc_data[index].desc, sizeof(sc->sc_data->desc),	\
-	    "%s %s", device_xname(sc->sc_dev), string);			\
+	    "%s %s", device_xname(dv), string);				\
 
 	INITDATA(ACPIBAT_PRESENT, ENVSYS_INDICATOR, "present");
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
@@ -722,8 +727,8 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_LCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_name = device_xname(sc->sc_dev);
-	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_name = device_xname(dv);
+	sc->sc_sysmon.sme_cookie = dv;
 	sc->sc_sysmon.sme_gtredata = acpibat_gtredata;
 	sc->sc_sysmon.sme_nsensors = ACPIBAT_NSENSORS;
 	sc->sc_sysmon.sme_class = SME_CLASS_BATTERY;
@@ -732,16 +737,17 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_updateinterval.tv_usec = 0;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		aprint_error_dev(sc->sc_dev, "unable to register with sysmon\n");
+		aprint_error_dev(dv, "unable to register with sysmon\n");
 }
 
 static int
 acpibat_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct acpibat_softc *sc = sme->sme_cookie;
+	device_t dv = sme->sme_cookie;
+	struct acpibat_softc *sc = device_private(dv);
 
 	if (ratecheck(&sc->sc_lastupdate, &sc->sc_updateinterval))
-		acpibat_update(sc);
+		acpibat_update(dv);
 
 	return 0;
 }
