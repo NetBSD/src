@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.2 2007/10/17 18:48:01 tls Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.3 2007/10/18 18:53:59 ad Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.7 2006/05/17 08:18:44 mrg Exp $	*/
 
@@ -48,6 +48,13 @@
 
 	int	Xflag;		/* do directory indexing */
 	int	Hflag;		/* hide .* */
+
+static void
+directory_hr(void)
+{
+
+	bozoprintf("<hr noshade align=\"left\" width=\"80%%\">\r\n\r\n");
+}
 
 /*
  * output a directory index.  return 1 if it actually did something..
@@ -111,7 +118,9 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	bozoprintf("Name                                     "
 	    "Last modified          "
 	    "Size\n");
-	bozoprintf("<hr noshade align=\"left\" width=\"80%%\">\r\n\r\n");
+	bozoprintf("</pre>");
+	directory_hr();
+	bozoprintf("<pre>");
 
 	while ((de = readdir(dp)) != NULL) {
 		int nostat = 0;
@@ -170,7 +179,9 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	}
 
 	closedir(dp);
-	bozoprintf("</pre><hr></body></html>\r\n");
+	bozoprintf("</pre>");
+	directory_hr();
+	bozoprintf("</body></html>\r\n");
 	bozoflush(stdout);
 	
 	return 1;
