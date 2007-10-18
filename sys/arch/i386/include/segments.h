@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.42 2007/03/02 17:27:26 ad Exp $	*/
+/*	$NetBSD: segments.h,v 1.42.22.1 2007/10/18 11:23:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,7 @@
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
+#define	GSYSSEL(s,r)	GSEL(s,r)	/* compat with amd64 */
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
