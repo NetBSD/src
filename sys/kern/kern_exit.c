@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.12 2007/08/20 21:27:29 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.13 2007/10/19 13:08:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.12 2007/08/20 21:27:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.13 2007/10/19 13:08:08 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -366,7 +366,7 @@ exit1(struct lwp *l, int rv)
 			 * and revoke access to controlling terminal.
 			 */
 			tp = sp->s_ttyp;
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			if (tp->t_session == sp) {
 				if (tp->t_pgrp) {
 					mutex_enter(&proclist_mutex);
@@ -376,7 +376,7 @@ exit1(struct lwp *l, int rv)
 				/* we can't guarantee the revoke will do this */
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
@@ -388,7 +388,7 @@ exit1(struct lwp *l, int rv)
 				 */
 				vprevoke = sp->s_ttyvp;
 			} else
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 			vprele = sp->s_ttyvp;
 			sp->s_ttyvp = NULL;
 			/*

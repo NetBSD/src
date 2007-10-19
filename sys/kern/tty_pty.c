@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.99.2.2 2007/03/21 20:11:54 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.99.2.3 2007/10/19 13:08:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.99.2.2 2007/03/21 20:11:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.99.2.3 2007/10/19 13:08:10 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -337,17 +337,17 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 		SET(tp->t_state, TS_CARR_ON);
 
 	if (!ISSET(flag, O_NONBLOCK)) {
-		mutex_enter(&tp->t_lock);
+		mutex_spin_enter(&tty_lock);
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 			tp->t_wopen--;
 			if (error) {
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				return (error);
 			}
 		}
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 	}
 	error = (*tp->t_linesw->l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
@@ -387,34 +387,34 @@ again:
 			    p->p_flag & PS_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			error = ttysleep(tp, &lbolt, true, 0);
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			if (error)
 				return (error);
 		}
-		mutex_enter(&tp->t_lock);
+		mutex_spin_enter(&tty_lock);
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY) {
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				return (EWOULDBLOCK);
 			}
 			error = ttysleep(tp, &tp->t_canq.c_cv, true, 0);
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			if (error)
 				return (error);
 			goto again;
 		}
 		while(error == 0 && tp->t_canq.c_cc > 1 && uio->uio_resid > 0) {
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			error = ureadc(getc(&tp->t_canq), uio);
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			/* Re-check terminal state here? */
 		}
 		if (tp->t_canq.c_cc == 1)
 			(void) getc(&tp->t_canq);
 		cc = tp->t_canq.c_cc;
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 		if (cc)
 			return (error);
 	} else
@@ -520,7 +520,7 @@ ptcwakeup(tp, flag)
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_outq.c_cvf);
@@ -529,7 +529,7 @@ ptcwakeup(tp, flag)
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 }
 
 /*ARGSUSED*/
@@ -547,13 +547,13 @@ ptcopen(dev_t dev, int flag, int devtype, struct lwp *l)
 	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	if (tp->t_oproc) {
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 		return (EIO);
 	}
 	tp->t_oproc = ptsstart;
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	(void)(*tp->t_linesw->l_modem)(tp, 1);
 	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
@@ -571,9 +571,9 @@ ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	tp->t_oproc = 0;		/* mark closed */
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	return (0);
 }
 
@@ -594,11 +594,11 @@ ptcread(dev, uio, flag)
 	 * but if we lost the slave or we're NBIO,
 	 * then return the appropriate error instead.
 	 */
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			if (pti->pt_flags & PF_PKT && pti->pt_send) {
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
 					return (error);
@@ -618,7 +618,7 @@ ptcread(dev, uio, flag)
 				return (0);
 			}
 			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				error = ureadc((int)pti->pt_ucntl, uio);
 				if (error)
 					return (error);
@@ -636,15 +636,15 @@ ptcread(dev, uio, flag)
 			error = EWOULDBLOCK;
 			goto out;
 		}
-		error = cv_wait_sig(&tp->t_outq.c_cvf, &tp->t_lock);
+		error = cv_wait_sig(&tp->t_outq.c_cvf, &tty_lock);
 		if (error)
 			goto out;
 	}
 
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL)) {
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 		error = ureadc(0, uio);
-		mutex_enter(&tp->t_lock);
+		mutex_spin_enter(&tty_lock);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
 	}
@@ -652,9 +652,9 @@ ptcread(dev, uio, flag)
 		cc = q_to_b(&tp->t_outq, bf, min(uio->uio_resid, BUFSIZ));
 		if (cc <= 0)
 			break;
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 		error = uiomove(bf, cc, uio);
-		mutex_enter(&tp->t_lock);
+		mutex_spin_enter(&tty_lock);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
 	}
@@ -667,7 +667,7 @@ ptcread(dev, uio, flag)
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 out:
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	return (error);
 }
 
@@ -687,7 +687,7 @@ ptcwrite(dev, uio, flag)
 	int error = 0;
 
 again:
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		goto block;
 	if (pti->pt_flags & PF_REMOTE) {
@@ -698,11 +698,11 @@ again:
 				cc = min(uio->uio_resid, BUFSIZ);
 				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
 				cp = locbuf;
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				error = uiomove((void *)cp, cc, uio);
 				if (error)
 					return (error);
-				mutex_enter(&tp->t_lock);
+				mutex_spin_enter(&tty_lock);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
 					/*
@@ -728,11 +728,11 @@ again:
 		if (cc == 0) {
 			cc = min(uio->uio_resid, BUFSIZ);
 			cp = locbuf;
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			error = uiomove((void *)cp, cc, uio);
 			if (error)
 				return (error);
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
 				/* adjust for data copied in but not written */
@@ -750,9 +750,9 @@ again:
 			/* XXX - should change l_rint to be called with lock
 			 *	 see also tty.c:ttyinput_wlock()
 			 */
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			(*tp->t_linesw->l_rint)(*cp++, tp);
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			cnt++;
 			cc--;
 		}
@@ -778,8 +778,8 @@ block:
 		error = cnt == 0 ? EWOULDBLOCK : 0;
 		goto out;
 	}
-	error = cv_wait_sig(&tp->t_rawq.c_cv, &tp->t_lock);
-	mutex_exit(&tp->t_lock);
+	error = cv_wait_sig(&tp->t_rawq.c_cv, &tty_lock);
+	mutex_spin_exit(&tty_lock);
 	if (error) {
 		/* adjust for data copied in but not written */
 		uio->uio_resid += cc;
@@ -788,7 +788,7 @@ block:
 	goto again;
 
 out:
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	return (error);
 }
 
@@ -802,7 +802,7 @@ ptcpoll(dev, events, l)
 	struct tty *tp = pti->pt_tty;
 	int revents = 0;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (ISSET(tp->t_state, TS_ISOPEN) &&
@@ -831,7 +831,7 @@ ptcpoll(dev, events, l)
 			selrecord(l, &pti->pt_selw);
 	}
 
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 
 	return (revents);
 }
@@ -845,9 +845,9 @@ filt_ptcrdetach(struct knote *kn)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	SLIST_REMOVE(&pti->pt_selr.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 }
 
 static int
@@ -860,7 +860,7 @@ filt_ptcread(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 
 	canread = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((tp->t_outq.c_cc > 0 && !ISSET(tp->t_state, TS_TTSTOP)) ||
@@ -879,7 +879,7 @@ filt_ptcread(struct knote *kn, long hint)
 			kn->kn_data++;
 	}
 
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 
 	return (canread);
 }
@@ -893,9 +893,9 @@ filt_ptcwdetach(struct knote *kn)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	SLIST_REMOVE(&pti->pt_selw.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 }
 
 static int
@@ -909,7 +909,7 @@ filt_ptcwrite(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 
 	canwrite = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((pti->pt_flags & PF_REMOTE) ?
@@ -928,7 +928,7 @@ filt_ptcwrite(struct knote *kn, long hint)
 		kn->kn_data = nwrite;
 	}
 
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 
 	return (canwrite);
 }
@@ -943,7 +943,6 @@ ptckqfilter(dev_t dev, struct knote *kn)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct klist	*klist;
-	struct tty	*tp = pti->pt_tty;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -960,9 +959,9 @@ ptckqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = pti;
 
-	mutex_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mutex_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 
 	return (0);
 }
@@ -1064,9 +1063,9 @@ ptyioctl(dev, cmd, data, flag, l)
 				pti->pt_flags |= PF_REMOTE;
 			else
 				pti->pt_flags &= ~PF_REMOTE;
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			ttyflush(tp, FREAD|FWRITE);
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			return (0);
 
 #ifdef COMPAT_OLDTTY
@@ -1077,22 +1076,22 @@ ptyioctl(dev, cmd, data, flag, l)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			ndflush(&tp->t_outq, tp->t_outq.c_cc);
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			break;
 
 		case TIOCSIG:
 			sig = (int)(long)*(void **)data;
 			if (sig <= 0 || sig >= NSIG)
 				return (EINVAL);
-			mutex_enter(&tp->t_lock);
+			mutex_spin_enter(&tty_lock);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp, 1);
-			mutex_exit(&tp->t_lock);
+			mutex_spin_exit(&tty_lock);
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.50.2.2 2007/07/01 21:47:47 ad Exp $	*/
+/*	$NetBSD: cy.c,v 1.50.2.3 2007/10/19 13:08:12 ad Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.50.2.2 2007/07/01 21:47:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.50.2.3 2007/10/19 13:08:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -377,18 +377,18 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* wait for carrier if necessary */
 	if (!ISSET(flag, O_NONBLOCK)) {
-		mutex_enter(&tp->t_lock);
+		mutex_spin_enter(&tty_lock);
 		while (!ISSET(tp->t_cflag, CLOCAL) &&
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 			tp->t_wopen--;
 			if (error != 0) {
-				mutex_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				return error;
 			}
 		}
-		mutex_exit(&tp->t_lock);
+		mutex_spin_exit(&tty_lock);
 	}
 
 	return (*tp->t_linesw->l_open) (dev, tp);
