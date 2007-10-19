@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.9 2007/10/18 02:07:19 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.10 2007/10/19 00:49:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.9 2007/10/18 02:07:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.10 2007/10/19 00:49:32 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,14 +108,6 @@ static int pnp_displaydev_suspend = 900;
 static int pnp_displaydev_off = 1200;
 
 static int pnp_audiodev_idle = 30;
-
-static kmutex_t pnp_mutex;
-
-void
-pnp_init(void)
-{
-	mutex_init(&pnp_mutex, MUTEX_DEFAULT, IPL_SCHED);
-}
 
 #ifdef PNP_DEBUG
 static const char *
@@ -235,20 +227,14 @@ pnp_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	pnp_device_t *pnp;
 	pnp_status_t status;
-	int owned;
 
 	pnp = device_pnp(dv);
 	if (pnp->pnp_power == NULL)
 		return PNP_STATUS_UNSUPPORTED;
 
-	/* XXXJDM: I'm not supposed to use mutex_owned for this purpose.. */
-
-	owned = mutex_owned(&pnp_mutex);
-	if (!owned)
-		mutex_enter(&pnp_mutex);
+	mutex_enter((kmutex_t *)pnp->pnp_lock);
 	status = pnp->pnp_power(dv, req, opaque);
-	if (!owned)
-		mutex_exit(&pnp_mutex);
+	mutex_exit((kmutex_t *)pnp->pnp_lock);
 
 	return status;
 }
@@ -351,6 +337,13 @@ pnp_register(device_t dv,
 
 	KASSERT(power != NULL);
 
+	/* XXX */
+	pnp->pnp_lock = malloc(sizeof(kmutex_t), M_DEVBUF, M_NOWAIT);
+	if (pnp->pnp_lock == NULL)
+		return PNP_STATUS_NO_MEMORY;
+
+	mutex_init((kmutex_t *)pnp->pnp_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	caps = pnp_get_capabilities(dv);
 	pnp->pnp_state = pnp_get_state(dv);
 #ifdef PNP_DEBUG
@@ -367,8 +360,10 @@ pnp_register(device_t dv,
 	case DV_DISPLAYDEV:
 		pdisplaydev = malloc(sizeof(struct pnp_displaydev),
 		    M_PNP, M_NOWAIT|M_ZERO);
-		if (pdisplaydev == NULL)
+		if (pdisplaydev == NULL) {
+			free(pnp->pnp_lock, M_DEVBUF);
 			return PNP_STATUS_NO_MEMORY;
+		}
 		pdisplaydev->dv = dv;
 		pdisplaydev->power = PNP_DISPLAY_POWER_ON;
 		LIST_INSERT_HEAD(&displaydevhead, pdisplaydev, next);
@@ -379,8 +374,10 @@ pnp_register(device_t dv,
 	case DV_AUDIODEV:
 		paudiodev = malloc(sizeof(struct pnp_audiodev),
 		    M_PNP, M_NOWAIT|M_ZERO);
-		if (paudiodev == NULL)
+		if (paudiodev == NULL) {
+			free(pnp->pnp_lock, M_DEVBUF);
 			return PNP_STATUS_NO_MEMORY;
+		}
 		paudiodev->dv = dv;
 		LIST_INSERT_HEAD(&audiodevhead, paudiodev, next);
 
@@ -405,6 +402,9 @@ pnp_deregister(device_t dv)
 
 	pnp = device_pnp(dv);
 	callout_stop(&pnp->pnp_idle);
+
+	if (pnp->pnp_lock)
+		free(pnp->pnp_lock, M_DEVBUF);
 
 	switch (device_class(dv)) {
 	case DV_AUDIODEV:
