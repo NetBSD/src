@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.109 2007/10/19 13:04:06 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.110 2007/10/19 14:38:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.109 2007/10/19 13:04:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.110 2007/10/19 14:38:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1121,7 +1121,7 @@ puffs_readdir(void *v)
 	readdir_msg->pvnr_dentoff = cookiemem;
 
 	error = puffs_msg_vn(pmp, park_readdir, PUFFS_VN_READDIR,
-	    0, vp, NULL);
+	    tomove, vp, NULL);
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
@@ -1750,7 +1750,7 @@ puffs_read(void *v)
 			    uio->uio_offset, ap->a_cred);
 
 			error = puffs_msg_vn(pmp, park_read, PUFFS_VN_READ,
-			    0, vp, NULL);
+			    tomove, vp, NULL);
 			error = checkerr(pmp, error, __func__);
 			if (error)
 				break;
@@ -2107,7 +2107,7 @@ puffs_strategy(void *v)
 			    puffs_parkdone_asyncbioread, bp, vp);
 		} else {
 			error = puffs_msg_vn(pmp, park_rw, PUFFS_VN_READ,
-			    0, vp, NULL);
+			    tomove, vp, NULL);
 			error = checkerr(pmp, error, __func__);
 			if (error)
 				goto out;
