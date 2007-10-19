@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.18 2007/10/18 18:09:52 joerg Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.19 2007/10/19 08:57:50 dogcow Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/device.h>
 
 struct wsevsrc;
 
