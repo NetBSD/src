@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.113.2.2 2007/07/15 22:20:27 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.113.2.3 2007/10/19 13:08:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113.2.2 2007/07/15 22:20:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113.2.3 2007/10/19 13:08:12 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -582,7 +582,7 @@ zsopen(dev, flags, mode, l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 
 	/*
 	 * Do the following iff this is a first open.
@@ -595,7 +595,7 @@ zsopen(dev, flags, mode, l)
 		/* Call the power management hook. */
 		if (cs->enable) {
 			if ((*cs->enable)(cs)) {
-				mutex_spin_exit(&tp->t_lock);
+				mutex_spin_exit(&tty_lock);
 				printf("%s: device enable failed\n",
 			       	zst->zst_dev.dv_xname);
 				return (EIO);
@@ -682,7 +682,7 @@ zsopen(dev, flags, mode, l)
 		mutex_spin_exit(&cs->cs_lock);
 	}
 
-	mutex_spin_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 
 	error = ttyopen(tp, ZSDIALOUT(dev), ISSET(flags, O_NONBLOCK));
 	if (error)
@@ -1048,7 +1048,7 @@ zsstart(tp)
 	u_char *tba;
 	int tbc;
 
-	mutex_spin_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 	if (zst->zst_tx_stopped)
@@ -1097,7 +1097,7 @@ zsstart(tp)
 
 	mutex_spin_exit(&cs->cs_lock);
 out:
-	mutex_spin_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	return;
 }
 
@@ -1870,7 +1870,7 @@ zstty_txsoft(zst, tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
-	mutex_spin_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 	mutex_spin_enter(&cs->cs_lock);
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
@@ -1878,7 +1878,7 @@ zstty_txsoft(zst, tp)
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
 	mutex_spin_exit(&cs->cs_lock);
-	mutex_spin_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 	(*tp->t_linesw->l_start)(tp);
 }
 
@@ -1933,7 +1933,7 @@ zstty_softint(cs)
 	struct zstty_softc *zst = cs->cs_private;
 	struct tty *tp = zst->zst_tty;
 
-	mutex_spin_enter(&tp->t_lock);
+	mutex_spin_enter(&tty_lock);
 
 	if (zst->zst_rx_ready) {
 		zst->zst_rx_ready = 0;
@@ -1950,7 +1950,7 @@ zstty_softint(cs)
 		zstty_txsoft(zst, tp);
 	}
 
-	mutex_spin_exit(&tp->t_lock);
+	mutex_spin_exit(&tty_lock);
 }
 
 struct zsops zsops_tty = {

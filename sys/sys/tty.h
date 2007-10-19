@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73.2.2 2007/07/01 21:51:01 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.2.3 2007/10/19 13:08:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,6 @@ struct clist {
  */
 struct tty {
 	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
-	kmutex_t t_lock;		/* mutex for all access to this tty */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
 	struct	clist t_canq;		/* Device canonical queue. */
@@ -194,6 +193,8 @@ TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
+
+extern kmutex_t	tty_lock;
 
 MALLOC_DECLARE(M_TTYS);
 
