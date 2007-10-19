@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.9 2007/10/04 17:05:01 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.10 2007/10/19 15:59:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.9 2007/10/04 17:05:01 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.10 2007/10/19 15:59:55 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -594,10 +594,21 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	 *    Thus we fall back on the headline time which was written
 	 *    locally when the message was received.  Of course, this
 	 *    is not the same time as in the Date field.
+	 *
+	 * 4) The 'obs-year' field is two digits wide, so check for that
+	 *    first.  This doubles the number of checks in (1) above.
 	 */
 	if (use_hl_date == 0 &&
 	    (date = hfield("date", mp)) != NULL &&
-	    ((tail = strptime(date, " %a, %d %b %Y %T ", tm)) != NULL ||
+	    (
+#define ALLOW_OBSOLETE_YEAR_FORMAT
+#ifdef  ALLOW_OBSOLETE_YEAR_FORMAT
+	     (tail = strptime(date, " %a, %d %b %y %T ", tm)) != NULL ||
+	     (tail = strptime(date,     " %d %b %y %T ", tm)) != NULL ||
+	     (tail = strptime(date, " %a, %d %b %y %R ", tm)) != NULL ||
+	     (tail = strptime(date,     " %d %b %y %R ", tm)) != NULL ||
+#endif
+	     (tail = strptime(date, " %a, %d %b %Y %T ", tm)) != NULL ||
 	     (tail = strptime(date,     " %d %b %Y %T ", tm)) != NULL ||
 	     (tail = strptime(date, " %a, %d %b %Y %R ", tm)) != NULL ||
 	     (tail = strptime(date,     " %d %b %Y %R ", tm)) != NULL)) {
