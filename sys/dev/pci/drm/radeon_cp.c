@@ -1882,7 +1882,7 @@ void radeon_do_release(drm_device_t * dev)
 				msleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
 				       1);
 #else
-				ltsleep(&ret, PZERO, "rdnrel", 1,
+				mtsleep(&ret, PZERO, "rdnrel", 1,
 					&dev->dev_lock);
 #endif
 #endif
