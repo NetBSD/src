@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.27 2007/10/09 13:45:15 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.28 2007/10/19 17:46:19 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.27 2007/10/09 13:45:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.28 2007/10/19 17:46:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2249,6 +2249,7 @@ softdep_freefile(struct vnode *pvp, ino_t ino, int mode)
 	}
 	worklist_insert(&inodedep->id_inowait, &freefile->fx_list);
 	mutex_exit(&bufcache_lock);
+	ip->i_flag |= IN_MODIFIED;
 }
 
 /*
