@@ -134,7 +134,7 @@ int drm_lock(DRM_IOCTL_ARGS)
 		ret = msleep((void *)&dev->lock.lock_queue, &dev->dev_lock,
 		    PZERO | PCATCH, "drmlk2", 0);
 #else
-		ret = ltsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
+		ret = mtsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
 		    "drmlk2", 0, &dev->dev_lock);
 #endif
 		if (ret != 0)
