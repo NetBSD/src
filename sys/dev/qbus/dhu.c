@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.47 2007/03/04 06:02:29 christos Exp $	*/
+/*	$NetBSD: dhu.c,v 1.48 2007/10/19 12:01:08 ad Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.48 2007/10/19 12:01:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47 2007/03/04 06:02:29 christos Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/scb.h>
 
 #include <dev/qbus/ubavar.h>

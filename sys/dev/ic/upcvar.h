@@ -1,4 +1,4 @@
-/* $NetBSD: upcvar.h,v 1.4 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: upcvar.h,v 1.5 2007/10/19 12:00:04 ad Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -29,7 +29,7 @@
 #ifndef __UPCVAR_H
 #define __UPCVAR_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct upc_irqhandle {
 	int	(*uih_func)(void *);

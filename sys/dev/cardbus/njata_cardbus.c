@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.4 2006/12/31 12:50:19 ichiro Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.5 2007/10/19 11:59:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.4 2006/12/31 12:50:19 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.5 2007/10/19 11:59:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>

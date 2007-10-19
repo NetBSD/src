@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.264 2007/10/17 17:20:41 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.265 2007/10/19 11:59:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.264 2007/10/17 17:20:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.265 2007/10/19 11:59:49 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.264 2007/10/17 17:20:41 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

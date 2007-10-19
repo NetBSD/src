@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.98 2007/08/26 22:45:55 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.99 2007/10/19 11:59:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.98 2007/08/26 22:45:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.99 2007/10/19 11:59:51 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -69,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.98 2007/08/26 22:45:55 dyoung Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/miivar.h>

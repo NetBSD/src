@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.6 2007/03/04 06:02:13 christos Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.6 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $");
 
 #include "opt_atppc.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.6 2007/03/04 06:02:13 christos Ex
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

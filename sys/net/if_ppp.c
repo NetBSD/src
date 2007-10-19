@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.118 2007/10/08 16:18:05 ad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.119 2007/10/19 12:16:44 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.118 2007/10/08 16:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.119 2007/10/19 12:16:44 ad Exp $");
 
 #include "ppp.h"
 
@@ -159,7 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.118 2007/10/08 16:18:05 ad Exp $");
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #ifdef PPP_COMPRESS
 #define PACKETPTR	struct mbuf *

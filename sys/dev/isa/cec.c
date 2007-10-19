@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.6 2007/07/09 21:00:49 ad Exp $	*/
+/*	$NetBSD: cec.c,v 1.7 2007/10/19 12:00:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.6 2007/07/09 21:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.7 2007/10/19 12:00:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.6 2007/07/09 21:00:49 ad Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

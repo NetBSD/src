@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/lock.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/stdarg.h>
 

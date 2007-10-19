@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.21 2007/07/09 21:00:50 ad Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.22 2007/10/19 12:00:22 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.21 2007/07/09 21:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.22 2007/10/19 12:00:22 ad Exp $");
 
 #include "opt_pckbc.h"
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.21 2007/07/09 21:00:50 ad Exp $");
 #include <sys/queue.h>
 #include <sys/lock.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.9 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.10 2007/10/19 12:00:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.9 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.10 2007/10/19 12:00:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.9 2006/11/16 01:33:10 christos Exp 
 #include <sys/wdog.h>
 #include <sys/endian.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i128.c,v 1.1 2007/08/26 00:34:34 macallan Exp $ */
+/*	$NetBSD: i128.c,v 1.2 2007/10/19 11:59:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i128.c,v 1.1 2007/08/26 00:34:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i128.c,v 1.2 2007/10/19 11:59:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: i128.c,v 1.1 2007/08/26 00:34:34 macallan Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/ic/i128reg.h>

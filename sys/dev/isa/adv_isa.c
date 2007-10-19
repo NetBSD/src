@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.13 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.14 2007/10/19 12:00:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.13 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.14 2007/10/19 12:00:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.13 2006/11/16 01:33:00 christos Exp $"
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

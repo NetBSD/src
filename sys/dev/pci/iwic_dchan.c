@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.5 2007/10/19 12:00:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.4 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.5 2007/10/19 12:00:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.4 2005/12/11 12:22:50 christos Exp 
 #include <sys/callout.h>
 #include <net/if.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 
