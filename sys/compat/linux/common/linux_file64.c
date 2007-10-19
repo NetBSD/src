@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.39 2007/05/12 23:02:49 dsl Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.40 2007/10/19 18:52:11 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.39 2007/05/12 23:02:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.40 2007/10/19 18:52:11 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.39 2007/05/12 23:02:49 dsl Exp $"
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_dirent.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

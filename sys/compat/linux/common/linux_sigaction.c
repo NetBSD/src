@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.30 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.31 2007/10/19 18:52:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.30 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.31 2007/10/19 18:52:12 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.30 2007/02/09 21:55:19 ad Exp 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

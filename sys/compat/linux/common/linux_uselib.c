@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.23 2007/10/19 12:16:39 ad Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.24 2007/10/19 18:52:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.23 2007/10/19 12:16:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.24 2007/10/19 18:52:12 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.23 2007/10/19 12:16:39 ad Exp $")
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #ifndef EXEC_AOUT
 /* define EXEC_AOUT to get prototype from linux_syscall.h */
