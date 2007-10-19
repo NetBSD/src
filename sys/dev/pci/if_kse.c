@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.8 2007/10/19 04:41:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.8 2007/10/19 04:41:30 nisimura Exp $");
 
 #include "bpfilter.h"
 
@@ -87,8 +87,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $");
 #define GRR	0x216	/* global reset */
 #define CIDR	0x400	/* chip ID and enable */
 #define CGCR	0x40a	/* chip global control */
+#define IACR	0x4a0	/* indirect access control */
+#define IADR1	0x4a2	/* indirect access data 66:63 */
+#define IADR2	0x4a4	/* indirect access data 47:32 */
+#define IADR3	0x4a6	/* indirect access data 63:48 */
+#define IADR4	0x4a8	/* indirect access data 15:0 */
+#define IADR5	0x4aa	/* indirect access data 31:16 */
 #define P1CR4	0x512	/* port 1 control 4 */
 #define P1SR	0x514	/* port 1 status */
+#define P2CR4	0x532	/* port 2 control 4 */
+#define P2SR	0x534	/* port 2 status */
 
 #define TXC_BS_MSK	0x3f000000	/* burst size */
 #define TXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
@@ -150,7 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.7 2007/10/14 12:06:17 nisimura Exp $");
 #define T1_TBS_MASK	0x7ff		/* segment size 10:0 */
 
 #define R1_RER		(1U<<25)	/* end of ring */
-#define R1_RBS_MASK	0x7fd		/* segment size 10:0 */
+#define R1_RBS_MASK	0x7fc		/* segment size 10:0 */
 
 #define KSE_NTXSEGS		16
 #define KSE_TXQUEUELEN		64
@@ -205,14 +213,15 @@ struct kse_softc {
 	struct ifmedia sc_media;	/* ifmedia information */
 	int sc_media_status;		/* PHY */
 	int sc_media_active;		/* PHY */
-	callout_t sc_callout;		/* tick callout */
+	callout_t sc_callout;		/* MII tick callout */
+	callout_t sc_stat_ch;		/* statistics counter callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
 	struct kse_control_data *sc_control_data;
-#define sc_txdescs      sc_control_data->kcd_txdescs
-#define sc_rxdescs      sc_control_data->kcd_rxdescs
+#define sc_txdescs	sc_control_data->kcd_txdescs
+#define sc_rxdescs	sc_control_data->kcd_rxdescs
 
 	struct kse_txsoft sc_txsoft[KSE_TXQUEUELEN];
 	struct kse_rxsoft sc_rxsoft[KSE_NRXDESC];
@@ -226,7 +235,19 @@ struct kse_softc {
 	uint32_t sc_txc, sc_rxc;
 	uint32_t sc_t1csum;
 	int sc_mcsum;
+	uint32_t sc_inten;
+
 	uint32_t sc_chip;
+	uint8_t sc_altmac[16][ETHER_ADDR_LEN];
+	uint16_t sc_vlan[16];
+
+#ifdef KSE_EVENT_COUNTERS
+	struct ksext {
+		char evcntname[3][8];
+		struct evcnt pev[3][34];
+		struct evcnt lev[2];
+	} sc_ext;			/* switch statistics */
+#endif
 };
 
 #define KSE_CDTXADDR(sc, x)	((sc)->sc_cddma + KSE_CDTXOFF((x)))
@@ -272,7 +293,7 @@ do {									\
 	KSE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
-u_int kse_burstsize = 16;	/* DMA burst length tuning knob */
+u_int kse_burstsize = 32;	/* DMA burst length tuning knob */
 
 #ifdef KSEDIAGNOSTIC
 u_int kse_monitor_rxintr;	/* fragmented UDP csum HW bug hook */
@@ -300,6 +321,12 @@ static void lnkchg(struct kse_softc *);
 static int ifmedia_upd(struct ifnet *);
 static void ifmedia_sts(struct ifnet *, struct ifmediareq *);
 static void phy_tick(void *);
+static int ifmedia2_upd(struct ifnet *);
+static void ifmedia2_sts(struct ifnet *, struct ifmediareq *);
+#ifdef KSE_EVENT_COUNTERS
+static void stat_tick(void *);
+static void zerostats(struct kse_softc *);
+#endif
 
 static int
 kse_match(struct device *parent, struct cfdata *match, void *aux)
@@ -324,9 +351,10 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp;
+	struct ifmedia *ifm;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
-	int error, i, nseg;
+	int i, p, error, nseg;
 	pcireg_t pmode;
 	int pmreg;
 
@@ -417,7 +445,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_0;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
+	    sizeof(struct kse_control_data), (void * *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
 		printf("%s: unable to map control data, error = %d\n",
@@ -459,14 +487,23 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_callout, 0);
+	callout_init(&sc->sc_stat_ch, 0);
 
-	ifmedia_init(&sc->sc_media, 0, ifmedia_upd, ifmedia_sts);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+	ifm = &sc->sc_media;
+	if (sc->sc_chip == 0x8841) {
+		ifmedia_init(ifm, 0, ifmedia_upd, ifmedia_sts);
+		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_100_TX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_AUTO, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER|IFM_AUTO);
+	}
+	else {
+		ifmedia_init(ifm, 0, ifmedia2_upd, ifmedia2_sts);
+		ifmedia_add(ifm, IFM_ETHER|IFM_AUTO, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER|IFM_AUTO);
+	}
 
 	printf("%s: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n",
 	    sc->sc_dev.dv_xname);
@@ -494,6 +531,82 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+
+	p = (sc->sc_chip == 0x8842) ? 3 : 1;
+#ifdef KSE_EVENT_COUNTERS
+	for (i = 0; i < p; i++) {
+		struct ksext *ee = &sc->sc_ext;
+		sprintf(ee->evcntname[i], "%s.%d", sc->sc_dev.dv_xname, i+1);
+		evcnt_attach_dynamic(&ee->pev[i][0], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxLoPriotyByte");
+		evcnt_attach_dynamic(&ee->pev[i][1], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxHiPriotyByte");
+		evcnt_attach_dynamic(&ee->pev[i][2], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxUndersizePkt");
+		evcnt_attach_dynamic(&ee->pev[i][3], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxFragments");
+		evcnt_attach_dynamic(&ee->pev[i][4], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxOversize");
+		evcnt_attach_dynamic(&ee->pev[i][5], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxJabbers");
+		evcnt_attach_dynamic(&ee->pev[i][6], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxSymbolError");
+		evcnt_attach_dynamic(&ee->pev[i][7], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxCRCError");
+		evcnt_attach_dynamic(&ee->pev[i][8], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxAlignmentError");
+		evcnt_attach_dynamic(&ee->pev[i][9], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxCtrol8808Pkts");
+		evcnt_attach_dynamic(&ee->pev[i][10], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxPausePkts");
+		evcnt_attach_dynamic(&ee->pev[i][11], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxBroadcast");
+		evcnt_attach_dynamic(&ee->pev[i][12], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxMulticast");
+		evcnt_attach_dynamic(&ee->pev[i][13], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxUnicast");
+		evcnt_attach_dynamic(&ee->pev[i][14], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx64Octets");
+		evcnt_attach_dynamic(&ee->pev[i][15], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx65To127Octets");
+		evcnt_attach_dynamic(&ee->pev[i][16], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx128To255Octets");
+		evcnt_attach_dynamic(&ee->pev[i][17], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx255To511Octets");
+		evcnt_attach_dynamic(&ee->pev[i][18], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx512To1023Octets");
+		evcnt_attach_dynamic(&ee->pev[i][19], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "Rx1024To1522Octets");
+		evcnt_attach_dynamic(&ee->pev[i][20], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxLoPriotyByte");
+		evcnt_attach_dynamic(&ee->pev[i][21], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxHiPriotyByte");
+		evcnt_attach_dynamic(&ee->pev[i][22], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxLateCollision");
+		evcnt_attach_dynamic(&ee->pev[i][23], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxPausePkts");
+		evcnt_attach_dynamic(&ee->pev[i][24], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxBroadcastPkts");
+		evcnt_attach_dynamic(&ee->pev[i][25], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxMulticastPkts");
+		evcnt_attach_dynamic(&ee->pev[i][26], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxUnicastPkts");
+		evcnt_attach_dynamic(&ee->pev[i][27], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxDeferred");
+		evcnt_attach_dynamic(&ee->pev[i][28], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxTotalCollision");
+		evcnt_attach_dynamic(&ee->pev[i][29], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxExcessiveCollision");
+		evcnt_attach_dynamic(&ee->pev[i][30], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxSingleCollision");
+		evcnt_attach_dynamic(&ee->pev[i][31], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxMultipleCollision");
+		evcnt_attach_dynamic(&ee->pev[i][32], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "TxDropPkts");
+		evcnt_attach_dynamic(&ee->pev[i][33], EVCNT_TYPE_MISC,
+		    NULL, ee->evcntname[i], "RxDropPkts");
+	}
+#endif
 	return;
 
  fail_5:
@@ -554,8 +667,6 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	splx(s);
 	return error;
 }
-
-#define KSE_INTRS (INT_DMLCS|INT_DMTS|INT_DMRS|INT_DMRBUS)
 
 static int
 kse_init(struct ifnet *ifp)
@@ -660,14 +771,24 @@ kse_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, MDRSC, 1);
 
 	/* enable interrupts */
+	sc->sc_inten = INT_DMTS|INT_DMRS|INT_DMRBUS;
+	if (sc->sc_chip == 0x8841)
+		sc->sc_inten |= INT_DMLCS;
 	CSR_WRITE_4(sc, INTST, ~0);
-	CSR_WRITE_4(sc, INTEN, KSE_INTRS);
+	CSR_WRITE_4(sc, INTEN, sc->sc_inten);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* start one second timer */
-	callout_reset(&sc->sc_callout, hz, phy_tick, sc);
+	if (sc->sc_chip == 0x8841) {
+		/* start one second timer */
+		callout_reset(&sc->sc_callout, hz, phy_tick, sc);
+	}
+#ifdef KSE_EVENT_COUNTERS
+	/* start statistics gather 1 minute timer */
+	zerostats(sc);
+	callout_reset(&sc->sc_stat_ch, hz * 60, stat_tick, sc);
+#endif
 
  out:
 	if (error) {
@@ -685,7 +806,9 @@ kse_stop(struct ifnet *ifp, int disable)
 	struct kse_txsoft *txs;
 	int i;
 
-	callout_stop(&sc->sc_callout);
+	if (sc->sc_chip == 0x8841)
+		callout_stop(&sc->sc_callout);
+	callout_stop(&sc->sc_stat_ch);
 
 	sc->sc_txc &= ~TXC_TEN;
 	sc->sc_rxc &= ~RXC_REN;
@@ -751,7 +874,7 @@ static void
 kse_start(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	struct mbuf *m0;
+	struct mbuf *m0, *m;
 	struct kse_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, ofree, seg;
@@ -838,13 +961,7 @@ kse_start(struct ifnet *ifp)
 			tdes0 |= T0_OWN;
 			lasttx = nexttx;
 		}
-#if 0
-		/*
-		 * T1_IC bit could schedule Tx frame done interrupt here,
-		 * but this driver takes a "shoot away" Tx strategy.
-		 */
-#else
-    {
+
 		/*
 		 * Outgoing NFS mbuf must be unloaded when Tx completed.
 		 * Without T1_IC NFS mbuf is left unack'ed for excessive
@@ -853,15 +970,13 @@ kse_start(struct ifnet *ifp)
 		 * It's painful to traverse every mbuf chain to determine
 		 * whether someone is waiting for Tx completion.
 		 */
-		struct mbuf *m = m0;
+		m = m0;
 		do {
 			if ((m->m_flags & M_EXT) && m->m_ext.ext_free) {
 				sc->sc_txdescs[lasttx].t1 |= T1_IC;
 				break;
 			}
 		} while ((m = m->m_next) != NULL);
-    }
-#endif
 
 		/* write last T0_OWN bit of the 1st segment */
 		sc->sc_txdescs[lasttx].t1 |= T1_LS;
@@ -1244,3 +1359,91 @@ phy_tick(void *arg)
 
 	callout_reset(&sc->sc_callout, hz, phy_tick, sc);
 }
+
+static int
+ifmedia2_upd(struct ifnet *ifp)
+{
+	struct kse_softc *sc = ifp->if_softc;
+
+	sc->sc_media_status = IFM_AVALID;
+	sc->sc_media_active = IFM_NONE;
+	return 0;
+}
+
+static void
+ifmedia2_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct kse_softc *sc = ifp->if_softc;
+	int p1sts, p2sts;
+
+	ifmr->ifm_status = IFM_AVALID;
+	ifmr->ifm_active = IFM_ETHER;
+	p1sts = CSR_READ_2(sc, P1SR);
+	p2sts = CSR_READ_2(sc, P2SR);
+	if (((p1sts | p2sts) & (1U << 5)) == 0)
+		ifmr->ifm_active |= IFM_NONE;
+	else {
+		ifmr->ifm_status |= IFM_ACTIVE;
+		ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
+		ifmr->ifm_active |= IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE;
+	}
+	sc->sc_media_status = ifmr->ifm_status;
+	sc->sc_media_active = ifmr->ifm_active;
+}
+
+#ifdef KSE_EVENT_COUNTERS
+static void
+stat_tick(arg)
+	void *arg;
+{
+	struct kse_softc *sc = arg;
+	struct ksext *ee = &sc->sc_ext;
+	int nport, p, i, val;
+
+	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
+	for (p = 0; p < nport; p++) {
+		for (i = 0; i < 27; i++) {
+			val = 0x1c00 | (p * 0x20 + i);
+			CSR_WRITE_2(sc, IACR, val);
+			do {
+				val = CSR_READ_2(sc, IADR5) << 16;
+			} while ((val & (1U << 30)) == 0);
+			if (val & (1U << 31))
+				val = 0x3fffffff; /* has made overflow */
+			val |= CSR_READ_2(sc, IADR4);
+			ee->pev[p][i].ev_count += val; /* i (0-31) */
+		}
+	}
+	nport = (sc->sc_chip == 0x8842) ? 2 : 1;
+	for (p = 0; p < nport; p++) {
+		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p);
+		ee->pev[p][32].ev_count = CSR_READ_2(sc, IADR4); /* 32 */
+		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p * 2 + 1);
+		ee->pev[p][33].ev_count = CSR_READ_2(sc, IADR4); /* 33 */
+	}
+	callout_reset(&sc->sc_stat_ch, hz * 60, stat_tick, arg);
+}
+
+static void
+zerostats(struct kse_softc *sc)
+{
+	struct ksext *ee = &sc->sc_ext;
+	int nport, p, i, val;
+
+	/* make sure all the HW counters get zero */
+	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
+	for (p = 0; p < nport; p++) {
+		for (i = 0; i < 31; i++) {
+			val = 0x1c00 | (p * 0x20 + i);
+			CSR_WRITE_2(sc, IACR, val);
+			do {
+				val = CSR_READ_2(sc, IADR5) << 16;
+			} while ((val & (1U << 30)) == 0);
+			if (val & (1U << 31))
+				val = 0x3fffffff; /* has made overflow */
+			val |= CSR_READ_2(sc, IADR4);
+			ee->pev[p][i].ev_count = 0;
+		}
+	}
+}
+#endif
