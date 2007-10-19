@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.34 2007/10/18 02:23:37 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.35 2007/10/19 15:58:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -79,7 +79,7 @@ void	*memccpy(void *, const void *, int, size_t);
 char	*strdup(const char *);
 #endif
 
-#if defined(_NETBSD_SOURCE) || defined(_NETBSD_TOOLS)
+#if defined(_NETBSD_SOURCE)
 #include <strings.h>		/* for backwards-compatibilty */
 void	*memmem(const void *, size_t, const void *, size_t);
 char	*strcasestr(const char *, const char *);

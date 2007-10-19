@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.55 2007/10/18 02:25:03 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.56 2007/10/19 15:58:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -245,12 +245,12 @@ int	lstat(const char *, struct stat *) __RENAME(__lstat30);
 int	mknod(const char *, mode_t, dev_t);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 
-#if defined(_NETBSD_SOURCE) || defined(_NETBSD_TOOLS)
+#if defined(_NETBSD_SOURCE)
 int	chflags(const char *, unsigned long);
 int	fchflags(int, unsigned long);
 int	lchflags(const char *, unsigned long);
 int	lchmod(const char *, mode_t);
-#endif /* defined(_NETBSD_SOURCE) || defined(_NETBSD_TOOLS) */
+#endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 
 #endif /* !_KERNEL && !_STANDALONE */
