@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.32 2007/09/06 08:14:30 he Exp $ */
+/*	$NetBSD: if_ni.c,v 1.33 2007/10/19 11:59:37 ad Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.32 2007/09/06 08:14:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.33 2007/10/19 11:59:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.32 2007/09/06 08:14:30 he Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __vax__
 #include <machine/mtpr.h>
 #include <machine/pte.h>

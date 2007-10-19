@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.64 2007/09/01 07:32:29 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.65 2007/10/19 12:00:46 ad Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.64 2007/09/01 07:32:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.65 2007/10/19 12:00:46 ad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.64 2007/09/01 07:32:29 dyoung Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/firmload.h>
 

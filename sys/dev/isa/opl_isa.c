@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.17 2007/10/19 12:00:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.17 2007/10/19 12:00:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $"
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>

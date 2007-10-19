@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.3 2007/09/10 10:35:53 cube Exp $	*/
+/*	$NetBSD: attimer.c,v 1.4 2007/10/19 11:59:48 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.3 2007/09/10 10:35:53 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.4 2007/10/19 11:59:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 

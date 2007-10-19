@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.77 2007/09/01 07:32:28 dyoung Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.78 2007/10/19 12:00:18 ad Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.77 2007/09/01 07:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.78 2007/10/19 12:00:18 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -91,9 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.77 2007/09/01 07:32:28 dyoung Exp $");
 #include <net/if_media.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

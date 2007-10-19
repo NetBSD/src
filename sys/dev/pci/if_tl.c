@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.83 2007/07/09 21:00:55 ad Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.84 2007/10/19 12:00:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.83 2007/07/09 21:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.84 2007/10/19 12:00:48 ad Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.83 2007/07/09 21:00:55 ad Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

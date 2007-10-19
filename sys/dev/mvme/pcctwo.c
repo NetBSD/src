@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.7 2007/10/19 12:00:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,15 +41,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.6 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.7 2007/10/19 12:00:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/mvme/pcctworeg.h>
 #include <dev/mvme/pcctwovar.h>

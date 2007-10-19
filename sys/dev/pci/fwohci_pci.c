@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.25 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.26 2007/10/19 12:00:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.26 2007/10/19 12:00:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25 2006/11/16 01:33:08 christos Exp
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.9 2007/09/04 20:46:00 xtraeme Exp $ */
+/* $NetBSD: mfi.c,v 1.10 2007/10/19 11:59:56 ad Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.9 2007/09/04 20:46:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.10 2007/10/19 11:59:56 ad Exp $");
 
 #include "bio.h"
 
@@ -32,7 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.9 2007/09/04 20:46:00 xtraeme Exp $");
 
 #include <uvm/uvm_param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>

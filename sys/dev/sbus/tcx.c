@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.21 2007/03/04 06:02:41 christos Exp $ */
+/*	$NetBSD: tcx.c,v 1.22 2007/10/19 12:01:12 ad Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.21 2007/03/04 06:02:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.22 2007/10/19 12:01:12 ad Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.21 2007/03/04 06:02:41 christos Exp $");
 #include <sys/syslog.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sun/fbio.h>

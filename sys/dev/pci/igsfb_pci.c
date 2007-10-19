@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.16 2007/01/13 19:03:49 cube Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.17 2007/10/19 12:00:50 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.16 2007/01/13 19:03:49 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.17 2007/10/19 12:00:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.16 2007/01/13 19:03:49 cube Exp $");
 #ifdef __sparc__  /* XXX: this doesn't belong here */
 #include <machine/autoconf.h>
 #endif
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

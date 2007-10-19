@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.51 2007/10/08 16:18:03 ad Exp $ */
+/*	$NetBSD: stp4020.c,v 1.52 2007/10/19 12:01:12 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.51 2007/10/08 16:18:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.52 2007/10/19 12:01:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.51 2007/10/08 16:18:03 ad Exp $");
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/stp4020reg.h>

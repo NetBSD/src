@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.100 2007/10/08 16:18:04 ad Exp $	*/
+/*	$NetBSD: usb.c,v 1.101 2007/10/19 12:01:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.100 2007/10/08 16:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.101 2007/10/19 12:01:22 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.100 2007/10/08 16:18:04 ad Exp $");
 
 #define USB_DEV_MINOR 255
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_quirks.h>

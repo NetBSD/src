@@ -35,14 +35,14 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.9 2007/03/04 06:02:12 christos Exp $
+ *	$Id: isic_isa_avm_a1.c,v 1.10 2007/10/19 12:00:19 ad Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.9 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.10 2007/10/19 12:00:19 ad Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_AVM_A1
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.9 2007/03/04 06:02:12 christos
 #include <machine/clock.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

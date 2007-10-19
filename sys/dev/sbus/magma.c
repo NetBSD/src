@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.43 2007/10/08 16:18:03 ad Exp $	*/
+/*	$NetBSD: magma.c,v 1.44 2007/10/19 12:01:12 ad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.43 2007/10/08 16:18:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.44 2007/10/19 12:01:12 ad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.43 2007/10/08 16:18:03 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

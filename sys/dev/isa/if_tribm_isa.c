@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.10 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.11 2007/10/19 12:00:18 ad Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.10 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.11 2007/10/19 12:00:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.10 2006/11/16 01:33:00 christos E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

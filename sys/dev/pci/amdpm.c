@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.27 2007/08/26 17:17:06 xtraeme Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.28 2007/10/19 12:00:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.27 2007/08/26 17:17:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.28 2007/10/19 12:00:39 ad Exp $");
 
 #include "opt_amdpm.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.27 2007/08/26 17:17:06 xtraeme Exp $");
 #include <sys/callout.h>
 #include <sys/rnd.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/acpipmtimer.h>
 
 #include <dev/i2c/i2cvar.h>

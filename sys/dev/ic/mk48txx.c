@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.21 2006/10/01 06:02:53 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.22 2007/10/19 11:59:56 ad Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.21 2006/10/01 06:02:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.22 2007/10/19 11:59:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
 #include <dev/ic/mk48txxvar.h>

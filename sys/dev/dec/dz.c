@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.29 2007/10/08 16:52:49 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.30 2007/10/19 11:59:40 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.29 2007/10/08 16:52:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.30 2007/10/19 11:59:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.29 2007/10/08 16:52:49 ad Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>

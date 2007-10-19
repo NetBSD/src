@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.11 2007/10/19 12:00:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.11 2007/10/19 12:00:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Ex
 #include <sys/device.h>
 
 #include <machine/psl.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mvme/clockvar.h>
 #include <dev/mvme/pcctwovar.h>

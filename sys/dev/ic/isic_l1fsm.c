@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.12 2005/12/11 12:21:27 christos Exp $
+ *	$Id: isic_l1fsm.c,v 1.13 2007/10/19 11:59:54 ad Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.12 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.13 2007/10/19 11:59:54 ad Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.12 2005/12/11 12:21:27 christos Exp
 #include <i386/isa/isa_device.h>
 #else
 #ifndef __bsdi__
-#include <machine/bus.h>
+#include <sys/bus.h>
 #endif
 #include <sys/device.h>
 #endif

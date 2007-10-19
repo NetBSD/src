@@ -44,7 +44,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_offload.c,v 1.5 2007/06/17 04:33:38 km
 #include <sys/pciio.h>
 #endif
 #include <sys/conf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __FreeBSD__
 #include <machine/resource.h>
 #include <sys/bus_dma.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.11 2006/08/31 18:31:59 matt Exp $	*/
+/*	$NetBSD: bicons.c,v 1.12 2007/10/19 11:59:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.11 2006/08/31 18:31:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.12 2007/10/19 11:59:42 ad Exp $");
 
 #define HALF_FONT
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.11 2006/08/31 18:31:59 matt Exp $");
 #include <dev/cons.h>
 
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/platid.h>
 #include <machine/stdarg.h>
 

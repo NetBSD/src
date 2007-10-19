@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.34 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.35 2007/10/19 12:00:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.34 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.35 2007/10/19 12:00:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.34 2006/11/16 01:33:00 christos Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

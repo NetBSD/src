@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.34 2006/10/15 19:45:06 martin Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.35 2007/10/19 12:01:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.34 2006/10/15 19:45:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.35 2007/10/19 12:01:10 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.34 2006/10/15 19:45:06 martin Exp 
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 

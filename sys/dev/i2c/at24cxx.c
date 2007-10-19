@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.7 2007/01/12 08:47:43 imp Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.8 2007/10/19 11:59:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/event.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/at24cxxvar.h>

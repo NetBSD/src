@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.42 2007/03/04 06:02:18 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.43 2007/10/19 12:00:43 ad Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42 2007/03/04 06:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.43 2007/10/19 12:00:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42 2007/03/04 06:02:18 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

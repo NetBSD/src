@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.73 2007/10/08 16:41:15 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.73 2007/10/08 16:41:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.73 2007/10/08 16:41:15 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>

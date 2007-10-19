@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.34 2007/06/15 13:26:57 joerg Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.35 2007/10/19 12:00:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34 2007/06/15 13:26:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.35 2007/10/19 12:00:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34 2007/06/15 13:26:57 joerg Exp $");
 
 #include <dev/pci/cs428x.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if defined(ENABLE_SECONDARY_CODEC)
 #define MAX_CHANNELS  (4)

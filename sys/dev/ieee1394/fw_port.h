@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.24 2007/08/05 01:19:17 rmind Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.25 2007/10/19 12:00:13 ad Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1136,7 +1136,7 @@ struct fw_hwaddr {
 /*
  * bus_dma macros for NetBSD
  */
-#include <machine/bus.h>
+#include <sys/bus.h>
 struct fw_bus_dma_tag {
 	bus_dma_tag_t tag;
 	bus_size_t alignment;
