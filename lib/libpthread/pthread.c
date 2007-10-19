@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.48.6.2 2007/09/25 05:12:02 wrstuden Exp $	*/
+/*	$NetBSD: pthread.c,v 1.48.6.3 2007/10/19 05:35:37 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.48.6.2 2007/09/25 05:12:02 wrstuden Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.48.6.3 2007/10/19 05:35:37 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -665,7 +665,11 @@ pthread_join(pthread_t thread, void **valptr)
 	}
 
 	num = thread->pt_num;
-	pthread_spinlock(self, &thread->pt_join_lock);
+	if (pthread_spintrylock(self, &thread->pt_join_lock)) {
+		pthread_spinunlock(self, &thread->pt_flaglock);
+		pthread_spinlock(self, &thread->pt_join_lock);
+		pthread_spinlock(self, &thread->pt_flaglock);
+	}
 	while (thread->pt_state != PT_STATE_ZOMBIE) {
 		if ((thread->pt_state == PT_STATE_DEAD) ||
 		    (thread->pt_flags & PT_FLAG_DETACHED) ||
@@ -676,8 +680,8 @@ pthread_join(pthread_t thread, void **valptr)
 			 * thread died and was recycled before we got
 			 * another chance to run.
 			 */
-			pthread_spinunlock(self, &thread->pt_join_lock);
 			pthread_spinunlock(self, &thread->pt_flaglock);
+			pthread_spinunlock(self, &thread->pt_join_lock);
 			return ESRCH;
 		}
 		/*
@@ -695,7 +699,7 @@ pthread_join(pthread_t thread, void **valptr)
 			pthread_spinunlock(self, &self->pt_statelock);
 			pthread_spinunlock(self, &thread->pt_join_lock);
 			pthread__signal_deferred(self, self);
-			pthread_spinlock(self, &thread->pt_flaglock);
+			pthread_spinlock(self, &thread->pt_statelock);
 			pthread_spinlock(self, &thread->pt_join_lock);
 			continue;
 		}
@@ -707,16 +711,16 @@ pthread_join(pthread_t thread, void **valptr)
 
 		PTQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
 		pthread__block(self, &thread->pt_join_lock);
-		pthread_spinlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &thread->pt_join_lock);
+		pthread_spinlock(self, &thread->pt_flaglock);
 	}
 
 	/* All ours. */
 	thread->pt_state = PT_STATE_DEAD;
 	name = thread->pt_name;
 	thread->pt_name = NULL;
-	pthread_spinunlock(self, &thread->pt_join_lock);
 	pthread_spinunlock(self, &thread->pt_flaglock);
+	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
@@ -756,12 +760,12 @@ pthread_detach(pthread_t thread)
 	if (thread->pt_magic != PT_MAGIC)
 		return EINVAL;
 
-	pthread_spinlock(self, &thread->pt_flaglock);
 	pthread_spinlock(self, &thread->pt_join_lock);
+	pthread_spinlock(self, &thread->pt_flaglock);
 
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
-		pthread_spinunlock(self, &thread->pt_join_lock);
 		pthread_spinunlock(self, &thread->pt_flaglock);
+		pthread_spinunlock(self, &thread->pt_join_lock);
 		return EINVAL;
 	}
 
@@ -777,8 +781,8 @@ pthread_detach(pthread_t thread)
 		doreclaim = 1;
 	}
 
-	pthread_spinunlock(self, &thread->pt_join_lock);
 	pthread_spinunlock(self, &thread->pt_flaglock);
+	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	if (doreclaim) {
 		pthread__dead(self, thread);
