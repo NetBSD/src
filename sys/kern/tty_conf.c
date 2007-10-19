@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.53.2.3 2007/10/19 13:08:10 ad Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.53.2.4 2007/10/19 15:54:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53.2.3 2007/10/19 13:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53.2.4 2007/10/19 15:54:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,6 @@ static struct linesw ntty_disc = {	/* old NTTYDISC */
 };
 
 static LIST_HEAD(, linesw) ttyldisc_list = LIST_HEAD_INITIALIZER(ttyldisc_head);
-kmutex_t tty_lock;
 
 /*
  * Note: We don't bother refcounting termios_disc and ntty_disc; they can't
@@ -173,9 +172,6 @@ ttyerrpoll(struct tty *tp, int events, struct lwp *l)
 void
 ttyldisc_init(void)
 {
-
-	/* XXX Doesn't really belong here. */
-	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (ttyldisc_attach(&termios_disc) != 0)
 		panic("ttyldisc_init: termios_disc");

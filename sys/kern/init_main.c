@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.23 2007/10/11 11:08:18 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.24 2007/10/19 15:54:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.23 2007/10/11 11:08:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.24 2007/10/19 15:54:27 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -422,7 +422,8 @@ main(void)
 	/* Initialize the device switch tables. */
 	devsw_init();
 
-	/* Initialize tty line disciplines. */
+	/* Initialize tty subsystem. */
+	tty_init();
 	ttyldisc_init();
 
 	/* Initialize the disk wedge subsystem. */
