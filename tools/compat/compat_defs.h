@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.63 2007/10/18 16:04:24 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.64 2007/10/19 15:56:53 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -22,7 +22,6 @@
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
 #define _XOPEN_SOURCE 600
-#define _NETBSD_TOOLS
 #else
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
@@ -275,18 +274,6 @@ int issetugid(void);
 #define isblank(x) ((x) == ' ' || (x) == '\t')
 #endif
 
-#if !HAVE_LCHFLAGS
-int lchflags(const char *, u_long);
-#endif
-
-#if !HAVE_LCHMOD
-int lchmod(const char *, mode_t);
-#endif
-
-#if !HAVE_LCHOWN
-int lchown(const char *, uid_t, gid_t);
-#endif
-
 #define __nbcompat_bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
 
 #define __nbcompat_bswap32(x)	((((x) << 24) & 0xff000000) | \
@@ -339,14 +326,6 @@ int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 /* Make them use our version */
 #  define heapsort __nbcompat_heapsort
 
-#if !HAVE_PWCACHE_USERDB
-int uid_from_user(const char *, uid_t *);
-int pwcache_userdb(int (*)(int), void (*)(void),
-		struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
-int gid_from_group(const char *, gid_t *);
-int pwcache_groupdb(int (*)(int), void (*)(void),
-		struct group * (*)(const char *), struct group * (*)(gid_t));
-#endif
 #if !HAVE_USER_FROM_UID
 /* Make them use our version */
 #  define user_from_uid __nbcompat_user_from_uid
@@ -354,6 +333,41 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
 #if !HAVE_GROUP_FROM_GID
 /* Make them use our version */
 #  define group_from_gid __nbcompat_group_from_gid
+#endif
+
+#if !HAVE_DECL_GID_FROM_USER
+int uid_from_user(const char *, uid_t *);
+#endif
+#if !HAVE_DECL_GID_FROM_GROUP
+int gid_from_group(const char *, gid_t *);
+#endif
+#if !HAVE_DECL_USER_FROM_UID
+const char	*user_from_uid(uid_t, int);
+#endif
+#if !HAVE_DECL_GROUP_FROM_GID
+const char	*group_from_gid(gid_t, int);
+#endif
+#if !HAVE_DECL_STRNDUP
+char		*strndup(const char *, size_t);
+#endif
+#if !HAVE_DECL_LCHFLAGS
+int		lchflags(const char *, unsigned long);
+#endif
+#if !HAVE_DECL_LCHMOD
+int		lchmod(const char *, mode_t);
+#endif
+#if !HAVE_DECL_LCHOWN
+int		lchown(const char *, uid_t, gid_t);
+#endif
+#if !HAVE_DECL_PWCACHE_USERDB
+int		pwcache_userdb(int (*)(int), void (*)(void),
+				struct passwd * (*)(const char *),
+				struct passwd * (*)(uid_t));
+#endif
+#if !HAVE_DECL_PWCACHE_GROUPDB
+int		 pwcache_groupdb(int (*)(int), void (*)(void),
+				    struct group * (*)(const char *),
+				    struct group * (*)(gid_t));
 #endif
 
 #if !HAVE_PWRITE
