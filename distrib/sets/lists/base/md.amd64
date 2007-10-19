@@ -1,10 +1,12 @@
-# $NetBSD: md.amd64,v 1.13 2007/01/14 04:45:18 christos Exp $
+# $NetBSD: md.amd64,v 1.14 2007/10/19 18:52:09 njoly Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libx86_64.so				base-sys-shlib
 ./usr/lib/libx86_64.so.0			base-sys-shlib
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib
+./usr/lkm/compat_linux.o			base-sys-lkm
+./usr/lkm/exec_linux_elf.o			base-sys-lkm
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
 ./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete
