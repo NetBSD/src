@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.10 2007/10/11 19:41:15 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.11 2007/10/19 14:38:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.10 2007/10/11 19:41:15 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.11 2007/10/19 14:38:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ puffs_req_loadget(struct puffs_getreq *pgr)
 			return 0;
 		return -1;
 	}
-	buf = malloc(pfr.pfr_len);
+	buf = malloc(pfr.pfr_alloclen);
 	assert(buf != NULL); /* XXX: a bit more grace here, thanks */
 	memcpy(buf, &pfr, sizeof(pfr));
 
@@ -148,6 +148,7 @@ puffs_req_put(struct puffs_putreq *ppr, struct puffs_req *preq)
 {
 	ssize_t n;
 
+	preq->preq_frhdr.pfr_len = preq->preq_buflen;
 	n = write(ppr->ppr_pu->pu_fd, preq, preq->preq_frhdr.pfr_len);
 	assert(n == preq->preq_frhdr.pfr_len);
 	free(preq);

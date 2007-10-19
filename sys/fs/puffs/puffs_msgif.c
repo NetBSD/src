@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.47 2007/10/11 23:04:21 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.48 2007/10/19 14:38:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.47 2007/10/11 23:04:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.48 2007/10/19 14:38:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -657,7 +657,8 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 
 	if (error == 0) {
 		*data = (uint8_t *)preq;
-		preq->preq_frhdr.pfr_len = park->park_maxlen;
+		preq->preq_frhdr.pfr_len = park->park_copylen;
+		preq->preq_frhdr.pfr_alloclen = park->park_maxlen;
 		preq->preq_frhdr.pfr_type = preq->preq_opclass; /* yay! */
 		*dlen = preq->preq_frhdr.pfr_len;
 		*parkptr = park;
