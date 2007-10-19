@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.98.6.1 2007/08/16 11:03:23 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.98.6.2 2007/10/19 11:52:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98.6.1 2007/08/16 11:03:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98.6.2 2007/10/19 11:52:26 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -245,6 +245,8 @@ USB_ATTACH(usb)
 
 	config_pending_incr();
 	usb_kthread_create(usb_create_event_thread, sc);
+
+	(void)pnp_register(self, pnp_generic_power);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
