@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.8 2007/10/19 04:41:30 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.9 2007/10/19 07:25:02 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.8 2007/10/19 04:41:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.9 2007/10/19 07:25:02 nisimura Exp $");
 
 #include "bpfilter.h"
 
@@ -213,8 +213,8 @@ struct kse_softc {
 	struct ifmedia sc_media;	/* ifmedia information */
 	int sc_media_status;		/* PHY */
 	int sc_media_active;		/* PHY */
-	callout_t sc_callout;		/* MII tick callout */
-	callout_t sc_stat_ch;		/* statistics counter callout */
+	callout_t  sc_callout;		/* MII tick callout */
+	callout_t  sc_stat_ch;		/* statistics counter callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -245,7 +245,6 @@ struct kse_softc {
 	struct ksext {
 		char evcntname[3][8];
 		struct evcnt pev[3][34];
-		struct evcnt lev[2];
 	} sc_ext;			/* switch statistics */
 #endif
 };
@@ -445,7 +444,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_0;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct kse_control_data), (void * *)&sc->sc_control_data,
+	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
 		printf("%s: unable to map control data, error = %d\n",
@@ -556,7 +555,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		evcnt_attach_dynamic(&ee->pev[i][8], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxAlignmentError");
 		evcnt_attach_dynamic(&ee->pev[i][9], EVCNT_TYPE_MISC,
-		    NULL, ee->evcntname[i], "RxCtrol8808Pkts");
+		    NULL, ee->evcntname[i], "RxControl8808Pkts");
 		evcnt_attach_dynamic(&ee->pev[i][10], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxPausePkts");
 		evcnt_attach_dynamic(&ee->pev[i][11], EVCNT_TYPE_MISC,
@@ -1402,23 +1401,25 @@ stat_tick(arg)
 
 	nport = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (p = 0; p < nport; p++) {
-		for (i = 0; i < 27; i++) {
+		for (i = 0; i < 32; i++) {
 			val = 0x1c00 | (p * 0x20 + i);
 			CSR_WRITE_2(sc, IACR, val);
 			do {
 				val = CSR_READ_2(sc, IADR5) << 16;
 			} while ((val & (1U << 30)) == 0);
-			if (val & (1U << 31))
+			if (val & (1U << 31)) {
+				(void)CSR_READ_2(sc, IADR4);
 				val = 0x3fffffff; /* has made overflow */
-			val |= CSR_READ_2(sc, IADR4);
+			}
+			else {
+				val &= 0x3fff0000;		/* 29:16 */
+				val |= CSR_READ_2(sc, IADR4);	/* 15:0 */
+			}
 			ee->pev[p][i].ev_count += val; /* i (0-31) */
 		}
-	}
-	nport = (sc->sc_chip == 0x8842) ? 2 : 1;
-	for (p = 0; p < nport; p++) {
 		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p);
 		ee->pev[p][32].ev_count = CSR_READ_2(sc, IADR4); /* 32 */
-		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p * 2 + 1);
+		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p * 3 + 1);
 		ee->pev[p][33].ev_count = CSR_READ_2(sc, IADR4); /* 33 */
 	}
 	callout_reset(&sc->sc_stat_ch, hz * 60, stat_tick, arg);
@@ -1439,9 +1440,7 @@ zerostats(struct kse_softc *sc)
 			do {
 				val = CSR_READ_2(sc, IADR5) << 16;
 			} while ((val & (1U << 30)) == 0);
-			if (val & (1U << 31))
-				val = 0x3fffffff; /* has made overflow */
-			val |= CSR_READ_2(sc, IADR4);
+			(void)CSR_READ_2(sc, IADR4);
 			ee->pev[p][i].ev_count = 0;
 		}
 	}
