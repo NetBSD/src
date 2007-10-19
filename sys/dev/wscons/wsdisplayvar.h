@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.43 2007/10/18 18:09:53 joerg Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.44 2007/10/19 08:57:50 dogcow Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _DEV_WSCONS_WSDISPLAYVAR_H
 #define _DEV_WSCONS_WSDISPLAYVAR_H
 
-struct device;
+#include <sys/device.h>
 
 /*
  * WSDISPLAY interfaces
