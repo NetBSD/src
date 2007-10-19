@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.5.32.4 2007/10/19 00:06:17 ad Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.5.32.5 2007/10/19 00:13:04 ad Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -9,9 +9,9 @@
 #define	IPL_SOFTBIO	0x2	/* block I/O passdown */
 #define	IPL_SOFTNET	0x3	/* protocol stacks */
 #define	IPL_SOFTSERIAL	0x4	/* serial passdown */
-#define	IPL_VM		0x5	/* low priority I/O, memory allocation */
-#define IPL_SCHED	0x6	/* scheduler, clock, high priority I/O */
-#define	IPL_HIGH	0x7	/* very high priority I/O, everything */
+#define	IPL_VM		0x5	/* low I/O, memory allocation */
+#define IPL_SCHED	0x6	/* medium I/O, scheduler, clock */
+#define	IPL_HIGH	0x7	/* high I/O, statclock, IPIs */
 #define	NIPL		8
 
 /*
