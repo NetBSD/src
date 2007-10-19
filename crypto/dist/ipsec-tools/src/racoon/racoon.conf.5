@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.41 2007/09/12 23:39:50 mgrooms Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.42 2007/10/19 03:37:19 manu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -606,6 +606,10 @@ SPLIT_INCLUDE and SPLIT_LOCAL are mutually exclusive.
 The space separated list of IPv4 addresses and masks (address slash mask)
 that define the networks to be considered local, and thus excluded from the
 tunnels ; obtained by ISAKMP mode config.
+.It SPLIT_INCLUDE_CIDR
+Same as SPLIT_INCLUDE, with netmasks in CIDR notation.
+.It SPLIT_LOCAL_CIDR
+Same as SPLIT_LOCAL, with netmasks in CIDR notation.
 .It DEFAULT_DOMAIN
 The DNS default domain name obtained by ISAKMP mode config.
 .El
