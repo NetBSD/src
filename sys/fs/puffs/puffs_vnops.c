@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.108 2007/10/18 17:07:30 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.109 2007/10/19 13:04:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.108 2007/10/18 17:07:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.109 2007/10/19 13:04:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2024,8 +2024,6 @@ puffs_advlock(void *v)
 /*
  * This maps itself to PUFFS_VN_READ/WRITE for data transfer.
  */
-
-/* XXX: if this is called from interrupt context, we lose */
 int
 puffs_strategy(void *v)
 {
