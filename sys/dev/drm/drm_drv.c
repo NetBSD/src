@@ -309,7 +309,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
         /* dev->maplist : drm_load */
         dev->context_sareas = NULL;
         dev->max_context = 0;
-	DRM_SPININIT(dev->dev_lock, "drm device");
+	DRM_SPININIT(&dev->dev_lock, "drm device");
         dev->dma = NULL;
 	/* dev->irq : drm_load */
 	dev->irq_enabled = 0;
@@ -833,7 +833,7 @@ int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid)
 			retcode = msleep((void *)&dev->lock.lock_queue,
 			    &dev->dev_lock, PZERO | PCATCH, "drmlk2", 0);
 #else
-			retcode = ltsleep((void *)&dev->lock.lock_queue,
+			retcode = mtsleep((void *)&dev->lock.lock_queue,
 			    PZERO | PCATCH, "drmlk2", 0, &dev->dev_lock);
 #endif
 			if (retcode)
