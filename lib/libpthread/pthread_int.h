@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34.4.2 2007/09/25 05:12:02 wrstuden Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.4.3 2007/10/19 05:35:38 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -173,6 +173,34 @@ struct	__pthread_st {
 	int	rescheds;
 #endif
 };
+
+/*
+ * Thread locking hierarcy. In order to avoid deadlocks when concurrency
+ * is enabled, locks mus be aquired in a consistent order. Locks are
+ * divided into groups, and no lock in a "higher" group may be taken while
+ * holding a lock in a "lower" group. Also, only one lock in a group may
+ * be taken at once, as otherwise the locks need to be listed separately
+ * to avoid an issue between them. Some locks listed are per-thread
+ * and some are global. A thread may take some per-thread locks on itself
+ * and per-thread locks on other threads, but any such locking must still
+ * respect the hierarcy. All per-thread locks of a given type are considered
+ * in the same group and thus only one may be taken at once by a given thread.
+ * It is believed that the current code never tries to take the same lock
+ * in more than one thread at once.
+ *
+ * "Top" group: pt_join_lock, pthread__deadqueue_lock, &barrier->ptb_lock,
+ * cond->ptc_lock, mutex->ptm_interlock, rwlock->ptr_interlock,
+ * pt_sigsuspended_lock, pt_sigwaiting_lock, pt_nanosleep_lock,
+ * pthread__allqueue_lock
+ *
+ * Group 2: pt_statelock
+ *
+ * Group 3: pt_siglock, pthread_alarmqlock
+ *
+ * Group 4: pt_flag_lock, pthread__runqueue_lock
+ *
+ * Group 5: alarm->pta_lock -- all locked in acending time order.
+ */
 
 struct pthread_lock_ops {
 	void	(*plo_init)(__cpu_simple_lock_t *);
