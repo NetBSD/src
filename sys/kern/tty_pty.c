@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.99.2.3 2007/10/19 13:08:10 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.99.2.4 2007/10/19 15:54:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.99.2.3 2007/10/19 13:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.99.2.4 2007/10/19 15:54:28 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -386,8 +386,8 @@ again:
 			    p->p_pgrp->pg_jobc == 0 ||
 			    p->p_flag & PS_PPWAIT)
 				return (EIO);
-			pgsignal(p->p_pgrp, SIGTTIN, 1);
 			mutex_spin_enter(&tty_lock);
+			ttysig(tp, TTYSIG_PG1, SIGTTIN);
 			error = ttysleep(tp, &lbolt, true, 0);
 			mutex_spin_exit(&tty_lock);
 			if (error)
@@ -1091,8 +1091,8 @@ ptyioctl(dev, cmd, data, flag, l)
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp, 1);
+			ttysig(tp, TTYSIG_PG1, sig);
 			mutex_spin_exit(&tty_lock);
-			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
 

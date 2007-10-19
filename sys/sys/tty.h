@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73.2.3 2007/10/19 13:08:11 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.2.4 2007/10/19 15:54:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -106,6 +106,11 @@ struct tty {
 	short	t_hiwat;		/* High water mark. */
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
+	sigset_t t_sigpg1;		/* Signals to PG (set 1) */
+	sigset_t t_sigpg2;		/* Signals to PG (set 2) */
+	sigset_t t_sigleader;		/* Signals to session leader */
+	int	t_sigcount;		/* # pending signals */
+	TAILQ_ENTRY(tty) t_sigqueue;	/* entry on pending signal list */
 };
 
 #define	t_cc		t_termios.c_cc
@@ -204,6 +209,12 @@ extern	struct ttychars ttydefaults;
 /* Symbolic sleep message strings. */
 extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
+enum ttysigtype {
+	TTYSIG_PG1,
+	TTYSIG_PG2,
+	TTYSIG_LEADER
+};
+
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);
 void	 clist_init(void);
@@ -244,9 +255,10 @@ void	 ttyrub(int, struct tty *);
 int	 ttysleep(struct tty *, kcondvar_t *, bool, int);
 int	 ttywait(struct tty *);
 int	 ttywflush(struct tty *);
-
+void	 ttysig(struct tty *, enum ttysigtype, int);
 void	 tty_attach(struct tty *);
 void	 tty_detach(struct tty *);
+void	 tty_init(void);
 struct tty
 	*ttymalloc(void);
 void	 ttyfree(struct tty *);
