@@ -1,4 +1,4 @@
-.\"	$NetBSD: kse.4,v 1.5 2007/10/19 04:57:48 nisimura Exp $
+.\"	$NetBSD: kse.4,v 1.6 2007/10/19 05:11:07 nisimura Exp $
 .\"
 .\" Copyright (c) 2006 Tohru Nishimura.
 .\"
@@ -60,9 +60,7 @@ The
 driver was written by
 .An Tohru Nishimura .
 .Sh BUGS
-The
-.Nm
-The __STRICT_ALIGNMENT case is not written.  8842 media selection
+__STRICT_ALIGNMENT case is not written.  8842 media selection
 keeps "auto" and indicates "up 100baseTX-FX flow" when either of
 two ports is found link-up.  There is no functional provision to
 see and control the media selection of them this moment.  Advanced
