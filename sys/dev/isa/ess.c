@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.74 2007/07/09 21:00:49 ad Exp $	*/
+/*	$NetBSD: ess.c,v 1.75 2007/10/19 12:00:16 ad Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.74 2007/07/09 21:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.75 2007/10/19 12:00:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.74 2007/07/09 21:00:49 ad Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

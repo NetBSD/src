@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.66 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.67 2007/10/19 12:00:24 ad Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.66 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.67 2007/10/19 12:00:24 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,8 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.66 2007/03/04 06:02:13 christos Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

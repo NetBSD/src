@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.18 2007/08/26 22:36:35 dyoung Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.19 2007/10/19 11:59:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.18 2007/08/26 22:36:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.19 2007/10/19 11:59:46 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.18 2007/08/26 22:36:35 dyoung Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 

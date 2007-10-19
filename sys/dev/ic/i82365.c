@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.99 2007/07/09 21:00:36 ad Exp $	*/
+/*	$NetBSD: i82365.c,v 1.100 2007/10/19 11:59:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.99 2007/07/09 21:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.100 2007/10/19 11:59:52 ad Exp $");
 
 #define	PCICDEBUG
 
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.99 2007/07/09 21:00:36 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

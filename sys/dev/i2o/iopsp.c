@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.28 2007/06/16 12:32:12 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.29 2007/10/19 11:59:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.28 2007/06/16 12:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.29 2007/10/19 11:59:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.28 2007/06/16 12:32:12 ad Exp $");
 #include <sys/scsiio.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>

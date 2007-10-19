@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.66 2007/09/01 07:32:31 dyoung Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.67 2007/10/19 12:01:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.66 2007/09/01 07:32:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.67 2007/10/19 12:01:05 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,9 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.66 2007/09/01 07:32:31 dyoung Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

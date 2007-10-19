@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.9 2007/10/19 07:25:02 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.10 2007/10/19 12:00:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.9 2007/10/19 07:25:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.10 2007/10/19 12:00:46 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.9 2007/10/19 07:25:02 nisimura Exp $");
 #include <sys/queue.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

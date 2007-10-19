@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.183 2007/08/15 04:00:33 kiyohara Exp $	*/
+/*	$NetBSD: ohci.c,v 1.184 2007/10/19 12:01:21 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.183 2007/08/15 04:00:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.184 2007/10/19 12:01:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.183 2007/08/15 04:00:33 kiyohara Exp $");
 #include <machine/bus_pio.h>
 #include <machine/bus_memio.h>
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #endif
 #endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 
 #include <dev/usb/usb.h>

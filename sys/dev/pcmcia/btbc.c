@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.4 2007/10/16 13:47:17 kiyohara Exp $	*/
+/*	$NetBSD: btbc.c,v 1.5 2007/10/19 12:01:03 ad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.4 2007/10/16 13:47:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.5 2007/10/19 12:01:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.4 2007/10/16 13:47:17 kiyohara Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

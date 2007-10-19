@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.9 2007/01/29 01:52:44 hubertf Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.9 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.9 2007/01/29 01:52:44 huber
 #include <sys/stat.h>
 #include <sys/kauth.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/vmparam.h>
 
 #include <uvm/uvm.h>
