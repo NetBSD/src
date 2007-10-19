@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.4 2007/10/18 02:07:17 jmcneill Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.5 2007/10/19 00:49:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -108,10 +108,9 @@ typedef struct pnp_device {
 	pnp_status_t		(*pnp_power)(device_t, pnp_request_t, void *);
 	pnp_state_t		pnp_state;
 	struct callout		pnp_idle;
+	void			*pnp_lock; /* XXX */
 	int			pnp_depth;
 } pnp_device_t;
-
-void		pnp_init(void);
 
 pnp_status_t		pnp_set_platform(const char *, const char *);
 const char *		pnp_get_platform(const char *);

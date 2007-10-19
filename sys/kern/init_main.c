@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311.4.4 2007/10/18 02:07:18 jmcneill Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311.4.5 2007/10/19 00:49:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.4 2007/10/18 02:07:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.5 2007/10/19 00:49:31 jmcneill Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -355,9 +355,6 @@ main(void)
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
-
-	/* Initialize the PNP power management subsystem */
-	pnp_init();
 
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
