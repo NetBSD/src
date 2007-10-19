@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.27 2007/07/09 21:11:14 ad Exp $
+ *	$Id: i4b_ipr.c,v 1.28 2007/10/19 12:16:47 ad Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.27 2007/07/09 21:11:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.28 2007/10/19 12:16:47 ad Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.27 2007/07/09 21:11:14 ad Exp $");
 #include <netisdn/i4b_l4.h>
 
 #ifndef __FreeBSD__
-#include <machine/cpu.h> /* For softnet */
+#include <sys/cpu.h> /* For softnet */
 #endif
 
 #ifdef __FreeBSD__

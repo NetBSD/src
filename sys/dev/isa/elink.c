@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.14 2001/11/13 08:01:12 lukem Exp $	*/
+/*	$NetBSD: elink.c,v 1.15 2007/10/19 12:00:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.14 2001/11/13 08:01:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.15 2007/10/19 12:00:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/elink.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.76 2007/08/26 22:45:56 dyoung Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.77 2007/10/19 11:59:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.76 2007/08/26 22:45:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.77 2007/10/19 11:59:59 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.76 2007/08/26 22:45:56 dyoung Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.16 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.17 2007/10/19 12:00:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16 2007/03/04 06:02:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.17 2007/10/19 12:00:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16 2007/03/04 06:02:16 christos Exp $")
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.10 2007/08/26 22:45:59 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.11 2007/10/19 12:01:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.10 2007/08/26 22:45:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.11 2007/10/19 12:01:21 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.10 2007/08/26 22:45:59 dyoung Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 
 #if NBPFILTER > 0

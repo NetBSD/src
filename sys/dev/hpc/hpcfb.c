@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.42 2007/07/09 21:00:32 ad Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.43 2007/10/19 11:59:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.42 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.43 2007/10/19 11:59:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.42 2007/07/09 21:00:32 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

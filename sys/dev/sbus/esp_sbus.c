@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.37 2007/09/22 23:32:27 martin Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.38 2007/10/19 12:01:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.37 2007/09/22 23:32:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.38 2007/10/19 12:01:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.37 2007/09/22 23:32:27 martin Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/ic/lsi64854reg.h>

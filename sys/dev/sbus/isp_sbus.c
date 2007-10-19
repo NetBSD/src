@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.69 2007/07/07 00:04:10 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.70 2007/10/19 12:01:11 ad Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.69 2007/07/07 00:04:10 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.70 2007/10/19 12:01:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.69 2007/07/07 00:04:10 mjacob Exp $")
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <dev/ic/isp_netbsd.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>

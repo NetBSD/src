@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.h,v 1.4 2007/01/14 01:05:49 cube Exp $
+ * $Id: ah_osdep.h,v 1.5 2007/10/19 12:16:41 ad Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -43,8 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/endian.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include "athhal_options.h"
 
