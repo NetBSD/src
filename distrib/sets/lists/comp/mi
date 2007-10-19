@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1072 2007/10/15 14:00:49 pooka Exp $
+#	$NetBSD: mi,v 1.1073 2007/10/19 13:11:23 njoly Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2752,6 +2752,7 @@
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/kadmind.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kpasswdd.debug	comp-krb5-debug		kerberos,debug
