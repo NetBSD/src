@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.24 2007/09/06 16:09:10 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.25 2007/10/20 19:14:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,8 @@
 #include <sys/queue.h>
 
 #include <puffs.h>
+
+extern unsigned int max_reads;
 
 /*
  * Later protocol versions would have some advantages (such as link count
@@ -99,9 +101,9 @@ struct psshfs_fid {
 	struct puffs_node *node;
 };
 
-struct psshfs_dirwait {
-	struct puffs_cc *dw_cc;
-	LIST_ENTRY(psshfs_dirwait) dw_entries;
+struct psshfs_wait {
+	struct puffs_cc *pw_cc;
+	TAILQ_ENTRY(psshfs_wait) pw_entries;
 };
 
 struct psshfs_node {
@@ -121,6 +123,7 @@ struct psshfs_node {
 
 	int stat;
 	int opencount;
+	int readcount;
 
 	time_t attrread;
 	struct puffs_framebuf *getattr_pb;
@@ -130,7 +133,7 @@ struct psshfs_node {
 	uint32_t fhand_r_len;
 	uint32_t fhand_w_len;
 
-	LIST_HEAD(, psshfs_dirwait) dw;
+	TAILQ_HEAD(, psshfs_wait) pw;
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
