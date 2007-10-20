@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.35 2007/09/01 16:43:11 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.36 2007/10/20 19:14:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.35 2007/09/01 16:43:11 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.36 2007/10/20 19:14:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -65,6 +65,8 @@ static void	usage(void);
 static void	add_ssharg(char ***, int *, char *);
 
 #define SSH_PATH "/usr/bin/ssh"
+
+unsigned int max_reads;
 
 static void
 add_ssharg(char ***sshargs, int *nargs, char *arg)
@@ -112,7 +114,7 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eo:O:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eo:O:r:s")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
@@ -126,6 +128,9 @@ main(int argc, char *argv[])
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 'r':
+			max_reads = atoi(optarg);
 			break;
 		case 's':
 			lflags |= PUFFSLOOP_NODAEMON;

@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.40 2007/10/16 10:53:02 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.41 2007/10/20 19:14:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.40 2007/10/16 10:53:02 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.41 2007/10/20 19:14:27 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -334,13 +334,13 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	int i, rv, set_readdir;
 
 	if (psn->stat & PSN_READDIR) {
-		struct psshfs_dirwait dw;
+		struct psshfs_wait pw;
 
 		set_readdir = 0;
-		dw.dw_cc = pcc;
-		LIST_INSERT_HEAD(&psn->dw, &dw, dw_entries);
+		pw.pw_cc = pcc;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		LIST_REMOVE(&dw, dw_entries);
+		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
 	} else {
 		psn->stat |= PSN_READDIR;
 		set_readdir = 1;
@@ -386,10 +386,10 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
 	if (set_readdir) {
-		struct psshfs_dirwait *dw;
+		struct psshfs_wait *pw;
 
-		while ((dw = LIST_FIRST(&psn->dw)) != NULL)
-			puffs_goto(dw->dw_cc);
+		while ((pw = TAILQ_FIRST(&psn->pw)) != NULL)
+			puffs_goto(pw->pw_cc);
 
 		psn->stat &= ~PSN_READDIR;
 	}
@@ -407,15 +407,31 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	struct psshfs_node *psn = pn->pn_data;
 	uint32_t readlen;
 
+	readlen = *resid;
+	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
+	psbuf_put_8(pb, offset);
+	psbuf_put_4(pb, readlen);
+
+	/*
+	 * Do this *after* accessing the file, the handle might not
+	 * exist after blocking.
+	 */
+	if (max_reads && ++psn->readcount > max_reads) {
+		struct psshfs_wait pw;
+
+		printf("currently %d, max %d\n", psn->readcount, max_reads);
+		pw.pw_cc = pcc;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
+	}
+
+	/* XXX: for structure & variable freeing.  but who cares? */
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
 		goto out;
 	}
 
-	readlen = *resid;
-	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
-	psbuf_put_8(pb, offset);
-	psbuf_put_4(pb, readlen);
 	GETRESPONSE(pb);
 
 	rv = psbuf_do_data(pb, buf, &readlen);
@@ -423,6 +439,14 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		*resid -= readlen;
 
  out:
+	if (max_reads && --psn->readcount >= max_reads) {
+		struct psshfs_wait *pw;
+
+		pw = TAILQ_FIRST(&psn->pw);
+		assert(pw != NULL);
+		puffs_goto(pw->pw_cc);
+	}
+
 	PSSHFSRETURN(rv);
 }
 
