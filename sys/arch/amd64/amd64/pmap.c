@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.2.2 2007/10/18 21:49:59 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.2.3 2007/10/20 20:58:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.2 2007/10/18 21:49:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.3 2007/10/20 20:58:36 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2052,10 +2052,10 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 		 *	enter the mapping in kernel map too
 		 */
 		xpmap_update(&pva[index], (pd_entry_t)
-			(xpmap_ptom(pa) | PG_u | PG_RW | PG_V));
+			(xpmap_ptom_masked(pa) | PG_u | PG_RW | PG_V));
 		if(i == PTP_LEVELS && pmap != pmap_kernel())
 			xpmap_update(&pmap_kernel()->pm_pdir[index],
-				(pd_entry_t) (xpmap_ptom(pa)
+				(pd_entry_t) (xpmap_ptom_masked(pa)
 					| PG_u | PG_RW | PG_V));
 #endif
 		pmap->pm_stats.resident_count++;
@@ -2236,7 +2236,8 @@ try_again:
 #ifndef XEN
 	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & PG_FRAME;
 #else
-	pmap->pm_pdirpa = xpmap_mtop(pmap->pm_pdir[PDIR_SLOT_PTE]) & PG_FRAME;
+	pmap->pm_pdirpa =
+	    xpmap_mtop_masked(pmap->pm_pdir[PDIR_SLOT_PTE]) & PG_FRAME;
 	/* Xen want PDP R/O */
 	xpmap_set_ro((vaddr_t) pmap->pm_pdir);
 #endif
@@ -2280,7 +2281,7 @@ pmap_destroy(struct pmap *pmap)
 	 * Xen lazy APDP handling:
 	 * clear APDP_PDE if pmap is the currently mapped
 	 */
-	if (xpmap_ptom(pmap->pm_pdirpa) == (*APDP_PDE & PG_FRAME)) {
+	if (xpmap_ptom_masked(pmap->pm_pdirpa) == (*APDP_PDE & PG_FRAME)) {
 		xpmap_update(APDP_PDE, 0);
 		pmap_apte_flush(pmap_kernel());
 	}
@@ -2586,7 +2587,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 #ifndef XEN
 			*pap = (pte & PG_FRAME) | (va & 0xfff);
 #else
-			*pap = xpmap_mtop_masked(pte) | (va & 0xfff);
+			*pap = xpmap_mtop_masked(pte & PG_FRAME) | (va & 0xfff);
 #endif
 		return (true);
 	}
@@ -2897,8 +2898,8 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 			if (vm_physseg_find(btop(opte & PG_FRAME), &off)
 #else
 			/* UVM want a PA */
-			if (vm_physseg_find(atop(xpmap_mtop_masked(opte)),
-			    &off)
+			if (vm_physseg_find(
+			    atop(xpmap_mtop_masked(opte & PG_FRAME)), &off)
 #endif
 			    != -1)
 				panic("pmap_remove_ptes: managed page without "
@@ -2910,7 +2911,8 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #ifndef XEN
 		bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
 #else
-		bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off);
+		bank = vm_physseg_find(
+		    atop(xpmap_mtop_masked(opte & PG_FRAME)), &off);
 #endif
 #ifdef DIAGNOSTIC
 		if (bank == -1)
@@ -2999,7 +3001,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		if (vm_physseg_find(btop(opte & PG_FRAME), &off) != -1)
 #else
 		/* UVM want a PA */
-		if (vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off) != -1)
+		if (vm_physseg_find(
+		    atop(xpmap_mtop_masked(opte & PG_FRAME)), &off) != -1)
 #endif
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
@@ -3011,7 +3014,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
 #else
 	/* UVM want a PA */
-	bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)), &off);
+	bank = vm_physseg_find(atop(xpmap_mtop_masked(opte & PG_FRAME)), &off);
 #endif
 #ifdef DIAGNOSTIC
 	if (bank == -1)
@@ -3077,7 +3080,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 #ifndef XEN
 			ptppa = pde & PG_FRAME;
 #else
-			ptppa = xpmap_mtop(pde & PG_FRAME);
+			ptppa = xpmap_mtop_masked(pde & PG_FRAME);
 #endif
 
 			/* get PTP if non-kernel mapping */
@@ -3145,7 +3148,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 #ifndef XEN
 		ptppa = pde & PG_FRAME;
 #else
-		ptppa = xpmap_mtop(pde & PG_FRAME);
+		ptppa = xpmap_mtop_masked(pde & PG_FRAME);
 #endif
 
 		/* get PTP if non-kernel mapping */
@@ -3217,7 +3220,7 @@ pmap_page_remove(struct vm_page *pg)
 #ifndef XEN
 		   (pde & PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 #else
-		   xpmap_mtop(pde & PG_FRAME) !=
+		   xpmap_mtop_masked(pde & PG_FRAME) !=
 			VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 #endif
 			printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n",
@@ -3227,7 +3230,7 @@ pmap_page_remove(struct vm_page *pg)
 #ifndef XEN
 			       (unsigned long)(pde & PG_FRAME),
 #else
-			       (unsigned long)xpmap_mtop(pde & PG_FRAME),
+			       (unsigned long)xpmap_mtop_masked(pde & PG_FRAME),
 #endif
 				VM_PAGE_TO_PHYS(pve->pv_ptp));
 			panic("pmap_page_remove: mapped managed page has "
@@ -3381,7 +3384,8 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 		opte = *ptep;
 		KASSERT(pmap_valid_entry(opte));
 #ifdef XEN
-		KDASSERT((opte & PG_FRAME) == xpmap_ptom(VM_PAGE_TO_PHYS(pg)));
+		KDASSERT((opte & PG_FRAME) ==
+		    xpmap_ptom_masked(VM_PAGE_TO_PHYS(pg)));
 #else
 		KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(pg));
 #endif
@@ -3707,7 +3711,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifndef XEN
 		if ((opte & PG_FRAME) == pa) {
 #else
-		if ((opte & PG_FRAME) == xpmap_ptom(pa)) {
+		if ((opte & PG_FRAME) == xpmap_ptom_masked(pa)) {
 #endif
 
 			/* if this is on the PVLIST, sync R/M bit */
@@ -3743,8 +3747,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifndef XEN
 			bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #else
-			bank = vm_physseg_find(atop(xpmap_mtop_masked(opte)),
-				&off);
+			bank = vm_physseg_find(atop(
+			    xpmap_mtop_masked(opte & PG_FRAME)), &off);
 #endif
 #ifdef DIAGNOSTIC
 			if (bank == -1)
