@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.41 2007/10/13 16:00:46 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.42 2007/10/20 00:12:35 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.41 2007/10/13 16:00:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.42 2007/10/20 00:12:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -463,6 +463,12 @@ sme_events_check(void *arg)
 		    see->type));
 		workqueue_enqueue(seewq, &see->see_wk, NULL);
 	}
+	/*
+	 * Now that the events list was checked, reset the refresh value.
+	 */
+	LIST_FOREACH(see, &sme_events_list, see_list)
+		see->refreshed = false;
+
 	if (!sysmon_low_power)
 		callout_schedule(&seeco, SME_EVTIMO);
 }
@@ -504,13 +510,17 @@ sme_events_worker(struct work *wk, void *arg)
 	edata = &sme->sme_sensor_data[see->snum];
 
 	/* 
-	 * refresh the sensor that was marked with a critical
-	 * event.
+	 * refresh the sensor that was marked with a critical event
+	 * only if it wasn't refreshed before or if the driver doesn't
+	 * use its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-		error = (*sme->sme_gtredata)(sme, edata);
-		if (error)
-			goto out;
+		if (!see->refreshed) {
+			error = (*sme->sme_gtredata)(sme, edata);
+			if (error)
+				goto out;
+			see->refreshed = true;
+		}
 	}
 
 	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
