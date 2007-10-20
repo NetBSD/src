@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.1 2007/10/17 21:38:14 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.2 2007/10/20 17:30:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.1 2007/10/17 21:38:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.2 2007/10/20 17:30:54 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1854,6 +1854,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		err = tf->tf_err;
 		trapno = tf->tf_trapno;
 		memcpy(tf, gr, sizeof *tf);
+#ifdef XEN
+		/*
+		 * Xen has its own way of dealing with %cs and %ss,
+		 * reset it to proper values.
+		 */
+		tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+#endif
 		rflags &= ~PSL_USER;
 		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
 		tf->tf_err = err;
@@ -1912,11 +1920,13 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 		if (error != 0)
 			return error;
 
+#ifndef XEN
 		if ((gr[_REG_SS] & 0xffff) == 0)
 			return EINVAL;
 		error = valid_user_selector(l, gr[_REG_SS], NULL, 0);
 		if (error != 0)
 			return error;
+#endif
 	} else {
 		sel = gr[_REG_ES] & 0xffff;
 		if (sel != 0 && !VALID_USER_DSEL(sel))
@@ -1934,15 +1944,19 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 		if (!VALID_USER_DSEL(sel))
 			return EINVAL;
 
+#ifndef XEN
 		sel = gr[_REG_SS] & 0xffff;
 		if (!VALID_USER_DSEL(sel)) 
 			return EINVAL;
+#endif
 
 	}
 
+#ifndef XEN
 	sel = gr[_REG_CS] & 0xffff;
 	if (!VALID_USER_CSEL(sel))
 		return EINVAL;
+#endif
 
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
