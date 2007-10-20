@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.101 2007/10/10 20:42:21 ad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.102 2007/10/20 01:38:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.101 2007/10/10 20:42:21 ad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.102 2007/10/20 01:38:45 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,7 +351,8 @@ vnodemode(void)
 	}
 
  out:
-	free(e_vnodebase);
+	if (e_vnodebase)
+		free(e_vnodebase);
 }
 
 int
@@ -700,6 +701,10 @@ loadvnodes(int *avnodes)
 	size_t copysize;
 	char *vnodebase;
 
+	if (totalflag) {
+		KGET(V_NUMV, *avnodes);
+		return NULL;
+	}
 	if (memf != NULL) {
 		/*
 		 * do it by hand
