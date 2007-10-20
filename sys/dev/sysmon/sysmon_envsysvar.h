@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.20 2007/10/07 04:11:16 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.21 2007/10/20 00:12:35 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -76,6 +76,7 @@ typedef struct sme_event {
 	int			snum;		/* sensor number */
 	int			evsent;		/* event already sent */
 	int 			see_flags;	/* see above */
+	bool			refreshed;	/* data was refreshed */
 #define SME_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
 
