@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.4.2 2007/10/18 21:52:34 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.3 2007/10/21 19:12:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1037,9 +1037,7 @@ NENTRY(hypervisor_callback)
 	movq	%rsp, %rdi
 	addq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
-  	STI(%rsi,%rdi)
-	# Mmm well AST... one day
-	INTRFASTEXIT
+	jmp doreti_checkast;
 
 # Panic?
 NENTRY(failsafe_callback)
