@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.13 2007/10/19 11:59:59 ad Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.14 2007/10/21 17:03:37 degroote Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.13 2007/10/19 11:59:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.14 2007/10/21 17:03:37 degroote Exp $");
 
 #include "bpfilter.h"
 
@@ -1794,6 +1794,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	uint16_t dur;
 	uint32_t flags = 0;
 	int rate, error;
@@ -1802,6 +1803,16 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 	data = &sc->prioq.data[sc->prioq.cur];
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m0);
+		if (k == NULL) {
+			m_freem(m0);
+			return ENOBUFS;
+		}
+	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.25 2007/10/19 12:01:21 ad Exp $ */
+/*	$NetBSD: if_ural.c,v 1.26 2007/10/21 17:03:37 degroote Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.25 2007/10/19 12:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.26 2007/10/21 17:03:37 degroote Exp $");
 
 #include "bpfilter.h"
 
@@ -1205,6 +1205,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ural_tx_desc *desc;
 	struct ural_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	uint32_t flags = 0;
 	uint16_t dur;
 	usbd_status error;
@@ -1214,6 +1215,16 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = (struct ural_tx_desc *)data->buf;
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 2;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m0);
+		if (k == NULL) {
+			m_freem(m0);
+			return ENOBUFS;
+		}
+	}
 
 	data->m = m0;
 	data->ni = ni;
