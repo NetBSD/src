@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.72 2007/08/10 15:12:56 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.73 2007/10/21 08:23:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ int nfsrv_access(struct vnode *, int, kauth_cred_t, int, struct lwp *, int);
 
 /* nfs_socket.c */
 int nfs_connect(struct nfsmount *, struct nfsreq *, struct lwp *);
-int nfs_reconnect(struct nfsreq *, struct lwp *);
+int nfs_reconnect(struct nfsreq *);
 void nfs_disconnect(struct nfsmount *);
 void nfs_safedisconnect(struct nfsmount *);
 int nfs_send(struct socket *, struct mbuf *, struct mbuf *, struct nfsreq *,
