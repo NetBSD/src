@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.5 2007/10/18 02:07:20 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.6 2007/10/21 19:10:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.5 2007/10/18 02:07:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.6 2007/10/21 19:10:28 joerg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3861,7 +3861,7 @@ audio_mixer_capture(struct audio_softc *sc)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_mixer_state != NULL && sc->sc_nmixer_states != mi.index) {
-		free(sc->sc_mixer_state);
+		free(sc->sc_mixer_state, M_DEVBUF);
 		sc->sc_mixer_state = NULL;
 	}
 #endif
