@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.9 2007/10/21 14:28:05 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.10 2007/10/21 19:25:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.9 2007/10/21 14:28:05 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.10 2007/10/21 19:25:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -82,6 +82,15 @@ puffs_goto(struct puffs_cc *loanpcc)
 	loanpcc->pcc_flags |= PCC_BORROWED;
 
 	swapcontext(&loanpcc->pcc_uc_ret, &loanpcc->pcc_uc);
+}
+
+void
+puffs_cc_schedule(struct puffs_cc *pcc)
+{
+	struct puffs_usermount *pu = pcc->pcc_pu;
+
+	assert(pu->pu_state & PU_INLOOP);
+	TAILQ_INSERT_TAIL(&pu->pu_sched, pcc, entries);
 }
 
 struct puffs_usermount *
