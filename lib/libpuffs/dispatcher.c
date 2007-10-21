@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.15 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.16 2007/10/21 14:28:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.15 2007/10/11 19:41:14 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.16 2007/10/21 14:28:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -102,6 +102,8 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 		pcc = puffs_cc_create(pu);
 		pcc->pcc_preq = preq;
 	}
+
+	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
 
 	puffs_docc(pcc, ppr);
 	return 0;
