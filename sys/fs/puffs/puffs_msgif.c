@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.48 2007/10/19 14:38:45 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.49 2007/10/21 14:28:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.48 2007/10/19 14:38:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.49 2007/10/21 14:28:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -411,6 +411,10 @@ touser(struct puffs_mount *pmp, struct puffs_msgpark *park)
 		preq->preq_opclass |= PUFFSOPFLAG_FAF;
 	else
 		preq->preq_id = puffs_getmsgid(pmp);
+
+	/* fill in caller information */
+	preq->preq_pid = l->l_proc->p_pid;
+	preq->preq_lid = l->l_lid;
 
 	/*
 	 * To support PCATCH, yet another movie: check if there are signals

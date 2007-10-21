@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.23 2007/10/11 19:41:15 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.24 2007/10/21 14:28:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -143,6 +143,9 @@ struct puffs_cc {
 	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
 	void			*pcc_stack;
 
+	pid_t			pcc_pid;
+	lwpid_t			pcc_lid;
+
 	int			pcc_flags;
 	struct puffs_putreq	*pcc_ppr;
 
@@ -153,6 +156,7 @@ struct puffs_cc {
 #define PCC_REALCC	0x02
 #define PCC_DONE	0x04
 #define PCC_BORROWED	0x08
+#define PCC_HASCALLER	0x10
 
 #define pcc_callstat(a)	   (a->pcc_flags & PCC_CALL_MASK)
 #define pcc_callset(a, b)  (a->pcc_flags = (a->pcc_flags & ~PCC_CALL_MASK) | b)
@@ -223,6 +227,7 @@ void	puffs_framev_notify(struct puffs_fctrl_io *, int);
 
 struct puffs_cc 	*puffs_cc_create(struct puffs_usermount *);
 void			puffs_cc_destroy(struct puffs_cc *);
+void			puffs_cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
 void			puffs_goto(struct puffs_cc *);
 
 __END_DECLS
