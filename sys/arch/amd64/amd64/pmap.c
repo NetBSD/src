@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.2.4 2007/10/21 15:41:02 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.2.5 2007/10/21 21:46:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.4 2007/10/21 15:41:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.5 2007/10/21 21:46:02 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -763,7 +763,6 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 	}
 #else /* XEN */
 	/* Lock the given pmap */
-	/* No need to lock kernel pmap? */
 	mutex_enter(&pmap->pm_lock);
 	mutex_enter(&pmap_kernel()->pm_lock);
 #endif /* XEN */
@@ -778,41 +777,49 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 			pmap_apte_flush(ourpmap);
 	}
 #else /* XEN */
-	npde = (pd_entry_t) (xpmap_ptom(pmap->pm_pdirpa) | PG_u | PG_V);
+	npde = (pd_entry_t) (xpmap_ptom_masked(pmap->pm_pdirpa) | PG_u | PG_V);
 	if (!pmap_valid_entry(opde) ||
-	    (opde & PG_FRAME) != xpmap_ptom(pmap->pm_pdirpa)) {
+	    (opde & PG_FRAME) != (npde & PG_FRAME)) {
+		int s;
 		/*
 		 * XXX: Xen private mappings (slots 256-271)
 		 * won't be accepted as L3 entries
 		 * If pmap is current user pmap,
 		 * Xen won't allow us to clear his entries either
 		 */
-		if (pmap->pm_pdirpa == xen_current_user_pgd)
-			xen_set_user_pgd(xen_dummy_user_pgd);
 		if (pmap->pm_flags & PMF_USER_XPIN) {
+			s = splvm();
+			if (pmap->pm_pdirpa == xen_current_user_pgd) {
+				xen_set_user_pgd(xen_dummy_user_pgd);
+				xen_current_user_pgd = 0;
+				pmap->pm_flags |= PMF_USER_RELOAD;
+			}
 			xpq_queue_unpin_table(
 			    xpmap_ptom_masked(pmap->pm_pdirpa));
 			pmap->pm_flags &= ~PMF_USER_XPIN;
+			splx(s);
 		}
 		/* Set user PGD R/W, update and make R/O again */
 		HYPERVISOR_update_va_mapping((unsigned long)pmap->pm_pdir,
-			xpmap_ptom(pmap->pm_pdirpa) | PG_u | PG_RW | PG_V,
-			UVMF_INVLPG);
+		    xpmap_ptom(pmap->pm_pdirpa) | PG_u | PG_RW | PG_V,
+		    UVMF_INVLPG);
 		memset(&pmap->pm_pdir[256],
 			0, (271-256+1) * sizeof(pd_entry_t));
 		HYPERVISOR_update_va_mapping((unsigned long)pmap->pm_pdir,
-			xpmap_ptom(pmap->pm_pdirpa) | PG_u | PG_V,
-			UVMF_INVLPG);
+		    xpmap_ptom(pmap->pm_pdirpa) | PG_u | PG_V,
+		    UVMF_INVLPG);
 		/*
 		 * Hack: force validation of pgd as a l4 page early,
 		 * otherwise APDP mapping will end marking it as a l3
 		 * and fail subsequent validations
 		 */
+		s = splvm();
 		xpq_queue_pin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
 		pmap->pm_flags |= PMF_USER_XPIN;
 		xpmap_update(APDP_PDE, npde);
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(pmap_kernel());
+		splx(s);
 	}
 	/* Make recursive entry usable in user PGD */
 	xpmap_update(&pmap->pm_pdir[PDIR_SLOT_PTE], npde);
@@ -856,6 +863,8 @@ pmap_unmap_ptes(struct pmap *pmap)
 static void
 pmap_unmap_ptes(struct pmap *pmap)
 {
+	int s;
+	
 	if (pmap == pmap_kernel()) {
 		crit_exit();
 		return;
@@ -865,16 +874,21 @@ pmap_unmap_ptes(struct pmap *pmap)
 	xpmap_update(&pmap->pm_pdir[PDIR_SLOT_PTE],
 		pmap->pm_pdir[PDIR_SLOT_PTE] & ~PG_V);
  
-	/* Reload user PGD if we had to clear it */
-	if (pmap->pm_pdirpa == xen_current_user_pgd)
+	/* Reload user PGD if we had to clear it, and no other pmap was loaded*/
+	s = splvm();
+	if ((pmap->pm_flags & PMF_USER_RELOAD) &&  xen_current_user_pgd == 0) {
 		xen_set_user_pgd(pmap->pm_pdirpa);
+		pmap->pm_flags &= ~PMF_USER_RELOAD;
+		xen_current_user_pgd = pmap->pm_pdirpa;
+	}
+	splx(s);
  
 	/* We do not clear APDP, may save some TLB flush */
 	mutex_exit(&pmap_kernel()->pm_lock);
 	mutex_exit(&pmap->pm_lock);
 	crit_exit();
 }
-#endif
+#endif /* XEN */
 
 
 /*
@@ -2285,8 +2299,10 @@ pmap_destroy(struct pmap *pmap)
 		pmap_apte_flush(pmap_kernel());
 	}
 	if (pmap->pm_flags & PMF_USER_XPIN) {
+		int s = splvm();
 		xpq_queue_unpin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
 		pmap->pm_flags &= ~PMF_USER_XPIN;
+		splx(s);
 	}
 #endif
 
@@ -3427,8 +3443,7 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 #ifndef XEN
 			opte = pmap_pte_set(ptep, (opte & ~(PG_U | PG_M)));
 #else
-			xpmap_update(ptep,
-			    ptes[pl1_i(pve->pv_va)] & (opte & ~(PG_U | PG_M)));
+			xpmap_update(ptep, opte & ~(PG_U | PG_M));
 #endif
 
 			result |= (opte & clearbits);
@@ -3931,6 +3946,9 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 	unsigned long index, endindex;
 	int level;
 	pd_entry_t *pdep;
+#ifdef XEN
+	int s = splvm(); /* protect xpq_* */
+#endif
 
 	for (level = lvl; level > 1; level--) {
 		if (level == PTP_LEVELS)
@@ -3967,6 +3985,9 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 		tlbflush();
 #endif
 	}
+#ifdef XEN
+	splx(s);
+#endif
 }
 
 /*
