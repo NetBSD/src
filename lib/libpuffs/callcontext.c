@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.8 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.9 2007/10/21 14:28:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.8 2007/10/11 19:41:14 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.9 2007/10/21 14:28:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,6 +98,22 @@ puffs_cc_getspecific(struct puffs_cc *pcc)
 	return puffs_getspecific(pcc->pcc_pu);
 }
 
+int
+puffs_cc_getcaller(struct puffs_cc *pcc, pid_t *pid, lwpid_t *lid)
+{
+
+	if ((pcc->pcc_flags & PCC_HASCALLER) == 0) {
+		errno = ESRCH;
+		return -1;
+	}
+
+	if (pid)
+		*pid = pcc->pcc_pid;
+	if (lid)
+		*lid = pcc->pcc_lid;
+	return 0;
+}
+
 struct puffs_cc *
 puffs_cc_create(struct puffs_usermount *pu)
 {
@@ -146,6 +163,15 @@ puffs_cc_create(struct puffs_usermount *pu)
 	    1, (uintptr_t)pcc);
 
 	return pcc;
+}
+
+void
+puffs_cc_setcaller(struct puffs_cc *pcc, pid_t pid, lwpid_t lid)
+{
+
+	pcc->pcc_pid = pid;
+	pcc->pcc_lid = lid;
+	pcc->pcc_flags |= PCC_HASCALLER;
 }
 
 void
