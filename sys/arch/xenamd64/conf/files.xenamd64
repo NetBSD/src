@@ -1,4 +1,4 @@
-#	$NetBSD: files.xenamd64,v 1.1.2.1 2007/10/17 21:38:21 bouyer Exp $
+#	$NetBSD: files.xenamd64,v 1.1.2.2 2007/10/21 15:41:04 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -58,6 +58,7 @@ file	arch/amd64/amd64/syscall.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/xenamd64/amd64/xpmap.c
+file	arch/xen/x86/x86_xpmap.c
 file	arch/xen/x86/xen_intr.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S

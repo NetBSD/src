@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.1.2.1 2007/10/17 21:08:22 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.1.2.2 2007/10/21 15:41:04 bouyer Exp $	*/
 
 /*
  *
@@ -100,7 +100,7 @@ void
 lcr3(vaddr_t val)
 {
 	int s = splvm();
-	xpq_queue_pt_switch(xpmap_ptom(val) & PG_FRAME);
+	xpq_queue_pt_switch(xpmap_ptom_masked(val));
 	xpq_flush_queue();
 	splx(s);
 }
