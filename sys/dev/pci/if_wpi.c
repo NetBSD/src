@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.25 2007/10/19 12:00:49 ad Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.26 2007/10/21 16:47:27 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.25 2007/10/19 12:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.26 2007/10/21 16:47:27 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1778,11 +1778,9 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (IEEE80211_QOS_HAS_SEQ(wh)) {
-		hdrlen = sizeof (struct ieee80211_qosframe);
 		cap = &ic->ic_wme.wme_chanParams;
 		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
-	} else
-		hdrlen = sizeof (struct ieee80211_frame);
+	}
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m0);
@@ -1794,6 +1792,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
+
+	hdrlen = ieee80211_anyhdrsize(wh);
 
 	/* pickup a rate */
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
@@ -1877,7 +1877,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	tx->len = htole16(m0->m_pkthdr.len);
 
 	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, hdrlen, (void *)&tx->wh);
+	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
 	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
@@ -1932,8 +1932,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		(1 + data->map->dm_nsegs) << 24);
 	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 		ring->cur * sizeof (struct wpi_tx_cmd));
-	/*XXX The next line might be wrong. I don't use hdrlen*/
-	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_data));
+	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_data) + 
+						 ((hdrlen + 3) & ~3));
 
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
 		desc->segs[i].addr =
