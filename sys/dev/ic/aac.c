@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.36 2007/10/19 11:59:44 ad Exp $	*/
+/*	$NetBSD: aac.c,v 1.37 2007/10/21 12:59:33 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.36 2007/10/19 11:59:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.37 2007/10/21 12:59:33 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ aac_init(struct aac_softc *sc)
 		goto bail_out;
 	}
 	state++;
-	while (sc->sc_total_fibs < AAC_PREALLOCATE_FIBS) {
+	while (sc->sc_total_fibs < AAC_PREALLOCATE_FIBS(sc)) {
 		if (aac_alloc_commands(sc) != 0)
 			break;
 	}
