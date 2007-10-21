@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.16 2007/10/19 12:01:21 ad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.17 2007/10/21 17:03:37 degroote Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.16 2007/10/19 12:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.17 2007/10/21 17:03:37 degroote Exp $");
 
 #include "bpfilter.h"
 
@@ -1083,6 +1083,7 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct rum_tx_desc *desc;
 	struct rum_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	uint32_t flags = 0;
 	uint16_t dur;
 	usbd_status error;
@@ -1095,6 +1096,16 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	data->m = m0;
 	data->ni = ni;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m0);
+		if (k == NULL) {
+			m_freem(m0);
+			return ENOBUFS;
+		}
+	}
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
