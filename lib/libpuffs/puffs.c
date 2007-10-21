@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.66 2007/10/11 19:41:15 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.67 2007/10/21 19:25:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.66 2007/10/11 19:41:15 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.67 2007/10/21 19:25:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -416,6 +416,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_framectrl.fb_ios);
 	LIST_INIT(&pu->pu_ccnukelst);
+	TAILQ_INIT(&pu->pu_sched);
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -474,6 +475,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	struct puffs_putreq *ppr = NULL;
 	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_fctrl_io *fio;
+	struct puffs_cc *pcc;
 	struct kevent *curev, *newevs;
 	size_t nchanges;
 	int puffsfd, sverrno;
@@ -632,6 +634,14 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			}
 			if (what)
 				puffs_framev_notify(fio, what);
+		}
+
+		/*
+		 * Schedule continuations.
+		 */
+		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
+			TAILQ_REMOVE(&pu->pu_sched, pcc, entries);
+			puffs_goto(pcc);
 		}
 
 		/*

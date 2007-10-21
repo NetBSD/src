@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.24 2007/10/21 14:28:05 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.25 2007/10/21 19:25:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -111,6 +111,7 @@ struct puffs_usermount {
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 	LIST_HEAD(, puffs_cc)	pu_ccnukelst;
+	TAILQ_HEAD(, puffs_cc)	pu_sched;
 
 	struct puffs_node	*(*pu_cmap)(void *);
 
