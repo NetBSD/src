@@ -26,27 +26,12 @@
 #include <xen/xen.h>
 #include <machine/cpufunc.h>
 
-volatile shared_info_t *HYPERVISOR_shared_info;
-union start_info_union start_info_union;
-
 extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
-
-void xen_failsafe_handler(void);
 
 static vaddr_t xen_arch_pmap_bootstrap(vaddr_t);
 static void xen_bt_set_readonly (vaddr_t);
 static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int);
-static void xen_set_pgd(paddr_t);
-
-static void xpq_dump (void);
-
-void
-xen_failsafe_handler(void)
-{
-	panic("xen_failsafe_handler called!\n");
-}
-
 
 /* How many PDEs ? */
 #if L2_SLOT_KERNBASE > 0
@@ -268,10 +253,10 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xen_bt_set_readonly(new_pgd);
 	/* Pin the PGD */
 	printk("pin PDG\n");
-	xen_pgd_pin(new_pgd - KERNBASE);
+	xpq_queue_pin_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 	/* Switch to new tables */
 	printk("switch to PDG\n");
-	xen_set_pgd(new_pgd - KERNBASE);
+	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 	printk("bt_pgd[PDIR_SLOT_PTE] now entry 0x%lx\n",bt_pgd[PDIR_SLOT_PTE]);
 	printk("L4_BASE va 0x%lx\n", (long)L4_BASE);
 	printk("value 0x%lx\n", *L4_BASE);
@@ -281,7 +266,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	
 	printk("unpin old PDG\n");
 	/* Unpin old PGD */
-	xen_pgd_unpin(old_pgd - KERNBASE);
+	xpq_queue_unpin_table(xpmap_ptom_masked(old_pgd - KERNBASE));
 	/* Mark old tables RW */
 	page = old_pgd;
 	addr = (paddr_t) pde[pl2_pi(page)] & PG_FRAME;
@@ -304,48 +289,11 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 
 void
-xen_pgd_pin(paddr_t page)
-{
-	int ret;
-        struct mmuext_op op;
-        op.cmd = MMUEXT_PIN_L4_TABLE;
-        op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
-        ret = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF);
-	if (ret) {
-		printk("MMUEXT_PIN_L4_TABLE ret %d\n", ret);
-		panic("MMUEXT_PIN_L4_TABLE");
-	}
-}
-
-void
-xen_pgd_unpin(paddr_t page)
-{
-	int ret;
-        struct mmuext_op op;
-        op.cmd = MMUEXT_UNPIN_TABLE;
-        op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
-        ret = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF);
-	if (ret) {
-		printk("MMUEXT_UNPIN_TABLE ret %d\n", ret);
-		panic("MMUEXT_UNPIN_TABLE");
-	}
-}
-
-static void
-xen_set_pgd(paddr_t page)
-{
-        struct mmuext_op op;
-        op.cmd = MMUEXT_NEW_BASEPTR;
-        op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
-        if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xen_set_pgd: failed to install new page directory %lx",
-			page);
-}
-
-void
 xen_set_user_pgd(paddr_t page)
 {
 	struct mmuext_op op;
+
+	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
 	op.arg1.mfn = xpmap_phys_to_machine_mapping[page >> PAGE_SHIFT];
         if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
@@ -371,105 +319,4 @@ xen_bt_set_readonly (vaddr_t page)
 	entry |= PG_u | PG_V;
 
 	HYPERVISOR_update_va_mapping (page, entry, UVMF_INVLPG);
-}
-
-
-/*
- * Xen pmap helper functions
- */
-
-/*
- * MMU update ops queues, ported from NetBSD/xen (i386)
- */
-
-
-#ifndef XPQUEUE_SIZE
-#define XPQUEUE_SIZE 2048
-#endif
-
-static mmu_update_t xpq_queue[XPQUEUE_SIZE];
-static int xpq_idx = 0;
-
-void
-xpq_flush_queue()
-{
-        int ok;
-
-        if (xpq_idx != 0 &&
-            HYPERVISOR_mmu_update(xpq_queue, xpq_idx, &ok, DOMID_SELF) < 0) {
-		xpq_dump();
-                panic("xpq_flush_queue(): HYPERVISOR_mmu_update failed\n");
-	}
-
-        xpq_idx = 0;
-}
-
-static inline void
-xpq_increment_idx(void)
-{
-        xpq_idx++;
-        if (xpq_idx == XPQUEUE_SIZE)
-                xpq_flush_queue();
-}
-
-void
-xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
-{
-        xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
-        xpq_queue[xpq_idx].val = val;
-        xpq_increment_idx();
-}
-
-void
-xpq_queue_tlb_flush()
-{
-        struct mmuext_op op;
-        xpq_flush_queue();
-
-        op.cmd = MMUEXT_TLB_FLUSH_LOCAL;
-        if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-                panic("xpq_queue_tlb_flush(): local TLB flush failed");
-}
-
-void
-xpq_flush_cache()
-{
-        struct mmuext_op op;
-        int s = splvm();
-        xpq_flush_queue();
-
-        op.cmd = MMUEXT_FLUSH_CACHE;
-        if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-                panic("xpq_flush_cache(): cache flush failed");
-        splx(s);
-}
-
-void
-xpq_queue_invlpg(vaddr_t va)
-{
-        struct mmuext_op op;
-        xpq_flush_queue();
-
-        op.cmd = MMUEXT_INVLPG_LOCAL;
-        op.arg1.linear_addr = (va & PG_FRAME);
-        if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
-		printf("xpq_queue_invlpg(): unable to invalidate va %lx\n", va);
-                panic("xpq_queue_invlpg(): tlb invalidation failed");
-	}
-}
-
-static void
-xpq_dump(void)
-{
-	int i;
-
-	printf("<<< xpq queue dump >>>\n");
-
-	for (i = 0; i < xpq_idx; i++)
-		printf("%d: ptr %lx, val %lx (pa %lx ma %lx)\n", i, 
-			xpq_queue[i].ptr, xpq_queue[i].val,
-			xpmap_mtop(xpq_queue[i].val & PG_FRAME),
-			xpq_queue[i].val & PG_FRAME);
-
-	printf("<<< end of xpq queue dump >>>\n");
 }

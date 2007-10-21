@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.2.3 2007/10/20 20:58:36 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.2.4 2007/10/21 15:41:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.3 2007/10/20 20:58:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.2.4 2007/10/21 15:41:02 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -380,8 +380,6 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
 static kmutex_t pmaps_lock;
 static krwlock_t pmap_main_lock;
-
-#define COUNT(x)	/* nothing */
 
 TAILQ_HEAD(pv_pagelist, pv_page);
 typedef struct pv_pagelist pv_pagelist_t;
@@ -767,6 +765,7 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 	/* Lock the given pmap */
 	/* No need to lock kernel pmap? */
 	mutex_enter(&pmap->pm_lock);
+	mutex_enter(&pmap_kernel()->pm_lock);
 #endif /* XEN */
 
 	/* need to load a new alternate pt space into curpmap? */
@@ -791,7 +790,8 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 		if (pmap->pm_pdirpa == xen_current_user_pgd)
 			xen_set_user_pgd(xen_dummy_user_pgd);
 		if (pmap->pm_flags & PMF_USER_XPIN) {
-			xen_pgd_unpin(pmap->pm_pdirpa);
+			xpq_queue_unpin_table(
+			    xpmap_ptom_masked(pmap->pm_pdirpa));
 			pmap->pm_flags &= ~PMF_USER_XPIN;
 		}
 		/* Set user PGD R/W, update and make R/O again */
@@ -808,7 +808,7 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 		 * otherwise APDP mapping will end marking it as a l3
 		 * and fail subsequent validations
 		 */
-		xen_pgd_pin(pmap->pm_pdirpa);
+		xpq_queue_pin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
 		pmap->pm_flags |= PMF_USER_XPIN;
 		xpmap_update(APDP_PDE, npde);
 		if (pmap_valid_entry(opde))
@@ -845,7 +845,6 @@ pmap_unmap_ptes(struct pmap *pmap)
 		*APDP_PDE = 0;
 		pmap_apte_flush(ourpmap);
 #endif
-		COUNT(apdp_pde_unmap);
 		mutex_exit(&pmap->pm_lock);
 		mutex_exit(&ourpmap->pm_lock);
 	}
@@ -871,7 +870,7 @@ pmap_unmap_ptes(struct pmap *pmap)
 		xen_set_user_pgd(pmap->pm_pdirpa);
  
 	/* We do not clear APDP, may save some TLB flush */
-	COUNT(apdp_pde_unmap);
+	mutex_exit(&pmap_kernel()->pm_lock);
 	mutex_exit(&pmap->pm_lock);
 	crit_exit();
 }
@@ -906,7 +905,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	npte = pa | protection_codes[prot] | PG_V | pmap_pg_g;
 	opte = pmap_pte_set(pte, npte); /* zap! */
 #else
-	npte = xpmap_ptom(pa) | protection_codes[prot] | PG_V |
+	npte = xpmap_ptom_masked(pa) | protection_codes[prot] | PG_V |
 	    PG_u;
 	opte = xpmap_pte_set (pte, (pt_entry_t *) xpmap_ptetomach (pte),
 	    npte); /* zap! */
@@ -1298,7 +1297,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    xpmap_ptom(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xen_pgd_pin(xen_dummy_user_pgd);
+	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	idt_paddr = avail_start;			/* steal a page */
 	/*
@@ -2286,7 +2285,7 @@ pmap_destroy(struct pmap *pmap)
 		pmap_apte_flush(pmap_kernel());
 	}
 	if (pmap->pm_flags & PMF_USER_XPIN) {
-		xen_pgd_unpin(pmap->pm_pdirpa);
+		xpq_queue_unpin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
 		pmap->pm_flags &= ~PMF_USER_XPIN;
 	}
 #endif
@@ -2465,7 +2464,8 @@ pmap_activate(struct lwp *l)
 			tlbflush();
 			/* Pin before installing */
 			if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
-				xen_pgd_pin(pmap->pm_pdirpa);
+				xpq_queue_pin_table(
+				    xpmap_ptom_masked(pmap->pm_pdirpa));
 				pmap->pm_flags |= PMF_USER_XPIN;
 			}
 			xen_set_user_pgd(pmap->pm_pdirpa);
@@ -2521,7 +2521,7 @@ pmap_deactivate(struct lwp *l)
 		/* Install dummy PGD */
 		xen_set_user_pgd(xen_dummy_user_pgd);
 		/* Unpin the now inactive one */
-		xen_pgd_unpin(pmap->pm_pdirpa);
+		xpq_queue_unpin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
 		pmap->pm_flags &= ~PMF_USER_XPIN;
 		xen_current_user_pgd = 0;
 		splx(s);
