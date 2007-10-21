@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2007/07/18 22:38:59 pooka Exp $
+# $NetBSD: Makefile,v 1.7 2007/10/21 16:46:52 pooka Exp $
 
 USE_FORT?=	yes	# data driven bugs?
 
 LIB=		refuse
-LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs
+LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs		\
+		pthread	${.CURDIR}/../libpthread
 
 .ifdef DEBUG
 FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
