@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.4.1 2007/10/17 21:38:15 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.4.2 2007/10/21 19:12:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -247,6 +247,9 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
+
+	.globl doreti_checkast
+doreti_checkast:
 	movq	CPUVAR(CURLWP),%r14
 5:	CHECK_ASTPENDING(%r14)
 	je	3f
