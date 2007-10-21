@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.147 2006/11/24 00:53:47 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.148 2007/10/21 20:21:02 pavel Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -685,6 +685,18 @@ extract_file(distinfo *dist, int update, int verbose)
 	}
 
 	if (update && dist->set == SET_ETC) {
+		int oldsendmail;
+		oldsendmail = run_program(RUN_DISPLAY | RUN_CHROOT |
+					  RUN_ERROR_OK | RUN_PROGRESS,
+					  "/usr/sbin/postinstall -s /.sysinst -d / check mailerconf");
+		if (oldsendmail == 1) {
+			msg_display(MSG_oldsendmail);
+			process_menu(MENU_yesno, NULL);
+			if (yesno) {
+				run_program(RUN_DISPLAY | RUN_CHROOT,
+					    "/usr/sbin/postinstall -s /.sysinst -d / fix mailerconf");
+			}
+		}
 		run_program(RUN_DISPLAY | RUN_CHROOT,
 			"/usr/sbin/postinstall -s /.sysinst -d / fix");
 	}
