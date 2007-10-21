@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.2 2007/10/20 17:30:54 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.3 2007/10/21 15:41:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.2 2007/10/20 17:30:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.3 2007/10/21 15:41:01 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -379,8 +379,6 @@ cpu_startup(void)
 }
 
 #ifdef XEN
-static void xen_lldt(vaddr_t, int);
-
 /* used in assembly */
 void hypervisor_callback(void);
 void failsafe_callback(void);
@@ -404,20 +402,6 @@ x86_64_switch_context(struct pcb *new)
 	}
 }
 
-static void
-xen_lldt(vaddr_t ldt_addr, int entries)
-{
-        struct mmuext_op op;
-
-	xpmap_set_ro(ldt_addr);
-
-	op.cmd = MMUEXT_SET_LDT;
-	op.arg1.linear_addr = ldt_addr;
-	op.arg2.nr_ents = entries;
-
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xen_lldt(): HYPERVISOR_mmuext_op() failed");
-}
 #endif
 
 /*
@@ -455,7 +439,7 @@ x86_64_proc0_tss_ldt_init(void)
 	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 #else
-	xen_lldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
+	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(0);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_tss.tss_rsp0);

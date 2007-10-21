@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.11.2.1 2007/10/17 21:08:19 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.11.2.2 2007/10/21 15:41:03 bouyer Exp $	*/
 
 /*
  *
@@ -47,8 +47,8 @@
 #define	__PRINTK(x)
 #endif
 
-#ifndef __x86_64__
 void xen_set_ldt(vaddr_t, uint32_t);
+#ifndef __x86_64__
 void xen_update_descriptor(union descriptor *, union descriptor *);
 #endif
 #endif /* _XEN_XENFUNC_H_ */
