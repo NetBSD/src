@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.905 2007/10/22 10:35:15 nisimura Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.906 2007/10/22 14:59:39 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -6450,6 +6450,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042,
 	    "Yukon 88EC042",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_CO55,
+	    "Yukon 88ECO55",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
@@ -13560,4 +13564,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2792;
+const int pci_nproducts = 2793;
