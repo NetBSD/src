@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.66 2007/10/22 15:28:48 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.67 2007/10/22 15:31:46 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.66 2007/10/22 15:28:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.67 2007/10/22 15:31:46 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -456,9 +456,9 @@ fail:	iwi_detach(self, 0);
 }
 
 static int
-iwi_detach(struct device* self, int flags)
+iwi_detach(device_t self, int flags)
 {
-	struct iwi_softc *sc = (struct iwi_softc *)self;
+	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (ifp != NULL)
