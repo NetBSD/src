@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.904 2007/10/14 00:40:41 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.905 2007/10/22 10:35:15 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.905 2007/10/14 00:40:17 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.906 2007/10/22 10:33:03 nisimura Exp
  */
 
 /*
@@ -10861,11 +10861,11 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030,
-	    "9030 Modem 4 port",
+	    "9030 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
-	    "9030 Modem 4 port V92",
+	    "9050 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
