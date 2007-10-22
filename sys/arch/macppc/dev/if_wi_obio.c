@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.14 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.15 2007/10/22 19:29:13 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.14 2007/10/17 19:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.15 2007/10/22 19:29:13 macallan Exp $");
 
 #include "opt_inet.h"
 
@@ -96,13 +96,14 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(" irq %d:", ca->ca_intr[0]);
 	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
 
-	wisc->sc_iot = ca->ca_tag;
+	sc->sc_tag = wisc->sc_iot = ca->ca_tag;
 	bus_space_map(sc->sc_tag, 0x8000000, 0x20000, 0, &sc->sc_bsh);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x40, 4, &sc->sc_fcr2h);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x6a, 16, &sc->sc_gpioh);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x58, 16, &sc->sc_extint_gpioh);
 
-	if (bus_space_map(wisc->sc_iot, ca->ca_reg[0], ca->ca_reg[1], 0, &wisc->sc_ioh)) {
+	if (bus_space_map(wisc->sc_iot, ca->ca_baseaddr + ca->ca_reg[0],
+	    ca->ca_reg[1], 0, &wisc->sc_ioh)) {
 		printf(" can't map i/o space\n");
 		return;
 	}
