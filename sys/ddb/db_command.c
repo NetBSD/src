@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.109 2007/10/19 12:16:41 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.110 2007/10/22 00:36:28 martin Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.109 2007/10/19 12:16:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.110 2007/10/22 00:36:28 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -586,6 +586,7 @@ db_cmd_search(const char *name,const struct db_command *table,
 	int result;
 
 	result = CMD_NONE;
+	*cmdp = NULL;
 	for (cmd = table; cmd->name != 0; cmd++) {
 		const char *lp;
 		const char *rp;
@@ -949,14 +950,14 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
   
 	const struct db_cmd_tbl_en_head *list;
 	const struct db_cmd_tbl_en *list_ent;
-	const struct db_command *help;
+	const struct db_command *help = NULL;
 	int t, result;
   
 	t = db_read_token();
 	/* is there another command after the "help"? */
 	if (t == tIDENT){
 
-		switch(db_get_list_type(db_tok_string)){
+		switch(db_get_list_type(db_tok_string)) {
 
 		case DDB_BASE_CMD:
 			list=&db_base_cmd_list;
@@ -1048,6 +1049,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		
 	return;
 }
+
 /*ARGSUSED*/
 static void
 db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
