@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.905 2007/10/14 00:40:17 xtraeme Exp $
+$NetBSD: pcidevs,v 1.906 2007/10/22 10:33:03 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3117,8 +3117,8 @@ product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100 Ethernet
 product PLANEX FNW_3800_TX	0xab07	FNW-3800-TX 10/100 Ethernet
 
 /* PLX Technology products */
-product PLX 9030	0x9030	9030 Modem 4 port
-product PLX 9050	0x9030	9030 Modem 4 port V92
+product PLX 9030	0x9030	9030 I/O Accelrator
+product PLX 9050	0x5201	9050 I/O Accelrator
 product PLX 9054	0x9054	9054 I/O Accelerator
 product PLX 9060ES	0x906e	9060ES PCI bus controller
 product PLX 9656	0x9656	9656 I/O Accelerator
