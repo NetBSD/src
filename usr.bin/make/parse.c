@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.142 2007/10/22 15:36:13 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.142 2007/10/22 15:36:13 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.141 2007/10/13 18:28:35 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.142 2007/10/22 15:36:13 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1785,18 +1785,29 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	}
 	free(incdir);
 
-        if (fullname == NULL) {
+	if (fullname == NULL) {
 	    /*
     	     * Makefile wasn't found in same directory as included makefile.
 	     * Search for it first on the -I search path,
 	     * then on the .PATH search path, if not found in a -I directory.
-	     * XXX: Suffix specific?
+	     * If we have a suffix specific path we should use that.
 	     */
-	    fullname = Dir_FindFile(file, parseIncPath);
-	    if (fullname == NULL) {
-	        fullname = Dir_FindFile(file, dirSearchPath);
+	    char *suff;
+	    Lst	suffPath = NILLST;
+
+	    if ((suff = strrchr(file, '.'))) {
+		suffPath = Suff_GetPath(suff);
+		if (suffPath != NILLST) {
+		    fullname = Dir_FindFile(file, suffPath);
+		}
 	    }
-        }
+	    if (fullname == NULL) {
+		fullname = Dir_FindFile(file, parseIncPath);
+		if (fullname == NULL) {
+		    fullname = Dir_FindFile(file, dirSearchPath);
+		}
+	    }
+	}
     }
 
     /* Looking for a system file or file still not found */
