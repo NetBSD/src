@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.9 2007/10/19 19:28:57 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.10 2007/10/22 04:16:48 simonb Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.9 2007/10/19 19:28:57 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.10 2007/10/22 04:16:48 simonb Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -2393,7 +2393,6 @@ arena_salloc(const void *ptr)
 {
 	size_t ret;
 	arena_chunk_t *chunk;
-	arena_run_t *run;
 	arena_chunk_map_t *mapelm;
 	unsigned pageind;
 
@@ -2408,11 +2407,14 @@ arena_salloc(const void *ptr)
 	pageind = (unsigned)(((uintptr_t)ptr - (uintptr_t)chunk) >>
 	    pagesize_2pow);
 	mapelm = &chunk->map[pageind];
-	run = (arena_run_t *)((uintptr_t)chunk + (pageind << pagesize_2pow));
-	if (mapelm->pos != 0 || ptr != run) {
+	if (mapelm->pos != 0 || ptr != (char *)((uintptr_t)chunk) + (pageind <<
+	    pagesize_2pow)) {
+		arena_run_t *run;
 
 		pageind -= mapelm->pos;
 
+		run = (arena_run_t *)((uintptr_t)chunk + (pageind <<
+		    pagesize_2pow));
 		assert(run->magic == ARENA_RUN_MAGIC);
 		ret = run->bin->reg_size;
 	} else
@@ -2475,7 +2477,6 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 {
 	unsigned pageind;
 	arena_chunk_map_t *mapelm;
-	arena_run_t *run;
 	size_t size;
 
 	assert(arena != NULL);
@@ -2487,14 +2488,17 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 	pageind = (unsigned)(((uintptr_t)ptr - (uintptr_t)chunk) >>
 	    pagesize_2pow);
 	mapelm = &chunk->map[pageind];
-	run = (arena_run_t *)((uintptr_t)chunk + (pageind << pagesize_2pow));
-	if (mapelm->pos != 0 || ptr != run) {
+	if (mapelm->pos != 0 || ptr != (char *)((uintptr_t)chunk) + (pageind <<
+	    pagesize_2pow)) {
+		arena_run_t *run;
 		arena_bin_t *bin;
 
 		/* Small allocation. */
 
 		pageind -= mapelm->pos;
 
+		run = (arena_run_t *)((uintptr_t)chunk + (pageind <<
+		    pagesize_2pow));
 		assert(run->magic == ARENA_RUN_MAGIC);
 		bin = run->bin;
 		size = bin->reg_size;
