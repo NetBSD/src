@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.260 2007/10/17 19:57:31 garbled Exp $	*/
+/*	$NetBSD: locore.s,v 1.261 2007/10/22 01:43:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4207,8 +4207,6 @@ zshard:
 
 	.globl	return_from_trap, rft_kernel, rft_user
 	.globl	softtrap, slowtrap
-	.globl	syscall
-
 
 /*
  * Various return-from-trap routines (see return_from_trap).
