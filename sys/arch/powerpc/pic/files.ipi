@@ -1,0 +1,13 @@
+# 
+#	$NetBSD: files.ipi,v 1.2.4.2 2007/10/23 20:36:15 ad Exp $
+#
+# generic IPI abstraction
+
+file arch/powerpc/pic/ipi.c
+defflag opt_ipi.h IPI_DEBUG
+
+define ipi_openpic
+
+defflag opt_ipi.h IPI_OPENPIC:	ipi_openpic
+
+file arch/powerpc/pic/ipi_openpic.c	ipi_openpic	needs-flag
