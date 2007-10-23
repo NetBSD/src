@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_header.c,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_header.c,v 1.4 2007/10/23 14:58:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_header.c,v 1.3 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_header.c,v 1.4 2007/10/23 14:58:44 christos Exp $");
 #endif /* not __lint__ */
 
 #include <stdio.h>
@@ -218,7 +218,7 @@ decode_word(const char **ibuf, char **obuf, char *oend, const char *to_cs)
 		dstend = *obuf;
 		dstlen = oend - *obuf - 1;
 		cnt = mime_iconv(cd, &src, &srclen, &dstend, &dstlen);
-		
+
 		(void)iconv_close(cd);
 		if (cnt == (size_t)-1)
 			return -1;
@@ -233,17 +233,24 @@ decode_word(const char **ibuf, char **obuf, char *oend, const char *to_cs)
 
 /*
  * Folding White Space.  See RFC 2822.
+ *
+ * Note: RFC 2822 specifies that '\n' and '\r' only occur as CRLF
+ * pairs (i.e., "\r\n") and never separately.  However, by the time
+ * mail(1) sees the messages, all CRLF pairs have been converted to
+ * '\n' characters.
+ *
+ * XXX - pull is_FWS() and skip_FWS() up to def.h?
  */
 static inline int
 is_FWS(int c)
 {
-	return isblank(c) || c == '\n';
+	return c == ' ' || c == '\t' || c == '\n';
 }
 
 static inline const char *
 skip_FWS(const char *p)
 {
-	while (is_FWS((unsigned char)*p))
+	while (is_FWS(*p))
 		p++;
 	return p;
 }
@@ -304,7 +311,7 @@ mime_decode_usfield(char *outbuf, size_t outsize, const char *hstring)
 		char *q1;
 		if (is_FWS(lastc) && p[0] == '=' && p[1] == '?' &&
 		    decode_word((p1 = p, &p1), (q1 = q, &q1), qend, charset) == 0 &&
-		    (*p1 == '\0' || is_FWS((unsigned char)*p1))) {
+		    (*p1 == '\0' || is_FWS(*p1))) {
 			p0 = p1;  /* pointer to first character after encoded word */
 			q = q1;
 			p = skip_FWS(p1);
@@ -340,7 +347,7 @@ decode_comment(char **obuf, char *oend, const char **ibuf, const char *iend, con
 	q = *obuf;
 	pend = iend;
 	qend = oend;
-	lastc = (unsigned char)' ';
+	lastc = ' ';
 	p0 = NULL;
 	while (p < pend && q < qend) {
 		const char *p1;
@@ -348,7 +355,7 @@ decode_comment(char **obuf, char *oend, const char **ibuf, const char *iend, con
 
 		if (is_FWS(lastc) && p[0] == '=' && p[1] == '?' &&
 		    decode_word((p1 = p, &p1), (q1 = q, &q1), qend, charset) == 0 &&
-		    (*p1 == ')' || is_FWS((unsigned char)*p1))) {
+		    (*p1 == ')' || is_FWS(*p1))) {
 			lastc = (unsigned char)*p1;
 			p0 = p1;
 			q = q1;
@@ -478,13 +485,13 @@ is_specials(int c)
 		0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,
 		0, 0, 1, 0,  0, 0, 0, 0,  1, 1, 0, 0,  1, 0, 1, 0,
 		0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 1,  1, 0, 1, 0,
-		
+
 		1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,
 		0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 1,  1, 1, 0, 0,
 		0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,
 		0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,
 	};
-	return specialtab[(c & 0x7f)];
+	return !(c & ~0x7f) ? specialtab[c] : 0;
 }
 
 /*
@@ -548,7 +555,7 @@ mime_decode_sfield(char *linebuf, size_t bufsize, const char *hstring)
 				p++;	/* skip the '\\' */
 			}
 			goto copy_char;
-			    
+
 		case '=':
 			/*
 			 * At this level encoded words can appear via
@@ -558,7 +565,7 @@ mime_decode_sfield(char *linebuf, size_t bufsize, const char *hstring)
 			 */
 			if ((lastc == ',' || is_FWS(lastc)) && p[1] == '?' &&
 			    decode_word((p1 = p, &p1), (q1 = q, &q1), qend, charset) == 0 &&
-			    (*p1 == '\0' || *p1 == ',' || is_FWS((unsigned char)*p1))) {
+			    (*p1 == '\0' || *p1 == ',' || is_FWS(*p1))) {
 				lastc = (unsigned char)*p1;
 				p0 = p1;
 				q = q1;

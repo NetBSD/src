@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.34 2007/06/05 17:50:22 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.35 2007/10/23 14:58:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.34 2007/06/05 17:50:22 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.35 2007/10/23 14:58:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,11 +222,11 @@ set_smopts(struct message *mp)
 		 *       "undisclosed-recipients:;" ?
 		 */
 		for (p = q = reply_as_recipient; *p; p = q) {
-			while (*q != '\0' && *q != ',' && !isblank((unsigned char)*q))
+			while (*q != '\0' && *q != ',' && !is_WSP(*q))
 				q++;
 			if (p + len == q && strncasecmp(cp, p, len) == 0)
 				return np;
-			while (*q == ',' || isblank((unsigned char)*q))
+			while (*q == ',' || is_WSP(*q))
 				q++;
 		}
 		np = extract(__UNCONST("-f"), GSMOPTS);
@@ -798,7 +798,7 @@ pop_cond(void)
 	c_cond = csp->c_cond;
 	cond_stack = csp->c_next;
 	free(csp);
-	return c_cond;	
+	return c_cond;
 }
 
 /*

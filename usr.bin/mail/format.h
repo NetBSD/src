@@ -1,4 +1,4 @@
-/*	$NetBSD: format.h,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: format.h,v 1.3 2007/10/23 14:58:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 char *smsgprintf(const char *, struct message *);
 void fmsgprintf(FILE *, const char *, struct message *);
 
-const char *dateof(struct tm *, struct message *, int);
+void dateof(struct tm *, struct message *, int);
 
 #define DEFAULT_PROMPT		"& "
 #define DEFAULT_HEADER_FORMAT	"%??%P%Q%?& ?%3i %-21.20f %a %b %e %R %3K/%-5O \"%q\""
