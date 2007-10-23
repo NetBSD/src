@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.42 2007/10/20 00:12:35 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.43 2007/10/23 21:36:03 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.42 2007/10/20 00:12:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.43 2007/10/23 21:36:03 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -467,7 +467,7 @@ sme_events_check(void *arg)
 	 * Now that the events list was checked, reset the refresh value.
 	 */
 	LIST_FOREACH(see, &sme_events_list, see_list)
-		see->refreshed = false;
+		see->see_flags &= ~SME_EVENT_REFRESHED;
 
 	if (!sysmon_low_power)
 		callout_schedule(&seeco, SME_EVTIMO);
@@ -515,11 +515,11 @@ sme_events_worker(struct work *wk, void *arg)
 	 * use its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-		if (!see->refreshed) {
+		if ((see->see_flags & SME_EVENT_REFRESHED) == 0) {
 			error = (*sme->sme_gtredata)(sme, edata);
 			if (error)
 				goto out;
-			see->refreshed = true;
+			see->see_flags |= SME_EVENT_REFRESHED;
 		}
 	}
 
