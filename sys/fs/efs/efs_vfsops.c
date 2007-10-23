@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.4.2.4 2007/10/09 15:22:14 ad Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.4.2.5 2007/10/23 20:17:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4.2.4 2007/10/09 15:22:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4.2.5 2007/10/23 20:17:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,9 +369,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		pool_put(&efs_inode_pool, eip);
 	}
 
-	mutex_enter(&vp->v_interlock);
-	vp->v_iflag |= VI_LOCKSWORK;
-	mutex_exit(&vp->v_interlock);
+	vp->v_vflag |= VV_LOCKSWORK;
 	eip->ei_mode = 0;
 	eip->ei_lockf = NULL;
 	eip->ei_number = ino;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.4.2.2 2007/06/08 14:17:42 ad Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.4.2.3 2007/10/23 20:17:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4.2.2 2007/06/08 14:17:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4.2.3 2007/10/23 20:17:19 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -126,18 +126,20 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		 * Since we have nothing to add, we attach the DLC
 		 * structure directly to our PCB pointer.
 		 */
+		err = soreserve(up, rfcomm_sendspace, rfcomm_recvspace);
+		if (err)
+			return err;
+
 		err = rfcomm_attach((struct rfcomm_dlc **)&up->so_pcb,
 					&rfcomm_proto, up);
 		if (err)
 			return err;
 
-		err = soreserve(up, rfcomm_sendspace, rfcomm_recvspace);
-		if (err)
-			return err;
-
 		err = rfcomm_rcvd(up->so_pcb, sbspace(&up->so_rcv));
-		if (err)
+		if (err) {
+			rfcomm_detach((struct rfcomm_dlc **)&up->so_pcb);
 			return err;
+		}
 
 		return 0;
 	}

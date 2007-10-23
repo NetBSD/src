@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.4.4.3 2007/08/20 21:28:33 ad Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.4.4.4 2007/10/23 20:17:32 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.4.4.3 2007/08/20 21:28:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.4.4.4 2007/10/23 20:17:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -164,7 +164,7 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	 */
 
 	if ((!fixed || newva == oldva) && newmap == oldmap &&
-	    (align == 0 || (oldva & ~(align - 1)) == 0)) {
+	    (align == 0 || (oldva & (align - 1)) == 0)) {
 		vaddr_t va;
 
 		if (newsize == oldsize) {

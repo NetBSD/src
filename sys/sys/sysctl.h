@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.168.4.2 2007/06/08 14:18:14 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.168.4.3 2007/10/23 20:17:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -806,6 +806,7 @@ struct kinfo_file {
 #define	HW_USERMEM64	14		/* quad: non-kernel memory (bytes) */
 #define	HW_IOSTATNAMES	15		/* string: iostat names */
 #define	HW_MAXID	15		/* number of valid hw ids */
+#define	HW_NCPUONLINE	16		/* number CPUs online */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -823,6 +824,7 @@ struct kinfo_file {
 	{ "cnmagic", CTLTYPE_STRING }, \
 	{ "physmem64", CTLTYPE_QUAD }, \
 	{ "usermem64", CTLTYPE_QUAD }, \
+	{ "ncpuonline", CTLTYPE_INT }, \
 }
 
 /*

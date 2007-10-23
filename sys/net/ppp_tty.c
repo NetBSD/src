@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.47.2.1 2007/04/05 21:57:51 ad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.47.2.2 2007/10/23 20:17:18 ad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.47.2.1 2007/04/05 21:57:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.47.2.2 2007/10/23 20:17:18 ad Exp $");
 
 #include "ppp.h"
 
@@ -330,27 +330,27 @@ pppread(struct tty *tp, struct uio *uio, int flag)
      * Loop waiting for input, checking that nothing disasterous
      * happens in the meantime.
      */
-    mutex_enter(&tp->t_lock);
+    mutex_spin_enter(&tty_lock);
     for (;;) {
 	if (tp != (struct tty *) sc->sc_devp ||
 	    tp->t_linesw != &ppp_disc) {
-	    mutex_exit(&tp->t_lock);
+	    mutex_spin_exit(&tty_lock);
 	    return 0;
 	}
 	if (sc->sc_inq.ifq_head != NULL)
 	    break;
 	if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0
 	    && (tp->t_state & TS_ISOPEN)) {
-	    mutex_exit(&tp->t_lock);
+	    mutex_spin_exit(&tty_lock);
 	    return 0;		/* end of file */
 	}
 	if (tp->t_state & TS_ASYNC || flag & IO_NDELAY) {
-	    mutex_exit(&tp->t_lock);
+	    mutex_spin_exit(&tty_lock);
 	    return (EWOULDBLOCK);
 	}
 	error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 	if (error) {
-	    mutex_exit(&tp->t_lock);
+	    mutex_spin_exit(&tty_lock);
 	    return error;
 	}
     }
@@ -360,7 +360,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 
     /* Get the packet from the input queue */
     IF_DEQUEUE(&sc->sc_inq, m0);
-    mutex_exit(&tp->t_lock);
+    mutex_spin_exit(&tty_lock);
 
     for (m = m0; m && uio->uio_resid; m = m->m_next)
 	if ((error = uiomove(mtod(m, u_char *), m->m_len, uio)) != 0)

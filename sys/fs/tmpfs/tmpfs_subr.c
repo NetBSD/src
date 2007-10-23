@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.10 2007/10/09 15:22:17 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.11 2007/10/23 20:17:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.10 2007/10/09 15:22:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.11 2007/10/23 20:17:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -400,11 +400,9 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 
 			/* XXX spec_vnodeops has no locking, so we have to
 			 * do it explicitly. */
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			mutex_enter(&vp->v_interlock);
-			vp->v_iflag &= ~VI_LOCKSWORK;
-			mutex_exit(&vp->v_interlock);
 			vgone(vp);
 
 			/* Reinitialize aliased node. */

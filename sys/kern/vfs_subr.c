@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.20 2007/10/09 13:44:33 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.21 2007/10/23 20:17:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.20 2007/10/09 13:44:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.21 2007/10/23 20:17:14 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1325,8 +1325,9 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = NULL;
 	VN_KNOTE(vp, NOTE_REVOKE);
-	vp->v_iflag &= ~(VI_XLOCK|VI_LOCKSWORK);
+	vp->v_iflag &= ~VI_XLOCK;
 	vp->v_iflag |= VI_CLEAN;
+	vp->v_vflag &= ~VV_LOCKSWORK;
 	cv_broadcast(&vp->v_cv);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);

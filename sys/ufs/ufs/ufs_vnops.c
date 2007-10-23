@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.152.2.8 2007/09/16 19:02:50 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.152.2.9 2007/10/23 20:17:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.8 2007/09/16 19:02:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.9 2007/10/23 20:17:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2070,11 +2070,9 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			/* XXX spec_vnodeops has no locking, do it explicitly */
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			mutex_enter(&vp->v_interlock);
-			vp->v_iflag &= ~VI_LOCKSWORK;
-			mutex_exit(&vp->v_interlock);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*

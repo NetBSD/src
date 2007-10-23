@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.196.2.4 2007/10/11 11:08:17 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.196.2.5 2007/10/23 20:17:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -92,6 +92,7 @@ extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
+extern int ncpuonline;		/* number of CPUs online */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
@@ -491,7 +492,7 @@ do {						\
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
 #endif
 
-#if defined(MULTIPROCESSOR) && defined(DEBUG)
+#if defined(DEBUG)
 #define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
 #define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
 void _kernel_lock_assert_locked(void);

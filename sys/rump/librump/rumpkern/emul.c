@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.10.2.3 2007/10/09 13:45:03 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.10.2.4 2007/10/23 20:17:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,8 +42,8 @@
 #include <sys/queue.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_map.h>

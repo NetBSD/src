@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.8.2.2 2007/05/27 14:35:11 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.8.2.3 2007/10/23 20:17:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.2.2 2007/05/27 14:35:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.2.3 2007/10/23 20:17:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.8.2.2 2007/05/27 14:35:11 ad E
 #include <compat/linux32/common/linux32_exec.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>

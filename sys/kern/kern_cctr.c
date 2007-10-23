@@ -1,4 +1,4 @@
-/* $NetBSD: kern_cctr.c,v 1.1.8.2 2007/08/20 22:07:05 ad Exp $ */
+/* $NetBSD: kern_cctr.c,v 1.1.8.3 2007/10/23 20:17:09 ad Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.8.2 2007/08/20 22:07:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.8.3 2007/10/23 20:17:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.8.2 2007/08/20 22:07:05 ad Exp $")
 #include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/power.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/cpu_counter.h>
 
 /* XXX make cc_timecounter.tc_frequency settable by sysctl() */

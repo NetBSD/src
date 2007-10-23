@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.12.2.3 2007/10/09 13:44:49 ad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.12.2.4 2007/10/23 20:17:19 ad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/syslog.h>
 #include <sys/acct.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/pfil.h>

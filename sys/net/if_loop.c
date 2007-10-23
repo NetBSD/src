@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.64.2.1 2007/10/09 13:44:41 ad Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.64.2.2 2007/10/23 20:17:17 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64.2.1 2007/10/09 13:44:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64.2.2 2007/10/23 20:17:17 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64.2.1 2007/10/09 13:44:41 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

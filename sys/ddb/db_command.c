@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.95.4.4 2007/10/17 23:23:42 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.95.4.5 2007/10/23 20:17:05 ad Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.95.4.4 2007/10/17 23:23:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.95.4.5 2007/10/23 20:17:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.95.4.4 2007/10/17 23:23:42 ad Exp $
 #include <sys/vnode.h>
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
+#include <sys/cpu.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -92,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.95.4.4 2007/10/17 23:23:42 ad Exp $
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#endif
-#ifdef MULTIPROCESSOR
-#include <machine/cpu.h>
 #endif
 
 #include <ddb/db_lex.h>

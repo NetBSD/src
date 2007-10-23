@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.13 2007/08/28 15:10:13 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.14 2007/10/23 20:17:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.13 2007/08/28 15:10:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.14 2007/10/23 20:17:32 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.13 2007/08/28 15:10:13 yamt Exp
 #include <sys/swap.h>
 #include <sys/kauth.h>
 #include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <uvm/uvm.h>
 
@@ -200,6 +201,10 @@ static struct swap_priority swap_priority;
 /* locks */
 static krwlock_t swap_syscall_lock;
 
+/* workqueue and use counter for swap to regular files */
+static int sw_reg_count = 0;
+static struct workqueue *sw_reg_workqueue;
+
 /*
  * prototypes
  */
@@ -216,7 +221,8 @@ static int swap_off(struct lwp *, struct swapdev *);
 static void uvm_swap_stats_locked(int, struct swapent *, int, register_t *);
 
 static void sw_reg_strategy(struct swapdev *, struct buf *, int);
-static void sw_reg_iodone(struct buf *);
+static void sw_reg_biodone(struct buf *);
+static void sw_reg_iodone(struct work *wk, void *dummy);
 static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
@@ -937,6 +943,18 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	result = vmem_alloc(swapmap, npages, VM_BESTFIT | VM_SLEEP);
 	if (result == 0)
 		panic("swapdrum_add");
+	/*
+	 * If this is the first regular swap create the workqueue.
+	 * => Protected by swap_syscall_lock.
+	 */
+	if (vp->v_type != VBLK) {
+		if (sw_reg_count++ == 0) {
+			KASSERT(sw_reg_workqueue == NULL);
+			if (workqueue_create(&sw_reg_workqueue, "swapiod",
+			    sw_reg_iodone, NULL, PRIBIO, IPL_BIO, 0) != 0)
+				panic("swap_add: workqueue_create failed");
+		}
+	}
 
 	sdp->swd_drumoffset = (int)result;
 	sdp->swd_drumsize = npages;
@@ -1005,6 +1023,19 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 		mutex_exit(&uvm_swap_data_lock);
 
 		return error;
+	}
+
+	/*
+	 * If this is the last regular swap destroy the workqueue.
+	 * => Protected by swap_syscall_lock.
+	 */
+	if (sdp->swd_vp->v_type != VBLK) {
+		KASSERT(sw_reg_count > 0);
+		KASSERT(sw_reg_workqueue != NULL);
+		if (--sw_reg_count == 0) {
+			workqueue_destroy(sw_reg_workqueue);
+			sw_reg_workqueue = NULL;
+		}
 	}
 
 	/*
@@ -1269,7 +1300,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_lblkno   = 0;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
-		nbp->vb_buf.b_iodone   = sw_reg_iodone;
+		nbp->vb_buf.b_iodone   = sw_reg_biodone;
 		nbp->vb_buf.b_vp       = vp;
 		nbp->vb_buf.b_objlock  = &vp->v_interlock;
 		if (vp->v_type == VBLK) {
@@ -1354,18 +1385,28 @@ sw_reg_start(struct swapdev *sdp)
 }
 
 /*
+ * sw_reg_biodone: one of our i/o's has completed
+ */
+static void
+sw_reg_biodone(struct buf *bp)
+{
+	workqueue_enqueue(sw_reg_workqueue, &bp->b_work, NULL);
+}
+
+/*
  * sw_reg_iodone: one of our i/o's has completed and needs post-i/o cleanup
  *
  * => note that we can recover the vndbuf struct by casting the buf ptr
  */
 static void
-sw_reg_iodone(struct buf *bp)
+sw_reg_iodone(struct work *wk, void *dummy)
 {
-	struct vndbuf *vbp = (struct vndbuf *) bp;
+	struct vndbuf *vbp = (void *)wk;
 	struct vndxfer *vnx = vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
 	int s, resid, error;
+	KASSERT(&vbp->vb_buf.b_work == wk);
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
@@ -1403,7 +1444,7 @@ sw_reg_iodone(struct buf *bp)
 		/* pass error upward */
 		error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-			bp->b_error = error;
+			pbp->b_error = error;
 			biodone(pbp);
 			pool_put(&vndxfer_pool, vnx);
 		}

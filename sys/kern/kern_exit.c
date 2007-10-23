@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.13 2007/10/19 13:08:08 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.14 2007/10/23 20:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.13 2007/10/19 13:08:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.14 2007/10/23 20:17:09 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.13 2007/10/19 13:08:08 ad Exp 
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.19 2007/10/18 15:47:33 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.20 2007/10/23 20:17:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.19 2007/10/18 15:47:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.20 2007/10/23 20:17:12 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -441,8 +441,9 @@ mi_switch(lwp_t *l)
 	}
 
 	/*
-	 * Let sched_nextlwp() select the LWP to run the CPU next. 
+	 * Let sched_nextlwp() select the LWP to run the CPU next.
 	 * If no LWP is runnable, switch to the idle LWP.
+	 * Note that spc_lwplock might not necessary be held.
 	 */
 	if (newl == NULL) {
 		newl = sched_nextlwp();

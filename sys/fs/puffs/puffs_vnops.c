@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.13 2007/10/12 17:03:19 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.14 2007/10/23 20:17:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.13 2007/10/12 17:03:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.14 2007/10/23 20:17:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -494,7 +494,7 @@ puffs_lookup(void *v)
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
 
-	error = puffs_msg_vn(pmp, park_lookup, 0, PUFFS_VN_LOOKUP, dvp, NULL);
+	error = puffs_msg_vn(pmp, park_lookup, PUFFS_VN_LOOKUP, 0, dvp, NULL);
 	DPRINTF(("puffs_lookup: return of the userspace, part %d\n", error));
 
 	/*
@@ -2020,8 +2020,6 @@ puffs_advlock(void *v)
 /*
  * This maps itself to PUFFS_VN_READ/WRITE for data transfer.
  */
-
-/* XXX: if this is called from interrupt context, we lose */
 int
 puffs_strategy(void *v)
 {

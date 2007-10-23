@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.13 2007/10/09 13:45:14 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.14 2007/10/23 20:17:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -181,6 +181,7 @@ typedef struct vnode vnode_t;
 #define	VV_ISTTY	0x00000004	/* vnode represents a tty */
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
 #define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
+#define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
 
 /* XXXAD ALIASED should be covered by spec lock? */
 
@@ -195,7 +196,6 @@ typedef struct vnode vnode_t;
 #define	VI_ALIASED	0x00002000	/* vnode has an alias */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
-#define	VI_LOCKSWORK	0x00010000	/* FS supports locking discipline */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
 #define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
@@ -206,9 +206,9 @@ typedef struct vnode vnode_t;
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
 
 #define	VNODE_FLAGBITS \
-    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\11TEXT\12EXECMAP\13WRMAP" \
-    "\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER\21LOCKSWORK" \
-    "\22LAYER\23MAPPED\24CLEAN\31DIROP" 
+    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
+    "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
+    "\22LAYER\23MAPPED\24CLEAN\25XWANT\26BWAIT\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
