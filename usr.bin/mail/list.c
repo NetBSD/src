@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.20 2007/01/02 03:09:13 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.21 2007/10/23 14:58:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.20 2007/01/02 03:09:13 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.21 2007/10/23 14:58:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,8 +102,7 @@ getrawlist(const char line[], char **argv, int argc)
 	argn = 0;
 	cp = line;
 	for (;;) {
-		for (; *cp == ' ' || *cp == '\t'; cp++)
-			continue;
+		cp = skip_WSP(cp);
 		if (*cp == '\0')
 			break;
 		if (argn >= argc - 1) {
@@ -170,7 +169,7 @@ getrawlist(const char line[], char **argv, int argc)
 					*cp2++ = c;
 			} else if (c == '"' || c == '\'')
 				quotec = c;
-			else if (c == ' ' || c == '\t')
+			else if (is_WSP(c))
 				break;
 			else
 				*cp2++ = c;
@@ -270,7 +269,7 @@ get_colmod(int colmod, char *cp)
 	if ((cp[0] == '\0') ||
 	    (cp[0] == '!' && cp[1] == '\0'))
 		colmod |= lastcolmod;
-	
+
 	for (/*EMPTY*/; *cp; cp++) {
 		int colresult;
 		if ((colresult = evalcol(*cp)) == 0) {
@@ -335,15 +334,14 @@ scan(char **sp)
 	/*
 	 * strip away leading white space.
 	 */
-	cp = skip_blank(cp);
-	c = *cp++;
+	cp = skip_WSP(cp);
 
 	/*
 	 * If no characters remain, we are at end of line,
 	 * so report that.
 	 */
-	if (c == '\0') {
-		*sp = --cp;
+	if (*cp == '\0') {
+		*sp = cp;
 		return TEOL;
 	}
 
@@ -352,12 +350,13 @@ scan(char **sp)
 	 * the number and convert it on the fly.
 	 * Return TNUMBER when done.
 	 */
+	c = (unsigned char)*cp++;
 	if (isdigit(c)) {
 		lexnumber = 0;
 		while (isdigit(c)) {
 			lexnumber = lexnumber * 10 + c - '0';
 			*cp2++ = c;
-			c = *cp++;
+			c = (unsigned char)*cp++;
 		}
 		*cp2 = '\0';
 		*sp = --cp;
@@ -545,7 +544,7 @@ get_cmpfn(void **pattern, char *str)
 
 	if ((val = value(ENAME_REGEX_SEARCH)) != NULL) {
 		cflags = REG_NOSUB;
-		val = skip_blank(val);
+		val = skip_WSP(val);
 		if (*val) {
 			if (is_substr(val, "icase"))
 				cflags |= REG_ICASE;
@@ -879,7 +878,7 @@ metamess(int meta, int f)
 		return -1;
 
 	case '.':
-		/* 
+		/*
 		 * Current message.
 		 */
 		if (dot == NULL) {
@@ -967,7 +966,7 @@ markall_core(int *markarray, char **bufp, int f, int level)
 		case TDOT:
 		case TNUMBER:
 			break;
-			
+
 		case TAND:
 		case TOR:
 		case TXOR:
@@ -1070,7 +1069,7 @@ markall_core(int *markarray, char **bufp, int f, int level)
 			if (lexstring[0] == ':') { /* colon modifier! */
 				colmod = get_colmod(colmod, lexstring + 1);
 				if (colmod == -1)
-					return -1;				 
+					return -1;
 				continue;
 			}
 			got_one = 1;
@@ -1181,7 +1180,7 @@ markall_core(int *markarray, char **bufp, int f, int level)
 
 	if (got_bin)
 		return syntax_error("missing right operand");
-		
+
 	if (colmod != 0) {
 		/*
 		 * If we have colon-modifiers but no messages
@@ -1218,8 +1217,8 @@ markall(char buf[], int f)
 	for (i = 1; i <= msgCount; i++)
 		if ((mp = get_message(i)) != NULL)
 			mp->m_flag &= ~MMARK;
-	
-	buf = skip_blank(buf);
+
+	buf = skip_WSP(buf);
 	if (*buf == '\0')
 		return 0;
 
@@ -1227,7 +1226,7 @@ markall(char buf[], int f)
 	markarray = csalloc((size_t)msgCount, sizeof(*markarray));
 	if (markall_core(markarray, &buf, f, 0) == -1)
 		return -1;
-		    
+
 	/*
 	 * Transfer the markarray values to the messages.
 	 */

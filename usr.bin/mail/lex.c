@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.33 2007/01/03 00:39:16 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.34 2007/10/23 14:58:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.33 2007/01/03 00:39:16 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.34 2007/10/23 14:58:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ setup_piping(char *cmdline, int c_pipe)
 			if (*cp == '>')
 				cp++;
 
-			cp = skip_blank(cp);
+			cp = skip_WSP(cp);
 			if ((fout = Fopen(cp, mode)) == NULL) {
 				warn("Fopen: %s", cp);
 				return -1;
@@ -492,7 +492,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 	 * lexical conventions.
 	 */
 
-	cp = skip_blank(linebuf);
+	cp = skip_space(linebuf);
 	if (*cp == '!') {
 		if (sourcing) {
 			(void)printf("Can't \"!\" while sourcing\n");
@@ -605,8 +605,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 		 * Just the straight string, with
 		 * leading blanks removed.
 		 */
-		while (isspace((unsigned char)*cp))
-			cp++;
+		cp = skip_space(cp);
 		e = (*com->c_func)(cp);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.28 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.29 2007/10/23 14:58:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.28 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.29 2007/10/23 14:58:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	FILE *ibuf;
 	char line[LINESIZE];
 	int isheadflag, infld, ignoring, dostat, firstline;
-	char *cp, *cp2;
+	char *cp;
 	int c;	/* XXX - this variable is horribly abused */
 	size_t length;
 	size_t prefixlen;
@@ -137,7 +137,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	if (prefix != NULL) {
 		const char *dp, *dp2 = NULL;
 		for (dp = prefix; *dp; dp++)
-			if (*dp != ' ' && *dp != '\t')
+			if (!is_WSP(*dp))
 				dp2 = dp;
 		prefixlen = dp2 == 0 ? 0 : dp2 - prefix + 1;
 	}
@@ -159,7 +159,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			break;
 		len -= length = strlen(line);
 		if (firstline) {
-			/* 
+			/*
 			 * First line is the From line, so no headers
 			 * there to worry about
 			 */
@@ -183,7 +183,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			}
 			isheadflag = 0;
 			ignoring = doign == ignoreall;
-		} else if (infld && (line[0] == ' ' || line[0] == '\t')) {
+		} else if (infld && is_WSP(line[0])) {
 			/*
 			 * If this line is a continuation (via space or tab)
 			 * of a previous header field, just echo it
@@ -194,12 +194,12 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			/*
 			 * Pick up the header field if we have one.
 			 */
-			for (cp = line; (c = *cp++) && c != ':' && !isspace(c); /*EMPTY*/)
+			char *save_cp;
+			for (cp = line; *cp && *cp != ':' && !is_WSP(*cp); cp++)
 				continue;
-			cp2 = --cp;
-			while (isspace((unsigned char)*cp++))
-				continue;
-			if (cp[-1] != ':') {
+			save_cp = cp;
+			cp = skip_WSP(cp);
+			if (*cp++ != ':') {
 				/*
 				 * Not a header line, force out status:
 				 * This happens in uucp style mail where
@@ -219,7 +219,9 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				 * If it is an ignored field and
 				 * we care about such things, skip it.
 				 */
-				*cp2 = 0;	/* temporarily null terminate */
+				int save_c;
+				save_c = *save_cp;
+				*save_cp = 0;	/* temporarily null terminate */
 				if (doign && isign(line, doign))
 					ignoring = 1;
 				else if ((line[0] == 's' || line[0] == 'S') &&
@@ -235,7 +237,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 					ignoring = 1;
 				} else {
 					ignoring = 0;
-					*cp2 = c;	/* restore */
+					*save_cp = save_c;	/* restore */
 				}
 				infld = 1;
 			}
@@ -346,7 +348,7 @@ fmt(const char *str, struct name *np, FILE *fo, int comma)
 	col = strlen(str);
 	if (col)
 		(void)fputs(str, fo);
-	for (; np != NULL; np = np->n_flink) {
+	for (/*EMPTY*/; np != NULL; np = np->n_flink) {
 		if (np->n_flink == NULL)
 			comma = 0;
 		len = strlen(np->n_name);
