@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.126 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.126.8.1 2007/10/23 20:08:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.126 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.126.8.1 2007/10/23 20:08:18 ad Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -96,9 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.126 2006/11/16 01:33:00 christos Exp $")
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

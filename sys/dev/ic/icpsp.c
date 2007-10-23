@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.17 2007/03/04 06:01:56 christos Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.17.2.1 2007/10/23 20:07:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.17 2007/03/04 06:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.17.2.1 2007/10/23 20:07:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.17 2007/03/04 06:01:56 christos Exp $");
 #include <sys/lock.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

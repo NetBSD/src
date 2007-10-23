@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.14 2005/12/11 12:21:22 christos Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.14.30.1 2007/10/23 20:07:07 ad Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.14 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.14.30.1 2007/10/23 20:07:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.14 2005/12/11 12:21:22 christos Exp $
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>
 

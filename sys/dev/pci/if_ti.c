@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.74.2.2 2007/10/09 13:41:46 ad Exp $ */
+/* $NetBSD: if_ti.c,v 1.74.2.3 2007/10/23 20:09:02 ad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.74.2.2 2007/10/09 13:41:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.74.2.3 2007/10/23 20:09:02 ad Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.74.2.2 2007/10/09 13:41:46 ad Exp $");
 #endif
 
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

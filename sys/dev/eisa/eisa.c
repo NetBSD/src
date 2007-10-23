@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.41 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: eisa.c,v 1.41.8.1 2007/10/23 20:07:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.41 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.41.8.1 2007/10/23 20:07:03 ad Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.41 2006/11/16 01:32:50 christos Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>

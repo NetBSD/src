@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.40.8.1 2007/07/15 13:21:08 ad Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.40.8.2 2007/10/23 20:06:50 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40.8.1 2007/07/15 13:21:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40.8.2 2007/10/23 20:06:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40.8.1 2007/07/15 13:21:08 ad Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

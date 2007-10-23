@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47.6.1 2007/05/27 12:27:59 ad Exp $
+#	$NetBSD: INSTALL,v 1.47.6.2 2007/10/23 20:14:15 ad Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -18,7 +18,9 @@ options		MEMORY_DISK_SERVER=0	# don't need for install
 maxusers	8
 
 # Platform support
-options 	OPENPIC				# OpenPIC support (7043-140)
+options 	PIC_OPENPIC	# OpenPIC support (7043-140)
+options		PIC_PREPIVR
+options		PIC_I8259
 
 # Compatibility options
 #options 	COMPAT_13	# NetBSD 1.3,

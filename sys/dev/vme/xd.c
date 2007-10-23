@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.67.2.3 2007/08/20 18:16:16 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.67.2.4 2007/10/23 20:09:59 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67.2.3 2007/08/20 18:16:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67.2.4 2007/10/23 20:09:59 ad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67.2.3 2007/08/20 18:16:16 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>

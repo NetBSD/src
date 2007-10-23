@@ -41,7 +41,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_lro.c,v 1.7 2007/06/13 05:35:59 kmacy 
 #include <sys/bus.h>
 #endif
 #include <sys/conf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __FreeBSD__
 #include <machine/resource.h>
 #include <sys/bus_dma.h>

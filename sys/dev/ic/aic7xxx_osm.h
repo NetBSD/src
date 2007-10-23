@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.17.8.1 2007/07/01 21:47:46 ad Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.17.8.2 2007/10/23 20:07:13 ad Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -58,8 +58,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

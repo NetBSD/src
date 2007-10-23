@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.7.2.1 2007/07/01 21:47:47 ad Exp $	*/
+/*	$NetBSD: ciss.c,v 1.7.2.2 2007/10/23 20:07:17 ad Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.7.2.1 2007/07/01 21:47:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.7.2.2 2007/10/23 20:07:17 ad Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.7.2.1 2007/07/01 21:47:47 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>

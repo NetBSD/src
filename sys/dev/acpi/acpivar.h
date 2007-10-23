@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.28.8.1 2007/08/20 18:36:42 ad Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.28.8.2 2007/10/23 20:06:50 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  * support.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcivar.h>
 #include <dev/isa/isavar.h>
 

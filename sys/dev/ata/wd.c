@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.10 2007/10/09 15:22:09 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.11 2007/10/23 20:06:54 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.10 2007/10/09 15:22:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.11 2007/10/23 20:06:54 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.10 2007/10/09 15:22:09 ad Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>

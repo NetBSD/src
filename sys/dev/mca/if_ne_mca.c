@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.12 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.12.8.1 2007/10/23 20:08:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.12 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.12.8.1 2007/10/23 20:08:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.12 2006/11/16 01:33:05 christos Exp 
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

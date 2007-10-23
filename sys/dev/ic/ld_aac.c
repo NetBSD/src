@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.13.8.4 2007/08/19 19:24:25 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.13.8.5 2007/10/23 20:07:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.8.4 2007/08/19 19:24:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.8.5 2007/10/23 20:07:33 ad Exp $");
 
 #include "rnd.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.8.4 2007/08/19 19:24:25 ad Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

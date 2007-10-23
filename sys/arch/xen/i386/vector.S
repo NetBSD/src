@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.17.6.1 2007/07/15 13:17:19 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.17.6.2 2007/10/23 20:14:44 ad Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -602,7 +602,7 @@ calltrap:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH(%eax)
+3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:	STIC(%eax)
     	jz	4f
@@ -685,7 +685,7 @@ trap0e_checkast:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	trap0e_checkast		/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH(%eax)
+3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:	STIC(%eax)
     	jz	4f

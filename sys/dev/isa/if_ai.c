@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.25 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.25.8.1 2007/10/23 20:08:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.25 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.25.8.1 2007/10/23 20:08:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.25 2006/11/16 01:33:00 christos Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

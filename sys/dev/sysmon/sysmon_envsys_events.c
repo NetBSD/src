@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.13.2.5 2007/10/12 17:03:14 ad Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.13.2.6 2007/10/23 20:09:45 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.13.2.5 2007/10/12 17:03:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.13.2.6 2007/10/23 20:09:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -363,11 +363,9 @@ do {									\
 			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
 			(void)strlcat(str, (c), sizeof(str));		\
-			mutex_enter(&sme_mtx);			\
 			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
-			mutex_exit(&sme_mtx);			\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -413,7 +411,7 @@ sme_events_init(void)
 	KASSERT(mutex_owned(&sme_event_init_mtx));
 
 	error = workqueue_create(&seewq, "envsysev",
-	    sme_events_worker, NULL, 0, IPL_SOFTCLOCK, WQ_MPSAFE);
+	    sme_events_worker, NULL, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error)
 		goto out;
 

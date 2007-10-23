@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.6.1 2007/10/23 20:11:56 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.6.1 2007/10/23 20:11:56 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -55,12 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2007/02/09 21:55:02 ad Exp $");
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ksyms.h>
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -79,13 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2007/02/09 21:55:02 ad Exp $");
 
 #include <dev/cons.h>
 
-#include "pfb.h"
 #include "ksyms.h"
-
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-#endif
 
 #include "vga.h"
 #if (NVGA > 0)
@@ -114,26 +102,21 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2007/02/09 21:55:02 ad Exp $");
  * Global variables used here and there
  */
 char bootinfo[BOOTINFO_MAXSIZE];
-
 paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
-
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-char *bootpath;
-
+char bootpath[256];
 paddr_t avail_end;			/* XXX temporary */
-
-void bebox_bus_space_init(void);
+struct pic_ops *isa_pic;
+void initppc(u_long, u_long, void *);
 void consinit(void);
 void ext_intr(void);
+void setup_bebox_intr(void);
 
 extern void *startsym, *endsym;
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_int startkernel, endkernel, args;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, void *btinfo)
 {
 	/*
 	 * copy bootinfo
@@ -176,69 +159,17 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * BeBox MotherBoard's Register
 	 *  Interrupt Mask Reset
 	 */
+#if 0
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x0ffffffc;
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x80000023;
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;
-
+#endif
 	/*
 	 * boothowto
 	 */
-	boothowto = args;
-
-	/*
-	 * Set up initial BAT table
-	 */
-	oea_batinit(
-	    BEBOX_BUS_SPACE_IO,  BAT_BL_256M,
-	    BEBOX_BUS_SPACE_MEM, BAT_BL_256M,
-	    0);
-
-	/*
-	 * Initialize the vector table and interrupt routine.
-	 */
-	oea_init(ext_intr);
-
-	/*
-	 * Init the I/O stuff before the console
-	 */
-	bebox_bus_space_init();
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
-}
-
-void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
-{
-	*mem = physmemr;
-	*avail = availmemr;
+	/*	boothowto = args; */
+	
+	setup_bebox_intr();
 }
 
 /*
@@ -250,30 +181,30 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
-	if (!bebox_mb_reg)
-		panic("cpu_startup: no room for interrupt register");
-
-	/*
-	 * Do common VM initialization
-	 */
-	oea_startup(NULL);
-
-	/*
-	 * Now that we have VM, malloc's are OK in bus_space.
-	 */
-	bus_space_mallocok();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	{
-		int msr;
-
-		splhigh();
-		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-	}
+  bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE);
+  if (!bebox_mb_reg)
+    panic("cpu_startup: no room for interrupt register");
+  
+  /*
+   * Do common VM initialization
+   */
+  oea_startup(NULL);
+  
+  /*
+   * Now that we have VM, malloc's are OK in bus_space.
+   */
+  bus_space_mallocok();
+  
+  /*
+   * Now allow hardware interrupts.
+   */
+  {
+    int msr;
+    
+    splhigh();
+    __asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		    : "=r"(msr) : "K"(PSL_EE));
+  }
 }
 
 /*
@@ -315,22 +246,25 @@ consinit()
 	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
 	if (!consinfo)
 		panic("not found console information in bootinfo");
-
+	
+#if 0
 #if (NPFB > 0)
 	if (!strcmp(consinfo->devname, "be")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
-		return;
+
+	return;
 	}
 #endif
+#endif /* if 0 */	
 
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(&bebox_io_bs_tag, &bebox_mem_bs_tag,
+		if (!vga_cnattach(&genppc_isa_io_space_tag, &genppc_isa_mem_space_tag,
 				  -1, 1))
 			goto dokbd;
 #endif
@@ -341,7 +275,7 @@ consinit()
 dokbd:
 #endif
 #if (NPCKBC > 0)
-		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -350,7 +284,7 @@ dokbd:
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = &bebox_isa_io_bs_tag;
+	   	bus_space_tag_t tag = &genppc_isa_io_space_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed,
 		    COM_FREQ, COM_TYPE_NORMAL,
@@ -382,22 +316,10 @@ pckbport_machdep_cnattach(kbctag, kbcslot)
 #endif
 
 /*
- * Stray interrupts.
- */
-void
-strayintr(irq)
-	int irq;
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
@@ -444,60 +366,12 @@ cpu_reboot(howto, what)
 	while (1);
 }
 
+#if 0
 void
-lcsplx(ipl)
-	int ipl;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
-	splx(ipl);
+
+  *mem = physmemr;
+  *avail = availmemr;
 }
-
-struct powerpc_bus_space bebox_io_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	BEBOX_BUS_SPACE_IO, 0x00000000, 0x3f800000,
-};
-struct powerpc_bus_space bebox_isa_io_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	BEBOX_BUS_SPACE_IO, 0x00000000, 0x00010000,
-};
-struct powerpc_bus_space bebox_mem_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x3f000000,
-};
-struct powerpc_bus_space bebox_isa_mem_bs_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x01000000,
-};
-
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-
-void
-bebox_bus_space_init(void)
-{
-	int error;
-
-	error = bus_space_init(&bebox_io_bs_tag, "ioport",
-	    ex_storage[0], sizeof(ex_storage[0]));
-	if (error)
-		panic("bebox_bus_space_init: can't init io tag");
-
-	error = extent_alloc_region(bebox_io_bs_tag.pbs_extent,
-	    0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("bebox_bus_space_init: can't block out reserved I/O"
-		    " space 0x10000-0x7fffff: error=%d", error);
-	error = bus_space_init(&bebox_mem_bs_tag, "iomem",
-	    ex_storage[1], sizeof(ex_storage[1]));
-	if (error)
-		panic("bebox_bus_space_init: can't init mem tag");
-
-	bebox_isa_io_bs_tag.pbs_extent = bebox_io_bs_tag.pbs_extent;
-	error = bus_space_init(&bebox_isa_io_bs_tag, "isa-ioport", NULL, 0);
-	if (error)
-		panic("bebox_bus_space_init: can't init isa io tag");
-
-	bebox_isa_mem_bs_tag.pbs_extent = bebox_mem_bs_tag.pbs_extent;
-	error = bus_space_init(&bebox_isa_mem_bs_tag, "isa-iomem", NULL, 0);
-	if (error)
-		panic("bebox_bus_space_init: can't init isa mem tag");
-}
+#endif

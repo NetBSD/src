@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.126.2.2 2007/10/09 13:41:21 ad Exp $  */
+/*	$NetBSD: atw.c,v 1.126.2.3 2007/10/23 20:07:15 ad Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.126.2.2 2007/10/09 13:41:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.126.2.3 2007/10/23 20:07:15 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.126.2.2 2007/10/09 13:41:21 ad Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/atwreg.h>
 #include <dev/ic/rf3000reg.h>

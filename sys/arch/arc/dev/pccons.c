@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.49.2.1 2007/07/15 13:15:33 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.49.2.2 2007/10/23 20:11:45 ad Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.49.2.1 2007/07/15 13:15:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.49.2.2 2007/10/23 20:11:45 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -815,7 +815,7 @@ pcstart(struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

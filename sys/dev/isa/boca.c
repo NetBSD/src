@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.47.8.1 2007/07/01 21:47:59 ad Exp $	*/
+/*	$NetBSD: boca.c,v 1.47.8.2 2007/10/23 20:08:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.47.8.1 2007/07/01 21:47:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.47.8.2 2007/10/23 20:08:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.47.8.1 2007/07/01 21:47:59 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

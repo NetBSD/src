@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.14 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: depca.c,v 1.14.8.1 2007/10/23 20:07:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.14 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.14.8.1 2007/10/23 20:07:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.14 2006/11/16 01:32:51 christos Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

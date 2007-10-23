@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.103.6.1 2007/04/10 13:23:08 ad Exp $
+#	$NetBSD: INSTALL,v 1.103.6.2 2007/10/23 20:13:14 ad Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -94,7 +94,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+#ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+genfb*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
@@ -150,15 +151,22 @@ wi*	at obio?			# AirMac
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
-adb*	at obio?			# Apple Desktop Bus
-akbd*	at adb?				# ADB keyboard
+#adb*	at obio?			# Apple Desktop Bus
+#akbd*	at adb?				# ADB keyboard
+cuda*	at obio?			# Apple CUDA
+pmu*	at obio?			# Apple CUDA
+nadb*	at cuda?			# new ADB Bus abstraction
+nadb*	at pmu?				# new ADB Bus abstraction
+adbkbd* at nadb?			# ADB keyboard
+
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
 
-wsdisplay0 at ofb? console ?
-wskbd0	at akbd? console ?
+wsdisplay0 at wsemuldisplaydev? console 1
+wsdisplay* at wsemuldisplaydev? console 0
+wskbd*	at wskbddev?
 
 scsibus* at scsi?
 
@@ -179,7 +187,6 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
-wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 #pseudo-device	fss		4	# file system snapshot device

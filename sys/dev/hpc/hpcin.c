@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.9 2006/03/29 06:37:35 thorpej Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.9.18.1 2007/10/23 20:07:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.9 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.9.18.1 2007/10/23 20:07:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/config_hook.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>

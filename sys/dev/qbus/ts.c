@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.19.2.1 2007/08/19 19:24:32 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.19.2.2 2007/10/23 20:09:36 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.19.2.1 2007/08/19 19:24:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.19.2.2 2007/10/23 20:09:36 ad Exp $");
 
 #undef	TSDEBUG
 
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.19.2.1 2007/08/19 19:24:32 ad Exp $");
 #include <sys/uio.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubareg.h>
 #include <dev/qbus/ubavar.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131.8.4 2007/10/09 13:38:21 ad Exp $
+# $NetBSD: GENERIC,v 1.131.8.5 2007/10/23 20:14:14 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,15 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.131.8.4 $"
+#ident		"GENERIC-$Revision: 1.131.8.5 $"
 
 maxusers	32
 
 # Platform support
 
-options 	OPENPIC				# OpenPIC support (7043-140)
+options 	PIC_OPENPIC	# OpenPIC support (7043-140)
+options		PIC_PREPIVR
+options		PIC_I8259
 
 # Standard system options
 
@@ -408,7 +410,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ohci*	at pci? dev ? function ?	# Open Host Controller
 
 # PCMCIA USB controllers
-slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 #usb*	at uhci?

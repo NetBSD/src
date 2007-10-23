@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.11 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.11.30.1 2007/10/23 20:07:13 ad Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -46,13 +46,13 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@NetBSD.org>
  *
- * $Id: aic7xxx_seeprom.c,v 1.11 2005/12/11 12:21:25 christos Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.11.30.1 2007/10/23 20:07:13 ad Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.11 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.11.30.1 2007/10/23 20:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.11 2005/12/11 12:21:25 christo
 #include <sys/device.h>
 #include <sys/reboot.h>		/* for AB_* needed by bootverbose */
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

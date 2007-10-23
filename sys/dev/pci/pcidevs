@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.871.2.8 2007/10/12 17:03:10 ad Exp $
+$NetBSD: pcidevs,v 1.871.2.9 2007/10/23 20:09:13 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3478,6 +3478,7 @@ product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
+product SUNDANCETI IP100A	0x0200	IP100A 10/100 Ethernet
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
 product SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
 product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet

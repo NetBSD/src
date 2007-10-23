@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.13.2.1 2007/10/09 13:41:28 ad Exp $ */
+/* $NetBSD: mtd803.c,v 1.13.2.2 2007/10/23 20:07:37 ad Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.2.1 2007/10/09 13:41:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.2.2 2007/10/23 20:07:37 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.2.1 2007/10/09 13:41:28 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mtd803reg.h>
 #include <dev/ic/mtd803var.h>

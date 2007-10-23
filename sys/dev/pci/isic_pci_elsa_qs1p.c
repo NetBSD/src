@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.15.30.1 2007/07/01 21:48:15 ad Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.15.30.2 2007/10/23 20:09:06 ad Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.15.30.1 2007/07/01 21:48:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.15.30.2 2007/10/23 20:09:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.15.30.1 2007/07/01 21:48:15
 #include <net/if.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcireg.h>

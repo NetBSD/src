@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.7 2006/02/19 15:16:53 jmcneill Exp $ */
+/* $NetBSD: vga_common.c,v 1.7.24.1 2007/10/23 20:07:51 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,11 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.7 2006/02/19 15:16:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.7.24.1 2007/10/23 20:07:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

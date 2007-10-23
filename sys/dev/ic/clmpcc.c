@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.32.2.1 2007/06/17 21:30:57 ad Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.32.2.2 2007/10/23 20:07:17 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32.2.1 2007/06/17 21:30:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32.2.2 2007/10/23 20:07:17 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32.2.1 2007/06/17 21:30:57 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/param.h>
 
 #include <dev/ic/clmpccreg.h>

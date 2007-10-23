@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22.2.1 2007/03/13 16:49:58 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.2.2 2007/10/23 20:12:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #define	IPL_BIO		5
 #define	IPL_NET		6
 #define	IPL_TTY		7
+#define	IPL_SERIAL	IPL_TTY	/* XXX */
 #define	IPL_TTYNOBUF	8	/* IPL_TTY + higher ISR priority */
 #define	IPL_VM		9
 #define	IPL_CLOCK	10

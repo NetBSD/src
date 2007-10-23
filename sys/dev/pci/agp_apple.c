@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.1.2.2 2007/04/10 13:24:23 ad Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.1.2.3 2007/10/23 20:08:42 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.2.2 2007/04/10 13:24:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.2.3 2007/10/23 20:08:42 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.2.2 2007/04/10 13:24:23 ad Exp $")
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 static u_int32_t agp_apple_get_aperture(struct agp_softc *);
 static int agp_apple_set_aperture(struct agp_softc *, u_int32_t);

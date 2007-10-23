@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.17 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.17.8.1 2007/10/23 20:09:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.17 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.17.8.1 2007/10/23 20:09:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.17 2006/11/16 01:33:20 christos Exp
 #include <sys/buf.h>
 #include <sys/audioio.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/audio_if.h>
 

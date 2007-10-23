@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.19.2.7 2007/10/09 13:42:08 ad Exp $ */
+/*	$NetBSD: if_ural.c,v 1.19.2.8 2007/10/23 20:09:51 ad Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.19.2.7 2007/10/09 13:42:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.19.2.8 2007/10/23 20:09:51 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.19.2.7 2007/10/09 13:42:08 ad Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

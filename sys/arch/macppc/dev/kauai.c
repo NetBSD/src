@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.19.28.1 2007/07/15 13:16:23 ad Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19.28.2 2007/10/23 20:13:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.28.1 2007/07/15 13:16:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.28.2 2007/10/23 20:13:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.28.1 2007/07/15 13:16:23 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -52,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.28.1 2007/07/15 13:16:23 ad Exp $");
 
 #define WDC_REG_NPORTS		8
 #define WDC_AUXREG_OFFSET	0x16
+#define WDC_AUXREG_NPORTS	1
 
 #define PIO_CONFIG_REG (0x200 >> 4)	/* PIO and DMA access timing */
 #define DMA_CONFIG_REG (0x210 >> 4)	/* UDMA access timing */
@@ -125,7 +127,7 @@ kauai_attach(parent, self, aux)
 
 	node = getnodebypci(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
-		printf(": cannot find gmac node\n");
+		printf(": cannot find kauai node\n");
 		return;
 	}
 
@@ -153,20 +155,20 @@ kauai_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	wdr->cmd_iot = wdr->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
+	wdr->cmd_iot = wdr->ctl_iot = pa->pa_memt;
 
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	if (bus_space_map(wdr->cmd_iot, regbase, WDC_REG_NPORTS << 4, 0,
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
+			WDC_AUXREG_OFFSET << 4, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n", self->dv_xname);
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i << 4,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-			    WDC_REG_NPORTS);
+			    WDC_REG_NPORTS << 4);
 			printf("%s: couldn't subregion registers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;

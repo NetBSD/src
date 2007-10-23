@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.8.2.2 2007/10/09 13:41:29 ad Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.8.2.3 2007/10/23 20:07:40 ad Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.8.2.2 2007/10/09 13:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.8.2.3 2007/10/23 20:07:40 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.8.2.2 2007/10/09 13:41:29 ad Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

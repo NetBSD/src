@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.9 2007/03/04 06:02:13 christos Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.9.2.1 2007/10/23 20:08:26 ad Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.9 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.9.2.1 2007/10/23 20:08:26 ad Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.9 2007/03/04 06:02:13 chri
 #include <machine/clock.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

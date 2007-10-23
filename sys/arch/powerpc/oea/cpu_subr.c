@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28.8.3 2007/07/15 13:16:49 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.8.4 2007/10/23 20:14:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.8.3 2007/07/15 13:16:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.8.4 2007/10/23 20:14:12 ad Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.8.3 2007/07/15 13:16:49 ad Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/types.h>
+#include <sys/lwp.h>
+#include <sys/user.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -206,12 +209,18 @@ static const struct cputab models[] = {
 	{ "",		0,		REVFMT_HEX }
 };
 
-
 #ifdef MULTIPROCESSOR
-struct cpu_info cpu_info[CPU_MAXNUM];
+struct cpu_info cpu_info[CPU_MAXNUM] = { { .ci_curlwp = &lwp0, }, }; 
+volatile struct cpu_hatch_data *cpu_hatch_data;
+volatile int cpu_hatch_stack;
+extern int ticks_per_intr;
+#include <powerpc/oea/bat.h>
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+extern struct bat battable[];
 #else
-struct cpu_info cpu_info[1];
-#endif
+struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, }; 
+#endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
 int cpu_psluserset, cpu_pslusermod;
@@ -599,6 +608,8 @@ cpu_setup(self, ci)
 		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
 #endif
+	evcnt_attach_dynamic(&ci->ci_ev_ipi, EVCNT_TYPE_INTR,
+		NULL, self->dv_xname, "IPIs");
 }
 
 void
@@ -957,3 +968,158 @@ cpu_tau_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	return 0;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
+
+#ifdef MULTIPROCESSOR
+int
+cpu_spinup(struct device *self, struct cpu_info *ci)
+{
+	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
+	struct pglist mlist;
+	int i, error, pvr, vers;
+	char *cp;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+	KASSERT(ci != curcpu());
+
+	/*
+	 * Allocate some contiguous pages for the intteup PCB and stack
+	 * from the lowest 256MB (because bat0 always maps it va == pa).
+	 */
+	error = uvm_pglistalloc(INTSTK, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	if (error) {
+		aprint_error(": unable to allocate idle stack\n");
+		return -1;
+	}
+
+	KASSERT(ci != &cpu_info[0]);
+
+	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+	memset(cp, 0, INTSTK);
+
+	ci->ci_intstk = cp;
+
+	/* Initialize secondary cpu's initial lwp to its idlelwp. */
+	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
+	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
+	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
+
+	cpu_hatch_data = h;
+	h->running = 0;
+	h->self = self;
+	h->ci = ci;
+	h->pir = ci->ci_cpuid;
+	cpu_hatch_stack = (uint32_t)cp + INTSTK - sizeof(struct trapframe);
+	ci->ci_lasttb = cpu_info[0].ci_lasttb;
+
+	/* copy special registers */
+	h->hid0 = mfspr(SPR_HID0);
+	__asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
+	for (i = 0; i < 16; i++)
+		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) :
+		       "r"(i << ADDR_SR_SHFT));
+	/* copy the bat regs */
+	__asm volatile ("mfibatu %0,0" : "=r"(h->batu[0]));
+	__asm volatile ("mfibatl %0,0" : "=r"(h->batl[0]));
+	__asm volatile ("mfibatu %0,1" : "=r"(h->batu[1]));
+	__asm volatile ("mfibatl %0,1" : "=r"(h->batl[1]));
+	__asm volatile ("mfibatu %0,2" : "=r"(h->batu[2]));
+	__asm volatile ("mfibatl %0,2" : "=r"(h->batl[2]));
+	__asm volatile ("mfibatu %0,3" : "=r"(h->batu[3]));
+	__asm volatile ("mfibatl %0,3" : "=r"(h->batl[3]));
+	__asm volatile ("sync; isync");
+
+	if (md_setup_trampoline(h, ci) == -1)
+		return -1;
+	md_presync_timebase(h);
+	md_start_timebase(h);
+
+	/* wait for secondary printf */
+	delay(200000);
+
+	if (h->running == 0) {
+		aprint_error(":CPU %d didn't start\n", ci->ci_cpuid);
+		return -1;
+	}
+
+	/* Register IPI Interrupt */
+	ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+
+	return 0;
+}
+
+static volatile int start_secondary_cpu;
+
+void
+cpu_hatch()
+{
+	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	struct cpu_info * const ci = h->ci;
+	u_int msr;
+	int i;
+
+	/* Initialize timebase. */
+	__asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+
+	/* Set PIR (Processor Identification Register).  i.e. whoami */
+	mtspr(SPR_PIR, h->pir);
+	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
+
+	/* Initialize MMU. */
+	__asm ("mtibatu 0,%0" :: "r"(h->batu[0]));
+	__asm ("mtibatl 0,%0" :: "r"(h->batl[0]));
+	__asm ("mtibatu 1,%0" :: "r"(h->batu[1]));
+	__asm ("mtibatl 1,%0" :: "r"(h->batl[1]));
+	__asm ("mtibatu 2,%0" :: "r"(h->batu[2]));
+	__asm ("mtibatl 2,%0" :: "r"(h->batl[2]));
+	__asm ("mtibatu 3,%0" :: "r"(h->batu[3]));
+	__asm ("mtibatl 3,%0" :: "r"(h->batl[3]));
+
+	mtspr(SPR_HID0, h->hid0);
+
+	__asm ("mtibatl 0,%0; mtibatu 0,%1; mtdbatl 0,%0; mtdbatu 0,%1;"
+	    :: "r"(battable[0].batl), "r"(battable[0].batu));
+
+	for (i = 0; i < 16; i++)
+		__asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
+
+	__asm ("mtsdr1 %0" :: "r"(h->sdr1));
+	__asm volatile ("isync");
+
+	/* Enable I/D address translations. */
+	__asm volatile ("mfmsr %0" : "=r"(msr));
+	msr |= PSL_IR|PSL_DR|PSL_ME|PSL_RI;
+	__asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("sync; isync");
+
+	md_sync_timebase(h);
+
+	cpu_setup(h->self, ci);
+
+	h->running = 1;
+	__asm volatile ("sync; isync");
+
+	while (start_secondary_cpu == 0)
+		;
+
+	__asm volatile ("sync; isync");
+
+	aprint_normal("cpu%d: started\n", cpu_number());
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+
+	md_setup_interrupts();
+
+	ci->ci_ipending = 0;
+	ci->ci_cpl = 0;
+
+	mtmsr(mfmsr() | PSL_EE);
+}
+
+void
+cpu_boot_secondary_processors()
+{
+	start_secondary_cpu = 1;
+	__asm volatile ("sync");
+}
+
+#endif /*MULTIPROCESSOR*/

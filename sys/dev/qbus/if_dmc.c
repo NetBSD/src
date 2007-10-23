@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.14 2007/03/04 06:02:29 christos Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.14.2.1 2007/10/23 20:09:34 ad Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.14 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.14.2.1 2007/10/23 20:09:34 ad Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.14 2007/03/04 06:02:29 christos Exp $")
 #include <netinet/in_var.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubareg.h>
 #include <dev/qbus/ubavar.h>

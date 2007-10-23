@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.4.2.1 2007/03/13 16:51:18 ad Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.4.2.2 2007/10/23 20:09:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.4.2.1 2007/03/13 16:51:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.4.2.2 2007/10/23 20:09:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.35.8.4 2007/08/19 19:24:29 ad Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.35.8.5 2007/10/23 20:08:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35.8.4 2007/08/19 19:24:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35.8.5 2007/10/23 20:08:30 ad Exp $");
 
 #include "rnd.h"
 
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35.8.4 2007/08/19 19:24:29 ad Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>

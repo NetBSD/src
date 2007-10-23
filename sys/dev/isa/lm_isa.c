@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.16.2.1 2007/10/09 13:41:37 ad Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.16.2.2 2007/10/23 20:08:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.16.2.1 2007/10/09 13:41:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.16.2.2 2007/10/23 20:08:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.16.2.1 2007/10/09 13:41:37 ad Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

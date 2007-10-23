@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.4 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.4.24.1 2007/10/23 20:14:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -71,12 +71,15 @@ cpu_counter32(void)
 	return rv;
 }
 
-#if 0	/* XXX MI microtime() needs frequency of CPU counter. */
+extern uint32_t ticks_per_sec;
+
 static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
+	/* XXX this probably only works on 603 and newer */
+	return ticks_per_sec;
 }
-#endif
+
 #endif /* _KERNEL */
 
 #endif /* _POWERPC_CPU_COUNTER_H_ */

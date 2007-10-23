@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.259.2.2 2007/07/01 21:38:33 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.259.2.3 2007/10/23 20:07:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259.2.2 2007/07/01 21:38:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259.2.3 2007/10/23 20:07:17 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259.2.2 2007/07/01 21:38:33 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -352,19 +352,21 @@ comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return com_probe_subr(&regs);
 }
 
+/*
+ * No locking in this routine; it is only called during attach,
+ * or with the port already locked.
+ */
 static void
 com_enable_debugport(struct com_softc *sc)
 {
 
 	/* Turn on line break interrupt, set carrier. */
-	mutex_spin_enter(&sc->sc_lock);
 	sc->sc_ier = IER_ERXRDY;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_MCR, sc->sc_mcr);
-	mutex_spin_exit(&sc->sc_lock);
 }
 
 void

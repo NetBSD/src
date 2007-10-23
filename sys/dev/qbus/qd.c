@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.37.2.1 2007/08/19 19:24:31 ad Exp $	*/
+/*	$NetBSD: qd.c,v 1.37.2.2 2007/10/23 20:09:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.37.2.1 2007/08/19 19:24:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.37.2.2 2007/10/23 20:09:35 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -77,12 +77,12 @@ __KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.37.2.1 2007/08/19 19:24:31 ad Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/scb.h>
 
 #ifdef __vax__
 #include <machine/sid.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/pte.h>
 #endif
 

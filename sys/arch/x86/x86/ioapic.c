@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.18.2.3 2007/10/10 23:28:29 rmind Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.18.2.4 2007/10/23 20:14:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.18.2.3 2007/10/10 23:28:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.18.2.4 2007/10/23 20:14:43 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -521,6 +521,7 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 
 #ifdef DDB
 void ioapic_dump(void);
+void ioapic_dump_raw(void);
 
 void
 ioapic_dump(void)
@@ -535,6 +536,27 @@ ioapic_dump(void)
 			if (ip->ip_type != IST_NONE)
 				ioapic_print_redir(sc, "dump", p);
 		}
+	}
+}
+
+void
+ioapic_dump_raw(void)
+{
+	struct ioapic_softc *sc;
+	int i;
+	uint32_t reg;
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		printf("Register dump of %s\n", sc->sc_pic.pic_dev.dv_xname);
+		i = 0;
+		do {
+			if (i % 0x08 == 0)
+				printf("%02x", i);
+			reg = ioapic_read(sc, i);
+			printf(" %08x", (u_int)reg);
+			if (++i % 0x08 == 0)
+				printf("\n");
+		} while (i < 0x40);
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28.12.1 2007/04/10 13:23:12 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.12.2 2007/10/23 20:14:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.12.1 2007/04/10 13:23:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.12.2 2007/10/23 20:14:20 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,30 +65,43 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.12.1 2007/04/10 13:23:12 ad Exp
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-/*
- * PCI doesn't have any special needs; just use the generic versions
- * of these functions.
- */
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-};
-
 /* 0 == direct 1 == indirect */
 int prep_pci_config_mode = 1;
-extern struct prep_pci_chipset *prep_pct;
+extern struct genppc_pci_chipset *genppc_pct;
+extern u_int32_t prep_pci_baseaddr;
+extern u_int32_t prep_pci_basedata;
+
+static void
+prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
+{
+
+	pc->pc_conf_v = (void *)pc;
+
+	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_bus_maxdevs = prep_pci_bus_maxdevs;
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_conf_read = genppc_pci_indirect_conf_read;
+	pc->pc_conf_write = genppc_pci_indirect_conf_write;
+
+	pc->pc_intr_v = (void *)pc;
+
+	pc->pc_intr_map = prep_pci_intr_map;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+
+	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_conf_hook = prep_pci_conf_hook;
+
+	pc->pc_addr = mapiodev(prep_pci_baseaddr, 4);
+	pc->pc_data = mapiodev(prep_pci_basedata, 4);
+	pc->pc_bus = 0;
+	pc->pc_node = 0;
+	pc->pc_memt = 0;
+	pc->pc_iot = 0;
+}
 
 void
 prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
@@ -110,10 +123,10 @@ prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 int
 prep_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 	prop_object_t busmax;
 
-	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 	while (busno--)
 		pbi = SIMPLEQ_NEXT(pbi, next);
 	if (pbi == NULL)
@@ -132,7 +145,7 @@ prep_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 int
 prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
@@ -146,7 +159,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	origdev = dev = pa->pa_device;
 	i = 0;
 
-	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 	while (busno--)
 		pbi = SIMPLEQ_NEXT(pbi, next);
 	KASSERT(pbi != NULL);
@@ -168,7 +181,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		dev = prop_number_integer_value(pbus);
 
 		/* now that we know the parent bus, we need to find it's pbi */
-		pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);
 		KASSERT(pbi != NULL);
@@ -187,7 +200,7 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (pin == 0)
 		goto bad;
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -216,15 +229,17 @@ prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	* the BIOS has not configured the device.
 	*/
 	if (line == 0 || line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		aprint_error("pci_intr_map: no mapping for pin %c\n",
+		    '@' + pin);
 		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			aprint_error("pci_intr_map: bad interrupt line %d\n",
+			    line);
 			goto bad;
 		}
 		if (line == IRQ_SLAVE) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
+			aprint_verbose("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
 	}
@@ -237,62 +252,16 @@ bad:
 	return 1;
 }
 
-const char *
-prep_pci_intr_string(void *v, pci_intr_handle_t ih)
-{
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
-
-	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
-	
-}
-
-const struct evcnt *
-prep_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
-void *
-prep_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg)
-{
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
-}
-
-void
-prep_pci_intr_disestablish(void *v, void *cookie)
-{
-
-	isa_intr_disestablish(NULL, cookie);
-}
-
-void
-prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
-    int swiz, int *iline)
-{
-	/* do nothing */
-}
-
 extern pcitag_t prep_pci_direct_make_tag(void *, int, int, int);
-extern pcitag_t prep_pci_indirect_make_tag(void *, int, int, int);
+extern pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
 extern pcireg_t prep_pci_direct_conf_read(void *, pcitag_t, int);
-extern pcireg_t prep_pci_indirect_conf_read(void *, pcitag_t, int);
+extern pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
 
 int
 prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	pcireg_t id)
 {
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 	prop_number_t bmax, pbus;
 	pcitag_t tag;
 	pcireg_t class;
@@ -329,8 +298,8 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 		return PCI_CONF_DEFAULT;
 
 	if (prep_pci_config_mode) {
-		tag = prep_pci_indirect_make_tag(pct, bus, dev, func);
-		class = prep_pci_indirect_conf_read(pct, tag,
+		tag = genppc_pci_indirect_make_tag(pct, bus, dev, func);
+		class = genppc_pci_indirect_conf_read(pct, tag,
 		    PCI_CLASS_REG);
 	} else {
 		tag = prep_pci_direct_make_tag(pct, bus, dev, func);
@@ -344,8 +313,8 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	 */
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
-		pbi = malloc(sizeof(struct prep_pci_chipset_businfo), M_DEVBUF,
-		    M_NOWAIT);
+		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
+		    M_DEVBUF, M_NOWAIT);
 		KASSERT(pbi != NULL);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
@@ -372,7 +341,7 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 			prop_object_release(bmax);
 		}
 
-		SIMPLEQ_INSERT_TAIL(&prep_pct->pc_pbi, pbi, next);
+		SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
 	}
 
 	return (PCI_CONF_DEFAULT);

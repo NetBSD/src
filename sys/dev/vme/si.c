@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.18 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.18.2.1 2007/10/23 20:09:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.18 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.18.2.1 2007/10/23 20:09:58 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.18 2007/03/04 06:02:50 christos Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

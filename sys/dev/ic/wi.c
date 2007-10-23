@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.219.2.2 2007/10/09 13:41:34 ad Exp $	*/
+/*	$NetBSD: wi.c,v 1.219.2.3 2007/10/23 20:07:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.219.2.2 2007/10/09 13:41:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.219.2.3 2007/10/23 20:07:53 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.219.2.2 2007/10/09 13:41:34 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>

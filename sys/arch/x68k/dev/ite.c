@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48.2.2 2007/05/27 14:26:59 ad Exp $	*/
+/*	$NetBSD: ite.c,v 1.48.2.3 2007/10/23 20:14:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48.2.2 2007/05/27 14:26:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48.2.3 2007/10/23 20:14:40 ad Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -559,7 +559,7 @@ itestart(struct tty *tp)
 	/* we have characters remaining. */
 	if (rbp->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	/* wakeup we are below */
 	if (rbp->c_cc <= tp->t_lowat) {

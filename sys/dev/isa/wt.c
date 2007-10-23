@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.75.2.3 2007/08/19 19:24:29 ad Exp $	*/
+/*	$NetBSD: wt.c,v 1.75.2.4 2007/10/23 20:08:22 ad Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.3 2007/08/19 19:24:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.4 2007/10/23 20:08:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.3 2007/08/19 19:24:29 ad Exp $");
 #include <sys/lwp.h>
 #include <sys/conf.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

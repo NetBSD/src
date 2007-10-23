@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.5 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.5.8.1 2007/10/23 20:06:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.5 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.5.8.1 2007/10/23 20:06:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

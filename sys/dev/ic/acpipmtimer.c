@@ -1,7 +1,7 @@
-/* $NetBSD: acpipmtimer.c,v 1.1.22.1 2007/10/09 13:41:19 ad Exp $ */
+/* $NetBSD: acpipmtimer.c,v 1.1.22.2 2007/10/23 20:07:10 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.22.1 2007/10/09 13:41:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.22.2 2007/10/23 20:07:10 ad Exp $");
 
 #include <sys/types.h>
 
@@ -10,7 +10,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.22.1 2007/10/09 13:41:19 ad Exp 
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 

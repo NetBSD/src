@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.59.2.2 2007/10/09 13:41:32 ad Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.59.2.3 2007/10/23 20:07:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.59.2.2 2007/10/09 13:41:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.59.2.3 2007/10/23 20:07:45 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -98,8 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.59.2.2 2007/10/09 13:41:32 ad Exp $")
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

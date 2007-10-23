@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.14.2.2 2007/10/09 13:41:30 ad Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.14.2.3 2007/10/23 20:07:40 ad Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14.2.2 2007/10/09 13:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14.2.3 2007/10/23 20:07:40 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14.2.2 2007/10/09 13:41:30 ad Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

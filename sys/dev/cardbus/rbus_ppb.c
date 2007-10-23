@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.19 2006/03/29 06:22:38 thorpej Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.19.18.1 2007/10/23 20:06:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.19 2006/03/29 06:22:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.19.18.1 2007/10/23 20:06:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.19 2006/03/29 06:22:38 thorpej Exp $"
 
 #include <machine/endian.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

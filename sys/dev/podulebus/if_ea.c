@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.12 2006/03/29 07:12:56 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.12.18.1 2007/10/23 20:09:32 ad Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.12 2006/03/29 07:12:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.12.18.1 2007/10/23 20:09:32 ad Exp $");
 
 #include <sys/param.h>
 
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.12 2006/03/29 07:12:56 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

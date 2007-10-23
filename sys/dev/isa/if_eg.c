@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.72 2007/03/04 06:02:12 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.72.2.1 2007/10/23 20:08:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.72 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.72.2.1 2007/10/23 20:08:06 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -79,9 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.72 2007/03/04 06:02:12 christos Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_egreg.h>
