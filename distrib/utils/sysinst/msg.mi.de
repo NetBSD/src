@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.39 2007/10/21 20:21:01 pavel Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.40 2007/10/23 13:26:09 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1002,8 +1002,11 @@ Verzeichnis abgleichen.
 .endif
 
 message oldsendmail
-{Sendmail is no longer in this release of NetBSD, default MTA is
-postfix. The file /etc/mailer.conf still chooses the removed
-sendmail. Do you want to upgrade /etc/mailer.conf automatically for
-postfix? If you choose "No" you will have to update /etc/mailer.conf
-yourself to ensure proper email delivery.}
+{Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
+Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
+eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
+vorhandene Sendmail-Programm verweist. 
+Möchten Sie /etc/mailer.conf automatisch auf eine Version für
+Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
+manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
+zu gewährleisten.}
