@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.18.2.1 2007/07/01 21:48:56 ad Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.18.2.2 2007/10/23 20:09:36 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.18.2.1 2007/07/01 21:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.18.2.2 2007/10/23 20:09:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ rcons_output(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {

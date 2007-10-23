@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.51.2.1 2007/07/01 21:49:06 ad Exp $ */
+/* $NetBSD: wsmouse.c,v 1.51.2.2 2007/10/23 20:10:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.51.2.1 2007/07/01 21:49:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.51.2.2 2007/10/23 20:10:00 ad Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -256,6 +256,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_repeat_button = -1;
 	sc->sc_repeat_delay = 0;
 	callout_init(&sc->sc_repeat_callout, 0);
+	callout_setfunc(&sc->sc_repeat_callout, wsmouse_repeat, sc);
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;
@@ -485,9 +486,8 @@ wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 		    sc->sc_repeat.wr_delay_first > 0) {
 			sc->sc_repeat_button = btnno;
 			sc->sc_repeat_delay = sc->sc_repeat.wr_delay_first;
-			callout_reset(&sc->sc_repeat_callout,
-			    (hz * sc->sc_repeat_delay) / 1000, wsmouse_repeat,
-			    sc);
+			callout_schedule(&sc->sc_repeat_callout,
+			    mstohz(sc->sc_repeat_delay));
 		}
 	}
 
@@ -552,8 +552,7 @@ wsmouse_repeat(void *v)
 	 * Reprogram the repeating event.
 	 */
 	sc->sc_repeat_delay = newdelay;
-	callout_reset(&sc->sc_repeat_callout, (hz * newdelay) / 1000,
-	    wsmouse_repeat, sc);
+	callout_schedule(&sc->sc_repeat_callout, mstohz(newdelay));
 
 	splx(oldspl);
 }

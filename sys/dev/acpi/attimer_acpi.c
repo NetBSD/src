@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.5.8.2 2007/10/23 20:06:51 ad Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.5.8.2 2007/10/23 20:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp 
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

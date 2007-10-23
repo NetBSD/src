@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.4.1 2007/08/20 18:37:51 ad Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.4.2 2007/10/23 20:09:50 ad Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.4.1 2007/08/20 18:37:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.4.2 2007/10/23 20:09:50 ad Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.4.1 2007/08/20 18:37:51 ad Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 
 #include <dev/usb/usb.h>

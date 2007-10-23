@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.22.6.1 2007/07/01 21:48:02 ad Exp $ */
+/* $NetBSD: pcppi.c,v 1.22.6.2 2007/10/23 20:08:16 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22.6.1 2007/07/01 21:48:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22.6.2 2007/10/23 20:08:16 ad Exp $");
 
 #include "attimer.h"
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22.6.1 2007/07/01 21:48:02 ad Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/attimervar.h>
 

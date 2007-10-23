@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.871.2.8 2007/10/12 17:03:11 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.871.2.9 2007/10/23 20:09:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.905 2007/10/14 00:40:17 xtraeme Exp
  */
 
 /*
@@ -3485,6 +3485,7 @@
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
 
 /* Sundance Technology products */
+#define	PCI_PRODUCT_SUNDANCETI_IP100A	0x0200		/* IP100A 10/100 Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST1023	0x1023		/* ST1023 Gigabit Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST2021	0x2021		/* ST2021 Gigabit Ethernet */

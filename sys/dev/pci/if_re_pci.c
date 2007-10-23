@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.26.2.2 2007/08/20 18:37:14 ad Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.26.2.3 2007/10/23 20:09:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -69,7 +69,7 @@
 #include <net/if_media.h>
 #include <net/if_vlanvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

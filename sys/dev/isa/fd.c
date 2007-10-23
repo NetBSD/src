@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73.2.5 2007/08/24 23:28:36 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.73.2.6 2007/10/23 20:08:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.5 2007/08/24 23:28:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.6 2007/10/23 20:08:04 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -131,8 +131,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.5 2007/08/24 23:28:36 ad Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include "locators.h"
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.5 2007/08/24 23:28:36 ad Exp $");
 #define	fd_cd	fdisa_cd
 #endif /* atari */
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

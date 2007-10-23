@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.144.6.1 2007/08/20 18:37:19 ad Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.144.6.2 2007/10/23 20:09:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144.6.1 2007/08/20 18:37:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144.6.2 2007/10/23 20:09:11 ad Exp $");
 
 /*
 #define CBB_DEBUG
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144.6.1 2007/08/20 18:37:19 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.39 2007/03/04 06:02:25 christos Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.39.2.1 2007/10/23 20:09:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,15 +46,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.39 2007/03/04 06:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.39.2.1 2007/10/23 20:09:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 

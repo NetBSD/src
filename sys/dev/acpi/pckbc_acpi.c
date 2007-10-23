@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.19.8.2 2007/10/09 13:41:15 ad Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.19.8.3 2007/10/23 20:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.19.8.2 2007/10/09 13:41:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.19.8.3 2007/10/23 20:06:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.19.8.2 2007/10/09 13:41:15 ad Exp $
 #include <sys/queue.h>
 #include <sys/lock.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

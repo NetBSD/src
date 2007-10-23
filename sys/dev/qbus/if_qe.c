@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.62.2.1 2007/10/09 13:42:01 ad Exp $ */
+/*      $NetBSD: if_qe.c,v 1.62.2.2 2007/10/23 20:09:34 ad Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.2.1 2007/10/09 13:42:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.2.2 2007/10/23 20:09:34 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.2.1 2007/10/09 13:42:01 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_qereg.h>

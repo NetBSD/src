@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.9 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.9.8.1 2007/10/23 20:08:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.9 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.9.8.1 2007/10/23 20:08:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isapnp/isapnpreg.h>

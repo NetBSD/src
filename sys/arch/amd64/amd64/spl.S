@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.6.3 2007/08/23 13:19:00 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.6.4 2007/10/23 20:11:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,7 +76,6 @@
 #define ALIGN_TEXT	.align 16,0x90
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>
@@ -228,11 +227,13 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-	movq	CPUVAR(CURLWP),%r14
-5:	CHECK_ASTPENDING(%r14)
-	je	3f
+5:
 	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
+	jz	6f
+.Ldoreti_checkast:
+	movq	CPUVAR(CURLWP),%r14
+	CHECK_ASTPENDING(%r14)
+	je	3f
 	CLEAR_ASTPENDING(%r14)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
@@ -240,8 +241,17 @@ IDTVEC(doreti)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	cli
-	jmp	5b
-3: 	INTRFASTEXIT
+	jmp	.Ldoreti_checkast
+3:
+	CHECK_DEFERRED_SWITCH
+	jnz	9f
+6:
+	INTRFASTEXIT
+9:
+	sti
+	call	_C_LABEL(do_pmap_load)
+	cli
+	jmp	.Ldoreti_checkast	/* recheck ASTs */
 
 /*
  * softintr()

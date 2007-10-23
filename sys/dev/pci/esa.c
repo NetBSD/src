@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.41 2007/03/04 06:02:18 christos Exp $ */
+/* $NetBSD: esa.c,v 1.41.2.1 2007/10/23 20:08:52 ad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41 2007/03/04 06:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41.2.1 2007/10/23 20:08:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41 2007/03/04 06:02:18 christos Exp $");
 #include <sys/select.h>
 #include <sys/audioio.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

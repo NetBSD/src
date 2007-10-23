@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.11.8.1 2007/04/10 13:24:24 ad Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.11.8.2 2007/10/23 20:08:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.11.8.1 2007/04/10 13:24:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.11.8.2 2007/10/23 20:08:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.11.8.1 2007/04/10 13:24:24 ad Exp $");
 #include <dev/pci/agpreg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 static u_int32_t agp_via_get_aperture(struct agp_softc *);
 static int agp_via_set_aperture(struct agp_softc *, u_int32_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.7.2.1 2007/05/27 14:30:10 ad Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.7.2.2 2007/10/23 20:07:56 ad Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -54,7 +54,7 @@
 #include <sys/taskqueue.h>
 #include <sys/module.h>
 #include <sys/bus.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -81,7 +81,7 @@
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_ieee1394.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.7.30.1 2007/10/23 20:07:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.7 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_cpcbus.c,v 1.7.30.1 2007/10/23 20:07:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/cpc700var.h>
 
 struct cpctim_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.11 2006/03/29 07:09:33 thorpej Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.11.18.1 2007/10/23 20:08:39 ad Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,15 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.11 2006/03/29 07:09:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.11.18.1 2007/10/23 20:08:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

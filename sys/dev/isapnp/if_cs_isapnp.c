@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.9 2006/03/29 06:51:47 thorpej Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.9.18.1 2007/10/23 20:08:24 ad Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.9 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.9.18.1 2007/10/23 20:08:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.9 2006/03/29 06:51:47 thorpej Exp
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 

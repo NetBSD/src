@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.121.2.2 2007/10/09 13:41:23 ad Exp $	*/
+/*	$NetBSD: elink3.c,v 1.121.2.3 2007/10/23 20:07:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.121.2.2 2007/10/09 13:41:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.121.2.3 2007/10/23 20:07:22 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -100,9 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.121.2.2 2007/10/09 13:41:23 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

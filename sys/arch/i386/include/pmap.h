@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.4.6 2007/10/09 15:22:06 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.7 2007/10/23 20:13:07 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,38 @@
  */
 
 /*
- * pmap.h: see pmap.c for the history of this pmap module.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef	_I386_PMAP_H_
@@ -41,13 +72,12 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
-#include "opt_largepages.h"
 #endif
 
 #include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/atomic.h>
-#if defined(_KERNEL) || defined(_LKM)
+#if defined(_KERNEL)
 #include <machine/cpufunc.h>
 #endif
 
@@ -147,12 +177,27 @@
 /* XXX MP should we allocate one APDP_PDE per processor?? */
 
 /*
+ * Mask to get rid of the sign-extended part of addresses.
+ */
+#define VA_SIGN_MASK		0
+#define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
+/*
+ * XXXfvdl this one's not right.
+ */
+#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
+
+/*
  * the following defines identify the slots used as described above.
  */
 
-#define PDSLOT_PTE	((KERNBASE/NBPD)-1) /* 767: for recursive PDP map */
-#define PDSLOT_KERN	(KERNBASE/NBPD)	    /* 768: start of kernel space */
-#define PDSLOT_APTE	((unsigned)1023) /* 1023: alternative recursive slot */
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1)	/* 767: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)	/* 768: start of kernel space */
+#define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#define L2_SLOT_APTE	1023		/* 1023: alternative recursive slot */
+
+#define PDIR_SLOT_KERN	L2_SLOT_KERN
+#define PDIR_SLOT_PTE	L2_SLOT_PTE
+#define PDIR_SLOT_APTE	L2_SLOT_APTE
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -162,47 +207,44 @@
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
-#define PTE_BASE	((pt_entry_t *)  (PDSLOT_PTE * NBPD) )
-#define APTE_BASE	((pt_entry_t *)  (PDSLOT_APTE * NBPD) )
-#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * PAGE_SIZE)))
-#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * PAGE_SIZE)))
-#define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
-#define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
+#define PTE_BASE  ((pt_entry_t *) (L2_SLOT_PTE * NBPD_L2))
+#define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L2_SLOT_APTE * NBPD_L2))))
 
-/*
- * the follow define determines how many PTPs should be set up for the
- * kernel by locore.S at boot time.  this should be large enough to
- * get the VM system running.  once the VM system is running, the
- * pmap module can add more PTPs to the kernel area on demand.
- */
+#define L1_BASE		PTE_BASE
+#define AL1_BASE	APTE_BASE
 
-#ifndef NKPTP
-#define NKPTP		0	/* 16MB to start */
-#endif
-#define NKPTP_MIN	2	/* smallest value we allow */
-#define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
-				/* largest value (-1 for APTP space) */
+#define L2_BASE ((pd_entry_t *)((char *)L1_BASE + L2_SLOT_PTE * NBPD_L1))
 
-/*
- * pdei/ptei: generate index into PDP/PTP from a VA
- */
-#define	pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
-#define	ptei(VA)	(((VA) & PT_MASK) >> PGSHIFT)
+#define AL2_BASE ((pd_entry_t *)((char *)AL1_BASE + L2_SLOT_PTE * NBPD_L1))
 
-/*
- * PTP macros:
- *   a PTP's index is the PD index of the PDE that points to it
- *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
- *   a PTP's VA is the first VA mapped by that PTP
- *
- * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
- */
+#define PDP_PDE		(L2_BASE + PDIR_SLOT_PTE)
+#define APDP_PDE	(L2_BASE + PDIR_SLOT_APTE)
 
-#define ptp_i2o(I)	((I) * PAGE_SIZE)	/* index => offset */
-#define ptp_o2i(O)	((O) / PAGE_SIZE)	/* offset => index */
-#define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
-#define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
+#define PDP_BASE	L2_BASE
+#define APDP_BASE	AL2_BASE
+
+/* largest value (-1 for APTP space) */
+#define NKL2_MAX_ENTRIES	(NTOPLEVEL_PDES - (KERNBASE/NBPD_L2) - 1)
+#define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * NPDPG)
+
+#define NKL2_KIMG_ENTRIES	0	/* XXX unused */
+
+#define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
+#define NKL1_START_ENTRIES	0	/* XXX unused */
+
+#define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
+
+#define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
+
+#define PTP_MASK_INITIALIZER	{ L1_FRAME, L2_FRAME }
+#define PTP_SHIFT_INITIALIZER	{ L1_SHIFT, L2_SHIFT }
+#define NKPTP_INITIALIZER	{ NKL1_START_ENTRIES, NKL2_START_ENTRIES }
+#define NKPTPMAX_INITIALIZER	{ NKL1_MAX_ENTRIES, NKL2_MAX_ENTRIES }
+#define NBPD_INITIALIZER	{ NBPD_L1, NBPD_L2 }
+#define PDES_INITIALIZER	{ L2_BASE }
+#define APDES_INITIALIZER	{ AL2_BASE }
+
+#define PTP_LEVELS	2
 
 /*
  * PG_AVAIL usage: we make use of the ignored bits of the PTE
@@ -216,284 +258,7 @@
  * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
  * Used to avoid false sharing of cache lines.
  */
-#define NPTECL			8
-
-#ifdef _KERNEL
-/*
- * pmap data structures: see pmap.c for details of locking.
- */
-
-struct pmap;
-typedef struct pmap *pmap_t;
-
-/*
- * we maintain a list of all non-kernel pmaps
- */
-
-LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
-
-/*
- * the pmap structure
- *
- * note that the pm_obj contains the simple_lock, the reference count,
- * page list, and number of PTPs within the pmap.
- *
- * XXX If we ever support processor numbers higher than 31, we'll have
- * XXX to rethink the CPU mask.
- */
-
-struct pmap {
-	struct uvm_object pm_obj;	/* object (lck by object lock) */
-#define	pm_lock	pm_obj.vmobjlock
-	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
-	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	uint32_t pm_pdirpa;		/* PA of PD (read-only after create) */
-	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
-	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
-
-	vaddr_t pm_hiexec;		/* highest executable mapping */
-	int pm_flags;			/* see below */
-
-	union descriptor *pm_ldt;	/* user-set LDT */
-	int pm_ldt_len;			/* number of LDT entries */
-	int pm_ldt_sel;			/* LDT selector */
-	uint32_t pm_cpus;		/* mask of CPUs using pmap */
-	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
-					 of pmap */
-};
-
-/* pm_flags */
-#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-
-/*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- */
-
-struct pv_entry {			/* locked by its list's pvh_lock */
-	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
-	struct pmap *pv_pmap;		/* the pmap */
-	vaddr_t pv_va;			/* the virtual address */
-	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
-};
-
-/*
- * pv_entrys are dynamically allocated in chunks from a single page.
- * we keep track of how many pv_entrys are in use for each page and
- * we can free pv_entry pages if needed.  there is one lock for the
- * entire allocation system.
- */
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pvpi_list;
-	struct pv_entry *pvpi_pvfree;
-	int pvpi_nfree;
-};
-
-/*
- * number of pv_entry's in a pv_page
- * (note: won't work on systems where NPBG isn't a constant)
- */
-
-#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
-			sizeof(struct pv_entry))
-
-/*
- * a pv_page: where pv_entrys are allocated from
- */
-
-struct pv_page {
-	struct pv_page_info pvinfo;
-	struct pv_entry pvents[PVE_PER_PVPAGE];
-};
-
-/*
- * global kernel variables
- */
-
-/* PDPpaddr: is the physical address of the kernel's PDP */
-extern u_long PDPpaddr;
-
-extern struct pmap kernel_pmap_store;	/* kernel pmap */
-extern int nkpde;			/* current # of PDEs for kernel */
-extern int pmap_pg_g;			/* do we support PG_G? */
-
-/*
- * macros
- */
-
-#define	pmap_kernel()			(&kernel_pmap_store)
-#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-
-#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
-#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
-#define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
-#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		x86_ptob(ppn)
-#define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
-
-
-/*
- * prototypes
- */
-
-void		pmap_activate(struct lwp *);
-void		pmap_bootstrap(vaddr_t);
-bool		pmap_clear_attrs(struct vm_page *, int);
-void		pmap_deactivate(struct lwp *);
-void		pmap_deactivate2(struct lwp *);
-void		pmap_page_remove (struct vm_page *);
-void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-bool		pmap_test_attrs(struct vm_page *, int);
-void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
-int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
-		    struct pcb *);
-void		pmap_load(void);
-
-vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
-
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
-void	pmap_tlb_shootwait(void);
-
-#define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
-
-/*
- * Do idle page zero'ing uncached to avoid polluting the cache.
- */
-bool	pmap_pageidlezero(paddr_t);
-#define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
-
-/*
- * inline functions
- */
-
-/*ARGSUSED*/
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
-
-/*
- * pmap_update_pg: flush one page from the TLB (or flush the whole thing
- *	if hardware doesn't support one-page flushing)
- */
-
-__inline static void __attribute__((__unused__))
-pmap_update_pg(vaddr_t va)
-{
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg((u_int) va);
-}
-
-/*
- * pmap_update_2pg: flush two pages from the TLB
- */
-
-__inline static void __attribute__((__unused__))
-pmap_update_2pg(vaddr_t va, vaddr_t vb)
-{
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg((u_int) va);
-		invlpg((u_int) vb);
-	}
-}
-
-/*
- * pmap_page_protect: change the protection of all recorded mappings
- *	of a managed page
- *
- * => this function is a frontend for pmap_page_remove/pmap_clear_attrs
- * => we only have to worry about making the page more protected.
- *	unprotecting a page is done on-demand at fault time.
- */
-
-__inline static void __attribute__((__unused__))
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
-{
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_clear_attrs(pg, PG_RW);
-		} else {
-			pmap_page_remove(pg);
-		}
-	}
-}
-
-/*
- * pmap_protect: change the protection of pages in a pmap
- *
- * => this function is a frontend for pmap_remove/pmap_write_protect
- * => we only have to worry about making the page more protected.
- *	unprotecting a page is done on-demand at fault time.
- */
-
-__inline static void __attribute__((__unused__))
-pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
-{
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			pmap_write_protect(pmap, sva, eva, prot);
-		} else {
-			pmap_remove(pmap, sva, eva);
-		}
-	}
-}
-
-/*
- * various address inlines
- *
- *  vtopte: return a pointer to the PTE mapping a VA, works only for
- *  user and PT addresses
- *
- *  kvtopte: return a pointer to the PTE mapping a kernel VA
- */
-
-#include <lib/libkern/libkern.h>
-
-static __inline pt_entry_t * __attribute__((__unused__))
-vtopte(vaddr_t va)
-{
-
-	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
-
-	return (PTE_BASE + x86_btop(va));
-}
-
-static __inline pt_entry_t * __attribute__((__unused__))
-kvtopte(vaddr_t va)
-{
-
-	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
-
-#ifdef LARGEPAGES
-	{
-		pd_entry_t *pde;
-
-		pde = PDP_BASE + pdei(va);
-		if (*pde & PG_PS)
-			return ((pt_entry_t *)pde);
-	}
-#endif
-
-	return (PTE_BASE + x86_btop(va));
-}
+#define NPTECL		8
 
 #define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
@@ -501,31 +266,11 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
-paddr_t vtophys(vaddr_t);
-vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
+#include <x86/pmap.h>
+
+struct trapframe;
+
+int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);
-void	pmap_cpu_init_early(struct cpu_info *);
-void	pmap_cpu_init_late(struct cpu_info *);
-void	sse2_zero_page(void *);
-void	sse2_copy_page(void *, void *);
 
-/*
- * Hooks for the pool allocator.
- */
-#define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
-
-/*
- * TLB shootdown mailbox.
- */
-
-struct pmap_mbox {
-	volatile void		*mb_pointer;
-	volatile uintptr_t	mb_addr1;
-	volatile uintptr_t	mb_addr2;
-	volatile uintptr_t	mb_head;
-	volatile uintptr_t	mb_tail;
-	volatile uintptr_t	mb_global;
-};
-
-#endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */

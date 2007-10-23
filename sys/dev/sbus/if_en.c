@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.21 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: if_en.c,v 1.21.30.1 2007/10/23 20:09:39 ad Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.21 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.21.30.1 2007/10/23 20:09:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.21 2005/12/11 12:23:44 christos Exp $");
 
 #include <net/if.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24.4.3 2007/10/09 13:38:49 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.4.4 2007/10/23 20:14:43 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -373,8 +373,8 @@ start:
 /*
  * Build initial page tables.
  */
-	/* Calculate end of text segment, rounded to a page. */
-	leal	(RELOC(etext)+PGOFSET),%edx
+	/* Calculate end of text segment. */
+	leal	(RELOC(__data_start)),%edx
 	andl	$~PGOFSET,%edx
 
 	/* Skip over the first 1MB. */
@@ -528,7 +528,7 @@ NENTRY(lwp_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -790,7 +790,7 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 	STIC(%eax)
 	jz	14f

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.6.1 2007/10/23 20:14:25 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.6.1 2007/10/23 20:14:25 ad Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
 #include "opt_openpic.h"
 
 #include <sys/param.h>
@@ -55,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $");
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -74,6 +72,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $");
 #include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/openpic.h>
+#include <arch/powerpc/pic/picvar.h>
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/ipivar.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -82,22 +85,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2007/02/09 21:55:11 ad Exp $");
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-void comsoft(void);
 #endif
 
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
-#include "ksyms.h"
+#include "opt_interrupt.h"
 
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
-void strayintr(int);
-int lcsplx(int);
-void prep_bus_space_init(void);
 static void prep_init(void);
+static void init_intr(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
 char bootpath[256];
@@ -109,13 +104,15 @@ uint32_t prep_intr_reg_off;		/* IVR offset within the mapped page */
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
+struct pic_ops *isa_pic;
+int isa_pcmciamask = 0x8b28;
+uint32_t busfreq;
+
+extern int primary_pic;
+extern struct platform_quirkdata platform_quirks[];
 
 RESIDUAL *res;
 RESIDUAL resdata;
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-extern void *endsym, *startsym;
-#endif
 
 void
 initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
@@ -144,7 +141,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		} else
 			panic("No residual data.");
 	}
-	printf("got residual data\n");
+	aprint_normal("got residual data\n");
 
 	/*
 	 * Set memory region
@@ -165,6 +162,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	{
 		struct btinfo_clock *clockinfo;
 		extern u_long ticks_per_sec, ns_per_tick;
+		VPD *vpd;
 
 		clockinfo =
 		    (struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
@@ -173,67 +171,12 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
+
+		vpd = &res->VitalProductData;
+		busfreq = be32toh(vpd->ProcessorBusHz);
 	}
 
-	/*
-	 * boothowto
-	 */
-	boothowto = args;
-
-	/*
-	 * Now setup fixed bat registers
-	 * We setup the memory BAT, the IO space BAT, and a special
-	 * BAT for certain machines that have rs6k style PCI bridges
-	 */
-	oea_batinit(
-	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
-	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
-	    0xbf800000, BAT_BL_8M,
-	    0);
-
-	/*
-	 * Install vectors and interrupt handler.
-	 */
-	oea_init(NULL);
-
-	/*
-	 * Initialize bus_space.
-	 */
-	prep_bus_space_init();
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
-#endif
-
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
+	prep_initppc(startkernel, endkernel, args);
 }
 
 /*
@@ -254,11 +197,6 @@ cpu_startup(void)
 	prep_init();
 
 	/*
-	 * Initialize soft interrupt framework.
-	 */
-	softintr__init();
-
-	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
@@ -277,6 +215,7 @@ cpu_startup(void)
 	 * Gather the pci interrupt routings.
          */
 	setup_pciroutinginfo();
+
 }
 
 /*
@@ -301,28 +240,6 @@ lookup_bootinfo(int type)
 }
 
 /*
- * Soft tty interrupts.
- */
-void
-softserial(void)
-{
-
-#if (NCOM > 0)
-	comsoft();
-#endif
-}
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
@@ -344,6 +261,12 @@ cpu_reboot(int howto, char *what)
 
 	/* Disable intr */
 	splhigh();
+
+#ifdef MULTIPROCESSOR
+	/* Halt other CPUs */
+	ppc_send_ipi(IPI_T_NOTME, PPC_IPI_HALT);
+	delay(100000);  /* XXX */
+#endif
 
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
@@ -370,56 +293,13 @@ halt_sys:
 	/* NOTREACHED */
 }
 
-/*
- * lcsplx() is called from locore; it is an open-coded version of
- * splx() differing in that it returns the previous priority level.
- */
-int
-lcsplx(int ipl)
-{
-	int oldcpl;
-	struct cpu_info *ci = curcpu();
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = ipl;
-	if (ci->ci_ipending & ~ipl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-	return (oldcpl);
-}
-
-struct powerpc_bus_space prep_io_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_offset = 0x80000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x3f800000,
-};
-struct powerpc_bus_space prep_isa_io_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	.pbs_offset = 0x80000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x00010000,
-};
 struct powerpc_bus_space prep_eisa_io_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	.pbs_offset = 0x80000000,
 	.pbs_base = 0x00000000,
 	.pbs_limit = 0x0000f000,
 };
-struct powerpc_bus_space prep_mem_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0xC0000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x3f000000,
-};
-struct powerpc_bus_space prep_isa_mem_space_tag = {
-	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0xC0000000,
-	.pbs_base = 0x00000000,
-	.pbs_limit = 0x01000000,
-};
+
 struct powerpc_bus_space prep_eisa_mem_space_tag = {
 	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_offset = 0xC0000000,
@@ -427,53 +307,21 @@ struct powerpc_bus_space prep_eisa_mem_space_tag = {
 	.pbs_limit = 0x3f000000,
 };
 
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-
-void
-prep_bus_space_init(void)
-{
-	int error;
-
-	error = bus_space_init(&prep_io_space_tag, "ioport",
-	    ex_storage[0], sizeof(ex_storage[0]));
-	if (error)
-		panic("prep_bus_space_init: can't init io tag");
-
-	error = extent_alloc_region(prep_io_space_tag.pbs_extent,
-	    0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("prep_bus_space_init: can't block out reserved I/O"
-		    " space 0x10000-0x7fffff: error=%d", error);
-	error = bus_space_init(&prep_mem_space_tag, "iomem",
-	    ex_storage[1], sizeof(ex_storage[1]));
-	if (error)
-		panic("prep_bus_space_init: can't init mem tag");
-
-	prep_isa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
-	error = bus_space_init(&prep_isa_io_space_tag, "isa-ioport", NULL, 0);
-	if (error)
-		panic("prep_bus_space_init: can't init isa io tag");
-
-	prep_isa_mem_space_tag.pbs_extent = prep_mem_space_tag.pbs_extent;
-	error = bus_space_init(&prep_isa_mem_space_tag, "isa-iomem", NULL, 0);
-	if (error)
-		panic("prep_bus_space_init: can't init isa mem tag");
-}
-
-#if defined(OPENPIC)
+#if defined(PIC_OPENPIC)
 
 static int
-setup_openpic(PPC_DEVICE *dev)
+prep_setup_openpic(PPC_DEVICE *dev)
 {
 	uint32_t l;
 	uint8_t *p;
 	void *v;
-	int tag, size, item;
+	int tag, size, item, i;
 	unsigned char *baseaddr = NULL;
 
 	l = be32toh(dev->AllocatedOffset);
 	p = res->DevicePnPHeap + l;
+
+        i = find_platform_quirk(res->VitalProductData.PrintableModel);
 
 	/* look for the large vendor item that describes the MPIC's memory
 	 * range */
@@ -502,13 +350,30 @@ setup_openpic(PPC_DEVICE *dev)
 			    le64dec(&pa->PPCData[12]));
 		if (baseaddr == NULL)
 			return 0;
-		openpic_init(baseaddr);
+		pic_init();
+        	if (i != -1 &&
+		    (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+                     platform_quirks[i].isa_intr_handler == EXT_INTR_I8259)) {
+			isa_pic = setup_prepivr(PIC_IVR_MOT);
+                } else
+			isa_pic = setup_prepivr(PIC_IVR_IBM);
+		(void)setup_openpic(baseaddr, 0);
+		/* set the timebase frequency to 1/8th busfreq */
+		openpic_write(OPENPIC_TIMER_FREQ, busfreq/8);
+		primary_pic = 1;
+		/* set up the IVR as a cascade on openpic 0 */
+		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		    isa_pic);
+		oea_install_extint(pic_ext_intr);
+#ifdef MULTIPROCESSOR
+		setup_openpic_ipi();
+#endif
 		return 1;
 	}
 	return 0;
 }
 
-#endif /* OPENPIC */
+#endif /* PIC_OPENPIC */
 
 /*
  * Locate and setup the isa_ivr.
@@ -573,9 +438,9 @@ prep_init()
 	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
 		if (ppc_dev[i].DeviceId.DevId == 0x41d00000) /* ISA_PIC */
 			setup_ivr(&ppc_dev[i]);
-#if defined(OPENPIC)
+#if defined(PIC_OPENPIC)
 		if (ppc_dev[i].DeviceId.DevId == 0x244d000d) { /* MPIC */
-			foundmpic = setup_openpic(&ppc_dev[i]);
+			foundmpic = prep_setup_openpic(&ppc_dev[i]);
 		}
 #else
 		;
@@ -595,4 +460,22 @@ prep_init()
 	}
 	if (!foundmpic)
 		init_intr();
+}
+
+static void
+init_intr(void)
+{
+        int i;
+        openpic_base = 0;
+
+	pic_init();
+        i = find_platform_quirk(res->VitalProductData.PrintableModel);
+        if (i != -1)
+                if (platform_quirks[i].quirk & PLAT_QUIRK_ISA_HANDLER &&
+                    platform_quirks[i].isa_intr_handler == EXT_INTR_I8259) {
+			isa_pic = setup_prepivr(PIC_IVR_MOT);
+                        return;
+                }
+	isa_pic = setup_prepivr(PIC_IVR_IBM);
+        oea_install_extint(pic_ext_intr);
 }

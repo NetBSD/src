@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.16.4.2 2007/10/09 13:41:38 ad Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.16.4.3 2007/10/23 20:08:14 ad Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.2 2007/10/09 13:41:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.16.4.3 2007/10/23 20:08:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/gpio.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* Don't use gpio for now in the LKM */
 #ifdef _LKM

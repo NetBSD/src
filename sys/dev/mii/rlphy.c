@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.12.10.2 2007/05/27 14:30:20 ad Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.12.10.3 2007/10/23 20:08:33 ad Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12.10.2 2007/05/27 14:30:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12.10.3 2007/10/23 20:08:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12.10.2 2007/05/27 14:30:20 ad Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/rtl81x9reg.h>
 
 struct rlphy_softc {
@@ -78,7 +78,7 @@ const struct mii_phy_funcs rlphy_funcs = {
 
 static const struct mii_phydesc rlphys[] = {
 	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
-          MII_STR_yyREALTEK_RTL8201L },
+	  MII_STR_yyREALTEK_RTL8201L },
 	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
 	  MII_STR_ICPLUS_IP101 },
 

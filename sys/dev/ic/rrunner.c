@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.61.2.3 2007/08/19 19:24:27 ad Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.61.2.4 2007/10/23 20:07:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.3 2007/08/19 19:24:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.4 2007/10/23 20:07:40 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.3 2007/08/19 19:24:27 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/rrunnerreg.h>
 #include <dev/ic/rrunnervar.h>

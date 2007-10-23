@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.33 2007/03/04 06:02:40 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.33.2.1 2007/10/23 20:09:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33.2.1 2007/10/23 20:09:40 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33 2007/03/04 06:02:40 christos Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

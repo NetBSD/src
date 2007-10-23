@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.5.8.2 2007/10/23 20:06:51 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.5.8.2 2007/10/23 20:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.5.8.1 2007/10/09 13:41:14 ad Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

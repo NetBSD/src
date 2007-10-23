@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.10 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: altivec.h,v 1.10.30.1 2007/10/23 20:14:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
 
 #ifdef _KERNEL
-#include "opt_multiprocessor.h"
 
 #define	ALTIVEC_SAVE	0
 #define	ALTIVEC_DISCARD	1
@@ -51,9 +50,6 @@
 void enable_vec(void);
 void save_vec_cpu(void);
 void save_vec_lwp(struct lwp *, int /*discard*/);
-#ifdef MULTIPROCESSOR
-void mp_save_vec_lwp(struct lwp *);
-#endif
 void vzeropage(paddr_t);
 void vcopypage(paddr_t, paddr_t);	/* dst, src */
 #endif

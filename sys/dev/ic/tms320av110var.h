@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.8 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.8.24.1 2007/10/23 20:07:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #ifndef _TMS320AV110_VAR_H_
 #define _TMS320AV110_VAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* softc */
 

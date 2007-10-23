@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.14 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.14.8.1 2007/10/23 20:08:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.14 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.14.8.1 2007/10/23 20:08:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.14 2006/11/16 01:33:08 christos Exp
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/atwreg.h>
 #include <dev/ic/rf3000reg.h>

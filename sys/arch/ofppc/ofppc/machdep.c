@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91.2.1 2007/07/15 13:16:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91.2.2 2007/10/23 20:13:43 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,167 +32,117 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.1 2007/07/15 13:16:37 ad Exp $");
-
-#include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.2 2007/10/23 20:13:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
-#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-
 #include <dev/ofw/openfirm.h>
+#include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-#include <machine/platform.h>
+#include <machine/bus.h>
+#include <machine/isa_machdep.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/ofw_cons.h>
 
-#include <dev/cons.h>
-
-#include "ksyms.h"
-/*
- * Global variables used here and there
- */
-char bootpath[256];
-
-int lcsplx(int);			/* called from locore.S */
-
-static int fake_spl __P((int));
-static void fake_splx __P((int));
-static void fake_setsoft __P((int));
-static void fake_clock_return __P((struct clockframe *, int, long));
-static void *fake_intr_establish __P((int, int, int, int (*)(void *), void *));
-static void fake_intr_disestablish __P((void *));
-
-struct machvec machine_interface = {
-	fake_spl,
-	fake_spl,
-	fake_splx,
-	fake_setsoft,
-	fake_clock_return,
-	fake_intr_establish,
-	fake_intr_disestablish,
-};
-
-void	ofppc_bootstrap_console(void);
 
 struct pmap ofw_pmap;
+char bootpath[256];
+
+void ofwppc_batinit(void);
+void	ofppc_bootstrap_console(void);
 
 void
-initppc(startkernel, endkernel, args)
-	u_int startkernel, endkernel;
-	char *args;
+initppc(u_int startkernel, u_int endkernel, char *args)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
-	extern void *startsym, *endsym;
-#endif
-
 	/* Initialize the bootstrap console. */
 	ofppc_bootstrap_console();
+	ofwoea_initppc(startkernel, endkernel, args);
+	map_isa_ioregs();
+}
 
-	/*
-	 * Initialize the bat registers
-	 */
-	oea_batinit(0);
-
-	/*
-	 * Initialize the platform structure.  This may add entries
-	 * to the BAT table.
-	 */
-	platform_init();
-
-#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
-	OF_set_callback(callback);
-#endif
-
-	oea_init(NULL);
-
-	/*
-	 * Now that translation is enabled (and we can access bus space),
-	 * initialize the console.
-	 */
-	(*platform.cons_init)();
-
-	/*
-	 * Parse arg string.
-	 */
-	strcpy(bootpath, args);
-	while (*++args && *args != ' ');
-	if (*args) {
-		for(*args++ = 0; *args; args++)
-			BOOT_FLAG(*args, boothowto);
-	}
-
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
+void
+cpu_startup(void)
+{
+	oea_startup(NULL);
 }
 
 /*
- * Machine dependent startup code.
- */
 void
-cpu_startup()
+consinit(void)
 {
-
-	oea_startup(NULL);
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	splhigh();
-	mtmsr(mfmsr() | PSL_EE | PSL_RI);
-	softintr__init();
-	if (platform.softintr_init != NULL)
-		platform.softintr_init();
+	ofwoea_consinit();
 }
+*/
+
+void
+dumpsys(void)
+{
+	printf("dumpsys: TBD\n");
+}
+
+/*
+ * Halt or reboot the machine after syncing/dumping according to howto.
+ */
+
+void
+cpu_reboot(int howto, char *what)
+{
+	static int syncing;
+	static char str[256];
+	char *ap = str, *ap1 = ap;
+
+	boothowto = howto;
+	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
+		syncing = 1;
+		vfs_shutdown();         /* sync */
+		resettodr();            /* set wall clock */
+	}
+	splhigh();
+	if (howto & RB_HALT) {
+		doshutdownhooks();
+		printf("halted\n\n");
+		ppc_exit();
+	}
+	if (!cold && (howto & RB_DUMP))
+		oea_dumpsys();
+	doshutdownhooks();
+	printf("rebooting\n\n");
+	if (what && *what) {
+		if (strlen(what) > sizeof str - 5)
+			printf("boot string too large, ignored\n");
+		else {
+			strcpy(str, what);
+			ap1 = ap = str + strlen(str);
+			*ap++ = ' ';
+		}
+	}
+	*ap++ = '-';
+	if (howto & RB_SINGLE)
+		*ap++ = 's';
+	if (howto & RB_KDB)
+		*ap++ = 'd';
+	*ap++ = 0;
+	if (ap[-2] == '-')
+		*ap1 = 0;
+	ppc_boot(str);
+}
+
+/*
+ * XXX
+ * The following code is subject to die at a later date.  This is the only
+ * remaining code in this file subject to the Tools GmbH copyright.
+ */
 
 void
 consinit()
@@ -258,145 +208,3 @@ ofppc_cnputc(dev_t dev, int c)
 	OF_write(ofppc_stdout_ihandle, &ch, 1);
 }
 
-/*
- * Crash dump handling.
- */
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(irq)
-	int irq;
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto.
- */
-void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
-	}
-	splhigh();
-	if (howto & RB_HALT) {
-		doshutdownhooks();
-		printf("halted\n\n");
-		ppc_exit();
-	}
-	if (!cold && (howto & RB_DUMP))
-		oea_dumpsys();
-	doshutdownhooks();
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-	ppc_boot(str);
-}
-
-#ifdef notyet
-/*
- * OpenFirmware callback routine
- */
-void
-callback(p)
-	void *p;
-{
-	panic("callback");	/* for now			XXX */
-}
-#endif
-
-/*
- * Perform an `splx()' for locore.
- */
-int
-lcsplx(int ipl)
-{
-
-	return (_spllower(ipl));
-}
-
-/*
- * Initial Machine Interface.
- */
-static int
-fake_spl(int new)
-{
-	int scratch;
-
-	__asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
-	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
-	return (-1);
-}
-
-static void
-fake_setsoft(int ipl)
-{
-	/* Do nothing */
-}
-
-static void
-fake_splx(new)
-	int new;
-{
-
-	(void) fake_spl(0);
-}
-
-static void
-fake_clock_return(frame, nticks, ticks)
-	struct clockframe *frame;
-	int nticks;
-	long ticks;
-{
-
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = mftb() + ticks - ticks_per_intr;
-}
-
-static void *
-fake_intr_establish(irq, level, ist, handler, arg)
-	int irq, level, ist;
-	int (*handler) __P((void *));
-	void *arg;
-{
-
-	panic("fake_intr_establish");
-}
-
-static void
-fake_intr_disestablish(cookie)
-	void *cookie;
-{
-
-	panic("fake_intr_disestablish");
-}

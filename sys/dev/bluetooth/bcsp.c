@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.2.4.2 2007/10/09 13:41:16 ad Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.2.4.3 2007/10/23 20:06:55 ad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.2.4.2 2007/10/09 13:41:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.2.4.3 2007/10/23 20:06:55 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,8 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.2.4.2 2007/10/09 13:41:16 ad Exp $");
 #include "ioconf.h"
 
 #ifdef BCSP_DEBUG
+#ifdef DPRINTF
 #undef DPRINTF
+#endif
+#ifdef DPRINTFN
 #undef DPRINTFN
+#endif
 
 #define DPRINTF(x)	printf x
 #define DPRINTFN(n, x)	do { if (bcsp_debug > (n)) printf x; } while (0)
@@ -588,7 +592,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			}
 
 			m = m->m_next;
-			m->m_len = 0;
+			m->m_pkthdr.len = m->m_len = 0;
 		}
 	} else
 		if (c != BCSP_SLIP_PKTSTART) {
@@ -677,13 +681,13 @@ bcsp_slip_receive(int c, struct tty *tp)
 		default:
 			mtod(m, uint8_t *)[m->m_len++] = c;
 		}
+		sc->sc_rxp->m_pkthdr.len++;
 	}
 	if (discard) {
 discarded:
 		DPRINTFN(4, ("%s: receives unexpected byte 0x%02x: %s\n",
 		    sc->sc_dev.dv_xname, c, errstr));
-	} else
-		sc->sc_rxp->m_pkthdr.len++;
+	}
 	sc->sc_unit.hci_stats.byte_rx++;
 
 	return 0;
@@ -890,6 +894,7 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 		hdrp->flags |= BCSP_FLAGS_PROTOCOL_REL;		/* Reliable */
 		goto transmit;
 	}
+	bcsp_start(unit);
 	if (sc->sc_mux_send_ack == true) {
 		m = bcsp_create_ackpkt();
 		if (m != NULL)
@@ -1005,11 +1010,6 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 
 	m_copydata(m, 0, sizeof(bcsp_hdr_t), &hdr);
 	rxseq = BCSP_FLAGS_SEQ(hdr.flags);
-	/*
-	 * We remove the header of BCSP and add the 'uint8_t type' of
-	 * hci_*_hdr_t to the head. 
-	 */
-	m_adj(m, sizeof(bcsp_hdr_t) - sizeof(uint8_t));
 
 	DPRINTFN(1, ("%s: seq receive: rxseq=%d, expected %d\n",
 	    sc->sc_dev.dv_xname, rxseq, sc->sc_seq_expected_rxseq));
@@ -1017,6 +1017,12 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 	if (bcsp_debug == 2)
 		bcsp_packet_print(m);
 #endif
+
+	/*
+	 * We remove the header of BCSP and add the 'uint8_t type' of
+	 * hci_*_hdr_t to the head. 
+	 */
+	m_adj(m, sizeof(bcsp_hdr_t) - sizeof(uint8_t));
 
 	if (rxseq != sc->sc_seq_expected_rxseq) {
 		m_freem(m);
@@ -1228,6 +1234,7 @@ bcsp_timer_timeout(void *arg)
 			printf("%s: reached the retry limit."
 			    "  restart the link-establishment\n",
 			    sc->sc_dev.dv_xname);
+			bcsp_sequencing_reset(sc);
 			bcsp_start_le(&sc->sc_unit);
 			return;
 		}
@@ -1509,6 +1516,8 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 			printf("%s: received sync!!  peer to reset?\n",
 			    sc->sc_dev.dv_xname);
 
+			bcsp_sequencing_reset(sc);
+			rplypkt = sync;
 			sc->sc_le_state = le_state_shy;
 		} else
 			printf("%s: received unknown packet at garrulous\n",

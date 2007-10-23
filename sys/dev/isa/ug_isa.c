@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.1.6.4 2007/10/09 13:41:38 ad Exp $ */
+/* $NetBSD: ug_isa.c,v 1.1.6.5 2007/10/23 20:08:20 ad Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.4 2007/10/09 13:41:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.5 2007/10/23 20:08:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.4 2007/10/09 13:41:38 ad Exp $");
 #include <sys/envsys.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

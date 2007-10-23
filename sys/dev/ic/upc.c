@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.12 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: upc.c,v 1.12.30.1 2007/10/23 20:07:50 ad Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,13 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.12 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.12.30.1 2007/10/23 20:07:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ata/atavar.h> /* XXX needed by wdcvar.h */
 #include <dev/ic/comreg.h>

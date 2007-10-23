@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.10.2.1 2007/07/15 13:21:14 ad Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.10.2.2 2007/10/23 20:07:24 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.10.2.1 2007/07/15 13:21:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.10.2.2 2007/10/23 20:07:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.10.2.1 2007/07/15 13:21:14 ad Exp
 #include <sys/ioccom.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

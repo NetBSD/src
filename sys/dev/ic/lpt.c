@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.69.2.2 2007/10/12 17:03:08 ad Exp $	*/
+/*	$NetBSD: lpt.c,v 1.69.2.3 2007/10/23 20:07:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.2 2007/10/12 17:03:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.3 2007/10/23 20:07:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.2.2 2007/10/12 17:03:08 ad Exp $");
 #include <sys/syslog.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>

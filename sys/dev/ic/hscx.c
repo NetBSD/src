@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.12 2005/12/11 12:21:26 christos Exp $
+ *	$Id: hscx.c,v 1.12.30.1 2007/10/23 20:07:26 ad Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.12 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.12.30.1 2007/10/23 20:07:26 ad Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.12 2005/12/11 12:21:26 christos Exp $");
 #include <i386/isa/isa_device.h>
 #else
 #ifndef __bsdi__
-#include <machine/bus.h>
+#include <sys/bus.h>
 #endif
 #include <sys/device.h>
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.2 2006/12/20 21:44:06 bouyer Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.2.14.1 2007/10/23 20:09:08 ad Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2 2006/12/20 21:44:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2.14.1 2007/10/23 20:09:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,7 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2 2006/12/20 21:44:06 bouyer Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>

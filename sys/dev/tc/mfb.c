@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.49 2007/03/04 15:46:18 yamt Exp $ */
+/* $NetBSD: mfb.c,v 1.49.2.1 2007/10/23 20:09:46 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49 2007/03/04 15:46:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49.2.1 2007/10/23 20:09:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49 2007/03/04 15:46:18 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

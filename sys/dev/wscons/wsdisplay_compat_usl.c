@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.40.2.1 2007/07/01 21:49:04 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.40.2.2 2007/10/23 20:10:00 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.40.2.1 2007/07/01 21:49:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.40.2.2 2007/10/23 20:10:00 ad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -110,7 +110,9 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	sd->s_relsig = relsig;
 	sd->s_frsig = frsig;
 	callout_init(&sd->s_attach_ch, 0);
+	callout_setfunc(&sd->s_attach_ch, usl_attachtimeout, sd);
 	callout_init(&sd->s_detach_ch, 0);
+	callout_setfunc(&sd->s_detach_ch, usl_detachtimeout, sd);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -183,8 +185,7 @@ usl_detachproc(void *cookie, int waitok,
 	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_relsig);
 	mutex_exit(&proclist_mutex);
-	callout_reset(&sd->s_detach_ch, wscompat_usl_synctimeout * hz,
-	    usl_detachtimeout, sd);
+	callout_schedule(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
 
 	return (EAGAIN);
 }
@@ -245,8 +246,7 @@ usl_attachproc(void *cookie, int waitok,
 	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_acqsig);
 	mutex_exit(&proclist_mutex);
-	callout_reset(&sd->s_attach_ch, wscompat_usl_synctimeout * hz,
-	    usl_attachtimeout, sd);
+	callout_schedule(&sd->s_attach_ch, wscompat_usl_synctimeout * hz);
 
 	return (EAGAIN);
 }
@@ -289,9 +289,10 @@ usl_attachtimeout(void *arg)
 }
 
 int
-wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
+wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
+	struct wsdisplay_softc *sc = device_private(dv);
 	int idx, maxidx;
 
 	switch (cmd) {
@@ -320,7 +321,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
 		idx = *(long *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
-		return (wsdisplay_switch((struct device *)sc, idx, 1));
+		return (wsdisplay_switch(dv, idx, 1));
 	    case VT_WAITACTIVE:
 		idx = *(long *)data - 1;
 		if (idx < 0)

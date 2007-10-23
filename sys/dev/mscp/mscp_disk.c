@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.54.2.2 2007/08/20 18:16:13 ad Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.54.2.3 2007/10/23 20:08:34 ad Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54.2.2 2007/08/20 18:16:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54.2.3 2007/10/23 20:08:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -100,8 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54.2.2 2007/08/20 18:16:13 ad Exp $"
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/mscp/mscp.h>
 #include <dev/mscp/mscpreg.h>

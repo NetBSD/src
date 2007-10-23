@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_eso.c,v 1.11 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.11.8.1 2007/10/23 20:09:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.11 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.11.8.1 2007/10/23 20:09:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.11 2006/11/16 01:33:09 christos Exp $"
 #include <sys/select.h>
 #include <sys/audioio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 

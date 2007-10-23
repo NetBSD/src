@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.1.6.2 2007/08/20 22:07:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.1.6.3 2007/10/23 20:08:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.1.6.2 2007/08/20 22:07:03 ad Exp $")
 
 #include <dev/pci/pcidevs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 
 #define	AMD64_MAX_MCTRL		8

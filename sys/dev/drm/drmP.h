@@ -84,7 +84,7 @@ typedef struct drm_file drm_file_t;
 #include <machine/resource.h>
 #endif
 #include <machine/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #if !defined(DRM_NO_MTRR)
 #include <machine/sysarch.h>
 #endif

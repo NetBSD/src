@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_machdep.c,v 1.13 2006/06/09 01:19:11 garbled Exp $	*/
+/*	$NetBSD: ibm_machdep.c,v 1.13.16.1 2007/10/23 20:14:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,21 +42,21 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
-extern struct prep_pci_chipset *prep_pct;
+extern struct genppc_pci_chipset *genppc_pct;
 
 void pci_intr_fixup_ibm_6015(void);
 
 void
 pci_intr_fixup_ibm_6015(void)
 {
-	struct prep_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 	prop_dictionary_t dict, sub;
 	prop_number_t intr_num;
 	int i, j;
 	char key[20];
 
 	/* this works because the 6015 has only 1 PCI bus native */
-	pbi = SIMPLEQ_FIRST(&prep_pct->pc_pbi);
+	pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 
 	dict = prop_dictionary_create_with_capacity(16);
 	KASSERT(dict != NULL);

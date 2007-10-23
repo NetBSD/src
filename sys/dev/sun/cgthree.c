@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.13 2007/03/04 06:02:45 christos Exp $ */
+/*	$NetBSD: cgthree.c,v 1.13.2.1 2007/10/23 20:09:45 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.13 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.13.2.1 2007/10/23 20:09:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.13 2007/03/04 06:02:45 christos Exp $"
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sun/fbio.h>

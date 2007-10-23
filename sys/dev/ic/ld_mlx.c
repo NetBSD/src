@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.13.8.2 2007/08/19 19:24:26 ad Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.13.8.3 2007/10/23 20:07:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.13.8.2 2007/08/19 19:24:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.13.8.3 2007/10/23 20:07:33 ad Exp $");
 
 #include "rnd.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.13.8.2 2007/08/19 19:24:26 ad Exp $");
 #endif
 
 #include <machine/vmparam.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ldvar.h>
 

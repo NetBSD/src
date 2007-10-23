@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.77.2.1 2007/10/09 13:41:37 ad Exp $	*/
+/*	$NetBSD: if_el.c,v 1.77.2.2 2007/10/23 20:08:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.77.2.1 2007/10/09 13:41:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.77.2.2 2007/10/23 20:08:07 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.77.2.1 2007/10/09 13:41:37 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_elreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.1.4.2 2007/06/09 21:37:17 ad Exp $ */
+/*	$NetBSD: pcf8584.c,v 1.1.4.3 2007/10/23 20:07:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.1.4.2 2007/06/09 21:37:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.1.4.3 2007/10/23 20:07:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.1.4.2 2007/06/09 21:37:17 ad Exp $");
 #include <sys/systm.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/param.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/ic/pcf8584reg.h>

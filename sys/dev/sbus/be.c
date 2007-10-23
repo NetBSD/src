@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.52.2.2 2007/10/09 13:42:03 ad Exp $	*/
+/*	$NetBSD: be.c,v 1.52.2.3 2007/10/23 20:09:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.52.2.2 2007/10/09 13:42:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.52.2.3 2007/10/23 20:09:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -107,8 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.52.2.2 2007/10/09 13:42:03 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

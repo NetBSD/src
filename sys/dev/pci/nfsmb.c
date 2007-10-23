@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.1.4.4 2007/10/09 13:41:49 ad Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.1.4.5 2007/10/23 20:09:10 ad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.1.4.4 2007/10/09 13:41:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.1.4.5 2007/10/23 20:09:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.1.4.4 2007/10/09 13:41:49 ad Exp $");
 #include <sys/rwlock.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 

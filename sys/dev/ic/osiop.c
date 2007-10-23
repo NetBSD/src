@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.27.2.1 2007/07/15 13:21:16 ad Exp $	*/
+/*	$NetBSD: osiop.c,v 1.27.2.2 2007/10/23 20:07:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27.2.1 2007/07/15 13:21:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27.2.2 2007/10/23 20:07:39 ad Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -120,8 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27.2.1 2007/07/15 13:21:16 ad Exp $");
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/ic/osiopreg.h>
 #include <dev/ic/osiopvar.h>

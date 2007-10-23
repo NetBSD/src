@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.30.2.3 2007/08/20 18:38:54 ad Exp $       */
+/*      $NetBSD: pccons.c,v 1.30.2.4 2007/10/23 20:14:37 ad Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.2.3 2007/08/20 18:38:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.2.4 2007/10/23 20:14:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1892,7 +1892,7 @@ pcstart(struct tty *tp)
         if (cl->c_cc) 
         {
             tp->t_state |= TS_TIMEOUT;
-	    callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+	    callout_schedule(&tp->t_rstrt_ch, 1);
         }
         /* 
         ** Check if we are under the low water mark and

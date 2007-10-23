@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2001/06/06 17:42:30 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.9.82.1 2007/10/23 20:12:00 ad Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,8 @@
 #endif	/* _LOCORE */
 #endif
 
+
+//#define DELAY(ms) delay(ms)                
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */

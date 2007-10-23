@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.6.1 2007/10/23 20:11:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,175 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #ifndef _BEBOX_INTR_H_
 #define _BEBOX_INTR_H_
 
-/* Interrupt priority `levels'. */
-#define	IPL_NONE	9	/* nothing */
-#define	IPL_SOFTCLOCK	8	/* software clock interrupt */
-#define	IPL_SOFTNET	7	/* software network interrupt */
-#define	IPL_BIO		6	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
-#define	IPL_CLOCK	1	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	1	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	0	/* serial */
-#define	NIPL		10
-
-/* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#include <powerpc/intr.h>
 
 #ifndef _LOCORE
 
-/*
- * Interrupt handler chains.  intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-struct intrhand {
-	int	(*ih_fun) __P((void *));
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-};
+void enable_intr(void);
+void disable_intr(void);
 
-void do_pending_int __P((void));
-
-void ext_intr __P((void));
-void *intr_establish __P((int, int, int, int (*)(void *), void *));
-void intr_disestablish __P((void *));
-void intr_calculatemasks __P((void));
-int  isa_intr __P((void));
-void isa_intr_mask __P((int));
-void isa_intr_clr __P((int));
-
-void enable_intr __P((void));
-void disable_intr __P((void));
-
-static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
-static __inline void set_sint __P((int));
-
-extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];
-extern long intrcnt[];
+extern paddr_t bebox_mb_reg;
 
-/*
- *  Reorder protection in the following inline functions is
- * achieved with the "eieio" instruction which the assembler
- * seems to detect and then doesn't move instructions past....
- */
-static __inline int
-splraise(newcpl)
-	int newcpl;
-{
-	int oldcpl;
+#define ICU_LEN         32
+#define IRQ_SLAVE       2
+#define LEGAL_IRQ(x)    ((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 
-	__asm volatile("sync; eieio\n");	/* don't reorder.... */
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-static __inline void
-splx(newcpl)
-	int newcpl;
-{
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-}
-
-static __inline int
-spllower(newcpl)
-	int newcpl;
-{
-	int oldcpl;
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-set_sint(pending)
-	int	pending;
-{
-	int	msrsave;
-
-	__asm ("mfmsr %0" : "=r"(msrsave));
-	__asm volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= pending;
-	__asm volatile ("mtmsr %0" :: "r"(msrsave));
-}
-
-#define	ICU_LEN		32
-#define	IRQ_SLAVE	2
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
-
-#define	MOTHER_BOARD_REG	0x7ffff000
-#define	CPU0_INT_MASK	0x0f0
-#define	CPU1_INT_MASK	0x1f0
-#define	INT_STATE_REG	0x2f0
-
-#define	SINT_CLOCK	0x20000000
-#define	SINT_NET	0x40000000
-#define	SINT_SERIAL	0x80000000
-#define	SPL_CLOCK	0x00000001
-#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
-
-#define	CNT_SINT_NET	29
-#define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_SERIAL	31
-#define	CNT_CLOCK	0
-
-#define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET);
-#define	setsoftserial()	set_sint(SINT_SERIAL);
-
-#define	spl0()		spllower(0)
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return splraise(imask[icookie._ipl]);
-}
-
-#include <sys/spl.h>
+#define BEBOX_INTR_REG        0xbffff000
+#define INTR_VECTOR_REG 0xff0
 
 #endif /* !_LOCORE */
 

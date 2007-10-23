@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.303.2.6 2007/10/09 13:37:53 ad Exp $
+#	$NetBSD: files.i386,v 1.303.2.7 2007/10/23 20:12:59 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -43,9 +43,6 @@ defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
-# Large page size
-defflag			LARGEPAGES
-
 # No unmapped page below kernel stack
 defflag			NOREDZONE
 
@@ -86,7 +83,7 @@ file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	arch/i386/i386/pmap.c
+file	arch/x86/x86/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c

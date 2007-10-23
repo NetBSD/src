@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.8 2007/10/12 13:48:49 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.9 2007/10/23 20:13:01 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,22 +164,16 @@ define	KSTACK_SIZE		KSTACK_SIZE
 define	KERNBASE		KERNBASE
 define	KERNTEXTOFF		KERNTEXTOFF
 
-define	PGSHIFT			PGSHIFT
-define	PGOFSET			PGOFSET
-define	PDSHIFT			PDSHIFT
-define	PDOFSET			PDOFSET
-define	NBPD			NBPD
-
 define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
 define	PG_KR			PG_KR
 
-define	PDSLOT_PTE		PDSLOT_PTE
-define	PDSLOT_APTE		PDSLOT_APTE
-define	PDSLOT_KERN		PDSLOT_KERN
-define	NKPTP_MIN		NKPTP_MIN
-define	NKPTP_MAX		NKPTP_MAX
+define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
+define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
+
+define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
+define	PTE_BASE		PTE_BASE
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
@@ -325,20 +319,20 @@ endif
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 
-define        SIZEOF_ISOURCE          sizeof(struct intrsource)
-define        SIZEOF_ISTUB            sizeof(struct intrstub)
+define	SIZEOF_ISOURCE		sizeof(struct intrsource)
+define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
-define		IS_RECURSE	offsetof(struct intrsource, is_recurse)
-define		IS_RESUME	offsetof(struct intrsource, is_resume)
-define		IS_EVCNTLO	offsetof(struct intrsource, is_evcnt.ev_count)
-define		IS_EVCNTHI	offsetof(struct intrsource, is_evcnt.ev_count)+4
-define		IS_HANDLERS	offsetof(struct intrsource, is_handlers)
-define		IS_PIC		offsetof(struct intrsource, is_pic)
-define		IS_FLAGS	offsetof(struct intrsource, is_flags)
-define		IS_PIN		offsetof(struct intrsource, is_pin)
-define		IS_TYPE		offsetof(struct intrsource, is_type)
-define		IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
-define		IS_LWP		offsetof(struct intrsource, is_lwp)
+define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
+define	IS_RESUME		offsetof(struct intrsource, is_resume)
+define	IS_EVCNTLO		offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_EVCNTHI		offsetof(struct intrsource, is_evcnt.ev_count)+4
+define	IS_HANDLERS		offsetof(struct intrsource, is_handlers)
+define	IS_PIC			offsetof(struct intrsource, is_pic)
+define	IS_FLAGS		offsetof(struct intrsource, is_flags)
+define	IS_PIN			offsetof(struct intrsource, is_pin)
+define	IS_TYPE			offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
+define	IS_LWP			offsetof(struct intrsource, is_lwp)
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -364,6 +358,10 @@ define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
+
+define	SIR_NET			SIR_NET
+define	SIR_CLOCK		SIR_CLOCK
+define	SIR_SERIAL		SIR_SERIAL
 
 define	IREENT_MAGIC		IREENT_MAGIC
 
@@ -400,3 +398,9 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	L1_SHIFT		L1_SHIFT
+define	L2_SHIFT		L2_SHIFT
+define	L2_FRAME		L2_FRAME
+define	PGOFSET			PGOFSET
+define	PGSHIFT			PGSHIFT

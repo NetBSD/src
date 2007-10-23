@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.6.1 2007/07/15 13:17:19 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.6.2 2007/10/23 20:14:44 ad Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -179,7 +179,7 @@ doreti_checkast:
 	CLI(%ecx)
 	jmp	.Ldoreti_resume
 3:
-	CHECK_DEFERRED_SWITCH(%eax)
+	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:	STIC(%ecx)
     	jz	4f

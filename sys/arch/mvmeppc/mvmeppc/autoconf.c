@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.30.1 2007/10/23 20:13:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.30.1 2007/10/23 20:13:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2005/12/11 12:18:20 christos Exp $"
 #include <machine/pte.h>
 #include <machine/intr.h>
 
-static void findroot __P((void));
+static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -65,16 +65,11 @@ static void findroot __P((void));
 void
 cpu_configure()
 {
-	/* startrtclock(); */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void
@@ -82,7 +77,7 @@ cpu_rootconf()
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
@@ -104,7 +99,7 @@ findroot(void)
 	const char *name;
 
 #if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
+	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
@@ -125,4 +120,10 @@ findroot(void)
 			return;
 		}
 	}
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
+	/* do nothing */
 }

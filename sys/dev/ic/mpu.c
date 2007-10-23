@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.14 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: mpu.c,v 1.14.8.1 2007/10/23 20:07:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.14 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.14.8.1 2007/10/23 20:07:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.14 2006/11/16 01:32:51 christos Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/midi_if.h>
 

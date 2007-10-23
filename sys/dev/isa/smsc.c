@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.1.2.5 2007/10/09 13:41:38 ad Exp $ */
+/*	$NetBSD: smsc.c,v 1.1.2.6 2007/10/23 20:08:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.5 2007/10/09 13:41:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.6 2007/10/23 20:08:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.5 2007/10/09 13:41:38 ad Exp $");
 #include <sys/conf.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.5 2007/10/09 13:41:38 ad Exp $");
 
 #include <dev/isa/smscvar.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)	do { printf x; } while (0)

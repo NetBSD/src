@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.14.1 2007/05/27 12:28:00 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.14.2 2007/10/23 20:14:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.14.1 2007/05/27 12:28:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.14.2 2007/10/23 20:14:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,7 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO] & 0x1fffffff,
-	    imask[IPL_NET] & 0x1fffffff,
-	    imask[IPL_TTY] & 0x1fffffff);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void
@@ -96,7 +91,7 @@ cpu_rootconf(void)
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);

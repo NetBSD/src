@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.135.2.6 2007/10/09 13:41:47 ad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.135.2.7 2007/10/23 20:09:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.135.2.6 2007/10/09 13:41:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.135.2.7 2007/10/23 20:09:04 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -118,8 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.135.2.6 2007/10/09 13:41:47 ad Exp $");
 #include <netinet/ip6.h>		/* XXX for struct ip6_hdr */
 #include <netinet/tcp.h>		/* XXX for struct tcphdr */
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

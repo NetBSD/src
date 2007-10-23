@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.22.8.1 2007/10/23 20:07:01 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22.8.1 2007/10/23 20:07:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp 
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 

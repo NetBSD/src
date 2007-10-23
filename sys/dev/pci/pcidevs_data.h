@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.870.2.8 2007/10/12 17:03:12 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.870.2.9 2007/10/23 20:09:15 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.905 2007/10/14 00:40:17 xtraeme Exp
  */
 
 /*
@@ -12044,6 +12044,10 @@ static const struct pci_product pci_products[] = {
 	    "UltraSPARC IIe PCI",
 	},
 	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_IP100A,
+	    "IP100A 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
 	    "ST201 10/100 Ethernet",
 	},
@@ -13556,4 +13560,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2791;
+const int pci_nproducts = 2792;

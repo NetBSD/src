@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.22.8.1 2007/05/27 14:30:12 ad Exp $	*/
+/*	$NetBSD: mca.c,v 1.22.8.2 2007/10/23 20:08:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.22.8.1 2007/05/27 14:30:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.22.8.2 2007/10/23 20:08:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/mca_machdep.h>
 
 #include <dev/mca/mcareg.h>

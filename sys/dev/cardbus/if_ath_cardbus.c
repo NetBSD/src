@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.18 2006/11/16 01:32:48 christos Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18.8.1 2007/10/23 20:06:57 ad Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.8.1 2007/10/23 20:06:57 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18 2006/11/16 01:32:48 christos
 #endif
 
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
