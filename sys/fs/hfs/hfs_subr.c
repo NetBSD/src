@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.2.2.4 2007/09/16 19:04:29 ad Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.2.2.5 2007/10/23 20:17:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2.2.4 2007/09/16 19:04:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2.2.5 2007/10/23 20:17:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,9 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			    vp->v_data = NULL;
 			    /* XXX spec_vnodeops has no locking,
 			       do it explicitly */
+			    vp->v_vflag &= ~VV_LOCKSWORK;
 			    VOP_UNLOCK(vp, 0);
 			    vp->v_op = specops;
-			    mutex_enter(&vp->v_interlock);
-			    vp->v_iflag &= ~VI_LOCKSWORK;
-			    mutex_exit(&vp->v_interlock);
 			    vgone(vp);
 			    lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
 				    &nvp->v_interlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.22 2007/10/18 15:47:33 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.23 2007/10/23 20:17:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -158,12 +158,12 @@
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSZOMB, LSONPROC:
+ *	LSONPROC, LSZOMB:
  *
  *		Always covered by spc_lwplock, which protects running LWPs.
  *		This is a per-CPU lock.
  *
- *	LSRUN:
+ *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
  *		This may be a per-CPU lock, depending on the scheduler.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.22 2007/10/18 15:47:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.23 2007/10/23 20:17:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"

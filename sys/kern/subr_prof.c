@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.40.2.1 2007/03/21 20:10:22 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.40.2.2 2007/10/23 20:17:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.40.2.1 2007/03/21 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.40.2.2 2007/10/23 20:17:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.40.2.1 2007/03/21 20:10:22 ad Exp $"
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #ifdef GPROF
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.17 2007/10/18 15:47:33 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.18 2007/10/23 20:17:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.17 2007/10/18 15:47:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.18 2007/10/23 20:17:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -801,7 +801,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 
 	do {
 		splx(s);
-		while (kernel_lock == __SIMPLELOCK_LOCKED) {
+		while (__SIMPLELOCK_LOCKED_P(&kernel_lock)) {
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
 				_KERNEL_LOCK_ABORT("spinout");

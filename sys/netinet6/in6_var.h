@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.51.2.2 2007/10/09 13:44:54 ad Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.51.2.3 2007/10/23 20:17:20 ad Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_VAR_H_
 #define _NETINET6_IN6_VAR_H_
+
+#include <sys/callout.h>
 
 /*
  * Interface address, Internet version.  One of these structures
@@ -527,7 +529,7 @@ struct	in6_multi {
 	u_int	in6m_state;		/* state of the membership */
 	int	in6m_timer;		/* delay to send the 1st report */
 	struct timeval in6m_timer_expire; /* when the timer expires */
-	struct callout *in6m_timer_ch;
+	callout_t in6m_timer_ch;
 };
  
 #define IN6M_TIMER_UNDEF -1

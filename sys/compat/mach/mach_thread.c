@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.39.6.2 2007/05/27 14:35:15 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.39.6.3 2007/10/23 20:17:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39.6.2 2007/05/27 14:35:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39.6.3 2007/10/23 20:17:01 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +210,7 @@ mach_thread_create_running(args)
 	if ((error = newlwp(l, p, uaddr, inmem, flags, NULL, 0,
 	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp)) != 0)
 	{
-		uvm_uarea_free(uaddr);
+		uvm_uarea_free(uaddr, curcpu());
 		return mach_msg_error(args, error);
 	}
 

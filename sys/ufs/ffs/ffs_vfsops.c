@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.19 2007/10/08 20:31:13 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.20 2007/10/23 20:17:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.19 2007/10/08 20:31:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.20 2007/10/23 20:17:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1475,7 +1475,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		goto retry;
 	}
 
-	vp->v_iflag |= VI_LOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we

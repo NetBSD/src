@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.2.7 2007/09/01 12:55:15 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.2.8 2007/10/23 20:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.7 2007/09/01 12:55:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.8 2007/10/23 20:17:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ const struct cdevsw cpuctl_cdevsw = {
 };
   
 kmutex_t cpu_lock;
+int	ncpu;
+int	ncpuonline;
 
 int
 mi_cpu_attach(struct cpu_info *ci)
@@ -120,6 +122,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	pool_cache_cpu_init(ci);
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
+	ncpuonline++;
 
 	return 0;
 }
@@ -163,7 +166,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_CPU_GETSTATE:
 		cs = data;
 		id = cs->cs_id;
-		memset(cs, sizeof(*cs), 0);
+		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
 		if ((ci = cpu_lookup(id)) == NULL) {
 			error = ESRCH;
@@ -254,6 +257,7 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0)
 			return 0;
 		func = (xcfunc_t)cpu_xc_online;
+		ncpuonline++;
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) != 0)
 			return 0;
@@ -265,6 +269,7 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		if (nonline == 1)
 			return EBUSY;
 		func = (xcfunc_t)cpu_xc_offline;
+		ncpuonline--;
 	}
 
 	where = xc_unicast(0, func, &ci->ci_schedstate, NULL, ci);
