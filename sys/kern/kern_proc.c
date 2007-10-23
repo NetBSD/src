@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.118 2007/10/12 14:29:38 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.119 2007/10/23 14:15:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.118 2007/10/12 14:29:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.119 2007/10/23 14:15:48 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -364,8 +364,8 @@ proc0_init(void)
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
 	l->l_cpu = curcpu();
-	l->l_priority = PRIBIO;
-	l->l_usrpri = PRIBIO;
+	l->l_priority = PUSER;
+	l->l_usrpri = PUSER;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
 	l->l_name = __UNCONST("swapper");
