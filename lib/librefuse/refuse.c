@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.77 2007/10/21 16:46:52 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.78 2007/10/23 17:19:19 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.77 2007/10/21 16:46:52 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.78 2007/10/23 17:19:19 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -38,8 +38,10 @@ __RCSID("$NetBSD: refuse.c,v 1.77 2007/10/21 16:46:52 pooka Exp $");
 #include <errno.h>
 #include <fuse.h>
 #include <paths.h>
-#include <pthread.h>
 #include <unistd.h>
+#ifdef MULTITHREADED_REFUSE
+#include <pthread.h>
+#endif
 
 #include "defs.h"
 
@@ -149,14 +151,17 @@ static ino_t fakeino = 3;
  * we follow fuse's lead and use the pthread specific information to hold
  * a reference to the fuse_context structure for this thread.
  */
+#ifdef MULTITHREADED_REFUSE
 static pthread_mutex_t		context_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t		context_key;
 static uint64_t			context_refc;
+#endif
 
 /* return the fuse_context struct related to this thread */
 struct fuse_context *
 fuse_get_context(void)
 {
+#ifdef MULTITHREADED_REFUSE
 	struct fuse_context	*ctxt;
 
 	if ((ctxt = pthread_getspecific(context_key)) == NULL) {
@@ -166,19 +171,27 @@ fuse_get_context(void)
 		pthread_setspecific(context_key, ctxt);
 	}
 	return ctxt;
+#else
+	static struct fuse_context	fcon;
+
+	return &fcon;
+#endif
 }
 
 /* used as a callback function */
+#ifdef MULTITHREADED_REFUSE
 static void
 free_context(void *ctxt)
 {   
 	free(ctxt);
 }
+#endif
 
 /* make the pthread key */
 static int
 create_context_key(void)
 {   
+#ifdef MULTITHREADED_REFUSE
 	if (pthread_mutex_lock(&context_mutex) == 0) {
 		/* we have the lock, attempt to create the key */
 		if (pthread_key_create(&context_key, free_context) != 0) {
@@ -190,18 +203,23 @@ create_context_key(void)
 	context_refc += 1;
 	pthread_mutex_unlock(&context_mutex);
 	return 1;
+#else
+	return 1;
+#endif
 }
 
 /* delete the pthread key */
 static void
 delete_context_key(void)
 {   
+#ifdef MULTITHREADED_REFUSE
 	pthread_mutex_lock(&context_mutex);
 	if (--context_refc == 0) {
 		free(pthread_getspecific(context_key));
 		pthread_key_delete(context_key);
 	}
 	pthread_mutex_unlock(&context_mutex);
+#endif
 }
 
 /* set the uid and gid of the calling process in the current fuse context */
