@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.329 2007/10/10 20:42:27 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.330 2007/10/23 16:16:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.329 2007/10/10 20:42:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.330 2007/10/23 16:16:26 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -308,7 +308,6 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 
-	mp->mnt_op->vfs_refcount++;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 	mp->mnt_unmounter = NULL;
