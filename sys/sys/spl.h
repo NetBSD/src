@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.5.6.1 2007/07/29 11:30:10 ad Exp $	*/
+/*	$NetBSD: spl.h,v 1.5.6.2 2007/10/23 20:28:55 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -46,6 +46,9 @@
 #if defined(IPL_SOFTCLOCK)
 _SPL_DECL(softclock, SOFTCLOCK)
 #endif /* defined(IPL_SOFTCLOCK) */
+#if defined(IPL_SOFTBIO)
+_SPL_DECL(softbio, SOFTBIO)
+#endif /* defined(IPL_SOFTBIO) */
 #if defined(IPL_SOFTNET)
 _SPL_DECL(softnet, SOFTNET)
 #endif /* defined(IPL_SOFTNET) */
@@ -53,26 +56,8 @@ _SPL_DECL(softnet, SOFTNET)
 _SPL_DECL(softserial, SOFTSERIAL)
 #endif /* defined(IPL_SOFTSERIAL) */
 
-_SPL_DECL(bio, BIO)
-_SPL_DECL(net, NET)
-_SPL_DECL(tty, TTY)
 _SPL_DECL(vm, VM)
-_SPL_DECL(clock, CLOCK)
 _SPL_DECL(sched, SCHED)
 _SPL_DECL(high, HIGH)
-
-#if defined(IPL_SERIAL)
-_SPL_DECL(serial, SERIAL)
-#endif /* defined(IPL_SERIAL) */
-#if defined(IPL_AUDIO)
-_SPL_DECL(audio, AUDIO)
-#endif /* defined(IPL_AUDIO) */
-#if defined(IPL_LPT)
-_SPL_DECL(lpt, LPT)
-#endif /* defined(IPL_LPT) */
-
-#if defined(IPL_IPI)
-_SPL_DECL(ipi, IPI)
-#endif /* defined(IPL_IPI) */
 
 #undef _SPL_DECL

@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.5.32.5 2007/10/19 00:13:04 ad Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.5.32.6 2007/10/23 20:28:56 ad Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -13,20 +13,6 @@
 #define IPL_SCHED	0x6	/* medium I/O, scheduler, clock */
 #define	IPL_HIGH	0x7	/* high I/O, statclock, IPIs */
 #define	NIPL		8
-
-/*
- * Historical aliases.  XXX Audio devices should run at
- * IPL_SCHED, but they need to acquire kernel_lock.
- */
-#define	IPL_BIO		IPL_VM
-#define	IPL_NET		IPL_VM
-#define	IPL_TTY		IPL_VM
-#define	IPL_LPT		IPL_VM
-#define	IPL_AUDIO	IPL_VM
-#define	IPL_CLOCK	IPL_SCHED
-#define	IPL_STATCLOCK	IPL_HIGH
-#define	IPL_IPI		IPL_HIGH
-#define	IPL_SERIAL	IPL_HIGH
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */

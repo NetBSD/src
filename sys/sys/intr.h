@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.7 2007/10/18 15:47:35 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.8 2007/10/23 20:28:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,28 @@ extern int	safepri;
 #ifndef IPL_SOFTBIO
 #define	IPL_SOFTBIO	IPL_SOFTNET
 #endif
+
+/*
+ * Historical aliases.  XXX Audio devices should run at
+ * IPL_SCHED, but they need to acquire kernel_lock.
+ */
+#define	IPL_BIO		IPL_VM
+#define	IPL_NET		IPL_VM
+#define	IPL_TTY		IPL_VM
+#define	IPL_LPT		IPL_VM
+#define	IPL_AUDIO	IPL_VM
+#define	IPL_CLOCK	IPL_SCHED
+#define	IPL_IPI		IPL_HIGH
+#define	IPL_SERIAL	IPL_HIGH
+
+#define	splbio()	splvm()
+#define	splnet()	splvm()
+#define	spltty()	splvm()
+#define	spllpt()	splvm()
+#define	splaudio()	splvm()
+#define	splclock()	splsched()
+#define	splipi()	splhigh()
+#define	splserial()	splhigh()
 
 #endif	/* _KERNEL */
 
