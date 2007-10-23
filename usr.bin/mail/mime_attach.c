@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.4 2007/01/03 00:24:36 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.5 2007/10/23 14:58:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.4 2007/01/03 00:24:36 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.5 2007/10/23 14:58:44 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -80,7 +80,7 @@ show_name(const char *prefix, struct name *np)
 	int i;
 
 	i = 0;
-	for (/* EMPTY */; np; np = np->n_flink) {
+	for (/*EMPTY*/; np; np = np->n_flink) {
 		(void)printf("%s[%d]: %s\n", prefix, i, np->n_name);
 		i++;
 	}
@@ -93,7 +93,7 @@ show_attach(const char *prefix, struct attachment *ap)
 {
 	int i;
 	i = 1;
-	for (/* EMPTY */; ap; ap = ap->a_flink) {
+	for (/*EMPTY*/; ap; ap = ap->a_flink) {
 		(void)printf("%s[%d]:\n", prefix, i);
 		fput_mime_content(stdout, &ap->a_Content);
 		i++;
@@ -182,7 +182,7 @@ make_boundary(void)
  *
  * NOTE: This means that CRLF text (MSDOS) files will be encoded
  * quoted-printable.
- */								     
+ */
 /*
  * RFC 821 imposes the following line length limit:
  *  The maximum total length of a text line including the
@@ -219,7 +219,7 @@ content_encoding_core(void *fh, const char *ctype)
 	int c, lastc;
 	int ctrlchar, endwhite;
 	size_t curlen, maxlen;
-	
+
 	curlen = 0;
 	maxlen = 0;
 	ctrlchar = 0;
@@ -227,7 +227,7 @@ content_encoding_core(void *fh, const char *ctype)
 	lastc = EOF;
 	while ((c = fgetc(fh)) != EOF) {
 		curlen++;
-		
+
 		if (c == '\0' || (lastc == '\r' && c != '\n'))
 			return MIME_TRANSFER_BASE64;
 
@@ -238,7 +238,7 @@ content_encoding_core(void *fh, const char *ctype)
 				return MIME_TRANSFER_BASE64;
 		}
 		if (c == '\n') {
-			if (isblank((unsigned char)lastc))
+			if (is_WSP(lastc))
 				endwhite = 1;
 			if (curlen > maxlen)
 				maxlen = curlen;
@@ -246,7 +246,7 @@ content_encoding_core(void *fh, const char *ctype)
 		}
 		else if ((c < 0x20 && c != '\t') || c == 0x7f)
 			ctrlchar = 1;
-		
+
 		lastc = c;
 	}
 	if (lastc == EOF) /* no characters read */
@@ -392,7 +392,7 @@ content_type_by_fileno(int fd)
 		warn("dup2");
 	(void)close(ofd);	/* close the copy */
 
-	(void)lseek(fd, cur_pos, SEEK_SET);	
+	(void)lseek(fd, cur_pos, SEEK_SET);
 	return cp;
 }
 
@@ -431,18 +431,18 @@ content_disposition(struct attachment *ap)
 	case ATTACH_MSG:
 	case ATTACH_FILENO:
 		return "inline";
-		
+
 	default:
 		return NULL;
 	}
 }
 
-/*ARGSUSED*/ 
+/*ARGSUSED*/
 static const char *
 content_id(struct attachment *attach __unused)
 {
 	/* XXX - to be written. */
-	
+
 	return NULL;
 }
 
@@ -609,14 +609,14 @@ mime_encode(FILE *fi, struct header *header)
 
 		/* Construct our MIME boundary string - used by mime_putheader() */
 		header->h_mime_boundary = make_boundary();
-		
+
 		(void)fprintf(nfo, "This is a multi-part message in MIME format.\n");
-		
+
 		for (ap = attach; ap; ap = ap->a_flink) {
 			(void)fprintf(nfo, "\n--%s\n", header->h_mime_boundary);
 			fput_attachment(nfo, ap);
 		}
-		
+
 		/* the final boundary with two attached dashes */
 		(void)fprintf(nfo, "\n--%s--\n", header->h_mime_boundary);
 	}
@@ -628,7 +628,7 @@ mime_encode(FILE *fi, struct header *header)
 		char *encoding;
 
 		header->h_Content = map.a_Content;
-		
+
 		/* check for an encoding override */
 		if ((encoding = value(ENAME_MIME_ENCODE_MSG)) && *encoding)
 			header->h_Content.C_encoding = encoding;
@@ -700,14 +700,14 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 	 */
 	if (check_filename(filename, canon_name) == NULL)
 		return NULL;
-	
+
 	nap = csalloc(1, sizeof(*nap));
 	nap->a_type = ATTACH_FNAME;
 	nap->a_name = savestr(canon_name);
 
 	if (attach == NULL)
 		attach = nap;
-	else {		
+	else {
 		for (ap = attach; ap->a_flink != NULL; ap = ap->a_flink)
 			continue;
 		ap->a_flink = nap;
@@ -925,7 +925,7 @@ mime_attach_optargs(struct name *optargs)
 		for (i = 0; i < argc; i++) {
 			struct attachment *ap2;
 			char *filename;
-			
+
 			if (argv[i][0] == '/')	/* an absolute path */
 				(void)easprintf(&filename, "%s", argv[i]);
 			else

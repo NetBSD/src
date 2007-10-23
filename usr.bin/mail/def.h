@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.24 2007/08/22 03:42:06 dogcow Exp $	*/
+/*	$NetBSD: def.h,v 1.25 2007/10/23 14:58:43 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.24 2007/08/22 03:42:06 dogcow Exp $
+ *	$NetBSD: def.h,v 1.25 2007/10/23 14:58:43 christos Exp $
  */
 
 /*
@@ -423,14 +423,34 @@ enum mailmode_e {
 }
 
 /*
- * Make this static inline available everywhere.
+ * White Space (WSP) as specified in see RFC 2822.
+ *
+ * NOTE: Use this in place of isblank() so it is inline.  Also, unlike
+ * the table implemented ctype(3) routines, this does not have input
+ * range issues caused by sign extensions.
+ *
+ * See mime_header.h for the related is_FWS().
  */
-static inline char*
-skip_blank(char *cp)
+static inline int
+is_WSP(int c)
 {
-	while (isblank((unsigned char)*cp))
+	return c == ' ' || c == '\t';
+}
+
+static inline char*
+skip_WSP(const char *cp)
+{
+	while (is_WSP(*cp))
 		cp++;
-	return cp;
+	return __UNCONST(cp);
+}
+
+static inline char*
+skip_space(char *p)
+{
+	while (isspace((unsigned char)*p))
+		p++;
+	return p;
 }
 
 #endif /* __DEF_H__ */

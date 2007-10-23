@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.1 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.2 2007/10/23 14:58:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.1 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.2 2007/10/23 14:58:44 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -103,7 +103,7 @@ detach_get_fname(char *prompt, char *pathname)
 	if (!detach_ctl.batch) {
 		char *fname;
 		fname = my_gets(&elm.filec, prompt, pathname);
-		fname = skip_blank(fname); /* XXX - do this? */
+		fname = skip_WSP(fname); /* XXX - do this? */
 		if (*fname == '\0')	/* ignore this attachment */
 			return NULL;
 		pathname = savestr(fname);	/* save this or it gets trashed */
@@ -126,18 +126,18 @@ detach_open_core(char *fname, const char *partstr)
 	int fd;
 
 	flags = (detach_ctl.overwrite ? 0 : O_EXCL) | O_CREAT | O_TRUNC | O_WRONLY;
-	
+
 	if ((fd = open(fname, flags, 0600)) != -1 &&
 	    Fdopen(fd, "w") != NULL)
 		return DETACH_OPEN_OK;
-	
+
 	if (detach_ctl.ask && fd == -1 && errno == EEXIST) {
 		char *p;
  start:
 		(void)sasprintf(&p, "%-7s overwrite: Always/Never/once/next/rename (ANonr)[n]? ",
 		    partstr, fname);
 		p = my_gets(&elm.string, p, NULL);
-		p = skip_blank(p);
+		p = skip_WSP(p);
 		switch (*p) {
 		case 'A':	detach_ctl.overwrite = 1;
 				detach_ctl.batch = 1;
@@ -186,7 +186,7 @@ detach_open_target(struct mime_info *mip)
 			return NULL;
 
 		(void)sasprintf(&pathname, "%s/msg-%s.part-%s.%s",
-		    mip->mi_detachdir, mip->mi_msgstr, 
+		    mip->mi_detachdir, mip->mi_msgstr,
 		    mip->mi_partstr[0] ? mip->mi_partstr : "0",
 		    mip->mi_subtype ? mip->mi_subtype : "unknown");
 	}
@@ -227,7 +227,7 @@ detach_open_target(struct mime_info *mip)
 			break;
 		}
 	} while (!detach_ctl.batch);
-	
+
 	return NULL;
 }
 
@@ -246,7 +246,7 @@ mime_detach_parts(struct mime_info *mip)
 	if ((dec = mime_fio_decoder(mip->mi_encoding)) == NULL &&
 	    (dec = mime_fio_decoder(MIME_TRANSFER_7BIT)) == NULL)
 		assert(/*CONSTCOND*/ 0); /* this should never get hit! */
-	
+
 	if ((pathname = detach_open_target(mip)) == NULL)
 		return NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $	*/
+/*	$NetBSD: fio.c,v 1.30 2007/10/23 14:58:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $");
+__RCSID("$NetBSD: fio.c,v 1.30 2007/10/23 14:58:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ PUBLIC struct message *
 next_message(struct message *mp)
 {
 	if (mp + 1 < message || mp + 1 >= message + msgCount)
-		return NULL;		
-	    
+		return NULL;
+
 	return mp + 1;
 }
 
@@ -69,8 +69,8 @@ PUBLIC struct message *
 prev_message(struct message *mp)
 {
 	if (mp - 1 < message || mp - 1 >= message + msgCount)
-		return NULL;		
-	    
+		return NULL;
+
 	return mp - 1;
 }
 
@@ -228,9 +228,9 @@ setptr(FILE *ibuf, off_t offset)
 		 * This allows mail to be able to read Eudora mailboxes
 		 * that reside on a DOS partition.
 		 */
-		if (len >= 2 && linebuf[len-1] == '\n' &&
-		    linebuf[len-2] == '\r') {
-			linebuf[len-2] = '\n';
+		if (len >= 2 && linebuf[len - 1] == '\n' &&
+		    linebuf[len - 2] == '\r') {
+			linebuf[len - 2] = '\n';
 			len--;
 		}
 		(void)fwrite(linebuf, sizeof *linebuf, len, otf);
