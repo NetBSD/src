@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.111 2007/10/21 19:43:52 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.112 2007/10/23 18:27:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.111 2007/10/21 19:43:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.112 2007/10/23 18:27:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2155,29 +2155,35 @@ puffs_strategy(void *v)
 			puffs_msg_setfaf(park_rw);
 		error = puffs_msg_vn(pmp, park_rw, PUFFS_VN_WRITE, 0, vp, NULL);
 
-		if (dofaf) {
-			/*
-			 * FAF moves everything.  Frankly, we don't
-			 * really have a choice.
-			 */
-			KASSERT(error == 0);
-			bp->b_resid = bp->b_bcount - tomove;
-		} else {
-			error = checkerr(pmp, error, __func__);
-			if (error)
-				goto out;
+		/*
+		 * XXXXXXXX: wrong, but kernel can't survive strategy
+		 * failure currently.  Here, have one more X: X.
+		 */
+		if (error != ENOMEM)
+			error = 0;
 
+		error = checkerr(pmp, error, __func__);
+		if (error)
+			goto out;
+
+		if (rw_msg->pvnr_resid > tomove) {
+			puffs_msg_errnotify(pmp, PUFFS_ERR_WRITE,
+			    E2BIG, "resid grew", VPTOPNC(vp));
+			ERROUT(EPROTO);
+		}
+
+		/*
+		 * FAF moved everything.  Frankly, we don't
+		 * really have a choice.
+		 */
+		if (dofaf && error == 0)
+			moved = tomove;
+		else 
 			moved = tomove - rw_msg->pvnr_resid;
-			if (rw_msg->pvnr_resid > tomove) {
-				puffs_msg_errnotify(pmp, PUFFS_ERR_WRITE,
-				    E2BIG, "resid grew", VPTOPNC(vp));
-				ERROUT(EPROTO);
-			}
 
-			bp->b_resid = bp->b_bcount - moved;
-			if (rw_msg->pvnr_resid != 0) {
-				ERROUT(EIO);
-			}
+		bp->b_resid = bp->b_bcount - moved;
+		if (bp->b_resid != 0) {
+			ERROUT(EIO);
 		}
 	}
 
