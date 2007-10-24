@@ -1,6 +1,6 @@
-# $NetBSD: GENERIC.NAS,v 1.2 2007/10/17 19:56:55 garbled Exp $
+# $NetBSD: GENERIC.NAS,v 1.3 2007/10/24 14:01:01 nisimura Exp $
 #
-# GENERIC machine description file
+# machine description file for GENERIC.NAS
 # 
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC.NAS-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -183,6 +183,7 @@ re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
