@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.330 2007/10/24 22:19:23 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.331 2007/10/24 22:24:10 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10221,4 +10221,14 @@ distrib/utils/sysinst/net.c			1.116
 	sysinst could incorrectly reset the media type (the net_media variable) to
 	'autoselect', writing incorrect ifconfig.<if> files in the target file system.
 	[jmmv, ticket #940]
+
+sys/arch/acorn32/acorn32/autoconf.c		1.9
+sys/arch/cats/cats/autoconf.c			1.11
+sys/arch/netwinder/netwinder/autoconf.c		1.8
+sys/arch/shark/shark/autoconf.c			1.9
+
+	Print some debugging information when DEBUG is set, not when TERSE is
+	unset.  The latter is not a "standard" definition, and was used in very
+	few places anyway.
+	[jmmv, ticket #941]
 
