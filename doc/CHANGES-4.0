@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.326 2007/10/22 22:05:12 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.327 2007/10/24 22:11:00 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10190,4 +10190,12 @@ sys/dev/pci/pcidevs_data.h			regen
 	IC Plus Corp IP100A support for ste(4), submitted by
 	Pedro Alejandro Lopez-Valencia in PR kern/36605.
 	[xtraeme, ticket #931]
+
+sys/dev/pci/piixide.c				1.38-1.41 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for ICH8M and ICH9's SATA controller.
+	[msaitoh, ticket #935]
 
