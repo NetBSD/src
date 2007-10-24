@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14.4.7 2007/10/24 16:23:20 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.14.4.8 2007/10/24 16:29:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.7 2007/10/24 16:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.8 2007/10/24 16:29:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ cd9660_done()
 {
 	hashdone(isohashtbl, M_ISOFSMNT);
 	pool_destroy(&cd9660_node_pool);
+	mutex_destroy(&cd9660_ihash_lock);
+	mutex_destroy(&cd9660_hashlock);
 	malloc_type_detach(M_ISOFSMNT);
 }
 
