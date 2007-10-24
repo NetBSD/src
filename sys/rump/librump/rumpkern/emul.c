@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.15 2007/10/19 12:16:47 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.16 2007/10/24 15:00:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -65,6 +65,7 @@ struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
 int physmem;
+int doing_shutdown;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
@@ -109,6 +110,16 @@ log(int level, const char *fmt, ...)
 
 void
 uprintf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+printf_nolog(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -254,7 +265,7 @@ __wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
-	rv = rumpuser_malloc(size, flags * (M_CANFAIL | M_NOWAIT));
+	rv = rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
