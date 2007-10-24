@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.21 2007/10/24 14:50:41 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.22 2007/10/24 21:50:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.21 2007/10/24 14:50:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.22 2007/10/24 21:50:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -134,7 +134,7 @@ ras_fork(struct proc *p1, struct proc *p2)
 		p2->p_raslist = nrp;
 	}
 
-	DPRINTF(("ras_fork: p1=%p, p2=%p, nras=%d\n", p1, p2, nras));
+	DPRINTF(("ras_fork: p1=%p, p2=%p\n", p1, p2));
 
 	return 0;
 }
