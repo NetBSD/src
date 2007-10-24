@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.12 2007/10/22 20:33:46 pavel Exp $
+$NetBSD: pcidevs,v 1.855.2.13 2007/10/24 22:00:15 pavel Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2257,6 +2257,7 @@ product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller with 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
+product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
 product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
@@ -2276,6 +2277,10 @@ product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
 product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
+product INTEL 82801HBM_IDE	0x2850 	82801H IDE Controller
+product INTEL 82801I_SATA_1	0x2920	82801I SATA Controller with 4 ports
+product INTEL 82801I_SATA_2	0x2921	82801I SATA Controller with 2 ports
+product INTEL 82801I_SATA_3	0x2926	82801I SATA Controller with 2 ports
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
