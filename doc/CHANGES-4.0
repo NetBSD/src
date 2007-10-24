@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.329 2007/10/24 22:15:28 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.330 2007/10/24 22:19:23 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10210,4 +10210,15 @@ sys/arch/hppa/include/cpufunc.h			1.10
 
 	Remove get_psw/set_psw - they're not needed and can cause problems.
 	[skrll, ticket #939]
+
+distrib/utils/sysinst/net.c			1.116
+
+	Use get_media_subtype_string instead of get_media_mode_string to determine
+	the card's current media type.  Otherwise it always defaults to 'autoselect'
+	which is not supported by all cards (e.g. cs(4) in NetBSD/shark).
+
+	This was causing problems when configuring an interface with dhclient, as
+	sysinst could incorrectly reset the media type (the net_media variable) to
+	'autoselect', writing incorrect ifconfig.<if> files in the target file system.
+	[jmmv, ticket #940]
 
