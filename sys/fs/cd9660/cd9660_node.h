@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.12.30.1 2007/10/24 16:16:31 ad Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.12.30.2 2007/10/24 16:23:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -60,18 +60,6 @@ typedef	struct	{
 	short		iso_links;	/* links of file */
 	dev_t		iso_rdev;	/* Major/Minor number for special */
 } ISO_RRIP_INODE;
-
-#ifdef ISODEVMAP
-/*
- * FOr device# (major,minor) translation table
- */
-struct iso_dnode {
-	LIST_ENTRY(iso_dnode) d_hash;
-	dev_t		i_dev;		/* device where dnode resides */
-	ino_t		i_number;	/* the identity of the inode */
-	dev_t		d_dev;		/* device # for translation */
-};
-#endif
 
 struct iso_node {
 	struct	genfs_node i_gnode;
@@ -150,9 +138,5 @@ int	cd9660_vget_internal(struct mount *, ino_t, struct vnode **, int,
 
 extern kmutex_t cd9660_hashlock;
 
-#ifdef	ISODEVMAP
-struct iso_dnode *iso_dmap(dev_t, ino_t, int);
-void iso_dunmap(dev_t);
-#endif
 #endif /* _KERNEL */
 #endif /* _ISOFS_CD9660_CD9660_NODE_H_ */

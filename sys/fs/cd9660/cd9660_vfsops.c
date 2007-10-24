@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.9 2007/10/24 16:16:32 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.10 2007/10/24 16:23:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.9 2007/10/24 16:16:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.10 2007/10/24 16:23:21 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -420,6 +420,7 @@ iso_mountfs(devvp, mp, l, argp)
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	mp->mnt_dev_bshift = iso_bsize;
 	mp->mnt_fs_bshift = isomp->im_bshift;
 	isomp->im_mountp = mp;
@@ -540,11 +541,6 @@ cd9660_unmount(mp, mntflags, l)
 		return (error);
 
 	isomp = VFSTOISOFS(mp);
-
-#ifdef	ISODEVMAP
-	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
-		iso_dunmap(isomp->im_dev);
-#endif
 
 	if (isomp->im_devvp->v_type != VBAD)
 		isomp->im_devvp->v_specmountpoint = NULL;
@@ -720,9 +716,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
-#ifdef ISODEVMAP
-	struct iso_dnode *dp;
-#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -888,10 +881,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		/*
 		 * if device, look at device number table for translation
 		 */
-#ifdef	ISODEVMAP
-		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
-			ip->inode.iso_rdev = dp->d_dev;
-#endif
 		vp->v_op = cd9660_specop_p;
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*
