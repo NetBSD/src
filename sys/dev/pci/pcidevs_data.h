@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.907 2007/10/22 15:01:17 manu Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.908 2007/10/24 23:08:24 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.907 2007/10/22 14:59:38 manu Exp
+ *	NetBSD: pcidevs,v 1.908 2007/10/24 23:08:06 xtraeme Exp
  */
 
 /*
@@ -11448,6 +11448,10 @@ static const struct pci_product pci_products[] = {
 	    "CSB5 IDE",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_IDE,
+	    "HT-1000 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
 	    "CSB6 IDE/RAID",
 	},
@@ -11484,7 +11488,11 @@ static const struct pci_product pci_products[] = {
 	    "Frodo8 SATA",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_1,
+	    "HT-1000 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2,
 	    "HT-1000 SATA",
 	},
 	{
@@ -13564,4 +13572,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2793;
+const int pci_nproducts = 2795;
