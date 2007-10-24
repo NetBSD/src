@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.23 2007/10/18 23:54:54 joerg Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.24 2007/10/24 07:05:35 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.23 2007/10/18 23:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.24 2007/10/24 07:05:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,6 @@ static void
 acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
-	struct acpibut_softc *sc = device_private(dv);
 	int rv;
 
 	switch (notify) {
@@ -191,7 +190,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		aprint_debug_dev(dv, "received ButtonPressed message\n");
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-		    acpibut_pressed_event, sc);
+		    acpibut_pressed_event, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
 			    "WARNING: unable to queue button pressed callback: %s\n",
