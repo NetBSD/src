@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.8 2007/09/16 19:04:27 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.9 2007/10/24 16:16:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.8 2007/09/16 19:04:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.9 2007/10/24 16:16:32 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -730,7 +730,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 
 	imp = VFSTOISOFS(mp);
 	dev = imp->im_dev;
-	if ((*vpp = cd9660_ihashget(dev, ino)) != NULLVP)
+
+ retry:
+	if ((*vpp = cd9660_ihashget(dev, ino, LK_EXCLUSIVE)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
@@ -739,11 +741,27 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		return (error);
 	}
 	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
+
+	/*
+	 * If someone beat us to it, put back the freshly allocated
+	 * vnode/inode pair and retry.
+	 */
+	mutex_enter(&cd9660_hashlock);
+	if (cd9660_ihashget(dev, ino, 0) != NULL) {
+		mutex_exit(&cd9660_hashlock);
+		ungetnewvnode(vp);
+		pool_put(&cd9660_node_pool, ip);
+		goto retry;
+	}
+
 	memset(ip, 0, sizeof(struct iso_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	ip->i_mnt = imp;
+	ip->i_devvp = imp->im_devvp;
+	genfs_node_init(vp, &cd9660_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -752,6 +770,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * disk portion of this inode to be read.
 	 */
 	cd9660_ihashins(ip);
+	mutex_exit(&cd9660_hashlock);
 
 	if (isodir == 0) {
 		int lbn, off;
@@ -807,8 +826,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	} else
 		bp = 0;
 
-	ip->i_mnt = imp;
-	ip->i_devvp = imp->im_devvp;
 	VREF(ip->i_devvp);
 
 	if (relocated) {
@@ -916,7 +933,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 
-	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

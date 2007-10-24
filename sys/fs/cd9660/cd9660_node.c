@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14.4.5 2007/09/16 19:04:27 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.14.4.6 2007/10/24 16:16:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.5 2007/09/16 19:04:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.6 2007/10/24 16:16:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.5 2007/09/16 19:04:27 ad Exp 
 LIST_HEAD(ihashhead, iso_node) *isohashtbl;
 u_long isohash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & isohash)
-struct simplelock cd9660_ihash_slock;
+kmutex_t cd9660_ihash_lock;
+kmutex_t cd9660_hashlock;
 
 #ifdef ISODEVMAP
 LIST_HEAD(idvhashhead, iso_dnode) *idvhashtbl;
@@ -90,7 +91,8 @@ cd9660_init()
 	    "cd9660nopl", &pool_allocator_nointr, IPL_NONE);
 	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &isohash);
-	simple_lock_init(&cd9660_ihash_slock);
+	mutex_init(&cd9660_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&cd9660_hashlock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef ISODEVMAP
 	idvhashtbl = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT,
 	    M_WAITOK, &idvhash);
@@ -121,7 +123,7 @@ cd9660_reinit()
 	    &mask2);
 #endif
 
-	simple_lock(&cd9660_ihash_slock);
+	mutex_enter(&cd9660_ihash_lock);
 	oldhash1 = isohashtbl;
 	oldmask1 = isohash;
 	isohashtbl = hash1;
@@ -146,7 +148,7 @@ cd9660_reinit()
 			LIST_INSERT_HEAD(&hash1[val], ip, i_hash);
 		}
 	}
-	simple_unlock(&cd9660_ihash_slock);
+	mutex_exit(&cd9660_ihash_lock);
 	hashdone(oldhash1, M_ISOFSMNT);
 #ifdef ISODEVMAP
 	hashdone(oldhash2, M_ISOFSMNT);
@@ -221,26 +223,31 @@ iso_dunmap(device)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-cd9660_ihashget(dev, inum)
+cd9660_ihashget(dev, inum, flags)
 	dev_t dev;
 	ino_t inum;
+	int flags;
 {
 	struct iso_node *ip;
 	struct vnode *vp;
 
 loop:
-	simple_lock(&cd9660_ihash_slock);
+	mutex_enter(&cd9660_ihash_lock);
 	LIST_FOREACH(ip, &isohashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			mutex_enter(&vp->v_interlock);
-			simple_unlock(&cd9660_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
+			if (flags == 0) {
+				mutex_exit(&cd9660_ihash_lock);
+			} else {
+				mutex_enter(&vp->v_interlock);
+				mutex_exit(&cd9660_ihash_lock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return (vp);
 		}
 	}
-	simple_unlock(&cd9660_ihash_slock);
+	mutex_exit(&cd9660_ihash_lock);
 	return (NULL);
 }
 
@@ -255,10 +262,12 @@ cd9660_ihashins(ip)
 {
 	struct ihashhead *ipp;
 
-	simple_lock(&cd9660_ihash_slock);
+	KASSERT(mutex_owned(&cd9660_hashlock));
+
+	mutex_enter(&cd9660_ihash_lock);
 	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
-	simple_unlock(&cd9660_ihash_slock);
+	mutex_exit(&cd9660_ihash_lock);
 
 	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, &ip->i_vnode->v_interlock);
 }
@@ -270,9 +279,9 @@ void
 cd9660_ihashrem(ip)
 	struct iso_node *ip;
 {
-	simple_lock(&cd9660_ihash_slock);
+	mutex_enter(&cd9660_ihash_lock);
 	LIST_REMOVE(ip, i_hash);
-	simple_unlock(&cd9660_ihash_slock);
+	mutex_exit(&cd9660_ihash_lock);
 }
 
 /*
