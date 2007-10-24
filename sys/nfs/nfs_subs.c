@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.184.2.8 2007/09/16 19:04:38 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.184.2.9 2007/10/24 16:47:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.8 2007/09/16 19:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.9 2007/10/24 16:47:02 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2653,7 +2653,7 @@ nfs_clearcommit(mp)
 	struct nfsmount *nmp = VFSTONFS(mp);
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
-
+	mutex_enter(&mntvnode_lock);
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
@@ -2669,6 +2669,7 @@ nfs_clearcommit(mp)
 		}
 		mutex_exit(&vp->v_uobj.vmobjlock);
 	}
+	mutex_exit(&mntvnode_lock);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);
