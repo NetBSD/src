@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.11 2007/10/18 15:47:34 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.12 2007/10/24 11:57:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.11 2007/10/18 15:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.12 2007/10/24 11:57:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -565,7 +565,7 @@ sched_nice(struct proc *chgp, int n)
 static void
 resetpriority(struct lwp *l)
 {
-	unsigned int newpriority;
+	pri_t newpriority;
 	struct proc *p = l->l_proc;
 
 	/* XXXSMP KASSERT(mutex_owned(&p->p_stmutex)); */
@@ -576,7 +576,7 @@ resetpriority(struct lwp *l)
 
 	newpriority = PRI_KERNEL - 1 - (p->p_estcpu >> ESTCPU_SHIFT) -
 	    NICE_WEIGHT * (p->p_nice - NZERO);
-	newpriority = max(newpriority, 0);
+	newpriority = imax(newpriority, 0);
 	lwp_changepri(l, newpriority);
 }
 
