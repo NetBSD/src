@@ -1,11 +1,11 @@
-/*	$NetBSD: kern_ras.c,v 1.20 2007/08/15 12:07:33 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.21 2007/10/24 14:50:41 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gregory McGarry.
+ * by Gregory McGarry, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,16 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.20 2007/08/15 12:07:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.21 2007/10/24 14:50:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-
-#include <sys/mount.h>
+#include <sys/xcall.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -66,10 +66,33 @@ int ras_debug = 0;
 #endif
 
 /*
+ * Force all CPUs through cpu_switchto(), waiting until complete.
+ */
+static void
+ras_sync(void)
+{
+
+	/* No need to sync if exiting or single threaded. */
+	if (curproc->p_nlwps > 1 && ncpu > 1) {
+#ifdef NO_SOFTWARE_PATENTS
+		uint64_t where;
+		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+		xc_wait(where);
+#else
+		kpause("ras", false, hz >> 3, NULL);
+#endif
+	}
+}
+
+/*
  * Check the specified address to see if it is within the
  * sequence.  If it is found, we return the restart address,
  * otherwise we return -1.  If we do perform a restart, we
  * mark the sequence as hit.
+ *
+ * No locking required: we disable preemption and ras_sync()
+ * guarantees that individual entries are valid while we still
+ * have visibility of them.
  */
 void *
 ras_lookup(struct proc *p, void *addr)
@@ -79,114 +102,66 @@ ras_lookup(struct proc *p, void *addr)
 
 	startaddr = (void *)-1;
 
-#ifdef DIAGNOSTIC
-	if (addr < (void *)VM_MIN_ADDRESS ||
-	    addr > (void *)VM_MAXUSER_ADDRESS)
-		return (startaddr);
-#endif
-
-	mutex_enter(&p->p_rasmutex);
-	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
+	crit_enter();
+	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
-			rp->ras_hits++;
 			startaddr = rp->ras_startaddr;
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
 			break;
 		}
 	}
-	mutex_exit(&p->p_rasmutex);
+	crit_exit();
 
-	return (startaddr);
+	return startaddr;
 }
 
 /*
  * During a fork, we copy all of the sequences from parent p1 to
  * the child p2.
+ *
+ * No locking required as the parent must be paused.
  */
 int
 ras_fork(struct proc *p1, struct proc *p2)
 {
 	struct ras *rp, *nrp;
-	int nras;
 
-again:
-	/*
-	 * first, try to shortcut.
-	 */
-
-	if (LIST_EMPTY(&p1->p_raslist))
-		return (0);
-
-	/*
-	 * count entries.
-	 */
-
-	nras = 0;
-	mutex_enter(&p1->p_rasmutex);
-	LIST_FOREACH(rp, &p1->p_raslist, ras_list)
-		nras++;
-	mutex_exit(&p1->p_rasmutex);
-
-	/*
-	 * allocate entries.
-	 */
-
-	for ( ; nras > 0; nras--) {
+	for (rp = p1->p_raslist; rp != NULL; rp = rp->ras_next) {
 		nrp = pool_get(&ras_pool, PR_WAITOK);
-		nrp->ras_hits = 0;
-		LIST_INSERT_HEAD(&p2->p_raslist, nrp, ras_list);
-	}
-
-	/*
-	 * copy entries.
-	 */
-
-	mutex_enter(&p1->p_rasmutex);
-	nrp = LIST_FIRST(&p2->p_raslist);
-	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
-		if (nrp == NULL)
-			break;
 		nrp->ras_startaddr = rp->ras_startaddr;
 		nrp->ras_endaddr = rp->ras_endaddr;
-		nrp = LIST_NEXT(nrp, ras_list);
-	}
-	mutex_exit(&p1->p_rasmutex);
-
-	/*
-	 * if we lose a race, retry.
-	 */
-
-	if (rp != NULL || nrp != NULL) {
-		ras_purgeall(p2);
-		goto again;
+		nrp = p2->p_raslist;
+		p2->p_raslist = nrp;
 	}
 
 	DPRINTF(("ras_fork: p1=%p, p2=%p, nras=%d\n", p1, p2, nras));
 
-	return (0);
+	return 0;
 }
 
 /*
  * Nuke all sequences for this process.
  */
 int
-ras_purgeall(struct proc *p)
+ras_purgeall(void)
 {
-	struct ras *rp;
+	struct ras *rp, *nrp;
+	proc_t *p;
 
-	mutex_enter(&p->p_rasmutex);
-	while (!LIST_EMPTY(&p->p_raslist)) {
-		rp = LIST_FIRST(&p->p_raslist);
-                DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
-                    rp->ras_endaddr, rp->ras_hits));
-		LIST_REMOVE(rp, ras_list);
-		mutex_exit(&p->p_rasmutex);
-		pool_put(&ras_pool, rp);
-		mutex_enter(&p->p_rasmutex);
+	p = curproc;
+
+	mutex_enter(&p->p_raslock);
+	if ((rp = p->p_raslist) != NULL) {
+		p->p_raslist = NULL;
+		ras_sync();
+		for(; rp != NULL; rp = nrp) {
+			nrp = rp->ras_next;
+			pool_put(&ras_pool, rp);
+		}
 	}
-	mutex_exit(&p->p_rasmutex);
+	mutex_exit(&p->p_raslock);
 
-	return (0);
+	return 0;
 }
 
 #if defined(__HAVE_RAS)
@@ -196,12 +171,15 @@ ras_purgeall(struct proc *p)
  * an error.
  */
 static int
-ras_install(struct proc *p, void *addr, size_t len)
+ras_install(void *addr, size_t len)
 {
 	struct ras *rp;
 	struct ras *newrp;
-	void *endaddr = (char *)addr + len;
-	int nras = 0;
+	void *endaddr;
+	int nras, error;
+	proc_t *p;
+
+	endaddr = (char *)addr + len;
 
 	if (addr < (void *)VM_MIN_ADDRESS ||
 	    endaddr > (void *)VM_MAXUSER_ADDRESS)
@@ -210,31 +188,35 @@ ras_install(struct proc *p, void *addr, size_t len)
 	if (len <= 0)
 		return (EINVAL);
 
-	newrp = NULL;
-again:
-	mutex_enter(&p->p_rasmutex);
-	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if (++nras >= ras_per_proc) {
-			mutex_exit(&p->p_rasmutex);
-			return (EINVAL);
-		}
-		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
-			mutex_exit(&p->p_rasmutex);
-			return (EEXIST);
-		}
-	}
-	if (newrp == NULL) {
-		mutex_exit(&p->p_rasmutex);
-		newrp = pool_get(&ras_pool, PR_WAITOK);
-		goto again;
-	}
+	newrp = pool_get(&ras_pool, PR_WAITOK);
 	newrp->ras_startaddr = addr;
 	newrp->ras_endaddr = endaddr;
-	newrp->ras_hits = 0;
-	LIST_INSERT_HEAD(&p->p_raslist, newrp, ras_list);
-	mutex_exit(&p->p_rasmutex);
+	error = 0;
+	nras = 0;
+	p = curproc;
 
-	return (0);
+	mutex_enter(&p->p_raslock);
+	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
+		if (++nras >= ras_per_proc) {
+			error = EINVAL;
+			break;
+		}
+		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
+			error = EEXIST;
+			break;
+		}
+	}
+	if (rp == NULL) {
+		newrp->ras_next = p->p_raslist;
+		p->p_raslist = newrp;
+		ras_sync();
+	 	mutex_exit(&p->p_raslock);
+	} else {
+	 	mutex_exit(&p->p_raslock);
+ 		pool_put(&ras_pool, newrp);
+	}
+
+	return error;
 }
 
 /*
@@ -242,27 +224,31 @@ again:
  * match, otherwise we return an error.
  */
 static int
-ras_purge(struct proc *p, void *addr, size_t len)
+ras_purge(void *addr, size_t len)
 {
-	struct ras *rp;
-	void *endaddr = (char *)addr + len;
-	int error = ESRCH;
+	struct ras *rp, **link;
+	void *endaddr;
+	proc_t *p;
 
-	mutex_enter(&p->p_rasmutex);
-	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr) {
-			LIST_REMOVE(rp, ras_list);
+	endaddr = (char *)addr + len;
+	p = curproc;
+
+	mutex_enter(&p->p_raslock);
+	link = &p->p_raslist;
+	for (rp = *link; rp != NULL; link = &rp->ras_next, rp = *link) {
+		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr)
 			break;
-		}
 	}
-	mutex_exit(&p->p_rasmutex);
-
 	if (rp != NULL) {
+		*link = rp->ras_next;
+		ras_sync();
+		mutex_exit(&p->p_raslock);
 		pool_put(&ras_pool, rp);
-		error = 0;
+		return 0;
+	} else {
+		mutex_exit(&p->p_raslock);
+		return ESRCH;
 	}
-
-	return (error);
 }
 
 #endif /* defined(__HAVE_RAS) */
@@ -279,7 +265,6 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) len;
 		syscallarg(int) op;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	void *addr;
 	size_t len;
 	int op;
@@ -294,17 +279,17 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 	op = SCARG(uap, op);
 
 	DPRINTF(("sys_rasctl: p=%p addr=%p, len=%ld, op=0x%x\n",
-	    p, addr, (long)len, op));
+	    curproc, addr, (long)len, op));
 
 	switch (op) {
 	case RAS_INSTALL:
-		error = ras_install(p, addr, len);
+		error = ras_install(addr, len);
 		break;
 	case RAS_PURGE:
-		error = ras_purge(p, addr, len);
+		error = ras_purge(addr, len);
 		break;
 	case RAS_PURGE_ALL:
-		error = ras_purgeall(p);
+		error = ras_purgeall();
 		break;
 	default:
 		error = EINVAL;

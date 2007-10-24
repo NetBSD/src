@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2007/10/17 19:54:24 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.134 2007/10/24 14:50:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2007/10/17 19:54:24 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2007/10/24 14:50:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -543,7 +543,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		/*
 		 * Don't go stepping into a RAS.
 		 */
-		if (!LIST_EMPTY(&p->p_raslist) &&
+		if (p->p_raslist != NULL &&
 		    (ras_lookup(p, (void *)fp->f_pc) != (void *)-1))
 			goto out;
 		fp->f_sr &= ~PSL_T;

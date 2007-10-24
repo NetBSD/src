@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.119 2007/10/23 14:15:48 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.120 2007/10/24 14:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.119 2007/10/23 14:15:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.120 2007/10/24 14:50:41 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -306,14 +306,9 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	/*
-	 * XXX p_rasmutex is run at IPL_SCHED, because of lock order
-	 * issues (kernel_lock -> p_rasmutex).  Ideally ras_lookup
-	 * should operate "lock free".
-	 */
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
-	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 

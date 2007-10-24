@@ -1,7 +1,7 @@
-/*	$NetBSD: ras.h,v 1.8 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: ras.h,v 1.9 2007/10/24 14:50:42 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,10 +43,9 @@
 #include <sys/queue.h>
 
 struct ras {
-	LIST_ENTRY(ras) ras_list;
-	void *ras_startaddr;
-	void *ras_endaddr;
-	int ras_hits;
+	struct ras	*ras_next;
+	void		*ras_startaddr;
+	void		*ras_endaddr;
 };
 
 #define RAS_INSTALL		0
@@ -55,15 +54,11 @@ struct ras {
 
 #ifdef _KERNEL
 
-struct pool;
 struct proc;
 
-void *ras_lookup(struct proc *, void *);
-
-int ras_fork(struct proc *, struct proc *);
-int ras_purgeall(struct proc *);
-
-extern struct pool ras_pool;
+void	*ras_lookup(struct proc *, void *);
+int	ras_fork(struct proc *, struct proc *);
+int	ras_purgeall(void);
 
 #else
 
