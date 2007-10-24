@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14.4.6 2007/10/24 16:16:31 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.14.4.7 2007/10/24 16:23:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.6 2007/10/24 16:16:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.14.4.7 2007/10/24 16:23:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +67,6 @@ u_long isohash;
 kmutex_t cd9660_ihash_lock;
 kmutex_t cd9660_hashlock;
 
-#ifdef ISODEVMAP
-LIST_HEAD(idvhashhead, iso_dnode) *idvhashtbl;
-u_long idvhash;
-#define	DNOHASH(device, inum)	(((device) + ((inum)>>12)) & idvhash)
-#endif
-
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 struct pool cd9660_node_pool;
@@ -93,10 +87,6 @@ cd9660_init()
 	    &isohash);
 	mutex_init(&cd9660_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&cd9660_hashlock, MUTEX_DEFAULT, IPL_NONE);
-#ifdef ISODEVMAP
-	idvhashtbl = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT,
-	    M_WAITOK, &idvhash);
-#endif
 }
 
 /*
@@ -109,38 +99,16 @@ cd9660_reinit()
 	struct iso_node *ip;
 	struct ihashhead *oldhash1, *hash1;
 	u_long oldmask1, mask1, val;
-#ifdef ISODEVMAP
-	struct iso_dnode *dp;
-	struct idvhashhead *oldhash2, *hash2;
-	u_long oldmask2, mask2;
-#endif
 	u_int i;
 
 	hash1 = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &mask1);
-#ifdef ISODEVMAP
-	hash2 = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT, M_WAITOK,
-	    &mask2);
-#endif
 
 	mutex_enter(&cd9660_ihash_lock);
 	oldhash1 = isohashtbl;
 	oldmask1 = isohash;
 	isohashtbl = hash1;
 	isohash = mask1;
-#ifdef ISODEVMAP
-	oldhash2 = idvhashtbl;
-	oldmask2 = idvhash;
-	idvhashtbl = hash2;
-	idvhash = mask2;
-	for (i = 0; i <= oldmask2; i++) {
-		while ((dp = LIST_FIRST(&oldhash2[i])) != NULL) {
-			LIST_REMOVE(dp, d_hash);
-			val = DNOHASH(dp->i_dev, dp->i_number);
-			LIST_INSERT_HEAD(&hash2[val], dp, d_hash);
-		}
-	}
-#endif
 	for (i = 0; i <= oldmask1; i++) {
 		while ((ip = LIST_FIRST(&oldhash1[i])) != NULL) {
 			LIST_REMOVE(ip, i_hash);
@@ -150,9 +118,6 @@ cd9660_reinit()
 	}
 	mutex_exit(&cd9660_ihash_lock);
 	hashdone(oldhash1, M_ISOFSMNT);
-#ifdef ISODEVMAP
-	hashdone(oldhash2, M_ISOFSMNT);
-#endif
 }
 
 /*
@@ -162,61 +127,9 @@ void
 cd9660_done()
 {
 	hashdone(isohashtbl, M_ISOFSMNT);
-#ifdef ISODEVMAP
-	hashdone(idvhashtbl, M_ISOFSMNT);
-#endif
 	pool_destroy(&cd9660_node_pool);
 	malloc_type_detach(M_ISOFSMNT);
 }
-
-#ifdef ISODEVMAP
-/*
- * Enter a new node into the device hash list
- */
-struct iso_dnode *
-iso_dmap(device, inum, create)
-	dev_t	device;
-	ino_t	inum;
-	int	create;
-{
-	struct iso_dnode *dp;
-	struct idvhashhead *hp;
-
-	hp = &idvhashtbl[DNOHASH(device, inum)];
-	LIST_FOREACH(dp, hp, d_hash) {
-		if (inum == dp->i_number && device == dp->i_dev)
-			return (dp);
-	}
-
-	if (!create)
-		return (NULL);
-
-	MALLOC(dp, struct iso_dnode *, sizeof(struct iso_dnode), M_CACHE,
-	       M_WAITOK);
-	dp->i_dev = device;
-	dp->i_number = inum;
-	LIST_INSERT_HEAD(hp, dp, d_hash);
-	return (dp);
-}
-
-void
-iso_dunmap(device)
-	dev_t device;
-{
-	struct idvhashhead *dpp;
-	struct iso_dnode *dp, *dq;
-
-	for (dpp = idvhashtbl; dpp <= idvhashtbl + idvhash; dpp++) {
-		for (dp = LIST_FIRST(dpp); dp != NULL; dp = dq) {
-			dq = LIST_NEXT(dp, d_hash);
-			if (device == dp->i_dev) {
-				LIST_REMOVE(dp, d_hash);
-				FREE(dp, M_CACHE);
-			}
-		}
-	}
-}
-#endif
 
 /*
  * Use the device/inum pair to find the incore inode, and return a pointer
