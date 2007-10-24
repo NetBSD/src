@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.134 2007/10/24 06:37:21 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.134 2007/10/24 06:37:21 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1864,7 +1864,7 @@ ip6_sprintf(const struct in6_addr *addr)
  * Determine if an address is on a local network.
  */
 int
-in6_localaddr(struct in6_addr *in6)
+in6_localaddr(const struct in6_addr *in6)
 {
 	struct in6_ifaddr *ia;
 
