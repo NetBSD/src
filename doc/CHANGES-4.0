@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.327 2007/10/24 22:11:00 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.328 2007/10/24 22:12:25 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10198,4 +10198,11 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for ICH8M and ICH9's SATA controller.
 	[msaitoh, ticket #935]
+
+sys/arch/mips/include/cpuregs.h			1.72
+sys/arch/mips/mips/mips_machdep.c		1.195
+
+	Recognise the R2000A cpu as found in some pmaxen.
+	From Dennis Grevenstein on port-pmax@.
+	[simonb, ticket #936]
 
