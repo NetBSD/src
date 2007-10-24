@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.63 2007/02/17 22:49:57 pavel Exp $	*/
+/*	$NetBSD: ps.c,v 1.64 2007/10/24 12:10:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.63 2007/02/17 22:49:57 pavel Exp $");
+__RCSID("$NetBSD: ps.c,v 1.64 2007/10/24 12:10:11 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,6 +145,8 @@ char sfmt[] = "uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt "
 		"time command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
+
+const char *default_fmt = dfmt;
 
 struct varent *Opos = NULL; /* -O flag inserts after this point */
 
@@ -239,7 +241,7 @@ main(int argc, char *argv[])
 			 */
 			if (!Opos) {
 				if (!fmt)
-					parsefmt(dfmt);
+					parsefmt(default_fmt);
 				Opos = varlist_find(&displaylist, "pid");
 			}
 			parsefmt_insert(optarg, &Opos);
@@ -263,9 +265,7 @@ main(int argc, char *argv[])
 		case 's':
 			/* -L was already taken... */
 			showlwps = 1;
-			parsefmt(sfmt);
-			fmt = 1;
-			sfmt[0] = '\0';
+			default_fmt = sfmt;
 			break;
 		case 'T':
 			if ((ttname = ttyname(STDIN_FILENO)) == NULL)
@@ -373,7 +373,7 @@ main(int argc, char *argv[])
 		errx(1, "%s", errbuf);
 
 	if (!fmt)
-		parsefmt(dfmt);
+		parsefmt(default_fmt);
 
 	/* Add default sort criteria */
 	parsesort("tdev,pid");
