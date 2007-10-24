@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.129 2007/10/08 14:08:26 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.130 2007/10/24 14:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.129 2007/10/08 14:08:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.130 2007/10/24 14:50:41 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -420,15 +420,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		case PIOD_WRITE_D:
 		case PIOD_WRITE_I:
-#if defined(__HAVE_RAS)
 			/*
 			 * Can't write to a RAS
 			 */
-			if (!LIST_EMPTY(&t->p_raslist) &&
-			    (ras_lookup(t, SCARG(uap, addr)) != (void *)-1)) {
+			if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
 				return (EACCES);
 			}
-#endif
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
