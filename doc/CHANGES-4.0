@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.331 2007/10/24 22:24:10 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.332 2007/10/24 22:32:52 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10231,4 +10231,11 @@ sys/arch/shark/shark/autoconf.c			1.9
 	unset.  The latter is not a "standard" definition, and was used in very
 	few places anyway.
 	[jmmv, ticket #941]
+
+sys/kern/vfs_bio.c				1.180
+
+	Fix vm.bufmem* sysctl nodes for 64bit archs by making them uint64_t,
+	as discussed on tech-kern. No requests for binary compat - so don't
+	bother to version them.
+	[martin, ticket #946]
 
