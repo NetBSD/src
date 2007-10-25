@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.11 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.12 2007/10/25 16:59:38 garbled Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.11 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.12 2007/10/25 16:59:38 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,7 @@ of_decode_int(p)
  *	None.
  */
 int
-of_compatible(phandle, strings)
-	int phandle;
-	const char * const *strings;
+of_compatible(int phandle, const char * const *strings)
 {
 	int len, allocated, rv;
 	char *buf;
@@ -175,10 +173,7 @@ out:
  *	either case, the contents of 'buf' will be NUL-terminated.
  */
 int
-of_packagename(phandle, buf, bufsize)
-	int phandle;
-	char *buf;
-	int bufsize;
+of_packagename(int phandle, char *buf, int bufsize)
 {
 	char *pbuf;
 	const char *lastslash;
@@ -208,4 +203,23 @@ of_packagename(phandle, buf, bufsize)
 
 	free(pbuf, M_TEMP);
 	return (rv);
+}
+
+/* 
+ * Find the first child of a given node that matches name.
+ */
+int
+of_find_firstchild_byname(int node, const char *name)
+{
+	char namex[32]; 
+	int nn;
+ 
+	for (nn = OF_child(node); nn; nn = OF_peer(nn)) {
+		memset(namex, 0, sizeof(namex));
+		if (OF_getprop(nn, "name", namex, sizeof(namex)) == -1)
+			continue;
+		if (strcmp(name, namex) == 0)
+			return nn;
+	}
+	return -1;
 }
