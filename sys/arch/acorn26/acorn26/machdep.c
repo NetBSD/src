@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: machdep.c,v 1.22 2007/10/25 09:43:24 he Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2007/10/17 19:52:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2007/10/25 09:43:24 he Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -221,10 +221,10 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (want_resched && !immed)
+	if (ci->ci_want_resched && !immed)
 		return;
 
-	want_resched = 1;
+	ci->ci_want_resched = 1;
 	if (curlwp != ci->ci_data.cpu_idlelwp)
 		setsoftast();
 }
