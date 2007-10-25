@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.333 2007/10/24 22:36:18 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.334 2007/10/25 21:34:48 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10245,4 +10245,19 @@ usr.sbin/postinstall/postinstall		1.50
 	scratch directory in err(). Use err() instead of exit in one place to
 	ensure that the temporary directory is removed.
 	[pavel, ticket #943]
+
+distrib/sets/lists/base/mi			1.721 via patch
+doc/3RDPARTY					1.554 via patch
+share/zoneinfo/australasia			1.16
+share/zoneinfo/africa				1.1.1.24-1.1.1.25 
+share/zoneinfo/antarctica			1.1.1.16-1.1.1.17 
+share/zoneinfo/asia				1.1.1.41-1.1.1.42 
+share/zoneinfo/europe				1.1.1.36-1.1.1.37 
+share/zoneinfo/leapseconds			1.1.1.13-1.1.1.14 
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			1.1.1.37-1.1.1.38 
+share/zoneinfo/zone.tab				1.1.1.29-1.1.1.30 
+
+	Import tzdata2007h.
+	[jnemeth, ticket #937]
 
