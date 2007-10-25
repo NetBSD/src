@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.7 2007/08/21 19:40:11 liamjfoy Exp $
+# $NetBSD: mi,v 1.678.2.8 2007/10/25 21:23:15 pavel Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3385,8 +3385,10 @@
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
 ./usr/share/zoneinfo/America/Indianapolis	base-sys-share		share
 ./usr/share/zoneinfo/America/Inuvik		base-sys-share		share
 ./usr/share/zoneinfo/America/Iqaluit		base-sys-share		share
@@ -3437,6 +3439,7 @@
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share
 ./usr/share/zoneinfo/America/Regina		base-sys-share		share
+./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
