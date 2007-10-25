@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.14 2007/10/23 20:17:09 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.15 2007/10/25 19:43:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.14 2007/10/23 20:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.15 2007/10/25 19:43:09 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -245,9 +245,7 @@ exit1(struct lwp *l, int rv)
 	 * Drain all remaining references that procfs, ptrace and others may
 	 * have on the process.
 	 */
-	mutex_enter(&p->p_mutex);
-	proc_drainrefs(p);
-	mutex_exit(&p->p_mutex);
+	rw_enter(&p->p_reflock, RW_WRITER);
 
 	/*
 	 * Bin any remaining signals and mark the process as dying so it will
@@ -566,9 +564,11 @@ exit1(struct lwp *l, int rv)
 
 	/*
 	 * Signal the parent to collect us, and drop the proclist lock.
+	 * Drop debugger/procfs lock; no new references can be gained.
 	 */
 	cv_broadcast(&p->p_pptr->p_waitcv);
 	mutex_exit(&proclist_lock);
+	rw_exit(&p->p_reflock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
 #ifdef MULTIPROCESSOR
@@ -989,7 +989,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	mutex_destroy(&p->p_smutex);
 	cv_destroy(&p->p_waitcv);
 	cv_destroy(&p->p_lwpcv);
-	cv_destroy(&p->p_refcv);
+	rw_destroy(&p->p_reflock);
 
 	pool_put(&proc_pool, p);
 
