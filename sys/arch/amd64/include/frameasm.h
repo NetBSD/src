@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4.14.2 2007/10/18 21:53:11 bouyer Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4.14.3 2007/10/25 23:59:22 bouyer Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -119,6 +119,14 @@
  
 #endif	/* !XEN */
  
+#define	DO_DEFERRED_SWITCH \
+	cmpq	$0, CPUVAR(WANT_PMAPLOAD)		; \
+	jz	1f					; \
+	call	_C_LABEL(do_pmap_load)			; \
+	1:
+
+#define	CHECK_DEFERRED_SWITCH \
+	cmpq	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define CHECK_ASTPENDING(reg)	cmpq	$0, reg				; \
 				je	99f				; \
@@ -129,19 +137,20 @@
 
 #ifdef XEN
 #define CLI(reg1,reg2) \
- 	movq CPUVAR(CPUID),reg1 ;		\
- 	shlq $6,reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),reg2 ;	\
- 	addq reg1,reg2 ;				\
- 	movb $1,EVTCHN_UPCALL_MASK(reg2)
+ 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
+ 	shlq $6,%r/**/reg1 ;					\
+ 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
+ 	addq %r/**/reg1,%r/**/reg2 ;				\
+ 	movb $1,EVTCHN_UPCALL_MASK(%r/**/reg2)
 #define STI(reg1,reg2) \
- 	movq CPUVAR(CPUID),reg1 ;		\
- 	shlq $6,reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),reg2 ;	\
- 	addq reg1,reg2 ;				\
- 	movb $0,EVTCHN_UPCALL_MASK(reg2)
+ 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
+ 	shlq $6,%r/**/reg1 ;					\
+ 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
+ 	addq %r/**/reg1,%r/**/reg2 ;				\
+ 	movb $0,EVTCHN_UPCALL_MASK(%r/**/reg2)
 #else /* XEN */
 #define CLI(reg1,reg2) cli
 #define STI(reg1,reg2) sti
 #endif	/* XEN */
+
 #endif /* _AMD64_MACHINE_FRAMEASM_H */

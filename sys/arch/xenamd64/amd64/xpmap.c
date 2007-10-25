@@ -132,11 +132,11 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	paddr_t addr, page;
 	vaddr_t avail, text_end, map_end;
 	int i;
-	extern char _etext;
+	extern char __data_start;
 
 	printk("xen_bootstrap_tables(0x%lx, 0x%lx, %d, %d)\n",
 	    old_pgd, new_pgd, old_count, new_count);
-	text_end = ((vaddr_t)&_etext + PAGE_MASK) & ~PAGE_MASK;
+	text_end = ((vaddr_t)&__data_start) & ~PAGE_MASK;
 	/*
 	 * size of R/W area after kernel text:
 	 * table pages
@@ -292,6 +292,7 @@ void
 xen_set_user_pgd(paddr_t page)
 {
 	struct mmuext_op op;
+	int s = splvm();
 
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
@@ -299,6 +300,7 @@ xen_set_user_pgd(paddr_t page)
         if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xen_set_user_pgd: failed to install new user page"
 			" directory %lx", page);
+	splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.4.2 2007/10/21 19:12:28 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.4.3 2007/10/25 23:59:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,7 +76,6 @@
 #define ALIGN_TEXT	.align 16,0x90
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>
@@ -210,7 +209,7 @@ IDTVEC(spllower)
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(%rsi,%rdi)
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -219,7 +218,7 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%rax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	STI(%rsi,%rdi)
+	STI(si,di)
 	popq	%r12
 	popq	%r13
 	popq	%rbx
@@ -238,7 +237,7 @@ IDTVEC(doreti)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(%rsi,%rdi)
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -247,23 +246,32 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-
+5:
+	testb   $SEL_RPL,TF_CS(%rsp)
+	jz	6f
 	.globl doreti_checkast
 doreti_checkast:
 	movq	CPUVAR(CURLWP),%r14
-5:	CHECK_ASTPENDING(%r14)
+	CHECK_ASTPENDING(%r14)
 	je	3f
-	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
 	CLEAR_ASTPENDING(%r14)
-	STI(%rsi,%rdi)
+	STI(si,di)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	CLI(%rsi,%rdi)
-	jmp	5b
-3: 	INTRFASTEXIT
+	CLI(si,di)
+	jmp	doreti_checkast
+3:
+	CHECK_DEFERRED_SWITCH
+	jnz	9f
+6:
+	INTRFASTEXIT
+9:
+	STI(si,di)
+	call	_C_LABEL(do_pmap_load)
+	CLI(si,di)
+	jmp	doreti_checkast		/* recheck ASTs */
 
 #ifdef XEN
 NENTRY(call_evtchn_do_event)
