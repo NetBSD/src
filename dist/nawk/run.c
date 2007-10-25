@@ -1699,28 +1699,36 @@ struct files {
 	FILE	*fp;
 	const char	*fname;
 	int	mode;	/* '|', 'a', 'w' => LE/LT, GT */
-} files[FOPEN_MAX] ={
-	{ NULL,  "/dev/stdin",  LT },	/* watch out: don't free this! */
-	{ NULL, "/dev/stdout", GT },
-	{ NULL, "/dev/stderr", GT }
-};
+} *files;
+size_t nfiles;
 
 void stdinit(void)	/* in case stdin, etc., are not constants */
 {
+	nfiles = FOPEN_MAX;
+	files = calloc(nfiles, sizeof(*files));
+	if (files == NULL)
+		FATAL("can't allocate file memory for %zu files", nfiles);
 	files[0].fp = stdin;
+	files[0].fname = "/dev/stdin";
+	files[0].mode = LT;
 	files[1].fp = stdout;
+	files[1].fname = "/dev/stdout";
+	files[1].mode = GT;
 	files[2].fp = stderr;
+	files[2].fname = "/dev/stderr";
+	files[2].mode = GT;
 }
 
 FILE *openfile(int a, const char *us)
 {
 	const char *s = us;
-	int i, m;
+	size_t i;
+	int m;
 	FILE *fp = 0;
 
 	if (*s == '\0')
 		FATAL("null file name in print or getline");
-	for (i=0; i < FOPEN_MAX; i++)
+	for (i = 0; i < nfiles; i++)
 		if (files[i].fname && strcmp(s, files[i].fname) == 0) {
 			if (a == files[i].mode || (a==APPEND && files[i].mode==GT))
 				return files[i].fp;
@@ -1730,11 +1738,19 @@ FILE *openfile(int a, const char *us)
 	if (a == FFLUSH)	/* didn't find it, so don't create it! */
 		return NULL;
 
-	for (i=0; i < FOPEN_MAX; i++)
-		if (files[i].fp == 0)
+	for (i = 0; i < nfiles; i++)
+		if (files[i].fp == NULL)
 			break;
-	if (i >= FOPEN_MAX)
-		FATAL("%s makes too many open files", s);
+	if (i >= nfiles) {
+		struct files *nf;
+		size_t nnf = nfiles + FOPEN_MAX;
+		nf = realloc(files, nnf * sizeof(*nf));
+		if (nf == NULL)
+			FATAL("cannot grow files for %s and %zu files", s, nnf);
+		(void)memset(&nf[nfiles], 0, FOPEN_MAX * sizeof(*nf));
+		nfiles = nnf;
+		files = nf;
+	}
 	fflush(stdout);	/* force a semblance of order */
 	m = a;
 	if (a == GT) {
@@ -1760,9 +1776,9 @@ FILE *openfile(int a, const char *us)
 
 const char *filename(FILE *fp)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < FOPEN_MAX; i++)
+	for (i = 0; i < nfiles; i++)
 		if (fp == files[i].fp)
 			return files[i].fname;
 	return "???";
@@ -1771,13 +1787,14 @@ const char *filename(FILE *fp)
 Cell *closefile(Node **a, int n)
 {
 	Cell *x;
-	int i, stat;
+	size_t i;
+	int stat;
 
 	n = n;
 	x = execute(a[0]);
 	getsval(x);
 	stat = -1;
-	for (i = 0; i < FOPEN_MAX; i++) {
+	for (i = 0; i < nfiles; i++) {
 		if (files[i].fname && strcmp(x->sval, files[i].fname) == 0) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
@@ -1801,9 +1818,10 @@ Cell *closefile(Node **a, int n)
 
 void closeall(void)
 {
-	int i, stat;
+	size_t i;
+	int stat;
 
-	for (i = 0; i < FOPEN_MAX; i++) {
+	for (i = 0; i < nfiles; i++) {
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
@@ -1819,9 +1837,9 @@ void closeall(void)
 
 void flush_all(void)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < FOPEN_MAX; i++)
+	for (i = 0; i < nfiles; i++)
 		if (files[i].fp)
 			fflush(files[i].fp);
 }
