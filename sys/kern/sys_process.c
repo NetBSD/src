@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.123.2.7 2007/10/25 19:43:11 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123.2.8 2007/10/25 20:44:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.7 2007/10/25 19:43:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.8 2007/10/25 20:44:21 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -147,20 +147,20 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * proclist lock so that we can re-parent the target process.
 	 */
 	mutex_enter(&proclist_lock);
-	mutex_enter(&t->p_mutex);
 
 	/* "A foolish consistency..." XXX */
-	if (req == PT_TRACE_ME)
+	if (req == PT_TRACE_ME) {
 		t = p;
-	else {
+		mutex_enter(&t->p_mutex);
+	} else {
 		/* Find the process we're supposed to be operating on. */
 		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
 			mutex_exit(&proclist_lock);
-			mutex_exit(&t->p_mutex);
 			return (ESRCH);
 		}
 
 		/* XXX elad - this should be in pfind(). */
+		mutex_enter(&t->p_mutex);
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    t, NULL, NULL, NULL);
 		if (error) {
