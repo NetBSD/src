@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.11 2007/08/24 23:28:34 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.12 2007/10/25 20:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.11 2007/08/24 23:28:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.12 2007/10/25 20:50:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -621,6 +621,7 @@ vndthread(void *arg)
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
+		bp->b_objlock = &bp->b_vp->v_interlock;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -790,8 +791,8 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 #ifdef	DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-			       " sz 0x%zx\n",
-			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
+			    " sz 0x%zx\n", vnd->sc_vp, vp, (long long)bn,
+			    nbn, sz);
 #endif
 
 		nbp = getiobuf(vp, true);

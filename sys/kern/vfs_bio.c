@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.22 2007/10/09 15:22:22 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.23 2007/10/25 20:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.22 2007/10/09 15:22:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.23 2007/10/25 20:50:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1932,6 +1932,7 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 
 	KASSERT(mbp->b_bcount >= offset + size);
 	bp->b_vp = vp;
+	bp->b_objlock = mbp->b_objlock;
 	bp->b_cflags = BC_BUSY;
 	bp->b_flags = B_ASYNC | b_read;
 	bp->b_iodone = nestiobuf_iodone;

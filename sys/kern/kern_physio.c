@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.8 2007/10/09 15:22:19 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.9 2007/10/25 20:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.8 2007/10/09 15:22:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.9 2007/10/25 20:50:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			bp->b_dev = dev;
 			bp->b_proc = p;
 			bp->b_private = ps;
-			bp->b_vp = NULL;
 
 			/*
 			 * [mark the buffer busy for physical I/O]
