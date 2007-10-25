@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.14 2007/10/23 20:17:32 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.15 2007/10/25 21:52:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.14 2007/10/23 20:17:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.15 2007/10/25 21:52:16 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1117,9 +1117,10 @@ swstrategy(struct buf *bp)
 	 * to sw_reg_strategy().
 	 */
 
-	switch (sdp->swd_vp->v_type) {
+	vp = sdp->swd_vp;		/* swapdev vnode pointer */
+	switch (vp->v_type) {
 	default:
-		panic("swstrategy: vnode type 0x%x", sdp->swd_vp->v_type);
+		panic("swstrategy: vnode type 0x%x", vp->v_type);
 
 	case VBLK:
 
@@ -1128,7 +1129,6 @@ swstrategy(struct buf *bp)
 		 * on the swapdev (sdp).
 		 */
 		bp->b_blkno = bn;		/* swapdev block number */
-		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
 
 		/*
@@ -1136,8 +1136,10 @@ swstrategy(struct buf *bp)
 		 * drum's v_numoutput counter to the swapdevs.
 		 */
 		if ((bp->b_flags & B_READ) == 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(bp->b_objlock);
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
+			mutex_exit(bp->b_objlock);
+			mutex_enter(&vp->v_interlock);
 			vp->v_numoutput++;	/* put it on swapdev */
 			mutex_exit(&vp->v_interlock);
 		}
@@ -1321,6 +1323,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		vnx->vx_pending++;
 
 		/* sort it in and start I/O if we are not over our limit */
+		/* XXXAD locking */
 		BUFQ_PUT(sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
