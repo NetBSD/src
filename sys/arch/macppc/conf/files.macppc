@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.85 2007/10/17 19:55:17 garbled Exp $
+#	$NetBSD: files.macppc,v 1.86 2007/10/25 11:08:35 aymeric Exp $
 #
 # macppc-specific configuration info
 
@@ -119,6 +119,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
 include "dev/usb/files.usb"
+include "dev/bluetooth/files.bluetooth"
 
 device ibmcpc: pcibus
 attach ibmcpc at mainbus
