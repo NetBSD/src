@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.14 2007/10/23 20:17:28 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.15 2007/10/25 20:52:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -348,6 +348,13 @@ vhold(struct vnode *vp)
 	mutex_enter(&vp->v_interlock);
 	vholdl(vp);
 	mutex_exit(&vp->v_interlock);
+}
+
+static __inline bool
+vismarker(struct vnode *vp)
+{
+
+	return (vp->v_iflag & VI_MARKER) != 0;
 }
 
 #define	NULLVP	((struct vnode *)NULL)

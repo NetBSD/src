@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.9 2007/10/24 16:47:03 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.10 2007/10/25 20:52:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.9 2007/10/24 16:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.10 2007/10/25 20:52:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -960,14 +960,11 @@ loop:
 	 */
 	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
 		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		mutex_enter(&vp->v_interlock);
+		/* XXX MNT_LAZY cannot be right? */
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {

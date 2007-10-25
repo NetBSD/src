@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.109.2.10 2007/10/23 20:17:28 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.109.2.11 2007/10/25 20:52:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.109.2.10 2007/10/23 20:17:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.109.2.11 2007/10/25 20:52:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -466,7 +466,7 @@ fail:
 int
 ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *mvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct m_ext2fs *fs;
@@ -477,6 +477,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
+
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
@@ -542,30 +543,37 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 		brelse(bp, 0);
 	}
 
-loop:
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mountp)) == NULL)
+		return (ENOMEM);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
 	mutex_enter(&mntvnode_lock);
-	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = nvp) {
-		if (vp->v_mount != mountp) {
-			mutex_exit(&mntvnode_lock);
-			goto loop;
-		}
+loop:
+	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mountp || vismarker(vp))
+			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock, l))
+		if (vrecycle(vp, &mntvnode_lock, l)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
 		mutex_enter(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ext2fs_reload: dirty2");
 		/*
@@ -576,7 +584,9 @@ loop:
 				  (int)fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			vput(vp);
-			return (error);
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
+			break;
 		}
 		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
@@ -586,7 +596,8 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	return (0);
+	vfree(mvp);
+	return (error);
 }
 
 /*
@@ -837,7 +848,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 int
 ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs;
@@ -848,6 +859,11 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->e2fs_fsmnt);
 		panic("update: rofs mod");
 	}
+
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return (ENOMEM);
+
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -857,15 +873,11 @@ loop:
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		mutex_enter(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
@@ -880,8 +892,11 @@ loop:
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT)
+			if (error == ENOENT) {
+				mutex_enter(&mntvnode_lock);
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
@@ -895,6 +910,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
