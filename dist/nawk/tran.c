@@ -411,6 +411,17 @@ char *tostring(const char *s)	/* make a copy of string s */
 	return(p);
 }
 
+char *tostringN(const char *s, size_t n)	/* make a copy of string s */
+{
+	char *p;
+
+	p = malloc(n);
+	if (p == NULL)
+		FATAL("out of space in tostring on %s", s);
+	strcpy(p, s);
+	return(p);
+}
+
 char *qstring(const char *is, int delim)	/* collect string up to next delim */
 {
 	const char *os = is;
