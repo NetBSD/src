@@ -25,6 +25,8 @@ THIS SOFTWARE.
 #define DEBUG
 #include <stdio.h>
 #include <ctype.h>
+#include <wchar.h>
+#include <wctype.h>
 #include <setjmp.h>
 #include <limits.h>
 #include <math.h>
@@ -1461,12 +1463,71 @@ Cell *instat(Node **a, int n)	/* for (a[0] in a[1]) a[2] */
 
 void flush_all(void);
 
+static char *nawk_toXXX(const char *s,
+			int (*fun_c)(int),
+			wint_t (*fun_wc)(wint_t))
+{
+	char *buf      = NULL;
+	char *pbuf     = NULL;
+	const char *ps = NULL;
+	size_t n       = 0;
+	mbstate_t mbs, mbs2;
+	wchar_t wc;
+	size_t sz = MB_CUR_MAX;
+
+	if (sz == 1) {
+		buf = tostring(s);
+
+		for (pbuf = buf; *pbuf; pbuf++)
+			*pbuf = fun_c((uschar)*pbuf);
+
+		return buf;
+	} else {
+		/* upper/lower character may be shorter/longer */
+		buf = tostringN(s, strlen(s) * sz + 1);
+
+		memset(&mbs,  0, sizeof(mbs));
+		memset(&mbs2, 0, sizeof(mbs2));
+
+		ps   = s;
+		pbuf = buf;
+		while (n = mbrtowc(&wc, ps, sz, &mbs),
+		       n > 0 && n != (size_t)-1 && n != (size_t)-2)
+		{
+			ps += n;
+
+			n = wcrtomb(pbuf, fun_wc(wc), &mbs2);
+			if (n == (size_t)-1 || n == (size_t)-2)
+				FATAL("illegal wide character %s", s);
+
+			pbuf += n;
+		}
+
+		*pbuf = 0;
+
+		if (n)
+			FATAL("illegal byte sequence %s", s);
+
+		return buf;
+	}
+}
+
+static char *nawk_toupper(const char *s)
+{
+	return nawk_toXXX(s, toupper, towupper);
+}
+
+static char *nawk_tolower(const char *s)
+{
+	return nawk_toXXX(s, tolower, towlower);
+}
+
 Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg list */
 {
 	Cell *x, *y;
 	Awkfloat u;
 	int t, sz;
-	char *p, *buf, *fmt;
+	char *buf, *fmt;
 	Node *nextarg;
 	FILE *fp;
 	time_t tv;
@@ -1522,16 +1583,10 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FTOUPPER:
 	case FTOLOWER:
-		buf = tostring(getsval(x));
-		if (t == FTOUPPER) {
-			for (p = buf; *p; p++)
-				if (islower((uschar) *p))
-					*p = toupper((uschar)*p);
-		} else {
-			for (p = buf; *p; p++)
-				if (isupper((uschar) *p))
-					*p = tolower((uschar)*p);
-		}
+		if (t == FTOUPPER)
+			buf = nawk_toupper(getsval(x));
+		else
+			buf = nawk_tolower(getsval(x));
 		tempfree(x);
 		x = gettemp();
 		setsval(x, buf);
