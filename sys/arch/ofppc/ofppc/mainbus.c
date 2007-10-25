@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2007/10/17 19:56:10 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2007/10/25 16:55:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2007/10/17 19:56:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2007/10/25 16:55:50 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,12 +119,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node, i, isa_cascade;
+	int node, i;
 	u_int32_t reg[4];
 	char name[32];
 
 	mainbus_found = 1;
-	isa_cascade = 0;
 
 	aprint_normal("\n");
 
@@ -133,32 +132,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ca.ca_reg = reg;
 		reg[0] = i;
 		config_found(self, &ca, NULL);
-	}
-
-	/* Now setup the PIC's */
-	genofw_find_ofpics(OF_finddevice("/"));
-	genofw_fixup_picnode_offsets();
-	pic_init();
-	/* find ISA first */
-	for (i = 0; i < nrofpics; i++)
-		if (picnodes[i].type == PICNODE_TYPE_8259)
-			isa_pic = setup_i8259();
-
-	for (i = 0; i < nrofpics; i++) {
-		if (picnodes[i].type == PICNODE_TYPE_8259)
-			continue;
-		if (picnodes[i].type == PICNODE_TYPE_OPENPIC) {
-			if (isa_pic != NULL)
-				isa_cascade = 1;
-			(void)init_openpic(picnodes[i].node);
-		} else
-			aprint_error("Unhandled pic node type node=%x\n",
-			    picnodes[i].node);
-	}
-	if (isa_cascade) {
-		primary_pic = 1;
-		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
-		    isa_pic);
 	}
 
 	node = OF_peer(0);
@@ -186,4 +159,36 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &ca, NULL);
 #endif
 
+}
+
+void
+ofppc_setup_pics(void)
+{
+	int i, isa_cascade = 0;
+
+	/* Now setup the PIC's */
+	genofw_find_ofpics(OF_finddevice("/"));
+	genofw_fixup_picnode_offsets();
+	pic_init();
+	/* find ISA first */
+	for (i = 0; i < nrofpics; i++)
+		if (picnodes[i].type == PICNODE_TYPE_8259)
+			isa_pic = setup_i8259();
+
+	for (i = 0; i < nrofpics; i++) {
+		if (picnodes[i].type == PICNODE_TYPE_8259)
+			continue;
+		if (picnodes[i].type == PICNODE_TYPE_OPENPIC) {
+			if (isa_pic != NULL)
+				isa_cascade = 1;
+			(void)init_openpic(picnodes[i].node);
+		} else
+			aprint_error("Unhandled pic node type node=%x\n",
+			    picnodes[i].node);
+	}
+	if (isa_cascade) {
+		primary_pic = 1;
+		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		    isa_pic);
+	}
 }
