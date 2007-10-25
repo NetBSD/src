@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.28.6.5 2007/10/09 15:22:24 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.28.6.6 2007/10/25 22:29:39 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.5 2007/10/09 15:22:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.6 2007/10/25 22:29:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,11 @@ sched_sync(void *v)
 			/* We are locking in the wrong direction. */
 			if (mutex_tryenter(&vp->v_interlock)) {
 				mutex_exit(&syncer_data_lock);
-				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT |
+				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT |
 				    LK_INTERLOCK) == 0) {
 					(void) VOP_FSYNC(vp, curlwp->l_cred,
 					    FSYNC_LAZY, 0, 0, curlwp);
-					VOP_UNLOCK(vp, 0);
+					vput(vp);
 				}
 				mutex_enter(&syncer_data_lock);
 			}
