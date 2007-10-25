@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.25 2007/10/21 19:25:58 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.26 2007/10/25 10:59:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -100,11 +100,11 @@ struct puffs_usermount {
 	size_t			pu_cc_stacksize;
 
 	int			pu_kq;
-	int			pu_haskq;
 	int			pu_state;
 #define PU_STATEMASK	0xff
 #define PU_INLOOP	0x100
 #define PU_ASYNCFD	0x200
+#define PU_HASKQ	0x400
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 
 	struct puffs_node	*pu_pn_root;
