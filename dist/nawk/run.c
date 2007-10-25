@@ -1497,7 +1497,7 @@ static char *nawk_toXXX(const char *s,
 			ps += n;
 
 			n = wcrtomb(pbuf, fun_wc(wc), &mbs2);
-			if (n == (size_t)-1 || n == (size_t)-2)
+			if (n == (size_t)-1)
 				FATAL("illegal wide character %s", s);
 
 			pbuf += n;
