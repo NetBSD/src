@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.67 2007/10/21 19:25:58 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.68 2007/10/25 10:59:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.67 2007/10/21 19:25:58 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.68 2007/10/25 10:59:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -461,7 +461,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 		puffs_pn_put(pn);
 
 	puffs_framev_exit(pu);
-	if (pu->pu_haskq)
+	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
 	free(pu);
 
@@ -504,7 +504,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	pu->pu_kq = kqueue();
 	if (pu->pu_kq == -1)
 		goto out;
-	pu->pu_haskq = 1;
+	pu->pu_state |= PU_HASKQ;
 
 	curev = pfctrl->evs;
 	LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
