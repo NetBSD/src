@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.44.2.5 2007/08/20 21:28:29 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.44.2.6 2007/10/25 20:52:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44.2.5 2007/08/20 21:28:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44.2.6 2007/10/25 20:52:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -669,7 +669,7 @@ int
 qsync(struct mount *mp)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *vp, *nextvp;
+	struct vnode *vp, *mvp;
 	struct dquot *dq;
 	int i, error;
 
@@ -682,17 +682,19 @@ qsync(struct mount *mp)
 			break;
 	if (i == MAXQUOTAS)
 		return (0);
+
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return (ENOMEM);
+
 	/*
 	 * Search vnodes associated with this mount point,
 	 * synchronizing any modified dquot structures.
 	 */
 	mutex_enter(&mntvnode_lock);
-again:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
-		if (vp->v_mount != mp)
-			goto again;
-		if (vp->v_type == VNON)
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON)
 			continue;
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
@@ -714,11 +716,9 @@ again:
 		}
 		vput(vp);
 		mutex_enter(&mntvnode_lock);
-		/* if the list changed, start again */
-		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
-			goto again;
 	}
 	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 	return (0);
 }
 

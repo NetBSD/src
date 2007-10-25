@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.21 2007/10/23 20:17:14 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.22 2007/10/25 20:52:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.21 2007/10/23 20:17:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.22 2007/10/25 20:52:17 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1103,7 +1103,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	 */
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		if (vp->v_mount != mp)
+		if (vp->v_mount != mp || vismarker(vp))
 			continue;
 		/*
 		 * Skip over a selected vnode.
@@ -1594,7 +1594,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			 * this filesystem.  RACE: could have been
 			 * recycled onto the same filesystem.
 			 */
-			if (vp->v_mount != mp)
+			if (vp->v_mount != mp || vismarker(vp))
 				continue;
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				(void)vunmark(mvp);

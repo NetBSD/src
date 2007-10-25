@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.20 2007/10/23 20:17:30 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.21 2007/10/25 20:52:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.20 2007/10/23 20:17:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.21 2007/10/25 20:52:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -650,27 +650,28 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/* Allocate a marker vnode. */
 	if ((mvp = valloc(mp)) == NULL)
 		return ENOMEM;
-loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
 	mutex_enter(&mntvnode_lock);
+ loop:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		if (vp->v_mount != mp) {
-			mutex_exit(&mntvnode_lock);
-			goto loop;
-		}
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock, l))
+		if (vrecycle(vp, &mntvnode_lock, l)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
 		mutex_enter(&vp->v_interlock);
-		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
 			(void)vunmark(mvp);
@@ -1347,14 +1348,14 @@ loop:
 	 * and vclean() can be called indirectly
 	 */
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		mutex_enter(&vp->v_interlock);
-		vmark(mvp, vp);
 		ip = VTOI(vp);
 		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON || ((ip->i_flag &
