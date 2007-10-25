@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2007/10/17 19:55:39 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.177 2007/10/25 13:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2007/10/17 19:55:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2007/10/25 13:03:04 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -311,7 +311,7 @@ pmap_bootstrap(void)
 	buf_setvalimit(bufsz);
 
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-	    bufsz + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
+	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
