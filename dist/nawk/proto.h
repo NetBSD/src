@@ -112,6 +112,7 @@ extern	double	getfval(Cell *);
 extern	char	*getsval(Cell *);
 extern	char	*getpssval(Cell *);     /* for print */
 extern	char	*tostring(const char *);
+extern	char	*tostringN(const char *, size_t n);
 extern	char	*qstring(const char *, int);
 
 extern	void	recinit(unsigned int);
