@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.23 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.23.28.1 2007/10/25 22:38:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,16 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.23 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.23.28.1 2007/10/25 22:38:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.9 2007/06/05 04:04:14 briggs Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.9.12.1 2007/10/25 22:37:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,8 +104,11 @@ struct aac_softc;
 /*
  * FIBs are allocated in page-size chunks and can grow up to the 512
  * limit imposed by the hardware.
+ * XXX -- There should be some way to allocate these as-needed without
+ *        allocating them at interrupt time.  For now, though, allocate
+ *	  all that we'll ever need up-front.
  */
-#define AAC_PREALLOCATE_FIBS	128
+#define AAC_PREALLOCATE_FIBS(sc)	((sc)->sc_max_fibs)
 
 /*
  * Firmware messages are passed in the printf buffer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.2 2006/12/02 04:49:38 christos Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.2.28.1 2007/10/25 22:35:49 bouyer Exp $	*/
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")
@@ -11,14 +11,20 @@ SECTIONS
      *(.text)
      *(.text.*)
      *(.stub)
-     *(.rodata)
    } =0
    _etext = . ;
    PROVIDE (etext = .) ;
 
+   .rodata :
+   {
+     *(.rodata)
+     *(.rodata.*)
+   }
+
    /* Adjust the address for the data segment.  We want to adjust up to
       the same address within the page on the next page up.  */
    . = ALIGN(0x1000) + (. & (0x1000 - 1));
+   __data_start = . ;
    .data :
    {
      *(.data)

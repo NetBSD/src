@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.20 2007/10/08 16:18:03 ad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.20.2.1 2007/10/25 22:37:34 bouyer Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.20 2007/10/08 16:18:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.20.2.1 2007/10/25 22:37:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.20 2007/10/08 16:18:03 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/cd18xxvar.h>
 #include <dev/ic/cd18xxreg.h>

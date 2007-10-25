@@ -1,11 +1,7 @@
-/*	$NetBSD: param.h,v 1.4 2007/10/13 14:46:54 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.4.2.1 2007/10/25 22:35:34 bouyer Exp $	*/
 
 #ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
 #include <machine/cpu.h>
-#endif
 #endif
 
 #define	_MACHINE	amd64

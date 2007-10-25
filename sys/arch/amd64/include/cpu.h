@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.2.1 2007/10/17 21:38:17 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.2.2 2007/10/25 22:35:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,6 +58,8 @@
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
+struct pmap;
+
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
@@ -80,7 +82,13 @@ struct cpu_info {
 	 * Private members.
 	 */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	int ci_want_pmapload;		/* pmap_load() is needed */
+	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+#define	TLBSTATE_VALID	0	/* all user tlbs are valid */
+#define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
+#define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 	u_int64_t ci_scratch;
 #ifdef XEN
 	struct iplsource *ci_isources[NIPL];

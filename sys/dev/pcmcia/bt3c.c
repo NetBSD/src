@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.11 2007/10/02 05:37:50 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.11.2.1 2007/10/25 22:39:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,16 +69,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.11 2007/10/02 05:37:50 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.11.2.1 2007/10/25 22:39:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

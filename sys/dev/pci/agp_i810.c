@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.42.6.1 2007/10/25 22:38:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42.6.1 2007/10/25 22:38:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $");
 
 #include <sys/agpio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include "agp_intel.h"
 

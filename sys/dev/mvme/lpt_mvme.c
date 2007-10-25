@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.10 2007/10/08 20:12:06 ad Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.10.2.1 2007/10/25 22:38:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.10 2007/10/08 20:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.10.2.1 2007/10/25 22:38:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.10 2007/10/08 20:12:06 ad Exp $");
 #include <sys/conf.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/mvme/lptvar.h>
 

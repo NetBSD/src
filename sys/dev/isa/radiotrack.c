@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.14 2006/11/16 01:33:00 christos Exp $ */
+/* $NetBSD: radiotrack.c,v 1.14.28.1 2007/10/25 22:38:24 bouyer Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.14 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.14.28.1 2007/10/25 22:38:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.14 2006/11/16 01:33:00 christos Exp
 #include <sys/device.h>
 #include <sys/radioio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/lm700x.h>

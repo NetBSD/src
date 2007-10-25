@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2005/12/11 12:18:30 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.54.1 2007/10/25 22:36:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,16 +165,15 @@ chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 	 * strings.
 	 */
 	l = strlen(args) + 1;
-	l = (l + 3) & ~3;			/* align */
-	DPRINTF("magic @ %p\n", args + l);
-	memcpy(args + l, &magic, sizeof(magic));
-	l += sizeof(magic);
 	DPRINTF("ssym @ %p\n", args + l);
 	memcpy(args + l, &ssym, sizeof(ssym));
 	l += sizeof(ssym); 
 	DPRINTF("esym @ %p\n", args + l);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
+	DPRINTF("magic @ %p\n", args + l);
+	memcpy(args + l, &magic, sizeof(magic));
+	l += sizeof(magic);
 	DPRINTF("args + l -> %p\n", args + l);
 
 	OF_chain((void *) RELOC, end - (char *)RELOC, entry, args, l);

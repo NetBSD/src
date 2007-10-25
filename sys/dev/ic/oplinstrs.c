@@ -1,7 +1,7 @@
-/*	$NetBSD: oplinstrs.c,v 1.6 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: oplinstrs.c,v 1.6.50.1 2007/10/25 22:37:52 bouyer Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oplinstrs.c,v 1.6 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oplinstrs.c,v 1.6.50.1 2007/10/25 22:37:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -11,7 +11,7 @@ __KERNEL_RCSID(0, "$NetBSD: oplinstrs.c,v 1.6 2005/12/11 12:21:28 christos Exp $
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/midivar.h>
 #include <dev/midisynvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.16 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.16.28.1 2007/10/25 22:39:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.16 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.16.28.1 2007/10/25 22:39:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.16 2006/11/16 01:33:09 christos Exp $"
 #include <sys/callout.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mlxreg.h>
 #include <dev/ic/mlxio.h>

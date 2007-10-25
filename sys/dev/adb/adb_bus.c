@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.5 2007/04/16 00:18:34 macallan Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.5.12.1 2007/10/25 22:37:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.5 2007/04/16 00:18:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.5.12.1 2007/10/25 22:37:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.5 2007/04/16 00:18:34 macallan Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <dev/adb/adbvar.h>
 

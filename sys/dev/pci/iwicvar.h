@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicvar.h,v 1.4 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: iwicvar.h,v 1.4.50.1 2007/10/25 22:39:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -126,7 +126,7 @@ struct iwic_softc {
  *	rd/wr register/fifo macros
  *---------------------------------------------------------------------------*/
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #define IWIC_READ(sc,reg)	bus_space_read_1((sc)->sc_io_bt,(sc)->sc_io_bh,(reg))
 #define IWIC_WRITE(sc,reg,val)	bus_space_write_1((sc)->sc_io_bt,(sc)->sc_io_bh,(reg),(val))

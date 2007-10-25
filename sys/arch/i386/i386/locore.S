@@ -1,4 +1,44 @@
-/*	$NetBSD: locore.S,v 1.51 2007/09/26 19:48:36 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.51.2.1 2007/10/25 22:35:50 bouyer Exp $	*/
+
+/*
+ * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -139,6 +179,7 @@ _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
+_C_LABEL(tablesize):	.long	0
 
 	.space 512
 tmpstk:
@@ -384,13 +425,27 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack
+ * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp
  *			      0          1       2      3
  */
-#define	PROC0PDIR	((0)              * PAGE_SIZE)
-#define	PROC0STACK	((1)              * PAGE_SIZE)
-#define	SYSMAP		((1+UPAGES)       * PAGE_SIZE)
-#define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkpde * PAGE_SIZE */
+
+#define	PROC0_PDIR_OFF	0
+#define	PROC0_STK_OFF	(PROC0_PDIR_OFF + PAGE_SIZE)
+#define	PROC0_PTP1_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
+
+/*
+ * fillkpt
+ *	eax = pte (page frame | control | status)
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
+
+#define fillkpt	\
+1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
+	addl	$4,%ebx		; 	/* next pte/pde */ \
+	addl	$PAGE_SIZE,%eax	; 	/* next phys page */ \
+	loop	1b		;  \
+
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
@@ -404,67 +459,60 @@ try586:	/* Use the `cpuid' instruction. */
 1:
 #endif
 
-	/* Calculate where to start the bootstrap tables. */
+	/* Compute sizes */
 	movl	%edi,%esi			# edi = esym ? esym : end
 	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 
-	/*
-	 * Calculate the size of the kernel page table directory, and
-	 * how many entries it will have.  Adjust nkpde to the actual
-	 * kernel size automatically.  Account for the bootstrap tables,
-	 * round up, and add an extra 4MB.
-	 */
-	leal	TABLESIZE+NBPD+PDOFSET(%edi),%eax
-	shrl	$PDSHIFT,%eax
-	movl	RELOC(nkpde),%ecx		# get nkpde
-	cmpl	%ecx,%eax
-	jb	1f
-	movl	%eax,%ecx
-1:	cmpl	$NKPTP_MIN,%ecx			# larger than min?
-	jge	1f
-	movl	$NKPTP_MIN,%ecx			# set at min
-	jmp	2f
-1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
-	jle	2f
-	movl	$NKPTP_MAX,%ecx
-2:	movl	%ecx,RELOC(nkpde)
+	/* nkptp[1] = (esi + ~L2_FRAME) >> L2_SHIFT + 1; */
+	movl	%esi,%eax
+	addl	$~L2_FRAME,%eax
+	shrl	$L2_SHIFT,%eax
+	incl	%eax		/* one more ptp for VAs stolen by bootstrap */
+1:	movl	%eax,RELOC(nkptp)+1*4
 
-	/* Clear memory for bootstrap tables. */
-	shll	$PGSHIFT,%ecx
-	addl	$TABLESIZE,%ecx
-	addl	%esi,%ecx			# end of tables
-	subl	%edi,%ecx			# size of tables
-	shrl	$2,%ecx
+	/* tablesize = (1 + UPAGES + nkptp) << PGSHIFT; */
+	addl	$(1+UPAGES),%eax
+	shll	$PGSHIFT,%eax
+	movl	%eax,RELOC(tablesize)
+
+	/* ensure that nkptp covers bootstrap tables */
+	addl	%esi,%eax
+	addl	$~L2_FRAME,%eax
+	shrl	$L2_SHIFT,%eax
+	incl	%eax
+	cmpl	%eax,RELOC(nkptp)+1*4
+	jnz	1b
+
+ 	/* Clear tables */
+ 	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
+ 	movl	RELOC(tablesize),%ecx
+ 	shrl	$2,%ecx
 	rep
 	stosl
 
-/*
- * fillkpt
- *	eax = pte (page frame | control | status)
- *	ebx = page table address
- *	ecx = number of pages to map
- */
-#define	fillkpt		\
-1:	movl	%eax,(%ebx)	; \
-	addl	$PAGE_SIZE,%eax	; /* increment physical address */ \
-	addl	$4,%ebx		; /* next pte */ \
-	loop	1b		;
+ 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 /*
  * Build initial page tables.
  */
-	/* Calculate end of text segment, rounded to a page. */
-	leal	(RELOC(etext)+PGOFSET),%edx
+ 	/*
+ 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	 * or we can't deal with it anyway, since we can't load it in
+	 * 32 bit mode. So use the bottom 32 bits.
+ 	 */
+ 	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
 
-	/* Skip over the first 1MB. */
+ 	/*
+ 	 * Skip the first MB.
+ 	 */
 	movl	$_RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
-	shrl	$PGSHIFT,%ecx
-	leal	(SYSMAP)(%esi,%ecx,4),%ebx
+ 	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
+ 	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
 	movl	%edx,%ecx
@@ -475,15 +523,13 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
-	movl	RELOC(nkpde),%ecx
-	shll	$PGSHIFT,%ecx
-	addl	$TABLESIZE,%ecx
+	movl	RELOC(tablesize),%ecx
 	addl	%esi,%ecx				# end of tables
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 
-	/* Map ISA I/O memory. */
+	/* Map ISA I/O mem (later atdevbase) */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax	# having these bits set
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
 	fillkpt
@@ -491,28 +537,40 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Construct a page table directory.
  */
-	/* Install PDEs for temporary double map of kernel. */
-	movl	RELOC(nkpde),%ecx			# for this many pde s,
-	leal	(PROC0PDIR+0*4)(%esi),%ebx		# which is where temp maps!
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
+ 	/* Set up top level entries for identity mapping */
+ 	leal    (PROC0_PDIR_OFF)(%esi),%ebx
+ 	leal	(PROC0_PTP1_OFF)(%esi),%eax
+ 	orl	$(PG_V|PG_KW), %eax
+ 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
-	/* Map kernel PDEs. */
-	movl	RELOC(nkpde),%ecx			# for this many pde s,
-	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# kernel pde offset
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
+ 	/* Set up top level entries for actual kernel mapping */
+ 	leal    (PROC0_PDIR_OFF + L2_SLOT_KERNBASE*4)(%esi),%ebx
+ 	leal	(PROC0_PTP1_OFF)(%esi),%eax
+ 	orl	$(PG_V|PG_KW), %eax
+ 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
-	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
-	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
+ 	leal    (PROC0_PDIR_OFF + PDIR_SLOT_PTE*4)(%esi),%ebx
+ 	leal    (PROC0_PDIR_OFF)(%esi),%eax
+ 	orl	$(PG_V|PG_KW),%eax
+ 	movl	%eax,(%ebx)
+ 
 
 	/* Save phys. addr of PDP, for libkvm. */
 	movl	%esi,RELOC(PDPpaddr)
 
-	/* Load base of page directory and enable mapping. */
+ 	/*
+ 	 * Startup checklist:
+ 	 * 1. Load %cr3 with pointer to PDIR.
+ 	 */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
+ 
+ 	/*
+ 	 * 2. Enable paging and the rest of it.
+ 	 */
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP),%eax
@@ -522,23 +580,26 @@ try586:	/* Use the `cpuid' instruction. */
 	ret
 
 begin:
-	/* Now running relocated at KERNBASE.  Remove double mapping. */
-	movl	_C_LABEL(nkpde),%ecx		# for this many pde s,
-	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
-	addl	$(KERNBASE), %ebx	# now use relocated address
+ 	/*
+ 	 * We have arrived.
+ 	 * There's no need anymore for the identity mapping in low
+ 	 * memory, remove it.
+ 	 */
+ 	movl	_C_LABEL(nkptp)+1*4,%ecx
+ 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys  address of PDIR
+ 	addl	$(KERNBASE), %ebx	# new, virtual address of PDIR
 1:	movl	$0,(%ebx)
-	addl	$4,%ebx	# next pde
+ 	addl	$4,%ebx
 	loop	1b
 
 	/* Relocate atdevbase. */
-	movl	_C_LABEL(nkpde),%edx
-	shll	$PGSHIFT,%edx
-	addl	$(TABLESIZE+KERNBASE),%edx
+	movl	$KERNBASE,%edx
+	addl	_C_LABEL(tablesize),%edx
 	addl	%esi,%edx
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
-	leal	(PROC0STACK+KERNBASE)(%esi),%eax
+ 	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(proc0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
@@ -557,9 +618,7 @@ begin:
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
-	movl	_C_LABEL(nkpde),%eax
-	shll	$PGSHIFT,%eax
-	addl	$TABLESIZE,%eax
+ 	movl	_C_LABEL(tablesize),%eax
 	addl	%esi,%eax		# skip past stack and page tables
 
 	pushl	%eax
@@ -604,7 +663,7 @@ NENTRY(lwp_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -825,7 +884,7 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
@@ -841,7 +900,7 @@ syscall1:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"

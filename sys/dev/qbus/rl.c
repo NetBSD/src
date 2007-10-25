@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.36 2007/10/08 16:41:12 ad Exp $	*/
+/*	$NetBSD: rl.c,v 1.36.2.1 2007/10/25 22:39:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.36 2007/10/08 16:41:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.36.2.1 2007/10/25 22:39:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.36 2007/10/08 16:41:12 ad Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/rlreg.h>

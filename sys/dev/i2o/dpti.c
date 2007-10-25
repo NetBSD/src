@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.34 2007/06/16 12:32:12 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.34.12.1 2007/10/25 22:37:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.34 2007/06/16 12:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.34.12.1 2007/10/25 22:37:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.34 2007/06/16 12:32:12 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __i386__
 #include <machine/pio.h>
 #endif

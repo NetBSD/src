@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.24 2007/10/07 23:14:53 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.24.2.1 2007/10/25 22:37:07 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.24 2007/10/07 23:14:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.24.2.1 2007/10/25 22:37:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,10 +197,11 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_callout, 0);
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, sc);
+	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
+
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
@@ -569,11 +570,9 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, opaque);
 	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
 
-	return;
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void

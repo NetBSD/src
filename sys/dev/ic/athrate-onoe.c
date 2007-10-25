@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-onoe.c,v 1.9 2006/04/02 05:52:50 gdamore Exp $ */
+/*	$NetBSD: athrate-onoe.c,v 1.9.38.1 2007/10/25 22:37:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.9 2006/04/02 05:52:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.9.38.1 2007/10/25 22:37:31 bouyer Exp $");
 #endif
 
 /*
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.9 2006/04/02 05:52:50 gdamore Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/socket.h>
  

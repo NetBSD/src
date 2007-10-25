@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.30 2007/03/04 06:02:12 christos Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.30.20.1 2007/10/25 22:38:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.30 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.30.20.1 2007/10/25 22:38:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.30 2007/03/04 06:02:12 christos Exp $");
 
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

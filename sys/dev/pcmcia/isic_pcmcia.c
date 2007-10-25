@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.32 2007/07/09 21:01:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.32.12.1 2007/10/25 22:39:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.32 2007/07/09 21:01:20 ad Exp $");
 #include <sys/callout.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

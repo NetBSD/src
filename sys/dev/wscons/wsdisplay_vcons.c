@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.14 2007/08/06 03:11:32 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.14.6.1 2007/10/25 22:39:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.14 2007/08/06 03:11:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.14.6.1 2007/10/25 22:39:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ static void vcons_scroll(void *, void *, int);
 static void vcons_do_scroll(struct vcons_screen *);
 #endif
 
-static void vcons_do_switch(struct vcons_data *);
+static void vcons_do_switch(void *);
 
 /* methods that work only on text buffers */
 static void vcons_copycols_buffer(void *, int, int, int, int);
@@ -138,6 +138,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	vd->wanted = NULL;
 	vd->currenttype = def;
 	callout_init(&vd->switch_callout, 0);
+	callout_setfunc(&vd->switch_callout, vcons_do_switch, vd);
 
 	/*
 	 * a lock to serialize access to the framebuffer.
@@ -290,8 +291,9 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 }
 
 static void
-vcons_do_switch(struct vcons_data *vd)
+vcons_do_switch(void *arg)
 {
+	struct vcons_data *vd = arg;
 	struct vcons_screen *scr, *oldscr;
 
 	scr = vd->wanted;
@@ -309,8 +311,7 @@ vcons_do_switch(struct vcons_data *vd)
 	if (oldscr != NULL) {
 		SCREEN_INVISIBLE(oldscr);
 		if (SCREEN_IS_BUSY(oldscr)) {
-			callout_reset(&vd->switch_callout, 1,
-			    (void(*)(void *))vcons_do_switch, vd);
+			callout_schedule(&vd->switch_callout, 1);
 #ifdef DIAGNOSTIC
 			/* bitch if we wait too long */
 			vd->switch_poll_count++;
@@ -513,8 +514,7 @@ vcons_show_screen(void *v, void *cookie, int waitok,
 	return EAGAIN;
 #else
 	if (cb) {
-		callout_reset(&vd->switch_callout, 0,
-		    (void(*)(void *))vcons_do_switch, vd);
+		callout_schedule(&vd->switch_callout, 0);
 		return EAGAIN;
 	}
 

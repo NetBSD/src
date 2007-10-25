@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.111 2007/10/16 16:10:59 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.111.2.1 2007/10/25 22:39:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.111 2007/10/16 16:10:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.111.2.1 2007/10/25 22:39:59 bouyer Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.111 2007/10/16 16:10:59 christos E
 #include <compat/netbsd32/netbsd32.h>
 #endif
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 /* XXX this should not be here */
 int security_setidcore_dump;

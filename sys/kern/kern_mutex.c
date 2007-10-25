@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.19 2007/10/11 19:45:25 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.19.2.1 2007/10/25 22:40:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19 2007/10/11 19:45:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19.2.1 2007/10/25 22:40:00 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19 2007/10/11 19:45:25 ad Exp $");
 
 #include <dev/lockstat.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 /*
  * When not running a debug kernel, spin mutexes are not much

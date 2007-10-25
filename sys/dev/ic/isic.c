@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.22 2005/12/11 12:21:27 christos Exp $ 
+ *	$Id: isic.c,v 1.22.50.1 2007/10/25 22:37:45 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.22 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.22.50.1 2007/10/25 22:37:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.22 2005/12/11 12:21:27 christos Exp $");
 #include <net/if.h>
 #include <sys/callout.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>

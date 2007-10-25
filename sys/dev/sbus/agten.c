@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.7 2007/09/11 00:46:12 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.7.6.1 2007/10/25 22:39:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.7 2007/09/11 00:46:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.7.6.1 2007/10/25 22:39:37 bouyer Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.7 2007/09/11 00:46:12 macallan Exp $");
 #include <dev/sun/btreg.h>
 #include <dev/sun/btvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
