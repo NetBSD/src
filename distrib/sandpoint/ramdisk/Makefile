@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/10/25 14:20:55 nisimura Exp $
+#	$NetBSD: Makefile,v 1.2 2007/10/25 14:48:00 nisimura Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ CRUNCHGEN_FLAGS=-d "${DBG}"
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
-MAKEDEVTARGETS=	floppy
+MAKEDEVTARGETS=	std md0 wd0 pty0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile termcap.src \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
