@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.21 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: esl.c,v 1.21.28.1 2007/10/25 22:39:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.21 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.21.28.1 2007/10/25 22:39:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.21 2006/11/16 01:33:20 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/audioio.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 
 #include <dev/audio_if.h>

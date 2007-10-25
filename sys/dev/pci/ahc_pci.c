@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.59 2007/09/26 01:22:29 macallan Exp $
+ * $Id: ahc_pci.c,v 1.59.2.1 2007/10/25 22:38:48 bouyer Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.59 2007/09/26 01:22:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.59.2.1 2007/10/25 22:38:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.59 2007/09/26 01:22:29 macallan Exp $"
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

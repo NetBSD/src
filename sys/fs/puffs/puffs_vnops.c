@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.107 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.107.2.1 2007/10/25 22:39:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.107 2007/10/11 19:41:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.107.2.1 2007/10/25 22:39:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -494,7 +494,7 @@ puffs_lookup(void *v)
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
 
-	error = puffs_msg_vn(pmp, park_lookup, 0, PUFFS_VN_LOOKUP, dvp, NULL);
+	error = puffs_msg_vn(pmp, park_lookup, PUFFS_VN_LOOKUP, 0, dvp, NULL);
 	DPRINTF(("puffs_lookup: return of the userspace, part %d\n", error));
 
 	/*
@@ -1121,7 +1121,7 @@ puffs_readdir(void *v)
 	readdir_msg->pvnr_dentoff = cookiemem;
 
 	error = puffs_msg_vn(pmp, park_readdir, PUFFS_VN_READDIR,
-	    0, vp, NULL);
+	    tomove, vp, NULL);
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
@@ -1411,11 +1411,12 @@ puffs_mkdir(void *v)
 	PUFFS_MSG_VARS(vn, mkdir);
 	struct vnode *dvp = ap->a_dvp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct componentname *cnp = ap->a_cnp;
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, mkdir);
 	puffs_makecn(&mkdir_msg->pvnr_cn, &mkdir_msg->pvnr_cn_cred,
-	    &mkdir_msg->pvnr_cn_cid, ap->a_cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    &mkdir_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
 	mkdir_msg->pvnr_va = *ap->a_vap;
 
 	error = puffs_msg_vn(pmp, park_mkdir, PUFFS_VN_MKDIR, 0, dvp, NULL);
@@ -1424,15 +1425,15 @@ puffs_mkdir(void *v)
 		goto out;
 
 	error = puffs_newnode(dvp->v_mount, dvp, ap->a_vpp,
-	    mkdir_msg->pvnr_newnode, ap->a_cnp, VDIR, 0);
+	    mkdir_msg->pvnr_newnode, cnp, VDIR, 0);
 	if (error)
 		puffs_abortbutton(pmp, PUFFS_ABORT_MKDIR, VPTOPNC(ap->a_dvp),
-		    mkdir_msg->pvnr_newnode, ap->a_cnp);
+		    mkdir_msg->pvnr_newnode, cnp);
 
  out:
 	PUFFS_MSG_RELEASE(mkdir);
-	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	if (error || (cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return error;
 }
@@ -1506,12 +1507,13 @@ puffs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct componentname *cnp = ap->a_cnp;
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, link);
 	link_msg->pvnr_cookie_targ = VPTOPNC(vp);
 	puffs_makecn(&link_msg->pvnr_cn, &link_msg->pvnr_cn_cred,
-	    &link_msg->pvnr_cn_cid, ap->a_cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    &link_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
 
 	error = puffs_msg_vn(pmp, park_link, PUFFS_VN_LINK, 0, dvp, NULL);
 	PUFFS_MSG_RELEASE(link);
@@ -1525,6 +1527,7 @@ puffs_link(void *v)
 	if (error == 0)
 		puffs_updatenode(vp, PUFFS_UPDATECTIME);
 
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
 	return error;
@@ -1750,7 +1753,7 @@ puffs_read(void *v)
 			    uio->uio_offset, ap->a_cred);
 
 			error = puffs_msg_vn(pmp, park_read, PUFFS_VN_READ,
-			    0, vp, NULL);
+			    tomove, vp, NULL);
 			error = checkerr(pmp, error, __func__);
 			if (error)
 				break;
@@ -2024,8 +2027,6 @@ puffs_advlock(void *v)
 /*
  * This maps itself to PUFFS_VN_READ/WRITE for data transfer.
  */
-
-/* XXX: if this is called from interrupt context, we lose */
 int
 puffs_strategy(void *v)
 {
@@ -2109,7 +2110,7 @@ puffs_strategy(void *v)
 			    puffs_parkdone_asyncbioread, bp, vp);
 		} else {
 			error = puffs_msg_vn(pmp, park_rw, PUFFS_VN_READ,
-			    0, vp, NULL);
+			    tomove, vp, NULL);
 			error = checkerr(pmp, error, __func__);
 			if (error)
 				goto out;

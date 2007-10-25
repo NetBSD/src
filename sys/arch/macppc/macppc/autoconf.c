@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2007/09/02 18:45:36 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59.4.1 2007/10/25 22:36:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2007/09/02 18:45:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59.4.1 2007/10/25 22:36:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2007/09/02 18:45:36 macallan Exp $
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -63,7 +62,7 @@ extern char bootpath[256];
 char cbootpath[256];
 int    console_node = 0, console_instance = 0;
 
-u_int *heathrow_FCR = NULL;
+volatile uint32_t *heathrow_FCR = NULL;
 
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);

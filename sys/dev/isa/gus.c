@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.99 2007/09/25 23:11:24 ad Exp $	*/
+/*	$NetBSD: gus.c,v 1.99.2.1 2007/10/25 22:38:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.99 2007/09/25 23:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.99.2.1 2007/10/25 22:38:11 bouyer Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -113,9 +113,9 @@ __KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.99 2007/09/25 23:11:24 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ug_acpi.c,v 1.2 2007/05/08 17:17:14 xtraeme Exp $ */
+/* $NetBSD: ug_acpi.c,v 1.2.22.1 2007/10/25 22:37:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.2 2007/05/08 17:17:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.2.22.1 2007/10/25 22:37:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.2 2007/05/08 17:17:14 xtraeme Exp $");
 #include <sys/proc.h>
 #include <sys/envsys.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

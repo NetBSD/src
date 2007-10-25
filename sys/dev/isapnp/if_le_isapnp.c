@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.31 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.31.20.1 2007/10/25 22:38:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.31 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.31.20.1 2007/10/25 22:38:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.31 2007/03/04 06:02:13 christos E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

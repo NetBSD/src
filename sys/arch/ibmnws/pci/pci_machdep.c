@@ -59,29 +59,46 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-/*
- * PCI doesn't have any special needs; just use the generic versions
- * of these functions.
- */
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-};
+#define	PCI_MODE1_ENABLE	0x80000000UL
+#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
+#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
+
+#define	PCI_CBIO		0x10
+
+void
+ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
+{
+
+	pc->pc_conf_v = (void *)pc;
+
+	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_bus_maxdevs = ibmnws_pci_bus_maxdevs;
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_conf_read = genppc_pci_indirect_conf_read;
+	pc->pc_conf_write = genppc_pci_indirect_conf_write;
+
+	pc->pc_intr_v = (void *)pc;
+
+	pc->pc_intr_map = genppc_pci_intr_map;
+	pc->pc_intr_string = genppc_pci_intr_string;
+	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
+	pc->pc_intr_establish = genppc_pci_intr_establish;
+	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+
+	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_conf_hook = ibmnws_pci_conf_hook;
+
+	pc->pc_addr = mapiodev(PCI_MODE1_ADDRESS_REG, 4);
+	pc->pc_data = mapiodev(PCI_MODE1_DATA_REG, 4);
+	pc->pc_bus = 0;
+	pc->pc_node = 0;
+	pc->pc_memt = 0;
+	pc->pc_iot = 0;
+}
 
 int
-ibmnws_pci_bus_maxdevs(void *v, int busno)
+ibmnws_pci_bus_maxdevs(pci_chipset_tag_t pct, int busno)
 {
 
 	/*
@@ -91,106 +108,8 @@ ibmnws_pci_bus_maxdevs(void *v, int busno)
 	return (32);
 }
 
-
 int
-ibmnws_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
-
-	if (pin == 0) {
-		/* No IRQ used. */
-		goto bad;
-	}
-
-	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	/*
-	* Section 6.2.4, `Miscellaneous Functions', says that 255 means
-	* `unknown' or `no connection' on a PC.  We assume that a device with
-	* `no connection' either doesn't have an interrupt (in which case the
-	* pin number should be 0, and would have been noticed above), or
-	* wasn't configured by the BIOS (in which case we punt, since there's
-	* no real way we can know how the interrupt lines are mapped in the
-	* hardware).
-	*
-	* XXX
-	* Since IRQ 0 is only used by the clock, and we can't actually be sure
-	* that the BIOS did its job, we also recognize that as meaning that
-	* the BIOS has not configured the device.
-	*/
-	if (line == 0 || line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
-		goto bad;
-	} else {
-		if (line >= ICU_LEN) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
-			goto bad;
-		}
-		if (line == IRQ_SLAVE) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
-			line = 9;
-		}
-	}
-
-	*ihp = line;
-	return 0;
-
-bad:
-	*ihp = -1;
-	return 1;
-}
-
-const char *
-ibmnws_pci_intr_string(void *v, pci_intr_handle_t ih)
-{
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
-
-	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
-	
-}
-
-const struct evcnt *
-ibmnws_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
-void *
-ibmnws_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg)
-{
-
-	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
-}
-
-void
-ibmnws_pci_intr_disestablish(void *v, void *cookie)
-{
-
-	isa_intr_disestablish(NULL, cookie);
-}
-
-void
-ibmnws_pci_conf_interrupt(void *v, int bus, int dev, int pin,
-    int swiz, int *iline)
-{
-}
-
-int
-ibmnws_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
+ibmnws_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func, pcireg_t id)
 {
 
 	/*

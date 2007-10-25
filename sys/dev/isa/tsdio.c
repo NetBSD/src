@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.3 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.3.52.1 2007/10/25 22:38:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.3 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.3.52.1 2007/10/25 22:38:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.608 2007/09/26 19:48:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.608.2.1 2007/10/25 22:35:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.608 2007/09/26 19:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.608.2.1 2007/10/25 22:35:50 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -636,11 +636,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "biosextmem", NULL,
 		       NULL, 0, &biosextmem, 0,
 		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "nkpde", NULL,
-		       NULL, 0, &nkpde, 0,
-		       CTL_MACHDEP, CPU_NKPDE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,

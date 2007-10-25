@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.50 2007/08/30 02:17:35 dyoung Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.50.4.1 2007/10/25 22:40:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.50 2007/08/30 02:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.50.4.1 2007/10/25 22:40:07 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.50 2007/08/30 02:17:35 dyoung Exp
 #include <sys/errno.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

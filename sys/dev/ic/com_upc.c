@@ -1,4 +1,4 @@
-/* $NetBSD: com_upc.c,v 1.8 2006/07/13 22:56:02 gdamore Exp $ */
+/* $NetBSD: com_upc.c,v 1.8.34.1 2007/10/25 22:37:35 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,14 +28,14 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.8 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.8.34.1 2007/10/25 22:37:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h> /* XXX for tcflag_t in comvar.h */
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

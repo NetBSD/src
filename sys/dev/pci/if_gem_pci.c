@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.23 2007/06/25 11:11:00 aymeric Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.23.12.1 2007/10/25 22:38:59 bouyer Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.23 2007/06/25 11:11:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.23.12.1 2007/10/25 22:38:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.23 2007/06/25 11:11:00 aymeric Exp 
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

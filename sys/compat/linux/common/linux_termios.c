@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.31 2007/05/13 16:04:00 dsl Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.31.12.1 2007/10/25 22:37:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.31 2007/05/13 16:04:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.31.12.1 2007/10/25 22:37:00 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.31 2007/05/13 16:04:00 dsl Exp $
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_termios.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

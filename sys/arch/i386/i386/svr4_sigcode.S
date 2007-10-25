@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.9 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.9.54.1 2007/10/25 22:35:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ IDTVEC(svr4_fasttrap)
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	2b
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 	INTRFASTEXIT
 9:	sti

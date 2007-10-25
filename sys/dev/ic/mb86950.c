@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.9 2007/03/04 06:01:58 christos Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.9.20.1 2007/10/25 22:37:48 bouyer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.9 2007/03/04 06:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.9.20.1 2007/10/25 22:37:48 bouyer Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -155,7 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.9 2007/03/04 06:01:58 christos Exp $")
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mb86950reg.h>
 #include <dev/ic/mb86950var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.12 2006/08/07 01:31:36 mhitch Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.12.34.1 2007/10/25 22:38:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.12 2006/08/07 01:31:36 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.12.34.1 2007/10/25 22:38:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.12 2006/08/07 01:31:36 mhitch Ex
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/clmpccvar.h>
 

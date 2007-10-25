@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.11 2007/07/09 21:10:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.11.12.1 2007/10/25 22:37:02 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.11 2007/07/09 21:10:47 ad Exp $");
 #include <sys/mbuf.h>
 #endif
 #include <sys/kthread.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __FreeBSD__
 #include <machine/resource.h>
 #include <sys/bus.h>

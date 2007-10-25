@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2007/06/01 14:23:50 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58.14.1 2007/10/25 22:36:25 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -117,9 +117,23 @@ struct cpu_info {
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
 	struct evcnt ci_ev_umchk;	/* user MCHK events */
+	struct evcnt ci_ev_ipi;		/* IPIs received */
 };
 
 #ifdef MULTIPROCESSOR
+
+struct cpu_hatch_data {
+	struct device *self;
+	struct cpu_info *ci;
+	int running;
+	int pir;
+	int hid0;
+	int sdr1;
+	int sr[16];
+	int batu[4], batl[4];
+	int tbu, tbl;
+};
+
 static __inline int
 cpu_number(void)
 {
@@ -309,6 +323,17 @@ void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
 void *mapiodev(paddr_t, psize_t);
 void unmapiodev(vaddr_t, vsize_t);
+
+#ifdef MULTIPROCESSOR
+int md_setup_trampoline(volatile struct cpu_hatch_data *, struct cpu_info *);
+void md_presync_timebase(volatile struct cpu_hatch_data *);
+void md_start_timebase(volatile struct cpu_hatch_data *);
+void md_sync_timebase(volatile struct cpu_hatch_data *);
+void md_setup_interrupts(void);
+int cpu_spinup(struct device *, struct cpu_info *);
+void cpu_hatch(void);
+void cpu_spinup_trampoline(void);
+#endif
 
 #define	DELAY(n)		delay(n)
 

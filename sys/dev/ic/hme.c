@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.59 2007/09/01 07:32:26 dyoung Exp $	*/
+/*	$NetBSD: hme.c,v 1.59.4.1 2007/10/25 22:37:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.59 2007/09/01 07:32:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.59.4.1 2007/10/25 22:37:40 bouyer Exp $");
 
 /* #define HMEDEBUG */
 
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.59 2007/09/01 07:32:26 dyoung Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.45 2007/07/09 21:00:52 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.45.12.1 2007/10/25 22:38:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.45 2007/07/09 21:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.45.12.1 2007/10/25 22:38:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.45 2007/07/09 21:00:52 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

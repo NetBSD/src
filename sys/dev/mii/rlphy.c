@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.16 2007/10/13 13:05:19 isaki Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.16.2.1 2007/10/25 22:38:39 bouyer Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.16 2007/10/13 13:05:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.16.2.1 2007/10/25 22:38:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.16 2007/10/13 13:05:19 isaki Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/rtl81x9reg.h>
 
 struct rlphy_softc {

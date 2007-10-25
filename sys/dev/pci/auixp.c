@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.23 2007/04/29 20:23:36 msaitoh Exp $ */
+/* $NetBSD: auixp.c,v 1.23.12.1 2007/10/25 22:38:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23 2007/04/29 20:23:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.12.1 2007/10/25 22:38:49 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23 2007/04/29 20:23:36 msaitoh Exp $");
 #include <sys/audioio.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

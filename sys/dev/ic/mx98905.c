@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.9 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.9.20.1 2007/10/25 22:37:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9.20.1 2007/10/25 22:37:51 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9 2007/03/04 06:01:59 christos Exp $")
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

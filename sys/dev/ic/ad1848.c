@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.25 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.25.28.1 2007/10/25 22:37:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.25 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.25.28.1 2007/10/25 22:37:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.25 2006/11/16 01:32:50 christos Exp $")
 /*#include <sys/syslog.h>*/
 /*#include <sys/proc.h>*/
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 

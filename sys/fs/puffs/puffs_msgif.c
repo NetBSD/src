@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.47 2007/10/11 23:04:21 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.47.2.1 2007/10/25 22:39:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.47 2007/10/11 23:04:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.47.2.1 2007/10/25 22:39:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -412,6 +412,10 @@ touser(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	else
 		preq->preq_id = puffs_getmsgid(pmp);
 
+	/* fill in caller information */
+	preq->preq_pid = l->l_proc->p_pid;
+	preq->preq_lid = l->l_lid;
+
 	/*
 	 * To support PCATCH, yet another movie: check if there are signals
 	 * pending and we are issueing a non-FAF.  If so, return an error
@@ -657,7 +661,8 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 
 	if (error == 0) {
 		*data = (uint8_t *)preq;
-		preq->preq_frhdr.pfr_len = park->park_maxlen;
+		preq->preq_frhdr.pfr_len = park->park_copylen;
+		preq->preq_frhdr.pfr_alloclen = park->park_maxlen;
 		preq->preq_frhdr.pfr_type = preq->preq_opclass; /* yay! */
 		*dlen = preq->preq_frhdr.pfr_len;
 		*parkptr = park;

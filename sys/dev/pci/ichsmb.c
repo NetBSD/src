@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.9 2007/09/01 22:19:25 riz Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.9.6.1 2007/10/25 22:38:57 bouyer Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.9 2007/09/01 22:19:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.9.6.1 2007/10/25 22:38:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.9 2007/09/01 22:19:25 riz Exp $");
 #include <sys/rwlock.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
