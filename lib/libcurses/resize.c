@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.15 2007/08/27 19:54:29 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.16 2007/10/25 20:42:08 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.15 2007/08/27 19:54:29 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.16 2007/10/25 20:42:08 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: resize.c,v 1.15 2007/08/27 19:54:29 jdc Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
+static int __resizeterm(WINDOW *win, int nlines, int ncols);
 static int __resizewin(WINDOW *win, int nlines, int ncols);
 
 /*
@@ -71,15 +72,17 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	nlines = req_nlines;
 	ncols = req_ncols;
 	if (win->orig == NULL) {
-		/* bound window to screen */
-		if (win->begy + nlines > LINES)
-			nlines = 0;
-		if (nlines <= 0)
-			nlines += LINES - win->begy;
-		if (win->begx + ncols > COLS)
-			ncols = 0;
-		if (ncols <= 0)
-			ncols += COLS - win->begx;
+		/* bound "our" windows by the screen size */
+		if (win == curscr || win == __virtscr || win == stdscr) {
+			if (win->begy + nlines > LINES)
+				nlines = 0;
+			if (nlines <= 0)
+				nlines += LINES - win->begy;
+			if (win->begx + ncols > COLS)
+				ncols = 0;
+			if (ncols <= 0)
+				ncols += COLS - win->begx;
+		}
 	} else {
 		/* subwins must fit inside the parent - check this */
 		if (win->begy + nlines > win->orig->begy + win->orig->maxy)
@@ -118,7 +121,6 @@ resizeterm(int nlines, int ncols)
 {
 	WINDOW *win;
 	struct __winlist *list;
-	int newlines, newcols;
 
 	  /* don't worry if things have not changed... we would like to
 	     do this but some bastard programs update LINES and COLS before
@@ -130,25 +132,12 @@ resizeterm(int nlines, int ncols)
 	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
 #endif
 
-
-	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {
-		win = list->winp;
-
-		newlines = win->reqy;
-		if (win->begy + newlines >= nlines)
-			newlines = 0;
-		if (newlines == 0)
-			newlines = nlines - win->begy;
-
-		newcols = win->reqx;
-		if (win->begx + newcols >= ncols)
-			newcols = 0;
-		if (newcols == 0)
-			newcols = ncols - win->begx;
-
-		if (__resizewin(win, newlines, newcols) != OK)
-			return ERR;
-	}
+	if (__resizeterm(curscr, nlines, ncols) == ERR)
+		return ERR;
+	if (__resizeterm(__virtscr, nlines, ncols) == ERR)
+		return ERR;
+	if (__resizeterm(stdscr, nlines, ncols) == ERR)
+		return ERR;
 
 	LINES = nlines;
 	COLS = ncols;
@@ -163,6 +152,30 @@ resizeterm(int nlines, int ncols)
 
 	wrefresh(curscr);
 	return OK;
+}
+
+/*
+ * __resizeterm
+ *	Setup window for resizing.
+ */
+static int
+__resizeterm(WINDOW *win, int nlines, int ncols)
+{
+	int newlines, newcols;
+
+	newlines = win->reqy;
+	if (win->begy + newlines >= nlines)
+		newlines = 0;
+	if (newlines == 0)
+		newlines = nlines - win->begy;
+
+	newcols = win->reqx;
+	if (win->begx + newcols >= ncols)
+		newcols = 0;
+	if (newcols == 0)
+		newcols = ncols - win->begx;
+
+	return __resizewin(win, newlines, newcols);
 }
 
 /*
