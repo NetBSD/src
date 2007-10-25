@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2003/04/02 07:36:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2007/10/25 13:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,7 +104,7 @@
 /*
  * Override the default pager_map size, there's not enough KVA.
  */
-#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
+#define PAGER_MAP_DEFAULT_SIZE		(4 * 1024 * 1024)
 #endif
 
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
