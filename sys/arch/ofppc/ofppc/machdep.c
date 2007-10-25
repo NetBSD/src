@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2007/10/18 21:12:54 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2007/10/25 16:55:49 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2007/10/18 21:12:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/10/25 16:55:49 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -68,7 +68,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	/* Initialize the bootstrap console. */
 	ofppc_bootstrap_console();
 	ofwoea_initppc(startkernel, endkernel, args);
-	map_isa_ioregs();
 }
 
 void
@@ -94,6 +93,7 @@ dumpsys(void)
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
+void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
@@ -118,6 +118,9 @@ cpu_reboot(int howto, char *what)
 		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
+
+	rtas_reboot();
+
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
 			printf("boot string too large, ignored\n");

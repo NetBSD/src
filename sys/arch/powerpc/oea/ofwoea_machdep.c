@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.2 2007/10/17 19:56:43 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.3 2007/10/25 16:55:50 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2 2007/10/17 19:56:43 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.3 2007/10/25 16:55:50 garbled Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2 2007/10/17 19:56:43 garbled E
 #ifdef OFWOEA_DEBUG
 #define DPRINTF printf
 #else
-#define DPRINTF while(0) printf
+#define DPRINTF while (0) printf
 #endif
 
 typedef struct _rangemap {
@@ -150,8 +150,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	if (startsym == NULL || endsym == NULL)
 	    startsym = endsym = NULL;
 #endif
-
-	ofwoea_bus_space_init();
 
 	ofwoea_consinit();
 
@@ -414,11 +412,25 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		reclen = 6;
 	else
 		reclen = acells + scells + 1;
-	DPRINTF("found a map reclen=%d cur=%d\n", reclen, *cur);
+	/*
+	 * There exist ISA buses with empty ranges properties.  This is
+	 * known to occur on the Pegasos II machine, and likely others.
+	 * According to them, that means that the isa bus is a fake bus, and
+	 * the real maps are the PCI maps of the preceeding bus.  To deal
+	 * with this, we will set cur to -1 and return.
+	 */
+	if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) == 0 && len == 0) {
+		*cur = -1;
+		DPRINTF("Found empty range in isa bus\n");
+		return;
+	}
+
+	DPRINTF("found a map reclen=%d cur=%d len=%d\n", reclen, *cur, len);
 	switch (type) {
 		case RANGE_TYPE_PCI:
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
+				DPRINTF("FOUND PCI RANGE\n");
 				regions[*cur].type = map[i*reclen] >> 24;
 				regions[*cur].addr = map[i*reclen + acells];
 				regions[*cur].size =
@@ -432,16 +444,23 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 					regions[*cur].type = RANGE_IO;
 				else
 					regions[*cur].type = RANGE_MEM;
+				DPRINTF("FOUND ISA RANGE TYPE=%d\n",
+					regions[*cur].type);
 				regions[*cur].size =
 				    map[i*reclen + acells + scells];
 				(*cur)++;
 			}
 			break;
 	}
+	DPRINTF("returning with CUR=%d\n", *cur);
 	return;
 rec:
-	for (node = OF_child(base); node; node = OF_peer(node))
+	for (node = OF_child(base); node; node = OF_peer(node)) {
+		DPRINTF("RECURSE 1 STEP\n");
 		find_ranges(node, regions, cur, type);
+		if (*cur == -1)
+			return;
+	}
 }
 
 static int
@@ -486,11 +505,24 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		u_int32_t size = 0;
 		rangemap_t regions[32];
 
+		DPRINTF("LOOKING FOR FIRSTPCI\n");
 		find_ranges(node, list, &cur, RANGE_TYPE_FIRSTPCI);
 		range = 0;
+		DPRINTF("LOOKING FOR ISA\n");
 		find_ranges(node, regions, &range, RANGE_TYPE_ISA);
 		if (range == 0 || cur == 0)
 			return -1; /* no isa stuff found */
+		/*
+		 * This may be confusing to some.  The ISA ranges property
+		 * is supposed to be a set of IO ranges for the ISA bus, but
+		 * generally, it's just a set of pci devfunc lists that tell
+		 * you to go look at the parent PCI device for the actual
+		 * ranges.
+		 */
+		if (range == -1) {
+			/* we found a rangeless isa bus */
+		}
+		DPRINTF("found isa stuff\n");
 		for (i=0; i < range; i++)
 			if (regions[i].type == iomem)
 				size = regions[i].size;
@@ -498,6 +530,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			/* the first io range is the one */
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_IO && size) {
+					DPRINTF("found IO\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
 					error = bus_space_init(tag, name, NULL, 0);
@@ -507,6 +540,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_MEM &&
 				    list[i].size == size) {
+					DPRINTF("found mem\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
 					error = bus_space_init(tag, name, NULL, 0);
@@ -605,6 +639,7 @@ ofwoea_bus_space_init(void)
 	    &genppc_isa_io_space_tag, "isa-ioport");
 	if (error > 0)
 		panic("Could not map ISA IO");
+
 	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_MEM, -1,
 	    &genppc_isa_mem_space_tag, "isa-iomem");
 	if (error > 0)

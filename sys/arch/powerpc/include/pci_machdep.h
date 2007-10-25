@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2 2007/10/17 19:56:41 garbled Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.3 2007/10/25 16:55:50 garbled Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct genppc_pci_chipset {
 	u_int32_t	*pc_addr;
 	u_int32_t	*pc_data;
 	int		pc_node;
+	int		pc_ihandle;
 	int		pc_bus;
 	bus_space_tag_t	pc_memt;
 	bus_space_tag_t	pc_iot;
@@ -156,6 +157,14 @@ pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
 pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
 void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
+
+/* generic OFW method PCI functions */
+void genppc_pci_ofmethod_attach_hook(struct device *, struct device *,
+    struct pcibus_attach_args *);
+pcitag_t genppc_pci_ofmethod_make_tag(void *, int, int, int);
+pcireg_t genppc_pci_ofmethod_conf_read(void *, pcitag_t, int);
+void genppc_pci_ofmethod_conf_write(void *, pcitag_t, int, pcireg_t);
+void genppc_pci_ofmethod_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 /* XXX for now macppc needs its own pci_bus_dma_tag */
 #ifndef macppc

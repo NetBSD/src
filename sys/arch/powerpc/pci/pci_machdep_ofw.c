@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.2 2007/10/17 19:56:44 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.3 2007/10/25 16:55:51 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.2 2007/10/17 19:56:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.3 2007/10/25 16:55:51 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,13 +99,18 @@ genofw_find_ofpics(int startnode)
 			continue;
 		if (strncmp(name, "interrupt-controller", 20) == 0)
 			goto foundic;
+
 		if (OF_getprop(node, "interrupt-controller", name,
 		    sizeof(name)) > -1)
 			goto foundic;
-		if (OF_getprop(node, "device-type", name, sizeof(name)) == -1)
+
+		if (OF_getprop(node, "device_type", name, sizeof(name)) == -1)
 			continue;
 		if (strncmp(name, "interrupt-controller", 20) == 0)
 			goto foundic;
+
+		/* if we didn't find one, skip to the next */
+		continue;
 foundic:
 		picnodes[nrofpics].node = node;
 		if (OF_getprop(node, "interrupt-parent", &iparent,
@@ -126,7 +131,7 @@ foundic:
 			    + picnodes[nrofpics-1].intrs;
 		else
 			picnodes[nrofpics].offset = 0;
-		OF_getprop(node, "device-type", name, sizeof(name));
+		OF_getprop(node, "device_type", name, sizeof(name));
 		if (strcmp(name, "open-pic") == 0)
 			picnodes[nrofpics].type = PICNODE_TYPE_OPENPIC;
 		if (strcmp(name, "interrupt-controller") == 0) {
@@ -135,6 +140,10 @@ foundic:
 				picnodes[nrofpics].type = PICNODE_TYPE_HEATHROW;
 			if (strcmp(name, "chrp,iic") != 0)
 				picnodes[nrofpics].type = PICNODE_TYPE_8259;
+		}
+		if (strlen(name) == 0) {
+			/* probably a Pegasos, assume 8259 */
+			picnodes[nrofpics].type = PICNODE_TYPE_8259;
 		}
 		nrofpics++;
 	}

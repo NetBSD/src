@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.3 2007/10/25 16:55:50 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.1 2007/10/25 16:55:50 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.3 2007/10/25 16:55:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.1 2007/10/25 16:55:50 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,32 +50,33 @@ __KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.3 2007/10/25 16:55:50 garbled Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
+#include <machine/isa_machdep.h>
 
-struct ofwpci_softc {
+struct pegasospci_softc {
 	struct device sc_dev;
 	struct genppc_pci_chipset sc_pc;
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
 };
 
-static void ofwpci_attach(struct device *, struct device *, void *);
-static int ofwpci_match(struct device *, struct cfdata *, void *);
+static void pegasospci_attach(struct device *, struct device *, void *);
+static int pegasospci_match(struct device *, struct cfdata *, void *);
 
-CFATTACH_DECL(ofwpci, sizeof(struct ofwpci_softc),
-    ofwpci_match, ofwpci_attach, NULL, NULL);
+CFATTACH_DECL(pegasospci, sizeof(struct pegasospci_softc),
+    pegasospci_match, pegasospci_attach, NULL, NULL);
 
 extern struct genppc_pci_chipset *genppc_pct;
 
 static void
-ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
+pegasospci_get_chipset_tag(pci_chipset_tag_t pc)
 {
 	pc->pc_conf_v = (void *)pc;
 
-	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_attach_hook = genppc_pci_ofmethod_attach_hook;
 	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
-	pc->pc_make_tag = genppc_pci_indirect_make_tag;
-	pc->pc_conf_read = genppc_pci_indirect_conf_read;
-	pc->pc_conf_write = genppc_pci_indirect_conf_write;
+	pc->pc_make_tag = genppc_pci_ofmethod_make_tag;
+	pc->pc_conf_read = genppc_pci_ofmethod_conf_read;
+	pc->pc_conf_write = genppc_pci_ofmethod_conf_write;
 
 	pc->pc_intr_v = (void *)pc;
 
@@ -86,22 +87,24 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
-	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_decompose_tag = genppc_pci_ofmethod_decompose_tag;
 	pc->pc_conf_hook = genofw_pci_conf_hook;
 
 	pc->pc_addr = 0;
 	pc->pc_data = 0;
 	pc->pc_bus = 0;
 	pc->pc_node = 0;
+	pc->pc_ihandle = 0;
 	pc->pc_memt = 0;
 	pc->pc_iot = 0;
 }
 
 static int
-ofwpci_match(struct device *parent, struct cfdata *cf, void *aux)
+pegasospci_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char name[32];
+	int node;
 
 	if (strcmp(ca->ca_name, "pci") != 0)
 		return 0;
@@ -111,26 +114,28 @@ ofwpci_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(name, "pci") != 0)
 		return 0;
 
-	return 1;
+	node = OF_finddevice("/");
+	if (node < 0)
+		return 0;
+	memset(name, 0, sizeof(name));
+	OF_getprop(node, "name", name, sizeof(name));
+	if (strcmp(name, "bplan,Pegasos2") != 0)
+		return 0;
+
+	return 10;
 }
 
 static void
-ofwpci_attach(struct device *parent, struct device *self, void *aux)
+pegasospci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofwpci_softc *sc = (void *)self;
+	struct pegasospci_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	struct genppc_pci_chipset_businfo *pbi;
-	int node = ca->ca_node;
+	int i, isprim = 0, node = ca->ca_node;
 	uint32_t reg[2], busrange[2];
-#if 0
-	struct ranges {
-		uint32_t pci_hi, pci_mid, pci_lo;
-		uint32_t host;
-		uint32_t size_hi, size_lo;
-	} ranges[6], *rp = ranges;
-#endif
+	char buf[64];
 
 	aprint_normal("\n");
 
@@ -145,16 +150,42 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
 	sc->sc_iot.pbs_base = 0x00000000;
 	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
-	    "ofwpci io-space") != 0)
-		panic("Can't init ofwpci io tag");
+	    "pegasospci io-space") != 0)
+		panic("Can't init pegasospci io tag");
 
 	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
 	sc->sc_memt.pbs_base = 0x00000000;
 	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
-	    "ofwpci mem-space") != 0)
-		panic("Can't init ofwpci mem tag");
+	    "pegasospci mem-space") != 0)
+		panic("Can't init pegasospci mem tag");
 
-	ofwpci_get_chipset_tag(pc);
+	/* are we the primary pci bus? */
+	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") ==
+	    ca->ca_node) {
+		isprim++;
+		/* yes we are, now do we have an ISA child? */
+		if (of_find_firstchild_byname(ca->ca_node, "isa") != -1) {
+			/* The Pegasos is very simple.  isa == pci */
+			genppc_isa_io_space_tag = sc->sc_iot;
+			genppc_isa_mem_space_tag = sc->sc_memt;
+			map_isa_ioregs();
+		}
+		/* If we are, regarless of isa above, now we wire up interrupt
+		 * controllers.  We had to wait because of ISA.
+		 */
+		ofppc_setup_pics();
+	}
+
+	pegasospci_get_chipset_tag(pc);
+	i = OF_package_to_path(node, buf, sizeof(buf)-1);
+	if (i < 0)
+		panic("Cannot find path for PCI device\n");
+	if (i < sizeof(buf)-1)
+		buf[i] = '\0';
+	pc->pc_ihandle = OF_open(buf);
+	if (pc->pc_ihandle == 0)
+		panic("Cannot open PCI device node\n");
+
 	pc->pc_node = node;
 	pc->pc_addr = mapiodev(reg[0] + 0xcf8, 4);
 	pc->pc_data = mapiodev(reg[0] + 0xcfc, 4);
@@ -182,5 +213,11 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	/* XXX
+	 * Currently I cannot get this method to work on the pegasos
+	 * secondary PCI bus.  This is unacceptable, but for the short term,
+	 * will have to suffice.
+	 */
+	if (isprim)
+		config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
