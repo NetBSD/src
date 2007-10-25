@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.65 2007/10/13 14:46:54 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.65.2.1 2007/10/25 22:35:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,7 @@
  */
 
 #ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
 #include <machine/cpu.h>
-#endif
 #endif
 
 #define	_MACHINE	i386
@@ -163,13 +159,14 @@
 /*
  * Mach derived conversion macros
  */
-#define	x86_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
-#define	x86_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
-#define	x86_btod(x)		((unsigned)(x) >> PDSHIFT)
-#define	x86_dtob(x)		((unsigned)(x) << PDSHIFT)
-#define	x86_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define	x86_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	x86_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define	x86_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define	x86_round_pdr(x) \
+	((((unsigned long)(x)) + (NBPD_L2 - 1)) & ~(NBPD_L2 - 1))
+#define	x86_trunc_pdr(x)	((unsigned long)(x) & ~(NBPD_L2 - 1))
+#define	x86_btod(x)		((unsigned long)(x) >> L2_SHIFT)
+#define	x86_dtob(x)		((unsigned long)(x) << L2_SHIFT)
+#define	x86_round_page(x)	((((unsigned long)(x)) + PGOFSET) & ~PGOFSET)
+#define	x86_trunc_page(x)	((unsigned long)(x) & ~PGOFSET)
+#define	x86_btop(x)		((unsigned long)(x) >> PGSHIFT)
+#define	x86_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
 #endif /* _I386_PARAM_H_ */

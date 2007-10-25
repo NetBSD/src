@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.12 2006/11/24 22:04:25 wiz Exp $ */
+/* $NetBSD: btvmeii.c,v 1.12.28.1 2007/10/25 22:38:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.12 2006/11/24 22:04:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.12.28.1 2007/10/25 22:38:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.12 2006/11/24 22:04:25 wiz Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
 

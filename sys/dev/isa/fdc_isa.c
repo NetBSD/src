@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.14 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.14.28.1 2007/10/25 22:38:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.14 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.14.28.1 2007/10/25 22:38:11 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -85,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.14 2006/11/16 01:33:00 christos Exp $"
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

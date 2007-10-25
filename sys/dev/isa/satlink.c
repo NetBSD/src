@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.33 2007/07/10 12:15:00 tsutsui Exp $	*/
+/*	$NetBSD: satlink.c,v 1.33.12.1 2007/10/25 22:38:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33 2007/07/10 12:15:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33.12.1 2007/10/25 22:38:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33 2007/07/10 12:15:00 tsutsui Exp $")
 #include <sys/file.h>
 #include <sys/tty.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

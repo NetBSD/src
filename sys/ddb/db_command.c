@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $	*/
+/*	$NetBSD: db_command.c,v 1.108.2.1 2007/10/25 22:37:05 bouyer Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.108.2.1 2007/10/25 22:37:05 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $")
 #include <sys/vnode.h>
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
+#include <sys/cpu.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -92,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.108 2007/10/14 00:37:56 uwe Exp $")
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#endif
-#ifdef MULTIPROCESSOR
-#include <machine/cpu.h>
 #endif
 
 #include <ddb/db_lex.h>
@@ -588,6 +586,7 @@ db_cmd_search(const char *name,const struct db_command *table,
 	int result;
 
 	result = CMD_NONE;
+	*cmdp = NULL;
 	for (cmd = table; cmd->name != 0; cmd++) {
 		const char *lp;
 		const char *rp;
@@ -951,14 +950,14 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
   
 	const struct db_cmd_tbl_en_head *list;
 	const struct db_cmd_tbl_en *list_ent;
-	const struct db_command *help;
+	const struct db_command *help = NULL;
 	int t, result;
   
 	t = db_read_token();
 	/* is there another command after the "help"? */
 	if (t == tIDENT){
 
-		switch(db_get_list_type(db_tok_string)){
+		switch(db_get_list_type(db_tok_string)) {
 
 		case DDB_BASE_CMD:
 			list=&db_base_cmd_list;
@@ -1050,6 +1049,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		
 	return;
 }
+
 /*ARGSUSED*/
 static void
 db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,

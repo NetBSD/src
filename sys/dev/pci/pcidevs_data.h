@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.904 2007/10/14 00:40:41 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.904.2.1 2007/10/25 22:39:17 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.905 2007/10/14 00:40:17 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.907 2007/10/22 14:59:38 manu Exp
  */
 
 /*
@@ -6452,6 +6452,10 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88EC042",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_CO55,
+	    "Yukon 88ECO55",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    "GT-64120 System Controller",
 	},
@@ -10861,11 +10865,11 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030,
-	    "9030 Modem 4 port",
+	    "9030 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
-	    "9030 Modem 4 port V92",
+	    "9050 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
@@ -13560,4 +13564,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2792;
+const int pci_nproducts = 2793;

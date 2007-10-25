@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.27 2007/07/09 21:00:39 ad Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.27.12.1 2007/10/25 22:37:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.27 2007/07/09 21:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.27.12.1 2007/10/25 22:37:59 bouyer Exp $");
 
 #undef	TCICDEBUG
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.27 2007/07/09 21:00:39 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

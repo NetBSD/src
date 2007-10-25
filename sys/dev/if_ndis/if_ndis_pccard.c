@@ -46,7 +46,7 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pccard.c,v 1.6.2.3 2005/03/31 04
 #include <net/if_arp.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/resource.h>
 #include <sys/bus.h>
 #include <sys/rman.h>

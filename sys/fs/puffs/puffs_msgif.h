@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.57 2007/10/11 23:46:08 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.57.2.1 2007/10/25 22:39:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@
 struct puffs_frame {
 	uint32_t	pfr_len;
 	uint32_t	pfr_type;
+	uint32_t	pfr_alloclen;
 };
 
 #define PUFFSOP_VFS		0x01	/* read/write	*/
@@ -104,7 +105,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	20
+#define PUFFSVERSION	22
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -173,6 +174,10 @@ struct puffs_req {
 	int			preq_rv;
 
 	uint32_t		preq_setbacks;
+
+	/* Who is making the call?  Eventually host id is also needed. */
+	pid_t			preq_pid;
+	lwpid_t			preq_lid;
 
 	/*
 	 * the following helper pads the struct size to md alignment

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.30 2007/08/14 16:18:20 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.30.6.1 2007/10/25 22:35:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.30 2007/08/14 16:18:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.30.6.1 2007/10/25 22:35:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -278,23 +278,27 @@ static const char *detect_reversed[] = {"AAPL,3400/2400",
 					"AAPL,3500",
 					NULL};
 
+static const char *use_gpio4[] = {	"PowerMac3,3",
+					NULL};
+
 static int
 awacs_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca;
 
 	ca = aux;
-	if (strcmp(ca->ca_name, "i2s") == 0)
-		return 1;
 
-	if (strcmp(ca->ca_name, "awacs") != 0 &&
-	    strcmp(ca->ca_name, "davbus") != 0)
-		return 0;
+	if (strcmp(ca->ca_name, "awacs") == 0 ||
+	    strcmp(ca->ca_name, "davbus") == 0)
+		return 100;
 
 	if (ca->ca_nreg < 24 || ca->ca_nintr < 12)
 		return 0;
 
-	return 1;
+	if (strcmp(ca->ca_name, "i2s") == 0)
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -349,7 +353,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		cirq = ca->ca_intr[0];
 		oirq = ca->ca_intr[1];
 		iirq = ca->ca_intr[2];
-		cirq_type = oirq_type = iirq_type = IST_LEVEL;
+		cirq_type = oirq_type = iirq_type = IST_EDGE;
 	}
 
 	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
@@ -430,10 +434,12 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_headphones_mask = 0x8;
 		sc->sc_headphones_in = 0x0;
-	} else if (perch != -1) {
+	} else if ((perch != -1) ||
+	    (of_compatible(root_node, use_gpio4) != -1)) {
 		/*
 		 * this is for the beige G3's 'personality card' which uses
 		 * yet another wiring of the headphone detect GPIOs
+		 * some G4s use it as well
 		 */
 		sc->sc_headphones_mask = 0x04;
 		sc->sc_headphones_in = 0x04;
@@ -1064,7 +1070,7 @@ awacs_trigger_output(void *h, void *start, void *end, int bsize,
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
 
 	dbdma_start(sc->sc_odma, sc->sc_odmacmd);
 

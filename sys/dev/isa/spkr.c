@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.24 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.24.20.1 2007/10/25 22:38:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24.20.1 2007/10/25 22:38:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24 2007/03/04 06:02:13 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/pcppivar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.40 2007/09/30 11:59:41 martin Exp $	*/
+/*	$NetBSD: esiop.c,v 1.40.2.1 2007/10/25 22:37:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.40 2007/09/30 11:59:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.40.2.1 2007/10/25 22:37:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.40 2007/09/30 11:59:41 martin Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/microcode/siop/esiop.out>
 

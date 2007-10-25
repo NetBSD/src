@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.20 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.20.24.1 2007/10/25 22:36:02 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.20 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.20.24.1 2007/10/25 22:36:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -232,7 +232,7 @@ ofcstart(struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

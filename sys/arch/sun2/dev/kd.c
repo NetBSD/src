@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.24.1 2007/10/25 22:36:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.16 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.16.24.1 2007/10/25 22:36:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,6 +102,7 @@ static void kdstart(struct tty *);
 static void kd_init(struct kd_softc *);
 static void kd_cons_input(int);
 static int  kdcngetc(dev_t);
+static void kd_later(void*);
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
@@ -135,6 +136,7 @@ kd_init(struct kd_softc *kd)
 	kd = &kd_softc; 	/* XXX */
 
 	tp = ttymalloc();
+	callout_setfunc(&tp->t_rstrt_ch, kd_later, tp);
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
 	tp->t_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
@@ -352,7 +354,6 @@ kdparam(struct tty *tp, struct termios *t)
 }
 
 
-static void kd_later(void*);
 static void kd_putfb(struct tty *);
 
 static void 
@@ -378,8 +379,7 @@ kdstart(struct tty *tp)
 				tp->t_state &= ~TS_BUSY;
 			} else {
 				/* called at interrupt level - do it later */
-				callout_reset(&tp->t_rstrt_ch, 0,
-				    kd_later, tp);
+				callout_schedule(&tp->t_rstrt_ch, 0);
 			}
 		} else {
 			/*

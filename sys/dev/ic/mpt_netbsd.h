@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.6 2007/07/27 13:06:51 tron Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.6.10.1 2007/10/25 22:37:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -88,8 +88,8 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

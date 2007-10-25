@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.28 2007/07/29 12:50:22 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.28.10.1 2007/10/25 22:39:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.28 2007/07/29 12:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.28.10.1 2007/10/25 22:39:11 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.28 2007/07/29 12:50:22 ad Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

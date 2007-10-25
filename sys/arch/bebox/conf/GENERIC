@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2007/06/04 08:55:20 martin Exp $
+# $NetBSD: GENERIC,v 1.105.14.1 2007/10/25 22:35:37 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.105.14.1 $"
 
 maxusers	32
 
@@ -212,9 +212,9 @@ pckbd*	at pckbc?
 #pms*	at pckbc?
 #vga0	at isa?
 vga*	at pci?
-pfb*	at pci?
+#pfb*	at pci?
 wsdisplay*	at vga? console ?
-wsdisplay*	at pfb? console ?
+#wsdisplay*	at pfb? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 

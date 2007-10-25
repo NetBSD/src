@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.52 2006/11/26 01:15:39 enami Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.52.28.1 2007/10/25 22:38:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.52 2006/11/26 01:15:39 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.52.28.1 2007/10/25 22:38:59 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.52 2006/11/26 01:15:39 enami Exp $"
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 

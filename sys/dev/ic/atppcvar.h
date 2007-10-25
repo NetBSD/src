@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.8 2007/03/04 06:01:50 christos Exp $ */
+/* $NetBSD: atppcvar.h,v 1.8.20.1 2007/10/25 22:37:32 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -32,7 +32,7 @@
 #ifndef __ATPPCVAR_H
 #define __ATPPCVAR_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/types.h>
 #include <sys/device.h>
 #include <sys/callout.h>

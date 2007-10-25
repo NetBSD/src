@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.29 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.29.28.1 2007/10/25 22:39:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.29 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.29.28.1 2007/10/25 22:39:02 bouyer Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.29 2006/11/16 01:33:09 christos Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #ifdef IPKDB_NE_PCI
 #include <ipkdb/ipkdb.h>

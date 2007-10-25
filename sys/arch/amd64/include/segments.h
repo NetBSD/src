@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.8.2.1 2007/10/17 21:38:18 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.8.2.2 2007/10/25 22:35:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -342,8 +342,6 @@ int valid_user_selector(struct lwp *, uint64_t, char *, int);
 
 #define	GLDT_SEL	0	/* Default LDT descriptor */
 #define NGDT_SYS	1
-
-#define GDT_SYS_OFFSET	(NGDT_MEM << 3)
 
 #define GDT_ADDR_MEM(s,i)	\
     ((struct mem_segment_descriptor *)((s) + ((i) << 3)))

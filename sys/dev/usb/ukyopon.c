@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.7 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.7.16.1 2007/10/25 22:39:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.7 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.7.16.1 2007/10/25 22:39:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.7 2007/03/13 13:51:55 drochner Exp $")
 #include <sys/device.h>
 #include <sys/poll.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>

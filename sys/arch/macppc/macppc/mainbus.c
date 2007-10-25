@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16.38.1 2007/10/25 22:36:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16.38.1 2007/10/25 22:36:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2006/08/05 21:26:48 sanjayl Exp $")
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
+
+#include <powerpc/pic/picvar.h>
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -82,6 +84,8 @@ mainbus_attach(parent, self, aux)
 		reg[0] = i;
 		config_found(self, &ca, NULL);
 	}
+
+	pic_finish_setup();
 
 	node = OF_peer(0);
 	if (node) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.25 2007/10/17 00:43:51 garbled Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.25.2.1 2007/10/25 22:38:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.25 2007/10/17 00:43:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.25.2.1 2007/10/25 22:38:35 bouyer Exp $");
 
 #include "opt_kgdb.h"
 
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.25 2007/10/17 00:43:51 garbled Exp $");
 
 #include <powerpc/atomic.h>
 #include <dev/cons.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>		/* for DELAY */
+#include <sys/bus.h>
+#include <sys/cpu.h>		/* for DELAY */
 #include <machine/stdarg.h>
 #include "gtmpsc.h"
 

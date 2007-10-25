@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.16 2007/10/08 16:41:12 ad Exp $	*/
+/*	$NetBSD: rf.c,v 1.16.2.1 2007/10/25 22:39:35 bouyer Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.16 2007/10/08 16:41:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.16.2.1 2007/10/25 22:39:35 bouyer Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.16 2007/10/08 16:41:12 ad Exp $");
 #include "ioconf.h"
 
 /* bus_space / bus_dma */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* UniBus / QBus specific stuff */
 #include <dev/qbus/ubavar.h>

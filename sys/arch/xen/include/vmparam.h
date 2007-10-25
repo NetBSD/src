@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2005/11/22 06:18:01 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.60.1 2007/10/25 22:36:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,6 +27,17 @@
  */
 
 #if !defined(_VMPARAM_H_)
+
+/* XXX hack */
+#define	PDIR_SLOT_PTE	PDSLOT_PTE
+#define	PDIR_SLOT_APTE	PDSLOT_APTE
+#define	PDIR_SLOT_KERN	PDSLOT_KERN
+#define	NBPD		NBPD_L2
+#define	PDSHIFT		L2_SHIFT
+#define	PD_MASK		L2_MASK
+#define	PT_MASK		L1_MASK
+#define	PTES_PER_PTP	NPTEPG
+
 #include <i386/vmparam.h>
 
 #undef VM_PHYSSEG_MAX

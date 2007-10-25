@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.249 2007/10/02 12:01:17 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.249.2.1 2007/10/25 22:39:59 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.249 2007/10/02 12:01:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.249.2.1 2007/10/25 22:39:59 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.249 2007/10/02 12:01:17 pooka Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/common/compat_util.h>

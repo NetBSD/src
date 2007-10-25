@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.120 2007/08/15 04:00:34 kiyohara Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.120.6.1 2007/10/25 22:39:53 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.120 2007/08/15 04:00:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.120.6.1 2007/10/25 22:39:53 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -54,13 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.120 2007/08/15 04:00:34 kiyohara Exp $")
 #include <sys/conf.h>
 #include "usb_if.h"
 #if defined(DIAGNOSTIC) && defined(__i386__)
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #endif
 #endif
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

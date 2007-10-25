@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.116 2007/10/08 15:12:10 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.116.2.1 2007/10/25 22:40:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116 2007/10/08 15:12:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116.2.1 2007/10/25 22:40:06 bouyer Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116 2007/10/08 15:12:10 ad Exp $");
 #include <sys/condvar.h>
 #include <sys/kthread.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>

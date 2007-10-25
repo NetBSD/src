@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.129 2007/10/08 20:06:19 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.129.2.1 2007/10/25 22:40:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129 2007/10/08 20:06:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129.2.1 2007/10/25 22:40:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129 2007/10/08 20:06:19 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr, IPL_NONE);

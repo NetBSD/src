@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.5 2007/10/14 13:56:32 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.5.2.1 2007/10/25 22:40:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.5 2007/10/14 13:56:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.5.2.1 2007/10/25 22:40:02 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.5 2007/10/14 13:56:32 yamt Exp $");
 #include <sys/sysctl.h>
 #include <sys/types.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 /*
  * XXX: Some definitions below will disappear

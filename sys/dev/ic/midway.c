@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.76 2007/09/01 04:32:50 dyoung Exp $	*/
+/*	$NetBSD: midway.c,v 1.76.4.1 2007/10/25 22:37:49 bouyer Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.76 2007/09/01 04:32:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.76.4.1 2007/10/25 22:37:49 bouyer Exp $");
 
 #include "opt_natm.h"
 
@@ -189,7 +189,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.76 2007/09/01 04:32:50 dyoung Exp $");
 
 
 #if !defined(__FreeBSD__)
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.21 2007/04/11 05:01:39 macallan Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.21.14.1 2007/10/25 22:39:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.21 2007/04/11 05:01:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.21.14.1 2007/10/25 22:39:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.21 2007/04/11 05:01:39 macallan Exp
 #include <sys/syslog.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

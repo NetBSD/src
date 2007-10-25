@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.c,v 1.4 2007/03/04 06:02:10 christos Exp $ */
+/* $NetBSD: atppc_isadma.c,v 1.4.20.1 2007/10/25 22:38:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.4 2007/03/04 06:02:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.4.20.1 2007/10/25 22:38:07 bouyer Exp $");
 
 #include "opt_atppc.h"
 
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.4 2007/03/04 06:02:10 christos Ex
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/atppcreg.h>
 #include <dev/ic/atppcvar.h>

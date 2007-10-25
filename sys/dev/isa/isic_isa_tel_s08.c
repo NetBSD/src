@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/8 and clones
  *	================================================================
  *
- *	$Id: isic_isa_tel_s08.c,v 1.8 2007/03/04 06:02:12 christos Exp $
+ *	$Id: isic_isa_tel_s08.c,v 1.8.20.1 2007/10/25 22:38:19 bouyer Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.8 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.8.20.1 2007/10/25 22:38:19 bouyer Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_8
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.8 2007/03/04 06:02:12 christo
 #include <machine/md_var.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_sis.c,v 1.10 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: agp_sis.c,v 1.10.28.1 2007/10/25 22:38:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.10 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.10.28.1 2007/10/25 22:38:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.10 2006/11/16 01:33:08 christos Exp $"
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct agp_sis_softc {
 	u_int32_t	initial_aperture; /* aperture size at startup */

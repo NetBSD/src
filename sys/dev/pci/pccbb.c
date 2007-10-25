@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.147 2007/08/11 00:45:35 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.147.6.1 2007/10/25 22:39:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.147 2007/08/11 00:45:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.147.6.1 2007/10/25 22:39:14 bouyer Exp $");
 
 /*
 #define CBB_DEBUG
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.147 2007/08/11 00:45:35 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -426,6 +426,9 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 #ifdef __HAVE_PCCBB_ATTACH_HOOK
 	pccbb_attach_hook(parent, self, pa);
 #endif
+
+	callout_init(&sc->sc_insert_ch, 0);
+	callout_setfunc(&sc->sc_insert_ch, pci113x_insert, sc);
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
@@ -1077,8 +1080,7 @@ pccbbintr(void *arg)
 			if (sc->sc_flags & CBB_INSERTING) {
 				callout_stop(&sc->sc_insert_ch);
 			}
-			callout_reset(&sc->sc_insert_ch, hz / 5,
-			    pci113x_insert, sc);
+			callout_schedule(&sc->sc_insert_ch, hz / 5);
 			sc->sc_flags |= CBB_INSERTING;
 		}
 	}
@@ -1155,8 +1157,7 @@ pci113x_insert(void *arg)
 			/* who are you? */
 		}
 	} else {
-		callout_reset(&sc->sc_insert_ch, hz / 10,
-		    pci113x_insert, sc);
+		callout_schedule(&sc->sc_insert_ch, hz / 10);
 	}
 }
 

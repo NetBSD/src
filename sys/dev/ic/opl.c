@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.31 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: opl.c,v 1.31.28.1 2007/10/25 22:37:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.31 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.31.28.1 2007/10/25 22:37:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.31 2006/11/16 01:32:52 christos Exp $");
 #include <sys/select.h>
 #include <sys/malloc.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <sys/midiio.h>

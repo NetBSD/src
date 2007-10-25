@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.18 2006/03/25 23:26:51 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.18.38.1 2007/10/25 22:39:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.18 2006/03/25 23:26:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.18.38.1 2007/10/25 22:39:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

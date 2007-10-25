@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.66 2007/07/09 21:00:33 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.66.12.1 2007/10/25 22:37:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66 2007/07/09 21:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66.12.1 2007/10/25 22:37:25 bouyer Exp $");
 
 #include "iop.h"
 
@@ -57,10 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66 2007/07/09 21:00:33 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/kauth.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
 
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopio.h>

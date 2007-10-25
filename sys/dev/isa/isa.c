@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $	*/
+/*	$NetBSD: isa.c,v 1.128.24.1 2007/10/25 22:38:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.24.1 2007/10/25 22:38:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

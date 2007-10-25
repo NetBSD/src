@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.58 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: ast.c,v 1.58.28.1 2007/10/25 22:38:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.58 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.58.28.1 2007/10/25 22:38:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

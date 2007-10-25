@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.26 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.26.28.1 2007/10/25 22:37:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.26 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.26.28.1 2007/10/25 22:37:21 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.26 2006/11/16 01:32:50 christos Exp $
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
