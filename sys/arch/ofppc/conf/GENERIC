@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2007/10/25 16:55:49 garbled Exp $
+# $NetBSD: GENERIC,v 1.102 2007/10/25 17:33:25 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 maxusers	32
 
@@ -57,8 +57,10 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+#options	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options		DDB_VERBOSE_HELP
 options 	TRAP_PANICWAIT
 
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -148,6 +150,14 @@ options 	NMBCLUSTERS=1024
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options		MIIVERBOSE	# verbose PHY autoconfig messages
+options		PCIVERBOSE	# verbose PCI device autoconfig messages
+#options		PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options		SCSIVERBOSE	# human readable SCSI error messages
+options		USBVERBOSE	# verbose USB device autoconfig messages
 
 options		WSEMUL_VT100
 options		WS_DEFAULT_FG=WSCOL_BLACK
