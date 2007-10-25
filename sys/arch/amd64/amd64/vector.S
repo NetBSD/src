@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.4.3 2007/10/21 19:12:29 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.4 2007/10/25 23:59:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -83,8 +83,6 @@
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
-#include <machine/intr.h>
-#include <machine/psl.h>
 #include <machine/specialreg.h>
 
 #include <net/netisr.h>
@@ -140,7 +138,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -229,33 +227,37 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	movq	CPUVAR(CURLWP),%r14
-2:	/* Check for ASTs on exit to user mode. */
-  	CLI(%rsi,%rdi)							;\
-	CHECK_ASTPENDING(%r14)
-	je	1f
 	testb	$SEL_RPL,TF_CS(%rsp)
-	jz	1f
+	jnz	.Lalltraps_checkast
+	jmp	6f
+.Lalltraps_checkast:
+	movq	CPUVAR(CURLWP),%r14
+	/* Check for ASTs on exit to user mode. */
+  	CLI(si,di)							;\
+	CHECK_ASTPENDING(%r14)
+	je	3f
 	CLEAR_ASTPENDING(%r14)
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	2b
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+3:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+6:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	CPUVAR(ILEVEL),%ebx
+6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
-3:  	STI(%rsi,%rdi)
+3:  	STI(si,di)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -265,9 +267,12 @@ calltrap:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
+9:	STI(si,di)
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
 
 #define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
@@ -406,7 +411,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	xchgq	MB_POINTER(%rcx), %rbx
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
-	je	4f
+	je	5f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	(%rax)
@@ -414,19 +419,34 @@ IDTVEC(intr_lapic_tlb_mcast)
 	cmpq	%rdx, %rax
 	jb	1b
 2:
-	/* Restore state and return. */
+	/* Ack the request. */
 	lock
 	incq	(%rbx)
+	/*
+	 * Check the current TLB state.  If we don't want further
+	 * invalidations for this pmap, then take the CPU out of
+	 * the pmap's bitmask.
+	 */
+	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
+	jne	3f
+	movq	CPUVAR(PMAP), %rdx
+	movl	CPUVAR(CPUMASK), %ecx
+	notl	%ecx
+	lock
+	andl	%ecx, PM_CPUS(%rdx)
+	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
+3:
+	/* Restore state and return. */
 	popq	%rdx
 	popq	%rcx
 	popq	%rbx
 	popq	%rax
 	testq	$SEL_UPL, 8(%rsp)
-	jz	3f
+	jz	4f
 	swapgs
-3:
-	iretq
 4:
+	iretq
+5:
 	/* Invalidate all user pages. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
@@ -855,7 +875,7 @@ IDTVEC(resume_/**/name/**/num)						\
 1:									\
   	pushq	%r13							;\
   	movl	$num,CPUVAR(ILEVEL)					;\
-  	STI(%rsi,%rdi)							;\
+  	STI(si,di)							;\
   	incl	CPUVAR(IDEPTH)						;\
   	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\
@@ -866,10 +886,10 @@ IDTVEC(resume_/**/name/**/num)						\
   	testq	%rbx,%rbx						;\
   	jnz	6b							;\
 5:									\
-  	CLI(%rsi,%rdi)							;\
+  	CLI(si,di)							;\
   	unmask(num)			/* unmask it in hardware */	;\
   	late_ack(num)							;\
-  	CLI(%rsi,%rdi)							;\
+  	CLI(si,di)							;\
   	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
   
 # The unmask func for Xen events
@@ -952,7 +972,7 @@ _C_LABEL(xenev_stubs):
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
@@ -971,7 +991,7 @@ IDTVEC(softserial)
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
@@ -1003,7 +1023,7 @@ IDTVEC(softnet)
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-  	STI(%rsi,%rdi)
+  	STI(si,di)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
@@ -1037,7 +1057,11 @@ NENTRY(hypervisor_callback)
 	movq	%rsp, %rdi
 	addq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
-	jmp doreti_checkast;
+	testb   $SEL_RPL,TF_CS(%rsp)
+	jz	1f
+	jmp doreti_checkast
+1:
+	INTRFASTEXIT
 
 # Panic?
 NENTRY(failsafe_callback)

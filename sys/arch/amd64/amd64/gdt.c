@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.12.4.1 2007/10/17 21:38:13 bouyer Exp $	*/
+/*	$NetBSD: gdt.c,v 1.12.4.2 2007/10/25 23:59:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.12.4.1 2007/10/17 21:38:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.12.4.2 2007/10/25 23:59:21 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -431,7 +431,8 @@ r Xen.
 			>> PAGE_SHIFT;
 		printk("frames[%d] = 0x%lx (pa 0x%lx)\n", i, frames[i],
 		    xpmap_mtop(frames[i] << PAGE_SHIFT));
-		xpmap_set_ro(desc->rd_base + (i << PAGE_SHIFT));
+		pmap_pte_clearbits(kvtopte(desc->rd_base + (i << PAGE_SHIFT)),
+		    PG_RW);
 	}
 	printk("HYPERVISOR_set_gdt(%d)\n", (desc->rd_limit + 1) >> 3);
 

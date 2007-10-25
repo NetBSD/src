@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.1 2007/10/17 21:08:20 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.2 2007/10/25 23:59:24 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.1 2007/10/17 21:08:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.2 2007/10/25 23:59:24 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -400,6 +400,7 @@ cpu_attach_common(parent, self, aux)
 #else
 	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
 #endif
+	ci->ci_cpumask = (1 << ci->ci_cpuid);
 	ci->ci_func = caa->cpu_func;
 
 #ifndef __x86_64__
@@ -423,10 +424,8 @@ cpu_attach_common(parent, self, aux)
 	}
 
 	pmap_reference(pmap_kernel());
-#ifndef __x86_64__
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
-#endif
 
 	/* further PCB init done later. */
 
@@ -657,6 +656,9 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
+#ifdef __x86_64__
+        cpu_init_msrs(ci);
+#endif
 
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
