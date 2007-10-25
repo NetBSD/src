@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2007/03/06 21:57:18 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5 2007/10/25 14:20:55 nisimura Exp $
 
-SUBDIR=		floppies cdroms
+SUBDIR=		ramdisk .WAIT md-kernel cdroms
 TARGETS+=	release
 
 iso_image:
