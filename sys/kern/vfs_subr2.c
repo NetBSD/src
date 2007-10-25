@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.4.7 2007/10/19 15:56:03 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.4.8 2007/10/25 19:37:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.7 2007/10/19 15:56:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.8 2007/10/25 19:37:31 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -959,7 +959,7 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
 	(*pr)("  data %p saveaddr %p dep %p\n",
 		  bp->b_data, bp->b_saveaddr, LIST_FIRST(&bp->b_dep));
-	(*pr)("  iodone %p\n", bp->b_iodone);
+	(*pr)("  iodone %p objlock %p\n", bp->b_iodone, bp->b_objlock);
 }
 
 
