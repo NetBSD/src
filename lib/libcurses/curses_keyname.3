@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_keyname.3,v 1.3 2004/03/16 19:25:39 snj Exp $
+.\"	$NetBSD: curses_keyname.3,v 1.4 2007/10/25 20:32:40 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2003
+.Dd October 17, 2007
 .Dt CURSES_KEYNAME 3
 .Os
 .Sh NAME
@@ -57,9 +57,14 @@ The string is formatted according to the following table:
 .It Li "Meta + visible character" Ta "159 - 254" Ta "M-X"
 .It Li "Meta + delete character" Ta "255" Ta "M-^?"
 .It Li "Named key" Ta "KEY_MIN - KEY_MAX" Ta "KEY_EXIT"
+.It Li "Unknown key" Ta "" Ta "-1"
 .El
 .Sh SEE ALSO
 .Xr curses_input 3
+.Sh NOTE
+The return value of
+.Fn keyname
+is a static buffer, which will be overwritten on a subsequent call.
 .Sh STANDARDS
 The
 .Nx
