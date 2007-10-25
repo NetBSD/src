@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.123.2.6 2007/10/12 13:48:55 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123.2.7 2007/10/25 19:43:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.6 2007/10/12 13:48:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.7 2007/10/25 19:43:11 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -147,6 +147,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * proclist lock so that we can re-parent the target process.
 	 */
 	mutex_enter(&proclist_lock);
+	mutex_enter(&t->p_mutex);
 
 	/* "A foolish consistency..." XXX */
 	if (req == PT_TRACE_ME)
@@ -155,6 +156,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		/* Find the process we're supposed to be operating on. */
 		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
 			mutex_exit(&proclist_lock);
+			mutex_exit(&t->p_mutex);
 			return (ESRCH);
 		}
 
@@ -163,6 +165,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		    t, NULL, NULL, NULL);
 		if (error) {
 			mutex_exit(&proclist_lock);
+			mutex_exit(&t->p_mutex);
 			return (ESRCH);
 		}
 	}
@@ -171,12 +174,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * Grab a reference on the process to prevent it from execing or
 	 * exiting.
 	 */
-	mutex_enter(&t->p_mutex);
-	error = proc_addref(t);
-	if (error != 0) {
-		mutex_exit(&t->p_mutex);
+	if (!rw_tryenter(&t->p_reflock, RW_READER)) {
 		mutex_exit(&proclist_lock);
-		return error;
+		mutex_exit(&t->p_mutex);
+		return EBUSY;
 	}
 
 	/* Make sure we can operate on it. */
@@ -320,8 +321,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (error != 0) {
 		mutex_exit(&proclist_lock);
-		proc_delref(t);
 		mutex_exit(&t->p_mutex);
+		rw_exit(&t->p_reflock);
 		return error;
 	}
 
@@ -743,16 +744,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (lt != NULL)
 		lwp_delref(lt);
-
 	if (pheld) {
-		proc_delref(t);
 		mutex_exit(&t->p_mutex);
 		mutex_exit(&proclist_lock);
-	} else {
-		mutex_enter(&t->p_mutex);
-		proc_delref(t);
-		mutex_exit(&t->p_mutex);
 	}
+	rw_exit(&t->p_reflock);
 
 	return error;
 }

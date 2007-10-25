@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.8 2007/10/09 13:44:25 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.9 2007/10/25 19:43:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.8 2007/10/09 13:44:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.9 2007/10/25 19:43:09 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -323,11 +323,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&p2->p_refcv, "drainref");
+	rw_init(&p2->p_reflock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
-	p2->p_refcnt = 1;
 	kauth_proc_fork(p1, p2);
 
 	LIST_INIT(&p2->p_raslist);
