@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.55.6.3 2007/09/01 12:55:16 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.55.6.4 2007/10/26 17:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -226,6 +226,7 @@ struct pool_cache {
 			pc_cachelist;	/* entry on global cache list */
 	pcg_t		*pc_emptygroups;/* list of empty cache groups */
 	pcg_t		*pc_fullgroups;	/* list of full cache groups */
+	pcg_t		*pc_partgroups;	/* groups for reclamation */
 	int		pc_ncpu;	/* number cpus set up */
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
@@ -235,6 +236,7 @@ struct pool_cache {
 	uint64_t	pc_contended;	/* contention events on cache */
 	unsigned int	pc_nempty;	/* empty groups in cache */
 	unsigned int	pc_nfull;	/* full groups in cache */
+	unsigned int	pc_npart;	/* partial groups in cache */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
 	void		*pc_freecheck;
 
@@ -309,7 +311,8 @@ int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
-void		pool_drain(void *);
+void		pool_drain_start(struct pool **, uint64_t *);
+void		pool_drain_end(struct pool *, uint64_t);
 
 /*
  * Debugging and diagnostic aides.
