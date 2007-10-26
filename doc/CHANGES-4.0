@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.339 2007/10/26 23:30:34 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.340 2007/10/26 23:33:40 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10313,4 +10313,10 @@ crypto/dist/openssl/ssl/ssl_err.c		1.11
 
 	Fix for CVE-2007-4995 from OpenSSL CVS
 	[adrianp, ticket #951]
+
+usr.sbin/postinstall/postinstall		1.54
+
+	now when trap 0 is not used, we need to remove the temporary directiry
+	at the end. PR bin/37223.
+	[pavel, ticket #952]
 
