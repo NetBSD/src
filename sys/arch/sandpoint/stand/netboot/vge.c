@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.3 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.4 2007/10/26 13:56:18 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -247,6 +247,10 @@ vge_init(void *cookie)
 	memset((void *)buf, 0, val);
 	l->TxD = TxD = (struct tdesc *)buf;
 	l->RxD = RxD = (struct rdesc *)&TxD[1];
+	buf = (unsigned)alloc(2 * FRAMESIZE + 8);
+	buf &= ~07; /* 8B alignment */
+	l->rxstore[0] = (uint8_t *)buf;
+	l->rxstore[1] = (uint8_t *)(buf + FRAMESIZE);
 
 	RxD[0].r0 = htole32(R0_OWN);
 	RxD[0].r1 = 0;
