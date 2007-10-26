@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.22 2007/10/25 16:56:41 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.23 2007/10/26 17:36:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -95,7 +95,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	struct puffs_usermount *pu;
 	struct puffs_node *pn_root;
 	struct ukfs *ukfs;
-	extern int puffs_fakecc;
+	extern int puffs_usethreads;
 	int rv, sverrno;
 
 	rv = -1;
@@ -150,7 +150,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
-	puffs_fakecc = 1;
+	puffs_usethreads = 1;
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
 		goto out;
@@ -162,7 +162,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 		errno = sverrno;
 		rv = -1;
 	}
-	
+
 	return rv;
 }
 
