@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.3 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.4 2007/10/26 14:30:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -180,13 +180,13 @@ sip_send(void *dev, char *buf, unsigned len)
 	TxD = &l->TxD;
 	TxD->xd2 = htole32(VTOPHYS(buf));
 	TxD->xd1 = htole32(CMDSTS_OWN | (len & 0x7ff));
-	wbinv(TxD, sizeof(*TxD));
+	wbinv(TxD, sizeof(struct desc));
 	loop = 100;
 	do {
 		if ((le32toh(TxD->xd1) & CMDSTS_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(*TxD));
+		inv(TxD, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -209,7 +209,7 @@ printf("recving with %u sec. timeout\n", timo);
   again:
 	RxD = &l->RxD[l->rx];
 	do {
-		inv(RxD, sizeof(*RxD));
+		inv(RxD, sizeof(struct desc));
 		rxstat = le32toh(RxD->xd1);
 		if ((rxstat & CMDSTS_OWN) == 0)
 			goto gotone;
@@ -220,7 +220,7 @@ printf("recving with %u sec. timeout\n", timo);
   gotone:
 	if (rxstat & 0x07ff0000) {
 		RxD->xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-		wbinv(RxD, sizeof(*RxD));
+		wbinv(RxD, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
@@ -232,7 +232,7 @@ printf("recving with %u sec. timeout\n", timo);
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
 	RxD->xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-	wbinv(RxD, sizeof(*RxD));
+	wbinv(RxD, sizeof(struct desc));
 	l->rx ^= 1;
 	return len;
 }
