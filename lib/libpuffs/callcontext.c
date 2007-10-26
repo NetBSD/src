@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.11 2007/10/26 13:51:14 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.12 2007/10/26 17:35:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.11 2007/10/26 13:51:14 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.12 2007/10/26 17:35:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -35,6 +35,9 @@ __RCSID("$NetBSD: callcontext.c,v 1.11 2007/10/26 13:51:14 pooka Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#ifdef PUFFS_WITH_THREADS
+#include <pthread.h>
+#endif
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,29 +127,43 @@ puffs_cc_getcaller(struct puffs_cc *pcc, pid_t *pid, lwpid_t *lid)
 	return 0;
 }
 
-struct puffs_cc *
-puffs_cc_create(struct puffs_usermount *pu)
+#ifdef PUFFS_WITH_THREADS
+int pthread__stackid_setup(void *, size_t, pthread_t *);
+#endif
+
+int
+puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
+	int type, struct puffs_cc **pccp)
 {
 	struct puffs_cc *volatile pcc;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
 	stack_t *st;
 	void *sp;
 
+#ifdef PUFFS_WITH_THREADS
+	extern size_t pthread__stacksize;
+	stacksize = pthread__stacksize;
+#endif
+
 	pcc = malloc(sizeof(struct puffs_cc));
 	if (!pcc)
-		return NULL;
+		return -1;
 	memset(pcc, 0, sizeof(struct puffs_cc));
 	pcc->pcc_pu = pu;
-	pcc->pcc_flags = PCC_REALCC;
+	pcc->pcc_preq = preq;
+
+	pcc->pcc_flags = type;
+	if (pcc->pcc_flags != PCC_REALCC)
+		goto out;
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {
 		free(pcc);
-		return NULL;
+		return -1;
 	}
 	if (getcontext(&pcc->pcc_uc_ret) == -1) {
 		free(pcc);
-		return NULL;
+		return -1;
 	}
 	/* return here.  it won't actually be "here" due to swapcontext() */
 	pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
@@ -157,11 +174,20 @@ puffs_cc_create(struct puffs_usermount *pu)
 	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, 0);
 	if (sp == MAP_FAILED) {
 		free(pcc);
-		return NULL;
+		return -1;
 	}
 	st->ss_sp = pcc->pcc_stack = sp;
 	st->ss_size = stacksize;
 	st->ss_flags = 0;
+
+#ifdef PUFFS_WITH_THREADS
+	{
+	pthread_t pt;
+	extern int __isthreaded;
+	if (__isthreaded)
+		pthread__stackid_setup(sp, stacksize, &pt);
+	}
+#endif
 
 	/*
 	 * Give us an initial context to jump to.
@@ -176,7 +202,9 @@ puffs_cc_create(struct puffs_usermount *pu)
 	makecontext(&pcc->pcc_uc, (void *)puffs_calldispatcher,
 	    1, (uintptr_t)pcc);
 
-	return pcc;
+ out:
+	*pccp = pcc;
+	return 0;
 }
 
 void
@@ -194,6 +222,8 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
 
-	munmap(pcc->pcc_stack, stacksize);
+	if (pcc->pcc_flags & PCC_REALCC)
+		munmap(pcc->pcc_stack, stacksize);
+	free(pcc->pcc_preq);
 	free(pcc);
 }

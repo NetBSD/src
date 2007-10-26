@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.16 2007/10/21 14:28:05 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.17 2007/10/26 17:35:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.16 2007/10/21 14:28:05 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.17 2007/10/26 17:35:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -38,6 +38,9 @@ __RCSID("$NetBSD: dispatcher.c,v 1.16 2007/10/21 14:28:05 pooka Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#ifdef PUFFS_WITH_THREADS
+#include <pthread.h>
+#endif
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdio.h>
@@ -55,13 +58,90 @@ static void processresult(struct puffs_cc *, struct puffs_putreq *, int);
  */
 int puffs_fakecc;
 
+/*
+ * Set the following to 1 to handle each request in a separate pthread.
+ * This is not exported as it should not be used yet unless having a
+ * very good knowledge of what you're signing up for (libpuffs is not
+ * threadsafe).
+ */
+int puffs_usethreads;
+
+#ifdef PUFFS_WITH_THREADS
+struct puffs_workerargs {
+	struct puffs_cc *pwa_pcc;
+	struct puffs_putreq *pwa_ppr;
+};
+
+static void *
+threadlauncher(void *v)
+{
+	struct puffs_workerargs *ap = v;
+	struct puffs_cc *pcc = ap->pwa_pcc;
+	struct puffs_putreq *ppr = ap->pwa_ppr;
+
+	free(ap);
+	puffs_docc(pcc, ppr);
+	return NULL;
+}
+#endif
+
+static int
+dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
+	struct puffs_putreq *ppr)
+{
+	struct puffs_cc *pcc;
+	int type;
+
+	if (puffs_fakecc) {
+		type = PCC_FAKECC;
+	} else if (puffs_usethreads) {
+		type = PCC_THREADED;
+#ifndef PUFFS_WITH_THREADS
+		type = PCC_FAKECC;
+#endif
+	} else {
+		type = PCC_REALCC;
+	}
+
+	if (puffs_cc_create(pu, preq, type, &pcc) == -1)
+		return errno;
+
+	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
+
+#ifdef PUFFS_WITH_THREADS
+	if (puffs_usethreads) {
+		struct puffs_workerargs *ap;
+		pthread_attr_t pattr;
+		pthread_t ptid;
+		int rv;
+
+		ap = malloc(sizeof(struct puffs_workerargs));
+		pcc = malloc(sizeof(struct puffs_cc));
+		pcc_init_unreal(pcc, PCC_THREADED);
+		pcc->pcc_pu = pu;
+		pcc->pcc_preq = preq;
+
+		pthread_attr_init(&pattr);
+		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
+
+		ap->pwa_pcc = pcc;
+		ap->pwa_ppr = ppr;
+
+		rv = pthread_create(&ptid, &pattr, threadlauncher, ap);
+
+		return rv;
+	}
+#endif
+	puffs_docc(pcc, ppr);
+	return 0;
+}
+
 /* user-visible point to handle a request from */
 int
 puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	struct puffs_putreq *ppr)
 {
-	struct puffs_cc fakecc;
-	struct puffs_cc *pcc;
+	struct puffs_executor *pex;
 
 	/*
 	 * XXX: the structure is currently a mess.  anyway, trap
@@ -91,22 +171,32 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
 
-	if (puffs_fakecc) {
-		pcc = &fakecc;
-		pcc_init_local(pcc);
+	/*
+	 * Check if we are already processing an operation from the same
+	 * caller.  If so, queue this operation until the previous one
+	 * finishes.  This prevents us from executing certain operations
+	 * out-of-order (e.g. fsync and reclaim).
+	 *
+	 * Eqch preq will only remove its own pex from the tailq.
+	 * See processresult() for the details on other-end removal
+	 * and dispatching.
+	 */
 
-		pcc->pcc_pu = pu;
-		pcc->pcc_preq = preq;
-		pcc->pcc_flags = PCC_FAKECC;
-	} else {
-		pcc = puffs_cc_create(pu);
-		pcc->pcc_preq = preq;
+	pex = malloc(sizeof(struct puffs_executor));
+	pex->pex_preq = preq;
+	/* mutex_enter */
+	TAILQ_INSERT_TAIL(&pu->pu_exq, pex, pex_entries);
+	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
+		if (pex->pex_preq->preq_pid == preq->preq_pid
+		    && pex->pex_preq->preq_lid == preq->preq_lid) {
+			if (pex->pex_preq != preq) {
+				/* mutex_exit */
+				return 0;
+			}
+		}
 	}
 
-	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
-
-	puffs_docc(pcc, ppr);
-	return 0;
+	return dopreq2(pu, preq, ppr);
 }
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
@@ -116,7 +206,10 @@ void
 puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
+	struct puffs_req *preq;
 	struct puffs_cc *pcc_iter;
+	struct puffs_executor *pex;
+	int found;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 	pcc->pcc_ppr = ppr;
@@ -125,6 +218,28 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 		puffs_cc_continue(pcc);
 	else
 		puffs_calldispatcher(pcc);
+
+	/* check if we need to schedule FAFs which were stalled */
+	found = 0;
+	preq = pcc->pcc_preq;
+	/* mutex_enter */
+	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
+		if (pex->pex_preq->preq_pid == preq->preq_pid
+		    && pex->pex_preq->preq_lid == preq->preq_lid) {
+			if (found == 0) {
+				/* this is us */
+				assert(pex->pex_preq == preq);
+				TAILQ_REMOVE(&pu->pu_exq, pex, pex_entries);
+				free(pex);
+				found = 1;
+			} else {
+				/* down at the mardi gras */
+				dopreq2(pu, pex->pex_preq, ppr);
+				break;
+			}
+		}
+	}
+	/* mutex_exit */
 
 	/* can't do this above due to PCC_BORROWED */
 	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
@@ -145,7 +260,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	void *opcookie = preq->preq_cookie;
 	int error, rv, buildpath;
 
-	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC));
+	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC | PCC_THREADED));
 
 	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
 		rv = PUFFCALL_ANSWER;
@@ -935,24 +1050,22 @@ static void
 processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_req *preq = pcc->pcc_preq;
+	int pccflags = pcc->pcc_flags;
 
 	/* check if we need to store this reply */
 	switch (how) {
 	case PUFFCALL_ANSWER:
 		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
-			puffsdump_rv(pcc->pcc_preq);
+			puffsdump_rv(preq);
 
-		if (pcc->pcc_flags & PCC_REALCC)
-			puffs_req_putcc(ppr, pcc);
-		else
-			puffs_req_put(ppr, pcc->pcc_preq);
+		puffs_req_putcc(ppr, pcc);
 		break;
 	case PUFFCALL_IGNORE:
-		if (pcc->pcc_flags & PCC_REALCC)
-			LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
+		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
 		break;
 	case PUFFCALL_AGAIN:
-		if (pcc->pcc_flags & PCC_FAKECC)
+		if ((pcc->pcc_flags & PCC_REALCC) == 0)
 			assert(pcc->pcc_flags & PCC_DONE);
 		break;
 	default:
@@ -960,6 +1073,8 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 	}
 
 	/* who needs information when you're living on borrowed time? */
-	if (pcc->pcc_flags & PCC_BORROWED)
+	if (pccflags & PCC_BORROWED) {
+		assert((pccflags & PCC_THREADED) == 0);
 		puffs_cc_yield(pcc); /* back to borrow source */
+	}
 }

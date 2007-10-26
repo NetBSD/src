@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.12 2007/10/21 16:29:40 he Exp $	*/
+/*	$NetBSD: requests.c,v 1.13 2007/10/26 17:35:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.12 2007/10/21 16:29:40 he Exp $");
+__RCSID("$NetBSD: requests.c,v 1.13 2007/10/26 17:35:02 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -152,7 +152,6 @@ puffs_req_put(struct puffs_putreq *ppr, struct puffs_req *preq)
 	preq->preq_frhdr.pfr_len = preq->preq_buflen;
 	n = write(ppr->ppr_pu->pu_fd, preq, preq->preq_frhdr.pfr_len);
 	assert(n == preq->preq_frhdr.pfr_len);
-	free(preq);
 }
 
 /*

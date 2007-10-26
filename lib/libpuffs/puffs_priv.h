@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.27 2007/10/26 13:51:15 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.28 2007/10/26 17:35:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -87,6 +87,11 @@ struct puffs_fctrl_io {
         || (fio->stat & FIO_ENABLE_W) == 0))	\
 	&& (fio->wwait == 0)))
 
+struct puffs_executor {
+	struct puffs_req		*pex_preq;
+	TAILQ_ENTRY(puffs_executor)	pex_entries;
+};
+
 /*
  * usermount: describes one file system instance
  */
@@ -112,6 +117,8 @@ struct puffs_usermount {
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 	LIST_HEAD(, puffs_cc)	pu_ccnukelst;
 	TAILQ_HEAD(, puffs_cc)	pu_sched;
+
+	TAILQ_HEAD(, puffs_executor) pu_exq;
 
 	struct puffs_node	*(*pu_cmap)(void *);
 
@@ -158,14 +165,15 @@ struct puffs_cc {
 #define PCC_DONE	0x04
 #define PCC_BORROWED	0x08
 #define PCC_HASCALLER	0x10
+#define PCC_THREADED	0x20
 
 #define pcc_callstat(a)	   (a->pcc_flags & PCC_CALL_MASK)
 #define pcc_callset(a, b)  (a->pcc_flags = (a->pcc_flags & ~PCC_CALL_MASK) | b)
 
-#define pcc_init_local(ap)   						\
+#define pcc_init_unreal(ap, type) 					\
 do {									\
 	memset(ap, 0, sizeof(*ap));					\
-	(ap)->pcc_flags = PCC_FAKECC;					\
+	(ap)->pcc_flags = type;						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -226,10 +234,11 @@ void	puffs_framev_writeclose(struct puffs_usermount *,
 				struct puffs_fctrl_io *, int);
 void	puffs_framev_notify(struct puffs_fctrl_io *, int);
 
-struct puffs_cc 	*puffs_cc_create(struct puffs_usermount *);
-void			puffs_cc_destroy(struct puffs_cc *);
-void			puffs_cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
-void			puffs_goto(struct puffs_cc *);
+int	puffs_cc_create(struct puffs_usermount *, struct puffs_req *,
+			int, struct puffs_cc **);
+void	puffs_cc_destroy(struct puffs_cc *);
+void	puffs_cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
+void	puffs_goto(struct puffs_cc *);
 
 __END_DECLS
 
