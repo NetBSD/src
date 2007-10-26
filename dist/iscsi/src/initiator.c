@@ -546,6 +546,7 @@ discovery_phase(int target, strv_t *svp)
 	char            port[64];
 	char           *text = NULL;
 	int             text_len = 0;
+	int		i;
 
 	if ((text = iscsi_malloc_atomic(DISCOVERY_PHASE_TEXT_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
@@ -578,17 +579,6 @@ discovery_phase(int target, strv_t *svp)
 		DP_ERROR;
 	}
 
-	/*
-	 * Use the first TargetName and TargetAddress sent to us (all others
-	 * are currently ignored)
-	 */
-	if (param_val(sess->params, "TargetName") != NULL) {
-		strlcpy(g_target[target].TargetName, param_val(sess->params, "TargetName"), sizeof(g_target[target].TargetName));
-	} else {
-		iscsi_trace_error(__FILE__, __LINE__, "SendTargets failed\n");
-		DP_ERROR;
-	}
-
 	/* fill in information on the targets from the TargetName values */
 	(void) memset(svp, 0x0, sizeof(*svp));
 	for (ip = sess->params ; ip ; ip = ip->next) {
@@ -602,29 +592,53 @@ discovery_phase(int target, strv_t *svp)
 		}
 	}
 
-	if (param_val(sess->params, "TargetAddress")) {
-		ptr = param_val(sess->params, "TargetAddress");
-		if (*ptr == 0x0) {
-			iscsi_trace_error(__FILE__, __LINE__, "Target is not allowing access\n");
-			DP_ERROR;
-		}
-		colon_ptr = strchr(ptr, ':');
-		if ((comma_ptr = strchr(ptr, ',')) == NULL) {
-			iscsi_trace_error(__FILE__, __LINE__, "portal group tag is missing in \"%s\"\n", param_val(sess->params, "TargetAddress"));
-			DP_ERROR;
-		}
-		if (colon_ptr) {
-			strncpy(g_target[target].ip, ptr, colon_ptr - ptr);
-			strncpy(port, colon_ptr + 1, comma_ptr - colon_ptr - 1);
-			port[comma_ptr - colon_ptr - 1] = 0x0;
-			g_target[target].port = iscsi_atoi(port);
+	if (g_target[target].iqnwanted[0] == 0x0) {
+		/*
+		 * Use the first TargetName and TargetAddress sent to us (all others
+		 * are currently ignored)
+		 */
+		if (param_val(sess->params, "TargetName") != NULL) {
+			strlcpy(g_target[target].TargetName, param_val(sess->params, "TargetName"), sizeof(g_target[target].TargetName));
 		} else {
-			strncpy(g_target[target].ip, ptr, comma_ptr - ptr);
-			g_target[target].port = ISCSI_PORT;
+			iscsi_trace_error(__FILE__, __LINE__, "SendTargets failed\n");
+			DP_ERROR;
+		}
+		if ((ptr = param_val(sess->params, "TargetAddress")) == NULL) {
+			iscsi_trace_error(__FILE__, __LINE__, "SendTargets failed\n");
+			DP_ERROR;
 		}
 	} else {
-		iscsi_trace_error(__FILE__, __LINE__, "SendTargets failed\n");
+		/* the user has asked for a specific target - find it */
+		for (i = 0 ; i < svp->c ; i += 2) {
+			if (strcmp(g_target[target].iqnwanted, svp->v[i]) == 0) {
+				strlcpy(g_target[target].TargetName, svp->v[i], sizeof(g_target[target].TargetName));
+				ptr = svp->v[i + 1];
+				break;
+			}
+		}
+		if (i >= svp->c) {
+			iscsi_trace_error(__FILE__, __LINE__, "SendTargets failed - target `%s' not found\n", g_target[target].iqnwanted);
+			DP_ERROR;
+		}
+	}
+
+	if (*ptr == 0x0) {
+		iscsi_trace_error(__FILE__, __LINE__, "Target is not allowing access\n");
 		DP_ERROR;
+	}
+	colon_ptr = strchr(ptr, ':');
+	if ((comma_ptr = strchr(ptr, ',')) == NULL) {
+		iscsi_trace_error(__FILE__, __LINE__, "portal group tag is missing in \"%s\"\n", param_val(sess->params, "TargetAddress"));
+		DP_ERROR;
+	}
+	if (colon_ptr) {
+		strncpy(g_target[target].ip, ptr, (int)(colon_ptr - ptr));
+		strncpy(port, colon_ptr + 1, (int)(comma_ptr - colon_ptr - 1));
+		port[comma_ptr - colon_ptr - 1] = 0x0;
+		g_target[target].port = iscsi_atoi(port);
+	} else {
+		strncpy(g_target[target].ip, ptr, (int)(comma_ptr - ptr));
+		g_target[target].port = ISCSI_PORT;
 	}
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "Discovered \"%s\" at \"%s:%u\"\n",
@@ -683,6 +697,7 @@ initiator_init(const char *hostname, int port, int address_family, const char *u
 {
 	int             i;
 	initiator_session_t *sess = NULL;
+
 #define INIT_CLEANUP {if (sess != NULL) iscsi_free_atomic(sess);}
 #define INIT_ERROR {INIT_CLEANUP; return -1;}
 
@@ -970,7 +985,7 @@ enqueue_worker_proc(void *arg)
 	iscsi_scsi_cmd_args_t *scsi_cmd;
 	iscsi_nop_out_args_t *nop_out;
 	iscsi_worker_t *me = (iscsi_worker_t *) arg;
-	uint64_t target;
+	uint64_t	target;
 	strv_t		sv;
 	int             rc;
 	uint32_t        tag;
@@ -1056,12 +1071,10 @@ initialize:
 				}
 
 				/*
-				 * If the Discovery phase was successful, we
-				 * re-initialize the session, enter
-				 */
-				/*
-				 * full feature phase and then execute the
-				 * command.
+				 * If the Discovery phase was
+				 * successful, we re-initialize the
+				 * session, enter full feature phase
+				 * and then execute the command.
 				 */
 
 				if (rc == 0) {
@@ -1084,10 +1097,10 @@ initialize:
 				}
 			}
 			/*
-			 * Now we are in FPP, so set the mostly accessed
-			 * parameters for
+			 * Now we are in FPP, so set the mostly
+			 * accessed parameters for easy retrieval
+			 * during data transfer
 			 */
-			/* easy retrieval during data transfer */
 			set_session_parameters(sess->params, &sess->sess_params);
 
 			/* Add command to tx work queue and signal worker */
@@ -3077,4 +3090,81 @@ void
 get_target_info(uint64_t target, initiator_target_t *ip)
 {
 	(void) memcpy(ip, &g_target[target], sizeof(*ip));
+}
+
+int 
+ii_initiator_init(const char *hostname, int port, int address_family, const char *user, char *lun, int auth_type, int mutual_auth, int digest_type)
+{
+	initiator_session_t *sess = NULL;
+
+#define INIT_CLEANUP {if (sess != NULL) iscsi_free_atomic(sess);}
+#define INIT_ERROR {INIT_CLEANUP; return -1;}
+
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "initializing initiator\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "target config filename to read from:%s\n", gfilename);
+	if (get_target_config(hostname, port) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "Error getting target configuration from config file\n");
+		return -1;
+	}
+	(void) strlcpy(g_target[0].iqnwanted, lun, sizeof(g_target[0].iqnwanted));
+	g_initiator_state = 0;
+	if (iscsi_queue_init(&g_session_q, CONFIG_INITIATOR_MAX_SESSIONS) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_queue_init() failed\n");
+		return -1;
+	}
+	if ((sess = iscsi_malloc_atomic(sizeof(initiator_session_t))) == NULL) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+		return -1;
+	}
+	if (iscsi_queue_insert(&g_session_q, sess) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_queue_init() failed\n");
+		INIT_CLEANUP;
+		return -1;
+	}
+	sess->sess_params.cred.user = strdup(user);
+	sess->sess_params.auth_type = auth_type;
+	sess->sess_params.mutual_auth = mutual_auth;
+	sess->sess_params.digest_wanted = digest_type;
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "%d free sessions available\n", CONFIG_INITIATOR_MAX_SESSIONS);
+
+	g_tag = 0xabc123;
+	if (hash_init(&g_tag_hash, CONFIG_INITIATOR_QUEUE_DEPTH) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "hash_init() failed\n");
+		INIT_CLEANUP;
+		return -1;
+	}
+	iscsi_spin_init(&g_tag_spin);
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "tag hash table initialized with queue depth %d\n", CONFIG_INITIATOR_QUEUE_DEPTH);
+
+	/*
+	 * Start enqueue worker.  This thread accepts scsi commands
+	 * from initiator_enqueue() and queues them onto one of the tx
+	 * worker queues.
+	 */
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "starting enqueue worker\n");
+	if (iscsi_queue_init(&g_enqueue_q, CONFIG_INITIATOR_QUEUE_DEPTH) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_queue_init() failed\n");
+		INIT_CLEANUP;
+		return -1;
+	}
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "about to initialize mutex\n");
+	ISCSI_MUTEX_INIT(&g_enqueue_worker.work_mutex, INIT_ERROR);
+	ISCSI_COND_INIT(&g_enqueue_worker.work_cond, INIT_ERROR);
+	ISCSI_MUTEX_INIT(&g_enqueue_worker.exit_mutex, INIT_ERROR);
+	ISCSI_COND_INIT(&g_enqueue_worker.exit_cond, INIT_ERROR);
+	ISCSI_LOCK(&g_enqueue_worker.exit_mutex, INIT_ERROR);
+
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "spawning thread for enqueue worker\n");
+	if (iscsi_thread_create(&g_enqueue_worker.thread, (void *) &enqueue_worker_proc, &g_enqueue_worker) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_threads_create() failed\n");
+		INIT_CLEANUP;
+		return -1;
+	}
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "thread spawned, waiting for signal\n");
+	ISCSI_WAIT(&g_enqueue_worker.exit_cond, &g_enqueue_worker.exit_mutex, INIT_ERROR);
+	ISCSI_UNLOCK(&g_enqueue_worker.exit_mutex, INIT_ERROR);
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "successfully started enqueue worker\n");
+
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "initiator initialization complete\n");
+	return 0;
 }

@@ -76,6 +76,7 @@ typedef struct globals_t {
 	int		address_family;				/* global default IP address family */
 	int		max_sessions;				/* maximum number of sessions */
 	char		config_file[MAX_CONFIG_FILE_NAME];	/* config file name */
+	uint32_t	last_tsih;				/* the last TSIH that was used */
 } globals_t;
 
 /* session parameters */
@@ -100,6 +101,7 @@ typedef struct target_session_t {
 	iscsi_sess_param_t sess_params;
 	char		initiator[MAX_INITIATOR_ADDRESS_SIZE];
 	int		address_family;
+	int32_t		last_tsih;
 } target_session_t;
 
 typedef struct target_cmd_t {
@@ -112,5 +114,8 @@ int             target_init(globals_t *, targv_t *, char *);
 int             target_shutdown(globals_t *);
 int             target_listen(globals_t *);
 int             target_transfer_data(target_session_t *, iscsi_scsi_cmd_args_t *, struct iovec *, int);
+
+int	find_target_tsih(globals_t *, int);
+int	find_target_iqn(target_session_t *);
 
 #endif				/* _TARGET_H_ */
