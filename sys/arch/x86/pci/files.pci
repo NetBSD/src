@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.2 2007/10/26 21:49:52 xtraeme Exp $
+#	$NetBSD: files.pci,v 1.3 2007/10/26 22:17:14 xtraeme Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -17,6 +17,19 @@ device	pchb:	pcibus, agpbus, agp_ali, agp_amd, agp_amd64, agp_i810,
 attach	pchb at pci
 file	arch/x86/pci/pchb.c		pchb		needs-flag
 file	arch/x86/pci/pchb_rnd.c		pchb & rnd
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/x86/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib |
+					amdpcib
+
+device	amdpcib {} : isabus
+attach	amdpcib at pci
+file	arch/x86/pci/amdpcib.c			amdpcib
+
+attach  hpet at amdpcib with amdpcib_hpet
+file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
 
 # PCI-LPC bridges
 device	ichlpcib: acpipmtimer, isabus, sysmon_wdog
