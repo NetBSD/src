@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.2 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.3 2007/10/26 14:30:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -227,8 +227,8 @@ nvt_init(void *cookie)
 	/* enable transmitter and receiver */
 	l->rcr = 0;
 	l->ctl0 = (CTL0_TXON | CTL0_RXON | CTL0_START);
-	CSR_WRITE_4(l, VR_RDBA, (unsigned)RxD);
-	CSR_WRITE_4(l, VR_TDBA, (unsigned)TxD);
+	CSR_WRITE_4(l, VR_RDBA, VTOPHYS(RxD));
+	CSR_WRITE_4(l, VR_TDBA, VTOPHYS(TxD));
 	CSR_WRITE_1(l, VR_RCR, l->rcr);
 	CSR_WRITE_1(l, VR_TCR, 0);
 	CSR_WRITE_2(l, VR_ISR, ~0);

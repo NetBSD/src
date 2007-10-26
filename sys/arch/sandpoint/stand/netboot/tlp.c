@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.3 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.4 2007/10/26 14:30:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -175,8 +175,8 @@ tlp_init(void *cookie)
 	RxD[1].xd1 = htole32(R1_RER | FRAMESIZE);
 	RxD[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	RxD[1].xd3 = htole32(VTOPHYS(&RxD[0]));
-	CSR_WRITE(l, TLP_TRBA, (unsigned)TxD);
-	CSR_WRITE(l, TLP_RRBA, (unsigned)RxD);
+	CSR_WRITE(l, TLP_TRBA, VTOPHYS(TxD));
+	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
 
 	/* "setup packet" to have own station address */
 	TxD = &l->TxD;
@@ -212,7 +212,7 @@ tlp_send(void *dev, char *buf, unsigned len)
 
 	wbinv(buf, len);
 	TxD = &l->TxD;
-	TxD->xd3 = htole32(TxD);
+	TxD->xd3 = htole32(VTOPHYS(TxD));
 	TxD->xd2 = htole32(VTOPHYS(buf));
 	TxD->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
 	TxD->xd0 = htole32(T0_OWN);

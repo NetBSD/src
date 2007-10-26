@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.2 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.3 2007/10/26 14:30:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -225,8 +225,8 @@ rge_init(void *cookie)
         CSR_WRITE_2(l, RGE_RMS, 0x8000);
         CSR_WRITE_4(l, RGE_TCR, l->tcr);
         CSR_WRITE_4(l, RGE_RCR, l->rcr);
-        CSR_WRITE_4(l, RGE_TNPDS, (unsigned)TxD);
-        CSR_WRITE_4(l, RGE_RDSAR, (unsigned)RxD);
+        CSR_WRITE_4(l, RGE_TNPDS, VTOPHYS(TxD));
+        CSR_WRITE_4(l, RGE_RDSAR, VTOPHYS(RxD));
         CSR_WRITE_4(l, RGE_TNPDS + 4, 0); 
         CSR_WRITE_4(l, RGE_RDSAR + 4, 0); 
         CSR_WRITE_2(l, RGE_ISR, ~0);
