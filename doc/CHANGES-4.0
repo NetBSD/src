@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.338 2007/10/26 23:25:35 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.339 2007/10/26 23:30:34 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10304,4 +10304,13 @@ distrib/utils/sysinst/msg.mi.es			1.19
 
 	Translate oldsendmail per Pavel's request.
 	[jmmv, ticket #950]
+
+crypto/dist/openssl/ssl/Makefile		1.2
+crypto/dist/openssl/ssl/d1_both.c		1.2
+crypto/dist/openssl/ssl/dtls1.h			1.2
+crypto/dist/openssl/ssl/ssl.h			1.17
+crypto/dist/openssl/ssl/ssl_err.c		1.11
+
+	Fix for CVE-2007-4995 from OpenSSL CVS
+	[adrianp, ticket #951]
 
