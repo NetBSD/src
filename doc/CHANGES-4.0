@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.337 2007/10/26 23:20:50 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.338 2007/10/26 23:25:35 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10299,4 +10299,9 @@ sys/dev/pci/pccbb.c				1.150
 	interrupt register is not used and broke on my Dell Latitude for that
 	reason.
 	[joerg, ticket #949]
+
+distrib/utils/sysinst/msg.mi.es			1.19
+
+	Translate oldsendmail per Pavel's request.
+	[jmmv, ticket #950]
 
