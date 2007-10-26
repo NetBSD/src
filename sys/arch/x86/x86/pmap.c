@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.2 2007/10/25 23:59:23 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.3 2007/10/26 14:33:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.2 2007/10/25 23:59:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.3 2007/10/26 14:33:43 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -793,7 +793,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_PTE], npde);
 		pmap_pte_flush();
 	}
-	tlbflush();
 #else /* XEN */
 	npde = pmap_pa2pte(pmap->pm_pdirpa) | PG_RW | PG_V;
 	if (!pmap_valid_entry(opde) || pmap_pte2pa(opde) != pmap->pm_pdirpa) {
