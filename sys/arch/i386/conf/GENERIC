@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.853 2007/10/17 19:54:42 garbled Exp $
+# $NetBSD: GENERIC,v 1.854 2007/10/26 22:20:43 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.853 $"
+#ident 		"GENERIC-$Revision: 1.854 $"
 
 maxusers	32		# estimated number of users
 
@@ -438,9 +438,11 @@ elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
 
 # PCI bridges
+#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+#hpet* 	at amdpcib?
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
-piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -460,8 +462,9 @@ eisa0	at mainbus?
 eisa0	at pceb?
 
 # ISA bus support
+#isa0 	at amdpcib?
 #isa0	at ichlpcib?
-isa0	at piixpcib?
+#isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
