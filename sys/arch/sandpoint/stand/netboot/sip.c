@@ -1,9 +1,8 @@
-/* $NetBSD: sip.c,v 1.1 2007/10/25 09:02:15 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.2 2007/10/26 01:16:27 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
  
-#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
  
@@ -48,6 +47,10 @@ static int read_eeprom(struct local *, int);
 static unsigned sip_mii_read(struct local *, int, int);
 static void sip_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
+
+/* Table and macro to bit-reverse an octet. */
+static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 void *
 sip_init(void *cookie)
@@ -197,10 +200,6 @@ printf("recving with %u sec. timeout\n", timo);
 	l->rx ^= 1;
 	return len;
 }
-
-/* Table and macro to bit-reverse an octet. */
-static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
-#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 static int
 read_eeprom(l, loc)

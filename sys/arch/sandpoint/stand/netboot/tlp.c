@@ -1,9 +1,8 @@
-/* $NetBSD: tlp.c,v 1.1 2007/10/25 09:02:15 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.2 2007/10/26 01:16:27 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
@@ -226,8 +225,6 @@ printf("recving with %u sec. timeout\n", timo);
 	}
 	/* good frame */
 	len = ((rxstat & R0_FL_MASK) >> 16) - 4; /* HASFCS */
-	if (len > 1520)
-		printf("tlprecv: len > 1520 (%d)\n", len);
         if (len > maxlen)
                 len = maxlen;
 	ptr = l->rxstore[l->rx];
