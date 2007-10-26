@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.5 2007/10/26 19:03:17 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ USE_FORT?= yes	# network protocol library
 
 LIB= iscsi
 SRCS= conffile.c disk.c target.c iscsi.c util.c parameters.c storage.c netmask.c
-CPPFLAGS+= -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64
+CPPFLAGS+= -DCONFIG_ISCSI_DEBUG
 CPPFLAGS+= -I${ISCSIDIST}/include
 CPPFLAGS+= -pthread
 LDFLAGS+= -pthread
