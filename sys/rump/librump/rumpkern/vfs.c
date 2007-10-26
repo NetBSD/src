@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.15 2007/10/17 16:48:17 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.16 2007/10/26 17:55:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,8 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	vn_lock(vp, lockflag & LK_TYPE_MASK);
+	if (lockflag & LK_TYPE_MASK)
+		vn_lock(vp, lockflag & LK_TYPE_MASK);
 	return 0;
 }
 
@@ -182,7 +183,13 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 	struct mount *mp = vp->v_mount;
 
 	if (vp->v_data != (void *)1) {
+		simple_lock(&vp->v_interlock);
+		if (inter_lkp)
+			simple_unlock(inter_lkp);
+		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+		VOP_INACTIVE(vp, l);
+
 		VOP_RECLAIM(vp, l);
 		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
