@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.356 2007/10/17 22:59:27 garbled Exp $
+.\"	$NetBSD: main,v 1.357 2007/10/26 21:08:53 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1259,6 +1259,16 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V .
+.Pp
+N.B. when using
+.Ic sysinst
+for upgrading, it will automatically invoke
+.(disp
+postinstall fix
+.disp)
+and thus all issues that are fixed by
+.Ic postinstall
+by default (see below) will be handled.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
 See the section below on upgrading from NetBSD 3.x as well.
@@ -1274,10 +1284,11 @@ as described below will take care of this. Please refer to
 .Lk http://www.netbsd.org/guide/en/chap-pam.html
 for documentation about PAM.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1330,10 +1341,11 @@ need to be created.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1394,6 +1406,42 @@ including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
 then please see the "Components removed from NetBSD" section near the
 beginning of this document.
+.It
+The replacement of Sendmail by Postfix can be handled automatically by
+.Em postinstall
+but it is not done by default.
+If you want to transition to Postfix, the command
+.(disp
+postinstall -s /path/to/etc.tgz fix mailerconf
+.disp)
+will update your
+.Pa /etc/mailer.conf
+file to use Postfix as the MTA. When using
+.Ic sysinst
+to upgrade the system, it will ask if you want this to be done.
+.Pp
+Note that if you have a customized
+Sendmail setup, you need to set up Postfix in an equivalent way; there
+is no tool for automatic conversion of Sendmail configuration to a
+Postfix one.
+.Pp
+Postfix will be started up automatically when the system boots.
+You may see messages like "$sendmail is not set properly" at boot.
+You can suppress them by removing
+.Pa /etc/rc.d/sendmail
+and
+.Pa /etc/rc.d/smmsp .
+Those files and other parts of sendmail configuration like files under
+.Pa /usr/share/sendmail
+are not removed by default
+while upgrading for those who want to continue using sendmail from
+outside the base system.
+If you want to delete them,
+.Em postinstall
+can be used:
+.(disp
+postinstall -s /path/to/etc.tgz fix sendmail
+.disp)
 .bullet)
 .
 .
