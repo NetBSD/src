@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.3 2007/10/25 16:55:51 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.4 2007/10/26 00:34:54 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.3 2007/10/25 16:55:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.4 2007/10/26 00:34:54 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,16 +174,18 @@ genofw_fixup_picnode_offsets(void)
 
 /* we are given a pci devnode, and dig from there */
 void
-genofw_setup_pciintr_map(struct genppc_pci_chipset_businfo *pbi, int pcinode)
+genofw_setup_pciintr_map(void *v, struct genppc_pci_chipset_businfo *pbi,
+    int pcinode)
 {
 	int node;
 	u_int32_t map[160];
 	int parent, len;
-	int curdev;
+	int curdev, foundirqs=0;
 	int i, reclen, nrofpcidevs=0;
 	u_int32_t acells, icells, pcells;
 	prop_dictionary_t dict;
 	prop_dictionary_t sub=0;
+	pci_chipset_tag_t pc = (pci_chipset_tag_t)v;
 
 	len = OF_getprop(pcinode, "interrupt-map", map, sizeof(map));
 	if (len == -1)
@@ -278,6 +280,44 @@ nomap:
 			sprintf(key, "devfunc-%d", dev);
 			prop_dictionary_set(dict, key, sub);
 			prop_object_release(sub);
+			foundirqs++;
+		}
+	}
+	if (foundirqs)
+		return;
+
+	/*
+	 * If we got this far, we have a super-annoying OFW.
+	 * They didn't bother to fill in any interrupt properties anywhere,
+	 * so we pray that they filled in the ones on the pci devices.
+	 */
+	for (node = OF_child(pcinode); node; node = OF_peer(node)) {
+		uint32_t reg[5], irq;
+		prop_number_t intr_num;
+		pcitag_t tag;
+		int dev, pin, func;
+		char key[20];
+
+		if (OF_getprop(node, "reg", reg, 5) > 0) {
+			dev = ((reg[0] & 0x0000ff00) >> 8) / 0x8;
+			func = ((reg[0] & 0x0000ff00) >> 8) % 0x8;
+
+			tag = pci_make_tag(pc, pc->pc_bus, dev, func);
+			irq = PCI_INTERRUPT_LINE(pci_conf_read(pc, tag,
+			    PCI_INTERRUPT_REG));
+			if (irq == 255)
+				irq = 0;
+
+			sub = prop_dictionary_create_with_capacity(4);
+			if (OF_getprop(node, "interrupts", &pin, 4) < 0)
+				pin = 1;
+			intr_num = prop_number_create_integer(irq);
+			sprintf(key, "pin-%c", 'A' + pin);
+			prop_dictionary_set(sub, key, intr_num);
+			prop_object_release(intr_num);
+			sprintf(key, "devfunc-%d", dev*0x8 + func);
+			prop_dictionary_set(dict, key, sub);
+			prop_object_release(sub);
 		}
 	}
 	aprint_normal("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
@@ -316,7 +356,7 @@ genofw_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev, origdev, i;
+	int busno, bus, pin, line, swiz, dev, origdev, func, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
@@ -324,6 +364,7 @@ genofw_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	bus = busno = pa->pa_bus;
 	swiz = pa->pa_intrswiz;
 	origdev = dev = pa->pa_device;
+	func = pa->pa_function;
 	i = 0;
 
 	pbi = SIMPLEQ_FIRST(&pa->pa_pc->pc_pbi);
@@ -371,7 +412,7 @@ genofw_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 
-	sprintf(key, "devfunc-%d", dev);
+	sprintf(key, "devfunc-%d", dev*0x8 + func);
 	devsub = prop_dictionary_get(dict, key);
 	if (devsub == NULL)
 		goto bad;
@@ -446,7 +487,7 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 			free(pbi, M_DEVBUF);
 			return (PCI_CONF_DEFAULT);
 		}
-		genofw_setup_pciintr_map(pbi, node);
+		genofw_setup_pciintr_map((void *)pct, pbi, node);
 
 		/* record the parent bus, and the parent device number */
 		pbus = prop_number_create_integer(bus);

@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.1 2007/10/25 16:55:50 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.2 2007/10/26 00:34:53 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.1 2007/10/25 16:55:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2 2007/10/26 00:34:53 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -201,7 +201,7 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&pc->pc_pbi);
 	SIMPLEQ_INSERT_TAIL(&pc->pc_pbi, pbi, next);
 
-	genofw_setup_pciintr_map(pbi, pc->pc_node);
+	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;
