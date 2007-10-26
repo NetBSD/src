@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.15 2007/10/11 19:41:15 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.16 2007/10/26 17:24:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.15 2007/10/11 19:41:15 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.16 2007/10/26 17:24:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -153,11 +153,12 @@ puffsdump_req(struct puffs_req *preq)
 	}
 
 	printf("\treqid: %" PRIu64 ", opclass %d%s, optype: %s, "
-	    "cookie: %p,\n\t\taux: %p, auxlen: %zu\n",
+	    "cookie: %p,\n\t\taux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
 	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
-	    preq->preq_buf, preq->preq_buflen);
+	    preq->preq_buf, preq->preq_buflen,
+	    preq->preq_pid, preq->preq_lid);
 
 	if (isvn) {
 		switch (preq->preq_optype) {
