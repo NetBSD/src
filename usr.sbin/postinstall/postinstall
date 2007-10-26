@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.53 2007/10/16 02:47:16 tls Exp $
+# $NetBSD: postinstall,v 1.54 2007/10/26 17:26:25 pavel Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1459,4 +1459,5 @@ exec 4>/dev/null
 exitstatus=0
 
 main "$@"
+/bin/rm -rf ${SCRATCHDIR}
 exit $exitstatus
