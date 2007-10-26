@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.89 2007/10/21 19:25:58 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.90 2007/10/26 13:51:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -116,7 +116,7 @@ struct puffs_usermount;
 /*
  * Magic constants
  */
-#define PUFFS_CC_STACKSIZE_DEFAULT (1024*1024)
+#define PUFFS_CC_STACKSHIFT_DEFAULT 18
 
 struct puffs_cn {
 	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
