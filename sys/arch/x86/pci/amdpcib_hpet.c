@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.2 2007/10/26 21:58:17 xtraeme Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.1 2007/10/26 22:17:14 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.2 2007/10/26 21:58:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.1 2007/10/26 22:17:14 xtraeme Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>

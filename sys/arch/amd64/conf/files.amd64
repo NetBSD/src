@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.47 2007/10/26 21:49:50 xtraeme Exp $
+#	$NetBSD: files.amd64,v 1.48 2007/10/26 22:17:13 xtraeme Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -103,18 +103,6 @@ include "dev/pci/files.agp"
 
 # x86 specific PCI hardware
 include "arch/x86/pci/files.pci"
-
-# PCI-ISA bridges
-device	pcib: isabus
-attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib | amdpcib | ichlpcib
-
-device 	amdpcib {} : isabus
-attach 	amdpcib at pci
-file 	arch/amd64/pci/amdpcib.c		amdpcib
-
-attach 	hpet at amdpcib with amdpcib_hpet
-file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
 
 #
 # ISA or ISA+PCI drivers
