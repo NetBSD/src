@@ -1,9 +1,8 @@
-/* $NetBSD: vge.c,v 1.1 2007/10/25 10:54:55 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.2 2007/10/26 01:16:27 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
@@ -31,61 +30,6 @@
 void *vge_init(void *);
 int vge_send(void *, char *, unsigned);
 int vge_recv(void *, char *, unsigned, unsigned);
-
-#define VGE_PAR0	0x00		/* SA [0] */
-#define VGE_PAR1	0x01		/* SA [1] */
-#define VGE_PAR2	0x02		/* SA [2] */
-#define VGE_PAR3	0x03		/* SA [3] */
-#define VGE_PAR4	0x04		/* SA [4] */
-#define VGE_PAR5	0x05		/* SA [5] */
-#define VGE_CAM0	0x10
-#define VGE_RCR		0x06		/* Rx control */
-#define	 RCR_AP		(1U << 6)	/* accept unicast frame */
-#define	 RCR_AL		(1U << 5)	/* accept large frame */
-#define	 RCR_PROM	(1U << 4)	/* accept any frame */
-#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define	 RCR_AM		(1U << 2)	/* use multicast filter */  
-#define VGE_CTL0		0x08		/* control #0 */
-#define	 CTL0_TXON	(1U << 4)
-#define	 CTL0_RXON	(1U << 3)
-#define	 CTL0_STOP	(1U << 2)
-#define	 CTL0_START	(1U << 1)
-#define VGE_CTL1		0x09		/* control #1 */
-#define	 CTL1_RESET	(1U << 7)
-#define VGE_CTL2		0x0a		/* control #2 */
-#define	 CTL2_3XFLC	(1U << 7)	/* 802.3x PAUSE flow control */
-#define	 CTL2_TPAUSE	(1U << 6)	/* handle PAUSE on transmit side */
-#define	 CTL2_RPAUSE	(1U << 5)	/* handle PAUSE on receive side */
-#define	 CTL2_HDXFLC	(1U << 4)	/* HDX jabber flow control */
-#define VGE_CTL3		0x0b		/* control #3 */
-#define	 CTL3_GINTMASK	(1U << 1)
-#define VGE_TCR		0x07		/* Tx control */
-#define VGE_DESCHI	0x18		/* RDES/TDES base high 63:32 */
-#define VGE_DATAHI	0x1c		/* frame data base high 63:32 */
-#define VGE_ISR		0x24		/* ISR0123 */
-#define VGE_IEN		0x28		/* IEN0123 */
-#define VGE_TDCSR	0x30
-#define VGE_RDCSR	0x32
-#define VGE_RDB		0x38		/* RDES base lo 31:0 */
-#define VGE_RDINDX	0x3c
-#define VGE_TDB0		0x40		/* #0 TDES base lo 31:0 */
-#define VGE_RDCSIZE	0x50
-#define VGE_TDCSIZE	0x52
-#define VGE_TD0IDX	0x54
-#define VGE_RBRDU	0x5e
-#define VGE_MIICFG	0x6c		/* PHY number 4:0 */
-#define VGE_PHYSR0	0x6e		/* PHY status */
-#define VGE_MIICR	0x70		/* MII control */
-#define	 MIICR_RCMD	(1U << 6)	/* MII read operation */
-#define	 MIICR_WCMD	(1U << 5)	/* MII write operation */
-#define VGE_MIIADR	0x71		/* MII indirect */
-#define VGE_MIIDATA	0x72		/* MII read/write */
-#define VGE_CAMADR	0x68
-#define	 CAMADR_EN	(1U << 7)	/* enable to manipulate */
-#define VGE_CAMCTL	0x69
-#define	 CAMCTL_RD	(1U << 3)	/* CAM read op, W1S */
-#define	 CAMCTL_WR	(1U << 2)	/* CAM write op, W1S */
-#define VGE_CHIPGCR	0x9f		/* chip global control */
 
 #define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define R0_FLMASK	0x3fff0000	/* frame length */
@@ -147,9 +91,65 @@ struct tdesc {
 		uint32_t hi;
 	} tf[7];
 };
+
 struct rdesc {
 	uint32_t r0, r1, r2, r3;
 };
+
+#define VGE_PAR0	0x00		/* SA [0] */
+#define VGE_PAR1	0x01		/* SA [1] */
+#define VGE_PAR2	0x02		/* SA [2] */
+#define VGE_PAR3	0x03		/* SA [3] */
+#define VGE_PAR4	0x04		/* SA [4] */
+#define VGE_PAR5	0x05		/* SA [5] */
+#define VGE_CAM0	0x10
+#define VGE_RCR		0x06		/* Rx control */
+#define	 RCR_AP		(1U << 6)	/* accept unicast frame */
+#define	 RCR_AL		(1U << 5)	/* accept large frame */
+#define	 RCR_PROM	(1U << 4)	/* accept any frame */
+#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
+#define	 RCR_AM		(1U << 2)	/* use multicast filter */  
+#define VGE_CTL0	0x08		/* control #0 */
+#define	 CTL0_TXON	(1U << 4)
+#define	 CTL0_RXON	(1U << 3)
+#define	 CTL0_STOP	(1U << 2)
+#define	 CTL0_START	(1U << 1)
+#define VGE_CTL1	0x09		/* control #1 */
+#define	 CTL1_RESET	(1U << 7)
+#define VGE_CTL2	0x0a		/* control #2 */
+#define	 CTL2_3XFLC	(1U << 7)	/* 802.3x PAUSE flow control */
+#define	 CTL2_TPAUSE	(1U << 6)	/* handle PAUSE on transmit side */
+#define	 CTL2_RPAUSE	(1U << 5)	/* handle PAUSE on receive side */
+#define	 CTL2_HDXFLC	(1U << 4)	/* HDX jabber flow control */
+#define VGE_CTL3	0x0b		/* control #3 */
+#define	 CTL3_GINTMASK	(1U << 1)
+#define VGE_TCR		0x07		/* Tx control */
+#define VGE_DESCHI	0x18		/* RDES/TDES base high 63:32 */
+#define VGE_DATAHI	0x1c		/* frame data base high 63:32 */
+#define VGE_ISR		0x24		/* ISR0123 */
+#define VGE_IEN		0x28		/* IEN0123 */
+#define VGE_TDCSR	0x30
+#define VGE_RDCSR	0x32
+#define VGE_RDB		0x38		/* RDES base lo 31:0 */
+#define VGE_RDINDX	0x3c
+#define VGE_TDB0	0x40		/* #0 TDES base lo 31:0 */
+#define VGE_RDCSIZE	0x50
+#define VGE_TDCSIZE	0x52
+#define VGE_TD0IDX	0x54
+#define VGE_RBRDU	0x5e
+#define VGE_MIICFG	0x6c		/* PHY number 4:0 */
+#define VGE_PHYSR0	0x6e		/* PHY status */
+#define VGE_MIICR	0x70		/* MII control */
+#define	 MIICR_RCMD	(1U << 6)	/* MII read operation */
+#define	 MIICR_WCMD	(1U << 5)	/* MII write operation */
+#define VGE_MIIADR	0x71		/* MII indirect */
+#define VGE_MIIDATA	0x72		/* MII read/write */
+#define VGE_CAMADR	0x68
+#define	 CAMADR_EN	(1U << 7)	/* enable to manipulate */
+#define VGE_CAMCTL	0x69
+#define	 CAMCTL_RD	(1U << 3)	/* CAM read op, W1S */
+#define	 CAMCTL_WR	(1U << 2)	/* CAM write op, W1S */
+#define VGE_CHIPGCR	0x9f		/* chip global control */
 
 #define FRAMESIZE	1536
 
@@ -218,7 +218,7 @@ vge_init(void *cookie)
 	RxD[0].r3 = htole32(FRAMESIZE << 16);
 	RxD[1].r0 = htole32(R0_OWN);
 	RxD[1].r1 = 0;
-	RxD[1].r2 = htole32(VTOPHYS(l->rxstore[0]));
+	RxD[1].r2 = htole32(VTOPHYS(l->rxstore[1]));
 	RxD[1].r3 = htole32(FRAMESIZE << 16);
 	wbinv(TxD, sizeof(struct tdesc));
 	wbinv(RxD, 2 * sizeof(struct rdesc));
