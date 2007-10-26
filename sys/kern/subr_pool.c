@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.10 2007/09/25 01:36:19 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.11 2007/10/26 17:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.10 2007/09/25 01:36:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.11 2007/10/26 17:03:10 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.10 2007/09/25 01:36:19 ad Exp 
 #include <sys/syslog.h>
 #include <sys/debug.h>
 #include <sys/lockdebug.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
@@ -148,7 +149,7 @@ struct pool_item {
 #ifdef DIAGNOSTIC
 	u_int pi_magic;
 #endif
-#define	PI_MAGIC 0xdeadbeefU
+#define	PI_MAGIC 0xdeaddeadU
 	/* Other entries use only this list entry */
 	LIST_ENTRY(pool_item)	pi_list;
 };
@@ -191,6 +192,7 @@ static pool_cache_cpu_t *pool_cache_get_slow(pool_cache_cpu_t *, int *,
 					     void **, paddr_t *, int);
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
+static void	pool_cache_xcall(pool_cache_t);
 
 static int	pool_catchup(struct pool *);
 static void	pool_prime_page(struct pool *, void *,
@@ -921,7 +923,7 @@ pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 }
 
 /*
- * Grab an item from the pool; must be called at appropriate spl level
+ * Grab an item from the pool.
  */
 void *
 #ifdef POOL_DIAGNOSTIC
@@ -1269,7 +1271,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 }
 
 /*
- * Return resource to the pool; must be called at appropriate spl level
+ * Return resource to the pool.
  */
 #ifdef POOL_DIAGNOSTIC
 void
@@ -1625,12 +1627,16 @@ pool_reclaim(struct pool *pp)
 }
 
 /*
- * Drain pools, one at a time.
+ * Drain pools, one at a time.  This is a two stage process;
+ * drain_start kicks off a cross call to drain CPU-level caches
+ * if the pool has an associated pool_cache.  drain_end waits
+ * for those cross calls to finish, and then drains the cache
+ * (if any) and pool.
  *
- * Note, we must never be called from an interrupt context.
+ * Note, must never be called from interrupt context.
  */
 void
-pool_drain(void *arg)
+pool_drain_start(struct pool **ppp, uint64_t *wp)
 {
 	struct pool *pp;
 
@@ -1638,25 +1644,50 @@ pool_drain(void *arg)
 
 	/* Find next pool to drain, and add a reference. */
 	mutex_enter(&pool_head_lock);
-	if (drainpp == NULL) {
-		drainpp = LIST_FIRST(&pool_head);
-	}
-	if (drainpp != NULL) {
-		pp = drainpp;
-		drainpp = LIST_NEXT(pp, pr_poollist);
-	}
-	if (pp != NULL)
-		pp->pr_refcnt++;
+	do {
+		if (drainpp == NULL) {
+			drainpp = LIST_FIRST(&pool_head);
+		}
+		if (drainpp != NULL) {
+			pp = drainpp;
+			drainpp = LIST_NEXT(pp, pr_poollist);
+		}
+		/* Skip completely idle pools. */
+	} while (pp == NULL || pp->pr_npages == 0);
+	pp->pr_refcnt++;
 	mutex_exit(&pool_head_lock);
 
-	/* If we have a candidate, drain it and unlock. */
+	/* If there is a pool_cache, drain CPU level caches. */
 	if (pp != NULL) {
-		pool_reclaim(pp);
-		mutex_enter(&pool_head_lock);
-		pp->pr_refcnt--;
-		cv_broadcast(&pool_busy);
-		mutex_exit(&pool_head_lock);
+		*ppp = pp;
+		if (pp->pr_cache != NULL) {
+			*wp = xc_broadcast(0, (xcfunc_t)pool_cache_xcall,
+			    pp->pr_cache, NULL);
+		}
 	}
+}
+
+void
+pool_drain_end(struct pool *pp, uint64_t where)
+{
+
+	if (pp == NULL)
+		return;
+
+	KASSERT(pp->pr_refcnt > 0);
+
+	/* Wait for remote draining to complete. */
+	if (pp->pr_cache != NULL)
+		xc_wait(where);
+
+	/* Drain the cache (if any) and pool.. */
+	pool_reclaim(pp);
+
+	/* Finally, unlock the pool. */
+	mutex_enter(&pool_head_lock);
+	pp->pr_refcnt--;
+	cv_broadcast(&pool_busy);
+	mutex_exit(&pool_head_lock);
 }
 
 /*
@@ -1983,12 +2014,14 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 
 	pc->pc_emptygroups = NULL;
 	pc->pc_fullgroups = NULL;
+	pc->pc_partgroups = NULL;
 	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
 	pc->pc_arg  = arg;
 	pc->pc_hits  = 0;
 	pc->pc_misses = 0;
 	pc->pc_nempty = 0;
+	pc->pc_npart = 0;
 	pc->pc_nfull = 0;
 	pc->pc_contended = 0;
 	pc->pc_refcnt = 0;
@@ -2189,19 +2222,23 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 void
 pool_cache_invalidate(pool_cache_t pc)
 {
-	pcg_t *full, *empty;
+	pcg_t *full, *empty, *part;
 
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
+	part = pc->pc_partgroups;
 	pc->pc_fullgroups = NULL;
 	pc->pc_emptygroups = NULL;
+	pc->pc_partgroups = NULL;
 	pc->pc_nfull = 0;
 	pc->pc_nempty = 0;
+	pc->pc_npart = 0;
 	mutex_exit(&pc->pc_lock);
 
 	pool_cache_invalidate_groups(pc, full);
 	pool_cache_invalidate_groups(pc, empty);
+	pool_cache_invalidate_groups(pc, part);
 }
 
 void
@@ -2569,6 +2606,58 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		 */
 		cc = pool_cache_put_slow(cc, &s, object, pa);
 	} while (cc != NULL);
+}
+
+/*
+ * pool_cache_xcall:
+ *
+ *	Transfer objects from the per-CPU cache to the global cache.
+ *	Run within a cross-call thread.
+ */
+static void
+pool_cache_xcall(pool_cache_t pc)
+{
+	pool_cache_cpu_t *cc;
+	pcg_t *prev, *cur, **list;
+	int s = 0; /* XXXgcc */
+
+	cc = pool_cache_cpu_enter(pc, &s);
+	cur = cc->cc_current;
+	cc->cc_current = NULL;
+	prev = cc->cc_previous;
+	cc->cc_previous = NULL;
+	pool_cache_cpu_exit(cc, &s);
+
+	mutex_enter(&pc->pc_lock);
+	if (cur != NULL) {
+		if (cur->pcg_avail == PCG_NOBJECTS) {
+			list = &pc->pc_fullgroups;
+			pc->pc_nfull++;
+		} else if (cur->pcg_avail == 0) {
+			list = &pc->pc_emptygroups;
+			pc->pc_nempty++;
+		} else {
+			list = &pc->pc_partgroups;
+			pc->pc_npart++;
+		}
+		cur->pcg_next = *list;
+		*list = cur;
+	}
+	if (prev != NULL) {
+		if (prev->pcg_avail == PCG_NOBJECTS) {
+			list = &pc->pc_fullgroups;
+			pc->pc_nfull++;
+		} else if (prev->pcg_avail == 0) {
+			list = &pc->pc_emptygroups;
+			pc->pc_nempty++;
+		} else {
+			list = &pc->pc_partgroups;
+			pc->pc_npart++;
+		}
+		prev->pcg_next = *list;
+		*list = prev;
+	}
+	mutex_exit(&pc->pc_lock);
 }
 
 /*
