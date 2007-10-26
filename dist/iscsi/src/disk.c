@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.29 2007/09/26 12:01:49 agc Exp $ */
+/* $NetBSD: disk.c,v 1.30 2007/10/26 18:36:47 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -1097,7 +1097,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SELECT_6:
-	case MODE_SELECT_10:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_6 | MODE_SELECT_10\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
@@ -1147,7 +1146,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SENSE_6:
-	case MODE_SENSE_10:
 		cp = data = args->send_data;
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
