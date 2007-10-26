@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.22 2007/10/25 20:52:17 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.23 2007/10/26 17:08:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.22 2007/10/25 20:52:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.23 2007/10/26 17:08:56 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1015,9 +1015,15 @@ vholdl(vnode_t *vp)
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
-	KASSERT(vp->v_usecount != 0);
 
-	vp->v_holdcnt++;
+	if (vp->v_holdcnt++ == 0 && vp->v_usecount == 0) {
+		mutex_enter(&vnode_free_list_lock);
+		KASSERT(vp->v_freelisthd == &vnode_free_list);
+		TAILQ_REMOVE(vp->v_freelisthd, vp, v_freelist);
+		vp->v_freelisthd = &vnode_hold_list;
+		TAILQ_INSERT_TAIL(vp->v_freelisthd, vp, v_freelist);
+		mutex_exit(&vnode_free_list_lock);
+	}
 }
 
 /*
