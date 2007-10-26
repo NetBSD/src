@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.336 2007/10/26 23:16:31 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.337 2007/10/26 23:20:50 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10290,4 +10290,13 @@ sys/dev/pci/pccbb.c				1.149 via patch
 	Correctly initialise sc_insert_ch and switch to
 	callout_setfunc/callout_schedule.
 	[joerg, ticket #942]
+
+sys/dev/pci/pccbb.c				1.150
+
+	Remove a completely bogus check if cbb has a valid PCI interrupt routed.
+	If you have a system where it doesn't get one and you still want pcic,
+	you can just disable cbb. This check is invalid as soon as the PCI
+	interrupt register is not used and broke on my Dell Latitude for that
+	reason.
+	[joerg, ticket #949]
 
