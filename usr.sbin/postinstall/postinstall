@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.6 2007/10/26 14:23:20 liamjfoy Exp $
+# $NetBSD: postinstall,v 1.31.2.7 2007/10/26 23:33:12 xtraeme Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1437,4 +1437,5 @@ exec 4>/dev/null
 exitstatus=0
 
 main "$@"
+/bin/rm -rf ${SCRATCHDIR}
 exit $exitstatus
