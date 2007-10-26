@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.10 2007/10/21 19:25:58 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.11 2007/10/26 13:51:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,10 +27,11 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.10 2007/10/21 19:25:58 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.11 2007/10/26 13:51:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -127,7 +128,9 @@ struct puffs_cc *
 puffs_cc_create(struct puffs_usermount *pu)
 {
 	struct puffs_cc *volatile pcc;
+	size_t stacksize = 1<<pu->pu_cc_stackshift;
 	stack_t *st;
+	void *sp;
 
 	pcc = malloc(sizeof(struct puffs_cc));
 	if (!pcc)
@@ -150,12 +153,14 @@ puffs_cc_create(struct puffs_usermount *pu)
 
 	/* allocate stack for execution */
 	st = &pcc->pcc_uc.uc_stack;
-	st->ss_sp = pcc->pcc_stack = malloc(pu->pu_cc_stacksize);
-	if (st->ss_sp == NULL) {
+	sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, 0);
+	if (sp == MAP_FAILED) {
 		free(pcc);
 		return NULL;
 	}
-	st->ss_size = pu->pu_cc_stacksize;
+	st->ss_sp = pcc->pcc_stack = sp;
+	st->ss_size = stacksize;
 	st->ss_flags = 0;
 
 	/*
@@ -186,7 +191,9 @@ puffs_cc_setcaller(struct puffs_cc *pcc, pid_t pid, lwpid_t lid)
 void
 puffs_cc_destroy(struct puffs_cc *pcc)
 {
+	struct puffs_usermount *pu = pcc->pcc_pu;
+	size_t stacksize = 1<<pu->pu_cc_stackshift;
 
-	free(pcc->pcc_stack);
+	munmap(pcc->pcc_stack, stacksize);
 	free(pcc);
 }

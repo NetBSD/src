@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.26 2007/10/25 10:59:45 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.27 2007/10/26 13:51:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -97,7 +97,7 @@ struct puffs_usermount {
 	size_t			pu_maxreqlen;
 
 	uint32_t		pu_flags;
-	size_t			pu_cc_stacksize;
+	int			pu_cc_stackshift;
 
 	int			pu_kq;
 	int			pu_state;
