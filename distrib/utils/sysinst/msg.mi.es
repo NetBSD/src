@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.17 2006/09/04 21:46:32 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.17.2.1 2007/10/26 14:44:35 liamjfoy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -981,3 +981,10 @@ message cdrombadmount
 message localfsbadmount
 {No se ha podido montar %s en el dispositivo local %s.}
 .endif
+
+message oldsendmail
+{Sendmail is no longer in this release of NetBSD, default MTA is
+postfix. The file /etc/mailer.conf still chooses the removed
+sendmail. Do you want to upgrade /etc/mailer.conf automatically for
+postfix? If you choose "No" you will have to update /etc/mailer.conf
+yourself to ensure proper email delivery.}
