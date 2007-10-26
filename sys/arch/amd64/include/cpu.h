@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 2007/10/18 15:28:34 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 2007/10/26 13:24:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -244,7 +244,7 @@ extern void cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -288,7 +288,7 @@ void	child_trampoline(void);
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 
