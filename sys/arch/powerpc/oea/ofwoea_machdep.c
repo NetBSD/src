@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.3 2007/10/25 16:55:50 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.4 2007/10/26 08:41:24 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.3 2007/10/25 16:55:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4 2007/10/26 08:41:24 garbled Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -308,32 +308,33 @@ restore_ofmap(struct ofw_translations *map, int len)
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
-	int child, mlen, len, acells, scells, reclen, i, addr, j;
-	u_int32_t map[160];
+	int child, mlen, acells, scells, reclen, i, j;
+	u_int32_t addr, len, map[160];
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		mlen = OF_getprop(child, "ranges", map, sizeof(map));
 		if (mlen == -1)
 			goto noranges;
-		len = OF_getprop(child, "#address-cells", &acells,
+
+		j = OF_getprop(child, "#address-cells", &acells,
 		    sizeof(acells));
-		if (len == -1)
+		if (j == -1)
 			goto noranges;
-		len = OF_getprop(child, "#size-cells", &scells,
+
+		j = OF_getprop(child, "#size-cells", &scells,
 		    sizeof(scells));
-		if (len == -1)
+		if (j == -1)
 			goto noranges;
 
 		reclen = acells + 1 + scells;
 
-		for (i=0; i < reclen/(mlen/4); i++) {
-			addr = map[reclen * i + acells + 1];
+		for (i=0; i < (mlen/4)/reclen; i++) {
+			addr = map[reclen * i + acells];
 			len = map[reclen * i + reclen - 1];
 			for (j = 0; j < len / 0x10000000; j++)
 				bitmap |= 1 << ((addr+j*0x10000000) >>28);
 			bitmap |= 1 << (addr >> 28);
 		}
-
 noranges:
 		bitmap |= ranges_bitmap(child, bitmap);
 		continue;
@@ -357,11 +358,15 @@ ofwoea_batinit(void)
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
 
+#ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
+#endif
 	for (i=1; i < 0x10; i++)
-		if (bitmap & (1 << i))
+		if (bitmap & (1 << i)) {
 			oea_iobat_add(0x10000000 * i, BAT_BL_256M);
+			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
+		}
 #endif
 }
 
