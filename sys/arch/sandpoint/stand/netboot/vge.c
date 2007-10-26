@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.4 2007/10/26 13:56:18 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.5 2007/10/26 14:30:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -282,10 +282,10 @@ vge_init(void *cookie)
 	/* prepare descriptor lists */
 	CSR_WRITE_2(l, VGE_DATAHI, 0);
 	CSR_WRITE_4(l, VGE_DESCHI, 0);
-	CSR_WRITE_4(l, VGE_RDB, (unsigned)RxD);
+	CSR_WRITE_4(l, VGE_RDB, VTOPHYS(RxD));
 	CSR_WRITE_2(l, VGE_RDCSIZE, 1);
 	CSR_WRITE_2(l, VGE_RBRDU, 1);
-	CSR_WRITE_4(l, VGE_TDB0, (unsigned)TxD);
+	CSR_WRITE_4(l, VGE_TDB0, VTOPHYS(TxD));
 	CSR_WRITE_2(l, VGE_TDCSIZE, 0);
 
 	/* determine speed and duplexity */
