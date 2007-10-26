@@ -1,4 +1,4 @@
-$NetBSD: COMPATIBILITY,v 1.1 2007/10/14 11:01:21 agc Exp $
+$NetBSD: COMPATIBILITY,v 1.2 2007/10/26 18:19:36 agc Exp $
 
 The NetBSD iSCSI initiator has been tried with the following initiators:
 
@@ -14,7 +14,7 @@ Only a small test case was tried
 VPD83 functionality was added for this initiator
 
 3. IBM AIX 5.3 iSCSI initiator
-Tested by Andreas Wrede
+Tested by Andreas
 Information in
 http://mail-index.netbsd.org/current-users/2007/10/12/0008.html
 
