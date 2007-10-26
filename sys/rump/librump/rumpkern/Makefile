@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2007/10/17 16:48:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.19 2007/10/26 18:03:26 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -31,8 +31,8 @@ SRCS+=	__assert.c scanc.c skpc.c
 
 SRCS+=	rumpvnode_if.c
 
-RUMUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
-OBJS+=	${RUMUSEROBJDIR}/rumpuser.o
+RUMPUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
+OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
