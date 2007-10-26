@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.65 2007/10/17 19:58:18 garbled Exp $
+#	$NetBSD: files.xen,v 1.66 2007/10/26 21:49:51 xtraeme Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -240,7 +240,7 @@ file	arch/x86/x86/ipmi.c		ipmi needs-flag
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 	      agp_via
 attach	pchb at pci
-file	arch/i386/pci/pchb.c		pchb			needs-flag
+file	arch/x86/pci/pchb.c		pchb			needs-flag
 file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # PCI-ISA bridges
