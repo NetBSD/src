@@ -1,9 +1,8 @@
-/* $NetBSD: pcn.c,v 1.1 2007/10/25 09:02:15 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.2 2007/10/26 01:16:27 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
  
-#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
  
@@ -146,7 +145,7 @@ pcn_send(void *dev, char *buf, unsigned len)
 		DELAY(10);
 		inv(TxD, sizeof(struct desc));
 	} while (--loop > 0);
-	printf("xmit fail\n");
+	printf("xmit failed\n");
 	return -1;
   done:
 	return len;
@@ -182,7 +181,6 @@ printf("recving with %u sec. timeout\n", timo);
 		goto again;
 	}
 	/* good frame */
-	rxstat = le32toh(RxD->xd2);
 	len = (rxstat & LE_R1_BCNT_MASK) - 4 /* HASFCS */;
 	if (len > maxlen)
 		len = maxlen;
