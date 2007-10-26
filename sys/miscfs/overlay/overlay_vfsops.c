@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.43 2007/07/31 21:14:16 pooka Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.43.2.1 2007/10/26 15:48:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43 2007/07/31 21:14:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43.2.1 2007/10/26 15:48:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	nmp->ovm_bypass = layer_bypass;
 	nmp->ovm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->ovm_vnodeop_p = overlay_vnodeop_p;
-	simple_lock_init(&nmp->ovm_hashlock);
+	mutex_init(&nmp->ovm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, HASH_LIST, M_CACHE,
 	    M_WAITOK, &nmp->ovm_node_hash);
 
@@ -182,7 +182,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in ov_unmount.
 	 */
-	vp->v_flag |= VROOT;
+	vp->v_vflag |= VV_ROOT;
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,

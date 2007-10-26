@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.89.6.1 2007/10/02 18:28:26 joerg Exp $ */
+/* $NetBSD: rtw.c,v 1.89.6.2 2007/10/26 15:44:59 joerg Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.89.6.1 2007/10/02 18:28:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.89.6.2 2007/10/26 15:44:59 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.89.6.1 2007/10/02 18:28:26 joerg Exp $");
 #include <sys/types.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
-#include <machine/intr.h>	/* splnet */
+#include <sys/bus.h>
+#include <sys/intr.h>	/* splnet */
 
 #include <uvm/uvm_extern.h>
 

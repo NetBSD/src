@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.18 2007/05/13 11:04:11 dsl Exp $ */
+/*	$NetBSD: linux_time.c,v 1.18.6.1 2007/10/26 15:44:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.18 2007/05/13 11:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.18.6.1 2007/10/26 15:44:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.18 2007/05/13 11:04:11 dsl Exp $");
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_sched.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

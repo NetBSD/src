@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75.16.3 2007/10/04 21:43:28 joerg Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.4 2007/10/26 15:44:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.3 2007/10/04 21:43:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.4 2007/10/26 15:44:18 joerg Exp $");
 
 #include "opt_cardbus.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.3 2007/10/04 21:43:28 joerg Exp 
 #include <sys/proc.h>
 #include <sys/reboot.h>		/* for AB_* needed by bootverbose */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>

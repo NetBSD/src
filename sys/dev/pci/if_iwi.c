@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62.14.4 2007/10/01 05:37:40 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.5 2007/10/26 15:46:05 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.4 2007/10/01 05:37:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.5 2007/10/26 15:46:05 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.4 2007/10/01 05:37:40 joerg Exp $
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/firmload.h>
 
@@ -90,9 +90,9 @@ int iwi_debug = 4;
 #define DPRINTFN(n, x)
 #endif
 
-static int	iwi_match(struct device *, struct cfdata *, void *);
-static void	iwi_attach(struct device *, struct device *, void *);
-static int	iwi_detach(struct device *, int);
+static int	iwi_match(device_t, struct cfdata *, void *);
+static void	iwi_attach(device_t, device_t, void *);
+static int	iwi_detach(device_t, int);
 
 static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
     int);
@@ -181,12 +181,11 @@ MEM_READ_4(struct iwi_softc *sc, uint32_t addr)
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
+CFATTACH_DECL_NEW(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
 
 static int
-iwi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+iwi_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -214,7 +213,7 @@ iwi_pci_resume(device_t dv)
 #define IWI_PCI_BAR0	0x10
 
 static void
-iwi_attach(struct device *parent, struct device *self, void *aux)
+iwi_attach(device_t parent, device_t self, void *aux)
 {
 	struct iwi_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -230,6 +229,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	int error, revision, i;
 	pnp_status_t pnp_status;
 
+	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -245,8 +245,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -259,8 +258,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_mapreg_map(pa, IWI_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &memt, &memh, NULL, &sc->sc_sz);
 	if (error != 0) {
-		aprint_error("%s: could not map memory space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not map memory space\n");
 		return;
 	}
 
@@ -272,26 +270,23 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error("%s: could not map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(sc->sc_pct, ih);
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: could not establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	if (iwi_reset(sc) != 0) {
-		aprint_error("%s: could not reset adapter\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not reset adapter\n");
 		return;
 	}
 
@@ -299,46 +294,40 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	 * Allocate rings.
 	 */
 	if (iwi_alloc_cmd_ring(sc, &sc->cmdq, IWI_CMD_RING_COUNT) != 0) {
-		aprint_error("%s: could not allocate command ring\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate command ring\n");
 		goto fail;
 	}
 
 	error = iwi_alloc_tx_ring(sc, &sc->txq[0], IWI_TX_RING_COUNT,
 	    IWI_CSR_TX1_RIDX, IWI_CSR_TX1_WIDX);
 	if (error != 0) {
-		aprint_error("%s: could not allocate Tx ring 1\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Tx ring 1\n");
 		goto fail;
 	}
 
 	error = iwi_alloc_tx_ring(sc, &sc->txq[1], IWI_TX_RING_COUNT,
 	    IWI_CSR_TX2_RIDX, IWI_CSR_TX2_WIDX);
 	if (error != 0) {
-		aprint_error("%s: could not allocate Tx ring 2\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Tx ring 2\n");
 		goto fail;
 	}
 
 	error = iwi_alloc_tx_ring(sc, &sc->txq[2], IWI_TX_RING_COUNT,
 	    IWI_CSR_TX3_RIDX, IWI_CSR_TX3_WIDX);
 	if (error != 0) {
-		aprint_error("%s: could not allocate Tx ring 3\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Tx ring 3\n");
 		goto fail;
 	}
 
 	error = iwi_alloc_tx_ring(sc, &sc->txq[3], IWI_TX_RING_COUNT,
 	    IWI_CSR_TX4_RIDX, IWI_CSR_TX4_WIDX);
 	if (error != 0) {
-		aprint_error("%s: could not allocate Tx ring 4\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Tx ring 4\n");
 		goto fail;
 	}
 
 	if (iwi_alloc_rx_ring(sc, &sc->rxq, IWI_RX_RING_COUNT) != 0) {
-		aprint_error("%s: could not allocate Rx ring\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Rx ring\n");
 		goto fail;
 	}
 
@@ -371,14 +360,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_myaddr[4] = val & 0xff;
 	ic->ic_myaddr[5] = val >> 8;
 
-	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
+	aprint_verbose_dev(self, "802.11 address %s\n",
 	    ether_sprintf(ic->ic_myaddr));
 
 	/* read the NIC type from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE);
 	sc->nictype = val & 0xff;
 
-	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));
+	DPRINTF(("%s: NIC type %d\n", device_xname(self), sc->nictype));
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2) {
@@ -419,7 +408,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = iwi_start;
 	ifp->if_watchdog = iwi_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
@@ -449,10 +438,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	pnp_status = pci_net_generic_power_register(self,
 	    pa->pa_pc, pa->pa_tag, ifp, NULL, iwi_pci_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (pnp_status != PNP_STATUS_SUCCESS)
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	ieee80211_announce(ic);
 
@@ -462,9 +449,9 @@ fail:	iwi_detach(self, 0);
 }
 
 static int
-iwi_detach(struct device* self, int flags)
+iwi_detach(device_t self, int flags)
 {
-	struct iwi_softc *sc = (struct iwi_softc *)self;
+	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
 	pci_net_generic_power_deregister(self);
@@ -513,8 +500,8 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 	    IWI_CMD_DESC_SIZE * count, 0,
 	    BUS_DMA_NOWAIT, &ring->desc_map);
 	if (error != 0) {
-		aprint_error("%s: could not create command ring DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create command ring DMA map\n");
 		goto fail;
 	}
 
@@ -522,8 +509,8 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 	    IWI_CMD_DESC_SIZE * count, PAGE_SIZE, 0,
 	    &sc->cmdq.desc_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not allocate command ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate command ring DMA memory\n");
 		goto fail;
 	}
 
@@ -531,8 +518,8 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 	    IWI_CMD_DESC_SIZE * count,
 	    (void **)&sc->cmdq.desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not map command ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map command ring DMA memory\n");
 		goto fail;
 	}
 
@@ -540,8 +527,8 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 	    IWI_CMD_DESC_SIZE * count, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not load command ring DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load command ring DMA map\n");
 		goto fail;
 	}
 
@@ -606,8 +593,8 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	    IWI_TX_DESC_SIZE * count, 0, BUS_DMA_NOWAIT,
 	    &ring->desc_map);
 	if (error != 0) {
-		aprint_error("%s: could not create tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create tx ring DMA map\n");
 		goto fail;
 	}
 
@@ -615,8 +602,8 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	    IWI_TX_DESC_SIZE * count, PAGE_SIZE, 0,
 	    &ring->desc_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not allocate tx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate tx ring DMA memory\n");
 		goto fail;
 	}
 
@@ -624,8 +611,8 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	    IWI_TX_DESC_SIZE * count,
 	    (void **)&ring->desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not map tx ring DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map tx ring DMA memory\n");
 		goto fail;
 	}
 
@@ -633,8 +620,8 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	    IWI_TX_DESC_SIZE * count, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not load tx ring DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load tx ring DMA map\n");
 		goto fail;
 	}
 
@@ -643,8 +630,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	ring->data = malloc(count * sizeof (struct iwi_tx_data), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
-		aprint_error("%s: could not allocate soft data\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
 		error = ENOMEM;
 		goto fail;
 	}
@@ -656,8 +642,8 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, IWI_MAX_NSEG,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &ring->data[i].map);
 		if (error != 0) {
-			aprint_error("%s: could not create tx buf DMA map",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not create tx buf DMA map");
 			goto fail;
 		}
 	}
@@ -719,8 +705,7 @@ iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 }
 
 static int
-iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
-    int count)
+iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 {
 	int i, error;
 
@@ -730,8 +715,7 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 	ring->data = malloc(count * sizeof (struct iwi_rx_data), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
-		aprint_error("%s: could not allocate soft data\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
 		error = ENOMEM;
 		goto fail;
 	}
@@ -744,8 +728,8 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ring->data[i].map);
 		if (error != 0) {
-			aprint_error("%s: could not create rx buf DMA map",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not create rx buf DMA map");
 			goto fail;
 		}
 
@@ -757,8 +741,8 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, ring->data[i].map,
 		    ring->data[i].m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
-			aprint_error("%s: could not load rx buffer DMA map\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not load rx buffer DMA map\n");
 			goto fail;
 		}
 
@@ -1132,15 +1116,14 @@ iwi_alloc_rx_buf(struct iwi_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		aprint_error("%s: could not allocate rx mbuf\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf\n");
 		return NULL;
 	}
 
 	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
-		aprint_error("%s: could not allocate rx mbuf cluster\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate rx mbuf cluster\n");
 		m_freem(m);
 		return NULL;
 	}
@@ -1165,7 +1148,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	if (le16toh(frame->len) < sizeof (struct ieee80211_frame) ||
 	    le16toh(frame->len) > MCLBYTES) {
-		DPRINTF(("%s: bad frame length\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: bad frame length\n", device_xname(sc->sc_dev)));
 		ifp->if_ierrors++;
 		return;
 	}
@@ -1190,15 +1173,15 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m_new,
 	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error("%s: could not load rx buf DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load rx buf DMA map\n");
 		m_freem(m_new);
 		ifp->if_ierrors++;
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map,
 		    data->m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error)
 			panic("%s: unable to remap rx buf",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -1293,8 +1276,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 			break;
 
 		default:
-			aprint_error("%s: unknown authentication state %u\n",
-			    sc->sc_dev.dv_xname, auth->state);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown authentication state %u\n", auth->state);
 		}
 		break;
 
@@ -1318,8 +1301,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 			break;
 
 		default:
-			aprint_error("%s: unknown association state %u\n",
-			    sc->sc_dev.dv_xname, assoc->state);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown association state %u\n", assoc->state);
 		}
 		break;
 
@@ -1327,8 +1310,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 		beacon = (struct iwi_notif_beacon_state *)(notif + 1);
 
 		if (beacon->state == IWI_BEACON_MISS) {
-			DPRINTFN(5, ("%s: %u beacon(s) missed\n", sc->sc_dev.dv_xname,
-			    le32toh(beacon->number)));
+			DPRINTFN(5, ("%s: %u beacon(s) missed\n",
+			    device_xname(sc->sc_dev), le32toh(beacon->number)));
 		}
 		break;
 
@@ -1342,7 +1325,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 
 	default:
 		DPRINTF(("%s: unknown notification type %u flags 0x%x len %d\n",
-		    sc->sc_dev.dv_xname, notif->type, notif->flags, le16toh(notif->len)));
+		    device_xname(sc->sc_dev), notif->type, notif->flags,
+		    le16toh(notif->len)));
 	}
 }
 
@@ -1395,8 +1379,8 @@ iwi_rx_intr(struct iwi_softc *sc)
 			break;
 
 		default:
-			aprint_error("%s: unknown hdr type %u\n",
-			    sc->sc_dev.dv_xname, hdr->type);
+			aprint_error_dev(sc->sc_dev, "unknown hdr type %u\n",
+			    hdr->type);
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -1460,7 +1444,7 @@ iwi_intr(void *arg)
 	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
 
 	if (r & IWI_INTR_FATAL_ERROR) {
-		aprint_error("%s: fatal error\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "fatal error\n");
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
 		return (1);
@@ -1496,9 +1480,8 @@ iwi_intr(void *arg)
 	if (r & IWI_INTR_RX_DONE)
 		iwi_rx_intr(sc);
 
-	if (r & IWI_INTR_PARITY_ERROR) {
-		aprint_error("%s: parity error\n", sc->sc_dev.dv_xname);
-	}
+	if (r & IWI_INTR_PARITY_ERROR)
+		aprint_error_dev(sc->sc_dev, "parity error\n");
 
 	return 1;
 }
@@ -1620,8 +1603,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
-		aprint_error("%s: could not map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n",
+		    error);
 		m_freem(m0);
 		return error;
 	}
@@ -1653,8 +1636,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error != 0) {
-			aprint_error("%s: could not map mbuf (error %d)\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(sc->sc_dev,
+			    "could not map mbuf (error %d)\n", error);
 			m_freem(m0);
 			return error;
 		}
@@ -1805,8 +1788,7 @@ iwi_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			aprint_error("%s: device timeout\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			ifp->if_oerrors++;
 			ifp->if_flags &= ~IFF_UP;
 			iwi_stop(ifp, 1);
@@ -1921,8 +1903,7 @@ iwi_stop_master(struct iwi_softc *sc)
 		DELAY(10);
 	}
 	if (ntries == 5)
-		aprint_error("%s: timeout waiting for master\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "timeout waiting for master\n");
 
 	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
 	    IWI_RST_PRINCETON_RESET);
@@ -1951,8 +1932,8 @@ iwi_reset(struct iwi_softc *sc)
 		DELAY(200);
 	}
 	if (ntries == 1000) {
-		aprint_error("%s: timeout waiting for clock stabilization\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for clock stabilization\n");
 		return ETIMEDOUT;
 	}
 
@@ -1986,8 +1967,7 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 		DELAY(10);
 	}
 	if (ntries == 5) {
-		aprint_error("%s: timeout waiting for master\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "timeout waiting for master\n");
 		return ETIMEDOUT;
 	}
 
@@ -2020,8 +2000,8 @@ iwi_load_ucode(struct iwi_softc *sc, void *uc, int size)
 		DELAY(100);
 	}
 	if (ntries == 100) {
-		aprint_error("%s: timeout waiting for ucode to initialize\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for ucode to initialize\n");
 		return ETIMEDOUT;
 	}
 
@@ -2052,16 +2032,16 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, size, 0,
 	    BUS_DMA_NOWAIT, &map);
 	if (error != 0) {
-		aprint_error("%s: could not create firmware DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create firmware DMA map\n");
 		goto fail1;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, map, fw, size, NULL,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0) {
-		aprint_error("%s: could not load fw dma map(%d)\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev, "could not load fw dma map(%d)\n",
+		    error);
 		goto fail2;
 	}
 
@@ -2136,8 +2116,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 		DELAY(100);
 	}
 	if (ntries == 400) {
-		aprint_error("%s: timeout processing cb\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "timeout processing cb\n");
 		error = ETIMEDOUT;
 		goto fail3;
 	}
@@ -2155,8 +2134,8 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 
 	/* Wait at most one second for firmware initialization to complete */
 	if ((error = tsleep(sc, 0, "iwiinit", hz)) != 0) {
-		aprint_error("%s: timeout waiting for firmware initialization "
-		    "to complete\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for firmware initialization to complete\n");
 		goto fail3;
 	}
 
@@ -2187,14 +2166,14 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	iwi_free_firmware(sc);
 	error = firmware_open("if_iwi", sc->sc_fwname, &fwh);
 	if (error != 0) {
-		printf("firmware_open failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_open failed\n");
 		goto fail1;
 	}
 
 	size = firmware_get_size(fwh);
 	if (size < sizeof(struct iwi_firmware_hdr)) {
-		aprint_error("%s: image '%s' has no header\n",
-		    sc->sc_dev.dv_xname, sc->sc_fwname);
+		aprint_error_dev(sc->sc_dev, "image '%s' has no header\n",
+		    sc->sc_fwname);
 		error = EIO;
 		goto fail1;
 	}
@@ -2214,8 +2193,8 @@ iwi_cache_firmware(struct iwi_softc *sc)
 
 	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
 	if (size < sizeof(struct iwi_firmware_hdr) + hdr->bsize + hdr->usize + hdr->fsize) {
-		aprint_error("%s: image '%s' too small\n",
-		    sc->sc_dev.dv_xname, sc->sc_fwname);
+		aprint_error_dev(sc->sc_dev, "image '%s' too small\n",
+		    sc->sc_fwname);
 		error = EIO;
 		goto fail2;
 	}
@@ -2224,8 +2203,8 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	DPRINTF(("firmware version = %d\n", le32toh(hdr->version)));
 	if ((IWI_FW_GET_MAJOR(le32toh(hdr->version)) != IWI_FW_REQ_MAJOR) ||
 	    (IWI_FW_GET_MINOR(le32toh(hdr->version)) != IWI_FW_REQ_MINOR)) {
-		aprint_error("%s: version for '%s' %d.%d != %d.%d\n",
-		    sc->sc_dev.dv_xname, sc->sc_fwname,
+		aprint_error_dev(sc->sc_dev,
+		    "version for '%s' %d.%d != %d.%d\n", sc->sc_fwname,
 		    IWI_FW_GET_MAJOR(le32toh(hdr->version)),
 		    IWI_FW_GET_MINOR(le32toh(hdr->version)),
 		    IWI_FW_REQ_MAJOR, IWI_FW_REQ_MINOR);
@@ -2548,9 +2527,9 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 
 #ifdef IWI_DEBUG
 	if (iwi_debug > 0) {
-		printf("Setting ESSID to ");
+		aprint_debug_dev(sc->sc_dev, "Setting ESSID to ");
 		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
-		printf("\n");
+		aprint_debug("\n");
 	}
 #endif
 	error = iwi_cmd(sc, IWI_CMD_SET_ESSID, ni->ni_essid, ni->ni_esslen, 1);
@@ -2673,8 +2652,8 @@ iwi_init(struct ifnet *ifp)
 	/* exit immediately if firmware has not been ioctl'd */
 	if (!(sc->flags & IWI_FLAG_FW_CACHED)) {
 		if ((error = iwi_cache_firmware(sc)) != 0) {
-			aprint_error("%s: could not cache the firmware\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not cache the firmware\n");
 			goto fail;
 		}
 	}
@@ -2682,20 +2661,17 @@ iwi_init(struct ifnet *ifp)
 	iwi_stop(ifp, 0);
 
 	if ((error = iwi_reset(sc)) != 0) {
-		aprint_error("%s: could not reset adapter\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not reset adapter\n");
 		goto fail;
 	}
 
 	if ((error = iwi_load_firmware(sc, fw->boot, fw->boot_size)) != 0) {
-		aprint_error("%s: could not load boot firmware\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not load boot firmware\n");
 		goto fail;
 	}
 
 	if ((error = iwi_load_ucode(sc, fw->ucode, fw->ucode_size)) != 0) {
-		aprint_error("%s: could not load microcode\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not load microcode\n");
 		goto fail;
 	}
 
@@ -2728,16 +2704,14 @@ iwi_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, IWI_CSR_RX_WIDX, sc->rxq.count -1);
 
 	if ((error = iwi_load_firmware(sc, fw->main, fw->main_size)) != 0) {
-		aprint_error("%s: could not load main firmware\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not load main firmware\n");
 		goto fail;
 	}
 
 	sc->flags |= IWI_FLAG_FW_INITED;
 
 	if ((error = iwi_config(sc)) != 0) {
-		aprint_error("%s: device configuration failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "device configuration failed\n");
 		goto fail;
 	}
 
@@ -2842,7 +2816,7 @@ iwi_sysctlattach(struct iwi_softc *sc)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("iwi controls and statistics"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
@@ -2931,8 +2905,8 @@ iwi_led_set(struct iwi_softc *sc, uint32_t state, int toggle)
 		val = (toggle && (val & state)) ? val & ~state : val | state;
 		break;
 	default:
-		aprint_normal("%s: unknown NIC type %d\n",
-		    sc->sc_dev.dv_xname, sc->nictype);
+		aprint_normal_dev(sc->sc_dev, "unknown NIC type %d\n",
+		    sc->nictype);
 		return;
 		break;
 	}

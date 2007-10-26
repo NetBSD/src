@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.7 2007/10/08 07:05:46 joerg Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.8 2007/10/26 15:46:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.7 2007/10/08 07:05:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.8 2007/10/26 15:46:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    self->dv_xname);
 		return;
 	}
+
+	ppb_fix_pcix(self, pa);
 
 	ppb_fix_pcix(self, pa);
 

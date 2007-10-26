@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.61.6.1 2007/09/03 16:49:07 jmcneill Exp $	*/
+/*	$NetBSD: in6.h,v 1.61.6.2 2007/10/26 15:49:07 joerg Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -224,19 +224,8 @@ extern const struct in6_addr in6addr_nodelocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allrouters;
 
-/*
- * Equality
- * NOTE: Some of kernel programming environment (for example, openbsd/sparc)
- * does not supply memcmp().  For userland memcmp() is preferred as it is
- * in ANSI standard.
- */
-#ifdef _KERNEL
-#define IN6_ARE_ADDR_EQUAL(a, b)			\
-    (bcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
-#else
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
     (memcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
-#endif
 
 /*
  * Unspecified
@@ -695,16 +684,16 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 struct mbuf;
 struct ifnet;
 int sockaddr_in6_cmp(const struct sockaddr *, const struct sockaddr *);
-int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
-void	in6_delayed_cksum __P((struct mbuf *));
-int	in6_localaddr __P((struct in6_addr *));
-int	in6_addrscope __P((struct in6_addr *));
-struct	in6_ifaddr *in6_ifawithifp __P((struct ifnet *, struct in6_addr *));
-extern void in6_if_up __P((struct ifnet *));
+int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
+void	in6_delayed_cksum(struct mbuf *);
+int	in6_localaddr(const struct in6_addr *);
+int	in6_addrscope(const struct in6_addr *);
+struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
+extern void in6_if_up(struct ifnet *);
 #ifndef __FreeBSD__
-extern int in6_src_sysctl __P((void *, size_t *, void *, size_t));
+extern int in6_src_sysctl(void *, size_t *, void *, size_t);
 #endif
-extern void addrsel_policy_init __P((void));
+extern void addrsel_policy_init(void);
 extern	u_char	ip6_protox[];
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))

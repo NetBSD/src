@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.90.6.1 2007/08/03 22:17:15 jmcneill Exp $	*/
+/*	$NetBSD: ata.c,v 1.90.6.2 2007/10/26 15:44:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.1 2007/08/03 22:17:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.2 2007/10/26 15:44:15 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.1 2007/08/03 22:17:15 jmcneill Exp $"
 #include <sys/errno.h>
 #include <sys/ataio.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.269.2.4 2007/10/02 18:29:28 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.269.2.5 2007/10/26 15:49:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499003100	/* NetBSD 4.99.31 */
+#define	__NetBSD_Version__	499003400	/* NetBSD 4.99.34 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -157,12 +157,14 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-/*
- * CPU cache values
- */
-#ifndef CACHE_LINE_SIZE
-#define	CACHE_LINE_SIZE		64
-#endif
+#ifdef _KERNEL
+# ifndef CACHE_LINE_SIZE
+#  define	CACHE_LINE_SIZE		64
+# endif
+# ifndef MAXCPUS
+#  define	MAXCPUS			32
+# endif
+#endif	/* _KERNEL */
 
 /*
  * Stack macros.  On most architectures, the stack grows down,
@@ -346,6 +348,12 @@
 	(__predict_false((ms) >= 0x20000) ? \
 	    ((ms +0u) / 1000u) * hz : \
 	    ((ms +0u) * hz) / 1000u)
+#endif
+#ifndef hztoms
+#define hztoms(t) \
+	(__predict_false((t) >= 0x20000) ? \
+	    ((t +0u) / hz) * 1000u : \
+	    ((t +0u) * 1000u) / hz)
 #endif
 #endif /* _KERNEL */
 

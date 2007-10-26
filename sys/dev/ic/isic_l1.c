@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.16 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isic_l1.c,v 1.16.44.1 2007/10/26 15:44:49 joerg Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.16 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.16.44.1 2007/10/26 15:44:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.16 2005/12/11 12:21:27 christos Exp $"
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 
 #include <sys/socket.h>

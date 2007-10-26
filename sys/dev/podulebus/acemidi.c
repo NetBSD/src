@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.12 2006/07/13 22:56:02 gdamore Exp $ */
+/* $NetBSD: acemidi.c,v 1.12.28.1 2007/10/26 15:47:17 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.12 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.12.28.1 2007/10/26 15:47:17 joerg Exp $");
 
 #include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>

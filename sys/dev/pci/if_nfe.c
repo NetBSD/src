@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.16.6.3 2007/10/05 00:40:12 joerg Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.16.6.4 2007/10/26 15:46:14 joerg Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.6.3 2007/10/05 00:40:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.6.4 2007/10/26 15:46:14 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.6.3 2007/10/05 00:40:12 joerg Exp $"
 #include <sys/device.h>
 #include <sys/socket.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

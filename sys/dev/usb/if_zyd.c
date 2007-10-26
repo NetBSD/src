@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.8.6.2 2007/09/03 16:48:42 jmcneill Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.8.6.3 2007/10/26 15:47:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.8.6.2 2007/09/03 16:48:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.8.6.3 2007/10/26 15:47:50 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.8.6.2 2007/09/03 16:48:42 jmcneill Exp 
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 
 #if NBPFILTER > 0
@@ -2049,6 +2049,7 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct zyd_tx_desc *desc;
 	struct zyd_tx_data *data;
 	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
 	int xferlen, totlen, rate;
 	uint16_t pktlen;
 	usbd_status error;
@@ -2057,6 +2058,16 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = (struct zyd_tx_desc *)data->buf;
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan) ? 12 : 2;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m0);
+		if (k == NULL) {
+			m_freem(m0);
+			return ENOBUFS;
+		}
+	}
 
 	data->ni = ni;
 

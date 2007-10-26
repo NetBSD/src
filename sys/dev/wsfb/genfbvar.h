@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.3.8.1 2007/08/09 02:37:16 jmcneill Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.3.8.2 2007/10/26 15:48:09 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.3.8.1 2007/08/09 02:37:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.3.8.2 2007/10/26 15:48:09 joerg Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.3.8.1 2007/08/09 02:37:16 jmcneill Ex
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

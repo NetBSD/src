@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.29.8.1 2007/09/03 16:48:52 jmcneill Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.29.8.2 2007/10/26 15:48:57 joerg Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.29.8.1 2007/09/03 16:48:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.29.8.2 2007/10/26 15:48:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ vn_syncer_add_to_worklist(vp, delayx)
 
 	s = splbio();
 
-	if (vp->v_flag & VONWORKLST) {
+	if (vp->v_iflag & VI_ONWORKLST) {
 		slp = &syncer_workitem_pending[vp->v_synclist_slot];
 		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
@@ -134,7 +134,7 @@ vn_syncer_add_to_worklist(vp, delayx)
 
 	slp = &syncer_workitem_pending[vp->v_synclist_slot];
 	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
-	vp->v_flag |= VONWORKLST;
+	vp->v_iflag |= VI_ONWORKLST;
 	splx(s);
 }
 
@@ -150,8 +150,8 @@ vn_syncer_remove_from_worklist(vp)
 
 	s = splbio();
 
-	if (vp->v_flag & VONWORKLST) {
-		vp->v_flag &= ~VONWORKLST;
+	if (vp->v_iflag & VI_ONWORKLST) {
+		vp->v_iflag &= ~VI_ONWORKLST;
 		slp = &syncer_workitem_pending[vp->v_synclist_slot];
 		TAILQ_REMOVE(slp, vp, v_synclist);
 	}

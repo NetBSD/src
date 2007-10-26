@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197.6.1 2007/10/02 18:29:06 joerg Exp $	*/
+/*	$NetBSD: tty.c,v 1.197.6.2 2007/10/26 15:48:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.1 2007/10/02 18:29:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.2 2007/10/26 15:48:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2645,6 +2645,7 @@ ttymalloc(void)
 	memset(tp, 0, sizeof(*tp));
 	simple_lock_init(&tp->t_slock);
 	callout_init(&tp->t_rstrt_ch, 0);
+	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

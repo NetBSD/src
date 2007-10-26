@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.39.6.1 2007/09/03 16:48:17 jmcneill Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.39.6.2 2007/10/26 15:46:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39.6.1 2007/09/03 16:48:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39.6.2 2007/10/26 15:46:15 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -97,8 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39.6.1 2007/09/03 16:48:17 jmcneill Exp
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

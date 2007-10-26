@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.22.6.1 2007/10/02 16:48:34 joerg Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.22.6.2 2007/10/26 15:42:01 joerg Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.22.6.1 2007/10/02 16:48:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.22.6.2 2007/10/26 15:42:01 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.22.6.1 2007/10/02 16:48:34 joerg Exp
 #ifdef __FreeBSD__
 #include <machine/md_var.h>		/* for cpu_feature */
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <machine/cpu.h>		/* for cpu_feature */
+#include <sys/cpu.h>		/* for cpu_feature */
 #endif
 #endif /* __i386__ */
 

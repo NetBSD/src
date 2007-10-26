@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.86.6.2 2007/10/05 01:08:57 joerg Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.86.6.3 2007/10/26 15:44:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -138,7 +138,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

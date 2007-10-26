@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.20.6.1 2007/09/03 16:48:19 jmcneill Exp $ */
+/* $NetBSD: if_txp.c,v 1.20.6.2 2007/10/26 15:46:24 joerg Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20.6.1 2007/09/03 16:48:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20.6.2 2007/10/26 15:46:24 joerg Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20.6.1 2007/09/03 16:48:19 jmcneill Exp
 #endif
 
 #include <uvm/uvm_extern.h>              /* for PAGE_SIZE */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

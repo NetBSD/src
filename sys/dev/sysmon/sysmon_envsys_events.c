@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.19.4.3 2007/10/07 13:25:05 joerg Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.19.4.4 2007/10/26 15:47:38 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19.4.3 2007/10/07 13:25:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19.4.4 2007/10/26 15:47:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,6 +66,7 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
+static bool sysmon_low_power = false;
 kmutex_t sme_mtx, sme_event_init_mtx;
 kcondvar_t sme_cv;
 
@@ -73,6 +74,8 @@ kcondvar_t sme_cv;
 static int sme_events_timeout = 10;
 static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
 #define SME_EVTIMO 	(sme_events_timeout * hz)
+
+static int sme_event_check_low_power(void);
 
 /*
  * sysctl(9) stuff to handle the refresh value in the callout
@@ -322,10 +325,8 @@ sme_event_unregister(const char *sensor, int type)
 		mutex_enter(&sme_event_init_mtx);
 		sme_events_destroy();
 		mutex_exit(&sme_event_init_mtx);
-		goto out;
 	}
 
-out:
 	kmem_free(see, sizeof(*see));
 	return 0;
 }
@@ -362,11 +363,9 @@ do {									\
 			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
 			(void)strlcat(str, (c), sizeof(str));		\
-			mutex_enter(&sme_mtx);			\
 			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
-			mutex_exit(&sme_mtx);			\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -412,7 +411,7 @@ sme_events_init(void)
 	KASSERT(mutex_owned(&sme_event_init_mtx));
 
 	error = workqueue_create(&seewq, "envsysev",
-	    sme_events_worker, NULL, 0, IPL_SOFTCLOCK, WQ_MPSAFE);
+	    sme_events_worker, NULL, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error)
 		goto out;
 
@@ -464,7 +463,14 @@ sme_events_check(void *arg)
 		    see->type));
 		workqueue_enqueue(seewq, &see->see_wk, NULL);
 	}
-	callout_schedule(&seeco, SME_EVTIMO);
+	/*
+	 * Now that the events list was checked, reset the refresh value.
+	 */
+	LIST_FOREACH(see, &sme_events_list, see_list)
+		see->see_flags &= ~SME_EVENT_REFRESHED;
+
+	if (!sysmon_low_power)
+		callout_schedule(&seeco, SME_EVTIMO);
 }
 
 /*
@@ -504,13 +510,17 @@ sme_events_worker(struct work *wk, void *arg)
 	edata = &sme->sme_sensor_data[see->snum];
 
 	/* 
-	 * refresh the sensor that was marked with a critical
-	 * event.
+	 * refresh the sensor that was marked with a critical event
+	 * only if it wasn't refreshed before or if the driver doesn't
+	 * use its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-		error = (*sme->sme_gtredata)(sme, edata);
-		if (error)
-			goto out;
+		if ((see->see_flags & SME_EVENT_REFRESHED) == 0) {
+			error = (*sme->sme_gtredata)(sme, edata);
+			if (error)
+				goto out;
+			see->see_flags |= SME_EVENT_REFRESHED;
+		}
 	}
 
 	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
@@ -528,6 +538,7 @@ do {									\
 	see->evsent = true;						\
 	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
+
 
 	switch (see->type) {
 	/*
@@ -616,10 +627,93 @@ do {									\
 			sysmon_penvsys_event(&see->pes, see->type);
 		}
 
+		/*
+		 * Check if the system is running in low power and send the
+		 * event to powerd (if running) or shutdown the system
+		 * otherwise.
+		 */
+		if (!sysmon_low_power && sme_event_check_low_power()) {
+			struct penvsys_state pes;
+
+			pes.pes_type = PENVSYS_TYPE_BATTERY;
+			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
+			sysmon_low_power = true;
+			callout_stop(&seeco);
+		}
+
 		break;
 	}
 out:
 	see->see_flags &= ~SME_EVENT_WORKING;
 	cv_broadcast(&sme_cv);
 	mutex_exit(&sme_mtx);
+}
+
+static int
+sme_event_check_low_power(void)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *edata;
+	int i, batteries_cnt, batteries_discharged;
+	bool acadapter_on, acadapter_sensor_found;
+
+	acadapter_on = acadapter_sensor_found = false;
+	batteries_cnt = batteries_discharged = 0;
+
+	KASSERT(mutex_owned(&sme_mtx));
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
+		if (sme->sme_class == SME_CLASS_ACADAPTER)
+			break;
+
+	/*
+	 * No AC Adapter devices were found, do nothing.
+	 */
+	if (!sme)
+		return 0;
+
+	for (i = 0; i < sme->sme_nsensors; i++) {
+		edata = &sme->sme_sensor_data[i];
+		if (edata->units == ENVSYS_INDICATOR) {
+			acadapter_sensor_found = true;
+			if (edata->value_cur) {
+				acadapter_on = true;
+				break;
+			}
+		}
+	}
+	/*
+	 * There's an AC Adapter device connected or there wasn't
+	 * any sensor capable of returning its state.
+	 */
+	if (acadapter_on || !acadapter_sensor_found)
+		return 0;
+
+#define IS_BATTERY_DISCHARGED()						\
+do {									\
+	if (((edata->units == ENVSYS_BATTERY_STATE) &&			\
+	    ((edata->value_cur == ENVSYS_BATTERY_STATE_CRITICAL) ||	\
+	     (edata->value_cur == ENVSYS_BATTERY_STATE_LOW)))) {	\
+		batteries_discharged++;					\
+		break;							\
+	}								\
+} while (/* CONSTCOND */ 0)
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		if (sme->sme_class == SME_CLASS_BATTERY) {
+			batteries_cnt++;
+			for (i = 0; i < sme->sme_nsensors; i++) {
+				edata = &sme->sme_sensor_data[i];
+				IS_BATTERY_DISCHARGED();
+			}
+		}
+	}
+
+	/*
+	 * All batteries are discharged?
+	 */
+	if (batteries_cnt == batteries_discharged)
+		return 1;
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.17 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.17.22.1 2007/10/26 15:45:31 joerg Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.17 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.17.22.1 2007/10/26 15:45:31 joerg Exp $");
 
 #undef	TCICISADEBUG
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.17 2006/11/16 01:33:00 christos Exp 
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

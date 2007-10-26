@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.18.22.1 2007/10/02 18:28:21 joerg Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.18.22.2 2007/10/26 15:44:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.18.22.1 2007/10/02 18:28:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.18.22.2 2007/10/26 15:44:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.18.22.1 2007/10/02 18:28:21 joe
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if defined pciinc
 #include <dev/pci/pcidevs.h>

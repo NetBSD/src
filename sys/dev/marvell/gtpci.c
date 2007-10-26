@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.15 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.15.18.1 2007/10/26 15:45:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.15 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.15.18.1 2007/10/26 15:45:40 joerg Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.15 2007/01/29 01:52:44 hubertf Exp $");
 
 #define _BUS_SPACE_PRIVATE
 #define _BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

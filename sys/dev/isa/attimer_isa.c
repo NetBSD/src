@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer_isa.c,v 1.5.18.1 2007/10/02 18:28:28 joerg Exp $	*/
+/*	$NetBSD: attimer_isa.c,v 1.5.18.2 2007/10/26 15:45:11 joerg Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.5.18.1 2007/10/02 18:28:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.5.18.2 2007/10/26 15:45:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.5.18.1 2007/10/02 18:28:28 joerg E
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/attimervar.h>
 

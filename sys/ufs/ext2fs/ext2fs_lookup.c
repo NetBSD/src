@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.51.4.1 2007/10/02 18:29:32 joerg Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.51.4.2 2007/10/26 15:49:26 joerg Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51.4.1 2007/10/02 18:29:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51.4.2 2007/10/26 15:49:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51.4.1 2007/10/02 18:29:32 joerg
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
-#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -369,7 +369,7 @@ searchloop:
 		 */
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = ext2fs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error != 0)
@@ -473,7 +473,7 @@ searchloop:
 		goto searchloop;
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -546,13 +546,13 @@ found:
 		error = ext2fs_setsize(dp,
 				dp->i_offset + EXT2FS_DIRSIZ(ep->e2d_namlen));
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(vdp, ext2fs_size(dp));
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.

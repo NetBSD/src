@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.26 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.26.18.1 2007/10/26 15:43:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.26 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.26.18.1 2007/10/26 15:43:50 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.26 2007/02/09 21:55:16 ad Exp $");
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <sys/user.h>		/* for coredump */
 

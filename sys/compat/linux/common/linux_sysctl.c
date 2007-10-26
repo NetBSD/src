@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.30.6.1 2007/08/16 11:02:50 jmcneill Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.30.6.2 2007/10/26 15:44:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.30.6.1 2007/08/16 11:02:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.30.6.2 2007/10/26 15:44:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.30.6.1 2007/08/16 11:02:50 jmcnei
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_sysctl.h>

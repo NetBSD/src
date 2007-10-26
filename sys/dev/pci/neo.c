@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.35.22.1 2007/10/05 00:12:33 joerg Exp $	*/
+/*	$NetBSD: neo.c,v 1.35.22.2 2007/10/26 15:46:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.1 2007/10/05 00:12:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.2 2007/10/26 15:46:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.1 2007/10/05 00:12:33 joerg Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

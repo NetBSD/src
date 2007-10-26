@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.224 2007/07/16 23:48:04 macallan Exp $ */
+/* $NetBSD: pmap.c,v 1.224.8.1 2007/10/26 15:42:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2007/07/16 23:48:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.8.1 2007/10/26 15:42:03 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,11 +385,11 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	with the pmap already locked by the caller (which will be
  *	an interface function).
  */
-static struct lock pmap_main_lock;
+/* static struct lock pmap_main_lock; */
 static struct simplelock pmap_all_pmaps_slock;
 static struct simplelock pmap_growkernel_slock;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */ 
 #define	PMAP_MAP_TO_HEAD_LOCK() \
 	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define	PMAP_MAP_TO_HEAD_UNLOCK() \
@@ -967,7 +967,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Initialize the locks.
 	 */
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
+	/* spinlockinit(&pmap_main_lock, "pmaplk", 0); */
 	simple_lock_init(&pmap_all_pmaps_slock);
 
 	/*

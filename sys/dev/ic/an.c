@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.48.14.1 2007/09/04 15:10:13 joerg Exp $	*/
+/*	$NetBSD: an.c,v 1.48.14.2 2007/10/26 15:44:36 joerg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.48.14.1 2007/09/04 15:10:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.48.14.2 2007/10/26 15:44:36 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.48.14.1 2007/09/04 15:10:13 joerg Exp $");
 #include <sys/endian.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

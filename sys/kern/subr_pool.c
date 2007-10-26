@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.129.12.1 2007/09/03 16:48:49 jmcneill Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.129.12.2 2007/10/26 15:48:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.129.12.1 2007/09/03 16:48:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.129.12.2 2007/10/26 15:48:40 joerg Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1165,13 +1165,6 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
-
-#ifdef LOCKDEBUG
-	/*
-	 * Check if we're freeing a locked simple lock.
-	 */
-	simple_lock_freecheck(pi, (char *)pi + pp->pr_size);
-#endif
 
 	/*
 	 * Return to item list.
@@ -2360,8 +2353,6 @@ pool_allocator_alloc(struct pool *pp, int flags)
 	struct pool_allocator *pa = pp->pr_alloc;
 	void *res;
 
-	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
-
 	res = (*pa->pa_alloc)(pp, flags);
 	if (res == NULL && (flags & PR_WAITOK) == 0) {
 		/*
@@ -2381,8 +2372,6 @@ static void
 pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
-
-	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
 
 	(*pa->pa_free)(pp, v);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: slhci_pcmcia.c,v 1.1.6.1 2007/09/03 16:48:36 jmcneill Exp $ */
+/* $NetBSD: slhci_pcmcia.c,v 1.1.6.2 2007/10/26 15:47:15 joerg Exp $ */
 /*
  * Not (c) 2007 Matthew Orgass
  * This file is public domain, meaning anyone can make any use of part or all 
@@ -11,7 +11,7 @@
 /* Glue for RATOC USB HOST CF+ Card (SL811HS chip) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.1.6.1 2007/09/03 16:48:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.1.6.2 2007/10/26 15:47:15 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -20,7 +20,7 @@ __KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.1.6.1 2007/09/03 16:48:36 jmcneil
 #include <sys/systm.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>

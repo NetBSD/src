@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.1.4.3 2007/10/05 01:33:37 joerg Exp $	*/
+/*	$NetBSD: aps.c,v 1.1.4.4 2007/10/26 15:45:10 joerg Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.3 2007/10/05 01:33:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.4 2007/10/26 15:45:10 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.3 2007/10/05 01:33:37 joerg Exp $");
 #include <sys/kernel.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sysmon/sysmonvar.h>
 

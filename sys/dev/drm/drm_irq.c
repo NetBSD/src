@@ -75,15 +75,12 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 static irqreturn_t
 drm_irq_handler_wrap(DRM_IRQ_ARGS)
 {
-	int s;
 	irqreturn_t ret;
 	drm_device_t *dev = (drm_device_t *)arg;
 
-	s = spldrm();
 	DRM_SPINLOCK(&dev->irq_lock);
 	ret = dev->driver.irq_handler(arg);
 	DRM_SPINUNLOCK(&dev->irq_lock);
-	splx(s);
 	return ret;
 }
 #endif
@@ -110,7 +107,7 @@ int drm_irq_install(drm_device_t *dev)
 
 	dev->context_flag = 0;
 
-	DRM_SPININIT(dev->irq_lock, "DRM IRQ lock");
+	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 				/* Before installing handler */
 	dev->driver.irq_preinstall(dev);
@@ -165,7 +162,7 @@ err:
 		dev->irqrid = 0;
 	}
 #endif
-	DRM_SPINUNINIT(dev->irq_lock);
+	DRM_SPINUNINIT(&dev->irq_lock);
 	DRM_UNLOCK();
 	return retcode;
 }
@@ -197,7 +194,7 @@ int drm_irq_uninstall(drm_device_t *dev)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 #endif
-	DRM_SPINUNINIT(dev->irq_lock);
+	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 2007/07/29 12:15:35 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.30.4.1 2007/10/26 15:42:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30 2007/07/29 12:15:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30.4.1 2007/10/26 15:42:02 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -519,8 +519,7 @@ fdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
@@ -1606,7 +1605,7 @@ load_memory_disc_from_floppy(md, dev)
 	s = spl0();
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
-		brelse(bp);		
+		brelse(bp, 0);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
 	}
@@ -1635,7 +1634,7 @@ load_memory_disc_from_floppy(md, dev)
         
 	fdclose(bp->b_dev, 0, 0, curlwp);
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	splx(s);
 	return(0);

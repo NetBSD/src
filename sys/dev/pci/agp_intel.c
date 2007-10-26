@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.22.8.2 2007/10/01 05:37:32 joerg Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.22.8.3 2007/10/26 15:45:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.2 2007/10/01 05:37:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.3 2007/10/26 15:45:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.2 2007/10/01 05:37:32 joerg Exp
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct agp_intel_softc {
 	u_int32_t		initial_aperture;

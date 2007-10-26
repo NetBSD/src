@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.9 2007/09/27 18:27:49 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.10 2007/10/26 15:42:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -166,9 +166,8 @@ wakeup_32:
 	pushl	$PSL_MBO
 	popfl
 
-	/* Enable PAE */
-	movl	%cr4,%eax
-	orl	$(CR4_PAE),%eax
+	/* Enable PAE and potentially PSE */
+	movl	WAKEUP_r_cr4 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr4
 
 	/* Enable SYSCALL extension and Long Mode */
@@ -242,6 +241,8 @@ tmp_gdtable64:
 WAKEUP_r_cr0:		.quad 0
 	.global WAKEUP_r_cr3
 WAKEUP_r_cr3:		.quad 0
+	.global WAKEUP_r_cr4
+WAKEUP_r_cr4:		.quad 0
 
 	.global WAKEUP_r_gdt
 WAKEUP_r_gdt:		.word 0

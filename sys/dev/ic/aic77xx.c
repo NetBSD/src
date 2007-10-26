@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.6 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.6.44.1 2007/10/26 15:44:35 joerg Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.6 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.6.44.1 2007/10/26 15:44:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

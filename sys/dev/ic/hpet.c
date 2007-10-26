@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.1.16.2 2007/09/04 19:14:17 joerg Exp $ */
+/* $NetBSD: hpet.c,v 1.1.16.3 2007/10/26 15:44:45 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.2 2007/09/04 19:14:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.3 2007/10/26 15:44:45 joerg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.2 2007/09/04 19:14:17 joerg Exp $");
 #include <sys/time.h>
 #include <sys/timetc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>

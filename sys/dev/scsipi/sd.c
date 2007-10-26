@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.265.2.2 2007/10/02 18:28:39 joerg Exp $	*/
+/*	$NetBSD: sd.c,v 1.265.2.3 2007/10/26 15:47:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.2.2 2007/10/02 18:28:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.2.3 2007/10/26 15:47:36 joerg Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -262,8 +262,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sd->sc_dk.dk_driver = &sddkdriver;
-	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
+	disk_init(&sd->sc_dk, sd->sc_dev.dv_xname, &sddkdriver);
 	disk_attach(&sd->sc_dk);
 
 	/*
@@ -390,6 +389,7 @@ sddetach(struct device *self, int flags)
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
+	disk_destroy(&sd->sc_dk);
 
 	/* Get rid of the shutdown hook. */
 	shutdownhook_disestablish(sd->sc_sdhook);

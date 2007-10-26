@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.58 2007/07/31 21:14:19 pooka Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.58.2.1 2007/10/26 15:43:50 joerg Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.58 2007/07/31 21:14:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.58.2.1 2007/10/26 15:43:50 joerg Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -248,7 +248,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      */
     cp = make_coda_node(&rootfid, vfsp, VDIR);
     rtvp = CTOV(cp);
-    rtvp->v_flag |= VROOT;
+    rtvp->v_vflag |= VV_ROOT;
 
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
@@ -313,7 +313,7 @@ coda_unmount(struct mount *vfsp, int mntflags, struct lwp *l)
 	vrele(mi->mi_rootvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
-	mi->mi_rootvp->v_flag &= ~VROOT;
+	mi->mi_rootvp->v_vflag &= ~VV_ROOT;
 	error = vflush(mi->mi_vfsp, NULLVP, FORCECLOSE);
 	printf("coda_unmount: active = %d, vflush active %d\n", active, error);
 	error = 0;

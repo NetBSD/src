@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.120 2007/07/21 19:21:54 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.120.4.1 2007/10/26 15:49:41 joerg Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.120 2007/07/21 19:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.120.4.1 2007/10/26 15:49:41 joerg Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -585,7 +585,6 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	KASSERT(mutex_owned(&amap->am_l));
 	LOCK_ASSERT(oanon == NULL || simple_lock_held(&oanon->an_lock));
 	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
-	LOCK_ASSERT(*spare == NULL || !simple_lock_held(&(*spare)->an_lock));
 
 	if (*spare != NULL) {
 		anon = *spare;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.4 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.4.44.1 2007/10/26 15:45:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.4 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.4.44.1 2007/10/26 15:45:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.4 2005/12/11 12:22:02 christos Exp
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
