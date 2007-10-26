@@ -47,4 +47,6 @@ int read_capacity(uint64_t , uint32_t , uint32_t *, uint32_t *);
 int write_read_test(uint64_t , uint32_t , int );
 int scatter_gather_test(uint64_t , uint32_t , uint8_t );
 
+int ii_test_all(void);
+
 #endif
