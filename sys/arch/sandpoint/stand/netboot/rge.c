@@ -1,9 +1,44 @@
-/* $NetBSD: rge.c,v 1.1 2007/10/25 10:54:55 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.2 2007/10/26 13:32:58 nisimura Exp $ */
+
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
@@ -31,6 +66,39 @@
 void *rge_init(void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
+
+#define T0_OWN		0x80000000
+#define T0_EOR		0x40000000	/* end of ring */
+#define T0_FS		0x20000000	/* first descriptor */
+#define T0_LS		0x10000000	/* last descriptor */
+#define T0_LSGEN	0x08000000	/* TCP segmentation offload */
+#define T0_IPCS		0x00040000	/* generate IP checksum */
+#define T0_UDPCS	0x00020000	/* generate UDP checksum */
+#define T0_TCPCS	0x00010000	/* generate TCP checksum */
+#define T0_FRMASK	0x0000ffff
+#define T1_TAGC		0x00020000	/* insert VTAG */
+#define T1_VTAG		0x0000ffff	/* VTAG value */
+
+#define R0_OWN		0x80000000	/* empty for HW to load */
+#define R0_EOR		0x40000000	/* end mark to form a ring */
+#define R0_BUFLEN	0x00003ff8	/* max frag. size to receive */
+/* RX status upon Rx completed */
+#define R0_FS		0x20000000	/* start of frame */
+#define R0_LS		0x10000000	/* end of frame */
+#define R0_RES		0x00200000	/* Rx error summary */
+#define R0_RUNT		0x00100000	/* runt frame received */
+#define R0_CRC		0x00080000	/* CRC error found */
+#define R0_PID		0x00060000	/* protocol type; 1:TCP, 2:UDP, 3:IP */
+#define R0_IPF		0x00010000	/* IP checksum bad */
+#define R0_UDPF		0x00008000	/* UDP checksum bad */
+#define R0_TCPF		0x00004000	/* TCP checksum bad */
+#define R0_FRMASK	0x00003fff	/* 13:0 frame length */
+#define R1_TAVA		0x00010000	/* VTAG exists */
+#define R1_VTAG		0x0000ffff	/* TAG value */
+
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
 
 #define RGE_IDR0	0x00		/* MAC address [0] */
 #define RGE_IDR1	0x01		/* MAC address [1] */
@@ -81,39 +149,6 @@ int rge_recv(void *, char *, unsigned, unsigned);
 #define	 CCCR_CSUM	(1U << 5)	/* Rx checksum offload */
 #define RGE_RDSAR	0xe4		/* Rx descriptor base paddr */
 #define RGE_ETTHR	0xec		/* Tx threshold */
-
-#define T0_OWN		0x80000000
-#define T0_EOR		0x40000000	/* end of ring */
-#define T0_FS		0x20000000	/* first descriptor */
-#define T0_LS		0x10000000	/* last descriptor */
-#define T0_LSGEN	0x08000000	/* TCP segmentation offload */
-#define T0_IPCS		0x00040000	/* generate IP checksum */
-#define T0_UDPCS	0x00020000	/* generate UDP checksum */
-#define T0_TCPCS	0x00010000	/* generate TCP checksum */
-#define T0_FRMASK	0x0000ffff
-#define T1_TAGC		0x00020000	/* insert VTAG */
-#define T1_VTAG		0x0000ffff	/* VTAG value */
-
-#define R0_OWN		0x80000000	/* empty for HW to load */
-#define R0_EOR		0x40000000	/* end mark to form a ring */
-#define R0_BUFLEN	0x00003ff8	/* max frag. size to receive */
-/* RX status upon Rx completed */
-#define R0_FS		0x20000000	/* start of frame */
-#define R0_LS		0x10000000	/* end of frame */
-#define R0_RES		0x00200000	/* Rx error summary */
-#define R0_RUNT		0x00100000	/* runt frame received */
-#define R0_CRC		0x00080000	/* CRC error found */
-#define R0_PID		0x00060000	/* protocol type; 1:TCP, 2:UDP, 3:IP */
-#define R0_IPF		0x00010000	/* IP checksum bad */
-#define R0_UDPF		0x00008000	/* UDP checksum bad */
-#define R0_TCPF		0x00004000	/* TCP checksum bad */
-#define R0_FRMASK	0x00003fff	/* 13:0 frame length */
-#define R1_TAVA		0x00010000	/* VTAG exists */
-#define R1_VTAG		0x0000ffff	/* TAG value */
-
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
 
 #define FRAMESIZE	1536
 
