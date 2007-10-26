@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.21.4.1 2007/08/03 22:17:17 jmcneill Exp $ */
+/* $NetBSD: vga_subr.c,v 1.21.4.2 2007/10/26 15:45:05 joerg Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.4.1 2007/08/03 22:17:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.4.2 2007/10/26 15:45:05 joerg Exp $");
 
 /* for WSDISPLAY_BORDER_COLOR */
 #include "opt_wsdisplay_border.h"
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.4.1 2007/08/03 22:17:17 jmcneill E
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplay.h>

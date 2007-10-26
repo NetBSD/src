@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.22 2007/02/15 01:46:32 macallan Exp $	*/
+/*	$NetBSD: adb.c,v 1.22.22.1 2007/10/26 15:42:45 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.22 2007/02/15 01:46:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.22.22.1 2007/10/26 15:42:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.22 2007/02/15 01:46:32 macallan Exp $");
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/akbdvar.h>

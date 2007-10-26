@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.6 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.6.48.1 2007/10/26 15:43:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -55,7 +55,17 @@
 
 /* spurious intr. vector */
 #define OPENPIC_SPURIOUS_VECTOR		0x10e0
+/* Timer frequency register */
+#define OPENPIC_TIMER_FREQ		0x10f0
 
+/* Timer current count register */
+#define OPENPIC_TIMER_CC(timer)		(0x1100 + (timer) * 0x40)
+/* Timer basecount register */
+#define OPENPIC_TIMER_BC(timer)		(0x1110 + (timer) * 0x40)
+/* Timer Vector/Priority register (uses imask,activity,priority and vector)*/
+#define OPENPIC_TIMER_VECTOR(timer)	(0x1120 + (timer) * 0x40)
+/* Timer destination register */
+#define OPENPIC_TIMER_DEST(timer)	(0x1130 + (timer) * 0x40)
 
 /*
  * INTERRUPT SOURCE register (IDU base + 0x10000)

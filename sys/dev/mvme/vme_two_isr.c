@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.6.44.1 2007/10/26 15:45:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.6 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.6.44.1 2007/10/26 15:45:47 joerg Exp $");
 
 #include "vmetwo.h"
 
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.6 2005/12/11 12:22:48 christos Exp
 #include <sys/malloc.h>
 #include <sys/lock.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

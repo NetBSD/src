@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.22.14.1 2007/10/02 18:28:21 joerg Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.22.14.2 2007/10/26 15:44:30 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.22.14.1 2007/10/02 18:28:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.22.14.2 2007/10/26 15:44:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.22.14.1 2007/10/02 18:28:21 joerg Exp $
 
 #include <sys/tty.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <machine/config_hook.h>
 #include <machine/platid.h>

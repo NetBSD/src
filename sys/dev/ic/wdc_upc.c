@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.23 2006/10/01 21:50:33 bjh21 Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.23.22.1 2007/10/26 15:45:06 joerg Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,15 +28,15 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.23 2006/10/01 21:50:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.23.22.1 2007/10/26 15:45:06 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ata/atavar.h> /* XXX needed by wdcvar.h */
 

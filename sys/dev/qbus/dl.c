@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.37 2007/03/04 06:02:29 christos Exp $	*/
+/*	$NetBSD: dl.c,v 1.37.14.1 2007/10/26 15:47:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.37 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.37.14.1 2007/10/26 15:47:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.37 2007/03/04 06:02:29 christos Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 

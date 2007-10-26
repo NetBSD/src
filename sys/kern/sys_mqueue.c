@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.2.4.2 2007/10/02 18:29:04 joerg Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.2.4.3 2007/10/26 15:48:42 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.2.4.2 2007/10/02 18:29:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.2.4.3 2007/10/26 15:48:42 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -473,8 +473,7 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 		error = cv_timedwait_sig(&mq->mq_send_cv, &mq->mq_mtx, t);
 		mq->mq_attrib.mq_flags &= ~MQ_RECEIVE;
 		if (error || (mq->mq_attrib.mq_flags & MQ_UNLINK)) {
-			if (error == EWOULDBLOCK)
-				error = ETIMEDOUT;
+			error = (error == EWOULDBLOCK) ? ETIMEDOUT : EINTR;
 			goto error;
 		}
 	}

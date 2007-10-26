@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.29 2007/07/31 21:14:19 pooka Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.29.2.1 2007/10/26 15:48:24 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.29 2007/07/31 21:14:19 pooka Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.29.2.1 2007/10/26 15:48:24 joerg Exp $");
 #endif /* not lint */
 
 
@@ -230,6 +230,8 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->vat_table,        M_UDFVOLD);
 		MPFREE(ump->sparing_table,    M_UDFVOLD);
 
+		mutex_destroy(&ump->ihash_lock);
+		mutex_destroy(&ump->get_node_lock);
 		free(ump, M_UDFMNT);
 	}
 }
@@ -410,11 +412,11 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 #endif
 
 	/*
-	 * By specifying SKIPSYSTEM we can skip vnodes marked with VSYSTEM.
+	 * By specifying SKIPSYSTEM we can skip vnodes marked with VV_SYSTEM.
 	 * This hardly documented feature allows us to exempt certain files
 	 * from being flushed.
 	 */
-	if ((error = vflush(mp, NULLVP, flags | VSYSTEM)) != 0)
+	if ((error = vflush(mp, NULLVP, flags | SKIPSYSTEM)) != 0)
 		return error;
 
 #ifdef DEBUG
@@ -478,12 +480,11 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return error;
 
 	/* allocate udf part of mount structure; malloc always succeeds */
-	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK);
-	memset(ump, 0, sizeof(struct udf_mount));
+	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK | M_ZERO);
 
 	/* init locks */
-	simple_lock_init(&ump->ihash_slock);
-	lockinit(&ump->get_node_lock, PINOD, "udf_getnode", 0, 0);
+	mutex_init(&ump->ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&ump->get_node_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* init `ino_t' to udf_node hash table */
 	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
@@ -609,9 +610,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 		return error;
 
 	vp = root_dir->vnode;
-	simple_lock(&vp->v_interlock);
-		root_dir->vnode->v_flag |= VROOT;
-	simple_unlock(&vp->v_interlock);
+	root_dir->vnode->v_vflag |= VV_ROOT;
 
 	*vpp = vp;
 	return 0;

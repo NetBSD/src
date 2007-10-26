@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.1.28.1 2007/10/26 15:47:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.1.28.1 2007/10/26 15:47:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

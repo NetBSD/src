@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.14.1 2007/08/03 22:17:22 jmcneill Exp $ */
+/* $NetBSD: pckbd.c,v 1.15.14.2 2007/10/26 15:47:01 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.1 2007/08/03 22:17:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.2 2007/10/26 15:47:01 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.1 2007/08/03 22:17:22 jmcneill Exp
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
 

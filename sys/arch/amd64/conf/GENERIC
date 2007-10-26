@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.7 2007/10/04 15:44:48 joerg Exp $
+# $NetBSD: GENERIC,v 1.153.8.8 2007/10/26 15:42:08 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.7 $"
+#ident 		"GENERIC-$Revision: 1.153.8.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -62,7 +62,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
-options 	P1003_1B_SEMAPHORE
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
 
@@ -71,7 +71,7 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Intel Enhanced Speedstep for EM64T CPUs
-#options 	ENHANCED_SPEEDSTEP
+options 	ENHANCED_SPEEDSTEP
 #options 	EST_FREQ_USERWRITE
 
 # AMD PowerNow! and Cool`n'Quiet technology
@@ -94,9 +94,10 @@ options 	POWERNOW_K8
 # Because gcc omits the frame pointer for any -O level, the line below
 # is needed to make backtraces in DDB work.
 #
-#makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
-#options 	DDB		# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -110,11 +111,12 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
+options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 #options 	COMPAT_LINUX
 #options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -189,7 +191,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options		ACPIVERBOSE	# verbose ACPI configuration messages
+options 	ACPIVERBOSE	# verbose ACPI configuration messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
@@ -337,7 +339,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
-#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
@@ -547,6 +549,7 @@ wd*	at atabus? drive ? flags 0x0000
 # ATAPI bus support
 atapibus* at atapi?
 
+
 # ATA RAID configuration support, as found on some Promise controllers.  
 pseudo-device ataraid  
 ld*     at ataraid? vendtype ? unit ?
@@ -573,6 +576,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
@@ -585,7 +589,9 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
@@ -598,6 +604,7 @@ pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 skc* 	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
@@ -607,6 +614,7 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
@@ -651,10 +659,11 @@ brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
-igphy* 	at mii? phy ?			# Intel IGP01E1000
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+igphy*  at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
@@ -707,6 +716,10 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
+# USB eGalax touch-panel
+uep*	at uhub? port ?
+wsmouse* at uep? mux 0
+
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
@@ -738,6 +751,9 @@ umidi* at uhub? port ? configuration ?
 # USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?
@@ -803,6 +819,9 @@ zyd*	at uhub? port ?		# Zydas ZD1211
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
 
+# Topfield TF5000PVR range of DVB recorders
+utoppy*	at uhub? port ?
+
 # Y@P firmware loader
 uyap* at uhub? port ?
 
@@ -815,6 +834,9 @@ ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options	UGEN_BULK_RA_WB
 
+# USB generic serial port (e.g., data over cellular)
+ugensa*	at uhub? port ?
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 
@@ -992,7 +1014,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
-#pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

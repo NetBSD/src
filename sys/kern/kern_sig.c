@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.254.6.3 2007/10/04 15:44:51 joerg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.254.6.4 2007/10/26 15:48:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.3 2007/10/04 15:44:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.4 2007/10/26 15:48:35 joerg Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.3 2007/10/04 15:44:51 joerg Exp
 #include <sys/acct.h>
 #include <sys/callout.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>

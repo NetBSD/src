@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.4 2006/09/03 05:16:59 christos Exp $	*/
+/*	$NetBSD: scope6.c,v 1.4.26.1 2007/10/26 15:49:10 joerg Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -94,7 +94,7 @@ scope6_ifdetach(struct scope6_id *sid)
 }
 
 int
-scope6_set(struct ifnet *ifp, struct scope6_id *idlist)
+scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 {
 	int i;
 	int error = 0;
@@ -150,18 +150,17 @@ scope6_set(struct ifnet *ifp, struct scope6_id *idlist)
 }
 
 int
-scope6_get(struct ifnet *ifp, struct scope6_id *idlist)
+scope6_get(const struct ifnet *ifp, struct scope6_id *idlist)
 {
-
 	/* We only need to lock the interface's afdata for SID() to work. */
-	struct scope6_id *sid = SID(ifp);
+	const struct scope6_id *sid = SID(ifp);
 
 	if (sid == NULL)	/* paranoid? */
-		return (EINVAL);
+		return EINVAL;
 
 	*idlist = *sid;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -169,7 +168,7 @@ scope6_get(struct ifnet *ifp, struct scope6_id *idlist)
  * or global.
  */
 int
-in6_addrscope(struct in6_addr *addr)
+in6_addrscope(const struct in6_addr *addr)
 {
 	int scope;
 
@@ -213,7 +212,7 @@ in6_addrscope(struct in6_addr *addr)
 		}
 	}
 
-	if (bcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
+	if (memcmp(&in6addr_loopback, addr, sizeof(*addr) - 1) == 0) {
 		if (addr->s6_addr[15] == 1) /* loopback */
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
 		if (addr->s6_addr[15] == 0) {
@@ -261,7 +260,7 @@ scope6_get_default(struct scope6_id *idlist)
 }
 
 uint32_t
-scope6_addr2default(struct in6_addr *addr)
+scope6_addr2default(const struct in6_addr *addr)
 {
 	uint32_t id;
 
@@ -364,17 +363,26 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 	return 0;
 }
 
+int
+in6_setzoneid(struct in6_addr *in6, uint32_t zoneid)
+{
+	if (IN6_IS_SCOPE_EMBEDDABLE(in6))
+		in6->s6_addr16[1] = htons(zoneid & 0xffff); /* XXX */
+
+	return 0;
+}
+
 /*
  * Determine the appropriate scope zone ID for in6 and ifp.  If ret_id is
  * non NULL, it is set to the zone ID.  If the zone ID needs to be embedded
  * in the in6_addr structure, in6 will be modified. 
  */
 int
-in6_setscope(struct in6_addr *in6, struct ifnet *ifp, uint32_t *ret_id)
+in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 {
 	int scope;
 	uint32_t zoneid = 0;
-	struct scope6_id *sid = SID(ifp);
+	const struct scope6_id *sid = SID(ifp);
 
 #ifdef DIAGNOSTIC
 	if (sid == NULL) { /* should not happen */
@@ -427,10 +435,7 @@ in6_setscope(struct in6_addr *in6, struct ifnet *ifp, uint32_t *ret_id)
 	if (ret_id != NULL)
 		*ret_id = zoneid;
 
-	if (IN6_IS_SCOPE_EMBEDDABLE(in6))
-		in6->s6_addr16[1] = htons(zoneid & 0xffff); /* XXX */
-
-	return (0);
+	return in6_setzoneid(in6, zoneid);
 }
 
 /*

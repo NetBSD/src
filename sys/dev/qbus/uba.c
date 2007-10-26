@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.75 2007/03/04 06:02:30 christos Exp $	   */
+/*	$NetBSD: uba.c,v 1.75.14.1 2007/10/26 15:47:26 joerg Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.75 2007/03/04 06:02:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.75.14.1 2007/10/26 15:47:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -84,9 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.75 2007/03/04 06:02:30 christos Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/scb.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <dev/qbus/ubareg.h>
 #include <dev/qbus/ubavar.h>

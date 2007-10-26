@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.150.6.2 2007/10/02 18:28:27 joerg Exp $	*/
+/*	$NetBSD: tulip.c,v 1.150.6.3 2007/10/26 15:45:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.150.6.2 2007/10/02 18:28:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.150.6.3 2007/10/26 15:45:04 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.150.6.2 2007/10/02 18:28:27 joerg Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

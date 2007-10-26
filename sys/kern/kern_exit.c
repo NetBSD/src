@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.183.6.3 2007/10/02 18:28:59 joerg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.183.6.4 2007/10/26 15:48:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.3 2007/10/02 18:28:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.4 2007/10/26 15:48:30 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.3 2007/10/02 18:28:59 joerg Ex
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -872,13 +872,10 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 static void
 proc_free(struct proc *p, struct rusage *ru)
 {
-	struct plimit *plim;
-	struct pstats *pstats;
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
 	kauth_cred_t cred1, cred2;
-	struct vnode *vp;
 	uid_t uid;
 
 	KASSERT(mutex_owned(&proclist_lock));
@@ -950,28 +947,52 @@ proc_free(struct proc *p, struct rusage *ru)
 	mutex_exit(&proclist_mutex);
 	LIST_REMOVE(p, p_sibling);
 
-	cred1 = p->p_cred;
-	uid = kauth_cred_getuid(cred1);
-	vp = p->p_textvp;
+	/*
+	 * Let pid be reallocated.
+	 */
+	proc_free_pid(p);
+	mutex_exit(&proclist_lock);
 
 	l = LIST_FIRST(&p->p_lwps);
 
 	/*
-	 * Delay release until after dropping the proclist lock.
+	 * Delay release until after lwp_free.
 	 */
-	plim = p->p_limit;
-	pstats = p->p_stats;
 	cred2 = l->l_cred;
 
 	/*
-	 * Free the last LWP's resources.  On a multiprocessor system,
-	 * this may spin waiting for the LWP to come off the CPU.
+	 * Free the last LWP's resources.
+	 *
+	 * lwp_free ensures the LWP is no longer running on another CPU.
 	 */
 	lwp_free(l, false, true);
 
 	/*
-	 * Now that it's off the CPU, destroy locks.
+	 * Now no one except us can reach the process p.
 	 */
+
+	/*
+	 * Decrement the count of procs running with this uid.
+	 */
+	cred1 = p->p_cred;
+	uid = kauth_cred_getuid(cred1);
+	(void)chgproccnt(uid, -1);
+
+	/*
+	 * Release substructures.
+	 */
+
+	limfree(p->p_limit);
+	pstatsfree(p->p_stats);
+	kauth_cred_free(cred1);
+	kauth_cred_free(cred2);
+
+	/*
+	 * Release reference to text vnode
+	 */
+	if (p->p_textvp)
+		vrele(p->p_textvp);
+
 	mutex_destroy(&p->p_rasmutex);
 	mutex_destroy(&p->p_mutex);
 	mutex_destroy(&p->p_stmutex);
@@ -980,30 +1001,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	cv_destroy(&p->p_lwpcv);
 	cv_destroy(&p->p_refcv);
 
-	/*
-	 * Free the proc structure and let pid be reallocated.  This will
-	 * release the proclist_lock.
-	 */
-	proc_free_mem(p);
-
-	/*
-	 * Decrement the count of procs running with this uid.
-	 */
-	(void)chgproccnt(uid, -1);
-
-	/*
-	 * Release substructures.
-	 */
-	limfree(plim);
-	pstatsfree(pstats);
-	kauth_cred_free(cred1);
-	kauth_cred_free(cred2);
-
-	/*
-	 * Release reference to text vnode
-	 */
-	if (vp)
-		vrele(vp);
+	pool_put(&proc_pool, p);
 
 	/*
 	 * Collect child u-areas.

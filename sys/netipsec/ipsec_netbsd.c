@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.28 2007/07/07 18:38:22 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.28.6.1 2007/10/26 15:49:10 joerg Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.28 2007/07/07 18:38:22 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.28.6.1 2007/10/26 15:49:10 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.28 2007/07/07 18:38:22 degroote E
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.10 2007/03/04 06:01:49 christos Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.10.14.1 2007/10/26 15:44:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.10 2007/03/04 06:01:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.10.14.1 2007/10/26 15:44:37 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.10 2007/03/04 06:01:49 christos Exp
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/callout.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/stdarg.h>
 #include <sys/endian.h>
 #include <sys/device.h>

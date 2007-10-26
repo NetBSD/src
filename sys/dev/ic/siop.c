@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.83.14.1 2007/10/02 18:28:26 joerg Exp $	*/
+/*	$NetBSD: siop.c,v 1.83.14.2 2007/10/26 15:45:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.83.14.1 2007/10/02 18:28:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.83.14.2 2007/10/26 15:45:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.83.14.1 2007/10/02 18:28:26 joerg Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/microcode/siop/siop.out>
 

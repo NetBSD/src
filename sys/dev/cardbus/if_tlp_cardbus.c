@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.53.22.1 2007/08/23 14:22:38 joerg Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.53.22.2 2007/10/26 15:44:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53.22.1 2007/08/23 14:22:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53.22.2 2007/10/26 15:44:21 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53.22.1 2007/08/23 14:22:38 joe
 #endif
 
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>

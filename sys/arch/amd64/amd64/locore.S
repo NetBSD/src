@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.8.2 2007/10/02 18:26:40 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.3 2007/10/26 15:42:06 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -126,9 +126,7 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <machine/param.h>
 #include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
@@ -178,7 +176,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
@@ -196,7 +194,7 @@ _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.quad	0
-_C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
+_C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
 #else
@@ -425,12 +423,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 	/*
-	 * Compute etext - KERNBASE. This can't be > 4G, or we can't deal
-	 * with it anyway, since we can't load it in 32 bit mode. So use
-	 * the bottom 32 bits.
+ 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	 * or we can't deal with it anyway, since we can't load it in
+	 * 32 bit mode. So use the bottom 32 bits.
 	 */
-	movl	$RELOC(etext),%edx
-	addl	$PGOFSET,%edx
+	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
 
 	/*
@@ -516,7 +513,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 
 	/* Save phys. addr of PTD, for libkvm. */
-	movl	$RELOC(PTDpaddr),%ebp
+	movl	$RELOC(PDPpaddr),%ebp
 	movl	%esi,(%ebp)
 	movl	$0,4(%ebp)
 
@@ -848,18 +845,20 @@ IDTVEC(syscall)
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%r15)
-1:	/* Check for ASTs on exit to user mode. */
+.Lsyscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r14)
-	je	2f
+	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	1b
-2:
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 	sti
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
@@ -898,9 +897,13 @@ syscall_return:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	1b
+	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
+
+9:	sti
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 /*
  * void lwp_trampoline(void);
@@ -916,6 +919,7 @@ NENTRY(lwp_trampoline)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -931,6 +935,7 @@ NENTRY(child_trampoline)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
+	DO_DEFERRED_SWITCH
 	jmp	syscall_return
 
 	.globl  _C_LABEL(osyscall_return)
@@ -966,7 +971,8 @@ osyscall1:
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
-2:	/* Check for ASTs on exit to user mode. */
+.Losyscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r14)
 	je	1f
@@ -976,13 +982,14 @@ _C_LABEL(osyscall_return):
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	jmp	2b
-
+	jmp	.Losyscall_checkast
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
 iret_return:
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -993,9 +1000,12 @@ iret_return:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
  * void sse2_zero_page(void *pg)

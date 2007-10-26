@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.8.26.1 2007/10/26 15:44:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.8.26.1 2007/10/26 15:44:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 

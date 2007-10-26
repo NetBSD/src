@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.20 2006/11/16 01:32:41 christos Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.20.22.1 2007/10/26 15:43:49 joerg Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.20 2006/11/16 01:32:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.20.22.1 2007/10/26 15:43:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -590,7 +590,7 @@ coda_nc_flush(enum dc_status dcstat)
 			}
 			vrele(CTOV(cncp->dcp));
 
-			if (CTOV(cncp->cp)->v_flag & VTEXT) {
+			if (CTOV(cncp->cp)->v_iflag & VI_TEXT) {
 			    if (coda_vmflush(cncp->cp))
 				CODADEBUG(CODA_FLUSH,
 					myprintf(("coda_nc_flush: %s busy\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.39 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.39.14.1 2007/10/26 15:49:00 joerg Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.39 2007/03/04 06:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.39.14.1 2007/10/26 15:49:00 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.39 2007/03/04 06:03:15 christos Exp $
 #include <sys/time.h>
 #include <sys/queue.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

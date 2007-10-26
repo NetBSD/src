@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.19.14.1 2007/09/03 16:48:48 jmcneill Exp $ */
+/* $NetBSD: kern_tc.c,v 1.19.14.2 2007/10/26 15:48:37 joerg Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.19.14.1 2007/09/03 16:48:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.19.14.2 2007/10/26 15:48:37 joerg Exp $");
 
 #include "opt_ntp.h"
 
@@ -267,7 +267,7 @@ tc_delta(struct timehands *th)
 /*
  * Functions for reading the time.  We have to loop until we are sure that
  * the timehands that we operated on was not updated under our feet.  See
- * the comment in <sys/time.h> for a description of these 12 functions.
+ * the comment in <sys/timevar.h> for a description of these 12 functions.
  */
 
 void

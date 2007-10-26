@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.158 2007/07/22 13:37:13 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.158.4.1 2007/10/26 15:48:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158 2007/07/22 13:37:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.4.1 2007/10/26 15:48:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ procfs_inactive(v)
 	VOP_UNLOCK(vp, 0);
 
 	error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH);
-	if (error != 0 && (vp->v_flag & VXLOCK) == 0)
+	if (error != 0 && (vp->v_iflag & VI_XLOCK) == 0)
 		vgone(vp);
 	else
 		procfs_proc_unlock(p);
@@ -566,7 +566,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 	struct vnode *vp, *rvp = caller->l_proc->p_cwdi->cwdi_rdir;
 	char *bp;
 
-	LOCK_ASSERT(mutex_owned(&target->p_mutex));
+	KASSERT(mutex_owned(&target->p_mutex));
 
 	bp = bpp ? *bpp : NULL;
 
@@ -1400,7 +1400,7 @@ procfs_readdir(v)
 			/* check the descriptor exists */
 			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
-			simple_unlock(&fp->f_slock);
+			mutex_exit(&fp->f_lock);
 
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),

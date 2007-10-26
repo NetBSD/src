@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.26 2007/07/09 21:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.26.6.1 2007/10/26 15:45:37 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.26 2007/07/09 21:00:51 ad Exp $");
 #include <sys/callout.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isapnp/isapnpreg.h>

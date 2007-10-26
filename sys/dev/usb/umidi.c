@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.31 2007/07/14 21:02:38 ad Exp $	*/
+/*	$NetBSD: umidi.c,v 1.31.6.1 2007/10/26 15:47:54 joerg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31 2007/07/14 21:02:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31.6.1 2007/10/26 15:47:54 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,8 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31 2007/07/14 21:02:38 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/lock.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -469,7 +468,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
-	ep->solicit_cookie = softintr_establish(IPL_SOFTCLOCK,out_solicit,ep);
+	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK, out_solicit, ep);
 quit:
 	return err;
 }
@@ -481,7 +480,7 @@ free_pipe(struct umidi_endpoint *ep)
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
-	softintr_disestablish(ep->solicit_cookie);
+	softint_disestablish(ep->solicit_cookie);
 }
 
 
@@ -1519,7 +1518,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		 * before starting the USB transfer, and send a longer one.
 		 */
 		ep->soliciting = 1;
-		softintr_schedule(ep->solicit_cookie);
+		softint_schedule(ep->solicit_cookie);
 	}
 	splx(s);
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.25.6.2 2007/10/02 23:37:18 jmcneill Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25.6.3 2007/10/26 15:44:11 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.2 2007/10/02 23:37:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.3 2007/10/26 15:44:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.2 2007/10/02 23:37:18 jmcneill 
 #include <dev/sysmon/sysmonvar.h>
 
 struct acpiacad_softc {
-	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
 	int sc_status;			/* status changed/not changed */
@@ -84,16 +83,16 @@ static const char * const acad_hid[] = {
 #define AACAD_CLEAR(sc, f)	(void)((sc)->sc_flags &= ~(f))
 #define AACAD_ISSET(sc, f)	((sc)->sc_flags & (f))
 
-static int acpiacad_match(struct device *, struct cfdata *, void *);
-static void acpiacad_attach(struct device *, struct device *, void *);
+static int acpiacad_match(device_t, struct cfdata *, void *);
+static void acpiacad_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(acpiacad, sizeof(struct acpiacad_softc),
+CFATTACH_DECL_NEW(acpiacad, sizeof(struct acpiacad_softc),
     acpiacad_match, acpiacad_attach, NULL, NULL);
 
 static void acpiacad_get_status(void *);
 static void acpiacad_clear_status(struct acpiacad_softc *);
 static void acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *);
-static void acpiacad_init_envsys(struct acpiacad_softc *);
+static void acpiacad_init_envsys(device_t);
 static int acpiacad_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 /*
@@ -102,7 +101,7 @@ static int acpiacad_gtredata(struct sysmon_envsys *, envsys_data_t *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
+acpiacad_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -118,9 +117,9 @@ acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpiacad_attach(struct device *parent, struct device *self, void *aux)
+acpiacad_attach(device_t parent, device_t self, void *aux)
 {
-	struct acpiacad_softc *sc = (void *) self;
+	struct acpiacad_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
@@ -130,22 +129,20 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
 
-	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		aprint_error("%s: unable to register with sysmon\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		return;
 	}
 
 	sc->sc_status = -1;
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpiacad_notify_handler, sc);
+	    ACPI_ALL_NOTIFY, acpiacad_notify_handler, self);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to register DEVICE and SYSTEM "
-		    "NOTIFY handler: %s\n", sc->sc_dev.dv_xname,
-		    AcpiFormatException(rv));
+		aprint_error_dev(self, "unable to register DEVICE and SYSTEM "
+		    "NOTIFY handler: %s\n", AcpiFormatException(rv));
 		return;
 	}
 
@@ -156,7 +153,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 
 	(void)pnp_register(self, pnp_generic_power);
 
-	acpiacad_init_envsys(sc);
+	acpiacad_init_envsys(self);
 }
 
 /*
@@ -167,7 +164,8 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 static void
 acpiacad_get_status(void *arg)
 {
-	struct acpiacad_softc *sc = arg;
+	device_t dv = arg;
+	struct acpiacad_softc *sc = device_private(dv);
 	ACPI_INTEGER status;
 	ACPI_STATUS rv;
 
@@ -198,8 +196,8 @@ acpiacad_get_status(void *arg)
 		sysmon_pswitch_event(&sc->sc_smpsw, status ?
 	    	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 		if (AACAD_ISSET(sc, AACAD_F_VERBOSE))
-			printf("%s: AC adapter %sconnected\n",
-		    	    sc->sc_dev.dv_xname, status == 0 ? "not " : "");
+			aprint_verbose_dev(dv, "AC adapter %sconnected\n",
+		    	    status == 0 ? "not " : "");
 	}
 	mutex_exit(&sc->sc_mtx);
 }
@@ -223,7 +221,8 @@ acpiacad_clear_status(struct acpiacad_softc *sc)
 static void
 acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
-	struct acpiacad_softc *sc = context;
+	device_t dv = context;
+	struct acpiacad_softc *sc = device_private(dv);
 	int rv;
 
 	switch (notify) {
@@ -251,52 +250,55 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		mutex_exit(&sc->sc_mtx);
 		if (sc->sc_status == -1 || !sc->sc_notifysent) {
 			rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
-			    acpiacad_get_status, sc);
+			    acpiacad_get_status, dv);
 			if (ACPI_FAILURE(rv))
-				printf("%s: unable to queue status check: %s\n",
-				    sc->sc_dev.dv_xname,
+				aprint_error_dev(dv,
+				    "unable to queue status check: %s\n",
 				    AcpiFormatException(rv));
 			sc->sc_notifysent = 1;
 #ifdef ACPI_ACAD_DEBUG
-			printf("%s: received notify message: 0x%x\n",
-		    	    sc->sc_dev.dv_xname, notify);
+			aprint_debug_dev(dv, "received notify message: 0x%x\n",
+		    	    notify);
 #endif
 		}
 		break;
 
 	default:
-		printf("%s: received unknown notify message: 0x%x\n",
-		    sc->sc_dev.dv_xname, notify);
+		aprint_error_dev(dv, "received unknown notify message: 0x%x\n",
+		    notify);
 	}
 }
 
 static void
-acpiacad_init_envsys(struct acpiacad_softc *sc)
+acpiacad_init_envsys(device_t dv)
 {
+	struct acpiacad_softc *sc = device_private(dv);
+
 	sc->sc_data[0].sensor = 0;
 	sc->sc_data[0].state = ENVSYS_SVALID;
 	sc->sc_data[0].units = ENVSYS_INDICATOR;
 	snprintf(sc->sc_data[0].desc, sizeof(sc->sc_data->desc),
-	    "%s %s", sc->sc_dev.dv_xname, "connected");
+	    "%s %s", device_xname(dv), "connected");
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_name = device_xname(dv);
+	sc->sc_sysmon.sme_cookie = dv;
 	sc->sc_sysmon.sme_gtredata = acpiacad_gtredata;
 	sc->sc_sysmon.sme_nsensors = 1;
+	sc->sc_sysmon.sme_class = SME_CLASS_ACADAPTER;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(dv, "unable to register with sysmon\n");
 }
 
 static int
 acpiacad_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct acpiacad_softc *sc = sme->sme_cookie;
+	device_t dv = sme->sme_cookie;
+	struct acpiacad_softc *sc = device_private(dv);
 
 	if (!AACAD_ISSET(sc, AACAD_F_AVAILABLE))
-		acpiacad_get_status(sc);
+		acpiacad_get_status(dv);
 
 	return 0;
 }

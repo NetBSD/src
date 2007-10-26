@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.40.14.1 2007/09/03 16:48:07 jmcneill Exp $ */
+/* $NetBSD: seeq8005.c,v 1.40.14.2 2007/10/26 15:45:00 joerg Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40.14.1 2007/09/03 16:48:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40.14.2 2007/10/26 15:45:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40.14.1 2007/09/03 16:48:07 jmcneill 
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/seeq8005reg.h>
 #include <dev/ic/seeq8005var.h>

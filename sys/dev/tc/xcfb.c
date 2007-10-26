@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.44 2007/03/06 22:29:29 simonb Exp $ */
+/* $NetBSD: xcfb.c,v 1.44.14.1 2007/10/26 15:47:46 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.44 2007/03/06 22:29:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.44.14.1 2007/10/26 15:47:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.44 2007/03/06 22:29:29 simonb Exp $");
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

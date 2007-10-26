@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.15.6.1 2007/10/02 18:29:00 joerg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.15.6.2 2007/10/26 15:48:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.1 2007/10/02 18:29:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.2 2007/10/26 15:48:32 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.1 2007/10/02 18:29:00 joerg Ex
 
 #include <dev/lockstat.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -326,16 +326,19 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	switch (type) {
 	case MUTEX_NODEBUG:
-		id = LOCKDEBUG_ALLOC(mtx, NULL);
+		id = LOCKDEBUG_ALLOC(mtx, NULL,
+		    (uintptr_t)__builtin_return_address(0));
 		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
 		break;
 	case MUTEX_ADAPTIVE:
 	case MUTEX_DEFAULT:
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
+		    (uintptr_t)__builtin_return_address(0));
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
 		break;
 	case MUTEX_SPIN:
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
+		    (uintptr_t)__builtin_return_address(0));
 		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
 		break;
 	default:

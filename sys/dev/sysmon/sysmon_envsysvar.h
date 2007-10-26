@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.12.4.3 2007/10/07 13:25:06 joerg Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.12.4.4 2007/10/26 15:47:38 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -77,6 +77,7 @@ typedef struct sme_event {
 	int			evsent;		/* event already sent */
 	int 			see_flags;	/* see above */
 #define SME_EVENT_WORKING	0x0001 		/* This event is busy */
+#define SME_EVENT_REFRESHED	0x0002		/* sensor already refreshed */
 } sme_event_t;
 
 /* struct by a sysmon envsys event set by a driver */

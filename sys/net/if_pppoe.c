@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.79.6.1 2007/10/02 18:29:15 joerg Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.79.6.2 2007/10/26 15:49:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79.6.1 2007/10/02 18:29:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79.6.2 2007/10/26 15:49:02 joerg Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79.6.1 2007/10/02 18:29:15 joerg Exp 
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
+
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
@@ -65,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79.6.1 2007/10/02 18:29:15 joerg Exp 
 #include <net/bpf.h>
 #endif
 
-#include <machine/intr.h>
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
@@ -215,7 +216,7 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-	pppoe_softintr = softintr_establish(IPL_SOFTNET, pppoe_softintr_handler, NULL);
+	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler, NULL);
 }
 
 static int

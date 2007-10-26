@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.19.48.1 2007/09/03 16:47:23 jmcneill Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.19.48.2 2007/10/26 15:42:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,9 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.19.48.1 2007/09/03 16:47:23 jmcneill Exp $");
-
-#include "opt_largepages.h"
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.19.48.2 2007/10/26 15:42:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -133,11 +131,9 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Get the VA for the page.
 		 */
-#ifdef LARGEPAGES
 		if (oldpte & PG_PS)
 			pgva = (vaddr_t)dst & PG_LGFRAME;
 		else
-#endif
 			pgva = x86_trunc_page(dst);
 
 		/*
@@ -145,11 +141,9 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
-#ifdef LARGEPAGES
 		if (oldpte & PG_PS)
-			limit = NBPD - ((vaddr_t)dst & (NBPD - 1));
+			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
 		else
-#endif
 			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
 		if (limit > size)
 			limit = size;
@@ -208,13 +202,13 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	extern char etext;
+	extern char __data_start;
 	char *dst;
 
 	dst = (char *)addr;
 
 	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
+	if (addr >= KERNBASE && addr < (vaddr_t)&__data_start) {
 		db_write_text(addr, size, data);
 		return;
 	}

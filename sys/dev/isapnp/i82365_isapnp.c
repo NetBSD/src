@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.23 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.23.22.1 2007/10/26 15:45:35 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.23 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.23.22.1 2007/10/26 15:45:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.23 2006/11/16 01:33:05 christos 
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20.6.5 2007/10/07 13:25:06 joerg Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.6.6 2007/10/26 15:47:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.5 2007/10/07 13:25:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.6 2007/10/26 15:47:39 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -135,6 +135,7 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
 	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
 	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
+	{ PENVSYS_EVENT_LOW_POWER,	"low-power" },
 	{ -1, NULL }
 };
 
@@ -316,6 +317,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	case PENVSYS_EVENT_USER_CRITMIN:
 	case PENVSYS_EVENT_BATT_USERCAP:
 	case PENVSYS_EVENT_STATE_CHANGED:
+	case PENVSYS_EVENT_LOW_POWER:
 	    {
 		struct penvsys_state *penvsys =
 		    (struct penvsys_state *)pev_data;
@@ -638,6 +640,7 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+
 		SETPROP("driver-name", smpsw->smpsw_name);
 
 		for (i = 0; peevent[i].type != -1; i++)
@@ -778,6 +781,10 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 	switch (pes->pes_type) {
 	case PENVSYS_TYPE_BATTERY:
 		switch (event) {
+		case PENVSYS_EVENT_LOW_POWER:
+			printf("sysmon: LOW POWER! SHUTTING DOWN.\n");
+			cpu_reboot(RB_POWERDOWN, NULL);
+			break;
 		case PENVSYS_EVENT_STATE_CHANGED:
 			printf("%s: state changed on '%s' to '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname,

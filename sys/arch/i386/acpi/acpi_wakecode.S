@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9.10.7 2007/09/24 22:46:46 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.8 2007/10/26 15:42:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -152,6 +152,10 @@ wakeup_32:
 	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
 	movw	%ax,%ds
 
+	/* Restore PSE and other settings before enabling paging. */
+	movl	WAKEUP_r_cr4 + ACPI_WAKEUP_ADDR,%eax
+	movl	%eax,%cr4
+
 	/* Enable paging (assumes identical mapping) */
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
@@ -195,6 +199,8 @@ tmp_gdtable:
 WAKEUP_r_cr0:		.long 0
 	.global WAKEUP_r_cr3
 WAKEUP_r_cr3:		.long 0
+	.global WAKEUP_r_cr4
+WAKEUP_r_cr4:		.long 0
 
 	.global WAKEUP_r_gdt
 WAKEUP_r_gdt:		.word 0

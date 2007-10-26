@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.12.6.2 2007/10/02 18:29:31 joerg Exp $	*/
+/*	$NetBSD: timevar.h,v 1.12.6.3 2007/10/26 15:49:23 joerg Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -123,8 +123,9 @@ struct	ptimers {
  *
  * Functions with the "get" prefix returns a less precise result
  * much faster than the functions without "get" prefix and should
- * be used where a precision of 10 msec is acceptable or where
- * performance is priority. (NB: "precision", _not_ "resolution" !) 
+ * be used where a precision of 1/HZ (eg 10 msec on a 100HZ machine)
+ * is acceptable or where performance is priority.
+ * (NB: "precision", _not_ "resolution" !) 
  * 
  */
 

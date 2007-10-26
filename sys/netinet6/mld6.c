@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.39.6.1 2007/09/03 16:49:08 jmcneill Exp $	*/
+/*	$NetBSD: mld6.c,v 1.39.6.2 2007/10/26 15:49:09 joerg Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.39.6.1 2007/09/03 16:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.39.6.2 2007/10/26 15:49:09 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -163,7 +163,6 @@ static struct mld_hdr * mld_allocbuf(struct mbuf **, int, struct in6_multi *,
 static void mld_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 static void mld_starttimer(struct in6_multi *);
 static void mld_stoptimer(struct in6_multi *);
-static void mld_timeo(struct in6_multi *);
 static u_long mld_timerresid(struct in6_multi *);
 
 void
@@ -203,8 +202,7 @@ mld_starttimer(struct in6_multi *in6m)
 	}
 
 	/* start or restart the timer */
-	callout_reset(in6m->in6m_timer_ch, in6m->in6m_timer,
-	    (void (*) __P((void *)))mld_timeo, in6m);
+	callout_schedule(&in6m->in6m_timer_ch, in6m->in6m_timer);
 }
 
 static void
@@ -213,19 +211,18 @@ mld_stoptimer(struct in6_multi *in6m)
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		return;
 
-	callout_stop(in6m->in6m_timer_ch);
+	callout_stop(&in6m->in6m_timer_ch);
 
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
 }
 
 static void
-mld_timeo(struct in6_multi *in6m)
+mld_timeo(void *arg)
 {
+	struct in6_multi *in6m = arg;
 	int s = splsoftnet();
 
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
-
-	callout_stop(in6m->in6m_timer_ch);
 
 	switch (in6m->in6m_state) {
 	case MLD_REPORTPENDING:
@@ -647,16 +644,8 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		in6m->in6m_ifp = ifp;
 		in6m->in6m_refcount = 1;
 		in6m->in6m_timer = IN6M_TIMER_UNDEF;
-		in6m->in6m_timer_ch =
-		    malloc(sizeof(*in6m->in6m_timer_ch), M_IPMADDR, M_NOWAIT);
-		if (in6m->in6m_timer_ch == NULL) {
-			free(in6m, M_IPMADDR);
-			splx(s);
-			return (NULL);
-		}
 		IFP_TO_IA6(ifp, ia);
 		if (ia == NULL) {
-			/* leaks in6m_timer_ch */
 			free(in6m, M_IPMADDR);
 			splx(s);
 			*errorp = EADDRNOTAVAIL; /* appropriate? */
@@ -678,14 +667,14 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 			    (void *)&ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
-			/* leaks in6m_timer_ch */
 			free(in6m, M_IPMADDR);
 			IFAFREE(&ia->ia_ifa);
 			splx(s);
 			return (NULL);
 		}
 
-		callout_init(in6m->in6m_timer_ch, 0);
+		callout_init(&in6m->in6m_timer_ch, 0);
+		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;
@@ -752,7 +741,7 @@ in6_delmulti(struct in6_multi *in6m)
 		sockaddr_in6_init(&ifr.ifr_addr, &in6m->in6m_addr, 0, 0, 0);
 		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
 		    SIOCDELMULTI, (void *)&ifr);
-		free(in6m->in6m_timer_ch, M_IPMADDR);
+		callout_destroy(&in6m->in6m_timer_ch);
 		free(in6m, M_IPMADDR);
 	}
 	splx(s);

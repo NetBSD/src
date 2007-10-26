@@ -1,10 +1,10 @@
-/* $NetBSD: puffs_transport.c,v 1.22.4.2 2007/10/07 13:25:07 joerg Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.22.4.3 2007/10/26 15:48:19 joerg Exp $ */
 
 /*
- * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Ulla Tuominen Foundation.
+ * Ulla Tuominen Foundation and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.22.4.2 2007/10/07 13:25:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.22.4.3 2007/10/26 15:48:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/fstrans.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
@@ -93,6 +94,146 @@ puffs_transport_destroy()
 }
 
 /*
+ * helpers
+ */
+static void
+dosuspendresume(void *arg)
+{
+	struct puffs_mount *pmp = arg;
+	struct mount *mp;
+	int rv;
+
+	mp = PMPTOMP(pmp);
+	/*
+	 * XXX?  does this really do any good or is it just
+	 * paranoid stupidity?  or stupid paranoia?
+	 */
+	if (mp->mnt_iflag & IMNT_UNMOUNT) {
+		printf("puffs dosuspendresume(): detected suspend on "
+		    "unmounting fs\n");
+		goto out;
+	}
+
+	/* Do the dance.  Allow only one concurrent suspend */
+	rv = vfs_suspend(PMPTOMP(pmp), 1);
+	if (rv == 0)
+		vfs_resume(PMPTOMP(pmp));
+
+ out:
+	mutex_enter(&pmp->pmp_lock);
+	KASSERT(pmp->pmp_suspend == 1);
+	pmp->pmp_suspend = 0;
+	puffs_mp_release(pmp);
+	mutex_exit(&pmp->pmp_lock);
+
+	kthread_exit(0);
+}
+
+static void
+puffsop_suspend(struct puffs_mount *pmp)
+{
+	int rv = 0;
+
+	mutex_enter(&pmp->pmp_lock);
+	if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING) {
+		rv = EBUSY;
+	} else {
+		puffs_mp_reference(pmp);
+		pmp->pmp_suspend = 1;
+	}
+	mutex_exit(&pmp->pmp_lock);
+	if (rv)
+		return;
+	rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
+	    pmp, NULL, "puffsusp");
+
+	/* XXX: "return" rv */
+}
+
+static int
+puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
+{
+	struct vnode *vp;
+	voff_t offlo, offhi;
+	int rv, flags = 0;
+
+	/* XXX: slurry */
+	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
+		cache_purgevfs(PMPTOMP(pmp));
+		return 0;
+	}
+
+	/*
+	 * Get vnode, don't lock it.  Namecache is protected by its own lock
+	 * and we have a reference to protect against premature harvesting.
+	 *
+	 * The node we want here might be locked and the op is in
+	 * userspace waiting for us to complete ==> deadlock.  Another
+	 * reason we need to eventually bump locking to userspace, as we
+	 * will need to lock the node if we wish to do flushes.
+	 */
+	rv = puffs_cookie2vnode(pmp, pf->pf_cookie, 0, 0, &vp);
+	if (rv) {
+		if (rv == PUFFS_NOSUCHCOOKIE)
+			return ENOENT;
+		return rv;
+	}
+
+	switch (pf->pf_op) {
+#if 0
+	/* not quite ready, yet */
+	case PUFFS_INVAL_NAMECACHE_NODE:
+	struct componentname *pf_cn;
+	char *name;
+		/* get comfortab^Wcomponentname */
+		MALLOC(pf_cn, struct componentname *,
+		    sizeof(struct componentname), M_PUFFS, M_WAITOK | M_ZERO);
+		memset(pf_cn, 0, sizeof(struct componentname));
+		break;
+
+#endif
+	case PUFFS_INVAL_NAMECACHE_DIR:
+		if (vp->v_type != VDIR) {
+			rv = EINVAL;
+			break;
+		}
+		cache_purge1(vp, NULL, PURGE_CHILDREN);
+		break;
+
+	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
+		flags = PGO_FREE;
+		/*FALLTHROUGH*/
+	case PUFFS_FLUSH_PAGECACHE_NODE_RANGE:
+		if (flags == 0)
+			flags = PGO_CLEANIT;
+
+		if (pf->pf_end > vp->v_size || vp->v_type != VREG) {
+			rv = EINVAL;
+			break;
+		}
+
+		offlo = trunc_page(pf->pf_start);
+		offhi = round_page(pf->pf_end);
+		if (offhi != 0 && offlo >= offhi) {
+			rv = EINVAL;
+			break;
+		}
+
+		simple_lock(&vp->v_uobj.vmobjlock);
+		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
+		break;
+
+	default:
+		rv = EINVAL;
+	}
+
+	vrele(vp);
+
+	return rv;
+}
+
+
+/*
  * fd routines, for cloner
  */
 static int puffs_fop_read(struct file *, off_t *, struct uio *,
@@ -120,16 +261,91 @@ static int
 puffs_fop_read(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
+	struct puffs_mount *pmp = FPTOPMP(fp);
+	size_t origres, moved;
+	int error;
 
-	return ENODEV;
+	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
+		printf("puffs_fop_read: puffs %p, not mounted\n", pmp);
+		return ENOENT;
+	}
+
+	if (pmp->pmp_curput == NULL) {
+		error = puffs_msgif_getout(pmp, uio->uio_resid,
+		    fp->f_flag & O_NONBLOCK, &pmp->pmp_curput,
+		    &pmp->pmp_curres, &pmp->pmp_curopaq);
+		if (error)
+			return error;
+	}
+
+	origres = uio->uio_resid;
+	error = uiomove(pmp->pmp_curput, pmp->pmp_curres, uio);
+	moved = origres - uio->uio_resid;
+	DPRINTF(("puffs_fop_read (%p): moved %zu bytes from %p, error %d\n",
+	    pmp, moved, pmp->pmp_curput, error));
+
+	KASSERT(pmp->pmp_curres >= moved);
+	pmp->pmp_curres -= moved;
+	pmp->pmp_curput += moved;
+
+	if (pmp->pmp_curres == 0) {
+		puffs_msgif_releaseout(pmp, pmp->pmp_curopaq, error);
+		pmp->pmp_curput = NULL;
+	}
+
+	return error;
 }
 
 static int
 puffs_fop_write(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
+	struct puffs_mount *pmp = FPTOPMP(fp);
+	struct puffs_frame pfr;
+	uint8_t *buf;
+	size_t frsize;
+	int error;
 
-	return ENODEV;
+	DPRINTF(("puffs_fop_write (%p): writing response, resid %zu\n",
+	    pmp, uio->uio_resid));
+
+	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
+		printf("puffs_fop_write: puffs %p, not mounted\n", pmp);
+		return ENOENT;
+	}
+
+	error = uiomove(&pfr, sizeof(struct puffs_frame), uio);
+	if (error)
+		return error;
+
+	/* Sorry mate, the kernel doesn't buffer. */
+	frsize = pfr.pfr_len - sizeof(struct puffs_frame);
+	if (uio->uio_resid < frsize)
+		return EINVAL;
+		
+	buf = kmem_alloc(frsize + sizeof(struct puffs_frame), KM_SLEEP);
+	memcpy(buf, &pfr, sizeof(pfr));
+	error = uiomove(buf+sizeof(struct puffs_frame), frsize, uio);
+	if (error == 0) {
+		switch (PUFFSOP_OPCLASS(pfr.pfr_type)) {
+		case PUFFSOP_VN:
+		case PUFFSOP_VFS:
+			puffs_msgif_incoming(pmp, buf);
+			break;
+		case PUFFSOP_FLUSH:
+			puffsop_flush(pmp, (void *)buf);
+			break;
+		case PUFFSOP_SUSPEND:
+			puffsop_suspend(pmp);
+			break;
+		default:
+			/* XXX: send error */
+			break;
+		}
+	}
+	kmem_free(buf, frsize + sizeof(struct puffs_frame));
+
+	return error;
 }
 
 /*
@@ -154,7 +370,7 @@ puffs_fop_poll(struct file *fp, int events, struct lwp *l)
 
 	/* check queue */
 	mutex_enter(&pmp->pmp_lock);
-	if (!TAILQ_EMPTY(&pmp->pmp_req_touser))
+	if (!TAILQ_EMPTY(&pmp->pmp_msg_touser))
 		revents |= PUFFPOLL_EVSET;
 	else
 		selrecord(l, pmp->pmp_sel);
@@ -325,125 +541,8 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 }
 
 static int
-puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
-{
-	struct vnode *vp;
-	voff_t offlo, offhi;
-	int rv, flags = 0;
-
-	/* XXX: slurry */
-	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
-		cache_purgevfs(PMPTOMP(pmp));
-		return 0;
-	}
-
-	/*
-	 * Get vnode, don't lock it.  Namecache is protected by its own lock
-	 * and we have a reference to protect against premature harvesting.
-	 *
-	 * The node we want here might be locked and the op is in
-	 * userspace waiting for us to complete ==> deadlock.  Another
-	 * reason we need to eventually bump locking to userspace, as we
-	 * will need to lock the node if we wish to do flushes.
-	 */
-	rv = puffs_cookie2vnode(pmp, pf->pf_cookie, 0, 0, &vp);
-	if (rv) {
-		if (rv == PUFFS_NOSUCHCOOKIE)
-			return ENOENT;
-		return rv;
-	}
-
-	switch (pf->pf_op) {
-#if 0
-	/* not quite ready, yet */
-	case PUFFS_INVAL_NAMECACHE_NODE:
-	struct componentname *pf_cn;
-	char *name;
-		/* get comfortab^Wcomponentname */
-		MALLOC(pf_cn, struct componentname *,
-		    sizeof(struct componentname), M_PUFFS, M_WAITOK | M_ZERO);
-		memset(pf_cn, 0, sizeof(struct componentname));
-		break;
-
-#endif
-	case PUFFS_INVAL_NAMECACHE_DIR:
-		if (vp->v_type != VDIR) {
-			rv = EINVAL;
-			break;
-		}
-		cache_purge1(vp, NULL, PURGE_CHILDREN);
-		break;
-
-	case PUFFS_INVAL_PAGECACHE_NODE_RANGE:
-		flags = PGO_FREE;
-		/*FALLTHROUGH*/
-	case PUFFS_FLUSH_PAGECACHE_NODE_RANGE:
-		if (flags == 0)
-			flags = PGO_CLEANIT;
-
-		if (pf->pf_end > vp->v_size || vp->v_type != VREG) {
-			rv = EINVAL;
-			break;
-		}
-
-		offlo = trunc_page(pf->pf_start);
-		offhi = round_page(pf->pf_end);
-		if (offhi != 0 && offlo >= offhi) {
-			rv = EINVAL;
-			break;
-		}
-
-		simple_lock(&vp->v_uobj.vmobjlock);
-		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
-		break;
-
-	default:
-		rv = EINVAL;
-	}
-
-	vrele(vp);
-
-	return rv;
-}
-
-static void
-dosuspendresume(void *arg)
-{
-	struct puffs_mount *pmp = arg;
-	struct mount *mp;
-	int rv;
-
-	mp = PMPTOMP(pmp);
-	/*
-	 * XXX?  does this really do any good or is it just
-	 * paranoid stupidity?  or stupid paranoia?
-	 */
-	if (mp->mnt_iflag & IMNT_UNMOUNT) {
-		printf("puffs dosuspendresume(): detected suspend on "
-		    "unmounting fs\n");
-		goto out;
-	}
-
-	/* Do the dance.  Allow only one concurrent suspend */
-	rv = vfs_suspend(PMPTOMP(pmp), 1);
-	if (rv == 0)
-		vfs_resume(PMPTOMP(pmp));
-
- out:
-	mutex_enter(&pmp->pmp_lock);
-	KASSERT(pmp->pmp_suspend == 1);
-	pmp->pmp_suspend = 0;
-	puffs_mp_release(pmp);
-	mutex_exit(&pmp->pmp_lock);
-
-	kthread_exit(0);
-}
-
-static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	struct puffs_mount *pmp = FPTOPMP(fp);
-	int rv;
 
 	/*
 	 * work already done in sys_ioctl().  skip sanity checks to enable
@@ -452,55 +551,7 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	if (cmd == FIONBIO)
 		return 0;
 
-	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
-		printf("puffs_fop_ioctl: puffs %p, not mounted\n", pmp);
-		return ENOENT;
-	}
-
-	switch (cmd) {
-	case PUFFSGETOP:
-		rv = puffs_getop(pmp, data, fp->f_flag & FNONBLOCK);
-		break;
-
-	case PUFFSPUTOP:
-		rv =  puffs_putop(pmp, data);
-		break;
-
-	case PUFFSFLUSHOP:
-		rv = puffs_flush(pmp, data);
-		break;
-
-	case PUFFSSUSPENDOP:
-		rv = 0;
-		mutex_enter(&pmp->pmp_lock);
-		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING) {
-			rv = EBUSY;
-		} else {
-			puffs_mp_reference(pmp);
-			pmp->pmp_suspend = 1;
-		}
-		mutex_exit(&pmp->pmp_lock);
-		if (rv)
-			break;
-		rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
-		    pmp, NULL, "puffsusp");
-		break;
-
-	case PUFFSREQSIZEOP:
-		{
-			size_t *rlenp = data;
-
-			*rlenp = pmp->pmp_req_maxsize;
-			rv = 0;
-			break;
-		}
-
-	default:
-		rv = EINVAL;
-		break;
-	}
-
-	return rv;
+	return EINVAL;
 }
 
 /* kqueue stuff */
@@ -532,7 +583,7 @@ filt_puffsioctl(struct knote *kn, long hint)
 		return 0;
 
 	mutex_enter(&pmp->pmp_lock);
-	kn->kn_data = pmp->pmp_req_touser_count;
+	kn->kn_data = pmp->pmp_msg_touser_count;
 	mutex_exit(&pmp->pmp_lock);
 
 	return kn->kn_data != 0;
@@ -563,7 +614,8 @@ puffs_fop_kqfilter(struct file *fp, struct knote *kn)
 
 
 /*
- * Device routines
+ * Device routines.  These are for when /dev/puffs is initially
+ * opened before it has been cloned.
  */
 
 dev_type_open(puffscdopen);

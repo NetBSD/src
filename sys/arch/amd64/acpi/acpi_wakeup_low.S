@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.4 2007/09/28 23:11:06 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.5 2007/10/26 15:42:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -192,9 +192,9 @@ r_r15:		.quad	0
 acpi_wakeup_cr0:
 r_cr0:		.quad	0
 r_cr2:		.quad	0
-	.globl acpi_wakeup_cr3
-acpi_wakeup_cr3:
 r_cr3:		.quad	0
+	.globl acpi_wakeup_cr4
+acpi_wakeup_cr4:
 r_cr4:		.quad	0
 r_cr8:		.quad	0
 

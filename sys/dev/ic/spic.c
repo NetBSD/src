@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.8.6.1 2007/09/09 20:52:14 christos Exp $	*/
+/*	$NetBSD: spic.c,v 1.8.6.2 2007/10/26 15:45:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.1 2007/09/09 20:52:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.2 2007/10/26 15:45:02 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.1 2007/09/09 20:52:14 christos Exp $"
 #include <sys/kernel.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sysmon/sysmonvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.4.2 2007/10/16 13:04:59 joerg Exp $ */
+/*	$NetBSD: wd.c,v 1.343.4.3 2007/10/26 15:44:16 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.2 2007/10/16 13:04:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.3 2007/10/26 15:44:16 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.2 2007/10/16 13:04:59 joerg Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -409,9 +409,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	wd->sc_dk.dk_driver = &wddkdriver;
-	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	/* we fill in dk_info later */
+	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 #if NRND > 0

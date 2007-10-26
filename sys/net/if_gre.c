@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.98.6.4 2007/10/07 13:25:09 joerg Exp $ */
+/*	$NetBSD: if_gre.c,v 1.98.6.5 2007/10/26 15:49:01 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.4 2007/10/07 13:25:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.5 2007/10/26 15:49:01 joerg Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.4 2007/10/07 13:25:09 joerg Exp $"
 #include <sys/condvar.h>
 #include <sys/kthread.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -1066,7 +1066,7 @@ gre_closef(struct file **fpp, struct lwp *l)
 {
 	struct file *fp = *fpp;
 
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 	closef(fp, l);
 	*fpp = NULL;
@@ -1111,9 +1111,9 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	if (error != 0)
 		goto closef;
 	fdp = kp->p_fd;
-	simple_lock(&fdp->fd_slock);
+	rw_enter(&fdp->fd_lock, RW_WRITER);
 	fdp->fd_ofiles[kfd] = fp;
-	simple_unlock(&fdp->fd_slock);
+	rw_exit(&fdp->fd_lock);
 
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.8.6.1 2007/10/02 18:29:01 joerg Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.8.6.2 2007/10/26 15:48:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8.6.1 2007/10/02 18:29:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8.6.2 2007/10/26 15:48:34 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,11 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8.6.1 2007/10/02 18:29:01 joerg Ex
 #include <sys/sleepq.h>
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
+#include <sys/cpu.h>
 
 #include <dev/lockstat.h>
-
-#define RW_ABORT(rw, msg)						\
-    LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, __func__, msg)
 
 /*
  * LOCKDEBUG
@@ -82,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.8.6.1 2007/10/02 18:29:01 joerg Ex
 #define	RW_DASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		RW_ABORT(rw, "assertion failed: " #cond);		\
+		rw_abort(rw, __func__, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0);
 
 #else	/* LOCKDEBUG */
@@ -103,7 +101,7 @@ do {									\
 #define	RW_ASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		RW_ABORT(rw, "assertion failed: " #cond);		\
+		rw_abort(rw, __func__, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0)
 
 #else
@@ -166,13 +164,33 @@ syncobj_t rw_syncobj = {
  *
  *	Dump the contents of a rwlock structure.
  */
-void
+static void
 rw_dump(volatile void *cookie)
 {
 	volatile krwlock_t *rw = cookie;
 
 	printf_nolog("owner/count  : %#018lx flags    : %#018x\n",
 	    (long)RW_OWNER(rw), (int)RW_FLAGS(rw));
+}
+
+/*
+ * rw_abort:
+ *
+ *	Dump information about an error and panic the system.  This
+ *	generates a lot of machine code in the DIAGNOSTIC case, so
+ *	we ask the compiler to not inline it.
+ */
+#if __GNUC_PREREQ__(3, 0)
+__attribute ((noinline))
+#endif
+static void
+rw_abort(krwlock_t *rw, const char *func, const char *msg)
+{
+
+	if (panicstr != NULL)
+		return;
+
+	LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, func, msg);
 }
 
 /*
@@ -187,7 +205,8 @@ rw_init(krwlock_t *rw)
 
 	memset(rw, 0, sizeof(*rw));
 
-	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops);
+	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops,
+	    (uintptr_t)__builtin_return_address(0));
 	RW_SETID(rw, id);
 }
 
@@ -225,12 +244,9 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, curthread != 0);
 	RW_WANTLOCK(rw, op);
 
-#ifdef LOCKDEBUG
 	if (panicstr == NULL) {
-		simple_lock_only_held(NULL, "rw_enter");
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	}
-#endif
 
 	/*
 	 * We play a slight trick here.  If we're a reader, we want
@@ -278,20 +294,13 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		if (panicstr != NULL)
 			return;
 		if (RW_OWNER(rw) == curthread)
-			RW_ABORT(rw, "locking against myself");
+			rw_abort(rw, __func__, "locking against myself");
 
 		/*
 		 * Grab the turnstile chain lock.  Once we have that, we
 		 * can adjust the waiter bits and sleep queue.
 		 */
 		ts = turnstile_lookup(rw);
-
-		/*
-		 * XXXSMP if this is a high priority LWP (interrupt handler
-		 * or realtime) and acquiring a read hold, then we shouldn't
-		 * wait for RW_WRITE_WANTED if our priority is >= that of
-		 * the highest priority writer that is waiting.
-		 */
 
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
@@ -340,13 +349,8 @@ rw_vector_exit(krwlock_t *rw)
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
 
-	if (panicstr != NULL) {
-		/*
-		 * XXX What's the correct thing to do here?  We should at
-		 * least release the lock.
-		 */
+	if (panicstr != NULL)
 		return;
-	}
 
 	/*
 	 * Again, we use a trick.  Since we used an add operation to

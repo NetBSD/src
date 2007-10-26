@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.9 2005/12/11 12:21:15 christos Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.9.44.1 2007/10/26 15:44:18 joerg Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.9 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.9.44.1 2007/10/26 15:44:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
 

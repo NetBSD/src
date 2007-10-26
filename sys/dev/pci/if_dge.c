@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.15.14.1 2007/09/03 16:48:16 jmcneill Exp $ */
+/*	$NetBSD: if_dge.c,v 1.15.14.2 2007/10/26 15:46:02 joerg Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.15.14.1 2007/09/03 16:48:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.15.14.2 2007/10/26 15:46:02 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -117,8 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.15.14.1 2007/09/03 16:48:16 jmcneill Ex
 #include <netinet/ip.h>			/* XXX for struct ip */
 #include <netinet/tcp.h>		/* XXX for struct tcphdr */
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

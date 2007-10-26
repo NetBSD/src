@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.52 2007/07/09 21:00:37 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.52.6.1 2007/10/26 15:44:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.52 2007/07/09 21:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.52.6.1 2007/10/26 15:44:54 joerg Exp $");
 
 #include "ld.h"
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.52 2007/07/09 21:00:37 ad Exp $");
 #include <sys/kauth.h>
 
 #include <machine/vmparam.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
