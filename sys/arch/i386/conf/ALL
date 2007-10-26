@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.128 2007/10/25 08:15:32 dogcow Exp $
+# $NetBSD: ALL,v 1.129 2007/10/26 22:21:20 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.128 $"
+#ident 		"ALL-$Revision: 1.129 $"
 
 maxusers	32		# estimated number of users
 
@@ -435,6 +435,8 @@ elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
 
 # PCI bridges
+amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+hpet* 	at amdpcib?
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
@@ -457,6 +459,7 @@ eisa0	at mainbus?
 eisa0	at pceb?
 
 # ISA bus support
+isa0 	at amdpcib?
 isa0	at ichlpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
