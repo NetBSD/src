@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.4 2007/10/25 22:35:31 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.5 2007/10/26 13:46:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.4 2007/10/25 22:35:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.5 2007/10/26 13:46:50 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1141,7 +1141,6 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-	__PRINTK(("consinit done!\n"));
 
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
