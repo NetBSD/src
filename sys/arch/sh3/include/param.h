@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2007/10/17 19:57:07 garbled Exp $	*/
+/*	$NetBSD: param.h,v 1.19 2007/10/26 22:24:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -122,10 +122,5 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * Needed to support adaptive mutexes.  See sh3/include/mutex.h.
- */
-#define	MIN_LWP_ALIGNMENT	64
 
 #endif /* !_SH3_PARAM_H_ */
