@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.3 2007/10/25 16:55:50 garbled Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4 2007/10/26 00:34:54 garbled Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 int genofw_find_picnode(int);
 void genofw_find_ofpics(int);
 void genofw_fixup_picnode_offsets(void);
-void genofw_setup_pciintr_map(struct genppc_pci_chipset_businfo *, int);
+void genofw_setup_pciintr_map(void *, struct genppc_pci_chipset_businfo *, int);
 int genofw_find_node_by_devfunc(int, int, int, int);
 int genofw_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int genofw_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
