@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27.2.2 2007/10/25 23:59:22 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.27.2.3 2007/10/26 13:46:50 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -895,10 +895,12 @@ ENTRY(cpu_switchto)
 
 	/* Switch to newlwp's stack. */
 1:	movq	L_ADDR(%r12),%r14
+#ifdef XEN /* XXX debug code */
 	cmpq	$0, PCB_RSP(%r14)
 	jne 999f
 	callq _C_LABEL(cpu_Debugger);
 999:
+#endif
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 

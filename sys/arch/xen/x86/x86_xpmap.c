@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.1.2.2 2007/10/25 23:59:24 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.1.2.3 2007/10/26 13:46:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.1.2.2 2007/10/25 23:59:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.1.2.3 2007/10/26 13:46:51 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -148,8 +148,6 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 		maptp = (pt_entry_t *)vtomach((vaddr_t)ptp);
 		XENPRINTF(("xen_set_ldt %p %d %p %p\n", (void *)base,
 			      entries, ptp, maptp));
-		printf("xen_set_ldt %p %d %p %p\n", (void *)base,
-			      entries, ptp, maptp);
 		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
 	s = splvm();

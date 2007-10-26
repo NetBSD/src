@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21.2.1 2007/10/17 21:08:17 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.2.2 2007/10/26 13:46:51 bouyer Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -82,6 +82,7 @@ struct cpu_info {
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
