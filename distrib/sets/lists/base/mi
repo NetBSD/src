@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.8 2007/10/25 21:23:15 pavel Exp $
+# $NetBSD: mi,v 1.678.2.9 2007/10/26 23:36:00 xtraeme Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2871,16 +2871,6 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
-./usr/share/sendmail				base-obsolete		obsolete
-./usr/share/sendmail/cf				base-obsolete		obsolete
-./usr/share/sendmail/domain			base-obsolete		obsolete
-./usr/share/sendmail/feature			base-obsolete		obsolete
-./usr/share/sendmail/hack			base-obsolete		obsolete
-./usr/share/sendmail/m4				base-obsolete		obsolete
-./usr/share/sendmail/mailer			base-obsolete		obsolete
-./usr/share/sendmail/ostype			base-obsolete		obsolete
-./usr/share/sendmail/sh				base-obsolete		obsolete
-./usr/share/sendmail/siteconfig			base-obsolete		obsolete
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
