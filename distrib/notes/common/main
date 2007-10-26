@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.357 2007/10/26 21:08:53 pavel Exp $
+.\"	$NetBSD: main,v 1.358 2007/10/26 21:09:49 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1274,7 +1274,7 @@ by default (see below) will be handled.
 See the section below on upgrading from NetBSD 3.x as well.
 .Pp
 It is
-.Ic very important
+.Sy very important
 that you populate the directory
 .Pa /etc/pam.d
 with appropriate configuration files for the Pluggable Authentication Modules
