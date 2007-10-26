@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.88 2007/07/10 09:50:07 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.88.6.1 2007/10/26 15:49:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88 2007/07/10 09:50:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88.6.1 2007/10/26 15:49:29 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -119,7 +119,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 		      fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
@@ -574,7 +574,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		error = biowait(bp);
 	}
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		*countp = 0;
 		return (error);
 	}
@@ -635,8 +635,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (copy != NULL) {
 		FREE(copy, M_TEMP);
 	} else {
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		brelse(bp, BC_INVAL);
 	}
 
 	*countp = blocksreleased;

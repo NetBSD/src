@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35.18.2 2007/10/02 18:27:50 joerg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35.18.3 2007/10/26 15:43:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.18.2 2007/10/02 18:27:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.18.3 2007/10/26 15:43:44 joerg Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -109,10 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.18.2 2007/10/02 18:27:50 joerg Exp 
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
-
-/* XXX needs changes from vmlocking branch */
-#define	crit_enter()	/* nothing */
-#define	crit_exit()	/* nothing */
 
 extern	paddr_t avail_end;
 

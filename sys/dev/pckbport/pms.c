@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.19.4.2 2007/10/02 16:31:39 joerg Exp $ */
+/* $NetBSD: pms.c,v 1.19.4.3 2007/10/26 15:47:01 joerg Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.2 2007/10/02 16:31:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.3 2007/10/26 15:47:01 joerg Exp $");
 
 #include "opt_pms.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.2 2007/10/02 16:31:39 joerg Exp $");
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
 #ifdef PMS_SYNAPTICS_TOUCHPAD

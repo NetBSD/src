@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.54.22.1 2007/10/02 18:28:36 joerg Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.54.22.2 2007/10/26 15:47:05 joerg Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.54.22.1 2007/10/02 18:28:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.54.22.2 2007/10/26 15:47:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.54.22.1 2007/10/02 18:28:36 joerg E
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>

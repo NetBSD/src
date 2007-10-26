@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.46.14.1 2007/10/02 18:28:36 joerg Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.46.14.2 2007/10/26 15:46:59 joerg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.46.14.1 2007/10/02 18:28:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.46.14.2 2007/10/26 15:46:59 joerg Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.46.14.1 2007/10/02 18:28:36 joerg Exp 
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>	/* used by bus space */
-#include <machine/bus.h>	/* used by bus space and newbus */
+#include <sys/bus.h>	/* used by bus space and newbus */
 #include <sys/bus.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.77.4.3 2007/10/02 18:29:15 joerg Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.77.4.4 2007/10/26 15:49:03 joerg Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.77.4.3 2007/10/02 18:29:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.77.4.4 2007/10/26 15:49:03 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -109,9 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.77.4.3 2007/10/02 18:29:15 joerg Exp 
 #include <sys/kauth.h>
 #endif
 #include <sys/syslog.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -488,10 +487,10 @@ stripopen(dev_t dev, struct tty *tp)
 
 	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL) {
-			sc->sc_si = softintr_establish(IPL_SOFTNET,
+			sc->sc_si = softint_establish(SOFTINT_NET,
 			    stripintr, sc);
 			if (stripinit(sc) == 0) {
-				softintr_disestablish(sc->sc_si);
+				softint_disestablish(sc->sc_si);
 				return (ENOBUFS);
 			}
 			tp->t_sc = (void *)sc;
@@ -516,7 +515,7 @@ stripopen(dev_t dev, struct tty *tp)
 				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
 				if (error) {
 					splx(s);
-					softintr_disestablish(sc->sc_si);
+					softint_disestablish(sc->sc_si);
 					/*
 					 * clalloc() might return -1 which
 					 * is no good, so we need to return
@@ -558,7 +557,7 @@ stripclose(struct tty *tp, int flag)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		s = splnet();
 		/*
 		 * Cancel watchdog timer, which stops the "probe-for-death"/
@@ -911,7 +910,7 @@ stripstart(struct tty *tp)
 	 */
 	if (sc == NULL)
 		return (0);
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 	return (0);
 }
 
@@ -1042,7 +1041,7 @@ stripinput(int c, struct tty *tp)
 		goto error;
 
 	IF_ENQUEUE(&sc->sc_inq, m);
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 	goto newpack;
 
 error:

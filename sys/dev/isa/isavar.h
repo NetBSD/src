@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.48.44.1 2007/10/05 01:25:24 joerg Exp $	*/
+/*	$NetBSD: isavar.h,v 1.48.44.2 2007/10/26 15:45:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/queue.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * Structures and definitions needed by the machine-dependent header.

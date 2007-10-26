@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.5.4.1 2007/09/03 16:48:21 jmcneill Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.5.4.2 2007/10/26 15:46:28 joerg Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -401,7 +401,6 @@ struct wpi_cmd_data {
 	uint8_t		data_ntries;
 	uint16_t	timeout;
 	uint16_t	txop;
-	struct		ieee80211_frame wh;
 } __attribute__((__packed__));
 
 /* structure for command WPI_CMD_SET_BEACON */

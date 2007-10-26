@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.3 2006/11/16 01:32:47 christos Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.3.24.1 2007/10/26 15:44:15 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,12 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.3 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.3.24.1 2007/10/26 15:44:15 joerg Exp $");
 
 #include "mpu_ym.h"
 
 #include <sys/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpivar.h>
 

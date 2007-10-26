@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.13 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.13.22.1 2007/10/26 15:45:21 joerg Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.13 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.13.22.1 2007/10/26 15:45:21 joerg Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.13 2006/11/16 01:33:00 christos E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/elink.h>

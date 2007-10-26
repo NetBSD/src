@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.38.6.2 2007/10/02 18:28:25 joerg Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.38.6.3 2007/10/26 15:44:55 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.38.6.2 2007/10/02 18:28:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.38.6.3 2007/10/26 15:44:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.38.6.2 2007/10/02 18:28:25 joerg Exp $"
 #include <sys/conf.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.38.6.2 2007/10/02 18:28:25 joerg Exp $"
 
 #include <dev/ic/nslm7xvar.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)	do { printf x; } while (0)

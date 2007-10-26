@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12.12.1 2007/10/26 15:43:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.12.1 2007/10/26 15:43:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,17 @@ bus_space_mallocok(void)
 paddr_t
 memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
-	return (trunc_page(bpa + offset));
+	paddr_t ret;
+	/* XXX what about stride? */
+	ret = trunc_page(t->pbs_offset + bpa + offset);
+#ifdef DEBUG
+	if (ret == 0) {
+		printf("%s: [%08x, %08x %08x] mmaps to 0?!\n", __func__,
+		    (uint32_t)t->pbs_offset, (uint32_t)bpa, (uint32_t)offset);
+		return -1;
+	}
+#endif
+	return ret;
 }
 
 int
@@ -510,11 +520,13 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	paddr_t pa;
 
 	size = _BUS_SPACE_STRIDE(t, size);
+	bpa = _BUS_SPACE_STRIDE(t, bpa);
 
 	if (bpa + size > t->pbs_limit) {
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
+		 
 #endif
 		return (EINVAL);
 	}
@@ -523,8 +535,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Can't map I/O space as linear.
 	 */
 	if ((flags & BUS_SPACE_MAP_LINEAR) &&
-	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE)) {
 		return (EOPNOTSUPP);
+	}
 
 #ifdef PPC_IBM4XX
 	/*
@@ -662,6 +675,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	int error;
 
 	size = _BUS_SPACE_STRIDE(t, size);
+	rstart = _BUS_SPACE_STRIDE(t, rstart);
 
 	if (rstart + size > t->pbs_limit)
 		return (EINVAL);

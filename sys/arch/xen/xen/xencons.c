@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.22 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: xencons.c,v 1.22.18.1 2007/10/26 15:43:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.18.1 2007/10/26 15:43:49 joerg Exp $");
 
 #include "opt_xen.h"
 
@@ -427,7 +427,7 @@ xencons_start(struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

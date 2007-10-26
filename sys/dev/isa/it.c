@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.13.4.1 2007/10/02 18:28:29 joerg Exp $	*/
+/*	$NetBSD: it.c,v 1.13.4.2 2007/10/26 15:45:23 joerg Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13.4.1 2007/10/02 18:28:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13.4.2 2007/10/26 15:45:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13.4.1 2007/10/02 18:28:29 joerg Exp $");
 #include <sys/envsys.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

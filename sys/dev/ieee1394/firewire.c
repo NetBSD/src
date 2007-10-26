@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.14 2007/07/09 21:00:41 ad Exp $	*/
+/*	$NetBSD: firewire.c,v 1.14.6.1 2007/10/26 15:45:07 joerg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -53,7 +53,7 @@
 #endif
 
 #include <sys/bus.h>		/* used by smbus and newbus */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #ifdef __DragonFly__
 #include "fw_port.h"
@@ -82,7 +82,7 @@
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>

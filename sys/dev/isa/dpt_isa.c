@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.17 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.17.22.1 2007/10/26 15:45:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,15 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.17 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.17.22.1 2007/10/26 15:45:14 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>

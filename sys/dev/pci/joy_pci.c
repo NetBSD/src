@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.14 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.14.22.1 2007/10/26 15:46:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.14 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.14.22.1 2007/10/26 15:46:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

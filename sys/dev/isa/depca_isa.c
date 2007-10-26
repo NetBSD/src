@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.11 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.11.22.1 2007/10/26 15:45:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.11 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.11.22.1 2007/10/26 15:45:14 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -93,9 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.11 2006/11/16 01:33:00 christos Exp 
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

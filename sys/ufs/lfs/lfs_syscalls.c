@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.122 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.122.14.1 2007/10/26 15:49:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122 2007/03/04 06:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.14.1 2007/10/26 15:49:35 joerg Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -306,7 +306,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				/* XXX fix for force write */
 				v_daddr = ifp->if_daddr;
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR)
 				continue;
@@ -366,9 +366,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 		/* Past this point we are guaranteed that vp, ip are valid. */
 
-		/* Can't clean VDIROP directories in case of truncation */
+		/* Can't clean VU_DIROP directories in case of truncation */
 		/* XXX - maybe we should mark removed dirs specially? */
-		if (vp->v_type == VDIR && (vp->v_flag & VDIROP)) {
+		if (vp->v_type == VDIR && (vp->v_uflag & VU_DIROP)) {
 			do_again++;
 			continue;
 		}
@@ -381,7 +381,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				if (ifp->if_daddr == blkp->bi_daddr)
 					LFS_SET_UINO(ip, IN_CLEANING);
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			continue;
 		}
@@ -714,7 +714,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			else {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				v_daddr = ifp->if_daddr;
-				brelse(bp);
+				brelse(bp, 0);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR) {
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
@@ -725,7 +725,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * here.  Instead, we try an unlocked access.
 			 */
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
-			if (vp != NULL && !(vp->v_flag & VXLOCK)) {
+			if (vp != NULL && !(vp->v_iflag & VI_XLOCK)) {
 				ip = VTOI(vp);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
@@ -880,19 +880,19 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (sup->su_nbytes) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " %d live bytes\n", segnum, sup->su_nbytes));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EBUSY);
 	}
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is active\n", segnum));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is already clean\n", segnum));
-		brelse(bp);
+		brelse(bp, 0);
 		return (EALREADY);
 	}
 
@@ -1009,8 +1009,8 @@ int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-		if ((*vpp)->v_flag & VXLOCK) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VXLOCK\n",
+		if ((*vpp)->v_iflag & VI_XLOCK) {
+			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VI_XLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
 			return EAGAIN;
@@ -1143,15 +1143,14 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			/* Unlock and discard unneeded inode. */
 			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
-			brelse(bp);
+			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}
 		dip = lfs_ifind(ump->um_lfs, ino, bp);
 		if (dip == NULL) {
 			/* Assume write has not completed yet; try again */
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, BC_INVAL);
 			++retries;
 			if (retries > LFS_IFIND_RETRIES)
 				panic("lfs_fastvget: dinode not found");
@@ -1160,7 +1159,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			goto again;
 		}
 		*ip->i_din.ffs1_din = *dip;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	lfs_vinit(mp, &vp);
 

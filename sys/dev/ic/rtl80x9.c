@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.11 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.11.44.1 2007/10/26 15:44:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.11 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.11.44.1 2007/10/26 15:44:59 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.11 2005/12/11 12:21:28 christos Exp $"
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.17 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.17.22.1 2007/10/26 15:45:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.17 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.17.22.1 2007/10/26 15:45:42 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.17 2006/11/16 01:33:05 christos Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/miivar.h>
 

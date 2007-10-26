@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.183 2007/07/17 17:42:08 joerg Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.183.6.1 2007/10/26 15:43:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183 2007/07/17 17:42:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183.6.1 2007/10/26 15:43:58 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183 2007/07/17 17:42:08 joerg Exp $
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

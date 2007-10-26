@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.3 2007/10/02 23:37:20 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.4 2007/10/26 15:44:12 joerg Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.3 2007/10/02 23:37:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.4 2007/10/26 15:44:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,12 +192,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_callout, 0);
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, sc);
+	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
 
 	(void)pnp_register(self, pnp_generic_power);
+
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
@@ -237,7 +238,6 @@ acpitz_get_status(void *opaque)
 	sc->sc_data[ATZ_SENSOR_TEMP].value_cur =
 	    sc->sc_zone.tmp * 100000 - 50000;
 	sc->sc_data[ATZ_SENSOR_TEMP].state = ENVSYS_SVALID;
-	sc->sc_data[ATZ_SENSOR_TEMP].monitor = true;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -567,11 +567,9 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, opaque);
 	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, sc);
 
-	return;
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
@@ -582,6 +580,7 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 	for (i = 0; i < ATZ_NUMSENSORS; i++) {
 		sc->sc_data[i].sensor = i;
 		sc->sc_data[i].state = ENVSYS_SVALID;
+		sc->sc_data[i].monitor = true;
 		sc->sc_data[i].flags = 
 		    (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
 	}

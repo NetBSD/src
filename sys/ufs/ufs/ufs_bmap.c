@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.45 2007/05/17 07:26:22 hannken Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.45.6.1 2007/10/26 15:49:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.45 2007/05/17 07:26:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.45.6.1 2007/10/26 15:49:37 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 * or we have a disk address for it, go fetch it.
 		 */
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
@@ -255,7 +255,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -288,7 +288,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	/*
 	 * Since this is FFS independent code, we are out of scope for the

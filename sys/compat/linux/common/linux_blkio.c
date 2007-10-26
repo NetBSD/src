@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_blkio.c,v 1.14 2007/03/04 06:01:22 christos Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.14.14.1 2007/10/26 15:43:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.14 2007/03/04 06:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.14.14.1 2007/10/26 15:43:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.14 2007/03/04 06:01:22 christos Ex
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_blkio.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

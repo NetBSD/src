@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.113.6.2 2007/10/02 18:29:01 joerg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.113.6.3 2007/10/26 15:48:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.2 2007/10/02 18:29:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.3 2007/10/26 15:48:33 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -364,8 +364,8 @@ proc0_init(void)
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
 	l->l_cpu = curcpu();
-	l->l_priority = PRIBIO;
-	l->l_usrpri = PRIBIO;
+	l->l_priority = PUSER;
+	l->l_usrpri = PUSER;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
 	l->l_name = __UNCONST("swapper");
@@ -674,12 +674,12 @@ proc_alloc(void)
 }
 
 /*
- * Free last resources of a process - called from proc_free (in kern_exit.c)
+ * Free a process id - called from proc_free (in kern_exit.c)
  *
- * Called with the proclist_lock held, and releases upon exit.
+ * Called with the proclist_lock held.
  */
 void
-proc_free_mem(struct proc *p)
+proc_free_pid(struct proc *p)
 {
 	pid_t pid = p->p_pid;
 	struct pid_table *pt;
@@ -707,9 +707,6 @@ proc_free_mem(struct proc *p)
 	mutex_exit(&proclist_mutex);
 
 	nprocs--;
-	mutex_exit(&proclist_lock);
-
-	pool_put(&proc_pool, p);
 }
 
 /*

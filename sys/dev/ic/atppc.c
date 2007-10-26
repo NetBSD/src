@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.23 2007/03/04 06:01:50 christos Exp $ */
+/* $NetBSD: atppc.c,v 1.23.14.1 2007/10/26 15:44:38 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.23 2007/03/04 06:01:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.23.14.1 2007/10/26 15:44:38 joerg Exp $");
 
 #include "opt_atppc.h"
 
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.23 2007/03/04 06:01:50 christos Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 
-#include <machine/bus.h>
-/*#include <machine/intr.h>*/
+#include <sys/bus.h>
+/*#include <sys/intr.h>*/
 
 #include <dev/isa/isareg.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: joy_ess.c,v 1.2 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: joy_ess.c,v 1.2.44.1 2007/10/26 15:45:24 joerg Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6,7 +6,7 @@
 #include <sys/device.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/essvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.9 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.9.2.1 2007/10/26 15:48:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9 2007/07/31 21:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9.2.1 2007/10/26 15:48:14 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -564,7 +564,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 		}
 	} while (lockmgr(&hfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 	
 	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
 		M_WAITOK + M_ZERO);

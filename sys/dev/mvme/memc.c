@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: memc.c,v 1.6.44.1 2007/10/26 15:45:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.6 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.6.44.1 2007/10/26 15:45:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.6 2005/12/11 12:22:48 christos Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/mvme/memcvar.h>
 #include <dev/mvme/memcreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.107.6.1 2007/10/02 18:28:27 joerg Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.107.6.2 2007/10/26 15:45:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.6.1 2007/10/02 18:28:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.6.2 2007/10/26 15:45:08 joerg Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.6.1 2007/10/02 18:28:27 joerg Exp $
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>

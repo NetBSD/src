@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.11 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.11.22.1 2007/10/26 15:45:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.11 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.11.22.1 2007/10/26 15:45:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.11 2006/11/16 01:33:00 christos Exp $")
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>

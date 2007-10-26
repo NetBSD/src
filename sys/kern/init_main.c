@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311.4.5 2007/10/19 00:49:31 jmcneill Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311.4.6 2007/10/26 15:48:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.5 2007/10/19 00:49:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.6 2007/10/26 15:48:26 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -178,7 +178,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.5 2007/10/19 00:49:31 jmcneill
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -211,7 +211,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
-int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -284,7 +283,7 @@ main(void)
 	 */
 	consinit();
 
-	KERNEL_LOCK_INIT();
+	kernel_lock_init();
 
 	uvm_init();
 
@@ -381,6 +380,9 @@ main(void)
 
 	/* Initialize fstrans. */
 	fstrans_init();
+
+	/* Initialize the file descriptor system. */
+	filedesc_init();
 
 	/* Initialize the select()/poll() system calls. */
 	selsysinit();
@@ -624,13 +626,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_cpu->ci_schedstate.spc_runtime = time;
 			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
+	curlwp->l_stime = time;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;

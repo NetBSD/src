@@ -1,6 +1,6 @@
 /* $Sourceforge: bktr_tuner.c,v 1.5 2003/03/13 22:21:04 emsi Exp $ */
 
-/*	$NetBSD: bktr_tuner.c,v 1.11 2005/12/28 20:41:56 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.11.44.1 2007/10/26 15:47:00 joerg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp$ */
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.11 2005/12/28 20:41:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.11.44.1 2007/10/26 15:47:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.11 2005/12/28 20:41:56 wiz Exp $");
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>          /* for bus space */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/bus.h>
 #endif
 #endif

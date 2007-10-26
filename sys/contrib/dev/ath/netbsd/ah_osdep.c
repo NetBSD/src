@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.10.22.1 2007/09/03 16:47:52 jmcneill Exp $
+ * $Id: ah_osdep.c,v 1.10.22.2 2007/10/26 15:44:07 joerg Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -57,7 +57,7 @@
 #include <contrib/dev/ath/ah.h>
 
 #ifdef __mips__
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #define ENTER	lwp_t *savlwp = curlwp; curlwp = cpu_info_store.ci_curlwp;
 #define	EXIT	curlwp = savlwp;

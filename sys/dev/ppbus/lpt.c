@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.19 2007/03/04 06:02:28 christos Exp $ */
+/* $NetBSD: lpt.c,v 1.19.14.1 2007/10/26 15:47:23 joerg Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.19 2007/03/04 06:02:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.19.14.1 2007/10/26 15:47:23 joerg Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.19 2007/03/04 06:02:28 christos Exp $");
 #include <sys/types.h>
 #include <sys/syslog.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ppbus/ppbus_1284.h>
 #include <dev/ppbus/ppbus_base.h>

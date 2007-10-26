@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.52.22.1 2007/08/07 02:20:45 jmcneill Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.52.22.2 2007/10/26 15:45:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52.22.1 2007/08/07 02:20:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52.22.2 2007/10/26 15:45:36 joerg Exp $");
 
 #include "isadma.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52.22.1 2007/08/07 02:20:45 jmcneill Ex
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.37.22.1 2007/10/05 00:04:29 joerg Exp $	*/
+/*	$NetBSD: yds.c,v 1.37.22.2 2007/10/26 15:46:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.1 2007/10/05 00:04:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.2 2007/10/26 15:46:58 joerg Exp $");
 
 #include "mpu.h"
 
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.1 2007/10/05 00:04:29 joerg Exp $");
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/microcode/yds/yds_hwmcode.h>
 #include <dev/pci/ydsreg.h>

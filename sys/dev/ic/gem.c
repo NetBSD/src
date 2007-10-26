@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.57.6.2 2007/10/02 18:28:24 joerg Exp $ */
+/*	$NetBSD: gem.c,v 1.57.6.3 2007/10/26 15:44:44 joerg Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.57.6.2 2007/10/02 18:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.57.6.3 2007/10/26 15:44:44 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.57.6.2 2007/10/02 18:28:24 joerg Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

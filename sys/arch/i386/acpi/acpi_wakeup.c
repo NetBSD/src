@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.17 2007/10/13 15:36:47 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.18 2007/10/26 15:42:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.17 2007/10/13 15:36:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.18 2007/10/26 15:42:31 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -178,6 +178,7 @@ enter_s4_with_bios(void)
 extern uint8_t acpi_wakeup_gdt[6];
 extern uint32_t acpi_wakeup_ds;
 extern uint32_t acpi_wakeup_cr0;
+extern uint32_t acpi_wakeup_cr4;
 /* XXX shut gcc up */
 extern int		acpi_savecpu(void) __attribute__((__returns_twice__));
 extern int		acpi_restorecpu(void);
@@ -246,6 +247,7 @@ acpi_md_sleep(int state)
 
 		WAKECODE_FIXUP(WAKEUP_r_cr0, uint32_t, acpi_wakeup_cr0);
 		WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
+		WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, acpi_wakeup_cr4);
 
 		WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
 

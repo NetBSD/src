@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.10 2007/05/09 00:10:56 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.10.6.1 2007/10/26 15:44:15 joerg Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.10 2007/05/09 00:10:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.10.6.1 2007/10/26 15:44:15 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,13 +62,16 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.10 2007/05/09 00:10:56 macallan Exp $"
 
 #include "opt_wsdisplay_compat.h"
 #include "adbdebug.h"
+#include "wsmouse.h"
 
 struct adbkbd_softc {
 	struct device sc_dev;
 	struct adb_device *sc_adbdev;
 	struct adb_bus_accessops *sc_ops;
 	struct device *sc_wskbddev;
+#if NWSMOUSE > 0
 	struct device *sc_wsmousedev;
+#endif
 	struct sysmon_pswitch sc_sm_pbutton;
 	int sc_leds;
 	int sc_have_led_control;
@@ -134,6 +137,7 @@ struct wskbd_mapdata adbkbd_keymapdata = {
 #endif
 };
 
+#if NWSMOUSE > 0
 static int adbkms_enable(void *);
 static int adbkms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbkms_disable(void *);
@@ -146,6 +150,8 @@ const struct wsmouse_accessops adbkms_accessops = {
 
 static int  adbkbd_sysctl_button(SYSCTLFN_ARGS);
 static void adbkbd_setup_sysctl(struct adbkbd_softc *);
+
+#endif /* NWSMOUSE > 0 */
 
 #ifdef ADBKBD_DEBUG
 #define DPRINTF printf
@@ -177,7 +183,9 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 	struct adb_attach_args *aaa = aux;
 	short cmd;
 	struct wskbddev_attach_args a;
+#if NWSMOUSE > 0
 	struct wsmousedev_attach_args am;
+#endif
 
 	sc->sc_ops = aaa->ops;
 	sc->sc_adbdev = aaa->dev;
@@ -306,13 +314,16 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
 
+#if NWSMOUSE > 0
 	/* attach the mouse device */
 	am.accessops = &adbkms_accessops;
 	am.accesscookie = sc;
-	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &am, wsmousedevprint);
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &am, 
+	    wsmousedevprint);
 
 	if (sc->sc_wsmousedev != NULL)
 		adbkbd_setup_sysctl(sc);
+#endif
 
 	/* finally register the power button */
 	sysmon_task_queue_init();
@@ -421,6 +432,7 @@ adbkbd_key(struct adbkbd_softc *sc, uint8_t k)
 		return;
 	}
 
+#if NWSMOUSE > 0
 	/* translate some keys to mouse events */
 	if (sc->sc_wsmousedev != NULL) {
 		if (ADBK_KEYVAL(k) == sc->sc_trans[1]) {
@@ -436,6 +448,8 @@ adbkbd_key(struct adbkbd_softc *sc, uint8_t k)
 			return;
 		}			
 	}
+#endif
+
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		char cbuf[2];
@@ -501,7 +515,8 @@ adbkbd_set_leds(void *cookie, int leds)
 		buffer[1] = aleds | 0xf8;
 	
 		cmd = ADBLISTEN(sc->sc_adbdev->current_addr, 2);
-		sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, 2, buffer);
+		sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, 2, 
+		    buffer);
 	}
 
 	sc->sc_leds = leds & 7;
@@ -612,6 +627,7 @@ adbkbd_cnpollc(void *v, int on)
 	}
 }
 
+#if NWSMOUSE > 0
 /* stuff for the pseudo mouse */
 static int
 adbkms_enable(void *v)
@@ -656,14 +672,16 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 	    (const struct sysctlnode **)&node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "middle", "middle mouse button", adbkbd_sysctl_button, 
-		    1, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		    1, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
+		    CTL_EOL);
 	node->sysctl_data = sc;
 
 	ret = sysctl_createv(NULL, 0, NULL, 
 	    (const struct sysctlnode **)&node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "right", "right mouse button", adbkbd_sysctl_button, 
-		    2, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		    2, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
+		    CTL_EOL);
 	node->sysctl_data = sc;
 }
 
@@ -702,3 +720,4 @@ SYSCTL_SETUP(sysctl_adbkbdtrans_setup, "adbkbd translator setup")
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 }
+#endif /* NWSMOUSE > 0 */

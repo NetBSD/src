@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.26 2007/03/04 06:01:46 christos Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.26.14.1 2007/10/26 15:44:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.26 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.26.14.1 2007/10/26 15:44:28 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.26 2007/03/04 06:01:46 christos Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>

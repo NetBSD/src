@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.11 2007/06/17 19:50:01 dsl Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.11.6.1 2007/10/26 15:44:03 joerg Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.11 2007/06/17 19:50:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.11.6.1 2007/10/26 15:44:03 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ osf1_sys_readv(struct lwp *l, void *v, register_t *retval)
 	error = osf1_get_iov(SCARG(uap, iovp), SCARG(uap, iovcnt), &niov);
 
 	if (error == 0) {
-		error = do_filereadv(l, SCARG(uap, fd), niov,
+		error = do_filereadv(SCARG(uap, fd), niov,
 		    SCARG(uap, iovcnt), NULL,
 		    FOF_UPDATE_OFFSET | FOF_IOV_SYSSPACE, retval);
 	}
@@ -149,7 +149,7 @@ osf1_sys_writev(struct lwp *l, void *v, register_t *retval)
 	error = osf1_get_iov(SCARG(uap, iovp), SCARG(uap, iovcnt), &niov);
 
 	if (error == 0) {
-		error = do_filewritev(l, SCARG(uap, fd), niov,
+		error = do_filewritev(SCARG(uap, fd), niov,
 		    SCARG(uap, iovcnt), NULL,
 		    FOF_UPDATE_OFFSET | FOF_IOV_SYSSPACE, retval);
 	}

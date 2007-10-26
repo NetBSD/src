@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.31.24.2 2007/10/01 05:37:49 joerg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.31.24.3 2007/10/26 15:46:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.2 2007/10/01 05:37:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.3 2007/10/26 15:46:40 joerg Exp $");
 
 #include "ehci.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.2 2007/10/01 05:37:49 joerg Exp
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/usb_pci.h>

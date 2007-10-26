@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.3.18.1 2007/10/26 15:45:31 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.3.18.1 2007/10/26 15:45:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $
 #include <sys/callout.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsdisplayvar.h>

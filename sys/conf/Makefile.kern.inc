@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.101.6.1 2007/10/02 18:28:15 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.101.6.2 2007/10/26 15:44:06 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -89,7 +89,7 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
-.if ${USE_FORT:Uno} == "yes"
+.if ${USE_SSP:Uno} == "yes"
 CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif

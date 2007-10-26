@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.34 2007/03/04 06:02:44 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.34.14.1 2007/10/26 15:47:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.34 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.34.14.1 2007/10/26 15:47:37 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.34 2007/03/04 06:02:44 christos Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>

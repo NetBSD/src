@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.12 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.12.22.1 2007/10/26 15:46:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.12 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.12.22.1 2007/10/26 15:46:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>

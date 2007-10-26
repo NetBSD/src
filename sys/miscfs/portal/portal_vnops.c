@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.74 2007/07/23 11:27:46 pooka Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.74.4.1 2007/10/26 15:48:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.74 2007/07/23 11:27:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.74.4.1 2007/10/26 15:48:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ portal_open(v)
 	/*
 	 * Nothing to do when opening the root node.
 	 */
-	if (vp->v_flag & VROOT)
+	if (vp->v_vflag & VV_ROOT)
 		return (0);
 
 	/*
@@ -544,7 +544,7 @@ portal_getattr(v)
 	/* vap->va_qbytes = 0; */
 	vap->va_bytes = 0;
 	/* vap->va_qsize = 0; */
-	if (vp->v_flag & VROOT) {
+	if (vp->v_vflag & VV_ROOT) {
 		vap->va_type = VDIR;
 		vap->va_mode = S_IRUSR|S_IWUSR|S_IXUSR|
 				S_IRGRP|S_IWGRP|S_IXGRP|
@@ -576,7 +576,7 @@ portal_setattr(v)
 	/*
 	 * Can't mess with the root vnode
 	 */
-	if (ap->a_vp->v_flag & VROOT)
+	if (ap->a_vp->v_vflag & VV_ROOT)
 		return (EACCES);
 
 	return (0);

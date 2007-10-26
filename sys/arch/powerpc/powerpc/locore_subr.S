@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.32 2007/07/21 19:26:14 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.32.4.1 2007/10/26 15:43:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -289,3 +289,16 @@ _C_LABEL(cpu_lwp_bootstrap):
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */
 	b	trapexit
+
+#if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
+ENTRY(cpu_spinup_trampoline)
+	li	0,0
+	mtmsr	0
+	isync
+
+	lis	3,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
+
+	bl	_C_LABEL(cpu_hatch)
+	b	_C_LABEL(idle_loop)
+#endif /*MULTIPROCESSOR + OEA*/

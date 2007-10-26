@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.7 2007/03/04 06:02:02 christos Exp $ */
+/* $NetBSD: sti.c,v 1.7.14.1 2007/10/26 15:45:02 joerg Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.7 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.7.14.1 2007/10/26 15:45:02 joerg Exp $");
 
 #include "wsdisplay.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.7 2007/03/04 06:02:02 christos Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>

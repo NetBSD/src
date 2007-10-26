@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.34.22.1 2007/10/04 18:59:20 joerg Exp $	*/
+/*	$NetBSD: autri.c,v 1.34.22.2 2007/10/26 15:45:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.34.22.1 2007/10/04 18:59:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.34.22.2 2007/10/26 15:45:54 joerg Exp $");
 
 #include "midi.h"
 
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.34.22.1 2007/10/04 18:59:20 joerg Exp $"
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/autrireg.h>
 #include <dev/pci/autrivar.h>

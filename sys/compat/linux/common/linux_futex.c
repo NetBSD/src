@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.7 2006/07/24 19:01:49 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.7.28.1 2007/10/26 15:43:57 joerg Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,9 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7 2006/07/24 19:01:49 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7.28.1 2007/10/26 15:43:57 joerg Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -42,8 +42,13 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7 2006/07/24 19:01:49 manu Exp $")
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_futex.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 struct futex;

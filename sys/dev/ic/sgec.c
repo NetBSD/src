@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.30.6.2 2007/10/02 18:28:26 joerg Exp $ */
+/*      $NetBSD: sgec.c,v 1.30.6.3 2007/10/26 15:45:00 joerg Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.6.2 2007/10/02 18:28:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.6.3 2007/10/26 15:45:00 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.30.6.2 2007/10/02 18:28:26 joerg Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>

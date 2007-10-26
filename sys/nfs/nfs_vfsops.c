@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.182.2.3 2007/10/02 18:29:24 joerg Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.182.2.4 2007/10/26 15:49:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182.2.3 2007/10/02 18:29:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182.2.4 2007/10/26 15:49:14 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -364,9 +364,9 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unbusy(mp);
@@ -928,7 +928,7 @@ nfs_root(mp, vpp)
 		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
-	vp->v_flag = VROOT;
+	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }

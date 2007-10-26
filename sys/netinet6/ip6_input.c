@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.109.4.1 2007/10/02 18:29:23 joerg Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.109.4.2 2007/10/26 15:49:08 joerg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.109.4.1 2007/10/02 18:29:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.109.4.2 2007/10/26 15:49:08 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -148,11 +148,11 @@ struct pfil_head inet6_pfil_hook;
 
 struct ip6stat ip6stat;
 
-static void ip6_init2 __P((void *));
+static void ip6_init2(void *);
 static struct m_tag *ip6_setdstifaddr __P((struct mbuf *, struct in6_ifaddr *));
 
-static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
-static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
+static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
+static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
@@ -590,18 +590,16 @@ ip6_input(struct mbuf *m)
 	 * as our interface address (e.g. multicast addresses, addresses
 	 * within FAITH prefixes and such).
 	 */
-	if (deliverifp && !ip6_getdstifaddr(m)) {
+	if (deliverifp && ip6_getdstifaddr(m) == NULL) {
 		struct in6_ifaddr *ia6;
 
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
-		if (ia6) {
-			if (!ip6_setdstifaddr(m, ia6)) {
-				/*
-				 * XXX maybe we should drop the packet here,
-				 * as we could not provide enough information
-				 * to the upper layers.
-				 */
-			}
+		if (ia6 != NULL && ip6_setdstifaddr(m, ia6) == NULL) {
+			/*
+			 * XXX maybe we should drop the packet here,
+			 * as we could not provide enough information
+			 * to the upper layers.
+			 */
 		}
 	}
 

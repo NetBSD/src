@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.50.2.1 2007/10/02 18:28:50 joerg Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.50.2.2 2007/10/26 15:48:15 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.50.2.1 2007/10/02 18:28:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.50.2.2 2007/10/26 15:48:15 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -211,21 +211,21 @@ msdosfs_mountroot()
 	if ((error = msdosfs_mountfs(rootvp, mp, l, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		(void)msdosfs_unmount(mp, 0, l);
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		vrele(rootvp);
 		return (error);
 	}
 
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -514,7 +514,6 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 */
 	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
 		goto error_exit;
-	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
@@ -721,7 +720,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	/*
 	 * Release the bootsector buffer.
 	 */
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/*
@@ -746,7 +745,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 			pmp->pm_nxtfree = getulong(fp->fsinxtfree);
 		else
 			pmp->pm_fsinfo = 0;
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 
@@ -822,7 +821,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 
 error_exit:;
 	if (bp)
-		brelse(bp);
+		brelse(bp, BC_AGE);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
@@ -868,7 +867,8 @@ msdosfs_unmount(mp, mntflags, l)
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
 		printf("flag %08x, usecount %d, writecount %ld, holdcnt %ld\n",
-		    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
+		    vp->v_vflag | vp->v_iflag | vp->v_uflag, vp->v_usecount,
+		    vp->v_writecount, vp->v_holdcnt);
 		printf("mount %p, op %p\n",
 		    vp->v_mount, vp->v_op);
 		printf("freef %p, freeb %p, mount %p\n",

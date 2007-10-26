@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12.26.1 2007/09/03 16:47:03 jmcneill Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12.26.2 2007/10/26 15:42:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,7 +119,7 @@
 #define VM_MAXUSER_ADDRESS	0x00007f8000000000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffff8000000000
 
 #define VM_MAXUSER_ADDRESS32	0xfffff000
 
@@ -153,33 +153,24 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
 
-#define __HAVE_PMAP_PHYSSEG
-
-#define __HAVE_VM_PAGE_MD
-#define VM_MDPAGE_INIT(pg)                                      \
-        memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));         \
-        mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM); \
-        SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
+#define	__HAVE_VM_PAGE_MD
+#define	VM_MDPAGE_INIT(pg)							\
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
+	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
+	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
 
 struct pv_head {
-	kmutex_t pvh_lock;	     /* locks every pv in this tree */
-        SPLAY_HEAD(pvtree, pv_entry) pvh_root;
-                                        /* head of tree (locked by pvh_lock) */
+	kmutex_t pvh_lock;		/* locks every pv in this tree */
+	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
+					/* head of tree (locked by pvh_lock) */
 };
 
 struct vm_page_md {
-        struct pv_head mp_pvhead;
-        int mp_attrs;
-};
-
-/*
- * pmap specific data stored in the vm_physmem[] array
- */
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv_head array */
-	unsigned char *attrs;		/* attrs array */
+	struct pv_head mp_pvhead;
+	struct vm_page *mp_link;
+	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
 };
 
 #endif /* _VMPARAM_H_ */

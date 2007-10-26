@@ -1,11 +1,7 @@
-/*	$NetBSD: param.h,v 1.3 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.3.30.1 2007/10/26 15:42:10 joerg Exp $	*/
 
 #ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
 #include <machine/cpu.h>
-#endif
 #endif
 
 #define	_MACHINE	amd64
@@ -64,7 +60,7 @@
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	4*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
 #endif
 
 /*

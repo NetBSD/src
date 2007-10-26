@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.8.2.2 2007/10/02 18:28:49 joerg Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.8.2.3 2007/10/26 15:48:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.2 2007/10/02 18:28:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.3 2007/10/26 15:48:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,11 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	if (err) {
 		EFS_DPRINTF(("superblock read failed\n"));
 		free(emp, M_EFSMNT);
-		brelse(bp);
+		brelse(bp, 0);
 		return (err);
 	}
 	memcpy(&emp->em_sb, bp->b_data, sizeof(emp->em_sb));
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* validate the superblock */
 	if (efs_sb_validate(&emp->em_sb, &why)) {
@@ -111,7 +111,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 				skip = true;
 			} else {
 				free(emp, M_EFSMNT);
-				brelse(rbp);
+				brelse(rbp, 0);
 				return (err);
 			}
 		}
@@ -122,13 +122,13 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 				printf("efs: superblock differs from "
 				    "replicant; please run fsck_efs(8)\n");
 				if (!(mp->mnt_flag & MNT_FORCE)) {
-					brelse(rbp);
+					brelse(rbp, 0);
 					free(emp, M_EFSMNT);
 					return (EIO);
 				}
 			}
 		}
-		brelse(rbp);
+		brelse(rbp, 0);
 	}
 
 	/* ensure we can read last block */
@@ -138,11 +138,11 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 		    "fsck_efs(8)\n");
 		if (!(mp->mnt_flag & MNT_FORCE)) {
 			free(emp, M_EFSMNT);
-			brelse(bp);
+			brelse(bp, 0);
 			return (err);
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	mp->mnt_data = emp;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -369,7 +369,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		pool_put(&efs_inode_pool, eip);
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 	eip->ei_mode = 0;
 	eip->ei_lockf = NULL;
 	eip->ei_number = ino;
@@ -419,7 +419,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	case S_IFDIR:
 		vp->v_type = VDIR;
 		if (ino == EFS_ROOTINO)
-			vp->v_flag |= VROOT;
+			vp->v_vflag |= VV_ROOT;
 		break;
 	case S_IFBLK:
 		vp->v_type = VBLK;

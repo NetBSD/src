@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.11 2007/07/29 12:15:43 ad Exp $ */
+/*	$NetBSD: ct.c,v 1.11.4.1 2007/10/26 15:44:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.11 2007/07/29 12:15:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.11.4.1 2007/10/26 15:44:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,7 @@ ctcommand(dev, cmd, cnt)
 	bp->b_flags = 0;
 	sc->sc_flags &= ~CTF_CMD;
 	if (nbp)
-		brelse(nbp);
+		brelse(nbp, 0);
 }
 
 void

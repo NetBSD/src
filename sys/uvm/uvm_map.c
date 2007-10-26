@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.238.4.1 2007/09/03 16:49:17 jmcneill Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.238.4.2 2007/10/26 15:49:41 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.238.4.1 2007/09/03 16:49:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.238.4.2 2007/10/26 15:49:41 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2324,7 +2324,7 @@ uvm_unmap_detach(struct vm_map_entry *first_entry, int flags)
 int
 uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
-    vsize_t align	/* alignment hint */,
+    vsize_t align	/* alignment */,
     vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
     uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
 {
@@ -2339,7 +2339,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 	 * reserve some virtual space.
 	 */
 
-	if (uvm_map(map, raddr, size, NULL, offset, 0,
+	if (uvm_map(map, raddr, size, NULL, offset, align,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE|flags)) != 0) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
@@ -2987,8 +2987,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 				    current->object.uvm_obj;
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
-				    (current->protection & VM_PROT_EXECUTE))
+				    (current->protection & VM_PROT_EXECUTE)) {
+				    	simple_lock(&uobj->vmobjlock);
 					vn_markexec((struct vnode *) uobj);
+				    	simple_unlock(&uobj->vmobjlock);
+				}
 			}
 		}
 
@@ -4426,7 +4429,8 @@ again:
 		goto again;
 	}
 
-	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, 0, 0, mapflags, &args);
+	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
+	    0, mapflags, &args);
 	if (error) {
 		uvm_pagefree(pg);
 		return NULL;

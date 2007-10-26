@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.61 2007/07/29 12:15:40 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.61.4.1 2007/10/26 15:43:40 joerg Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2007/07/29 12:15:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.4.1 2007/10/26 15:43:40 joerg Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -497,8 +497,7 @@ xyattach(struct device *parent, struct device *self, void *aux)
 	 * to start with a clean slate.
 	 */
 	memset(&xy->sc_dk, 0, sizeof(xy->sc_dk));
-	xy->sc_dk.dk_driver = &xydkdriver;
-	xy->sc_dk.dk_name = xy->sc_dev.dv_xname;
+	disk_init(&xy->sc_dk, xy->sc_dev.dv_xname, &xydkdriver);
 
 	xy->state = XY_DRIVE_UNKNOWN;	/* to start */
 	xy->flags = 0;

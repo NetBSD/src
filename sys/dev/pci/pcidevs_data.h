@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.884.6.7 2007/10/02 18:28:34 joerg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.884.6.8 2007/10/26 15:46:47 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.903 2007/09/20 20:25:27 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.907 2007/10/22 14:59:38 manu Exp
  */
 
 /*
@@ -6452,6 +6452,10 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88EC042",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_CO55,
+	    "Yukon 88ECO55",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    "GT-64120 System Controller",
 	},
@@ -6729,7 +6733,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ISABRIDGE,
-	    "ISA Bridge w/PnP",
+	    "Fire Coral ISA Bridge w/PnP",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWERWAVE,
+	    "PowerWave Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IDAHO,
+	    "Idaho PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPUBRIDGE,
@@ -6744,6 +6756,14 @@ static const struct pci_product pci_products[] = {
 	    "GXT-150P 2D Accelerator",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CARRERA,
+	    "Carrera PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82G2675,
+	    "82G2675 SCSI-2 Fast Controller",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE2,
 	    "MCA Bridge",
 	},
@@ -6752,12 +6772,20 @@ static const struct pci_product pci_products[] = {
 	    "82351 PCI-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MONNAV,
+	    "Montana/Nevada PCI Bridge and Memory Controller",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_PYTHON,
+	    "Python PCI-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
 	    "ServeRAID",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
-	    "GXT-250P",
+	    "GXT-250P Graphics Adapter",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
@@ -6780,12 +6808,44 @@ static const struct pci_product pci_products[] = {
 	    "Turboways 25 ATM",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT500P,
+	    "GXT-500P/GXT550P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_I82557B,
+	    "i82557B 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT800P,
-	    "GXT-800P",
+	    "GXT-800P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_EADSPCI,
+	    "EADS PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P,
+	    "GXT-3000P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P2,
+	    "GXT-3000P Graphics Adapter(2)",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT2000P,
+	    "GXT-2000P Graphics Adapter",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC2,
 	    "Olympic 2 Token Ring",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71064,
+	    "CPC710 Dual Bridge and Memory Controller (PCI64)",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71032,
+	    "CPC710 Dual Bridge and Memory Controller (PCI32)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO,
@@ -6796,12 +6856,44 @@ static const struct pci_product pci_products[] = {
 	    "PPC 405GP PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4000P,
+	    "GXT-4000P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6000P,
+	    "GXT-6000P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT300P,
+	    "GXT-300P Graphics Adapter",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
 	    "133 PCI-X Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4,
 	    "ServeRAID 4/5",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP,
+	    "PPC 440GP PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IBMETHER,
+	    "10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6500P,
+	    "GXT-6500P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4500P,
+	    "GXT-4500P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT135P,
+	    "GXT-135P Graphics Adapter",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
@@ -10801,11 +10893,11 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030,
-	    "9030 Modem 4 port",
+	    "9030 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
-	    "9030 Modem 4 port V92",
+	    "9050 I/O Accelrator",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
@@ -11982,6 +12074,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
 	    "UltraSPARC IIe PCI",
+	},
+	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_IP100A,
+	    "IP100A 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
@@ -13496,4 +13592,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2776;
+const int pci_nproducts = 2793;

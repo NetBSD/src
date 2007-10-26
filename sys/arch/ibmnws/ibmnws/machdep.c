@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.22.1 2007/10/26 15:42:40 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.22.1 2007/10/26 15:42:40 joerg Exp $");
+
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,7 +53,6 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -67,32 +68,20 @@
 #include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
+#include <arch/powerpc/pic/picvar.h>
 
 #include <dev/cons.h>
 
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#endif
-
-#include "ksyms.h"
-
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
-void strayintr(int);
-int lcsplx(int);
-void ibmnws_bus_space_init(void);
-
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-extern void *endsym, *startsym;
-#endif
+struct pic_ops *isa_pic;
+int isa_pcmciamask = 0x8b28;
 
 void
 initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
@@ -133,68 +122,12 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	/* Initialize the CPU type */
-	/* ident_platform(); */
-
 	/*
 	 * boothowto
 	 */
 	boothowto = 0;		/* XXX - should make this an option */
 
-	/*
-	 * Initialize bus_space.
-	 */
-	ibmnws_bus_space_init();
-
-	/*
-	 * Now setup fixed bat registers
-	 */
-	oea_batinit(
-	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
-	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
-	    0);
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-	oea_init(NULL);
-
-	/*
-	 * external interrupt handler install
-	 */
-
-	init_intr_ivr();
-
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
-#endif
-
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-}
-
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-	*mem = physmemr;
-	*avail = availmemr;
+	prep_initppc(startkernel, endkernel, args);
 }
 
 /*
@@ -209,16 +142,17 @@ cpu_startup(void)
 	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
+	prep_intr_reg_off = INTR_VECTOR_REG;
 
 	/*
 	 * Do common startup.
 	 */
 	oea_startup("IBM NetworkStation 1000 (8362-XXX)");
 
-	/*
-	 * Initialize soft interrupt framework.
-	 */
-	softintr__init();
+	isa_pic = setup_prepivr(PIC_IVR_IBM);
+
+        oea_install_extint(pic_ext_intr);
+
 	/*
 	 * Now allow hardware interrupts.
 	 */
@@ -302,75 +236,4 @@ halt_sys:
 	for (;;)
 		continue;
 	/* NOTREACHED */
-}
-
-/*
- * lcsplx() is called from locore; it is an open-coded version of
- * splx() differing in that it returns the previous priority level.
- */
-int
-lcsplx(int ipl)
-{
-	int oldcpl;
-	struct cpu_info *ci = curcpu();
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = ci->ci_cpl;
-	ci->ci_cpl = ipl;
-	if (ci->ci_ipending & ~ipl)
-		do_pending_int();
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-	return (oldcpl);
-}
-
-struct powerpc_bus_space io_bus_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x3f800000,
-};
-struct powerpc_bus_space isa_io_bus_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x00010000,
-};
-struct powerpc_bus_space mem_bus_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x3f000000,
-};
-struct powerpc_bus_space isa_mem_bus_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x01000000,
-};
-
-static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-
-void
-ibmnws_bus_space_init(void)
-{
-	int error;
-
-	error = bus_space_init(&io_bus_space_tag, "ioport",
-	    ex_storage[0], sizeof(ex_storage[0]));
-	if (error)
-		panic("prep_bus_space_init: can't init io tag");
-
-	error = extent_alloc_region(io_bus_space_tag.pbs_extent,
-	    0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("prep_bus_space_init: can't block out reserved I/O"
-		    " space 0x10000-0x7fffff: error=%d", error);
-	error = bus_space_init(&mem_bus_space_tag, "iomem",
-	    ex_storage[1], sizeof(ex_storage[1]));
-	if (error)
-		panic("prep_bus_space_init: can't init mem tag");
-
-	isa_io_bus_space_tag.pbs_extent = io_bus_space_tag.pbs_extent;
-	error = bus_space_init(&isa_io_bus_space_tag, "isa-ioport", NULL, 0);
-	if (error)
-		panic("bus_space_init: can't init isa io tag");
-
-	isa_mem_bus_space_tag.pbs_extent = mem_bus_space_tag.pbs_extent;
-	error = bus_space_init(&isa_mem_bus_space_tag, "isa-iomem", NULL, 0);
-	if (error)
-		panic("bus_space_init: can't init isa mem tag");
 }

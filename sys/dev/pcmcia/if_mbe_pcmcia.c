@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.41 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.41.22.1 2007/10/26 15:47:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.41 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.41.22.1 2007/10/26 15:47:09 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.41 2006/11/16 01:33:20 christos 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>

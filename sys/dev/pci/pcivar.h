@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.14.3 2007/10/01 05:37:54 joerg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.14.4 2007/10/26 15:46:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/device.h>
 #include <sys/pnp.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcireg.h>
 
 /*
