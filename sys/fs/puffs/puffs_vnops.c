@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.112 2007/10/23 18:27:10 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.113 2007/10/26 16:54:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.112 2007/10/23 18:27:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.113 2007/10/26 16:54:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1749,6 +1749,7 @@ puffs_read(void *v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
+			memset(read_msg, 0, argsize); /* XXX: touser KASSERT */
 			RWARGS(read_msg, ap->a_ioflag, tomove,
 			    uio->uio_offset, ap->a_cred);
 
@@ -1899,6 +1900,7 @@ puffs_write(void *v)
 		while (uio->uio_resid > 0) {
 			/* move data to buffer */
 			tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
+			memset(write_msg, 0, argsize); /* XXX: touser KASSERT */
 			RWARGS(write_msg, ap->a_ioflag, tomove,
 			    uio->uio_offset, ap->a_cred);
 			error = uiomove(write_msg->pvnr_data, tomove, uio);
