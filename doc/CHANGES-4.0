@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.335 2007/10/26 14:49:44 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.336 2007/10/26 23:16:31 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10270,17 +10270,24 @@ distrib/utils/sysinst/msg.mi.fr			1.99
 distrib/utils/sysinst/msg.mi.pl			1.58
 distrib/utils/sysinst/util.c			1.148
 
-Offer to update /etc/mailer.conf if sysinst detects during upgrade
-that sendmail (removed in NetBSD 4.0) is being used.
-[pavel, ticket #948]
+	Offer to update /etc/mailer.conf if sysinst detects during upgrade
+	that sendmail (removed in NetBSD 4.0) is being used.
+	[pavel, ticket #948]
 
 Makefile					1.250
 usr.sbin/postinstall/postinstall		1.51
 usr.sbin/postinstall/postinstall		1.52
 
-- Return exit code 1 when a postinstall check or fix fails.
-- Ignore the return code from "postinstall check" during make build, it
-  typically fails.
-- Add a check for obsolete sendmail in /etc/mailer.conf, installs a
-  fresh copy of the file if invoked as "fix". Not enabled by default.
-[pavel, ticket #947]
+	- Return exit code 1 when a postinstall check or fix fails.
+	- Ignore the return code from "postinstall check" during make build, it
+  	  typically fails.
+	- Add a check for obsolete sendmail in /etc/mailer.conf, installs a
+	  fresh copy of the file if invoked as "fix". Not enabled by default.
+	[pavel, ticket #947]
+
+sys/dev/pci/pccbb.c				1.149 via patch
+
+	Correctly initialise sc_insert_ch and switch to
+	callout_setfunc/callout_schedule.
+	[joerg, ticket #942]
+
