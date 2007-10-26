@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.68 2007/10/25 10:59:45 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.69 2007/10/26 13:51:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.68 2007/10/25 10:59:45 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.69 2007/10/26 13:51:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -147,8 +147,16 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
-
-	pu->pu_cc_stacksize = ss;
+	int stackshift;
+ 
+	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
+	stackshift = -1;
+	while (ss) {
+		ss >>= 1;
+		stackshift++;
+	}
+	pu->pu_cc_stackshift = stackshift;
+	assert(1<<stackshift == ss);
 }
 
 struct puffs_pathobj *
@@ -412,7 +420,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	free(pops); /* XXX */
 
 	pu->pu_privdata = priv;
-	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
+	pu->pu_cc_stackshift = PUFFS_CC_STACKSHIFT_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_framectrl.fb_ios);
 	LIST_INIT(&pu->pu_ccnukelst);
