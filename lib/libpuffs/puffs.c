@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.69 2007/10/26 13:51:14 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.70 2007/10/26 17:35:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.69 2007/10/26 13:51:14 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.70 2007/10/26 17:35:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -425,6 +425,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	LIST_INIT(&pu->pu_framectrl.fb_ios);
 	LIST_INIT(&pu->pu_ccnukelst);
 	TAILQ_INIT(&pu->pu_sched);
+	TAILQ_INIT(&pu->pu_exq);
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
