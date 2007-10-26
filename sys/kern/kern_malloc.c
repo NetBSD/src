@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.108.2.4 2007/07/29 11:34:48 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.108.2.5 2007/10/26 17:05:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.4 2007/07/29 11:34:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.5 2007/10/26 17:05:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -339,11 +339,11 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &kmembuckets[indx];
-	mutex_enter(&malloc_lock);
+	mutex_spin_enter(&malloc_lock);
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
-			mutex_exit(&malloc_lock);
+			mutex_spin_exit(&malloc_lock);
 			return ((void *) NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
@@ -357,21 +357,18 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
 #endif
 	if (kbp->kb_next == NULL) {
-		int s;
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
 			allocsize = round_page(size);
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
-		mutex_exit(&malloc_lock);
-		s = splvm();
+		mutex_spin_exit(&malloc_lock);
 		va = (void *) uvm_km_alloc(kmem_map,
 		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0) |
 		    UVM_KMF_WIRED);
-		splx(s);
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -385,7 +382,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 				panic("malloc: out of space in kmem_map");
 			return (NULL);
 		}
-		mutex_enter(&malloc_lock);
+		mutex_spin_enter(&malloc_lock);
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
 #endif
@@ -510,7 +507,7 @@ out:
 #ifdef MALLOCLOG
 	domlog(va, size, ksp, 1, file, line);
 #endif
-	mutex_exit(&malloc_lock);
+	mutex_spin_exit(&malloc_lock);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
 	FREECHECK_OUT(&malloc_freecheck, (void *)va);
@@ -561,7 +558,7 @@ free(void *addr, struct malloc_type *ksp)
 
 	LOCKDEBUG_MEM_CHECK(addr, size);
 
-	mutex_enter(&malloc_lock);
+	mutex_spin_enter(&malloc_lock);
 #ifdef MALLOCLOG
 	domlog(addr, 0, ksp, 2, file, line);
 #endif
@@ -596,7 +593,7 @@ free(void *addr, struct malloc_type *ksp)
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
-		mutex_exit(&malloc_lock);
+		mutex_spin_exit(&malloc_lock);
 		return;
 	}
 	freep = (struct freelist *)addr;
@@ -655,7 +652,7 @@ free(void *addr, struct malloc_type *ksp)
 		((struct freelist *)kbp->kb_last)->next = addr;
 	freep->next = NULL;
 	kbp->kb_last = addr;
-	mutex_exit(&malloc_lock);
+	mutex_spin_exit(&malloc_lock);
 }
 
 /*
@@ -830,9 +827,9 @@ void
 malloc_type_setlimit(struct malloc_type *type, u_long limit)
 {
 #ifdef KMEMSTATS
-	mutex_enter(&malloc_lock);
+	mutex_spin_enter(&malloc_lock);
 	type->ks_limit = limit;
-	mutex_exit(&malloc_lock);
+	mutex_spin_exit(&malloc_lock);
 #endif
 }
 
