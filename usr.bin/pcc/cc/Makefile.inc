@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2007/09/21 21:10:55 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2007/10/27 18:14:45 abs Exp $
 
 MDIR=	${DIST}/arch/${TARGMACH}
 MIPDIR=	${DIST}/mip
@@ -20,3 +20,13 @@ includedir = ${DESTDIR}/usr/include
 
 CPPFLAGS+= -DLIBEXECDIR=\"${libexecdir}\" -DINCLUDEDIR=\"${includedir}\"
 CPPFLAGS+= -I${DIST}/os/${TARGOS} -I${MDIR} -Dmach_${TARGMACH} -Dos_${TARGOS}
+
+# Somewhat inelegant logic to handle config.h - obviously not crossbuildable
+#
+../config.h: ${DIST}/config.h.in ${DIST}/configure
+	mkdir -p configtmp
+	cd configtmp && ${SH} ${DIST}/configure && mv config.h ../..
+	rm -rf configtmp
+
+DPSRCS+=../config.h
+CLEANFILES+=../config.h
