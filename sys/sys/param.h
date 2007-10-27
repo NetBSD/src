@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.255.4.13 2007/10/23 20:17:25 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.255.4.14 2007/10/27 09:18:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -237,6 +237,11 @@
 
 #define	PRI_USER	0
 #define	NPRI_USER	64
+
+#define	PRI_PGDAEMON	(PRI_KERNEL + NPRI_KERNEL - 1)
+#define	PRI_VM		(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 1)
+#define	PRI_IOFLUSH	(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 2)
+#define	PRI_BIO		(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 3)
 
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
