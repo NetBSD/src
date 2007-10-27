@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.359 2007/10/27 07:11:58 plunky Exp $
+.\"	$NetBSD: main,v 1.360 2007/10/27 19:55:35 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1388,15 +1388,15 @@ The following issues need to be resolved manually:
 .
 .(bullet -offset indent
 The users
-.Sq _sdpd ,
-.Sq _proxy
+.Sq authpf ,
+.Sq _proxy ,
 and
-.Sq authpf
+.Sq _sdpd
 and the groups
-.Sq _sdpd ,
-.Sq _proxy
-and
+.Sq _proxy ,
 .Sq rwhod 
+and
+.Sq _sdpd
 need to be created and the user
 .Sq uucp
 needs to be updated.
