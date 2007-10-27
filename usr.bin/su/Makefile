@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2007/10/17 21:05:39 christos Exp $
+#	$NetBSD: Makefile,v 1.48 2007/10/27 15:37:45 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -8,9 +8,12 @@ PROG=	su
 BINOWN=	root
 BINMODE=4555
 
+.PATH.c: ${.CURDIR}/../newgrp
+CPPFLAGS+=-I${.CURDIR}/../newgrp
 CPPFLAGS+=-DLOGIN_CAP
-#CPPFLAGS+=-DALLOW_GROUP_CHANGE
-#CPPFLAGS+=-DALLOW_EMPTY_USER
+CPPFLAGS+=-DALLOW_GROUP_CHANGE
+CPPFLAGS+=-DALLOW_EMPTY_USER
+CPPFLAGS+=-DGRUTIL_SETGROUPS_MAKESPACE
 
 .if ${USE_PAM} != "no"
 
