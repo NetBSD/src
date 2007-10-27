@@ -1,4 +1,4 @@
-/*	$Id: cpy.y,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: cpy.y,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -62,23 +62,34 @@
  */
 
 %{
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+
+#include "cpp.h"
+
 void yyerror(char *);
 int yylex(void);
+int setd(int l, int r);
+
+#define	EVALUNARY(tok, l, r) l.nd_val = tok r.nd_val; l.op = r.op
+#define	EVALBIN(tok, d, l, r)	\
+	d.op = setd(l.op, r.op); d.nd_val = l.nd_val tok r.nd_val
+#define	EVALUBIN(tok, d, l, r, t)				\
+	d.op = setd(l.op, r.op);				\
+	if (d.op == NUMBER) d.nd_val = l.nd_val tok r.nd_val;	\
+	else d.nd_uval = l.nd_uval tok r.nd_uval;		\
+	if (t && d.op) d.op = NUMBER
+#define	XEVALUBIN(tok, d, l, r)					\
+	if (r.nd_val) { EVALUBIN(tok, d, l, r, 0); } else d.op = 0
 %}
 
 %term stop
 %term EQ NE LE GE LS RS
-%term ANDAND OROR IDENT NUMBER
+%term ANDAND OROR IDENT NUMBER UNUMBER
 /*
  * The following terminals are not used in the yacc code.
  */
 %term STRING FPOINT WSPACE VA_ARGS CONCAT MKSTR ELLIPS
 
 %left ','
-%right '='
 %right '?' ':'
 %left OROR
 %left ANDAND
@@ -90,77 +101,117 @@ int yylex(void);
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' '~' UMINUS
-%left '(' '.'
+%left '('
 
 %union {
-	long long val;
+	struct nd node;
 }
 
-%type <val> term NUMBER e
+%type <node>	term e NUMBER UNUMBER
 
 %%
-S:	e '\n'	{ return($1 != 0);}
-
+S:	e '\n'	{ 
+		if ($1.op == 0)
+			error("division by zero");
+		return $1.nd_val;
+	}
 
 e:	  e '*' e
-		{$$ = $1 * $3;}
+		{ EVALUBIN(*, $$, $1, $3, 0); }
 	| e '/' e
-		{$$ = $1 / $3;}
+		{ XEVALUBIN(/, $$, $1, $3); }
 	| e '%' e
-		{$$ = $1 % $3;}
+		{ XEVALUBIN(%, $$, $1, $3); }
 	| e '+' e
-		{$$ = $1 + $3;}
+		{ EVALBIN(+, $$, $1, $3); }
 	| e '-' e
-		{$$ = $1 - $3;}
+		{ EVALBIN(-, $$, $1, $3); }
 	| e LS e
-		{$$ = $1 << $3;}
+		{ EVALBIN(<<, $$, $1, $3); }
 	| e RS e
-		{$$ = $1 >> $3;}
+		{ EVALUBIN(>>, $$, $1, $3, 0); }
 	| e '<' e
-		{$$ = $1 < $3;}
+		{ EVALUBIN(<, $$, $1, $3, 1); }
 	| e '>' e
-		{$$ = $1 > $3;}
+		{ EVALUBIN(>, $$, $1, $3, 1); }
 	| e LE e
-		{$$ = $1 <= $3;}
+		{ EVALUBIN(<=, $$, $1, $3, 1); }
 	| e GE e
-		{$$ = $1 >= $3;}
+		{ EVALUBIN(>=, $$, $1, $3, 1); }
 	| e EQ e
-		{$$ = $1 == $3;}
+		{ EVALUBIN(==, $$, $1, $3, 1); }
 	| e NE e
-		{$$ = $1 != $3;}
+		{ EVALUBIN(!=, $$, $1, $3, 1); }
 	| e '&' e
-		{$$ = $1 & $3;}
+		{ EVALBIN(&, $$, $1, $3); }
 	| e '^' e
-		{$$ = $1 ^ $3;}
+		{ EVALBIN(^, $$, $1, $3); }
 	| e '|' e
-		{$$ = $1 | $3;}
-	| e ANDAND e
-		{$$ = $1 && $3;}
-	| e OROR e
-		{$$ = $1 || $3;}
-	| e '?' e ':' e
-		{$$ = $1 ? $3 : $5;}
-	| e ',' e
-		{$$ = $3;}
+		{ EVALBIN(|, $$, $1, $3); }
+	| e ANDAND e {
+		$$ = $1;
+		if ($1.nd_val) {
+			$$.op = setd($1.op, $3.op);
+			$$.nd_val = ($3.nd_val != 0);
+		}
+		if ($$.op == UNUMBER) $$.op = NUMBER;
+	}
+	| e OROR e {
+		if ($1.nd_val != 0) {
+			$$.nd_val = ($1.nd_val != 0);
+			$$.op = $1.op;
+		} else {
+			$$.nd_val = ($3.nd_val != 0);
+			$$.op = setd($1.op, $3.op);
+		}
+		if ($$.op == UNUMBER) $$.op = NUMBER;
+	}
+	| e '?' e ':' e {
+		if ($1.op == 0)
+			$$ = $1;
+		else if ($1.nd_val)
+			$$ = $3;
+		else
+			$$ = $5;
+	}
+	| e ',' e {
+		$$.op = setd($1.op, $3.op);
+		$$.nd_val = $3.nd_val;
+		if ($$.op) $$.op =  $3.op;
+	}
 	| term
 		{$$ = $1;}
 term:
 	  '-' term %prec UMINUS
-		{$$ = -$2;}
+		{ EVALUNARY(-, $$, $2); }
+	| '+' term %prec UMINUS
+		{$$ = $2;}
 	| '!' term
-		{$$ = !$2;}
+		{ $$.nd_val = ! $2.nd_val; $$.op = $2.op ? NUMBER : 0; }
 	| '~' term
-		{$$ = ~$2;}
+		{ EVALUNARY(~, $$, $2); }
 	| '(' e ')'
 		{$$ = $2;}
 	| NUMBER
-		{$$= $1;}
+		{$$ = $1;}
 %%
-
-#include "cpp.h"
 
 void
 yyerror(char *err)
 {
 	error(err);
 }
+
+/*
+ * Set return type of an expression.
+ */
+int
+setd(int l, int r)
+{
+	if (!l || !r)
+		return 0; /* div by zero involved */
+	if (l == UNUMBER || r == UNUMBER)
+		return UNUMBER;
+	return NUMBER;
+}
+

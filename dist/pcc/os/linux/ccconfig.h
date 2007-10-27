@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2007/09/20 13:08:50 abs Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -40,7 +40,7 @@
 #define	ENDFILES { "/usr/lib/gcc/i586-suse-linux/4.1.0/crtend.o", "/usr/lib/crtn.o", NULL }
 #define STARTLABEL "_start"
 
-#if defined(mach_x86)
+#if defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
 #else
 #error defines for arch missing
