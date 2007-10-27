@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.20 2007/10/01 13:15:06 martin Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.21 2007/10/27 12:19:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 #include "nfs.h"
 #include "bootparam.h"
 #include "dev_net.h"
+#ifdef SUPPORT_BOOTP
+#include "bootp.h"
+#endif
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
@@ -206,7 +209,6 @@ net_strategy(devdata, rw, blk, size, buf, rsize)
  */
 #ifdef	SUPPORT_BOOTP
 int try_bootp;
-int bootp __P((int sock));
 #endif
 
 static int
