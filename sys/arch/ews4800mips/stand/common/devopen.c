@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2007/02/22 05:31:53 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2007/10/27 12:26:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <lib/libsa/dev_net.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/dev_net.h>
 #include <machine/sbd.h>
 
 #include "local.h"
@@ -109,7 +110,6 @@ devopen(struct open_file *f, const char *request, char **file)
 
 	/* NFS boot */
 	if (strcmp(fname, "nfs") == 0) {
-		extern int try_bootp;
 		if (!DEVICE_CAPABILITY.network_enabled) {
 			printf("Network disabled.\n");
 			return -1;

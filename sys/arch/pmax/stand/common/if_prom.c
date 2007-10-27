@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.2 2003/03/13 13:55:24 drochner Exp $ */
+/*      $NetBSD: if_prom.c,v 1.3 2007/10/27 12:23:44 tsutsui Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+#include <lib/libsa/dev_net.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/dec_prom.h>
@@ -80,8 +81,6 @@ void prom_init __P((struct iodesc *, void *));
 int prom_get __P((struct iodesc *, void *, size_t, time_t));
 int prom_put __P((struct iodesc *, void *, size_t));
 void prom_end __P((struct netif *));
-
-extern int try_bootp;
 
 extern struct netif_stats       prom_stats[];
 struct netif_dif prom_ifs[] = {
