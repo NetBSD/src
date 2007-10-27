@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.9 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.10 2007/10/27 15:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: glob.h,v 1.9 2006/11/28 18:45:32 christos Exp $
+ *	$NetBSD: glob.h,v 1.10 2007/10/27 15:14:51 christos Exp $
  */
 
 /*
@@ -73,6 +73,7 @@ EXTERN struct	ignoretab	ignore[2];	/* ignored and retained fields
 						   0 is ignore, 1 is retain */
 EXTERN struct	ignoretab	saveignore[2];	/* ignored and retained fields
 						   on save to folder */
+EXTERN struct	ignoretab	bouncetab[2];	/* special for bounce */
 EXTERN struct	ignoretab	ignoreall[2];	/* special, ignore all headers */
 #ifdef MIME_SUPPORT
 EXTERN struct	ignoretab	detachall[2];	/* special for detach, do all parts */

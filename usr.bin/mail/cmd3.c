@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.35 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.36 2007/10/27 15:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.35 2007/10/23 14:58:43 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.36 2007/10/27 15:14:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,7 +280,7 @@ set_ident_fields(struct header *hp, struct message *mp)
  * message header and send them off to mail1()
  */
 static int
-_respond(int *msgvec)
+respond_core(int *msgvec)
 {
 	struct message *mp;
 	char *cp, *rcv, *replyto;
@@ -351,7 +351,7 @@ _respond(int *msgvec)
  * reply.
  */
 static int
-_Respond(int msgvec[])
+Respond_core(int msgvec[])
 {
 	struct header head;
 	struct message *mp;
@@ -392,9 +392,9 @@ respond(void *v)
 {
 	int *msgvec = v;
 	if (value(ENAME_REPLYALL) == NULL)
-		return _respond(msgvec);
+		return respond_core(msgvec);
 	else
-		return _Respond(msgvec);
+		return Respond_core(msgvec);
 }
 
 PUBLIC int
@@ -402,9 +402,119 @@ Respond(void *v)
 {
 	int *msgvec = v;
 	if (value(ENAME_REPLYALL) == NULL)
-		return _Respond(msgvec);
+		return Respond_core(msgvec);
 	else
-		return _respond(msgvec);
+		return respond_core(msgvec);
+}
+
+PUBLIC int
+forward(void *v)
+{
+	int *msgvec = v;
+	int *ip;
+	for ( ip = msgvec; *ip; ip++)
+		(void)printf("%d ", *ip);
+	(void)printf("forward not supported yet\n");
+	return 0;
+}
+
+static int
+bounce_one(int msgno, const char **smargs, struct name *h_to)
+{
+	char mailtempname[PATHSIZE];
+	struct message *mp;
+	int fd;
+	FILE *obuf;
+	int rval;
+
+	rval = 0;
+
+	obuf = NULL;
+	(void)snprintf(mailtempname, sizeof(mailtempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(mailtempname)) == -1 ||
+	    (obuf = Fdopen(fd, "w+")) == NULL) {
+		if (fd != -1)
+			(void)close(fd);
+		warn("%s", mailtempname);
+		rval = 1;
+		goto done;
+	}
+	(void)rm(mailtempname);
+
+	mp = get_message(msgno);
+
+	if (mp == NULL) {
+		(void)printf("no such message %d\n", msgno);
+		rval = 1;
+		goto done;
+	}
+	else {
+		char *cp;
+		char **ap;
+		struct name *np;
+		struct header hdr;
+
+		/*
+		 * Construct and output a new "To:" field:
+		 * Remove our address from anything in the old "To:" field
+		 * and append that list to the bounce address(es).
+		 */
+		np = NULL;
+		if ((cp = skin(hfield("to", mp))) != NULL)
+			np = extract(cp, GTO);
+		np = delname(np, myname);
+		if (altnames)
+			for (ap = altnames; *ap; ap++)
+				np = delname(np, *ap);
+		np = cat(h_to, np);
+		(void)memset(&hdr, 0, sizeof(hdr));
+		hdr.h_to = elide(np);
+		(void)puthead(&hdr, obuf, GTO | GCOMMA);
+	}
+	if (sendmessage(mp, obuf, bouncetab, NULL, NULL)) {
+		(void)printf("bounce failed for message %d\n", msgno);
+		rval = 1;
+		goto done;
+	}
+	rewind(obuf);	/* XXX - here or inside mail2() */
+	mail2(obuf, smargs);
+ done:
+	if (obuf)
+		(void)Fclose(obuf);
+	return rval;
+}
+
+PUBLIC int
+bounce(void *v)
+{
+	int *msgvec = v;
+	int *ip;
+	const char **smargs;
+	struct header hdr;
+	int rval;
+
+	if (bouncetab[0].i_count == 0) {
+		/* setup the bounce tab */
+		add_ignore("Status", bouncetab);
+		add_ignore("Delivered-To", bouncetab);
+		add_ignore("To", bouncetab);
+		add_ignore("X-Original-To", bouncetab);
+	}
+	(void)memset(&hdr, 0, sizeof(hdr));
+	if ((rval = grabh(&hdr, GTO)) != 0)
+		return rval;
+
+	if (hdr.h_to == NULL)
+		return 1;
+
+	smargs = unpack(hdr.h_to);
+	for ( ip = msgvec; *ip; ip++) {
+		int e;
+		if ((e = bounce_one(*ip, smargs, hdr.h_to)) != 0)
+			return e;
+	}
+	return 0;
 }
 
 /*
@@ -653,7 +763,7 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		gh = (struct grouphead *) ecalloc(1, sizeof *gh);
+		gh = ecalloc(1, sizeof *gh);
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -667,7 +777,7 @@ group(void *v)
 	 */
 
 	for (ap = argv + 1; *ap != NULL; ap++) {
-		gp = (struct group *) ecalloc(1, sizeof *gp);
+		gp = ecalloc(1, sizeof *gp);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -919,7 +1029,7 @@ PUBLIC int
 alternates(void *v)
 {
 	char **namelist = v;
-	int c;
+	size_t c;
 	char **ap, **ap2, *cp;
 
 	c = argcount(namelist) + 1;
@@ -933,9 +1043,9 @@ alternates(void *v)
 	}
 	if (altnames != 0)
 		free(altnames);
-	altnames = (char **) ecalloc((unsigned) c, sizeof (char *));
+	altnames = ecalloc(c, sizeof(char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = ecalloc((unsigned) strlen(*ap) + 1, sizeof (char));
+		cp = ecalloc(strlen(*ap) + 1, sizeof(char));
 		(void)strcpy(cp, *ap);
 		*ap2 = cp;
 	}

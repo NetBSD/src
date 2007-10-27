@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.22 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.23 2007/10/27 15:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.22 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.23 2007/10/27 15:14:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *igtab)
 	FILE *obuf;
 
 	msgCount = get_msgCount();
-	msgvec = salloc((msgCount + 2) * sizeof *msgvec);
+	msgvec = salloc((msgCount + 2) * sizeof(*msgvec));
 	if ((fn = snarf(str, &f, "file")) == NULL)
 		return 1;
 	if (!f) {
@@ -483,13 +483,13 @@ igshow(struct ignoretab *tab, const char *which)
 		(void)printf("No fields currently being %s.\n", which);
 		return 0;
 	}
-	ring = salloc((tab->i_count + 1) * sizeof (char *));
+	ring = salloc((tab->i_count + 1) * sizeof(char *));
 	ap = ring;
 	for (h = 0; h < HSHSIZE; h++)
 		for (igp = tab->i_head[h]; igp != 0; igp = igp->i_link)
 			*ap++ = igp->i_field;
 	*ap = 0;
-	qsort(ring, tab->i_count, sizeof (char *), igcomp);
+	qsort(ring, tab->i_count, sizeof(char *), igcomp);
 	for (ap = ring; *ap != 0; ap++)
 		(void)printf("%s\n", *ap);
 	return 0;
@@ -501,26 +501,14 @@ igshow(struct ignoretab *tab, const char *which)
 static int
 ignore1(char *list[], struct ignoretab *tab, const char *which)
 {
-	char field[LINESIZE];
-	int h;
-	struct ignore *igp;
 	char **ap;
 
 	if (*list == NULL)
 		return igshow(tab, which);
-	for (ap = list; *ap != 0; ap++) {
-		istrcpy(field, *ap);
-		if (member(field, tab))
-			continue;
-		h = hash(field);
-		igp = (struct ignore *) ecalloc(1, sizeof (struct ignore));
-		igp->i_field = ecalloc((unsigned) strlen(field) + 1,
-			sizeof (char));
-		(void)strcpy(igp->i_field, field);
-		igp->i_link = tab->i_head[h];
-		tab->i_head[h] = igp;
-		tab->i_count++;
-	}
+
+	for (ap = list; *ap != 0; ap++)
+		add_ignore(*ap, tab);
+
 	return 0;
 }
 
@@ -669,7 +657,7 @@ detach1(void *v, int do_unnamed)
 	 * Setup the message list.
 	 */
 	msgCount = get_msgCount();
-	msgvec = salloc((msgCount + 2) * sizeof *msgvec);
+	msgvec = salloc((msgCount + 2) * sizeof(*msgvec));
 	if (!f) {
 		*msgvec = first(0, MMNORM);
 		if (*msgvec == 0) {

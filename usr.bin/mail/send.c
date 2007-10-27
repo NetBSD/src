@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.29 2007/10/23 14:58:45 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.30 2007/10/27 15:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.29 2007/10/23 14:58:45 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.30 2007/10/27 15:14:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,11 +123,9 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	char line[LINESIZE];
 	int isheadflag, infld, ignoring, dostat, firstline;
 	char *cp;
-	int c;	/* XXX - this variable is horribly abused */
-	size_t length;
 	size_t prefixlen;
+	size_t linelen;
 
-	c = 0;
 	ignoring = 0;
 	prefixlen = 0;
 
@@ -155,16 +153,16 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		obuf = mime_decode_header(mip);
 #endif
 	while (len > 0 && isheadflag) {
-		if (fgets(line, LINESIZE, ibuf) == NULL)
+		if (fgets(line, sizeof(line), ibuf) == NULL)
 			break;
-		len -= length = strlen(line);
+		len -= linelen = strlen(line);
 		if (firstline) {
 			/*
 			 * First line is the From line, so no headers
 			 * there to worry about
 			 */
 			firstline = 0;
-			ignoring = doign == ignoreall;
+			ignoring = doign == ignoreall || doign == bouncetab;
 #ifdef MIME_SUPPORT
 			/* XXX - ignore multipart boundary lines! */
 			if (line[0] == '-' && line[1] == '-')
@@ -237,9 +235,9 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 					ignoring = 1;
 				} else {
 					ignoring = 0;
-					*save_cp = save_c;	/* restore */
 				}
 				infld = 1;
+				*save_cp = save_c;	/* restore the line */
 			}
 		}
 		if (!ignoring) {
@@ -248,13 +246,13 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			 * if line is blank.
 			 */
 			if (prefix != NULL) {
-				if (length > 1)
+				if (linelen > 1)
 					(void)fputs(prefix, obuf);
 				else
-					(void)fwrite(prefix, sizeof *prefix,
+					(void)fwrite(prefix, sizeof(*prefix),
 							prefixlen, obuf);
 			}
-			(void)fwrite(line, sizeof *line, length, obuf);
+			(void)fwrite(line, sizeof(*line), linelen, obuf);
 			if (ferror(obuf))
 				return -1;
 		}
@@ -269,43 +267,45 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			return 0;
 	}
 #endif
-	c = 0;	/* This is needed if len == 0.  It's used differently above. */
 	if (doign == ignoreall)
 		len--;		/* skip final blank line */
 
+	linelen = 0;		/* needed for in case len == 0 */
 	if (prefix != NULL)
 		while (len > 0) {
-			if (fgets(line, LINESIZE, ibuf) == NULL) {
-				c = 0;
+			if (fgets(line, sizeof(line), ibuf) == NULL) {
+				linelen = 0;
 				break;
 			}
-			len -= c = strlen(line);
+			len -= linelen = strlen(line);
 			/*
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
 			 */
-			if (c > 1)
+			if (linelen > 1)
 				(void)fputs(prefix, obuf);
 			else
-				(void)fwrite(prefix, sizeof *prefix,
+				(void)fwrite(prefix, sizeof(*prefix),
 						prefixlen, obuf);
-			(void)fwrite(line, sizeof *line, (size_t)c, obuf);
+			(void)fwrite(line, sizeof *line, linelen, obuf);
 			if (ferror(obuf))
 				return -1;
 		}
 	else
 		while (len > 0) {
-			c = (int)(len < LINESIZE ? len : LINESIZE);
-			if ((c = fread(line, sizeof *line, (size_t)c, ibuf)) == 0)
+			linelen = len < sizeof(line) ? (size_t)len : sizeof(line);
+			if ((linelen = fread(line, sizeof(*line), linelen, ibuf)) == 0)
 				break;
-			len -= c;
-			if (fwrite(line, sizeof *line, (size_t)c, obuf) != (size_t)c)
+			len -= linelen;
+			if (fwrite(line, sizeof(*line), linelen, obuf) != linelen)
 				return -1;
 		}
-	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
+	if (doign == ignoreall && linelen > 0 && line[linelen - 1] != '\n') {
+		int c;
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
-				return -1;
+			return -1;
+	}
 	return 0;
 }
 
@@ -490,14 +490,72 @@ savemail(const char name[], FILE *fi)
 }
 
 /*
+ * Mail a message that is already prepared in a file.
+ */
+PUBLIC void
+mail2(FILE *mtf, const char **namelist)
+{
+	int pid;
+	const char *cp;
+
+	if (debug) {
+		const char **t;
+
+		(void)printf("Sendmail arguments:");
+		for (t = namelist; *t != NULL; t++)
+			(void)printf(" \"%s\"", *t);
+		(void)printf("\n");
+		return;
+	}
+	if ((cp = value(ENAME_RECORD)) != NULL)
+		(void)savemail(expand(cp), mtf);
+	/*
+	 * Fork, set up the temporary mail file as standard
+	 * input for "mail", and exec with the user list we generated
+	 * far above.
+	 */
+	pid = fork();
+	switch (pid) {
+	case -1:
+		warn("fork");
+		savedeadletter(mtf);
+		return;
+	case 0:
+	{
+		sigset_t nset;
+		(void)sigemptyset(&nset);
+		(void)sigaddset(&nset, SIGHUP);
+		(void)sigaddset(&nset, SIGINT);
+		(void)sigaddset(&nset, SIGQUIT);
+		(void)sigaddset(&nset, SIGTSTP);
+		(void)sigaddset(&nset, SIGTTIN);
+		(void)sigaddset(&nset, SIGTTOU);
+		prepare_child(&nset, fileno(mtf), -1);
+		if ((cp = value(ENAME_SENDMAIL)) != NULL)
+			cp = expand(cp);
+		else
+			cp = _PATH_SENDMAIL;
+		(void)execv(cp, (char *const *)__UNCONST(namelist));
+		warn("%s", cp);
+		_exit(1);
+		break;		/* Appease GCC */
+	}
+	default:
+		if (value(ENAME_VERBOSE) != NULL)
+			(void)wait_child(pid);
+		else
+			free_child(pid);
+		break;
+	}
+}
+
+/*
  * Mail a message on standard input to the people indicated
  * in the passed header.  (Internal interface).
  */
 PUBLIC void
 mail1(struct header *hp, int printheaders)
 {
-	const char *cp;
-	int pid;
 	const char **namelist;
 	struct name *to;
 	FILE *mtf;
@@ -573,51 +631,8 @@ mail1(struct header *hp, int printheaders)
 			}
 	}
 	namelist = unpack(cat(hp->h_smopts, to));
-	if (debug) {
-		const char **t;
-
-		(void)printf("Sendmail arguments:");
-		for (t = namelist; *t != NULL; t++)
-			(void)printf(" \"%s\"", *t);
-		(void)printf("\n");
-		goto out;
-	}
-	if ((cp = value(ENAME_RECORD)) != NULL)
-		(void)savemail(expand(cp), mtf);
-	/*
-	 * Fork, set up the temporary mail file as standard
-	 * input for "mail", and exec with the user list we generated
-	 * far above.
-	 */
-	pid = fork();
-	if (pid == -1) {
-		warn("fork");
-		savedeadletter(mtf);
-		goto out;
-	}
-	if (pid == 0) {
-		sigset_t nset;
-		(void)sigemptyset(&nset);
-		(void)sigaddset(&nset, SIGHUP);
-		(void)sigaddset(&nset, SIGINT);
-		(void)sigaddset(&nset, SIGQUIT);
-		(void)sigaddset(&nset, SIGTSTP);
-		(void)sigaddset(&nset, SIGTTIN);
-		(void)sigaddset(&nset, SIGTTOU);
-		prepare_child(&nset, fileno(mtf), -1);
-		if ((cp = value(ENAME_SENDMAIL)) != NULL)
-			cp = expand(cp);
-		else
-			cp = _PATH_SENDMAIL;
-		(void)execv(cp, (char *const *)__UNCONST(namelist));
-		warn("%s", cp);
-		_exit(1);
-	}
-	if (value(ENAME_VERBOSE) != NULL)
-		(void)wait_child(pid);
-	else
-		free_child(pid);
-out:
+	mail2(mtf, namelist);
+ out:
 	(void)Fclose(mtf);
 }
 
@@ -648,7 +663,7 @@ mail(struct name *to, struct name *cc, struct name *bcc,
 
 /*
  * Send mail to a bunch of user names.  The interface is through
- * the mail1 routine below.
+ * the mail1 routine above.
  */
 PUBLIC int
 sendmail(void *v)

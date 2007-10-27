@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.17 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: vars.c,v 1.18 2007/10/27 15:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.17 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: vars.c,v 1.18 2007/10/27 15:14:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ assign(const char name[], const char values[])
 	h = hash(name);
 	vp = lookup(name);
 	if (vp == NULL) {
-		vp = (struct var *) ecalloc(1, sizeof *vp);
+		vp = ecalloc(1, sizeof(*vp));
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
 		variables[h] = vp;
