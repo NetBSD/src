@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.40 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.41 2007/10/27 15:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.40 2007/10/23 14:58:43 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.41 2007/10/27 15:14:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ out:
  * should shift over and 'f' if not.
  */
 static int
-forward(char ms[], FILE *fp, char *fn, int f)
+interpolate(char ms[], FILE *fp, char *fn, int f)
 {
 	int *msgvec;
 	struct ignoretab *ig;
@@ -716,7 +716,7 @@ cont:
 			 * standard list processing garbage.
 			 * If ~f is given, we don't shift over.
 			 */
-			if (forward(linebuf + 2, collf, mailtempname, c) < 0)
+			if (interpolate(linebuf + 2, collf, mailtempname, c) < 0)
 				goto err;
 			goto cont;
 		case '?':

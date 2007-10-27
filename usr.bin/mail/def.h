@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.25 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.26 2007/10/27 15:14:50 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.25 2007/10/23 14:58:43 christos Exp $
+ *	$NetBSD: def.h,v 1.26 2007/10/27 15:14:50 christos Exp $
  */
 
 /*
@@ -325,6 +325,7 @@ struct header {
 	struct name *h_smopts;		/* Sendmail options */
 	char *h_in_reply_to;
 	struct name *h_references;
+	char *h_extra;			/* extra lines to output */
 #ifdef MIME_SUPPORT
 	char *h_mime_boundary;		/* MIME multipart boundary string */
 	struct Content h_Content;	/* MIME content for message */

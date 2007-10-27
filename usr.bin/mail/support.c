@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.19 2007/10/23 14:58:45 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.20 2007/10/27 15:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.19 2007/10/23 14:58:45 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.20 2007/10/27 15:14:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -700,6 +700,25 @@ isign(const char *field, struct ignoretab ignoretabs[2])
 		return !member(realfld, ignoretabs + 1);
 	else
 		return member(realfld, ignoretabs);
+}
+
+PUBLIC void
+add_ignore(const char *name, struct ignoretab *tab)
+{
+	char field[LINESIZE];
+	int h;
+	struct ignore *igp;
+
+	istrcpy(field, name);
+	if (member(field, tab))
+		return;
+	h = hash(field);
+	igp = ecalloc(1, sizeof(struct ignore));
+	igp->i_field = ecalloc(strlen(field) + 1, sizeof(char));
+	(void)strcpy(igp->i_field, field);
+	igp->i_link = tab->i_head[h];
+	tab->i_head[h] = igp;
+	tab->i_count++;
 }
 
 /*
