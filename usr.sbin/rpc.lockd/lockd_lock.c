@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.26 2006/08/09 14:12:47 martin Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.27 2007/10/27 18:41:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -432,16 +432,7 @@ unlock(lck, flags)
 static struct file_lock *
 lalloc(void)
 {
-	struct file_lock *fl;
-
-	fl = malloc(sizeof(*fl));
-	if (fl != NULL) {
-		fl->addr = NULL;
-		fl->client.oh.n_bytes = NULL;
-		fl->client_cookie.n_bytes = NULL;
-		fl->filehandle.fhdata = NULL;
-	}
-	return fl;
+	return calloc(1, sizeof(struct file_lock));
 }
 
 void
