@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.27 2007/10/17 19:53:02 garbled Exp $	*/
+/*	$NetBSD: syscall.c,v 1.28 2007/10/27 18:41:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2007/10/17 19:53:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2007/10/27 18:41:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,8 +213,8 @@ syscall_fancy(struct trapframe *frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	argp = &args[0];
 	argoff = 0;
+	argp = &args[0];
 
 	switch (code) {
 	case SYS_syscall:
@@ -228,8 +228,8 @@ syscall_fancy(struct trapframe *frame)
 		break;
 	default:
 		break;
-
 	}
+
 	code &= (SYS_NSYSENT - 1);
 	callp += code;
 
