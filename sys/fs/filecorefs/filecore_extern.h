@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.9.12.3 2007/09/03 14:40:17 yamt Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.9.12.4 2007/10/27 11:35:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -79,6 +79,7 @@
 #include <sys/mallocvar.h>
 
 MALLOC_DECLARE(M_FILECOREMNT);
+MALLOC_DECLARE(M_FILECORETMP);
 
 struct filecore_mnt {
 	struct mount *fc_mountp;

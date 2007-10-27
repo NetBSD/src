@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.4.16.4 2007/09/03 14:47:03 yamt Exp $
+#	$NetBSD: files.uvm,v 1.4.16.5 2007/10/27 11:36:53 yamt Exp $
 
 #
 # UVM options
@@ -8,6 +8,7 @@ defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_NOCOUNTERS
 defflag opt_vmswap.h		VMSWAP
 defflag opt_readahead.h		READAHEAD_STATS
 defflag opt_ubc.h		UBC_STATS
+defparam opt_pagermap.h		PAGER_MAP_SIZE
 defflag				PDPOLICY_CLOCKPRO
 
 file	uvm/uvm_amap.c

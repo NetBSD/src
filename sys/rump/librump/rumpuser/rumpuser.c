@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.6.6.2 2007/09/03 14:45:54 yamt Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.6.6.3 2007/10/27 11:36:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -138,11 +138,18 @@ rumpuser_ioctl(int fd, u_long cmd, void *data, int *error)
 	DOCALL(int, (ioctl(fd, cmd, data)));
 }
 
-void
-rumpuser_close(int fd)
+int
+rumpuser_close(int fd, int *error)
 {
 
-	close(fd);
+	DOCALL(int, close(fd));
+}
+
+int
+rumpuser_fsync(int fd, int *error)
+{
+
+	DOCALL(int, fsync(fd));
 }
 
 ssize_t
@@ -160,10 +167,10 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 }
 
 int
-rumpuser_gettimeofday(struct timeval *tv)
+rumpuser_gettimeofday(struct timeval *tv, int *error)
 {
 
-	return gettimeofday(tv, NULL);
+	DOCALL(int, gettimeofday(tv, NULL));
 }
 
 int

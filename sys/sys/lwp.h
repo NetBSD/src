@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28.2.4 2007/09/03 14:46:24 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.5 2007/10/27 11:36:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct lwp {
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
 	struct timeval 	l_rtime;	/* l: real time */
+	struct timeval	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
@@ -93,6 +94,7 @@ struct lwp {
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	int		l_policy;	/* l: scheduling policy */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 
 	/* Synchronisation */
@@ -104,7 +106,7 @@ struct lwp {
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
-	callout_t	l_tsleep_ch;	/* !: callout for tsleep */
+	callout_t	l_timeout_ch;	/* !: callout for sleep timeout */
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
@@ -180,6 +182,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */

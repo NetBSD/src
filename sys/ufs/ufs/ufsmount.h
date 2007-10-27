@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.18.2.2 2007/09/03 14:47:02 yamt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.18.2.3 2007/10/27 11:36:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _UFS_UFS_UFSMOUNT_H_
 #define _UFS_UFS_UFSMOUNT_H_
+
+#include <sys/mount.h> /* struct export_args30 */
 
 /*
  * Arguments to mount UFS-based filesystems

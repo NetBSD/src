@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.8.2 2007/09/03 14:45:05 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.8.3 2007/10/27 11:36:19 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ SRCS=	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_inode.c		\
 	ffs_softdep.stub.c ffs_subr.c ffs_tables.c ffs_vfsops.c		\
 	ffs_vnops.c ffs_snapshot.c
 
-CPPFLAGS+=	-DFFS_NO_SNAPSHOT
+CPPFLAGS+=	-DFFS_NO_SNAPSHOT -DFFS_EI
 CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>

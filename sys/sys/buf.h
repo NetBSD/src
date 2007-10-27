@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.81.2.4 2007/09/03 14:45:59 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.81.2.5 2007/10/27 11:36:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -221,6 +221,10 @@ do {									\
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
 
+/* XXX Compat for vmlocking branch. */
+#define	BC_AGE		B_AGE
+#define	BC_INVAL	B_INVAL
+#define	BC_NOCACHE	B_NOCACHE
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
@@ -277,7 +281,7 @@ int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
 	       struct buf **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 	       struct kauth_cred *, struct buf **);
-void	brelse(struct buf *);
+void	brelse(struct buf *, int);
 void	bremfree(struct buf *);
 void	bufinit(void);
 int	bwrite(struct buf *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.5.8.2 2007/09/03 14:45:37 yamt Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.5.8.3 2007/10/27 11:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,9 +35,6 @@
     int name(void *);							\
     int name(void *arg) {panic("%s: unimplemented vfs stub", __func__);}
 
-#define VFSSTUB_RV(name,rv)						\
-	int name(void *); int name(void *arg) {return (rv);}
-
 /* specfs */
 VFSSTUB(spec_lookup)
 VFSSTUB(spec_open)
@@ -66,20 +63,3 @@ VFSSTUB(fifo_pathconf)
 VFSSTUB(fifo_bmap)
 VFSSTUB(fifo_read)
 VFSSTUB(fifo_write)
-
-/* genfs */
-VFSSTUB(genfs_abortop)
-VFSSTUB(genfs_null_putpages)
-VFSSTUB(genfs_fcntl)
-VFSSTUB(genfs_poll)
-VFSSTUB(genfs_revoke)
-VFSSTUB(genfs_kqfilter)
-VFSSTUB(genfs_lease_check)
-VFSSTUB(genfs_compat_getpages)
-
-VFSSTUB_RV(genfs_nullop, 0)
-VFSSTUB_RV(genfs_eopnotsupp, EOPNOTSUPP)
-VFSSTUB_RV(genfs_enoioctl, EPASSTHROUGH)
-VFSSTUB_RV(genfs_badop, EOPNOTSUPP)
-VFSSTUB_RV(genfs_einval, EINVAL)
-VFSSTUB_RV(genfs_mmap, 0)

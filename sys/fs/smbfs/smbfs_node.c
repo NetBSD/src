@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.24.2.3 2007/09/03 14:40:32 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.24.2.4 2007/10/27 11:35:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.3 2007/09/03 14:40:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.4 2007/10/27 11:35:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ loop:
 
 	if (dvp) {
 		np->n_parent = dvp;
-		if (/*vp->v_type == VDIR &&*/ (dvp->v_flag & VROOT) == 0) {
+		if (/*vp->v_type == VDIR &&*/ (dvp->v_vflag & VV_ROOT) == 0) {
 			vref(dvp);
 			np->n_flag |= NREFPARENT;
 		}

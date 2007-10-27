@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.16.2.2 2007/09/03 14:45:39 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.16.2.3 2007/10/27 11:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -235,18 +235,19 @@ uao_detach(struct uvm_object *uobj)
 int
 rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 {
+	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, n);
-	struct vm_page *pgs[npages];
 	int i, rv;
 
 	if (ubc_winvalid == 0)
 		panic("%s: ubc window not allocated", __func__);
 
+	pgs = rumpuser_malloc(npages * sizeof(pgs), 0);
 	memset(pgs, 0, sizeof(pgs));
 	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset,
 	    pgs, &npages, 0, 0, 0, 0);
 	if (rv)
-		return rv;
+		goto out;
 
 	for (i = 0; i < npages; i++) {
 		size_t xfersize;
@@ -261,7 +262,9 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 		n -= xfersize;
 	}
 
-	return 0;
+ out:
+	rumpuser_free(pgs);
+	return rv;
 }
 
 void *
@@ -436,11 +439,12 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
-	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
-	struct vm_page *pgs[maxpages];
 	struct uvm_object *uobj = &vp->v_uobj;
+	struct vm_page **pgs;
+	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
 	int rv, npages, i;
 
+	pgs = rumpuser_malloc(maxpages * sizeof(pgs), 0);
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
@@ -462,6 +466,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			len -= chunklen;
 		}
 	}
+	rumpuser_free(pgs);
 
 	return;
 }
@@ -485,7 +490,7 @@ uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (void *)uobj;
 
-	return (vp->v_flag & VONWORKLST) == 0;
+	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 /*

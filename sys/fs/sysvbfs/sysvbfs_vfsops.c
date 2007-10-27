@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.4.6.5 2007/09/03 14:40:35 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.4.6.6 2007/10/27 11:35:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.4.6.5 2007/09/03 14:40:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.4.6.6 2007/10/27 11:35:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -383,14 +383,13 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	if (ino == BFS_ROOT_INODE) {	/* BFS is flat filesystem */
 		vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 	} else {
 		vp->v_type = VREG;
 	}
-	vp->v_size = bfs_file_size(inode);
 
 	genfs_node_init(vp, &sysvbfs_genfsops);
-	uvm_vnp_setsize(vp, vp->v_size);
+	uvm_vnp_setsize(vp, bfs_file_size(inode));
 	*vpp = vp;
 
 	return 0;

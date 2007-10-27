@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.64.2.4 2007/09/03 14:41:56 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.64.2.5 2007/10/27 11:35:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.4 2007/09/03 14:41:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.5 2007/10/27 11:35:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 
 	switch (pfs_type) {
 	case PFSroot:	/* /proc = dr-xr-xr-x */
-		vp->v_flag = VROOT;
+		vp->v_vflag = VV_ROOT;
 		/*FALLTHROUGH*/
 	case PFSproc:	/* /proc/N = dr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
@@ -636,7 +636,7 @@ procfs_hashins(pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, NULL);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.18.1 2007/09/03 14:46:36 yamt Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.18.2 2007/10/27 11:36:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@
 #define	_SYS_SIMPLELOCK_H_
 
 #if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/types.h>
@@ -100,14 +100,6 @@ struct simplelock {
 	 */
 	uint8_t lock_pad[3];
 #endif
-#ifdef LOCKDEBUG
-	const char *lock_file;
-	const char *unlock_file;
-	short lock_line;
-	short unlock_line;
-	_TAILQ_ENTRY(struct simplelock, volatile) list;
-	cpuid_t lock_holder;		/* CPU ID */
-#endif
 };
 
 /*
@@ -117,76 +109,35 @@ struct simplelock {
 #define	LK_NOPROC	((pid_t) -1)
 #define	LK_NOCPU	((cpuid_t) -1)
 
-#ifdef __CPU_SIMPLE_LOCK_PAD
-#ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0}, NULL, \
-				  NULL, 0, 0, { NULL, NULL }, LK_NOCPU }
-#else
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0 } }
-#endif
-#else	/* __CPU_SIMPLE_LOCK_PAD */
-#ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0, \
-				  0, { NULL, NULL }, LK_NOCPU }
-#else
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
-#endif
-#endif	/* __CPU_SIMPLE_LOCK_PAD */
+#define	SIMPLELOCK_INITIALIZER	{ .lock_data = __SIMPLELOCK_UNLOCKED }
 
 #ifdef _KERNEL
 
-#if defined(LOCKDEBUG)
-
-void _simple_lock(volatile struct simplelock *, const char *, int);
-int  _simple_lock_try(volatile struct simplelock *, const char *, int);
-void _simple_unlock(volatile struct simplelock *, const char *, int);
-int  _simple_lock_held(volatile struct simplelock *);
-void simple_lock_only_held(volatile struct simplelock *, const char *);
-void _simple_lock_assert_locked(volatile struct simplelock *, const char *,
-    const char *, int l);
-void _simple_lock_assert_unlocked(volatile struct simplelock *, const char *,
-    const char *, int l);
-
-#define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
-#define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
-#define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
-#define	simple_lock_held(alp)	_simple_lock_held((alp))
-#define simple_lock_assert_locked(alp,lockname)	\
-	_simple_lock_assert_locked((alp),(lockname), __FILE__, __LINE__)
-#define simple_lock_assert_unlocked(alp,lockname) \
-	_simple_lock_assert_unlocked((alp),(lockname), __FILE__, __LINE__)
-
-#define	LOCK_ASSERT(x)		KASSERT(x)
-
-void	simple_lock_init(volatile struct simplelock *);
-void	simple_lock_dump(void);
-void	simple_lock_freecheck(void *, void *);
-void	simple_lock_switchcheck(void);
-#elif defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
+#define	simple_lock_held(alp)	(__SIMPLELOCK_LOCKED_P(&(alp)->lock_data))
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
-#define	LOCK_ASSERT(x)		/* nothing */
-#define	simple_lock_only_held(x,y)		/* nothing */
-#define simple_lock_assert_locked(alp,lockname)	/* nothing */
-#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
 #else
-#define	simple_lock_try(alp)	(1)
-#ifndef __lint__
-#define	simple_lock_init(alp)	(void)(alp)
-#define	simple_lock(alp)	(void)(alp)
-#define	simple_unlock(alp)	(void)(alp)
-#define simple_lock_assert_locked(alp,lockname)	(void)(alp)
-#define simple_lock_assert_unlocked(alp,lockname)	(void)(alp)
-#else /* __lint__ */
-#define	simple_lock_init(alp)	/* nothing */
-#define	simple_lock(alp)	/* nothing */
-#define	simple_unlock(alp)	/* nothing */
-#define	simple_lock_only_held(x,y)		/* nothing */
-#define simple_lock_assert_locked(alp,lockname)	/* nothing */
+#define	simple_lock_nothing(alp) 	\
+do {					\
+	(void)alp;			\
+} while (0);
+#define	simple_lock_init(alp)	simple_lock_nothing(alp)
+#define	simple_lock(alp)	simple_lock_nothing(alp)
+#define	simple_lock_held(alp)	1
+#define	simple_lock_try(alp)	1
+#define	simple_unlock(alp)	simple_lock_nothing(alp)
+#endif
+
+#define	simple_lock_only_held(x,y)			/* nothing */
+#define simple_lock_assert_locked(alp,lockname)		/* nothing */
 #define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
-#endif /* __lint__ */
+
+#ifdef LOCKDEBUG
+#define	LOCK_ASSERT(x)		KASSERT(x)
+#else
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
 

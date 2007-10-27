@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.36.6.3 2007/09/03 14:46:46 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.36.6.4 2007/10/27 11:36:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36.6.3 2007/09/03 14:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36.6.4 2007/10/27 11:36:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,10 +202,10 @@ ext2fs_read(void *v)
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (error)
 			break;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 
 out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {

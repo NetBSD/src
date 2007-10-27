@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.46.2.5 2007/09/03 14:40:41 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.46.2.6 2007/10/27 11:35:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.5 2007/09/03 14:40:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.6 2007/10/27 11:35:18 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.5 2007/09/03 14:40:41 yamt Ex
 #include <compat/netbsd32/netbsd32.h>
 #endif
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 /* XXX this should not be here */
 int security_setidcore_dump;
@@ -197,7 +197,6 @@ static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_hw_usermem(SYSCTLFN_PROTO);
 static int sysctl_hw_cnmagic(SYSCTLFN_PROTO);
-static int sysctl_hw_ncpu(SYSCTLFN_PROTO);
 
 static u_int sysctl_map_flags(const u_int *, u_int);
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
@@ -209,8 +208,8 @@ static void fill_file(struct kinfo_file *, const struct file *, struct proc *,
  * ********************************************************************
  * section 1: setup routines
  * ********************************************************************
- * these functions are stuffed into a link set for sysctl setup
- * functions.  they're never called or referenced from anywhere else.
+ * These functions are stuffed into a link set for sysctl setup
+ * functions. They're never called or referenced from anywhere else.
  * ********************************************************************
  */
 
@@ -844,6 +843,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_security_setidcore, 0, &security_setidcore_mode,
 		       0,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "no_sa_support",
+		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise it doesn't"),
+		       NULL, 1, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -918,8 +923,8 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "ncpu",
-		       SYSCTL_DESCR("Number of active CPUs"),
-		       sysctl_hw_ncpu, 0, NULL, 0,
+		       SYSCTL_DESCR("Number of CPUs configured"),
+		       NULL, 0, &ncpu, 0,
 		       CTL_HW, HW_NCPU, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -979,6 +984,12 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Bytes of non-kernel memory"),
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM64, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ncpuonline",
+		       SYSCTL_DESCR("Number of CPUs online"),
+		       NULL, 0, &ncpuonline, 0,
+		       CTL_HW, HW_NCPUONLINE, CTL_EOL);
 }
 
 #ifdef DEBUG
@@ -1017,7 +1028,7 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 
 	 node	debug
 	 node	debug.0
-	 string	debug.0.name
+	 string debug.0.name
 	 int	debug.0.value
 	 int	debug.name
 
@@ -1088,7 +1099,7 @@ sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
 #endif
 
 /*
- * sysctl helper routine for kern.maxvnodes.  drain vnodes if
+ * sysctl helper routine for kern.maxvnodes.  Drain vnodes if
  * new value is lower than desiredvnodes and then calls reinit
  * routines that needs to adjust to the new value.
  */
@@ -1156,7 +1167,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.maxproc.  ensures that the new
+ * sysctl helper routine for kern.maxproc. Ensures that the new
  * values are not too low or too high.
  */
 static int
@@ -1184,7 +1195,7 @@ sysctl_kern_maxproc(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper function for kern.hostid.  the hostid is a long, but
+ * sysctl helper function for kern.hostid. The hostid is a long, but
  * we export it as an int, so we need to give it a little help.
  */
 static int
@@ -1232,7 +1243,7 @@ sysctl_setlen(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.clockrate.  assembles a struct on
+ * sysctl helper routine for kern.clockrate. Assembles a struct on
  * the fly to be returned to the caller.
  */
 static int
@@ -1309,8 +1320,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.msgbufsize and kern.msgbuf.  for the
- * former it merely checks the message buffer is set up.  for the latter,
+ * sysctl helper routine for kern.msgbufsize and kern.msgbuf. For the
+ * former it merely checks the message buffer is set up. For the latter,
  * it also copies out the data if necessary.
  */
 static int
@@ -1342,11 +1353,11 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 	if (newp != NULL)
 		return (EPERM);
 
-        if (oldp == NULL) {
+	if (oldp == NULL) {
 		/* always return full buffer size */
 		*oldlenp = msgbufp->msg_bufs;
 		return (0);
-        }
+	}
 
 	error = 0;
 	maxlen = MIN(msgbufp->msg_bufs, *oldlenp);
@@ -1379,7 +1390,7 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.defcorename.  in the case of a new
+ * sysctl helper routine for kern.defcorename. In the case of a new
  * string being assigned, check that it's not a zero-length string.
  * (XXX the check in -current doesn't work, but do we really care?)
  */
@@ -1401,7 +1412,7 @@ sysctl_kern_defcorename(SYSCTLFN_ARGS)
 
 	/*
 	 * when sysctl_lookup() deals with a string, it's guaranteed
-	 * to come back nul terminated.  so there.  :)
+	 * to come back nul terminated. So there.  :)
 	 */
 	if (strlen(newcorename) == 0) {
 		error = EINVAL;
@@ -1415,7 +1426,7 @@ done:
 }
 
 /*
- * sysctl helper routine for kern.cp_time node.  adds up cpu time
+ * sysctl helper routine for kern.cp_time node. Adds up cpu time
  * across all cpus.
  */
 static int
@@ -1455,7 +1466,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-	    	if (*oldlenp == sizeof(uint64_t) * CPUSTATES || oldp == NULL) {
+		if (*oldlenp == sizeof(uint64_t) * CPUSTATES || oldp == NULL) {
 			node.sysctl_size = sizeof(uint64_t) * CPUSTATES;
 			n = -1; /* SUM */
 		}
@@ -1517,7 +1528,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 
 #if NPTY > 0
 /*
- * sysctl helper routine for kern.maxptys.  ensures that any new value
+ * sysctl helper routine for kern.maxptys. Ensures that any new value
  * is acceptable to the pty subsystem.
  */
 static int
@@ -1544,7 +1555,7 @@ sysctl_kern_maxptys(SYSCTLFN_ARGS)
 #endif /* NPTY > 0 */
 
 /*
- * sysctl helper routine for kern.sbmax.  basically just ensures that
+ * sysctl helper routine for kern.sbmax. Basically just ensures that
  * any new value is not too small.
  */
 static int
@@ -1566,7 +1577,7 @@ sysctl_kern_sbmax(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.urandom node.  picks a random number
+ * sysctl helper routine for kern.urandom node. Picks a random number
  * for you.
  */
 static int
@@ -1588,7 +1599,7 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.arandom node.  picks a random number
+ * sysctl helper routine for kern.arandom node. Picks a random number
  * for you.
  */
 static int
@@ -1653,9 +1664,6 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
-				 *
-				 * XXX We should not be holding p_smutex, but
-				 * for now, the buffer is wired.  Fix later.
 				 */
 				error = dcopyout(l, &klwp, dp,
 				    min(sizeof(klwp), elem_size));
@@ -1673,24 +1681,34 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			mutex_exit(&proclist_lock);
 			return (ESRCH);
 		}
-		mutex_enter(&p->p_smutex);	
+		mutex_enter(&p->p_smutex);
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			if (buflen >= elem_size && elem_count > 0) {
+				struct lwp *l3;
+
 				lwp_lock(l2);
 				fill_lwp(l2, &klwp);
 				lwp_unlock(l2);
-
+				mutex_exit(&p->p_smutex);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
-				 *
-				 * XXX We should not be holding p_smutex, but
-				 * for now, the buffer is wired.  Fix later.
 				 */
 				error = dcopyout(l, &klwp, dp,
 				    min(sizeof(klwp), elem_size));
-				if (error)
+				if (error) {
 					goto cleanup;
+				}
+				mutex_enter(&p->p_smutex);
+				LIST_FOREACH(l3, &p->p_lwps, l_sibling) {
+					if (l2 == l3)
+						break;
+				}
+				if (l3 == NULL) {
+					mutex_exit(&p->p_smutex);
+					error = EAGAIN;
+					goto cleanup;
+				}
 				dp += elem_size;
 				buflen -= elem_size;
 				elem_count--;
@@ -1711,11 +1729,12 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	}
 	return (0);
  cleanup:
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 
 /*
- * sysctl helper routine for kern.forkfsleep node.  ensures that the
+ * sysctl helper routine for kern.forkfsleep node. Ensures that the
  * given value is not too large or two small, and is at least one
  * timer tick if not zero.
  */
@@ -1954,7 +1973,7 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 		kp->ki_vdata =	PTRTOUINT64(vp->v_data);
 	}
 
-        /* process information when retrieved via KERN_FILE_BYPID */
+	/* process information when retrieved via KERN_FILE_BYPID */
 	if (p) {
 		kp->ki_pid =		p->p_pid;
 		kp->ki_fd =		i;
@@ -2325,7 +2344,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	if (error)
 		goto done;
 
-	/* 
+	/*
 	 * Now copy each string.
 	 */
 	len = 0; /* bytes written to user buffer */
@@ -2345,6 +2364,15 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		} else
 #endif
 			base = (vaddr_t)argv[i];
+
+		/*
+		 * The program has messed around with its arguments,
+		 * possibly deleting some, and replacing them with
+		 * NULL's. Treat this as the last argument and not
+		 * a failure.
+		 */
+		if (base == 0)
+			break;
 
 		while (!finished) {
 			xlen = PAGE_SIZE - (base & PAGE_MASK);
@@ -2373,12 +2401,12 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			/* Check for user buffer overflow */
 			if (len + xlen > *oldlenp) {
 				finished = 1;
-				if (len > *oldlenp) 
+				if (len > *oldlenp)
 					xlen = 0;
 				else
 					xlen = *oldlenp - len;
 			}
-				
+
 			/* Copyout the page */
 			error = dcopyout(l, arg, (char *)oldp + len, xlen);
 			if (error)
@@ -2457,7 +2485,7 @@ out:
 }
 
 /*
- * sysctl helper routine for kern.cp_id node.  maps cpus to their
+ * sysctl helper routine for kern.cp_id node. Maps cpus to their
  * cpuids.
  */
 static int
@@ -2489,8 +2517,8 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	CPU_INFO_ITERATOR cii;
 
 	/*
-	 * here you may either retrieve a single cpu id or the whole
-	 * set.  the size you get back when probing depends on what
+	 * Here you may either retrieve a single cpu id or the whole
+	 * set. The size you get back when probing depends on what
 	 * you ask for.
 	 */
 	switch (namelen) {
@@ -2549,7 +2577,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for hw.usermem and hw.usermem64.  values are
+ * sysctl helper routine for hw.usermem and hw.usermem64. Values are
  * calculate on the fly taking into account integer overflow and the
  * current wired count.
  */
@@ -2581,7 +2609,7 @@ sysctl_hw_usermem(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.cnmagic node.  pulls the old value
+ * sysctl helper routine for kern.cnmagic node. Pulls the old value
  * out, encoded, and stuffs the new value in for decoding.
  */
 static int
@@ -2601,18 +2629,6 @@ sysctl_hw_cnmagic(SYSCTLFN_ARGS)
 
 	return (cn_set_magic(magic));
 }
-
-static int
-sysctl_hw_ncpu(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-
-	node = *rnode;
-	node.sysctl_data = &ncpu;
-
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
 
 /*
  * ********************************************************************
@@ -2638,7 +2654,7 @@ sysctl_root_device(SYSCTLFN_ARGS)
 
 /*
  * sysctl helper routine for kern.consdev, dependent on the current
- * state of the console.  also used for machdep.console_device on some
+ * state of the console. Also used for machdep.console_device on some
  * ports.
  */
 int

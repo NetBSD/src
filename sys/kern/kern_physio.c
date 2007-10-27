@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.61.2.4 2007/09/03 14:40:52 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.61.2.5 2007/10/27 11:35:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61.2.4 2007/09/03 14:40:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61.2.5 2007/10/27 11:35:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61.2.4 2007/09/03 14:40:52 yamt Ex
 #include <sys/proc.h>
 #include <sys/once.h>
 #include <sys/workqueue.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,9 +106,16 @@ struct workqueue *physio_workqueue;
 #define	DPRINTF(a)	/* nothing */
 #endif /* defined(PHYSIO_DEBUG) */
 
-/* abuse these members/flags of struct buf */
-#define	b_running	b_freelistindex
-#define	b_endoffset	b_lblkno
+struct physio_stat {
+	int ps_running;
+	int ps_error;
+	int ps_failed;
+	off_t ps_endoffset;
+	kmutex_t ps_lock;
+	kcondvar_t ps_cv;
+};
+
+/* abuse these flags of struct buf */
 #define	B_DONTFREE	B_AGE
 
 /*
@@ -146,7 +154,7 @@ physio_done(struct work *wk, void *dummy)
 	struct buf *bp = (void *)wk;
 	size_t todo = bp->b_bufsize;
 	size_t done = bp->b_bcount - bp->b_resid;
-	struct buf *mbp = bp->b_private;
+	struct physio_stat *ps = bp->b_private;
 
 	KASSERT(&bp->b_work == wk);
 	KASSERT(bp->b_bcount <= todo);
@@ -157,7 +165,7 @@ physio_done(struct work *wk, void *dummy)
 	vunmapbuf(bp, todo);
 	uvm_vsunlock(bp->b_proc->p_vmspace, bp->b_data, todo);
 
-	simple_lock(&mbp->b_interlock);
+	mutex_enter(&ps->ps_lock);
 	if (__predict_false(done != todo)) {
 		off_t endoffset = dbtob(bp->b_blkno) + done;
 
@@ -168,33 +176,30 @@ physio_done(struct work *wk, void *dummy)
 		 * ie. the one at the lowest offset.
 		 */
 
-		KASSERT(mbp->b_endoffset != endoffset);
+		KASSERT(ps->ps_endoffset != endoffset);
 		DPRINTF(("%s: error=%d at %" PRIu64 " - %" PRIu64
 		    ", blkno=%" PRIu64 ", bcount=%d, flags=0x%x\n",
 		    __func__, bp->b_error, dbtob(bp->b_blkno), endoffset,
 		    bp->b_blkno, bp->b_bcount, bp->b_flags));
 
-		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
-			DPRINTF(("%s: mbp=%p, error %d -> %d, endoff %" PRIu64
+		if (ps->ps_endoffset == -1 || endoffset < ps->ps_endoffset) {
+			DPRINTF(("%s: ps=%p, error %d -> %d, endoff %" PRIu64
 			    " -> %" PRIu64 "\n",
-			    __func__, mbp,
-			    mbp->b_error, bp->b_error,
-			    mbp->b_endoffset, endoffset));
+			    __func__, ps,
+			    ps->ps_error, bp->b_error,
+			    ps->ps_endoffset, endoffset));
 
-			mbp->b_endoffset = endoffset;
-			mbp->b_error = bp->b_error;
+			ps->ps_endoffset = endoffset;
+			ps->ps_error = bp->b_error;
 		}
-		mbp->b_error = EIO;
+		ps->ps_failed++;
 	} else {
 		KASSERT(bp->b_error == 0);
 	}
 
-	mbp->b_running--;
-	if ((mbp->b_flags & B_WANTED) != 0) {
-		mbp->b_flags &= ~B_WANTED;
-		wakeup(mbp);
-	}
-	simple_unlock(&mbp->b_interlock);
+	ps->ps_running--;
+	cv_signal(&ps->ps_cv);
+	mutex_exit(&ps->ps_lock);
 
 	putphysbuf(bp);
 }
@@ -203,10 +208,10 @@ static void
 physio_biodone(struct buf *bp)
 {
 #if defined(DIAGNOSTIC)
-	struct buf *mbp = bp->b_private;
+	struct physio_stat *ps = bp->b_private;
 	size_t todo = bp->b_bufsize;
 
-	KASSERT(mbp->b_running > 0);
+	KASSERT(ps->ps_running > 0);
 	KASSERT(bp->b_bcount <= todo);
 	KASSERT(bp->b_resid <= bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
@@ -214,22 +219,14 @@ physio_biodone(struct buf *bp)
 	workqueue_enqueue(physio_workqueue, &bp->b_work, NULL);
 }
 
-static int
-physio_wait(struct buf *bp, int n, const char *wchan)
+static void
+physio_wait(struct physio_stat *ps, int n)
 {
-	int error = 0;
 
-	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
+	KASSERT(mutex_owned(&ps->ps_lock));
 
-	while (bp->b_running > n) {
-		bp->b_flags |= B_WANTED;
-		error = ltsleep(bp, PRIBIO + 1, wchan, 0, &bp->b_interlock);
-		if (error) {
-			break;
-		}
-	}
-
-	return error;
+	while (ps->ps_running > n)
+		cv_wait(&ps->ps_cv, &ps->ps_lock);
 }
 
 static int
@@ -262,9 +259,8 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	struct proc *p = l->l_proc;
 	int i, s;
 	int error;
-	int error2;
 	struct buf *bp = NULL;
-	struct buf *mbp;
+	struct physio_stat *ps;
 	int concurrency = PHYSIO_CONCURRENCY - 1;
 
 	error = RUN_ONCE(&physio_initialized, physio_init);
@@ -276,6 +272,15 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	    __func__, uio->uio_offset, uio->uio_resid));
 
 	flags &= B_READ | B_WRITE;
+
+	if ((ps = kmem_zalloc(sizeof(*ps), KM_SLEEP)) == NULL)
+		return ENOMEM;
+	/* ps->ps_running = 0; */
+	/* ps->ps_error = 0; */
+	/* ps->ps_failed = 0; */
+	ps->ps_endoffset = -1;
+	mutex_init(&ps->ps_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&ps->ps_cv, "physio");
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if (obp != NULL) {
@@ -301,10 +306,6 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 		concurrency = 0; /* see "XXXkludge" comment below */
 	}
 
-	mbp = getphysbuf();
-	mbp->b_running = 0;
-	mbp->b_endoffset = -1;
-
 	uvm_lwp_hold(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
@@ -315,16 +316,12 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			size_t todo;
 			vaddr_t endp;
 
-			simple_lock(&mbp->b_interlock);
-			if (mbp->b_error != 0) {
+			mutex_enter(&ps->ps_lock);
+			if (ps->ps_failed != 0) {
 				goto done_locked;
 			}
-			error = physio_wait(mbp, sync ? 0 : concurrency,
-			    "physio1");
-			if (error) {
-				goto done_locked;
-			}
-			simple_unlock(&mbp->b_interlock);
+			physio_wait(ps, sync ? 0 : concurrency);
+			mutex_exit(&ps->ps_lock);
 			if (obp != NULL) {
 				/*
 				 * XXXkludge
@@ -336,7 +333,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			}
 			bp->b_dev = dev;
 			bp->b_proc = p;
-			bp->b_private = mbp;
+			bp->b_private = ps;
 			bp->b_vp = NULL;
 
 			/*
@@ -398,9 +395,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
-			simple_lock(&mbp->b_interlock);
-			mbp->b_running++;
-			simple_unlock(&mbp->b_interlock);
+			mutex_enter(&ps->ps_lock);
+			ps->ps_running++;
+			mutex_exit(&ps->ps_lock);
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);
@@ -414,31 +411,30 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	}
 
 done:
-	simple_lock(&mbp->b_interlock);
+	mutex_enter(&ps->ps_lock);
 done_locked:
-	error2 = physio_wait(mbp, 0, "physio2");
-	if (error == 0) {
-		error = error2;
-	}
-	simple_unlock(&mbp->b_interlock);
+	physio_wait(ps, 0);
+	mutex_exit(&ps->ps_lock);
 
-	if (mbp->b_error != 0) {
+	if (ps->ps_failed != 0) {
 		off_t delta;
 
-		delta = uio->uio_offset - mbp->b_endoffset;
+		delta = uio->uio_offset - ps->ps_endoffset;
 		KASSERT(delta > 0);
 		uio->uio_resid += delta;
-		/* uio->uio_offset = mbp->b_endoffset; */
+		/* uio->uio_offset = ps->ps_endoffset; */
 	} else {
-		KASSERT(mbp->b_endoffset == -1);
+		KASSERT(ps->ps_endoffset == -1);
 	}
 	if (bp != NULL) {
 		putphysbuf(bp);
 	}
 	if (error == 0) {
-		error = mbp->b_error;
+		error = ps->ps_error;
 	}
-	putphysbuf(mbp);
+	mutex_destroy(&ps->ps_lock);
+	cv_destroy(&ps->ps_cv);
+	kmem_free(ps, sizeof(*ps));
 
 	/*
 	 * [clean up the state of the buffer]

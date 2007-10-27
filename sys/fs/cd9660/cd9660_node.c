@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10.2.3 2007/09/03 14:40:06 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10.2.4 2007/10/27 11:35:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.3 2007/09/03 14:40:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.4 2007/10/27 11:35:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ cd9660_defattr(isodir, inop, bp)
 		inop->inode.iso_gid = (gid_t)0;
 	}
 	if (bp2)
-		brelse(bp2);
+		brelse(bp2, 0);
 }
 
 /*
@@ -443,7 +443,7 @@ cd9660_deftstamp(isodir,inop,bp)
 		inop->inode.iso_mtime = inop->inode.iso_ctime;
 	}
 	if (bp2)
-		brelse(bp2);
+		brelse(bp2, 0);
 }
 
 int

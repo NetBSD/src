@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.55.2.4 2007/09/03 14:41:53 yamt Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.55.2.5 2007/10/27 11:35:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55.2.4 2007/09/03 14:41:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55.2.5 2007/10/27 11:35:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ nullfs_mount(mp, path, data, data_len, l)
 	nmp->nullm_bypass = layer_bypass;
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->nullm_vnodeop_p = null_vnodeop_p;
-	simple_lock_init(&nmp->nullm_hashlock);
+	mutex_init(&nmp->nullm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	nmp->nullm_node_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_CACHE,
 	    M_WAITOK, &nmp->nullm_node_hash);
 
@@ -187,13 +187,13 @@ nullfs_mount(mp, path, data, data_len, l)
 	/*
 	 * Unlock the node
 	 */
+	vp->v_vflag |= VV_ROOT;
 	VOP_UNLOCK(vp, 0);
 
 	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in nullfs_unmount.
 	 */
-	vp->v_flag |= VROOT;
 	nmp->nullm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
@@ -245,6 +245,7 @@ nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * Finally, throw away the null_mount structure
 	 */
 	hashdone(nmp->nullm_node_hashtbl, M_CACHE);
+	mutex_destroy(&nmp->nullm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = NULL;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.146.2.4 2007/09/03 14:41:20 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146.2.5 2007/10/27 11:35:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,11 +77,11 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.5 2007/10/27 11:35:40 yamt Exp $");
+
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.4 2007/09/03 14:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,10 +231,10 @@ static struct pool_allocator bufmempool_allocator = {
 };
 
 /* Buffer memory management variables */
-u_long bufmem_valimit;
-u_long bufmem_hiwater;
-u_long bufmem_lowater;
-u_long bufmem;
+uint64_t bufmem_valimit;
+uint64_t bufmem_hiwater;
+uint64_t bufmem_lowater;
+uint64_t bufmem;
 
 /*
  * MD code can call this to set a hard limit on the amount
@@ -599,7 +599,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		/* Pay for the read. */
 		curproc->p_stats->p_ru.ru_inblock++;
 	} else if (async) {
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	if (vp->v_type == VBLK)
@@ -762,7 +762,7 @@ bwrite(struct buf *bp)
 		rv = biowait(bp);
 
 		/* Release the buffer. */
-		brelse(bp);
+		brelse(bp, 0);
 
 		return (rv);
 	} else {
@@ -824,7 +824,7 @@ bdwrite(struct buf *bp)
 	simple_unlock(&bp->b_interlock);
 	splx(s);
 
-	brelse(bp);
+	brelse(bp, 0);
 }
 
 /*
@@ -872,7 +872,7 @@ bdirty(struct buf *bp)
  * Described in Bach (p. 46).
  */
 void
-brelse(struct buf *bp)
+brelse(struct buf *bp, int set)
 {
 	struct bqueue *bufq;
 	int s;
@@ -881,6 +881,8 @@ brelse(struct buf *bp)
 	s = splbio();
 	simple_lock(&bqueue_slock);
 	simple_lock(&bp->b_interlock);
+
+	bp->b_flags |= set;
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
 	KASSERT(!ISSET(bp->b_flags, B_CALL));
@@ -1313,7 +1315,7 @@ buf_trim(void)
 		bp->b_bcount = bp->b_bufsize = 0;
 	}
 	/* brelse() will return the buffer to the global buffer pool */
-	brelse(bp);
+	brelse(bp, 0);
 	simple_lock(&bqueue_slock);
 	return size;
 }
@@ -1401,7 +1403,7 @@ biodone(struct buf *bp)
 	} else {
 		if (ISSET(bp->b_flags, B_ASYNC)) {	/* if async, release */
 			simple_unlock(&bp->b_interlock);
-			brelse(bp);
+			brelse(bp, 0);
 		} else {			/* or just wakeup the buffer */
 			CLR(bp->b_flags, B_WANTED);
 			wakeup(bp);
@@ -1596,8 +1598,20 @@ cleanup:
 	return (error);
 }
 
+static void
+sysctl_bufvm_common(void)
+{
+	int64_t t;
+
+	/* Drain until below new high water mark */
+	while ((t = (int64_t)bufmem - (int64_t)bufmem_hiwater) >= 0) {
+		if (buf_drain(t / (2 * 1024)) <= 0)
+			break;
+	}
+}
+
 static int
-sysctl_bufvm_update(SYSCTLFN_ARGS)
+sysctl_bufcache_update(SYSCTLFN_ARGS)
 {
 	int t, error;
 	struct sysctlnode node;
@@ -1609,14 +1623,32 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
+	if (t < 0 || t > 100)
+		return EINVAL;
+	bufcache = t;
+	buf_setwm();
+
+	sysctl_bufvm_common();
+	return 0;
+}
+
+static int
+sysctl_bufvm_update(SYSCTLFN_ARGS)
+{
+	int64_t t;
+	int error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = *(int64_t *)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
 	if (t < 0)
 		return EINVAL;
-	if (rnode->sysctl_data == &bufcache) {
-		if (t > 100)
-			return (EINVAL);
-		bufcache = t;
-		buf_setwm();
-	} else if (rnode->sysctl_data == &bufmem_lowater) {
+	if (rnode->sysctl_data == &bufmem_lowater) {
 		if (bufmem_hiwater - t < 16)
 			return (EINVAL);
 		bufmem_lowater = t;
@@ -1627,11 +1659,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	} else
 		return (EINVAL);
 
-	/* Drain until below new high water mark */
-	while ((t = bufmem - bufmem_hiwater) >= 0) {
-		if (buf_drain(t / (2 * 1024)) <= 0)
-			break;
-	}
+	sysctl_bufvm_common();
 
 	return 0;
 }
@@ -1666,25 +1694,25 @@ SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 		       CTLTYPE_INT, "bufcache",
 		       SYSCTL_DESCR("Percentage of physical memory to use for "
 				    "buffer cache"),
-		       sysctl_bufvm_update, 0, &bufcache, 0,
+		       sysctl_bufcache_update, 0, &bufcache, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_INT, "bufmem",
+		       CTLTYPE_QUAD, "bufmem",
 		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
 				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_lowater",
+		       CTLTYPE_QUAD, "bufmem_lowater",
 		       SYSCTL_DESCR("Minimum amount of kernel memory to "
 				    "reserve for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_hiwater",
+		       CTLTYPE_QUAD, "bufmem_hiwater",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to use "
 				    "for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,

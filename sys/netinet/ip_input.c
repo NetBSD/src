@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.218.2.4 2007/09/03 14:42:58 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.218.2.5 2007/10/27 11:36:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.4 2007/09/03 14:42:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.5 2007/10/27 11:36:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1013,7 +1013,6 @@ found:
 			/* XXX error stat??? */
 			error = EINVAL;
 DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
-			goto bad;
 		}
 		splx(s);
 		if (error)
@@ -1775,32 +1774,6 @@ ip_srcroute(void)
 		printf(" %x\n", ntohl(q->s_addr));
 #endif
 	return (m);
-}
-
-/*
- * Strip out IP options, at higher
- * level protocol in the kernel.
- * Second argument is buffer to which options
- * will be moved, and return value is their length.
- * XXX should be deleted; last arg currently ignored.
- */
-void
-ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
-{
-	int i;
-	struct ip *ip = mtod(m, struct ip *);
-	void *opts;
-	int olen;
-
-	olen = (ip->ip_hl << 2) - sizeof (struct ip);
-	opts = (void *)(ip + 1);
-	i = m->m_len - (sizeof (struct ip) + olen);
-	memmove(opts, (char *)opts + olen, (unsigned)i);
-	m->m_len -= olen;
-	if (m->m_flags & M_PKTHDR)
-		m->m_pkthdr.len -= olen;
-	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
-	ip->ip_hl = sizeof (struct ip) >> 2;
 }
 
 const int inetctlerrmap[PRC_NCMDS] = {

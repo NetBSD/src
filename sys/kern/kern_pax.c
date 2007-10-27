@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.3.10.5 2007/09/03 14:40:52 yamt Exp $ */
+/* $NetBSD: kern_pax.c,v 1.3.10.6 2007/10/27 11:35:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.3.10.6 2007/10/27 11:35:25 yamt Exp $");
 
 #include "opt_pax.h"
 

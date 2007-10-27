@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.2.18.4 2007/09/03 14:46:45 yamt Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2.18.5 2007/10/27 11:36:36 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -29,7 +29,7 @@
 #ifndef _SYS_WORKQUEUE_H_
 #define	_SYS_WORKQUEUE_H_
 
-#include <machine/cpu.h>
+struct cpu_info;
 
 /*
  * a simple "do it in thread context" framework.

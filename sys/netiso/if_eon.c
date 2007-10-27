@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.47.2.4 2007/09/03 14:44:02 yamt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.47.2.5 2007/10/27 11:36:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.4 2007/09/03 14:44:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.5 2007/10/27 11:36:16 yamt Exp $");
 
 #include "opt_eon.h"
 
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.4 2007/09/03 14:44:02 yamt Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
+#include <sys/cpu.h>	/* XXX for setsoftnet().  This must die. */
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -431,6 +431,25 @@ flush:
 	return error;
 }
 
+/*
+ * Strip out IP options, at higher
+ * level protocol in the kernel.
+ */
+static void
+ip_stripoptions(struct mbuf *m)
+{
+	struct ip *ip = mtod(m, struct ip *);
+	void *opts;
+	size_t olen;
+
+	olen = (ip->ip_hl << 2) - sizeof(struct ip);
+	opts = (void *)(ip + 1);
+	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
+	ip->ip_hl = sizeof(struct ip) >> 2;
+	memmove((char *)ip + olen, ip, (size_t)olen);
+	m_adj(m, olen);
+}
+
 void
 eoninput(struct mbuf *m, ...)
 {
@@ -458,7 +477,7 @@ eoninput(struct mbuf *m, ...)
 	if (m == NULL)
 		return;
 	if (iphlen > sizeof(struct ip))
-		ip_stripoptions(m, NULL);
+		ip_stripoptions(m);
 	if (m->m_len < EONIPLEN) {
 		if ((m = m_pullup(m, EONIPLEN)) == NULL) {
 			IncStat(es_badhdr);

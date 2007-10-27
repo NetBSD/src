@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.12.2.2 2007/09/03 14:45:36 yamt Exp $	*/
+/*	$NetBSD: vfs.c,v 1.12.2.3 2007/10/27 11:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,8 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	vn_lock(vp, lockflag & LK_TYPE_MASK);
+	if (lockflag & LK_TYPE_MASK)
+		vn_lock(vp, lockflag & LK_TYPE_MASK);
 	return 0;
 }
 
@@ -155,6 +156,13 @@ void
 vgone(struct vnode *vp)
 {
 
+	vgonel(vp, curlwp);
+}
+
+void
+vgonel(struct vnode *vp, struct lwp *l)
+{
+
 }
 
 void
@@ -175,7 +183,13 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 	struct mount *mp = vp->v_mount;
 
 	if (vp->v_data != (void *)1) {
+		simple_lock(&vp->v_interlock);
+		if (inter_lkp)
+			simple_unlock(inter_lkp);
+		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+		VOP_INACTIVE(vp, l);
+
 		VOP_RECLAIM(vp, l);
 		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
@@ -297,6 +311,8 @@ namei(struct nameidata *ndp)
 	}
 
 	vp = makevnode(&sb_node, cnp->cn_pnbuf);
+	if (cnp->cn_flags & LOCKLEAF)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	ndp->ni_vp = vp;
 
 	return 0;
@@ -342,7 +358,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 }
 
 int
-vfs_busy(struct mount *mp, int flags, struct simplelock *interlck)
+vfs_busy(struct mount *mp, int flags, kmutex_t *interlck)
 {
 
 	return 0;

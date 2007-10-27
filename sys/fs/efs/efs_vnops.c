@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.6.8.2 2007/09/03 14:40:16 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.6.8.3 2007/10/27 11:35:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.2 2007/09/03 14:40:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.3 2007/10/27 11:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ efs_lookup(void *v)
 				cache_enter(ap->a_dvp, NULL, cnp);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
-				err = VOP_ACCESS(vp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				err = VOP_ACCESS(ap->a_dvp, VWRITE,
+				    cnp->cn_cred, cnp->cn_lwp);
 				if (err)
 					return (err);
 				cnp->cn_flags |= SAVENAME;
@@ -192,7 +192,8 @@ efs_getattr(void *v)
 	vap->va_ctime.tv_sec	= eip->ei_ctime;
 /*	vap->va_birthtime 	= */
 	vap->va_gen		= eip->ei_gen;
-	vap->va_flags		= ap->a_vp->v_flag;
+	vap->va_flags		= ap->a_vp->v_vflag |
+	    ap->a_vp->v_iflag | ap->a_vp->v_uflag;
 
 	if (ap->a_vp->v_type == VBLK || ap->a_vp->v_type == VCHR) {
 		uint32_t dmaj, dmin;
@@ -296,11 +297,11 @@ efs_readdir(void *v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
+	struct dirent *dp;
 	struct efs_dinode edi;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
 	struct buf *bp;
-	struct dirent *dp;
 	struct efs_dirent *de;
 	struct efs_dirblk *db;
 	struct uio *uio = ap->a_uio;
@@ -322,6 +323,8 @@ efs_readdir(void *v)
 		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
  	}
 
+	dp = malloc(sizeof(struct dirent), M_EFSTMP, M_WAITOK | M_ZERO);
+
 	offset = 0;
 	efs_extent_iterator_init(&exi, ei, 0);
 	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
@@ -329,7 +332,7 @@ efs_readdir(void *v)
 			err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 			    ex.ex_bn + i, NULL, &bp);
 			if (err) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto exit_err;
 			}
 
@@ -337,7 +340,7 @@ efs_readdir(void *v)
 
 			if (be16toh(db->db_magic) != EFS_DIRBLK_MAGIC) {
 				printf("efs_readdir: bad dirblk\n");
-				brelse(bp);
+				brelse(bp, 0);
 				continue;
 			}
 
@@ -359,14 +362,15 @@ efs_readdir(void *v)
 					continue;
 				}
 
-				/* XXX - latter shouldn't happen, right? */
-				if (s > uio->uio_resid ||
-				    offset > uio->uio_offset) {
-					brelse(bp);
+				/* XXX - shouldn't happen, right? */
+				if (offset > uio->uio_offset ||
+				    s > uio->uio_resid) {
+					brelse(bp, 0);
 					goto exit_ok;
 				}
 
-				dp = malloc(s, M_EFSTMP, M_ZERO | M_WAITOK);
+				/* de_namelen is uint8_t, d.d_name is 512b */
+				KASSERT(sizeof(dp->d_name)-de->de_namelen > 0);
 				dp->d_fileno = be32toh(de->de_inumber);
 				dp->d_reclen = s;
 				dp->d_namlen = de->de_namelen;
@@ -379,8 +383,7 @@ efs_readdir(void *v)
 				    VFSTOEFS(ap->a_vp->v_mount),
 				    dp->d_fileno, NULL, &edi);
 				if (err) {
-					brelse(bp);
-					free(dp, M_EFSTMP);
+					brelse(bp, 0);
 					goto exit_err;
 				}
 
@@ -412,10 +415,9 @@ efs_readdir(void *v)
 				}
 
 				err = uiomove(dp, s, uio);
-				free(dp, M_EFSTMP);
 				if (err) {
-					brelse(bp);
-					goto exit_err;
+					brelse(bp, 0);
+					goto exit_err;	
 				}
 
 				offset += s;
@@ -423,13 +425,13 @@ efs_readdir(void *v)
 				if (cookies != NULL && maxcookies != 0) {
 					cookies[ncookies++] = offset;
 					if (ncookies == maxcookies) {
-						brelse(bp);
+						brelse(bp, 0);
 						goto exit_ok;
 					}
 				}
 			}
 
-			brelse(bp);
+			brelse(bp, 0);
 		}
 	}
 
@@ -449,11 +451,15 @@ efs_readdir(void *v)
 
 	uio->uio_offset = offset;
 
+	free(dp, M_EFSTMP);
+
 	return (0);
 
  exit_err:
 	if (cookies != NULL)
 		free(cookies, M_TEMP);
+
+	free(dp, M_EFSTMP);
 	
 	return (err);
 }
@@ -506,14 +512,14 @@ efs_readlink(void *v)
 				err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
 				    ex.ex_bn + i, NULL, &bp);
 				if (err) {
-					brelse(bp);
+					brelse(bp, 0);
 					free(buf, M_EFSTMP);
 					return (err);
 				}
 
 				len = MIN(resid, bp->b_bcount);
 				memcpy(buf + off, bp->b_data, len);
-				brelse(bp);
+				brelse(bp, 0);
 
 				off += len;
 				resid -= len;

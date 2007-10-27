@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.24.4.3 2007/09/03 14:41:52 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.24.4.4 2007/10/27 11:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24.4.3 2007/09/03 14:41:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24.4.4 2007/10/27 11:35:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -874,9 +874,9 @@ layer_reclaim(v)
 		lmp->layerm_rootvp = NULL;
 	}
 	xp->layer_lowervp = NULL;
-	simple_lock(&lmp->layerm_hashlock);
+	mutex_enter(&lmp->layerm_hashlock);
 	LIST_REMOVE(xp, layer_hash);
-	simple_unlock(&lmp->layerm_hashlock);
+	mutex_exit(&lmp->layerm_hashlock);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
 	vrele(lowervp);

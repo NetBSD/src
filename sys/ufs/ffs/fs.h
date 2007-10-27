@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.45 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: fs.h,v 1.45.4.1 2007/10/27 11:36:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -205,9 +205,9 @@
  * however throughput drops by fifty percent if the file system
  * is run at between 95% and 100% full; thus the minimum default
  * value of fs_minfree is 5%. However, to get good clustering
- * performance, 10% is a better choice. hence we use 10% as our
- * default value. With 10% free space, fragmentation is not a
- * problem, so we choose to optimize for time.
+ * performance, 10% is a better choice. This value is used only
+ * when creating a file system and can be overriden from the
+ * command line. By default we choose to optimize for time.
  */
 #define	MINFREE		5
 #define	DEFAULTOPT	FS_OPTTIME

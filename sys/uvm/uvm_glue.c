@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.89.2.4 2007/09/03 14:47:06 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.89.2.5 2007/10/27 11:36:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.4 2007/09/03 14:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.5 2007/10/27 11:36:53 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -479,7 +479,7 @@ uvm_swapin(struct lwp *l)
 	vaddr_t addr;
 	int error;
 
-	KASSERT(mutex_owned(&l->l_swaplock));
+	/* XXXSMP notyet KASSERT(mutex_owned(&l->l_swaplock)); */
 	KASSERT(l != curlwp);
 
 	addr = USER_TO_UAREA(l->l_addr);

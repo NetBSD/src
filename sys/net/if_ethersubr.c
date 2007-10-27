@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.126.2.4 2007/09/03 14:42:04 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.126.2.5 2007/10/27 11:36:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.4 2007/09/03 14:42:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.5 2007/10/27 11:36:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.4 2007/09/03 14:42:04 yamt 
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -797,7 +797,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem(m);
 		} else
 			IF_ENQUEUE(inq, m);
-		softintr_schedule(pppoe_softintr);
+		softint_schedule(pppoe_softintr);
 		return;
 #endif /* NPPPOE > 0 */
 	case ETHERTYPE_SLOWPROTOCOLS: {
@@ -1266,14 +1266,14 @@ ether_nonstatic_aton(u_char *dest, char *str)
  * addresses.
  */
 int
-ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
+ether_multiaddr(const struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
     u_int8_t addrhi[ETHER_ADDR_LEN])
 {
 #ifdef INET
-	struct sockaddr_in *sin;
+	const struct sockaddr_in *sin;
 #endif /* INET */
 #ifdef INET6
-	struct sockaddr_in6 *sin6;
+	const struct sockaddr_in6 *sin6;
 #endif /* INET6 */
 
 	switch (sa->sa_family) {
@@ -1285,7 +1285,7 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 
 #ifdef INET
 	case AF_INET:
-		sin = satosin(sa);
+		sin = satocsin(sa);
 		if (sin->sin_addr.s_addr == INADDR_ANY) {
 			/*
 			 * An IP address of INADDR_ANY means listen to
@@ -1304,7 +1304,7 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 #endif
 #ifdef INET6
 	case AF_INET6:
-		sin6 = satosin6(sa);
+		sin6 = satocsin6(sa);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
 			 * An IP6 address of 0 means listen to or stop
@@ -1332,15 +1332,14 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
  * given interface.
  */
 int
-ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
+ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 {
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splnet(), error;
 
-	error = ether_multiaddr(&ifr->ifr_addr, addrlo,
-	    addrhi);
+	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0) {
 		splx(s);
 		return error;
@@ -1391,15 +1390,14 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
  * Delete a multicast address record.
  */
 int
-ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
+ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 {
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splnet(), error;
 
-	error = ether_multiaddr(&ifr->ifr_addr, addrlo,
-	    addrhi);
+	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0) {
 		splx(s);
 		return (error);
@@ -1532,11 +1530,11 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCADDMULTI:
-		error = ether_addmulti(ifr, ec);
+		error = ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
 		break;
 
 	case SIOCDELMULTI:
-		error = ether_delmulti(ifr, ec);
+		error = ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 		break;
 
 	default:

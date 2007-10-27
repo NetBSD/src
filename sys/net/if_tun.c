@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.76.8.4 2007/09/03 14:42:21 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.76.8.5 2007/10/27 11:36:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.4 2007/09/03 14:42:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.5 2007/10/27 11:36:04 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.4 2007/09/03 14:42:21 yamt Exp $")
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

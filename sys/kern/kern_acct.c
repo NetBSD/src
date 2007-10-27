@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.61.2.4 2007/09/03 14:40:42 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.61.2.5 2007/10/27 11:35:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.4 2007/09/03 14:40:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.5 2007/10/27 11:35:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,8 +387,11 @@ acct_process(struct lwp *l)
 	struct timeval ut, st, tmp;
 	struct rusage *r;
 	int t, error = 0;
-	struct plimit *oplim = NULL;
+	struct rlimit orlim;
 	struct proc *p = l->l_proc;
+
+	if (acct_state != ACCT_ACTIVE)
+		return 0;
 
 	mutex_enter(&acct_lock);
 
@@ -397,18 +400,16 @@ acct_process(struct lwp *l)
 		goto out;
 
 	/*
-	 * Raise the file limit so that accounting can't be stopped by
-	 * the user.
+	 * Temporarily raise the file limit so that accounting can't
+	 * be stopped by the user.
 	 *
 	 * XXX We should think about the CPU limit, too.
 	 */
-	mutex_enter(&p->p_mutex);
-	if (p->p_limit->p_refcnt > 1) {
-		oplim = p->p_limit;
-		p->p_limit = limcopy(p);
-	}
+	lim_privatise(p, false);
+	orlim = p->p_rlimit[RLIMIT_FSIZE];
+	/* Set current and max to avoid illegal values */
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	mutex_exit(&p->p_mutex);
+	p->p_rlimit[RLIMIT_FSIZE].rlim_max = RLIM_INFINITY;
 
 	/*
 	 * Get process accounting information.
@@ -467,12 +468,8 @@ acct_process(struct lwp *l)
 	if (error != 0)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
 
-	if (oplim) {
-		mutex_enter(&p->p_mutex);
-		limfree(p->p_limit);
-		p->p_limit = oplim;
-		mutex_exit(&p->p_mutex);
-	}
+	/* Restore limit - rather pointless since process is about to exit */
+	p->p_rlimit[RLIMIT_FSIZE] = orlim;
 
  out:
 	mutex_exit(&acct_lock);

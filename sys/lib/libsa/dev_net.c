@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.19 2002/03/17 05:46:37 gmcgarry Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.19.28.1 2007/10/27 11:35:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ net_open(struct open_file *f, ...)
 
 #ifdef	NETIF_DEBUG
 	if (debug)
-		printf("net_open: %s\n", devname);
+		printf("%s\n", devname);
 #endif
 
 	/* On first open, do netif open, mount, etc. */
@@ -104,12 +104,12 @@ net_open(struct open_file *f, ...)
 		if (netdev_sock < 0) {
 			netdev_sock = netif_open(devname);
 			if (netdev_sock < 0) {
-				printf("net_open: netif_open() failed\n");
+				printf("netif_open() failed\n");
 				return (ENXIO);
 			}
 #ifdef NETIF_DEBUG
 			if (debug)
-				printf("net_open: netif_open() succeeded\n");
+				printf("netif_open() succeeded\n");
 #endif
 		}
 		if (rootip.s_addr == 0) {
@@ -122,7 +122,7 @@ net_open(struct open_file *f, ...)
 			/* Get the NFS file handle (mountd). */
 			error = nfs_mount(netdev_sock, rootip, rootpath);
 			if (error) {
-				printf("net_open: NFS mount error=%d\n", error);
+				printf("NFS mount error=%d\n", error);
 				rootip.s_addr = 0;
 			fail:
 				netif_close(netdev_sock);
@@ -131,7 +131,7 @@ net_open(struct open_file *f, ...)
 			}
 #ifdef NETIF_DEBUG
 			if (debug)
-				printf("net_open: NFS mount succeeded\n");
+				printf("NFS mount succeeded\n");
 #endif
 		}
 	}
@@ -229,7 +229,7 @@ net_getparams(sock)
 		return (0);
 #ifdef NETIF_DEBUG
 	if (debug)
-		printf("net_open: BOOTP failed, trying RARP/RPC...\n");
+		printf("BOOTP failed, trying RARP/RPC...\n");
 #endif
 #endif
 
@@ -238,17 +238,23 @@ net_getparams(sock)
 	 * netmask to the "natural" default for our address.
 	 */
 	if (rarp_getipaddress(sock)) {
-		printf("net_open: RARP failed\n");
+		printf("RARP failed\n");
 		return (EIO);
 	}
-	printf("net_open: client addr: %s\n", inet_ntoa(myip));
+#ifdef NETIF_DEBUG
+	if (debug)
+		printf("client addr: %s\n", inet_ntoa(myip));
+#endif
 
 	/* Get our hostname, server IP address, gateway. */
 	if (bp_whoami(sock)) {
-		printf("net_open: bootparam/whoami RPC failed\n");
+		printf("bootparam/whoami RPC failed\n");
 		return (EIO);
 	}
-	printf("net_open: client name: %s\n", hostname);
+#ifdef NETIF_DEBUG
+	if (debug)
+		printf("client name: %s\n", hostname);
+#endif
 
 	/*
 	 * Ignore the gateway from whoami (unreliable).
@@ -264,19 +270,29 @@ net_getparams(sock)
 	}
 	if (smask) {
 		netmask = smask;
-		printf("net_open: subnet mask: %s\n", intoa(netmask));
+#ifdef NETIF_DEBUG
+		if (debug)
+			printf("subnet mask: %s\n", intoa(netmask));
+#endif
 	}
-	if (gateip.s_addr)
-		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
+#ifdef NETIF_DEBUG
+	if (debug)
+		if (gateip.s_addr)
+			printf("net gateway: %s\n", inet_ntoa(gateip));
+#endif
 
 	/* Get the root server and pathname. */
 	if (bp_getfile(sock, "root", &rootip, rootpath)) {
-		printf("net_open: bootparam/getfile RPC failed\n");
+		printf("bootparam/getfile RPC failed\n");
 		return (EIO);
 	}
 
-	printf("net_open: server addr: %s\n", inet_ntoa(rootip));
-	printf("net_open: server path: %s\n", rootpath);
+#ifdef NETIF_DEBUG
+	if (debug) {
+		printf("server addr: %s\n", inet_ntoa(rootip));
+		printf("server path: %s\n", rootpath);
+	}
+#endif
 
 	return (0);
 }

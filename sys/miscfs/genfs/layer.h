@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.6.12.1 2006/06/21 15:10:25 yamt Exp $	*/
+/*	$NetBSD: layer.h,v 1.6.12.2 2007/10/27 11:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -98,7 +98,7 @@ struct layer_mount {
 	struct layer_node_hashhead	/* head of hash list for layer_nodes */
 				*layerm_node_hashtbl;
 	u_long			layerm_node_hash; /* hash mask for hash chain */
-	struct simplelock	layerm_hashlock; /* interlock for hash chain. */
+	kmutex_t		layerm_hashlock; /* interlock for hash chain. */
 };
 
 #define	LAYERFS_MFLAGS		0x00000fff	/* reserved layer mount flags */

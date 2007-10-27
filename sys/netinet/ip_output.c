@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.153.2.4 2007/09/03 14:42:59 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.153.2.5 2007/10/27 11:36:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.4 2007/09/03 14:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.5 2007/10/27 11:36:08 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1268,10 +1268,14 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #endif
 
 	if (level != IPPROTO_IP) {
-		error = EINVAL;
 		if (op == PRCO_SETOPT && *mp)
 			(void) m_free(*mp);
-	} else switch (op) {
+		if (level == SOL_SOCKET && optname == SO_NOHEADER)
+			return 0;
+		return ENOPROTOOPT;
+	}
+
+	switch (op) {
 
 	case PRCO_SETOPT:
 		switch (optname) {

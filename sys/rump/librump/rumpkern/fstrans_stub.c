@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans_stub.c,v 1.1.8.2 2007/09/03 14:45:28 yamt Exp $	*/
+/*	$NetBSD: fstrans_stub.c,v 1.1.8.3 2007/10/27 11:36:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,4 +63,26 @@ fstrans_is_owner(struct mount *mp)
 {
 
 	return 1;
+}
+
+int
+fscow_establish(struct mount *mp, int (*func)(void *, struct buf *), void *arg)
+{
+
+	return 0;
+}
+
+int
+fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *),
+    void *arg)
+{
+
+	return 0;
+}
+
+int
+fscow_run(struct buf *bp)
+{
+
+	return 0;
 }
