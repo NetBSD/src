@@ -1,5 +1,5 @@
 %{
-/*	$Id: scan.l,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: scan.l,v 1.1.1.2 2007/10/27 14:43:38 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -48,11 +48,11 @@ IS			(u|U|l|L)*
 static NODE *cvtdig(int radix);
 static NODE *charcon(void);
 static void control(int);
+static int pragma(void);
 static NODE *floatcon(void);
 static NODE *fhexcon(void);
 int notype, parbal;
 
-#define	CPP_PRAGMA	1
 #define	CPP_IDENT 	2
 #define	CPP_LINE 	3
 #define	CPP_HASH	4
@@ -142,10 +142,11 @@ extern void yyset_lineno (int);
 				int i;
 
 				yylval.strp = addname(yytext);
+#ifdef GCC_COMPAT
 				if ((i = gcc_keyword(yylval.strp,
 				    &yylval.nodep)) != 0)
 					return i;
-// printf("str: %s notype %d parbal %d\n", yytext, notype, parbal);
+#endif
 				if (!notype) {
 					s = lookup(yylval.strp, SNOCREAT);
 					if (s && s->sclass == TYPEDEF)
@@ -225,7 +226,7 @@ L?\"(\\.|[^\\"])*\"	{
 "^"			{ return('^'); }
 "|"			{ return('|'); }
 "?"			{ return('?'); }
-^#pragma[ \t].*		{ control(CPP_PRAGMA); }
+^#pragma[ \t].*		{ int rv; if ((rv = pragma())) return rv; }
 ^#ident[ \t].*		{ control(CPP_IDENT); }
 ^#line[ \t].*		{ control(CPP_LINE); }
 ^#.*			{ control(CPP_HASH); }
@@ -432,7 +433,6 @@ control(int t)
 
 	wr++;	/* Skip initial '#' */
 	switch (t) {
-	case CPP_PRAGMA:
 	case CPP_IDENT:
 		return;	/* Just skip these for now. */
 
@@ -464,4 +464,53 @@ control(int t)
 	return;
 bad:
 	werror("%s: illegal control", yytext);
+}
+
+static char *
+nextkw(char **ptr)
+{
+	char *rc;
+
+	while (**ptr == ' ' || **ptr == '\t')
+		(*ptr)++;
+	if (**ptr == 0)
+		return 0;
+	rc = *ptr;
+	while (**ptr && **ptr != ' ' && **ptr != '\t')
+		(*ptr)++;
+	if (**ptr != 0) {
+		**ptr = 0;
+		(*ptr)++;
+	}
+	return rc;
+}
+
+/*
+ * got a full pragma line.  Split it up here.
+ */
+static int
+pragma()
+{
+	int rv;
+	char *c, *ptr = yytext;
+
+	rv = 0;
+	ptr += strlen("#pragma");
+	if ((c = nextkw(&ptr)) == NULL)
+		goto bad;
+	if (strcmp(c, "packed") == 0) {
+		rv = PRAG_PACKED;
+	} else if (strcmp(c, "aligned") == 0) {
+		rv = PRAG_ALIGNED;
+	} else if (strcmp(c, "rename") == 0) {
+		if ((c = nextkw(&ptr)) == NULL)
+			goto bad;
+		/* XXX may loose memory if blevel > 0 */
+		yylval.strp = newstring(c, strlen(c));
+		rv = PRAG_RENAMED;
+	}
+bad:	
+	if (rv == 0)
+		werror("unknown pragma");
+	return rv;
 }

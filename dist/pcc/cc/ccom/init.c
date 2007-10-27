@@ -1,4 +1,4 @@
-/*	$Id: init.c,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $	*/
+/*	$Id: init.c,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -185,16 +185,19 @@ getll(void)
 /*
  * Return structure containing off bitnumber.
  * Allocate more entries, if needed.
- * This is not bright implemented.
  */
 static struct llist *
 setll(OFFSZ off)
 {
-	struct llist *ll;
+	struct llist *ll = NULL;
 
 	/* Ensure that we have enough entries */
 	while (off >= basesz * numents)
-		(void)getll();
+		 ll = getll();
+
+	if (ll != NULL && ll->begsz <= off && ll->begsz + basesz > off)
+		return ll;
+
 	SLIST_FOREACH(ll, &lpole, next)
 		if (ll->begsz <= off && ll->begsz + basesz > off)
 			break;
@@ -282,10 +285,14 @@ stkpush(void)
 		is->in_df = sp->sdf;
 	} else if (ISSOU(t)) {
 		sq = *pstk->in_xp;
-		is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
-		is->in_t = sq->stype;
-		is->in_sym = sq;
-		is->in_df = sq->sdf;
+		if (sq == NULL) {
+			uerror("excess of initializing elements");
+		} else {
+			is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
+			is->in_t = sq->stype;
+			is->in_sym = sq;
+			is->in_df = sq->sdf;
+		}
 	} else if (ISARY(t)) {
 		is->in_xp = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suelem : 0;
 		is->in_t = DECREF(t);
@@ -297,7 +304,7 @@ stkpush(void)
 		if (ISARY(is->in_t))
 			is->in_df = pstk->in_df+1;
 	} else
-		cerror("onstk");
+		uerror("too many left braces");
 	is->in_prev = pstk;
 	pstk = is;
 
@@ -322,7 +329,7 @@ stkpop(void)
 		printf("stkpop\n");
 #endif
 	for (; pstk; pstk = pstk->in_prev) {
-		if (pstk->in_t == STRTY) {
+		if (pstk->in_t == STRTY && pstk->in_xp[0] != NULL) {
 			pstk->in_xp++;
 			if (*pstk->in_xp != NULL)
 				break;
@@ -386,8 +393,12 @@ findoff(void)
 				t = DECREF(t);
 			o = ISPTR(t) ? SZPOINT(t) : is->in_sym->ssue->suesize;
 			off += o * acalc(is, 1);
-			while (is->in_prev && ISARY(is->in_prev->in_t))
+			while (is->in_prev && ISARY(is->in_prev->in_t)) {
+				if (is->in_prev->in_prev &&
+				    is->in_prev->in_prev->in_t == STRTY)
+					off += is->in_sym->soffset;
 				is = is->in_prev;
+			}
 		}
 	}
 	if (idebug>1) {
@@ -723,7 +734,7 @@ irbrace()
 		if (ISARY(pstk->in_t))
 			pstk->in_n = pstk->in_df->ddim;
 		else if (pstk->in_t == STRTY) {
-			while (pstk->in_xp[1] != NULL)
+			while (pstk->in_xp[0] != NULL && pstk->in_xp[1] != NULL)
 				pstk->in_xp++;
 		}
 		stkpop();
@@ -850,6 +861,8 @@ asginit(NODE *p)
 		/* HACKHACKHACK */
 		struct instk *is = pstk;
 
+		if (pstk == NULL)
+			stkpush();
 		while (ISSOU(pstk->in_t) || ISARY(pstk->in_t))
 			stkpush();
 		if (pstk->in_prev && 
@@ -933,7 +946,10 @@ simpleinit(struct symtab *sp, NODE *p)
 		spname = sp;
 		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
 		setscl(sp);
-		ninval(0, p->n_right->n_sue->suesize, p->n_right);
+		if (p->n_right->n_op != ICON && p->n_right->n_op != FCON)
+			uerror("initializer element is not a constant");
+		else
+			ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
 		break;
 
