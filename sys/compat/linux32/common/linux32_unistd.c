@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.10 2007/06/16 19:55:26 dsl Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.11 2007/10/27 09:16:24 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10 2007/06/16 19:55:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.11 2007/10/27 09:16:24 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -405,6 +405,34 @@ linux32_sys_chmod(l, v, retval)
 	NETBSD32TO64_UAP(mode);
 
 	return sys_chmod(l, &ua, retval);
+}
+
+int
+linux32_sys_chown16(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_chown16_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+        struct sys___posix_chown_args ua;
+
+	NETBSD32TOP_UAP(path, const char);
+
+        if ((linux32_uid_t)SCARG(uap, uid) == (linux32_uid_t)-1)
+        	SCARG(&ua, uid) = (uid_t)-1;
+	else
+        	SCARG(&ua, uid) = SCARG(uap, uid);
+
+        if ((linux32_gid_t)SCARG(uap, gid) == (linux32_gid_t)-1)
+        	SCARG(&ua, gid) = (gid_t)-1;
+	else
+        	SCARG(&ua, gid) = SCARG(uap, gid);
+       
+        return sys___posix_chown(l, &ua, retval);
 }
 
 int
