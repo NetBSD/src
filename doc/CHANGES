@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.936 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.937 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -223,4 +223,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: A new SCHED_M2 scheduler, improves the performance on
 		MP systems, supports real-time and time-sharing classes,
 		ready for the CPU affinity. [rmind 20071009]
-	msk(4): Add support for Marvell 88CO55 [manu 20071022]
+	msk(4): Add support for Marvell 88CO55 gigabit ethernet, which 
+		is used by newer iMacs [manu 20071022]
