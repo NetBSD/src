@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2007/10/27 04:32:39 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2007/10/27 05:10:19 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/10/27 04:32:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2007/10/27 05:10:19 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -116,12 +116,6 @@ extern void *startsym, *endsym;
 
 #if 1
 extern struct consdev kcomcons;
-#endif
-
-#if (NPCIB > 0)
-struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
-#else
-struct btinfo_console bi_cons = { { 0, 0 },  "eumb", 0x4600, 57600 };
 #endif
 
 void
@@ -293,6 +287,12 @@ cpu_startup(void)
 	    :	"=r"(msr)
 	    :	"K"(PSL_EE));
 }
+
+#if (NPCIB > 0)
+struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
+#else
+struct btinfo_console bi_cons = { { 0, 0 },  "eumb", 0x4600, 57600 };
+#endif
 
 /*
  * lookup_bootinfo:
@@ -549,7 +549,6 @@ struct consdev kcomcons = {
 	NULL, NULL, NODEV, CN_NORMAL
 };
 
-static unsigned uartbase = 0xfe0003f8;
 #define THR		0
 #define RBR		0
 #define LSR		5
@@ -569,6 +568,7 @@ static void
 kcomcninit(struct consdev *cn)
 {
 	struct btinfo_console *bi = lookup_bootinfo(BTINFO_CONSOLE);
+	unsigned uartbase = 0xfe0003f8;
 
 	if (bi == NULL)
 		bi = &bi_cons;
