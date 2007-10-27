@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.215 2007/10/18 23:50:10 ad Exp $
+#	$NetBSD: BRANCHES,v 1.216 2007/10/27 13:27:24 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -549,28 +549,26 @@ Notes:		Goals:
 		  vax			
 		  m68k			
 
-		Remaining MI work to do:
+		Remaining MD work to do:
 
-		- subr_pool/pagedaemon needs to use crosscalls to invalidate
-		  per-cpu pool_cache elements.
+		- Defer x86 npxsave interrupts to an process context (do
+		  aston() and handle from trap.c).
+
+		- Port other architectures.
+
+		Remaining MI work to do:
 
 		- Clean up vfs_busy/vfs_unbusy and mount/dounmount semantics
 		  so that lockmgr is not being used any more. Reference
 		  counting on struct mount is probably the best solution.
 
-		- Check locking around fields in struct mount.
+		- Check + document locking around fields in struct mount.
 
-		- Check file systems that traverse mounpoint vnode lists.
-		  They need to use marker vnodes.
-
-		- Double check that revoke / forced unmount is still safe
-		  (it might never have been!).
+		- Check file systems that traverse mountpoint vnode lists.
+		  They need to use marker vnodes. Most already done.
 
 		- Re-write the itimer code to be MP safe and work in the
 		  presence of threaded soft interrupts.
-
-		- Defer x86 npxsave interrupts to an process context (do
-		  aston() and handle from trap.c).
 
 		- Check aliased vnode handling. There may be problems.
 
@@ -586,21 +584,11 @@ Notes:		Goals:
 		  wait long term even if they are trying to make a NOWAIT
 		  allocation.
 
-		- softdep: "unmount pending error". It looks like free
-		  bitmaps are not being updated in some cases. Does not
-		  pose a corruption risk but needs to be fixed.
-
-		- softdep: allocation failure on a full file system
-		  will deadlock the system because we try to flush
-		  out free pages in order to resolve dependencies.
-		  On head, it panics the system: just comment out the
-		  fix for now.
-
 		- ffs+snapshots needs testing.
 
 		- LFS port has been fudged and it's probably borked.
 
-		- Report of ext2fs panic on unmount.
+		- ext2fs panic on unmount.
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
