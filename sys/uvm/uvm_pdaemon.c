@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.9 2007/10/26 17:03:11 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.10 2007/10/27 07:07:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.9 2007/10/26 17:03:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.10 2007/10/27 07:07:40 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -93,8 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.9 2007/10/26 17:03:11 ad Exp 
  * queue too quickly to for them to be referenced and avoid being freed.
  */
 
-#define UVMPD_NUMDIRTYREACTS 16
+#define	UVMPD_NUMDIRTYREACTS	16
 
+#define	UVMPD_NUMTRYLOCKOWNER	16
 
 /*
  * local prototypes
@@ -652,6 +653,7 @@ uvmpd_scan_queue(void)
 	struct swapcluster swc;
 #endif /* defined(VMSWAP) */
 	int dirtyreacts;
+	int lockownerfail;
 	kmutex_t *slock;
 	UVMHIST_FUNC("uvmpd_scan_queue"); UVMHIST_CALLED(pdhist);
 
@@ -666,6 +668,7 @@ uvmpd_scan_queue(void)
 #endif /* defined(VMSWAP) */
 
 	dirtyreacts = 0;
+	lockownerfail = 0;
 	uvmpdpol_scaninit();
 
 	while (/* CONSTCOND */ 1) {
@@ -717,6 +720,19 @@ uvmpd_scan_queue(void)
 
 		slock = uvmpd_trylockowner(p);
 		if (slock == NULL) {
+			/*
+			 * yield cpu to make a chance for an LWP holding
+			 * the lock run.  otherwise we can busy-loop too long
+			 * if the page queue is filled with a lot of pages
+			 * from few objects.
+			 */
+			lockownerfail++;
+			if (lockownerfail > UVMPD_NUMTRYLOCKOWNER) {
+				mutex_exit(&uvm_pageqlock);
+				yield();
+				mutex_enter(&uvm_pageqlock);
+				lockownerfail = 0;
+			}
 			continue;
 		}
 		if (p->flags & PG_BUSY) {
