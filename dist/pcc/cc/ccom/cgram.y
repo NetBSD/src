@@ -1,4 +1,4 @@
-/*	$Id: cgram.y,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $	*/
+/*	$Id: cgram.y,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -118,6 +118,13 @@
 %token	C_ASM
 
 /*
+ * These tokens are only used for pragmas; let yacc handle syntax check.
+ */
+%token	PRAG_PACKED
+%token	PRAG_ALIGNED
+%token	PRAG_RENAMED
+
+/*
  * Precedence
  */
 %left ','
@@ -191,7 +198,7 @@ struct savbc {
 %start ext_def_list
 
 %type <intval> con_e ifelprefix ifprefix whprefix forprefix doprefix switchpart
-		type_qualifier_list
+		type_qualifier_list str_attr
 %type <nodep> e .e term enum_dcl struct_dcl cast_type funct_idn declarator
 		direct_declarator elist type_specifier merge_attribs
 		parameter_declaration abstract_declarator initializer
@@ -200,12 +207,14 @@ struct savbc {
 		specifier_qualifier_list merge_specifiers nocon_e
 		identifier_list arg_param_list arg_declaration arg_dcl_list
 		designator_list designator
-%type <strp>	string wstring C_STRING C_WSTRING
+%type <strp>	string wstring C_STRING C_WSTRING PRAG_RENAMED
 %type <rp>	enum_head str_head
 %type <symp>	xnfdeclarator clbrace
 
 %type <intval> C_CLASS C_STRUCT C_RELOP C_DIVOP C_SHIFTOP
 		C_ANDAND C_OROR C_STROP C_INCOP C_UNOP C_ASOP C_EQUOP
+		PRAG_PACKED PRAG_ALIGNED
+
 %type <nodep>  C_TYPE C_QUALIFIER C_ICON C_FCON
 %type <strp>	C_NAME C_TYPENAME
 
@@ -477,7 +486,7 @@ init_declarator_list:
 		|  init_declarator_list ',' { $<nodep>$ = $<nodep>0; } init_declarator
 		;
 
-enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = dclstruct($1); }
+enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = dclstruct($1, 0); }
 		|  C_ENUM C_NAME {  $$ = rstruct($2,0);  }
 		|  C_ENUM C_TYPENAME {  $$ = rstruct($2,0);  }
 		;
@@ -495,15 +504,22 @@ moe:		   C_NAME {  moedef( $1 ); }
 		|  C_NAME '=' con_e {  strucoff = $3;  moedef( $1 ); }
 		;
 
-struct_dcl:	   str_head '{' struct_dcl_list '}' { $$ = dclstruct($1);  }
+struct_dcl:	   str_head '{' struct_dcl_list '}' str_attr {
+			$$ = dclstruct($1, $5); 
+		}
 		|  C_STRUCT C_NAME {  $$ = rstruct($2,$1); }
 		|  C_STRUCT C_TYPENAME {  $$ = rstruct($2,$1); }
 		|  str_head '{' '}' {
 #ifndef GCC_COMPAT
 			werror("gcc extension");
 #endif
-			$$ = dclstruct($1); 
+			$$ = dclstruct($1, 0); 
 		}
+		;
+
+str_attr:	   { $$ = 0; /* nothing */ }
+		|  PRAG_PACKED { $$ = PRAG_PACKED; }
+		|  PRAG_ALIGNED { $$ = PRAG_ALIGNED; }
 		;
 
 str_head:	   C_STRUCT {  $$ = bstruct(NULL, $1);  }
@@ -574,6 +590,10 @@ xnfdeclarator:	   declarator { $$ = xnf = init_declarator($<nodep>0, $1, 1); }
  * Returns nothing.
  */
 init_declarator:   declarator { init_declarator($<nodep>0, $1, 0); }
+		|  declarator PRAG_RENAMED {
+			renname = $2; /* XXX ugly */
+			init_declarator($<nodep>0, $1, 0);
+		}
 		|  declarator C_ASM '(' string ')' {
 #ifdef GCC_COMPAT
 			renname = $4;
@@ -883,6 +903,10 @@ nocon_e:	{ $<intval>$=instruct; instruct=0; } e %prec ',' {
 
 elist:		   e %prec ','
 		|  elist  ','  e { $$ = buildtree(CM, $1, $3); }
+		|  elist  ','  cast_type { /* hack for stdarg */
+			$3->n_op = TYPE;
+			$$ = buildtree(CM, $1, $3);
+		}
 		;
 
 /*
@@ -946,7 +970,7 @@ term:		   term C_INCOP {  $$ = buildtree( $2, $1, bcon(1) ); }
 			$$ = buildtree(CAST, $2, $4);
 			nfree($$->n_left);
 			nfree($$);
-			$$ = $$->n_right;
+			$$ = $$->n_right; /* XXX use after free */
 		}
 		|  C_SIZEOF '(' cast_type ')'  %prec C_SIZEOF {
 			$$ = doszof($3);
@@ -1328,7 +1352,8 @@ structref(NODE *p, int f, char *name)
 		p = buildtree(ADDROF, p, NIL);
 	r = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
 	r->n_name = name;
-	return buildtree(STREF, p, r);
+	r = buildtree(STREF, p, r);
+	return r;
 }
 
 static void

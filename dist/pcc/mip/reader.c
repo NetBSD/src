@@ -1,4 +1,4 @@
-/*	$Id: reader.c,v 1.1.1.1 2007/09/20 13:08:50 abs Exp $	*/
+/*	$Id: reader.c,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -86,6 +86,7 @@ int p2autooff, p2maxautooff;
 
 NODE *nodepole;
 FILE *prfil;
+static struct interpass prepole;
 
 void saveip(struct interpass *ip);
 void deljumps(void);
@@ -181,12 +182,8 @@ deluseless(NODE *p)
 	r = deluseless(p->n_right);
 	nfree(p);
 	if (l && r) {
-		/* Put left on queue first */
-		ip = tmpalloc(sizeof(*ip));
-		ip->type = IP_NODE;
-		ip->lineno = 0; /* XXX */
-		ip->ip_node = l;
-		pass2_compile(ip);
+		ip = ipnode(l);
+		DLIST_INSERT_AFTER(&prepole, ip, qelem);
 		return r;
 	} else if (l)
 		return l;
@@ -231,13 +228,21 @@ pass2_compile(struct interpass *ip)
 		if (xtemps == 0)
 			walkf(ip->ip_node, deltemp);
 	}
+	DLIST_INIT(&prepole, qelem);
 	DLIST_FOREACH(ip, &ipole, qelem) {
 		if (ip->type != IP_NODE)
 			continue;
 		canon(ip->ip_node);
 		walkf(ip->ip_node, cktree);
-		if ((ip->ip_node = deluseless(ip->ip_node)) == NULL)
+		if ((ip->ip_node = deluseless(ip->ip_node)) == NULL) {
 			DLIST_REMOVE(ip, qelem);
+		} else while (!DLIST_ISEMPTY(&prepole, qelem)) {
+			struct interpass *ipp;
+
+			ipp = DLIST_NEXT(&prepole, qelem);
+			DLIST_REMOVE(ipp, qelem);
+			DLIST_INSERT_BEFORE(ip, ipp, qelem);
+		}
 	}
 
 	optimize(&ipole);
@@ -425,6 +430,7 @@ again:	switch (o = p->n_op) {
 			geninsn(p1->n_right, FOREFF);
 		geninsn(p1, FOREFF);
 		/* FALLTHROUGH */
+	case FLD:
 	case COMPL:
 	case UMINUS:
 	case PCONV:
@@ -547,7 +553,8 @@ rewrite(NODE *p, int rewrite, int cookie)
 		tfree(r);
 	if (rewrite == 0)
 		return;
-	CDEBUG(("rewrite: %p, reg %s\n", p, rnames[DECRA(p->n_reg, 0)]));
+	CDEBUG(("rewrite: %p, reg %s\n", p,
+	    p->n_reg == -1? "<none>" : rnames[DECRA(p->n_reg, 0)]));
 	p->n_rval = DECRA(p->n_reg, 0);
 }
 
@@ -676,6 +683,7 @@ gencode(NODE *p, int cookie)
 }
 
 int negrel[] = { NE, EQ, GT, GE, LT, LE, UGT, UGE, ULT, ULE } ;  /* negatives of relationals */
+size_t negrelsize = sizeof negrel / sizeof negrel[0];
 
 #ifdef PCC_DEBUG
 #undef	PRTABLE
@@ -780,18 +788,27 @@ ffld(NODE *p, int down, int *down1, int *down2 )
 
 		/* make & mask part */
 
-		p->n_left->n_type = ty;
+		if (ISUNSIGNED(ty)) {
 
-		p->n_op = AND;
-		p->n_right = mklnode(ICON, (1 << s)-1, 0, ty);
+			p->n_left->n_type = ty;
+			p->n_op = AND;
+			p->n_right = mklnode(ICON, ((CONSZ)1 << s)-1, 0, ty);
 
-		/* now, if a shift is needed, do it */
-
-		if( o != 0 ){
-			shp = mkbinode(RS, p->n_left,
-			    mklnode(ICON, o, 0, INT), ty);
-			p->n_left = shp;
-			/* whew! */
+			/* now, if a shift is needed, do it */
+			if( o != 0 ){
+				shp = mkbinode(RS, p->n_left,
+				    mklnode(ICON, o, 0, INT), ty);
+				p->n_left = shp;
+				/* whew! */
+			}
+		} else {
+			/* must sign-extend, assume RS will do */
+			/* if not, arch must use rewfld() */
+			p->n_left->n_type = INT; /* Ok? */
+			p->n_op = RS;
+			p->n_right = mklnode(ICON, SZINT-s, 0, INT);
+			p->n_left = mkbinode(LS, p->n_left, 
+			    mklnode(ICON, SZINT-s-o, 0, INT), INT);
 		}
 	}
 }

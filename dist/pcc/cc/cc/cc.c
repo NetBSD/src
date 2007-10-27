@@ -1,4 +1,4 @@
-/*	$Id: cc.c,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $	*/
+/*	$Id: cc.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -38,6 +38,7 @@
  *
  * Brief description of its syntax:
  * - Files that end with .c are passed via cpp->ccom->as->ld
+ * - Files that end with .i are passed via ccom->as->ld
  * - Files that end with .s are passed as->ld
  * - Files that end with .o are passed directly to ld
  * - Multiple files may be given on the command line.
@@ -49,19 +50,18 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <stdio.h>
 #include <ctype.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <libgen.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "../../config.h"
-
 #include "ccconfig.h"
 /* C command */
 
@@ -73,24 +73,22 @@
  */
 #define	STDINC	  "/usr/include/"
 
-#define SBSIZE 10000
-#define MAXINC 100
-#define MAXFIL 100
+#define MAXFIL 10000
 #define MAXLIB 10000
 #define MAXAV  10000
 #define MAXOPT 100
 char	*tmp3;
 char	*tmp4;
 char	*outfile;
-char *copy(char *as),*setsuf(char *as, char ch);
-int getsuf(char []);
+char *copy(char *),*setsuf(char *, char);
+int getsuf(char *);
 int main(int, char *[]);
 void error(char *, ...);
-void errorx(int eval, char *, ...);
+void errorx(int, char *, ...);
 int nodup(char **, char *);
 int callsys(char [], char *[]);
 int cunlink(char *);
-void dexit(int eval);
+void dexit(int);
 void idexit(int);
 char *gettmp();
 char	*av[MAXAV];
@@ -99,6 +97,7 @@ char	*llist[MAXLIB];
 char	alist[20];
 char	*xlist[100];
 int	xnum;
+int	Cflag;
 int	dflag;
 int	pflag;
 int	sflag;
@@ -150,171 +149,176 @@ main(int argc, char *argv[])
 	i = nc = nl = nxo = 0;
 	pv = ptemp;
 	while(++i < argc) {
-		if (argv[i][0] == '-')
-		switch (argv[i][1]) {
-		default:
-			goto passa;
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			default:
+				goto passa;
+#ifdef notyet
+	/* must add library options first (-L/-l/...) */
+				error("unrecognized option `-%c'", argv[i][1]);
+				break;
+#endif
 
-		case 'B': /* other search paths for binaries */
-			Bflag = &argv[i][2];
-			break;
+			case 'B': /* other search paths for binaries */
+				Bflag = &argv[i][2];
+				break;
 
-		case 'X':
-			Xflag++;
-			break;
-		case 'W': /* Ignore (most of) W-flags */
-			if (strncmp(argv[i], "-Wl,", 4) == 0) {
-				/* options to the linker */
-				t = &argv[i][4];
-				while ((u = strchr(t, ','))) {
-					*u++ = 0;
+			case 'X':
+				Xflag++;
+				break;
+			case 'W': /* Ignore (most of) W-flags */
+				if (strncmp(argv[i], "-Wl,", 4) == 0) {
+					/* options to the linker */
+					t = &argv[i][4];
+					while ((u = strchr(t, ','))) {
+						*u++ = 0;
+						llist[nl++] = t;
+						t = u;
+					}
 					llist[nl++] = t;
-					t = u;
 				}
-				llist[nl++] = t;
-			}
-			break;
+				break;
 
-		case 'f': /* GCC compatibility flags */
-			if (strcmp(argv[i], "-fPIC") == 0)
-				kflag = F_PIC;
-			if (strcmp(argv[i], "-fpic") == 0)
+			case 'f': /* GCC compatibility flags */
+				if (strcmp(argv[i], "-fPIC") == 0)
+					kflag = F_PIC;
+				if (strcmp(argv[i], "-fpic") == 0)
+					kflag = F_pic;
+				/* silently ignore the rest */
+				break;
+
+			case 'g': /* create debug output */
+				gflag++;
+				break;
+
+			case 'i':
+				if (strcmp(argv[i], "-isystem") == 0) {
+					*pv++ = "-S";
+					*pv++ = argv[++i];
+				} else if (strcmp(argv[i], "-include") == 0) {
+					*pv++ = "-i";
+					*pv++ = argv[++i];
+				} else
+					goto passa;
+				break;
+
+			case 'k': /* generate PIC code */
 				kflag = F_pic;
-			/* silently ignore the rest */
-			break;
+				break;
 
-		case 'g': /* create debug output */
-			gflag++;
-			break;
+			case 'n': /* handle -n flags */
+				if (strcmp(argv[i], "-nostdinc") == 0)
+					nostdinc++;
+				else if (strcmp(argv[i], "-nostdlib") == 0) {
+					nostdlib++;
+					nostartfiles++;
+				} else if (strcmp(argv[i], "-nostartfiles") == 0)
+					nostartfiles = 1;
+				else
+					goto passa;
+				break;
 
-		case 'i':
-			if (strcmp(argv[i], "-isystem") == 0) {
-				*pv++ = "-S";
-				*pv++ = argv[++i];
-			} else if (strcmp(argv[i], "-include") == 0) {
-				*pv++ = "-i";
-				*pv++ = argv[++i];
-			} else
-				goto passa;
-			break;
+			case 'p':
+				if (strcmp(argv[i], "-pg") == 0)
+					pgflag++;
+				else if (strcmp(argv[i], "-pthread") == 0)
+					pthreads++;
+				else
+					errorx(1, "unknown option %s", argv[i]);
+				break;
 
-		case 'k': /* generate PIC code */
-			kflag = F_pic;
-			break;
-
-		case 'n': /* handle -n flags */
-			if (strcmp(argv[i], "-nostdinc") == 0)
-				nostdinc++;
-			if (strcmp(argv[i], "-nostdlib") == 0) {
-				nostdlib++;
-				nostartfiles++;
-			} else if (strcmp(argv[i], "-nostartfiles") == 0)
-				nostartfiles = 1;
-			else
-				goto passa;
-			break;
-
-		case 'p':
-			if (strcmp(argv[i], "-pg") == 0)
-				pgflag++;
-			else if (strcmp(argv[i], "-pthread") == 0)
-				pthreads++;
-			else
-				errorx(1, "unknown option %s", argv[i]);
-			break;
-
-		case 'x':
-			xlist[xnum++] = argv[i];
-			break;
-		case 't':
-			tflag++;
-			break;
-		case 'S':
-			sflag++;
-			cflag++;
-			break;
-		case 'o':
-			if (outfile)
-				errorx(8, "too many -o");
-			outfile = argv[++i];
-			break;
-		case 'O':
-			Oflag++;
-			break;
-		case 'E':
-			Eflag++;
-			break;
-		case 'P':
-			pflag++;
-			*pv++ = argv[i];
-		case 'c':
-			cflag++;
-			break;
+			case 'x':
+				xlist[xnum++] = argv[i];
+				break;
+			case 't':
+				tflag++;
+				break;
+			case 'S':
+				sflag++;
+				cflag++;
+				break;
+			case 'o':
+				if (outfile)
+					errorx(8, "too many -o");
+				outfile = argv[++i];
+				break;
+			case 'O':
+				Oflag++;
+				break;
+			case 'E':
+				Eflag++;
+				break;
+			case 'P':
+				pflag++;
+				*pv++ = argv[i];
+			case 'c':
+				cflag++;
+				break;
 
 #if 0
-		case '2':
-			if(argv[i][2] == '\0')
-				pref = "/lib/crt2.o";
-			else {
-				pref = "/lib/crt20.o";
-			}
-			break;
-#endif
-		case 'D':
-		case 'I':
-		case 'U':
-		case 'C':
-			*pv++ = argv[i];
-			if (argv[i][2] == 0)
-				*pv++ = argv[++i];
-			if (pv >= ptemp+MAXOPT)
-				{
-				error("Too many DIUC options");
-				--pv;
+			case '2':
+				if(argv[i][2] == '\0')
+					pref = "/lib/crt2.o";
+				else {
+					pref = "/lib/crt20.o";
 				}
-			break;
+				break;
+#endif
+			case 'C':
+				Cflag = 1;
+				break;
+			case 'D':
+			case 'I':
+			case 'U':
+				*pv++ = argv[i];
+				if (argv[i][2] == 0)
+					*pv++ = argv[++i];
+				if (pv >= ptemp+MAXOPT) {
+					error("Too many DIU options");
+					--pv;
+				}
+				break;
 
-		case 'M':
-			Mflag++;
-			break;
+			case 'M':
+				Mflag++;
+				break;
 
-		case 'd':
-			dflag++;
-			strncpy(alist, argv[i], 19);
-			break;
-		case 'v':
-			printf("%s\n", VERSSTR);
-			vflag++;
-			break;
+			case 'd':
+				dflag++;
+				strlcpy(alist, argv[i], sizeof (alist));
+				break;
+			case 'v':
+				printf("%s\n", VERSSTR);
+				vflag++;
+				break;
 
-		case 's':
-			if (strcmp(argv[i], "-static") == 0)
-				Bstatic = 1;
-			else
-				goto passa;
-			break;
+			case 's':
+				if (strcmp(argv[i], "-static") == 0)
+					Bstatic = 1;
+				else
+					goto passa;
+				break;
+			}
 		} else {
 		passa:
 			t = argv[i];
 			if (*argv[i] == '-' && argv[i][1] == 'L')
 				;
-			else if((c=getsuf(t))=='c' || c=='S' ||
+			else if((c=getsuf(t))=='c' || c=='S' || c=='i' ||
 			    c=='s'|| Eflag) {
 				clist[nc++] = t;
-				if (nc>=MAXFIL)
-					{
+				if (nc>=MAXFIL) {
 					error("Too many source files");
 					exit(1);
-					}
+				}
 				t = setsuf(t, 'o');
 			}
 			if (nodup(llist, t)) {
 				llist[nl++] = t;
-				if (nl >= MAXLIB)
-					{
+				if (nl >= MAXLIB) {
 					error("Too many object/library files");
 					exit(1);
-					}
+				}
 				if (getsuf(t)=='o')
 					nxo++;
 			}
@@ -323,10 +327,20 @@ main(int argc, char *argv[])
 	/* Sanity checking */
 	if (nc == 0 && nl == 0)
 		errorx(8, "no input files");
-	if (outfile && (cflag || sflag) && nc > 1)
-		errorx(8, "-o given with -c || -S and more than one file");
+	if (outfile && (cflag || sflag || Eflag) && nc > 1)
+		errorx(8, "-o given with -c || -E || -S and more than one file");
 	if (outfile && clist[0] && strcmp(outfile, clist[0]) == 0)
 		errorx(8, "output file will be clobbered");
+#if 0
+	for(i=0, j=0; i<nc; i++) {
+		if((c=getsuf(clist[i]))=='c' || c=='S') {
+			j++;
+			break;
+		}
+	}
+	if (j==0 && Eflag)
+		errorx(8, "no file to be preprocessed");
+#endif
 
 	if (gflag) Oflag = 0;
 #if 0
@@ -352,18 +366,21 @@ main(int argc, char *argv[])
 			printf("%s:\n", clist[i]);
 		onlyas = 0;
 		assource = tmp3;
-		if (getsuf(clist[i])=='s') {
+		if (getsuf(clist[i])=='i') {
+			if(Eflag)
+				continue;
+			goto com;
+		} else if (getsuf(clist[i])=='s') {
 			assource = clist[i];
-			onlyas = 1;
 			goto assemble;
-		} else if (getsuf(clist[i])=='S') {
-			assource = clist[i];
+		} else if (getsuf(clist[i])=='S')
 			onlyas = 1;
-		}
 		if (pflag)
 			tmp4 = setsuf(clist[i], 'i');
 		na = 0;
 		av[na++] = "cpp";
+		if (vflag)
+			av[na++] = "-v";
 		av[na++] = "-D__PCC__=" MKS(PCC_MAJOR);
 		av[na++] = "-D__PCC_MINOR__=" MKS(PCC_MINOR);
 		av[na++] = "-D__PCC_MINORMINOR__=" MKS(PCC_MINORMINOR);
@@ -371,6 +388,8 @@ main(int argc, char *argv[])
 			av[na++] = "-D__ASSEMBLER__";
 		if (pthreads)
 			av[na++] = "-D_PTHREADS";
+		if (Cflag)
+			av[na++] = "-C";
 		if (Mflag)
 			av[na++] = "-M";
 		if (dflag)
@@ -388,29 +407,40 @@ main(int argc, char *argv[])
 		av[na++] = clist[i];
 		if (!Eflag && !Mflag)
 			av[na++] = tmp4;
+		if (Eflag && outfile)
+			 av[na++] = outfile;
 		av[na++]=0;
 		if (callsys(passp, av))
 			{exfail++; eflag++;}
 		if (Eflag || Mflag)
 			continue;
-		if (onlyas)
+		if (onlyas) {
+			assource = tmp4;
 			goto assemble;
+		}
 
 		/*
 		 * C compiler
 		 */
+	com:
 		na = 0;
 		av[na++]= "ccom";
+		if (vflag)
+			av[na++] = "-v";
 		if (gflag)
 			av[na++] = "-g";
 		if (kflag)
 			av[na++] = "-k";
 		if (Oflag) {
 			av[na++] = "-xtemps";
+			av[na++] = "-xdeljumps";
 		}
 		for (j = 0; j < xnum; j++)
 			av[na++] = xlist[j];
-		av[na++] = tmp4;
+		if (getsuf(clist[i])=='i')
+			av[na++] = clist[i];
+		else
+			av[na++] = tmp4; /* created by cpp */
 		if (pflag || exfail)
 			{
 			cflag++;
@@ -445,6 +475,8 @@ main(int argc, char *argv[])
 	assemble:
 		na = 0;
 		av[na++] = "as";
+		if (vflag)
+			av[na++] = "-v";
 		if (kflag)
 			av[na++] = "-k";
 		av[na++] = "-o";
@@ -452,7 +484,7 @@ main(int argc, char *argv[])
 			av[na++] = outfile;
 		else
 			av[na++] = setsuf(clist[i], 'o');
-		av[na++] = onlyas ? tmp4 : assource;
+		av[na++] = assource;
 		if (dflag)
 			av[na++] = alist;
 		av[na++] = 0;
@@ -475,6 +507,8 @@ nocom:
 	if (cflag==0 && nl!=0) {
 		j = 0;
 		av[j++] = "ld";
+		if (vflag)
+			av[j++] = "-v";
 		av[j++] = "-X";
 		av[j++] = "-d";
 		av[j++] = "-e";
@@ -499,6 +533,8 @@ nocom:
 			if (j >= MAXAV)
 				error("Too many ld options");
 		}
+		if (gflag)
+			av[j++] = "-g";
 #if 0
 		if (gflag)
 			av[j++] = "-lg";
@@ -546,6 +582,8 @@ dexit(int eval)
 			cunlink(tmp3);
 		cunlink(tmp4);
 	}
+	if (eval == 100)
+		_exit(eval);
 	exit(eval);
 }
 
@@ -587,8 +625,7 @@ errorx(int eval, char *s, ...)
 }
 
 int
-getsuf(as)
-char as[];
+getsuf(char *as)
 {
 	register char *s;
 
@@ -626,8 +663,10 @@ callsys(char f[], char *v[])
 		if (Bflag) {
 			size_t len = strlen(Bflag) + 8;
 			char *a = malloc(len);
-			if (a == NULL)
-				errorx(1, "callsys: malloc failed\n");
+			if (a == NULL) {
+				error("callsys: malloc failed");
+				exit(1);
+			}
 			if ((s = strrchr(f, '/'))) {
 				strlcpy(a, Bflag, len);
 				strlcat(a, s, len);
@@ -665,8 +704,7 @@ copy(char *as)
 }
 
 int
-nodup(l, os)
-char **l, *os;
+nodup(char **l, char *os)
 {
 	register char *t, *s;
 	register int c;
@@ -686,8 +724,7 @@ char **l, *os;
 }
 
 int
-cunlink(f)
-char *f;
+cunlink(char *f)
 {
 	if (f==0 || Xflag)
 		return(0);
@@ -695,9 +732,9 @@ char *f;
 }
 
 char *
-gettmp()
+gettmp(void)
 {
-	char *sfn = strdup("/tmp/ctm.XXXXXX");
+	char *sfn = copy("/tmp/ctm.XXXXXX");
 	int fd = -1;
 
 	if ((fd = mkstemp(sfn)) == -1) {

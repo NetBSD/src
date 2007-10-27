@@ -1,5 +1,5 @@
 %{
-/*	$Id: scanner.l,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: scanner.l,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -33,12 +33,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "../../mip/compat.h"
 #include "cpp.h"
 #include "y.tab.h"
 %}
 
 %{
-static long long cvtdig(int rad);
+static void cvtdig(int rad);
 static int charcon(void);
 static void elsestmt(void);
 static void ifdefstmt(void);
@@ -50,7 +51,6 @@ static void pragmastmt(void);
 static void undefstmt(void);
 static void cpperror(void);
 static void elifstmt(void);
-//static void linestmt(void);
 static void storepb(void);
 void  include(void);
 void  define(void);
@@ -160,27 +160,30 @@ WS	[\t ]
 
 <IFR>{WS}+		{ ; }
 <IFR>{L}({L}|{D})*	{
+				yylval.node.op = NUMBER;
 				if (gotdef) {
-					yylval.val =
-					    lookup((usch *)yytext, FIND) != 0;
+					yylval.node.nd_val
+					    = lookup((usch *)yytext, FIND) != 0;
 					gotdef = 0;
 					return IDENT;
 				}
-				yylval.val = 0;
+				yylval.node.nd_val = 0;
 				return NUMBER;
 			}
 
 [1-9][0-9]*		{ if (slow && !YYSTATE) return IDENT; scale = 10; goto num; }
 
 0[xX]{H}+{IS}?		{	scale = 16;
-			num:	if (YYSTATE)
-					yylval.val = cvtdig(scale);
+			num:	if (YYSTATE) 
+					cvtdig(scale);
 				PRTOUT(NUMBER);
 			}
 0{D}+{IS}?		{ scale = 8; goto num; }
 {D}+{IS}?		{ scale = 10; goto num; }
-L?'(\\.|[^\\'])+'	{	if (YYSTATE)
-					yylval.val = charcon();
+L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
+					yylval.node.op = NUMBER;
+					yylval.node.nd_val = charcon();
+				}
 				PRTOUT(NUMBER);
 			}
 
@@ -203,7 +206,7 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE)
 <CONTR>"define"		{ contr = 0; BEGIN DEF; define(); BEGIN 0; }
 <CONTR>"undef"		{ contr = 0; if (slow) return IDENT; undefstmt(); }
 <CONTR>"line"		{ contr = 0; storepb(); BEGIN 0; line(); }
-<CONTR>"pragma"		{ contr = 0; pragmastmt(); }
+<CONTR>"pragma"		{ contr = 0; pragmastmt(); BEGIN 0; }
 <CONTR>"elif"		{ contr = 0; storepb(); BEGIN IFR; elifstmt(); BEGIN 0; }
 
 
@@ -380,9 +383,11 @@ prinit(struct initar *it, struct includ *ic)
 	default:
 		error("prinit");
 	}
-	strcat((char *)ic->buffer, pre);
-	strcat((char *)ic->buffer, it->str);
-	strcat((char *)ic->buffer, post);
+	strlcat((char *)ic->buffer, pre, CPPBUF+1);
+	strlcat((char *)ic->buffer, it->str, CPPBUF+1);
+	if (strlcat((char *)ic->buffer, post, CPPBUF+1) >= CPPBUF+1)
+		error("line exceeds buffer size");
+
 	ic->lineno--;
 	while (*ic->maxread)
 		ic->maxread++;
@@ -486,13 +491,13 @@ dig2num(int c)
 }
 
 /*
- * Convert some string numbers to long long.
- * Do not care about UL trailers, should we?
+ * Convert string numbers to unsigned long long and check overflow.
  */
-static long long
+static void
 cvtdig(int rad)
 {
-	long long rv = 0;
+	unsigned long long rv = 0;
+	unsigned long long rv2 = 0;
 	char *y = yytext;
 	int c;
 
@@ -501,9 +506,20 @@ cvtdig(int rad)
 		y++;
 	while (isxdigit(c)) {
 		rv = rv * rad + dig2num(c);
+		/* check overflow */
+		if (rv / rad < rv2)
+			error("Constant \"%s\" is out of range", yytext);
+		rv2 = rv;
 		c = *y++;
 	}
-	return rv;
+	y--;
+	while (*y == 'l' || *y == 'L')
+		y++;
+	yylval.node.op = *y == 'u' || *y == 'U' ? UNUMBER : NUMBER;
+	yylval.node.nd_uval = rv;
+	if (yylval.node.op == NUMBER && yylval.node.nd_val < 0)
+		/* too large for signed */
+		error("Constant \"%s\" is out of range", yytext);
 }
 
 static int
@@ -777,7 +793,7 @@ cpperror(void)
 	if (flslvl)
 		stringbuf = cp;
 	else
-		error("error: %s", cp);
+		error("%s", cp);
 }
 
 static void
@@ -797,10 +813,19 @@ undefstmt(void)
 static void
 pragmastmt(void)
 {
+	int c;
+
 	slow = 1;
 	if (yylex() != WSPACE)
 		error("bad pragma");
-	while (yylex() != '\n')  /* no pragma support */
-		;
+	if (!flslvl)
+		putstr((usch *)"#pragma ");
+	do {
+		c = input();
+		if (!flslvl)
+			putch(c);	/* Do arg expansion instead? */
+	} while (c && c != '\n');
+	ifiles->lineno++;
+	prtline();
 	slow = 0;
 }

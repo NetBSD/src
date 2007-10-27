@@ -1,4 +1,4 @@
-/*      $Id: gcc_compat.c,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $     */
+/*      $Id: gcc_compat.c,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,11 +40,16 @@ static struct kw {
 	char *name, *ptr;
 	int rv;
 } kw[] = {
+/*
+ * Do NOT change the order of these entries unless you know 
+ * what you're doing!
+ */
 	{ "__asm", NULL, C_ASM },
 	{ "__signed", NULL, 0 },
 	{ "__inline", NULL, C_FUNSPEC },
 	{ "__const", NULL, 0 },
 	{ "__asm__", NULL, C_ASM },
+	{ "__inline__", NULL, C_FUNSPEC },
 	{ NULL, NULL, 0 },
 };
 
@@ -114,11 +119,11 @@ gcc_findname(struct symtab *sp)
 	struct ren *w;
 
 	if ((sp->sflags & SRENAME) == 0)
-		return exname(sp->sname);
+		return sp->sname;
 
 	for (w = renp; w; w = w->next) {
 		if (w->old == sp->sname)
-			return exname(w->new);
+			return w->new;
 	}
 	cerror("gcc_findname %s", sp->sname);
 	return NULL;

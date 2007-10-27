@@ -1,4 +1,4 @@
-/*	$Id: pass2.h,v 1.1.1.1 2007/09/20 13:08:50 abs Exp $	*/
+/*	$Id: pass2.h,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -222,7 +222,6 @@ extern	int p2autooff, p2maxautooff;
 extern	NODE
 	*talloc(void),
 	*eread(void),
-	*tcopy(NODE *),
 	*mklnode(int, CONSZ, int, TWORD),
 	*mkbinode(int, NODE *, NODE *, TWORD),
 	*mkunode(int, NODE *, int, TWORD),
@@ -252,7 +251,6 @@ void comperr(char *str, ...);
 void genregs(NODE *p);
 void ngenregs(struct interpass *);
 NODE *store(NODE *);
-void gencall(NODE *, NODE *prev);
 struct interpass *ipnode(NODE *);
 void deflab(int);
 void rmove(int, int, TWORD);

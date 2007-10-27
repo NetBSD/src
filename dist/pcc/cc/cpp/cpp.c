@@ -1,4 +1,4 @@
-/*	$Id: cpp.c,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: cpp.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -84,6 +84,7 @@
 #include <alloca.h>
 #endif
 
+#include "../../mip/compat.h"
 #include "cpp.h"
 #include "y.tab.h"
 
@@ -126,6 +127,7 @@ struct incs {
 
 static struct symtab *filloc;
 static struct symtab *linloc;
+static struct symtab *pragloc;
 int	trulvl;
 int	flslvl;
 int	elflvl;
@@ -176,7 +178,7 @@ main(int argc, char **argv)
 	struct symtab *nl;
 	register int ch;
 
-	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tv?")) != -1)
+	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tvV?")) != -1)
 		switch (ch) {
 		case 'C': /* Do not discard comments */
 			Cflag++;
@@ -213,10 +215,13 @@ main(int argc, char **argv)
 			break;
 
 #ifdef CPP_DEBUG
-		case 'v':
+		case 'V':
 			dflag++;
 			break;
 #endif
+		case 'v':
+			printf("cpp: %s\n", VERSSTR);
+			break;
 		case 'd':
 			if (optarg[0] == 'M') {
 				dMflag = 1;
@@ -239,7 +244,9 @@ main(int argc, char **argv)
 
 	filloc = lookup((usch *)"__FILE__", ENTER);
 	linloc = lookup((usch *)"__LINE__", ENTER);
+	pragloc = lookup((usch *)"_Pragma", ENTER);
 	filloc->value = linloc->value = (usch *)""; /* Just something */
+	pragloc->value = (usch *)"";
 
 	if (tflag == 0) {
 		time_t t = time(NULL);
@@ -427,7 +434,9 @@ line()
 		llen = c;
 	}
 	yytext[strlen(yytext)-1] = 0;
-	strcpy((char *)lbuf, &yytext[1]);
+	if (strlcpy((char *)lbuf, &yytext[1], SBSIZE) >= SBSIZE)
+		error("line exceeded buffer size");
+
 	ifiles->fname = lbuf;
 	if (yylex() != '\n')
 		goto bad;
@@ -448,7 +457,7 @@ include()
 	struct incs *w;
 	struct symtab *nl;
 	usch *osp;
-	usch *fn;
+	usch *fn, *safefn;
 	int i, c, it;
 
 	if (flslvl)
@@ -482,6 +491,7 @@ again:
 		if (c != '\n')
 			goto bad;
 		it = SYSINC;
+		safefn = fn;
 	} else {
 		usch *nm = stringbuf;
 
@@ -497,6 +507,7 @@ again:
 			else
 				stringbuf++;
 		}
+		safefn = stringbuf;
 		savstr(fn); savch(0);
 		while ((c = yylex()) == WSPACE)
 			;
@@ -505,7 +516,7 @@ again:
 		slow = 0;
 		if (pushfile(nm) == 0)
 			return;
-		stringbuf = nm;
+		/* XXX may loose stringbuf space */
 	}
 
 	/* create search path and try to open file */
@@ -515,13 +526,13 @@ again:
 			usch *nm = stringbuf;
 
 			savstr(w->dir); savch('/');
-			savstr(fn); savch(0);
+			savstr(safefn); savch(0);
 			if (pushfile(nm) == 0)
 				return;
 			stringbuf = nm;
 		}
 	}
-	error("cannot find '%s'", fn);
+	error("cannot find '%s'", safefn);
 	/* error() do not return */
 
 bad:	error("bad include");
@@ -547,6 +558,7 @@ define()
 	int c, i, redef;
 	int mkstr = 0, narg = -1;
 	int ellips = 0;
+	size_t len;
 
 	if (flslvl)
 		return;
@@ -575,8 +587,9 @@ define()
 				break;
 			}
 			if (c == IDENT) {
-				args[narg] = alloca(strlen(yytext)+1);
-				strcpy((char *)args[narg], yytext);
+				len = strlen(yytext);
+				args[narg] = alloca(len+1);
+				strlcpy((char *)args[narg], yytext, len+1);
 				narg++;
 				if ((c = definp()) == ',')
 					continue;
@@ -720,6 +733,23 @@ bad:	error("bad define");
 }
 
 void
+xwarning(usch *s)
+{
+	usch *t;
+	usch *sb = stringbuf;
+
+	flbuf();
+	savch(0);
+	if (ifiles != NULL) {
+		t = sheap("%s:%d: warning: ", ifiles->fname, ifiles->lineno);
+		write (2, t, strlen((char *)t));
+	}
+	write (2, s, strlen((char *)s));
+	write (2, "\n", 1);
+	stringbuf = sb;
+}
+
+void
 xerror(usch *s)
 {
 	usch *t;
@@ -727,7 +757,7 @@ xerror(usch *s)
 	flbuf();
 	savch(0);
 	if (ifiles != NULL) {
-		t = sheap("%s:%d: ", ifiles->fname, ifiles->lineno);
+		t = sheap("%s:%d: error: ", ifiles->fname, ifiles->lineno);
 		write (2, t, strlen((char *)t));
 	}
 	write (2, s, strlen((char *)s));
@@ -747,6 +777,51 @@ savch(c)
 		stringbuf = sbf; /* need space to write error message */
 		error("Too much defining");
 	} 
+}
+
+/*
+ * convert _Pragma to #pragma for output.
+ */
+static void
+pragoper(void)
+{
+	usch *opb;
+	int t;
+
+	slow = 1;
+	putstr((usch *)"\n#pragma ");
+	if ((t = yylex()) == WSPACE)
+		t = yylex();
+	if (t != '(')
+		goto bad;
+	if ((t = yylex()) == WSPACE)
+		t = yylex();
+	opb = stringbuf;
+	while (t != ')') {
+		savstr((usch *)yytext);
+		t = yylex();
+	}
+	savch(0);
+	cunput(WARN);
+	unpstr(opb);
+	stringbuf = opb;
+	expmac(NULL);
+	while (stringbuf > opb)
+		cunput(*--stringbuf);
+	if ((t = yylex()) != STRING)
+		goto bad;
+	opb = (usch *)yytext;
+	if (*opb++ == 'L')
+		opb++;
+	while ((t = *opb++) != '\"') {
+		if (t == '\\' && (*opb == '\"' || *opb == '\\'))
+			t = *opb++;
+		putch(t);
+	}
+	putch('\n');
+	prtline();
+	return;
+bad:	error("bad pragma operator");
 }
 
 /*
@@ -770,6 +845,9 @@ struct recur *rp;
 		return 1;
 	} else if (sp == linloc) {
 		(void)sheap("%d", ifiles->lineno);
+		return 1;
+	} else if (sp == pragloc) {
+		pragoper();
 		return 1;
 	}
 	vp = sp->value;
@@ -850,7 +928,7 @@ expmac(struct recur *rp)
 		struct recur *rp2 = rp;
 		printf("\nexpmac\n");
 		while (rp2) {
-			printf("do not expand %s\n", rp->sp->namep);
+			printf("do not expand %s\n", rp2->sp->namep);
 			rp2 = rp2->next;
 		}
 	}
@@ -945,7 +1023,7 @@ expmac(struct recur *rp)
 			stksv = NULL;
 			if ((c = yylex()) == WSPACE) {
 				stksv = alloca(yyleng+1);
-				strcpy((char *)stksv, yytext);
+				strlcpy((char *)stksv, yytext, yyleng+1);
 				c = yylex();
 			}
 			/* only valid for expansion if fun macro */
@@ -1001,9 +1079,9 @@ expdef(vp, rp, gotwarn)
 	int narg, c, i, plev, snuff, instr;
 	int ellips = 0;
 
-	DPRINT(("expdef %s rp %s\n", vp, (rp ? (char *)rp->sp->namep : "")));
+	DPRINT(("expdef rp %s\n", (rp ? (char *)rp->sp->namep : "")));
 	if ((c = yylex()) != '(')
-		error("got %c, expected )", c);
+		error("got %c, expected (", c);
 	if (vp[1] == VARG) {
 		narg = *vp--;
 		ellips = 1;

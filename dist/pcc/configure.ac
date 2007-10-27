@@ -14,41 +14,55 @@ case "$target_os" in
     netbsd*)
 	targos=netbsd
 	case "$target_cpu" in
-	    i?86) targmach=x86 ;;
+	    i?86) targmach=i386 ;;
+	    vax) targmach=vax ;;
 	esac
 	;;
+
     openbsd*)
 	targos=openbsd
 	case "$target_cpu" in
-	    i?86) targmach=x86 ;;
+	    i?86) targmach=i386 ;;
+	    vax) targmach=vax ;;
 	esac
 	;;
+
     dragonfly*)
 	targos=dragonfly
 	case "$target_cpu" in
-	    i?86) targmach=x86 ;;
+	    i?86) targmach=i386 ;;
 	esac
 	;;
+
     darwin*)
       targos=darwin
 	case "$target_cpu" in
-	    i?86) targmach=x86 ;;
+	    i?86) targmach=i386 ;;
+	    powerpc) targmach=powerpc ;;
 	esac
         ;;
 
     freebsd*)
       targos=freebsd
 	case "$target_cpu" in
-	    i386) targmach=x86 ;;
+	    i386) targmach=i386 ;;
 	esac
 	;;
 
     linux*)
 	targos=linux
 	case "$target_cpu" in
-	    i?86) targmach=x86 ;;
+	    i?86) targmach=i386 ;;
 	esac
 	;;
+
+    mirbsd*)
+	targos=mirbsd
+	case "$target_cpu" in
+	    i?86) targmach=i386 ;;
+	esac
+	;;
+
     *)
         targos="$target_os"
 	case "$target_cpu" in
