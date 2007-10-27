@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.12 2007/09/03 14:58:02 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.13 2007/10/27 11:40:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #ifndef M_WAITOK
 #include <sys/malloc.h>
 #endif
+#include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 
@@ -224,7 +225,7 @@ struct	pkthdr {
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct _m_ext_storage {
-	struct simplelock ext_lock;
+	kmutex_t ext_lock;
 	int ext_refcnt;
 	int ext_flags;
 	char *ext_buf;			/* start of buffer */
@@ -527,7 +528,7 @@ do {									\
 	KDASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
 	(m)->m_ext.ext_refcnt = 1;					\
-	simple_lock_init(&(m)->m_ext.ext_lock);				\
+	mutex_init(&(m)->m_ext.ext_lock, MUTEX_NODEBUG, IPL_VM);	\
 	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
 	MCLREFDEBUGN((m), NULL, 0);					\
 } while (/* CONSTCOND */ 0)
