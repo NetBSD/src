@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.80.10.3 2007/02/26 09:10:15 yamt Exp $	*/
+/*	$NetBSD: sb.c,v 1.80.10.4 2007/10/27 11:31:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.80.10.3 2007/02/26 09:10:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.80.10.4 2007/10/27 11:31:54 yamt Exp $");
 
 #include "midi.h"
 
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.80.10.3 2007/02/26 09:10:15 yamt Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

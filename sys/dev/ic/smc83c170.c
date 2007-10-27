@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.59.4.2 2007/09/03 14:35:14 yamt Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.59.4.3 2007/10/27 11:31:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59.4.2 2007/09/03 14:35:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59.4.3 2007/10/27 11:31:04 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59.4.2 2007/09/03 14:35:14 yamt Exp 
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/lxtphyreg.h>

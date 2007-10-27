@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.10.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: mpu.c,v 1.10.4.3 2007/10/27 11:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.10.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.10.4.3 2007/10/27 11:30:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.10.4.2 2006/12/30 20:48:03 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/midi_if.h>
 

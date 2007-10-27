@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.3.8.4 2007/09/03 14:36:16 yamt Exp $ */
+/*	$NetBSD: owtemp.c,v 1.3.8.5 2007/10/27 11:32:28 yamt Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.3.8.4 2007/09/03 14:36:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.3.8.5 2007/10/27 11:32:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ owtemp_update(void *arg)
 	struct owtemp_softc *sc = arg;
 	u_int8_t data[9];
 
-	onewire_lock(sc->sc_onewire, 0);
+	onewire_lock(sc->sc_onewire);
 	if (onewire_reset(sc->sc_onewire) != 0)
 		goto done;
 	onewire_matchrom(sc->sc_onewire, sc->sc_rom);

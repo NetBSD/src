@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.c,v 1.3 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: lcdkp_subr.c,v 1.3.4.1 2007/10/27 11:30:49 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.3 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.3.4.1 2007/10/27 11:30:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.3 2005/02/27 00:27:01 perry Exp $")
 #include <sys/types.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/lcdkp_subr.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.2.18.3 2007/09/03 14:26:37 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.2.18.4 2007/10/27 11:26:33 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -221,7 +221,7 @@ _C_LABEL(copyin_func):
  */
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	jmp	*_C_LABEL(copyout_func)
 
 #if defined(I386_CPU)
@@ -363,7 +363,7 @@ ENTRY(i486_copyout)
  */
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	jmp	*_C_LABEL(copyin_func)
 
 #if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
@@ -448,7 +448,7 @@ ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
 
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
@@ -569,7 +569,7 @@ ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
 
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
@@ -683,7 +683,7 @@ ENTRY(copystr)
  */
 /* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -700,7 +700,7 @@ ENTRY(fuword)
  */
 /* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -737,7 +737,7 @@ ENTRY(fuswintr)
  */
 /* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -782,7 +782,7 @@ NENTRY(fusuaddrfault)
  */
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -830,7 +830,7 @@ ENTRY(suword)
  */
 /* LINTSTUB: Func: int susword(void *base, short c) */
 ENTRY(susword)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -918,7 +918,7 @@ ENTRY(suswintr)
  */
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)

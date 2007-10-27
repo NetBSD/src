@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.42.4.1 2006/12/30 20:48:44 yamt Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.42.4.2 2007/10/27 11:32:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.42.4.1 2006/12/30 20:48:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.42.4.2 2007/10/27 11:32:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.42.4.1 2006/12/30 20:48:44 yamt Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 

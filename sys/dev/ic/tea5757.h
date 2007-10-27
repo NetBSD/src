@@ -1,4 +1,4 @@
-/* $NetBSD: tea5757.h,v 1.2 2002/09/03 18:53:40 augustss Exp $ */
+/* $NetBSD: tea5757.h,v 1.2.22.1 2007/10/27 11:31:06 yamt Exp $ */
 /*	$OpenBSD: tea5757.h,v 1.3 2002/01/07 18:32:19 mickey Exp $	*/
 /* $RuOBSD: tea5757.h,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -31,7 +31,7 @@
 
 #include <sys/types.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #define TEA5757_REGISTER_LENGTH		25
 #define TEA5757_FREQ			0x0007FFF

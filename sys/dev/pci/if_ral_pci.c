@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.2.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.2.2.3 2007/10/27 11:32:59 yamt Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.2.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.2.2.3 2007/10/27 11:32:59 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -35,8 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.2.2.2 2006/12/30 20:48:45 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

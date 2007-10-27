@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.10.4.3 2007/09/03 14:33:57 yamt Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.10.4.4 2007/10/27 11:30:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,14 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.10.4.3 2007/09/03 14:33:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.10.4.4 2007/10/27 11:30:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>

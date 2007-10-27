@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.6.16.2 2007/09/03 14:34:59 yamt Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.6.16.3 2007/10/27 11:30:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6.16.2 2007/09/03 14:34:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6.16.3 2007/10/27 11:30:54 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6.16.2 2007/09/03 14:34:59 yamt Exp $"
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

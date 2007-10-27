@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.95.2.3 2007/02/26 09:10:40 yamt Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.95.2.4 2007/10/27 11:34:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.3 2007/02/26 09:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.4 2007/10/27 11:34:15 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.3 2007/02/26 09:10:40 yamt Exp 
 #include <sys/proc.h>
 #include <sys/dvdio.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_multi_stream_2	bus_space_write_multi_2

@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.10.4.1 2007/09/03 14:32:46 yamt Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.10.4.2 2007/10/27 11:29:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ struct oss_sys_ioctl_args {
 #define OSS_SNDCTL_DSP_MAPOUTBUF	_OSS_IOR ('P', 20, struct oss_buffmem_desc)
 #define OSS_SNDCTL_DSP_SETSYNCRO	_OSS_IO  ('P', 21)
 #define OSS_SNDCTL_DSP_SETDUPLEX	_OSS_IO  ('P', 22)
+#define OSS_SNDCTL_DSP_GETODELAY	_OSS_IOR ('P', 23, int)
 #define OSS_SNDCTL_DSP_PROFILE		_OSS_IOW ('P', 23, int)
 #define	  OSS_APF_NORMAL		0	/* Normal applications */
 #define	  OSS_APF_NETWORK		1	/* "external" delays */

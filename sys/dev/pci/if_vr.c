@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.74.6.3 2007/09/03 14:37:05 yamt Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.74.6.4 2007/10/27 11:33:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74.6.3 2007/09/03 14:37:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74.6.4 2007/10/27 11:33:05 yamt Exp $");
 
 #include "rnd.h"
 
@@ -135,8 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74.6.3 2007/09/03 14:37:05 yamt Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

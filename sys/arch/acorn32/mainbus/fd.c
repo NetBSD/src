@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20.2.3 2007/09/03 14:22:06 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.20.2.4 2007/10/27 11:24:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20.2.3 2007/09/03 14:22:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.20.2.4 2007/10/27 11:24:56 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -519,8 +519,7 @@ fdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
@@ -1074,7 +1073,8 @@ loop:
 		fdc->sc_fh.fh_regs = &fdc->sc_fr;
 		fdc->sc_fr.fr_r9 = IOMD_BASE + (IOMD_FIQRQ << 2);
 		fdc->sc_fr.fr_r10 = fd->sc_nbytes;
-		fdc->sc_fr.fr_r11 = (u_int)(bp->b_data + fd->sc_skip);
+		fdc->sc_fr.fr_r11 =
+		    (u_int)((uintptr_t)bp->b_data + fd->sc_skip);
 		fdc->sc_fr.fr_r12 = fdc->sc_drq;
 #ifdef FD_DEBUG
 		printf("fdc-doio:r9=%x r10=%x r11=%x r12=%x data=%x skip=%x\n",
@@ -1606,7 +1606,7 @@ load_memory_disc_from_floppy(md, dev)
 	s = spl0();
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
-		brelse(bp);		
+		brelse(bp, 0);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
 	}
@@ -1626,7 +1626,7 @@ load_memory_disc_from_floppy(md, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image");
                                                  
-		memcpy((void *)md->md_addr + loop * fd_types[type].sectrac
+		memcpy((char *)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (void *)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
@@ -1635,7 +1635,7 @@ load_memory_disc_from_floppy(md, dev)
         
 	fdclose(bp->b_dev, 0, 0, curlwp);
 
-	brelse(bp);
+	brelse(bp, 0);
 
 	splx(s);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.67.2.3 2007/09/03 14:25:13 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.67.2.4 2007/10/27 11:26:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67.2.3 2007/09/03 14:25:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67.2.4 2007/10/27 11:26:06 yamt Exp $");
 
 #include "hil.h"
 
@@ -554,7 +554,7 @@ itestart(struct tty *tp)
 		}
 		if (hiwat) {
 			tp->t_state |= TS_TIMEOUT;
-			callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+			callout_schedule(&tp->t_rstrt_ch, 1);
 		}
 	}
 	tp->t_state &= ~TS_BUSY;

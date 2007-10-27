@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2.2.5 2007/09/03 14:31:31 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.2.2.6 2007/10/27 11:29:06 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -108,6 +108,7 @@ include <machine/pmap.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/types.h>
+include <machine/specialreg.h>
 
 ifdef XEN3
 include <machine/xen3-public/sched.h>
@@ -134,6 +135,8 @@ endif
 
 include <machine/tlog.h>
 
+include <x86/busdefs.h>
+
 define	PAGE_SIZE		PAGE_SIZE
 
 define	LSRUN			LSRUN
@@ -148,9 +151,6 @@ define	KERNTEXTOFF		KERNTEXTOFF
 
 define	PGSHIFT			PGSHIFT
 define	PGOFSET			PGOFSET
-define	PDSHIFT			PDSHIFT
-define	PDOFSET			PDOFSET
-define	NBPD			NBPD
 
 define	PG_RW			PG_RW
 define	PG_V			PG_V
@@ -261,7 +261,6 @@ define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
@@ -348,12 +347,16 @@ endif
 define SIF_INITDOMAIN		SIF_INITDOMAIN
 
 ifdef XEN3
-define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_pending)
-define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_data[0].evtchn_upcall_mask)
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_mask)
 else
-define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_pending)
-define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_data[0].evtchn_upcall_mask)
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_mask)
 endif
 
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
 define SCHEDOP_yield		SCHEDOP_yield
+
+define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
+
+define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO

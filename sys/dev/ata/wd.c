@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305.2.4 2007/09/03 14:33:28 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.305.2.5 2007/10/27 11:30:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.4 2007/09/03 14:33:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.5 2007/10/27 11:30:05 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.4 2007/09/03 14:33:28 yamt Exp $");
 #include <sys/rnd.h>
 #endif
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -408,9 +408,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	wd->sc_dk.dk_driver = &wddkdriver;
-	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	/* we fill in dk_info later */
+	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
@@ -764,6 +763,7 @@ wddone(void *v)
 	int do_perror = 0;
 	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
+	int nblks;
 
 	if (bp == NULL)
 		return;
@@ -788,13 +788,33 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
+		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
+			nblks = wd->sc_wdc_bio.bcount /
+			    wd->sc_dk.dk_label->d_secsize;
+			/*
+			 * If we get a "id not found" when crossing the
+			 * LBA48_THRESHOLD, and the drive is larger than
+			 * 128GB, then we can assume the drive has the
+			 * LBA48 bug and we switch to LBA48.
+			 */
+			if (wd->sc_wdc_bio.blkno <= LBA48_THRESHOLD &&
+			    wd->sc_wdc_bio.blkno + nblks > LBA48_THRESHOLD &&
+			    wd->sc_capacity > LBA48_THRESHOLD + 1) {
+				errmsg = "LBA48 bug";
+				wd->sc_quirks |= WD_QUIRK_FORCE_LBA48;
+				do_perror = 0;
+				goto retry2;
+			}
+		}
 retry:		/* Just reset and retry. Can we do more ? */
 		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries < WDIORETRIES)
-			printf(", retrying\n");
+			printf(", retrying");
+		printf("\n");
 		if (do_perror)
 			wdperror(wd);
 		if (wd->retries < WDIORETRIES) {
@@ -803,7 +823,6 @@ retry2:
 			    wdrestart, wd);
 			return;
 		}
-		printf("\n");
 
 #ifdef WD_SOFTBADSECT
 		/*
@@ -1175,14 +1194,14 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		struct disk_badsecinfo dbsi;
 		struct disk_badsectors *dbs;
 		size_t available;
-		void *laddr;
+		uint8_t *laddr;
 
 		dbsi = *(struct disk_badsecinfo *)addr;
 		missing = wd->sc_bscount;
 		count = 0;
 		available = dbsi.dbsi_bufsize;
 		skip = dbsi.dbsi_skip;
-		laddr = dbsi.dbsi_buffer;
+		laddr = (uint8_t *)dbsi.dbsi_buffer;
 
 		/*
 		 * We start this loop with the expectation that all of the

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.29.4.3 2007/09/03 14:38:09 yamt Exp $	*/
+/*	$NetBSD: dl.c,v 1.29.4.4 2007/10/27 11:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.3 2007/09/03 14:38:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.4 2007/10/27 11:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.3 2007/09/03 14:38:09 yamt Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.4.12.1 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.4.12.2 2007/10/27 11:30:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.4.12.1 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.4.12.2 2007/10/27 11:30:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.4.12.1 2006/12/30 20:48:02 yamt Exp $"
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>

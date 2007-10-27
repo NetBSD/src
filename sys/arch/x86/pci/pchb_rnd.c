@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.2.14.3 2007/09/03 14:31:22 yamt Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.2.14.4 2007/10/27 11:28:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.2.14.3 2007/09/03 14:31:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.2.14.4 2007/10/27 11:28:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,126 +53,126 @@ __KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.2.14.3 2007/09/03 14:31:22 yamt Exp $
 static void pchb_rnd_callout(void *v);
 
 #define	PCHB_RNG_RETRIES	1000
+#define	PCHB_RNG_MIN_SAMPLES	10
 
 void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 {
-	int i;
+	int i, j, count_ff;
 	uint8_t reg8;
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
+		return;
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
 #if defined(__i386__)
-		/* Old chipsets which only support IA32 CPUs. */
-		case PCI_PRODUCT_INTEL_82810E_MCH:
-		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
-		case PCI_PRODUCT_INTEL_82810_MCH:
-		case PCI_PRODUCT_INTEL_82815_DC100_HUB:
-		case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
-		case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
-		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
-		case PCI_PRODUCT_INTEL_82820_MCH:
-		case PCI_PRODUCT_INTEL_82840_HB:
-		case PCI_PRODUCT_INTEL_82845_HB:
-		case PCI_PRODUCT_INTEL_82850_HB:
-		case PCI_PRODUCT_INTEL_82860_HB:
-		case PCI_PRODUCT_INTEL_82865_HB:
-		case PCI_PRODUCT_INTEL_82875P_HB:
+	/* Old chipsets which only support IA32 CPUs. */
+	case PCI_PRODUCT_INTEL_82810E_MCH:
+	case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+	case PCI_PRODUCT_INTEL_82810_MCH:
+	case PCI_PRODUCT_INTEL_82815_DC100_HUB:
+	case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
+	case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
+	case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+	case PCI_PRODUCT_INTEL_82820_MCH:
+	case PCI_PRODUCT_INTEL_82840_HB:
+	case PCI_PRODUCT_INTEL_82845_HB:
+	case PCI_PRODUCT_INTEL_82850_HB:
+	case PCI_PRODUCT_INTEL_82860_HB:
+	case PCI_PRODUCT_INTEL_82865_HB:
+	case PCI_PRODUCT_INTEL_82875P_HB:
 #endif	/* defined((__i386__) */
-		/* New chipsets which support EM64T CPUs. */
-		case PCI_PRODUCT_INTEL_82915G_HB:
-		case PCI_PRODUCT_INTEL_82915GM_HB:
-		case PCI_PRODUCT_INTEL_82925X_HB:
-		case PCI_PRODUCT_INTEL_82945P_MCH:
-		case PCI_PRODUCT_INTEL_82955X_HB:
-			sc->sc_st = pa->pa_memt;
-			if (bus_space_map(sc->sc_st, I82802_IOBASE,
-			    I82802_IOSIZE, 0, &sc->sc_sh) != 0) {
-				/*
-				 * Unable to map control registers, punt,
-				 * but don't bother issuing a warning.
-				 */
-				return;
-			}
+	/* New chipsets which support EM64T CPUs. */
+	case PCI_PRODUCT_INTEL_82915G_HB:
+	case PCI_PRODUCT_INTEL_82915GM_HB:
+	case PCI_PRODUCT_INTEL_82925X_HB:
+	case PCI_PRODUCT_INTEL_82945P_MCH:
+	case PCI_PRODUCT_INTEL_82955X_HB:
+		break;
+	default:
+		return;
+	}
 
+	sc->sc_st = pa->pa_memt;
+	if (bus_space_map(sc->sc_st, I82802_IOBASE, I82802_IOSIZE, 0,
+	    &sc->sc_sh) != 0) {
+		/*
+		 * Unable to map control registers, punt,
+		 * but don't bother issuing a warning.
+		 */
+		return;
+	}
+
+	reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
+	    I82802_RNG_HWST);
+	if ((reg8 & I82802_RNG_HWST_PRESENT) == 0) {
+		/*
+		 * Random number generator is not present.
+		 */
+		bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+		return;
+	}
+
+	/* Enable the RNG. */
+	bus_space_write_1(sc->sc_st, sc->sc_sh,
+	    I82802_RNG_HWST, reg8 | I82802_RNG_HWST_ENABLE);
+	reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_HWST);
+	if ((reg8 & I82802_RNG_HWST_ENABLE) == 0) {
+		/*
+		 * Couldn't enable the RNG.
+		 */
+		bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+		return;
+	}
+
+	/* Check to see if we can read data from the RNG. */
+	count_ff = 0;
+	for (j = 0; j < PCHB_RNG_MIN_SAMPLES; ++j) {
+		for (i = 0; i < PCHB_RNG_RETRIES; i++) {
 			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
-			    I82802_RNG_HWST);
-			if ((reg8 & I82802_RNG_HWST_PRESENT) == 0) {
-				/*
-				 * Random number generator is not present.
-				 */
-				bus_space_unmap(sc->sc_st, sc->sc_sh,
-				    I82802_IOSIZE);
-				return;
+			    I82802_RNG_RNGST);
+			if (!(reg8 & I82802_RNG_RNGST_DATAV)) {
+				delay(10);
+				continue;
 			}
-
-			/* Enable the RNG. */
-			bus_space_write_1(sc->sc_st, sc->sc_sh,
-			    I82802_RNG_HWST, reg8 | I82802_RNG_HWST_ENABLE);
 			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
-			    I82802_RNG_HWST);
-			if ((reg8 & I82802_RNG_HWST_ENABLE) == 0) {
-				/*
-				 * Couldn't enable the RNG.
-				 */
-				bus_space_unmap(sc->sc_st, sc->sc_sh,
-				    I82802_IOSIZE);
-				return;
-			}
-
-			/* Check to see if we can read data from the RNG. */
-			for (i = 0; i < PCHB_RNG_RETRIES; i++) {
-				reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_RNGST);
-				if (!(reg8 & I82802_RNG_RNGST_DATAV)) {
-					delay(10);
-					continue;
-				}
-				if (bus_space_read_1(sc->sc_st, sc->sc_sh,
-				    I82802_RNG_DATA) != 0xff) {
-					break;
-				}
-			}
-
-			if (i == PCHB_RNG_RETRIES) {
-				bus_space_unmap(sc->sc_st, sc->sc_sh,
-				    I82802_IOSIZE);
-#ifdef DIAGNOSTIC
-				aprint_verbose("%s: unable to read from "
-				    "random number generator.\n",
-				    sc->sc_dev.dv_xname);
-#endif
-				return;
-			}
-
-			/*
-			 * Should test entropy source to ensure
-			 * that it passes the Statistical Random
-			 * Number Generator Tests in section 4.11.1,
-			 * FIPS PUB 140-1.
-			 *
-			 *	http://csrc.nist.gov/fips/fips1401.htm
-			 */
-
-			printf("%s: random number generator enabled\n",
-			    sc->sc_dev.dv_xname);
-
-			callout_init(&sc->sc_rnd_ch, 0);
-			rnd_attach_source(&sc->sc_rnd_source,
-			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
-			    /*
-			     * We can't estimate entropy since we poll
-			     * random data periodically.
-			     */
-			    RND_FLAG_NO_ESTIMATE);
-			sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
-			pchb_rnd_callout(sc);
-			break;
-		default:
+			    I82802_RNG_DATA);
 			break;
 		}
+		if (i == PCHB_RNG_RETRIES) {
+			bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+			aprint_verbose_dev(&sc->sc_dev,
+			    "timeout reading test samples, RNG disabled.\n");
+			return;
+		}
+		if (reg8 == 0xff)
+			++count_ff;
 	}
+
+	if (count_ff == PCHB_RNG_MIN_SAMPLES) {
+		bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+		aprint_verbose_dev(&sc->sc_dev,
+		    "returns constant 0xff stream, RNG disabled.\n");
+		return;
+	}
+
+	/*
+	 * Should test entropy source to ensure
+	 * that it passes the Statistical Random
+	 * Number Generator Tests in section 4.11.1,
+	 * FIPS PUB 140-1.
+	 *
+	 *	http://csrc.nist.gov/fips/fips1401.htm
+	 */
+
+	aprint_normal_dev(&sc->sc_dev, "random number generator enabled\n");
+
+	callout_init(&sc->sc_rnd_ch, 0);
+	/* pch is polled for entropy, so no estimate is available. */
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+	sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
+	pchb_rnd_callout(sc);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.6.4.2 2007/09/03 14:38:26 yamt Exp $ */
+/*	$NetBSD: agten.c,v 1.6.4.3 2007/10/27 11:34:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.6.4.2 2007/09/03 14:38:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.6.4.3 2007/10/27 11:34:05 yamt Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.6.4.2 2007/09/03 14:38:26 yamt Exp $");
 #include <dev/sun/btreg.h>
 #include <dev/sun/btvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -239,13 +239,6 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_fb_is_open = 0;
 	sc->sc_video = -1;
 	sc->sc_bustag = sa->sa_bustag;
-#if 0
-	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
-
-	dict = device_properties(&sc->sc_dev);
-
-	prop_dictionary_get_bool(dict, "is_console", &console);
-#endif
 
 	reg = prom_getpropint(node, "i128_fb_physaddr", -1);
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
@@ -282,22 +275,24 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	reg = prom_getpropint(node, "glint_fb0_physaddr", -1);
 	sc->sc_glint_fb = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
-	sc->sc_glint_fbsz = prom_getpropint(node, "glint_fb0_size", -1);
+	sc->sc_glint_fbsz = prom_getpropint(node, "glint_lb_size", -1);
 	reg = prom_getpropint(node, "glint_reg_physaddr", -1);
 	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
 	    agten_intr, sc);
 #endif
 
-	sc->sc_width = prom_getpropint(node, "ffb_width", 800);
-	sc->sc_height = prom_getpropint(node, "ffb_height", 600);
+	sc->sc_width = prom_getpropint(node, "ffb_width", 1152);
+	sc->sc_height = prom_getpropint(node, "ffb_height", 900);
 	sc->sc_depth = prom_getpropint(node, "ffb_depth", 8);
 	sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
 
+	printf(": %dx%d\n", sc->sc_width, sc->sc_height);
 	agten_init(sc);
 
 	console = fb_is_console(node);

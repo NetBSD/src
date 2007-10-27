@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.7 2005/05/31 11:58:54 yamt Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.7.2.1 2007/10/27 11:29:12 yamt Exp $	*/
 
 /*
  *
@@ -49,83 +49,5 @@
 
 void xen_set_ldt(vaddr_t, uint32_t);
 void xen_update_descriptor(union descriptor *, union descriptor *);
-
-static __inline void 
-invlpg(u_int addr)
-{
-	int s = splvm();
-	xpq_queue_invlpg(addr);
-	xpq_flush_queue();
-	splx(s);
-}  
-
-static __inline void
-lldt(u_short sel)
-{
-
-	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
-	if (sel == GSEL(GLDT_SEL, SEL_KPL))
-		xen_set_ldt((vaddr_t)ldt, NLDT);
-	else
-		xen_set_ldt(cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_base,
-		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
-}
-
-static __inline void
-ltr(u_short sel)
-{
-	__PRINTK(("XXX ltr not supported\n"));
-}
-
-static __inline void
-lcr0(u_int val)
-{
-	__PRINTK(("XXX lcr0 not supported\n"));
-}
-
-static __inline u_int
-rcr0(void)
-{
-	__PRINTK(("XXX rcr0 not supported\n"));
-	return 0;
-}
-
-#define lcr3(_v) _lcr3((_v), __FILE__, __LINE__)
-static __inline void
-_lcr3(u_int val, const char *file, int line)
-{
-	int s = splvm();
-/* 	__PRINTK(("lcr3 %08x at %s:%d\n", val, file, line)); */
-	xpq_queue_pt_switch(xpmap_ptom(val) & PG_FRAME);
-	xpq_flush_queue();
-	splx(s);
-}
-
-static __inline void
-tlbflush(void)
-{
-	int s = splvm();
-	xpq_queue_tlb_flush();
-	xpq_flush_queue();
-	splx(s);
-}
-
-#define	tlbflushg()	tlbflush()	/* we don't use PGE */
-
-static __inline u_int
-rdr6(void)
-{
-	u_int val;
-
-	val = HYPERVISOR_get_debugreg(6);
-	return val;
-}
-
-static __inline void
-ldr6(u_int val)
-{
-
-	HYPERVISOR_set_debugreg(6, val);
-}
 
 #endif /* _XEN_XENFUNC_H_ */

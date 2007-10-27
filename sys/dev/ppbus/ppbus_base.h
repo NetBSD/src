@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.h,v 1.4.4.1 2007/09/03 14:38:08 yamt Exp $ */
+/* $NetBSD: ppbus_base.h,v 1.4.4.2 2007/10/27 11:33:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -31,7 +31,7 @@
 #ifndef __PPBUS_BASE_H
 #define __PPBUS_BASE_H
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ppbus/ppbus_msq.h>
 

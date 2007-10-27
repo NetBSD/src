@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.18.2.1 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.18.2.2 2007/10/27 11:32:42 yamt Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,14 +10,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.18.2.1 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.18.2.2 2007/10/27 11:32:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

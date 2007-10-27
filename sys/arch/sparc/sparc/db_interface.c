@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.2.2 2007/02/26 09:08:19 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.64.2.3 2007/10/27 11:28:34 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.2.2 2007/02/26 09:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.2.3 2007/10/27 11:28:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -543,17 +543,17 @@ db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ "prom",	db_prom_cmd,	0,	0 },
-	{ "proc",	db_proc_cmd,	0,	0 },
-	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "lock",	db_lock_cmd,	0,	0 },
-	{ "slock",	db_simple_lock_cmd,	0,	0 },
-	{ "page",	db_page_cmd,	0,	0 },
-	{ "uvmdump",	db_uvmhistdump,	0,	0 },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("slock",	db_simple_lock_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,	NULL,NULL,NULL) },
 #ifdef MULTIPROCESSOR
-	{ "cpu",	db_cpu_cmd,	0,	0 },
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
 #endif
-	{ (char *)0, }
+	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
 };
 #endif /* DDB */
 

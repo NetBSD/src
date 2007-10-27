@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.11.4.3 2007/09/03 14:34:52 yamt Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.11.4.4 2007/10/27 11:30:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11.4.3 2007/09/03 14:34:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11.4.4 2007/10/27 11:30:49 yamt Exp $");
 
 #include "rnd.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11.4.3 2007/09/03 14:34:52 yamt Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ldvar.h>
 

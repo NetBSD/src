@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.12 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.12.6.1 2007/10/27 11:31:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.12 2005/02/04 02:10:40 perry Exp $");
 #include <sys/callout.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/socket.h>
 #include <net/if.h>

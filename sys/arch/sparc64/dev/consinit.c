@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.18.2.2 2006/12/30 20:47:02 yamt Exp $	*/
+/*	$NetBSD: consinit.c,v 1.18.2.3 2007/10/27 11:28:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18.2.2 2006/12/30 20:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.18.2.3 2007/10/27 11:28:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -216,10 +216,9 @@ consinit()
 		   (OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
-	printf("console is %s\n", consname);
+	DBPRINT(("console is %s\n", consname));
 
 	/* Initialize PROM console */
 	(*cn_tab->cn_probe)(cn_tab);
 	(*cn_tab->cn_init)(cn_tab);
 }
-

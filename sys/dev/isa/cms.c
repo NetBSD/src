@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.10.4.1 2006/12/30 20:48:26 yamt Exp $ */
+/* $NetBSD: cms.c,v 1.10.4.2 2007/10/27 11:31:26 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.10.4.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.10.4.2 2007/10/27 11:31:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.10.4.1 2006/12/30 20:48:26 yamt Exp $");
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

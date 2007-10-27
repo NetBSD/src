@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.2.12.2 2007/09/03 14:35:45 yamt Exp $ */
+/*	$NetBSD: smsc.c,v 1.2.12.3 2007/10/27 11:31:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.12.2 2007/09/03 14:35:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.12.3 2007/10/27 11:31:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.12.2 2007/09/03 14:35:45 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.12.2 2007/09/03 14:35:45 yamt Exp $");
 
 #include <dev/isa/smscvar.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.12.2 2007/09/03 14:35:45 yamt Exp $");
 
 int smsc_probe(struct device *, struct cfdata *, void *);
 void smsc_attach(struct device *, struct device *, void *);
+int smsc_detach(struct device *, int);
 static uint8_t smsc_readreg(struct smsc_softc *, int);
 /*static void smsc_writereg(struct smsc_softc *, int, int);*/
 void smsc_setup(struct smsc_softc *);
@@ -84,7 +85,7 @@ void smsc_setup(struct smsc_softc *);
 static int smsc_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(smsc, sizeof(struct smsc_softc),
-    smsc_probe, smsc_attach, NULL, NULL);
+    smsc_probe, smsc_attach, smsc_detach, NULL);
 
 struct smsc_sysmon {
 	struct sysmon_envsys sme;
@@ -207,6 +208,15 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 	smsc_setup(smsc_sc);
 }
 
+int
+smsc_detach(struct device *self, int flags)
+{
+	struct smsc_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(sc->smsc_sysmon);
+	bus_space_unmap(sc->smsc_iot, sc->smsc_ioh, 2);
+	return 0;
+}
 
 /*
  * Read the value of the given register

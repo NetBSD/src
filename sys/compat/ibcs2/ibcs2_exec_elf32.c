@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.10.2.3 2007/09/03 14:32:04 yamt Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.10.2.4 2007/10/27 11:29:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.10.2.3 2007/09/03 14:32:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.10.2.4 2007/10/27 11:29:31 yamt Exp $");
 
 #define ELFSIZE		32
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.10.2.3 2007/09/03 14:32:04 ya
 
 #include <sys/mman.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 #include <machine/ibcs2_machdep.h>
 

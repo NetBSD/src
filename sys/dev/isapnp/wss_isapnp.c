@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.16.10.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.16.10.3 2007/10/27 11:32:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.16.10.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.16.10.3 2007/10/27 11:32:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

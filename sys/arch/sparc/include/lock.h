@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18.6.2 2007/02/26 09:08:16 yamt Exp $ */
+/*	$NetBSD: lock.h,v 1.18.6.3 2007/10/27 11:28:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -77,6 +77,30 @@ static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 #else
 extern void __cpu_simple_lock(__cpu_simple_lock_t *);
 #endif
+
+static __inline int
+__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_LOCKED;
+}
+
+static __inline int
+__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_LOCKED;
+}
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

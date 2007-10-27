@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.5.14.3 2007/09/03 14:33:21 yamt Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.5.14.4 2007/10/27 11:30:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.5.14.3 2007/09/03 14:33:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.5.14.4 2007/10/27 11:30:01 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.5.14.3 2007/09/03 14:33:21 yamt Exp
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.2.4.3 2007/09/03 14:31:28 yamt Exp $	*/
+/*	$NetBSD: patch.c,v 1.2.4.4 2007/10/27 11:29:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.4.3 2007/09/03 14:31:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.4.4 2007/10/27 11:29:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -104,8 +104,8 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	    (uintptr_t)to_e - (uintptr_t)to_s)
 		panic("patchfunc: sizes do not match (from=%p)", from_s);
 
-	psl = read_psl();
-	disable_intr();
+	psl = x86_read_psl();
+	x86_disable_intr();
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
 	if (pcrel != NULL) {
 		ptr = pcrel;
@@ -120,7 +120,7 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 		    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
 	}
 	x86_flush();
-	write_psl(psl);
+	x86_write_psl(psl);
 }
 
 static inline void  __attribute__ ((__unused__))

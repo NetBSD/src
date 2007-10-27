@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.13.2.2 2007/09/03 14:38:53 yamt Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.13.2.3 2007/10/27 11:34:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13.2.2 2007/09/03 14:38:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13.2.3 2007/10/27 11:34:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13.2.2 2007/09/03 14:38:53 yamt Exp $
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsreg.h>

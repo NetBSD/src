@@ -1,4 +1,39 @@
-/*	$NetBSD: pte.h,v 1.14.16.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.14.16.2 2007/10/27 11:26:46 yamt Exp $	*/
+
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  *
@@ -142,16 +177,16 @@ typedef uint32_t pt_entry_t;		/* PTE */
  * now we define various for playing with virtual addresses
  */
 
-#define	PDSHIFT		22		/* offset of PD index in VA */
-#define	NBPD		(1 << PDSHIFT)	/* # bytes mapped by PD (4MB) */
-#define	PDOFSET		(NBPD-1)	/* mask for non-PD part of VA */
-#if 0 /* not used? */
-#define	NPTEPD		(NBPD / PAGE_SIZE)	/* # of PTEs in a PD */
-#else
-#define	PTES_PER_PTP	(NBPD / PAGE_SIZE)	/* # of PTEs in a PTP */
-#endif
-#define	PD_MASK		0xffc00000	/* page directory address bits */
-#define	PT_MASK		0x003ff000	/* page table address bits */
+#define L1_SHIFT	12
+#define	L2_SHIFT	22
+#define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
+
+#define L2_MASK		0xffc00000
+#define L1_MASK		0x003ff000
+
+#define L2_FRAME	(L2_MASK)
+#define L1_FRAME	(L2_FRAME|L1_MASK)
 
 /*
  * here we define the bits of the PDE/PTE, as described above:
@@ -182,6 +217,7 @@ typedef uint32_t pt_entry_t;		/* PTE */
 
 #define	PG_KR		0x00000000	/* kernel read-only */
 #define	PG_KW		0x00000002	/* kernel read-write */
+#define	PG_NX		0		/* dummy */
 
 /*
  * page protection exception bits

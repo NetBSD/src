@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.23.22.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: hid.c,v 1.23.22.3 2007/10/27 11:34:31 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.23.22.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.23.22.3 2007/10/27 11:34:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ hid_get_data(u_char *buf, struct hid_location *loc)
  *
  * This function is broken in the following way.
  *
- * It used to discover if the given 'id' is part of 'usage' collection
+ * It is used to discover if the given 'id' is part of 'usage' collection
  * in the descriptor in order to match report id against device type.
  *
  * The semantics of hid_start_parse() means though, that only a single

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.1.8.5 2007/09/03 14:26:36 yamt Exp $
+# $NetBSD: XEN2_DOMU,v 1.1.8.6 2007/10/27 11:26:30 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -104,10 +104,10 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

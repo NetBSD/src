@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17.4.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.17.4.2 2007/10/27 11:28:03 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.4.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.4.2 2007/10/27 11:28:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -44,6 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.4.1 2006/06/21 14:55:11 yamt Exp $");
 
 #include <machine/fpu.h>
 #include <machine/psl.h>
+
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+static void mp_save_fpu_lwp(struct lwp *);
+#endif
 
 void
 enable_fpu(void)
@@ -185,6 +191,43 @@ save_fpu_cpu(void)
  out:
 	mtmsr(msr);
 }
+
+#ifdef MULTIPROCESSOR
+
+/*
+ * Save a process's FPU state to its PCB.  The state is in another CPU
+ * (though by the time our IPI is processed, it may have been flushed already).
+ */
+static void
+mp_save_fpu_lwp(struct lwp *l)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct cpu_info *fpcpu;
+	int i;
+
+	/*
+	 * Send an IPI to the other CPU with the data and wait for that CP		 * to flush the data.  Note that the other CPU might have switched
+	 * to a different proc's FPU state by the time it receives the IPI,
+	 * but that will only result in an unnecessary reload.
+	 */
+
+	fpcpu = pcb->pcb_fpcpu;
+	if (fpcpu == NULL)
+		return;
+
+	ppc_send_ipi(fpcpu->ci_cpuid, PPC_IPI_FLUSH_FPU);
+
+	/* Wait for flush. */
+	for (i = 0; i < 0x3fffffff; i++) {
+		if (pcb->pcb_fpcpu == NULL)
+			return;
+	}
+
+	aprint_error("mp_save_fpu_proc{%d} pid = %d.%d, fpcpu->ci_cpuid = %d\n",
+	    cpu_number(), l->l_proc->p_pid, l->l_lid, fpcpu->ci_cpuid);
+	panic("mp_save_fpu_proc: timed out");
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * Save a process's FPU state to its PCB.  The state may be in any CPU.

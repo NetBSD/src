@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.71.16.2 2007/09/03 14:22:12 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.71.16.3 2007/10/27 11:24:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.2 2007/09/03 14:22:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.3 2007/10/27 11:24:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -564,9 +564,6 @@ cpu_hatch(struct cpu_info *ci)
 	alpha_pal_imb();
 
 	cc_calibrate_cpu(ci);
-
-	/* Initialize our base "runtime". */
-	microtime(&ci->ci_schedstate.spc_runtime);
 }
 
 int

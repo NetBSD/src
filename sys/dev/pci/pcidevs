@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.725.2.4 2007/09/03 14:37:17 yamt Exp $
+$NetBSD: pcidevs,v 1.725.2.5 2007/10/27 11:33:24 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor ATTANSIC		0x1969	Attansic Technologies
+vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
@@ -1263,6 +1264,8 @@ product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
+product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
+product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -1497,10 +1500,11 @@ product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
 product CMDTECH 680		0x0680	SiI0680
 product CMDTECH 3112		0x3112	SiI3112 SATALink
-product CMDTECH 3512		0x3512	SiI3512 SATALink
 product CMDTECH 3114		0x3114	SiI3114 SATALink
 product CMDTECH 3124		0x3124	SiI3124 SATALink
 product CMDTECH 3132		0x3132	SiI3132 SATALink
+product CMDTECH 3512		0x3512	SiI3512 SATALink
+product CMDTECH 3531		0x3531	SiI3531 SATALink
 
 /* C-Media products */
 product CMEDIA CMI8338A		0x0100	CMI8338A PCI Audio Device
@@ -1854,6 +1858,7 @@ product MARVELL YUKON_C036	0x4366	Yukon 88EC036
 product MARVELL YUKON_C032	0x4367	Yukon 88EC032
 product MARVELL YUKON_C034	0x4368	Yukon 88EC034
 product MARVELL YUKON_C042	0x4369	Yukon 88EC042
+product MARVELL YUKON_CO55	0x436a	Yukon 88ECO55
 product MARVELL	GT64120		0x4620	GT-64120 System Controller
 product MARVELL	BELKIN		0x5005	Belkin Gigabit Ethernet
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
@@ -1942,25 +1947,47 @@ product HITACHI SH7751R	0x350e	SH7751R PCI Controller
 product IBM MCABRIDGE 	0x0002	MCA Bridge
 product IBM ALTALITE 	0x0005	CPU Bridge - Alta Lite
 product IBM ALTAMP 	0x0007	CPU Bridge - Alta MP
-product IBM ISABRIDGE	0x000a	ISA Bridge w/PnP
+product IBM ISABRIDGE	0x000a	Fire Coral ISA Bridge w/PnP
+product IBM POWERWAVE	0x0013	PowerWave Graphics Adapter
+product IBM IDAHO	0x0015	Idaho PCI Bridge
 product IBM CPUBRIDGE 	0x0017	CPU Bridge
 product IBM LANSTREAMER	0x0018	Auto LANStreamer
 product IBM GXT150P	0x001b	GXT-150P 2D Accelerator
+product IBM CARRERA	0x001c	Carrera PCI Bridge
+product IBM 82G2675	0x001d	82G2675 SCSI-2 Fast Controller
 product IBM MCABRIDGE2	0x0020	MCA Bridge
 product IBM 82351	0x0022	82351 PCI-PCI Bridge
+product IBM MONNAV	0x002c	Montana/Nevada PCI Bridge and Memory Controller
+product IBM PYTHON	0x002d	Python PCI-PCI Bridge
 product IBM SERVERAID	0x002e	ServeRAID
-product IBM GXT250P	0x003c	GXT-250P
+product IBM GXT250P	0x003c	GXT-250P Graphics Adapter
 product IBM OLYMPIC	0x003e	16/4 Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
 product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM GXT800P	0x005e	GXT-800P
+product IBM GXT500P	0x0054	GXT-500P/GXT550P Graphics Adapter
+product IBM I82557B	0x005c	i82557B 10/100 Ethernet
+product IBM GXT800P	0x005e	GXT-800P Graphics Adapter
+product IBM EADSPCI	0x008b	EADS PCI-PCI Bridge
+product IBM GXT3000P	0x008e	GXT-3000P Graphics Adapter
+product IBM GXT3000P2	0x0090	GXT-3000P Graphics Adapter(2)
+product IBM GXT2000P	0x00b8	GXT-2000P Graphics Adapter
 product IBM OLYMPIC2	0x00ce	Olympic 2 Token Ring
+product IBM CPC71064	0x00fc	CPC710 Dual Bridge and Memory Controller (PCI64)
+product IBM CPC71032	0x0105	CPC710 Dual Bridge and Memory Controller (PCI32)
 product IBM TPAUDIO	0x0153	ThinkPad 600X/A20/T20/T22 Audio
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
+product IBM GXT4000P	0x016e	GXT-4000P Graphics Adapter
+product IBM GXT6000P	0x0170	GXT-6000P Graphics Adapter
+product IBM GXT300P	0x017d	GXT-300P Graphics Adapter
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM SERVERAID4	0x01bd	ServeRAID 4/5
+product IBM 440GP	0x01ef	PPC 440GP PCI Bridge
+product IBM IBMETHER	0x01ff	10/100 Ethernet
+product IBM GXT6500P	0x021b	GXT-6500P Graphics Adapter
+product IBM GXT4500P	0x021c	GXT-4500P Graphics Adapter
+product IBM GXT135P	0x0233	GXT-135P Graphics Adapter
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IC Ensemble / VIA Technologies products */
@@ -2338,6 +2365,7 @@ product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller with 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
+product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
 product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
@@ -2417,6 +2445,8 @@ product INTEL PRO_WL_3945ABG_1	0x4222	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
 product INTEL PRO_WL_2915ABG_1	0x4223	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL PRO_WL_2915ABG_2	0x4224	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL PRO_WL_3945ABG_2	0x4227	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
+product INTEL PRO_WL_4965AGN_1	0x4229  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
+product INTEL PRO_WL_4965AGN_2	0x4230  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
 product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
@@ -2710,8 +2740,11 @@ product SYMBIOS 1035			0x0040	53c1035
 product SYMBIOS 1035ZC			0x0041	53c1035ZC
 product SYMBIOS SAS1064			0x0050	SAS1064
 product SYMBIOS SAS1068			0x0054	SAS1068
+product SYMBIOS SAS1068_2		0x0055	SAS1068
 product SYMBIOS SAS1064E		0x0056	SAS1064E
+product SYMBIOS SAS1064E_2		0x0057	SAS1064E
 product SYMBIOS SAS1068E		0x0058	SAS1068E
+product SYMBIOS SAS1068E_2		0x0059	SAS1068E
 product SYMBIOS SAS1066E		0x005A	SAS1066E
 product SYMBIOS SAS1064A		0x005C	SAS1064A
 product SYMBIOS SAS1066			0x005E	SAS1066
@@ -3085,8 +3118,8 @@ product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100 Ethernet
 product PLANEX FNW_3800_TX	0xab07	FNW-3800-TX 10/100 Ethernet
 
 /* PLX Technology products */
-product PLX 9030	0x9030	9030 Modem 4 port
-product PLX 9050	0x9030	9030 Modem 4 port V92
+product PLX 9030	0x9030	9030 I/O Accelrator
+product PLX 9050	0x5201	9050 I/O Accelrator
 product PLX 9054	0x9054	9054 I/O Accelerator
 product PLX 9060ES	0x906e	9060ES PCI bus controller
 product PLX 9656	0x9656	9656 I/O Accelerator
@@ -3272,6 +3305,7 @@ product SERVERWORKS CSB6		0x0203	CSB6 southbridge
 product SERVERWORKS HT1000SB		0x0205	HT1000SB southbridge
 product SERVERWORKS OSB4_IDE		0x0211	OSB4 IDE
 product SERVERWORKS CSB5_IDE		0x0212	CSB5 IDE
+product SERVERWORKS HT1000_IDE 		0x0214	HT-1000 IDE Controller
 product SERVERWORKS CSB6_RAID		0x0213	CSB6 IDE/RAID
 product SERVERWORKS CSB6_IDE		0x0217	CSB6 IDE/RAID
 product SERVERWORKS OSB4_USB		0x0220	OSB4/CSB5 USB Host Controller
@@ -3281,7 +3315,8 @@ product SERVERWORKS CSB6_LPC		0x0227	CSB6 ISA/LPC bridge
 product SERVERWORKS K2_SATA		0x0240	K2 SATA
 product SERVERWORKS FRODO4_SATA		0x0241	Frodo4 SATA
 product SERVERWORKS FRODO8_SATA		0x0242	Frodo8 SATA
-product SERVERWORKS HT1000_SATA		0x024a	HT-1000 SATA
+product SERVERWORKS HT1000_SATA_1	0x024a	HT-1000 SATA
+product SERVERWORKS HT1000_SATA_2 	0x024b	HT-1000 SATA
 product SERVERWORKS BCM5714		0x0103	bcm5714/bcm5715 integral PCI-E to PCI-X bridge
 
 /* SGI products */
@@ -3446,6 +3481,7 @@ product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
+product SUNDANCETI IP100A	0x0200	IP100A 10/100 Ethernet
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
 product SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
 product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet

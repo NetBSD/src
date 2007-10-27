@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.5.12.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: i8259.c,v 1.5.12.3 2007/10/27 11:29:00 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5.12.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5.12.3 2007/10/27 11:29:00 yamt Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ i8259_hwunmask(struct pic *pic, int pin)
 	unsigned port;
 	u_int8_t byte;
 
-	disable_intr();	/* XXX */
+	x86_disable_intr();	/* XXX */
 	i8259_imen &= ~(1 << pin);
 #ifdef PIC_MASKDELAY
 	delay(10);
@@ -228,7 +228,7 @@ i8259_hwunmask(struct pic *pic, int pin)
 		byte = i8259_imen & 0xff;
 	}
 	outb(port, byte);
-	enable_intr();
+	x86_enable_intr();
 }
 
 static void

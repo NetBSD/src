@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.33.2.3 2007/09/03 14:39:34 yamt Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.33.2.4 2007/10/27 11:34:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _DEV_WSCONS_WSDISPLAYVAR_H
 #define _DEV_WSCONS_WSDISPLAYVAR_H
 
-struct device;
+#include <sys/device.h>
 
 /*
  * WSDISPLAY interfaces
@@ -198,8 +198,7 @@ int wsscreen_switchwait(struct wsdisplay_softc *, int);
 int wsdisplay_internal_ioctl(struct wsdisplay_softc *, struct wsscreen *,
 			     u_long, void *, int, struct lwp *);
 
-int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
-			 u_long, void *, int, struct lwp *);
+int wsdisplay_usl_ioctl1(device_t, u_long, void *, int, struct lwp *);
 
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
 			 u_long, void *, int, struct lwp *);

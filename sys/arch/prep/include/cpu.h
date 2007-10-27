@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.38.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.38.2 2007/10/27 11:28:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #define	_MACHINE_CPU_H_
 
 #if defined(_KERNEL)
-#define	CPU_MAXNUM	1
+#define	CPU_MAXNUM	2
 extern char bootpath[];
 #endif
 

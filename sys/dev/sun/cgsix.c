@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.27.2.3 2007/09/03 14:38:45 yamt Exp $ */
+/*	$NetBSD: cgsix.c,v 1.27.2.4 2007/10/27 11:34:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27.2.3 2007/09/03 14:38:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27.2.4 2007/10/27 11:34:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.27.2.3 2007/09/03 14:38:45 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>

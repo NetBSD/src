@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.3.4.1 2007/09/03 14:36:22 yamt Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.3.4.2 2007/10/27 11:32:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.3.4.1 2007/09/03 14:36:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.3.4.2 2007/10/27 11:32:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.3.4.1 2007/09/03 14:36:22 yamt Exp $
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>

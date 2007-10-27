@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.29.4.3 2007/09/03 14:35:52 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.29.4.4 2007/10/27 11:32:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.29.4.3 2007/09/03 14:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.29.4.4 2007/10/27 11:32:13 yamt Exp $");
 
 #include "rnd.h"
 
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.29.4.3 2007/09/03 14:35:52 yamt Exp $")
 #include <sys/rnd.h>
 #endif
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/mca/mcavar.h>
 
@@ -180,8 +180,7 @@ ed_mca_attach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	ed->sc_dk.dk_driver = &eddkdriver;
-	ed->sc_dk.dk_name = ed->sc_dev.dv_xname;
+	disk_init(&ed->sc_dk, ed->sc_dev.dv_xname, &eddkdriver);
 	disk_attach(&ed->sc_dk);
 #if NRND > 0
 	rnd_attach_source(&ed->rnd_source, ed->sc_dev.dv_xname,

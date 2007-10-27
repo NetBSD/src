@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.11.2.4 2007/09/03 14:37:26 yamt Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.11.2.5 2007/10/27 11:33:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.11.2.4 2007/09/03 14:37:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.11.2.5 2007/10/27 11:33:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/acpipmtimer.h>
 
 #include <dev/pci/pcivar.h>

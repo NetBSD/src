@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm9.S,v 1.3 2004/01/26 15:54:16 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm9.S,v 1.3.16.1 2007/10/27 11:25:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 ARM Limited
@@ -215,9 +215,6 @@ ENTRY(arm9_dcache_wbinv_all)
  *
  * These is the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
- *
- * NOTE: Special calling convention
- *	r1, r4-r13 must be preserved
  */
 ENTRY(arm9_context_switch)
 	/*

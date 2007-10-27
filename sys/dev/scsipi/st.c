@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.181.2.3 2007/09/03 14:38:43 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.181.2.4 2007/10/27 11:34:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.3 2007/09/03 14:38:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.4 2007/10/27 11:34:17 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -1219,6 +1219,7 @@ ststart(struct scsipi_periph *periph)
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
 						BUFQ_GET(st->buf_queue);
 						bp->b_error = EIO;
+						bp->b_resid = bp->b_bcount;
 						biodone(bp);
 						continue;
 					}
@@ -1326,6 +1327,13 @@ stdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
+		/*
+		 * buggy device ? A SDLT320 can report an info
+		 * field of 0x3de8000 on a Media Error/Write Error
+		 * for this CBD: 0x0a 00 00 80 00 00
+		 */
+		if (bp->b_resid > bp->b_bcount || bp->b_resid < 0)
+			bp->b_resid = bp->b_bcount;
 
 		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
@@ -1926,6 +1934,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	struct scsi_rewind cmd;
 	int error;
 	int nmarks;
+	int timeout;
 
 	error = st_check_eod(st, FALSE, &nmarks, flags);
 	if (error) {
@@ -1934,6 +1943,9 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 		return (error);
 	}
 	st->flags &= ~ST_PER_ACTION;
+
+	/* If requestor asked for immediate response, set a short timeout */
+	timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
 	/*
 	 * ATAPI tapes always need immediate to be set
@@ -1946,7 +1958,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.byte2 = immediate;
 
 	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    ST_RETRIES, immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+	    ST_RETRIES, timeout, NULL, flags);
 	if (error) {
 		printf("%s: error %d trying to rewind\n",
 		    st->sc_dev.dv_xname, error);

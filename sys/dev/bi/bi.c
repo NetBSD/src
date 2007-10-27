@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.20.4.1 2007/09/03 14:33:29 yamt Exp $ */
+/*	$NetBSD: bi.c,v 1.20.4.2 2007/10/27 11:30:05 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,13 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.20.4.1 2007/09/03 14:33:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.20.4.2 2007/10/27 11:30:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>

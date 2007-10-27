@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.26.2.1 2007/09/03 14:25:22 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.26.2.2 2007/10/27 11:26:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.1 2007/09/03 14:25:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.2 2007/10/27 11:26:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.1 2007/09/03 14:25:22 yamt
 
 extern char *etext;
 extern int Sysptsize;
-extern char *extiobase, *proc0paddr;
+extern char *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 extern vaddr_t CLKbase, MMUbase;

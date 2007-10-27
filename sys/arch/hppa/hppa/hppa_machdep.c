@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.4.12.3 2007/09/03 14:26:22 yamt Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.4.12.4 2007/10/27 11:26:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.4.12.3 2007/09/03 14:26:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.4.12.4 2007/10/27 11:26:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,9 +283,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (want_resched && !immed)
+	if (ci->ci_want_resched && !immed)
 		return;
-	want_resched = 1;
+	ci->ci_want_resched = 1;
 
         if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
 		/* aston(ci->ci_curlwp); */

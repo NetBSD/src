@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.4.40.2 2007/02/26 09:07:21 yamt Exp $	*/
+/*	$NetBSD: viareg.h,v 1.4.40.3 2007/10/27 11:27:05 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -193,8 +193,6 @@ extern volatile unsigned char *Via1Base;
 #define vSR_OUT		0x10
 
 #define via_reg(v, r) (*(Via1Base + (r)))
-
-#include <machine/pio.h>
 
 static inline void via_reg_and(int, int, int);
 static inline void via_reg_or(int, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.22.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: rbus.c,v 1.22.4.2 2007/10/27 11:30:11 yamt Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.22.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.22.4.2 2007/10/27 11:30:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.22.4.1 2006/06/21 15:02:45 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cardbus/rbus.h>
 

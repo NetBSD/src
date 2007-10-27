@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.12.6.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.12.6.2 2007/10/27 11:32:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.12.6.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.12.6.2 2007/10/27 11:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

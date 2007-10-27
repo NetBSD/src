@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.9.16.1 2006/12/30 20:48:03 yamt Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.9.16.2 2007/10/27 11:30:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.9.16.1 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.9.16.2 2007/10/27 11:30:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

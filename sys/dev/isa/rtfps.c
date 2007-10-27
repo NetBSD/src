@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.49.6.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.49.6.2 2007/10/27 11:31:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.49.6.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.49.6.2 2007/10/27 11:31:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.73.12.3 2007/09/03 14:27:56 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.73.12.4 2007/10/27 11:27:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,8 @@
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	cpuid_t	ci_cpuid;
+	struct cpu_info *ci_next;	/* Next CPU in list */
+	cpuid_t ci_cpuid;		/* Machine-level identifier */
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */
@@ -65,6 +66,10 @@ struct cpu_info {
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
 };
+
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	\
+    (void)(cii), ci = &cpu_info_store; ci != NULL; ci = ci->ci_next
 
 /*
  * To implement a more accurate microtime using the CP0 COUNT register

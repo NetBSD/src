@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb_bios.c,v 1.1.12.2 2006/12/30 20:48:48 yamt Exp $ */
+/* $NetBSD: radeonfb_bios.c,v 1.1.12.3 2007/10/27 11:33:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,13 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.1.12.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.1.12.3 2007/10/27 11:33:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

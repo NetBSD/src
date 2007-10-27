@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.24.2.2 2007/09/03 14:37:09 yamt Exp $ */
+/* $NetBSD: isic_pci.c,v 1.24.2.3 2007/10/27 11:33:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.24.2.2 2007/09/03 14:37:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.24.2.3 2007/10/27 11:33:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.24.2.2 2007/09/03 14:37:09 yamt Exp $
 #include <sys/malloc.h>
 #include <sys/callout.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

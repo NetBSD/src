@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.26.4.2 2007/09/03 14:38:03 yamt Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.26.4.3 2007/10/27 11:33:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26.4.2 2007/09/03 14:38:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26.4.3 2007/10/27 11:33:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

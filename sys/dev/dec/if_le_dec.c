@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.15.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.15.4.2 2007/10/27 11:30:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.15.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.15.4.2 2007/10/27 11:30:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.15.4.1 2006/06/21 15:02:45 yamt Exp 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* access LANCE registers */
 void le_dec_writereg(volatile u_short *regptr, u_short val);

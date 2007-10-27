@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.8.22.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.8.22.2 2007/10/27 11:30:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.8.22.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.8.22.2 2007/10/27 11:30:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/config_hook.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>

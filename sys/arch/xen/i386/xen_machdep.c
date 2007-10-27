@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.10.2.2 2007/09/03 14:31:34 yamt Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.10.2.3 2007/10/27 11:29:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10.2.2 2007/09/03 14:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10.2.3 2007/10/27 11:29:10 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -151,13 +151,6 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	xpq_queue_set_ldt(base, entries);
 	xpq_flush_queue();
 	splx(s);
-}
-
-void
-lgdt(struct region_descriptor *rdp)
-{
-
-	panic("lgdt %p %08x\n", (void *)rdp->rd_base, rdp->rd_limit);
 }
 
 void

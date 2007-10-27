@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.25.2.2 2007/09/03 14:38:53 yamt Exp $ */
+/* $NetBSD: bba.c,v 1.25.2.3 2007/10/27 11:34:24 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.25.2.2 2007/09/03 14:38:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.25.2.3 2007/10/27 11:34:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,9 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.25.2.2 2007/09/03 14:38:53 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

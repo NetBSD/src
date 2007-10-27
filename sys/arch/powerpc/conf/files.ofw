@@ -1,5 +1,6 @@
-#	$NetBSD: files.ofw,v 1.5 2000/11/15 00:39:32 matt Exp $
+#	$NetBSD: files.ofw,v 1.5.40.1 2007/10/27 11:27:43 yamt Exp $
 
+defflag opt_ofwoea.h OFWOEA_DEBUG
 file	arch/powerpc/powerpc/ofw_machdep.c
 file	arch/powerpc/powerpc/ofwmagic.S
 file	arch/powerpc/powerpc/openfirm.c

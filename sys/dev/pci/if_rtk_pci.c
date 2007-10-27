@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.22.6.4 2007/09/03 14:37:01 yamt Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.22.6.5 2007/10/27 11:33:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.22.6.4 2007/09/03 14:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.22.6.5 2007/10/27 11:33:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.22.6.4 2007/09/03 14:37:01 yamt Exp
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

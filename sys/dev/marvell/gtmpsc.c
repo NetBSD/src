@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.11.2.4 2007/09/03 14:35:52 yamt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.11.2.5 2007/10/27 11:32:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.11.2.4 2007/09/03 14:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.11.2.5 2007/10/27 11:32:12 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.11.2.4 2007/09/03 14:35:52 yamt Exp $")
 #include <sys/tty.h>
 #include <sys/callout.h>
 #include <sys/fcntl.h>
+#include <sys/intr.h>
 #ifdef KGDB
 #include <sys/kernel.h>
 #include <sys/kgdb.h>
@@ -67,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.11.2.4 2007/09/03 14:35:52 yamt Exp $")
 
 #include <powerpc/atomic.h>
 #include <dev/cons.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>		/* for DELAY */
+#include <sys/bus.h>
+#include <sys/cpu.h>		/* for DELAY */
 #include <machine/stdarg.h>
 #include "gtmpsc.h"
 
@@ -514,9 +515,9 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 			panic("mpscattach: cannot intr_establish IRQ_SDMA");
 	}
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, gtmpsc_softintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, gtmpsc_softintr, sc);
 	if (sc->sc_si == NULL)
-		panic("mpscattach: cannot softintr_establish IPL_SOFTSERIAL");
+		panic("mpscattach: cannot softint_establish IPL_SOFTSERIAL");
 
 	shutdownhook_establish(gtmpsc_shutdownhook, sc);
 
@@ -988,7 +989,7 @@ skip_kgdb:
 			if (sc->sc_tbc == 0 && sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
 				sc->sc_tx_done = 1;
-				softintr_schedule(sc->sc_si);
+				softint_schedule(sc->sc_si);
 				SDMA_IMASK_DISABLE(sc, SDMA_INTR_TXBUF(unit));
 			}
 		}
@@ -1742,7 +1743,7 @@ gtmpsc_poll(void *arg)
 	}
 #endif
 	if (kick)
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
 }
 
 #ifdef KGDB

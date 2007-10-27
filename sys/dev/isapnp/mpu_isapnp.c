@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.10.4.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.10.4.3 2007/10/27 11:32:09 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.10.4.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.10.4.3 2007/10/27 11:32:09 yamt Exp $");
 
 #include "midi.h"
 
@@ -13,7 +13,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.10.4.2 2006/12/30 20:48:35 yamt Exp
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

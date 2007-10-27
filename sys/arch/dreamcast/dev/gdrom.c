@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.17.6.2 2007/09/03 14:23:55 yamt Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.17.6.3 2007/10/27 11:25:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.17.6.2 2007/09/03 14:23:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.17.6.3 2007/10/27 11:25:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,8 +385,7 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->dkdev.dk_name = sc->sc_dv.dv_xname;
-	sc->dkdev.dk_driver = &gdromdkdriver;
+	disk_init(&sc->dkdev, sc->sc_dv.dv_xname, &gdromdkdriver);
 	disk_attach(&sc->dkdev);
 
 	/*

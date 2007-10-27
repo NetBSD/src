@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.1.16.3 2006/12/30 20:49:38 yamt Exp $ */
+/* $NetBSD: splash.c,v 1.1.16.4 2007/10/27 11:34:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.1.16.3 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.1.16.4 2007/10/27 11:34:18 yamt Exp $");
 
 #include "opt_splash.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.1.16.3 2006/12/30 20:49:38 yamt Exp $")
 #endif
 
 #ifdef __HAVE_CPU_COUNTER
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/cpu_counter.h>
 #endif
 

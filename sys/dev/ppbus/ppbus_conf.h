@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.5.4.1 2007/09/03 14:38:08 yamt Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.5.4.2 2007/10/27 11:33:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -35,7 +35,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ppbus/ppbus_msq.h>
 #include <dev/ppbus/ppbus_device.h>

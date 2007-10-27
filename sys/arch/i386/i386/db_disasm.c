@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.30.2.3 2007/09/03 14:26:37 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.30.2.4 2007/10/27 11:26:34 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.30.2.3 2007/09/03 14:26:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.30.2.4 2007/10/27 11:26:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1100,7 +1100,7 @@ db_disasm(
 	/*
 	 * Don't try to disassemble the location if the mapping is invalid.
 	 * If we do, we'll fault, and end up debugging the debugger!
-	 * in a LARGEPAGES kernel, "pte" is really the pde and "pde" is
+	 * in the case of largepages, "pte" is really the pde and "pde" is
 	 * really the entry for the pdp itself.
 	 */
 	if ((vaddr_t)loc >= VM_MIN_KERNEL_ADDRESS)

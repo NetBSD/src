@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.7.16.1 2006/12/30 20:48:46 yamt Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.7.16.2 2007/10/27 11:33:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.7.16.1 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.7.16.2 2007/10/27 11:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.7.16.1 2006/12/30 20:48:46 yamt Exp $
 #include <sys/callout.h>
 #include <net/if.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

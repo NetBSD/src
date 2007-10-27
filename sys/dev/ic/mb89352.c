@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.38.10.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.38.10.3 2007/10/27 11:30:51 yamt Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.38.10.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.38.10.3 2007/10/27 11:30:51 yamt Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -144,8 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.38.10.2 2006/12/30 20:48:03 yamt Exp $
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

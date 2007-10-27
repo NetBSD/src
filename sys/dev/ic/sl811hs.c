@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.6.2.2 2007/09/03 14:35:13 yamt Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.6.2.3 2007/10/27 11:31:03 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.2 2007/09/03 14:35:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.3 2007/10/27 11:31:03 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.2 2007/09/03 14:35:13 yamt Exp $")
 #include <sys/gcq.h>
 #include <sys/lock.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

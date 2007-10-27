@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.46.4.4 2007/09/03 14:35:01 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.46.4.5 2007/10/27 11:30:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.4 2007/09/03 14:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.5 2007/10/27 11:30:54 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.4 2007/09/03 14:35:01 yamt Exp $")
 #include <net/if_ether.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_write_stream_2	bus_space_write_2
