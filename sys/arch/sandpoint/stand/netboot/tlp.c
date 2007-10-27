@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.6 2007/10/27 02:51:59 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.7 2007/10/27 06:34:20 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@
 #define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
-#define wb(adr, siz)		_wb(VTOPHYS(adr), (uint32_t)(siz))
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
 void *tlp_init(void *);
 int tlp_send(void *, char *, unsigned);
@@ -141,7 +141,7 @@ tlp_init(void *cookie)
 		return NULL;
 	}
 	
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x14); /* use mem space */
 
