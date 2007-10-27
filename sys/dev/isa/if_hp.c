@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.38.4.2 2007/09/03 14:35:38 yamt Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.38.4.3 2007/10/27 11:31:38 yamt Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.38.4.2 2007/09/03 14:35:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.38.4.3 2007/10/27 11:31:38 yamt Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.38.4.2 2007/09/03 14:35:38 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa_device.h>	/* XXX BROKEN */

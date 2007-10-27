@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.13.2.4 2007/09/03 14:34:00 yamt Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.13.2.5 2007/10/27 11:30:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.13.2.4 2007/09/03 14:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.13.2.5 2007/10/27 11:30:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.13.2.4 2007/09/03 14:34:00 yamt Exp $")
 
 #include <sys/tty.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <machine/config_hook.h>
 #include <machine/platid.h>
@@ -370,7 +370,7 @@ __hpckbd_input(void *arg, int flag, int scancode)
 
 		if (scancode == hc->hc_special[KEY_SPECIAL_OFF]) {
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
-			    CONFIG_HOOK_BUTTONEVENT_POWER, NULL);
+			    CONFIG_HOOK_BUTTONEVENT_POWER, (void *)1 /* on */);
 		} else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
 			static int onoff; /* XXX -uch */
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.2.18.3 2007/09/03 14:37:07 yamt Exp $ */
+/*      $NetBSD: if_xge.c,v 1.2.18.4 2007/10/27 11:33:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.2.18.3 2007/09/03 14:37:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.2.18.4 2007/10/27 11:33:08 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.2.18.3 2007/09/03 14:37:07 yamt Exp $")
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

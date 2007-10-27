@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.9.4.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.9.4.2 2007/10/27 11:30:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.9.4.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.9.4.2 2007/10/27 11:30:35 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.9.4.1 2006/06/21 15:02:54 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include "locators.h"
 
 #include <dev/pci/pcivar.h>

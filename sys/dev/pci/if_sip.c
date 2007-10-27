@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.102.2.3 2007/09/03 14:37:01 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.102.2.4 2007/10/27 11:33:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.3 2007/09/03 14:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.4 2007/10/27 11:33:01 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -112,8 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.3 2007/09/03 14:37:01 yamt Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>

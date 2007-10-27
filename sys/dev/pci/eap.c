@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.79.2.3 2007/09/03 14:36:46 yamt Exp $	*/
+/*	$NetBSD: eap.c,v 1.79.2.4 2007/10/27 11:32:43 yamt Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.79.2.3 2007/09/03 14:36:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.79.2.4 2007/10/27 11:32:43 yamt Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.79.2.3 2007/09/03 14:36:46 yamt Exp $");
 #include <dev/auconv.h>
 #include <dev/ic/ac97var.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/eapreg.h>
 #include <dev/pci/eapvar.h>

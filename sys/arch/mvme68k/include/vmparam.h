@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2005/04/01 11:59:33 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26.2.1 2007/10/27 11:27:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -90,16 +90,6 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-
-/*
- * Need a small pager map for the benefit of low-memory models.
- * To avoid using a needlessly small value on larger memory models,
- * this is calculated at runtime.
- */
-#ifndef PAGER_MAP_SIZE
-extern int mvme68k_pager_map_size;
-#define PAGER_MAP_SIZE	((vsize_t) mvme68k_pager_map_size)
-#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.

@@ -1,9 +1,27 @@
-/* $NetBSD: vcpu.h,v 1.3.6.2 2006/06/21 14:58:15 yamt Exp $ */
+/* $NetBSD: vcpu.h,v 1.3.6.3 2007/10/27 11:29:18 yamt Exp $ */
 /******************************************************************************
  * vcpu.h
  * 
  * VCPU initialisation, query, and hotplug.
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
 
@@ -25,13 +43,13 @@
  * @extra_arg == pointer to vcpu_guest_context structure containing initial
  *               state for the VCPU.
  */
-#define VCPUOP_initialise           0
+#define VCPUOP_initialise            0
 
 /*
  * Bring up a VCPU. This makes the VCPU runnable. This operation will fail
  * if the VCPU has not been initialised (VCPUOP_initialise).
  */
-#define VCPUOP_up                   1
+#define VCPUOP_up                    1
 
 /*
  * Bring down a VCPU (i.e., make it non-runnable).
@@ -47,17 +65,17 @@
  *     practise to move a VCPU onto an 'idle' or default page table, LDT and
  *     GDT before bringing it down.
  */
-#define VCPUOP_down                 2
+#define VCPUOP_down                  2
 
 /* Returns 1 if the given VCPU is up. */
-#define VCPUOP_is_up                3
+#define VCPUOP_is_up                 3
 
 /*
  * Return information about the state and running time of a VCPU.
  * @extra_arg == pointer to vcpu_runstate_info structure.
  */
-#define VCPUOP_get_runstate_info    4
-typedef struct vcpu_runstate_info {
+#define VCPUOP_get_runstate_info     4
+struct vcpu_runstate_info {
     /* VCPU's current state (RUNSTATE_*). */
     int      state;
     /* When was current state entered (system time, ns)? */
@@ -67,7 +85,9 @@ typedef struct vcpu_runstate_info {
      * guaranteed not to drift from system time.
      */
     uint64_t time[4];
-} vcpu_runstate_info_t;
+};
+typedef struct vcpu_runstate_info vcpu_runstate_info_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_runstate_info_t);
 
 /* VCPU is currently running on a physical CPU. */
 #define RUNSTATE_running  0
@@ -90,8 +110,9 @@ typedef struct vcpu_runstate_info {
  * Register a shared memory area from which the guest may obtain its own
  * runstate information without needing to execute a hypercall.
  * Notes:
- *  1. The registered address may be virtual or physical, depending on the
- *     platform. The virtual address should be registered on x86 systems.
+ *  1. The registered address may be virtual or physical or guest handle,
+ *     depending on the platform. Virtual address or guest handle should be
+ *     registered on x86 systems.
  *  2. Only one shared area may be registered per VCPU. The shared area is
  *     updated by the hypervisor each time the VCPU is scheduled. Thus
  *     runstate.state will always be RUNSTATE_running and
@@ -100,12 +121,64 @@ typedef struct vcpu_runstate_info {
  * @extra_arg == pointer to vcpu_register_runstate_memory_area structure.
  */
 #define VCPUOP_register_runstate_memory_area 5
-typedef struct vcpu_register_runstate_memory_area {
+struct vcpu_register_runstate_memory_area {
     union {
+        XEN_GUEST_HANDLE(vcpu_runstate_info_t) h;
         struct vcpu_runstate_info *v;
         uint64_t p;
     } addr;
-} vcpu_register_runstate_memory_area_t;
+};
+typedef struct vcpu_register_runstate_memory_area vcpu_register_runstate_memory_area_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_register_runstate_memory_area_t);
+
+/*
+ * Set or stop a VCPU's periodic timer. Every VCPU has one periodic timer
+ * which can be set via these commands. Periods smaller than one millisecond
+ * may not be supported.
+ */
+#define VCPUOP_set_periodic_timer    6 /* arg == vcpu_set_periodic_timer_t */
+#define VCPUOP_stop_periodic_timer   7 /* arg == NULL */
+struct vcpu_set_periodic_timer {
+    uint64_t period_ns;
+};
+typedef struct vcpu_set_periodic_timer vcpu_set_periodic_timer_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_set_periodic_timer_t);
+
+/*
+ * Set or stop a VCPU's single-shot timer. Every VCPU has one single-shot
+ * timer which can be set via these commands.
+ */
+#define VCPUOP_set_singleshot_timer  8 /* arg == vcpu_set_singleshot_timer_t */
+#define VCPUOP_stop_singleshot_timer 9 /* arg == NULL */
+struct vcpu_set_singleshot_timer {
+    uint64_t timeout_abs_ns;   /* Absolute system time value in nanoseconds. */
+    uint32_t flags;            /* VCPU_SSHOTTMR_??? */
+};
+typedef struct vcpu_set_singleshot_timer vcpu_set_singleshot_timer_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_set_singleshot_timer_t);
+
+/* Flags to VCPUOP_set_singleshot_timer. */
+ /* Require the timeout to be in the future (return -ETIME if it's passed). */
+#define _VCPU_SSHOTTMR_future (0)
+#define VCPU_SSHOTTMR_future  (1U << _VCPU_SSHOTTMR_future)
+
+/* 
+ * Register a memory location in the guest address space for the
+ * vcpu_info structure.  This allows the guest to place the vcpu_info
+ * structure in a convenient place, such as in a per-cpu data area.
+ * The pointer need not be page aligned, but the structure must not
+ * cross a page boundary.
+ *
+ * If the specified mfn is INVALID_MFN, then it reverts to using the
+ * vcpu_info structure in the shared_info page.
+ */
+#define VCPUOP_register_vcpu_info   10  /* arg == struct vcpu_info */
+struct vcpu_register_vcpu_info {
+    xen_pfn_t mfn;              /* mfn of page to place vcpu_info */
+    uint32_t offset;            /* offset within page */
+};
+typedef struct vcpu_register_vcpu_info vcpu_register_vcpu_info_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_register_vcpu_info_t);
 
 #endif /* __XEN_PUBLIC_VCPU_H__ */
 

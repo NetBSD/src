@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.1.18.2 2007/09/03 14:22:32 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.1.18.3 2007/10/27 11:25:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
 #include "assym.h"
-#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -141,6 +140,11 @@ _TRMP_LABEL(mp_startup)
 
 	movl	%cr4,%eax
 	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
+	movl	RELOC(pmap_largepages),%ecx
+	orl	%ecx,%ecx
+	jz	1f
+	orl	$CR4_PSE,%eax
+1:
 	movl	%eax,%cr4
 
 	movl	$MSR_EFER,%ecx

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.2.4.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.2.4.3 2007/10/27 11:30:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.2.4.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.2.4.3 2007/10/27 11:30:20 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.2.4.2 2006/12/30 20:48:00 yamt Exp $");
 
 #include <dev/hpc/apm/apmvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

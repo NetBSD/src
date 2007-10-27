@@ -1,11 +1,8 @@
-/*	$NetBSD: netbsd32_event.c,v 1.2.18.2 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.2.18.3 2007/10/27 11:29:45 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
  *  All rights reserved.
- *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -15,11 +12,7 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. All advertising materials mentioning features or use of this software
- *     must display the following acknowledgement:
- *         This product includes software developed by the NetBSD
- *         Foundation, Inc. and its contributors.
- *  4. Neither the name of The NetBSD Foundation nor the names of its
+ *  3. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.2.18.2 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.2.18.3 2007/10/27 11:29:45 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

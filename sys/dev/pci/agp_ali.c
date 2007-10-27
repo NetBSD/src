@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.7.2.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.7.2.2 2007/10/27 11:32:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.2 2007/10/27 11:32:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.1 2006/06/21 15:05:02 yamt Exp $")
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct agp_ali_softc {
 	struct agp_softc agp;

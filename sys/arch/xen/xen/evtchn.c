@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.14.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.14.2.3 2007/10/27 11:29:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.3 2007/10/27 11:29:26 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -175,7 +175,7 @@ init_events()
 	ctrl_if_init();
 #endif
 
-	enable_intr();		/* at long last... */
+	x86_enable_intr();		/* at long last... */
 }
 
 unsigned int
@@ -609,10 +609,14 @@ xen_debug_handler(void *arg)
 	int ci_ipending = ci->ci_ipending;
 	int ci_idepth = ci->ci_idepth;
 	u_long upcall_pending =
-	    HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending;
+	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
 	u_long upcall_mask =
-	    HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask;
+	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;
+#ifdef XEN3
+	u_long pending_sel = HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel;
+#else
 	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
+#endif
 	unsigned long evtchn_mask[sizeof(unsigned long) * 8];
 	unsigned long evtchn_pending[sizeof(unsigned long) * 8];
 

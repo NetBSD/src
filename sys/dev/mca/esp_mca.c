@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.9.4.3 2007/09/03 14:35:53 yamt Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.9.4.4 2007/10/27 11:32:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.9.4.3 2007/09/03 14:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.9.4.4 2007/10/27 11:32:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.9.4.3 2007/09/03 14:35:53 yamt Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

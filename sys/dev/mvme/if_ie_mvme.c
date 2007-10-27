@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.7.6.2 2007/09/03 14:36:13 yamt Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.7.6.3 2007/10/27 11:32:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.7.6.2 2007/09/03 14:36:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.7.6.3 2007/10/27 11:32:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.7.6.2 2007/09/03 14:36:13 yamt Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.10.2.2 2007/09/03 14:34:40 yamt Exp $ */
+/* $NetBSD: i82596.c,v 1.10.2.3 2007/10/27 11:30:44 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10.2.2 2007/09/03 14:34:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10.2.3 2007/10/27 11:30:44 yamt Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10.2.2 2007/09/03 14:34:40 yamt Exp $")
 #include "ioconf.h"
 
 /* bus_space / bus_dma etc. */
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 /* general system data and functions */
 #include <sys/systm.h>

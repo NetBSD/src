@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.32.2.4 2007/09/03 14:27:32 yamt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.32.2.5 2007/10/27 11:27:01 yamt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,16 +60,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.32.2.4 2007/09/03 14:27:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.32.2.5 2007/10/27 11:27:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 
-#include <machine/param.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <machine/adbsys.h>
+#include <machine/pio.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/adbvar.h>

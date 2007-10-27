@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.18.2.4 2007/09/03 14:34:07 yamt Exp $	*/
+/*	$NetBSD: iopl.c,v 1.18.2.5 2007/10/27 11:30:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.4 2007/09/03 14:34:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.5 2007/10/27 11:30:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.4 2007/09/03 14:34:07 yamt Exp $");
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 

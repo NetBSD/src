@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.35.2.1 2007/09/03 14:35:06 yamt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.35.2.2 2007/10/27 11:30:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -139,8 +139,8 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #if !defined(PDQ_HWSUPPORT)
 #include <net/if_media.h>
 #endif
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #define PDQ_OS_HDR_OFFSET	(PDQ_RX_FC_OFFSET-3)
 #define	PDQ_OS_PTR_FMT		"%p"
 #define	PDQ_OS_CSR_FMT		"0x%lx"

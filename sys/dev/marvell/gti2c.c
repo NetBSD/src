@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.2.6.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.2.6.3 2007/10/27 11:32:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,15 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.2.6.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.2.6.3 2007/10/27 11:32:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/marvell/gtintrreg.h>
 #include <dev/marvell/gti2creg.h>

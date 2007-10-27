@@ -1,4 +1,4 @@
-/* $NetBSD: joy_eap.c,v 1.3.2.1 2006/12/30 20:48:46 yamt Exp $ */
+/* $NetBSD: joy_eap.c,v 1.3.2.2 2007/10/27 11:33:13 yamt Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6,7 +6,7 @@
 #include <sys/device.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/eapreg.h>
 #include <dev/pci/eapvar.h>

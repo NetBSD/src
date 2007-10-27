@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.137.2.4 2007/09/03 14:35:17 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137.2.5 2007/10/27 11:31:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.4 2007/09/03 14:35:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.5 2007/10/27 11:31:08 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.4 2007/09/03 14:35:17 yamt Exp $")
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1416,7 +1416,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		/*
 		 * We sometimes have to run the 21140 in Hash-Only

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.45.4.1 2007/09/03 14:34:11 yamt Exp $	 */
+/* $NetBSD: adw.c,v 1.45.4.2 2007/10/27 11:30:26 yamt Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.45.4.1 2007/09/03 14:34:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.45.4.2 2007/10/27 11:30:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.45.4.1 2007/09/03 14:34:11 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 

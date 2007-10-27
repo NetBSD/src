@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.2.18.3 2007/09/03 14:35:26 yamt Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.2.18.4 2007/10/27 11:31:17 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -55,7 +55,7 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.32 2007/03/
 #endif
 
 #include <sys/bus.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/signal.h>
 #include <sys/mman.h>
@@ -84,7 +84,7 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.32 2007/03/
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>

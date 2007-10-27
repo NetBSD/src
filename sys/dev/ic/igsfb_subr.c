@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.4.12.1 2006/06/21 15:02:55 yamt Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.4.12.2 2007/10/27 11:30:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,14 +31,14 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.4.12.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.4.12.2 2007/10/27 11:30:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>

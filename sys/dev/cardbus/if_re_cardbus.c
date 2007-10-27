@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.5.4.3 2007/09/03 14:33:32 yamt Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.5.4.4 2007/10/27 11:30:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.3 2007/09/03 14:33:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.4 2007/10/27 11:30:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.3 2007/09/03 14:33:32 yamt E
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.5.16.4 2007/09/03 14:22:00 yamt Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.5.16.5 2007/10/27 11:24:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.5.16.4 2007/09/03 14:22:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.5.16.5 2007/10/27 11:24:54 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -79,7 +79,7 @@ cpu_switchto(lwp_t *old, lwp_t *new)
 	if ((new->l_flag & LW_SYSTEM) == 0) {
 		/* Check for Restartable Atomic Sequences. */
 		p2 = new->l_proc;
-		if (!LIST_EMPTY(&p2->p_raslist)) {
+		if (p2->p_raslist != NULL) {
 			struct trapframe *tf = new->l_addr->u_pcb.pcb_tf;
 			void *pc;
 

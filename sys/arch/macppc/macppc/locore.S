@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.53.2.2 2007/09/03 14:27:41 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.53.2.3 2007/10/27 11:27:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,19 +138,6 @@ __start:
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
 
-#if defined(MULTIPROCESSOR)
-ENTRY(cpu_spinup_trampoline)
-	li	0,0
-	mtmsr	0
-	isync
-
-	lis	3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
-
-	bl	_C_LABEL(cpu_hatch)
-	b       _C_LABEL(idle_loop)
-#endif
-
 #if defined (PPC_OEA64_BRIDGE)
 /* Return all 64 bits of HID4 */
 	.text
@@ -196,3 +183,8 @@ _C_LABEL(change_hid4):
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Pull in common pio / bus_space code.
+ */
+#include <powerpc/powerpc/pio_subr.S>

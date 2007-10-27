@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.3.18.2 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.3.18.3 2007/10/27 11:31:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.3.18.2 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.3.18.3 2007/10/27 11:31:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

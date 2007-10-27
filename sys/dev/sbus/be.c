@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.45.6.3 2007/09/03 14:38:27 yamt Exp $	*/
+/*	$NetBSD: be.c,v 1.45.6.4 2007/10/27 11:34:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45.6.3 2007/09/03 14:38:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45.6.4 2007/10/27 11:34:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -107,8 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45.6.3 2007/09/03 14:38:27 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.115.2.4 2007/09/03 14:35:00 yamt Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.115.2.5 2007/10/27 11:30:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.4 2007/09/03 14:35:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.5 2007/10/27 11:30:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1211,7 +1211,8 @@ ncr53c9x_done(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	callout_stop(&ecb->xs->xs_callout);
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
+		callout_stop(&xs->xs_callout);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the

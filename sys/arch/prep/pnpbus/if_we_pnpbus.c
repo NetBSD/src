@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.1.16.2 2006/12/30 20:46:50 yamt Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.1.16.3 2007/10/27 11:28:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.1.16.2 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.1.16.3 2007/10/27 11:28:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -390,10 +390,11 @@ we_params(asict, asich, typep, memsizep, flagp, is790p)
 	{
 		int i;
 
-		printf("we_params: type = 0x%x, typestr = %s, is16bit = %d, "
-		    "memsize = %d\n", type, typestr, is16bit, memsize);
+		aprint_debug("we_params: type = 0x%x, typestr = %s,"
+		    " is16bit = %d, memsize = %d\n", type, typestr, is16bit,
+		    memsize);
 		for (i = 0; i < 8; i++)
-			printf("     %d -> 0x%x\n", i,
+			aprint_debug("     %d -> 0x%x\n", i,
 			    bus_space_read_1(asict, asich, i));
 	}
 #endif

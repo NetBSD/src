@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.197.2.4 2007/09/03 14:33:08 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.197.2.5 2007/10/27 11:29:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197.2.4 2007/09/03 14:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197.2.5 2007/10/27 11:29:56 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197.2.4 2007/09/03 14:33:08 yamt Exp $")
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -336,9 +337,9 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_sih_rd = softintr_establish(IPL_SOFTSERIAL,
+	sc->sc_sih_rd = softint_establish(SOFTINT_SERIAL,
 	    audio_softintr_rd, sc);
-	sc->sc_sih_wr = softintr_establish(IPL_SOFTSERIAL,
+	sc->sc_sih_wr = softint_establish(SOFTINT_SERIAL,
 	    audio_softintr_wr, sc);
 
 	iclass = mclass = oclass = rclass = -1;
@@ -531,11 +532,11 @@ audiodetach(struct device *self, int flags)
 		sc->sc_powerhook = NULL;
 	}
 	if (sc->sc_sih_rd) {
-		softintr_disestablish(sc->sc_sih_rd);
+		softint_disestablish(sc->sc_sih_rd);
 		sc->sc_sih_rd = NULL;
 	}
 	if (sc->sc_sih_wr) {
-		softintr_disestablish(sc->sc_sih_wr);
+		softint_disestablish(sc->sc_sih_wr);
 		sc->sc_sih_wr = NULL;
 	}
 
@@ -2681,12 +2682,12 @@ audio_pint(void *v)
 		     audio_stream_get_used(sc->sc_pustream), cb->usedlow));
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
 		if (audio_stream_get_used(sc->sc_pustream) <= cb->usedlow)
-			softintr_schedule(sc->sc_sih_wr);
+			softint_schedule(sc->sc_sih_wr);
 	}
 
 	/* Possible to return one or more "phantom blocks" now. */
 	if (!sc->sc_full_duplex && sc->sc_rchan)
-		softintr_schedule(sc->sc_sih_rd);
+		softint_schedule(sc->sc_sih_rd);
 }
 
 /*
@@ -2791,7 +2792,7 @@ audio_rint(void *v)
 		}
 	}
 
-	softintr_schedule(sc->sc_sih_rd);
+	softint_schedule(sc->sc_sih_rd);
 }
 
 int

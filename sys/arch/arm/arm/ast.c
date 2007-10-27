@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.6.16.1 2007/02/26 09:05:51 yamt Exp $	*/
+/*	$NetBSD: ast.c,v 1.6.16.2 2007/10/27 11:25:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.6.16.1 2007/02/26 09:05:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.6.16.2 2007/10/27 11:25:16 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.6.16.1 2007/02/26 09:05:51 yamt Exp $");
  */
 void ast __P((struct trapframe *));
  
-int want_resched = 0;
 int astpending;
 
 void
@@ -123,7 +122,7 @@ ast(struct trapframe *tf)
 	}
 
 	/* Allow a forced task switch. */
-	if (want_resched)
+	if (curcpu()->ci_want_resched)
 		preempt();
 
 	userret(l);

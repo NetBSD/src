@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.11.4.1 2006/06/21 15:08:12 yamt Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.11.4.2 2007/10/27 11:34:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.11.4.1 2006/06/21 15:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.11.4.2 2007/10/27 11:34:46 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.11.4.1 2006/06/21 15:08:12 yamt Exp $")
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

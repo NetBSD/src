@@ -84,7 +84,7 @@ typedef struct drm_file drm_file_t;
 #include <machine/resource.h>
 #endif
 #include <machine/param.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #if !defined(DRM_NO_MTRR)
 #include <machine/sysarch.h>
 #endif
@@ -226,16 +226,14 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_CURPROC		curproc
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
-#define DRM_NOOP		do {} while(0)
-#define DRM_SPINTYPE		struct simplelock
-#define DRM_SPININIT(l,name)	simple_lock_init(&l)
-#define DRM_SPINUNINIT(l)	DRM_NOOP
-#define DRM_SPINLOCK(l)		if(!simple_lock_try(l)) simple_lock(l)
-#define DRM_SPINUNLOCK(u)	simple_unlock(u)
-#define DRM_SPINLOCK_ASSERT(l)	DRM_NOOP
+#define DRM_SPINTYPE		kmutex_t
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DRIVER, IPL_NONE)
+#define DRM_SPINUNINIT(l)	mutex_destroy(l)
+#define DRM_SPINLOCK(l)		mutex_enter(l)
+#define DRM_SPINUNLOCK(u)	mutex_exit(u)
+#define DRM_SPINLOCK_ASSERT(l)	mutex_owned(l)
 #define DRM_LOCK()		DRM_SPINLOCK(&dev->dev_lock)
 #define DRM_UNLOCK() 		DRM_SPINUNLOCK(&dev->dev_lock)
-#define spldrm()		spltty()
 #define DRM_CURRENTPID		curproc->p_pid
 #define DRM_SYSCTL_HANDLER_ARGS	(SYSCTLFN_ARGS)
 #else
@@ -313,8 +311,7 @@ extern drm_device_t *drm_units[];
 #define DRM_IOCTL_ARGS		dev_t kdev, u_long cmd, void *data, \
 				int flags, DRM_STRUCTCDEVPROC *p, DRMFILE filp
 
-#define CDEV_MAJOR		34
-#define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
+#define PAGE_ALIGN(addr)	ALIGN(addr)
 /* DRM_SUSER returns true if the user is superuser */
 #ifdef DRM_NO_AGP
 #define DRM_AGP_FIND_DEVICE()	0
@@ -346,7 +343,17 @@ typedef u_int8_t u8;
  * DRM_WRITEMEMORYBARRIER() prevents reordering of writes.
  * DRM_MEMORYBARRIER() prevents reordering of reads and writes.
  */
-#if defined(__i386__)
+
+/* XXX  TODO: change to bus_space_barrier(9), as certain architectures
+	might need them--not to mention that MD cruft is ugly.  I just 
+	didn't feel like writing the macros right now.  The use of mb(9)
+	below should be enough for x86, perhaps others. */
+
+#if defined(__NetBSD__) 
+#define DRM_READMEMORYBARRIER()		mb_read()
+#define DRM_WRITEMEMORYBARRIER()	mb_write()
+#define DRM_MEMORYBARRIER()		mb_memory()
+#elif defined(__i386__) 
 #define DRM_READMEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%esp)" : : : "memory");
 #define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
@@ -484,6 +491,17 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	   ret = msleep(&(queue), &dev->irq_lock, 		\
 			 PZERO | PCATCH, "drmwtq", (timeout));	\
 	mtx_unlock(&dev->irq_lock);				\
+	DRM_LOCK();						\
+}
+#elif defined(__NetBSD__)
+#define DRM_WAIT_ON( ret, queue, timeout, condition )		\
+for ( ret = 0 ; !ret && !(condition) ; ) {			\
+	DRM_UNLOCK();						\
+	mutex_enter(&dev->irq_lock);				\
+	if (!(condition))					\
+	   ret = mtsleep(&(queue), PZERO | PCATCH, 		\
+			 "drmwtq", (timeout), &dev->irq_lock);	\
+	mutex_exit(&dev->irq_lock);				\
 	DRM_LOCK();						\
 }
 #else

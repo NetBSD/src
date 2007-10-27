@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.24 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: bandit.c,v 1.24.12.1 2007/10/27 11:27:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.24 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.24.12.1 2007/10/27 11:27:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,28 +38,29 @@ __KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.24 2004/08/30 15:05:18 drochner Exp $")
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+#include <machine/pci_machdep.h>
+#include <machine/pio.h>
 
 struct bandit_softc {
 	struct device sc_dev;
-	struct pci_bridge sc_pc;
+	struct genppc_pci_chipset sc_pc;
+	struct powerpc_bus_space sc_iot;
+	struct powerpc_bus_space sc_memt;
 };
 
-void bandit_attach __P((struct device *, struct device *, void *));
-int bandit_match __P((struct device *, struct cfdata *, void *));
+static void bandit_attach(struct device *, struct device *, void *);
+static int bandit_match(struct device *, struct cfdata *, void *);
 
-pcireg_t bandit_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t bandit_conf_read(void *, pcitag_t, int);
+static void bandit_conf_write(void *, pcitag_t, int, pcireg_t);
 
-static void bandit_init __P((struct bandit_softc *));
+static void bandit_init(struct bandit_softc *);
 
 CFATTACH_DECL(bandit, sizeof(struct bandit_softc),
     bandit_match, bandit_attach, NULL, NULL);
 
-int
-bandit_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+bandit_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -70,24 +71,22 @@ bandit_match(parent, cf, aux)
 	return 0;
 }
 
-void
-bandit_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bandit_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bandit_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int len, node = ca->ca_node;
-	u_int32_t reg[2], busrange[2];
-	struct ranges {
-		u_int32_t pci_hi, pci_mid, pci_lo;
-		u_int32_t host;
-		u_int32_t size_hi, size_lo;
+	uint32_t reg[2], busrange[2];
+	struct range {
+		uint32_t pci_hi, pci_mid, pci_lo;
+		uint32_t host;
+		uint32_t size_hi, size_lo;
 	} ranges[6], *rp = ranges;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Bandit address */
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
@@ -97,34 +96,50 @@ bandit_attach(parent, self, aux)
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
 
-	pc->node = node;
-	pc->addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->data = mapiodev(reg[0] + 0xc00000, 8);
-	pc->bus = busrange[0];
-	pc->conf_read = bandit_conf_read;
-	pc->conf_write = bandit_conf_write;
-	pc->memt = (bus_space_tag_t)0;
-
 	/* find i/o tag */
 	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
 	if (len == -1)
 		return;
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
-		     OFW_PCI_PHYS_HI_SPACE_IO)
-			pc->iot = (bus_space_tag_t)rp->host;
+		     OFW_PCI_PHYS_HI_SPACE_IO) {
+			sc->sc_iot.pbs_base = rp->host;
+			sc->sc_iot.pbs_limit = rp->host + rp->size_lo;
+			break;
+		}
 		len -= sizeof(ranges[0]);
 		rp++;
 	}
+	memset(&sc->sc_iot, 0, sizeof(struct powerpc_bus_space));
+	memset(&sc->sc_memt, 0, sizeof(struct powerpc_bus_space));
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
+	    "bandit io-space") != 0)
+		panic("Can't init bandit io tag");
+
+	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
+	    "bandit mem-space") != 0)
+		panic("Can't init bandit mem tag");
+
+	macppc_pci_get_chipset_tag(pc);
+	pc->pc_node = node;
+	pc->pc_iot = &sc->sc_iot;
+	pc->pc_memt = &sc->sc_memt;
+	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
+	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->pc_bus = busrange[0];
+	pc->pc_conf_read = bandit_conf_read;
+	pc->pc_conf_write = bandit_conf_write;
 
 	bandit_init(sc);
 
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_memt = pc->memt;
-	pba.pba_iot = pc->iot;
+	pba.pba_memt = pc->pc_memt;
+	pba.pba_iot = pc->pc_iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
-	pba.pba_bus = pc->bus;
+	pba.pba_bus = pc->pc_bus;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -132,15 +147,13 @@ bandit_attach(parent, self, aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-pcireg_t
-bandit_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+static pcireg_t
+bandit_conf_read(void *cookie, pcitag_t tag, int reg)
 {
+	pci_chipset_tag_t pc = cookie;
 	pcireg_t data;
 	int bus, dev, func, s;
-	u_int32_t x;
+	uint32_t x;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
@@ -151,7 +164,7 @@ bandit_conf_read(pc, tag, reg)
 	if (func > 7)
 		panic("pci_conf_read: func > 7");
 
-	if (bus == pc->bus) {
+	if (bus == pc->pc_bus) {
 		if (dev < 11)
 			return 0xffffffff;
 		x = (1 << dev) | (func << 8) | reg;
@@ -160,13 +173,13 @@ bandit_conf_read(pc, tag, reg)
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
+	out32rb(pc->pc_addr, x);
 	DELAY(10);
 	data = 0xffffffff;
-	if (!badaddr(pc->data, 4))
-		data = in32rb(pc->data);
+	if (!badaddr(pc->pc_data, 4))
+		data = in32rb(pc->pc_data);
 	DELAY(10);
-	out32rb(pc->addr, 0);
+	out32rb(pc->pc_addr, 0);
 	DELAY(10);
 
 	splx(s);
@@ -174,13 +187,10 @@ bandit_conf_read(pc, tag, reg)
 	return data;
 }
 
-void
-bandit_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+static void
+bandit_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 {
+	pci_chipset_tag_t pc = cookie;
 	int bus, dev, func, s;
 	u_int32_t x;
 
@@ -189,7 +199,7 @@ bandit_conf_write(pc, tag, reg, data)
 	if (func > 7)
 		panic("pci_conf_write: func > 7");
 
-	if (bus == pc->bus) {
+	if (bus == pc->pc_bus) {
 		if (dev < 11)
 			panic("pci_conf_write: dev < 11");
 		x = (1 << dev) | (func << 8) | reg;
@@ -198,11 +208,11 @@ bandit_conf_write(pc, tag, reg, data)
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
+	out32rb(pc->pc_addr, x);
 	DELAY(10);
-	out32rb(pc->data, data);
+	out32rb(pc->pc_data, data);
 	DELAY(10);
-	out32rb(pc->addr, 0);
+	out32rb(pc->pc_addr, 0);
 	DELAY(10);
 
 	splx(s);
@@ -214,15 +224,14 @@ bandit_conf_write(pc, tag, reg, data)
 
 #define	PCI_MODE_IO_COHERENT	0x040	/* I/O coherent */
 
-void
-bandit_init(sc)
-	struct bandit_softc *sc;
+static void
+bandit_init(struct bandit_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	pcitag_t tag;
 	u_int mode;
 
-	tag = pci_make_tag(pc, pc->bus, PCI_BANDIT, 0);
+	tag = pci_make_tag(pc, pc->pc_bus, PCI_BANDIT, 0);
 	if ((pci_conf_read(pc, tag, PCI_ID_REG) & 0xffff) == 0xffff)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.36.2.3 2007/09/03 14:38:32 yamt Exp $	*/
+/*	$NetBSD: qe.c,v 1.36.2.4 2007/10/27 11:34:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.3 2007/09/03 14:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.4 2007/10/27 11:34:12 yamt Exp $");
 
 #define QEDEBUG
 
@@ -117,8 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.3 2007/09/03 14:38:32 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

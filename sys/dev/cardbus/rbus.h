@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.8 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: rbus.h,v 1.8.4.1 2007/10/27 11:30:12 yamt Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -65,7 +65,7 @@
 
 
 /* require sys/extent.h */
-/* require machine/bus.h */
+/* require sys/bus.h */
 
 #define rbus 1
 

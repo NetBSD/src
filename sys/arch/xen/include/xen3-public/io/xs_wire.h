@@ -1,7 +1,26 @@
-/* $NetBSD: xs_wire.h,v 1.4.6.2 2006/06/21 14:58:15 yamt Exp $ */
+/* $NetBSD: xs_wire.h,v 1.4.6.3 2007/10/27 11:29:26 yamt Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (C) 2005 Rusty Russell IBM Corporation
  */
 
@@ -27,7 +46,8 @@ enum xsd_sockmsg_type
     XS_SET_PERMS,
     XS_WATCH_EVENT,
     XS_ERROR,
-    XS_IS_DOMAIN_INTRODUCED
+    XS_IS_DOMAIN_INTRODUCED,
+    XS_RESUME
 };
 
 #define XS_WRITE_NONE "NONE"

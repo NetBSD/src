@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.h,v 1.3.2.1 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: mpacpi.h,v 1.3.2.2 2007/10/27 11:28:55 yamt Exp $	*/
 
 #ifndef _X86_MPACPI_H_
 #define _X86_MPACPI_H_
@@ -13,5 +13,7 @@ int mpacpi_scan_pci(struct device *, struct pcibus_attach_args *, cfprint_t);
 
 struct mp_intr_map;
 int mpacpi_findintr_linkdev(struct mp_intr_map *);
+
+extern struct mp_intr_map *mpacpi_sci_override;
 
 #endif /* _X86_MPACPI_H_ */

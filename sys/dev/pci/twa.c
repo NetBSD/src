@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.3.8.4 2007/09/03 14:37:23 yamt Exp $ */
+/*	$NetBSD: twa.c,v 1.3.8.5 2007/10/27 11:33:32 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.8.4 2007/09/03 14:37:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.8.5 2007/10/27 11:33:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.8.4 2007/09/03 14:37:23 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

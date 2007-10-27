@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.23.4.3 2007/09/03 14:31:52 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.23.4.4 2007/10/27 11:29:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.23.4.3 2007/09/03 14:31:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.23.4.4 2007/10/27 11:29:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,6 @@ compat_cvtcmd(u_long cmd)
 	case SIOCSDEFIFACE_IN6:
 	case SIOCSIFADDR:
 	case SIOCSIFADDR_IN6:
-	case SIOCSIFALIFETIME_IN6:
 	case SIOCSIFBRDADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFDSTADDR_IN6:

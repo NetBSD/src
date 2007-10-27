@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.19.4.2 2006/12/30 20:49:30 yamt Exp $ */
+/* $NetBSD: dtide.c,v 1.19.4.3 2007/10/27 11:33:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.19.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.19.4.3 2007/10/27 11:33:54 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.19.4.2 2006/12/30 20:49:30 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>

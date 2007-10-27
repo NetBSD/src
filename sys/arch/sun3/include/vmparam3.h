@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.32 2003/08/07 16:29:56 agc Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.32.16.1 2007/10/27 11:28:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -135,4 +135,4 @@
 #define SHMMAXPGS	512 	/* 4 MB */
 #endif
 
-#define	PAGER_MAP_SIZE (4 * 1024 * 1024)
+#define	PAGER_MAP_DEFAULT_SIZE (4 * 1024 * 1024)

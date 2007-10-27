@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.34.2.1 2006/12/30 20:49:17 yamt Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.34.2.2 2007/10/27 11:33:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.34.2.1 2006/12/30 20:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.34.2.2 2007/10/27 11:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.34.2.1 2006/12/30 20:49:17 yamt 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>

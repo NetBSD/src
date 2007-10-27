@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.24.4.4 2007/09/03 14:38:27 yamt Exp $ */
+/*	$NetBSD: bpp.c,v 1.24.4.5 2007/10/27 11:34:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.24.4.4 2007/09/03 14:38:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.24.4.5 2007/10/27 11:34:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.24.4.4 2007/09/03 14:38:27 yamt Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/ic/lsi64854reg.h>

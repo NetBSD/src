@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.4.2.3 2006/12/30 20:46:50 yamt Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.4.2.4 2007/10/27 11:28:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.4.2.3 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.4.2.4 2007/10/27 11:28:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	struct pnpbus_softc *sc = (struct pnpbus_softc *)self;
 	struct pnpbus_attach_args *paa = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	pnpbus_softc = sc;
 	sc->sc_ic = paa->paa_ic;
@@ -588,8 +588,8 @@ pnpbus_io_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = &prep_isa_io_space_tag;
-	return (bus_space_map(&prep_isa_io_space_tag, io->minbase, io->len,
+	*tagp = &genppc_isa_io_space_tag;
+	return (bus_space_map(&genppc_isa_io_space_tag, io->minbase, io->len,
 	    0, hdlp));
 }
 
@@ -641,8 +641,8 @@ pnpbus_iomem_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	while (idx--)
 		mem = SIMPLEQ_NEXT(mem, next);
 
-	*tagp = &prep_isa_mem_space_tag;
-	return (bus_space_map(&prep_isa_mem_space_tag, mem->minbase, mem->len,
+	*tagp = &genppc_isa_mem_space_tag;
+	return (bus_space_map(&genppc_isa_mem_space_tag, mem->minbase, mem->len,
 	    0, hdlp));
 }
 

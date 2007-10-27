@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.4.10.4 2007/09/03 14:37:25 yamt Exp $ */
+/* $NetBSD: unichromefb.c,v 1.4.10.5 2007/10/27 11:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,14 +57,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.4.10.4 2007/09/03 14:37:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.4.10.5 2007/10/27 11:33:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

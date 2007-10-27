@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.2.6.1 2006/06/21 14:58:15 yamt Exp $ */
+/* $NetBSD: xen.h,v 1.2.6.2 2007/10/27 11:29:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser
@@ -315,7 +315,7 @@ typedef struct shared_info_st
         u8 evtchn_upcall_pending;
         u8 evtchn_upcall_mask;
         u8 pad0, pad1;
-    } PACKED vcpu_data[MAX_VIRT_CPUS];  /*   0 */
+    } PACKED vcpu_info[MAX_VIRT_CPUS];  /*   0 */
 
     /*
      * A domain can have up to 1024 "event channels" on which it can send

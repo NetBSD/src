@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.84.4.2 2006/12/30 20:48:01 yamt Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.84.4.3 2007/10/27 11:30:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84.4.2 2006/12/30 20:48:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84.4.3 2007/10/27 11:30:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -130,8 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84.4.2 2006/12/30 20:48:01 yamt Exp $"
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>

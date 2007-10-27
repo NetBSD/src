@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58.2.4 2007/09/03 14:35:36 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.58.2.5 2007/10/27 11:31:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.4 2007/09/03 14:35:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.5 2007/10/27 11:31:31 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -131,8 +131,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.4 2007/09/03 14:35:36 yamt Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include "locators.h"
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.4 2007/09/03 14:35:36 yamt Exp $");
 #define	fd_cd	fdisa_cd
 #endif /* atari */
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -500,8 +500,7 @@ fdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/*

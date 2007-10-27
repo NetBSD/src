@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.35.2.3 2007/09/03 14:36:17 yamt Exp $	*/
+/*	$NetBSD: agp.c,v 1.35.2.4 2007/10/27 11:32:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.35.2.3 2007/09/03 14:36:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.35.2.4 2007/10/27 11:32:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.35.2.3 2007/09/03 14:36:17 yamt Exp $");
 #include <dev/pci/agpreg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 

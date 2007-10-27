@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.77.2.4 2007/09/03 14:32:21 yamt Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.77.2.5 2007/10/27 11:29:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77.2.4 2007/09/03 14:32:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77.2.5 2007/10/27 11:29:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77.2.4 2007/09/03 14:32:21 yamt Exp
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.77.2.4 2007/09/03 14:32:21 yamt Exp
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_futex.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>

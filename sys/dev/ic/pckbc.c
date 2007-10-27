@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.34.4.1 2007/09/03 14:35:05 yamt Exp $ */
+/* $NetBSD: pckbc.c,v 1.34.4.2 2007/10/27 11:30:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34.4.1 2007/09/03 14:35:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34.4.2 2007/10/27 11:30:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34.4.1 2007/09/03 14:35:05 yamt Exp $");
 #include <sys/queue.h>
 #include <sys/lock.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>

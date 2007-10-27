@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.28.10.1 2007/09/03 14:39:21 yamt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.28.10.2 2007/10/27 11:34:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.28.10.1 2007/09/03 14:39:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.28.10.2 2007/10/27 11:34:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.28.10.1 2007/09/03 14:39:21 yamt Exp $
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for usbdivar.h */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #ifdef __NetBSD__
 #include <sys/extent.h>

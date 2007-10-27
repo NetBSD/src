@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.82.2.2 2007/09/03 14:33:27 yamt Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.82.2.3 2007/10/27 11:30:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82.2.2 2007/09/03 14:33:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82.2.3 2007/10/27 11:30:04 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82.2.2 2007/09/03 14:33:27 yamt Exp $"
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define    bus_space_write_multi_stream_2    bus_space_write_multi_2
 #define    bus_space_write_multi_stream_4    bus_space_write_multi_4

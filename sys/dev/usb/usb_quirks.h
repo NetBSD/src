@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.20.38.1 2007/02/26 09:10:48 yamt Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.20.38.2 2007/10/27 11:34:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct usbd_quirks {
 #define UQ_AU_INP_ASYNC	0x0800	/* input is async despite claim of adaptive */
 #define UQ_ASSUME_CM_OVER_DATA 0x1000 /* modem device breaks on cm over data */
 #define UQ_BROKEN_BIDIR	0x2000	/* printer has broken bidir mode */
+#define UQ_HID_IGNORE	0x4000	/* device should be ignored by hid class */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;

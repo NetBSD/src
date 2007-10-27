@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.9.4.2 2006/12/30 20:49:30 yamt Exp $ */
+/* $NetBSD: acemidi.c,v 1.9.4.3 2007/10/27 11:33:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.9.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.9.4.3 2007/10/27 11:33:54 yamt Exp $");
 
 #include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>

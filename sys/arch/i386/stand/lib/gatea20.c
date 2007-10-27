@@ -1,14 +1,14 @@
-/*	$NetBSD: gatea20.c,v 1.7 2005/06/29 19:08:04 junyoung Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.7.2.1 2007/10/27 11:26:52 yamt Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
 #include <sys/types.h>
-#include <machine/pio.h>
 
 #include <lib/libsa/stand.h>
 
 #include "libi386.h"
 #include "biosmca.h"
+#include "cpufunc.h"
 
 #define K_RDWR 		0x60		/* keyboard data & cmds (read/write) */
 #define K_STATUS 	0x64		/* keyboard status */
@@ -33,7 +33,10 @@ static unsigned char	x_20 = KB_A20;
 void
 gateA20(void)
 {
-	__asm("pushfl ; cli");
+	u_long psl;
+
+	psl = x86_read_psl();
+	x86_disable_intr();
 	/*
 	 * Not all systems enable A20 via the keyboard controller.
 	 *	* IBM PS/2 L40
@@ -67,5 +70,5 @@ gateA20(void)
 		while (inb(K_STATUS) & K_OBUF_FUL)
 			(void)inb(K_RDWR);
 	}
-	__asm("popfl");
+	x86_write_psl(psl);
 }

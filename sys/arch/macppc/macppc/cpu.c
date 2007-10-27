@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40.6.4 2007/10/27 11:27:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.4 2007/10/27 11:27:08 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/types.h>
 #include <sys/lwp.h>
 #include <sys/user.h>
 
@@ -56,6 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.6.3 2007/09/03 14:27:40 yamt Exp $");
 #include <powerpc/altivec.h>
 #endif
 
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+#endif
+
 #include <machine/autoconf.h>
 #include <machine/fpu.h>
 #include <machine/pcb.h>
@@ -67,22 +73,18 @@ void cpuattach(struct device *, struct device *, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
-int cpu_spinup(struct device *, struct cpu_info *);
-void cpu_hatch(void);
-void cpu_spinup_trampoline(void);
-int cpuintr(void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
-#define HH_ARBCONF		0xf8000090
 #define HH_INTR_SECONDARY	0xf80000c0
-#define HH_INTR_PRIMARY		0xf3019000
-#define GC_IPI_IRQ		30
+#define HH_ARBCONF		0xf8000090
 
 extern uint32_t ticks_per_intr;
+
+extern void openpic_set_priority(int, int);
 
 int
 cpumatch(parent, cf, aux)
@@ -143,11 +145,6 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 			}
 		}
 	}
-	if (ci->ci_khz) {
-		aprint_normal("%s: %u.%02u MHz\n",
-			      self->dv_xname,
-			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
-	}
 }
 
 void
@@ -203,86 +200,19 @@ ohare_init()
 
 #ifdef MULTIPROCESSOR
 
-struct cpu_hatch_data {
-	struct device *self;
-	struct cpu_info *ci;
-	int running;
-	int pir;
-	int hid0;
-	int sdr1;
-	int sr[16];
-	int tbu, tbl;
-};
-
-volatile struct cpu_hatch_data *cpu_hatch_data;
-volatile int cpu_hatch_stack;
-
 int
-cpu_spinup(self, ci)
-	struct device *self;
-	struct cpu_info *ci;
+md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 {
-	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
-	int i;
-	struct pglist mlist;
-	int pvr, vers;
-	int error;
-	char *cp;
-
-	pvr = mfpvr();
-	vers = pvr >> 16;
-
-	/*
-	 * Allocate some contiguous pages for the intteup PCB and stack
-	 * from the lowest 256MB (because bat0 always maps it va == pa).
-	 */
-	error = uvm_pglistalloc(INTSTK, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
-	if (error) {
-		printf(": unable to allocate idle stack\n");
-		return -1;
-	}
-
-	KASSERT(ci == &cpu_info[1]);
-
-	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(cp, 0, INTSTK);
-
-	cpu_info[1].ci_intstk = cp;
-
-	/*
-	 * Initialize secondary cpu's initial lwp to it's idlelwp.
-	 */
-	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
-	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
-
-	cpu_hatch_data = h;
-	h->running = 0;
-	h->self = self;
-	h->ci = ci;
-	h->pir = 1;
-	cpu_hatch_stack = ci->ci_curpcb->pcb_sp;
-	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
-
-	/* copy special registers */
-	__asm volatile ("mfspr %0,%1" : "=r"(h->hid0) : "n"(SPR_HID0));
-	__asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
-	for (i = 0; i < 16; i++)
-		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) : "r"(i << ADDR_SR_SHFT));
-
-	__asm volatile ("sync; isync");
-
 	if (openpic_base) {
-		uint64_t tb;
-		u_int kl_base = 0x80000000;	/* XXX */
-		u_int gpio = kl_base + 0x5c;	/* XXX */
+		uint32_t kl_base = 0x80000000;	/* XXX */
+		uint32_t gpio = kl_base + 0x5c;	/* XXX */
 		u_int node, off;
 		char cpupath[32];
 
+		/* construct an absolute branch instruction */
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
 		__syncicache((void *)EXC_RST, 0x100);
-
 		h->running = -1;
 
 		/* see if there's an OF property for the reset register */
@@ -297,8 +227,25 @@ cpu_spinup(self, ci)
 		}
 
 		/* Start secondary CPU. */
+#if 1
 		out8(gpio, 4);
-		out8(gpio, 5);
+		out8(gpio, 0);
+#else
+		openpic_write(OPENPIC_PROC_INIT, (1 << 1));
+#endif
+	} else {
+		/* Start secondary CPU and stop timebase. */
+		out32(0xf2800000, (int)cpu_spinup_trampoline);
+		ppc_send_ipi(1, PPC_IPI_NOMESG);
+	}
+	return 1;
+}
+
+void
+md_presync_timebase(volatile struct cpu_hatch_data *h)
+{
+	if (openpic_base) {
+		uint64_t tb;
 
 		/* Sync timebase. */
 		tb = mftb();
@@ -315,14 +262,17 @@ cpu_spinup(self, ci)
 
 		delay(500000);
 	} else {
-		/* Start secondary CPU and stop timebase. */
-		out32(0xf2800000, (int)cpu_spinup_trampoline);
-		out32(HH_INTR_SECONDARY, ~0);
-		out32(HH_INTR_SECONDARY, 0);
-
 		/* sync timebase (XXX shouldn't be zero'ed) */
 		__asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+	}
+}
 
+void
+md_start_timebase(volatile struct cpu_hatch_data *h)
+{
+	int i;
+
+	if (!openpic_base) {
 		/*
 		 * wait for secondary spin up (1.5ms @ 604/200MHz)
 		 * XXX we cannot use delay() here because timebase is not
@@ -334,81 +284,13 @@ cpu_spinup(self, ci)
 
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
-		out32(HH_INTR_SECONDARY, ~0);
-		out32(HH_INTR_SECONDARY, 0);
+		ppc_send_ipi(1, PPC_IPI_NOMESG);
 	}
-
-	delay(200000);		/* wait for secondary printf */
-
-	if (h->running == 0) {
-		printf(": secondary CPU didn't start\n");
-		return -1;
-	}
-
-	if (!openpic_base) {
-		/* Register IPI. */
-		intr_establish(GC_IPI_IRQ, IST_LEVEL, IPL_HIGH, cpuintr, NULL);
-	}
-
-	return 0;
 }
 
-volatile static int start_secondary_cpu;
-
 void
-cpu_hatch()
+md_sync_timebase(volatile struct cpu_hatch_data *h)
 {
-	volatile struct cpu_hatch_data *h = cpu_hatch_data;
-	struct cpu_info * const ci = h->ci;
-	u_int msr;
-	int i;
-
-	/* Initialize timebase. */
-	__asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
-
-	/* Set PIR (Processor Identification Register).  i.e. whoami */
-	__asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
-	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
-
-	/* Initialize MMU. */
-	__asm ("mtibatu 0,%0" :: "r"(0));
-	__asm ("mtibatu 1,%0" :: "r"(0));
-	__asm ("mtibatu 2,%0" :: "r"(0));
-	__asm ("mtibatu 3,%0" :: "r"(0));
-	__asm ("mtdbatu 0,%0" :: "r"(0));
-	__asm ("mtdbatu 1,%0" :: "r"(0));
-	__asm ("mtdbatu 2,%0" :: "r"(0));
-	__asm ("mtdbatu 3,%0" :: "r"(0));
-
-	__asm ("mtspr %1,%0" :: "r"(h->hid0), "n"(SPR_HID0));
-
-	__asm ("mtibatl 0,%0; mtibatu 0,%1;"
-	     "mtdbatl 0,%0; mtdbatu 0,%1;"
-		:: "r"(battable[0].batl), "r"(battable[0].batu));
-
-	if (openpic_base) {
-		__asm ("mtibatl 1,%0; mtibatu 1,%1;"
-		     "mtdbatl 1,%0; mtdbatu 1,%1;"
-			:: "r"(battable[0x8].batl), "r"(battable[0x8].batu));
-	} else {
-		__asm ("mtibatl 1,%0; mtibatu 1,%1;"
-		     "mtdbatl 1,%0; mtdbatu 1,%1;"
-			:: "r"(battable[0xf].batl), "r"(battable[0xf].batu));
-	}
-
-	for (i = 0; i < 16; i++)
-		__asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
-	__asm ("mtsdr1 %0" :: "r"(h->sdr1));
-
-	__asm volatile ("isync");
-
-	/* Enable I/D address translations. */
-	__asm volatile ("mfmsr %0" : "=r"(msr));
-	msr |= PSL_IR|PSL_DR|PSL_ME|PSL_RI;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
-
-	__asm volatile ("sync; isync");
-
 	if (openpic_base) {
 		/* Sync timebase. */
 		u_int tbu = h->tbu;
@@ -420,94 +302,14 @@ cpu_hatch()
 		__asm volatile ("mttbu %0" :: "r"(tbu));
 		__asm volatile ("mttbl %0" :: "r"(tbl));
 	}
+}
 
-	cpu_setup(h->self, h->ci);
-
-	h->running = 1;
-	__asm volatile ("sync; isync");
-
-	while (start_secondary_cpu == 0)
-		;
-
-	__asm volatile ("sync; isync");
-
-	printf("cpu%d: started\n", cpu_number());
-	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-
+void
+md_setup_interrupts(void)
+{
 	if (openpic_base)
 		openpic_set_priority(cpu_number(), 0);
 	else
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
-
-	ci->ci_ipending = 0;
-	ci->ci_cpl = 0;
-}
-
-void
-cpu_boot_secondary_processors()
-{
-
-	start_secondary_cpu = 1;
-	__asm volatile ("sync");
-}
-
-static volatile u_long IPI[CPU_MAXNUM];
-
-void
-macppc_send_ipi(ci, mesg)
-	volatile struct cpu_info *ci;
-	u_long mesg;
-{
-	int cpu_id = ci->ci_cpuid;
-
-	/* printf("send_ipi(%d, 0x%lx)\n", cpu_id, mesg); */
-	atomic_setbits_ulong(&IPI[cpu_id], mesg);
-
-	if (openpic_base) {
-		openpic_write(OPENPIC_IPI(cpu_number(), 1), 1 << cpu_id);
-	} else {
-		switch (cpu_id) {
-		case 0:
-			in32(HH_INTR_PRIMARY);
-			break;
-		case 1:
-			out32(HH_INTR_SECONDARY, ~0);
-			out32(HH_INTR_SECONDARY, 0);
-			break;
-		}
-	}
-}
-
-/*
- * Process IPIs.  External interrupts are blocked.
- */
-int
-cpuintr(v)
-	void *v;
-{
-	int cpu_id = cpu_number();
-	int msr;
-	u_long ipi;
-
-	/* printf("cpuintr{%d}\n", cpu_id); */
-
-	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
-	if (ipi & MACPPC_IPI_FLUSH_FPU) {
-		save_fpu_cpu();
-	}
-#ifdef ALTIVEC
-	if (ipi & MACPPC_IPI_FLUSH_VEC) {
-		save_vec_cpu();
-	}
-#endif
-	if (ipi & MACPPC_IPI_HALT) {
-		printf("halt{%d}\n", cpu_id);
-		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
-		for (;;) {
-			__asm volatile ("sync; isync");
-			mtmsr(msr);
-		}
-	}
-	return 1;
 }
 #endif /* MULTIPROCESSOR */

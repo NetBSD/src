@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.56.2.4 2007/09/03 14:32:25 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.56.2.5 2007/10/27 11:29:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56.2.4 2007/09/03 14:32:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56.2.5 2007/10/27 11:29:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.56.2.4 2007/09/03 14:32:25 yamt E
 #include <compat/linux/common/linux_socketcall.h>
 #endif
 #include <compat/linux/common/linux_sockio.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

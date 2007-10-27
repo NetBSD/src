@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.48.6.3 2007/09/03 14:34:27 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.48.6.4 2007/10/27 11:30:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 #include <dev/ic/comreg.h>	/* for COM_NPORTS */
 
@@ -221,7 +221,7 @@ struct com_softc {
 	rndsource_element_t  rnd_source;
 #endif
 	void			*sc_powerhook;	/* power management hook */
-	struct simplelock	sc_lock;
+	kmutex_t		sc_lock;
 };
 
 int comprobe1(bus_space_tag_t, bus_space_handle_t);
@@ -231,3 +231,8 @@ int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
 int com_activate(struct device *, enum devact);
 void com_cleanup(void *);
+
+#ifndef IPL_SERIAL
+#define	IPL_SERIAL	IPL_TTY
+#define	splserial()	spltty()
+#endif

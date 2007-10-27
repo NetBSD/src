@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.13.4.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.13.4.3 2007/10/27 11:30:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13.4.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13.4.3 2007/10/27 11:30:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13.4.2 2006/12/30 20:47:57 yamt
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if defined pciinc
 #include <dev/pci/pcidevs.h>
@@ -154,8 +154,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	/* XXX NULL should be replaced by some call to Cardbus coed */
 	if (fwohci_init(&sc->sc_sc, &(sc->sc_sc.fc._dev)) != 0) {
 		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
-		bus_space_unmap(sc->sc_sc.bst, sc->sc_sc.bsh,
-		    sc->sc_sc.bssize);
+		sc->sc_ih = NULL;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.6.4.3 2007/09/03 14:38:11 yamt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.6.4.4 2007/10/27 11:34:00 yamt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.3 2007/09/03 14:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.4 2007/10/27 11:34:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.3 2007/09/03 14:38:11 yamt Exp $");
 #endif
 
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_uba.h>

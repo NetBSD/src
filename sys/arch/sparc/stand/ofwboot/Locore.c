@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5.2.2 2006/12/30 20:47:01 yamt Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5.2.3 2007/10/27 11:28:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,6 +127,30 @@ OF_instance_to_package(int ihandle)
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
+}
+
+int
+OF_instance_to_path(int ihandle, char *buf, int buflen)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t buf;
+		cell_t buflen;
+		cell_t length;
+	} args;
+
+	args.name = ADR2CELL("instance-to-path");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(ihandle);
+	args.buf = ADR2CELL(buf);
+	args.buflen = buflen;
+	if (openfirmware(&args) < 0)
+		return -1;
+	return args.length;
 }
 
 int

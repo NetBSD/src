@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.3.6.3 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.3.6.4 2007/10/27 11:30:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.3.6.3 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.3.6.4 2007/10/27 11:30:12 yamt Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.3.6.3 2006/12/30 20:47:57 yamt Ex
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/usb_cardbus.h>

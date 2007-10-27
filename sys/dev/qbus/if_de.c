@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.17.2.2 2007/09/03 14:38:10 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.17.2.3 2007/10/27 11:33:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.17.2.2 2007/09/03 14:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.17.2.3 2007/10/27 11:33:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.17.2.2 2007/09/03 14:38:10 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_dereg.h>

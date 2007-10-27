@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.13.4.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.13.4.2 2007/10/27 11:31:57 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.13.4.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.13.4.2 2007/10/27 11:31:57 yamt Exp $");
 
 #undef	TCICISADEBUG
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.13.4.1 2006/12/30 20:48:27 yamt Exp 
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

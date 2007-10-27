@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.18.4.3 2007/09/03 14:32:20 yamt Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.18.4.4 2007/10/27 11:29:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.18.4.3 2007/09/03 14:32:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.18.4.4 2007/10/27 11:29:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.18.4.3 2007/09/03 14:32:20 yamt Ex
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_cdrom.h>
 
 #include <compat/linux/linux_syscallargs.h>

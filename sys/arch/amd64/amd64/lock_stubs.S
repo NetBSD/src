@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.4.3 2007/09/03 14:22:31 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.4.4 2007/10/27 11:25:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include "opt_lockdebug.h"
 
 #include <machine/asm.h>
-#include <machine/intrdefs.h>
 
 #include "assym.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.6.2.1 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.6.2.2 2007/10/27 11:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.6.2.1 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.6.2.2 2007/10/27 11:30:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.6.2.1 2006/12/30 20:48:03 yamt Exp $")
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 

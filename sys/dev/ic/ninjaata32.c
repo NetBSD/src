@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.6.2.3 2007/09/03 14:35:01 yamt Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.6.2.4 2007/10/27 11:30:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.6.2.3 2007/09/03 14:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.6.2.4 2007/10/27 11:30:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 

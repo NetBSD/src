@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.33.2.1 2007/09/03 14:38:32 yamt Exp $ */
+/*	$NetBSD: qec.c,v 1.33.2.2 2007/10/27 11:34:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.33.2.1 2007/09/03 14:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.33.2.2 2007/10/27 11:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.33.2.1 2007/09/03 14:38:32 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

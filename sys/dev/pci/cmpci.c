@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.28.10.3 2007/09/03 14:36:26 yamt Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.28.10.4 2007/10/27 11:32:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.28.10.3 2007/09/03 14:36:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.28.10.4 2007/10/27 11:32:37 yamt Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -74,8 +74,8 @@ int cmpcidebug = 0;
 #include <dev/pci/cmpcivar.h>
 
 #include <dev/ic/mpuvar.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 /*
  * Low-level HW interface

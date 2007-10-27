@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.12.2.3 2007/09/03 14:39:01 yamt Exp $ */
+/*	$NetBSD: if_atu.c,v 1.12.2.4 2007/10/27 11:34:31 yamt Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.12.2.3 2007/09/03 14:39:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.12.2.4 2007/10/27 11:34:31 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.12.2.3 2007/09/03 14:39:01 yamt Exp $")
 #include <sys/queue.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.3.14.2 2007/09/03 14:39:26 yamt Exp $ */
+/* $NetBSD: uslsa.c,v 1.3.14.3 2007/10/27 11:34:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.3.14.2 2007/09/03 14:39:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.3.14.3 2007/10/27 11:34:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.3.14.2 2007/09/03 14:39:26 yamt Exp $");
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>

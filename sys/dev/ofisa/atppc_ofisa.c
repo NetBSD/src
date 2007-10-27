@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.2.4.2 2007/09/03 14:36:14 yamt Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.2.4.3 2007/10/27 11:32:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.2.4.2 2007/09/03 14:36:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.2.4.3 2007/10/27 11:32:24 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.2.4.2 2007/09/03 14:36:14 yamt Exp
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

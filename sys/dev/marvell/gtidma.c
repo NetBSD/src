@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.5.4.2 2007/09/03 14:35:51 yamt Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.5.4.3 2007/10/27 11:32:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.5.4.2 2007/09/03 14:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.5.4.3 2007/10/27 11:32:11 yamt Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.5.4.2 2007/09/03 14:35:51 yamt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <powerpc/atomic.h>
 

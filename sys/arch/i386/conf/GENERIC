@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.683.2.4 2007/09/03 14:26:29 yamt Exp $
+# $NetBSD: GENERIC,v 1.683.2.5 2007/10/27 11:26:22 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.683.2.4 $"
+#ident 		"GENERIC-$Revision: 1.683.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -129,6 +129,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_VERBOSE_HELP
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -182,12 +183,12 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	PTYFS		# /dev/ptm support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system 	PTYFS		# /dev/ptm support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -437,9 +438,11 @@ elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
 
 # PCI bridges
+#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+#hpet* 	at amdpcib?
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
-piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -459,8 +462,9 @@ eisa0	at mainbus?
 eisa0	at pceb?
 
 # ISA bus support
+#isa0 	at amdpcib?
 #isa0	at ichlpcib?
-isa0	at piixpcib?
+#isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
@@ -519,7 +523,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
-#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -626,6 +630,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# IBM Thinkpad Active Protection System
+#aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
 #it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
@@ -804,7 +811,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -988,6 +995,7 @@ atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
+re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?	# DECchip 21143
@@ -1106,6 +1114,9 @@ umidi* at uhub? port ? configuration ?
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
 
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
+
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?
 irframe* at ustir?
@@ -1131,6 +1142,9 @@ upl*	at uhub? port ?
 # Serial adapters
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uchcom*	at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
@@ -1182,6 +1196,9 @@ ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options UGEN_BULK_RA_WB
 
+# USB generic serial port (e.g., data over cellular)
+ugensa*	at uhub? port ?
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 
@@ -1397,7 +1414,7 @@ pseudo-device	swcrypto	# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

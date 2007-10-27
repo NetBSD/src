@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.29.2.3 2007/09/03 14:38:56 yamt Exp $	*/
+/*	$NetBSD: stic.c,v 1.29.2.4 2007/10/27 11:34:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.29.2.3 2007/09/03 14:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.29.2.4 2007/10/27 11:34:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.29.2.3 2007/09/03 14:38:56 yamt Exp $");
 #endif
 
 #include <machine/vmparam.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>

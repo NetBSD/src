@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2003/07/28 07:58:52 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.16.1 2007/10/27 11:28:15 yamt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 #ifndef _SANDPOINT_BUS_H_
@@ -19,9 +19,13 @@
 #define PHYS_TO_BUS_MEM(t,x)	(x)
 #define BUS_MEM_TO_PHYS(t,x)	(x)
 
-extern struct powerpc_bus_space sandpoint_io_bs_tag;
-extern struct powerpc_bus_space sandpoint_isa_io_bs_tag;
-extern struct powerpc_bus_space sandpoint_mem_bs_tag;
+#ifdef _KERNEL
+extern struct powerpc_bus_space sandpoint_io_space_tag;
+extern struct powerpc_bus_space genppc_isa_io_space_tag;
+extern struct powerpc_bus_space sandpoint_mem_space_tag;
+extern struct powerpc_bus_space genppc_isa_mem_space_tag;
+extern struct powerpc_bus_space sandpoint_eumb_space_tag;
+#endif
 
 #include <powerpc/bus.h>
 

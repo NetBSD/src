@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.28.2.2 2007/09/03 14:34:53 yamt Exp $ */
+/* $NetBSD: lemac.c,v 1.28.2.3 2007/10/27 11:30:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.28.2.2 2007/09/03 14:34:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.28.2.3 2007/10/27 11:30:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.28.2.2 2007/09/03 14:34:53 yamt Exp $");
 #endif
 
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/lemacreg.h>
 #include <dev/ic/lemacvar.h>

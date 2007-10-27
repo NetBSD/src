@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.12.2.3 2007/09/03 14:39:09 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.12.2.4 2007/10/27 11:34:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.12.2.3 2007/09/03 14:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.12.2.4 2007/10/27 11:34:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -560,17 +560,21 @@ ubt_activate(device_ptr_t self, enum devact act)
 	struct ubt_softc *sc = (struct ubt_softc *)self;
 	int error = 0;
 
-	DPRINTFN(1, "ubt_activate: sc=%p, act=%d\n", sc, act);
+	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		break;
+
+	default:
+		error = EOPNOTSUPP;
+		break;
 	}
+
 	return error;
 }
 

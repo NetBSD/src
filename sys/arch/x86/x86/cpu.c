@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.4.2 2007/09/03 14:31:23 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.2.4.3 2007/10/27 11:29:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.2 2007/09/03 14:31:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.3 2007/10/27 11:29:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -319,11 +319,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
-#ifdef i386
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
-#endif
 
 	/* further PCB init done later. */
 
@@ -648,11 +646,10 @@ cpu_hatch(void *v)
 
 #ifdef i386
 	npxinit(ci);
-	lldt(GSEL(GLDT_SEL, SEL_KPL));
 #else
 	fpuinit(ci);
-	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 #endif
+	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
 
@@ -662,7 +659,7 @@ cpu_hatch(void *v)
 #else
 	lcr8(0);
 #endif
-	enable_intr();
+	x86_enable_intr();
 	splx(s);
 
 	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_ym.c,v 1.9.6.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.9.6.2 2007/10/27 11:31:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.9.6.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.9.6.2 2007/10/27 11:31:50 yamt Exp $");
 
 #define NMPU_YM 1
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.9.6.1 2006/12/30 20:48:27 yamt Exp $");
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>

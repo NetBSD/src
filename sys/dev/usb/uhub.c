@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.76.2.4 2007/09/03 14:39:14 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.76.2.5 2007/10/27 11:34:37 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.4 2007/09/03 14:39:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.5 2007/10/27 11:34:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.4 2007/09/03 14:39:14 yamt Exp $");
 #include "bus_if.h"
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

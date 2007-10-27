@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.18.2.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.18.2.3 2007/10/27 11:32:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.18.2.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.18.2.3 2007/10/27 11:32:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.18.2.2 2006/12/30 20:48:35 yamt Ex
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>

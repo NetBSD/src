@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.104.2.4 2007/09/03 14:33:10 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.104.2.5 2007/10/27 11:29:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.4 2007/09/03 14:33:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.5 2007/10/27 11:29:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,8 @@ ccdattach(int num)
 	for (i = 0; i < num; i++) {
 		cs = &ccd_softc[i];
 		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
-		cs->sc_dkdev.dk_name = cs->sc_xname;	/* XXX */
 		mutex_init(&cs->sc_lock, MUTEX_DRIVER, IPL_NONE);
-		pseudo_disk_init(&cs->sc_dkdev);
+		disk_init(&cs->sc_dkdev, cs->sc_xname, NULL); /* XXX */
 	}
 }
 
@@ -1135,7 +1134,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		bufq_alloc(&cs->sc_bufq, "fcfs", 0);
 
 		/* Attach the disk. */
-		pseudo_disk_attach(&cs->sc_dkdev);
+		disk_attach(&cs->sc_dkdev);
 
 		/* Try and read the disklabel. */
 		ccdgetdisklabel(dev);
@@ -1194,7 +1193,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		cs->sc_flags &= ~(CCDF_INITED|CCDF_VLABEL);
 
 		/* Detatch the disk. */
-		pseudo_disk_detach(&cs->sc_dkdev);
+		disk_detach(&cs->sc_dkdev);
 		break;
 
 	case DIOCGDINFO:

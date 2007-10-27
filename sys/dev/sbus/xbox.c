@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.12 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: xbox.c,v 1.12.6.1 2007/10/27 11:34:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.12 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.12.6.1 2007/10/27 11:34:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/xboxvar.h>
 #include <machine/autoconf.h>

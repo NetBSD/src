@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.11.16.2 2007/09/03 14:30:51 yamt Exp $	*/
+/*	$NetBSD: cfl.c,v 1.11.16.3 2007/10/27 11:28:50 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.11.16.2 2007/09/03 14:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.11.16.3 2007/10/27 11:28:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ cflclose(dev, flag, mode, l)
 {
 	int s;
 	s = splbio();
-	brelse(cfltab.cfl_buf);
+	brelse(cfltab.cfl_buf, 0);
 	splx(s);
 	cfltab.cfl_state = IDLE;
 	return 0;

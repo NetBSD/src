@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10.16.3 2007/09/03 14:26:40 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10.16.4 2007/10/27 11:26:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.3 2007/09/03 14:26:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.4 2007/10/27 11:26:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -102,11 +102,11 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
-	disable_intr();
+	x86_disable_intr();
 	x86_atomic_clearbits_l(&ci->ci_flags, CPUF_RUNNING);
 
 	for(;;) {
-		__asm volatile("hlt");
+		x86_hlt();
 	}
 }
 

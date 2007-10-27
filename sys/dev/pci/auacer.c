@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.10.2.2 2007/09/03 14:36:22 yamt Exp $	*/
+/*	$NetBSD: auacer.c,v 1.10.2.3 2007/10/27 11:32:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.10.2.2 2007/09/03 14:36:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.10.2.3 2007/10/27 11:32:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.10.2.2 2007/09/03 14:36:22 yamt Exp $")
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

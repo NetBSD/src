@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.1.16.5 2007/09/03 14:32:30 yamt Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.1.16.6 2007/10/27 11:29:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.5 2007/09/03 14:32:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.6 2007/10/27 11:29:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.5 2007/09/03 14:32:30 yamt E
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/linux/common/linux_types.h>

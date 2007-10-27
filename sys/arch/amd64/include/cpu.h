@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.12.4 2007/09/03 14:22:36 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.12.5 2007/10/27 11:25:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,6 +57,8 @@
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
 
+struct pmap;
+
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
@@ -79,7 +81,13 @@ struct cpu_info {
 	 * Private members.
 	 */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	int ci_want_pmapload;		/* pmap_load() is needed */
+	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+#define	TLBSTATE_VALID	0	/* all user tlbs are valid */
+#define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
+#define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 	u_int64_t ci_scratch;
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
@@ -113,7 +121,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
@@ -147,17 +154,45 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#if defined(MULTIPROCESSOR)
-
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define curcpu()	({struct cpu_info *__ci;                  \
-			__asm volatile("movq %%gs:8,%0" : "=r" (__ci)); \
-			__ci;})
+#if defined(__GNUC__) && defined(_KERNEL)
+static struct cpu_info *x86_curcpu(void);
+static lwp_t *x86_curlwp(void);
+
+__inline static struct cpu_info * __attribute__((__unused__))
+x86_curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (ci) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
+	return ci;
+}
+
+__inline static lwp_t * __attribute__((__unused__))
+x86_curlwp(void)
+{
+	lwp_t *l;
+
+	__asm volatile("movq %%gs:%1, %0" :
+	    "=r" (l) :
+	    "m"
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
+	return l;
+}
+#else	/* __GNUC__ && _KERNEL */
+/* For non-GCC and LKMs */
+struct cpu_info	*x86_curcpu(void);
+lwp_t	*x86_curlwp(void);
+#endif	/* __GNUC__ && _KERNEL */
+
 #define cpu_number()	(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
@@ -167,29 +202,12 @@ extern struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);    
 
-
-#else /* !MULTIPROCESSOR */
-
-#define X86_MAXPROCS		1
-
-extern struct cpu_info cpu_info_primary;
-
-#define curcpu()		(&cpu_info_primary)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()		0
-#define CPU_IS_PRIMARY(ci)	1
-
-#endif
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curlwp		curcpu()->ci_curlwp
+#define curcpu()	x86_curcpu()
+#define curlwp		x86_curlwp()
 #define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*
@@ -226,7 +244,7 @@ extern void cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -270,7 +288,7 @@ void	child_trampoline(void);
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 

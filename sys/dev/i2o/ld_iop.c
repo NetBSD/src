@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.17.2.3 2007/09/03 14:34:09 yamt Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.17.2.4 2007/10/27 11:30:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17.2.3 2007/09/03 14:34:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17.2.4 2007/10/27 11:30:24 yamt Exp $");
 
 #include "rnd.h"
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17.2.3 2007/09/03 14:34:09 yamt Exp $")
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ldvar.h>
 

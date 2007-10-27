@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.26.4.1 2007/09/03 14:35:11 yamt Exp $ */
+/*      $NetBSD: sgec.c,v 1.26.4.2 2007/10/27 11:31:02 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.26.4.1 2007/09/03 14:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.26.4.2 2007/10/27 11:31:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.26.4.1 2007/09/03 14:35:11 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
@@ -539,7 +539,6 @@ zeioctl(ifp, cmd, data)
 	void *data;
 {
 	struct ze_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 

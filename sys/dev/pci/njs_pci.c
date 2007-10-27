@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.2.18.1 2006/12/30 20:48:46 yamt Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.2.18.2 2007/10/27 11:33:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.2.18.1 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.2.18.2 2007/10/27 11:33:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

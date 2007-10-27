@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.4.2.1 2006/12/30 20:48:03 yamt Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.4.2.2 2007/10/27 11:30:46 yamt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4.2.1 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4.2.2 2007/10/27 11:30:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4.2.1 2006/12/30 20:48:03 yamt Ex
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170reg.h>
 #include <dev/ic/intersil7170var.h>

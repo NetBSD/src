@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.24 2005/05/30 22:17:47 christos Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.24.2.1 2007/10/27 11:34:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.24 2005/05/30 22:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.24.2.1 2007/10/27 11:34:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.24 2005/05/30 22:17:47 christos Exp $
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>

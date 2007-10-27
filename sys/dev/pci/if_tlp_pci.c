@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.80.2.3 2007/02/26 09:10:28 yamt Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.80.2.4 2007/10/27 11:33:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.80.2.3 2007/02/26 09:10:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.80.2.4 2007/10/27 11:33:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.80.2.3 2007/02/26 09:10:28 yamt Exp
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #ifdef __sparc__
 #include <machine/promlib.h>
 #endif

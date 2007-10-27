@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.65.16.2 2006/12/30 20:46:32 yamt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.65.16.3 2007/10/27 11:27:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -731,6 +731,7 @@
  */
 
 /* For MIPS_R3000 */
+#define	MIPS_REV_R2000A		0x16	/* R2000A uses R3000 proc revision */
 #define	MIPS_REV_R3000		0x20
 #define	MIPS_REV_R3000A		0x30
 

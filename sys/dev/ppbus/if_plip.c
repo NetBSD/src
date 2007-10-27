@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.6.4.2 2007/09/03 14:38:07 yamt Exp $ */
+/* $NetBSD: if_plip.c,v 1.6.4.3 2007/10/27 11:33:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.2 2007/09/03 14:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.3 2007/10/27 11:33:56 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.2 2007/09/03 14:38:07 yamt Exp $")
 #include <dev/ppbus/ppbus_var.h>
 
 #include <machine/types.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #ifndef LPMTU			/* MTU for the lp# interfaces */
 #define	LPMTU		1500

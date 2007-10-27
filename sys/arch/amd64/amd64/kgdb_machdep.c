@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1.16.2 2006/12/30 20:45:22 yamt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.16.3 2007/10/27 11:25:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,10 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1.16.2 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1.16.3 2007/10/27 11:25:04 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_largepages.h"
 
 /*
  * Machine-dependent functions for remote KGDB.  Originally written

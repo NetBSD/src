@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.25.4.2 2007/09/03 14:38:52 yamt Exp $ */
+/* $NetBSD: asc_tc.c,v 1.25.4.3 2007/10/27 11:34:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.25.4.2 2007/09/03 14:38:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.25.4.3 2007/10/27 11:34:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.25.4.2 2007/09/03 14:38:52 yamt Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

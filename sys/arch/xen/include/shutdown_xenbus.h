@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.h,v 1.1.16.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: shutdown_xenbus.h,v 1.1.16.3 2007/10/27 11:29:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,

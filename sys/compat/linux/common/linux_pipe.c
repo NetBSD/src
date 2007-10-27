@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.53.18.2 2007/02/26 09:09:22 yamt Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.53.18.3 2007/10/27 11:29:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53.18.2 2007/02/26 09:09:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53.18.3 2007/10/27 11:29:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53.18.2 2007/02/26 09:09:22 yamt Ex
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.11.4.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.11.4.3 2007/10/27 11:30:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.11.4.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.11.4.3 2007/10/27 11:30:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.11.4.2 2006/12/30 20:47:57 yamt E
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #if defined pciinc
 #include <dev/pci/pcidevs.h>

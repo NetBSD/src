@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.12.2.3 2007/09/03 14:36:56 yamt Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.12.2.4 2007/10/27 11:32:53 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.12.2.3 2007/09/03 14:36:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.12.2.4 2007/10/27 11:32:53 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.12.2.3 2007/09/03 14:36:56 yamt Exp $")
 #include <sys/malloc.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

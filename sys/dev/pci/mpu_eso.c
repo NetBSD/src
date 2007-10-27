@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_eso.c,v 1.10 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: mpu_eso.c,v 1.10.2.1 2007/10/27 11:33:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.10 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.10.2.1 2007/10/27 11:33:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.10 2005/06/28 00:28:42 thorpej Exp $")
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>

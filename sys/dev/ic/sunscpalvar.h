@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.6 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.6.4.1 2007/10/27 11:31:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -55,7 +55,7 @@
  * Handy read/write macros
  */
 #ifdef SUNSCPAL_USE_BUS_SPACE
-# include <machine/bus.h>
+# include <sys/bus.h>
 /* bus_space() variety */
 #define SUNSCPAL_READ_1(sc, reg)	bus_space_read_1(sc->sunscpal_regt, \
 						sc->sunscpal_regh, sc->reg)

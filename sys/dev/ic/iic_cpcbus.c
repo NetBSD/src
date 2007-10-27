@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_cpcbus.c,v 1.6 2003/07/14 15:47:10 lukem Exp $	*/
+/*	$NetBSD: iic_cpcbus.c,v 1.6.16.1 2007/10/27 11:30:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.6 2003/07/14 15:47:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.6.16.1 2007/10/27 11:30:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/cpc700reg.h>
 #include <dev/ic/cpc700var.h>
 

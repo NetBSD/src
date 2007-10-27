@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.23.6.2 2007/02/26 09:10:14 yamt Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.23.6.3 2007/10/27 11:31:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23.6.2 2007/02/26 09:10:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23.6.3 2007/10/27 11:31:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23.6.2 2007/02/26 09:10:14 yamt Exp $"
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

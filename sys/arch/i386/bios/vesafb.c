@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.15.6.4 2007/09/03 14:26:28 yamt Exp $ */
+/* $NetBSD: vesafb.c,v 1.15.6.5 2007/10/27 11:26:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15.6.4 2007/09/03 14:26:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15.6.5 2007/10/27 11:26:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* XXX */
 	if (offset >= 0 && offset <
 	    sc->sc_mi.YResolution*sc->sc_mi.BytesPerScanLine) {
-		pa = x86_memio_mmap(X86_BUS_SPACE_MEM, sc->sc_mi.PhysBasePtr,
+		pa = bus_space_mmap(X86_BUS_SPACE_MEM, sc->sc_mi.PhysBasePtr,
 		    offset, prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}

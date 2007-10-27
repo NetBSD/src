@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.30.2.2 2007/09/03 14:39:28 yamt Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.30.2.3 2007/10/27 11:34:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.30.2.2 2007/09/03 14:39:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.30.2.3 2007/10/27 11:34:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.30.2.2 2007/09/03 14:39:28 yamt Exp $")
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>

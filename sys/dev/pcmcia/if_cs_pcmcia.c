@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.11.4.1 2006/12/30 20:49:17 yamt Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.11.4.2 2007/10/27 11:33:43 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.11.4.1 2006/12/30 20:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.11.4.2 2007/10/27 11:33:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.11.4.1 2006/12/30 20:49:17 yamt E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

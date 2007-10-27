@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.13 2005/02/27 00:27:00 perry Exp $ */
+/* $NetBSD: am79c930.c,v 1.13.4.1 2007/10/27 11:30:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.13 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.13.4.1 2007/10/27 11:30:29 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
@@ -75,14 +75,14 @@ __FBSDID("$FreeBSD$");
 #include <sys/device.h>
 #endif
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #ifdef __FreeBSD__
 #include <machine/bus_pio.h>
 #include <machine/bus_memio.h>
 #endif
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __NetBSD__
-#include <machine/intr.h>
+#include <sys/intr.h>
 #endif
 
 #ifdef __NetBSD__

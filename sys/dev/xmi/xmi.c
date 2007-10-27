@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.6.4.1 2007/09/03 14:39:45 yamt Exp $	*/
+/*	$NetBSD: xmi.c,v 1.6.4.2 2007/10/27 11:34:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.6.4.1 2007/09/03 14:39:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.6.4.2 2007/10/27 11:34:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.6.4.1 2007/09/03 14:39:45 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/xmi/xmireg.h>
 #include <dev/xmi/xmivar.h>

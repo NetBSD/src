@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.26.6.4 2007/09/03 14:33:32 yamt Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.26.6.5 2007/10/27 11:30:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.4 2007/09/03 14:33:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.5 2007/10/27 11:30:09 yamt Exp $");
 
 #include "opt_cardslot.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.4 2007/09/03 14:33:32 yamt Exp $
 #include <sys/syslog.h>
 #include <sys/kthread.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/cardbus/cardslotvar.h>
 #include <dev/cardbus/cardbusvar.h>

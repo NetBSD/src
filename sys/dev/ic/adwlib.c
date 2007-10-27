@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.34.2.2 2006/12/30 20:48:01 yamt Exp $        */
+/* $NetBSD: adwlib.c,v 1.34.2.3 2007/10/27 11:30:26 yamt Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.34.2.2 2006/12/30 20:48:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.34.2.3 2007/10/27 11:30:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.34.2.2 2006/12/30 20:48:01 yamt Exp $")
 #include <sys/queue.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

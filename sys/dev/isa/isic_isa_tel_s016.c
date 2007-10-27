@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16 and clones
  *	=================================================================
  *
- *	$Id: isic_isa_tel_s016.c,v 1.6.4.1 2007/09/03 14:35:40 yamt Exp $
+ *	$Id: isic_isa_tel_s016.c,v 1.6.4.2 2007/10/27 11:31:45 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.6.4.1 2007/09/03 14:35:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.6.4.2 2007/10/27 11:31:45 yamt Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.6.4.1 2007/09/03 14:35:40 ya
 #include <machine/md_var.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

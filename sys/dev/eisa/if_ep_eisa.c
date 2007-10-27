@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.30.4.2 2006/12/30 20:47:58 yamt Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.30.4.3 2007/10/27 11:30:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.2 2006/12/30 20:47:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.3 2007/10/27 11:30:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -105,9 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.2 2006/12/30 20:47:58 yamt Exp
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 

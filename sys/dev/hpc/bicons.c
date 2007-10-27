@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.9.2.1 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: bicons.c,v 1.9.2.2 2007/10/27 11:30:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.9.2.1 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.9.2.2 2007/10/27 11:30:19 yamt Exp $");
 
 #define HALF_FONT
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.9.2.1 2006/12/30 20:48:00 yamt Exp $");
 #include <dev/cons.h>
 
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/platid.h>
 #include <machine/stdarg.h>
 

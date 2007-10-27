@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.8.4.4 2007/09/03 14:31:21 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.8.4.5 2007/10/27 11:28:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -198,12 +198,6 @@
 /* Extended family and model are defined on amd64 processors */
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
-
-#define CPUID(code, eax, ebx, ecx, edx)                         \
-	__asm("cpuid"                                           \
-	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
-	    : "a" (code));
-
 
 /*
  * Model-specific registers for the i386 family

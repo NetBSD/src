@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.21 2005/06/03 22:00:34 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.21.2.1 2007/10/27 11:34:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.21 2005/06/03 22:00:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.21.2.1 2007/10/27 11:34:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,8 +160,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.21 2005/06/03 22:00:34 tsutsui Exp $
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #ifdef __sparc__
 #include <machine/autoconf.h>
 #endif

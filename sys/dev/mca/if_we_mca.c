@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.13.2.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.13.2.3 2007/10/27 11:32:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.3 2007/10/27 11:32:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.2 2006/12/30 20:48:35 yamt Exp 
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>

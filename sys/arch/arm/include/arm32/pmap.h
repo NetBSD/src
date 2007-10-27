@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77.16.2 2007/02/26 09:05:59 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.77.16.3 2007/10/27 11:25:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -171,7 +171,10 @@ struct pmap_devmap {
 struct pmap {
 	u_int8_t		pm_domain;
 	bool			pm_remove_all;
+	bool			pm_activated;
 	struct l1_ttable	*pm_l1;
+	pd_entry_t		*pm_pl1vec;
+	pd_entry_t		pm_l1vec;
 	union pmap_cache_state	pm_cstate;
 	struct uvm_object	pm_obj;
 #define	pm_lock pm_obj.vmobjlock

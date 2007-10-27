@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.33.2.3 2007/09/03 14:33:19 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.33.2.4 2007/10/27 11:30:00 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.33.2.3 2007/09/03 14:33:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.33.2.4 2007/10/27 11:30:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.33.2.3 2007/09/03 14:33:19 yamt Exp $"
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

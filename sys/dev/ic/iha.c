@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.29.2.2 2007/09/03 14:34:44 yamt Exp $ */
+/*	$NetBSD: iha.c,v 1.29.2.3 2007/10/27 11:30:45 yamt Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.29.2.2 2007/09/03 14:34:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.29.2.3 2007/10/27 11:30:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.29.2.2 2007/09/03 14:34:44 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>

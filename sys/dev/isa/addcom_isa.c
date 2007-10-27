@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.12.6.1 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.12.6.2 2007/10/27 11:31:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,15 +55,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.12.6.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.12.6.2 2007/10/27 11:31:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

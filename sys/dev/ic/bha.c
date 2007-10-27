@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.63.2.3 2007/09/03 14:34:23 yamt Exp $	*/
+/*	$NetBSD: bha.c,v 1.63.2.4 2007/10/27 11:30:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.3 2007/09/03 14:34:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.4 2007/10/27 11:30:33 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.3 2007/09/03 14:34:23 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

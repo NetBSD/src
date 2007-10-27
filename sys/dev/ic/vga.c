@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.81.4.3 2007/09/03 14:35:20 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.81.4.4 2007/10/27 11:31:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.4.3 2007/09/03 14:35:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.4.4 2007/10/27 11:31:10 yamt Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.4.3 2007/09/03 14:35:20 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

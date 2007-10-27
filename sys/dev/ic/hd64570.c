@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.29.4.4 2007/09/03 14:34:34 yamt Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.29.4.5 2007/10/27 11:30:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29.4.4 2007/09/03 14:34:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29.4.5 2007/10/27 11:30:41 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -103,9 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29.4.4 2007/09/03 14:34:34 yamt Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

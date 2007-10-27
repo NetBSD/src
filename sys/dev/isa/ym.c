@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.25.2.4 2007/09/03 14:35:47 yamt Exp $	*/
+/*	$NetBSD: ym.c,v 1.25.2.5 2007/10/27 11:32:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.4 2007/09/03 14:35:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.5 2007/10/27 11:32:01 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -80,9 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.4 2007/09/03 14:35:47 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

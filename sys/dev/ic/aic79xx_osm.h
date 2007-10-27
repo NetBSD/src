@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.7.4.2 2007/09/03 14:34:16 yamt Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.7.4.3 2007/10/27 11:30:29 yamt Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.7.4.2 2007/09/03 14:34:16 yamt Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.7.4.3 2007/10/27 11:30:29 yamt Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.7.4.2 2007/09/03 14:34:16 yamt Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.7.4.3 2007/10/27 11:30:29 yamt Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -62,8 +62,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

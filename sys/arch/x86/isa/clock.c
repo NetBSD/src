@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.3 2007/09/03 14:31:21 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.4 2007/10/27 11:28:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.3 2007/09/03 14:31:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.4 2007/10/27 11:28:57 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -174,14 +174,6 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-#ifdef __x86_64__
-#define READ_FLAGS()	read_rflags()
-#define WRITE_FLAGS(x)	write_rflags(x)
-#else /* i386 architecture processor */
-#define READ_FLAGS()	read_eflags()
-#define WRITE_FLAGS(x)	write_eflags(x)
-#endif
-
 #ifdef CLOCKDEBUG
 int clock_debug = 0;
 #define DPRINTF(arg) if (clock_debug) printf arg
@@ -189,7 +181,8 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-int		gettick(void);
+/* Used by lapic.c */
+unsigned int	gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 
@@ -202,7 +195,7 @@ static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
 
-static inline int gettick_broken_latch(void);
+static unsigned int	gettick_broken_latch(void);
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;
@@ -261,7 +254,7 @@ static int ticks[6];
  *     machdep sets the variable 'clock_broken_latch' to indicate it.
  */
 
-int
+static unsigned int
 gettick_broken_latch(void)
 {
 	u_long flags;
@@ -269,8 +262,8 @@ gettick_broken_latch(void)
 	int w1, w2, w3;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
 	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
@@ -279,7 +272,7 @@ gettick_broken_latch(void)
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -432,8 +425,8 @@ i8254_get_timecount(struct timecounter *tc)
 	u_long flags;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&tmr_lock);
 
 	/* Select timer0 and latch counter value. */ 
@@ -452,12 +445,12 @@ i8254_get_timecount(struct timecounter *tc)
 	count += i8254_offset;
 
 	__cpu_simple_unlock(&tmr_lock);
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 
 	return (count);
 }
 
-int
+unsigned int
 gettick(void)
 {
 	u_long flags;
@@ -467,13 +460,13 @@ gettick(void)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = READ_FLAGS();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	WRITE_FLAGS(flags);
+	x86_write_psl(flags);
 	return ((hi << 8) | lo);
 }
 
@@ -486,9 +479,10 @@ gettick(void)
  * Don't rely on this being particularly accurate.
  */
 void
-i8254_delay(int n)
+i8254_delay(unsigned int n)
 {
-	int delay_tick, odelay_tick;
+	unsigned int cur_tick, initial_tick;
+	int remaining;
 	static const int delaytab[26] = {
 		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
 		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
@@ -503,49 +497,34 @@ i8254_delay(int n)
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
 	 */
-	odelay_tick = gettick();
+	initial_tick = gettick();
 
 	if (n <= 25)
-		n = delaytab[n];
-	else {
-#ifdef __GNUC__
+		remaining = delaytab[n];
+	else if (n <= UINT_MAX / TIMER_FREQ) {
 		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler
-		 * code so we can take advantage of the intermediate 64-bit
-		 * quantity to prevent loss of significance.
+		 * For unsigned arithmetic, division can be replaced with
+		 * multiplication with the inverse and a shift.
 		 */
-		int m;
-		__asm volatile("mul %3"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "r" (TIMER_FREQ));
-		__asm volatile("div %4"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "1" (m), "r" (1000000));
-#else
-		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
-		 * point and without any avoidable overflows.
+		remaining = n * TIMER_FREQ / 1000000;
+	} else {
+		/* This is a very long delay.
+		 * Being slow here doesn't matter.
 		 */
-		int sec = n / 1000000,
-		    usec = n % 1000000;
-		n = sec * TIMER_FREQ +
-		    usec * (TIMER_FREQ / 1000000) +
-		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
-		    usec * (TIMER_FREQ % 1000) / 1000000;
-#endif
+		remaining = (unsigned long long) n * TIMER_FREQ / 1000000;
 	}
 
-	while (n > 0) {
+	while (remaining > 0) {
 #ifdef CLOCK_PARANOIA
 		int delta;
-		delay_tick = gettick();
-		if (delay_tick > odelay_tick)
-			delta = rtclock_tval - (delay_tick - odelay_tick);
+		cur_tick = gettick();
+		if (cur_tick > initial_tick)
+			delta = rtclock_tval - (cur_tick - initial_tick);
 		else
-			delta = odelay_tick - delay_tick;
+			delta = initial_tick - cur_tick;
 		if (delta < 0 || delta >= rtclock_tval / 2) {
 			DPRINTF(("delay: ignore ticks %.4x-%.4x",
-				 odelay_tick, delay_tick));
+				 initial_tick, cur_tick));
 			if (clock_broken_latch) {
 				DPRINTF(("  (%.4x %.4x %.4x %.4x %.4x %.4x)\n",
 				         ticks[0], ticks[1], ticks[2],
@@ -554,15 +533,15 @@ i8254_delay(int n)
 				DPRINTF(("\n"));
 			}
 		} else
-			n -= delta;
+			remaining -= delta;
 #else
-		delay_tick = gettick();
-		if (delay_tick > odelay_tick)
-			n -= rtclock_tval - (delay_tick - odelay_tick);
+		cur_tick = gettick();
+		if (cur_tick > initial_tick)
+			remaining -= rtclock_tval - (cur_tick - initial_tick);
 		else
-			n -= odelay_tick - delay_tick;
+			remaining -= initial_tick - cur_tick;
 #endif
-		odelay_tick = delay_tick;
+		initial_tick = cur_tick;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.10.4.3 2007/09/03 14:34:24 yamt Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.10.4.4 2007/10/27 11:30:34 yamt Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10.4.3 2007/09/03 14:34:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10.4.4 2007/10/27 11:30:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -115,8 +115,9 @@ __KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10.4.3 2007/09/03 14:34:24 yamt Exp $")
 #include <sys/tty.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/cd18xxvar.h>
 #include <dev/ic/cd18xxreg.h>
@@ -288,7 +289,7 @@ cd18xx_attach(sc)
 	cd18xx_write(sc, CD18xx_PPRL, sc->sc_pprl);
 
 	/* establish our soft interrupt. */
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, cd18xx_softintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, cd18xx_softintr, sc);
 
 	printf(", 8 ports ready (chip id %d)\n", sc->sc_chip_id);
 
@@ -954,7 +955,7 @@ cdttyparam(tp, t)
 		p->p_r_lowat = 0;
 		if (ISSET(p->p_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(p->p_rx_flags, RX_TTY_OVERFLOWED);
-			softintr_schedule(sc->sc_si);
+			softint_schedule(sc->sc_si);
 		}
 		if (ISSET(p->p_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
 			CLR(p->p_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
@@ -1064,7 +1065,7 @@ cdttyhwiflow(tp, block)
 	} else {
 		if (ISSET(p->p_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(p->p_rx_flags, RX_TTY_OVERFLOWED);
-			softintr_schedule(sc->sc_si);
+			softint_schedule(sc->sc_si);
 		}
 		if (ISSET(p->p_rx_flags, RX_TTY_BLOCKED)) {
 			CLR(p->p_rx_flags, RX_TTY_BLOCKED);
@@ -1387,7 +1388,7 @@ cd18xx_hardintr(v)
 			}
 		}
 		if (ns)
-			softintr_schedule(sc->sc_si);
+			softint_schedule(sc->sc_si);
 	}
 
 	return (rv);

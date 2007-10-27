@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.23.4.3 2007/09/03 14:37:12 yamt Exp $	*/
+/*	$NetBSD: mly.c,v 1.23.4.4 2007/10/27 11:33:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.3 2007/09/03 14:37:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.4 2007/10/27 11:33:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.3 2007/09/03 14:37:12 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

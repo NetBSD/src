@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9.2.4 2007/09/03 14:32:12 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.9.2.5 2007/10/27 11:29:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.4 2007/09/03 14:32:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.5 2007/10/27 11:29:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.4 2007/09/03 14:32:12 yamt E
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_prctl.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
 
@@ -403,7 +405,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	struct linux_rt_sigframe frame, *fp;
 	ucontext_t uctx;
 	mcontext_t *mctx;
-	struct fxsave64 *fxsave;
+	struct fxsave64 *fxarea;
 	int error;
 
 	fp = (struct linux_rt_sigframe *)(tf->tf_rsp - 8);
@@ -417,7 +419,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 
 	bzero(&uctx, sizeof(uctx));
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
-	fxsave = (struct fxsave64 *)&mctx->__fpregs;
+	fxarea = (struct fxsave64 *)&mctx->__fpregs;
 
 	/* 
 	 * Set the flags. Linux always have CPU, stack and signal state,
@@ -474,18 +476,18 @@ linux_sys_rt_sigreturn(l, v, retval)
 			return error;
 		}
 
-		fxsave->fx_fcw = fpstate.cwd;
-		fxsave->fx_fsw = fpstate.swd;
-		fxsave->fx_ftw = fpstate.twd;
-		fxsave->fx_fop = fpstate.fop;
-		fxsave->fx_rip = fpstate.rip;
-		fxsave->fx_rdp = fpstate.rdp;
-		fxsave->fx_mxcsr = fpstate.mxcsr;
-		fxsave->fx_mxcsr_mask = fpstate.mxcsr_mask;
-		memcpy(&fxsave->fx_st, &fpstate.st_space, 
-		    sizeof(fxsave->fx_st));
-		memcpy(&fxsave->fx_xmm, &fpstate.xmm_space, 
-		    sizeof(fxsave->fx_xmm));
+		fxarea->fx_fcw = fpstate.cwd;
+		fxarea->fx_fsw = fpstate.swd;
+		fxarea->fx_ftw = fpstate.twd;
+		fxarea->fx_fop = fpstate.fop;
+		fxarea->fx_rip = fpstate.rip;
+		fxarea->fx_rdp = fpstate.rdp;
+		fxarea->fx_mxcsr = fpstate.mxcsr;
+		fxarea->fx_mxcsr_mask = fpstate.mxcsr_mask;
+		memcpy(&fxarea->fx_st, &fpstate.st_space, 
+		    sizeof(fxarea->fx_st));
+		memcpy(&fxarea->fx_xmm, &fpstate.xmm_space, 
+		    sizeof(fxarea->fx_xmm));
 	}
 
 	/*

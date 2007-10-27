@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.30.2.4 2007/09/03 14:34:24 yamt Exp $	*/
+/*	$NetBSD: cac.c,v 1.30.2.5 2007/10/27 11:30:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30.2.4 2007/09/03 14:34:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30.2.5 2007/10/27 11:30:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30.2.4 2007/09/03 14:34:24 yamt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>

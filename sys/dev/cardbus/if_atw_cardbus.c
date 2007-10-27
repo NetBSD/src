@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.12.2.2 2006/12/30 20:47:57 yamt Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.12.2.3 2007/10/27 11:30:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.12.2.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.12.2.3 2007/10/27 11:30:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.12.2.2 2006/12/30 20:47:57 yamt
 #endif
 
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/atwreg.h>
 #include <dev/ic/rf3000reg.h>

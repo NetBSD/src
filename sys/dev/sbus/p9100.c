@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.23.2.3 2007/09/03 14:38:32 yamt Exp $ */
+/*	$NetBSD: p9100.c,v 1.23.2.4 2007/10/27 11:34:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23.2.3 2007/09/03 14:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23.2.4 2007/10/27 11:34:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.23.2.3 2007/09/03 14:38:32 yamt Exp $");
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sun/fbio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.14.4.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.14.4.2 2007/10/27 11:32:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.14.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.14.4.2 2007/10/27 11:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

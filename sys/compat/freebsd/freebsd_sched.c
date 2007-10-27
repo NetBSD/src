@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.2.18.4 2007/09/03 14:31:59 yamt Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.2.18.5 2007/10/27 11:29:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.4 2007/09/03 14:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.5 2007/10/27 11:29:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.4 2007/09/03 14:31:59 yamt 
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_sched.h>

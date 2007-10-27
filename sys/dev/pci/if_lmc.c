@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.22.2.4 2007/09/03 14:36:57 yamt Exp $ */
+/* $NetBSD: if_lmc.c,v 1.22.2.5 2007/10/27 11:32:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -107,7 +107,7 @@
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
-# include <machine/bus.h>
+# include <sys/bus.h>
 # include <machine/resource.h>
 # include <machine/clock.h>
 # include <sys/rman.h>
@@ -172,8 +172,8 @@
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
-# include <machine/bus.h>
-# include <machine/intr.h>
+# include <sys/bus.h>
+# include <sys/intr.h>
 # include <machine/lock.h>
 # include <machine/types.h>
 # include <dev/pci/pcivar.h>
@@ -224,8 +224,8 @@
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
-# include <machine/bus.h>
-# include <machine/intr.h>
+# include <sys/bus.h>
+# include <sys/intr.h>
 # include <machine/lock.h>
 # include <uvm/uvm_extern.h>
 # include <dev/pci/pcivar.h>

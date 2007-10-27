@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.h,v 1.3 2001/02/05 19:22:23 briggs Exp $	*/
+/*	$NetBSD: openpic.h,v 1.3.42.1 2007/10/27 11:27:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,11 +29,6 @@
 #include <machine/pio.h>
 
 #include <machine/openpicreg.h>
-
-/* void openpic_init(): defined in machdep code, must set openpic_base */
-void openpic_enable_irq __P((int, int));
-void openpic_disable_irq __P((int));
-void openpic_set_priority __P((int, int));
 
 extern volatile unsigned char *openpic_base;
 

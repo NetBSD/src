@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.9.4.2 2007/09/03 14:36:15 yamt Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.9.4.3 2007/10/27 11:32:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.2 2007/09/03 14:36:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.3 2007/10/27 11:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.2 2007/09/03 14:36:15 yamt Exp
 #include <sys/queue.h>
 #include <sys/lock.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

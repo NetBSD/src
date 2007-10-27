@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.17.2.3 2007/09/03 14:28:21 yamt Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.17.2.4 2007/10/27 11:27:23 yamt Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.17.2.3 2007/09/03 14:28:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.17.2.4 2007/10/27 11:27:23 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -88,21 +88,6 @@ static inline u_int	sonicput(struct sn_softc *sc, struct mbuf *m0,
     int mtd_next);
 static inline int	sonic_read(struct sn_softc *, void *, int);
 static inline struct mbuf *sonic_get(struct sn_softc *, void *, int);
-
-#undef assert
-#undef _assert
-
-#ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
-#else
-#define	_assert(e)	assert(e)
-#ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
-#endif
-#endif
 
 int sndebug = 0;
 
@@ -244,7 +229,6 @@ static int
 snioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	struct sn_softc *sc = ifp->if_softc;
 	int	s = splnet(), err = 0;
 	int	temp;

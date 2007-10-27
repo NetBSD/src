@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.9.12.1 2006/12/30 20:48:26 yamt Exp $ */
+/* $NetBSD: aztech.c,v 1.9.12.2 2007/10/27 11:31:24 yamt Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9.12.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9.12.2 2007/10/27 11:31:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9.12.1 2006/12/30 20:48:26 yamt Exp $")
 #include <sys/device.h>
 #include <sys/radioio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/lm700x.h>

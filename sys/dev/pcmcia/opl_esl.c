@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.10.2.1 2006/06/21 15:06:14 yamt Exp $ */
+/* $NetBSD: opl_esl.c,v 1.10.2.2 2007/10/27 11:33:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.10.2.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.10.2.2 2007/10/27 11:33:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.10.2.1 2006/06/21 15:06:14 yamt Exp $"
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>

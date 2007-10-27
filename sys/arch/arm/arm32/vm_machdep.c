@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.2.3 2007/09/03 14:23:16 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.2.4 2007/10/27 11:25:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.3 2007/09/03 14:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.2.4 2007/10/27 11:25:22 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -170,8 +170,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		    l2->l_proc->p_vmspace->vm_map.pmap);
 	}
 #endif	/* PMAP_DEBUG */
-
-	pmap_activate(l2);
 
 #ifdef ARMFPE
 	/* Initialise a new FP context for p2 and copy the context from p1 */

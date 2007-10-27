@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.29 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.29.4.1 2007/10/27 11:31:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.29 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.29.4.1 2007/10/27 11:31:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.29 2005/02/27 00:27:17 perry Exp $"
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 

@@ -1,9 +1,9 @@
-/* $NetBSD: commultiprint.c,v 1.1 2004/09/14 17:19:34 drochner Exp $ */
+/* $NetBSD: commultiprint.c,v 1.1.14.1 2007/10/27 11:31:27 yamt Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/isa/com_multi.h>
 
 int

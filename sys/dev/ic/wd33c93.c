@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.9.4.3 2007/09/03 14:35:21 yamt Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.9.4.4 2007/10/27 11:31:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.9.4.3 2007/09/03 14:35:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.9.4.4 2007/10/27 11:31:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.9.4.3 2007/09/03 14:35:21 yamt Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wd33c93reg.h>
 #include <dev/ic/wd33c93var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1.2.3 2007/09/03 14:33:31 yamt Exp $	*/
+/*	$NetBSD: btuart.c,v 1.1.2.4 2007/10/27 11:30:07 yamt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.3 2007/09/03 14:33:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.4 2007/10/27 11:30:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.3 2007/09/03 14:33:31 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>

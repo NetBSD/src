@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.5 2002/10/02 16:53:21 thorpej Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.5.22.1 2007/10/27 11:34:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.5 2002/10/02 16:53:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.5.22.1 2007/10/27 11:34:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/xmi/xmireg.h>
 #include <dev/xmi/xmivar.h>

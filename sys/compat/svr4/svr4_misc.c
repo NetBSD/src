@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.113.2.4 2007/09/03 14:32:54 yamt Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.113.2.5 2007/10/27 11:29:50 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.113.2.4 2007/09/03 14:32:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.113.2.5 2007/10/27 11:29:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.113.2.4 2007/09/03 14:32:54 yamt Exp
 #include <compat/svr4/svr4_acl.h>
 #include <compat/svr4/svr4_mman.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 

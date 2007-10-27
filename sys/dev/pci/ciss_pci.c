@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.1.18.3 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.1.18.4 2007/10/27 11:32:37 yamt Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.1.18.3 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.1.18.4 2007/10/27 11:32:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -30,7 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.1.18.3 2006/12/30 20:48:43 yamt Exp $
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.11.4.1 2006/12/30 20:48:26 yamt Exp $ */
+/* $NetBSD: ics2101.c,v 1.11.4.2 2007/10/27 11:31:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.11.4.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.11.4.2 2007/10/27 11:31:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.11.4.1 2006/12/30 20:48:26 yamt Exp $"
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

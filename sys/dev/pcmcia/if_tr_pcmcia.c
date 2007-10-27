@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.15.4.1 2006/12/30 20:49:18 yamt Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.15.4.2 2007/10/27 11:33:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.15.4.1 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.15.4.2 2007/10/27 11:33:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.15.4.1 2006/12/30 20:49:18 yamt E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.22.4.1 2006/06/21 15:06:27 yamt Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.22.4.2 2007/10/27 11:33:58 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.22.4.1 2006/06/21 15:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.22.4.2 2007/10/27 11:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.22.4.1 2006/06/21 15:06:27 yamt Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pte.h>
 #include <machine/trap.h>
 #include <machine/scb.h>

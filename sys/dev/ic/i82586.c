@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.52.2.3 2007/09/03 14:34:39 yamt Exp $	*/
+/*	$NetBSD: i82586.c,v 1.52.2.4 2007/10/27 11:30:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.3 2007/09/03 14:34:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.4 2007/10/27 11:30:44 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.3 2007/09/03 14:34:39 yamt Exp $")
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.8.2.2 2007/02/26 09:09:02 yamt Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.8.2.3 2007/10/27 11:29:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.2 2007/02/26 09:09:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.3 2007/10/27 11:29:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.2 2007/02/26 09:09:02 yamt
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/darwin_machdep.h>
 
 #include <uvm/uvm_extern.h>

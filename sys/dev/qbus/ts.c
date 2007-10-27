@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.13.4.2 2007/09/03 14:38:14 yamt Exp $ */
+/*	$NetBSD: ts.c,v 1.13.4.3 2007/10/27 11:34:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.2 2007/09/03 14:38:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.3 2007/10/27 11:34:01 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.2 2007/09/03 14:38:14 yamt Exp $");
 #include <sys/uio.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubareg.h>
 #include <dev/qbus/ubavar.h>

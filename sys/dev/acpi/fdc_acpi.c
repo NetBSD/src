@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.24.2.2 2006/12/30 20:47:54 yamt Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.24.2.3 2007/10/27 11:30:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24.2.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24.2.3 2007/10/27 11:30:02 yamt Exp $");
 
 #include "rnd.h"
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24.2.2 2006/12/30 20:47:54 yamt Exp $
 #include <sys/rnd.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

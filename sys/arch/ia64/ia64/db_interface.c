@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.1.14.3 2007/02/26 09:07:05 yamt Exp $ */
+/* $NetBSD: db_interface.c,v 1.1.14.4 2007/10/27 11:26:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.14.3 2007/02/26 09:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.14.4 2007/10/27 11:26:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,7 +111,7 @@ int	db_active = 0;
 db_regs_t *ddb_regp;
 
 const struct db_command db_machine_command_table[] = {
-	{ (char *)0, },
+	{  DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
 };
 
 static int

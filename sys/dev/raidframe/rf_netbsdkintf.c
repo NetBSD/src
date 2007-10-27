@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.187.2.3 2007/09/03 14:38:20 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.187.2.4 2007/10/27 11:34:03 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.187.2.3 2007/09/03 14:38:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.187.2.4 2007/10/27 11:34:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -584,11 +584,141 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, void *va,
-    size_t  size)
+raiddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
-	/* Not implemented. */
-	return ENXIO;
+	int     unit = raidunit(dev);
+	struct raid_softc *rs;
+	const struct bdevsw *bdev;
+	struct disklabel *lp;
+	RF_Raid_t *raidPtr;
+	daddr_t offset;
+	int     part, c, sparecol, j, scol, dumpto;
+	int     error = 0;
+
+	if (unit >= numraid)
+		return (ENXIO);
+
+	rs = &raid_softc[unit];
+	raidPtr = raidPtrs[unit];
+
+	if ((rs->sc_flags & RAIDF_INITED) == 0)
+		return ENXIO;
+
+	/* we only support dumping to RAID 1 sets */
+	if (raidPtr->Layout.numDataCol != 1 || 
+	    raidPtr->Layout.numParityCol != 1)
+		return EINVAL;
+
+
+	if ((error = raidlock(rs)) != 0)
+		return error;
+
+	if (size % DEV_BSIZE != 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if (blkno + size / DEV_BSIZE > rs->sc_size) {
+		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
+		    "sc->sc_size (%" PRIu64 ")\n", __func__, blkno,
+		    size / DEV_BSIZE, rs->sc_size);
+		error = EINVAL;
+		goto out;
+	}
+
+	part = DISKPART(dev);
+	lp = rs->sc_dkdev.dk_label;
+	offset = lp->d_partitions[part].p_offset + RF_PROTECTED_SECTORS;
+
+	/* figure out what device is alive.. */
+
+	/* 
+	   Look for a component to dump to.  The preference for the
+	   component to dump to is as follows:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	*/
+
+	dumpto = -1;
+	for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status == rf_ds_optimal) {
+			/* this might be the one */
+			dumpto = c;
+			break;
+		}
+	}
+	
+	/* 
+	   At this point we have possibly selected a live master or a
+	   live slave.  We now check to see if there is a spared
+	   master (or a spared slave), if we didn't find a live master
+	   or a live slave.  
+	*/
+
+	for (c = 0; c < raidPtr->numSpare; c++) {
+		sparecol = raidPtr->numCol + c;
+		if (raidPtr->Disks[sparecol].status ==  rf_ds_used_spare) {
+			/* How about this one? */
+			scol = -1;
+			for(j=0;j<raidPtr->numCol;j++) {
+				if (raidPtr->Disks[j].spareCol == sparecol) {
+					scol = j;
+					break;
+				}
+			}
+			if (scol == 0) {
+				/* 
+				   We must have found a spared master!
+				   We'll take that over anything else
+				   found so far.  (We couldn't have
+				   found a real master before, since
+				   this is a used spare, and it's
+				   saying that it's replacing the
+				   master.)  On reboot (with
+				   autoconfiguration turned on)
+				   sparecol will become the 1st
+				   component (component0) of this set.  
+				*/
+				dumpto = sparecol;
+				break;
+			} else if (scol != -1) {
+				/* 
+				   Must be a spared slave.  We'll dump
+				   to that if we havn't found anything
+				   else so far. 
+				*/
+				if (dumpto == -1)
+					dumpto = sparecol;
+			}
+		}
+	}
+	
+	if (dumpto == -1) {
+		/* we couldn't find any live components to dump to!?!?
+		 */
+		error = EINVAL;
+		goto out;
+	}
+
+	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+
+	/* 
+	   Note that blkno is relative to this particular partition.
+	   By adding the offset of this partition in the RAID
+	   set, and also adding RF_PROTECTED_SECTORS, we get a
+	   value that is relative to the partition used for the
+	   underlying component.
+	*/
+	   
+	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
+				blkno + offset, va, size);
+	
+out:
+	raidunlock(rs);
+		
+	return error;
 }
 /* ARGSUSED */
 int
@@ -726,7 +856,8 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			free(cf, M_RAIDFRAME);
 			
 			/* Detach the disk. */
-			pseudo_disk_detach(&rs->sc_dkdev);
+			disk_detach(&rs->sc_dkdev);
+			disk_destroy(&rs->sc_dkdev);
 		}
 	}
 
@@ -1070,7 +1201,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		free(cf, M_RAIDFRAME);
 
 		/* Detach the disk. */
-		pseudo_disk_detach(&rs->sc_dkdev);
+		disk_detach(&rs->sc_dkdev);
+		disk_destroy(&rs->sc_dkdev);
 
 		raidunlock(rs);
 
@@ -1720,8 +1852,6 @@ raidinit(RF_Raid_t *raidPtr)
 	/* XXX doesn't check bounds. */
 	snprintf(rs->sc_xname, sizeof(rs->sc_xname), "raid%d", unit);
 
-	rs->sc_dkdev.dk_name = rs->sc_xname;
-
 	/* attach the pseudo device */
 	cf = malloc(sizeof(*cf), M_RAIDFRAME, M_WAITOK);
 	cf->cf_name = raid_cd.cd_name;
@@ -1740,6 +1870,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
+	disk_init(&rs->sc_dkdev, rs->sc_xname, NULL);
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
@@ -2308,7 +2439,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 		       sizeof(RF_ComponentLabel_t));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 /* ARGSUSED */
@@ -2339,7 +2470,7 @@ raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 		return (ENXIO);
 	(*bdev->d_strategy)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	if (error) {
 #if 1
 		printf("Failed to write RAID component info!\n");
@@ -2520,9 +2651,6 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct lwp *l;
-
-	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2531,7 +2659,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, curlwp->l_cred, curlwp);
 		}
 	}
 }

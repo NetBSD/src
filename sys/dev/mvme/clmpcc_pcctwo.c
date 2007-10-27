@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.9.6.2 2006/12/30 20:48:38 yamt Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.9.6.3 2007/10/27 11:32:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.9.6.2 2006/12/30 20:48:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.9.6.3 2007/10/27 11:32:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.9.6.2 2006/12/30 20:48:38 yamt E
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/clmpccvar.h>
 

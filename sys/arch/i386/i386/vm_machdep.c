@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.2.4 2007/09/03 14:26:46 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.2.5 2007/10/27 11:26:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,10 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.2.4 2007/09/03 14:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.2.5 2007/10/27 11:26:42 yamt Exp $");
 
 #include "opt_user_ldt.h"
-#include "opt_largepages.h"
 #include "opt_mtrr.h"
 #include "opt_noredzone.h"
 #include "opt_execfmt.h"

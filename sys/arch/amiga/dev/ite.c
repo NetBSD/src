@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.70.2.3 2007/09/03 14:22:53 yamt Exp $ */
+/*	$NetBSD: ite.c,v 1.70.2.4 2007/10/27 11:25:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70.2.3 2007/09/03 14:22:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70.2.4 2007/10/27 11:25:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -662,7 +662,7 @@ itestart(struct tty *tp)
 		/* we have characters remaining. */
 		if (rbp->c_cc) {
 			tp->t_state |= TS_TIMEOUT;
-			callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+			callout_schedule(&tp->t_rstrt_ch, 1);
 		}
 		/* wakeup we are below */
 		if (rbp->c_cc <= tp->t_lowat) {

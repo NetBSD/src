@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.12.4.1 2007/09/03 14:34:30 yamt Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.12.4.2 2007/10/27 11:30:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.1 2007/09/03 14:34:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.2 2007/10/27 11:30:38 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.1 2007/09/03 14:34:30 yamt Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/dp83932reg.h>
 #include <dev/ic/dp83932var.h>

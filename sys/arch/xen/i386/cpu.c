@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.2.3 2007/09/03 14:31:31 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.2.4 2007/10/27 11:29:06 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.2.3 2007/09/03 14:31:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.2.4 2007/10/27 11:29:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -155,25 +155,19 @@ CFATTACH_DECL(vcpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-#ifdef TRAPLOG
 struct tlog tlog_primary;
 struct cpu_info cpu_info_primary = {
-	0,
-	&cpu_info_primary,
-	(uint8_t *)&cpu_info_primary + 0x150,
-	&tlog_primary
+	.ci_self = &cpu_info_primary,
+	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
+	.ci_curlwp = &lwp0,
+#ifdef TRAPLOG
+	.ci_tlog = &tlog_primary,
+#endif
 };
-#else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = {
-	0,
-	&cpu_info_primary,
-	(uint8_t *)&cpu_info_primary + 0x150,
-};	
-#endif /* !TRAPLOG */
 struct cpu_info phycpu_info_primary = {
-	0,
-	&phycpu_info_primary,
-	(uint8_t *)&cpu_info_primary + 0x150,
+	.ci_self = &phycpu_info_primary,
+	.ci_self150 = (uint8_t *)&phycpu_info_primary + 0x150,
+	.ci_curlwp = &lwp0,
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -714,7 +708,6 @@ cpu_hatch(void *v)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 #endif
-	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 

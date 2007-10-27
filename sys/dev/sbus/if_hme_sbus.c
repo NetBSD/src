@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.20 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.20.6.1 2007/10/27 11:34:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.20 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.20.6.1 2007/10/27 11:34:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.20 2005/02/04 02:10:47 perry Exp $
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

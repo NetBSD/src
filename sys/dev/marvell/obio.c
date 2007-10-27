@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5.12.2 2007/02/26 09:10:17 yamt Exp $	*/
+/*	$NetBSD: obio.c,v 1.5.12.3 2007/10/27 11:32:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5.12.2 2007/02/26 09:10:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5.12.3 2007/10/27 11:32:13 yamt Exp $");
 
 #include "opt_marvell.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5.12.2 2007/02/26 09:10:17 yamt Exp $");
 
 #define _BUS_SPACE_PRIVATE
 #define _BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>

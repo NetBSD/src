@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.1.14.4 2007/09/03 14:36:16 yamt Exp $ */
+/* $NetBSD: onewire.c,v 1.1.14.5 2007/10/27 11:32:28 yamt Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.1.14.4 2007/09/03 14:36:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.1.14.5 2007/10/27 11:32:28 yamt Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -122,7 +122,7 @@ onewire_detach(struct device *self, int flags)
 		tsleep(&sc->sc_dying, PWAIT, "owdt", 0);
 	}
 
-	onewire_lock(sc, 0);
+	onewire_lock(sc);
 	//rv = config_detach_children(self, flags);
 	rv = 0;  /* XXX riz */
 	onewire_unlock(sc);
@@ -182,16 +182,12 @@ onewirebus_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-int
-onewire_lock(void *arg, int flags)
+void
+onewire_lock(void *arg)
 {
 	struct onewire_softc *sc = arg;
 
-	if (flags & ONEWIRE_NOWAIT)
-		return rw_tryenter(&sc->sc_rwlock, RW_WRITER);
-	
 	rw_enter(&sc->sc_rwlock, RW_WRITER);
-	return 0;
 }
 
 void
@@ -344,7 +340,7 @@ onewire_scan(struct onewire_softc *sc)
 		 * Reset the bus. If there's no presence pulse
 		 * don't search for any devices.
 		 */
-		onewire_lock(sc, 0);
+		onewire_lock(sc);
 		if (onewire_reset(sc) != 0) {
 			DPRINTF(("%s: scan: no presence pulse\n",
 			    sc->sc_dev.dv_xname));
@@ -441,7 +437,7 @@ onewire_scan(struct onewire_softc *sc)
 	}
 
 	/* Detach disappeared devices */
-	onewire_lock(sc, 0);
+	onewire_lock(sc);
 	for (d = TAILQ_FIRST(&sc->sc_devs);
 	    d != NULL; d = next) {
 		next = TAILQ_NEXT(d, d_list);

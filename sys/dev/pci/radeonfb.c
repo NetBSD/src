@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.8.2.4 2007/09/03 14:37:21 yamt Exp $ */
+/* $NetBSD: radeonfb.c,v 1.8.2.5 2007/10/27 11:33:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.4 2007/09/03 14:37:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.5 2007/10/27 11:33:29 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.4 2007/09/03 14:37:21 yamt Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>

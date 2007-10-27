@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72.2.4 2007/09/03 14:25:17 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.72.2.5 2007/10/27 11:26:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72.2.4 2007/09/03 14:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72.2.5 2007/10/27 11:26:07 yamt Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -984,13 +984,14 @@ iounmap(void *kva, int size)
 {
 
 #ifdef DEBUG
-	if (((int)kva & PGOFSET) || (size & PGOFSET))
+	if (((vaddr_t)kva & PGOFSET) || (size & PGOFSET))
 		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ptoa(EIOMAPSIZE))
+	if ((uint8_t *)kva < extiobase ||
+	    (uint8_t *)kva >= extiobase + ptoa(EIOMAPSIZE))
 		panic("iounmap: bad address");
 #endif
 	physunaccess(kva, size);
-	if (extent_free(extio_ex, (u_long) kva, size,
+	if (extent_free(extio_ex, (vaddr_t)kva, size,
 	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
 		printf("iounmap: kva %p size 0x%x: can't free region\n",
 		    kva, size);

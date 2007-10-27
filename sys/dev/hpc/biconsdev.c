@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.10.16.3 2007/09/03 14:33:59 yamt Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.10.16.4 2007/10/27 11:30:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.10.16.3 2007/09/03 14:33:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.10.16.4 2007/10/27 11:30:19 yamt Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -151,7 +151,7 @@ biconsdev_output(struct tty *tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {

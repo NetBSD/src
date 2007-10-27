@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.6.16.1 2006/06/21 14:52:18 yamt Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.6.16.2 2007/10/27 11:26:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ IDTVEC(mach_trap)
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	2b
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 	INTRFASTEXIT
 9:	sti

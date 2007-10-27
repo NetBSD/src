@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.40.6.4 2007/09/03 14:36:49 yamt Exp $	*/
+/*	$NetBSD: eso.c,v 1.40.6.5 2007/10/27 11:32:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.4 2007/09/03 14:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.5 2007/10/27 11:32:45 yamt Exp $");
 
 #include "mpu.h"
 
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.4 2007/09/03 14:36:49 yamt Exp $");
 #include <dev/pci/esoreg.h>
 #include <dev/pci/esovar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 /*
  * XXX Work around the 24-bit implementation limit of the Audio 1 DMA

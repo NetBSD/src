@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.9.10.2 2006/12/30 20:46:49 yamt Exp $	*/
+/*	$NetBSD: platform.h,v 1.9.10.3 2007/10/27 11:28:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ void reset_prep(void);
 void setup_pciroutinginfo(void);
 int pci_chipset_tag_type(void);
 void cpu_setup_prep_generic(struct device *);
-void setup_pciintr_map(struct prep_pci_chipset_businfo *, int bus, int device,
+void setup_pciintr_map(struct genppc_pci_chipset_businfo *, int bus, int device,
 	int func);
 
 #endif /* !_PREP_PLATFORM_H_ */

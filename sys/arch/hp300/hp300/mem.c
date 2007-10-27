@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.41.12.3 2007/09/03 14:25:22 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.41.12.4 2007/10/27 11:26:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41.12.3 2007/09/03 14:25:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41.12.4 2007/10/27 11:26:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41.12.3 2007/09/03 14:25:22 yamt Exp $");
 #include <uvm/uvm_extern.h>
 
 extern u_int lowram;
-extern char *extiobase;
 static void *devzeropage;
 
 static dev_type_read(mmrw);
