@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.1.6.2 2007/09/03 14:45:29 yamt Exp $	*/
+/*	$NetBSD: lock.c,v 1.1.6.3 2007/10/27 11:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 /* oh sweet crackmgr, what would I do without you? */
 int
-lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
+lockmgr(struct lock *lock, u_int flags, struct simplelock *slock)
 {
 	u_int lktype = flags & LK_TYPE_MASK;
 
@@ -84,14 +84,7 @@ lockstatus(struct lock *lock)
 }
 
 void
-lockmgr_printinfo(volatile struct lock *lock)
-{
-
-	return;
-}
-
-void
-transferlockers(struct lock *from, struct lock *to)
+lockmgr_printinfo(struct lock *lock)
 {
 
 	return;

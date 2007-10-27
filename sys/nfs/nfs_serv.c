@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.95.2.5 2007/09/03 14:44:18 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.95.2.6 2007/10/27 11:36:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.5 2007/09/03 14:44:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.6 2007/10/27 11:36:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1767,7 +1767,7 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
 		 */
-		if (vp->v_flag & VROOT) {
+		if (vp->v_vflag & VV_ROOT) {
 			error = EBUSY;
 			goto out;
 		}
@@ -2402,7 +2402,7 @@ nfsrv_rmdir(nfsd, slp, lwp, mrq)
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_flag & VROOT)
+	if (vp->v_vflag & VV_ROOT)
 		error = EBUSY;
 out:
 	if (!error) {
@@ -3420,7 +3420,7 @@ nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 		 * If the vnode is in use as a process's text,
 		 * we can't allow writing.
 		 */
-		if (vp->v_flag & VTEXT)
+		if (vp->v_iflag & VI_TEXT)
 			return (ETXTBSY);
 	}
 	error = VOP_GETATTR(vp, &vattr, cred, lwp);

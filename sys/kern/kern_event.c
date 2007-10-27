@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.23.2.4 2007/09/03 14:40:45 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.23.2.5 2007/10/27 11:35:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.4 2007/09/03 14:40:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.5 2007/10/27 11:35:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,7 +701,7 @@ kevent1(struct lwp *l, register_t *retval, int fd,
 		return (EBADF);
 
 	if (fp->f_type != DTYPE_KQUEUE) {
-		simple_unlock(&fp->f_slock);
+		mutex_exit(&fp->f_lock);
 		return (EBADF);
 	}
 

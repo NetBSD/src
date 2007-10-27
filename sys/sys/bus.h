@@ -1,11 +1,8 @@
-/*	$NetBSD: ip_gre.h,v 1.7.12.1 2006/06/21 15:11:01 yamt Exp $ */
+/*	$NetBSD: bus.h,v 1.1.8.2 2007/10/27 11:36:26 yamt Exp $	*/
 
-/*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Heiko W.Rupp <hwr@pilhuhn.de>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,12 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET_IP_GRE_H_
-#define _NETINET_IP_GRE_H_
+#ifndef _SYS_BUS_H_
+#define	_SYS_BUS_H_
 
-#ifdef _KERNEL
-void gre_input(struct mbuf *, ...);
-void gre_mobile_input(struct mbuf *, ...);
-#endif /* _KERNEL */
+#include <machine/bus.h>
 
-#endif /* !_NETINET_IP_GRE_H_ */
+#endif	/* _SYS_BUS_H_ */

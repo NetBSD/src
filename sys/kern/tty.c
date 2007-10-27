@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.173.2.4 2007/09/03 14:41:13 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.173.2.5 2007/10/27 11:35:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.4 2007/09/03 14:41:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.5 2007/10/27 11:35:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2645,6 +2645,7 @@ ttymalloc(void)
 	memset(tp, 0, sizeof(*tp));
 	simple_lock_init(&tp->t_slock);
 	callout_init(&tp->t_rstrt_ch, 0);
+	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);
@@ -2652,6 +2653,8 @@ ttymalloc(void)
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
+	selinit(&tp->t_rsel);
+	selinit(&tp->t_wsel);
 	return (tp);
 }
 
@@ -2670,6 +2673,8 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	seldestroy(&tp->t_rsel);
+	seldestroy(&tp->t_wsel);
 	pool_put(&tty_pool, tp);
 }
 

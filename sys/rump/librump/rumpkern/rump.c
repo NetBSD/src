@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.12.2.2 2007/09/03 14:45:33 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.12.2.3 2007/10/27 11:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,8 +35,7 @@
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 

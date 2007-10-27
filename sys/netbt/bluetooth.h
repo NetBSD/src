@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.2.2.4 2007/09/03 14:42:32 yamt Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.2.2.5 2007/10/27 11:36:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -139,9 +139,9 @@ extern int bluetooth_debug;
 # define UNKNOWN(value)			\
 		printf("%s: %s = %d unknown!\n", __func__, #value, (value));
 #else
-# define DPRINTF(...)
-# define DPRINTFN(...)
-# define UNKNOWN(x)
+# define DPRINTF(...) ((void)0)
+# define DPRINTFN(...) ((void)0)
+# define UNKNOWN(x) ((void)0)
 #endif	/* BLUETOOTH_DEBUG */
 
 #endif	/* _KERNEL */

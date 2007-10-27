@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.4 2007/09/03 14:46:46 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.5 2007/10/27 11:36:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.4 2007/09/03 14:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.5 2007/10/27 11:36:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1380,9 +1380,9 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
+			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
 			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
@@ -1405,7 +1405,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 		break;
 	}
 	if (ip->i_number == ROOTINO)
-                vp->v_flag |= VROOT;
+                vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.7.2.3 2007/09/03 14:39:59 yamt Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.7.2.4 2007/10/27 11:34:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.7.2.3 2007/09/03 14:39:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.7.2.4 2007/10/27 11:34:57 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.7.2.4 2007/10/27 11:34:57 yamt Exp $";
 #endif
 #endif
 
@@ -657,8 +657,8 @@ void *data;
 	int error;
 
 	error = fr_inobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
+	if (error != 0)
+		return error;
 
 	isn = ips.ips_next;
 	if (isn == NULL) {
@@ -687,9 +687,7 @@ void *data;
 		bcopy((char *)isn->is_rule, (char *)&ips.ips_fr,
 		      sizeof(ips.ips_fr));
 	error = fr_outobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
-	return 0;
+	return error;
 }
 
 
@@ -1281,7 +1279,7 @@ u_int flags;
 		* timer on it as we'll never see an error if it fails to
 		* connect.
 		*/
-		(void) fr_tcp_age(&is->is_sti, fin, ips_tqtqb, is->is_flags);
+		(void) fr_tcp_age(&is->is_sti, fin, ips_tqtqb, is->is_flags, 1);
 		MUTEX_EXIT(&is->is_lock);
 #ifdef	IPFILTER_SCAN
 		if ((is->is_flags & SI_CLONE) == 0)
@@ -1444,12 +1442,13 @@ ipstate_t *is;
 			is->is_state[!source] = IPF_TCPS_CLOSED;
 			fr_movequeue(&is->is_sti, is->is_sti.tqe_ifq,
 				     &ips_deletetq);
-			MUTEX_ENTER(&is->is_lock);
+			MUTEX_EXIT(&is->is_lock);
 			return 0;
 		}
 	}
 
-	if (fr_tcpinwindow(fin, fdata, tdata, tcp, is->is_flags)) {
+	ret = fr_tcpinwindow(fin, fdata, tdata, tcp, is->is_flags);
+	if (ret > 0) {
 #ifdef	IPFILTER_SCAN
 		if (is->is_flags & (IS_SC_CLIENT|IS_SC_SERVER)) {
 			ipsc_packet(fin, is);
@@ -1463,7 +1462,8 @@ ipstate_t *is;
 		/*
 		 * Nearing end of connection, start timeout.
 		 */
-		ret = fr_tcp_age(&is->is_sti, fin, ips_tqtqb, is->is_flags);
+		ret = fr_tcp_age(&is->is_sti, fin, ips_tqtqb, is->is_flags,
+				 (ret == 2));
 		if (ret == 0) {
 			MUTEX_EXIT(&is->is_lock);
 			return 0;
@@ -1545,7 +1545,8 @@ ipstate_t *is;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_tcpinwindow                                              */
-/* Returns:     int - 1 == packet inside TCP "window", 0 == not inside.     */
+/* Returns:     int - 1 == packet inside TCP "window", 0 == not inside,     */
+/*                    2 == packet seq number matches next expected          */
 /* Parameters:  fin(I)   - pointer to packet information                    */
 /*              fdata(I) - pointer to tcp state informatio (forward)        */
 /*              tdata(I) - pointer to tcp state informatio (reverse)        */
@@ -1561,10 +1562,10 @@ tcpdata_t  *fdata, *tdata;
 tcphdr_t *tcp;
 int flags;
 {
+	int dsize, inseq, rval;
 	tcp_seq seq, ack, end;
 	int ackskew, tcpflags;
 	u_32_t win, maxwin;
-	int dsize, inseq;
 
 	/*
 	 * Find difference between last checked packet and this packet.
@@ -1629,14 +1630,15 @@ int flags;
 	/*
 	 * Strict sequencing only allows in-order delivery.
 	 */
-	if ((flags & IS_STRICT) != 0) {
-		if (seq != fdata->td_end) {
+	if (seq != fdata->td_end) {
+		if ((flags & IS_STRICT) != 0) {
 			return 0;
 		}
+		rval = 1;
+	} else {
+		rval = 2;
 	}
 
-#define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
-#define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
 	inseq = 0;
 	if ((SEQ_GE(fdata->td_maxend, end)) &&
 	    (SEQ_GE(seq, fdata->td_end - maxwin)) &&
@@ -1715,7 +1717,7 @@ int flags;
 			fdata->td_end = end;
 		if (SEQ_GE(ack + win, tdata->td_maxend))
 			tdata->td_maxend = ack + win;
-		return 1;
+		return rval;
 	}
 	return 0;
 }
@@ -1782,7 +1784,7 @@ ipstate_t *is;
 	clone->is_ref = 2;
 	if (clone->is_p == IPPROTO_TCP) {
 		(void) fr_tcp_age(&clone->is_sti, fin, ips_tqtqb,
-				  clone->is_flags);
+				  clone->is_flags, 1);
 	}
 	MUTEX_EXIT(&clone->is_lock);
 #ifdef	IPFILTER_SCAN
@@ -2303,8 +2305,6 @@ u_int hv;
 {
 	ipstate_t **isp;
 	u_int hvm;
-
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
 
 	hvm = is->is_hv;
 	/*
@@ -2893,8 +2893,6 @@ ipstate_t *is;
 int why;
 {
 
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
-
 	/*
 	 * Since we want to delete this, remove it from the state table,
 	 * where it can be found & used, first.
@@ -2942,9 +2940,15 @@ int why;
 	 * entry (such as ipfstat), it'll do the deref path that'll bring
 	 * us back here to do the real delete & free.
 	 */
-	is->is_ref--;
-	if (is->is_ref > 0)
+	MUTEX_ENTER(&is->is_lock);
+	if (is->is_ref > 1) {
+		is->is_ref--;
+		MUTEX_EXIT(&is->is_lock);
 		return is->is_ref;
+	}
+	MUTEX_EXIT(&is->is_lock);
+
+	is->is_ref = 0;
 
 	if (is->is_tqehead[0] != NULL) {
 		if (fr_deletetimeoutqueue(is->is_tqehead[0]) == 0)
@@ -3275,11 +3279,11 @@ void *entry;
 /*                                                                          */
 /* Locking: it is assumed that the parent of the tqe structure is locked.   */
 /* ------------------------------------------------------------------------ */
-int fr_tcp_age(tqe, fin, tqtab, flags)
+int fr_tcp_age(tqe, fin, tqtab, flags, seqnext)
 ipftqent_t *tqe;
 fr_info_t *fin;
 ipftq_t *tqtab;
-int flags;
+int flags, seqnext;
 {
 	int dlen, ostate, nstate, rval, dir;
 	u_char tcpflags;
@@ -3546,14 +3550,7 @@ int flags;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
 			if (tcpflags & TH_ACK) {
-				if ((tcpflags & TH_PUSH) || dlen)
-					/*
-					 * there is still data to be delivered,
-					 * reset timeout
-					 */
-					rval = 1;
-				else
-					rval = 2;
+				rval = 1;
 			}
 			/*
 			 * we cannot detect when we go out of LAST_ACK state to
@@ -3565,23 +3562,15 @@ int flags;
 
 		case IPF_TCPS_FIN_WAIT_2: /* 9 */
 			/* NOT USED */
-#if 0
-			rval = 1;
-			if ((tcpflags & TH_OPENING) == TH_OPENING) {
-				nstate = IPF_TCPS_SYN_RECEIVED;
-			} else if (tcpflags & TH_SYN) {
-				nstate = IPF_TCPS_SYN_SENT;
-			} else if ((tcpflags & (TH_FIN|TH_ACK)) != 0) {
-				nstate = IPF_TCPS_TIME_WAIT;
-			}
-#endif
 			break;
 
 		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
-			rval = 2;
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
+				rval = 1;
+			} else {
+				rval = 2;
 			}
 			break;
 
@@ -3615,7 +3604,8 @@ int flags;
 	if (rval == 2)
 		rval = 1;
 	else if (rval == 1) {
-		tqe->tqe_state[dir] = nstate;
+		if (seqnext)
+			tqe->tqe_state[dir] = nstate;
 		if ((tqe->tqe_flags & TQE_RULEBASED) == 0)
 			fr_movequeue(tqe, tqe->tqe_ifq, tqtab + nstate);
 	}
@@ -3936,6 +3926,14 @@ void fr_sttab_destroy(ipftq_t *tqp)
 /* Decrement the reference counter for this state table entry and free it   */
 /* if there are no more things using it.                                    */
 /*                                                                          */
+/* This function is only called when cleaning up after increasing is_ref by */
+/* one earlier in the 'code path' so if is_ref is 1 when entering, we do    */
+/* have an orphan, otherwise not.  However there is a possible race between */
+/* the entry being deleted via flushing with an ioctl call (that calls the  */
+/* delete function directly) and the tail end of packet processing so we    */
+/* need to grab is_lock before doing the check to synchronise the two code  */
+/* paths.                                                                   */
+/*                                                                          */
 /* When operating in userland (ipftest), we have no timers to clear a state */
 /* entry.  Therefore, we make a few simple tests before deleting an entry   */
 /* outright.  We compare states on each side looking for a combination of   */
@@ -3958,17 +3956,23 @@ ipstate_t **isp;
 
 	is = *isp;
 	*isp = NULL;
-	WRITE_ENTER(&ipf_state);
-	is->is_ref--;
-	if (is->is_ref == 0) {
-		is->is_ref++;		/* To counter ref-- in fr_delstate() */
-		fr_delstate(is, ISL_EXPIRE);
+
+	MUTEX_ENTER(&is->is_lock);
+	if (is->is_ref > 1) {
+		is->is_ref--;
+		MUTEX_EXIT(&is->is_lock);
 #ifndef	_KERNEL
-	} else if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
+		if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
 		   (is->is_sti.tqe_state[1] > IPF_TCPS_ESTABLISHED)) {
-		fr_delstate(is, ISL_ORPHAN);
+			fr_delstate(is, ISL_ORPHAN);
+		}
 #endif
+		return;
 	}
+	MUTEX_EXIT(&is->is_lock);
+
+	WRITE_ENTER(&ipf_state);
+	fr_delstate(is, ISL_EXPIRE);
 	RWLOCK_EXIT(&ipf_state);
 }
 
@@ -4062,7 +4066,7 @@ ipfgeniter_t *itp;
 	if (itp->igi_data == NULL)
 		return EFAULT;
 
-	if (itp->igi_nitems == 0)
+	if (itp->igi_nitems < 1)
 		return ENOSPC;
 
 	if (itp->igi_type != IPFGENITER_STATE)
@@ -4084,31 +4088,27 @@ ipfgeniter_t *itp;
 		next = is->is_next;
 	}
 
-	for (count = itp->igi_nitems; count > 0; count--) {
+	count = itp->igi_nitems;
+	for (;;) {
 		if (next != NULL) {
 			/*
 			 * If we find a state entry to use, bump its
 			 * reference count so that it can be used for
 			 * is_next when we come back.
 			 */
-			MUTEX_ENTER(&next->is_lock);
-			next->is_ref++;
-			MUTEX_EXIT(&next->is_lock);
-			token->ipt_data = next;
+			if (count == 1) {
+				MUTEX_ENTER(&next->is_lock);
+				next->is_ref++;
+				MUTEX_EXIT(&next->is_lock);
+				token->ipt_data = next;
+			}
 		} else {
 			bzero(&zero, sizeof(zero));
 			next = &zero;
-			token->ipt_data = (void *)-1;
 			count = 1;
+			token->ipt_data = NULL;
 		}
 		RWLOCK_EXIT(&ipf_state);
-
-		/*
-		 * If we had a prior pointer to a state entry, release it.
-		 */
-		if (is != NULL) {
-			fr_statederef(&is);
-		}
 
 		/*
 		 * This should arguably be via fr_outobj() so that the state
@@ -4121,9 +4121,14 @@ ipfgeniter_t *itp;
 			break;
 
 		dst += sizeof(*next);
+		count--;
+
 		READ_ENTER(&ipf_state);
-		is = next;
-		next = is->is_next;
+		next = next->is_next;
+	}
+
+	if (is != NULL) {
+		fr_statederef(&is);
 	}
 
 	return error;

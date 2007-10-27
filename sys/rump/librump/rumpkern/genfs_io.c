@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.18.2.2 2007/09/03 14:45:29 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.1.8.2 2007/10/27 11:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,80 +37,10 @@
 #include "rumpuser.h"
 
 void
-genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
-{
-	struct genfs_node *gp = VTOG(vp);
-
-	gp->g_op = ops;
-}
-
-void
-genfs_node_destroy(struct vnode *vp)
-{
-
-	return;
-}
-
-void
-genfs_node_unlock(struct vnode *vp)
-{
-
-}
-
-void
-genfs_node_wrlock(struct vnode *vp)
-{
-
-}
-
-void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 {
 
 	panic("%s: not implemented", __func__);
-}
-
-int
-genfs_lock(void *v)
-{
-	struct vop_lock_args *ap = v;
-
-	return lockmgr(ap->a_vp->v_vnlock, ap->a_flags, &ap->a_vp->v_interlock);
-}
-
-int
-genfs_unlock(void *v)
-{
-	struct vop_unlock_args *ap = v;
-
-	return lockmgr(ap->a_vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &ap->a_vp->v_interlock);
-}
-
-int
-genfs_islocked(void *v)
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	return lockstatus(ap->a_vp->v_vnlock);
-}
-
-int
-genfs_seek(void *v)
-{
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t a_oldoff;
-		off_t a_newoff;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-
-	if (ap->a_newoff < 0)
-		return EINVAL;
-
-	return 0;
 }
 
 int
@@ -141,7 +71,7 @@ genfs_getpages(void *v)
 		panic("%s: centeridx != not supported", __func__);
 
 	if (ap->a_access_type & VM_PROT_WRITE)
-		vp->v_flag |= VONWORKLST;
+		vp->v_iflag |= VI_ONWORKLST;
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
@@ -233,6 +163,13 @@ genfs_getpages(void *v)
 	return 0;
 }
 
+int
+genfs_compat_getpages(void *v)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
 /*
  * simplesimplesimple: we put all pages every time.
  */
@@ -282,7 +219,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
-		vp->v_flag &= ~VONWORKLST;
+		vp->v_iflag &= ~VI_ONWORKLST;
 		return 0;
 	}
 
@@ -367,12 +304,15 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	goto restart;
 }
 
-void
-genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
+int
+genfs_null_putpages(void *v)
 {
-	int fs_bsize = 1 << vp->v_mount->mnt_fs_bshift;
+	struct vop_putpages_args *ap = v;
+	struct vnode *vp = ap->a_vp;
 
-	*eobp = (size + fs_bsize - 1) & ~(fs_bsize - 1);
+	KASSERT(vp->v_uobj.uo_npages == 0);
+	simple_unlock(&vp->v_interlock);
+	return 0;
 }
 
 int

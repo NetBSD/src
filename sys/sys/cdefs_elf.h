@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.22.4.1 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.22.4.2 2007/10/27 11:36:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -71,7 +71,9 @@
 #endif
 
 #define	__warn_references(sym,msg)					\
-    __asm(".section .gnu.warning." #sym "\n\t.ascii \"" msg "\"\n\t.text");
+    __asm(".pushsection .gnu.warning." #sym "\n"			\
+	  ".ascii \"" msg "\"\n"					\
+	  ".popsection");
 
 #else /* !__STDC__ */
 
@@ -92,16 +94,22 @@
     __asm(".weak sym");
 #endif
 #define	__warn_references(sym,msg)					\
-    __asm(".section .gnu.warning.sym\n\t.ascii msg ; .text");
+    __asm(".pushsection .gnu.warning.sym\n"				\
+	  ".ascii \"" msg "\"\n"					\
+	  ".popsection");
 
 #endif /* !__STDC__ */
 
 #if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm(".section " #_sec "\n\t.asciz \"" _str "\"\n\t.previous")
+	__asm(".pushsection " #_sec "\n"				\
+	      ".asciz \"" _str "\"\n"					\
+	      ".popsection")
 #else
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm(".section _sec\n\t.asciz _str\n\t.previous")
+	__asm(".pushsection _sec\n"					\
+	      ".asciz \"" _str "\"\n"					\
+	      ".popsection")
 #endif
 
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
@@ -113,17 +121,13 @@
 #define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright,_s)
 #else
 #define	__COPYRIGHT(_s)							\
-	static const char copyright[]					\
-	    __attribute__((__unused__,__section__(".copyright"))) = _s
+	static const char copyright[] __used				\
+	    __attribute__((__section__(".copyright"))) = _s
 #endif
 
 #define	__KERNEL_RCSID(_n, _s)		__RCSID(_s)
 #define	__KERNEL_SCCSID(_n, _s)
-#if 0	/* XXX see above */
 #define	__KERNEL_COPYRIGHT(_n, _s)	__COPYRIGHT(_s)
-#else
-#define	__KERNEL_COPYRIGHT(_n, _s)	__SECTIONSTRING(.copyright, _s)
-#endif
 
 #ifndef __lint__
 #define	__link_set_make_entry(set, sym)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.95.4.4 2007/09/03 14:41:09 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.95.4.5 2007/10/27 11:35:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -88,12 +88,12 @@
  * in this file.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.5 2007/10/27 11:35:36 yamt Exp $");
+
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.4 2007/09/03 14:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,15 +420,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		case PIOD_WRITE_D:
 		case PIOD_WRITE_I:
-#if defined(__HAVE_RAS)
 			/*
 			 * Can't write to a RAS
 			 */
-			if (!LIST_EMPTY(&t->p_raslist) &&
-			    (ras_lookup(t, SCARG(uap, addr)) != (void *)-1)) {
+			if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
 				return (EACCES);
 			}
-#endif
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
@@ -632,6 +629,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			}
 			lt = LIST_NEXT(lt, l_sibling);
 		}
+		while (lt != NULL && lt->l_stat == LSZOMB)
+			lt = LIST_NEXT(lt, l_sibling);
 		pl.pl_lwpid = 0;
 		pl.pl_event = 0;
 		if (lt) {

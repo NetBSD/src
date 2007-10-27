@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.152.2.4 2007/09/03 14:46:56 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.152.2.5 2007/10/27 11:36:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.4 2007/09/03 14:46:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.5 2007/10/27 11:36:49 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -380,11 +380,11 @@ lfs_inactive(void *v)
  * identify all the pages touched during directory ops which need to
  * be ordered and flushed atomically, so that they may be recovered.
  *
- * Because we have to mark nodes VDIROP in order to prevent
+ * Because we have to mark nodes VU_DIROP in order to prevent
  * the cache from reclaiming them while a dirop is in progress, we must
  * also manage the number of nodes so marked (otherwise we can run out).
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
- * is decremented during segment write, when VDIROP is taken off.
+ * is decremented during segment write, when VU_DIROP is taken off.
  */
 #define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
 #define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
@@ -523,7 +523,7 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 		if (nvpp && *nvpp)					\
 			UNMARK_VNODE(*nvpp);				\
 		/* Check for error return to stem vnode leakage */	\
-		if (nvpp && *nvpp && !((*nvpp)->v_flag & VDIROP))	\
+		if (nvpp && *nvpp && !((*nvpp)->v_uflag & VU_DIROP))	\
 			ungetnewvnode(*(nvpp));				\
 		SET_ENDOP_BASE((fs), (dvp), (str));			\
 		lfs_reserve((fs), (dvp), NULL, -LFS_NRESERVE(fs));	\
@@ -552,19 +552,19 @@ lfs_mark_vnode(struct vnode *vp)
 
 	simple_lock(&fs->lfs_interlock);
 	if (!(ip->i_flag & IN_ADIROP)) {
-		if (!(vp->v_flag & VDIROP)) {
+		if (!(vp->v_uflag & VU_DIROP)) {
 			(void)lfs_vref(vp);
 			simple_lock(&lfs_subsys_lock);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-			vp->v_flag |= VDIROP;
+			vp->v_uflag |= VU_DIROP;
 		}
 		++fs->lfs_nadirop;
 		ip->i_flag |= IN_ADIROP;
 	} else
-		KASSERT(vp->v_flag & VDIROP);
+		KASSERT(vp->v_uflag & VU_DIROP);
 	simple_unlock(&fs->lfs_interlock);
 }
 
@@ -574,7 +574,7 @@ lfs_unmark_vnode(struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 
 	if (ip && (ip->i_flag & IN_ADIROP)) {
-		KASSERT(vp->v_flag & VDIROP);
+		KASSERT(vp->v_uflag & VU_DIROP);
 		simple_lock(&ip->i_lfs->lfs_interlock);
 		--ip->i_lfs->lfs_nadirop;
 		simple_unlock(&ip->i_lfs->lfs_interlock);
@@ -651,7 +651,7 @@ lfs_mknod(void *v)
 
 	/*
 	 * Call fsync to write the vnode so that we don't have to deal with
-	 * flushing it when it's marked VDIROP|VXLOCK.
+	 * flushing it when it's marked VU_DIROP|VI_XLOCK.
 	 *
 	 * XXX KS - If we can't flush we also can't call vgone(), so must
 	 * return.  But, that leaves this vnode in limbo, also not good.
@@ -1117,9 +1117,9 @@ lfs_reclaim(void *v)
 		ip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
-	if (vp->v_flag & VDIROP) {
-		panic("reclaimed vnode is VDIROP");
-		vp->v_flag &= ~VDIROP;
+	if (vp->v_uflag & VU_DIROP) {
+		panic("reclaimed vnode is VU_DIROP");
+		vp->v_uflag &= ~VU_DIROP;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 	}
 	simple_unlock(&fs->lfs_interlock);
@@ -1308,7 +1308,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * make sure that we don't clear IN_MODIFIED
 		 * unnecessarily.
 		 */
-		if (vp->v_flag & (VXLOCK | VFREEING)) {
+		if (vp->v_iflag & (VI_XLOCK | VI_FREEING)) {
 			simple_lock(&fs->lfs_interlock);
 			continue;
 		}
@@ -1337,7 +1337,7 @@ lfs_flush_dirops(struct lfs *fs)
 
 /*
  * Flush all vnodes for which the pagedaemon has requested pageouts.
- * Skip over any files that are marked VDIROP (since lfs_flush_dirop()
+ * Skip over any files that are marked VU_DIROP (since lfs_flush_dirop()
  * has just run, this would be an error).  If we have to skip a vnode
  * for any reason, just skip it; if we have to wait for the cleaner,
  * abort.  The writer daemon will call us again later.
@@ -1391,7 +1391,7 @@ lfs_flush_pchain(struct lfs *fs)
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		if (vp->v_flag & (VXLOCK|VDIROP))
+		if ((vp->v_iflag|vp->v_uflag) & (VI_XLOCK|VU_DIROP))
 			continue;
 		if (vp->v_type != VREG)
 			continue;
@@ -1585,7 +1585,7 @@ lfs_fcntl(void *v)
 		    /* Mark a segment SEGUSE_INVAL */
 		    LFS_SEGENTRY(sup, fs, *(int *)ap->a_data, bp);
 		    if (sup->su_nbytes > 0) {
-			    brelse(bp);
+			    brelse(bp, 0);
 			    lfs_unset_inval_all(fs);
 			    return EBUSY;
 		    }
@@ -2039,9 +2039,9 @@ lfs_putpages(void *v)
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
 		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
-		    (vp->v_flag & VONWORKLST) &&
+		    (vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-			vp->v_flag &= ~VWRITEMAPDIRTY;
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
 		splx(s);
@@ -2205,10 +2205,10 @@ lfs_putpages(void *v)
 	 * at it).
 	 */
 	if ((ap->a_flags & (PGO_CLEANIT|PGO_LOCKED)) == PGO_CLEANIT &&
-	    (vp->v_flag & VDIROP)) {
+	    (vp->v_uflag & VU_DIROP)) {
 		int locked;
 
-		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
+		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		simple_unlock(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
@@ -2267,7 +2267,7 @@ lfs_putpages(void *v)
 	 * Ensure that the partial segment is marked SS_DIROP if this
 	 * vnode is a DIROP.
 	 */
-	if (!seglocked && vp->v_flag & VDIROP)
+	if (!seglocked && vp->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	/*
@@ -2380,7 +2380,7 @@ lfs_putpages(void *v)
 		while (vp->v_numoutput > 0) {
 			DLOG((DLOG_PAGE, "lfs_putpages: ino %d sleeping on"
 			      " num %d\n", ip->i_number, vp->v_numoutput));
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0,
 				&global_v_numoutput_slock);
 		}

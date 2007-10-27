@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.80.12.4 2007/09/03 14:40:52 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.80.12.5 2007/10/27 11:35:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.4 2007/09/03 14:40:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.5 2007/10/27 11:35:26 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -306,14 +306,9 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	/*
-	 * XXX p_rasmutex is run at IPL_SCHED, because of lock order
-	 * issues (kernel_lock -> p_rasmutex).  Ideally ras_lookup
-	 * should operate "lock free".
-	 */
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
-	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -364,13 +359,14 @@ proc0_init(void)
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
 	l->l_cpu = curcpu();
-	l->l_priority = PRIBIO;
-	l->l_usrpri = PRIBIO;
+	l->l_priority = PUSER;
+	l->l_usrpri = PUSER;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
 	l->l_name = __UNCONST("swapper");
 
-	callout_init(&l->l_tsleep_ch, 0);
+	callout_init(&l->l_timeout_ch, 0);
+	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
 	cv_init(&l->l_sigcv, "sigwait");
 
 	/* Create credentials. */
@@ -387,7 +383,7 @@ proc0_init(void)
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
-	mutex_init(&limit0.p_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&limit0.pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
@@ -405,7 +401,8 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	limit0.pl_corename = defcorename;
-	limit0.p_refcnt = 1;
+	limit0.pl_refcnt = 1;
+	limit0.pl_sv_limit = NULL;
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);
@@ -672,12 +669,12 @@ proc_alloc(void)
 }
 
 /*
- * Free last resources of a process - called from proc_free (in kern_exit.c)
+ * Free a process id - called from proc_free (in kern_exit.c)
  *
- * Called with the proclist_lock held, and releases upon exit.
+ * Called with the proclist_lock held.
  */
 void
-proc_free_mem(struct proc *p)
+proc_free_pid(struct proc *p)
 {
 	pid_t pid = p->p_pid;
 	struct pid_table *pt;
@@ -705,9 +702,6 @@ proc_free_mem(struct proc *p)
 	mutex_exit(&proclist_mutex);
 
 	nprocs--;
-	mutex_exit(&proclist_lock);
-
-	pool_put(&proc_pool, p);
 }
 
 /*
@@ -1313,6 +1307,18 @@ proc_crmod_enter(void)
 	kauth_cred_t oc;
 	char *cn;
 
+	/* Reset what needs to be reset in plimit. */
+	if (p->p_limit->pl_corename != defcorename) {
+		lim_privatise(p, false);
+		lim = p->p_limit;
+		mutex_enter(&lim->pl_lock);
+		cn = lim->pl_corename;
+		lim->pl_corename = defcorename;
+		mutex_exit(&lim->pl_lock);
+		if (cn != defcorename)
+			free(cn, M_TEMP);
+	}
+
 	mutex_enter(&p->p_mutex);
 
 	/* Ensure the LWP cached credentials are up to date. */
@@ -1322,22 +1328,6 @@ proc_crmod_enter(void)
 		kauth_cred_free(oc);
 	}
 
-	/* Reset what needs to be reset in plimit. */
-	lim = p->p_limit;
-	if (lim->pl_corename != defcorename) {
-		if (lim->p_refcnt > 1 &&
-		    (lim->p_lflags & PL_SHAREMOD) == 0) {
-			p->p_limit = limcopy(p);
-			limfree(lim);
-			lim = p->p_limit;
-		}
-		mutex_enter(&lim->p_lock);
-		cn = lim->pl_corename;
-		lim->pl_corename = defcorename;
-		mutex_exit(&lim->p_lock);
-		if (cn != defcorename)
-			free(cn, M_TEMP);
-	}
 }
 
 /*

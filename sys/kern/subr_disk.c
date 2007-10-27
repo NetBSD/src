@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.69.2.3 2007/09/03 14:41:01 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.69.2.4 2007/10/27 11:35:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69.2.3 2007/09/03 14:41:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69.2.4 2007/10/27 11:35:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,8 +184,8 @@ disk_find(const char *name)
 	return (NULL);
 }
 
-static void
-disk_init0(struct disk *diskp)
+void
+disk_init(struct disk *diskp, char *name, struct dkdriver *driver)
 {
 
 	/*
@@ -197,10 +197,15 @@ disk_init0(struct disk *diskp)
 	diskp->dk_nwedges = 0;
 	diskp->dk_labelsector = LABELSECTOR;
 	disk_blocksize(diskp, DEV_BSIZE);
+	diskp->dk_name = name;
+	diskp->dk_driver = driver;
 }
 
-static void
-disk_attach0(struct disk *diskp)
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
 {
 
 	/*
@@ -223,8 +228,11 @@ disk_attach0(struct disk *diskp)
 	diskp->dk_stats = iostat_alloc(IOSTAT_DISK, diskp, diskp->dk_name);
 }
 
-static void
-disk_detach0(struct disk *diskp)
+/*
+ * Detach a disk.
+ */
+void
+disk_detach(struct disk *diskp)
 {
 
 	/*
@@ -247,57 +255,12 @@ disk_detach0(struct disk *diskp)
 	free(diskp->dk_cpulabel, M_DEVBUF);
 }
 
-/*
- * Attach a disk.
- */
 void
-disk_attach(struct disk *diskp)
-{
-
-	disk_init0(diskp);
-	disk_attach0(diskp);
-}
-
-/*
- * Detach a disk.
- */
-void
-disk_detach(struct disk *diskp)
+disk_destroy(struct disk *diskp)
 {
 
 	mutex_destroy(&diskp->dk_openlock);
 	mutex_destroy(&diskp->dk_rawlock);
-	disk_detach0(diskp);
-}
-
-/*
- * Initialize a pseudo disk.
- */
-void
-pseudo_disk_init(struct disk *diskp)
-{
-
-	disk_init0(diskp);
-}
-
-/*
- * Attach a pseudo disk.
- */
-void
-pseudo_disk_attach(struct disk *diskp)
-{
-
-	disk_attach0(diskp);
-}
-
-/*
- * Detach a pseudo disk.
- */
-void
-pseudo_disk_detach(struct disk *diskp)
-{
-
-	disk_detach0(diskp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.4.16.4 2007/02/26 09:11:00 yamt Exp $ */
+/* $NetBSD: udf.h,v 1.4.16.5 2007/10/27 11:35:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -38,6 +38,7 @@
 
 #include <sys/queue.h>
 #include <sys/uio.h>
+#include <sys/mutex.h>
 
 #include "udf_osta.h"
 #include "ecma167-udf.h"
@@ -192,8 +193,8 @@ struct udf_mount {
 	struct pool *desc_pool;
 
 	/* locks */
-	struct simplelock ihash_slock;
-	struct lock       get_node_lock;
+	kmutex_t	ihash_lock;
+	kmutex_t	get_node_lock;
 
 	/* lists */
 	STAILQ_HEAD(, udf_node) dirty_nodes;

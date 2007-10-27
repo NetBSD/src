@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.34.2.4 2007/09/03 14:46:46 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.34.2.5 2007/10/27 11:36:39 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34.2.4 2007/09/03 14:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34.2.5 2007/10/27 11:36:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34.2.4 2007/09/03 14:46:46 yamt 
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
-#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -143,7 +143,7 @@ ext2fs_readdir(void *v)
 	struct m_ext2fs *fs = VTOI(vp)->i_e2fs;
 
 	struct ext2fs_direct *dp;
-	struct dirent dstd;
+	struct dirent *dstd;
 	struct uio auio;
 	struct iovec aiov;
 	void *dirbuf;
@@ -168,8 +168,10 @@ ext2fs_readdir(void *v)
 	auio.uio_resid = e2fs_count;
 	UIO_SETUP_SYSSPACE(&auio);
 	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
+	dstd = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK | M_ZERO);
 	if (ap->a_ncookies) {
-		nc = ncookies = e2fs_count / 16;
+		nc = e2fs_count / _DIRENT_MINSIZE((struct dirent *)0);
+		ncookies = nc;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
@@ -186,11 +188,12 @@ ext2fs_readdir(void *v)
 				error = EIO;
 				break;
 			}
-			ext2fs_dirconv2ffs(dp, &dstd);
-			if(dstd.d_reclen > uio->uio_resid) {
+			ext2fs_dirconv2ffs(dp, dstd);
+			if(dstd->d_reclen > uio->uio_resid) {
 				break;
 			}
-			if ((error = uiomove((void *)&dstd, dstd.d_reclen, uio)) != 0) {
+			error = uiomove(dstd, dstd->d_reclen, uio);
+			if (error != 0) {
 				break;
 			}
 			off = off + e2d_reclen;
@@ -207,6 +210,7 @@ ext2fs_readdir(void *v)
 		uio->uio_offset = off;
 	}
 	FREE(dirbuf, M_TEMP);
+	FREE(dstd, M_TEMP);
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {
@@ -365,7 +369,7 @@ searchloop:
 		 */
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = ext2fs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error != 0)
@@ -469,7 +473,7 @@ searchloop:
 		goto searchloop;
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -542,13 +546,13 @@ found:
 		error = ext2fs_setsize(dp,
 				dp->i_offset + EXT2FS_DIRSIZ(ep->e2d_namlen));
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(vdp, ext2fs_size(dp));
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.

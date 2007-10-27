@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.4.2.3 2007/09/03 14:42:04 yamt Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.4.2.4 2007/10/27 11:35:59 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -32,9 +32,6 @@
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
  *  All rights reserved.
  *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier
- *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -43,11 +40,7 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. All advertising materials mentioning features or use of this software
- *     must display the following acknowledgement:
- *         This product includes software developed by the NetBSD
- *         Foundation, Inc. and its contributors.
- *  4. Neither the name of The NetBSD Foundation nor the names of its
+ *  3. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -109,6 +102,7 @@
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/socket.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -355,7 +349,7 @@ etherip_start(struct ifnet *ifp)
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 
 	if(sc->sc_si)
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
 }
 
 static void
@@ -524,7 +518,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 	}
 
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 
@@ -533,17 +527,17 @@ etherip_set_tunnel(struct ifnet *ifp,
 	osrc = sc->sc_src; sc->sc_src = NULL;
 	odst = sc->sc_dst; sc->sc_dst = NULL;
 
-	sc->sc_src = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
-	memcpy(sc->sc_src, src, src->sa_len);
-	if (osrc) FREE(osrc, M_IFADDR);
+	sc->sc_src = sockaddr_dup(src, M_WAITOK);
+	if (osrc)
+		sockaddr_free(osrc);
 
-	sc->sc_dst = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
-	memcpy(sc->sc_dst, dst, dst->sa_len);
-	if (odst) FREE(odst, M_IFADDR);
+	sc->sc_dst = sockaddr_dup(dst, M_WAITOK);
+	if (odst)
+		sockaddr_free(odst);
 
 	ifp->if_flags |= IFF_RUNNING;
 
-	sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
 
@@ -562,16 +556,16 @@ etherip_delete_tunnel(struct ifnet *ifp)
 	s = splsoftnet();
 
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 
 	if (sc->sc_src) {
-		FREE(sc->sc_src, M_IFADDR);
+		sockaddr_free(sc->sc_src);
 		sc->sc_src = NULL;
 	}
 	if (sc->sc_dst) {
-		FREE(sc->sc_dst, M_IFADDR);
+		sockaddr_free(sc->sc_dst);
 		sc->sc_dst = NULL;
 	}
 
@@ -585,7 +579,7 @@ etherip_init(struct ifnet *ifp)
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
-		sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+		sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);

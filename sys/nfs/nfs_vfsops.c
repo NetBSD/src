@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.148.2.4 2007/09/03 14:44:20 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.148.2.5 2007/10/27 11:36:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.4 2007/09/03 14:44:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.5 2007/10/27 11:36:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -364,9 +364,9 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unbusy(mp);
@@ -653,16 +653,16 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
 	error = copyin(args->fh, nfh, args->fhsize);
 	if (error)
-		return (error);
+		goto free_nfh;
 	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(path, pth, MNAMELEN - 1, &len);
 	if (error)
-		goto free_nfh;
+		goto free_pth;
 	memset(&pth[len], 0, MNAMELEN - len);
 	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(args->hostname, hst, MNAMELEN - 1, &len);
 	if (error)
-		goto free_pth;
+		goto free_hst;
 	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
 	error = sockargs(&nam, args->addr, args->addrlen, MT_SONAME);
@@ -928,7 +928,7 @@ nfs_root(mp, vpp)
 		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
-	vp->v_flag = VROOT;
+	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }

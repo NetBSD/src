@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140.2.4 2007/09/03 14:46:44 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140.2.5 2007/10/27 11:36:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,11 +89,8 @@ enum vtagtype	{
 LIST_HEAD(buflists, buf);
 
 /*
- * Reading or writing any of these items requires holding the appropriate lock.
- * v_freelist is locked by the global vnode_free_list simple lock.
- * v_mntvnodes is locked by the global mntvnodes simple lock.
- * v_flag, v_usecount, v_holdcount and v_writecount are
- *     locked by the v_interlock simple lock
+ * Reading or writing any of these items requires holding the appropriate
+ * lock. [XXX documented on the vmlocking branch.]
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
@@ -104,7 +101,9 @@ struct vnode {
 #define	v_interlock	v_uobj.vmobjlock
 	voff_t		v_size;			/* size of file */
 	voff_t		v_writesize;		/* new size after write */
-	int		v_flag;			/* flags */
+	int		v_iflag;		/* i: VI_* flags */
+	int		v_vflag;		/* v: VV_* flags */
+	int		v_uflag;		/* u: VU_* flags */
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
@@ -152,32 +151,46 @@ struct vnode {
  */
 
 /*
- * Vnode flags.
+ * Vnode flags.  The first set are locked by vp->v_vnlock or are stable.
+ * VSYSTEM is only used to skip vflush()ing quota files.  VISTTY is used
+ * when reading dead vnodes.
  */
-#define	VROOT		0x0001	/* root of its file system */
-#define	VTEXT		0x0002	/* vnode is a pure text prototype */
-	/* VSYSTEM only used to skip vflush()ing quota files */
-#define	VSYSTEM		0x0004	/* vnode being used by kernel */
-	/* VISTTY used when reading dead vnodes */
-#define	VISTTY		0x0008	/* vnode represents a tty */
-#define	VEXECMAP	0x0010	/* vnode might have PROT_EXEC mappings */
-#define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
-#define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
-#define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
-#define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
-#define	VXWANT		0x0200	/* process is waiting for vnode */
-#define	VBWAIT		0x0400	/* waiting for output to complete */
-#define	VALIASED	0x0800	/* vnode has an alias */
-#define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
-#define	VLAYER		0x2000	/* vnode is on a layer filesystem */
-#define	VONWORKLST	0x4000	/* On syncer work-list */
-#define	VFREEING	0x8000	/* vnode is being freed */
-#define	VMAPPED		0x10000	/* vnode might have user mappings */
+#define	VV_ROOT		0x00000001	/* root of its file system */
+#define	VV_SYSTEM	0x00000002	/* vnode being used by kernel */
+#define	VV_ISTTY	0x00000004	/* vnode represents a tty */
+#define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
+#define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
+#define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
+
+/* XXXAD ALIASED should be covered by spec lock? */
+
+/*
+ * The second set are locked by vp->v_interlock.
+ */
+#define	VI_TEXT		0x00000100	/* vnode is a pure text prototype */
+#define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
+#define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
+#define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
+#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
+#define	VI_ALIASED	0x00002000	/* vnode has an alias */
+#define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
+#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
+#define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
+#define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
+#define	VI_CLEAN	0x00080000	/* has been reclaimed */
+#define	VI_XWANT	0x00100000	/* process is waiting for vnode */
+#define	VI_BWAIT	0x00200000	/* waiting for output to complete */
+#define	VI_FREEING	0x00400000	/* vnode is being freed */
+
+/*
+ * The third set are locked by the underlying file system.
+ */
+#define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
 
 #define	VNODE_FLAGBITS \
-    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
-    "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
-    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
+    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
+    "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
+    "\22LAYER\23MAPPED\24CLEAN\25XWANT\26BWAIT\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 

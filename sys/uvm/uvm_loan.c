@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.55.2.4 2007/09/03 14:47:07 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.55.2.5 2007/10/27 11:36:54 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55.2.4 2007/09/03 14:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55.2.5 2007/10/27 11:36:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,6 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 		/* locked: if (rv > 0) => map, amap, uobj  [o.w. unlocked] */
 		KASSERT(rv > 0 || aref->ar_amap == NULL ||
 		    !mutex_owned(&aref->ar_amap->am_l));
-		LOCK_ASSERT(rv > 0 || uobj == NULL ||
-		    !simple_lock_held(&uobj->vmobjlock));
 
 		/* total failure */
 		if (rv < 0) {
