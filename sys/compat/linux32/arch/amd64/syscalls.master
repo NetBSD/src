@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 2007/04/20 13:37:05 njoly Exp $
+	$NetBSD: syscalls.master,v 1.16 2007/10/27 09:16:24 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -303,7 +303,8 @@
 		    netbsd32_size_t sigsetsize); }
 180	UNIMPL	pread
 181	UNIMPL	pwrite
-182	UNIMPL	chown16
+182	STD	{ int linux32_sys_chown16(const netbsd32_charp path, \
+		    int uid, int gid); }
 183	NOARGS	{ int netbsd32___getcwd(netbsd32_charp bufp, \
 		    netbsd32_size_t length); } 
 184	UNIMPL	capget
@@ -326,7 +327,8 @@
 		    linux32_stat64p sp); }
 197	STD	{ int linux32_sys_fstat64(int fd, \
 		    linux32_stat64p sp); }
-198	UNIMPL	lchown
+198	NOARGS	{ int netbsd32___posix_lchown(const netbsd32_charp path, \
+		    int uid, int gid); }
 199	NOARGS	{ uid_t sys_getuid(void); }
 200	NOARGS	{ gid_t sys_getgid(void); }
 201	NOARGS	{ uid_t sys_geteuid(void); }
@@ -344,7 +346,8 @@
 210	STD	{ int linux32_sys_setresgid(gid_t rgid, gid_t egid, \
 		    gid_t sgid); }
 211	UNIMPL	getresgid
-212	UNIMPL	chown
+212	NOARGS	{ int netbsd32___posix_chown(const netbsd32_charp path, \
+		    int uid, int gid); }
 213 	NOARGS	{ int sys_setuid(uid_t uid); }
 214	NOARGS	{ int sys_setgid(gid_t gid); }
 215	NOARGS	{ int linux_sys_setfsuid(uid_t uid); }
