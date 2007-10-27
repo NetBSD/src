@@ -1,4 +1,4 @@
-/*	$NetBSD: grutil.c,v 1.2 2007/10/18 13:04:06 christos Exp $	*/
+/*	$NetBSD: grutil.c,v 1.3 2007/10/27 15:33:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grutil.c,v 1.2 2007/10/18 13:04:06 christos Exp $");
+__RCSID("$NetBSD: grutil.c,v 1.3 2007/10/27 15:33:25 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -92,7 +92,7 @@ alloc_groups(int *ngroups, gid_t **groups, int *ngroupsmax)
 }
 
 static addgrp_ret_t
-addgid(gid_t *groups, int ngroups, int ngroupsmax, gid_t gid)
+addgid(gid_t *groups, int ngroups, int ngroupsmax, gid_t gid, int makespace)
 {
 	int i;
 
@@ -101,8 +101,40 @@ addgid(gid_t *groups, int ngroups, int ngroupsmax, gid_t gid)
 		continue;
 
 	/* add the gid to the supplemental group list */
-	if (i == ngroups && ngroups < ngroupsmax) {
-		groups[ngroups++] = gid;
+	if (i == ngroups) {
+		if (ngroups < ngroupsmax)
+			groups[ngroups++] = gid;
+		else {	/*
+			 * setgroups(2) will fail with errno = EINVAL
+			 * if ngroups > nmaxgroups.  If makespace is
+			 * set, replace the last group with the new
+			 * one.  Otherwise, fail the way setgroups(2)
+			 * would if we passed the larger groups array.
+			 */
+			if (makespace) {
+				/*
+				 * Find a slot that doesn't contain
+				 * the primary group.
+				 */
+				struct passwd *pwd;
+				gid_t pgid;
+				pwd = getpwuid(getuid());
+				if (pwd == NULL)
+					goto error;
+				pgid = pwd->pw_gid;
+				for (i = ngroupsmax - 1; i >= 0; i--)
+					if (groups[i] != pgid)
+						break;
+				if (i < 0)
+					goto error;
+				groups[i] = gid;
+			}
+			else {
+		error:
+				errno = EINVAL;
+				return ADDGRP_ESETGROUPS;
+			}
+		}
 		if (setgroups(ngroups, groups) < 0)
 			return ADDGRP_ESETGROUPS;
 	}
@@ -110,10 +142,15 @@ addgid(gid_t *groups, int ngroups, int ngroupsmax, gid_t gid)
 }
 
 static addgrp_ret_t
-addgrp(gid_t newgid)
+addgrp(gid_t newgid, int makespace)
 {
 	int ngroups, ngroupsmax, rval;
 	gid_t *groups;
+	gid_t oldgid;
+
+	oldgid = getgid();
+	if (oldgid == newgid) /* nothing to do */
+		return ADDGRP_NOERROR;
 
 	rval = alloc_groups(&ngroups, &groups, &ngroupsmax);
 	if (rval != 0)
@@ -135,7 +172,7 @@ addgrp(gid_t newgid)
 	 *	  add the new egid to the list if there is room.
 	 */
 
-	rval = addgid(groups, ngroups, ngroupsmax, newgid);
+	rval = addgid(groups, ngroups, ngroupsmax, newgid, makespace);
 #else
 	/*
 	 * According to POSIX/XPG6:
@@ -147,10 +184,8 @@ addgrp(gid_t newgid)
 	 *	o If the old egid is not in the supplemental group list,
 	 *	  add the old egid to the list if there is room.
 	 */
-
 	{
 		int i;
-		gid_t oldgid;
 
 		/* search for new egid in supplemental group list */
 		for (i = 0; i < ngroups && groups[i] != newgid; i++)
@@ -161,9 +196,7 @@ addgrp(gid_t newgid)
 			for (--ngroups; i < ngroups; i++)
 				groups[i] = groups[i + 1];
 
-		oldgid = getgid();
-		if (oldgid != newgid)
-			rval = addgid(groups, ngroups, ngroupsmax, oldgid);
+		rval = addgid(groups, ngroups, ngroupsmax, oldgid, makespace);
 	}
 #endif
 	free_groups(groups);
@@ -171,7 +204,8 @@ addgrp(gid_t newgid)
 }
 
 /*
- * If newgrp fails, it returns -1, and the errno variable is set to:
+ * If newgrp fails, it returns (gid_t)-1 and the errno variable is
+ * set to:
  *	[EINVAL]	Unknown group.
  *	[EPERM]		Bad password.
  */
@@ -179,9 +213,10 @@ static gid_t
 newgrp(const char *gname, struct passwd *pwd, uid_t ruid, const char *prompt)
 {
 	struct group *grp;
+	char **ap;
+	char *p;
 	gid_t *groups;
 	int ngroups, ngroupsmax;
-	char *p;
 
 	if (gname == NULL)
 		return pwd->pw_gid;
@@ -209,14 +244,20 @@ newgrp(const char *gname, struct passwd *pwd, uid_t ruid, const char *prompt)
 	if (alloc_groups(&ngroups, &groups, &ngroupsmax) == 0) {
 		int i;
 		for (i = 0; i < ngroups; i++)
-			if (groups[i] == grp->gr_gid)
+			if (groups[i] == grp->gr_gid) {
+				free_groups(groups);
 				return grp->gr_gid;
-	} else {
-		char **ap;
-		for (ap = grp->gr_mem; *ap != NULL; ap++)
-			if (strcmp(*ap, pwd->pw_name) == 0)
-				return grp->gr_gid;
+			}
+		free_groups(groups);
 	}
+
+	/*
+	 * Check the group membership list in case the groups[] array
+	 * was maxed out or the user has been added to it since login.
+	 */
+	for (ap = grp->gr_mem; *ap != NULL; ap++)
+		if (strcmp(*ap, pwd->pw_name) == 0)
+			return grp->gr_gid;
 
 	if (*grp->gr_passwd != '\0') {
 		p = getpass(prompt);
@@ -230,6 +271,12 @@ newgrp(const char *gname, struct passwd *pwd, uid_t ruid, const char *prompt)
 	errno = EPERM;
 	return (gid_t)-1;
 }
+
+#ifdef GRUTIL_SETGROUPS_MAKESPACE
+# define ADDGRP_MAKESPACE	1
+#else
+# define ADDGRP_MAKESPACE	0
+#endif
 
 #ifdef GRUTIL_ALLOW_GROUP_ERRORS
 # define maybe_exit(e)
@@ -262,7 +309,7 @@ addgroup(
 		pwd->pw_gid = getgid();
 	}
 
-	switch (addgrp(pwd->pw_gid)) {
+	switch (addgrp(pwd->pw_gid, ADDGRP_MAKESPACE)) {
 	case ADDGRP_NOERROR:
 		break;
 	case ADDGRP_EMALLOC:
@@ -272,8 +319,18 @@ addgroup(
 		err(EXIT_FAILURE, "getgroups");
 		break;
 	case ADDGRP_ESETGROUPS:
-		warn("setgroups");
-		maybe_exit(EXIT_FAILURE);
+		switch(errno) {
+		case EINVAL:
+			warnx("setgroups: ngroups > ngroupsmax");
+			maybe_exit(EXIT_FAILURE);
+			break;
+		case EPERM:
+		case EFAULT:
+		default:
+			warn("setgroups");
+			maybe_exit(EXIT_FAILURE);
+			break;
+		}
 		break;
 	}
 
