@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2007/10/27 05:10:19 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2007/10/27 05:35:55 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2007/10/27 05:10:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2007/10/27 05:35:55 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -564,11 +564,12 @@ struct consdev kcomcons = {
 #define LSR_RXREADY		0x01
 #define LSR_ANYE		(LSR_OE|LSR_PE|LSR_FE|LSR_BE)
 
+static unsigned uartbase = 0xfe0003f8;
+
 static void
 kcomcninit(struct consdev *cn)
 {
 	struct btinfo_console *bi = lookup_bootinfo(BTINFO_CONSOLE);
-	unsigned uartbase = 0xfe0003f8;
 
 	if (bi == NULL)
 		bi = &bi_cons;
