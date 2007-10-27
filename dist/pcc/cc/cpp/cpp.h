@@ -1,4 +1,4 @@
-/*	$Id: cpp.h,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: cpp.h,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -90,6 +90,23 @@ struct initar {
 	char *str;
 };
 
+/*
+ * Struct used in parse tree evaluation.
+ * op is one of:
+ *	- number type (NUMBER, UNUMBER)
+ *	- zero (0) if divided by zero.
+ */
+struct nd {
+	int op;
+	union {
+		long long val;
+		unsigned long long uval;
+	} n;
+};
+
+#define nd_val n.val
+#define nd_uval n.uval
+
 struct recur;	/* not used outside cpp.c */
 int subst(struct symtab *, struct recur *);
 struct symtab *lookup(usch *namep, int enterf);
@@ -115,6 +132,8 @@ void putch(int);
 void putstr(usch *s);
 void line(void);
 usch *sheap(char *fmt, ...);
+void xwarning(usch *);
 void xerror(usch *);
+#define warning(...) xwarning(sheap(__VA_ARGS__))
 #define error(...) xerror(sheap(__VA_ARGS__))
 void expmac(struct recur *);

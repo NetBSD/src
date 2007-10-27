@@ -1,4 +1,4 @@
-/*	$Id: regs.c,v 1.1.1.1 2007/09/20 13:08:50 abs Exp $	*/
+/*	$Id: regs.c,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -28,7 +28,12 @@
 
 #include "pass2.h"
 #include <string.h>
+#include <strings.h>
+#include <stdint.h>
 #include <stdlib.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #define	MAXLOOP	20 /* Max number of allocation loops XXX 3 should be enough */
 
@@ -42,7 +47,7 @@
 
 #define	BIT2BYTE(bits) ((((bits)+NUMBITS-1)/NUMBITS)*(NUMBITS/8))
 #define	BITALLOC(ptr,all,sz) { \
-	int __s = BIT2BYTE(sz); ptr = all(__s); memset(ptr, 0, __s); }
+	int sz__s = BIT2BYTE(sz); ptr = all(sz__s); memset(ptr, 0, sz__s); }
 
 #undef COMPERR_PERM_MOVE
 #define	RDEBUG(x)	if (rdebug) printf x
@@ -289,10 +294,11 @@ nsucomp(NODE *p)
 	w->r_class = TCLASS(p->n_su);
 	if (w->r_class == 0)
 		w->r_class = gclass(p->n_type);
+	w->r_nclass[0] = o == LTYPE; /* XXX store leaf info here */
 	SETNUM(w);
 	if (w->r_class)
 		DLIST_INSERT_BEFORE(&initial, w, link);
-	UDEBUG(("Adding short %d calss %d\n", w->nodnum, w->r_class));
+	UDEBUG(("Adding short %d class %d\n", w->nodnum, w->r_class));
 	w++;
 	ADCL(nareg, CLASSA);
 	ADCL(nbreg, CLASSB);
@@ -542,7 +548,7 @@ adjSet(REGW *u, REGW *v)
 	}
 	if (u > v)
 		t = v, v = u, u = t;
-	w = edgehash[((int)u+(int)v) & 255];
+	w = edgehash[((intptr_t)u+(intptr_t)v) & 255];
 	for (; w; w = w->next) {
 		if (u == w->u && v == w->v)
 			return 1;
@@ -560,7 +566,7 @@ adjSetadd(REGW *u, REGW *v)
 
 	if (u > v)
 		t = v, v = u, u = t;
-	x = ((int)u+(int)v) & 255;
+	x = ((intptr_t)u+(intptr_t)v) & 255;
 	w = tmpalloc(sizeof(struct AdjSet));
 	w->u = u, w->v = v;
 	w->next = edgehash[x];
@@ -1678,6 +1684,16 @@ SelectSpill(void)
 
 	if (w == &spillWorklist) {
 		/* no heuristics, just fetch first element */
+		/* but not if leaf */
+		DLIST_FOREACH(w, &spillWorklist, link) {
+			if (w->r_nclass[0] == 0)
+				break;
+		}
+	}
+
+	if (w == &spillWorklist) {
+		/* Eh, only leaves :-/ Try anyway */
+		/* May not be useable */
 		w = DLIST_NEXT(&spillWorklist, link);
 	}
  
@@ -1847,6 +1863,7 @@ static void
 shorttemp(NODE *p)
 {
 	struct interpass *nip;
+	struct optab *q;
 	REGW *w;
 	NODE *l, *r;
 	int off;
@@ -1862,12 +1879,35 @@ shorttemp(NODE *p)
 			break;
 		}
 		RDEBUG(("rewriting node %d\n", ASGNUM(w)));
+
 		off = BITOOR(freetemp(szty(p->n_type)));
 		l = mklnode(OREG, off, FPREG, p->n_type);
 		r = talloc();
-		*r = *p;
-		nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
-		*p = *l;
+		/*
+		 * If this is a binode which reclaim a leg, and it had
+		 * to walk down the other leg first, then it must be
+		 * split below this node instead.
+		 */
+		q = &table[TBLIDX(p->n_su)];
+		if (optype(p->n_op) == BITYPE &&
+		    (q->rewrite & RLEFT && (p->n_su & DORIGHT) == 0) &&
+		    (TBLIDX(p->n_right->n_su) != 0)) {
+			*r = *l;
+			nip = ipnode(mkbinode(ASSIGN, l,
+			    p->n_left, p->n_type));
+			p->n_left = r;
+		} else if (optype(p->n_op) == BITYPE &&
+		    (q->rewrite & RRIGHT && (p->n_su & DORIGHT) != 0) &&
+		    (TBLIDX(p->n_left->n_su) != 0)) {
+			*r = *l;
+			nip = ipnode(mkbinode(ASSIGN, l,
+			    p->n_right, p->n_type));
+			p->n_right = r;
+		} else {
+			*r = *p;
+			nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
+			*p = *l;
+		}
 		DLIST_INSERT_BEFORE(cip, nip, qelem);
 		DLIST_REMOVE(w, link);
 		break;
@@ -2101,8 +2141,8 @@ ngenregs(struct interpass *ipole)
 
 		nblock -= tempmin;
 		live = tmpalloc(BIT2BYTE(nbits));
-		RDEBUG(("nblock %p num %d size %d\n",
-		    nblock, nbits, (int)(nbits * sizeof(REGW))));
+		RDEBUG(("nblock %p num %d size %zu\n",
+		    nblock, nbits, (size_t)(nbits * sizeof(REGW))));
 	}
 
 
@@ -2197,54 +2237,54 @@ onlyperm: /* XXX - should not have to redo all */
 		case SMALL:
 			optimize(ipole);
 			if (beenhere++ == MAXLOOP)
-					comperr("beenhere");
-				goto recalc;
-			}
+				comperr("beenhere");
+			goto recalc;
 		}
+	}
 
-		/* fill in regs to save */
-		ipp->ipp_regs = 0;
-		for (i = 0; i < NPERMREG-1; i++) {
-			NODE *p;
+	/* fill in regs to save */
+	ipp->ipp_regs = 0;
+	for (i = 0; i < NPERMREG-1; i++) {
+		NODE *p;
 
-			if (nsavregs[i]) {
-				ipp->ipp_regs |= (1 << permregs[i]);
-				continue; /* Spilled */
-			}
-			if (nblock[i+tempmin].r_color == permregs[i])
-				continue; /* Coalesced */
-			/*
-			 * If the original color of this permreg is used for
-			 * coloring another register, swap them to avoid
-			 * unneccessary moves.
-			 */
-			for (j = i+1; j < NPERMREG-1; j++) {
-				if (nblock[j+tempmin].r_color != permregs[i])
-					continue;
-				nblock[j+tempmin].r_color = nblock[i+tempmin].r_color;
-				break;
-			}
-			if (j != NPERMREG-1)
+		if (nsavregs[i]) {
+			ipp->ipp_regs |= (1 << permregs[i]);
+			continue; /* Spilled */
+		}
+		if (nblock[i+tempmin].r_color == permregs[i])
+			continue; /* Coalesced */
+		/*
+		 * If the original color of this permreg is used for
+		 * coloring another register, swap them to avoid
+		 * unneccessary moves.
+		 */
+		for (j = i+1; j < NPERMREG-1; j++) {
+			if (nblock[j+tempmin].r_color != permregs[i])
 				continue;
-
-			/* Generate reg-reg move nodes for save */
-			p = mkbinode(ASSIGN,
-			    mklnode(REG, 0, nblock[i+tempmin].r_color, INT),
-			    mklnode(REG, 0, permregs[i], INT), INT);
-			p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
-			p->n_left->n_su = p->n_right->n_su = 0;
-			geninsn(p, FOREFF);
-			ip = ipnode(p);
-			DLIST_INSERT_AFTER(ipole->qelem.q_forw, ip, qelem);
-				/* XXX not int */
-			p = mkbinode(ASSIGN, mklnode(REG, 0, permregs[i], INT),
-			    mklnode(REG, 0, nblock[i+tempmin].r_color, INT), INT);
-			p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
-			p->n_left->n_su = p->n_right->n_su = 0;
-			geninsn(p, FOREFF);
-			ip = ipnode(p);
-			DLIST_INSERT_BEFORE(ipole->qelem.q_back, ip, qelem);
+			nblock[j+tempmin].r_color = nblock[i+tempmin].r_color;
+			break;
 		}
-		epp->ipp_regs = ipp->ipp_regs;
-		/* Done! */
+		if (j != NPERMREG-1)
+			continue;
+
+		/* Generate reg-reg move nodes for save */
+		p = mkbinode(ASSIGN,
+		    mklnode(REG, 0, nblock[i+tempmin].r_color, INT),
+		    mklnode(REG, 0, permregs[i], INT), INT);
+		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
+		p->n_left->n_su = p->n_right->n_su = 0;
+		geninsn(p, FOREFF);
+		ip = ipnode(p);
+		DLIST_INSERT_AFTER(ipole->qelem.q_forw, ip, qelem);
+			/* XXX not int */
+		p = mkbinode(ASSIGN, mklnode(REG, 0, permregs[i], INT),
+		    mklnode(REG, 0, nblock[i+tempmin].r_color, INT), INT);
+		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
+		p->n_left->n_su = p->n_right->n_su = 0;
+		geninsn(p, FOREFF);
+		ip = ipnode(p);
+		DLIST_INSERT_BEFORE(ipole->qelem.q_back, ip, qelem);
+	}
+	epp->ipp_regs = ipp->ipp_regs;
+	/* Done! */
 }

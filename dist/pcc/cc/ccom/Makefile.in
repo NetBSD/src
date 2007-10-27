@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $
 #
 # Makefile.in for ccom
 #
@@ -7,7 +7,7 @@ XFL=-DPCC_DEBUG -DGCC_COMPAT \
 
 CC = @CC@
 CFLAGS = @CFLAGS@ $(XFL) -I. -I${MIPDIR} -I$(MDIR) -Dmach_${TARGMACH} \
-	-I../../os/${TARGOS}
+	-I../../os/${TARGOS} -Dos_${TARGOS}
 CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
@@ -18,6 +18,8 @@ TARGMACH = @targmach@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
 strip = @strip@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -95,6 +97,8 @@ scan.c: scan.l cgram.c
 
 optim2.o reader.o: external.h
 
+pftn.o: cgram.c # creates cgram.h also
+
 install:
 	test -z "${DESTDIR}$(libexecdir)" || mkdir -p "${DESTDIR}$(libexecdir)"
 	${INSTALL_PROGRAM} ${DEST} ${DESTDIR}${libexecdir}
@@ -102,6 +106,8 @@ install:
 		strip ${DESTDIR}${libexecdir}/${DEST} ;		\
 		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
 	fi
+	test -z "${DESTDIR}$(mandir)/man1" || mkdir -p "${DESTDIR}$(mandir)/man1"       
+	${INSTALL} ${DEST}.1 ${DESTDIR}${mandir}/man1/
 
 clean:
 	/bin/rm -f $(OBJS) ccom scan.c cgram.[ch] mkext external.[ch]

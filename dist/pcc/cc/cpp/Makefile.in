@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $
 #
 # Makefile.in for cpp
 #
@@ -8,6 +8,8 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
 strip = @strip@
 CC = @CC@
 CFLAGS = @CFLAGS@ $(XFL)
@@ -78,6 +80,8 @@ install:
 		strip ${DESTDIR}${libexecdir}/${DEST} ;	\
 		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
 	fi
+	test -z "${DESTDIR}$(mandir)/man1" || mkdir -p "${DESTDIR}$(mandir)/man1"       
+	${INSTALL} ${DEST}.1 ${DESTDIR}${mandir}/man1/
 
 clean:
 	/bin/rm -f $(OBJS) cpp lex.yy.c y.tab.[ch] tests/run*

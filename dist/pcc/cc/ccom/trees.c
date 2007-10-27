@@ -1,4 +1,4 @@
-/*	$Id: trees.c,v 1.1.1.1 2007/09/20 13:08:49 abs Exp $	*/
+/*	$Id: trees.c,v 1.1.1.2 2007/10/27 14:43:39 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -72,6 +72,7 @@
 # include <stdarg.h>
 
 static void chkpun(NODE *p);
+static int chkenum(int, int, NODE *p);
 static int opact(NODE *p);
 static int moditype(TWORD);
 static NODE *strargs(NODE *);
@@ -743,8 +744,10 @@ chkpun(NODE *p)
 			return;
 		break;
 	default:
-		if ((t1 == VOID && t2 != VOID) || (t1 != VOID && t2 == VOID))
-			return uerror("value of void expression used");
+		if ((t1 == VOID && t2 != VOID) || (t1 != VOID && t2 == VOID)) {
+			uerror("value of void expression used");
+			return;
+		}
 		break;
 	}
 
@@ -754,25 +757,15 @@ chkpun(NODE *p)
 	if (BTYPE(t2) == VOID && (t1 & TMASK))
 		return;
 
-#ifdef notdef
-	/* C99 says that enums always should be handled as ints */
 	/* check for enumerations */
-	if (t1==ENUMTY || t2==ENUMTY) {
-		if( clogop( p->n_op ) && p->n_op != EQ && p->n_op != NE ) {
-			werror( "comparison of enums" );
-			return;
-			}
-		if (t1==ENUMTY && t2==ENUMTY) {
-			if (p->n_left->n_sue!=p->n_right->n_sue)
-				werror("enumeration type clash, "
-				    "operator %s", copst(p->n_op));
+	if (t1 == ENUMTY || t2 == ENUMTY) {
+		if (clogop(p->n_op) && p->n_op != EQ && p->n_op != NE) {
+			werror("comparison of enums");
 			return;
 		}
-		if ((t1 == ENUMTY && t2 <= BTMASK) ||
-		    (t2 == ENUMTY && t1 <= BTMASK))
+		if (chkenum(t1, t2, p))
 			return;
 	}
-#endif
 
 	if (ISPTR(t1) || ISARY(t1))
 		q = p->n_right;
@@ -810,6 +803,9 @@ chkpun(NODE *p)
 				}
 				++d1;
 				++d2;
+			} else if (t1 == ENUMTY || t2 == ENUMTY) {
+				chkenum(t1, t2, p);
+				return;
 			} else
 				break;
 			t1 = DECREF(t1);
@@ -817,6 +813,22 @@ chkpun(NODE *p)
 		}
 		werror("illegal pointer combination");
 	}
+}
+
+static int
+chkenum(int t1, int t2, NODE *p)
+{
+	if (t1 == ENUMTY && t2 == ENUMTY) {
+		if (p->n_left->n_sue != p->n_right->n_sue)
+		werror("enumeration type clash, operator %s", copst(p->n_op));
+			return 1;
+	}
+	if ((t1 == ENUMTY && !(t2 >= CHAR && t2 <= UNSIGNED)) ||
+	    (t2 == ENUMTY && !(t1 >= CHAR && t1 <= UNSIGNED))) {
+		werror("illegal combination of enum and non-integer type");
+		return 1;
+	}
+	return 0;
 }
 
 NODE *
@@ -855,6 +867,21 @@ stref(NODE *p)
 
 	off = s->soffset;
 	dsc = s->sclass;
+
+#ifndef CAN_UNALIGN
+	/*
+	 * If its a packed struct, and the target cannot do unaligned
+	 * accesses, then split it up in two bitfield operations.
+	 * LHS and RHS accesses are different, so must delay
+	 * it until we know.  Do the bitfield construct here though.
+	 */
+	if ((dsc & FIELD) == 0 && (off % talign(s->stype, s->ssue))) {
+//		int sz = tsize(s->stype, s->sdf, s->ssue);
+//		int al = talign(s->stype, s->ssue);
+//		int sz1 = al - (off % al);
+		
+	}
+#endif
 
 	if (dsc & FIELD) {  /* make fields look like ints */
 		off = (off/ALINT)*ALINT;
@@ -1599,6 +1626,9 @@ doszof(NODE *p)
 	TWORD ty;
 	NODE *rv;
 
+	if (p->n_op == FLD)
+		uerror("can't apply sizeof to bit-field");
+
 	/*
 	 * Arrays may be dynamic, may need to make computations.
 	 */
@@ -1635,7 +1665,8 @@ eprint(NODE *p, int down, int *a, int *b)
 	printf("%p) %s, ", p, copst(p->n_op));
 	if (ty == LTYPE) {
 		printf(CONFMT, p->n_lval);
-		printf(", %d, ", p->n_rval);
+		printf(", %d, ", (p->n_op != NAME && p->n_op != ICON) ?
+		    p->n_rval : 0);
 	}
 	tprint(stdout, p->n_type, p->n_qual);
 	printf( ", %p, %p\n", p->n_df, p->n_sue );
@@ -1663,6 +1694,7 @@ prtdcon(NODE *p)
 	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
 	p->n_sp->sclass = ILABEL;
 	p->n_sp->soffset = i;
+	p->n_sp->sflags = 0;
 }
 
 extern int negrel[];
@@ -2168,7 +2200,7 @@ p2tree(NODE *p)
 #ifdef GCC_COMPAT
 				p->n_name = gcc_findname(q);
 #else
-				p->n_name = exname(q->sname);
+				p->n_name = q->sname;
 #endif
 			}
 		} else
