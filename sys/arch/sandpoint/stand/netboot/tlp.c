@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.5 2007/10/27 02:01:42 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.6 2007/10/27 02:51:59 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct desc {
 #define TLP_BMR		0x000		/* 0: bus mode */
 #define  BMR_RST	01
 #define TLP_TPD		0x008		/* 1: instruct Tx to start */
+#define TLP_RPD		0x010		/* 2: instruct Rx to start */
 #define TLP_RRBA	0x018		/* 3: Rx descriptor base */
 #define TLP_TRBA	0x020		/* 4: Tx descriptor base */
 #define TLP_STS		0x028		/* 5: status */
@@ -119,9 +120,11 @@ struct local {
 
 static void size_srom(struct local *);
 static int read_srom(struct local *, int);
+#if 0
 static unsigned tlp_mii_read(struct local *, int, int);
 static void tlp_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
+#endif
 
 void *
 tlp_init(void *cookie)
@@ -154,7 +157,6 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_STS, ~0);
 	CSR_WRITE(l, TLP_IEN, 0);
 
-	mii_initphy(l);
 	size_srom(l);
 	en = cookie;
 	val = read_srom(l, 20/2+0); en[0] = val; en[1] = val >> 8;
@@ -181,7 +183,7 @@ tlp_init(void *cookie)
 	/* "setup packet" to have own station address */
 	TxD = &l->TxD;
 	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32((unsigned)l->txstore);
+	TxD->xd2 = htole32(VTOPHYS(l->txstore));
 	TxD->xd1 = htole32(T1_SET | T1_TER);
 	TxD->xd0 = htole32(T0_OWN);
 	p = (unsigned *)l->txstore;
@@ -199,6 +201,7 @@ tlp_init(void *cookie)
 	/* start Tx/Rx */
 	CSR_WRITE(l, TLP_OMR, l->omr);
 	CSR_WRITE(l, TLP_TPD, 01);
+	CSR_WRITE(l, TLP_RPD, 01);
 
 	return l;
 }
@@ -257,6 +260,7 @@ printf("recving with %u sec. timeout\n", timo);
 		RxD->xd0 = htole32(R0_OWN);
 		wbinv(RxD, sizeof(struct desc));
 		l->rx ^= 1;
+		CSR_WRITE(l, TLP_RPD, 01);
 		goto again;
 	}
 	/* good frame */
@@ -329,6 +333,8 @@ read_srom(struct local *l, int off)
 	return ret;
 }
 
+#if 0
+
 static unsigned
 tlp_mii_read(struct local *l, int phy, int reg)
 {
@@ -353,10 +359,6 @@ static void
 mii_initphy(struct local *l)
 {
 	int phy, ctl, sts, bound;
-
-	l->phy = 0;
-	l->bmsr = CSR_READ(l, TLP_CSR12);
-	return; /* XXX */
 
 	for (phy = 0; phy < 32; phy++) {
 		ctl = tlp_mii_read(l, phy, MII_BMCR);
@@ -389,7 +391,6 @@ mii_initphy(struct local *l)
 	l->bmsr = sts;
 }
 
-#if 0
 static void
 mii_dealan(struct local *, unsigned timo)
 {
