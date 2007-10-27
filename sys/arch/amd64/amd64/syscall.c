@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2007/10/27 18:41:57 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.29 2007/10/27 22:56:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef BUILD_SYSCALL_PLAIN	/* See bottom of file */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2007/10/27 18:41:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2007/10/27 22:56:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,7 @@ syscall_intern(struct proc *p)
 	else
 		p->p_md.md_syscall = syscall_plain;
 }
+#endif
 
 /*
  * syscall(frame):
@@ -89,122 +91,13 @@ syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 static void
-syscall_plain(struct trapframe *frame)
-{
-	void *params;
-	const struct sysent *callp;
-	struct proc *p;
-	struct lwp *l;
-	int error;
-	size_t argsize, argoff;
-	register_t code, args[9], rval[2], *argp;
-
-	uvmexp.syscalls++;
-	l = curlwp;
-	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
-
-	code = frame->tf_rax;
-	callp = p->p_emul->e_sysent;
-	argoff = 0;
-	argp = &args[0];
-
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = frame->tf_rdi;
-		argp = &args[1];
-		argoff = 1;
-		break;
-	default:
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
-
-	argsize = (callp->sy_argsize >> 3) + argoff;
-	if (argsize) {
-		switch (MIN(argsize, 6)) {
-		case 6:
-			args[5] = frame->tf_r9;
-		case 5:
-			args[4] = frame->tf_r8;
-		case 4:
-			args[3] = frame->tf_r10;
-		case 3:
-			args[2] = frame->tf_rdx;
-		case 2:	
-			args[1] = frame->tf_rsi;
-		case 1:
-			args[0] = frame->tf_rdi;
-			break;
-		default:
-			panic("impossible syscall argsize");
-		}
-		if (argsize > 6) {
-			argsize -= 6;
-			params = (char *)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (void *)&args[6],
-					argsize << 3);
-			if (error != 0)
-				goto bad;
-		}
-	}
-
-	rval[0] = 0;
-	rval[1] = 0;
-
-	if (callp->sy_flags & SYCALL_MPSAFE)
-		error = (*callp->sy_call)(l, argp, rval);
-	else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, argp, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
-
-	switch (error) {
-	case 0:
-		frame->tf_rax = rval[0];
-#ifndef COMPAT_LINUX
-		frame->tf_rdx = rval[1];
-#endif
-		frame->tf_rflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_rip -= frame->tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame->tf_rax = error;
-		frame->tf_rflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-	userret(l);
-}
-
-static void
 syscall_fancy(struct trapframe *frame)
 {
-	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	size_t argsize, argoff;
-	register_t code, args[9], rval[2], *argp;
+	register_t code, args[9], rval[2];
 
 	uvmexp.syscalls++;
 	l = curlwp;
@@ -213,95 +106,103 @@ syscall_fancy(struct trapframe *frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	argoff = 0;
-	argp = &args[0];
 
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
+	if (__predict_false(code == SYS_syscall)
+	    || __predict_false(code == SYS___syscall)) {
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = frame->tf_rdi;
-		argp = &args[1];
-		argoff = 1;
-		break;
-	default:
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
-
-	argsize = (callp->sy_argsize >> 3) + argoff;
-	if (argsize) {
-		switch (MIN(argsize, 6)) {
-		case 6:
-			args[5] = frame->tf_r9;
-		case 5:
-			args[4] = frame->tf_r8;
-		case 4:
-			args[3] = frame->tf_r10;
-		case 3:
-			args[2] = frame->tf_rdx;
-		case 2:	
-			args[1] = frame->tf_rsi;
-		case 1:
+		code = frame->tf_rdi & (SYS_NSYSENT - 1);
+		callp += code;
+		if (callp->sy_argsize != 0) {
+			args[0] = frame->tf_rsi;
+			args[1] = frame->tf_rdx;
+			args[2] = frame->tf_r10;
+			args[3] = frame->tf_r8;
+			args[4] = frame->tf_r9;
+			if (__predict_false(callp->sy_argsize > 5 * 8)) {
+				error = copyin((register_t *)frame->tf_rsp + 1,
+				    &args[5], callp->sy_argsize - 5 * 8);
+				if (error != 0)
+					goto bad;
+			}
+		}
+	} else {
+		code &= (SYS_NSYSENT - 1);
+		callp += code;
+		if (callp->sy_argsize != 0) {
 			args[0] = frame->tf_rdi;
-			break;
-		default:
-			panic("impossible syscall argsize");
-		}
-		if (argsize > 6) {
-			argsize -= 6;
-			params = (char *)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (void *)&args[6],
-					argsize << 3);
-			if (error != 0)
-				goto bad;
+			args[1] = frame->tf_rsi;
+			args[2] = frame->tf_rdx;
+			args[3] = frame->tf_r10;
+			args[4] = frame->tf_r8;
+			args[5] = frame->tf_r9;
+			if (__predict_false(callp->sy_argsize > 6 * 8)) {
+				error = copyin((register_t *)frame->tf_rsp + 1,
+				    &args[6], callp->sy_argsize - 6 * 8);
+				if (error != 0)
+					goto bad;
+			}
 		}
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, argp)) == 0) {
+	if ((error = trace_enter(l, code, code, NULL, args)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 
 		if (callp->sy_flags & SYCALL_MPSAFE) {
-			error = (*callp->sy_call)(l, argp, rval);
+			error = (*callp->sy_call)(l, args, rval);
 		} else {
 			KERNEL_LOCK(1, l);
-			error = (*callp->sy_call)(l, argp, rval);
+			error = (*callp->sy_call)(l, args, rval);
 			KERNEL_UNLOCK_LAST(l);
 		}
 	}
 
-	switch (error) {
-	case 0:
+	if (__predict_true(error == 0)) {
 		frame->tf_rax = rval[0];
-#ifndef COMPAT_LINUX
 		frame->tf_rdx = rval[1];
-#endif
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_rip -= frame->tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame->tf_rax = error;
-		frame->tf_rflags |= PSL_C;	/* carry bit */
-		break;
+	} else {
+		switch (error) {
+		case ERESTART:
+			/*
+			 * The offset to adjust the PC by depends on whether we
+			 * entered the kernel through the trap or call gate.
+			 * We pushed the size of the instruction into tf_err
+			 * on entry.
+			 */
+			frame->tf_rip -= frame->tf_err;
+			break;
+		case EJUSTRETURN:
+			/* nothing to do */
+			break;
+		default:
+		bad:
+			frame->tf_rax = error;
+			frame->tf_rflags |= PSL_C;	/* carry bit */
+			break;
+		}
 	}
 
-	trace_exit(l, code, argp, rval, error);
+	trace_exit(l, code, args, rval, error);
 
 	userret(l);
 }
+
+#ifndef BUILD_SYSCALL_PLAIN
+#define BUILD_SYSCALL_PLAIN
+
+/*
+ * There is a micro-optimiation to avoid a test prior to trace_entry/exit
+ * by substituting a different copy of the syscall code.
+ * (Which would be very marginal if trace_is_enabled(p) were an inlineable
+ * single bit test.)
+ * By re-including the current file we avoid having two versions of the source.
+ */
+#define syscall_fancy syscall_plain
+#define trace_enter(l, code, code_, NULL_, args) 0
+#define trace_exit(l, code, args, rval, error)
+
+#include "syscall.c"
+#endif
