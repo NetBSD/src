@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/10/17 21:07:49 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2007/10/27 15:36:21 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,8 +9,6 @@ BINOWN=	root
 BINMODE=4555
 WARNS=	4
 
-.PATH.c: ${.CURDIR}/../su
-CPPFLAGS+=-I${.CURDIR}/../su
 CPPFLAGS+=-DGRUTIL_ACCEPT_GROUP_NUMBERS
 CPPFLAGS+=-DGRUTIL_ALLOW_GROUP_ERRORS	# for POSIX.1 compliance
 CPPFLAGS+=-DLOGIN_CAP
