@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-int chkop[MAXOP];
+int chkop[DSIZE];
 
 void mktables(void);
 
@@ -118,11 +118,14 @@ main(int argc, char *argv[])
 	}
 	fprintf(fh, "#define NUMBITS %d\n", bitsz);
 	fprintf(fh, "#define BITSET(arr, bit) "
-	     "(arr[bit/NUMBITS] |= (1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] |= ((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "#define BITCLEAR(arr, bit) "
-	     "(arr[bit/NUMBITS] &= ~(1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] &= ~((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "#define TESTBIT(arr, bit) "
-	     "(arr[bit/NUMBITS] & (1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] & ((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "typedef %s bittype;\n", bitary);
 
 	/* register class definitions, used by graph-coloring */
@@ -139,7 +142,7 @@ main(int argc, char *argv[])
 				rval++;
 			}
 #undef F
-			if ((q->visit & INREGS) && q->rewrite != RDEST) {
+			if ((q->visit & INREGS) && !(q->rewrite & RDEST)) {
 				compl(q, "ASSIGN reclaim must be RDEST");
 				rval++;
 			}
@@ -169,8 +172,8 @@ main(int argc, char *argv[])
 	 */
 	areg = breg = creg = dreg = 0;
 	for (i = 0; i < MAXREGS; i++) {
-		regclassmap[0][i] = regclassmap[1][i] = regclassmap[2][i] = 
-		    regclassmap[3][i] = -1;
+		for (j = 0; j < NUMCLASS; j++)
+			regclassmap[j][i] = -1;
 		if (rstatus[i] & SAREG) regclassmap[0][i] = areg++;
 		if (rstatus[i] & SBREG) regclassmap[1][i] = breg++;
 		if (rstatus[i] & SCREG) regclassmap[2][i] = creg++;
@@ -208,7 +211,11 @@ main(int argc, char *argv[])
 			if (rstatus[r] & SDREG)
 				bd |= (1 << regclassmap[3][r]);
 		}
-		fprintf(fc, "\t{ 0x%x,0x%x,0x%x,0x%x },\n", ba, bb, bc, bd);
+		fprintf(fc, "\t{ 0x%x", ba);
+		if (NUMCLASS > 1) fprintf(fc, ",0x%x", bb);
+		if (NUMCLASS > 2) fprintf(fc, ",0x%x", bc);
+		if (NUMCLASS > 3) fprintf(fc, ",0x%x", bd);
+		fprintf(fc, " },\n");
 	}
 	fprintf(fc, "};\n");
 
@@ -221,6 +228,11 @@ main(int argc, char *argv[])
 	if (breg > mx) mx = breg;
 	if (creg > mx) mx = creg;
 	if (dreg > mx) mx = dreg;
+	if (mx > (sizeof(int)*8)-1) {
+		printf("too many regs in a class, use two classes instead\n");
+		printf("%d > %zu\n", mx, (sizeof(int)*8)-1);
+		rval++;
+	}
 	fprintf(fc, "static int rmap[NUMCLASS][%d] = {\n", mx);
 	for (j = 0; j < NUMCLASS; j++) {
 		int cl = (1 << (j+1));

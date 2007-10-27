@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2007 David O'Brien <obrien@FreeBSD.org>
  * Copyright (c) 2007 Ed Schouten <ed@fxq.nl>
  * All rights reserved.
  *
@@ -24,15 +25,15 @@
  * SUCH DAMAGE.
  */
 
-#define CPPADD { "-D__FreeBSD__", "-D__ELF__", NULL, }
+#define CPPADD { "-D__FreeBSD__", "-D__ELF__", "-D__unix__=1", "-D__unix=1", NULL, }
 #define DYNLINKER { "-dynamic-linker", "/libexec/ld-elf.so.1", "-lgcc_s", NULL }
 #define CRT0FILE "/usr/lib/crt1.o"
 #define STARTFILES { "/usr/lib/crti.o", "/usr/lib/crtbegin.o", NULL }
 #define ENDFILES { "/usr/lib/crtend.o", "/usr/lib/crtn.o", NULL }
 #define STARTLABEL "_start"
 
-#if defined(mach_x86)
-#define CPPMDADD { "-D__i386__", NULL, }
+#if defined(mach_i386)
+#define CPPMDADD { "-D__i386__", "-D__i386", NULL, }
 #else
 #error defines for arch missing
 #endif

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $	*/
+/*	$Id: main.c,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -72,10 +72,12 @@ usage(void)
 static void
 segvcatch(int a)
 {
-	fprintf(stderr, "%sinternal compiler error: %s, line %d\n",
+	char buf[1024];
+
+	snprintf(buf, sizeof buf, "%sinternal compiler error: %s, line %d\n",
 	    nerrors ? "" : "major ", ftitle, lineno);
-	fflush(stderr);
-	exit(1);
+	write(STDERR_FILENO, buf, strlen(buf));
+	_exit(1);
 }
 
 /*
@@ -110,7 +112,7 @@ main(int argc, char *argv[])
 
 	prgname = argv[0];
 
-	while ((ch = getopt(argc, argv, "VlwX:Z:W:sOT:gx:k")) != -1)
+	while ((ch = getopt(argc, argv, "VlwX:Z:W:sOT:gx:kv")) != -1)
 		switch (ch) {
 #if !defined(MULTIPASS) || defined(PASS1)
 		case 'X':
@@ -219,6 +221,9 @@ main(int argc, char *argv[])
 			else
 				usage();
 			break;
+		case 'v':
+			printf("ccom: %s\n", VERSSTR);
+			break;
 
 		case '?':
 		default:
@@ -284,7 +289,8 @@ main(int argc, char *argv[])
 	yyaccpt();
 
 	ejobcode( nerrors ? 1 : 0 );
-	lcommprint();
+	if (!nerrors)
+		lcommprint();
 
 	if (sflag)
 		prtstats();
