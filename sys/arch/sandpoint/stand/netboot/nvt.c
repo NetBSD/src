@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.3 2007/10/26 14:30:03 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.4 2007/10/27 06:34:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
 void *nvt_init(void *);
 int nvt_send(void *, char *, unsigned);
@@ -183,7 +184,7 @@ nvt_init(void *cookie)
 		return NULL;
 	}
 
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x14); /* use mem space */
 
