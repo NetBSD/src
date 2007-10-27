@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.3 2007/10/24 14:01:01 nisimura Exp $
+# $NetBSD: GENERIC.NAS,v 1.4 2007/10/27 05:24:29 nisimura Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.3 $"
+#ident 		"GENERIC.NAS-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -152,15 +152,12 @@ mainbus0 at root
 cpu*	at mainbus0
 pci*	at mainbus0 bus ?
 
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
-
 pchb*	at pci? dev ? function ?	# PCI host bridge
 
 eumb*	at mainbus0
 com0	at eumb? unit 0
 com1	at eumb? unit 1
-#com0	at eumb? unit 1
+#com0	at eumb? unit 1			# if console is there
 #com1	at eumb? unit 0
 ociic*	at eumb?
 iic*	at ociic?
