@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.72.2.4 2007/09/03 14:32:01 yamt Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.72.2.5 2007/10/27 11:29:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72.2.4 2007/09/03 14:32:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72.2.5 2007/10/27 11:29:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.72.2.4 2007/09/03 14:32:01 yamt Ex
 #include <sys/kauth.h>
 #include <sys/timetc.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/vmparam.h>

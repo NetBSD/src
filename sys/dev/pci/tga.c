@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.60.4.3 2007/09/03 14:37:22 yamt Exp $ */
+/* $NetBSD: tga.c,v 1.60.4.4 2007/10/27 11:33:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.60.4.3 2007/09/03 14:37:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.60.4.4 2007/10/27 11:33:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.60.4.3 2007/09/03 14:37:22 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

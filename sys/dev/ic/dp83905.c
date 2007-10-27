@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83905.c,v 1.2 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: dp83905.c,v 1.2.4.1 2007/10/27 11:30:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: dp83905.c,v 1.2 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83905.c,v 1.2.4.1 2007/10/27 11:30:38 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: dp83905.c,v 1.2 2005/02/27 00:27:01 perry Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.8.4.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.8.4.2 2007/10/27 11:33:49 yamt Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_SBSPEEDSTAR2
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.8.4.1 2006/06/21 15:0
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netisdn/i4b_debug.h>

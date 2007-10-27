@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.28.6.1 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.28.6.2 2007/10/27 11:30:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -61,7 +61,7 @@
  * Handy read/write macros
  */
 #ifdef NCR5380_USE_BUS_SPACE
-# include <machine/bus.h>
+# include <sys/bus.h>
 /* bus_space() variety */
 # define NCR5380_READ(sc, reg)		bus_space_read_1(sc->sc_regt, \
 					    sc->sc_regh, sc->reg)

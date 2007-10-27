@@ -1,4 +1,4 @@
-/*	$NetBSD: cyber.c,v 1.2 2004/02/04 01:58:44 fredb Exp $	*/
+/*	$NetBSD: cyber.c,v 1.2.18.1 2007/10/27 11:32:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,13 +39,13 @@
 /* Store one "Usr" register on an SIIG Cyberserial multiport PCI card. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cyber.c,v 1.2 2004/02/04 01:58:44 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cyber.c,v 1.2.18.1 2007/10/27 11:32:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h> /* XXX for tcflag_t in comvar.h */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/cyberreg.h>
 #include <dev/pci/cybervar.h>

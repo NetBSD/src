@@ -1,4 +1,4 @@
-/* $NetBSD: ddc.c,v 1.1.14.2 2006/06/21 15:02:51 yamt Exp $ */
+/* $NetBSD: ddc.c,v 1.1.14.3 2007/10/27 11:30:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,14 +32,14 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.1.14.2 2006/06/21 15:02:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.1.14.3 2007/10/27 11:30:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcreg.h>
 #include <dev/i2c/ddcvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.7.6.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.7.6.2 2007/10/27 11:31:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.7.6.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.7.6.2 2007/10/27 11:31:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

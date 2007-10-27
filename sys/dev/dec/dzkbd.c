@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.14.4.2 2007/09/03 14:33:33 yamt Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.14.4.3 2007/10/27 11:30:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14.4.2 2007/09/03 14:33:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14.4.3 2007/10/27 11:30:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14.4.2 2007/09/03 14:33:33 yamt Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <dev/dec/wskbdmap_lk201.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>

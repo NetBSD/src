@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.5.6.4 2007/09/03 14:32:25 yamt Exp $ */
+/* $NetBSD: linux_sg.c,v 1.5.6.5 2007/10/27 11:29:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.4 2007/09/03 14:32:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.5 2007/10/27 11:29:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.4 2007/09/03 14:32:25 yamt Exp $"
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_sg.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

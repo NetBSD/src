@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.12.16.2 2007/09/03 14:31:50 yamt Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.12.16.3 2007/10/27 11:29:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.12.16.2 2007/09/03 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.12.16.3 2007/10/27 11:29:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.12.16.2 2007/09/03 14:31:50 yamt 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 #include <compat/common/compat_util.h>
 

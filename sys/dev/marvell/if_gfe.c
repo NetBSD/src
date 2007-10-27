@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.16.4.2 2007/09/03 14:35:52 yamt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.16.4.3 2007/10/27 11:32:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.2 2007/09/03 14:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.3 2007/10/27 11:32:12 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.2 2007/09/03 14:35:52 yamt Exp $")
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

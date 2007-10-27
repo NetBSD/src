@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.10.16.3 2007/09/03 14:38:52 yamt Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.10.16.4 2007/10/27 11:34:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,9 +36,6 @@
 #ifndef _DEV_SYSMON_SYSMONVAR_H_
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
-#ifndef _LKM
-#include "opt_compat_netbsd.h"
-#endif
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/power.h>
@@ -67,6 +64,11 @@ struct sysmon_envsys {
 	const char *sme_name;			/* envsys device name */
 	uint32_t sme_nsensors;			/* sensor count, from driver */
 	uint32_t sme_uniqsensors;
+
+	int sme_class;				/* class of device */
+#define SME_CLASS_BATTERY	1		/* device is a battery */
+#define SME_CLASS_ACADAPTER	2		/* device is an AC adapter */
+
 	int sme_flags;				/* additional flags */
 #define SME_FLAG_BUSY 		0x00000001 	/* sme is busy */
 #define SME_FLAG_WANTED 	0x00000002 	/* someone waiting for this */
@@ -76,6 +78,7 @@ struct sysmon_envsys {
 
 	/* linked list for the sysmon envsys devices */
 	LIST_ENTRY(sysmon_envsys) sme_list;
+
 	/* 
 	 * Singly linked list for the sysmon envsys sensor descriptions.
 	 */
@@ -86,10 +89,8 @@ struct sysmon_envsys {
 	/* Function callback to recieve data from device */
 	int (*sme_gtredata)(struct sysmon_envsys *, envsys_data_t *);
 
-#ifdef COMPAT_40
-	u_int sme_fsensor;		/* sensor index base, from sysmon */
+	uint32_t sme_fsensor;		/* sensor index base, from sysmon */
 #define SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
-#endif
 };
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);

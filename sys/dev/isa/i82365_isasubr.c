@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.36.4.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.36.4.2 2007/10/27 11:31:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.36.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.36.4.2 2007/10/27 11:31:34 yamt Exp $");
 
 #define	PCICISADEBUG
 
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.36.4.1 2006/06/21 15:04:21 yamt
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.25.6.1 2007/09/03 14:38:30 yamt Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.25.6.2 2007/10/27 11:34:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.25.6.1 2007/09/03 14:38:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.25.6.2 2007/10/27 11:34:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.25.6.1 2007/09/03 14:38:30 yamt Ex
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

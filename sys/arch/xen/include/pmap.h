@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.4.3 2007/09/03 14:31:35 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.4.4 2007/10/27 11:29:12 yamt Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <machine/xenfunc.h>
 #include <machine/xenpmap.h>
 #include <machine/segments.h>
+#include <machine/atomic.h>
 #include <uvm/uvm_object.h>
 
 /*

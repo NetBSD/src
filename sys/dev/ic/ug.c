@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.7.12.2 2007/09/03 14:35:18 yamt Exp $ */
+/* $NetBSD: ug.c,v 1.7.12.3 2007/10/27 11:31:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.7.12.2 2007/09/03 14:35:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.7.12.3 2007/10/27 11:31:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.7.12.2 2007/09/03 14:35:18 yamt Exp $");
 #include <sys/envsys.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.26.6.1 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.26.6.2 2007/10/27 11:31:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.26.6.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.26.6.2 2007/10/27 11:31:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4.12.2 2006/12/30 20:45:45 yamt Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.4.12.3 2007/10/27 11:25:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -74,7 +74,6 @@ main(argc, argv)
 	struct image_block *p;
 	struct stat insb;
 	struct timeval tp;
-	struct timezone tzp;
 	size_t outbufsize;
 	ssize_t rv;
 	int c, verbose, nowrite, infd, outfd;
@@ -149,7 +148,7 @@ main(argc, argv)
 		(long)BO(roundup(insb.st_size, BLOCK_SIZE));
 
 	/* set mtime */
-	gettimeofday(&tp, &tzp);
+	gettimeofday(&tp, 0);
 	for (offset = mtime_offset; *offset != -1; offset++)
 		*(long *)(outbuf + *offset) = (long)BO(tp.tv_sec);
 

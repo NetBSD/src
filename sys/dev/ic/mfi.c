@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.2.6.3 2007/09/03 14:34:55 yamt Exp $ */
+/* $NetBSD: mfi.c,v 1.2.6.4 2007/10/27 11:30:52 yamt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2.6.3 2007/09/03 14:34:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2.6.4 2007/10/27 11:30:52 yamt Exp $");
 
 #include "bio.h"
 
@@ -32,7 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2.6.3 2007/09/03 14:34:55 yamt Exp $");
 
 #include <uvm/uvm_param.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
@@ -1872,7 +1872,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 		sc->sc_sensor_data[i].state = ENVSYS_SVALID;
 		sc->sc_sensor_data[i].monitor = true;
 		/* Enable monitoring for drive state changes */
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONDRVSTATE;
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */
 		snprintf(sc->sc_sensor_data[i].desc,
 		    sizeof(sc->sc_sensor_data[i].desc), "%s:%d",

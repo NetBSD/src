@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.23.10.1 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: aria.c,v 1.23.10.2 2007/10/27 11:31:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.23.10.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.23.10.2 2007/10/27 11:31:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.23.10.1 2006/12/30 20:48:26 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

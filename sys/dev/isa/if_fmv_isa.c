@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.4.10.2 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.4.10.3 2007/10/27 11:31:38 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.4.10.2 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.4.10.3 2007/10/27 11:31:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.4.10.2 2006/12/30 20:48:26 yamt Exp
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>

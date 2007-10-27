@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.7.2.3 2007/09/03 14:31:24 yamt Exp $	*/
+/*	$NetBSD: errata.c,v 1.7.2.4 2007/10/27 11:29:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.7.2.3 2007/09/03 14:31:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.7.2.4 2007/10/27 11:29:00 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -267,6 +267,8 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 	wrmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE, val | e->e_data2);
+	aprint_debug("%s: erratum %d patched\n",
+	    ci->ci_dev->dv_xname, e->e_num);
 
 	return FALSE;
 }
@@ -274,7 +276,7 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 void
 x86_errata(struct cpu_info *ci, int vendor)
 {
-	uint32_t code, dummy;
+	uint32_t descs[4];
 	errata_t *e, *ex;
 	cpurev_t rev;
 	int i, j, upgrade;
@@ -283,12 +285,12 @@ x86_errata(struct cpu_info *ci, int vendor)
 	if (vendor != CPUVENDOR_AMD)
 		return;
 
-	CPUID(0x80000001, code, dummy, dummy, dummy);
+	x86_cpuid(0x80000001, descs);
 
 	for (i = 0;; i += 2) {
 		if ((rev = cpurevs[i]) == OINK)
 			return;
-		if (cpurevs[i + 1] == code)
+		if (cpurevs[i + 1] == descs[0])
 			break;
 	}
 

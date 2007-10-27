@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.2.6.4 2007/09/03 14:27:54 yamt Exp $ */
+/* $Id: if_ae.c,v 1.2.6.5 2007/10/27 11:27:13 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.2.6.4 2007/09/03 14:27:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.2.6.5 2007/10/27 11:27:13 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1179,7 +1179,7 @@ ae_rxintr(struct ae_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

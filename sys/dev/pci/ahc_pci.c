@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.51.2.2 2006/12/30 20:48:41 yamt Exp $
+ * $Id: ahc_pci.c,v 1.51.2.3 2007/10/27 11:32:32 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51.2.2 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51.2.3 2007/10/27 11:32:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51.2.2 2006/12/30 20:48:41 yamt Exp $"
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -780,6 +780,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t  ih;
 	const char        *intrstr;
 	struct ahc_pci_busdata *bd;
+	bool               override_ultra;
 
 	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
 	ahc->parent_dmat = pa->pa_dmat;
@@ -1000,8 +1001,14 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * We cannot perform ULTRA speeds without the presence
 	 * of the external precision resistor.
+	 * Allow override for the SGI O2 though, which has two onboard ahc
+	 * that fail here but are perfectly capable of ultra speeds.
 	 */
-	if ((ahc->features & AHC_ULTRA) != 0) {
+	override_ultra = FALSE;
+	prop_dictionary_get_bool(device_properties(self), "override_ultra",
+	    &override_ultra);
+
+	if (((ahc->features & AHC_ULTRA) != 0) && (!override_ultra)) {
 		uint32_t dvconfig;
 
 		dvconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);

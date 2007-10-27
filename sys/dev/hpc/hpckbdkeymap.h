@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.34.8.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.34.8.3 2007/10/27 11:30:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -721,7 +721,7 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 };
 
 const int persona_hpw50pad_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= -1,	/* 5 */
+	[KEY_SPECIAL_OFF]	= 5,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
@@ -763,7 +763,7 @@ const uint8_t persona_hpw200ec_keytrans[] = {
 };
 
 const int persona_hpw200ec_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= -1,	/* 5 */
+	[KEY_SPECIAL_OFF]	= 5,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.9.12.1 2007/09/03 14:36:14 yamt Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.9.12.2 2007/10/27 11:32:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9.12.1 2007/09/03 14:36:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9.12.2 2007/10/27 11:32:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9.12.1 2007/09/03 14:36:14 yamt Exp $"
 #include <sys/malloc.h>
 #include <sys/kcore.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

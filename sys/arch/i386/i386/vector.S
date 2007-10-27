@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.19.2.4 2007/09/03 14:26:46 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.19.2.5 2007/10/27 11:26:42 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -286,7 +286,8 @@ IDTVEC(intr_lapic_tlb_bcast)
 	 * to invalidate the entire TLB we arrive here.
 	 */
 	movl	%cr4, %eax
-	leal	-CR4_PGE(%eax), %edx
+	movl	%eax, %edx
+	andl	$~CR4_PGE, %edx
 	movl	%edx, %cr4
 	movl	%eax, %cr4
 	jmp	2b
@@ -979,7 +980,7 @@ calltrap:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH(%eax)
+3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 #ifndef DIAGNOSTIC
 6:	INTRFASTEXIT

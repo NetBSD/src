@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.24.2.2 2007/09/03 14:38:55 yamt Exp $	*/
+/* 	$NetBSD: px.c,v 1.24.2.3 2007/10/27 11:34:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24.2.2 2007/09/03 14:38:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24.2.3 2007/10/27 11:34:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24.2.2 2007/09/03 14:38:55 yamt Exp $");
 #endif
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 

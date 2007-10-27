@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.12 2005/05/30 04:28:49 christos Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.12.2.1 2007/10/27 11:33:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _PCMCIA_PCMCIACHIP_H_
 #define	_PCMCIA_PCMCIACHIP_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct pcmcia_function;
 struct pcmcia_mem_handle;

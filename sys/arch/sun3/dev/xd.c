@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.49.2.4 2007/09/03 14:30:37 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.49.2.5 2007/10/27 11:28:47 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.4 2007/09/03 14:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.5 2007/10/27 11:28:47 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -553,8 +553,7 @@ xdattach(struct device *parent, struct device *self, void *aux)
 	 * to start with a clean slate.
 	 */
 	memset(&xd->sc_dk, 0, sizeof(xd->sc_dk));
-	xd->sc_dk.dk_driver = &xddkdriver;
-	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
+	disk_init(&xd->sc_dk, xd->sc_dev.dv_xname, &xddkdriver);
 
 	xd->state = XD_DRIVE_UNKNOWN;	/* to start */
 	xd->flags = 0;

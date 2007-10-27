@@ -1,11 +1,8 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.27.2.2 2007/09/03 14:38:50 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.27.2.3 2007/10/27 11:34:20 yamt Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -41,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27.2.2 2007/09/03 14:38:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27.2.3 2007/10/27 11:34:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,31 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27.2.2 2007/09/03 14:38:5
 #include <sys/kmem.h>
 #include <sys/callout.h>
 
+/* #define ENVSYS_DEBUG */
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
-
-struct sme_sensor_state {
-	int		type;
-	const char 	*desc;
-};
 
 struct sme_sensor_event {
 	int		state;
 	int		event;
-};
-
-static const struct sme_sensor_state sme_sensor_drive_state[] = {
-	{ ENVSYS_DRIVE_EMPTY, 		"drive state is unknown" },
-	{ ENVSYS_DRIVE_READY, 		"drive is ready" },
-	{ ENVSYS_DRIVE_POWERUP,		"drive is powering up" },
-	{ ENVSYS_DRIVE_ONLINE, 		"drive is online" },
-	{ ENVSYS_DRIVE_IDLE, 		"drive is idle" },
-	{ ENVSYS_DRIVE_ACTIVE, 		"drive is active" },
-	{ ENVSYS_DRIVE_REBUILD, 	"drive is rebuilding" },
-	{ ENVSYS_DRIVE_POWERDOWN,	"drive is powering down" },
-	{ ENVSYS_DRIVE_FAIL, 		"drive failed" },
-	{ ENVSYS_DRIVE_PFAIL,		"drive degraded" },
-	{ -1, 				"unknown" }
 };
 
 static const struct sme_sensor_event sme_sensor_event[] = {
@@ -95,13 +66,16 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
-kmutex_t sme_list_mtx, sme_event_mtx, sme_event_init_mtx;
-kcondvar_t sme_event_cv;
+static bool sysmon_low_power = false;
+kmutex_t sme_mtx, sme_event_init_mtx;
+kcondvar_t sme_cv;
 
 /* 10 seconds of timeout for the callout */
 static int sme_events_timeout = 10;
 static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
 #define SME_EVTIMO 	(sme_events_timeout * hz)
+
+static int sme_event_check_low_power(void);
 
 /*
  * sysctl(9) stuff to handle the refresh value in the callout
@@ -118,7 +92,7 @@ sme_events_timeout_sysctl(SYSCTLFN_ARGS)
 	node.sysctl_data = &timo;
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
+	if (error || !newp)
 		return error;
 
 	/* min 1s */
@@ -172,7 +146,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 
 	KASSERT(sdict != NULL || edata != NULL);
 
-	mutex_enter(&sme_event_mtx);
+	mutex_enter(&sme_mtx);
 	/* 
 	 * check if the event is already on the list and return
 	 * EEXIST if value provided hasn't been changed.
@@ -185,7 +159,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 				    	    "(already exists)\n", __func__,
 				    	    see->pes.pes_dvname,
 				    	    see->pes.pes_sensname, see->type));
-					mutex_exit(&sme_event_mtx);
+					mutex_exit(&sme_mtx);
 					return EEXIST;
 				}
 				critvalup = true;
@@ -198,7 +172,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 */
 	if (objkey && critval && critvalup) {
 		obj = prop_dictionary_get(sdict, objkey);
-		if (obj != NULL) {
+		if (obj) {
 			/* 
 			 * object is already in dictionary and value
 			 * provided is not the same than we have
@@ -208,7 +182,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			DPRINTF(("%s: sensor=%s type=%d (critval updated)\n",
 				 __func__, edata->desc, see->type));
 			error = sme_sensor_upint32(sdict, objkey, critval);
-			mutex_exit(&sme_event_mtx);
+			mutex_exit(&sme_mtx);
 			return error;
 		}
 	}
@@ -221,7 +195,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	see = NULL;
 	see = kmem_zalloc(sizeof(*see), KM_NOSLEEP);
 	if (see == NULL) {
-		mutex_exit(&sme_event_mtx);
+		mutex_exit(&sme_mtx);
 		return ENOMEM;
 	}
 
@@ -238,7 +212,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	if (objkey && critval) {
 		error = sme_sensor_upint32(sdict, objkey, critval);
 		if (error) {
-			mutex_exit(&sme_event_mtx);
+			mutex_exit(&sme_mtx);
 			goto out;
 		}
 	}
@@ -251,7 +225,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * before.
 	 */
 	mutex_enter(&sme_event_init_mtx);
-	mutex_exit(&sme_event_mtx);
+	mutex_exit(&sme_mtx);
 	if (sme_events_initialized == false)
 		error = sme_events_init();
 	mutex_exit(&sme_event_init_mtx);
@@ -273,9 +247,9 @@ sme_event_unregister_all(const char *sme_name)
 	sme_event_t *see;
 	int evcounter = 0;
 
+	KASSERT(mutex_owned(&sme_mtx));
 	KASSERT(sme_name != NULL);
 
-	mutex_enter(&sme_event_mtx);
 	LIST_FOREACH(see, &sme_events_list, see_list) {
 		if (strcmp(see->pes.pes_dvname, sme_name) == 0)
 			evcounter++;
@@ -284,7 +258,7 @@ sme_event_unregister_all(const char *sme_name)
 	DPRINTF(("%s: total events %d (%s)\n", __func__,
 	    evcounter, sme_name));
 
-	while ((see = LIST_FIRST(&sme_events_list)) != NULL) {
+	while ((see = LIST_FIRST(&sme_events_list))) {
 		if (evcounter == 0)
 			break;
 
@@ -293,7 +267,7 @@ sme_event_unregister_all(const char *sme_name)
 			    see->pes.pes_sensname, see->type, sme_name));
 
 			while (see->see_flags & SME_EVENT_WORKING)
-				cv_wait(&sme_event_cv, &sme_event_mtx);
+				cv_wait(&sme_cv, &sme_mtx);
 
 			LIST_REMOVE(see, see_list);
 			kmem_free(see, sizeof(*see));
@@ -303,13 +277,10 @@ sme_event_unregister_all(const char *sme_name)
 
 	if (LIST_EMPTY(&sme_events_list)) {
 		mutex_enter(&sme_event_init_mtx);
-		mutex_exit(&sme_event_mtx);
-		sme_events_destroy();
+		if (sme_events_initialized)
+			sme_events_destroy();
 		mutex_exit(&sme_event_init_mtx);
-		return;
 	}
-
-	mutex_exit(&sme_event_mtx);
 }
 
 /*
@@ -323,9 +294,9 @@ sme_event_unregister(const char *sensor, int type)
 	sme_event_t *see;
 	bool found = false;
 
+	KASSERT(mutex_owned(&sme_mtx));
 	KASSERT(sensor != NULL);
 
-	mutex_enter(&sme_event_mtx);
 	LIST_FOREACH(see, &sme_events_list, see_list) {
 		if (strcmp(see->pes.pes_sensname, sensor) == 0) {
 			if (see->type == type) {
@@ -335,13 +306,11 @@ sme_event_unregister(const char *sensor, int type)
 		}
 	}
 
-	if (!found) {
-		mutex_exit(&sme_event_mtx);
+	if (!found)
 		return EINVAL;
-	}
 
 	while (see->see_flags & SME_EVENT_WORKING)
-		cv_wait(&sme_event_cv, &sme_event_mtx);
+		cv_wait(&sme_cv, &sme_mtx);
 
 	DPRINTF(("%s: removing dev=%s sensor=%s type=%d\n",
 	    __func__, see->pes.pes_dvname, sensor, type));
@@ -354,14 +323,10 @@ sme_event_unregister(const char *sensor, int type)
 	 */
 	if (LIST_EMPTY(&sme_events_list)) {
 		mutex_enter(&sme_event_init_mtx);
-		mutex_exit(&sme_event_mtx);
 		sme_events_destroy();
 		mutex_exit(&sme_event_init_mtx);
-		goto out;
 	}
-	mutex_exit(&sme_event_mtx);
 
-out:
 	kmem_free(see, sizeof(*see));
 	return 0;
 }
@@ -383,7 +348,7 @@ sme_event_drvadd(void *arg)
 #define SEE_REGEVENT(a, b, c)						\
 do {									\
 	if (sed_t->edata->flags & (a)) {				\
-		char str[32] = "monitoring-state-";			\
+		char str[ENVSYS_DESCLEN] = "monitoring-state-";		\
 									\
 		error = sme_event_register(sed_t->sdict,		\
 				      sed_t->edata,			\
@@ -398,11 +363,9 @@ do {									\
 			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
 			(void)strlcat(str, (c), sizeof(str));		\
-			mutex_enter(&sme_event_mtx);			\
 			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
-			mutex_exit(&sme_event_mtx);			\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -427,9 +390,9 @@ do {									\
 		     PENVSYS_EVENT_WARNOVER,
 		     "warnover");
 
-	SEE_REGEVENT(ENVSYS_FMONDRVSTATE,
-		     PENVSYS_EVENT_DRIVE_STCHANGED,
-		     "drvstchanged");
+	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
+		     PENVSYS_EVENT_STATE_CHANGED,
+		     "state-changed");
 
 	/* we are done, free memory now */
 	kmem_free(sed_t, sizeof(*sed_t));
@@ -448,7 +411,7 @@ sme_events_init(void)
 	KASSERT(mutex_owned(&sme_event_init_mtx));
 
 	error = workqueue_create(&seewq, "envsysev",
-	    sme_events_worker, NULL, 0, IPL_SOFTCLOCK, WQ_MPSAFE);
+	    sme_events_worker, NULL, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error)
 		goto out;
 
@@ -500,7 +463,14 @@ sme_events_check(void *arg)
 		    see->type));
 		workqueue_enqueue(seewq, &see->see_wk, NULL);
 	}
-	callout_schedule(&seeco, SME_EVTIMO);
+	/*
+	 * Now that the events list was checked, reset the refresh value.
+	 */
+	LIST_FOREACH(see, &sme_events_list, see_list)
+		see->see_flags &= ~SME_EVENT_REFRESHED;
+
+	if (!sysmon_low_power)
+		callout_schedule(&seeco, SME_EVTIMO);
 }
 
 /*
@@ -512,41 +482,45 @@ sme_events_check(void *arg)
 void
 sme_events_worker(struct work *wk, void *arg)
 {
-	const struct sme_sensor_state *esds = sme_sensor_drive_state;
+	const struct sme_description_table *sdt = NULL;
 	const struct sme_sensor_event *sse = sme_sensor_event;
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	int i, error = 0;
+	int i, state, error;
 
 	KASSERT(wk == &see->see_wk);
 
-	mutex_enter(&sme_event_mtx);
+	state = error = 0;
+
+	mutex_enter(&sme_mtx);
 	see->see_flags |= SME_EVENT_WORKING;
 
 	/*
 	 * We have to find the sme device by looking
 	 * at the power envsys device name.
 	 */
-	mutex_enter(&sme_list_mtx);
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
 		if (strcmp(sme->sme_name, see->pes.pes_dvname) == 0)
 			break;
-	mutex_exit(&sme_list_mtx);
-
-	KASSERT(sme != NULL);
+	if (!sme)
+		goto out;
 
 	/* get the sensor with the index specified in see->snum */
 	edata = &sme->sme_sensor_data[see->snum];
 
 	/* 
-	 * refresh the sensor that was marked with a critical
-	 * event.
+	 * refresh the sensor that was marked with a critical event
+	 * only if it wasn't refreshed before or if the driver doesn't
+	 * use its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-		error = (*sme->sme_gtredata)(sme, edata);
-		if (error)
-			return;
+		if ((see->see_flags & SME_EVENT_REFRESHED) == 0) {
+			error = (*sme->sme_gtredata)(sme, edata);
+			if (error)
+				goto out;
+			see->see_flags |= SME_EVENT_REFRESHED;
+		}
 	}
 
 	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
@@ -564,6 +538,7 @@ do {									\
 	see->evsent = true;						\
 	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
+
 
 	switch (see->type) {
 	/*
@@ -610,35 +585,135 @@ do {									\
 
 		break;
 	/*
-	 * if value_cur is not ENVSYS_DRIVE_ONLINE, send the event...
+	 * if value_cur is not normal (battery) or online (drive),
+	 * send the event...
 	 */
-	case PENVSYS_EVENT_DRIVE_STCHANGED:
+	case PENVSYS_EVENT_STATE_CHANGED:
 		/* the state has not been changed, just ignore the event */
 		if (edata->value_cur == see->evsent)
 			break;
 
-		for (i = 0; esds[i].type != -1; i++)
-			if (esds[i].type == edata->value_cur)
+		switch (edata->units) {
+		case ENVSYS_DRIVE:
+			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+			state = ENVSYS_DRIVE_ONLINE;
+			break;
+		case ENVSYS_BATTERY_STATE:
+			sdt =
+			    sme_get_description_table(SME_DESC_BATTERY_STATES);
+			state = ENVSYS_BATTERY_STATE_NORMAL;
+			break;
+		default:
+			panic("%s: invalid units for ENVSYS_FMONSTCHANGED",
+			    __func__);
+		}
+
+		for (i = 0; sdt[i].type != -1; i++)
+			if (sdt[i].type == edata->value_cur)
 				break;
 
 		/* copy current state description  */
-		(void)strlcpy(see->pes.pes_statedesc, esds[i].desc,
+		(void)strlcpy(see->pes.pes_statedesc, sdt[i].desc,
 		    sizeof(see->pes.pes_statedesc));
 
 		/* state is ok again... send a normal event */
-		if (see->evsent && edata->value_cur == ENVSYS_DRIVE_ONLINE)
+		if (see->evsent && edata->value_cur == state)
 			SME_SEND_NORMALEVENT();
 
-		/* something bad happened to the drive... send the event */
-		if (see->evsent || edata->value_cur != ENVSYS_DRIVE_ONLINE) {
+		/* state has been changed... send event */
+		if (see->evsent || edata->value_cur != state) {
 			/* save current drive state */
 			see->evsent = edata->value_cur;
 			sysmon_penvsys_event(&see->pes, see->type);
 		}
 
+		/*
+		 * Check if the system is running in low power and send the
+		 * event to powerd (if running) or shutdown the system
+		 * otherwise.
+		 */
+		if (!sysmon_low_power && sme_event_check_low_power()) {
+			struct penvsys_state pes;
+
+			pes.pes_type = PENVSYS_TYPE_BATTERY;
+			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
+			sysmon_low_power = true;
+			callout_stop(&seeco);
+		}
+
 		break;
 	}
+out:
 	see->see_flags &= ~SME_EVENT_WORKING;
-	cv_broadcast(&sme_event_cv);
-	mutex_exit(&sme_event_mtx);
+	cv_broadcast(&sme_cv);
+	mutex_exit(&sme_mtx);
+}
+
+static int
+sme_event_check_low_power(void)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *edata;
+	int i, batteries_cnt, batteries_discharged;
+	bool acadapter_on, acadapter_sensor_found;
+
+	acadapter_on = acadapter_sensor_found = false;
+	batteries_cnt = batteries_discharged = 0;
+
+	KASSERT(mutex_owned(&sme_mtx));
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
+		if (sme->sme_class == SME_CLASS_ACADAPTER)
+			break;
+
+	/*
+	 * No AC Adapter devices were found, do nothing.
+	 */
+	if (!sme)
+		return 0;
+
+	for (i = 0; i < sme->sme_nsensors; i++) {
+		edata = &sme->sme_sensor_data[i];
+		if (edata->units == ENVSYS_INDICATOR) {
+			acadapter_sensor_found = true;
+			if (edata->value_cur) {
+				acadapter_on = true;
+				break;
+			}
+		}
+	}
+	/*
+	 * There's an AC Adapter device connected or there wasn't
+	 * any sensor capable of returning its state.
+	 */
+	if (acadapter_on || !acadapter_sensor_found)
+		return 0;
+
+#define IS_BATTERY_DISCHARGED()						\
+do {									\
+	if (((edata->units == ENVSYS_BATTERY_STATE) &&			\
+	    ((edata->value_cur == ENVSYS_BATTERY_STATE_CRITICAL) ||	\
+	     (edata->value_cur == ENVSYS_BATTERY_STATE_LOW)))) {	\
+		batteries_discharged++;					\
+		break;							\
+	}								\
+} while (/* CONSTCOND */ 0)
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		if (sme->sme_class == SME_CLASS_BATTERY) {
+			batteries_cnt++;
+			for (i = 0; i < sme->sme_nsensors; i++) {
+				edata = &sme->sme_sensor_data[i];
+				IS_BATTERY_DISCHARGED();
+			}
+		}
+	}
+
+	/*
+	 * All batteries are discharged?
+	 */
+	if (batteries_cnt == batteries_discharged)
+		return 1;
+
+	return 0;
 }

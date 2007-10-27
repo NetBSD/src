@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.8.2.3 2007/09/03 14:29:29 yamt Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.8.2.4 2007/10/27 11:28:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.3 2007/09/03 14:29:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.4 2007/10/27 11:28:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.3 2007/09/03 14:29:29 yamt Exp $"
 void cpu_switch_prepare(struct lwp *, struct lwp *);
 
 void (*__sh_switch_resume)(struct lwp *);
-int want_resched;
-
 
 /*
  * Called from cpu_switchto after olwp's state has been saved.
@@ -148,7 +146,7 @@ cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 	curpcb = nlwp->l_md.md_pcb;
 
 	/* Check for Restartable Atomic Sequences. */
-	if (!LIST_EMPTY(&p->p_raslist)) {
+	if (p->p_raslist != NULL) {
 		void *pc;
 
 		pc = ras_lookup(p, (void *)nlwp->l_md.md_regs->tf_spc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.97.2.4 2007/09/03 14:36:23 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.97.2.5 2007/10/27 11:32:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.4 2007/09/03 14:36:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.5 2007/10/27 11:32:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.4 2007/09/03 14:36:23 yamt Exp $");
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.37.2.3 2007/09/03 14:33:13 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.37.2.4 2007/10/27 11:29:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.3 2007/09/03 14:33:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.4 2007/10/27 11:29:58 yamt Exp $");
 
 #include "rnd.h"
 
@@ -116,8 +116,7 @@ ldattach(struct ld_softc *sc)
 	}
 
 	/* Initialise and attach the disk structure. */
-	sc->sc_dk.dk_driver = &lddkdriver;
-	sc->sc_dk.dk_name = sc->sc_dv.dv_xname;
+	disk_init(&sc->sc_dk, sc->sc_dv.dv_xname, &lddkdriver);
 	disk_attach(&sc->sc_dk);
 
 	if (sc->sc_maxxfer > MAXPHYS)
@@ -243,6 +242,7 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Detach from the disk list. */
 	disk_detach(&sc->sc_dk);
+	disk_destroy(&sc->sc_dk);
 
 #if NRND > 0
 	/* Unhook the entropy source. */

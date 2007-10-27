@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.100.2.2 2006/12/30 20:49:18 yamt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.100.2.3 2007/10/27 11:33:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100.2.2 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100.2.3 2007/10/27 11:33:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100.2.2 2006/12/30 20:49:18 yamt Ex
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.52.2.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: uda.c,v 1.52.2.2 2007/10/27 11:34:02 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.52.2.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.52.2.2 2007/10/27 11:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.52.2.1 2006/06/21 15:06:28 yamt Exp $");
 #include <sys/bufq.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/sid.h>
 
 #include <dev/qbus/ubavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.5.12.2 2007/02/26 09:07:01 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.5.12.3 2007/10/27 11:26:44 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -83,13 +83,13 @@
 	addl	$(TF_PUSHSIZE+8),%esp	; \
 	iret
 
-#define	DO_DEFERRED_SWITCH(reg) \
+#define	DO_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
 	jz	1f					; \
 	call	_C_LABEL(pmap_load)			; \
 	1:
 
-#define	CHECK_DEFERRED_SWITCH(reg) \
+#define	CHECK_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define	CHECK_ASTPENDING(reg)	movl	CPUVAR(CURLWP),reg	; \

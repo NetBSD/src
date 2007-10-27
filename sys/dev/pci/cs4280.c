@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.35.2.3 2007/09/03 14:36:27 yamt Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.35.2.4 2007/10/27 11:32:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.35.2.3 2007/09/03 14:36:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.35.2.4 2007/10/27 11:32:38 yamt Exp $");
 
 #include "midi.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.35.2.3 2007/09/03 14:36:27 yamt Exp $")
 
 #include <dev/pci/cs428x.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/bswap.h>
 
 #define BA1READ4(sc, r) bus_space_read_4((sc)->ba1t, (sc)->ba1h, (r))

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.87.2.3 2007/09/03 14:34:22 yamt Exp $  */
+/*	$NetBSD: atw.c,v 1.87.2.4 2007/10/27 11:30:32 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.87.2.3 2007/09/03 14:34:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.87.2.4 2007/10/27 11:30:32 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.87.2.3 2007/09/03 14:34:22 yamt Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/atwreg.h>
 #include <dev/ic/rf3000reg.h>
@@ -3206,7 +3206,7 @@ atw_rxintr(struct atw_softc *sc)
 			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
 			    tap->ar_ihdr.it_len, m);
  		}
- #endif /* NPBFILTER > 0 */
+ #endif /* NBPFILTER > 0 */
 
 		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.3.2.1 2006/12/30 20:48:44 yamt Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.3.2.2 2007/10/27 11:32:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.3.2.1 2006/12/30 20:48:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.3.2.2 2007/10/27 11:32:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.3.2.1 2006/12/30 20:48:44 yamt Exp $"
 #include <sys/device.h>
 #include <net/if.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

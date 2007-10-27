@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.61.10.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: pas.c,v 1.61.10.2 2007/10/27 11:31:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.61.10.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.61.10.2 2007/10/27 11:31:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.61.10.1 2006/12/30 20:48:27 yamt Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>

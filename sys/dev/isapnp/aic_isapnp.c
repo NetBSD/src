@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.10.6.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.10.6.3 2007/10/27 11:32:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.10.6.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.10.6.3 2007/10/27 11:32:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

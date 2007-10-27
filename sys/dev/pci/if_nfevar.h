@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.1.16.3 2007/09/03 14:37:00 yamt Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.1.16.4 2007/10/27 11:32:58 yamt Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ struct nfe_rx_ring {
 	void *			jpool;
 	struct nfe_rx_data	data[NFE_RX_RING_COUNT];
 	struct nfe_jbuf		jbuf[NFE_JPOOL_COUNT];
+	int			jbufmap[NFE_RX_RING_COUNT];
 	SLIST_HEAD(, nfe_jbuf)	jfreelist;
 	int			bufsz;
 	int			cur;

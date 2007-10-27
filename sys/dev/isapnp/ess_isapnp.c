@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.12.10.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.12.10.3 2007/10/27 11:32:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.12.10.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.12.10.3 2007/10/27 11:32:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.12.10.2 2006/12/30 20:48:35 yamt Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

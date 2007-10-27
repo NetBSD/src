@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.4 2007/09/03 14:31:53 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.5 2007/10/27 11:29:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.4 2007/09/03 14:31:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.5 2007/10/27 11:29:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -485,7 +485,7 @@ unionread:
 #endif /* UNION */
 
 	if ((count == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) &&
+	    (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
@@ -534,6 +534,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 	vfc.vfc_flags = 0;
 	vfc.vfc_mountroot = vfsp->vfs_mountroot;
 	vfc.vfc_next = NULL;
+	vfs_delref(vfsp);
 
 	node = *rnode;
 	node.sysctl_data = &vfc;

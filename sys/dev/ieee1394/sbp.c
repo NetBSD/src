@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.11.6.4 2007/09/03 14:35:29 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.11.6.5 2007/10/27 11:31:18 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -44,7 +44,7 @@
 #include <sys/bus.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/malloc.h>
 #if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 #include <sys/lock.h>
@@ -97,7 +97,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>

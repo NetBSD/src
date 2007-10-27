@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.10.12.2 2006/12/30 20:47:54 yamt Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.10.12.3 2007/10/27 11:30:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.10.12.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.10.12.3 2007/10/27 11:30:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.10.12.2 2006/12/30 20:47:54 yamt Exp 
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

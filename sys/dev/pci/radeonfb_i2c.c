@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_i2c.c,v 1.1.12.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_i2c.c,v 1.1.12.3 2007/10/27 11:33:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>

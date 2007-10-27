@@ -1,11 +1,11 @@
-/* $NetBSD: attimer_acpi.c,v 1.1.8.2 2006/12/30 20:47:54 yamt Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.1.8.3 2007/10/27 11:30:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines <xtraeme@NetBSD.org> and Quentin Garnier.
+ * by Quentin Garnier.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.1.8.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.1.8.3 2007/10/27 11:30:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.1.8.2 2006/12/30 20:47:54 yamt Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>

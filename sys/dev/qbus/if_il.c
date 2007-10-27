@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.11.4.3 2007/09/03 14:38:10 yamt Exp $	*/
+/*	$NetBSD: if_il.c,v 1.11.4.4 2007/10/27 11:33:59 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.11.4.3 2007/09/03 14:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.11.4.4 2007/10/27 11:33:59 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.11.4.3 2007/09/03 14:38:10 yamt Exp $");
 #endif
 
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubareg.h>
 #include <dev/qbus/ubavar.h>

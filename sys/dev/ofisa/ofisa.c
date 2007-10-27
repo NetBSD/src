@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.15.6.1 2007/02/26 09:10:19 yamt Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.15.6.2 2007/10/27 11:32:26 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.15.6.1 2007/02/26 09:10:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.15.6.2 2007/10/27 11:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

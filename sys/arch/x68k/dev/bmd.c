@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.4.2.2 2007/09/03 14:31:03 yamt Exp $	*/
+/*	$NetBSD: bmd.c,v 1.4.2.3 2007/10/27 11:28:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.4.2.2 2007/09/03 14:31:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.4.2.3 2007/10/27 11:28:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,7 @@ bmd_attach(struct device *parent, struct device *self, void *aux)
 	printf("%d MB, 0x%x(64KB) x %d pages\n",
 		(sc->sc_maxpage / 16), sc->sc_window, sc->sc_maxpage);
 
-	sc->sc_dkdev.dk_driver = &bmddkdriver;
-	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	disk_init(&sc->sc_dkdev, sc->sc_dev.dv_xname, &bmddkdriver);
 	disk_attach(&sc->sc_dkdev);
 }
 

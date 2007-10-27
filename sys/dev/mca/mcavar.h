@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.8 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.8.6.1 2007/10/27 11:32:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * separated into mca_machdep.h.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/mca_machdep.h>
 
 struct mcabus_attach_args {

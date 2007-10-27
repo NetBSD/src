@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.4 2007/09/03 14:35:42 yamt Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.5 2007/10/27 11:31:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,18 +27,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.4 2007/09/03 14:35:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.5 2007/10/27 11:31:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/gpio.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
+
+/* Don't use gpio for now in the LKM */
+#ifdef _LKM
+#undef NGPIO
+#endif
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#ifndef _LKM
 #include "gpio.h"
+#endif
 #if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
 #endif
@@ -46,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.4 2007/09/03 14:35:42 yamt E
 
 static int nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
 static void nsclpcsio_isa_attach(struct device *, struct device *, void *);
+static int nsclpcsio_isa_detach(struct device *, int);
 
 #define GPIO_NPINS 29
 #define	SIO_GPIO_CONF_OUTPUTEN	(1 << 0)
@@ -76,7 +85,7 @@ struct nsclpcsio_softc {
 	    (sc)->sc_gpio_ioh, (reg), (val))
 
 CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
-    nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
+    nsclpcsio_isa_match, nsclpcsio_isa_attach, nsclpcsio_isa_detach, NULL);
 
 static u_int8_t nsread(bus_space_tag_t, bus_space_handle_t, int);
 static void nswrite(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
@@ -294,6 +303,16 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self,
 	}
 #endif
 	return;
+}
+
+static int
+nsclpcsio_isa_detach(struct device *self, int flags)
+{
+	struct nsclpcsio_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(&sc->sc_sysmon);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	return 0;
 }
 
 static void

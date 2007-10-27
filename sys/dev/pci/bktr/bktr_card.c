@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.20.2.2 2006/12/30 20:49:17 yamt Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.20.2.3 2007/10/27 11:33:36 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.20.2.2 2006/12/30 20:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.20.2.3 2007/10/27 11:33:36 yamt Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.20.2.2 2006/12/30 20:49:17 yamt Exp 
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>	/* for bus space */
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/bus.h>
 #endif
 #endif

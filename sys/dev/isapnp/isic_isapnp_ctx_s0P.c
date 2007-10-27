@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Creatix PnP cards
  *	============================================================
  *
- *	$Id: isic_isapnp_ctx_s0P.c,v 1.6.4.3 2007/09/03 14:35:49 yamt Exp $
+ *	$Id: isic_isapnp_ctx_s0P.c,v 1.6.4.4 2007/10/27 11:32:07 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.6.4.3 2007/09/03 14:35:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.6.4.4 2007/10/27 11:32:07 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #if ISICPNP_CRTX_S0_P
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.6.4.3 2007/09/03 14:35:49 
 #include <machine/clock.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

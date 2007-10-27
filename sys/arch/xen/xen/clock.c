@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13.2.3 2007/09/03 14:31:36 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.2.4 2007/10/27 11:29:26 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.2.3 2007/09/03 14:31:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.2.4 2007/10/27 11:29:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ startrtclock()
  * Wait approximately `n' microseconds.
  */
 void
-xen_delay(int n)
+xen_delay(unsigned int n)
 {
 	if (n < 500000) {
 		/*

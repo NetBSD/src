@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.3.18.4 2007/09/03 14:35:26 yamt Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.3.18.5 2007/10/27 11:31:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -54,7 +54,7 @@
 
 #include <sys/bus.h>
 #include <sys/ctype.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/ioccom.h>
 
@@ -85,7 +85,7 @@
 #include <sys/poll.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>

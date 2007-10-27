@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.26.2.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: interwave.c,v 1.26.2.3 2007/10/27 11:30:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.26.2.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.26.2.3 2007/10/27 11:30:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.26.2.2 2006/12/30 20:48:03 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 #include <machine/pio.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.9.10.2 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.9.10.3 2007/10/27 11:32:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.9.10.2 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.9.10.3 2007/10/27 11:32:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.9.10.2 2006/12/30 20:48:43 yamt Exp $")
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/cs428xreg.h>
 #include <dev/pci/cs428x.h>

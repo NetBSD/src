@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.4.22.2 2007/09/03 14:35:44 yamt Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.4.22.3 2007/10/27 11:31:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.4.22.2 2007/09/03 14:35:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.4.22.3 2007/10/27 11:31:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

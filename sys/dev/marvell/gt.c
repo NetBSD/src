@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.9.4.2 2007/02/26 09:10:16 yamt Exp $	*/
+/*	$NetBSD: gt.c,v 1.9.4.3 2007/10/27 11:32:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9.4.2 2007/02/26 09:10:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9.4.3 2007/10/27 11:32:11 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9.4.2 2007/02/26 09:10:16 yamt Exp $");
 
 #define _BUS_SPACE_PRIVATE
 #define _BUS_DMA_PRIVATE
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>

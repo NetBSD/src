@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.2.4 2007/09/03 14:30:24 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.5 2007/10/27 11:28:43 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.4 2007/09/03 14:30:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.5 2007/10/27 11:28:43 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -752,9 +752,9 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 #endif
 
 	/*
-	 * Allocate a ncpu*128KB page for the cpu_info & stack structure now.
+	 * Allocate a ncpu*64KB page for the cpu_info & stack structure now.
 	 */
-	cpu0paddr = prom_alloc_phys(16 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE);
+	cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE);
 	if (cpu0paddr == 0) {
 		prom_printf("Cannot allocate cpu_infos\n");
 		prom_halt();
@@ -1052,9 +1052,9 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		BDPRINTF(PDB_BOOT1,
 			("Inserting cpu_info into pmap_kernel() at %p\n",
 				 cpus));
-		/* Now map in all 16 pages of interrupt stack/cpu_info */
+		/* Now map in all 8 pages of interrupt stack/cpu_info */
 		pa = cpu0paddr;
-		prom_map_phys(pa, 128*KB, vmmap, -1);
+		prom_map_phys(pa, 64*KB, vmmap, -1);
 
 		/*
 		 * Also map it in as the interrupt stack.
@@ -1064,8 +1064,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		 * before installing the locked TTE.
 		 */
 		prom_map_phys(pa, 64*KB, INTSTACK, -1);
-		prom_map_phys(pa + 64*KB, 64*KB, KSTACK_VA, -1);
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 8; i++) {
 			int64_t data1;
 
 			data1 = TSB_DATA(0 /* global */,
@@ -1084,14 +1083,12 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\n"));
 
 		/* Initialize our cpu_info structure */
-		memset((void *)intstk, 0, 128 * KB);
+		memset((void *)intstk, 0, 64 * KB);
 		cpus->ci_self = cpus;
 		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_flags = CPUF_PRIMARY;
-		cpus->ci_upaid = CPU_UPAID;
-		cpus->ci_number = 0;
-		cpus->ci_cpuid = cpus->ci_upaid;
+		cpus->ci_cpuid = CPU_UPAID;
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
@@ -1102,7 +1099,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		lwp0.l_md.md_tf = (struct trapframe64*)(u0va + USPACE
 		    - sizeof(struct trapframe64));
 
-		cpu0paddr += 128 * KB;
+		cpu0paddr += 64 * KB;
 
 		CPUSET_CLEAR(cpus_active);
 		CPUSET_ADD(cpus_active, 0);
@@ -2047,6 +2044,7 @@ pmap_extract(pm, va, pap)
 	paddr_t *pap;
 {
 	paddr_t pa;
+	int64_t data = 0;
 
 	if (pm == pmap_kernel() && va >= kdata && va < roundup(ekdata, 4*MEG)) {
 		/* Need to deal w/locked TLB entry specially. */
@@ -2065,18 +2063,12 @@ pmap_extract(pm, va, pap)
 		if (pap != NULL)
 			*pap = pa;
 		return TRUE;
-	} else if (pm == pmap_kernel() && va >= KSTACK_VA && va < (KSTACK_VA + 64*KB)) {
-		pa = (paddr_t)(curcpu()->ci_paddr - KSTACK_VA + va);
-		DPRINTF(PDB_EXTRACT, ("pmap_extract (kstack): va=%lx pa=%llx\n",
-		    (u_long)va, (unsigned long long)pa));
-		if (pap != NULL)
-			*pap = pa;
-		return TRUE;
 	} else {
 		if (pm != pmap_kernel()) {
 			simple_lock(&pm->pm_lock);
 		}
-		pa = pseg_get(pm, va) & TLB_PA_MASK;
+		data = pseg_get(pm, va);
+		pa = data & TLB_PA_MASK;
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			paddr_t npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)],
@@ -2110,7 +2102,7 @@ pmap_extract(pm, va, pap)
 			simple_unlock(&pm->pm_lock);
 		}
 	}
-	if (pa == 0)
+	if ((data & TLB_V) == 0)
 		return (FALSE);
 	if (pap != NULL)
 		*pap = pa + (va & PGOFSET);
@@ -3430,10 +3422,6 @@ pmap_testout()
 void
 pmap_update(struct pmap *pmap)
 {
-
-#ifdef MULTIPROCESSOR
-	smp_tlb_flush_all();	/* XXX */
-#endif
 
 	if (pmap->pm_refs > 0) {
 		return;

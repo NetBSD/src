@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.10.2.2 2007/09/03 14:29:12 yamt Exp $ */
+/* $NetBSD: disksubr.c,v 1.10.2.3 2007/10/27 11:28:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10.2.2 2007/09/03 14:29:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10.2.3 2007/10/27 11:28:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,7 @@ nombrpart:
 	}
 
 done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	brelse(bp, BC_INVAL);
 	return (msg);
 }
 
@@ -396,7 +395,6 @@ nombrpart:
 	error = ESRCH;
 
 done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	brelse(bp, BC_INVAL);
 	return (error);
 }

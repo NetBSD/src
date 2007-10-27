@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.50.6.1 2006/12/30 20:49:17 yamt Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.50.6.2 2007/10/27 11:33:41 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.50.6.1 2006/12/30 20:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.50.6.2 2007/10/27 11:33:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.50.6.1 2006/12/30 20:49:17 yamt Exp
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
@@ -119,6 +119,8 @@ CFATTACH_DECL(com_pcmcia, sizeof(struct com_pcmcia_softc),
 static const struct pcmcia_product com_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+	{ PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_BLUETOOTH_PCCARD,
+	  PCMCIA_CIS_INVALID },
 };
 static const size_t com_pcmcia_nproducts =
     sizeof(com_pcmcia_products) / sizeof(com_pcmcia_products[0]);

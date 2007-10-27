@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.22.4.2 2006/12/30 20:49:18 yamt Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.22.4.3 2007/10/27 11:33:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.22.4.2 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.22.4.3 2007/10/27 11:33:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.22.4.2 2006/12/30 20:49:18 yamt Exp $")
 #include <sys/termios.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

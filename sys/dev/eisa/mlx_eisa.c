@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.13.4.2 2006/12/30 20:47:58 yamt Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.13.4.3 2007/10/27 11:30:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.13.4.2 2006/12/30 20:47:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.13.4.3 2007/10/27 11:30:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.2.4.2 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: iavc.c,v 1.2.4.3 2007/10/27 11:30:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.2.4.2 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.2.4.3 2007/10/27 11:30:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.2.4.2 2006/12/30 20:48:02 yamt Exp $");
 #include <sys/reboot.h>
 #include <net/if.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>

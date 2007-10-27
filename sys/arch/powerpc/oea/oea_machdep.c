@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.22.2.4 2007/09/03 14:29:00 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.22.2.5 2007/10/27 11:27:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.4 2007/09/03 14:29:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.5 2007/10/27 11:27:53 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -751,6 +751,13 @@ oea_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
+
+	/*
+	 * Initialize soft interrupt framework.
+	 */
+#ifndef __ev64260__
+	softintr__init();
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.24.10.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.24.10.3 2007/10/27 11:32:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.3 2007/10/27 11:32:04 yamt Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.2 2006/12/30 20:48:35 yamt Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.29.2.4 2007/09/03 14:33:16 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29.2.5 2007/10/27 11:29:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.4 2007/09/03 14:33:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.5 2007/10/27 11:29:59 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.4 2007/09/03 14:33:16 yamt Exp 
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
@@ -148,7 +149,7 @@ sequencerattach(int n)
 	for (n = 0; n < NSEQUENCER; n++) {
 		sc = &seqdevs[n];
 		callout_init(&sc->sc_callout, 0);
-		sc->sih = softintr_establish(IPL_SOFTSERIAL, seq_softintr, sc);
+		sc->sih = softint_establish(SOFTINT_SERIAL, seq_softintr, sc);
 	}
 }
 
@@ -348,7 +349,7 @@ seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 	if (SEQ_QFULL(q))
 		return (ENOMEM);
 	SEQ_QPUT(q, *cmd);
-	softintr_schedule(sc->sih);
+	softint_schedule(sc->sih);
 	return 0;
 }
 

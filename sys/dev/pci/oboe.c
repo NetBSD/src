@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.19.2.3 2007/09/03 14:37:14 yamt Exp $	*/
+/*	$NetBSD: oboe.c,v 1.19.2.4 2007/10/27 11:33:19 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.3 2007/09/03 14:37:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.4 2007/10/27 11:33:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.3 2007/09/03 14:37:14 yamt Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/pci/oboereg.h>

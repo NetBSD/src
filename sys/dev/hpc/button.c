@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.10.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: button.c,v 1.10.4.2 2007/10/27 11:30:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,13 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.10.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.10.4.2 2007/10/27 11:30:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/config_hook.h>
 #include <machine/platid.h>

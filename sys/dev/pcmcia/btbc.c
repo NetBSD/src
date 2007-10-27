@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.2.2.2 2007/09/03 14:38:03 yamt Exp $	*/
+/*	$NetBSD: btbc.c,v 1.2.2.3 2007/10/27 11:33:41 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.2.2.2 2007/09/03 14:38:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.2.2.3 2007/10/27 11:33:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.2.2.2 2007/09/03 14:38:03 yamt Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.2.2.2 2007/09/03 14:38:03 yamt Exp $");
 #define BTBC_SLEEPING		(1 << 0)	/* but not with the fishes */
 
 /* Default baud rate: 57600, 115200, 230400 or 460800 */
-#define BTBC_DEFAULT_BAUDRATE	230400
+#define BTBC_DEFAULT_BAUDRATE	57600
 
 struct btbc_softc {
 	struct device sc_dev;			/* required */
@@ -96,7 +96,6 @@ struct btbc_softc {
 static int btbc_match(struct device *, struct cfdata *, void *);
 static void btbc_attach(struct device *, struct device *, void *);
 static int btbc_detach(struct device *, int);
-static int btbc_activate(struct device *, enum devact);
 static void btbc_power(int, void *);
 
 static void btbc_activity_led_timeout(void *);
@@ -113,7 +112,7 @@ static int btbc_enable(struct hci_unit *);
 static void btbc_disable(struct hci_unit *);
 
 CFATTACH_DECL(btbc, sizeof(struct btbc_softc),
-    btbc_match, btbc_attach, btbc_detach, btbc_activate);
+    btbc_match, btbc_attach, btbc_detach, NULL);
 
 
 /* ARGSUSED */
@@ -200,25 +199,6 @@ btbc_detach(struct device *self, int flags)
 	hci_detach(&sc->sc_unit);
 
 	pcmcia_function_unconfigure(sc->sc_pf);
-
-	return err;
-}
-
-/* ARGSUSED */
-static int
-btbc_activate(struct device *self, enum devact act)
-{
-	int err = 0;
-
-	switch(act) {
-	case DVACT_ACTIVATE:
-		err = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		// could notify unit somehow?
-		break;
-	}
 
 	return err;
 }
@@ -560,7 +540,7 @@ btbc_transmit(struct btbc_softc *sc)
 {
 	hci_cmd_hdr_t *p;
 	struct mbuf *m;
-	int count, rlen, set_baudrate, n, s;
+	int count, set_baudrate, n, s;
 	uint32_t offset, command;
 	uint8_t *rptr;
 
@@ -586,10 +566,9 @@ btbc_transmit(struct btbc_softc *sc)
 	}
 
 	count = 0;
-	rlen = 0;
 	rptr = mtod(m, uint8_t *);
 	for(;;) {
-		if (rlen >= m->m_len) {
+		if (m->m_len == 0) {
 			m = m->m_next;
 			if (m == NULL) {
 				m = sc->sc_txp;
@@ -603,7 +582,6 @@ btbc_transmit(struct btbc_softc *sc)
 				break;
 			}
 
-			rlen = 0;
 			rptr = mtod(m, uint8_t *);
 			continue;
 		}
@@ -616,7 +594,6 @@ btbc_transmit(struct btbc_softc *sc)
 				sc->sc_txstate &= ~(TXBUF2_EMPTY | TXBUF_MASK);
 			} else {
 				splx(s);
-				m_adj(m, rlen);
 				break;
 			}
 		} else {
@@ -627,7 +604,6 @@ btbc_transmit(struct btbc_softc *sc)
 				sc->sc_txstate |= TXBUF_MASK;
 			} else {
 				splx(s);
-				m_adj(m, rlen);
 				break;
 			}
 		}
@@ -644,10 +620,10 @@ btbc_transmit(struct btbc_softc *sc)
 		btbc_enable_activity_led(sc);
 
 		/* Send frame */
-		n = btbc_write(sc, offset, rptr, m->m_len - rlen);
+		n = btbc_write(sc, offset, rptr, m->m_len);
 		count += n;
-		rlen += n;
 		rptr += n;
+		m_adj(m, n);
 
 		/* Tell the FPGA to send the data */
 		bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,

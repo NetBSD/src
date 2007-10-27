@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.88.2.3 2007/09/03 14:38:22 yamt Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.88.2.4 2007/10/27 11:34:04 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.3 2007/09/03 14:38:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.4 2007/10/27 11:34:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -399,7 +399,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 
 	/* Actually, we don't care if it's failed or not...  On a RAID
 	   set with correct parity, this function should be callable
-	   on any component without ill affects. */
+	   on any component without ill effects. */
 	/* RF_ASSERT(raidPtr->Disks[col].status == rf_ds_failed); */
 
 #if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
@@ -1339,7 +1339,7 @@ ComputePSDiskOffsets(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 	return (0);
 
 skipit:
-	Dprintf2("RECON: Skipping psid %ld: nothing needed from r%d c%d\n",
+	Dprintf2("RECON: Skipping psid %ld: nothing needed from c%d\n",
 	    psid, col);
 	return (1);
 }

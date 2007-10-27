@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.10.4.1 2007/09/03 14:35:32 yamt Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.10.4.2 2007/10/27 11:31:27 yamt Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.10.4.1 2007/09/03 14:35:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.10.4.2 2007/10/27 11:31:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.10.4.1 2007/09/03 14:35:32 yamt Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

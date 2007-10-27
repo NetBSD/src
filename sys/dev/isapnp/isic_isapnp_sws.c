@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.7.4.3 2007/09/03 14:35:51 yamt Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.7.4.4 2007/10/27 11:32:09 yamt Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.7.4.3 2007/09/03 14:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.7.4.4 2007/10/27 11:32:09 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.7.4.3 2007/09/03 14:35:51 yamt
 #include <machine/clock.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.4.8.4 2007/09/03 14:38:07 yamt Exp $ */
+/* $NetBSD: sec.c,v 1.4.8.5 2007/10/27 11:33:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.8.4 2007/09/03 14:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.8.5 2007/10/27 11:33:56 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.8.4 2007/09/03 14:38:07 yamt Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wd33c93reg.h>
 #include <dev/ic/wd33c93var.h>

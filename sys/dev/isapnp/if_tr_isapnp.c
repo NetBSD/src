@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.11.4.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.11.4.3 2007/10/27 11:32:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.11.4.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.11.4.3 2007/10/27 11:32:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.11.4.2 2006/12/30 20:48:35 yamt E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.60.4.1 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.60.4.2 2007/10/27 11:31:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.60.4.1 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.60.4.2 2007/10/27 11:31:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.60.4.1 2006/12/30 20:48:27 yamt Exp $"
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/lptreg.h>

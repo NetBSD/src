@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.17.2.1 2006/12/30 20:48:03 yamt Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.17.2.2 2007/10/27 11:30:52 yamt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,14 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17.2.1 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17.2.2 2007/10/27 11:30:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
 #include <dev/ic/mk48txxvar.h>

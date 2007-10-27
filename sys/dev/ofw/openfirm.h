@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.20.2.2 2007/02/26 09:10:19 yamt Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.20.2.3 2007/10/27 11:32:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,5 +99,6 @@ int	openfirmware(void *);
 int	of_compatible(int, const char * const *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
+int	of_find_firstchild_byname(int, const char *);
 
 int	*of_network_decode_media(int, int *, int *);

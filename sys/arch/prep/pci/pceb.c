@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.1.16.2 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: pceb.c,v 1.1.16.3 2007/10/27 11:28:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1.16.2 2006/06/21 14:55:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.1.16.3 2007/10/27 11:28:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,14 +107,14 @@ pcebattach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int error;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	prep_eisa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
@@ -150,8 +150,8 @@ pceb_callback(struct device *self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_iba.iba_iot = &prep_isa_io_space_tag;
-	ea.ea_iba.iba_memt = &prep_isa_mem_space_tag;
+	ea.ea_iba.iba_iot = &genppc_isa_io_space_tag;
+	ea.ea_iba.iba_memt = &genppc_isa_mem_space_tag;
 #if NISA > 0
 	ea.ea_iba.iba_dmat = &isa_bus_dma_tag;
 #endif

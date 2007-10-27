@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.3 2007/09/03 14:35:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.4 2007/10/27 11:31:45 yamt Exp $");
 
 #include "opt_isicisa.h"
 
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.3 2007/09/03 14:35:40 ya
 #include <machine/clock.h>
 #include <i386/isa/isa_device.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 
