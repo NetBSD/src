@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.4.2 2007/09/03 14:45:26 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.11.4.3 2007/10/27 11:36:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,8 +42,8 @@
 #include <sys/queue.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_map.h>
@@ -51,7 +51,11 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
+#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
+#else
+volatile struct timeval time = { 1, 0 };
+#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;
@@ -61,6 +65,7 @@ struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
 int physmem;
+int doing_shutdown;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
@@ -105,6 +110,16 @@ log(int level, const char *fmt, ...)
 
 void
 uprintf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+printf_nolog(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -212,8 +227,9 @@ device_class(device_t dev)
 void
 getmicrouptime(struct timeval *tvp)
 {
+	int error;
 
-	rumpuser_gettimeofday(tvp);
+	rumpuser_gettimeofday(tvp, &error);
 }
 
 int
@@ -228,7 +244,6 @@ void
 wakeup(wchan_t ident)
 {
 
-	printf("%s: not implemented\n", __func__);
 }
 
 void
@@ -250,7 +265,7 @@ __wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
-	rv = rumpuser_malloc(size, flags * (M_CANFAIL | M_NOWAIT));
+	rv = rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
@@ -261,8 +276,9 @@ void
 nanotime(struct timespec *ts)
 {
 	struct timeval tv;
+	int error;
 
-	rumpuser_gettimeofday(&tv);
+	rumpuser_gettimeofday(&tv, &error);
 	TIMEVAL_TO_TIMESPEC(&tv, ts);
 }
 
@@ -277,15 +293,17 @@ getnanotime(struct timespec *ts)
 void
 microtime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void
 getmicrotime(struct timeval *tv)
 {
+	int error;
 
-	rumpuser_gettimeofday(tv);
+	rumpuser_gettimeofday(tv, &error);
 }
 
 void

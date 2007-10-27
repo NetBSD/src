@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.81.2.3 2007/09/03 14:41:57 yamt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.81.2.4 2007/10/27 11:35:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81.2.3 2007/09/03 14:41:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81.2.4 2007/10/27 11:35:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.81.2.3 2007/09/03 14:41:57 yamt Exp
 #include <sys/lockf.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -195,7 +196,7 @@ spec_open(void *v)
 			return (error);
 
 		if (cdev_type(dev) == D_TTY)
-			vp->v_flag |= VISTTY;
+			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
 		error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -295,11 +296,11 @@ spec_read(void *v)
 			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			brelse(bp);
+			brelse(bp, 0);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
 
@@ -370,20 +371,19 @@ spec_write(void *v)
 			else
 				error = bread(vp, bn, bsize, NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 			n = min(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			if (error)
-				brelse(bp);
+				brelse(bp, 0);
 			else {
 				if (n + on == bsize)
 					bawrite(bp);
 				else
 					bdwrite(bp);
-				if (bp->b_error != 0)
-					error = bp->b_error;
+				error = bp->b_error;
 			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -420,7 +420,7 @@ spec_ioctl(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	simple_lock(&vp->v_interlock);
-	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
 	simple_unlock(&vp->v_interlock);
@@ -435,12 +435,6 @@ spec_ioctl(void *v)
 		    ap->a_fflag, ap->a_l);
 
 	case VBLK:
-		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
-			if (bdev_type(dev) == D_TAPE)
-				return (0);
-			else
-				return (1);
-		}
 		return bdev_ioctl(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, ap->a_l);
 
@@ -470,7 +464,7 @@ spec_poll(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	simple_lock(&vp->v_interlock);
-	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
 	simple_unlock(&vp->v_interlock);
@@ -567,8 +561,7 @@ spec_strategy(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
-	int error, s;
-	struct spec_cow_entry *e;
+	int error;
 
 	error = 0;
 	bp->b_dev = vp->v_rdev;
@@ -576,25 +569,8 @@ spec_strategy(void *v)
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioopsp)
 		bioopsp->io_start(bp);
 
-	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
-		SPEC_COW_LOCK(vp->v_specinfo, s);
-		while (vp->v_spec_cow_req > 0)
-			ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
-			    &vp->v_spec_cow_slock);
-		vp->v_spec_cow_count++;
-		SPEC_COW_UNLOCK(vp->v_specinfo, s);
-
-		SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list) {
-			if ((error = (*e->ce_func)(e->ce_cookie, bp)) != 0)
-				break;
-		}
-
-		SPEC_COW_LOCK(vp->v_specinfo, s);
-		vp->v_spec_cow_count--;
-		if (vp->v_spec_cow_req && vp->v_spec_cow_count == 0)
-			wakeup(&vp->v_spec_cow_req);
-		SPEC_COW_UNLOCK(vp->v_specinfo, s);
-	}
+	if (!(bp->b_flags & B_READ))
+		error = fscow_run(bp);
 
 	if (error) {
 		bp->b_error = error;
@@ -661,7 +637,7 @@ spec_close(void *v)
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
-	flags = vp->v_flag;
+	flags = vp->v_iflag;
 
 	switch (vp->v_type) {
 
@@ -703,7 +679,7 @@ spec_close(void *v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VI_XLOCK) == 0)
 			return (0);
 		mode = S_IFCHR;
 		break;
@@ -726,7 +702,7 @@ spec_close(void *v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0)
+		if (count > 1 && (flags & VI_XLOCK) == 0)
 			return (0);
 		mode = S_IFBLK;
 		break;
@@ -738,16 +714,16 @@ spec_close(void *v)
 	flags1 = ap->a_fflag;
 
 	/*
-	 * if VXLOCK is set, then we're going away soon, so make this
+	 * if VI_XLOCK is set, then we're going away soon, so make this
 	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
 	 */
-	if (flags & VXLOCK)
+	if (flags & VI_XLOCK)
 		flags1 |= FNONBLOCK;
 
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
 	 * might end up sleeping for someone else who wants our queues. They
-	 * won't get them if we hold the vnode locked. Also, if VXLOCK is
+	 * won't get them if we hold the vnode locked. Also, if VI_XLOCK is
 	 * set, don't release the lock as we won't be able to regain it.
 	 */
 	if (!(flags1 & FNONBLOCK))

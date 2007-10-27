@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.90.2.4 2007/09/03 14:40:58 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.90.2.5 2007/10/27 11:35:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.90.2.4 2007/09/03 14:40:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.90.2.5 2007/10/27 11:35:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.90.2.4 2007/09/03 14:40:58 yamt Exp 
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr, IPL_NONE);
@@ -114,8 +114,8 @@ settime(struct proc *p, struct timespec *ts)
 	struct timeval now;
 	struct timespec ts1;
 #endif /* !__HAVE_TIMECOUNTER */
-	struct cpu_info *ci;
-	int s1, s2;
+	lwp_t *l;
+	int s;
 
 	/*
 	 * Don't allow the time to be set forward so far it will wrap
@@ -147,8 +147,7 @@ settime(struct proc *p, struct timespec *ts)
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	s1 = splsoftclock();
-	s2 = splclock();
+	s = splclock();
 #ifdef __HAVE_TIMECOUNTER
 	microtime(&now);
 	timersub(&tv, &now, &delta);
@@ -158,12 +157,12 @@ settime(struct proc *p, struct timespec *ts)
 	if ((delta.tv_sec < 0 || delta.tv_usec < 0) &&
 	    kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
 	    KAUTH_REQ_SYSTEM_TIME_BACKWARDS, NULL, NULL, NULL)) {
-		splx(s1);
+		splx(s);
 		return (EPERM);
 	}
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
-		splx(s1);
+		splx(s);
 		return (EPERM);
 	}
 #endif
@@ -175,21 +174,23 @@ settime(struct proc *p, struct timespec *ts)
 	time = tv;
 #endif /* !__HAVE_TIMECOUNTER */
 
-	splx(s2);
-
 	timeradd(&boottime, &delta, &boottime);
 
 	/*
-	 * XXXSMP
-	 * This is wrong.  We should traverse a list of all
-	 * CPUs and add the delta to the runtime of those
-	 * CPUs which have a process on them.
+	 * XXXSMP: There is a short race between setting the time above
+	 * and adjusting LWP's run times.  Fixing this properly means
+	 * pausing all CPUs while we adjust the clock.
 	 */
-	ci = curcpu();
-	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
-	    &ci->ci_schedstate.spc_runtime);
-	splx(s1);
+	mutex_enter(&proclist_lock);
+	LIST_FOREACH(l, &alllwp, l_list) {
+		lwp_lock(l);
+		timeradd(&l->l_stime, &delta, &l->l_stime);
+		lwp_unlock(l);
+	}
+	mutex_exit(&proclist_lock);
 	resettodr();
+	splx(s);
+
 	return (0);
 }
 

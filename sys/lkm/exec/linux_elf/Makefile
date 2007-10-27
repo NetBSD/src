@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7.12.1 2007/09/03 14:41:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.12.2 2007/10/27 11:35:49 yamt Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/linux/common
+.PATH:	$S/compat/linux/arch/${MACHINE}
 .PATH:	$S/compat/linux/arch/${MACHINE_ARCH}
 
 CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_ELF32 -DEXEC_ELF64
@@ -11,13 +12,15 @@ KMOD=	exec_linux_elf
 
 SRCS=	lkminit_exec.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 SRCS+=	linux_exec_machdep.c
 .endif
 
-.if ${MACHINE} == "alpha" || ${MACHINE} == "sparc64"
+.if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || ${MACHINE} == "sparc64"
+CPPFLAGS+=	-DELFSIZE=64
 SRCS+=	linux_exec_elf64.c
 .else
+CPPFLAGS+=	-DELFSIZE=32
 SRCS+=	linux_exec_elf32.c
 .endif
 

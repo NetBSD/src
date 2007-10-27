@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.7.2.3 2007/09/03 14:40:06 yamt Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.7.2.4 2007/10/27 11:35:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.7.2.3 2007/09/03 14:40:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.7.2.4 2007/10/27 11:35:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,7 @@ cd9660_rrip_loop(isodir, ana, table)
 			break;
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If we don't find the Basic SUSP stuffs, just set default value
 	 *   (attribute/time stamp)

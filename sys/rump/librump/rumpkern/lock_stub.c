@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.8.4.2 2007/09/03 14:45:30 yamt Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.8.4.3 2007/10/27 11:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -66,10 +66,13 @@ mutex_owned(kmutex_t *mtx)
 	return 1;
 }
 
+#define RW_UNLOCKED -1 /* XXX */
+
 void
 rw_init(krwlock_t *rw)
 {
 
+	rw->rw_locked = RW_UNLOCKED;
 }
 
 void
@@ -82,10 +85,31 @@ void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
+	KASSERT(rw->rw_locked == RW_UNLOCKED);
+	rw->rw_locked = op;
 }
 
 void
 rw_exit(krwlock_t *rw)
 {
 
+	KASSERT(rw->rw_locked != RW_UNLOCKED);
+	rw->rw_locked = RW_UNLOCKED;
+}
+
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	return rw->rw_locked != RW_UNLOCKED;
+}
+
+int
+rw_tryupgrade(krwlock_t *rw)
+{
+
+	KASSERT(rw->rw_locked == RW_READER);
+	rw->rw_locked = RW_WRITER;
+
+	return 1;
 }

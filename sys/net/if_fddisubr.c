@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.56.2.4 2007/09/03 14:42:05 yamt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.56.2.5 2007/10/27 11:36:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.4 2007/09/03 14:42:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.5 2007/10/27 11:36:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.4 2007/09/03 14:42:05 yamt Ex
 #include <sys/errno.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

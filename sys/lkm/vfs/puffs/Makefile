@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2006/12/30 20:50:17 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2007/10/27 11:35:51 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,7 @@
 KMOD=	puffs
 
 SRCS=	lkminit_vfs.c
-SRCS+=	puffs_msgif.c puffs_subr.c puffs_transport.c puffs_vfsops.c	\
-	puffs_vnops.c
+SRCS+=	puffs_node.c puffs_msgif.c puffs_subr.c puffs_transport.c	\
+	puffs_vfsops.c puffs_vnops.c
 
 .include <bsd.kmod.mk>

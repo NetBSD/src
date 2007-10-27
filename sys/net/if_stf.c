@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.48.2.4 2007/09/03 14:42:12 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.48.2.5 2007/10/27 11:36:03 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.4 2007/09/03 14:42:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.5 2007/10/27 11:36:03 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.48.2.4 2007/09/03 14:42:12 yamt Exp $")
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.5.4.2 2007/09/03 14:40:14 yamt Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.5.4.3 2007/10/27 11:35:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.5.4.2 2007/09/03 14:40:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.5.4.3 2007/10/27 11:35:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -165,11 +165,11 @@ efs_read_inode(struct efs_mount *emp, ino_t ino, struct lwp *l,
 
 	err = efs_bread(emp, bboff, l, &bp);
 	if (err) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (err);
 	}
 	memcpy(di, ((struct efs_dinode *)bp->b_data) + index, sizeof(*di));
-	brelse(bp);
+	brelse(bp, 0);
 
 	return (0);
 }
@@ -322,16 +322,16 @@ efs_extent_lookup(struct efs_mount *emp, struct efs_extent *ex,
 		err = efs_bread(emp, ex->ex_bn + i, NULL, &bp);
 		if (err) {
 			printf("efs: warning: invalid extent descriptor\n");
-			brelse(bp);
+			brelse(bp, 0);
 			return (err);
 		}
 
 		db = (struct efs_dirblk *)bp->b_data;
 		if (efs_dirblk_lookup(db, cn, ino) == 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (0);
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	
 	return (ENOENT);
@@ -482,12 +482,12 @@ efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
 
 		err = efs_bread(emp, ex.ex_bn, NULL, &bp);
 		if (err) {
-			brelse(bp);
+			brelse(bp, 0);
 			return;
 		}
 
 		efs_dextent_to_extent((struct efs_dextent *)bp->b_data, &ex2);
-		brelse(bp);
+		brelse(bp, 0);
 
 		offset = ex2.ex_offset * EFS_BB_SIZE;
 
@@ -528,14 +528,14 @@ efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
 
 		err = efs_bread(emp, ex.ex_bn + bboff, NULL, &bp);
 		if (err) {
-			brelse(bp);
+			brelse(bp, 0);
 			EFS_DPRINTF(("efs_extent_iterator_init: bsrch read\n"));
 			return;
 		}
 
 		efs_dextent_to_extent((struct efs_dextent *)bp->b_data + index,
 		    &ex2);
-		brelse(bp);
+		brelse(bp, 0);
 
 		offset = ex2.ex_offset * EFS_BB_SIZE;
 		length = ex2.ex_length * EFS_BB_SIZE;
@@ -603,7 +603,7 @@ efs_extent_iterator_next(struct efs_extent_iterator *exi,
 		if (err) {
 			EFS_DPRINTF(("efs_extent_iterator_next: "
 			    "efs_bread failed: %d\n", err));
-			brelse(bp);
+			brelse(bp, 0);
 			return (err);
 		}
 
@@ -611,7 +611,7 @@ efs_extent_iterator_next(struct efs_extent_iterator *exi,
 			dexp = (struct efs_dextent *)bp->b_data + index;
 			efs_dextent_to_extent(dexp, exp);
 		}
-		brelse(bp);
+		brelse(bp, 0);
 
 		bboff = exi->exi_innext++ / EFS_EXTENTS_PER_BB;
 		if (bboff >= ex.ex_length) {

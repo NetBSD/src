@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.82.2.3 2007/09/03 14:46:37 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.82.2.4 2007/10/27 11:36:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -270,6 +270,9 @@ struct msghdr;
 struct stat;
 struct knote;
 
+struct	mbuf *m_intopt(struct socket *, int);
+struct	mbuf *getsombuf(struct socket *);
+
 /*
  * File operations on sockets.
  */
@@ -312,6 +315,7 @@ int	soclose(struct socket *);
 int	soconnect(struct socket *, struct mbuf *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
 int	socreate(int, struct socket **, int, int, struct lwp *);
+int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, int, int, struct mbuf **);

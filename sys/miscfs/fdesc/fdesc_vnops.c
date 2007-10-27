@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.84.2.4 2007/09/03 14:41:49 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.84.2.5 2007/10/27 11:35:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.4 2007/09/03 14:41:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.5 2007/10/27 11:35:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,7 +630,7 @@ fdesc_setattr(v)
 	 *      On vnode's this will cause truncation and socket/pipes make
 	 *      no sense.
 	 */
-	simple_unlock(&fp->f_slock);
+	mutex_exit(&fp->f_lock);
 	return (0);
 }
 

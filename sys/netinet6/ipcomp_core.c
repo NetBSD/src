@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.20.22.2 2007/09/03 14:43:38 yamt Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.20.22.3 2007/10/27 11:36:13 yamt Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.20.22.2 2007/09/03 14:43:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.20.22.3 2007/10/27 11:36:13 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.20.22.2 2007/09/03 14:43:38 yamt E
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/zlib.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <netinet6/ipcomp.h>
 #include <netinet6/ipsec.h>

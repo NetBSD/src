@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.9 2005/02/26 22:58:58 perry Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.9.4.1 2007/10/27 11:35:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9.4.1 2007/10/27 11:35:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9 2005/02/26 22:58:58 perry Exp $
 #include <sys/signalvar.h>
 
 #include <machine/elf_machdep.h>
-#define ELFSIZE	32
 #include <sys/exec_elf.h>
 
 #include <compat/linux/common/linux_exec.h>
@@ -56,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9 2005/02/26 22:58:58 perry Exp $
 int exec_linux_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_linux_elf =
-	/* Linux Elf32 */
+	/* Linux Elf */
 	{ sizeof (Elf_Ehdr),
 	  ELFNAME2(exec,makecmds),
 	  { ELFNAME2(linux,probe) },
@@ -65,7 +64,7 @@ static struct execsw exec_linux_elf =
 	  LINUX_ELF_AUX_ARGSIZ,
 	  ELFNAME2(linux,copyargs),
 	  NULL,
-	  coredump_elf32,	/* XXX ELF64? */
+	  ELFNAMEEND(coredump),
 	  linux_exec_setup_stack };
 
 /*

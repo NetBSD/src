@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.10.2.5 2007/09/03 14:40:36 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.10.2.6 2007/10/27 11:35:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.10.2.5 2007/09/03 14:40:36 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.10.2.6 2007/10/27 11:35:16 yamt Exp $");
 #endif /* not lint */
 
 
@@ -359,7 +359,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			if (i == sector_size) {
 				/* return no error but with no dscrptr */
 				/* dispose first block */
-				brelse(bp);
+				brelse(bp, 0);
 				return 0;
 			}
 		}
@@ -372,8 +372,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		memcpy(dst, src, sector_size);
 	}
 	/* dispose first block */
-	bp->b_flags |= B_AGE;
-	brelse(bp);
+	brelse(bp, BC_AGE);
 
 	if (!error && (dscrlen > sector_size)) {
 		DPRINTF(DESCRIPTOR, ("multi block descriptor read\n"));
@@ -386,15 +385,14 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		for (blk = 1; blk < blks; blk++) {
 			error = udf_bread(ump, sector + blk, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				break;
 			}
 			pos = (uint8_t *) dst + blk*sector_size;
 			memcpy(pos, bp->b_data, sector_size);
 
 			/* dispose block */
-			bp->b_flags |= B_AGE;
-			brelse(bp);
+			brelse(bp, BC_AGE);
 		}
 		DPRINTFIF(DESCRIPTOR, error, ("read error on multi (%d)\n",
 		    error));
@@ -1369,9 +1367,8 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 /* --------------------------------------------------------------------- */
 
 #define UDF_SET_SYSTEMFILE(vp) \
-	simple_lock(&(vp)->v_interlock);	\
-	(vp)->v_flag |= VSYSTEM;		\
-	simple_unlock(&(vp)->v_interlock);\
+	/* XXXAD Is the vnode locked? */	\
+	(vp)->v_vflag |= VV_SYSTEM;		\
 	vref(vp);			\
 	vput(vp);			\
 
@@ -1778,7 +1775,7 @@ udf_hashget(struct udf_mount *ump, struct long_ad *icbptr)
 	uint32_t hashline;
 
 loop:
-	simple_lock(&ump->ihash_slock);
+	mutex_enter(&ump->ihash_lock);
 
 	hashline = udf_calchash(icbptr) & UDF_INODE_HASHMASK;
 	LIST_FOREACH(unp, &ump->udf_nodes[hashline], hashchain) {
@@ -1788,13 +1785,13 @@ loop:
 			vp = unp->vnode;
 			assert(vp);
 			simple_lock(&vp->v_interlock);
-			simple_unlock(&ump->ihash_slock);
+			mutex_exit(&ump->ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return unp;
 		}
 	}
-	simple_unlock(&ump->ihash_slock);
+	mutex_exit(&ump->ihash_lock);
 
 	return NULL;
 }
@@ -1808,12 +1805,12 @@ udf_hashins(struct udf_node *unp)
 	uint32_t hashline;
 
 	ump = unp->ump;
-	simple_lock(&ump->ihash_slock);
+	mutex_enter(&ump->ihash_lock);
 
 	hashline = udf_calchash(&unp->loc) & UDF_INODE_HASHMASK;
 	LIST_INSERT_HEAD(&ump->udf_nodes[hashline], unp, hashchain);
 
-	simple_unlock(&ump->ihash_slock);
+	mutex_exit(&ump->ihash_lock);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1824,11 +1821,11 @@ udf_hashrem(struct udf_node *unp)
 	struct udf_mount *ump;
 
 	ump = unp->ump;
-	simple_lock(&ump->ihash_slock);
+	mutex_enter(&ump->ihash_lock);
 
 	LIST_REMOVE(unp, hashchain);
 
-	simple_unlock(&ump->ihash_slock);
+	mutex_exit(&ump->ihash_lock);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1972,7 +1969,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	*noderes = node = NULL;
 
 	/* lock to disallow simultanious creation of same node */
-	lockmgr(&ump->get_node_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&ump->get_node_lock);
 
 	DPRINTF(NODE, ("\tlookup in hash table\n"));
 	/* lookup in hash table */
@@ -1983,7 +1980,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		DPRINTF(NODE, ("\tgot it from the hash!\n"));
 		/* vnode is returned locked */
 		*noderes = node;
-		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
+		mutex_exit(&ump->get_node_lock);
 		return 0;
 	}
 
@@ -1991,7 +1988,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	error = udf_translate_vtop(ump, node_icb_loc, &sector, &dummy);
 	if (error) {
 		/* no use, this will fail anyway */
-		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
+		mutex_exit(&ump->get_node_lock);
 		return EINVAL;
 	}
 
@@ -2004,7 +2001,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	error = getnewvnode(VT_UDF, ump->vfs_mountp, udf_vnodeop_p, &nvp);
         if (error) {
 		pool_put(&udf_node_pool, node);
-		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
+		mutex_exit(&ump->get_node_lock);
 		return error;
 	}
 
@@ -2012,7 +2009,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	if ((error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY))) {
 		/* recycle vnode and unlock; simultanious will fail too */
 		ungetnewvnode(nvp);
-		lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
+		mutex_exit(&ump->get_node_lock);
 		return error;
 	}
 
@@ -2027,7 +2024,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	udf_hashins(node);
 
 	/* safe to unlock, the entry is in the hash table, vnode is locked */
-	lockmgr(&ump->get_node_lock, LK_RELEASE, NULL);
+	mutex_exit(&ump->get_node_lock);
 
 	icb_loc = *node_icb_loc;
 	needs_indirect = 0;
@@ -2443,7 +2440,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	struct fileid_desc *fid;
-	struct dirent dirent;
+	struct dirent *dirent;
 	uint64_t file_size, diroffset;
 	uint32_t lb_size;
 	int found, error;
@@ -2460,7 +2457,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 
 	/* allocate temporary space for fid */
 	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
-	fid = malloc(lb_size, M_TEMP, M_WAITOK);
+	fid = malloc(lb_size, M_UDFTEMP, M_WAITOK);
 
 	found = 0;
 	diroffset = dir_node->last_diroffset;
@@ -2473,20 +2470,22 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		diroffset = dir_node->last_diroffset = file_size;
 	}
 
+	dirent = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+
 	while (!found) {
 		/* if at the end, go trough zero */
 		if (diroffset >= file_size)
 			diroffset = 0;
 
 		/* transfer a new fid/dirent */
-		error = udf_read_fid_stream(vp, &diroffset, fid, &dirent);
+		error = udf_read_fid_stream(vp, &diroffset, fid, dirent);
 		if (error)
 			break;
 
 		/* skip deleted entries */
 		if ((fid->file_char & UDF_FILE_CHAR_DEL) == 0) {
-			if ((strlen(dirent.d_name) == namelen) &&
-			    (strncmp(dirent.d_name, name, namelen) == 0)) {
+			if ((strlen(dirent->d_name) == namelen) &&
+			    (strncmp(dirent->d_name, name, namelen) == 0)) {
 				found = 1;
 				*icb_loc = fid->icb;
 			}
@@ -2497,7 +2496,8 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 			break;
 		}
 	}
-	free(fid, M_TEMP);
+	free(fid, M_UDFTEMP);
+	free(dirent, M_UDFTEMP);
 	dir_node->last_diroffset = diroffset;
 
 	return found;
@@ -2777,7 +2777,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		return;
 	}
 
-	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_TEMP, M_WAITOK);
+	mapping = malloc(sizeof(*mapping) * FILEBUFSECT, M_UDFTEMP, M_WAITOK);
 
 	error = 0;
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
@@ -2850,7 +2850,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	}
 out:
 	DPRINTF(READ, ("\tend of read_filebuf\n"));
-	free(mapping, M_TEMP);
+	free(mapping, M_UDFTEMP);
 	return;
 }
 #undef FILEBUFSECT

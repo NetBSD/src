@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/24 15:01:57 kent Exp $
+#	$NetBSD: Makefile,v 1.14.26.1 2007/10/27 11:35:49 yamt Exp $
+
+.if ${MACHINE} == "amd64"
+SUBDIR+=	linux_elf
+.endif
 
 .if ${MACHINE} == "i386"
 SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf pecoff

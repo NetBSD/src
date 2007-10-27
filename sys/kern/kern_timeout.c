@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.16.2.2 2007/09/03 14:40:58 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.16.2.3 2007/10/27 11:35:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.2 2007/09/03 14:40:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.3 2007/10/27 11:35:30 yamt Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -100,8 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.2 2007/09/03 14:40:58 yamt E
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
 #include <sys/evcnt.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -279,7 +278,7 @@ void
 callout_startup2(void)
 {
 
-	callout_si = softintr_establish(IPL_SOFTCLOCK,
+	callout_si = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	    callout_softclock, NULL);
 	if (callout_si == NULL)
 		panic("callout_startup2: unable to register softclock intr");
@@ -553,7 +552,7 @@ callout_hardclock(void)
 	mutex_spin_exit(&callout_lock);
 
 	if (needsoftclock)
-		softintr_schedule(callout_si);
+		softint_schedule(callout_si);
 }
 
 /* ARGSUSED */

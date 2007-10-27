@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.3.12.2 2007/09/03 14:40:20 yamt Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.3.12.3 2007/10/27 11:35:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.3.12.2 2007/09/03 14:40:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.3.12.3 2007/10/27 11:35:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,9 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			    vp->v_data = NULL;
 			    /* XXX spec_vnodeops has no locking,
 			       do it explicitly */
+			    vp->v_vflag &= ~VV_LOCKSWORK;
 			    VOP_UNLOCK(vp, 0);
 			    vp->v_op = specops;
-			    vp->v_flag &= ~VLOCKSWORK;
 			    vrele(vp);
 			    vgone(vp);
 			    lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
@@ -108,7 +108,7 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 	}
 
 	if (hp->h_rec.cnid == HFS_CNID_ROOT_FOLDER)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	*vpp = vp;
 }
@@ -339,7 +339,7 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 				(off - start), min(len - curoff, MAXBSIZE - (off - start)));
 		
 		if (bp != NULL)
-			brelse(bp);
+			brelse(bp, 0);
 		if (error != 0)
 			return error;
 			

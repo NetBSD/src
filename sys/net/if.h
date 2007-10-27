@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.110.2.4 2007/09/03 14:42:01 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.110.2.5 2007/10/27 11:35:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -552,6 +552,7 @@ struct	ifreq {
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
 #define	ifr_broadaddr	ifr_ifru.ifru_broadaddr	/* broadcast address */
+#define	ifr_space	ifr_ifru.ifru_space	/* sockaddr_storage */
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.4 2007/09/03 14:46:46 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.5 2007/10/27 11:36:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.4 2007/09/03 14:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.5 2007/10/27 11:36:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -221,12 +221,12 @@ ext2fs_mountroot(void)
 	if ((error = ext2fs_mountfs(rootvp, mp, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
@@ -494,13 +494,13 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 		size = dpart.disklab->d_secsize;
 	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
 	error = ext2fs_checksb(newfs, (mountp->mnt_flag & MNT_RDONLY) != 0);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 
@@ -532,13 +532,13 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 		    fsbtodb(fs, ((fs->e2fs_bsize>1024)? 0 : 1) + i + 1),
 		    fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		e2fs_cgload((struct ext2_gd*)bp->b_data,
 		    &fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)],
 		    fs->e2fs_bsize);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 loop:
@@ -580,7 +580,7 @@ loop:
 		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
-		brelse(bp);
+		brelse(bp, 0);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
 	}
@@ -642,7 +642,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
 	memset(ump->um_e2fs, 0, sizeof(struct m_ext2fs));
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
-	brelse(bp);
+	brelse(bp, 0);
 	bp = NULL;
 	m_fs = ump->um_e2fs;
 	m_fs->e2fs_ronly = ronly;
@@ -683,7 +683,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		    &m_fs->e2fs_gd[
 			i * m_fs->e2fs_bsize / sizeof(struct ext2_gd)],
 		    m_fs->e2fs_bsize);
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 
@@ -712,7 +712,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 out:
 	KASSERT(bp != NULL);
-	brelse(bp);
+	brelse(bp, 0);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -936,7 +936,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-
+retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
@@ -948,14 +948,14 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 
 	mutex_enter(&ufs_hashlock);
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+	if ((*vpp = ufs_ihashget(dev, ino, 0)) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
 		pool_put(&ext2fs_inode_pool, ip);
-		return (0);
+		goto retry;
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 
 	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
@@ -990,7 +990,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 */
 
 		vput(vp);
-		brelse(bp);
+		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -998,7 +998,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	    (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
 	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
