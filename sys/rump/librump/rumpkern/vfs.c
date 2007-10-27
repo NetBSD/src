@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.16 2007/10/26 17:55:43 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.17 2007/10/27 19:36:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,6 +84,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
+	vp->v_usecount = 1;
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 
 	uobj = &vp->v_uobj;
@@ -182,7 +183,8 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
 
-	if (vp->v_data != (void *)1) {
+	if (vp->v_usecount == 1) {
+		vp->v_usecount = 0;
 		simple_lock(&vp->v_interlock);
 		if (inter_lkp)
 			simple_unlock(inter_lkp);
@@ -191,7 +193,6 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 		VOP_INACTIVE(vp, l);
 
 		VOP_RECLAIM(vp, l);
-		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	}
 
