@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.4 2007/10/26 14:30:03 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.5 2007/10/27 02:01:42 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ read_srom(struct local *l, int off)
 	x1 = val | D1;			/* 1 */
 	x0 = val | D0;			/* 0 */
 	/* instruct R110 op. at off in MSB first order */
-	for (cnt = (1 << (l->sromsft + 3)); cnt > 0; cnt >>= 1) {
+	for (cnt = (1 << (l->sromsft + 2)); cnt > 0; cnt >>= 1) {
 		bit = (idx & cnt) ? x1 : x0;
 		CSR_WRITE(l, TLP_APROM, bit);
 		DELAY(10);
