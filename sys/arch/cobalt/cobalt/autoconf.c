@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2007/10/27 14:47:04 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2007/10/27 17:23:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2007/10/27 14:47:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2007/10/27 17:23:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2007/10/27 14:47:04 tsutsui Exp $"
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
+#include <dev/pci/pcivar.h>
 #include <dev/ata/atavar.h>
 
 extern char	bootstring[];
@@ -85,9 +86,14 @@ device_register(struct device *dev, void *aux)
 	if (netboot == 1) {
 		/* check tlp0 on netboot */
 		if (device_class(dev) == DV_IFNET &&
-		    device_is_a(dev, "tlp") &&
-		    device_unit(dev) == 0)
-			booted_device = dev;
+		    device_is_a(dev, "tlp")) {
+			struct pci_attach_args *pa = aux;
+
+			if (pa->pa_bus == 0 &&
+			    pa->pa_device == 7 &&
+			    pa->pa_function == 0)
+				booted_device = dev;
+		}
 	} else {
 		/* check wd channel and drive */
 		if (device_class(dev) == DV_DISK &&
