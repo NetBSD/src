@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.14 2007/09/03 14:58:03 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.15 2007/10/27 11:40:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.14 2007/09/03 14:58:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.15 2007/10/27 11:40:55 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -145,35 +145,29 @@ struct mowner unknown_mowners[] = {
 struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #endif
 
-#define	MEXT_LOCK(m)	simple_lock(&(m)->m_ext.ext_lock)
-#define	MEXT_UNLOCK(m)	simple_unlock(&(m)->m_ext.ext_lock)
+#define	MEXT_LOCK(m)	mutex_enter(&(m)->m_ext.ext_lock)
+#define	MEXT_UNLOCK(m)	mutex_exit(&(m)->m_ext.ext_lock)
 #define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
 
 static inline void
 mcl_inc_reference(struct mbuf *m)
 {
-	int s;
 
-	s = splvm();
 	MEXT_LOCK(m);
 	m->m_ext.ext_refcnt++;
 	MEXT_UNLOCK(m);
-	splx(s);
 }
 
 static inline bool
 mcl_dec_and_test_reference(struct mbuf *m)
 {
 	bool gotzero;
-	int s;
 
-	s = splvm();
 	MEXT_LOCK(m);
 	KASSERT(m->m_ext.ext_refcnt > 0);
 	m->m_ext.ext_refcnt--;
 	gotzero = (m->m_ext.ext_refcnt == 0);
 	MEXT_UNLOCK(m);
-	splx(s);
 
 	return gotzero;
 }
@@ -1482,6 +1476,9 @@ m_ext_free(struct mbuf *m)
 
 	if (!mcl_dec_and_test_reference(m)) {
 		if (embedded) {
+			/*
+			 * other mbuf's m_ext_ref still points to us.
+			 */
 			dofree = false;
 		} else {
 			m->m_ext_ref = m;
@@ -1499,6 +1496,7 @@ m_ext_free(struct mbuf *m)
 			    m->m_ext.ext_arg,
 			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 		} else if (m->m_ext.ext_free) {
+			mutex_destroy(&m->m_ext.ext_lock);
 			(*m->m_ext.ext_free)(m,
 			    m->m_ext.ext_buf, m->m_ext.ext_size,
 			    m->m_ext.ext_arg);
@@ -1511,6 +1509,9 @@ m_ext_free(struct mbuf *m)
 		}
 	}
 	if (dofree) {
+		if (embedded) {
+			mutex_destroy(&m->m_ext.ext_lock);
+		}
 		pool_cache_put(&mbpool_cache, m);
 	}
 }
@@ -1519,12 +1520,10 @@ m_ext_free(struct mbuf *m)
 char *
 m_mapin(struct mbuf *m)
 {
-#if defined(__HAVE_LAZY_MBUF)
-	int s;
 
+#if defined(__HAVE_LAZY_MBUF)
 	KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES|M_EXT_LAZY)) == 0);
 
-	s = splvm();
 	MEXT_LOCK(m);
 	if (m->m_ext.ext_flags & M_EXT_LAZY) {
 		vaddr_t buf = (vaddr_t)m->m_ext.ext_buf;
@@ -1543,7 +1542,6 @@ m_mapin(struct mbuf *m)
 		m->m_ext.ext_flags &= ~M_EXT_LAZY;
 	}
 	MEXT_UNLOCK(m);
-	splx(s);
 
 	m->m_flags &= ~M_EXT_LAZY;
 	return m->m_data;
