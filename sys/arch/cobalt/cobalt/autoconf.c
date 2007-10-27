@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2006/11/17 21:01:03 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2007/10/27 14:47:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2006/11/17 21:01:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2007/10/27 14:47:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2006/11/17 21:01:03 tsutsui Exp $"
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+
+#include <dev/ata/atavar.h>
 
 extern char	bootstring[];
 extern int	netboot;
@@ -73,23 +75,29 @@ cpu_rootconf(void)
 	setroot(booted_device, booted_partition);
 }
 
-static int hd_iterate = -1;
-
 void
 device_register(struct device *dev, void *aux)
 {
 
-	if (booted_device)
+	if (booted_device != NULL)
 		return;
 
-	if ((booted_device == NULL) && (netboot == 1))
-		if (device_class(dev) == DV_IFNET)
+	if (netboot == 1) {
+		/* check tlp0 on netboot */
+		if (device_class(dev) == DV_IFNET &&
+		    device_is_a(dev, "tlp") &&
+		    device_unit(dev) == 0)
 			booted_device = dev;
+	} else {
+		/* check wd channel and drive */
+		if (device_class(dev) == DV_DISK &&
+		    device_is_a(dev, "wd")) {
+			struct ata_device *adev = aux;
+			int unit;
 
-	if ((booted_device == NULL) && (netboot == 0)) {
-		if (device_class(dev) == DV_DISK && device_is_a(dev, "wd")) {
-			hd_iterate++;
-			if (hd_iterate == bootunit) {
+			unit = adev->adev_channel * 2 +
+			    adev->adev_drv_data->drive;
+			if (unit == bootunit) {
 				booted_device = dev;
 			}
 		}
