@@ -1,6 +1,8 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.10 2007/10/26 15:42:04 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.11 2007/10/28 17:11:25 joerg Exp $	*/
 
 /*-
+ * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
+ *
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
