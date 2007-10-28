@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.4 2007/10/24 06:21:32 joerg Exp $	*/
+/*	$NetBSD: est.c,v 1.5 2007/10/28 15:15:35 joerg Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.4 2007/10/24 06:21:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.5 2007/10/28 15:15:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1201,12 +1201,13 @@ est_init_main(int vendor)
 		voltinc = maxvolt - minvolt;
 
 		/* Avoid diving by zero. */
-		if (freqinc == 0 || voltinc == 0)
+		if (freqinc == 0)
 			return;
 
-		if (freqinc < voltinc) {
+		if (freqinc < voltinc || voltinc == 0) {
 			tablesize = maxfreq - minfreq + 1;
-			voltinc = voltinc * 100 / freqinc - 1;
+			if (voltinc != 0)
+				voltinc = voltinc * 100 / freqinc - 1;
 			freqinc = 100;
 		} else {
 			tablesize = maxvolt - minvolt + 1;
@@ -1229,7 +1230,7 @@ est_init_main(int vendor)
 			    "MSR*100 mV = %4d freq = %4d\n",
 			    __FUNCTION__, j, MSR2MV(fake_table[j]),
 			    MSR2MHZ(fake_table[j], bus_clock),
-			    freq, volt);
+			    volt, freq);
 #endif /* EST_DEBUG */
 			freq -= freqinc;
 			volt -= voltinc;
