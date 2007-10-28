@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.28 2007/10/26 17:35:02 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.29 2007/10/28 18:40:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -129,6 +129,9 @@ struct puffs_usermount {
 	pu_namemod_fn		pu_namemod;
 
 	pu_errnotify_fn		pu_errnotify;
+
+	pu_prepost_fn		pu_oppre;
+	pu_prepost_fn		pu_oppost;
 
 	struct puffs_framectrl	pu_framectrl;
 

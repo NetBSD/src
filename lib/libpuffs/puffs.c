@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.70 2007/10/26 17:35:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.71 2007/10/28 18:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.70 2007/10/26 17:35:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.71 2007/10/28 18:40:30 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -309,6 +309,15 @@ puffs_ml_settimeout(struct puffs_usermount *pu, struct timespec *ts)
 		pu->pu_ml_timeout = *ts;
 		pu->pu_ml_timep = &pu->pu_ml_timeout;
 	}
+}
+
+void
+puffs_set_prepost(struct puffs_usermount *pu,
+	pu_prepost_fn pre, pu_prepost_fn pst)
+{
+
+	pu->pu_oppre = pre;
+	pu->pu_oppost = pst;
 }
 
 void

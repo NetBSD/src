@@ -1,10 +1,10 @@
-/*	$NetBSD: dispatcher.c,v 1.17 2007/10/26 17:35:01 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.18 2007/10/28 18:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Ulla Tuominen Foundation.
+ * Ulla Tuominen Foundation and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.17 2007/10/26 17:35:01 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.18 2007/10/28 18:40:30 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -177,11 +177,10 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	 * finishes.  This prevents us from executing certain operations
 	 * out-of-order (e.g. fsync and reclaim).
 	 *
-	 * Eqch preq will only remove its own pex from the tailq.
-	 * See processresult() for the details on other-end removal
+	 * Each preq will only remove its own pex from the tailq.
+	 * See puffs_docc() for the details on other-end removal
 	 * and dispatching.
 	 */
-
 	pex = malloc(sizeof(struct puffs_executor));
 	pex->pex_preq = preq;
 	/* mutex_enter */
@@ -269,6 +268,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH;
 	preq->preq_setbacks = 0;
+
+	if (pu->pu_oppre)
+		pu->pu_oppre(pcc);
 
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
 		switch (preq->preq_optype) {
@@ -1037,6 +1039,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 	preq->preq_rv = error;
 	pcc->pcc_flags |= PCC_DONE;
+
+	if (pu->pu_oppost)
+		pu->pu_oppost(pcc);
 
 	/*
 	 * Note, we are calling this from here so that we can run it
