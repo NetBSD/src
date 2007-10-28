@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.90 2007/10/26 13:51:14 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.91 2007/10/28 18:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -256,6 +256,8 @@ typedef int (*pu_namemod_fn)(struct puffs_usermount *,
 
 typedef void (*pu_errnotify_fn)(struct puffs_usermount *,
 				uint8_t, int, const char *, void *);
+
+typedef void (*pu_prepost_fn)(struct puffs_cc *);
 
 enum {
 	PUFFS_STATE_BEFOREMOUNT,	PUFFS_STATE_RUNNING,
@@ -626,6 +628,8 @@ void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
 void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
 
 void	puffs_set_errnotify(struct puffs_usermount *, pu_errnotify_fn);
+void	puffs_set_prepost(struct puffs_usermount *,
+			  pu_prepost_fn, pu_prepost_fn);
 
 /*
  * Suspension
