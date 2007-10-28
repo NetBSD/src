@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.164 2007/10/02 12:45:51 gdt Exp $
+$NetBSD: UPDATING,v 1.165 2007/10/28 18:13:38 jmmv Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20071028:
+	The pccons(4) driver has been removed from the NetBSD/shark port.
+	You need to update any custom kernel configuration file you have
+	to remove any references to pccons (which includes removing the
+	now useless XSERVER option) and replace them with the correct
+	entries for the wscons driver.  See the GENERIC configuration file
+	for more details.
 
 20070913:
 	A latent bug in dhclient/dhcpd that caused it to be unable to
