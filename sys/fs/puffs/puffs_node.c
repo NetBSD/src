@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.4.6.5 2007/10/23 20:17:06 ad Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.4.6.6 2007/10/28 22:01:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.6.5 2007/10/23 20:17:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.4.6.6 2007/10/28 22:01:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -138,8 +138,8 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	/* So mp is not dead yet.. good.. inform new vnode of its master */
 	mutex_enter(&mntvnode_lock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	mutex_exit(&mntvnode_lock);
 	vp->v_mount = mp;
+	mutex_exit(&mntvnode_lock);
 
 	/*
 	 * clerical tasks & footwork

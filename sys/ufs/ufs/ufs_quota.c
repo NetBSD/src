@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.44.2.6 2007/10/25 20:52:19 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.44.2.7 2007/10/28 22:01:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44.2.6 2007/10/25 20:52:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.44.2.7 2007/10/28 22:01:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -412,8 +412,7 @@ int
 quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *vp, **vpp;
-	struct vnode *nextvp;
+	struct vnode *vp, **vpp, *mvp;
 	struct dquot *dq;
 	int error;
 	struct nameidata nd;
@@ -453,29 +452,43 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 			ump->um_itime[type] = dq->dq_itime;
 		dqrele(NULLVP, dq);
 	}
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
 	/*
 	 * Search vnodes associated with this mount point,
 	 * adding references to quota file being opened.
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
+	mutex_enter(&mntvnode_lock);
 again:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
-		if (vp->v_mount != mp)
-			goto again;
-		if (vp->v_type == VNON ||vp->v_writecount == 0)
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		mutex_enter(&vp->v_interlock);
+		if (vp->v_mount != mp || vismarker(vp) ||
+		    vp->v_type == VNON || vp->v_writecount == 0) {
+			mutex_exit(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		}
+		mutex_exit(&mntvnode_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto again;
+		}
 		if ((error = getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			break;
 		}
 		vput(vp);
-		/* if the list changed, start again */
-		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
-			goto again;
 	}
+	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
+ out:
 	mutex_enter(&dqlock);
 	ump->um_qflags[type] &= ~QTF_OPENING;
 	cv_broadcast(&dqcv);
@@ -492,18 +505,23 @@ int
 quotaoff(struct lwp *l, struct mount *mp, int type)
 {
 	struct vnode *vp;
-	struct vnode *qvp, *nextvp;
+	struct vnode *qvp, *mvp;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dquot *dq;
 	struct inode *ip;
 	kauth_cred_t cred;
 	int i, error;
 
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return ENOMEM;
+
 	mutex_enter(&dqlock);
 	while ((ump->um_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
 		cv_wait(&dqcv, &dqlock);
 	if ((qvp = ump->um_quotas[type]) == NULLVP) {
 		mutex_exit(&dqlock);
+		vfree(mvp);
 		return (0);
 	}
 	ump->um_qflags[type] |= QTF_CLOSING;
@@ -512,24 +530,29 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 	 * Search vnodes associated with this mount point,
 	 * deleting any references to quota file being closed.
 	 */
+	mutex_enter(&mntvnode_lock);
 again:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
-		if (vp->v_mount != mp)
-			goto again;
-		if (vp->v_type == VNON)
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		mutex_enter(&vp->v_interlock);
+		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON) {
+			mutex_exit(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		}
+		mutex_exit(&mntvnode_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto again;
+		}
 		ip = VTOI(vp);
 		dq = ip->i_dquot[type];
 		ip->i_dquot[type] = NODQUOT;
 		dqrele(vp, dq);
 		vput(vp);
-		/* if the list changed, start again */
-		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
-			goto again;
+		mutex_enter(&mntvnode_lock);
 	}
+	mutex_exit(&mntvnode_lock);
 #ifdef DIAGNOSTIC
 	dqflush(qvp);
 #endif
@@ -692,17 +715,22 @@ qsync(struct mount *mp)
 	 * synchronizing any modified dquot structures.
 	 */
 	mutex_enter(&mntvnode_lock);
+ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON)
-			continue;
 		mutex_enter(&vp->v_interlock);
+		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON) {
+			mutex_exit(&vp->v_interlock);
+			continue;
+		}
 		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT)
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto again;
+			}
 			continue;
 		}
 		for (i = 0; i < MAXQUOTAS; i++) {
