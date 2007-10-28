@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.256 2007/07/09 21:11:31 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.257 2007/10/28 22:24:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.256 2007/07/09 21:11:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.257 2007/10/28 22:24:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -331,7 +331,7 @@ nfs_access(v)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	cachevalid = (np->n_accstamp != -1 &&
-	    (time_uptime - np->n_accstamp) < NFS_ATTRTIMEO(nmp, np) &&
+	    (time_uptime - np->n_accstamp) < nfs_attrtimeo(nmp, np) &&
 	    np->n_accuid == kauth_cred_geteuid(ap->a_cred));
 
 	/*
