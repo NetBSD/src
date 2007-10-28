@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.10 2007/10/26 15:42:35 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.11 2007/10/28 20:10:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.10 2007/10/26 15:42:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.11 2007/10/28 20:10:38 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -264,7 +264,7 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.7 2007/10/02 18:27:53 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.8 2007/10/28 20:11:01 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.7 2007/10/02 18:27:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.8 2007/10/28 20:11:01 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -73,10 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.7 2007/10/02 18:27:53 joerg Exp $"
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
-void		lapic_delay(int);
-void		lapic_microtime(struct timeval *);
-static uint32_t lapic_gettick(void);
+/* Referenced from vector.S */
 void		lapic_clockintr(void *, struct intrframe *);
+
+static void	lapic_delay(unsigned int);
+static uint32_t lapic_gettick(void);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -349,7 +350,7 @@ lapic_initclocks(void)
 	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
 }
 
-extern int gettick(void);	/* XXX put in header file */
+extern unsigned int gettick(void);	/* XXX put in header file */
 extern int rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
@@ -434,7 +435,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		/*
 		 * Compute fixed-point ratios between cycles and
 		 * microseconds to avoid having to do any division
-		 * in lapic_delay and lapic_microtime.
+		 * in lapic_delay.
 		 */
 
 		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
@@ -465,8 +466,8 @@ lapic_calibrate_timer(struct cpu_info *ci)
  * delay for N usec.
  */
 
-void
-lapic_delay(int usec)
+static void
+lapic_delay(unsigned int usec)
 {
 	int32_t xtick, otick;
 	int64_t deltat;		/* XXX may want to be 64bit */

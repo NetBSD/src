@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.7 2006/11/30 19:32:37 hannken Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.7.22.1 2007/10/28 20:11:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.7 2006/11/30 19:32:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.7.22.1 2007/10/28 20:11:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,12 @@ static const struct pciide_product_desc pciide_svwsata_products[] =  {
 	  "ServerWorks Frodo8 SATA Controller",
 	  svwsata_chip_map
 	},
-	{ PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	{ PCI_PRODUCT_SERVERWORKS_HT1000_SATA_1,
+	  0,
+	  "ServerWorks HT-1000 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2,
 	  0,
 	  "ServerWorks HT-1000 SATA Controller",
 	  svwsata_chip_map

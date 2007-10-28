@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2007/05/17 14:51:34 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.150.8.1 2007/10/28 20:10:57 joerg Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2007/05/17 14:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150.8.1 2007/10/28 20:10:57 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -217,7 +217,7 @@ calc_kvmsize(vsize_t usrptsize)
 	/* IO device register space */
 	kvmsize += (IOSPSZ * VAX_NBPG);
 	/* Pager allocations */
-	kvmsize += (PAGER_MAP_SIZE + MAXBSIZE);
+	kvmsize += (pager_map_size + MAXBSIZE);
 	/* Anon pool structures */
 	kvmsize += (physmem * sizeof(struct vm_anon));
 

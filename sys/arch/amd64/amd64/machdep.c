@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.8 2007/10/28 17:25:21 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.9 2007/10/28 20:10:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.8 2007/10/28 17:25:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.9 2007/10/28 20:10:31 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -211,7 +211,7 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 
 #ifdef MTRR

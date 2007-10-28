@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.64.22.4 2007/09/06 22:12:53 jmcneill Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.4.2 2007/10/28 20:11:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.64.22.4 2007/09/06 22:12:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.2 2007/10/28 20:11:00 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,23 +87,23 @@ CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
 
 int
-pchbmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+pchbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
-		return (1);
-	}
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
+#if NRND > 0
 	struct pchb_softc *sc = (void *) self;
+#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
@@ -119,8 +119,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	doattach = 0;
 	has_agp = 0;
 	attachflags = pa->pa_flags;
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_tag = pa->pa_tag;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -130,7 +128,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
+
 	switch (PCI_VENDOR(pa->pa_id)) {
+	/*
+	 * i386 stuff.
+	 */
 	case PCI_VENDOR_SERVERWORKS:
 		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xff;
 
@@ -157,7 +159,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			   buses. */
 			break;
 		default:
-			aprint_error("%s: unknown ServerWorks chip ID 0x%04x; trying to attach PCI buses behind it\n", self->dv_xname, PCI_PRODUCT(pa->pa_id));
+			aprint_error("%s: unknown ServerWorks chip ID "
+			    "0x%04x; trying to attach PCI buses behind it\n",
+			    self->dv_xname, PCI_PRODUCT(pa->pa_id));
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP:
 		case PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI:
@@ -169,7 +173,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB_X2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB_E:
-			switch (attachflags & (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) {
+			switch (attachflags &
+			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) {
 			case 0:
 				/* Doesn't smell like there's anything there. */
 				break;
@@ -183,7 +188,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 		break;
-
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82452_PB:
@@ -306,6 +310,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				doattach = 1;
 			break;
 
+		/*
+		 * i386 and amd64 stuff.
+		 */
 		case PCI_PRODUCT_INTEL_82810_MCH:
 		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
 		case PCI_PRODUCT_INTEL_82810E_MCH:
@@ -319,8 +326,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82945P_MCH:
 		case PCI_PRODUCT_INTEL_82945GM_HB:
 		case PCI_PRODUCT_INTEL_82965Q_HB:
-		case PCI_PRODUCT_INTEL_82965PM_HB:
-		case PCI_PRODUCT_INTEL_82G33_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend
@@ -344,8 +349,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if (pnp_register(self, pchb_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * If we haven't detected AGP yet (via a product ID),

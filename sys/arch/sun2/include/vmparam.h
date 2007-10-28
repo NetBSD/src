@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2003/04/02 07:53:57 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10.78.1 2007/10/28 20:10:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,7 @@
 /*
  * We definitely need a small pager map.
  */
-#undef	PAGER_MAP_SIZE
-#define	PAGER_MAP_SIZE (1 * 1024 * 1024)
+#define	PAGER_MAP_DEFAULT_SIZE (1 * 1024 * 1024)
 
 /*
  * USRSTACK is the top (end) of the user stack.

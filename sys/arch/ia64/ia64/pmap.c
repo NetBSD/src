@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2007/07/16 23:48:04 macallan Exp $ */
+/* $NetBSD: pmap.c,v 1.9.8.1 2007/10/28 20:10:41 joerg Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2007/07/16 23:48:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9.8.1 2007/10/28 20:10:41 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,7 +628,7 @@ pmap_bootstrap()
 	buf_setvalimit(bufsz);
 
 	nkpt = (((ubc_nwins << ubc_winshift) +
-		bufsz + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
+		bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		USRIOSIZE + (maxproc * UPAGES) + nkmempages) / NKPTEPG;
 
 	/*
