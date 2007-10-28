@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.78 2007/10/23 17:19:19 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.79 2007/10/28 18:41:54 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.78 2007/10/23 17:19:19 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.79 2007/10/28 18:41:54 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -574,7 +574,6 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	ret = fuse->op.getattr(path, &st);
 
@@ -614,7 +613,6 @@ puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	return fuse_getattr(fuse, pn, path, va);
 }
@@ -637,7 +635,6 @@ puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
 	}
 
 	set_fuse_context_uid_gid(cred);
-	set_fuse_context_pid(pcc);
 
 	/* wrap up return code */
 	ret = (*fuse->op.readlink)(path, linkname, *linklen);
@@ -672,7 +669,6 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc,
 	}
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	/* wrap up return code */
 	mode = puffs_addvtype2mode(va->va_mode, va->va_type);
@@ -701,7 +697,6 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.mkdir == NULL) {
 		return ENOSYS;
@@ -741,7 +736,6 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	created = 0;
 	if (fuse->op.create) {
@@ -787,7 +781,6 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.unlink == NULL) {
 		return ENOSYS;
@@ -814,7 +807,6 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.rmdir == NULL) {
 		return ENOSYS;
@@ -841,7 +833,6 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn_src->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.symlink == NULL) {
 		return ENOSYS;
@@ -873,7 +864,6 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn_targ->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.rename == NULL) {
 		return ENOSYS;
@@ -901,7 +891,6 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
-	set_fuse_context_pid(pcc);
 
 	if (fuse->op.link == NULL) {
 		return ENOSYS;
@@ -932,7 +921,6 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	return fuse_setattr(fuse, pn, path, va);
 }
@@ -952,7 +940,6 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	fuse = puffs_getspecific(pu);
 
 	set_fuse_context_uid_gid(cred);
-	set_fuse_context_pid(pcc);
 
 	/* if open, don't open again, lest risk nuking file private info */
 	if (rn->flags & RN_OPEN) {
@@ -995,7 +982,6 @@ puffs_fuse_node_close(struct puffs_cc *pcc, void *opc, int fflag,
 	ret = 0;
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	if (rn->flags & RN_OPEN) {
 		if (pn->pn_va.va_type == VDIR) {
@@ -1033,7 +1019,6 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	}
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	maxread = *resid;
 	if (maxread > pn->pn_va.va_size - offset) {
@@ -1074,7 +1059,6 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	}
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	if (ioflag & PUFFS_IO_APPEND)
 		offset = pn->pn_va.va_size;
@@ -1114,7 +1098,6 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
 	set_fuse_context_uid_gid(pcr);
-	set_fuse_context_pid(pcc);
 
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
@@ -1177,7 +1160,6 @@ puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags,
 	struct fuse		*fuse;
 
 	fuse = puffs_getspecific(pu);
-	set_fuse_context_pid(pcc);
 	if (fuse->op.destroy == NULL) {
 		return 0;
 	}
@@ -1191,7 +1173,6 @@ puffs_fuse_fs_sync(struct puffs_cc *pcc, int flags,
             const struct puffs_cred *cr, const struct puffs_cid *pcid)
 {
 	set_fuse_context_uid_gid(cr);
-	set_fuse_context_pid(pcc);
         return 0;
 }
 
@@ -1205,7 +1186,6 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb,
 	int			ret;
 
 	fuse = puffs_getspecific(pu);
-	set_fuse_context_pid(pcc);
 	if (fuse->op.statfs == NULL) {
 		if ((ret = statvfs(PNPATH(puffs_getroot(pu)), svfsb)) == -1) {
 			return errno;
@@ -1371,6 +1351,8 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 
 	if (fuse->op.init)
 		fusectx->private_data = fuse->op.init(NULL); /* XXX */
+
+	puffs_set_prepost(pu, set_fuse_context_pid, NULL);
 
 	puffs_zerostatvfs(&svfsb);
 	if (puffs_mount(pu, fc->dir, MNT_NODEV | MNT_NOSUID, pn_root) == -1) {
