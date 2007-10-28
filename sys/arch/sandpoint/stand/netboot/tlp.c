@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.7 2007/10/27 06:34:20 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.8 2007/10/28 03:15:04 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct desc {
 struct local {
 	struct desc TxD;
 	struct desc RxD[2];
-	uint8_t txstore[FRAMESIZE];
+	uint8_t txstore[192];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, omr, rx;
 	unsigned sromsft;
@@ -129,11 +129,11 @@ static void mii_initphy(struct local *);
 void *
 tlp_init(void *cookie)
 {
-	unsigned tag, val;
+	unsigned tag, val, i;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
-	unsigned *p;
+	uint32_t *p;
 
 	if (pcifinddev(0x1011, 0x0009, &tag) != 0) {
 		/* genuine DE500 */
@@ -180,17 +180,18 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_TRBA, VTOPHYS(TxD));
 	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
 
-	/* "setup packet" to have own station address */
+	/* "setup frame" to have own station address */
 	TxD = &l->TxD;
 	TxD->xd3 = htole32(VTOPHYS(TxD));
 	TxD->xd2 = htole32(VTOPHYS(l->txstore));
-	TxD->xd1 = htole32(T1_SET | T1_TER);
+	TxD->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
 	TxD->xd0 = htole32(T0_OWN);
-	p = (unsigned *)l->txstore;
-	memset(p, 0, FRAMESIZE);
+	p = (uint32_t *)l->txstore;
 	p[0] = en[1] << 8 | en[0];
 	p[1] = en[3] << 8 | en[2];
 	p[2] = en[5] << 8 | en[4];
+	for (i = 1; i < 16; i++)
+		memcpy(&p[3 * i], &p[0], 3 * sizeof(p[0]));
 
 	/* make sure the entire descriptors transfered to memory */
 	wbinv(l, sizeof(struct local));

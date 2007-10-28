@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.4 2007/10/27 06:34:19 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.5 2007/10/28 03:15:04 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -219,8 +219,7 @@ nvt_init(void *cookie)
 	RxD[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
 	RxD[1].xd2 = htole32(FRAMESIZE << 16);
 	RxD[1].xd3 = htole32(&RxD[0]);
-	wbinv(TxD, sizeof(struct desc));
-	wbinv(RxD, 2 * sizeof(struct desc));
+	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
 	/* speed and duplexity can be seen in MIISR and MII 20 */
