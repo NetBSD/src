@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.8.1 2007/10/02 18:27:50 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.8.2 2007/10/28 20:10:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.1 2007/10/02 18:27:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.2 2007/10/28 20:10:58 joerg Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -181,7 +181,8 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-int		gettick(void);
+/* Used by lapic.c */
+unsigned int	gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 
@@ -194,7 +195,7 @@ static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
 
-static inline int gettick_broken_latch(void);
+static unsigned int	gettick_broken_latch(void);
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;
@@ -253,7 +254,7 @@ static int ticks[6];
  *     machdep sets the variable 'clock_broken_latch' to indicate it.
  */
 
-int
+static unsigned int
 gettick_broken_latch(void)
 {
 	u_long flags;
@@ -449,7 +450,7 @@ i8254_get_timecount(struct timecounter *tc)
 	return (count);
 }
 
-int
+unsigned int
 gettick(void)
 {
 	u_long flags;
@@ -478,9 +479,10 @@ gettick(void)
  * Don't rely on this being particularly accurate.
  */
 void
-i8254_delay(int n)
+i8254_delay(unsigned int n)
 {
-	int delay_tick, odelay_tick;
+	unsigned int cur_tick, initial_tick;
+	int remaining;
 	static const int delaytab[26] = {
 		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
 		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
@@ -495,49 +497,34 @@ i8254_delay(int n)
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
 	 */
-	odelay_tick = gettick();
+	initial_tick = gettick();
 
 	if (n <= 25)
-		n = delaytab[n];
-	else {
-#ifdef __GNUC__
+		remaining = delaytab[n];
+	else if (n <= UINT_MAX / TIMER_FREQ) {
 		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler
-		 * code so we can take advantage of the intermediate 64-bit
-		 * quantity to prevent loss of significance.
+		 * For unsigned arithmetic, division can be replaced with
+		 * multiplication with the inverse and a shift.
 		 */
-		int m;
-		__asm volatile("mul %3"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "r" (TIMER_FREQ));
-		__asm volatile("div %4"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "1" (m), "r" (1000000));
-#else
-		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
-		 * point and without any avoidable overflows.
+		remaining = n * TIMER_FREQ / 1000000;
+	} else {
+		/* This is a very long delay.
+		 * Being slow here doesn't matter.
 		 */
-		int sec = n / 1000000,
-		    usec = n % 1000000;
-		n = sec * TIMER_FREQ +
-		    usec * (TIMER_FREQ / 1000000) +
-		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
-		    usec * (TIMER_FREQ % 1000) / 1000000;
-#endif
+		remaining = (unsigned long long) n * TIMER_FREQ / 1000000;
 	}
 
-	while (n > 0) {
+	while (remaining > 0) {
 #ifdef CLOCK_PARANOIA
 		int delta;
-		delay_tick = gettick();
-		if (delay_tick > odelay_tick)
-			delta = rtclock_tval - (delay_tick - odelay_tick);
+		cur_tick = gettick();
+		if (cur_tick > initial_tick)
+			delta = rtclock_tval - (cur_tick - initial_tick);
 		else
-			delta = odelay_tick - delay_tick;
+			delta = initial_tick - cur_tick;
 		if (delta < 0 || delta >= rtclock_tval / 2) {
 			DPRINTF(("delay: ignore ticks %.4x-%.4x",
-				 odelay_tick, delay_tick));
+				 initial_tick, cur_tick));
 			if (clock_broken_latch) {
 				DPRINTF(("  (%.4x %.4x %.4x %.4x %.4x %.4x)\n",
 				         ticks[0], ticks[1], ticks[2],
@@ -546,15 +533,15 @@ i8254_delay(int n)
 				DPRINTF(("\n"));
 			}
 		} else
-			n -= delta;
+			remaining -= delta;
 #else
-		delay_tick = gettick();
-		if (delay_tick > odelay_tick)
-			n -= rtclock_tval - (delay_tick - odelay_tick);
+		cur_tick = gettick();
+		if (cur_tick > initial_tick)
+			remaining -= rtclock_tval - (cur_tick - initial_tick);
 		else
-			n -= odelay_tick - delay_tick;
+			remaining -= initial_tick - cur_tick;
 #endif
-		odelay_tick = delay_tick;
+		initial_tick = cur_tick;
 	}
 }
 

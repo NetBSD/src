@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.85.4.1 2007/09/03 16:49:17 jmcneill Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.85.4.2 2007/10/28 20:11:16 joerg Exp $	*/
 
 /*
  *
@@ -39,10 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.4.1 2007/09/03 16:49:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.4.2 2007/10/28 20:11:16 joerg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
+#include "opt_pagermap.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,22 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.4.1 2007/09/03 16:49:17 jmcneill 
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
+
+/*
+ * XXX
+ * this is needed until the device strategy interface
+ * is changed to do physically-addressed i/o.
+ */
+
+#ifndef PAGER_MAP_DEFAULT_SIZE
+#define PAGER_MAP_DEFAULT_SIZE	(16 * 1024 * 1024)
+#endif
+
+#ifndef PAGER_MAP_SIZE
+#define PAGER_MAP_SIZE	PAGER_MAP_DEFAULT_SIZE
+#endif
+
+size_t pager_map_size = PAGER_MAP_SIZE;
 
 struct pool *uvm_aiobuf_pool;
 
@@ -91,7 +108,7 @@ uvm_pager_init(void)
 	 */
 
 	sva = 0;
-	pager_map = uvm_km_suballoc(kernel_map, &sva, &eva, PAGER_MAP_SIZE, 0,
+	pager_map = uvm_km_suballoc(kernel_map, &sva, &eva, pager_map_size, 0,
 	    false, NULL);
 	mutex_init(&pager_map_wanted_lock, MUTEX_DEFAULT, IPL_NONE);
 	pager_map_wanted = false;

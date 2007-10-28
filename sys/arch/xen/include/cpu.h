@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.8.1 2007/10/02 18:27:58 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.8.2 2007/10/28 20:11:02 joerg Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -269,7 +269,7 @@ extern void	cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -351,12 +351,12 @@ void	lwp_trampoline(void);
 #ifdef ISA_CLOCK
 void	initrtclock(void);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #else
 void	startrtclock(void);
-void	xen_delay(int);
+void	xen_delay(unsigned int);
 void	xen_initclocks(void);
 #endif
 

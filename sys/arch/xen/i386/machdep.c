@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41.8.1 2007/10/02 18:27:56 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.8.2 2007/10/28 20:11:01 joerg Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.8.1 2007/10/02 18:27:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.8.2 2007/10/28 20:11:01 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -261,11 +261,11 @@ extern	paddr_t avail_start, avail_end;
 extern	paddr_t pmap_pa_start, pmap_pa_end;
 
 #ifdef ISA_CLOCK
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 #else
-void (*delay_func)(int) = xen_delay;
+void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 

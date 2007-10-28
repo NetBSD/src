@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.40.4.3 2007/10/26 15:48:18 joerg Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.40.4.4 2007/10/28 20:11:09 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.3 2007/10/26 15:48:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.4 2007/10/28 20:11:09 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -590,6 +590,7 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 
 	error = 0;
 	mutex_enter(&pmp->pmp_lock);
+	puffs_mp_reference(pmp);
 	for (;;) {
 		/* RIP? */
 		if (pmp->pmp_status != PUFFSTAT_RUNNING) {
@@ -616,6 +617,9 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 		}
 
 		park = TAILQ_FIRST(&pmp->pmp_msg_touser);
+		if (park == NULL)
+			continue;
+
 		mutex_enter(&park->park_mtx);
 		puffs_msgpark_reference(park);
 
@@ -657,6 +661,7 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 
 		break;
 	}
+	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	if (error == 0) {
@@ -706,6 +711,9 @@ puffs_msgif_releaseout(void *this, void *parkptr, int status)
 	mutex_exit(&pmp->pmp_lock);
 }
 
+/*
+ * XXX: locking with this one?
+ */
 void
 puffs_msgif_incoming(void *this, void *buf)
 {
@@ -865,4 +873,6 @@ puffs_userdead(struct puffs_mount *pmp)
 			}
 		}
 	}
+
+	cv_broadcast(&pmp->pmp_msg_waiter_cv);
 }

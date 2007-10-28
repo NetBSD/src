@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.1.6.1 2007/10/26 15:43:05 joerg Exp $ */
+/* $NetBSD: ofwpci.c,v 1.1.6.2 2007/10/28 20:10:45 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.1.6.1 2007/10/26 15:43:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.1.6.2 2007/10/28 20:10:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ ofwpci_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	memset(name, 0, sizeof(name));
-	OF_getprop(ca->ca_node, "device-type", name, sizeof(name));
+	OF_getprop(ca->ca_node, "device_type", name, sizeof(name));
 	if (strcmp(name, "pci") != 0)
 		return 0;
 
@@ -170,7 +170,7 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&pc->pc_pbi);
 	SIMPLEQ_INSERT_TAIL(&pc->pc_pbi, pbi, next);
 
-	genofw_setup_pciintr_map(pbi, pc->pc_node);
+	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;

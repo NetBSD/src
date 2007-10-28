@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.141.6.2 2007/10/02 18:28:59 joerg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.141.6.3 2007/10/28 20:11:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141.6.2 2007/10/02 18:28:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141.6.3 2007/10/28 20:11:11 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -321,7 +321,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
-	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p2->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p2->p_refcv, "drainref");
 	cv_init(&p2->p_waitcv, "wait");
@@ -330,7 +330,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_refcnt = 1;
 	kauth_proc_fork(p1, p2);
 
-	LIST_INIT(&p2->p_raslist);
+	p2->p_raslist = NULL;
 #if defined(__HAVE_RAS)
 	ras_fork(p1, p2);
 #endif

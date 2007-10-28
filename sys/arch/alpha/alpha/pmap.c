@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.224.8.1 2007/10/26 15:42:03 joerg Exp $ */
+/* $NetBSD: pmap.c,v 1.224.8.2 2007/10/28 20:10:30 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.8.1 2007/10/26 15:42:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.8.2 2007/10/28 20:10:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -831,7 +831,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 
 	lev3mapsize =
 		(VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-		 bufsz + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
+		 bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM

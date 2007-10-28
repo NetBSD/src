@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.30.8.2 2007/09/04 16:13:45 joerg Exp $
+#	$NetBSD: files.x86,v 1.30.8.3 2007/10/28 20:10:58 joerg Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -31,6 +31,13 @@ define  cpubus { [apid = -1] }
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
 
+#
+# CPUs
+#
+device	cpu
+attach	cpu at cpubus
+file 	arch/x86/x86/cpu.c 		cpu
+
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
@@ -38,6 +45,7 @@ file	arch/x86/x86/cacheinfo.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/errata.c
 file	arch/x86/x86/i8259.c
+file	arch/x86/x86/idle_machdep.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
@@ -45,16 +53,17 @@ file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
 file	arch/x86/x86/platform.c
+file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/softintr.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
 
-define lapic
+define	lapic
 file	arch/x86/x86/lapic.c		lapic needs-flag
 
-device ioapic: lapic
-attach ioapic at ioapicbus
+device	ioapic: lapic
+attach	ioapic at ioapicbus
 file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # MP configuration using Intel SMP specification 1.4
@@ -79,6 +88,6 @@ file	arch/x86/x86/est.c		enhanced_speedstep
 file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
 
 # IPMI device
-device ipmi : sysmon_envsys, sysmon_wdog
-attach ipmi at ipmibus
+device	ipmi: sysmon_envsys, sysmon_wdog
+attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
