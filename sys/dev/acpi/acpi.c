@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.21 2007/10/13 15:33:24 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.22 2007/10/28 17:20:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.21 2007/10/13 15:33:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.22 2007/10/28 17:20:43 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -600,8 +600,12 @@ acpi_build_tree(struct acpi_softc *sc)
 
 			/*
 			 * XXX Same problem as above...
+			 *
+			 * Do this check only for devices, as e.g.
+			 * a Thermal Zone doesn't have a HID.
 			 */
-			if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+			if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
+			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 				continue;
 
 			ad->ad_device = config_found_ia(&sc->sc_dev,
