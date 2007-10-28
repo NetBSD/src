@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.2.18.1 2007/10/26 15:42:28 joerg Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.2.18.2 2007/10/28 17:13:14 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_kgdb.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.18.1 2007/10/26 15:42:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.18.2 2007/10/28 17:13:14 joerg Exp $");
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
