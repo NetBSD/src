@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.360 2007/10/27 19:55:35 jnemeth Exp $
+.\"	$NetBSD: main,v 1.361 2007/10/28 09:31:15 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1390,11 +1390,12 @@ The following issues need to be resolved manually:
 The users
 .Sq authpf ,
 .Sq _proxy ,
+.Sq _rwhod ,
 and
 .Sq _sdpd
 and the groups
 .Sq _proxy ,
-.Sq rwhod 
+.Sq _rwhod 
 and
 .Sq _sdpd
 need to be created and the user
