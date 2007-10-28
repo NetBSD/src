@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.12 2007/10/09 15:22:28 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.13 2007/10/28 22:01:27 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.12 2007/10/09 15:22:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.13 2007/10/28 22:01:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -220,7 +220,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
-	struct vnode *xvp, *nvp, *devvp;
+	struct vnode *xvp, *mvp, *devvp;
 	struct snap_info *si;
 
 	ns = UFS_FSNEEDSWAP(fs);
@@ -426,29 +426,37 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 */
 	snaplistsize = fs->fs_ncg + howmany(fs->fs_cssize, fs->fs_bsize) +
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
+	/* Allocate a marker vnode */
+	if ((mvp = valloc(mp)) == NULL) {
+		error = ENOMEM;
+		goto out1;
+	}
 	MNT_ILOCK(mp);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
+	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
 		 */
-		if (xvp->v_mount != mp)
-			goto loop;
+		if (xvp->v_mount != mp || vismarker(xvp))
+			continue;
 		VI_LOCK(xvp);
-		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
-		MNT_IUNLOCK(mp);
 		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
 			VI_UNLOCK(xvp);
-			MNT_ILOCK(mp);
 			continue;
 		}
+		MNT_IUNLOCK(mp);
+		/*
+		 * XXXAD should increase vnode ref count to prevent it
+		 * disappearing or being recycled.
+		 */
 		VI_UNLOCK(xvp);
 #ifdef DEBUG
 		if (snapdebug)
@@ -492,11 +500,13 @@ loop:
 			    xp->i_mode);
 		if (error) {
 			free(copy_fs->fs_csp, M_UFSMNT);
+			(void)vunmark(mvp);
 			goto out1;
 		}
 		MNT_ILOCK(mp);
 	}
 	MNT_IUNLOCK(mp);
+	vfree(mvp);
 	/*
 	 * If there already exist snapshots on this filesystem, grab a
 	 * reference to their shared lock. If this is the first snapshot

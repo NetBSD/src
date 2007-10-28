@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.62.6.7 2007/10/09 13:44:20 ad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.62.6.8 2007/10/28 22:01:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62.6.7 2007/10/09 13:44:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.62.6.8 2007/10/28 22:01:26 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -405,34 +405,32 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 int
 smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct smbnode *np;
 	int error, allerror = 0;
+
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
 	mutex_enter(&mntvnode_lock);
 loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		mutex_enter(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-
 		np = VTOSMB(vp);
 		if (np == NULL) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0) {
@@ -443,8 +441,10 @@ loop:
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT)
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
@@ -455,6 +455,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 	return (allerror);
 }
 
