@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.2 2007/10/27 18:14:45 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2007/10/28 10:06:41 ragge Exp $
 
 MDIR=	${DIST}/arch/${TARGMACH}
 MIPDIR=	${DIST}/mip
 
 TARGOS = netbsd
-# XXX Currently only handles x86 (i386)
+# XXX Currently only handles i386
 .if ${MACHINE_ARCH} == "i386"
-TARGMACH = x86
+TARGMACH = i386
 .elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 TARGMACH = mips
 .elif ${MACHINE_ARCH} == "vax"
@@ -20,13 +20,14 @@ includedir = ${DESTDIR}/usr/include
 
 CPPFLAGS+= -DLIBEXECDIR=\"${libexecdir}\" -DINCLUDEDIR=\"${includedir}\"
 CPPFLAGS+= -I${DIST}/os/${TARGOS} -I${MDIR} -Dmach_${TARGMACH} -Dos_${TARGOS}
+CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/..
 
 # Somewhat inelegant logic to handle config.h - obviously not crossbuildable
 #
-../config.h: ${DIST}/config.h.in ${DIST}/configure
+../../config.h: ${DIST}/config.h.in ${DIST}/configure
 	mkdir -p configtmp
-	cd configtmp && ${SH} ${DIST}/configure && mv config.h ../..
+	cd configtmp && ${SH} ${DIST}/configure && mv config.h ../../..
 	rm -rf configtmp
 
-DPSRCS+=../config.h
-CLEANFILES+=../config.h
+DPSRCS+=../../config.h
+CLEANFILES+=../../config.h
