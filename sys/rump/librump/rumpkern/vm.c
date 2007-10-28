@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.18 2007/10/10 20:42:32 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.19 2007/10/28 18:54:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -395,9 +395,9 @@ void
 uvm_estimatepageable(int *active, int *inactive)
 {
 
-	*active = 0;
-	*inactive = 0;
-	panic("%s: unimplemented", __func__);
+	/* XXX: guessing game */
+	*active = 1024;
+	*inactive = 1024;
 }
 
 void
