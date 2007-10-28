@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.70.2.5 2007/10/25 19:43:10 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.70.2.6 2007/10/28 21:48:52 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.70.2.5 2007/10/25 19:43:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.70.2.6 2007/10/28 21:48:52 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1228,7 +1228,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		return (ESRCH);
 	}
 
-	if (!rw_tryenter(&proc->p_reflock) {
+	if (!rw_tryenter(&proc->p_reflock, RW_READER)) {
 		mutex_exit(&proc->p_mutex);
 		return (EBUSY);
 	}
