@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.252.6.3 2007/10/26 15:49:21 joerg Exp $	*/
+/*	$NetBSD: proc.h,v 1.252.6.4 2007/10/28 20:11:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -209,13 +209,13 @@ struct emul {
  * s:	p_smutex
  * t:	p_stmutex
  * p:	p_mutex
- * r:	p_rasmutex
+ * r:	p_raslock
  * (:	unlocked, stable
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
 
-	kmutex_t	p_rasmutex;	/* :: RAS mutex */
+	kmutex_t	p_raslock;	/* :: RAS modification lock */
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
@@ -254,7 +254,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
 	LIST_HEAD(, lwp) p_lwps;	/* s: List of LWPs. */
-	LIST_HEAD(, ras) p_raslist;	/* r: List of RAS entries */
+	struct ras	*p_raslist;	/* r: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps

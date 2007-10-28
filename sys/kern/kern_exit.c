@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.183.6.4 2007/10/26 15:48:30 joerg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.183.6.5 2007/10/28 20:11:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.4 2007/10/26 15:48:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.5 2007/10/28 20:11:11 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -268,7 +268,7 @@ exit1(struct lwp *l, int rv)
 #endif
 	timers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
-	ras_purgeall(p);
+	ras_purgeall();
 #endif
 
 	/*
@@ -993,7 +993,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	mutex_destroy(&p->p_rasmutex);
+	mutex_destroy(&p->p_raslock);
 	mutex_destroy(&p->p_mutex);
 	mutex_destroy(&p->p_stmutex);
 	mutex_destroy(&p->p_smutex);

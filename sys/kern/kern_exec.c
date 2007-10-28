@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246.4.3 2007/10/26 15:48:30 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.246.4.4 2007/10/28 20:11:10 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.3 2007/10/26 15:48:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.4 2007/10/28 20:11:10 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -883,7 +883,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/*
 	 * Remove all RASs from the address space.
 	 */
-	ras_purgeall(p);
+	ras_purgeall();
 #endif
 
 	doexechooks(p);

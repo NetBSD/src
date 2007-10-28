@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.16 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: rccide.c,v 1.16.18.1 2007/10/28 20:11:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.16 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.16.18.1 2007/10/28 20:11:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,11 @@ static const struct pciide_product_desc pciide_serverworks_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
 	  0,
 	  "ServerWorks CSB6 RAID/IDE Controller",
+	  serverworks_chip_map,
+	},
+	{ PCI_PRODUCT_SERVERWORKS_HT1000_IDE,
+	  0,
+	  "ServerWorks HT-1000 IDE Controller",
 	  serverworks_chip_map,
 	},
 	{ 0,
@@ -139,6 +144,7 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
 	case PCI_PRODUCT_SERVERWORKS_CSB6_RAID:
+	case PCI_PRODUCT_SERVERWORKS_HT1000_IDE:
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	}

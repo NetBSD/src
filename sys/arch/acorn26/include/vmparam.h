@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2006/10/05 00:25:50 bjh21 Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7.26.1 2007/10/28 20:10:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -68,7 +68,7 @@
 /*
  * Override the default pager_map size, there's not enough KVA.
  */
-#define PAGER_MAP_SIZE          (1 * 1024 * 1024)
+#define PAGER_MAP_DEFAULT_SIZE          (1 * 1024 * 1024)
 
 /*
  * Mach derived constants

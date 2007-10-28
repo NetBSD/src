@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.31.10.2 2007/10/02 18:28:43 joerg Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.31.10.3 2007/10/28 20:11:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.2 2007/10/02 18:28:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.3 2007/10/28 20:11:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.2 2007/10/02 18:28:43 joerg Exp $"
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>

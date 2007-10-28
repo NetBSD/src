@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.1 2007/03/08 14:26:27 njoly Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.1.4.2 2007/10/28 20:10:59 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.1 2007/03/08 14:26:27 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.1.4.2 2007/10/28 20:10:59 joerg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,12 +53,14 @@ CFATTACH_DECL(amdpcib_hpet, sizeof(struct hpet_softc), amdpcib_hpet_match,
     amdpcib_hpet_attach, NULL, NULL);
 
 static int
-amdpcib_hpet_match(struct device *parent, struct cfdata *match, void *aux) {
+amdpcib_hpet_match(struct device *parent, struct cfdata *match, void *aux)
+{
 	return 1;
 }
 
 static void
-amdpcib_hpet_attach(struct device *parent, struct device *self, void *aux) {
+amdpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct hpet_softc *sc;
 	struct pci_attach_args *pa;
 	pcireg_t conf, addr;
