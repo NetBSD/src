@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.5 2007/10/26 15:42:04 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.6 2007/10/28 17:15:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -45,11 +45,16 @@ acpi_restorecpu:
 	movl	r_fs_base_l,%eax
 	movl	r_fs_base_h,%edx
 	wrmsr
-	movl	$MSR_KERNELGSBASE,%ecx
+
+	movl	$MSR_GSBASE,%ecx
 	movl	r_gs_base_l,%eax
 	movl	r_gs_base_h,%edx
 	wrmsr
-	swapgs
+
+	movl	$MSR_KERNELGSBASE,%ecx
+	movl	r_gs_kernelbase_l,%eax
+	movl	r_gs_kernelbase_h,%edx
+	wrmsr
 
 	movq	r_cr8,%rax
 	movq	%rax,%cr8
@@ -138,12 +143,15 @@ acpi_savecpu:
 	movl	%eax,r_fs_base_l
 	movl	%edx,r_fs_base_h
 
-	swapgs
-	movl	$MSR_KERNELGSBASE,%ecx
+	movl	$MSR_GSBASE,%ecx
 	rdmsr
 	movl	%eax,r_gs_base_l
 	movl	%edx,r_gs_base_h
-	swapgs
+
+	movl	$MSR_KERNELGSBASE,%ecx
+	rdmsr
+	movl	%eax,r_gs_kernelbase_l
+	movl	%edx,r_gs_kernelbase_h
 
 	sgdt	r_gdt
 	sidt	r_idt
@@ -170,6 +178,10 @@ r_fs_base_h:
 r_gs_base_l:
 		.long	0
 r_gs_base_h:
+		.long	0
+r_gs_kernelbase_l:
+		.long	0
+r_gs_kernelbase_h:
 		.long	0
 r_rbx:		.quad	0
 r_rcx:		.quad	0
