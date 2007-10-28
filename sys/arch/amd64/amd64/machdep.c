@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.7 2007/10/26 15:42:06 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.8 2007/10/28 17:25:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.7 2007/10/26 15:42:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.8 2007/10/28 17:25:21 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1086,7 +1086,7 @@ init_x86_64(paddr_t first_avail)
 	u_int64_t addr, size, io_end;
 #endif
 
-	cpu_init_msrs(&cpu_info_primary);
+	cpu_init_msrs(&cpu_info_primary, true);
 
 	lwp0.l_addr = proc0paddr;
 
