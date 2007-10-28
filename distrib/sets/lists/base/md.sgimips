@@ -1,6 +1,0 @@
-# $NetBSD: md.sgimips,v 1.7 2004/09/29 04:59:05 sekiya Exp $
-./usr/mdec/aoutboot				base-sysutil-bin
-./usr/mdec/ip2xboot				base-sysutil-bin
-./usr/mdec/ip30boot				base-sysutil-bin
-./usr/mdec/ip3xboot				base-sysutil-bin
-./usr/mdec/sgivol				base-sysutil-bin
