@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.361 2007/10/28 09:31:15 jnemeth Exp $
+.\"	$NetBSD: main,v 1.362 2007/10/28 09:36:01 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1388,7 +1388,6 @@ The following issues need to be resolved manually:
 .
 .(bullet -offset indent
 The users
-.Sq authpf ,
 .Sq _proxy ,
 .Sq _rwhod ,
 and
