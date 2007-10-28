@@ -1,6 +1,0 @@
-#	$NetBSD: files.nullfs,v 1.3 2005/12/11 12:24:51 christos Exp $
-
-deffs	NULLFS
-
-file	miscfs/nullfs/null_vfsops.c	nullfs
-file	miscfs/nullfs/null_vnops.c	nullfs

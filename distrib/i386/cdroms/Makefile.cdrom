@@ -1,7 +1,0 @@
-# $NetBSD: Makefile.cdrom,v 1.2 2007/03/08 13:48:36 bouyer Exp $
-
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot
-CDINSTKERNEL= ../../instkernel
-CDKERNELS=	netbsd-INSTALL_LARGE.gz	netbsd	# from ../instkernel
-CDKERNELS+=	netbsd-INSTALL_LAPTOP.gz nblaptop
-CDKERNELS+=	netbsd-INSTALL.gz	nbnoacpi
