@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.14 2007/10/26 15:43:45 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.15 2007/10/28 17:25:22 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.14 2007/10/26 15:43:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.15 2007/10/28 17:25:22 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -703,7 +703,7 @@ cpu_hatch(void *v)
 	int s;
 
 #ifdef __x86_64__
-	cpu_init_msrs(ci);
+	cpu_init_msrs(ci, true);
 #endif
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
@@ -962,7 +962,7 @@ typedef void (vector)(void);
 extern vector Xsyscall, Xsyscall32;
 
 void
-cpu_init_msrs(struct cpu_info *ci)
+cpu_init_msrs(struct cpu_info *ci, bool full)
 {
 	wrmsr(MSR_STAR,
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
@@ -971,9 +971,11 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
 	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C);
 
-	wrmsr(MSR_FSBASE, 0);
-	wrmsr(MSR_GSBASE, (u_int64_t)ci);
-	wrmsr(MSR_KERNELGSBASE, 0);
+	if (full) {
+		wrmsr(MSR_FSBASE, 0);
+		wrmsr(MSR_GSBASE, (u_int64_t)ci);
+		wrmsr(MSR_KERNELGSBASE, 0);
+	}
 
 	if (cpu_feature & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
