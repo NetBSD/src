@@ -1,1 +1,0 @@
-#include <arm/atomic.h>

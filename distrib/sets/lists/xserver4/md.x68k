@@ -1,5 +1,0 @@
-# $NetBSD: md.x68k,v 1.1 2003/12/28 15:46:00 lukem Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/X68k
-./usr/X11R6/lib/X11/X68kConfig
-./usr/X11R6/man/cat1/X68k.0

@@ -1,7 +1,0 @@
-#!/bin/sh
-
-for i in $*
-do
-	echo === $i ===
-	dehtml $i | spell | fgrep -vxf proto/stop
-done

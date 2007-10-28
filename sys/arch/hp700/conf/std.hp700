@@ -1,9 +1,0 @@
-# $NetBSD: std.hp700,v 1.3 2005/12/11 12:17:24 christos Exp $
-#
-# standard, required NetBSD/hp700 'options'
-
-machine	hp700 hppa
-include		"conf/std"	# MI standard options
-
-options 	EXEC_ELF32	# exec ELF binaries
-options 	EXEC_SCRIPT	# exec #! scripts

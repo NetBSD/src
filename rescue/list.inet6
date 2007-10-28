@@ -1,4 +1,0 @@
-#	$NetBSD: list.inet6,v 1.1 2005/01/10 02:58:59 lukem Exp $
-
-PROG	ping6
-PROG	rtsol
