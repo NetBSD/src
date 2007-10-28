@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.33 2007/07/07 18:38:22 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.34 2007/10/28 15:48:23 adrianp Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.33 2007/07/07 18:38:22 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.34 2007/10/28 15:48:23 adrianp Exp $");
 
 /*
  * IPsec controller part.
@@ -938,7 +938,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	/* NB: ip_input() flips it into host endian XXX need more checking */
 	if (m->m_len >= sizeof(struct ip)) {
 		struct ip *ip = mtod(m, struct ip *);
-		if (ip->ip_off & (IP_MF | IP_OFFMASK))
+		if (ip->ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
 			goto done;
 #ifdef _IP_VHL
 		off = _IP_VHL_HL(ip->ip_vhl) << 2;
@@ -950,7 +950,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		struct ip ih;
 
 		m_copydata(m, 0, sizeof (struct ip), &ih);
-		if (ih.ip_off & (IP_MF | IP_OFFMASK))
+		if (ih.ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
 			goto done;
 #ifdef _IP_VHL
 		off = _IP_VHL_HL(ih.ip_vhl) << 2;
