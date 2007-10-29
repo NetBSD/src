@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.5 2007/10/28 20:10:32 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.6 2007/10/29 02:57:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@ struct cpu_info {
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
-	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */

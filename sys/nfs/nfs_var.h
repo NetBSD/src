@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.71.4.2 2007/10/26 15:49:14 joerg Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.71.4.3 2007/10/29 02:57:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ int nfsrv_fhtovp(nfsrvfh_t *, int, struct vnode **, kauth_cred_t,
 	struct nfssvc_sock *, struct mbuf *, int *, int, int);
 int nfs_ispublicfh __P((const nfsrvfh_t *));
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
+time_t nfs_attrtimeo(struct nfsmount *, struct nfsnode *);
 
 /* flags for nfs_loadattrcache and friends */
 #define	NAC_NOTRUNC	1	/* don't truncate file size */
