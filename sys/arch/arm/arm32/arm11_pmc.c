@@ -1,6 +1,6 @@
-/*	$NetBSD: arm11_pmc.c,v 1.1.2.1 2007/09/25 19:33:45 matt Exp $	*/
+/*	$NetBSD: arm11_pmc.c,v 1.1.2.2 2007/10/29 17:57:53 matt Exp $	*/
 
- * Copyright (c) 2007 Danger Inc.
+/* Copyright (c) 2007 Danger Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.1.2.1 2007/09/25 19:33:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.1.2.2 2007/10/29 17:57:53 matt Exp $");
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
