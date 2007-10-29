@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.1.2.3 2007/09/11 02:36:54 matt Exp $
+#	$NetBSD: IMX31LITE,v 1.1.2.4 2007/10/29 19:21:43 matt Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -153,10 +153,10 @@ options		MEMSIZE=0x8000000
 ahb0		at mainbus?
 avic0		at ahb? addr 0x68000000 irqbase 0
 aips*		at ahb0
-imxuart*	at aips? addr 0x43f90000
-imxgpio0	at ahb? addr 0x53fcc000 irqbase 64
-imxgpio1	at ahb? addr 0x53fd0000 irqbase 96
-imxgpio2	at ahb? addr 0x53fa4000 irqbase 128
+imxuart*	at aips? addr 0x43f90000 intr 45
+imxgpio0	at ahb? addr 0x53fcc000 irqbase 64 intr 52
+imxgpio1	at ahb? addr 0x53fd0000 irqbase 96 intr 51
+imxgpio2	at ahb? addr 0x53fa4000 irqbase 128 intr 56
 gpio*		at imxgpio?
 
 # pcic
