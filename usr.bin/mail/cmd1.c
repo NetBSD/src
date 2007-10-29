@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.28 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.29 2007/10/29 23:20:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.28 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.29 2007/10/29 23:20:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ type1(int *msgvec, int doign, int mime_decode)
 	mip = NULL;
 
 	oldsigpipe = signal(SIGPIPE, SIG_IGN);
-	
+
 	if (setjmp(pipestop))
 		goto close_pipe;
 
