@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.1.2.2 2007/10/29 17:58:24 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.2 2007/10/29 17:58:24 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -219,10 +219,10 @@ static const gptimer_instance_t gptimer_instance_tab[] = {
 #define GPTIMER_INSTANCE_CNT \
 		(sizeof(gptimer_instance_tab) / sizeof(gptimer_instance_tab[0]))
 
-static gptimer_instance_t *
+static const gptimer_instance_t *
 		gpt_lookup(struct obio_attach_args *);
 static void	gpt_enable(struct mputmr_softc *,
-			struct obio_attach_args *, gptimer_instance_t *);
+			struct obio_attach_args *, const gptimer_instance_t *);
 #endif	/* OMAP_2430 */
 
 
@@ -327,10 +327,10 @@ obiomputmr_attach(struct device *parent, struct device *self, void *aux)
 	/* The clock is now running, but is not generating interrupts. */
 }
 
-static gptimer_instance_t *
+static const gptimer_instance_t *
 gpt_lookup(struct obio_attach_args *obio)
 {
-	gptimer_instance_t *ip = NULL;
+	const gptimer_instance_t *ip = NULL;
 	uint i;
 
 	ip = gptimer_instance_tab;
@@ -349,7 +349,7 @@ void
 gpt_enable(
 	struct mputmr_softc *sc,
 	struct obio_attach_args *obio,
-	gptimer_instance_t *ip)
+	const gptimer_instance_t *ip)
 {
 	bus_space_handle_t ioh;
 	uint32_t r;
