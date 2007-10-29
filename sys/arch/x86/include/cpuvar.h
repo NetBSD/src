@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.15 2007/10/17 19:58:14 garbled Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.16 2007/10/29 00:42:29 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct cpu_attach_args {
 #include "opt_multiprocessor.h"
 #ifndef XEN
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #endif
 
@@ -111,6 +112,10 @@ void x86_errata(struct cpu_info *, int);
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
+
+#ifdef INTEL_CORETEMP
+void coretemp_register(struct cpu_info *);
+#endif
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 void clockmod_init(void);

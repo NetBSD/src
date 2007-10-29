@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.26 2007/10/17 19:53:00 garbled Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.26 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $");
 
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
@@ -178,6 +179,10 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif
 
+#ifdef INTEL_CORETEMP
+	if (vendor == CPUVENDOR_INTEL)
+		coretemp_register(ci);
+#endif
 }
 
 void
