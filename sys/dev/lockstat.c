@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.8.2.2 2007/10/28 15:44:57 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8.2.3 2007/10/29 00:22:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.2.2 2007/10/28 15:44:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.2.3 2007/10/29 00:22:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,10 +342,10 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	 * Find the table for this lock+callsite pair, and try to locate a
 	 * buffer with the same key.
 	 */
+	s = splhigh();
 	lc = curcpu()->ci_lockstat;
 	ll = &lc->lc_hash[LOCKSTAT_HASH(lock ^ callsite)];
 	event = (flags & LB_EVENT_MASK) - 1;
-	s = splhigh();
 
 	LIST_FOREACH(lb, ll, lb_chain.list) {
 		if (lb->lb_lock == lock && lb->lb_callsite == callsite)
