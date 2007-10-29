@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.22 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.23 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.22 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.23 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ struct child {
 static struct child *child, *child_freelist = NULL;
 
 
-#if 0	/* XXX - debugging stuff.  This should go away eventually! */ 
+#if 0	/* XXX - debugging stuff.  This should go away eventually! */
 static void
 show_one_file(FILE *fo, struct fp *fpp)
 {
@@ -82,7 +82,7 @@ PUBLIC void
 show_all_files(FILE *fo)
 {
 	struct fp *fpp;
-	
+
 	(void)fprintf(fo, ">> FILES\n");
 	for (fpp = fp_head; fpp; fpp = fpp->link)
 		show_one_file(fo, fpp);
@@ -111,7 +111,7 @@ register_file(FILE *fp, int pipefd, pid_t pid)
 {
 	struct fp *fpp;
 
-	fpp = (struct fp *)emalloc(sizeof(*fpp));
+	fpp = emalloc(sizeof(*fpp));
 	fpp->fp = fp;
 	fpp->pipe = pipefd;
 	fpp->pid = pid;
@@ -279,7 +279,7 @@ findchild(pid_t pid, int dont_alloc)
 			*cpp = child_freelist;
 			child_freelist = (*cpp)->link;
 		} else
-			*cpp = (struct child *)emalloc(sizeof(struct child));
+			*cpp = emalloc(sizeof(struct child));
 
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
@@ -376,7 +376,7 @@ PUBLIC FILE *
 last_registered_file(int last_pipe)
 {
 	struct fp *fpp;
-	
+
 	if (last_pipe == 0)
 		return fp_head ? fp_head->fp : NULL;
 
@@ -401,7 +401,7 @@ PUBLIC void
 flush_files(FILE *fo, int only_pipes)
 {
 	struct fp *fpp;
-	
+
 	if (fo)
 		(void)fflush(fo);
 

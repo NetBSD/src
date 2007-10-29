@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.8 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.9 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.8 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.9 2007/10/29 23:20:38 christos Exp $");
 #endif
 
 #include "rcv.h"
@@ -64,7 +64,7 @@ create_exclusive(const char *fname)
 	struct stat st;
 
 	(void)gettimeofday(&tv, NULL);
-	(void)gethostname(hostname, sizeof hostname);
+	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 	pid = getpid();
 
@@ -78,7 +78,7 @@ create_exclusive(const char *fname)
 	else
 		ptr++;
 
-	(void)snprintf(path, sizeof(path), "%.*s.%s.%lx", 
+	(void)snprintf(path, sizeof(path), "%.*s.%s.%lx",
 	    (int)(ptr - fname), fname, hostname, (u_long)cookie);
 
 	/*

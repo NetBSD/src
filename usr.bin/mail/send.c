@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.30 2007/10/27 15:14:51 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.31 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.30 2007/10/27 15:14:51 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.31 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			else
 				(void)fwrite(prefix, sizeof(*prefix),
 						prefixlen, obuf);
-			(void)fwrite(line, sizeof *line, linelen, obuf);
+			(void)fwrite(line, sizeof(*line), linelen, obuf);
 			if (ferror(obuf))
 				return -1;
 		}
@@ -478,7 +478,7 @@ savemail(const char name[], FILE *fi)
 	}
 	(void)time(&now);
 	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
-	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
+	while ((i = fread(buf, 1, sizeof(buf), fi)) > 0)
 		(void)fwrite(buf, 1, (size_t)i, fo);
 	(void)putc('\n', fo);
 	(void)fflush(fo);

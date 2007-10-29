@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.10 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.11 2007/10/29 23:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.10 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.11 2007/10/29 23:20:38 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -709,7 +709,7 @@ prefix_line(FILE *fi, FILE *fo, void *cookie)
 		if (length > 1)
 			(void)fputs(prefix, fo);
 		else
-			(void)fwrite(prefix, sizeof *prefix,
+			(void)fwrite(prefix, sizeof(*prefix),
 			    prefixlen, fo);
 		(void)fwrite(line, sizeof(*line), length, fo);
 	}

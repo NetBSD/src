@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.15 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: strings.c,v 1.16 2007/10/29 23:20:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.15 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: strings.c,v 1.16 2007/10/29 23:20:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ salloc(size_t size)
 	int idx;
 
 	s = size;
-	s += (sizeof (char *) - 1);
-	s &= ~(sizeof (char *) - 1);
+	s += (sizeof(char *) - 1);
+	s &= ~(sizeof(char *) - 1);
 	idx = 0;
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++) {
 		if (sp->s_topFree == NULL && (STRINGSIZE << idx) >= s)

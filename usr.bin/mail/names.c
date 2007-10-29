@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.26 2007/10/23 14:58:45 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.27 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.26 2007/10/23 14:58:45 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.27 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ nalloc(char str[], int ntype)
 {
 	struct name *np;
 
-	np = salloc(sizeof *np);
+	np = salloc(sizeof(*np));
 	np->n_flink = NULL;
 	np->n_blink = NULL;
 	np->n_type = ntype;
@@ -548,7 +548,7 @@ unpack(struct name *np)
 	verbose = value(ENAME_VERBOSE) != NULL;
 	if (verbose)
 		extra++;
-	begin = salloc((t + extra) * sizeof *begin);
+	begin = salloc((t + extra) * sizeof(*begin));
 	ap = begin;
 	*ap++ = "sendmail";
 	*ap++ = "-i";

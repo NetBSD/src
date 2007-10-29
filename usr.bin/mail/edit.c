@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.23 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.24 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.23 2007/10/23 14:58:43 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.24 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ edit1(int *msgvec, int editortype)
 			char *p;
 
 			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof buf, stdin) == 0)
+			if (fgets(buf, sizeof(buf), stdin) == 0)
 				break;
 			p = skip_WSP(buf);
 			if (*p == 'q')

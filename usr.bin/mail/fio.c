@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.30 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.31 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.30 2007/10/23 14:58:43 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.31 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 static int
 append(struct message *mp, FILE *f)
 {
-	return fwrite(mp, sizeof *mp, 1, f) != 1;
+	return fwrite(mp, sizeof(*mp), 1, f) != 1;
 }
 
 /*
@@ -233,7 +233,7 @@ setptr(FILE *ibuf, off_t offset)
 			linebuf[len - 2] = '\n';
 			len--;
 		}
-		(void)fwrite(linebuf, sizeof *linebuf, len, otf);
+		(void)fwrite(linebuf, sizeof(*linebuf), len, otf);
 		if (ferror(otf)) {
 			warn("/tmp");
 			exit(1);
@@ -298,7 +298,7 @@ putline(FILE *obuf, const char *linebuf, int outlf)
 	size_t c;
 
 	c = strlen(linebuf);
-	(void)fwrite(linebuf, sizeof *linebuf, c, obuf);
+	(void)fwrite(linebuf, sizeof(*linebuf), c, obuf);
 	if (outlf) {
 		(void)putc('\n', obuf);
 		c++;

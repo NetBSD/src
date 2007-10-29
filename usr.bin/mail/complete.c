@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.13 2007/10/23 14:58:43 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.14 2007/10/29 23:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.13 2007/10/23 14:58:43 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.14 2007/10/29 23:20:38 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -558,7 +558,7 @@ complete_set(EditLine *el, char *word, int dolist)
 	for (h = 0; h < HSHSIZE; h++)
 		for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 			s++;
-	ap = salloc(s * sizeof *ap);
+	ap = salloc(s * sizeof(*ap));
 
 	/* save the pointers */
 	for (h = 0, p = ap; h < HSHSIZE; h++)
@@ -650,7 +650,7 @@ complete_smopts(EditLine *el, char *word, int dolist)
 	}
 
 	/* allocate sufficient space for the pointers */
-	ap = salloc(MAX(s1, s2) * sizeof *ap);
+	ap = salloc(MAX(s1, s2) * sizeof(*ap));
 
 	/*
 	 * First do the smoptstbl pointers. (case _insensitive_)
@@ -710,7 +710,7 @@ complete_thread_key(EditLine *el, char *word, int dolist)
 		cnt++;
 
 	/* allocate sufficient space for the pointers */
-	ap = salloc(cnt * sizeof *ap);
+	ap = salloc(cnt * sizeof(*ap));
 
 	/* load the array */
 	p = ap;

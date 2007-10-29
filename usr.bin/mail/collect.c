@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.41 2007/10/27 15:14:50 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.42 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.41 2007/10/27 15:14:50 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.42 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ interpolate(char ms[], FILE *fp, char *fn, int f)
 	struct mime_info *mip;
 	int retval;
 #endif
-	msgvec = salloc((get_msgCount() + 1) * sizeof *msgvec);
+	msgvec = salloc((get_msgCount() + 1) * sizeof(*msgvec));
 	if (msgvec == NULL)
 		return 0;
 	if (getmsglist(ms, msgvec, 0) < 0)
