@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.5 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.6 2007/10/29 23:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.5 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.6 2007/10/29 23:20:38 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -67,7 +67,6 @@ __RCSID("$NetBSD: mime_attach.c,v 1.5 2007/10/23 14:58:44 christos Exp $");
 #include "mime_child.h"
 #endif
 #include "glob.h"
-
 
 #if 0
 #ifndef __lint__
@@ -112,7 +111,6 @@ show_header(struct header *hp)
 }
 #endif	/* __lint__ */
 #endif
-
 
 /***************************
  * boundary string routines
@@ -159,7 +157,6 @@ make_boundary(void)
 
 #undef BOUND_LEN
 }
-
 
 /***************************
  * Transfer coding routines
@@ -308,8 +305,6 @@ content_encoding(struct attachment *attach, const char *ctype)
 	/* NOTREACHED */
 }
 
-
-
 /************************
  * Content type routines
  */
@@ -396,7 +391,6 @@ content_type_by_fileno(int fd)
 	return cp;
 }
 
-
 static const char *
 content_type(struct attachment *attach)
 {
@@ -413,7 +407,6 @@ content_type(struct attachment *attach)
 		return NULL;
 	}
 }
-
 
 /*************************
  * Other content routines
@@ -505,7 +498,6 @@ fput_body(FILE *fi, FILE *fo, struct Content *Cp)
 		enc(fi, fo, 0);
 }
 
-
 static void
 fput_attachment(FILE *fo, struct attachment *ap)
 {
@@ -566,7 +558,6 @@ mktemp_file(FILE **nfo, FILE **nfi, const char *hint)
 	}
 	return 0;
 }
-
 
 /*
  * Repackage the mail as a multipart MIME message.  This should always
@@ -719,7 +710,6 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 
 	return attach;
 }
-
 
 static char *
 get_line(el_mode_t *em, const char *pr, const char *str, int i)

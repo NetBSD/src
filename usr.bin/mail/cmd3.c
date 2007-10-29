@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.36 2007/10/27 15:14:50 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.37 2007/10/29 23:20:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.36 2007/10/27 15:14:50 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.37 2007/10/29 23:20:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -620,7 +620,7 @@ set(void *v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				s++;
-		ap = salloc(s * sizeof *ap);
+		ap = salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				*p++ = vp->v_name;
@@ -636,7 +636,7 @@ set(void *v)
 		while (*cp != '=' && *cp != '\0')
 			++cp;
 		l = cp - *ap;
-		if (l >= sizeof varbuf)
+		if (l >= sizeof(varbuf))
 			l = sizeof(varbuf) - 1;
 		(void)strncpy(varbuf, *ap, l);
 		varbuf[l] = '\0';
@@ -709,7 +709,7 @@ show(void *v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				s++;
-		ap = salloc(s * sizeof *ap);
+		ap = salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				*p++ = vp->v_name;
@@ -746,7 +746,7 @@ group(void *v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				s++;
-		ap = salloc(s * sizeof *ap);
+		ap = salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				*p++ = gh->g_name;
@@ -763,7 +763,7 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		gh = ecalloc(1, sizeof *gh);
+		gh = ecalloc(1, sizeof(*gh));
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -777,7 +777,7 @@ group(void *v)
 	 */
 
 	for (ap = argv + 1; *ap != NULL; ap++) {
-		gp = ecalloc(1, sizeof *gp);
+		gp = ecalloc(1, sizeof(*gp));
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
