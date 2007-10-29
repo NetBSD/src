@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.362 2007/10/28 09:36:01 jnemeth Exp $
+.\"	$NetBSD: main,v 1.363 2007/10/29 20:25:08 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -862,7 +862,7 @@ IPFilter 4.1.23
 .It
 GNU gcc 4.1.1
 .It
-NTP 4.2.2p2
+NTP 4.2.4p2
 .It
 pppd 2.4.4
 .bullet)
@@ -883,6 +883,9 @@ Initiator (client) code is underway.
 .It
 .Xr lockstat 8 :
 new command to display a summary of kernel locking events recorded over the lifetime of a called program.
+.It
+.Xr ofctl 8 :
+new command to display the OpenPROM or OpenFirmware device tree for the macppc, shark and sparc64.
 .It
 Various utilities to support Bluetooth were added:
 .(bullet
@@ -918,23 +921,14 @@ Besides this list, there there have also been innumerable bug fixes and other mi
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
 .(bullet
-Sushi was removed from the base system due to lack of interest and
-maintenance.
-If you really want it, it is available in the CVS repository at
-.Dq Me "othersrc/usr.sbin/sushi".
-However, be warned that it is unmaintained and is most likely out of date.
+Sushi was removed from the base system due to lack of interest and maintenance. If you really want it, it is available in the CVS repository at othersrc/usr.sbin/sushi. However, be warned that it is unmaintained and is most likely out of date.
 .It
-Vinum was removed due to lack of interest and maintenance.
-At the time of removal, it had several known serious issues (including
-not being compilable).
-RAIDframe provides similar functionality.
-If you were using Vinum you will need to back up your data, delete
-the Vinum partitions, create RAIDframe partitions, and restore your
-data to them.
-Details about RAIDframe can be found in
+Vinum was removed due to lack of interest and maintenance. At the time of removal, it had several known serious issues (including not being compilable). RAIDframe provides similar functionality. If you were using Vinum you will need to back up your data, delete the Vinum partitions, create RAIDframe partitions, and restore your data to them. Details about RAIDframe can be found in
 .Xr raid 4 ,
 .Xr raidctl 8 ,
-and the NetBSD Guide:
+and the
+NetBSD
+      Guide:
 .Lk http://www.NetBSD.org/docs/guide/en/chap-rf.html .
 .It
 Sendmail was removed. Postfix is the MTA and provides the
@@ -948,17 +942,7 @@ and
 .Pa mail/sendmail813
 packages.
 .It
-NETCCITT was removed due to lack of interest and maintenance.
-It had known serious issues (including being out of date with
-respect to other network code) and there were no known users at
-the time of its removal.
-Unfortunatly, there is no replacement or option for it.
-.It
-NETNS was removed due to lack of interest and maintenance.
-It had known serious issues (including being out of date with
-respect to other network code) and there were no known users at
-the time of its removal.
-Unfortunatly, there is no replacement or option for it.
+NETCCITT and NETNS were removed due to lack of interest and maintenance. They had known serious issues (including being out of date with respect to other network code) and there were no known users at the time of their removal. Unfortunately, there is no replacement or option for them.
 .It
 UUCP was removed. The NetBSD improvements were merged into the pkgsrc version. For those who use UUCP tools, they are available from pkgsrc in the
 .Pa net/uucp
