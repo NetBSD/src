@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.342 2007/10/27 16:03:05 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.343 2007/10/29 14:16:22 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10337,3 +10337,9 @@ sys/dist/ipf/netinet/ip_state.h			patch
 	Revert pullup #880. It reportedly causes RDR sessions to not
 	expire and fill up the NAT table. See PR kern/37037 and possibly
 	kern/37174.
+
+sys/arch/x86/x86/mtrr_i686.c			1.12
+
+Fix a reboot when using MTRR, triggered by running X11 on amd64 machines
+with more than 4GB of RAM.
+[pavel, ticket #959]
