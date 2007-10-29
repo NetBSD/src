@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.19.2.2.2.3 2007/09/23 21:36:31 wrstuden Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.19.2.2.2.4 2007/10/29 00:45:20 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -5013,10 +5013,11 @@ ipfgeniter_t *itp;
 	ipnat_t *ipn, *nextipnat = NULL, zeroipn;
 	nat_t *nat, *nextnat = NULL, zeronat;
 	int error = 0, count;
-	ipftoken_t *freet;
 	char *dst;
 
-	freet = NULL;
+	count = itp->igi_nitems;
+	if (count < 1)
+		return ENOSPC;
 
 	READ_ENTER(&ipf_nat);
 
@@ -5054,61 +5055,52 @@ ipfgeniter_t *itp;
 	}
 
 	dst = itp->igi_data;
-	for (count = itp->igi_nitems; count > 0; count--) {
+	for (;;) {
 		switch (itp->igi_type)
 		{
 		case IPFGENITER_HOSTMAP :
 			if (nexthm != NULL) {
-				if (nexthm->hm_next == NULL) {
-					freet = t;
-					count = 1;
-					hm = NULL;
-				}
 				if (count == 1) {
 					ATOMIC_INC32(nexthm->hm_ref);
+					t->ipt_data = nexthm;
 				}
 			} else {
 				bzero(&zerohm, sizeof(zerohm));
 				nexthm = &zerohm;
 				count = 1;
+				t->ipt_data = NULL;
 			}
 			break;
 
 		case IPFGENITER_IPNAT :
 			if (nextipnat != NULL) {
-				if (nextipnat->in_next == NULL) {
-					freet = t;
-					count = 1;
-					ipn = NULL;
-				}
 				if (count == 1) {
 					MUTEX_ENTER(&nextipnat->in_lock);
 					nextipnat->in_use++;
 					MUTEX_EXIT(&nextipnat->in_lock);
+					t->ipt_data = nextipnat;
 				}
 			} else {
 				bzero(&zeroipn, sizeof(zeroipn));
 				nextipnat = &zeroipn;
 				count = 1;
+				t->ipt_data = NULL;
 			}
 			break;
 
 		case IPFGENITER_NAT :
 			if (nextnat != NULL) {
-				if (nextnat->nat_next == NULL) {
-					count = 1;
-					freet = t;
-					nat = NULL;
-				}
 				if (count == 1) {
 					MUTEX_ENTER(&nextnat->nat_lock);
 					nextnat->nat_ref++;
 					MUTEX_EXIT(&nextnat->nat_lock);
+					t->ipt_data = nextnat;
 				}
 			} else {
 				bzero(&zeronat, sizeof(zeronat));
 				nextnat = &zeronat;
 				count = 1;
+				t->ipt_data = NULL;
 			}
 			break;
 		default :
@@ -5116,20 +5108,12 @@ ipfgeniter_t *itp;
 		}
 		RWLOCK_EXIT(&ipf_nat);
 
-		if (freet != NULL) {
-			ipf_freetoken(freet);
-			freet = NULL;
-		}
-
+		/*
+		 * Copying out to user space needs to be done without the lock.
+		 */
 		switch (itp->igi_type)
 		{
 		case IPFGENITER_HOSTMAP :
-			if (hm != NULL) {
-				WRITE_ENTER(&ipf_nat);
-				fr_hostmapdel(&hm);
-				RWLOCK_EXIT(&ipf_nat);
-			}
-			t->ipt_data = nexthm;
 			error = COPYOUT(nexthm, dst, sizeof(*nexthm));
 			if (error != 0)
 				error = EFAULT;
@@ -5138,9 +5122,6 @@ ipfgeniter_t *itp;
 			break;
 
 		case IPFGENITER_IPNAT :
-			if (ipn != NULL)
-				fr_ipnatderef(&ipn);
-			t->ipt_data = nextipnat;
 			error = COPYOUT(nextipnat, dst, sizeof(*nextipnat));
 			if (error != 0)
 				error = EFAULT;
@@ -5149,9 +5130,6 @@ ipfgeniter_t *itp;
 			break;
 
 		case IPFGENITER_NAT :
-			if (nat != NULL)
-				fr_natderef(&nat);
-			t->ipt_data = nextnat;
 			error = COPYOUT(nextnat, dst, sizeof(*nextnat));
 			if (error != 0)
 				error = EFAULT;
@@ -5163,27 +5141,50 @@ ipfgeniter_t *itp;
 		if ((count == 1) || (error != 0))
 			break;
 
+		count--;
+
 		READ_ENTER(&ipf_nat);
 
+		/*
+		 * We need to have the lock again here to make sure that
+		 * using _next is consistent.
+		 */
 		switch (itp->igi_type)
 		{
 		case IPFGENITER_HOSTMAP :
-			hm = nexthm;
-			nexthm = hm->hm_next;
+			nexthm = nexthm->hm_next;
 			break;
-
 		case IPFGENITER_IPNAT :
-			ipn = nextipnat;
-			nextipnat = ipn->in_next;
+			nextipnat = nextipnat->in_next;
 			break;
-
 		case IPFGENITER_NAT :
-			nat = nextnat;
-			nextnat = nat->nat_next;
-			break;
-		default :
+			nextnat = nextnat->nat_next;
 			break;
 		}
+	}
+
+
+	switch (itp->igi_type)
+	{
+	case IPFGENITER_HOSTMAP :
+		if (hm != NULL) {
+			WRITE_ENTER(&ipf_nat);
+			fr_hostmapdel(&hm);
+			RWLOCK_EXIT(&ipf_nat);
+		}
+		break;
+	case IPFGENITER_IPNAT :
+		if (ipn != NULL) {
+			fr_ipnatderef(&ipn);
+		}
+		break;
+	case IPFGENITER_NAT :
+		if (nat != NULL) {
+			fr_natderef(&nat);
+		}
+		break;
+	default :
+		break;
 	}
 
 	return error;

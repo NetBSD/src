@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.2.2.1 2007/09/03 07:05:42 wrstuden Exp $
+# $NetBSD: postinstall,v 1.31.2.2.2.2 2007/10/29 00:45:24 wrstuden Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -626,7 +626,7 @@ do_gid()
 	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd postfix sshd authpf _pflogd _rwhod
+	    named ntpd postfix sshd authpf _pflogd _rwhod _sdpd
 }
 
 #
@@ -882,6 +882,9 @@ do_rc()
 		ip6forwarding \
 		mountcritlocal mountcritremote \
 		network nfsiod_flags \
+		sdpd sdpd_control \
+		sdpd sdpd_groupname \
+		sdpd sdpd_username \
 		sysctl
 	while [ $# -gt 1 ]; do
 		if rcconf_is_set ${op} $1 $2 1; then
@@ -1106,7 +1109,7 @@ do_uid()
 	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd postfix sshd _pflogd _rwhod
+	    named ntpd postfix sshd _pflogd _rwhod _sdpd
 }
 
 
