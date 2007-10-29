@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.1 2007/01/06 08:16:26 christos Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.1 2007/01/06 08:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -185,12 +185,10 @@ static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;		/* exception vectors */
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;	/* stack for SVC mode */
-static pv_addr_t kernel_l1pt;	/* First level page table. */
 
 /* Physical address of the message buffer. */
 paddr_t msgbufphys;
@@ -488,8 +486,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
