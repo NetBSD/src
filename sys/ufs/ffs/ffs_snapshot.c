@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.13 2007/10/28 22:01:27 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.14 2007/10/29 16:38:39 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.13 2007/10/28 22:01:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.14 2007/10/29 16:38:39 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -432,7 +432,6 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		goto out1;
 	}
 	MNT_ILOCK(mp);
-loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
