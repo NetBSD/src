@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.182.2.4 2007/10/26 15:49:14 joerg Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.182.2.5 2007/10/29 02:57:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182.2.4 2007/10/26 15:49:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182.2.5 2007/10/29 02:57:27 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -329,7 +329,7 @@ nfs_mountroot()
 	 * XXX time must be non-zero when we init the interface or else
 	 * the arp code will wedge.  [Fixed now in if_ether.c]
 	 * However, the NFS attribute cache gives false "hits" when the
-	 * current time < NFS_ATTRTIMEO(nmp, np) so keep this in for now.
+	 * current time < nfs_attrtimeo(nmp, np) so keep this in for now.
 	 */
 	if (time_second < NFS_MAXATTRTIMO) {
 #ifdef __HAVE_TIMECOUNTER

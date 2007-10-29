@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.74.4.1 2007/10/02 18:27:17 joerg Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.74.4.2 2007/10/29 02:57:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74.4.1 2007/10/02 18:27:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74.4.2 2007/10/29 02:57:21 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
+#include "opt_intel_coretemp.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 
@@ -1628,6 +1629,11 @@ identifycpu(struct cpu_info *ci)
 			    cpuname);
 	}
 #endif /* ENHANCED_SPEEDSTEP */
+
+#ifdef INTEL_CORETEMP
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		coretemp_register(ci);
+#endif
 
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
 	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {

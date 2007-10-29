@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.18.3 2007/10/28 20:10:31 joerg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.18.4 2007/10/29 02:57:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef BUILD_SYSCALL_PLAIN	/* See bottom of file */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.3 2007/10/28 20:10:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.4 2007/10/29 02:57:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.3 2007/10/28 20:10:31 joerg Exp 
 #include <sys/ktrace.h>
 #include <sys/systrace.h>
 #include <sys/syscall.h>
+#include <sys/syscall_stats.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,6 +113,7 @@ syscall_fancy(struct trapframe *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
+		SYSCALL_COUNT(syscall_counts, code);
 		code = frame->tf_rdi & (SYS_NSYSENT - 1);
 		callp += code;
 		if (callp->sy_argsize != 0) {
@@ -145,6 +147,9 @@ syscall_fancy(struct trapframe *frame)
 			}
 		}
 	}
+
+	SYSCALL_COUNT(syscall_counts, code);
+	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
 	if ((error = trace_enter(l, code, code, NULL, args)) == 0) {
 		rval[0] = 0;
@@ -187,6 +192,7 @@ syscall_fancy(struct trapframe *frame)
 
 	trace_exit(l, code, args, rval, error);
 
+	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);
 }
 
