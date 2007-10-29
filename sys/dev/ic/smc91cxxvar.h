@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.13 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.13.46.1 2007/10/29 02:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@ struct smc91cxx_softc {
 	u_int8_t	sc_chipid;
 	u_int8_t	sc_internal_phy;	/* 91C111 only */
 
+	uint8_t		sc_intmask;
+	uint8_t		sc_txpacketno;		/* cached packetno */
 #if NRND > 0
 	rndsource_element_t rnd_source;
 #endif
