@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.111 2007/10/24 06:37:22 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.112 2007/10/29 16:54:42 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.111 2007/10/24 06:37:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.112 2007/10/29 16:54:42 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -149,7 +149,7 @@ struct pfil_head inet6_pfil_hook;
 struct ip6stat ip6stat;
 
 static void ip6_init2(void *);
-static struct m_tag *ip6_setdstifaddr __P((struct mbuf *, struct in6_ifaddr *));
+static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
@@ -827,24 +827,30 @@ ip6_input(struct mbuf *m)
  * set/grab in6_ifaddr correspond to IPv6 destination address.
  */
 static struct m_tag *
-ip6_setdstifaddr(struct mbuf *m, struct in6_ifaddr *ia6)
+ip6_setdstifaddr(struct mbuf *m, const struct in6_ifaddr *ia)
 {
 	struct m_tag *mtag;
 
 	mtag = ip6_addaux(m);
-	if (mtag)
-		((struct ip6aux *)(mtag + 1))->ip6a_dstia6 = ia6;
+	if (mtag != NULL) {
+		struct ip6aux *ip6a;
+
+		ip6a = (struct ip6aux *)(mtag + 1);
+		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id);
+		ip6a->ip6a_src = ia->ia_addr.sin6_addr;
+		ip6a->ip6a_flags = ia->ia6_flags;
+	}
 	return mtag;	/* NULL if failed to set */
 }
 
-struct in6_ifaddr *
+const struct ip6aux *
 ip6_getdstifaddr(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
 	mtag = ip6_findaux(m);
-	if (mtag)
-		return ((struct ip6aux *)(mtag + 1))->ip6a_dstia6;
+	if (mtag != NULL)
+		return (struct ip6aux *)(mtag + 1);
 	else
 		return NULL;
 }
