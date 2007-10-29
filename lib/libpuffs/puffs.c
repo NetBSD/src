@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.71 2007/10/28 18:40:30 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.72 2007/10/29 15:52:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.71 2007/10/28 18:40:30 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.72 2007/10/29 15:52:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -58,6 +58,11 @@ const struct mntopt puffsmopts[] = {
 	PUFFSMOPT_STD,
 	MOPT_NULL,
 };
+
+#ifdef PUFFS_WITH_THREADS
+#include <pthread.h>
+pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 #define FILLOP(lower, upper)						\
 do {									\

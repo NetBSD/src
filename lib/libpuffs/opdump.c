@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.16 2007/10/26 17:24:45 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.17 2007/10/29 15:52:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.16 2007/10/26 17:24:45 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.17 2007/10/29 15:52:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: opdump.c,v 1.16 2007/10/26 17:24:45 pooka Exp $");
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdio.h>
+
+#include "puffs_priv.h"
 
 /* XXX! */
 const char *vfsop_revmap[] = {
@@ -174,10 +176,12 @@ puffsdump_req(struct puffs_req *preq)
 		}
 	}
 	
+	PU_LOCK();
 	gettimeofday(&tv_now, NULL);
 	timersub(&tv_now, &tv_prev, &tv);
 	printf("\t\tsince previous call: %ld.%06ld\n", tv.tv_sec, tv.tv_usec);
 	gettimeofday(&tv_prev, NULL);
+	PU_UNLOCK();
 }
 
 void
