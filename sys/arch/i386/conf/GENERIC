@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.854 2007/10/26 22:20:43 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.855 2007/10/29 00:47:17 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.854 $"
+#ident 		"GENERIC-$Revision: 1.855 $"
 
 maxusers	32		# estimated number of users
 
@@ -56,7 +56,7 @@ options 	POWERNOW_K8
 #options	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
-# options 	INTEL_ONDEMAND_CLOCKMOD
+#options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -613,6 +613,9 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
+
+# Intel Core's on-die Thermal sensor
+options INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?

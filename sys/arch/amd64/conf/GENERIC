@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2007/10/28 18:39:38 dsl Exp $
+# $NetBSD: GENERIC,v 1.170 2007/10/29 00:47:16 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.170 $"
 
 maxusers	32		# estimated number of users
 
@@ -399,6 +399,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
+
+# Intel Core's on-die Thermal sensor
+options INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
