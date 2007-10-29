@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193.4.1 2007/10/01 16:51:51 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.193.4.2 2007/10/29 00:45:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.4.1 2007/10/01 16:51:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.4.2 2007/10/29 00:45:10 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -819,7 +819,7 @@ dumpsys()
 
 			/* print out how many MBs we still have to dump */
 			if ((todo % (1024*1024)) == 0)
-				printf("%ld ", todo / (1024*1024));
+				printf("%" PRIu64 " ", todo / (1024*1024));
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,

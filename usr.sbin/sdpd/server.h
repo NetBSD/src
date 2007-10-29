@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: server.h,v 1.1.6.1 2007/10/29 00:45:25 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: server.h,v 1.1.6.1 2007/10/29 00:45:25 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.h,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
@@ -95,6 +95,7 @@ struct server
 	fd_set			 fdset;		/* current descriptor set */
 	fd_idx_p		 fdidx;		/* descriptor index */
 	struct sockaddr_bt	 req_sa;	/* local address */
+	const char		*sgroup;	/* privileged group */
 };
 
 typedef struct server	server_t;
@@ -104,7 +105,7 @@ typedef struct server *	server_p;
  * External API
  */
 
-int32_t	server_init(server_p srv, const char *control);
+int32_t	server_init(server_p srv, const char *control, char const *sgroup);
 void	server_shutdown(server_p srv);
 int32_t	server_do(server_p srv);
 

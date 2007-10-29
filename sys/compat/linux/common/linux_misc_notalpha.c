@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.84.2.1 2007/04/20 20:14:12 bouyer Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.84.2.1.2.1 2007/10/29 00:45:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.84.2.1 2007/04/20 20:14:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.84.2.1.2.1 2007/10/29 00:45:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,9 @@ bsd_to_linux_statfs64(bsp, lsp)
 		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
 	}
 
-	div = bsp->f_bsize / bsp->f_frsize;
+	div = bsp->f_frsize ? (bsp->f_bsize / bsp->f_frsize) : 1;
+	if (div == 0)
+		div = 1;
 	lsp->l_fbsize = bsp->f_bsize;
 	lsp->l_ffrsize = bsp->f_frsize;
 	lsp->l_fblocks = bsp->f_blocks / div;

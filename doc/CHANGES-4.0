@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.8 2007/10/01 16:51:51 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.9 2007/10/29 00:45:07 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10024,4 +10024,161 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD-4.0_RC2.
+
+sys/arch/sparc64/sparc64/machdep.c		1.206 via patch
+
+	Fix printf format. Allows a 32-bit sparc64 kernel to build.
+	[martin, ticket #913]
+
+distrib/acorn32/cdroms/installcd/Makefile	1.2
+
+	Use the correct name for the acorn32 iso image. Fix the acorn32
+	part of PR 37033.
+	[bouyer, ticket #914]
+
+crypto/dist/openssl/ssl/ssl_lib.c		1.4
+
+	apply a patch from openssl CVS to fix a remaining off-by-one error
+	in an older security fix, see
+	http://www.securityfocus.com/archive/1/480855/30/0/threaded
+	[drochner, ticket #917]
+
+sys/dev/pci/if_bge.c				1.139
+
+	Fix three bugs.
+
+	1) Move a magic number writing code.
+	Fix a watchdog timeout and "block failed to stop" problem on BCM5701 B5 card.
+
+	2) Fix incorrect register write.
+	Fix a watchdog timeout "block failed to stop" problem on BCM5700 B2 card.
+
+	3) Wait more long time for PCISTATE register to return to its original
+	pre-reset state.
+	Fix "pcistate failed to revert" problem on BCM5703 A2 card.
+	[msaitoh, ticket #918]
+
+sys/kern/kern_sig.c				patch
+
+	Fix two problems with signals that could cause kernel crashes.
+	Should fix PR kern/37004.
+	[ad, ticket #921]
+
+sys/compat/linux/common/linux_misc_notalpha.c	1.89
+
+	avoid zerodivide in linux emulation of statfs64. PR 36920.
+	[hauke, ticket #919]
+
+sys/dev/acpi/pckbc_acpi.c			1.21
+
+	Sort IO resources before attempting to attach; resolves issues on ACPI
+	firmware that reports 0x64,0x60 instead of 0x60,0x64. Patch tested by
+	Greg A. Woods.
+	[jmcneill, ticket #924]
+
+sys/dev/pci/aac_pci.c				1.20
+sys/dev/pci/pcidevs				1.872
+
+	PR/35970: Todd Kover: Add support for HP ML110 G2 / Adaptec 2610SA
+	[christos, ticket #923]
+
+share/man/man4/man4.sparc/intro.4		1.22
+share/man/man4/man4.sparc/intro.4		1.23
+
+	PR/37049 - Edward Swiftwood -- SPARC LX -> SPARCstation LX
+	PR/37048 - Edward Swiftwood -- dbri audio component is supported
+	[jnemeth, ticket #915]
+
+sys/dev/pci/if_nfe.c				1.14,1.18-1.19 via patch
+sys/dev/pci/if_nfereg.h				1.4 via patch
+sys/dev/pci/if_nfevar.h				1.3 via patch
+
+	nfe(4): various fixes to make the RX path more robust and lower
+	time spent in handling interrupts.
+	[cube, ticket #920]
+
+sys/dev/pci/viaide.c				1.45
+
+	AMD CS5536 Companion Device is able to work in Ultra DMA Mode 5,
+	patch from Andreas Wrede in PR kern/37059.
+	[xtraeme, ticket #922]
+
+sys/dist/ipf/netinet/ip_nat.c			patch
+
+	Fix PR kern/37037 "ipnat: Data modified on freelist", verified by
+	the submitter.
+	[martti, ticket #916]
+
+sys/uvm/uvm_map.c				1.242
+
+	Don't restrict the offset when allocating a map entry for in-kernel
+	map - use UVM_UNKNOWN_OFFSET in the call to uvm_map_prepare.
+	Fixes PR#35887.
+	[skrll, ticket #928]
+
+sys/uvm/uvm_meter.c				1.45
+
+	Fix load average calculation.
+	[ad, ticket #929]
+
+sys/conf/copyright				1.4
+
+	Update the copyright year.
+	[martin, ticket #927]
+
+sys/arch/x86/include/mpacpi.h			1.5
+sys/arch/x86/x86/acpi_machdep.c			1.16
+sys/arch/x86/x86/mpacpi.c			1.50
+
+	Merge from mpacpi.h 1.4.32.1, acpi_machdep.c 1.13.22.5 and
+	mpacpi.c 1.48.12.2 from jmcneill-pm:
+
+	Don't process the MADT and modify the interrupt config at one moment and
+	later trying to figure out if an entry was overriden and matches the
+	ACPI SCI. This is brain-dead and breaks in various situations.
+
+	Just check for each ISA override entry, if it matches the SCI. If it
+	does, remember it and use it for the interrupt setup. If there's no such
+	override assume that it is not changed, but override the polarity and
+	level from ISA settings to PCI settings.
+	[joerg, ticket #925]
+
+etc/defaults/rc.conf				1.85 via patch
+etc/group					1.22 via patch
+etc/master.passwd				1.38 via patch
+etc/rc.d/sdpd					1.2
+share/man/man5/rc.conf.5			1.113
+usr.sbin/postinstall/postinstall		1.38 via patch
+usr.sbin/sdpd/main.c				1.2-1.3
+usr.sbin/sdpd/sdpd.8				1.2-1.3
+usr.sbin/sdpd/server.c				1.3
+usr.sbin/sdpd/server.h				1.2
+
+	Add an option to permit members of a specific group to register
+	services, in order to lower the barrier for users of bluetooth
+	devices which may need to query services on the local host.
+	change default user/group from nobody/nobody to _sdpd/_sdpd
+	[xtraeme, ticket #930]
+
+distrib/sets/lists/comp/mi			1.990 (via patch)
+sys/net/Makefile				1.22  (via patch)
+
+	Install <net/if_pflog.h>.
+	[tron, ticket #932]
+
+sys/netisdn/i4b_global.h			1.8
+
+	We count last activity in time_update nowadays, so use that to compare
+	idle timeouts as well.
+	[martin, ticket #933]
+
+sys/dev/pci/if_bge.c				patch
+
+	Shut up a debug message.
+	[msaitoh, ticket #934]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD-4.0_RC3.
 
