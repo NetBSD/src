@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.11 2007/10/26 17:03:10 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.12 2007/10/29 16:37:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.11 2007/10/26 17:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.12 2007/10/29 16:37:44 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1640,6 +1640,8 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 {
 	struct pool *pp;
 
+	KASSERT(!LIST_EMPTY(&pool_head));
+
 	pp = NULL;
 
 	/* Find next pool to drain, and add a reference. */
@@ -1652,18 +1654,19 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 			pp = drainpp;
 			drainpp = LIST_NEXT(pp, pr_poollist);
 		}
-		/* Skip completely idle pools. */
+		/*
+		 * Skip completely idle pools.  We depend on at least
+		 * one pool in the system being active.
+		 */
 	} while (pp == NULL || pp->pr_npages == 0);
 	pp->pr_refcnt++;
 	mutex_exit(&pool_head_lock);
 
 	/* If there is a pool_cache, drain CPU level caches. */
-	if (pp != NULL) {
-		*ppp = pp;
-		if (pp->pr_cache != NULL) {
-			*wp = xc_broadcast(0, (xcfunc_t)pool_cache_xcall,
-			    pp->pr_cache, NULL);
-		}
+	*ppp = pp;
+	if (pp->pr_cache != NULL) {
+		*wp = xc_broadcast(0, (xcfunc_t)pool_cache_xcall,
+		    pp->pr_cache, NULL);
 	}
 }
 
