@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.23.8.2 2007/10/02 18:26:39 joerg Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.23.8.3 2007/10/29 02:57:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.8.2 2007/10/02 18:26:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.8.3 2007/10/29 02:57:17 joerg Exp $");
 
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
@@ -178,6 +179,10 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif
 
+#ifdef INTEL_CORETEMP
+	if (vendor == CPUVENDOR_INTEL)
+		coretemp_register(ci);
+#endif
 }
 
 void

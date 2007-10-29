@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.9 2007/10/28 17:13:41 joerg Exp $
+# $NetBSD: GENERIC,v 1.153.8.10 2007/10/29 02:57:18 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.9 $"
+#ident 		"GENERIC-$Revision: 1.153.8.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -101,6 +101,9 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	SYSCALL_STATS	# per syscall counts
+#options 	SYSCALL_TIMES	# per syscall times
+#options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
 options 	COMPAT_15	# compatibility with NetBSD 1.5,
@@ -402,6 +405,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
+
+# Intel Core's on-die Thermal sensor
+options INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
