@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.248 2007/10/26 22:42:43 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.249 2007/10/29 00:47:17 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.248 $"
+#ident 		"GENERIC-$Revision: 1.249 $"
 
 maxusers	32		# estimated number of users
 
@@ -503,6 +503,9 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+# Intel Core's on-die Thermal sensor
+options INTEL_CORETEMP
 
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
