@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.363 2007/10/29 20:25:08 pavel Exp $
+.\"	$NetBSD: main,v 1.364 2007/10/29 20:28:26 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 26, 2007
+.Dd October 29, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
