@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.39 2007/10/09 19:00:16 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.40 2007/10/29 12:16:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_sched.h"
 #endif
 
 struct sched_param {
