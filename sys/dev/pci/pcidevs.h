@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.5.2.1 2007/09/03 07:04:38 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.5.2.2 2007/10/29 00:45:17 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.10 2007/08/31 20:09:26 pavel Exp
+ *	NetBSD
  */
 
 /*
@@ -827,6 +827,7 @@
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
 /* XXX guess */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
+#define	PCI_PRODUCT_ADP2_HP_M110_G2	0x3227		/* HP M110 G2 / ASR-2610SA */
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */

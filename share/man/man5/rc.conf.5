@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.109 2006/10/13 21:21:47 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.109.4.1 2007/10/29 00:45:10 wrstuden Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -1191,24 +1191,8 @@ or
 .Sq NO .
 Runs the Service Discovery Profile daemon,
 .Xr sdpd 8 .
-.It Sy sdpd_control
-Optional string specifying the path to the
-.Xr sdpd 8
-control socket.
-Defaults to
-.Pa /var/run/sdp .
-.It Sy sdpd_username
-Optional string specifying the username that
-.Xr sdpd 8
-will run as after initialisation.
-Defaults to
-.Sq nobody .
-.It Sy sdpd_groupname
-Optional string specifying the groupname that
-.Xr sdpd 8
-will run as after initialisation.
-Defaults to
-.Sq nobody .
+Passes
+.Sy sdpd_flags .
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces

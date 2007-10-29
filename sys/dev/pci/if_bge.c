@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.122.2.3.2.1 2007/09/03 07:04:29 wrstuden Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.122.2.3.2.2 2007/10/29 00:45:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3.2.1 2007/09/03 07:04:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3.2.2 2007/10/29 00:45:14 wrstuden Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1102,7 +1102,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 	/* NIC-memory send ring  not used; initialize to zero. */
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
-		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_RSLOTS; i++) {
@@ -1272,7 +1272,7 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
 		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					   BGE_PCI_CONF_DEV_CTRL);
-		printf("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl);
+		DPRINTFN(1,("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl));
 
 		if ((device_ctl & 0x00e0) && 0) {
 			/*
@@ -2828,11 +2828,6 @@ bge_reset(struct bge_softc *sc)
 			val |= (1<<29);
 		}
 	}
-	/*
-	 * Write the magic number to the firmware mailbox at 0xb50
-	 * so that the driver can synchronize with the firmware.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG, val);
@@ -2881,6 +2876,12 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	/*
+	 * Write the magic number to the firmware mailbox at 0xb50
+	 * so that the driver can synchronize with the firmware.
+	 */
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
+	/*
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
 	 * This indicates that the firmware initialization
@@ -2913,7 +2914,7 @@ bge_reset(struct bge_softc *sc)
 	 * from the device's non-PCI registers may yield garbage
 	 * results.
 	 */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 10000; i++) {
 		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    BGE_PCI_PCISTATE);
 		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.5.2.1 2007/09/03 07:04:39 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.5.2.2 2007/10/29 00:45:18 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.10 2007/08/31 20:09:26 pavel Exp
+ *	NetBSD
  */
 
 /*
@@ -3010,6 +3010,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC,
 	    "Dell PERC 3/QC",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_HP_M110_G2,
+	    "HP M110 G2 / ASR-2610SA",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
@@ -12856,4 +12860,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2619;
+const int pci_nproducts = 2620;
