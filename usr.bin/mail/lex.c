@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.34 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.35 2007/10/29 23:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.34 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.35 2007/10/29 23:20:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ setmsize(int sz)
 {
 	if (msgvec != 0)
 		free(msgvec);
-	msgvec = ecalloc((size_t) (sz + 1), sizeof *msgvec);
+	msgvec = ecalloc((size_t) (sz + 1), sizeof(*msgvec));
 }
 
 /*
@@ -614,7 +614,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 		 * A vector of strings, in shell style.
 		 */
 		if ((c = getrawlist(cp, arglist,
-				sizeof arglist / sizeof *arglist)) < 0)
+				sizeof(arglist) / sizeof(*arglist))) < 0)
 			break;
 		if (c < com->c_minargs) {
 			(void)printf("%s requires at least %d arg(s)\n",

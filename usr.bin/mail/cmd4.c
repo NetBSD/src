@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.3 2007/10/29 23:20:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.2 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.3 2007/10/29 23:20:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ printsmoptstbl(void)
 	const char **argv, **ap;
 	int h;
 	int cnt;
-	
+
 	cnt = 1;
 	for (h = 0; h < (int)sizeofarray(smoptstbl); h++ )
 		for (sp = smoptstbl[h]; sp && sp->s_name != NULL; sp = sp->s_link)
@@ -177,7 +177,7 @@ ncalloc(char *str, int ntype)
 {
 	struct name *np;
 
-	np = ecalloc(1, sizeof *np);
+	np = ecalloc(1, sizeof(*np));
 	np->n_type = ntype;
 	np->n_name = vcopy(str);
 	return np;
@@ -198,7 +198,7 @@ smopts_core(const char *sname, char **argv)
 		return;
 	}
 	h = hashcase(sname);
-	sp = ecalloc(1, sizeof *sp);
+	sp = ecalloc(1, sizeof(*sp));
 	sp->s_name = vcopy(sname);
 	if (smoptstbl[h])
 		sp->s_link = smoptstbl[h];
