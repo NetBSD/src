@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.19 2007/10/29 15:52:44 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.20 2007/10/29 17:47:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.19 2007/10/29 15:52:44 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.20 2007/10/29 17:47:33 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -235,7 +235,9 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 				found = 1;
 			} else {
 				/* down at the mardi gras */
+				PU_UNLOCK();
 				dopreq2(pu, pex->pex_preq, ppr);
+				PU_LOCK();
 				break;
 			}
 		}
