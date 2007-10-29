@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.18 2007/10/28 18:40:30 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.19 2007/10/29 15:52:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.18 2007/10/28 18:40:30 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.19 2007/10/29 15:52:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -183,17 +183,18 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	 */
 	pex = malloc(sizeof(struct puffs_executor));
 	pex->pex_preq = preq;
-	/* mutex_enter */
+	PU_LOCK();
 	TAILQ_INSERT_TAIL(&pu->pu_exq, pex, pex_entries);
 	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
 		if (pex->pex_preq->preq_pid == preq->preq_pid
 		    && pex->pex_preq->preq_lid == preq->preq_lid) {
 			if (pex->pex_preq != preq) {
-				/* mutex_exit */
+				PU_UNLOCK();
 				return 0;
 			}
 		}
 	}
+	PU_UNLOCK();
 
 	return dopreq2(pu, preq, ppr);
 }
@@ -207,7 +208,7 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_req *preq;
 	struct puffs_cc *pcc_iter;
-	struct puffs_executor *pex;
+	struct puffs_executor *pex, *pex_n;
 	int found;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
@@ -221,8 +222,9 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 	/* check if we need to schedule FAFs which were stalled */
 	found = 0;
 	preq = pcc->pcc_preq;
-	/* mutex_enter */
-	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
+	PU_LOCK();
+	for (pex = TAILQ_FIRST(&pu->pu_exq); pex; pex = pex_n) {
+		pex_n = TAILQ_NEXT(pex, pex_entries);
 		if (pex->pex_preq->preq_pid == preq->preq_pid
 		    && pex->pex_preq->preq_lid == preq->preq_lid) {
 			if (found == 0) {
@@ -238,13 +240,13 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 			}
 		}
 	}
-	/* mutex_exit */
 
 	/* can't do this above due to PCC_BORROWED */
 	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
 		LIST_REMOVE(pcc_iter, nlst_entries);
 		puffs_cc_destroy(pcc_iter);
 	}
+	PU_UNLOCK();
 }
 
 /* library private, but linked from callcontext.c */
@@ -728,9 +730,11 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					pi.pi_old = &pcn_src.pcn_po_full;
 					pi.pi_new = &pcn_targ.pcn_po_full;
 
+					PU_LOCK();
 					if (puffs_pn_nodewalk(pu,
 					    puffs_path_prefixadj, &pi) != NULL)
 						error = ENOMEM;
+					PU_UNLOCK();
 					pu->pu_pathfree(pu, &po_old);
 				}
 			}
@@ -1067,7 +1071,9 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 		puffs_req_putcc(ppr, pcc);
 		break;
 	case PUFFCALL_IGNORE:
+		PU_LOCK();
 		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
+		PU_UNLOCK();
 		break;
 	case PUFFCALL_AGAIN:
 		if ((pcc->pcc_flags & PCC_REALCC) == 0)
