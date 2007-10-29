@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.343 2007/10/29 14:16:22 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.344 2007/10/29 20:03:02 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10343,3 +10343,27 @@ sys/arch/x86/x86/mtrr_i686.c			1.12
 Fix a reboot when using MTRR, triggered by running X11 on amd64 machines
 with more than 4GB of RAM.
 [pavel, ticket #959]
+
+lib/libc/arch/hppa/gen/swapcontext.S		1.2
+
+	Fix setcontext(3) on hppa.
+	[skrll, ticket #955]
+
+sys/dev/acpi/acpi_apm.c				1.11
+usr.sbin/apm/apm.c				1.18
+
+	When no estimate of battery minutes_left can be made, apm should
+	return a value of 0.
+	[plunky, ticket #956]
+
+distrib/sets/lists/comp/mi			1.1074
+
+	The man page for rcs2log(1) is not installed when MKCVS=no.
+	[minskim, ticket #958]
+
+sys/arch/sparc64/sparc64/locore.s			patch
+
+	Avoid undefined symbol "time" in sparc64 kernels causing
+	savecore confusion.
+	[martin, ticket #944]
+
