@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.8.2.3 2007/10/29 00:22:43 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8.2.4 2007/10/29 16:33:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.2.3 2007/10/29 00:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.2.4 2007/10/29 16:33:14 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,7 @@ uintptr_t	lockstat_lamask;
 uintptr_t	lockstat_lockstart;
 uintptr_t	lockstat_lockend;
 __cpu_simple_lock_t lockstat_lock;
+lwp_t		*lockstat_lwp;
 lsbuf_t		*lockstat_baseb;
 size_t		lockstat_sizeb;
 int		lockstat_busy;
@@ -395,6 +396,7 @@ lockstat_open(dev_t dev, int flag, int mode, lwp_t *l)
 
 	if (!__cpu_simple_lock_try(&lockstat_lock))
 		return EBUSY;
+	lockstat_lwp = curlwp;
 	return 0;
 }
 
@@ -405,6 +407,7 @@ int
 lockstat_close(dev_t dev, int flag, int mode, lwp_t *l)
 {
 
+	lockstat_lwp = NULL;
 	__cpu_simple_unlock(&lockstat_lock);
 	return 0;
 }
@@ -417,6 +420,9 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	lsenable_t *le;
 	int error;
+
+	if (lockstat_lwp != curlwp)
+		return EBUSY;
 
 	switch (cmd) {
 	case IOC_LOCKSTAT_GVERSION:
@@ -488,7 +494,7 @@ int
 lockstat_read(dev_t dev, struct uio *uio, int flag)
 {
 
-	if (lockstat_enabled)
+	if (curlwp != lockstat_lwp || lockstat_enabled)
 		return EBUSY;
 	return uiomove(lockstat_baseb, lockstat_sizeb, uio);
 }
