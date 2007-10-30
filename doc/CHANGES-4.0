@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.344 2007/10/29 20:03:02 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.345 2007/10/30 15:42:44 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10367,3 +10367,25 @@ sys/arch/sparc64/sparc64/locore.s			patch
 	savecore confusion.
 	[martin, ticket #944]
 
+distrib/notes/common/main			1.355
+distrib/notes/common/main			1.357
+distrib/notes/common/main			1.358
+distrib/notes/common/main			1.359
+distrib/notes/common/main			1.360
+distrib/notes/common/main			1.361
+distrib/notes/common/main			1.362
+distrib/notes/common/main			1.363
+distrib/notes/common/main			1.364
+
+	Update release notes.
+	[pavel, ticket #962]
+
+share/man/man5/mk.conf.5			1.35
+
+	Remove the MKUUCP entry as uucp is no longer in src.
+	[minskim, ticket #961]
+
+bin/ln/ln.1					1.22
+
+	fixup botched addition of -i option
+	[jnemeth, ticket #960]
