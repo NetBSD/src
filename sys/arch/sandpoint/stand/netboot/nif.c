@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.1 2007/10/30 00:30:13 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.2 2007/10/30 05:05:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ NIF_DECL(fxp);
 NIF_DECL(tlp);
 NIF_DECL(nvt);
 NIF_DECL(sip);
+NIF_DECL(pcn);
 NIF_DECL(vge);
 NIF_DECL(rge);
 
@@ -78,6 +79,7 @@ static struct nifdv vnifdv[] = {
 	{ tlp_init, tlp_send, tlp_recv },
 	{ nvt_init, nvt_send, nvt_recv },
 	{ sip_init, sip_send, sip_recv },
+	{ pcn_init, pcn_send, pcn_recv },
 	{ vge_init, vge_send, vge_recv },
 	{ rge_init, rge_send, rge_recv }
 };
