@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2007/10/26 13:32:57 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.4 2007/10/30 00:30:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ int brdtype;
 void
 main()
 {
-	int howto;
+	int n, b, d, f, howto;
 	unsigned memsize, tag;
 	unsigned long marks[MARK_MAX];
 	struct btinfo_memory bi_mem;
@@ -90,6 +90,7 @@ main()
 	struct btinfo_clock bi_clk;
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
+	unsigned lnif[1][2];
 
 	/* determine SDRAM size */
 	memsize = mpc107memsize();
@@ -103,19 +104,23 @@ main()
 	case BRD_ENCOREPP1:
 		printf("Encore PP1"); break;
 	}
-	printf(", %dMB SDRAM", memsize >> 20);
-	if (pcifinddev(0x8086, 0x1209, &tag) == 0
-	    || pcifinddev(0x8086, 0x1229, &tag) == 0) {
-		int b, d, f;
-		pcidecomposetag(tag, &b, &d, &f);
-		printf(", Intel i82559 NIC %02d:%02d:%02d", b, d, f);
+	printf(", %dMB SDRAM\n", memsize >> 20);
+	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
+	if (n == 0) {
+		tag = ~0;
+		printf("no NIC found\n");
 	}
-	printf("\n");
+	else {
+		tag = lnif[0][1];
+		pcidecomposetag(tag, &b, &d, &f);
+		printf("%08x NIC %02d:%02d:%02d", lnif[0][0], b, d, f);
+	}
 
 	pcisetup();
 	pcifixup();
 
-	netif_init();
+	if (netif_init(tag) == 0)
+		printf("no device driver is found\n");
 
 	printf("Try NFS load /netbsd\n");
 	marks[MARK_START] = 0;
@@ -361,8 +366,6 @@ _inv(adr, siz)
 	asm volatile ("sync");
 }
 
-#include <dev/ic/mpc106reg.h>
-
 unsigned
 mpc107memsize()
 {
@@ -373,6 +376,11 @@ mpc107memsize()
 	if (brdtype == BRD_ENCOREPP1) {
 		/* the brd's PPCBOOT looks to have erroneous values */
 		unsigned tbl[] = {
+#define MPC106_MEMSTARTADDR1	0x80
+#define MPC106_EXTMEMSTARTADDR1	0x88
+#define MPC106_MEMENDADDR1	0x90
+#define MPC106_EXTMEMENDADDR1	0x98
+#define MPC106_MEMEN		0xa0
 #define	BK0_S	0x00000000
 #define	BK0_E	(128 << 20) - 1
 #define BK1_S	0x3ff00000
