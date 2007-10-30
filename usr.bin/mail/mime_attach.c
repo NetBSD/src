@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.6 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.7 2007/10/30 02:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.6 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.7 2007/10/30 02:28:31 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -69,9 +69,27 @@ __RCSID("$NetBSD: mime_attach.c,v 1.6 2007/10/29 23:20:38 christos Exp $");
 #include "glob.h"
 
 #if 0
-#ifndef __lint__
 /*
- * XXX - This block for debugging only and eventually should go away.
+ * XXX - This block is for debugging only and eventually should go away.
+ */
+# define SHOW_ALIST(a,b) show_alist(a,b)
+static void
+show_alist(struct attachment *alist, struct attachment *ap)
+{
+	(void)printf("alist=%p ap=%p\n", alist, ap);
+	for (ap = alist; ap; ap = ap->a_flink) {
+		(void)printf("ap=%p ap->a_flink=%p ap->a_blink=%p ap->a_name=%s\n",
+		    ap, ap->a_flink, ap->a_blink, ap->a_name ? ap->a_name : "<null>");
+	}
+}
+#else
+# define SHOW_ALIST(a,b)
+#endif
+
+#if 0
+#ifndef __lint__ /* Don't lint: the public routines may not be used. */
+/*
+ * XXX - This block for is debugging only and eventually should go away.
  */
 static void
 show_name(const char *prefix, struct name *np)
@@ -289,20 +307,22 @@ content_encoding_by_fileno(int fd, const char *ctype)
 }
 
 static const char *
-content_encoding(struct attachment *attach, const char *ctype)
+content_encoding(struct attachment *ap, const char *ctype)
 {
-	switch (attach->a_type) {
+	switch (ap->a_type) {
 	case ATTACH_FNAME:
-		return content_encoding_by_name(attach->a_name, ctype);
+		return content_encoding_by_name(ap->a_name, ctype);
 	case ATTACH_MSG:
-		errx(EXIT_FAILURE, "msgno not supported yet\n");
-		/* NOTREACHED */
+		return "7bit";
 	case ATTACH_FILENO:
-		return content_encoding_by_fileno(attach->a_fileno, ctype);
+		return content_encoding_by_fileno(ap->a_fileno, ctype);
+	case ATTACH_INVALID:
 	default:
-		errx(EXIT_FAILURE, "invalid attach type: %d\n", attach->a_type);
+		/* This is a coding error! */
+		assert(/* CONSTCOND */ 0);
+		errx(EXIT_FAILURE, "invalid attachment type: %d", ap->a_type);
+		/* NOTREACHED */
 	}
-	/* NOTREACHED */
 }
 
 /************************
@@ -392,19 +412,27 @@ content_type_by_fileno(int fd)
 }
 
 static const char *
-content_type(struct attachment *attach)
+content_type(struct attachment *ap)
 {
-	switch (attach->a_type) {
+	switch (ap->a_type) {
 	case ATTACH_FNAME:
-		return content_type_by_name(attach->a_name);
+		return content_type_by_name(ap->a_name);
 	case ATTACH_MSG:
+		/*
+		 * Note: the encapusulated message header must include
+		 * at least one of the "Date:", "From:", or "Subject:"
+		 * fields.  See rfc2046 Sec 5.2.1.
+		 * XXX - Should we really test for this?
+		 */
 		return "message/rfc822";
 	case ATTACH_FILENO:
-		return content_type_by_fileno(attach->a_fileno);
+		return content_type_by_fileno(ap->a_fileno);
+	case ATTACH_INVALID:
 	default:
 		/* This is a coding error! */
 		assert(/* CONSTCOND */ 0);
-		return NULL;
+		errx(EXIT_FAILURE, "invalid attachment type: %d", ap->a_type);
+		/* NOTREACHED */
 	}
 }
 
@@ -418,21 +446,27 @@ content_disposition(struct attachment *ap)
 	switch (ap->a_type) {
 	case ATTACH_FNAME: {
 		char *disp;
-		(void)sasprintf(&disp, "attachment; filename=\"%s\"", basename(ap->a_name));
+		(void)sasprintf(&disp, "attachment; filename=\"%s\"",
+		    basename(ap->a_name));
 		return disp;
 	}
 	case ATTACH_MSG:
+		return NULL;
 	case ATTACH_FILENO:
 		return "inline";
 
+	case ATTACH_INVALID:
 	default:
-		return NULL;
+		/* This is a coding error! */
+		assert(/* CONSTCOND */ 0);
+		errx(EXIT_FAILURE, "invalid attachment type: %d", ap->a_type);
+		/* NOTREACHED */
 	}
 }
 
 /*ARGSUSED*/
 static const char *
-content_id(struct attachment *attach __unused)
+content_id(struct attachment *ap __unused)
 {
 	/* XXX - to be written. */
 
@@ -454,7 +488,7 @@ content_description(struct attachment *attach, int attach_num)
 /*******************************************
  * Routines to get the MIME content strings.
  */
-static struct Content
+PUBLIC struct Content
 get_mime_content(struct attachment *ap, int i)
 {
 	struct Content Cp;
@@ -520,15 +554,53 @@ fput_attachment(FILE *fo, struct attachment *ap)
 			err(EXIT_FAILURE, "fdopen: %d", ap->a_fileno);
 		break;
 
-	case ATTACH_MSG:
+	case ATTACH_MSG: {
+		char mailtempname[PATHSIZE];
+		int fd;
+
+		fi = NULL;	/* appease gcc */
+		(void)snprintf(mailtempname, sizeof(mailtempname),
+		    "%s/mail.RsXXXXXXXXXX", tmpdir);
+		if ((fd = mkstemp(mailtempname)) == -1 ||
+		    (fi = Fdopen(fd, "w+")) == NULL) {
+			if (fd != -1)
+				(void)close(fd);
+			err(EXIT_FAILURE, "%s", mailtempname);
+		}
+		(void)rm(mailtempname);
+
+		/*
+		 * This is only used for forwarding, so use the forwardtab[].
+		 *
+		 * XXX - sendmessage really needs a 'flags' argument
+		 * so we don't have to play games.
+		 */
+		ap->a_msg->m_size--;	/* XXX - remove trailing newline */
+		(void)fputc('>', fi);	/* XXX - hide the headerline */
+		if (sendmessage(ap->a_msg, fi, forwardtab, NULL, NULL))
+			(void)fprintf(stderr, ". . . forward failed, sorry.\n");
+		ap->a_msg->m_size++;
+
+		rewind(fi);
+		break;
+	}
+	case ATTACH_INVALID:
 	default:
-		errx(EXIT_FAILURE, "unsupported attachment type");
+		/* This is a coding error! */
+		assert(/* CONSTCOND */ 0);
+		errx(EXIT_FAILURE, "invalid attachment type: %d", ap->a_type);
 	}
 
 	fput_body(fi, fo, Cp);
 
-	if (ap->a_type == ATTACH_FNAME)
+	switch (ap->a_type) {
+	case ATTACH_FNAME:
+	case ATTACH_MSG:
 		(void)fclose(fi);
+		break;
+	default:
+		break;
+	}
 }
 
 /***********************************
@@ -678,16 +750,17 @@ check_filename(char *filename, char *canon_name)
 }
 
 static struct attachment *
-attach_one_file(struct attachment *attach, char *filename, int attach_num)
+attach_one_file(struct attachment *ap, char *filename, int attach_num)
 {
 	char canon_name[MAXPATHLEN];
-	struct attachment *ap, *nap;
+	struct attachment *nap;
 
 	/*
-	 * 1) check that filename is really a readable file.
+	 * 1) check that filename is really a readable file; return NULL if not.
 	 * 2) allocate an attachment structure.
 	 * 3) save cananonical name for filename, so cd won't screw things later.
 	 * 4) add the structure to the end of the chain.
+	 * 5) return the new attachment structure.
 	 */
 	if (check_filename(filename, canon_name) == NULL)
 		return NULL;
@@ -696,10 +769,8 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 	nap->a_type = ATTACH_FNAME;
 	nap->a_name = savestr(canon_name);
 
-	if (attach == NULL)
-		attach = nap;
-	else {
-		for (ap = attach; ap->a_flink != NULL; ap = ap->a_flink)
+	if (ap) {
+		for (/*EMPTY*/; ap->a_flink != NULL; ap = ap->a_flink)
 			continue;
 		ap->a_flink = nap;
 		nap->a_blink = ap;
@@ -708,7 +779,7 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 	if (attach_num)
 		nap->a_Content = get_mime_content(nap, attach_num);
 
-	return attach;
+	return nap;
 }
 
 static char *
@@ -721,7 +792,7 @@ get_line(el_mode_t *em, const char *pr, const char *str, int i)
 	 * Don't use a '\t' in the format string here as completion
 	 * seems to handle it badly.
 	 */
-	(void)easprintf(&prompt, "#%-8d%s: ", i, pr);
+	(void)easprintf(&prompt, "#%-7d %s: ", i, pr);
 	line = my_getline(em, prompt, __UNCONST(str));
 	/* LINTED */
 	line = line ? savestr(line) : __UNCONST("");
@@ -767,6 +838,7 @@ sget_encoding(const char **str, const char *filename, const char *ctype, int num
 					break;
 				(void)fputc(',', stdout);
 			}
+			(void)putchar('\n');
 			ename = *str;
 		}
 		else {
@@ -777,10 +849,13 @@ sget_encoding(const char **str, const char *filename, const char *ctype, int num
 	}
 }
 
+/*
+ * Edit an attachment list.
+ * Return the new attachment list.
+ */
 static struct attachment *
-edit_attachments(struct attachment *attach)
+edit_attachlist(struct attachment *alist)
 {
-	char canon_name[MAXPATHLEN];
 	struct attachment *ap;
 	char *line;
 	int attach_num;
@@ -788,36 +863,69 @@ edit_attachments(struct attachment *attach)
 	(void)printf("Attachments:\n");
 
 	attach_num = 1;
-	ap = attach;
+	ap = alist;
 	while (ap) {
-		line = get_line(&elm.filec, "filename", ap->a_name, attach_num);
-		if (*line == '\0') {	/* omit this attachment */
-			if (ap->a_blink)
-				ap->a_blink->a_flink = ap->a_flink;
-			else
-				attach = ap->a_flink;
-		}
-		else {
-			if (strcmp(line, ap->a_name) != 0) { /* new filename */
-				if (check_filename(line, canon_name) == NULL)
-					continue;
-				ap->a_name = savestr(canon_name);
-				ap->a_Content = get_mime_content(ap, 0);
+		SHOW_ALIST(alist, ap);
+
+		switch(ap->a_type) {
+		case ATTACH_MSG:
+			(void)printf("#%-7d message:  <not changeable>\n",
+			    attach_num);
+			break;
+		case ATTACH_FNAME:
+		case ATTACH_FILENO:
+			line = get_line(&elm.filec, "filename", ap->a_name, attach_num);
+			if (*line == '\0') {	/* omit this attachment */
+				if (ap->a_blink) {
+					struct attachment *next_ap;
+					next_ap = ap->a_flink;
+					ap = ap->a_blink;
+					ap->a_flink = next_ap;
+					if (next_ap)
+						next_ap->a_blink = ap;
+					else
+						goto done;
+				}
+				else {
+					alist = ap->a_flink;
+					if (alist)
+						alist->a_blink = NULL;
+				}
 			}
-			sget_line(&elm.string, "description",
-			    &ap->a_Content.C_description, attach_num);
-			sget_encoding(&ap->a_Content.C_encoding, ap->a_name,
-			    ap->a_Content.C_type, attach_num);
+			else {
+				char canon_name[MAXPATHLEN];
+				if (strcmp(line, ap->a_name) != 0) { /* new filename */
+					if (check_filename(line, canon_name) == NULL)
+						continue;
+					ap->a_name = savestr(canon_name);
+					ap->a_Content = get_mime_content(ap, 0);
+				}
+				sget_line(&elm.string, "description",
+				    &ap->a_Content.C_description, attach_num);
+				sget_encoding(&ap->a_Content.C_encoding, ap->a_name,
+				    ap->a_Content.C_type, attach_num);
+			}
+			break;
+		case ATTACH_INVALID:
+		default:
+			/* This is a coding error! */
+			assert(/* CONSTCOND */ 0);
+			errx(EXIT_FAILURE, "invalid attachment type: %d",
+			    ap->a_type);
 		}
+
 		attach_num++;
-		if (ap->a_flink == NULL)
+		if (alist == NULL || ap->a_flink == NULL)
 			break;
 
 		ap = ap->a_flink;
 	}
 
-	do {
+	ap = alist;
+	for (;;) {
 		struct attachment *nap;
+
+		SHOW_ALIST(alist, ap);
 
 		line = get_line(&elm.filec, "filename", "", attach_num);
 		if (*line == '\0')
@@ -827,20 +935,20 @@ edit_attachments(struct attachment *attach)
 		if (nap == NULL)
 			continue;
 
-		if (ap)
-			ap = ap->a_flink;
-		else
-			ap = attach = nap;
+		if (alist == NULL)
+			alist = nap;
+		ap = nap;
 
 		sget_line(&elm.string, "description",
 		    &ap->a_Content.C_description, attach_num);
 		sget_encoding(&ap->a_Content.C_encoding, ap->a_name,
 		    ap->a_Content.C_type, attach_num);
 		attach_num++;
+	}
+ done:
+	SHOW_ALIST(alist, ap);
 
-	} while (ap);
-
-	return attach;
+	return alist;
 }
 
 /*
@@ -873,7 +981,7 @@ mime_attach_files(struct attachment *attach, char *linebuf)
 		}
 	}
 	else {
-		attach = edit_attachments(attach);
+		attach = edit_attachlist(attach);
 		(void)printf("--- end attachments ---\n");
 	}
 
@@ -923,13 +1031,13 @@ mime_attach_optargs(struct name *optargs)
 				    origdir, argv[i]);
 
 			ap2 = attach_one_file(ap, filename, attach_num);
-			free(filename);
 			if (ap2 != NULL) {
 				ap = ap2;
 				if (attach == NULL)
 					attach = ap;
 				attach_num++;
 			}
+			free(filename);
 		}
 	}
 	return attach;

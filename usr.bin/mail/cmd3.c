@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.37 2007/10/29 23:20:37 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.38 2007/10/30 02:28:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.37 2007/10/29 23:20:37 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.38 2007/10/30 02:28:30 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <assert.h>
 #include <util.h>
 #include "extern.h"
 #include "mime.h"
@@ -241,19 +242,19 @@ set_smopts(struct message *mp)
  * it does not already.
  */
 static char *
-reedit(char *subj)
+reedit(char *subj, const char *pref)
 {
 	char *newsubj;
+	size_t preflen;
 
+	assert(pref != NULL);
 	if (subj == NULL)
-		return NULL;
-	if ((subj[0] == 'r' || subj[0] == 'R') &&
-	    (subj[1] == 'e' || subj[1] == 'E') &&
-	    subj[2] == ':')
+		return __UNCONST(pref);
+	preflen = strlen(pref);
+	if (strncasecmp(subj, pref, preflen) == 0)
 		return subj;
-	newsubj = salloc(strlen(subj) + 5);
-	(void)strcpy(newsubj, "Re: ");
-	(void)strcpy(newsubj + 4, subj);
+	newsubj = salloc(strlen(subj) + preflen + 1 + 1);
+	(void)sprintf(newsubj, "%s %s", pref, subj);
 	return newsubj;
 }
 
@@ -325,7 +326,7 @@ respond_core(int *msgvec)
 	head.h_to = np;
 	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
-	head.h_subject = reedit(head.h_subject);
+	head.h_subject = reedit(head.h_subject, "Re:");
 	if (replyto == NULL && (cp = skin(hfield("cc", mp))) != NULL) {
 		np = elide(extract(cp, GCC));
 		np = delname(np, myname);
@@ -375,7 +376,7 @@ Respond_core(int msgvec[])
 	mp = get_message(msgvec[0]);
 	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
-	head.h_subject = reedit(head.h_subject);
+	head.h_subject = reedit(head.h_subject, "Re:");
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
 	head.h_smopts = set_smopts(mp);
@@ -407,14 +408,63 @@ Respond(void *v)
 		return respond_core(msgvec);
 }
 
+static int
+forward_one(int msgno, struct name *h_to)
+{
+	struct attachment attach;
+	struct message *mp;
+	struct header hdr;
+
+	mp = get_message(msgno);
+	if (mp == NULL) {
+		(void)printf("no such message %d\n", msgno);
+		return 1;
+	}
+	(void)printf("message %d\n", msgno);
+
+	(void)memset(&attach, 0, sizeof(attach));
+	attach.a_type = ATTACH_MSG;
+	attach.a_msg = mp;
+	attach.a_Content = get_mime_content(&attach, 0);
+
+	(void)memset(&hdr, 0, sizeof(hdr));
+	hdr.h_to = h_to;
+	if ((hdr.h_subject = hfield("subject", mp)) == NULL)
+		hdr.h_subject = hfield("subj", mp);
+	hdr.h_subject = reedit(hdr.h_subject, "Fwd:");
+	hdr.h_attach = &attach;
+	hdr.h_smopts = set_smopts(mp);
+
+	set_ident_fields(&hdr, mp);
+	mail1(&hdr, 1);
+	return 0;
+}
+
 PUBLIC int
 forward(void *v)
 {
 	int *msgvec = v;
 	int *ip;
-	for ( ip = msgvec; *ip; ip++)
-		(void)printf("%d ", *ip);
-	(void)printf("forward not supported yet\n");
+	struct header hdr;
+	int rval;
+
+	if (forwardtab[0].i_count == 0) {
+		/* setup the forward tab */
+		add_ignore("Status", forwardtab);
+	}
+	(void)memset(&hdr, 0, sizeof(hdr));
+	if ((rval = grabh(&hdr, GTO)) != 0)
+		return rval;
+
+	if (hdr.h_to == NULL) {
+		(void)printf("address missing!\n");
+		return 1;
+	}
+	for ( ip = msgvec; *ip; ip++) {
+		int e;
+		if ((e = forward_one(*ip, hdr.h_to)) != 0)
+			return e;
+	}
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_attach.h,v 1.4 2007/10/30 02:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ struct attachment *mime_attach_optargs(struct name *);
 struct attachment *mime_attach_files(struct attachment *, char *);
 FILE	*mime_encode(FILE *, struct header *);
 void	mime_putheader(FILE *, struct header *);
+struct Content get_mime_content(struct attachment *, int);
 
 /*
  * XXX - Debugging routines stuck in mime_attach.c ... these should go away!

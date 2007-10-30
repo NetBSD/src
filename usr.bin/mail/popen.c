@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.23 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.24 2007/10/30 02:28:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.23 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.24 2007/10/30 02:28:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ findchild(pid_t pid, int dont_alloc)
 			*cpp = child_freelist;
 			child_freelist = (*cpp)->link;
 		} else
-			*cpp = emalloc(sizeof(struct child));
+			*cpp = emalloc(sizeof(**cpp));
 
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
