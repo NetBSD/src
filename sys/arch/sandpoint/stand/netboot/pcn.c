@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.6 2007/10/30 04:29:51 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.7 2007/10/30 05:05:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -108,14 +108,12 @@ struct desc {
 #define PCN_BCR34	0x22
 
 struct pcninit {
-	uint16_t init_mode;		/* +0x0000 */
-	uint16_t init_padr[3];		/* +0x0002 */
-	uint16_t init_ladrf[4];		/* +0x0008 */
-	uint16_t init_rdra;		/* +0x0010 */
-	uint16_t init_rlen;		/* +0x0012 */
-	uint16_t init_tdra;		/* +0x0014 */
-	uint16_t init_tlen;		/* +0x0016 */
-	int16_t  pad0[4];		/* Pad to 16 shorts */
+	uint32_t init_mode;
+	uint32_t init_padr[2];
+	uint16_t init_ladrf[4];
+	uint32_t init_rdra;
+	uint32_t init_tdra;
+	uint32_t pad;
 };
 
 #define FRAMESIZE	1536
