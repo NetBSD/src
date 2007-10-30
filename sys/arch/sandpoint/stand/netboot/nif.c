@@ -1,4 +1,4 @@
-/* $NetBSD: nif_fxp.c,v 1.3 2007/10/26 13:32:58 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.1 2007/10/30 00:30:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -45,45 +44,80 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
-struct iodesc sockets[2]; /* SOPEN_MAX */
+struct nifdv {
+	unsigned (*init)(unsigned, void *);
+	int (*send)(void *, char *, unsigned);
+	int (*recv)(void *, char *, unsigned, unsigned);
+	void *priv;
+	int unit;
+};
 
-struct iodesc *socktodesc(int);
-void netif_init(void);
+int netif_init(unsigned);
 int netif_open(void *);
 int netif_close(int);
 ssize_t netif_put(struct iodesc *, void *, size_t);
 ssize_t netif_get(struct iodesc *, void *, size_t, time_t);
+struct iodesc *socktodesc(int);
 
-void *fxp_init(void *);
-int fxp_send(void *, char *, unsigned);
-int fxp_recv(void *, char *, unsigned, unsigned);
+static struct iodesc netdesc;
 
-struct iodesc *
-socktodesc(sock)
-	int sock;
-{
-	if (sock < 0 || sock >= 2)
-		return NULL;
-	return &sockets[sock];
-}
+#define NIF_DECL(xxx) \
+    unsigned xxx ## _init(unsigned, void *); \
+    int xxx ## _send(void *, char *, unsigned); \
+    int xxx ## _recv(void *, char *, unsigned, unsigned);
 
-void
-netif_init()
+NIF_DECL(fxp);
+NIF_DECL(tlp);
+NIF_DECL(nvt);
+NIF_DECL(sip);
+NIF_DECL(vge);
+NIF_DECL(rge);
+
+static struct nifdv vnifdv[] = {
+	{ fxp_init, fxp_send, fxp_recv },
+	{ tlp_init, tlp_send, tlp_recv },
+	{ nvt_init, nvt_send, nvt_recv },
+	{ sip_init, sip_send, sip_recv },
+	{ vge_init, vge_send, vge_recv },
+	{ rge_init, rge_send, rge_recv }
+};
+static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
+int nmatchednif = 0;
+
+int
+netif_init(tag)
+	unsigned tag;
 {
 	struct iodesc *s;
+	struct nifdv *dv;
+	int n;
+	void *l;
+	uint8_t enaddr[6];
 	extern uint8_t en[];
 
-	s = &sockets[0];
-	s->io_netif = fxp_init(s->myea); /* determine MAC address */
-
-	memcpy(en, s->myea, sizeof(s->myea));
+	for (n = 0; n < nnifdv; n++) {
+		l = (void *)(*vnifdv[n].init)(tag, enaddr);
+		if (l != NULL)
+			goto found;
+	}
+	return 0;
+  found:
+	memcpy(en, enaddr, sizeof(enaddr));
+	dv = alloc(sizeof(struct nifdv));
+	*dv = vnifdv[n];
+	dv->priv = l;
+	dv->unit = nmatchednif++;
+	s = &netdesc;
+	s->io_netif = dv;
+	memcpy(s->myea, enaddr, sizeof(enaddr));
+	return 1;
 }
 
 int
 netif_open(cookie)
 	void *cookie;
 {
-
+	/* single action */
 	return 0;
 }
 
@@ -91,7 +125,6 @@ int
 netif_close(sock)
 	int sock;
 {
-
 	/* nothing to do for the HW */
 	return 0;
 }
@@ -106,16 +139,9 @@ netif_put(desc, pkt, len)
 	void *pkt;
 	size_t len;
 {
-	ssize_t rv;
-	size_t sendlen;
+	struct nifdv *dv = desc->io_netif;
 
-	sendlen = len;
-	if (sendlen < 60)
-		sendlen = 60;
-
-	rv = fxp_send(desc->io_netif, pkt, sendlen);
-
-	return rv;
+	return (*dv->send)(dv->priv, pkt, len);
 }
 
 /*
@@ -129,15 +155,19 @@ netif_get(desc, pkt, maxlen, timo)
 	size_t maxlen;
 	time_t timo;
 {
+	struct nifdv *dv = desc->io_netif;
 	int len;
 
-	len = fxp_recv(desc->io_netif, pkt, maxlen, timo);
-	if (len == -1) {
+	len = (*dv->recv)(dv->priv, pkt, maxlen, timo);
+	if (len == -1)
 		printf("timeout\n");
-		/* XXX errno = ... */
-	}
-
-	if (len < 12)
-		return -1;
 	return len;
+}
+
+struct iodesc *
+socktodesc(num)
+	int num;
+{
+
+	return (num == 0) ? &netdesc : NULL;
 }

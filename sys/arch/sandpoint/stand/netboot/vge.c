@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.6 2007/10/28 03:15:04 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.7 2007/10/30 00:30:14 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -64,7 +63,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *vge_init(void *);
+void *vge_init(unsigned, void *);
 int vge_send(void *, char *, unsigned);
 int vge_recv(void *, char *, unsigned, unsigned);
 
@@ -205,18 +204,17 @@ static void vge_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-vge_init(void *cookie)
+vge_init(unsigned tag, void *data)
 {
-	unsigned tag, val, i, loop, chipgcr;
+	unsigned val, i, loop, chipgcr;
 	struct local *l;
 	struct tdesc *TxD;
 	struct rdesc *RxD;
 	uint8_t *en;
 
-	if (pcifinddev(0x1106, 0x3119, &tag) != 0) {
-		printf("vge NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3119)
 		return NULL;
-	}
 
 	l = ALLOC(struct local, 256);   /* tdesc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -231,7 +229,7 @@ vge_init(void *cookie)
 	l->phy = CSR_READ_1(l, VGE_MIICFG) & 0x1f;
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, VGE_PAR0);
 	en[1] = CSR_READ_1(l, VGE_PAR1);
 	en[2] = CSR_READ_1(l, VGE_PAR2);

@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.4 2007/10/27 06:34:20 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.5 2007/10/30 00:30:14 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
  
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -66,7 +65,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *pcn_init(void *);
+void *pcn_init(unsigned, void *);
 int pcn_send(void *, char *, unsigned);
 int pcn_recv(void *, char *, unsigned, unsigned);
 
@@ -94,18 +93,17 @@ static void pcn_bcr_write(struct local *, int, int);
 static void mii_initphy(struct local *l);
 
 void *
-pcn_init(void *cookie)
+pcn_init(unsigned tag, void *data)
 {
-	unsigned tag, val, loop;
+	unsigned val, loop;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
 	struct leinit initblock, *ib;
 
-	if (pcifinddev(0x1022, 0x2000, &tag) != 0) {
-		printf("pcn NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x1022 && PCI_PRODUCT(val) != 0x2000)
 		return NULL;
-	}
 
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
@@ -117,7 +115,7 @@ pcn_init(void *cookie)
 	CSR_WRITE_4(l, PCN32_RDP, 0);
 
 	mii_initphy(l);
-	en = cookie;
+	en = data;
 	val = pcn_csr_read(l, LE_CSR12); en[0] = val; en[1] = (val >> 8);
 	val = pcn_csr_read(l, LE_CSR13); en[2] = val; en[3] = (val >> 8);
 	val = pcn_csr_read(l, LE_CSR14); en[4] = val; en[5] = (val >> 8);

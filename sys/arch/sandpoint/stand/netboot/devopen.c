@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.3 2007/10/26 13:32:57 nisimura Exp $ */
+/* $NetBSD: devopen.c,v 1.4 2007/10/30 00:30:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 struct devsw devsw[] = {
-	{ "fxp", net_strategy, net_open, net_close, noioctl },
+	{ "net", net_strategy, net_open, net_close, noioctl },
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
@@ -88,5 +88,6 @@ noioctl(f, cmd, data)
 	u_long cmd;
 	void *data;
 {
+
 	return EINVAL;
 }

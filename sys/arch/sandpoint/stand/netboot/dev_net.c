@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.3 2007/10/26 13:32:57 nisimura Exp $ */
+/* $NetBSD: dev_net.c,v 1.4 2007/10/30 00:30:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <net/if.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
