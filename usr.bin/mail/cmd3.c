@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.38 2007/10/30 02:28:30 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.39 2007/10/30 16:08:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.38 2007/10/30 02:28:30 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.39 2007/10/30 16:08:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -408,6 +408,7 @@ Respond(void *v)
 		return respond_core(msgvec);
 }
 
+#ifdef MIME_SUPPORT
 static int
 forward_one(int msgno, struct name *h_to)
 {
@@ -467,6 +468,7 @@ forward(void *v)
 	}
 	return 0;
 }
+#endif /* MIME_SUPPORT */
 
 static int
 bounce_one(int msgno, const char **smargs, struct name *h_to)
