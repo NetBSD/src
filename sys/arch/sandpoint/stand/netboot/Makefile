@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.2 2007/10/17 19:57:00 garbled Exp $
+#	$NetBSD: Makefile,v 1.3 2007/10/30 00:30:13 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		netboot
-SRCS=		entry.S main.c pci.c devopen.c dev_net.c nif_fxp.c fxp.c \
-		printf.c vers.c
+SRCS=		entry.S main.c pci.c devopen.c dev_net.c nif.c \
+		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c printf.c vers.c
 CLEANFILES+=	vers.c ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
 #CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4600 -DCONSSPEED=115200
 #CPPFLAGS+=	-DDEBUG
-CPPFLAGS+=	-nostdinc -I. -I${S}
+CPPFLAGS+=	-Wall -nostdinc -I. -I${S}
 DBG=		-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
