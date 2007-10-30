@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.2 2007/10/17 19:57:01 garbled Exp $ */
+/* $NetBSD: fxp.c,v 1.3 2007/10/30 00:30:13 nisimura Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -73,7 +73,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -137,7 +136,7 @@ struct local {
 	unsigned eeprom_addr;
 };
 
-void *fxp_init(void *);
+void *fxp_init(unsigned, void *);
 int fxp_send(void *, char *, unsigned);
 int fxp_recv(void *, char *, unsigned, unsigned);
 static void autosize_eeprom(struct local *);
@@ -181,20 +180,19 @@ static struct fxp_cb_config store_cbc;
 static struct fxp_cb_ias store_cbi;
 
 void *
-fxp_init(void *cookie)
+fxp_init(unsigned tag, void *data)
 {
 	struct local *sc;
-	uint8_t *en = cookie;
+	uint8_t *en = data;
 	struct fxp_cb_config *cbp = &store_cbc;
 	struct fxp_cb_ias *cb_ias = &store_cbi;
 	struct rxdesc *rfa;
-	unsigned tag, v, i;
+	unsigned v, i;
 
-	if (pcifinddev(0x8086, 0x1209, &tag) != 0
-	    && pcifinddev(0x8086, 0x1229, &tag) != 0) {
-		printf("fxp NIC not found\n");
+	v = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(v) != 0x8086 ||
+		    (PCI_PRODUCT(v) != 0x1209 && PCI_PRODUCT(v) != 0x1229))
 		return NULL;
-	}
 
 	sc = alloc(sizeof(struct local));
 	memset(sc, 0, sizeof(struct local));
