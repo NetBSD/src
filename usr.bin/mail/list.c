@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.21 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.22 2007/10/30 02:28:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.21 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.22 2007/10/30 02:28:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -529,6 +529,20 @@ substrcmp(void *pattern, char *line, size_t len)
 	return strcasestr(line, substr) != NULL;
 }
 
+/*
+ * Look for NULL line.  Used to find non-existent fields.
+ * Return 1 if match found.
+ */
+static int
+hasfieldcmp(void *pattern __unused, char *line, size_t len __unused)
+{
+#ifdef __lint__
+	pattern = pattern;
+	len = len;
+#endif
+	return line != NULL;
+}
+
 static regex_t preg;
 /*
  * Determine the compare function and its argument based on the
@@ -541,6 +555,11 @@ get_cmpfn(void **pattern, char *str)
 	char *val;
 	int cflags;
 	int e;
+
+	if (*str == 0) {
+		*pattern = NULL;
+		return hasfieldcmp;
+	}
 
 	if ((val = value(ENAME_REGEX_SEARCH)) != NULL) {
 		cflags = REG_NOSUB;
@@ -820,9 +839,6 @@ match_string(int *markarray, char *str, int msgCount)
 			str = cp;
 		}
 	}
-
-	if (*str == '\0') /* an empty string matches nothing instead of everything */
-		return 0;
 
 	cmpfn = get_cmpfn(&cmparg, str);
 	if (cmpfn == NULL)
