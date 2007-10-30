@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.1 2007/10/30 15:07:08 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.2 2007/10/30 16:38:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ tlp_send(void *dev, char *buf, u_int len)
 	struct desc *TxD;
 	u_int loop;
 
-#if 0	/* unaligned TX buf might be problematic? */
+#if 1
 	wb(buf, len);
 	TxD = &l->TxD;
 	TxD->xd3 = htole32(VTOPHYS(TxD));
