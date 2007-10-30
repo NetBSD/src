@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.912 2007/10/30 20:44:31 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.913 2007/10/30 20:58:57 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.911 2007/10/30 20:44:12 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.912 2007/10/30 20:58:38 xtraeme Exp
  */
 
 /*
@@ -2054,8 +2054,8 @@
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
-#define	PCI_PRODUCT_INTEL_IOP332_A	0x0370		/* IOP332 PCI Express-to-PCI Bridge #0 */
-#define	PCI_PRODUCT_INTEL_IOP332_B	0x0372		/* IOP332 PCI Express-to-PCI Bridge #1 */
+#define	PCI_PRODUCT_INTEL_IOP333_A	0x0370		/* IOP333 PCI Express-to-PCI Bridge #0 */
+#define	PCI_PRODUCT_INTEL_IOP333_B	0x0372		/* IOP333 PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE0	0x0329		/* 6700PXH PCI Express-to-PCI Bridge #0 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE1	0x032a		/* 6700PXH PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_SRCZCRX	0x0407		/* RAID controller */
