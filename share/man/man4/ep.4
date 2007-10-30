@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.34 2003/06/27 18:22:53 wiz Exp $
+.\"	$NetBSD: ep.4,v 1.35 2007/10/30 20:56:00 christos Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 17, 2001
+.Dd October 30, 2007
 .Dt EP 4
 .Os
 .Sh NAME
@@ -123,27 +123,29 @@ ISA Plug-and-Play 10Mbps card, in BNC and multiport variants
 ISA Plug-and-Play 10/100 card with UTP
 .It 3c529
 MCA 10Mbps card, in UTP+AUI and BNC+AUI variants
+.It 3c556B
+PCMCIA 56K modem-10/100Mbps Ethernet combo card with dongle
+.It 3c562
+PCMCIA modem-10Mbps Ethernet combo card with dongle
+.It 3c574
+PCMCIA 10/100Mbps card with dongle
 .It 3c579
 EISA 10Mbps card, in UTP, BNC, and multiport variants
-.It 3c592
-EISA 10Mbps card with DMA capability
-.It 3c597
-EISA 10/100Mbps card with DMA capability
+.It 3c589
+PCMCIA 10Mbps card with dongle
 .It 3c590
 PCI 10Mbps multiport card with DMA capability
+.It 3c592
+EISA 10Mbps card with DMA capability
 .It 3c595
 PCI 10/100Mbps with different media options and DMA capability
+.It 3c597
+EISA 10/100Mbps card with DMA capability
 .It 3c900
 PCI 10Mbps card in 10BASE-T and multiport variants with DMA capability
 .It 3c905
 PCI 10/100Mbps card in 10BASE-T, multiport, and fast variants with
 DMA capability
-.It 3c562
-PCMCIA modem/10Mbps Ethernet combo card with dongle
-.It 3c574
-PCMCIA 10/100Mbps card with dongle
-.It 3c589
-PCMCIA 10Mbps card with dongle
 .El
 .Sh NOTES
 EtherLink III cards have no jumpers to set the address.
