@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.130 2007/10/29 00:47:16 xtraeme Exp $
+# $NetBSD: ALL,v 1.131 2007/10/30 00:03:50 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.130 $"
+#ident 		"ALL-$Revision: 1.131 $"
 
 maxusers	32		# estimated number of users
 
@@ -622,7 +622,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
 
 # Intel Core's on-die Thermal sensor
-options INTEL_CORETEMP
+options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
