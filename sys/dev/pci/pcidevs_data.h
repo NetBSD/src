@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.910 2007/10/30 12:39:48 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.911 2007/10/30 20:44:31 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.910 2007/10/30 12:39:24 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.911 2007/10/30 20:44:12 xtraeme Exp
  */
 
 /*
@@ -7060,6 +7060,14 @@ static const struct pci_product pci_products[] = {
 	    "80321 I/O Processor",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP332_A,
+	    "IOP332 PCI Express-to-PCI Bridge #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP332_B,
+	    "IOP332 PCI Express-to-PCI Bridge #1",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE0,
 	    "6700PXH PCI Express-to-PCI Bridge #0",
 	},
@@ -13664,4 +13672,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2817;
+const int pci_nproducts = 2819;
