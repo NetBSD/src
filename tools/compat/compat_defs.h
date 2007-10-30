@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.64 2007/10/19 15:56:53 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.65 2007/10/30 20:23:35 tls Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -326,27 +326,47 @@ int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 /* Make them use our version */
 #  define heapsort __nbcompat_heapsort
 
-#if !HAVE_USER_FROM_UID
+/*
+ * HAVE_X_FROM_Y and HAVE_PWCACHE_FOODB go together, because we cannot
+ * supply an implementation of one without the others -- some parts are
+ * libc internal and this varies from system to system.
+ *
+ * XXX this is dubious anyway: we assume (see HAVE_DECLs below) that if the
+ * XXX host system has all of these functions, all of their interfaces
+ * XXX and interactions are exactly the same as in our libc/libutil -- ugh.
+ */
+#if !HAVE_USER_FROM_UID || !HAVE_UID_FROM_USER || !HAVE_GROUP_FROM_GID || \
+    !HAVE_GID_FROM_GROUP || !HAVE_PWCACHE_USERDB || !HAVE_PWCACHE_GROUDB
 /* Make them use our version */
 #  define user_from_uid __nbcompat_user_from_uid
-#endif
-#if !HAVE_GROUP_FROM_GID
-/* Make them use our version */
+#  define uid_from_user __nbcompat_uid_from_user
+#  define pwcache_userdb __nbcompat_pwcache_userdb
 #  define group_from_gid __nbcompat_group_from_gid
+#  define gid_from_group __nbcompat_gid_from_group
+#  define pwcache_groupdb __nbcompat_pwcache_groupdb
 #endif
 
-#if !HAVE_DECL_GID_FROM_USER
+#if !HAVE_DECL_UID_FROM_USER
 int uid_from_user(const char *, uid_t *);
+#endif
+#if !HAVE_DECL_USER_FROM_UID
+const char *user_from_uid(uid_t, int);
+#endif
+#if !HAVE_DECL_PWCACHE_USERDB
+int pwcache_userdb(int (*)(int), void (*)(void),
+                struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
 #endif
 #if !HAVE_DECL_GID_FROM_GROUP
 int gid_from_group(const char *, gid_t *);
 #endif
-#if !HAVE_DECL_USER_FROM_UID
-const char	*user_from_uid(uid_t, int);
-#endif
 #if !HAVE_DECL_GROUP_FROM_GID
-const char	*group_from_gid(gid_t, int);
+const char *group_from_gid(gid_t, int);
 #endif
+#if !HAVE_DECL_PWCACHE_GROUPDB
+int pwcache_groupdb(int (*)(int), void (*)(void),
+                struct group * (*)(const char *), struct group * (*)(gid_t));
+#endif
+
 #if !HAVE_DECL_STRNDUP
 char		*strndup(const char *, size_t);
 #endif
@@ -358,16 +378,6 @@ int		lchmod(const char *, mode_t);
 #endif
 #if !HAVE_DECL_LCHOWN
 int		lchown(const char *, uid_t, gid_t);
-#endif
-#if !HAVE_DECL_PWCACHE_USERDB
-int		pwcache_userdb(int (*)(int), void (*)(void),
-				struct passwd * (*)(const char *),
-				struct passwd * (*)(uid_t));
-#endif
-#if !HAVE_DECL_PWCACHE_GROUPDB
-int		 pwcache_groupdb(int (*)(int), void (*)(void),
-				    struct group * (*)(const char *),
-				    struct group * (*)(gid_t));
 #endif
 
 #if !HAVE_PWRITE
