@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.18 2007/10/18 15:47:00 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.19 2007/10/30 15:32:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.18 2007/10/18 15:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.19 2007/10/30 15:32:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -307,7 +307,6 @@ softint_init(struct cpu_info *ci)
 
 	ci->ci_data.cpu_softcpu = sc;
 	ci->ci_data.cpu_softints = 0;
-	ci->ci_data.cpu_netisrs = 0;
 	sc->sc_cpu = ci;
 
 	softint_init_isr(sc, "net", PRI_SOFTNET, SOFTINT_NET);
