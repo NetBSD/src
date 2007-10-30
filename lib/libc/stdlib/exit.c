@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.10 2003/08/07 16:43:39 agc Exp $	*/
+/*	$NetBSD: exit.c,v 1.11 2007/10/30 17:19:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,14 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)exit.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: exit.c,v 1.10 2003/08/07 16:43:39 agc Exp $");
+__RCSID("$NetBSD: exit.c,v 1.11 2007/10/30 17:19:59 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef _LIBC
 #include "reentrant.h"
 #include "atexit.h"
+#endif
 
 void (*__cleanup) __P((void));
 
@@ -53,7 +55,9 @@ exit(status)
 	int status;
 {
 
+#ifdef _LIBC
 	__cxa_finalize(NULL);
+#endif
 	if (__cleanup)
 		(*__cleanup)();
 	_exit(status);
