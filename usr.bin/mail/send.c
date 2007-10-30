@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.31 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.32 2007/10/30 02:28:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.31 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.32 2007/10/30 02:28:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,16 +458,24 @@ infix(struct header *hp, FILE *fi)
 
 /*
  * Save the outgoing mail on the passed file.
+ *
+ * Take care not to save a valid headline or the mbox file will be
+ * broken.  Prefix valid headlines with '>'.
+ *
+ * Note: most servers prefix any line starting with "From " in the
+ * body of the message.  We are more restrictive to avoid header/body
+ * issues.
  */
 /*ARGSUSED*/
 static int
 savemail(const char name[], FILE *fi)
 {
 	FILE *fo;
-	char buf[LINESIZE];
-	int i;
 	time_t now;
 	mode_t m;
+	char *line;
+	size_t linelen;
+	int afterblank;
 
 	m = umask(077);
 	fo = Fopen(name, "a");
@@ -478,8 +486,27 @@ savemail(const char name[], FILE *fi)
 	}
 	(void)time(&now);
 	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
-	while ((i = fread(buf, 1, sizeof(buf), fi)) > 0)
-		(void)fwrite(buf, 1, (size_t)i, fo);
+	afterblank = 0;
+	while ((line = fgetln(fi, &linelen)) != NULL) {
+		char c, *cp;
+		cp = line + linelen - 1;
+		if (afterblank &&
+		    linelen > sizeof("From . Aaa Aaa O0 00:00 0000") &&
+		    line[0] == 'F' &&
+		    line[1] == 'r' &&
+		    line[2] == 'o' &&
+		    line[3] == 'm' &&
+		    line[4] == ' ' &&
+		    *cp == '\n') {
+			c = *cp;
+			*cp = '\0';
+			if (ishead(line))
+				(void)fputc('>', fo);
+			*cp = c;
+		}
+		(void)fwrite(line, 1, linelen, fo);
+		afterblank = linelen == 1 && line[0] == '\n';
+	}
 	(void)putc('\n', fo);
 	(void)fflush(fo);
 	if (ferror(fo))
@@ -566,6 +593,7 @@ mail1(struct header *hp, int printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
+
 	if (value(ENAME_INTERACTIVE) != NULL) {
 		if (value(ENAME_ASKCC) != NULL || value(ENAME_ASKBCC) != NULL) {
 			if (value(ENAME_ASKCC) != NULL)
