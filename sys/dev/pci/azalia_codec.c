@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.45 2007/09/22 15:14:33 xtraeme Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.46 2007/10/30 19:36:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.45 2007/09/22 15:14:33 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.46 2007/10/30 19:36:10 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3176,12 +3176,14 @@ stac9200_mixer_init(codec_t *this)
 #define STAC9200_DELL_INSPIRON6400_ID	0x01bd1028
 #define STAC9200_DELL_INSPIRON9400_ID	0x01cd1028
 #define STAC9200_DELL_640M_ID		0x01d81028
+#define STAC9200_DELL_LATITUDE_D430_ID	0x02011028
 #define STAC9200_EVENT_HP	0
 #define STAC9200_NID_HP		0x0d
 #define STAC9200_NID_SPEAKER	0x0e
 	if (this->subid == STAC9200_DELL_INSPIRON6400_ID ||
 	    this->subid == STAC9200_DELL_INSPIRON9400_ID ||
-	    this->subid == STAC9200_DELL_640M_ID) {
+	    this->subid == STAC9200_DELL_640M_ID ||
+	    this->subid == STAC9200_DELL_LATITUDE_D430_ID) {
 		/* Does every DELL model have the same pin configuration?
 		 * I'm not sure. */
 
