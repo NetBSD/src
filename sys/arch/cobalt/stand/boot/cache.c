@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1 2007/10/30 15:07:08 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.2 2007/10/30 16:38:54 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -53,8 +53,8 @@ pdcache_inv(uint32_t va, u_int size)
 {
 	uint32_t eva;
 
-	va  = trunc_line(va);
 	eva = round_line(va + size);
+	va  = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
@@ -67,8 +67,8 @@ pdcache_wb(uint32_t va, u_int size)
 {
 	uint32_t eva;
 
-	va  = trunc_line(va);
 	eva = round_line(va + size);
+	va  = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
@@ -81,8 +81,8 @@ pdcache_wbinv(uint32_t va, u_int size)
 {
 	uint32_t eva;
 
-	va  = trunc_line(va);
 	eva = round_line(va + size);
+	va  = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
