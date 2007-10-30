@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.4 2007/09/29 17:05:16 pavel Exp $
+.\"	$NetBSD: main,v 1.320.2.5 2007/10/30 15:24:14 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 26, 2007
+.Dd October 29, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -862,7 +862,7 @@ IPFilter 4.1.23
 .It
 GNU gcc 4.1.1
 .It
-NTP 4.2.2p2
+NTP 4.2.4p2
 .It
 pppd 2.4.4
 .bullet)
@@ -883,6 +883,9 @@ Initiator (client) code is underway.
 .It
 .Xr lockstat 8 :
 new command to display a summary of kernel locking events recorded over the lifetime of a called program.
+.It
+.Xr ofctl 8 :
+new command to display the OpenPROM or OpenFirmware device tree for the macppc, shark and sparc64.
 .It
 Various utilities to support Bluetooth were added:
 .(bullet
@@ -918,9 +921,15 @@ Besides this list, there there have also been innumerable bug fixes and other mi
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
 .(bullet
-Sushi ...
+Sushi was removed from the base system due to lack of interest and maintenance. If you really want it, it is available in the CVS repository at othersrc/usr.sbin/sushi. However, be warned that it is unmaintained and is most likely out of date.
 .It
-Vinum ...
+Vinum was removed due to lack of interest and maintenance. At the time of removal, it had several known serious issues (including not being compilable). RAIDframe provides similar functionality. If you were using Vinum you will need to back up your data, delete the Vinum partitions, create RAIDframe partitions, and restore your data to them. Details about RAIDframe can be found in
+.Xr raid 4 ,
+.Xr raidctl 8 ,
+and the
+NetBSD
+      Guide:
+.Lk http://www.NetBSD.org/docs/guide/en/chap-rf.html .
 .It
 Sendmail was removed. Postfix is the MTA and provides the
 .Xr sendmail 1
@@ -933,9 +942,7 @@ and
 .Pa mail/sendmail813
 packages.
 .It
-NETCCITT ...
-.It
-NETNS ...
+NETCCITT and NETNS were removed due to lack of interest and maintenance. They had known serious issues (including being out of date with respect to other network code) and there were no known users at the time of their removal. Unfortunately, there is no replacement or option for them.
 .It
 UUCP was removed. The NetBSD improvements were merged into the pkgsrc version. For those who use UUCP tools, they are available from pkgsrc in the
 .Pa net/uucp
@@ -1236,12 +1243,22 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V .
+.Pp
+N.B. when using
+.Ic sysinst
+for upgrading, it will automatically invoke
+.(disp
+postinstall fix
+.disp)
+and thus all issues that are fixed by
+.Ic postinstall
+by default (see below) will be handled.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
 See the section below on upgrading from NetBSD 3.x as well.
 .Pp
 It is
-.Ic very important
+.Sy very important
 that you populate the directory
 .Pa /etc/pam.d
 with appropriate configuration files for the Pluggable Authentication Modules
@@ -1251,10 +1268,11 @@ as described below will take care of this. Please refer to
 .Lk http://www.netbsd.org/guide/en/chap-pam.html
 for documentation about PAM.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1307,10 +1325,11 @@ need to be created.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1353,13 +1372,15 @@ The following issues need to be resolved manually:
 .
 .(bullet -offset indent
 The users
-.Sq _proxy
+.Sq _proxy ,
+.Sq _rwhod ,
 and
-.Sq authpf
+.Sq _sdpd
 and the groups
-.Sq _proxy
+.Sq _proxy ,
+.Sq _rwhod 
 and
-.Sq rwhod 
+.Sq _sdpd
 need to be created and the user
 .Sq uucp
 needs to be updated.
@@ -1371,6 +1392,42 @@ including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
 then please see the "Components removed from NetBSD" section near the
 beginning of this document.
+.It
+The replacement of Sendmail by Postfix can be handled automatically by
+.Em postinstall
+but it is not done by default.
+If you want to transition to Postfix, the command
+.(disp
+postinstall -s /path/to/etc.tgz fix mailerconf
+.disp)
+will update your
+.Pa /etc/mailer.conf
+file to use Postfix as the MTA. When using
+.Ic sysinst
+to upgrade the system, it will ask if you want this to be done.
+.Pp
+Note that if you have a customized
+Sendmail setup, you need to set up Postfix in an equivalent way; there
+is no tool for automatic conversion of Sendmail configuration to a
+Postfix one.
+.Pp
+Postfix will be started up automatically when the system boots.
+You may see messages like "$sendmail is not set properly" at boot.
+You can suppress them by removing
+.Pa /etc/rc.d/sendmail
+and
+.Pa /etc/rc.d/smmsp .
+Those files and other parts of sendmail configuration like files under
+.Pa /usr/share/sendmail
+are not removed by default
+while upgrading for those who want to continue using sendmail from
+outside the base system.
+If you want to delete them,
+.Em postinstall
+can be used:
+.(disp
+postinstall -s /path/to/etc.tgz fix sendmail
+.disp)
 .bullet)
 .
 .
