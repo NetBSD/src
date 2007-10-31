@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.20 2007/10/29 17:47:33 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.21 2007/10/31 16:09:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.20 2007/10/29 17:47:33 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.21 2007/10/31 16:09:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -116,13 +116,10 @@ dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
 		int rv;
 
 		ap = malloc(sizeof(struct puffs_workerargs));
-		pcc = malloc(sizeof(struct puffs_cc));
-		pcc_init_unreal(pcc, PCC_THREADED);
-		pcc->pcc_pu = pu;
-		pcc->pcc_preq = preq;
 
 		pthread_attr_init(&pattr);
 		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
+		pthread_attr_destroy(&pattr);
 
 		ap->pwa_pcc = pcc;
 		ap->pwa_ppr = ppr;
