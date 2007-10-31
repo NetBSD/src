@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.4.2.2 2007/10/28 20:10:52 joerg Exp $ */
+/* $NetBSD: rge.c,v 1.4.2.3 2007/10/31 23:14:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -64,7 +63,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *rge_init(void *);
+void *rge_init(unsigned, void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
 
@@ -167,17 +166,16 @@ static void rge_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-rge_init(void *cookie)
+rge_init(unsigned tag, void *data)
 {
-	unsigned tag, val;
+	unsigned val;
 	struct local *l;
 	struct desc *TxD, *RxD;
-	uint8_t *en = cookie;
+	uint8_t *en = data;
 
-	if (pcifinddev(0x10ec, 0x8169, &tag) != 0) {
-		printf("rge NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x10ec && PCI_PRODUCT(val) != 0x8169)
 		return NULL;
-	}
 
 	l = ALLOC(struct local, 256);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -190,7 +188,7 @@ rge_init(void *cookie)
 
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, RGE_IDR0);
 	en[1] = CSR_READ_1(l, RGE_IDR1);
 	en[2] = CSR_READ_1(l, RGE_IDR2);

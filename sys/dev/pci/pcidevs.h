@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.885.6.9 2007/10/28 20:11:06 joerg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.885.6.10 2007/10/31 23:14:08 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.908 2007/10/24 23:08:06 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.885.6.9 2007/10/28 20:11:05 joerg Exp
  */
 
 /*
@@ -604,6 +604,7 @@
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
+#define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
@@ -1024,6 +1025,26 @@
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
 #define	PCI_PRODUCT_ARC_2000PV	0xa099		/* 2000PV */
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
+
+/* Areca products */
+#define	PCI_PRODUCT_ARECA_ARC1110	0x1110		/* ARC-1110 */
+#define	PCI_PRODUCT_ARECA_ARC1120	0x1120		/* ARC-1120 */
+#define	PCI_PRODUCT_ARECA_ARC1130	0x1130		/* ARC-1130 */
+#define	PCI_PRODUCT_ARECA_ARC1160	0x1160		/* ARC-1160 */
+#define	PCI_PRODUCT_ARECA_ARC1170	0x1170		/* ARC-1170 */
+#define	PCI_PRODUCT_ARECA_ARC1200	0x1200		/* ARC-1200 */
+#define	PCI_PRODUCT_ARECA_ARC1200_B	0x1201		/* ARC-1200 rev B */
+#define	PCI_PRODUCT_ARECA_ARC1202	0x1202		/* ARC-1202 */
+#define	PCI_PRODUCT_ARECA_ARC1210	0x1210		/* ARC-1210 */
+#define	PCI_PRODUCT_ARECA_ARC1220	0x1220		/* ARC-1220 */
+#define	PCI_PRODUCT_ARECA_ARC1230	0x1230		/* ARC-1230 */
+#define	PCI_PRODUCT_ARECA_ARC1260	0x1260		/* ARC-1260 */
+#define	PCI_PRODUCT_ARECA_ARC1270	0x1270		/* ARC-1270 */
+#define	PCI_PRODUCT_ARECA_ARC1280	0x1280		/* ARC-1280 */
+#define	PCI_PRODUCT_ARECA_ARC1380	0x1380		/* ARC-1380 */
+#define	PCI_PRODUCT_ARECA_ARC1381	0x1381		/* ARC-1381 */
+#define	PCI_PRODUCT_ARECA_ARC1680	0x1680		/* ARC-1680 */
+#define	PCI_PRODUCT_ARECA_ARC1681	0x1681		/* ARC-1681 */
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
@@ -2033,6 +2054,8 @@
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
+#define	PCI_PRODUCT_INTEL_IOP333_A	0x0370		/* IOP333 PCI Express-to-PCI Bridge #0 */
+#define	PCI_PRODUCT_INTEL_IOP333_B	0x0372		/* IOP333 PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE0	0x0329		/* 6700PXH PCI Express-to-PCI Bridge #0 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE1	0x032a		/* 6700PXH PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_SRCZCRX	0x0407		/* RAID controller */
@@ -2423,6 +2446,10 @@
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD	0x2992		/* 82965Q Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD_1	0x2993		/* 82965Q Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82965G_HB	0x29a0		/* 82965G Host Bridge */
+#define	PCI_PRODUCT_INTEL_82965G_EXP	0x29a1		/* 82965G PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82965G_IGD	0x29a2		/* 82965G Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82965G_IGD_1	0x29a3		/* 82965G Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G33_HB	0x29c0		/* 82G33/P35 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82G33_EXP	0x29c1		/* 82G33 PCI Express Port */
 #define	PCI_PRODUCT_INTEL_82G33_IGD	0x29c2		/* 82G33 Integrated Graphics Device */

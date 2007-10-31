@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.10.6.1 2007/10/28 20:11:03 joerg Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.10.6.2 2007/10/31 23:14:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.1 2007/10/28 20:11:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.2 2007/10/31 23:14:04 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,24 +85,6 @@ linux32_sys_brk(l, v, retval)
 
 	NETBSD32TOP_UAP(nsize, char);
 	return linux_sys_brk(l, &ua, retval);
-}
-
-int
-linux32_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_access_args /* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) flags;
-	} */ *uap = v;
-	struct sys_access_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(flags);
-
-	return sys_access(l, &ua, retval);
 }
 
 int
@@ -317,40 +299,6 @@ linux32_sys_unlink(l, v, retval)
 }
 
 int
-linux32_sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_chdir_args /* {
-		syscallarg(const netbsd32_charp) path;
-	} */ *uap = v;
-	struct sys_chdir_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-
-	return sys_chdir(l, &ua, retval);
-}
-
-int
-linux32_sys_link(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_link_args /* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(const netbsd32_charp) link;
-	} */ *uap = v;
-	struct sys_link_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TOP_UAP(link, const char);
-
-	return sys_link(l, &ua, retval);
-}
-
-int
 linux32_sys_creat(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -387,24 +335,6 @@ linux32_sys_mknod(l, v, retval)
 	NETBSD32TO64_UAP(dev);
 
 	return linux_sys_mknod(l, &ua, retval);
-}
-
-int
-linux32_sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_chmod_args /* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-	struct sys_chmod_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(mode);
-
-	return sys_chmod(l, &ua, retval);
 }
 
 int
@@ -497,40 +427,6 @@ linux32_sys_rename(l, v, retval)
 }
 
 int
-linux32_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_mkdir_args /* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-	struct sys_mkdir_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(mode);
-
-	return sys_mkdir(l, &ua, retval);
-}
-
-int
-linux32_sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_rmdir_args /* {
-		syscallarg(const netbsd32_charp) path;
-	} */ *uap = v;
-	struct sys_rmdir_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-
-	return sys_rmdir(l, &ua, retval);
-}
-
-int
 linux32_sys_getgroups16(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -565,25 +461,6 @@ linux32_sys_setgroups16(l, v, retval)
 	
 	return linux_sys_setgroups16(l, &ua, retval);
 }
-
-int
-linux32_sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_symlink_args /* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(const netbsd32_charp) link;
-	} */ *uap = v;
-	struct sys_symlink_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TOP_UAP(link, const char);
-
-	return sys_symlink(l, &ua, retval);
-}
-
 
 int
 linux32_sys_swapon(l, v, retval)
