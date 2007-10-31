@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.8.2.2 2007/10/28 20:10:53 joerg Exp $ */
+/* $NetBSD: tlp.c,v 1.8.2.3 2007/10/31 23:14:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -60,7 +59,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *tlp_init(void *);
+void *tlp_init(unsigned, void *);
 int tlp_send(void *, char *, unsigned);
 int tlp_recv(void *, char *, unsigned, unsigned);
 
@@ -127,19 +126,18 @@ static void mii_initphy(struct local *);
 #endif
 
 void *
-tlp_init(void *cookie)
+tlp_init(unsigned tag, void *data)
 {
-	unsigned tag, val, i;
+	unsigned val, i;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
 	uint32_t *p;
 
-	if (pcifinddev(0x1011, 0x0009, &tag) != 0) {
-		/* genuine DE500 */
-		printf("tlp NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	/* genuine DE500 */
+	if (PCI_VENDOR(val) != 0x1011 && PCI_PRODUCT(val) != 0x0009)
 		return NULL;
-	}
 	
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
@@ -158,7 +156,7 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_IEN, 0);
 
 	size_srom(l);
-	en = cookie;
+	en = data;
 	val = read_srom(l, 20/2+0); en[0] = val; en[1] = val >> 8;
 	val = read_srom(l, 20/2+1); en[2] = val; en[3] = val >> 8;
 	val = read_srom(l, 20/2+2); en[4] = val; en[5] = val >> 8;

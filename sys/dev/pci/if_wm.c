@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.8 2007/10/26 15:46:26 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.9 2007/10/31 23:14:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.8 2007/10/26 15:46:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.9 2007/10/31 23:14:06 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -578,7 +578,7 @@ static int	wm_read_eeprom_ich8(struct wm_softc *, int, int, uint16_t *);
 static int32_t	wm_ich8_cycle_init(struct wm_softc *);
 static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
-                     uint32_t, uint16_t *);
+		     uint32_t, uint16_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
@@ -4222,14 +4222,14 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(20000);
 	} else {
-                /*
-                 * With 82543, we need to force speed and duplex on the MAC
-                 * equal to what the PHY speed and duplex configuration is.
-                 * In addition, we need to perform a hardware reset on the PHY
-                 * to take it out of reset.
-                 */
-                sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
-                CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		/*
+		 * With 82543, we need to force speed and duplex on the MAC
+		 * equal to what the PHY speed and duplex configuration is.
+		 * In addition, we need to perform a hardware reset on the PHY
+		 * to take it out of reset.
+		 */
+		sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 		/* The PHY reset pin is active-low. */
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);

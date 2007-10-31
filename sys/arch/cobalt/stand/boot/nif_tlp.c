@@ -1,11 +1,11 @@
-/* $NetBSD: nif_fxp.c,v 1.1.6.1 2007/10/28 20:10:50 joerg Exp $ */
+/*	$NetBSD: nif_tlp.c,v 1.1.2.2 2007/10/31 23:13:57 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Tohru Nishimura.
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,105 +39,115 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/dev_net.h>
 
-struct iodesc sockets[2]; /* SOPEN_MAX */
+#include "boot.h"
 
-struct iodesc *socktodesc(int);
-void netif_init(void);
-int netif_open(void *);
-int netif_close(int);
-ssize_t netif_put(struct iodesc *, void *, size_t);
-ssize_t netif_get(struct iodesc *, void *, size_t, time_t);
+static int tlp_match(struct netif *, void *);
+static int tlp_probe(struct netif *, void *);
+static void tlp_attach(struct iodesc *, void *);
+static int tlp_get(struct iodesc *, void *, size_t, time_t);
+static int tlp_put(struct iodesc *, void *, size_t);
+static void tlp_end(struct netif *);
 
-void *fxp_init(void *);
-int fxp_send(void *, char *, unsigned);
-int fxp_recv(void *, char *, unsigned, unsigned);
+#define MIN_LEN		60	/* ETHER_MIN_LEN - ETHER_CRC_LEN */
 
-struct iodesc *
-socktodesc(sock)
-	int sock;
+static struct netif_stats tlp_stats[1];
+
+static struct netif_dif tlp_ifs[] = {
+	{ 0, 1, &tlp_stats[0], NULL, 0 },
+};
+
+struct netif_driver ether_tlp_driver = {
+	"tlp",
+	tlp_match,
+	tlp_probe,
+	tlp_attach,
+	tlp_get,
+	tlp_put,
+	tlp_end,
+	tlp_ifs,
+	1,
+};
+
+#ifdef DEBUG
+int debug = 1;		/* referred in various libsa net sources */
+#endif
+
+int
+tlp_match(struct netif *netif, void *hint)
 {
-	if (sock < 0 || sock >= 2)
-		return NULL;
-	return &sockets[sock];
+
+	/* always match for onboard tlp */
+	return 1;
+}
+
+int
+tlp_probe(struct netif *netif, void *hint)
+{
+
+	/* XXX */
+	return 0;
 }
 
 void
-netif_init()
+tlp_attach(struct iodesc *desc, void *hint)
 {
-	struct iodesc *s;
-	extern uint8_t en[];
+	struct netif *nif = desc->io_netif;
+	struct netif_dif *dif = &nif->nif_driver->netif_ifs[nif->nif_unit];
 
-	s = &sockets[0];
-	s->io_netif = fxp_init(s->myea); /* determine MAC address */
-
-	memcpy(en, s->myea, sizeof(s->myea));
+	dif->dif_private = tlp_init(&desc->myea);
 }
 
 int
-netif_open(cookie)
-	void *cookie;
+tlp_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout)
 {
+	int len;
+	struct netif *nif = desc->io_netif;
+	struct netif_dif *dif = &nif->nif_driver->netif_ifs[nif->nif_unit];
+	void *l = dif->dif_private;
 
-	return 0;
+	len = tlp_recv(l, pkt, maxlen, timeout);
+	if (len == -1) {
+		printf("tlp: receive timeout\n");
+		/* XXX */
+	}
+
+	if (len < MIN_LEN)
+		len = -1;
+
+	return len;
 }
 
 int
-netif_close(sock)
-	int sock;
+tlp_put(struct iodesc *desc, void *pkt, size_t len)
 {
-
-	/* nothing to do for the HW */
-	return 0;
-}
-
-/*
- * Send a packet.  The ether header is already there.
- * Return the length sent (or -1 on error).
- */
-ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
-{
-	ssize_t rv;
+	struct netif *nif = desc->io_netif;
+	struct netif_dif *dif = &nif->nif_driver->netif_ifs[nif->nif_unit];
+	void *l = dif->dif_private;
+	int rv;
 	size_t sendlen;
 
 	sendlen = len;
-	if (sendlen < 60)
-		sendlen = 60;
+	if (sendlen < MIN_LEN)
+		sendlen = MIN_LEN;	/* XXX */
 
-	rv = fxp_send(desc->io_netif, pkt, sendlen);
+	rv = tlp_send(l, pkt, sendlen);
 
 	return rv;
 }
 
-/*
- * Receive a packet, including the ether header.
- * Return the total length received (or -1 on error).
- */
-ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+void
+tlp_end(struct netif *netif)
 {
-	int len;
-
-	len = fxp_recv(desc->io_netif, pkt, maxlen, timo);
-	if (len == -1) {
-		printf("timeout\n");
-		/* XXX errno = ... */
-	}
-
-	if (len < 12)
-		return -1;
-	return len;
 }

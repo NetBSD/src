@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.135.4.3 2007/10/26 15:49:06 joerg Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.135.4.4 2007/10/31 23:14:10 joerg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.135.4.3 2007/10/26 15:49:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.135.4.4 2007/10/31 23:14:10 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1926,11 +1926,13 @@ icmp6_reflect(struct mbuf *m, size_t off)
 {
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
-	struct in6_ifaddr *ia;
+	const struct in6_ifaddr *ia;
+	const struct ip6aux *ip6a;
 	int plen;
 	int type, code;
 	struct ifnet *outif = NULL;
-	struct in6_addr origdst, *src = NULL;
+	struct in6_addr origdst;
+	const struct in6_addr *src = NULL;
 
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
@@ -1994,26 +1996,27 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * procedure of an outgoing packet of our own, in which case we need
 	 * to search in the ifaddr list.
 	 */
-	if (!IN6_IS_ADDR_MULTICAST(&origdst)) {
-		if ((ia = ip6_getdstifaddr(m))) {
-			if (!(ia->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)))
-				src = &ia->ia_addr.sin6_addr;
-		} else {
-			struct sockaddr_in6 d;
+	if (IN6_IS_ADDR_MULTICAST(&origdst))
+		;
+	else if ((ip6a = ip6_getdstifaddr(m)) != NULL) {
+		if ((ip6a->ip6a_flags &
+		     (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
+			src = &ip6a->ip6a_src;
+	} else {
+		union {
+			struct sockaddr_in6 sin6;
+			struct sockaddr sa;
+		} u;
 
-			bzero(&d, sizeof(d));
-			d.sin6_family = AF_INET6;
-			d.sin6_len = sizeof(d);
-			d.sin6_addr = origdst;
-			ia = (struct in6_ifaddr *)
-			    ifa_ifwithaddr((struct sockaddr *)&d);
-			if (ia &&
-			    !(ia->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY))) {
-				src = &ia->ia_addr.sin6_addr;
-			}
-		}
+		sockaddr_in6_init(&u.sin6, &origdst, 0, 0, 0);
+
+		ia = (struct in6_ifaddr *)ifa_ifwithaddr(&u.sa);
+
+		if (ia == NULL)
+			;
+		else if ((ia->ia6_flags &
+			 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
+			src = &ia->ia_addr.sin6_addr;
 	}
 
 	if (src == NULL) {

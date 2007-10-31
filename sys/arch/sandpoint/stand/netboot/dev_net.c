@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.1.6.1 2007/10/28 20:10:49 joerg Exp $ */
+/* $NetBSD: dev_net.c,v 1.1.6.2 2007/10/31 23:14:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <net/if.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
