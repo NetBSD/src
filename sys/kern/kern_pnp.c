@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.10 2007/10/19 00:49:32 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.11 2007/10/31 01:44:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.10 2007/10/19 00:49:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.11 2007/10/31 01:44:57 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -281,7 +281,7 @@ pnp_set_state(device_t dv, pnp_state_t ds)
 	 * For a transition from a low power state to a higher power state,
 	 * we need to ensure that our bus is powered up as well.
 	 */
-	if (bus && curstate > ds)
+	if (bus && curstate > ds && pnp_get_state(bus) != ds)
 		pnp_power(bus, PNP_REQUEST_SET_STATE, &on);
 
 	status = pnp_power(dv, PNP_REQUEST_SET_STATE, &ds);
