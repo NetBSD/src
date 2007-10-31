@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.2 2007/10/30 16:38:54 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.3 2007/10/31 13:30:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,12 +77,17 @@ do {									\
 #define R0_FS		(1U<<30)	/* first desc of frame */
 #define R0_LS		(1U<<8)		/* last desc of frame */
 #define R0_ES		(1U<<15)	/* Rx error summary */
+#define R1_RCH		(1U<<24)	/* Second address chained */
 #define R1_RER		(1U<<25)	/* end of ring mark */
 #define R0_FL_MASK	0x3fff0000	/* frame length 29:16 */
 #define R1_RBS_MASK	0x7ff		/* segment size 10:0 */
 
+#define DESCSIZE	16
 struct desc {
 	volatile uint32_t xd0, xd1, xd2, xd3;
+#if CACHELINESIZE > DESCSIZE
+	uint8_t pad[CACHELINESIZE - DESCSIZE];
+#endif
 };
 
 #define TLP_BMR		0x000		/* 0: bus mode */
@@ -121,9 +126,6 @@ struct desc {
 
 struct local {
 	struct desc TxD;
-#if CACHELINESIZE > 16
-	uint8_t pad[CACHELINESIZE - sizeof(struct desc)];
-#endif
 	struct desc RxD[NRXBUF];
 	uint8_t txstore[BUFSIZE];
 	uint8_t rxstore[NRXBUF][BUFSIZE];
@@ -208,10 +210,9 @@ tlp_init(void *cookie)
 	for (i = 0; i < NRXBUF; i++) {
 		RxD[i].xd3 = htole32(VTOPHYS(&RxD[NEXT_RXBUF(i)]));
 		RxD[i].xd2 = htole32(VTOPHYS(l->rxstore[i]));
-		RxD[i].xd1 = htole32(FRAMESIZE);
-		RxD[i].xd0 = htole32(R0_OWN|R0_FS|R0_LS);
+		RxD[i].xd1 = htole32(R1_RCH|FRAMESIZE);
+		RxD[i].xd0 = htole32(R0_OWN);
 	}
-	RxD[NRXBUF - 1].xd1 |= htole32(R1_RER);
 	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
 
 	/* "setup packet" to have own station address */
@@ -310,7 +311,7 @@ tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 	return -1;
   gotone:
 	if (rxstat & R0_ES) {
-		RxD->xd0 = htole32(R0_OWN|R0_FS|R0_LS);
+		RxD->xd0 = htole32(R0_OWN);
 		wbinv(RxD, sizeof(struct desc));
 		l->rx = NEXT_RXBUF(l->rx);
 		CSR_WRITE(l, TLP_RPD, RPD_POLL);
@@ -323,7 +324,7 @@ tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 	ptr = l->rxstore[l->rx];
 	memcpy(buf, ptr, len);
 	inv(ptr, FRAMESIZE);
-	RxD->xd0 = htole32(R0_OWN|R0_FS|R0_LS);
+	RxD->xd0 = htole32(R0_OWN);
 	wbinv(RxD, sizeof(struct desc));
 	l->rx = NEXT_RXBUF(l->rx);
 	CSR_WRITE(l, TLP_OMR, l->omr); /* necessary? */
