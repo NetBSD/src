@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.12 2007/10/26 17:35:01 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.13 2007/10/31 16:09:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.12 2007/10/26 17:35:01 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.13 2007/10/31 16:09:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -221,6 +221,11 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
+
+#ifdef PUFFS_WITH_THREADS
+	extern size_t pthread__stacksize;
+	stacksize = pthread__stacksize;
+#endif
 
 	if (pcc->pcc_flags & PCC_REALCC)
 		munmap(pcc->pcc_stack, stacksize);
