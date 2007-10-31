@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.11 2007/10/31 01:44:57 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.12 2007/10/31 01:58:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.11 2007/10/31 01:44:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.12 2007/10/31 01:58:12 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,7 +342,7 @@ pnp_register(device_t dv,
 	if (pnp->pnp_lock == NULL)
 		return PNP_STATUS_NO_MEMORY;
 
-	mutex_init((kmutex_t *)pnp->pnp_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init((kmutex_t *)pnp->pnp_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	caps = pnp_get_capabilities(dv);
 	pnp->pnp_state = pnp_get_state(dv);
