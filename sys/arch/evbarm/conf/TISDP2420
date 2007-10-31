@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.1.2.1 2007/10/29 19:23:13 matt Exp $
+#	$NetBSD: TISDP2420,v 1.1.2.2 2007/10/31 16:36:04 matt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -218,7 +218,7 @@ omapwdt32k*	at obio? addr 0x48026000 size 2048	# WDT4
 #omapwdt32k*	at obio? addr 0x49016000 size 2048	# WDT2
 
 # On-board SMSC LAN91C96 Ethernet Controller
-sm0		at gpmc? addr 0x08000300 intr 245
+sm0		at gpmc? addr 0x08000300 intr 252	# (intr is GPIO92)
 
 # On-board USB
 ##ohci*		at obio? addr 0x4805e000 size 0x1000 intr 75
