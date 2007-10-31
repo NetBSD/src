@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.14 2007/10/29 15:52:45 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.15 2007/10/31 16:09:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.14 2007/10/29 15:52:45 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.15 2007/10/31 16:09:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -161,8 +161,8 @@ void
 puffs_req_putcc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 {
 
-	puffs_req_put(ppr, pcc->pcc_preq);
 	PU_LOCK();
+	puffs_req_put(ppr, pcc->pcc_preq);
 	TAILQ_INSERT_TAIL(&ppr->ppr_pccq, pcc, entries);
 	PU_UNLOCK();
 }
