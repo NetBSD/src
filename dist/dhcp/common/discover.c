@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.10 2007/09/13 11:56:41 gdt Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.11 2007/10/31 15:26:51 gdt Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -138,7 +138,13 @@ void discover_interfaces (state)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
-	char buf [2048];
+	/*
+	 * Because the code to retry on SIOCGIFCONF not returning all
+	 * interfaces is broken, use an unreasonably large buffer to
+	 * handle the case of a machine with lots of (usually virtual)
+	 * interfaces.
+	 */
+	char buf [32768];
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
