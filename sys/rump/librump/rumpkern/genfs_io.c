@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.1 2007/10/17 16:48:17 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.2 2007/10/31 15:57:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -96,7 +96,9 @@ genfs_getpages(void *v)
 	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
 
-	printf("a_offset: %x, startoff: 0x%x, endoff 0x%x\n", (int)ap->a_offset, (int)curoff, (int)endoff);
+	DPRINTF(("a_offset: %llx, startoff: 0x%llx, endoff 0x%llx\n",
+	    (unsigned long long)ap->a_offset, (unsigned long long)curoff,
+	    (unsigned long long)endoff));
 
 	/* read everything into a buffer */
 	tmpbuf = rumpuser_malloc(round_page(remain), 0);
@@ -112,8 +114,8 @@ genfs_getpages(void *v)
 		if (error)
 			panic("%s: VOP_BMAP & lazy bum: %d", __func__, error);
 
-		printf("lbn %d (off %d) -> bn %d run %d\n", (int)lbn,
-		    (int)(curoff+bufoff), (int)bn, run);
+		DPRINTF(("lbn %d (off %d) -> bn %d run %d\n", (int)lbn,
+		    (int)(curoff+bufoff), (int)bn, run));
 		xfersize = MIN(((lbn+1+run)<<bshift)-(curoff+bufoff), remain);
 
 		/* hole? */
@@ -140,7 +142,7 @@ genfs_getpages(void *v)
 	while (round_page(curoff + bufoff) < trunc_page(ap->a_offset))
 		bufoff += PAGE_SIZE;
 
-	printf("first page offset 0x%x\n", (int)(curoff + bufoff));
+	DPRINTF(("first page offset 0x%x\n", (int)(curoff + bufoff)));
 
 	for (i = 0; i < count; i++, bufoff += PAGE_SIZE) {
 		/* past our prime? */
@@ -148,7 +150,7 @@ genfs_getpages(void *v)
 			break;
 
 		pg = uvm_pagelookup(&vp->v_uobj, curoff + bufoff);
-		printf("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff));
+		DPRINTF(("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff)));
 		if (pg == NULL) {
 			pg = rumpvm_makepage(&vp->v_uobj, curoff + bufoff);
 			memcpy((void *)pg->uanon, tmpbuf+bufoff, PAGE_SIZE);
@@ -276,10 +278,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		KASSERT(buf.b_bcount > 0);
 		KASSERT(smallest >= 0);
 
-		printf("putpages writing from %x to %x (vp size %x)\n",
+		DPRINTF(("putpages writing from %x to %x (vp size %x)\n",
 		    (int)(smallest + bufoff),
 		    (int)(smallest + bufoff + buf.b_bcount),
-		    (int)eof);
+		    (int)eof));
 
 		buf.b_bufsize = round_page(buf.b_bcount);
 		buf.b_lblkno = 0;
