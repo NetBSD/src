@@ -1,9 +1,10 @@
-/*	$NetBSD: lock_stub.c,v 1.9 2007/09/22 11:26:42 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.1 2007/10/31 15:57:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,85 +32,130 @@
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 
+#include "rumpuser.h"
+
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
 
-	return;
+	rumpuser_mutex_init(&mtx->kmtx_mtx);
 }
 
 void
 mutex_destroy(kmutex_t *mtx)
 {
 
-	return;
+	rumpuser_mutex_destroy(mtx->kmtx_mtx);
 }
 
 void
 mutex_enter(kmutex_t *mtx)
 {
 
-	return;
+	rumpuser_mutex_enter(mtx->kmtx_mtx);
+}
+
+int
+mutex_tryenter(kmutex_t *mtx)
+{
+	int rv;
+
+	rv = rumpuser_mutex_tryenter(mtx->kmtx_mtx);
+	if (rv)
+		return 0;
+	else
+		return 1;
 }
 
 void
 mutex_exit(kmutex_t *mtx)
 {
 
-	return;
+	rumpuser_mutex_exit(mtx->kmtx_mtx);
 }
 
 int
 mutex_owned(kmutex_t *mtx)
 {
 
+	/* XXX */
 	return 1;
 }
 
-#define RW_UNLOCKED -1 /* XXX */
+/* reader/writer locks */
 
 void
 rw_init(krwlock_t *rw)
 {
 
-	rw->rw_locked = RW_UNLOCKED;
+	rumpuser_rw_init(&rw->krw_pthlock);
 }
 
 void
 rw_destroy(krwlock_t *rw)
 {
 
+	rumpuser_rw_destroy(rw->krw_pthlock);
 }
 
 void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
-	KASSERT(rw->rw_locked == RW_UNLOCKED);
-	rw->rw_locked = op;
+	rumpuser_rw_enter(rw->krw_pthlock, op == RW_WRITER);
+}
+
+int
+rw_tryenter(krwlock_t *rw, const krw_t op)
+{
+
+	return rumpuser_rw_tryenter(rw->krw_pthlock, op == RW_WRITER);
 }
 
 void
 rw_exit(krwlock_t *rw)
 {
 
-	KASSERT(rw->rw_locked != RW_UNLOCKED);
-	rw->rw_locked = RW_UNLOCKED;
+	rumpuser_rw_exit(rw->krw_pthlock);
 }
 
-int
-rw_lock_held(krwlock_t *rw)
-{
-
-	return rw->rw_locked != RW_UNLOCKED;
-}
-
+/* always fails */
 int
 rw_tryupgrade(krwlock_t *rw)
 {
 
-	KASSERT(rw->rw_locked == RW_READER);
-	rw->rw_locked = RW_WRITER;
+	return 0;
+}
 
-	return 1;
+/* curriculum vitaes */
+
+/* forgive me for I have sinned */
+#define RUMPCV(a) ((struct rumpuser_cv *)(__UNCONST((a)->cv_wmesg)))
+
+void
+cv_init(kcondvar_t *cv, const char *msg)
+{
+
+	rumpuser_cv_init((struct rumpuser_cv **)__UNCONST(&cv->cv_wmesg));
+}
+
+void
+cv_destroy(kcondvar_t *cv)
+{
+
+	rumpuser_cv_destroy(RUMPCV(cv));
+}
+
+void
+cv_wait(kcondvar_t *cv, kmutex_t *mtx)
+{
+
+	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+}
+
+void
+cv_signal(kcondvar_t *cv)
+{
+
+	rumpuser_cv_signal(RUMPCV(cv));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1 2007/09/22 11:26:43 pooka Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2 2007/10/31 15:57:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 #define _SYS_RUMP_RWLOCK_H_
 
 struct krwlock {
-	int	rw_locked;
+	struct rumpuser_rw *krw_pthlock;
 };
 
 #endif /* _SYS_RUMP_RWLOCK_H_ */

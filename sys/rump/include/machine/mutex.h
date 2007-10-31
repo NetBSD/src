@@ -1,9 +1,10 @@
-/*	$NetBSD: cpu.h,v 1.3 2007/10/31 15:57:20 pooka Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1 2007/10/31 15:57:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,21 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_CPU_H_
-#define _SYS_RUMP_CPU_H_
+#ifndef _SYS_RUMP_MUTEX_H_
+#define _SYS_RUMP_MUTEX_H_
 
-#include <sys/cpu_data.h>
-
-struct cpu_info {
-        struct cpu_data ci_data;
-	cpuid_t ci_cpuid;
+struct kmutex {
+	struct rumpuser_mtx *kmtx_mtx;
 };
 
-extern struct cpu_info rump_cpu;
-#define curcpu() (&rump_cpu)
-#define cpu_number() 0 /* XXX: good enuf? */
-
-struct lwp *rump_get_curlwp(void); /* XXX */
-#define curlwp rump_get_curlwp()
-
-#endif /* _SYS_RUMP_CPU_H_ */
+#endif /* _SYS_RUMP_MUTEX_H_ */

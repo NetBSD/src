@@ -1,9 +1,10 @@
-/*	$NetBSD: lock.c,v 1.3 2007/10/11 19:45:26 ad Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.1 2007/10/31 15:57:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,64 +29,66 @@
  */
 
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
 
-/* oh sweet crackmgr, what would I do without you? */
+#include "rump_private.h"
+
+struct ltsleeper {
+	wchan_t id;
+	kcondvar_t cv;
+	LIST_ENTRY(ltsleeper) entries;
+};
+
+static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
+static kmutex_t sleepermtx;
+
 int
-lockmgr(struct lock *lock, u_int flags, struct simplelock *slock)
+ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
+	volatile struct simplelock *slock)
 {
-	u_int lktype = flags & LK_TYPE_MASK;
+	struct ltsleeper lts;
 
-	switch (lktype) {
-	case LK_SHARED:
-	case LK_EXCLUSIVE:
-		lock->lk_flags = lktype;
-		lock->lk_recurselevel++;
-		break;
+	lts.id = ident;
+	cv_init(&lts.cv, NULL);
 
-	case LK_RELEASE:
-		assert(lock->lk_flags != 0);
-		if (--lock->lk_recurselevel == 0)
-			lock->lk_flags = 0;
-		break;
+	mutex_enter(&sleepermtx);
+	LIST_INSERT_HEAD(&sleepers, &lts, entries);
+	/*
+	 * XXX: this is SOOOO WRONG, but I don't have any bright ideas.
+	 * ltsleep() is going away in any case, so considering this as
+	 * a punishment for your wrongdoing for still using it ....
+	 * or something
+	 */
+	if (slock)
+		simple_unlock(slock);
+	cv_wait(&lts.cv, &sleepermtx);
+	LIST_REMOVE(&lts, entries);
+	mutex_exit(&sleepermtx);
 
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-		assert(lock->lk_flags == LK_SHARED);
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
+	if (slock && (prio & PNORELOCK) == 0)
+		simple_lock(slock);
 
-	case LK_DOWNGRADE:
-		assert(lock->lk_flags == LK_EXCLUSIVE);
-		lock->lk_flags = LK_SHARED;
-		break;
-
-	case LK_DRAIN:
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-	}
+	cv_destroy(&lts.cv);
 
 	return 0;
 }
 
 void
-lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
-	int flags)
+wakeup(wchan_t ident)
 {
+	struct ltsleeper *ltsp;
 
-	lock->lk_flags = 0;
-}
-
-int
-lockstatus(struct lock *lock)
-{
-
-	return lock->lk_flags;
+	mutex_enter(&sleepermtx);
+	LIST_FOREACH(ltsp, &sleepers, entries)
+		if (ltsp->id == ident)
+			cv_signal(&ltsp->cv);
+	mutex_exit(&sleepermtx);
 }
 
 void
-lockmgr_printinfo(struct lock *lock)
+rump_sleepers_init()
 {
 
-	return;
+	mutex_init(&sleepermtx, MUTEX_DEFAULT, 0);
 }
