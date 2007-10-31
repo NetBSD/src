@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.345 2007/10/30 15:42:44 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.346 2007/10/31 12:54:27 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10389,3 +10389,16 @@ bin/ln/ln.1					1.22
 
 	fixup botched addition of -i option
 	[jnemeth, ticket #960]
+
+sys/netipsec/ipsec.c				1.34
+sys/netipsec/ipsec_osdep.h			1.21
+sys/netipsec/ipsec_output.c			1.23
+sys/netipsec/xform_ah.c				1.19
+sys/netipsec/xform_ipip.c			1.18
+
+	The function ipsec4_get_ulp assumes that ip_off is in host order. This results
+	in IPsec processing that is dependent on protocol and/or port can be bypassed.
+
+	Bug report, analysis and initial fix from Karl Knutsson.
+	Final patch and ok from degroote
+	[adrianp, ticket #964]
