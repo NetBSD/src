@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.17.2.1 2007/05/24 19:13:12 pavel Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.17.2.2 2007/10/31 12:39:30 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17.2.1 2007/05/24 19:13:12 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17.2.2 2007/10/31 12:39:30 liamjfoy Exp $");
 
 /*
  * IPsec output processing.
@@ -477,9 +477,7 @@ ipsec4_process_packet(
 					goto bad;
 				}
 				ip = mtod(m, struct ip *);
-				ip->ip_off = ntohs(ip->ip_off);
-				ip->ip_off |= IP_DF;
-				ip->ip_off = htons(ip->ip_off);
+				ip->ip_off |= IP_OFF_CONVERT(IP_DF);
 			}
 		}
 	}
