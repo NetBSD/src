@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.24 2007/10/27 19:36:34 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.25 2007/10/31 15:57:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,23 @@ freecn(struct componentname *cnp, int flags)
 	rump_freecn(cnp, flags | RUMPCN_FREECRED);
 }
 
+static void
+makelwp(struct puffs_cc *pcc)
+{
+	pid_t pid;
+	lwpid_t lid;
+
+	puffs_cc_getcaller(pcc, &pid, &lid);
+	rump_setup_curlwp(pid, lid, 1);
+}
+
+static void
+clearlwp(struct puffs_cc *pcc)
+{
+
+	rump_clear_curlwp();
+}
+
 int
 p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
@@ -151,6 +168,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_usethreads = 1;
+
+	puffs_set_prepost(pu, makelwp, clearlwp);
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
 		goto out;
