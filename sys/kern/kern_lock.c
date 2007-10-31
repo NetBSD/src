@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.123 2007/10/17 17:22:19 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.124 2007/10/31 15:36:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.123 2007/10/17 17:22:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.124 2007/10/31 15:36:07 pooka Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -691,6 +691,14 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 #endif
 
 /*
+ * rump doesn't need the kernel lock so force it out.  We cannot
+ * currently easily include it for compilation because of
+ * a) SPINLOCK_* b) mb_write().  They are defined in different
+ * places / way for each arch, so just simply do not bother to
+ * fight a lot for no gain (i.e. pain but still no gain).
+ */
+#ifndef _RUMPKERNEL
+/*
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
  */
@@ -900,3 +908,4 @@ _kernel_lock_assert_unlocked()
 		_KERNEL_LOCK_ABORT("locked");
 }
 #endif
+#endif /* !_RUMPKERNEL */
