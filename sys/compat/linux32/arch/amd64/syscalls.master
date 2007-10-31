@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15.6.1 2007/10/28 20:11:03 joerg Exp $
+	$NetBSD: syscalls.master,v 1.15.6.2 2007/10/31 23:14:03 joerg Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -75,16 +75,16 @@
 7	STD	{ int linux32_sys_waitpid(int pid, netbsd32_intp status, \
 		    int options);}
 8	STD	{ int linux32_sys_creat(const netbsd32_charp path, int mode); }
-9	STD	{ int linux32_sys_link(const netbsd32_charp path, \
+9	NOARGS	{ int netbsd32_link(const netbsd32_charp path, \
 		    const netbsd32_charp link); }
 10	STD	{ int linux32_sys_unlink(const netbsd32_charp path); }
 11	NOARGS	{ int netbsd32_execve(const netbsd32_charp path, \
 		    netbsd32_charpp argp, netbsd32_charpp envp); }
-12	STD	{ int linux32_sys_chdir(const netbsd32_charp path); }
+12	NOARGS	{ int netbsd32_chdir(const netbsd32_charp path); }
 13	STD	{ int linux32_sys_time(linux32_timep_t t); }
 14	STD	{ int linux32_sys_mknod(const netbsd32_charp path, \
 		    int mode, int dev); }
-15	STD	{ int linux32_sys_chmod(const netbsd32_charp path, int mode); }
+15	NOARGS	{ int netbsd32_chmod(const netbsd32_charp path, int mode); }
 16	STD	{ int linux32_sys_lchown16(const netbsd32_charp path, \
 		    int uid, int gid); }
 17	STD	{ int linux32_sys_break(netbsd32_charp nsize); }
@@ -105,7 +105,7 @@
 		    linux32_utimbufp_t times); }
 31	OBSOL	stty
 32	OBSOL	gtty
-33	STD	{ int linux32_sys_access(const netbsd32_charp path, \
+33	NOARGS	{ int netbsd32_access(const netbsd32_charp path, \
 		    int flags); }
 34	NOARGS	{ int linux_sys_nice(int incr); }
 35	OBSOL	ftime
@@ -113,8 +113,8 @@
 37	STD	{ int linux32_sys_kill(int pid, int signum); }
 38	STD	{ int linux32_sys_rename(const netbsd32_charp from, \
 		    const netbsd32_charp to); }
-39	STD	{ int linux32_sys_mkdir(const netbsd32_charp path, int mode); }
-40	STD	{ int linux32_sys_rmdir(const netbsd32_charp path); }
+39	NOARGS	{ int netbsd32_mkdir(const netbsd32_charp path, int mode); }
+40	NOARGS	{ int netbsd32_rmdir(const netbsd32_charp path); }
 41	NOARGS	{ int netbsd32_dup(u_int fd); }
 42	STD	{ int linux32_sys_pipe(netbsd32_intp fd); }
 43	STD	{ int linux32_sys_times(linux32_tmsp_t tms); }
@@ -169,7 +169,7 @@
 81	STD	{ int linux32_sys_setgroups16(int gidsetsize, \
 		    linux32_gidp_t gidset); }
 82	STD	{ int linux32_sys_oldselect(linux32_oldselectp_t lsp); }
-83	STD	{ int linux32_sys_symlink(netbsd32_charp path, \
+83	NOARGS	{ int netbsd32_symlink(netbsd32_charp path, \
 		    const netbsd32_charp link); }
 84	NOARGS	{ int compat_43_netbsd32_lstat43(const netbsd32_charp \
 		    path, netbsd32_stat43p_t ub); }

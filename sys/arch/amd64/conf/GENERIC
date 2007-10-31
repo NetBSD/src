@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.10 2007/10/29 02:57:18 joerg Exp $
+# $NetBSD: GENERIC,v 1.153.8.11 2007/10/31 23:13:56 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.10 $"
+#ident 		"GENERIC-$Revision: 1.153.8.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -407,7 +407,7 @@ nfsmb*	at nfsmbc?
 iic*	at nfsmb?
 
 # Intel Core's on-die Thermal sensor
-options INTEL_CORETEMP
+options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?

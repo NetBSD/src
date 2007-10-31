@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.5.2.2 2007/10/28 20:10:50 joerg Exp $ */
+/* $NetBSD: nvt.c,v 1.5.2.3 2007/10/31 23:14:01 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -64,7 +63,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *nvt_init(void *);
+void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
 
@@ -171,18 +170,16 @@ static void nvt_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-nvt_init(void *cookie)
+nvt_init(unsigned tag, void *data)
 {
-	unsigned tag, val;
+	unsigned val;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
 
-	if (pcifinddev(0x1106, 0x3106, &tag) != 0
-	    || pcifinddev(0x1106, 0x3053, &tag) != 0) {
-		printf("nvt NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3053)
 		return NULL;
-	}
 
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
@@ -197,7 +194,7 @@ nvt_init(void *cookie)
 	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, VR_PAR0);
 	en[1] = CSR_READ_1(l, VR_PAR1);
 	en[2] = CSR_READ_1(l, VR_PAR2);

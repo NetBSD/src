@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.4.4.2 2007/10/28 20:10:52 joerg Exp $ */
+/* $NetBSD: sip.c,v 1.4.4.3 2007/10/31 23:14:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
  
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -61,7 +60,7 @@
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 
-void *sip_init(void *);
+void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
 
@@ -89,18 +88,17 @@ static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 void *
-sip_init(void *cookie)
+sip_init(unsigned tag, void *data)
 {
-	unsigned tag, val, i, txcfg, rxcfg;
+	unsigned val, i, txcfg, rxcfg;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint16_t eedata[4], *ee;
 	uint8_t *en;
 
-	if (pcifinddev(0x100b, 0x0020, &tag) != 0) {
-		printf("sip NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x100b && PCI_PRODUCT(val) != 0x0020)
 		return NULL;
-	}
 
 	l = alloc(sizeof(struct local));
 	memset(l, 0, sizeof(struct local));
@@ -116,7 +114,7 @@ sip_init(void *cookie)
 
 	mii_initphy(l);
 
-	ee = eedata; en = cookie;
+	ee = eedata; en = data;
 	ee[0] = read_eeprom(l, 6);
 	ee[1] = read_eeprom(l, 7);
 	ee[2] = read_eeprom(l, 8);
