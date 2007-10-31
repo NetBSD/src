@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.82.24.1 2007/10/31 23:15:29 rjs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.82.24.1 2007/10/31 23:15:29 rjs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp $
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/io.h>
 #include <machine/platid.h>
 #include <machine/rtc.h>
 #include <machine/signal.h>
