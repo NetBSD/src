@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.250 2007/10/30 00:03:51 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.251 2007/11/01 13:48:52 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.250 $"
+#ident 		"GENERIC-$Revision: 1.251 $"
 
 maxusers	32		# estimated number of users
 
@@ -50,7 +50,7 @@ options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
-#	you don't want the option below ON iff you are using the
+#	you don't want the option below ON if you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
