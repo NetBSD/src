@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.23 2007/10/25 20:50:41 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.24 2007/11/01 21:53:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.23 2007/10/25 20:50:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.24 2007/11/01 21:53:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,8 @@ void
 bufinit2(void)
 {
 
-	biodone_sih = softint_establish(SOFTINT_BIO, biointr, NULL);
+	biodone_sih = softint_establish(SOFTINT_BIO | SOFTINT_MPSAFE, biointr,
+	    NULL);
 	if (biodone_sih == NULL)
 		panic("bufinit2: can't establish soft interrupt");
 }
@@ -1494,9 +1495,11 @@ biodone2(buf_t *bp)
 
 	if ((callout = bp->b_iodone) != NULL) {
 		/* Note callout done, then call out. */
+		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		bp->b_iodone = NULL;
 		mutex_exit(bp->b_objlock);
 		(*callout)(bp);
+		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
 		mutex_exit(bp->b_objlock);
