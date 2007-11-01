@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.132 2007/11/01 13:48:52 xtraeme Exp $
+# $NetBSD: ALL,v 1.133 2007/11/01 13:54:28 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.132 $"
+#ident 		"ALL-$Revision: 1.133 $"
 
 maxusers	32		# estimated number of users
 
@@ -62,7 +62,7 @@ options 	CPURESET_DELAY=2000
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
 options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
-#	you don't want the option below ON if you are using the
+#	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
