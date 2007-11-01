@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.23 2007/10/19 12:16:46 ad Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.24 2007/11/01 20:33:58 dyoung Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.23 2007/10/19 12:16:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.24 2007/11/01 20:33:58 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.23 2007/10/19 12:16:46 ad Exp $"
 
 #include <net/net_osdep.h>
 
-static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
-	struct ipsecrequest *, int));
+static int ipcomp_output(struct mbuf *, u_char *, struct mbuf *,
+	struct ipsecrequest *, int);
 
 /*
  * Modify the packet so that the payload is compressed.

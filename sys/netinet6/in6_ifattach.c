@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.73 2007/08/10 22:43:26 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.74 2007/11/01 20:33:56 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.73 2007/08/10 22:43:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.74 2007/11/01 20:33:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +67,13 @@ callout_t in6_tmpaddrtimer_ch;
 
 
 #if 0
-static int get_hostid_ifid __P((struct ifnet *, struct in6_addr *));
+static int get_hostid_ifid(struct ifnet *, struct in6_addr *);
 #endif
-static int get_rand_ifid __P((struct ifnet *, struct in6_addr *));
-static int generate_tmp_ifid __P((u_int8_t *, const u_int8_t *, u_int8_t *));
-static int get_ifid __P((struct ifnet *, struct ifnet *, struct in6_addr *));
-static int in6_ifattach_linklocal __P((struct ifnet *, struct ifnet *));
-static int in6_ifattach_loopback __P((struct ifnet *));
+static int get_rand_ifid(struct ifnet *, struct in6_addr *);
+static int generate_tmp_ifid(u_int8_t *, const u_int8_t *, u_int8_t *);
+static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
+static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
+static int in6_ifattach_loopback(struct ifnet *);
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
