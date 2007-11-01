@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.148.2.9 2007/08/27 12:55:22 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.148.2.10 2007/11/01 00:40:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.9 2007/08/27 12:55:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.10 2007/11/01 00:40:12 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -177,7 +177,9 @@ static void nfs_sndunlock(struct nfsmount *);
 static int nfs_rcvlock(struct nfsmount *, struct nfsreq *);
 static void nfs_rcvunlock(struct nfsmount *);
 
+#if defined(NFSSERVER)
 static void nfsrv_wakenfsd_locked(struct nfssvc_sock *);
+#endif /* defined(NFSSERVER) */
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
