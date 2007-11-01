@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.65.4.2 2007/07/03 13:14:03 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.65.4.3 2007/11/01 23:06:00 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.65.4.2 2007/07/03 13:14:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.65.4.3 2007/11/01 23:06:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -987,7 +987,8 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 				break;
 			}
 			mutex_exit(&uvm_pageqlock);
-			yield();
+			/* XXX Better than yielding but inadequate. */
+			kpause("livelock", false, 1, NULL);
 			mutex_enter(&uvm_pageqlock);
 			slock = NULL;
 		}
