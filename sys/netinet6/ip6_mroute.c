@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.83 2007/07/09 21:11:12 ad Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.84 2007/11/01 20:33:57 dyoung Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.83 2007/07/09 21:11:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.84 2007/11/01 20:33:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -155,14 +155,14 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.83 2007/07/09 21:11:12 ad Exp $");
 
 #include <net/net_osdep.h>
 
-static int ip6_mdq __P((struct mbuf *, struct ifnet *, struct mf6c *));
-static void phyint_send __P((struct ip6_hdr *, struct mif6 *, struct mbuf *));
+static int ip6_mdq(struct mbuf *, struct ifnet *, struct mf6c *);
+static void phyint_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
 
-static int set_pim6 __P((int *));
-static int get_pim6 __P((struct mbuf *));
-static int socket_send __P((struct socket *, struct mbuf *,
-	    struct sockaddr_in6 *));
-static int register_send __P((struct ip6_hdr *, struct mif6 *, struct mbuf *));
+static int set_pim6(int *);
+static int get_pim6(struct mbuf *);
+static int socket_send(struct socket *, struct mbuf *,
+	    struct sockaddr_in6 *);
+static int register_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
 
 /*
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
@@ -189,7 +189,7 @@ u_int		mrt6debug = 0;	  /* debug level 	*/
 #define DEBUG_PIM	0x40
 #endif
 
-static void	expire_upcalls __P((void *));
+static void	expire_upcalls(void *);
 #define	EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define	UPCALL_EXPIRE	6		/* number of timeouts */
 
@@ -282,13 +282,13 @@ u_long upcall_data[UPCALL_MAX + 1];
 static void collate();
 #endif /* UPCALL_TIMING */
 
-static int get_sg_cnt __P((struct sioc_sg_req6 *));
-static int get_mif6_cnt __P((struct sioc_mif_req6 *));
-static int ip6_mrouter_init __P((struct socket *, int, int));
-static int add_m6if __P((struct mif6ctl *));
-static int del_m6if __P((mifi_t *));
-static int add_m6fc __P((struct mf6cctl *));
-static int del_m6fc __P((struct mf6cctl *));
+static int get_sg_cnt(struct sioc_sg_req6 *);
+static int get_mif6_cnt(struct sioc_mif_req6 *);
+static int ip6_mrouter_init(struct socket *, int, int);
+static int add_m6if(struct mif6ctl *);
+static int del_m6if(mifi_t *);
+static int add_m6fc(struct mf6cctl *);
+static int del_m6fc(struct mf6cctl *);
 
 static callout_t expire_upcalls_ch;
 
