@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.6 2007/07/12 01:58:32 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.6.6.1 2007/11/01 16:06:53 rjs Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -18,12 +18,18 @@ include	"dev/pcmcia/files.pcmcia"
 device	gxio {[addr = -1], [gpirq = -1]}
 attach	gxio at pxaip
 defflag opt_gxio.h				GXIO_BLUETOOTH_ON_HWUART
+defparam opt_gxio.h				GXIO_DEFAULT_EXPANSION
 file	arch/evbarm/gumstix/gxio.c			gxio
 
 # SMSC LAN91C111
 attach	sm at gxio with sm_gxio
 file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
 
-# PCMCIA/CF socket and GPIO controllers
+# PCMCIA/CF socket
 attach	pxapcic at pxaip with pxapcic_gxpcic
 file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic
+
+# Inter-Integrated Circuit controller
+device	gxiic: pxaiic, i2cbus
+attach	gxiic at pxaip
+file	arch/evbarm/gumstix/gxiic.c			gxiic
