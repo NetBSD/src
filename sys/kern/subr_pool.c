@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.12 2007/10/29 16:37:44 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.13 2007/11/01 21:10:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.12 2007/10/29 16:37:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.13 2007/11/01 21:10:14 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1572,6 +1572,8 @@ pool_reclaim(struct pool *pp)
 	struct pool_item_header *ph, *phnext;
 	struct pool_pagelist pq;
 	struct timeval curtime, diff;
+	bool klock;
+	int rv;
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -1580,12 +1582,33 @@ pool_reclaim(struct pool *pp)
 		(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, PR_NOWAIT);
 	}
 
+	/*
+	 * XXXSMP Because mutexes at IPL_SOFTXXX are still spinlocks,
+	 * and we are called from the pagedaemon without kernel_lock.
+	 * Does not apply to IPL_SOFTBIO.
+	 */
+	switch (pp->pr_ipl) {
+	case IPL_SOFTNET:
+	case IPL_SOFTCLOCK:
+	case IPL_SOFTSERIAL:
+		KERNEL_LOCK(1, NULL);
+		klock = true;
+		break;
+	default:
+		klock = false;
+		break;
+	}
+
 	/* Reclaim items from the pool's cache (if any). */
 	if (pp->pr_cache != NULL)
 		pool_cache_invalidate(pp->pr_cache);
 
-	if (mutex_tryenter(&pp->pr_lock) == 0)
+	if (mutex_tryenter(&pp->pr_lock) == 0) {
+		if (klock) {
+			KERNEL_UNLOCK_ONE(NULL);
+		}
 		return (0);
+	}
 	pr_enter(pp, file, line);
 
 	LIST_INIT(&pq);
@@ -1618,12 +1641,19 @@ pool_reclaim(struct pool *pp)
 
 	pr_leave(pp);
 	mutex_exit(&pp->pr_lock);
+
 	if (LIST_EMPTY(&pq))
-		return 0;
+		rv = 0;
+	else {
+		pr_pagelist_free(pp, &pq);
+		rv = 1;
+	}
 
-	pr_pagelist_free(pp, &pq);
+	if (klock) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
 
-	return (1);
+	return (rv);
 }
 
 /*
@@ -2631,6 +2661,13 @@ pool_cache_xcall(pool_cache_t pc)
 	cc->cc_previous = NULL;
 	pool_cache_cpu_exit(cc, &s);
 
+	/*
+	 * XXXSMP Go to splvm to prevent kernel_lock from being taken,
+	 * because locks at IPL_SOFTXXX are still spinlocks.  Does not
+	 * apply to IPL_SOFTBIO.  Cross-call threads do not take the
+	 * kernel_lock.
+	 */
+	s = splvm();
 	mutex_enter(&pc->pc_lock);
 	if (cur != NULL) {
 		if (cur->pcg_avail == PCG_NOBJECTS) {
@@ -2661,6 +2698,7 @@ pool_cache_xcall(pool_cache_t pc)
 		*list = prev;
 	}
 	mutex_exit(&pc->pc_lock);
+	splx(s);
 }
 
 /*
