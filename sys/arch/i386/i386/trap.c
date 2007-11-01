@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.2.5 2007/10/09 13:37:57 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.5 2007/10/09 13:37:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -505,15 +505,11 @@ copyfault:
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) { /* XXX CSE me? */
-			curcpu()->ci_want_resched = 0;
+		if (curcpu()->ci_want_resched)
 			preempt();
-		}
 		goto out;
 
 	case T_DNA|T_USER: {
