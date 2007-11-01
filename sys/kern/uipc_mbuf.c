@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.120.2.2 2007/09/01 12:56:49 ad Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.120.2.3 2007/11/01 21:05:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.120.2.2 2007/09/01 12:56:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.120.2.3 2007/11/01 21:05:21 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -378,8 +378,10 @@ m_reclaim(void *arg, int flags)
 	struct domain *dp;
 	const struct protosw *pr;
 	struct ifnet *ifp;
-	int s = splvm();
+	int s;
 
+	KERNEL_LOCK(1, NULL);
+	s = splvm();
 	DOMAIN_FOREACH(dp) {
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++)
@@ -392,6 +394,7 @@ m_reclaim(void *arg, int flags)
 	}
 	splx(s);
 	mbstat.m_drain++;
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
