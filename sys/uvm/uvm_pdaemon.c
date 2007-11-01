@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.10 2007/10/27 07:07:40 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.11 2007/11/01 23:06:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.10 2007/10/27 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.11 2007/11/01 23:06:01 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -729,7 +729,8 @@ uvmpd_scan_queue(void)
 			lockownerfail++;
 			if (lockownerfail > UVMPD_NUMTRYLOCKOWNER) {
 				mutex_exit(&uvm_pageqlock);
-				yield();
+				/* XXX Better than yielding but inadequate. */
+				kpause("livelock", false, 1, NULL);
 				mutex_enter(&uvm_pageqlock);
 				lockownerfail = 0;
 			}

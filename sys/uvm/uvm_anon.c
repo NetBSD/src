@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.43.4.4 2007/09/01 12:56:52 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.43.4.5 2007/11/01 23:05:59 ad Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.4 2007/09/01 12:56:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.5 2007/11/01 23:05:59 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -324,7 +324,8 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 				 * someone locking the object has a chance to
 				 * lock us right now
 				 */
-				yield();
+				/* XXX Better than yielding but inadequate. */
+				kpause("livelock", false, 1, NULL);
 
 				mutex_enter(&anon->an_lock);
 				continue;
