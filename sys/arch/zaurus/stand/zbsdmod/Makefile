@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/12/17 16:07:11 peter Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2007/11/01 16:06:56 rjs Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -6,7 +6,7 @@ OBJS=	zbsdmod.o
 SRCS=	zbsdmod.c
 NOMAN=	yes
 
-all: ${OBJS}
+realall: ${OBJS}
 
 cleandir:
 	rm -f machine arm
@@ -14,7 +14,7 @@ cleandir:
 .include <bsd.prog.mk>
 
 afterinstall:
-	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
+	${INSTALL_FILE} ${INSTALL_COPY} -o root -g wheel -m 644 \
 		${OBJS} ${DESTDIR}/${BINDIR}
 
 CFLAGS=		-Wall -Wmissing-prototypes -Wstrict-prototypes
@@ -22,7 +22,7 @@ CFLAGS+=	-DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
 CPPFLAGS+=      -nostdinc -D_STANDALONE
 CPPFLAGS+=	-I${.OBJDIR} -I${S}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
+.if !make(obj) && !make(clean) && !make(cleandir) && !make(release)
 .BEGIN: machine arm
 .NOPATH: machine arm
 
@@ -34,3 +34,7 @@ arm::
 	-rm -f $@
 	ln -s ${S}/arch/arm/include $@
 .endif
+
+release: check_RELEASEDIR
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${OBJS} \
+	    ${RELEASEDIR}/${MACHINE}/installation
