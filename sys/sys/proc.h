@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.243.2.8 2007/10/25 19:43:12 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.243.2.9 2007/11/01 21:58:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -465,7 +465,12 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
 
-#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+}
 #define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */

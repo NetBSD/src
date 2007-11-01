@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.6.2.7 2007/09/01 12:56:48 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6.2.8 2007/11/01 21:58:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.7 2007/09/01 12:56:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.8 2007/11/01 21:58:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -261,14 +261,13 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	sleepq_enter(sq, l);
 	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
-	l->l_priority = sched_kpri(l);
-	prio = lwp_eprio(l);
-	sleepq_enqueue(sq, prio, obj, "tstile", sobj);
+	l->l_kpriority = true;
+	sleepq_enqueue(sq, obj, "tstile", sobj);
 
 	/*
 	 * lend our priority to lwps on the blocking chain.
 	 */
-
+	prio = lwp_eprio(l);
 	for (;;) {
 		bool dolock;
 

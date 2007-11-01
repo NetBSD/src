@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.8.2.3 2007/07/15 13:17:15 ad Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.8.2.4 2007/11/01 21:58:14 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -122,6 +122,8 @@ int	via_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
+
+extern void (*initclock_func)(void);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.20 2007/10/23 20:17:12 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.21 2007/11/01 21:58:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.20 2007/10/23 20:17:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.21 2007/11/01 21:58:20 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -172,9 +172,10 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 		return 0;
 	}
 
+	l->l_kpriority = true;
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, sched_kpri(l), ident, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
 
 	if (interlock != NULL) {
 		KASSERT(simple_lock_held(interlock));
@@ -204,9 +205,10 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 		return 0;
 	}
 
+	l->l_kpriority = true;
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, sched_kpri(l), ident, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
 	mutex_exit(mtx);
 	error = sleepq_block(timo, priority & PCATCH);
 
@@ -231,9 +233,10 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 
 	if (mtx != NULL)
 		mutex_exit(mtx);
+	l->l_kpriority = true;
 	sq = sleeptab_lookup(&sleeptab, l);
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, sched_kpri(l), l, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, l, wmesg, &sleep_syncobj);
 	error = sleepq_block(timo, intr);
 	if (mtx != NULL)
 		mutex_enter(mtx);
@@ -291,8 +294,14 @@ yield(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
-	/* XXX Only do this for timeshared threads. */
-	l->l_priority = 0;
+	l->l_kpriority = false;
+	if (l->l_class == SCHED_OTHER) {
+		/*
+		 * Only for timeshared threads.  It will be reset
+		 * by the scheduler in due course.
+		 */
+		l->l_priority = 0;
+	}
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -310,7 +319,7 @@ preempt(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
-	l->l_priority = l->l_usrpri;
+	l->l_kpriority = false;
 	l->l_nivcsw++;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -465,19 +474,23 @@ mi_switch(lwp_t *l)
 		 */
 		ci->ci_want_resched = ci->ci_data.cpu_softints;
 		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
+		spc->spc_curpriority = lwp_eprio(newl);
 	}
 
-	/* Update the new LWP's start time while it is still locked. */
+	/* Items that must be updated with the CPU locked. */
 	if (!returning) {
+		/* Update the new LWP's start time. */
 		newl->l_stime = tv;
-		/*
-		 * XXX The following may be done unlocked if newl != NULL
-		 * above.
-		 */
-		newl->l_priority = newl->l_usrpri;
-	}
 
-	spc->spc_curpriority = newl->l_usrpri;
+		/*
+		 * ci_curlwp changes when a fast soft interrupt occurs.
+		 * We use cpu_onproc to keep track of which kernel or
+		 * user thread is running 'underneath' the software
+		 * interrupt.  This is important for time accounting,
+		 * itimers and forcing user threads to preempt (aston).
+		 */
+		ci->ci_data.cpu_onproc = newl;
+	}
 
 	if (l != newl) {
 		struct lwp *prevlwp;
@@ -511,7 +524,6 @@ mi_switch(lwp_t *l)
 		l->l_flag &= ~LW_RUNNING;
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		prevlwp = cpu_switchto(l, newl, returning);
-
 		/*
 		 * .. we have switched away and are now back so we must
 		 * be the new curlwp.  prevlwp is who we replaced.
@@ -741,9 +753,8 @@ sched_kpri(struct lwp *l)
 	 * the priority space and so should be kept in sync with
 	 * param.h.
 	 */
-	if ((pri = l->l_usrpri) >= PRI_KERNEL)
+	if ((pri = l->l_priority) >= PRI_KERNEL)
 		return pri;
-
 	return (pri >> 1) + PRI_KERNEL;
 }
 
@@ -762,11 +773,10 @@ sched_unsleep(struct lwp *l)
 	panic("sched_unsleep");
 }
 
-inline void
+void
 resched_cpu(struct lwp *l)
 {
 	struct cpu_info *ci;
-	const pri_t pri = lwp_eprio(l);
 
 	/*
 	 * XXXSMP
@@ -787,7 +797,7 @@ resched_cpu(struct lwp *l)
 	 * cost of moving a process from one CPU to another.
 	 */
 	ci = l->l_cpu;
-	if (pri > ci->ci_schedstate.spc_curpriority)
+	if (lwp_eprio(l) > ci->ci_schedstate.spc_curpriority)
 		cpu_need_resched(ci, 0);
 }
 
@@ -797,20 +807,14 @@ sched_changepri(struct lwp *l, pri_t pri)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	l->l_usrpri = pri;
-	if (l->l_priority >= PRI_KERNEL)
-		return;
-
-	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
+	if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+		sched_dequeue(l);
 		l->l_priority = pri;
-		return;
+		sched_enqueue(l, false);
+	} else {
+		l->l_priority = pri;
 	}
-
-	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	sched_dequeue(l);
-	l->l_priority = pri;
-	sched_enqueue(l, false);
 	resched_cpu(l);
 }
 
@@ -820,16 +824,14 @@ sched_lendpri(struct lwp *l, pri_t pri)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
+	if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+		sched_dequeue(l);
 		l->l_inheritedprio = pri;
-		return;
+		sched_enqueue(l, false);
+	} else {
+		l->l_inheritedprio = pri;
 	}
-
-	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	sched_dequeue(l);
-	l->l_inheritedprio = pri;
-	sched_enqueue(l, false);
 	resched_cpu(l);
 }
 
@@ -872,7 +874,7 @@ sched_pstats(void *arg)
 	struct rlimit *rlim;
 	struct lwp *l;
 	struct proc *p;
-	int minslp, sig, clkhz;
+	int sig, clkhz;
 	long runtm;
 
 	sched_pstats_ticks++;
@@ -884,7 +886,6 @@ sched_pstats(void *arg)
 		 * sleeping).  We ignore overflow; with 16-bit int's
 		 * (remember them?) overflow takes 45 days.
 		 */
-		minslp = 2;
 		mutex_enter(&p->p_smutex);
 		mutex_spin_enter(&p->p_stmutex);
 		runtm = p->p_rtime.tv_sec;
@@ -894,12 +895,6 @@ sched_pstats(void *arg)
 			lwp_lock(l);
 			runtm += l->l_rtime.tv_sec;
 			l->l_swtime++;
-			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-			    l->l_stat == LSSUSPENDED) {
-				l->l_slptime++;
-				minslp = min(minslp, l->l_slptime);
-			} else
-				minslp = 0;
 			sched_pstats_hook(l);
 			lwp_unlock(l);
 
@@ -922,21 +917,7 @@ sched_pstats(void *arg)
 				l->l_cpticks = 0;
 			}
 		}
-
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
-#ifdef SCHED_4BSD
-		/*
-		 * XXX: Workaround - belongs to sched_4bsd.c
-		 * If the process has slept the entire second,
-		 * stop recalculating its priority until it wakes up.
-		 */
-		if (minslp <= 1) {
-			extern fixpt_t decay_cpu(fixpt_t, fixpt_t);
-
-			fixpt_t loadfac = 2 * (averunnable.ldavg[0]);
-			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
-		}
-#endif
 		mutex_spin_exit(&p->p_stmutex);
 
 		/*

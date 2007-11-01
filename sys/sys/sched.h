@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.33.2.10 2007/10/10 23:03:26 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.33.2.11 2007/11/01 21:58:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 void		preempt(void);
 int		mi_switch(struct lwp *);
-inline void	resched_cpu(struct lwp *);
+void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct timeval *);
 
 #endif	/* _KERNEL */

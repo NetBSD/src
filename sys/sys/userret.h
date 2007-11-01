@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.11.4.1 2007/10/18 15:47:35 ad Exp $ */
+/* $NetBSD: userret.h,v 1.11.4.2 2007/11/01 21:58:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -100,8 +100,7 @@ mi_userret(struct lwp *l)
 	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0)
 		lwp_userret(l);
 
-	/* XXXSMP unlocked */
-	l->l_priority = l->l_usrpri;
+	l->l_kpriority = false;
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
 }
 

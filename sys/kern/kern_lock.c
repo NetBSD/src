@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.18 2007/10/23 20:17:10 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.19 2007/11/01 21:58:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.18 2007/10/23 20:17:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.19 2007/11/01 21:58:18 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.18 2007/10/23 20:17:10 ad Exp 
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
@@ -684,7 +685,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (panicstr != NULL)
 		return;
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
-	if (CURCPU_IDLE_P()) {
+	if (CURCPU_IDLE_P() && !cold) {
 		panic("assert_sleepable: idle");
 	}
 }

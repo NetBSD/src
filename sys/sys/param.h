@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.255.4.14 2007/10/27 09:18:53 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.255.4.15 2007/11/01 21:58:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -198,51 +198,66 @@
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
 /*
- * Priorities.  Note that with 32 run queues, differences less than 4 are
- * insignificant.
+ * Historic priority levels.  These are meaningless and remain only
+ * for source compatibility.  Do not use in new code.
  */
 #define	PSWP	0
 #define	PVM	4
 #define	PINOD	8
 #define	PRIBIO	16
 #define	PVFS	20
-#define	PZERO	22		/* No longer magic, shouldn't be here.  XXX */
+#define	PZERO	22
 #define	PSOCK	24
 #define	PWAIT	32
 #define	PLOCK	36
 #define	PPAUSE	40
 #define	PUSER	50
-#define	MAXPRI	127		/* Priorities range from 0 through MAXPRI. */
+#define	MAXPRI	127
 
-#define	PRIMASK 	0x0ff
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
-#define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
-				   the interlock */
+#define	PNORELOCK	0x200	/* OR'd with pri for tsleep to not relock */
 
 /*
  * New priority levels.
  */
+#define	PRI_COUNT		192
+#define	PRI_NONE		(-1)
 
-#define	PRI_COUNT	192
-#define	PRI_NONE	(-1)
+#define	PRI_KERNEL_RT		160
+#define	NPRI_KERNEL_RT		32
+#define	MAXPRI_KERNEL_RT	(PRI_KERNEL_RT + NPRI_KERNEL_RT - 1)
 
-#define	PRI_KERNEL_RT	160
-#define	NPRI_KERNEL_RT	32
+#define	PRI_USER_RT		96
+#define	NPRI_USER_RT		64
+#define	MAXPRI_USER_RT		(PRI_USER_RT + NPRI_USER_RT - 1)
 
-#define	PRI_USER_RT	96
-#define	NPRI_USER_RT	64
+#define	PRI_KERNEL		64
+#define	NPRI_KERNEL		32
+#define	MAXPRI_KERNEL		(PRI_KERNEL + NPRI_KERNEL - 1)
 
-#define	PRI_KERNEL	64
-#define	NPRI_KERNEL	32
+#define	PRI_USER		0
+#define	NPRI_USER		64
+#define	MAXPRI_USER		(PRI_USER + NPRI_USER - 1)
 
-#define	PRI_USER	0
-#define	NPRI_USER	64
+/*
+ * Kernel thread priorities.
+ */
+#define	PRI_SOFTSERIAL	MAXPRI_KERNEL_RT
+#define	PRI_SOFTNET	(MAXPRI_KERNEL_RT - schedppq * 1)
+#define	PRI_SOFTBIO	(MAXPRI_KERNEL_RT - schedppq * 2)
+#define	PRI_SOFTCLOCK	(MAXPRI_KERNEL_RT - schedppq * 3)
 
-#define	PRI_PGDAEMON	(PRI_KERNEL + NPRI_KERNEL - 1)
-#define	PRI_VM		(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 1)
-#define	PRI_IOFLUSH	(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 2)
-#define	PRI_BIO		(PRI_KERNEL + NPRI_KERNEL - 1 - schedppq * 3)
+#define	PRI_XCALL	MAXPRI_KERNEL
+#define	PRI_PGDAEMON	(MAXPRI_KERNEL - schedppq * 1)
+#define	PRI_VM		(MAXPRI_KERNEL - schedppq * 2)
+#define	PRI_IOFLUSH	(MAXPRI_KERNEL - schedppq * 3)
+#define	PRI_BIO		(MAXPRI_KERNEL - schedppq * 4)
 
+#define	PRI_IDLE	PRI_USER
+
+/*
+ * Miscellaneous.
+ */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
