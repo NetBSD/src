@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.3.2.5 2007/10/23 20:17:13 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.3.2.6 2007/11/01 21:58:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.5 2007/10/23 20:17:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.6 2007/11/01 21:58:22 ad Exp $");
 
 #include <sys/param.h>
 
@@ -286,8 +286,8 @@ sched_lwp_fork(struct lwp *l)
 	KASSERT(l->l_sched_info == NULL);
 	l->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
 	memset(l->l_sched_info, 0, sizeof(sched_info_lwp_t));
-	if (l->l_usrpri <= PRI_HIGHEST_TS) /* XXX: For now only.. */
-		l->l_usrpri = l->l_priority = PRI_DEFAULT;
+	if (l->l_priority <= PRI_HIGHEST_TS) /* XXX: For now only.. */
+		l->l_priority = PRI_DEFAULT;
 }
 
 void
@@ -465,9 +465,9 @@ sched_slept(struct lwp *l)
 	 * If thread is in time-sharing queue and batch flag is not marked,
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_usrpri < PRI_HIGHEST_TS && (sil->sl_flags & SL_BATCH) == 0) {
+	if (l->l_priority < PRI_HIGHEST_TS && (sil->sl_flags & SL_BATCH) == 0) {
 		KASSERT(l->l_policy == SCHED_OTHER);
-		l->l_usrpri++;
+		l->l_priority++;
 	}
 }
 
@@ -482,7 +482,7 @@ sched_wakeup(struct lwp *l)
 
 	/* If thread was sleeping a second or more - set a high priority */
 	if (l->l_slptime > 1 || (hardclock_ticks - sil->sl_slept) >= hz)
-		l->l_usrpri = l->l_priority = high_pri[l->l_usrpri];
+		l->l_priority = high_pri[l->l_priority];
 
 	/* Also, consider looking for a better CPU to wake up */
 	if ((l->l_flag & (LW_BOUND | LW_SYSTEM)) == 0)
@@ -494,6 +494,10 @@ sched_pstats_hook(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
 	bool batch;
+
+	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
+	    l->l_stat == LSSUSPENDED)
+		l->l_slptime++;
 
 	/*
 	 * Set that thread is more CPU-bound, if sum of run time exceeds the
@@ -512,17 +516,17 @@ sched_pstats_hook(struct lwp *l)
 	sil->sl_rtsum = 0;
 
 	/* Estimate threads on time-sharing queue only */
-	if (l->l_usrpri >= PRI_HIGHEST_TS)
+	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
 
 	/* If it is CPU-bound not a first time - decrease the priority */
-	if (batch && l->l_usrpri != 0)
-		l->l_usrpri--;
+	if (batch && l->l_priority != 0)
+		l->l_priority--;
 
 	/* If thread was not ran a second or more - set a high priority */
 	if (l->l_stat == LSRUN && sil->sl_lrtime &&
 	    (hardclock_ticks - sil->sl_lrtime >= hz))
-		lwp_changepri(l, high_pri[l->l_usrpri]);
+		lwp_changepri(l, high_pri[l->l_priority]);
 }
 
 /*
@@ -829,11 +833,10 @@ sched_tick(struct cpu_info *ci)
 		 * If thread is in time-sharing queue, decrease the priority,
 		 * and run with a higher time-quantum.
 		 */
-		if (l->l_usrpri > PRI_HIGHEST_TS)
+		if (l->l_priority > PRI_HIGHEST_TS)
 			break;
-		if (l->l_usrpri != 0)
-			l->l_usrpri--;
-		l->l_priority = l->l_usrpri;
+		if (l->l_priority != 0)
+			l->l_priority--;
 		break;
 	}
 
@@ -1010,7 +1013,7 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 	}
 
 	(*pr)("   %5s %4s %4s %10s %3s %4s %11s %3s %s\n",
-	    "LID", "PRI", "UPRI", "FL", "ST", "TS", "LWP", "CPU", "LRTIME");
+	    "LID", "PRI", "EPRI", "FL", "ST", "TS", "LWP", "CPU", "LRTIME");
 
 	PROCLIST_FOREACH(p, &allproc) {
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
@@ -1019,7 +1022,7 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 			ci = l->l_cpu;
 			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3d "
 			    "%u ST=%d RT=%d %d\n",
-			    (int)l->l_lid, l->l_priority, l->l_usrpri,
+			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
 			    sil->sl_timeslice, l, ci->ci_cpuid,

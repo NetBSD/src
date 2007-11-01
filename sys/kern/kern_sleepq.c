@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.19 2007/10/23 20:17:12 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.20 2007/11/01 21:58:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.19 2007/10/23 20:17:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.20 2007/11/01 21:58:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -216,8 +216,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
  *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
  */
 void
-sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-	       syncobj_t *sobj)
+sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
@@ -230,7 +229,6 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	l->l_sleepq = sq;
 	l->l_wmesg = wmesg;
 	l->l_slptime = 0;
-	l->l_priority = pri;
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
 
@@ -455,9 +453,7 @@ sleepq_changepri(lwp_t *l, pri_t pri)
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 
 	opri = lwp_eprio(l);
-	l->l_usrpri = pri;
-	l->l_priority = sched_kpri(l);
-
+	l->l_priority = pri;
 	if (lwp_eprio(l) != opri) {
 		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
 		sleepq_insert(sq, l, l->l_syncobj);

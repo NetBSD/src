@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.12.2.11 2007/10/18 22:45:53 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12.2.12 2007/11/01 21:58:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.11 2007/10/18 22:45:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.12 2007/11/01 21:58:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		return ENOMEM;
 	}
 
-	error = newlwp(l, p, uaddr, inmem,
-	    SCARG(uap, flags) & LWP_DETACHED,
-	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2);
+	error = lwp_create(l, p, uaddr, inmem, SCARG(uap, flags) & LWP_DETACHED,
+	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2, l->l_class);
 	if (error) {
 		uvm_uarea_free(uaddr, curcpu());
 		pool_put(&lwp_uc_pool, newuc);
@@ -554,7 +553,7 @@ lwp_park(struct timespec *ts, const void *hint)
 	}
 	lwp_unlock_to(l, sq->sq_mutex);
 	l->l_biglocks = 0;
-	sleepq_enqueue(sq, l->l_usrpri, wchan, "parked", &lwp_park_sobj);
+	sleepq_enqueue(sq, wchan, "parked", &lwp_park_sobj);
 	error = sleepq_block(timo, true);
 	switch (error) {
 	case EWOULDBLOCK:

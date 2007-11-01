@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.17 2007/10/18 15:47:35 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.18 2007/11/01 21:58:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  * t:	l_proc->p_stmutex
  * S:	select_lock
  * (:	unlocked, stable
- * !:	unlocked, may only be safely accessed by the LWP itself
+ * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
  *
  * Fields are clustered together by usage (to increase the likelyhood
@@ -86,14 +86,16 @@ struct lwp {
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
-	pri_t		l_priority;	/* l: process priority */
-	pri_t		l_usrpri;	/* l: user-priority */
+	int		l_class;	/* l: scheduling class */
+	int		l_kpriority;	/* !: has kernel priority boost */
+	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	fixpt_t		l_estcpu;	/* t: cpu time for SCHED_4BSD */
 	int		l_policy;	/* l: scheduling policy */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 
@@ -157,6 +159,11 @@ struct lwp {
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
+
+#ifndef _KERNEL
+/* For source compatibility only. */
+#define	l_usrpri	l_priority
+#endif
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
@@ -321,9 +328,6 @@ lwp_changepri(lwp_t *l, pri_t pri)
 {
 	KASSERT(mutex_owned(l->l_mutex));
 
-	if (l->l_priority == pri)
-		return;
-
 	(*l->l_syncobj->sobj_changepri)(l, pri);
 }
 
@@ -346,15 +350,19 @@ lwp_unsleep(lwp_t *l)
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
-static inline int
+static inline pri_t
 lwp_eprio(lwp_t *l)
 {
+	pri_t pri;
 
-	return MAX(l->l_inheritedprio, l->l_priority);
+	pri = l->l_priority;
+	if (l->l_kpriority && pri < PRI_KERNEL)
+		pri = (pri >> 1) + PRI_KERNEL;
+	return MAX(l->l_inheritedprio, pri);
 }
 
-int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,
-    void *, size_t, void (*)(void *), void *, lwp_t **);
+int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
+    void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*
  * We should provide real stubs for the below that LKMs can use.

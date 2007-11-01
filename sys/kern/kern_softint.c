@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.19 2007/10/30 15:32:52 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.20 2007/11/01 21:58:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.19 2007/10/30 15:32:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.20 2007/11/01 21:58:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -198,11 +198,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.19 2007/10/30 15:32:52 ad Exp
 #include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
-
-#define	PRI_SOFTSERIAL	(PRI_COUNT - 1)
-#define	PRI_SOFTNET	(PRI_SOFTSERIAL - schedppq * 1)
-#define	PRI_SOFTBIO	(PRI_SOFTSERIAL - schedppq * 2)
-#define	PRI_SOFTCLOCK	(PRI_SOFTSERIAL - schedppq * 3)
 
 /* This could overlap with signal info in struct lwp. */
 typedef struct softint {
@@ -275,9 +270,6 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	si->si_lwp->l_private = si;
 	softint_init_md(si->si_lwp, level, &si->si_machdep);
-#ifdef __HAVE_FAST_SOFTINTS
-	si->si_lwp->l_mutex = &ci->ci_schedstate.spc_lwplock;
-#endif
 }
 /*
  * softint_init:
@@ -566,6 +558,7 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	si = l->l_private;
 
 	lwp_lock(l);
+	lwp_relock(l, ci->ci_schedstate.spc_mutex);
 	/* Cheat and make the KASSERT in softint_thread() happy. */
 	si->si_active = 1;
 	l->l_stat = LSRUN;

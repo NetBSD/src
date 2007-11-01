@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193.2.13 2007/10/28 22:04:55 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.14 2007/11/01 21:58:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.13 2007/10/28 22:04:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.14 2007/11/01 21:58:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2365,6 +2365,7 @@ ttyinfo(struct tty *tp, int fromsig)
 static int
 proc_compare(struct proc *p1, struct proc *p2)
 {
+	lwp_t *l1, *l2;
 
 	if (p1 == NULL)
 		return (1);
@@ -2380,9 +2381,11 @@ proc_compare(struct proc *p1, struct proc *p2)
 		/*
 		 * tie - favor one with highest recent CPU utilization
 		 */
-		if (p2->p_estcpu > p1->p_estcpu)
+		l1 = LIST_FIRST(&p1->p_lwps);
+		l2 = LIST_FIRST(&p2->p_lwps);
+		if (l2->l_pctcpu > l1->l_pctcpu)
 			return (1);
-		if (p1->p_estcpu > p2->p_estcpu)
+		if (l1->l_estcpu > l2->l_estcpu)
 			return (0);
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}

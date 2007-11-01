@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52.2.9 2007/10/23 20:11:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.10 2007/11/01 21:58:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.9 2007/10/23 20:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.10 2007/11/01 21:58:13 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1716,57 +1716,6 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	return 0;
-}
-
-void
-cpu_initclocks(void)
-{
-	(*initclock_func)();
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
-#ifdef MULTIPROCESSOR
-		if (immed && ci != curcpu()) {
-			x86_send_ipi(ci, 0);
-		}
-#endif
-	} else {
-#ifdef MULTIPROCESSOR
-		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
-		    ci != curcpu())
-			x86_send_ipi(ci, 0);
-#endif
-	}
-}
-
-void
-cpu_signotify(struct lwp *l)
-{
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
-}
-
-void
-cpu_need_proftick(struct lwp *l)
-{
-
-	KASSERT(l->l_cpu == curcpu());
-
-	l->l_pflag |= LP_OWEUPC;
-	aston(l);
 }
 
 /*
