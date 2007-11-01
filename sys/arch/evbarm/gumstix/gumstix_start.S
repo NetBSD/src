@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.3 2007/04/20 12:48:52 kiyohara Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.3.8.1 2007/11/01 16:06:53 rjs Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -42,7 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -94,7 +94,7 @@ _C_LABEL(gumstix_start):
 	/* gumstix's loader is u-boot.  it's running on RAM */
 	/*
 	 *  Kernel is loaded in SDRAM (0xa0200000..), and is expected to run
-	 *  in VA 0xc0200000..  
+	 *  in VA 0xc0200000..
 	 */
 	/* save u-boot's args */
 	adr	r0, u_boot_args
@@ -118,7 +118,7 @@ _C_LABEL(gumstix_start):
 	adds	r1, r1, #-1
 	bhi	2b
 3:	
-	ldmia	r4!, {r1, r2 , r3}	/* # of sections, PA|attr, VA */
+	ldmia	r4!, {r1, r2, r3}	/* # of sections, PA|attr, VA */
 	cmp	r1, #0
 	bne	2b	
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11.6.1 2007/07/31 15:17:16 rjs Exp $	*/
+/*	$NetBSD: psl.h,v 1.11.6.2 2007/11/01 16:06:50 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -75,7 +75,6 @@
 #define spl0()		splx(_SPL_0)
 #define splsoft()	raisespl(_SPL_SOFT)
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
-#define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)
