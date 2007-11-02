@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.13 2007/09/16 19:59:30 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.14 2007/11/02 20:27:14 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.13 2007/09/16 19:59:30 plunky Exp $
+ * $Id: hci.h,v 1.14 2007/11/02 20:27:14 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2106,7 +2106,7 @@ struct hci_unit {
 	struct device	*hci_bthub;		/* bthub(4) handle */
 
 	/* device info */
-	char		*hci_devname;		/* device name */
+	const char	*hci_devname;		/* device name */
 	bdaddr_t	 hci_bdaddr;		/* device address */
 	uint16_t	 hci_flags;		/* see BTF_ above */
 
