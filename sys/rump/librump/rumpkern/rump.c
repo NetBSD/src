@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.14.2.2 2007/10/31 23:14:17 joerg Exp $	*/
+/*	$NetBSD: rump.c,v 1.14.2.3 2007/11/02 13:02:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
@@ -56,28 +57,51 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
+static void
+rump_aiodone_worker(struct work *wk, void *dummy)
+{
+	struct buf *bp = (struct buf *)wk;
+
+	KASSERT(&bp->b_work == wk);
+	bp->b_iodone(bp);
+}
+
 void
 rump_init()
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 
-	curlwp = &lwp0;
+	l = &lwp0;
+	p = &rump_proc;
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+	p->p_pid = 0;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+	l->l_lid = 1;
+
 	rumpvm_init();
 
-	curlwp->l_proc = &rump_proc;
-	curlwp->l_cred = rump_cred;
-	rump_proc.p_stats = &rump_stats;
-	rump_proc.p_cwdi = &rump_cwdi;
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	rump_proc.p_limit = &rump_limits;
 
 	/* should be "enough" */
 	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
+
+	rump_sleepers_init();
+	rumpuser_thrinit();
+
+	/* aieeeedondest */
+	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+	    rump_aiodone_worker, NULL, 0, 0, 0))
+		panic("aiodoned");
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
@@ -469,4 +493,49 @@ rump_bioops_sync()
 
 	if (bioopsp)
 		bioopsp->io_sync(NULL);
+}
+
+struct lwp *
+rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+{
+	struct lwp *l;
+	struct proc *p;
+
+	l = kmem_alloc(sizeof(struct lwp), KM_SLEEP);
+	p = kmem_alloc(sizeof(struct proc), KM_SLEEP);
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+        p->p_pid = pid;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+        l->l_lid = lid;
+
+	if (set)
+		rumpuser_set_curlwp(l);
+
+	return l;
+}
+
+void
+rump_clear_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	kmem_free(l->l_proc, sizeof(struct proc));
+	kmem_free(l, sizeof(struct lwp));
+	rumpuser_set_curlwp(NULL);
+}
+
+struct lwp *
+rump_get_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	if (l == NULL)
+		l = &lwp0;
+
+	return l;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.20.2.2 2007/10/31 23:14:18 joerg Exp $	*/
+/*	$NetBSD: vm.c,v 1.20.2.3 2007/11/02 13:02:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -62,11 +62,6 @@
 #define len2npages(off, len)						\
   (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
     + (((off & PAGE_MASK) + (len & PAGE_MASK)) > PAGE_SIZE))
-
-static int ubc_winvalid;
-static struct uvm_object *ubc_uobj;
-static off_t ubc_offset;
-static int ubc_flags;
 
 struct uvm_pagerops uvm_vnodeops;
 struct uvm_pagerops aobj_pager;
@@ -232,19 +227,38 @@ uao_detach(struct uvm_object *uobj)
  * UBC
  */
 
+struct ubc_window {
+	struct uvm_object	*uwin_obj;
+	voff_t			uwin_off;
+	uint8_t			*uwin_mem;
+	size_t			uwin_mapsize;
+
+	LIST_ENTRY(ubc_window)	uwin_entries;
+};
+
+static LIST_HEAD(, ubc_window) uwinlst = LIST_HEAD_INITIALIZER(uwinlst);
+
 int
-rump_ubc_magic_uiomove(size_t n, struct uio *uio)
+rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp)
 {
+	struct ubc_window *uwinp;
 	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, n);
 	int i, rv;
 
-	if (ubc_winvalid == 0)
-		panic("%s: ubc window not allocated", __func__);
+	LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
+		if ((uint8_t *)va >= uwinp->uwin_mem
+		    && (uint8_t *)va < (uwinp->uwin_mem + uwinp->uwin_mapsize))
+			break;
+	if (uwinp == NULL) {
+		KASSERT(rvp != NULL);
+		return 0;
+	}
 
 	pgs = rumpuser_malloc(npages * sizeof(pgs), 0);
 	memset(pgs, 0, sizeof(pgs));
-	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset,
+	rv = uwinp->uwin_obj->pgops->pgo_get(uwinp->uwin_obj,
+	    uwinp->uwin_off + ((uint8_t *)va - uwinp->uwin_mem),
 	    pgs, &npages, 0, 0, 0, 0);
 	if (rv)
 		goto out;
@@ -258,41 +272,51 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 		uiomove((uint8_t *)pgs[i]->uanon + pageoff, xfersize, uio);
 		if (uio->uio_rw == UIO_WRITE)
 			pgs[i]->flags &= ~PG_CLEAN;
-		ubc_offset += xfersize;
 		n -= xfersize;
 	}
 
  out:
 	rumpuser_free(pgs);
-	return rv;
+	if (rvp)
+		*rvp = rv;
+	return 1;
 }
 
 void *
 ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	int flags)
 {
-	vsize_t reallen;
+	struct ubc_window *uwinp; /* pronounced: you wimp! */
 
-	/* XXX: only one window, but that's ok for now */
-	if (ubc_winvalid == 1)
-		panic("%s: ubc window already allocated", __func__);
+	uwinp = kmem_alloc(sizeof(struct ubc_window), KM_SLEEP);
+	uwinp->uwin_obj = uobj;
+	uwinp->uwin_off = offset;
+	uwinp->uwin_mapsize = *lenp;
+	uwinp->uwin_mem = kmem_alloc(*lenp, KM_SLEEP);
 
-	printf("UBC_ALLOC offset 0x%x\n", (int)offset);
-	ubc_uobj = uobj;
-	ubc_offset = offset;
-	reallen = round_page(*lenp);
-	ubc_flags = flags;
+	LIST_INSERT_HEAD(&uwinlst, uwinp, uwin_entries);
 
-	ubc_winvalid = 1;
-
-	return RUMP_UBC_MAGIC_WINDOW;
+	DPRINTF(("UBC_ALLOC offset 0x%llx, uwin %p, mem %p\n",
+	    (unsigned long long)offset, uwinp, uwinp->uwin_mem));
+	
+	return uwinp->uwin_mem;
 }
 
 void
 ubc_release(void *va, int flags)
 {
+	struct ubc_window *uwinp;
 
-	ubc_winvalid = 0;
+	LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
+		if ((uint8_t *)va >= uwinp->uwin_mem
+		    && (uint8_t *)va < (uwinp->uwin_mem + uwinp->uwin_mapsize))
+			break;
+	if (uwinp == NULL)
+		panic("%s: releasing invalid window at %p", __func__, va);
+
+	LIST_REMOVE(uwinp, uwin_entries);
+	kmem_free(uwinp->uwin_mem, uwinp->uwin_mapsize);
+	kmem_free(uwinp, sizeof(struct ubc_window));
 }
 
 int
@@ -306,7 +330,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 		len = todo;
 
 		win = ubc_alloc(uobj, uio->uio_offset, &len, 0, flags);
-		rump_ubc_magic_uiomove(len, uio);
+		rump_ubc_magic_uiomove(win, len, uio, NULL);
 		ubc_release(win, 0);
 
 		todo -= len;
