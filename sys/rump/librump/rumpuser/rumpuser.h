@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.7.2.2 2007/10/31 23:14:19 joerg Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.7.2.3 2007/11/02 12:44:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -60,5 +61,39 @@ uint64_t rumpuser_bswap64(uint64_t);
 int rumpuser_gethostname(char *, size_t, int *);
 
 char *rumpuser_realpath(const char *, char *, int *);
+
+/* rumpuser_pth */
+
+int  rumpuser_thrinit(void);
+void rumpuser_thrdestroy(void);
+
+int  rumpuser_thread_create(void *(*f)(void *), void *);
+void rumpuser_thread_exit(void);
+
+struct rumpuser_mtx;
+
+void rumpuser_mutex_init(struct rumpuser_mtx **);
+void rumpuser_mutex_enter(struct rumpuser_mtx *);
+int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
+void rumpuser_mutex_exit(struct rumpuser_mtx *);
+void rumpuser_mutex_destroy(struct rumpuser_mtx *);
+
+struct rumpuser_rw;
+
+void rumpuser_rw_init(struct rumpuser_rw **);
+void rumpuser_rw_enter(struct rumpuser_rw *, int);
+int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
+void rumpuser_rw_exit(struct rumpuser_rw *);
+void rumpuser_rw_destroy(struct rumpuser_rw *);
+
+struct rumpuser_cv;
+
+void rumpuser_cv_init(struct rumpuser_cv **);
+void rumpuser_cv_destroy(struct rumpuser_cv *);
+void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
+void rumpuser_cv_signal(struct rumpuser_cv *);
+
+void rumpuser_set_curlwp(struct lwp *);
+struct lwp *rumpuser_get_curlwp(void);
 
 #endif /* _SYS_RUMPUSER_H_ */
