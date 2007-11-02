@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.3 2007/11/02 21:05:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,9 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ffs.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.3 2007/11/02 21:05:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+#include <sys/bitops.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
@@ -53,11 +56,5 @@ __RCSID("$NetBSD: ffs.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 int
 ffs(int mask)
 {
-	int bit;
-
-	if (mask == 0)
-		return(0);
-	for (bit = 1; !(mask & 1); bit++)
-		mask >>= 1;
-	return(bit);
+	return ffs32((uint32_t)mask);
 }
