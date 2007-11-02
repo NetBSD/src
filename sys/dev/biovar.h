@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.1 2007/05/01 17:20:11 bouyer Exp $ */
+/*	$NetBSD: biovar.h,v 1.2 2007/11/02 08:37:06 xtraeme Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ struct bioc_disk {
 #define BIOC_SDSCRUB_S		"Scrubbing"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
-	size_t		bd_size;	/* size of the disk */
+	u_quad_t	bd_size;	/* size of the disk */
 
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
@@ -121,7 +121,7 @@ struct bioc_vol {
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	size_t		bv_size;	/* size of the disk */
+	u_quad_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
 	int		bv_nodisk;	/* nr of drives */
 
