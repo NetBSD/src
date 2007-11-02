@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.7 2007/10/30 00:30:14 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.8 2007/11/02 02:31:12 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va)		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -218,7 +219,7 @@ vge_init(unsigned tag, void *data)
 
 	l = ALLOC(struct local, 256);   /* tdesc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VGE_CTL1, val);

@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.2 2007/10/30 05:05:19 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.3 2007/11/02 02:31:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,9 +45,11 @@
 #include <lib/libsa/net.h>
 
 struct nifdv {
+	char *name;
 	unsigned (*init)(unsigned, void *);
 	int (*send)(void *, char *, unsigned);
 	int (*recv)(void *, char *, unsigned, unsigned);
+	int (*halt)(void *, int);
 	void *priv;
 	int unit;
 };
@@ -75,13 +77,13 @@ NIF_DECL(vge);
 NIF_DECL(rge);
 
 static struct nifdv vnifdv[] = {
-	{ fxp_init, fxp_send, fxp_recv },
-	{ tlp_init, tlp_send, tlp_recv },
-	{ nvt_init, nvt_send, nvt_recv },
-	{ sip_init, sip_send, sip_recv },
-	{ pcn_init, pcn_send, pcn_recv },
-	{ vge_init, vge_send, vge_recv },
-	{ rge_init, rge_send, rge_recv }
+	{ "fxp", fxp_init, fxp_send, fxp_recv },
+	{ "tlp", tlp_init, tlp_send, tlp_recv },
+	{ "nvt", nvt_init, nvt_send, nvt_recv },
+	{ "sip", sip_init, sip_send, sip_recv },
+	{ "pcn", pcn_init, pcn_send, pcn_recv },
+	{ "vge", vge_init, vge_send, vge_recv },
+	{ "rge", rge_init, rge_send, rge_recv }
 };
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 int nmatchednif = 0;
@@ -95,7 +97,8 @@ netif_init(tag)
 	int n;
 	void *l;
 	uint8_t enaddr[6];
-	extern uint8_t en[];
+	extern uint8_t en[6];
+	extern char rootdev[4];
 
 	for (n = 0; n < nnifdv; n++) {
 		l = (void *)(*vnifdv[n].init)(tag, enaddr);
@@ -104,7 +107,6 @@ netif_init(tag)
 	}
 	return 0;
   found:
-	memcpy(en, enaddr, sizeof(enaddr));
 	dv = alloc(sizeof(struct nifdv));
 	*dv = vnifdv[n];
 	dv->priv = l;
@@ -112,6 +114,8 @@ netif_init(tag)
 	s = &netdesc;
 	s->io_netif = dv;
 	memcpy(s->myea, enaddr, sizeof(enaddr));
+	memcpy(en, enaddr, sizeof(en));
+	snprintf(rootdev, sizeof(rootdev), "%s", dv->name);
 	return 1;
 }
 
