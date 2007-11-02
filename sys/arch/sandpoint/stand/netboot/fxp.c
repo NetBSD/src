@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.3 2007/10/30 00:30:13 nisimura Exp $ */
+/* $NetBSD: fxp.c,v 1.4 2007/11/02 02:31:11 nisimura Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -100,6 +100,7 @@
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->iobase+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->iobase+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wb(adr, siz)		_wb(VTOPHYS(adr), (uint32_t)(siz))
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
@@ -196,7 +197,7 @@ fxp_init(unsigned tag, void *data)
 
 	sc = alloc(sizeof(struct local));
 	memset(sc, 0, sizeof(struct local));
-	sc->iobase = pcicfgread(tag, 0x10);
+	sc->iobase = DEVTOV(pcicfgread(tag, 0x10)); /* use mem space */
 
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(100);	

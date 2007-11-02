@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.5 2007/10/30 00:30:14 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.6 2007/11/02 02:31:12 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
 #define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -102,7 +103,7 @@ sip_init(unsigned tag, void *data)
 
 	l = alloc(sizeof(struct local));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	CSR_WRITE(l, SIP_IER, 0);
 	CSR_WRITE(l, SIP_IMR, 0);
@@ -240,53 +241,37 @@ read_eeprom(l, loc)
 	struct local *l;
 	int loc;
 {
-	int reg, data, x;
+#define R110 06 /* SEEPROM READ op. */
+	unsigned data, v, i;
 
-	reg = EROMAR_EECS;
-	CSR_WRITE(l, SIP_EROMAR, reg);
+	/* hold chip select */
+	v = EROMAR_EECS;
+	CSR_WRITE(l, SIP_EROMAR, v);
 
-	/* Shift in the READ opcode. */
-	for (x = 3; x > 0; x--) {
-		if (SIP_EEPROM_OPC_READ & (1 << (x - 1)))
-			reg |= EROMAR_EEDI;
+	data = (R110 << 6) | (loc & 0x3f); /* 6 bit addressing */
+	/* instruct R110 op. at loc in MSB first order */
+	for (i = (1 << 11); i != 0; i >>= 1) {
+		if (data & i)
+			v |= EROMAR_EEDI;
 		else
-			reg &= ~EROMAR_EEDI;
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
+			v &= ~EROMAR_EEDI;
+		CSR_WRITE(l, SIP_EROMAR, v);
+		CSR_WRITE(l, SIP_EROMAR, v | EROMAR_EESK);
 		DELAY(4);
-		CSR_WRITE(l, SIP_EROMAR, reg);
+		CSR_WRITE(l, SIP_EROMAR, v);
 		DELAY(4);
 	}
-
-	/* Shift in address. */
-	for (x = 6; x > 0; x--) {
-		if (loc & (1 << (x - 1)))
-			reg |= EROMAR_EEDI;
-		else
-			reg &= ~EROMAR_EEDI;
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
-		DELAY(4);
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		DELAY(4);
-	}
-
-	/* Shift out data. */
-	reg = EROMAR_EECS;
+	v = EROMAR_EECS;
+	/* read 16bit quantity in MSB first order */
 	data = 0;
-	for (x = 16; x > 0; x--) {
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
+	for (i = 0; i < 16; i++) {
+		CSR_WRITE(l, SIP_EROMAR, v | EROMAR_EESK);
 		DELAY(4);
-		if (CSR_READ(l, SIP_EROMAR) & EROMAR_EEDO)
-			data |= (1 << (x - 1));
-		CSR_WRITE(l, SIP_EROMAR, reg);
+		data = (data << 1) | !!(CSR_READ(l, SIP_EROMAR) & EROMAR_EEDO);
+		CSR_WRITE(l, SIP_EROMAR, v);
 		DELAY(4);
 	}
-
-	/* Clear CHIP SELECT. */
+	/* turn off chip select */
 	CSR_WRITE(l, SIP_EROMAR, 0);
 	DELAY(4);
 	return data;
