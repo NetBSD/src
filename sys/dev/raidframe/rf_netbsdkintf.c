@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.8 2007/10/09 13:42:01 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.9 2007/11/02 13:28:32 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.8 2007/10/09 13:42:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.9 2007/11/02 13:28:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2224,10 +2224,11 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_iodone = cbFunc;
 	bp->b_private = cbArg;
 	bp->b_vp = b_vp;
+	bp->b_objlock = &b_vp->v_interlock;
 	if ((bp->b_flags & B_READ) == 0) {
-		mutex_enter(&bp->b_vp->v_interlock);
-		bp->b_vp->v_numoutput++;
-		mutex_exit(&bp->b_vp->v_interlock);
+		mutex_enter(&b_vp->v_interlock);
+		b_vp->v_numoutput++;
+		mutex_exit(&b_vp->v_interlock);
 	}
 
 }
