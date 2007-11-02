@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.561 2007/10/27 02:56:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.562 2007/11/02 03:40:52 itohy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -596,7 +596,7 @@ additions in our libcurses.
 Package:	OpenPAM
 Version:	20050616
 Current Vers:	20050616
-Maintainer:	Dag-Erling Sm¯rgrav <des@FreeBSD.org>
+Maintainer:	Dag-Erling Smè”grav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
 Mailing List:
@@ -756,8 +756,8 @@ Notes:
 Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2004012900 (Jan 29, 2004)
-Current Vers:	2004012900 (Jan 29, 2004)
+Version:	2007110100 (Nov 01, 2007)
+Current Vers:	2007110100 (Nov 01, 2007)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
