@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1074 2007/10/20 15:47:27 minskim Exp $
+#	$NetBSD: mi,v 1.1075 2007/11/02 21:26:55 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1755,6 +1755,7 @@
 ./usr/include/sys/ansi.h			comp-c-include
 ./usr/include/sys/ataio.h			comp-c-include
 ./usr/include/sys/audioio.h			comp-c-include
+./usr/include/sys/bitops.h			comp-c-include
 ./usr/include/sys/bootblock.h			comp-c-include
 ./usr/include/sys/bootinfo.h			comp-obsolete		obsolete
 ./usr/include/sys/bswap.h			comp-c-include
