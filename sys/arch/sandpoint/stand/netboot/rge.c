@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.5 2007/10/30 00:30:14 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.6 2007/11/02 02:31:12 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -179,7 +180,7 @@ rge_init(unsigned tag, void *data)
 
 	l = ALLOC(struct local, 256);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use PCI mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	CSR_WRITE_1(l, RGE_CR, CR_RESET);
 	do {
