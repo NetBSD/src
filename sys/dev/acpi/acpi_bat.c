@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.59 2007/10/18 23:54:54 joerg Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.60 2007/11/02 19:21:29 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.59 2007/10/18 23:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.60 2007/11/02 19:21:29 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,8 +692,8 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_data[index].sensor = index;				\
 	sc->sc_data[index].units = unit;     				\
 	sc->sc_data[index].state = ENVSYS_SVALID;			\
-	snprintf(sc->sc_data[index].desc, sizeof(sc->sc_data->desc),	\
-	    "%s %s", device_xname(dv), string);				\
+ 	strlcpy(sc->sc_data[index].desc, string,			\
+ 	    sizeof(sc->sc_data[index].desc));
 
 	INITDATA(ACPIBAT_PRESENT, ENVSYS_INDICATOR, "present");
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
