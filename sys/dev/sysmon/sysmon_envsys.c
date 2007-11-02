@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.69 2007/10/07 04:11:15 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.70 2007/11/02 19:21:29 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.69 2007/10/07 04:11:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.70 2007/11/02 19:21:29 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -430,8 +430,17 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (binfo->sensor < sme->sme_nsensors) {
 			binfo->units = edata->units;
-			(void)strlcpy(binfo->desc, edata->desc,
-			    sizeof(binfo->desc));
+
+			/*
+			 * previously, the ACPI sensor names included the
+			 * device name. Include that in compatibility code.
+			 */
+			if (strncmp(sme->sme_name, "acpi", 4) == 0)
+				(void)snprintf(binfo->desc, sizeof(binfo->desc),
+				    "%s %s", sme->sme_name, edata->desc);
+			else
+				(void)strlcpy(binfo->desc, edata->desc,
+				    sizeof(binfo->desc));
 		}
 
 		DPRINTFOBJ(("%s: binfo->units=%d binfo->validflags=%d\n",
