@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.562 2007/11/02 03:40:52 itohy Exp $
+#	$NetBSD: 3RDPARTY,v 1.563 2007/11/03 05:24:51 xtraeme Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -112,13 +112,13 @@ License:	GPLv2, LGPLv2, BSD
 Notes:
 
 Package:	bsd-family-tree
-Version:	1.111
-Current Vers:	1.111
+Version:	1.116
+Current Vers:	1.116
 Maintainer:	n/a
 Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Mailing List:
-Responsible:	None.
+Responsible:	xtraeme
 License:	See URL above.
 Notes:
 
