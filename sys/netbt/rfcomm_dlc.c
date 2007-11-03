@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_dlc.c,v 1.3 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.4 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.3 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.4 2007/11/03 17:20:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -202,8 +202,10 @@ rfcomm_dlc_timeout(void *arg)
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
 		rfcomm_dlc_close(dlc, ETIMEDOUT);
-	else if (dlc->rd_flags & RFCOMM_DLC_DETACH)
+	else if (dlc->rd_flags & RFCOMM_DLC_DETACH) {
+		callout_destroy(&dlc->rd_timeout);
 		free(dlc, M_BLUETOOTH);
+	}
 
 	splx(s);
 }

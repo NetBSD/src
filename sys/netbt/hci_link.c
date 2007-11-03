@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.14 2007/09/16 19:59:30 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.15 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.14 2007/09/16 19:59:30 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.15 2007/11/03 17:20:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -989,6 +989,8 @@ hci_link_free(struct hci_link *link, int err)
 	callout_stop(&link->hl_expire);
 	if (callout_invoking(&link->hl_expire))
 		return;
+
+	callout_destroy(&link->hl_expire);
 
 	/*
 	 * If we made a note of clock offset, keep it in a memo
