@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.2 2007/10/07 04:11:15 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.3 2007/11/03 23:05:21 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.2 2007/10/07 04:11:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.3 2007/11/03 23:05:21 xtraeme Exp $");
 
 #include <sys/types.h>
 
@@ -49,7 +49,8 @@ static const struct sme_description_table sme_units_description[] = {
 	{ ENVSYS_INDICATOR,	PENVSYS_TYPE_INDICATOR,	"Indicator" },
 	{ ENVSYS_INTEGER,	PENVSYS_TYPE_INDICATOR,	"Integer" },
 	{ ENVSYS_DRIVE,		PENVSYS_TYPE_DRIVE,	"Drive" },
-	{ ENVSYS_BATTERY_STATE,	PENVSYS_TYPE_BATTERY,	"Battery state" },
+	{ ENVSYS_BATTERY_CAPACITY, PENVSYS_TYPE_BATTERY,"Battery capacity" },
+	{ ENVSYS_BATTERY_CHARGE, -1,			"Battery charge" },
 	{ -1,			-1,			"unknown" }
 };
 
@@ -85,13 +86,13 @@ static const struct sme_description_table sme_drivestate_description[] = {
 };
 
 /*
- * Available battery state descriptions.
+ * Available battery capacity descriptions.
  */
-static const struct sme_description_table sme_batterystate_description[] = {
-	{ ENVSYS_BATTERY_STATE_NORMAL,		-1,	"NORMAL" },
-	{ ENVSYS_BATTERY_STATE_WARNING,		-1, 	"WARNING" },
-	{ ENVSYS_BATTERY_STATE_CRITICAL,	-1, 	"CRITICAL" },
-	{ ENVSYS_BATTERY_STATE_LOW,		-1,	"LOW" },
+static const struct sme_description_table sme_batterycap_description[] = {
+	{ ENVSYS_BATTERY_CAPACITY_NORMAL,	-1,	"NORMAL" },
+	{ ENVSYS_BATTERY_CAPACITY_WARNING,	-1, 	"WARNING" },
+	{ ENVSYS_BATTERY_CAPACITY_CRITICAL,	-1, 	"CRITICAL" },
+	{ ENVSYS_BATTERY_CAPACITY_LOW,		-1,	"LOW" },
 	{ -1,					-1, 	"UNKNOWN" }
 };
 
@@ -104,8 +105,7 @@ sme_get_description_table(int type)
 	const struct sme_description_table *ud = sme_units_description;
 	const struct sme_description_table *sd = sme_state_description;
 	const struct sme_description_table *dd = sme_drivestate_description;
-	const struct sme_description_table *bd = sme_batterystate_description;
-
+	const struct sme_description_table *bd = sme_batterycap_description;
 	switch (type) {
 	case SME_DESC_UNITS:
 		return ud;
@@ -113,7 +113,7 @@ sme_get_description_table(int type)
 		return sd;
 	case SME_DESC_DRIVE_STATES:
 		return dd;
-	case SME_DESC_BATTERY_STATES:
+	case SME_DESC_BATTERY_CAPACITY:
 		return bd;
 	default:
 		return NULL;

@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.56 2007/10/07 04:16:48 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.57 2007/11/03 23:05:22 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.56 2007/10/07 04:16:48 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.57 2007/11/03 23:05:22 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,7 +74,7 @@ struct envsys_sensor {
 	char	desc[ENVSYS_DESCLEN];
 	char	type[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
-	char	battstate[ENVSYS_DESCLEN];
+	char	battcap[ENVSYS_DESCLEN];
 	char 	dvname[ENVSYS_DESCLEN];
 };
 
@@ -431,12 +431,12 @@ find_sensors(prop_array_t array, const char *dvname)
 			    prop_string_cstring_nocopy(obj1),
 			    sizeof(gesen[gnelems].drvstate));
 
-		/* get current battery state string */
-		obj1 = prop_dictionary_get(obj, "battery-state");
+		/* get current battery capacity string */
+		obj1 = prop_dictionary_get(obj, "battery-capacity");
 		if (obj1)
-			(void)strlcpy(gesen[gnelems].battstate,
+			(void)strlcpy(gesen[gnelems].battcap,
 			    prop_string_cstring_nocopy(obj1),
-			    sizeof(gesen[gnelems].battstate));
+			    sizeof(gesen[gnelems].battcap));
 
 		/* get current value */
 		obj1 = prop_dictionary_get(obj, "cur-value");
@@ -602,7 +602,11 @@ print_sensors(struct envsys_sensor *es, size_t nelems, const char *dvname)
 			continue;
 		}
 
-		if (strcmp(es[i].type, "Indicator") == 0) {
+		/*
+		 * Indicator and Battery charge sensors.
+		 */
+		if ((strcmp(es[i].type, "Indicator") == 0) ||
+		    (strcmp(es[i].type, "Battery charge") == 0)) {
 
 			(void)printf(": %10s", es[i].cur_value ? "ON" : "OFF");
 
@@ -664,10 +668,10 @@ do {								\
 
 			(void)printf(": %10s", es[i].drvstate);
 
-		/* Battery state */
-		} else if (strcmp(es[i].type, "Battery state") == 0) {
+		/* Battery capacity */
+		} else if (strcmp(es[i].type, "Battery capacity") == 0) {
 
-			(void)printf(": %10s", es[i].battstate);
+			(void)printf(": %10s", es[i].battcap);
 
 		/* everything else */
 		} else {

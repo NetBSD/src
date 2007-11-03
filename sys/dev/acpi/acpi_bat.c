@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.60 2007/11/02 19:21:29 plunky Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.61 2007/11/03 23:05:22 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.60 2007/11/02 19:21:29 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.61 2007/11/03 23:05:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ acpibat_get_status(device_t dv)
 	}
 
 	sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
-	    ENVSYS_BATTERY_STATE_NORMAL;
+	    ENVSYS_BATTERY_CAPACITY_NORMAL;
 
 	sc->sc_data[ACPIBAT_CAPACITY].value_cur = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SVALID;
@@ -482,20 +482,20 @@ acpibat_get_status(device_t dv)
 	    sc->sc_data[ACPIBAT_WCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SWARNUNDER;
 		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
-		    ENVSYS_BATTERY_STATE_WARNING;
+		    ENVSYS_BATTERY_CAPACITY_WARNING;
 	}
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
 	    sc->sc_data[ACPIBAT_LCAPACITY].value_cur) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITUNDER;
 		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
-		    ENVSYS_BATTERY_STATE_LOW;
+		    ENVSYS_BATTERY_CAPACITY_LOW;
 	}
 
 	if (status & ACPIBAT_ST_CRITICAL) {
 		sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SCRITICAL;
 		sc->sc_data[ACPIBAT_CHARGE_STATE].value_cur =
-		    ENVSYS_BATTERY_STATE_CRITICAL;
+		    ENVSYS_BATTERY_CAPACITY_CRITICAL;
 	}
 
 	mutex_exit(&sc->sc_mtx);
@@ -706,8 +706,8 @@ acpibat_init_envsys(device_t dv)
 	INITDATA(ACPIBAT_CHARGERATE, rateunit, "charge rate");
 	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
 	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
-	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
-	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_BATTERY_STATE, "charge state");
+	INITDATA(ACPIBAT_CHARGING, ENVSYS_BATTERY_CHARGE, "charging");
+	INITDATA(ACPIBAT_CHARGE_STATE, ENVSYS_BATTERY_CAPACITY, "charge state");
 
 #undef INITDATA
 
