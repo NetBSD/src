@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.31 2007/11/01 22:48:14 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.32 2007/11/03 12:20:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BUILD_SYSCALL_PLAIN	/* See bottom of file */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2007/11/01 22:48:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2007/11/03 12:20:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +80,6 @@ syscall_intern(struct proc *p)
 	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = syscall;
 }
-#endif
 
 /*
  * syscall(frame):
