@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.6 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: storage.c,v 1.7 2007/11/03 09:44:06 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -377,7 +377,8 @@ read_conf_file(const char *cf, targv_t *tvp, devv_t *dvp, extv_t *evp)
 			do_extent(&conf, evp, &e);
 		} else if (strncmp(e.sv.v[0], "device", 6) == 0) {
 			do_device(&conf, dvp, evp, &e);
-		} else if (strncmp(e.sv.v[0], "target", 6) == 0) {
+		} else if (strncmp(e.sv.v[0], "target", 6) == 0 ||
+			   strncmp(e.sv.v[0], "lun", 3) == 0) {
 			do_target(&conf, tvp, dvp, evp, &e);
 		}
 		e.sv.c = 0;
