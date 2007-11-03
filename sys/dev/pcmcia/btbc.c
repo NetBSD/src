@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.6 2007/11/03 17:41:04 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.6 2007/11/03 17:41:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -177,6 +177,7 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	    btbc_power, sc);
 
 	callout_init(&sc->sc_ledch, 0);
+	callout_setfunc(&sc->sc_ledch, btbc_activity_led_timeout, sc);
 
 	return;
 }
@@ -196,6 +197,7 @@ btbc_detach(device_t self, int flags)
 	}
 
 	callout_stop(&sc->sc_ledch);
+	callout_destroy(&sc->sc_ledch);
 
 	hci_detach(&sc->sc_unit);
 
@@ -276,16 +278,14 @@ btbc_enable_activity_led(struct btbc_softc *sc)
 		    BLUECARD_LEDCONTROL, 0x10 | 0x40);
 
 		/* Stop the LED after hz/4 */
-		callout_reset(&sc->sc_ledch, hz / 4,
-		    btbc_activity_led_timeout, sc);
+		callout_schedule(&sc->sc_ledch, hz / 4);
 	} else {
 		/* Enable power LED */
 		bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 		    BLUECARD_LEDCONTROL, 0x08 | 0x20);
 
 		/* Stop the LED after HZ/2 */
-		callout_reset(&sc->sc_ledch, hz / 2,
-		    btbc_activity_led_timeout, sc);
+		callout_schedule(&sc->sc_ledch, hz / 2);
 	}
 }
 
