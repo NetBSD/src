@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.17 2007/11/03 12:21:20 dsl Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.18 2007/11/03 12:58:04 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.17 2007/11/03 12:21:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2007/11/03 12:58:04 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -84,64 +84,41 @@ linux_syscall_intern(struct proc *p)
 static void
 linux_syscall(struct trapframe *frame)
 {
-	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	size_t argsize, argoff;
-	register_t code, args[9], rval[2], *argp;
+	register_t code, args[6], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
+	uvmexp.syscalls++;
+
+	LWP_CACHE_CREDS(l, p);
+
 	callp = p->p_emul->e_sysent;
-	argp = &args[0];
-	argoff = 0;
 
 	code &= (SYS_NSYSENT - 1);
 	callp += code;
 
-	argsize = (callp->sy_argsize >> 3) + argoff;
-	if (argsize) {
-		switch (MIN(argsize, 6)) {
-		case 6:
-			args[5] = frame->tf_r9;
-		case 5:
-			args[4] = frame->tf_r8;
-		case 4:
-			args[3] = frame->tf_r10;
-		case 3:
-			args[2] = frame->tf_rdx;
-		case 2:	
-			args[1] = frame->tf_rsi;
-		case 1:
-			args[0] = frame->tf_rdi;
-			break;
-		default:
-			panic("impossible syscall argsize");
-		}
-		if (argsize > 6) {
-			argsize -= 6;
-			params = (char *)frame->tf_rsp + sizeof(register_t);
-			error = copyin(params, (void *)&args[6],
-					argsize << 3);
-			if (error != 0)
-				goto bad;
-		}
-	}
+	/* Linux system calls have a maximum of 6 arguments, copy them all */
+	args[0] = frame->tf_rdi;
+	args[1] = frame->tf_rsi;
+	args[2] = frame->tf_rdx;
+	args[3] = frame->tf_r10;
+	args[4] = frame->tf_r8;
+	args[5] = frame->tf_r9;
 
 	KERNEL_LOCK(1, l);
 	if (__predict_false(p->p_trace_enabled)
-	    && (error = trace_enter(l, code, code, NULL, argp)) != 0)
+	    && (error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, argp, rval);
+	error = (*callp->sy_call)(l, args, rval);
 out:
 	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
@@ -161,7 +138,6 @@ out:
 		/* nothing to do */
 		break;
 	default:
-	bad:
 		error = native_to_linux_errno[error];
 		frame->tf_rax = error;
 		frame->tf_rflags |= PSL_C;	/* carry bit */
@@ -169,7 +145,7 @@ out:
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(l, code, argp, rval, error);
+		trace_exit(l, code, args, rval, error);
 
 	userret(l);
 }
