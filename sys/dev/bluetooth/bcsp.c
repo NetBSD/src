@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.4 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.5 2007/11/03 18:24:00 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.4 2007/11/03 17:41:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.5 2007/11/03 18:24:00 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -331,6 +331,12 @@ bcsp_detach(struct device *self, int flags __unused)
 	struct bcsp_softc *sc = device_private(self);
 
 	hci_detach(&sc->sc_unit);
+
+	callout_stop(&sc->sc_seq_timer);
+	callout_destroy(&sc->sc_seq_timer);
+
+	callout_stop(&sc->sc_le_timer);
+	callout_destroy(&sc->sc_le_timer);
 
 	return 0;
 }

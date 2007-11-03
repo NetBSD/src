@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.10 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.11 2007/11/03 18:24:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.10 2007/11/03 17:41:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.11 2007/11/03 18:24:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,7 +85,7 @@ struct bthidev_softc {
 
 	LIST_HEAD(,bthidev)	sc_list;	/* child list */
 
-	struct callout		sc_reconnect;
+	callout_t		sc_reconnect;
 	int			sc_attempts;	/* connection attempts */
 };
 
@@ -353,6 +353,8 @@ bthidev_detach(device_t self, int flags)
 	callout_stop(&sc->sc_reconnect);
 	if (callout_invoking(&sc->sc_reconnect))
 		tsleep(sc, PWAIT, "bthidetach", 0);
+
+	callout_destroy(&sc->sc_reconnect);
 
 	splx(s);
 
