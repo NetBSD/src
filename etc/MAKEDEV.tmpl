@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.87 2007/08/04 11:03:04 ad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.88 2007/11/03 19:33:36 gdt Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -527,6 +527,7 @@ all)
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev bthub
+	makedev cfs
 	makedev puffs
 	makedev local # do this last
 	;;
@@ -1123,6 +1124,10 @@ satlink*)
 random)
 	mkdev random	c %rnd_chr% 0 444
 	mkdev urandom	c %rnd_chr% 1 644
+	;;
+
+cfs)
+	makedev cfs0
 	;;
 
 cfs*)
