@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.14 2007/10/13 00:56:16 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.15 2007/11/03 23:33:50 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.14 2007/10/13 00:56:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.15 2007/11/03 23:33:50 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ struct aiboost_comp {
 };
 
 struct aiboost_softc {
-	struct device sc_dev;
 	struct acpi_devnode *sc_node;	/* ACPI devnode */
 	struct aiboost_comp *sc_aitemp, *sc_aivolt, *sc_aifan;
 	struct sysmon_envsys sc_sme;
@@ -77,15 +76,14 @@ static int	aiboost_get_value(ACPI_HANDLE, const char *, UINT32);
 
 /* sysmon_envsys(9) glue */
 static void	aiboost_setup_sensors(struct aiboost_softc *);
-static int	aiboost_gtredata(struct sysmon_envsys *, envsys_data_t *);
-static void	aiboost_refresh_sensors(struct aiboost_softc *,
+static int	aiboost_refresh_sensors(struct sysmon_envsys *,
 					envsys_data_t *);
 
 /* autoconf(9) glue */
-static int	aiboost_acpi_match(struct device *, struct cfdata *, void *);
-static void	aiboost_acpi_attach(struct device *, struct device *, void *);
+static int	aiboost_acpi_match(device_t, struct cfdata *, void *);
+static void	aiboost_acpi_attach(device_t, struct device *, void *);
 
-CFATTACH_DECL(aiboost, sizeof(struct aiboost_softc), aiboost_acpi_match,
+CFATTACH_DECL_NEW(aiboost, sizeof(struct aiboost_softc), aiboost_acpi_match,
     aiboost_acpi_attach, NULL, NULL);
 
 /*
@@ -98,7 +96,7 @@ static const char * const aiboost_acpi_ids[] = {
 };
 
 static int
-aiboost_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+aiboost_acpi_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -109,9 +107,9 @@ aiboost_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-aiboost_acpi_attach(struct device *parent, struct device *self, void *aux)
+aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct aiboost_softc *sc = (struct aiboost_softc *)self;
+	struct aiboost_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_HANDLE *handl;
 	int i, maxsens;
@@ -122,8 +120,7 @@ aiboost_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	aprint_normal("%s: ASUS AI Boost Hardware monitor\n",
-	    sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "ASUS AI Boost Hardware monitor\n");
 
 	if (ACPI_FAILURE(aiboost_getcomp(handl, "TSIF", &sc->sc_aitemp)))
 		return;
@@ -149,15 +146,14 @@ aiboost_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook into the system monitor.
 	 */
-	sc->sc_sme.sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme.sme_name = device_xname(self);
 	sc->sc_sme.sme_sensor_data = sc->sc_data;
 	sc->sc_sme.sme_cookie = sc;
-	sc->sc_sme.sme_gtredata = aiboost_gtredata;
+	sc->sc_sme.sme_gtredata = aiboost_refresh_sensors;
 	sc->sc_sme.sme_nsensors = maxsens;
 
 	if (sysmon_envsys_register(&sc->sc_sme))
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 }
 
 #define COPYDESCR(x, y)				\
@@ -202,9 +198,10 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 	}
 }
 
-static void
-aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
+static int
+aiboost_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
+	struct aiboost_softc *sc = sme->sme_cookie;
 	ACPI_HANDLE *h = sc->sc_node->ad_handle;
 	int i, j, val;
 
@@ -254,18 +251,6 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	edata->state = ENVSYS_SVALID;
 out:
 	mutex_exit(&sc->sc_mtx);
-}
-
-static int
-aiboost_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
-{
-	struct aiboost_softc *sc = sme->sme_cookie;
-
-	/* 
-	 * Refresh our stored data for the sensor specified
-	 * on edata->sensor.
-	 */
-	aiboost_refresh_sensors(sc, edata);
 	return 0;
 }
 
