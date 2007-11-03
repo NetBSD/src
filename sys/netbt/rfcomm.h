@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.3 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.4 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.3 2007/04/21 06:15:23 plunky Exp $
+ * $Id: rfcomm.h,v 1.4 2007/11/03 17:20:17 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -287,7 +287,7 @@ struct rfcomm_session {
 	SIMPLEQ_HEAD(,rfcomm_credit)	 rs_credits;	/* credit notes */
 	LIST_HEAD(,rfcomm_dlc)		 rs_dlcs;	/* DLC list */
 
-	struct callout			 rs_timeout;	/* timeout */
+	callout_t			 rs_timeout;	/* timeout */
 
 	LIST_ENTRY(rfcomm_session)	 rs_next;	/* next session */
 };

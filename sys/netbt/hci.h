@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.14 2007/11/02 20:27:14 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.15 2007/11/03 17:20:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.14 2007/11/02 20:27:14 plunky Exp $
+ * $Id: hci.h,v 1.15 2007/11/03 17:20:17 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2059,7 +2059,7 @@ struct hci_link {
 	TAILQ_HEAD(,l2cap_pdu)	 hl_txq;	/* queue of outgoing PDUs */
 	int			 hl_txqlen;	/* number of fragments */
 	struct mbuf		*hl_rxp;	/* incoming PDU (accumulating)*/
-	struct callout		 hl_expire;	/* connection expiry timer */
+	callout_t		 hl_expire;	/* connection expiry timer */
 	TAILQ_HEAD(,l2cap_req)	 hl_reqs;	/* pending requests */
 
 	/* SCO link info */
