@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.7 2007/07/09 21:00:31 ad Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.8 2007/11/03 17:41:03 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.7 2007/07/09 21:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.8 2007/11/03 17:41:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -79,7 +79,7 @@ struct btkbd_mod {
 
 struct btkbd_softc {
 	struct bthidev		 sc_hidev;	/* device+ */
-	struct device		*sc_wskbd;	/* child */
+	device_t		 sc_wskbd;	/* child */
 	int			 sc_enabled;
 
 	int			(*sc_output)	/* output method */
@@ -114,11 +114,11 @@ struct btkbd_softc {
 };
 
 /* autoconf(9) methods */
-static int	btkbd_match(struct device *, struct cfdata *, void *);
-static void	btkbd_attach(struct device *, struct device *, void *);
-static int	btkbd_detach(struct device *, int);
+static int	btkbd_match(device_t, struct cfdata *, void *);
+static void	btkbd_attach(device_t, device_t, void *);
+static int	btkbd_detach(device_t, int);
 
-CFATTACH_DECL(btkbd, sizeof(struct btkbd_softc),
+CFATTACH_DECL_NEW(btkbd, sizeof(struct btkbd_softc),
     btkbd_match, btkbd_attach, btkbd_detach, NULL);
 
 /* wskbd(4) accessops */
@@ -164,8 +164,7 @@ static void btkbd_repeat(void *);
  */
 
 static int
-btkbd_match(struct device *self, struct cfdata *cfdata,
-    void *aux)
+btkbd_match(device_t self, struct cfdata *cfdata, void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -177,9 +176,9 @@ btkbd_match(struct device *self, struct cfdata *cfdata,
 }
 
 static void
-btkbd_attach(struct device *parent, struct device *self, void *aux)
+btkbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = device_private(self);
 	struct bthidev_attach_args *ba = aux;
 	struct wskbddev_attach_args wska;
 	const char *parserr;
@@ -207,13 +206,13 @@ btkbd_attach(struct device *parent, struct device *self, void *aux)
 	wska.accessops = &btkbd_accessops;
 	wska.accesscookie = sc;
 
-	sc->sc_wskbd = config_found((struct device *)sc, &wska, wskbddevprint);
+	sc->sc_wskbd = config_found(self, &wska, wskbddevprint);
 }
 
 static int
-btkbd_detach(struct device *self, int flags)
+btkbd_detach(device_t self, int flags)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = device_private(self);
 	int err = 0;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -300,7 +299,7 @@ btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
 static int
 btkbd_enable(void *self, int on)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = self;
 
 	sc->sc_enabled = on;
 	return 0;
@@ -309,7 +308,7 @@ btkbd_enable(void *self, int on)
 static void
 btkbd_set_leds(void *self, int leds)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = self;
 	uint8_t report;
 
 	if (sc->sc_leds == leds)
@@ -340,7 +339,7 @@ static int
 btkbd_ioctl(void *self, unsigned long cmd, void *data, int flag,
     struct lwp *l)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = self;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:

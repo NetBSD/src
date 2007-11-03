@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.3 2007/10/14 18:13:49 kiyohara Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.4 2007/11/03 17:41:03 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.3 2007/10/14 18:13:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.4 2007/11/03 17:41:03 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ int bcsp_debug = 3;
 #endif
 
 struct bcsp_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct tty *sc_tp;
 	struct hci_unit sc_unit;		/* Bluetooth HCI Unit */
@@ -175,7 +175,7 @@ static void bcsp_packet_print(struct mbuf *m);
  * It doesn't need to be exported, as only bcspattach() uses it,
  * but there's no "official" way to make it static.
  */
-CFATTACH_DECL(bcsp, sizeof(struct bcsp_softc),
+CFATTACH_DECL_NEW(bcsp, sizeof(struct bcsp_softc),
     bcsp_match, bcsp_attach, bcsp_detach, NULL);
 
 static struct linesw bcsp_disc = {
@@ -245,6 +245,7 @@ bcsp_attach(struct device *parent __unused, struct device *self,
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+	sc->sc_dev = self;
 	callout_init(&sc->sc_seq_timer, 0);
 	callout_setfunc(&sc->sc_seq_timer, bcsp_timer_timeout, sc);
 	callout_init(&sc->sc_le_timer, 0);
@@ -258,7 +259,7 @@ bcsp_attach(struct device *parent __unused, struct device *self,
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+	sc->sc_unit.hci_devname = device_xname(self);
 	sc->sc_unit.hci_enable = bcsp_enable;
 	sc->sc_unit.hci_disable = bcsp_disable;
 	sc->sc_unit.hci_start_cmd = bcsp_start;
@@ -273,7 +274,7 @@ bcsp_attach(struct device *parent __unused, struct device *self,
 		goto err;
 	}
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, &node,
-	    0, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    0, CTLTYPE_NODE, device_xname(self),
 	    SYSCTL_DESCR("bcsp controls"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
 		goto err;
@@ -355,7 +356,7 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	s = spltty();
 
 	if (tp->t_linesw == &bcsp_disc) {
-		sc = (struct bcsp_softc *)tp->t_sc;
+		sc = tp->t_sc;
 		if (sc != NULL) {
 			splx(s);
 			return EBUSY;
@@ -400,11 +401,9 @@ bcspopen(dev_t device __unused, struct tty *tp)
 static int
 bcspclose(struct tty *tp, int flag __unused)
 {
-	struct bcsp_softc *sc;
+	struct bcsp_softc *sc = tp->t_sc;
 	struct cfdata *cfdata;
 	int s;
-
-	sc = tp->t_sc;
 
 	/* terminate link-establishment */
 	bcsp_terminate_le(&sc->sc_unit);
@@ -420,8 +419,8 @@ bcspclose(struct tty *tp, int flag __unused)
 	if (sc != NULL) {
 		tp->t_sc = NULL;
 		if (sc->sc_tp == tp) {
-			cfdata = sc->sc_dev.dv_cfdata;
-			config_detach(&sc->sc_dev, 0);
+			cfdata = device_cfdata(sc->sc_dev);
+			config_detach(sc->sc_dev, 0);
 			free(cfdata, M_DEVBUF);
 		}
 
@@ -435,7 +434,7 @@ static int
 bcspioctl(struct tty *tp, u_long cmd, void *data, int flag __unused,
 	  struct lwp *l __unused)
 {
-	struct bcsp_softc *sc = (struct bcsp_softc *)tp->t_sc;
+	struct bcsp_softc *sc = tp->t_sc;
 	int error;
 
 	if (sc == NULL || tp != sc->sc_tp)
@@ -464,7 +463,7 @@ bcspioctl(struct tty *tp, u_long cmd, void *data, int flag __unused,
 static int
 bcsp_slip_transmit(struct tty *tp)
 {
-	struct bcsp_softc *sc = (struct bcsp_softc *)tp->t_sc;
+	struct bcsp_softc *sc = tp->t_sc;
 	struct mbuf *m;
 	int count, rlen;
 	uint8_t *rptr;
@@ -484,7 +483,7 @@ bcsp_slip_transmit(struct tty *tp)
 #ifdef BCSP_DEBUG
 		if (sc->sc_slip_txrsv == BCSP_SLIP_PKTSTART)
 			DPRINTFN(4, ("%s: slip transmit start\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev));
 		else
 			DPRINTFN(4, ("0x%02x ", sc->sc_slip_txrsv));
 #endif
@@ -509,7 +508,7 @@ bcsp_slip_transmit(struct tty *tp)
 					break;
 
 				DPRINTFN(4, ("\n%s: slip transmit end\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(sc->sc_dev));
 
 				m = sc->sc_txp;
 				sc->sc_txp = NULL;
@@ -569,7 +568,7 @@ bcsp_slip_transmit(struct tty *tp)
 static int
 bcsp_slip_receive(int c, struct tty *tp)
 {
-	struct bcsp_softc *sc = (struct bcsp_softc *)tp->t_sc;
+	struct bcsp_softc *sc = tp->t_sc;
 	struct mbuf *m = sc->sc_rxp;
 	int discard = 0;
 	const char *errstr;
@@ -586,7 +585,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			MGET(m->m_next, M_DONTWAIT, MT_DATA);
 			if (m->m_next == NULL) {
 				printf("%s: out of memory\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -607,13 +606,13 @@ bcsp_slip_receive(int c, struct tty *tp)
 			/* BCSP_SLIP_PKTSTART */
 
 			DPRINTFN(4, ("%s: slip receive start\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev)));
 
 			/* new packet */
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: out of memory\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -626,7 +625,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 
 			if (m == sc->sc_rxp && m->m_len == 0) {
 				DPRINTFN(4, ("%s: resynchronises\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(sc->sc_dev)));
 
 				sc->sc_unit.hci_stats.byte_rx++;
 				return 0;
@@ -634,7 +633,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 
 			DPRINTFN(4, ("%s%s: slip receive end\n",
 			    (m->m_len % 16 != 0) ? "\n" :  "",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev)));
 
 			bcsp_pktintegrity_receive(sc, sc->sc_rxp);
 			sc->sc_rxp = NULL;
@@ -686,7 +685,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 	if (discard) {
 discarded:
 		DPRINTFN(4, ("%s: receives unexpected byte 0x%02x: %s\n",
-		    sc->sc_dev.dv_xname, c, errstr));
+		    device_xname(sc->sc_dev), c, errstr));
 	}
 	sc->sc_unit.hci_stats.byte_rx++;
 
@@ -705,7 +704,7 @@ bcsp_pktintegrity_transmit(struct bcsp_softc *sc)
 	bcsp_hdr_t *hdrp = mtod(m, bcsp_hdr_t *);
 	int pktlen, pldlen;
 
-	DPRINTFN(3, ("%s: pi transmit\n", sc->sc_dev.dv_xname));
+	DPRINTFN(3, ("%s: pi transmit\n", device_xname(sc->sc_dev)));
 
 	for (pktlen = 0, _m = m; _m != NULL; _m = _m->m_next)
 		pktlen += _m->m_len;
@@ -749,7 +748,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	uint16_t crc = 0xffff;
 	const char *errstr;
 
-	DPRINTFN(3, ("%s: pi receive\n", sc->sc_dev.dv_xname));
+	DPRINTFN(3, ("%s: pi receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG
 	if (bcsp_debug == 4)
 		bcsp_packet_print(m);
@@ -804,7 +803,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	if (discard) {
 discarded:
 		DPRINTFN(3, ("%s: receives unexpected packet: %s\n",
-		    sc->sc_dev.dv_xname, errstr));
+		    device_xname(sc->sc_dev), errstr));
 		m_freem(m);
 	} else
 		bcsp_mux_receive(sc, m);
@@ -854,7 +853,7 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 	bcsp_hdr_t *hdrp;
 
 	DPRINTFN(2, ("%s: mux transmit: hci_flags=0x%x, choke=%d",
-	    sc->sc_dev.dv_xname, unit->hci_flags, sc->sc_mux_choke));
+	    device_xname(sc->sc_dev), unit->hci_flags, sc->sc_mux_choke));
 
 	if (sc->sc_mux_choke) {
 		struct mbuf *_m = NULL;
@@ -899,7 +898,7 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 		m = bcsp_create_ackpkt();
 		if (m != NULL)
 			goto transmit;
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+		printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		++unit->hci_stats.err_tx;
 	}
 
@@ -933,7 +932,7 @@ bcsp_mux_receive(struct bcsp_softc *sc, struct mbuf *m)
 	const u_int rxack = BCSP_FLAGS_ACK(hdrp->flags);
 
 	DPRINTFN(2, ("%s: mux receive: flags=0x%x, ident=%d, rxack=%d\n",
-	    sc->sc_dev.dv_xname, hdrp->flags, hdrp->ident, rxack));
+	    device_xname(sc->sc_dev), hdrp->flags, hdrp->ident, rxack));
 #ifdef BCSP_DEBUG
 	if (bcsp_debug == 3)
 		bcsp_packet_print(m);
@@ -961,7 +960,7 @@ static __inline void
 bcsp_send_ack_command(struct bcsp_softc *sc)
 {
 
-	DPRINTFN(2, ("%s: mux send_ack_command\n", sc->sc_dev.dv_xname));
+	DPRINTFN(2, ("%s: mux send_ack_command\n", device_xname(sc->sc_dev)));
 
 	sc->sc_mux_send_ack = true;
 }
@@ -993,7 +992,7 @@ static __inline void
 bcsp_set_choke(struct bcsp_softc *sc, bool choke)
 {
 
-	DPRINTFN(2, ("%s: mux set choke=%d\n", sc->sc_dev.dv_xname, choke));
+	DPRINTFN(2, ("%s: mux set choke=%d\n", device_xname(sc->sc_dev), choke));
 
 	sc->sc_mux_choke = choke;
 }
@@ -1012,7 +1011,7 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 	rxseq = BCSP_FLAGS_SEQ(hdr.flags);
 
 	DPRINTFN(1, ("%s: seq receive: rxseq=%d, expected %d\n",
-	    sc->sc_dev.dv_xname, rxseq, sc->sc_seq_expected_rxseq));
+	    device_xname(sc->sc_dev), rxseq, sc->sc_seq_expected_rxseq));
 #ifdef BCSP_DEBUG
 	if (bcsp_debug == 2)
 		bcsp_packet_print(m);
@@ -1062,7 +1061,7 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 	default:
 		printf("%s:"
 		    " received reliable packet with not support channel %d\n",
-		    sc->sc_dev.dv_xname, hdr.ident);
+		    device_xname(sc->sc_dev), hdr.ident);
 		m_freem(m);
 		break;
 	}
@@ -1082,7 +1081,7 @@ bcsp_tx_reliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 	int s;
 
 	DPRINTFN(1, ("%s: seq transmit:"
-	    "protocol_id=%d, winspace=%d, txseq=%d\n", sc->sc_dev.dv_xname,
+	    "protocol_id=%d, winspace=%d, txseq=%d\n", device_xname(sc->sc_dev),
 	    protocol_id, sc->sc_seq_winspace, sc->sc_seq_txseq));
 
 	for (pldlen = 0, _m = m; _m != NULL; _m = _m->m_next) {
@@ -1100,7 +1099,7 @@ bcsp_tx_reliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 
 	M_PREPEND(m, sizeof(bcsp_hdr_t), M_DONTWAIT);
 	if (m == NULL) {
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+		printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		return false;
 	}
 	KASSERT(m->m_len >= sizeof(bcsp_hdr_t));
@@ -1126,7 +1125,7 @@ bcsp_tx_reliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 	sc->sc_seq_winspace--;
 	_m = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 	if (_m == NULL) {
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+		printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		return false;
 	}
 	MBUFQ_ENQUEUE(&sc->sc_seq_retryq, _m);
@@ -1168,7 +1167,7 @@ bcsp_signal_rxack(struct bcsp_softc *sc, uint32_t rxack)
 	int s;
 
 	DPRINTFN(1, ("%s: seq signal rxack: rxack=%d\n",
-	    sc->sc_dev.dv_xname, rxack));
+	    device_xname(sc->sc_dev), rxack));
 
 	s = splserial();
 	m = MBUFQ_FIRST(&sc->sc_seq_retryq);
@@ -1212,14 +1211,14 @@ bcsp_timer_timeout(void *arg)
 	int s, i = 0;
 
 	DPRINTFN(1, ("%s: seq timeout: retries=%d\n",
-	    sc->sc_dev.dv_xname, sc->sc_seq_retries));
+	    device_xname(sc->sc_dev), sc->sc_seq_retries));
 
 	s = splserial();
 	for (m = MBUFQ_FIRST(&sc->sc_seq_retryq); m != NULL;
 	    m = MBUFQ_NEXT(m)) {
 		_m = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 		if (_m == NULL) {
-			printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+			printf("%s: out of memory\n", device_xname(sc->sc_dev));
 			return;
 		}
 		MBUFQ_ENQUEUE(&sc->sc_seqq, _m);
@@ -1233,7 +1232,7 @@ bcsp_timer_timeout(void *arg)
 		else {
 			printf("%s: reached the retry limit."
 			    "  restart the link-establishment\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			bcsp_sequencing_reset(sc);
 			bcsp_start_le(&sc->sc_unit);
 			return;
@@ -1274,7 +1273,7 @@ bcsp_datagramq_receive(struct bcsp_softc *sc, struct mbuf *m)
 {
 	bcsp_hdr_t hdr;
 
-	DPRINTFN(1, ("%s: dgq receive\n", sc->sc_dev.dv_xname));
+	DPRINTFN(1, ("%s: dgq receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG
 	if (bcsp_debug == 2)
 		bcsp_packet_print(m);
@@ -1302,7 +1301,7 @@ bcsp_datagramq_receive(struct bcsp_softc *sc, struct mbuf *m)
 	default:
 		printf("%s:"
 		    " received unreliable packet with not support channel %d\n",
-		    sc->sc_dev.dv_xname, hdr.ident);
+		    device_xname(sc->sc_dev), hdr.ident);
 		m_freem(m);
 		break;
 	}
@@ -1317,7 +1316,7 @@ bcsp_tx_unreliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 	int s;
 
 	DPRINTFN(1, ("%s: dgq transmit: protocol_id=%d,",
-	    sc->sc_dev.dv_xname, protocol_id));
+	    device_xname(sc->sc_dev), protocol_id));
 
 	for (pldlen = 0, _m = m; _m != NULL; _m = m->m_next) {
 		if (_m->m_len < 0)
@@ -1332,7 +1331,7 @@ bcsp_tx_unreliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 
 	M_PREPEND(m, sizeof(bcsp_hdr_t), M_DONTWAIT);
 	if (m == NULL) {
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+		printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		return false;
 	}
 	KASSERT(m->m_len >= sizeof(bcsp_hdr_t));
@@ -1389,7 +1388,7 @@ bcsp_start_le(struct hci_unit *unit)
 {
 	struct bcsp_softc *sc = unit->hci_softc;
 
-	DPRINTF(("%s: start link-establish\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: start link-establish\n", device_xname(sc->sc_dev)));
 
 	bcsp_set_choke(sc, true);
 
@@ -1401,7 +1400,7 @@ bcsp_start_le(struct hci_unit *unit)
 		m_copyback(m, 0, sizeof(sync), sync);
 		if (!bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_LE)) {
 			printf("%s: le-packet transmit failed\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return EINVAL;
 		}
 	}
@@ -1422,14 +1421,14 @@ bcsp_terminate_le(struct hci_unit *unit)
 	bcsp_set_choke(sc, true);
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+		printf("%s: out of memory\n", device_xname(sc->sc_dev));
 	else {
 		/* length of le packets is 4 */
 		m->m_pkthdr.len = m->m_len = 0;
 		m_copyback(m, 0, sizeof(sync), sync);
 		if (!bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_LE))
 			printf("%s: link-establishment terminations failed\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 	}
 }
 
@@ -1453,7 +1452,7 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 	};
 
 	DPRINTFN(0, ("%s: le input: state %d, muzzled %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_le_state, sc->sc_le_muzzled));
+	    device_xname(sc->sc_dev), sc->sc_le_state, sc->sc_le_muzzled));
 #ifdef BCSP_DEBUG
 	if (bcsp_debug == 1)
 		bcsp_packet_print(m);
@@ -1467,7 +1466,7 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 			if (*(const uint32_t *)pkt[i].datap == *rcvpkt)
 				break;
 	if (m->m_len != sizeof(uint32_t) || pkt[i].type == NULL) {
-		printf("%s: received unknown packet\n", sc->sc_dev.dv_xname);
+		printf("%s: received unknown packet\n", device_xname(sc->sc_dev));
 		m_freem(m);
 		return;
 	}
@@ -1480,7 +1479,7 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 			rplypkt = syncresp;
 		} else if (*rcvpkt == *(const uint32_t *)syncresp) {
 			DPRINTF(("%s: state change to curious\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev)));
 
 			rplypkt = conf;
 			callout_schedule(&sc->sc_le_timer,
@@ -1488,7 +1487,7 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 			sc->sc_le_state = le_state_curious;
 		} else
 			printf("%s: received an unknown packet at shy\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		break;
 
 	case le_state_curious:
@@ -1498,14 +1497,14 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 			rplypkt = confresp;
 		else if (*rcvpkt == *(const uint32_t *)confresp) {
 			DPRINTF(("%s: state change to garrulous:\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev)));
 
 			bcsp_set_choke(sc, false);
 			callout_stop(&sc->sc_le_timer);
 			sc->sc_le_state = le_state_garrulous;
 		} else
 			printf("%s: received unknown packet at curious\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		break;
 
 	case le_state_garrulous:
@@ -1514,14 +1513,14 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 		else if (*rcvpkt == *(const uint32_t *)sync) {
 			/* XXXXX */
 			printf("%s: received sync!!  peer to reset?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 
 			bcsp_sequencing_reset(sc);
 			rplypkt = sync;
 			sc->sc_le_state = le_state_shy;
 		} else
 			printf("%s: received unknown packet at garrulous\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		break;
 	}
 
@@ -1530,14 +1529,14 @@ bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 	if (rplypkt != NULL) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
-			printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+			printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		else {
 			/* length of le packets is 4 */
 			m->m_pkthdr.len = m->m_len = 0;
 			m_copyback(m, 0, 4, rplypkt);
 			if (!bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_LE))
 				printf("%s: le-packet transmit failed\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 		}
 	}
 }
@@ -1551,7 +1550,7 @@ bcsp_le_timeout(void *arg)
 	const uint8_t *sndpkt = NULL;
 
 	DPRINTFN(0, ("%s: le timeout: state %d, muzzled %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_le_state, sc->sc_le_muzzled));
+	    device_xname(sc->sc_dev), sc->sc_le_state, sc->sc_le_muzzled));
 
 	switch (sc->sc_le_state) {
 	case le_state_shy:
@@ -1567,21 +1566,21 @@ bcsp_le_timeout(void *arg)
 
 	default:
 		printf("%s: timeout happen at unknown state %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_le_state);
+		    device_xname(sc->sc_dev), sc->sc_le_state);
 		return;
 	}
 
 	if (sndpkt != NULL) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
-			printf("%s: out of memory\n", sc->sc_dev.dv_xname);
+			printf("%s: out of memory\n", device_xname(sc->sc_dev));
 		else {
 			/* length of le packets is 4 */
 			m->m_pkthdr.len = m->m_len = 0;
 			m_copyback(m, 0, 4, sndpkt);
 			if (!bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_LE))
 				printf("%s: le-packet transmit failed\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 		}
 	}
 

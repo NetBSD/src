@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.5 2007/10/19 12:01:03 ad Exp $	*/
+/*	$NetBSD: btbc.c,v 1.6 2007/11/03 17:41:04 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.5 2007/10/19 12:01:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.6 2007/11/03 17:41:04 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.5 2007/10/19 12:01:03 ad Exp $");
 #define BTBC_DEFAULT_BAUDRATE	57600
 
 struct btbc_softc {
-	struct device sc_dev;			/* required */
+	device_t sc_dev;
 
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
@@ -93,9 +93,9 @@ struct btbc_softc {
 	uint8_t sc_ctrlreg;			/* value for control register */
 };
 
-static int btbc_match(struct device *, struct cfdata *, void *);
-static void btbc_attach(struct device *, struct device *, void *);
-static int btbc_detach(struct device *, int);
+static int btbc_match(device_t, struct cfdata *, void *);
+static void btbc_attach(device_t, device_t, void *);
+static int btbc_detach(device_t, int);
 static void btbc_power(int, void *);
 
 static void btbc_activity_led_timeout(void *);
@@ -111,13 +111,13 @@ static void btbc_start(struct hci_unit *);
 static int btbc_enable(struct hci_unit *);
 static void btbc_disable(struct hci_unit *);
 
-CFATTACH_DECL(btbc, sizeof(struct btbc_softc),
+CFATTACH_DECL_NEW(btbc, sizeof(struct btbc_softc),
     btbc_match, btbc_attach, btbc_detach, NULL);
 
 
 /* ARGSUSED */
 static int
-btbc_match(struct device *parent, struct cfdata *match, void *aux)
+btbc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -141,13 +141,14 @@ btbc_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 
 /* ARGSUSED */
 static void
-btbc_attach(struct device *parent, struct device *self, void *aux)
+btbc_attach(device_t parent, device_t self, void *aux)
 {
 	struct btbc_softc *sc = (struct btbc_softc *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_pf = pa->pf;
 
 	if ((error = pcmcia_function_configure(pa->pf,
@@ -162,7 +163,7 @@ btbc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 	sc->sc_unit.hci_enable = btbc_enable;
 	sc->sc_unit.hci_disable = btbc_disable;
 	sc->sc_unit.hci_start_cmd = btbc_start;
@@ -172,7 +173,7 @@ btbc_attach(struct device *parent, struct device *self, void *aux)
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    btbc_power, sc);
 
 	callout_init(&sc->sc_ledch, 0);
@@ -182,7 +183,7 @@ btbc_attach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static int
-btbc_detach(struct device *self, int flags)
+btbc_detach(device_t self, int flags)
 {
 	struct btbc_softc *sc = (struct btbc_softc *)self;
 	int err = 0;
@@ -215,18 +216,18 @@ btbc_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BTBC_SLEEPING;
-			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
+			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BTBC_SLEEPING) {
-			printf_nolog("%s: waking up\n", sc->sc_dev.dv_xname);
+			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
 			sc->sc_flags &= ~BTBC_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
 			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 			sc->sc_unit.hci_enable = btbc_enable;
 			sc->sc_unit.hci_disable = btbc_disable;
 			sc->sc_unit.hci_start_cmd = btbc_start;
@@ -404,7 +405,7 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
 					printf("%s: out of memory\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -420,7 +421,7 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
 					printf("%s: out of memory\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -473,7 +474,7 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 
 			default:
 				printf("%s: Unknown packet type=%#x!\n",
-					sc->sc_dev.dv_xname, buf[i]);
+					device_xname(sc->sc_dev), buf[i]);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -525,7 +526,7 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 
 		default:
 			panic("%s: invalid state %d!\n",
-				sc->sc_dev.dv_xname, sc->sc_state);
+				device_xname(sc->sc_dev), sc->sc_state);
 		}
 		i++;
 	}
