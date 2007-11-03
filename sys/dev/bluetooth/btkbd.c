@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.8 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.9 2007/11/03 18:24:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.8 2007/11/03 17:41:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.9 2007/11/03 18:24:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -106,7 +106,7 @@ struct btkbd_softc {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int			 sc_rawkbd;
 #ifdef BTKBD_REPEAT
-	struct callout		 sc_repeat;
+	callout_t		 sc_repeat;
 	int			 sc_nrep;
 	char			 sc_rep[MAXKEYS];
 #endif
@@ -219,6 +219,7 @@ btkbd_detach(device_t self, int flags)
 #ifdef BTKBD_REPEAT
 	callout_stop(&sc->sc_repeat);
 	KASSERT(!callout_invoking(&sc->sc_repeat));
+	callout_destroy(&sc->sc_repeat);
 #endif
 #endif
 
