@@ -26,7 +26,7 @@ WWAARRNNIINNGG
      _Y_o_u _a_r_e _a_d_v_i_s_e_d _t_o _v_e_r_i_f_y _t_h_e _c_o_m_p_e_t_e_n_c_e _a_n_d _i_d_e_n_t_i_t_y _o_f _t_h_o_s_e _w_h_o _p_r_o_-
      _v_i_d_e _i_n_s_t_a_l_l_a_b_l_e _p_a_c_k_a_g_e _f_i_l_e_s_.  _F_o_r _e_x_t_r_a _p_r_o_t_e_c_t_i_o_n_, _u_s_e _t_h_e _d_i_g_i_t_a_l
      _s_i_g_n_a_t_u_r_e_s _p_r_o_v_i_d_e_d _w_h_e_r_e _p_o_s_s_i_b_l_e _(_s_e_e _t_h_e --ss _o_p_t_i_o_n_)_, _o_r_, _f_a_i_l_i_n_g _t_h_a_t_,
-     _u_s_e _t_h_e --MM _f_l_a_g _t_o _e_x_t_r_a_c_t _t_h_e _p_a_c_k_a_g_e _f_i_l_e_, _a_n_d _i_n_s_p_e_c_t _i_t_s _c_o_n_t_e_n_t_s _a_n_d
+     _u_s_e tar(_1) _t_o _e_x_t_r_a_c_t _t_h_e _p_a_c_k_a_g_e _f_i_l_e_, _a_n_d _i_n_s_p_e_c_t _i_t_s _c_o_n_t_e_n_t_s _a_n_d
      _s_c_r_i_p_t_s _t_o _e_n_s_u_r_e _i_t _p_o_s_e_s _n_o _d_a_n_g_e_r _t_o _y_o_u_r _s_y_s_t_e_m_'_s _i_n_t_e_g_r_i_t_y_.  _P_a_y
      _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L _o_r _+_D_E_I_N_S_T_A_L_L _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e
      _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d
@@ -144,13 +144,13 @@ OOPPTTIIOONNSS
      a URL pointing at a file available on an ftp or web site.  Thus you may
      extract files directly from their anonymous ftp or WWW locations (e.g.,
      ppkkgg__aadddd ftp://ftp.NetBSD.org/pub/pkgsrc/pack-
-     ages/NetBSD-3.1/i386/shells/bash-3.2.9.tgz or ppkkgg__aadddd http://www.exam-
-     ple.org/packages/screen-4.0.tbz).  Note:  For ftp transfers, if you wish
-     to use _p_a_s_s_i_v_e _m_o_d_e ftp in such transfers, set the variable _F_T_P___P_A_S_-
-     _S_I_V_E___M_O_D_E to some value in your environment.  Otherwise, the more stan-
-     dard ACTIVE mode may be used.  If ppkkgg__aadddd consistently fails to fetch a
-     package from a site known to work, it may be because you have a firewall
-     that demands the usage of _p_a_s_s_i_v_e _m_o_d_e ftp.
+     ages/NetBSD/i386/3.1_2007Q2/shells/bash-3.2.9.tgz or ppkkgg__aadddd
+     http://www.example.org/packages/screen-4.0.tbz).  Note:  For ftp trans-
+     fers, if you wish to use _p_a_s_s_i_v_e _m_o_d_e ftp in such transfers, set the
+     variable _F_T_P___P_A_S_S_I_V_E___M_O_D_E to some value in your environment.  Otherwise,
+     the more standard ACTIVE mode may be used.  If ppkkgg__aadddd consistently fails
+     to fetch a package from a site known to work, it may be because you have
+     a firewall that demands the usage of _p_a_s_s_i_v_e _m_o_d_e ftp.
 
 TTEECCHHNNIICCAALL DDEETTAAIILLSS
      ppkkgg__aadddd extracts each package's ``packing list'' into a special staging
@@ -300,9 +300,9 @@ EEXXAAMMPPLLEESS
      You can grab a compiled binary package from remote location by specifying
      a URL.  The URL can be put into an environment variable, PKG_PATH.
 
-     # pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/firefox-2.0.0.4.tgz
+     # pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All/firefox-2.0.0.4.tgz
 
-     # export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/
+     # export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All
      # pkg_add -v firefox
 
      Over time, as problems are found in packages, they will be moved from the
@@ -310,15 +310,15 @@ EEXXAAMMPPLLEESS
      vulnerable packages by default (and know what you are doing), you can add
      the _v_u_l_n_e_r_a_b_l_e directory to your PKG_PATH like this:
 
-     # export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/vulnerable/"
+     # export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/vulnerable/"
 
      (The quotes are needed because semicolon (`;') is a shell meta-charac-
      ter.)  If you do this, consider installing and using the
      _s_e_c_u_r_i_t_y_/_a_u_d_i_t_-_p_a_c_k_a_g_e_s package and running it after every ppkkgg__aadddd.
 
 SSEEEE AALLSSOO
-     pkg_admin(1), pkg_create(1), pkg_delete(1), pkg_info(1), mktemp(3),
-     sysconf(3), pkgsrc(7)
+     pkg_admin(1), pkg_create(1), pkg_delete(1), pkg_info(1), tar(1),
+     mktemp(3), sysconf(3), pkgsrc(7)
 
 AAUUTTHHOORRSS
      Jordan Hubbard
@@ -343,4 +343,4 @@ BBUUGGSS
 
      Sure to be others.
 
-NetBSD 4.0                      August 10, 2007                     NetBSD 4.0
+NetBSD 4.0                      August 23, 2007                     NetBSD 4.0
