@@ -1,4 +1,4 @@
-.\" $NetBSD: audit-packages.conf.5.in,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $
+.\" $NetBSD: audit-packages.conf.5.in,v 1.1.1.3 2007/11/03 14:14:13 joerg Exp $
 .\"
 .\" Copyright (c) 2007 Adrian Portelli.  All rights reserved.
 .\"
@@ -82,6 +82,10 @@ Specifies the client used to download the
 file.  Currently known tools include curl, ftp, wget and fetch.
 .Pp
 The default is @ftp@. 
+.It Ev FETCH_PRE_ARGS
+Specifies optional arguments for the
+.Pa download-vulnerability-list 
+client. These options appear before FETCH_CMD.
 .It Ev FETCH_ARGS
 Specifies optional arguments for the client used to download the
 .Pa pkg-vulnerabilities 

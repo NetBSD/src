@@ -1,4 +1,4 @@
-/*	$NetBSD: opattern.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: opattern.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: opattern.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: opattern.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $");
 #endif
 #endif
 
@@ -139,11 +139,27 @@ pkg_match(const char *pattern, const char *pkg)
 	}
 	if (strpbrk(pattern, "*?[]") != (char *) NULL) {
 		/* glob match */
-		return glob_match(pattern, pkg);
+		if (glob_match(pattern, pkg))
+			return 1;
 	}
-	
+
 	/* no alternate, dewey or glob match -> simple compare */
-	return simple_match(pattern, pkg);
+	if (simple_match(pattern, pkg))
+		return 1;
+
+	/* globbing patterns and simple matches may be specified with or
+	 * without the version number, so check for both cases. */
+
+	{
+		char *pattern_ver;
+		int retval;
+
+		if (asprintf(&pattern_ver, "%s-[0-9]*", pattern) == -1)
+			errx(EXIT_FAILURE, "Out of memory");
+		retval = glob_match(pattern_ver, pkg);
+		free(pattern_ver);
+		return retval;
+	}
 }
 
 int

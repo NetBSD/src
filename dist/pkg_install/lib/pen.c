@@ -1,4 +1,4 @@
-/*	$NetBSD: pen.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $	*/
+/*	$NetBSD: pen.c,v 1.1.1.2 2007/11/03 14:14:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $");
+__RCSID("$NetBSD: pen.c,v 1.1.1.2 2007/11/03 14:14:13 joerg Exp $");
 #endif
 #endif
 
@@ -158,6 +158,16 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		cleanup(0);
 		errx(2, "can't mkdtemp '%s'", pen);
 	}
+
+	/*
+	 * On at least NetBSD, the temporary directory may have a group
+	 * that isn't in the group list of the current user. In that
+	 * case, it is impossible to extract setgid binaries from the
+	 * package, since chmod(2) doesn't allow to set the S_ISGID bit
+	 * for a group that isn't yours.
+	 */
+	(void)chown(pen, -1, getegid());
+
 	if (Verbose) {
 		if (sz)
 			fprintf(stderr,

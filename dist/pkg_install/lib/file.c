@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -17,7 +17,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $");
 #endif
 #endif
 
@@ -109,6 +109,23 @@ islinktodir(const char *fname)
 			return TRUE;	/* link to dir! */
 		else
 			return FALSE;	/* link to non-dir */
+	} else
+		return FALSE;	/* non-link */
+}
+
+/*
+ * Check if something is a link that points to nonexistant target.
+ */
+Boolean
+isbrokenlink(const char *fname)
+{
+	struct stat sb;
+
+	if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode)) {
+		if (stat(fname, &sb) != FAIL)
+			return FALSE;	/* link target exists! */
+		else
+			return TRUE;	/* link target missing*/
 	} else
 		return FALSE;	/* non-link */
 }

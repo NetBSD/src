@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $");
+__RCSID("$NetBSD: show.c,v 1.1.1.4 2007/11/03 14:14:13 joerg Exp $");
 #endif
 #endif
 
@@ -397,6 +397,14 @@ show_summary(package_t *plist, const char *binpkgfile)
 	var_copy_list(BUILD_INFO_FNAME, bi_vars);
 
 	if (binpkgfile != NULL && stat(binpkgfile, &st) == 0) {
+	    const char *base;
+
+	    base = strrchr(binpkgfile, '/');
+	    if (base == NULL)
+		base = binpkgfile;
+	    else
+		base++;
+	    printf("FILE_NAME=%s\n", base);
 	    printf("FILE_SIZE=%" MY_PRIu64 "\n", (uint64_t)st.st_size);
 	    /* XXX: DIGETS */
 	}
