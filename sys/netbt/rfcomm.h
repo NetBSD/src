@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.4 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.5 2007/11/03 17:39:14 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.4 2007/11/03 17:20:17 plunky Exp $
+ * $Id: rfcomm.h,v 1.5 2007/11/03 17:39:14 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -333,7 +333,7 @@ struct rfcomm_dlc {
 	int			 rd_txcred;  /* transmit credits (unused) */
 	int			 rd_pending; /* packets sent but not complete */
 
-	struct callout		 rd_timeout; /* timeout */
+	callout_t		 rd_timeout; /* timeout */
 	struct mbuf		*rd_txbuf;   /* transmit buffer */
 
 	const struct btproto	*rd_proto;   /* upper layer callbacks */
