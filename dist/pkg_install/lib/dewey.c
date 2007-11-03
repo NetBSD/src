@@ -1,4 +1,4 @@
-/* $NetBSD: dewey.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $ */
+/* $NetBSD: dewey.c,v 1.1.1.3 2007/11/03 14:14:13 joerg Exp $ */
 
 /*
  * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
@@ -127,10 +127,18 @@ mkcomponent(arr_t *ap, const char *num)
 	int                 n;
 	const char             *cp;
 
-	if (*num == 0) {
-		return 0;
+	if (ap->c == ap->size) {
+		if (ap->size == 0) {
+			ap->size = 62;
+			if ((ap->v = malloc(ap->size * sizeof(int))) == NULL)
+				err(EXIT_FAILURE, "mkver malloc failed");
+		} else {
+			ap->size *= 2;
+			if ((ap->v = realloc(ap->v, ap->size * sizeof(int)))
+			    == NULL)
+				err(EXIT_FAILURE, "mkver realloc failed");
+		}
 	}
-	ALLOC(int, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
 	if (isdigit((unsigned char)*num)) {
 		for (cp = num, n = 0 ; isdigit((unsigned char)*num) ; num++) {
 			n = (n * 10) + (*num - '0');
@@ -154,7 +162,11 @@ mkcomponent(arr_t *ap, const char *num)
 	if (isalpha((unsigned char)*num)) {
 		ap->v[ap->c++] = Dot;
 		cp = strchr(alphas, tolower((unsigned char)*num));
-		ALLOC(int, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
+		if (ap->c == ap->size) {
+			ap->size *= 2;
+			if ((ap->v = realloc(ap->v, ap->size * sizeof(int))) == NULL)
+				err(EXIT_FAILURE, "mkver realloc failed");
+		}
 		ap->v[ap->c++] = (int)(cp - alphas) + 1;
 		return 1;
 	}
@@ -165,11 +177,24 @@ mkcomponent(arr_t *ap, const char *num)
 static int
 mkversion(arr_t *ap, const char *num)
 {
-	(void) memset(ap, 0, sizeof(arr_t));
+	ap->c = 0;
+	ap->size = 0;
+	ap->v = NULL;
+	ap->netbsd = 0;
+
 	while (*num) {
 		num += mkcomponent(ap, num);
 	}
 	return 1;
+}
+
+static void
+freeversion(arr_t *ap)
+{
+	free(ap->v);
+	ap->v = NULL;
+	ap->c = 0;
+	ap->size = 0;
 }
 
 #define DIGIT(v, c, n) (((n) < (c)) ? v[n] : 0)
@@ -220,16 +245,18 @@ dewey_cmp(const char *lhs, int op, const char *rhs)
 {
 	arr_t	right;
 	arr_t	left;
+	int retval;
 
-	(void) memset(&left, 0, sizeof(left));
-	if (!mkversion(&left, lhs)) {
+	if (!mkversion(&left, lhs))
 		return 0;
-	}
-	(void) memset(&right, 0, sizeof(right));
 	if (!mkversion(&right, rhs)) {
+		freeversion(&left);
 		return 0;
 	}
-        return vtest(&left, op, &right);
+        retval = vtest(&left, op, &right);
+	freeversion(&left);
+	freeversion(&right);
+	return retval;
 }
 
 /*
