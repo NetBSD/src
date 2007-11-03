@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.4 2007/08/23 15:19:15 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.5 2007/11/03 14:14:13 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -348,6 +348,7 @@ Boolean islinktodir(const char *);
 Boolean isemptydir(const char *);
 Boolean isemptyfile(const char *);
 Boolean isfile(const char *);
+Boolean isbrokenlink(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
 char   *fileGetURL(const char *);
