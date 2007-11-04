@@ -1,4 +1,7 @@
-/*	$NetBSD: bus.h,v 1.11 2007/10/17 19:56:07 garbled Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2007/11/04 17:15:43 garbled Exp $	*/
 
-#include <powerpc/bus.h>
+#define PHYS_TO_BUS_MEM(t,x)	(x)
+#define BUS_MEM_TO_PHYS(t,x)	(x)
+
 #include <powerpc/ofw_bus.h>
+#include <powerpc/bus.h>
