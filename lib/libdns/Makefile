@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.5 2007/04/08 09:36:35 scw Exp $
+#	$NetBSD: Makefile,v 1.1 2007/11/04 23:28:18 tls Exp $
 
 LIB=dns
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/../Makefile.inc"
+.include "${NETBSDSRCDIR}/usr.sbin/bind/Makefile.inc"
 
 DIST=	${IDIST}/lib/dns
 .include "${DIST}/api"
 
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
-CPPFLAGS+=-I${.CURDIR}/../include/dns -I${DIST}
+CPPFLAGS+=	-I${BIND_SRCDIR}/include/dns -I${DIST}
 
 .if ${HAVE_GCC} == 4
 .for f in lookup byaddr request sdb validator

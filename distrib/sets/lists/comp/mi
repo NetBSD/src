@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1075 2007/11/02 21:26:55 christos Exp $
+#	$NetBSD: mi,v 1.1076 2007/11/04 23:28:16 tls Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2070,6 +2070,8 @@
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
+./usr/lib/libbind9.a				comp-bind-lib
+./usr/lib/libbind9_p.a				comp-bind-proflib	profile
 ./usr/lib/libbluetooth.a			comp-c-lib
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib
@@ -2098,6 +2100,8 @@
 ./usr/lib/libcurses_p.a				comp-c-proflib		profile
 ./usr/lib/libdes.a				comp-c-lib		crypto
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libdns.a				comp-bind-lib
+./usr/lib/libdns_p.a				comp-bind-proflib	profile
 ./usr/lib/libedit.a				comp-c-lib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
 ./usr/lib/libevent.a				comp-c-lib
@@ -2128,6 +2132,12 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
+./usr/lib/libisc.a				comp-bind-lib
+./usr/lib/libisc_p.a				comp-bind-lib		profile
+./usr/lib/libisccc.a				comp-bind-lib
+./usr/lib/libisccc_p.a				comp-bind-profilb	profile
+./usr/lib/libisccfg.a				comp-bind-lib
+./usr/lib/libisccfg_p.a				comp-bind-profilb	profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
@@ -2150,6 +2160,8 @@
 ./usr/lib/libkvm_p.a				comp-c-proflib		profile
 ./usr/lib/libl.a				comp-c-lib
 ./usr/lib/libl_p.a				comp-c-proflib		profile
+./usr/lib/liblwres.a				comp-bind-lib
+./usr/lib/liblwres_p.a				comp-bind-profilb	profile
 ./usr/lib/libm.a				comp-c-lib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
 ./usr/lib/libmagic.a				comp-c-lib
@@ -3045,6 +3057,7 @@
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
@@ -3057,15 +3070,20 @@
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lisc.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
 ./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete

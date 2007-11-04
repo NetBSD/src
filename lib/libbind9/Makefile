@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2004/05/18 00:06:58 christos Exp $
+#	$NetBSD: Makefile,v 1.1 2007/11/04 23:28:17 tls Exp $
 
 LIB=bind9
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/../Makefile.inc"
+.include "${NETBSDSRCDIR}/usr.sbin/bind/Makefile.inc"
 
 DIST=	${IDIST}/lib/bind9
 .include "${DIST}/api"
