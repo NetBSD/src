@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.1.2.2 2007/10/29 17:58:24 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.1.2.3 2007/11/04 21:58:06 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.2 2007/10/29 17:58:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.3 2007/11/04 21:58:06 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -123,18 +123,12 @@ __KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.2 2007/10/29 17:58:24 matt Exp
 #include <arm/omap/omap2_mputmrreg.h>
 
 
-#if defined(OMAP_2430)
-# include <arm/omap/omap2430reg.h>
-#else
-# error unknown OMAP implementation
-#endif
-
+#include <arm/omap/omap2430reg.h>
 
 #ifndef OMAP_MPU_TIMER_CLOCK_FREQ
 #error Specify the timer frequency in Hz with the OMAP_MPU_TIMER_CLOCK_FREQ option.
 #endif
 
-#if defined(OMAP_2430)
 typedef struct {
 	uint       gptn;
 	bus_addr_t addr;
@@ -223,8 +217,6 @@ static const gptimer_instance_t *
 		gpt_lookup(struct obio_attach_args *);
 static void	gpt_enable(struct mputmr_softc *,
 			struct obio_attach_args *, const gptimer_instance_t *);
-#endif	/* OMAP_2430 */
-
 
 static int	obiomputmr_match(struct device *, struct cfdata *, void *);
 static void	obiomputmr_attach(struct device *, struct device *, void *);

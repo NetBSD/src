@@ -1,4 +1,4 @@
-/* $NetBSD: omap2430obiovar.h,v 1.1.2.1 2007/10/12 02:22:28 matt Exp $ */
+/* $NetBSD: omap2430obiovar.h,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Danger Inc.
@@ -36,8 +36,9 @@ struct obio_attach_args {
 	bus_addr_t	obio_addr;
 	bus_size_t	obio_size;
 	int		obio_intr;
-	bus_dma_tag_t	obio_dmac;
+	bus_dma_tag_t	obio_dmat;
 	unsigned int	obio_mult;
+	unsigned int	obio_intrbase;
 };
 
 #endif /* _OMAP2430OBIOVAR_H */

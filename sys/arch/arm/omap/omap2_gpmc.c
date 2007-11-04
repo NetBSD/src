@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.1.2.1 2007/10/12 02:22:28 matt Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.1.2.1 2007/10/12 02:22:28 matt Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $ */
 
 
 /*
@@ -130,7 +130,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.1.2.1 2007/10/12 02:22:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $");
 
 #include "locators.h"
 
@@ -147,18 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.1.2.1 2007/10/12 02:22:28 matt Exp 
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#if defined(OMAP_2430)
-# include <arm/omap/omap2430gpmcreg.h>
-# include <arm/omap/omap2430gpmcvar.h>
-#else
-/*
- * we have only used this with OMAP 2430 so far....
- * some of the 2430 stuff may generalize to other OMAP implementations,
- * or not.  Either generalize the include files accordingly, or
- * add your own implementation-specific includes.
- */
-# error unknown OMAP GPMC implementation
-#endif
+#include <arm/omap/omap2430gpmcreg.h>
+#include <arm/omap/omap2430gpmcvar.h>
 
 typedef struct {
 	boolean_t	cs_valid;
@@ -209,7 +199,7 @@ gpmc_match(struct device *parent, struct cfdata *match, void *aux)
 	if (gpmc_attached != 0)
 		return 0;
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 	if (mb->mb_iobase != OMAP2430_GPMC_BASE)
 		return 0;
 #endif

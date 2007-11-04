@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.1.2.1 2007/10/12 02:22:24 matt Exp $
+#	$NetBSD: files.omap2,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2 CPU support
 # Based on xscale/files.pxa2x0
@@ -10,10 +10,12 @@ file	arch/arm/arm32/irq_dispatch.S
 # Memory size in megabytes
 defparam opt_omap.h				MEMSIZE
 defparam opt_omap.h				OMAP_EMIFF_PBASE OMAP_EMIFF_SIZE
-defflag opt_omap.h				OMAP_2430 OMAP_2420
+defflag opt_omap.h				OMAP2
+defflag	opt_omap.h				OMAP_2430: OMAP2
+defflag opt_omap.h				OMAP_2420: OMAP2
 
 # OBIO just an attach point
-device obio { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+device obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
 	     } : bus_space_generic
 attach obio at mainbus
 file	arch/arm/omap/omap2_obio.c		obio needs-count
@@ -26,7 +28,7 @@ file	arch/arm/omap/omap_a4x_space.c		obio
 file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
 
 # INTC controller
-file	arch/arm/omap/omap2430_intr.c		omap_2430
+file	arch/arm/omap/omap2430_intr.c		omap2
 
 # OMAP 2430 General Purpose Timer
 device omap2430mputmr
@@ -55,7 +57,7 @@ file arch/arm/omap/obio_wdt.c			obiowdt32k
 device L3i { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 	     } : bus_space_generic
 attach L3i at mainbus
-file	arch/arm/omap/omap2_l3i.c		omap_2430
+file	arch/arm/omap/omap2_l3i.c		omap2
 
 # General Purpose Memory Controller
 # XXX some addl. chip select config parms may be desired here (e.g. timing)

@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.1.2.1 2007/10/12 02:22:29 matt Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.1.2.1 2007/10/12 02:22:29 matt Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.2.1 2007/10/12 02:22:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $");
 
 #include "locators.h"
 
@@ -148,7 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.2.1 2007/10/12 02:22:29 matt Exp $
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 #include <arm/omap/omap2430reg.h>
 #ifdef NOTYET
 #include <arm/omap/omap2430var.h>
@@ -396,7 +396,7 @@ L3i_search(struct device *parent, struct cfdata *cf,
 	aa.L3i_size = cf->cf_loc[L3iCF_SIZE];
 	aa.L3i_intr = cf->cf_loc[L3iCF_INTR];
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 	if ((aa.L3i_addr >= OMAP2430_L3i_BASE)
 	&&  (aa.L3i_addr < (OMAP2430_L4_CORE_BASE + OMAP2430_L3i_SIZE))) {
 		/* XXX
