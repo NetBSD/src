@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.13 2007/10/24 22:09:45 pavel Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.14 2007/11/04 01:12:40 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.13 2007/10/24 22:00:15 pavel Exp
+ *	NetBSD
  */
 
 /*
@@ -1789,6 +1789,7 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_C032	0x4367		/* Yukon 88EC032 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C034	0x4368		/* Yukon 88EC034 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C042	0x4369		/* Yukon 88EC042 */
+#define	PCI_PRODUCT_MARVELL_YUKON_CO55	0x436a		/* Yukon 88ECO55 */
 #define	PCI_PRODUCT_MARVELL_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_MARVELL_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
 #define	PCI_PRODUCT_MARVELL_88SX5040	0x5040		/* 88SX5040 SATA */
