@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.10 2007/10/17 17:50:07 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.11 2007/11/04 11:43:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.10 2007/10/17 17:50:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.11 2007/11/04 11:43:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.10 2007/10/17 17:50:07 ad Exp $");
 
 void	cpuctlattach(int);
 
-static void	cpu_xc_online(struct schedstate_percpu *);
-static void	cpu_xc_offline(struct schedstate_percpu *);
+static void	cpu_xc_online(struct cpu_info *);
+static void	cpu_xc_offline(struct cpu_info *);
 
 dev_type_ioctl(cpuctl_ioctl);
 
@@ -94,7 +94,7 @@ const struct cdevsw cpuctl_cdevsw = {
 	nullstop, notty, nopoll, nommap, nokqfilter,
 	D_OTHER | D_MPSAFE
 };
-  
+
 kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
@@ -219,20 +219,84 @@ cpu_lookup(cpuid_t id)
 }
 
 static void
-cpu_xc_offline(struct schedstate_percpu *spc)
+cpu_xc_offline(struct cpu_info *ci)
 {
+	struct schedstate_percpu *spc, *mspc = NULL;
+	struct cpu_info *mci;
+	struct lwp *l;
+	CPU_INFO_ITERATOR cii;
 	int s;
 
+	spc = &ci->ci_schedstate;
 	s = splsched();
 	spc->spc_flags |= SPCF_OFFLINE;
 	splx(s);
+
+	/* Take the first available CPU for the migration */
+	for (CPU_INFO_FOREACH(cii, mci)) {
+		mspc = &mci->ci_schedstate;
+		if ((mspc->spc_flags & SPCF_OFFLINE) == 0)
+			break;
+	}
+	KASSERT(mci != NULL);
+
+	/*
+	 * Migrate all non-bound threads to the other CPU.
+	 * Please note, that this runs from the xcall thread, thus handling
+	 * of LSONPROC is not needed.
+	 */
+	mutex_enter(&proclist_lock);
+
+	/*
+	 * Note that threads on the runqueue might sleep after this, but
+	 * sched_takecpu() would migrate such threads to the appropriate CPU.
+	 */
+	LIST_FOREACH(l, &alllwp, l_list) {
+		lwp_lock(l);
+		if (l->l_cpu == ci && (l->l_stat == LSSLEEP ||
+		    l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED)) {
+			KASSERT((l->l_flag & LW_RUNNING) == 0);
+			l->l_cpu = mci;
+		}
+		lwp_unlock(l);
+	}
+
+	/* Double-lock the runqueues */
+	if (ci < mci) {
+		spc_lock(ci);
+		spc_lock(mci);
+	} else {
+		spc_lock(mci);
+		spc_lock(ci);
+	}
+
+	/* Handle LSRUN and LSIDL cases */
+	LIST_FOREACH(l, &alllwp, l_list) {
+		if (l->l_cpu != ci || (l->l_flag & LW_BOUND))
+			continue;
+		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+			sched_dequeue(l);
+			l->l_cpu = mci;
+			lwp_setlock(l, mspc->spc_mutex);
+			sched_enqueue(l, false);
+		} else if (l->l_stat == LSRUN || l->l_stat == LSIDL) {
+			l->l_cpu = mci;
+			lwp_setlock(l, mspc->spc_mutex);
+		}
+	}
+	spc_unlock(ci);
+	spc_unlock(mci);
+
+	mutex_exit(&proclist_lock);
 }
 
 static void
-cpu_xc_online(struct schedstate_percpu *spc)
+cpu_xc_online(struct cpu_info *ci)
 {
+	struct schedstate_percpu *spc;
 	int s;
 
+	spc = &ci->ci_schedstate;
 	s = splsched();
 	spc->spc_flags &= ~SPCF_OFFLINE;
 	splx(s);
@@ -271,8 +335,13 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		ncpuonline--;
 	}
 
-	where = xc_unicast(0, func, &ci->ci_schedstate, NULL, ci);
+	where = xc_unicast(0, func, ci, NULL, ci);
 	xc_wait(where);
+	if (online) {
+		KASSERT((spc->spc_flags & SPCF_OFFLINE) == 0);
+	} else {
+		KASSERT(spc->spc_flags & SPCF_OFFLINE);
+	}
 	spc->spc_lastmod = time_second;
 
 	return 0;
