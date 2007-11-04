@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.1 2007/10/12 02:22:27 matt Exp $	*/
+/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $	*/
 /*
  * Copyright (c) 2007 Danger Inc.
  * All rights reserved.
@@ -30,10 +30,6 @@
 
 #ifndef _OMAP2430GPMCREG_H
 #define _OMAP2430GPMCREG_H
-
-#ifndef OMAP_2430
-# error whay are you including this file
-#endif
 
 #define BITS(hi,lo)	((uint32_t)(~((~0ULL)<<((hi)+1)))&((~0)<<(lo)))
 #define BIT(n)		((uint32_t)(1 << (n)))

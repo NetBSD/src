@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,10 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.1.2.1 2007/10/12 02:22:25 matt Exp $
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-#if defined(OMAP_2430)
 #include <arm/omap/omap2430obiovar.h>
 #include <arm/omap/omap2430obioreg.h>
-#endif
 
 
 struct obioohci_softc {
@@ -266,7 +264,6 @@ obioohci_disable(struct obioohci_softc *sc)
 #endif
 }
 
-#if defined(OMAP_2430)
 static void
 obioohci_clkinit(struct obio_attach_args *obio)
 {
@@ -293,6 +290,7 @@ obioohci_clkinit(struct obio_attach_args *obio)
 	bus_space_unmap(obio->obio_iot, ioh, OMAP2430_CM_SIZE);
 }
 
+#if 0
 int (*obioohci_fake_intr_func)(void *);
 void *obioohci_fake_intr_arg;
 
@@ -309,6 +307,4 @@ obioohci_fake_intr(void)
 {
 	(void)(*obioohci_fake_intr_func)(obioohci_fake_intr_arg);
 }
-#else
-# error unknown OMAP implementation
 #endif
