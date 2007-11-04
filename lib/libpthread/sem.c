@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9.6.1 2007/09/10 05:24:54 wrstuden Exp $	*/
+/*	$NetBSD: sem.c,v 1.9.6.2 2007/11/04 04:27:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.9.6.1 2007/09/10 05:24:54 wrstuden Exp $");
+__RCSID("$NetBSD: sem.c,v 1.9.6.2 2007/11/04 04:27:00 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -431,7 +431,7 @@ sem_post(sem_t *sem)
 	if (blocked) {
 		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
 		/* Give the head of the blocked queue another try. */
-		pthread__sched(self, blocked);
+		pthread__sched(self, blocked, 0);
 	}
 	pthread_spinunlock(self, &(*sem)->usem_interlock);
 
