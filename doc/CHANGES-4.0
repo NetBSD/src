@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.350 2007/11/04 11:50:11 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.351 2007/11/04 12:07:01 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10421,6 +10421,26 @@ sys/dev/pci/pucdata.c				1.52
 
 	PR/37259 - Daniel Neri -- typo in EXAR XR17C158 description
 	[jnemeth, ticket #968]
+
+sys/dev/biovar.h				1.2,1.4
+
+	Make the bio(4) variables which represent disk and volume size
+	64-bit, for large RAID volumes.
+	[xtraeme, ticket #969]
+
+usr.sbin/bind/Makefile.inc			patch
+
+	Do not build named with threads support on mips architectures,
+	as it triggers libpthread/SA problems.
+	[martin, ticket #965]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c 1.11
+
+	Add SSP related symbols "__stack_chk_guard" and "__stack_chk_fail"
+	to the list of symbols for X11 server loadable modules.
+
+	This makes an X11 server built via "src/x11" with SSP enabled work.
+	[tron, ticket #967]
 
 etc/namedb/root.cache				1.11
 
