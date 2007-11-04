@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.13.6.1 2007/09/10 05:24:53 wrstuden Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.13.6.2 2007/11/04 04:26:58 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.13.6.1 2007/09/10 05:24:53 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.13.6.2 2007/11/04 04:26:58 wrstuden Exp $");
 
 #include <errno.h>
 
@@ -440,7 +440,7 @@ pthread_rwlock__callback(void *arg)
 	 */
 	if (a->ptw_thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 		PTQ_REMOVE(a->ptw_queue, a->ptw_thread, pt_sleep);
-		pthread__sched(self, a->ptw_thread);
+		pthread__sched(self, a->ptw_thread, 0);
 	}
 	pthread_spinunlock(self, &a->ptw_rwlock->ptr_interlock);
 
@@ -498,7 +498,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 	}
 
 	if (writer != NULL)
-		pthread__sched(self, writer);
+		pthread__sched(self, writer, 0);
 	else
 		pthread__sched_sleepers(self, &blockedq);
 	

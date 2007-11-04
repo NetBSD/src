@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.18.12.2 2007/11/04 04:26:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.18.12.1 2007/09/10 05:24:53 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.18.12.2 2007/11/04 04:26:57 wrstuden Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -299,7 +299,7 @@ pthread_cond_wait__callback(void *arg)
 		if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
 			a->ptw_cond->ptc_mutex = NULL;
 #endif
-		pthread__sched(self, a->ptw_thread);
+		pthread__sched(self, a->ptw_thread, 0);
 	}
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
 }
@@ -322,7 +322,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 		signaled = PTQ_FIRST(&cond->ptc_waiters);
 		if (signaled != NULL) {
 			PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
-			pthread__sched(self, signaled);
+			pthread__sched(self, signaled, 0);
 			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 		}
 #ifdef ERRORCHECK

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34.4.3 2007/10/19 05:35:38 wrstuden Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.4.4 2007/11/04 04:26:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -186,20 +186,27 @@ struct	__pthread_st {
  * respect the hierarcy. All per-thread locks of a given type are considered
  * in the same group and thus only one may be taken at once by a given thread.
  * It is believed that the current code never tries to take the same lock
- * in more than one thread at once.
+ * in more than one thread at once (other than group 6).
  *
  * "Top" group: pt_join_lock, pthread__deadqueue_lock, &barrier->ptb_lock,
  * cond->ptc_lock, mutex->ptm_interlock, rwlock->ptr_interlock,
  * pt_sigsuspended_lock, pt_sigwaiting_lock, pt_nanosleep_lock,
- * pthread__allqueue_lock
+ * pthread__allqueue_lock, pt_siglock, usem_interlock.
  *
- * Group 2: pt_statelock
+ * Note that "Top" group includes all of the locks that can be assigned to
+ * pt_sleeplock.
  *
- * Group 3: pt_siglock, pthread_alarmqlock
+ * Group 2: pthread__runqueue_lock
  *
- * Group 4: pt_flag_lock, pthread__runqueue_lock
+ * Group 3: pt_statelock
  *
- * Group 5: alarm->pta_lock -- all locked in acending time order.
+ * Group 4: pthread_alarmqlock
+ *
+ * Group 5: pt_flag_lock
+ *
+ * Group 6: alarm->pta_lock -- all locked in acending time order.
+ *
+ * Group 7: [misc globals] pt_sigacts_lock, pt_process_siglock
  */
 
 struct pthread_lock_ops {
@@ -287,7 +294,7 @@ void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
 /* Put a thread back on the suspended queue */
 void	pthread__suspend(pthread_t self, pthread_t thread);
 /* Put a thread back on the run queue */
-void	pthread__sched(pthread_t self, pthread_t thread);
+void	pthread__sched(pthread_t self, pthread_t thread, int);
 void	pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq);
 void	pthread__sched_idle(pthread_t self, pthread_t thread);
 void	pthread__sched_idle2(pthread_t self);
