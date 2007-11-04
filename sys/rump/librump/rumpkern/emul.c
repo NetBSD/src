@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.17 2007/10/31 15:57:20 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.18 2007/11/04 19:52:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -176,7 +176,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	 * a blatant violation of abstraction levels, but let's keep
 	 * me simple & stupid for now.
 	 */
-	if (rump_ubc_magic_uiomove(buf, n, uio, &rv))
+	if (rump_ubc_magic_uiomove(buf, n, uio, &rv, NULL))
 		return rv;
 
 	while (n && uio->uio_resid) {
