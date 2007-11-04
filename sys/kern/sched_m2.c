@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.6 2007/10/19 12:16:43 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.7 2007/11/04 11:43:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6 2007/10/19 12:16:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.7 2007/11/04 11:43:07 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -749,7 +749,7 @@ sched_nextlwp(void)
 #ifdef MULTIPROCESSOR
 	/* If runqueue is empty, try to catch some thread from other CPU */
 	if (spc->spc_flags & SPCF_OFFLINE) {
-		if (ci_rq->r_mcount == 0)
+		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
 			return NULL;
 	} else if (ci_rq->r_count == 0) {
 		/* Reset the counter, and call the balancer */
@@ -787,7 +787,7 @@ sched_curcpu_runnable_p(void)
 	const runqueue_t *ci_rq = ci->ci_schedstate.spc_sched_info;
 
 	if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
-		return ci_rq->r_mcount;
+		return (ci_rq->r_count - ci_rq->r_mcount);
 
 	return ci_rq->r_count;
 }
