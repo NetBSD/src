@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.10 2007/10/31 15:57:21 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.11 2007/11/04 18:43:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -189,7 +189,6 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
-	ssize_t rv;
 	off_t off;
 	int error;
 
@@ -201,23 +200,17 @@ rump_specstrategy(void *v)
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
 	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
+
 	if (bp->b_flags & B_READ)
-		rv = rumpuser_pread(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
+		rumpuser_read(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
 	else {
-		int dummy;
-		rv = rumpuser_pwrite(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
-		if ((bp->b_flags & B_ASYNC) == 0)
-			rumpuser_fsync(sp->rsp_fd, &dummy);
+		rumpuser_write(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
 	}
 
-	bp->b_error = 0;
-	if (rv == -1)
-		bp->b_error = error;
-	else
-		bp->b_resid = bp->b_bcount - rv;
-	biodone(bp);
+#ifdef notyet
+	if ((bp->b_flags & B_ASYNC) == 0)
+#endif
+		biowait(bp);
 
 	return error;
 }
