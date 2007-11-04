@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.6 2007/11/04 04:26:59 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.7 2007/11/04 05:57:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.6 2007/11/04 04:26:59 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.7 2007/11/04 05:57:40 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: pthread_sig.c,v 1.47.4.6 2007/11/04 04:26:59 wrstuden Exp $");
 #define SDPRINTF(x) DPRINTF(x)
 #else
 #define SDPRINTF(x)
+#endif
+
+#ifdef PTHREAD__DEBUG
+int __pthread_running_kills;
 #endif
 
 extern int pthread__started;
@@ -945,6 +949,9 @@ try_again:
 		 * handler doesn't handle it (easy to add), and more
 		 * importantly so that we can test signal capture points.
 		 */
+#ifdef PTHREAD__DEBUG
+		__pthread_running_kills++;
+#endif
 		//sa_preempt(target->pt_lastlwp);
 		return;
 	case PT_STATE_SUSPENDED:
