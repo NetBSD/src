@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.46 2007/08/21 16:53:18 bouyer Exp $	*/
+/*	$NetBSD: atactl.c,v 1.47 2007/11/04 02:34:27 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.46 2007/08/21 16:53:18 bouyer Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.47 2007/11/04 02:34:27 xtraeme Exp $");
 #endif
 
 
@@ -249,7 +249,7 @@ struct bitinfo ata_sata_feat[] = {
 	{ SATA_DMA_SETUP_AUTO, "DMA Setup Auto Activate" },
 	{ SATA_DRIVE_PWR_MGMT, "Device-Initiated Interface Power Managment" },
 	{ SATA_IN_ORDER_DATA, "In-order Data Delivery" },
-	{ SATA_SW_STTNGS_PRS, "Software Settings Perservation" },
+	{ SATA_SW_STTNGS_PRS, "Software Settings Preservation" },
 	{ 0, NULL },
 };
 
