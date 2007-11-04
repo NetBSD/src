@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.352 2007/11/04 17:11:19 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.353 2007/11/04 21:27:35 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10476,4 +10476,10 @@ usr.sbin/cron/config.h				1.7
 	Use default timeout parameters when cron invokes sendmail.
 	PR bin/37226.
 	[martin, ticket #971]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.8
+
+	Fix off-by-one error accessing "clnt_cache_addr" array which causes heap
+	corruption. This will hopefully fix PR bin/37236.
+	[tron, ticket #976]
 
