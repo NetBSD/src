@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2007/11/04 14:34:24 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.104 2007/11/04 16:28:27 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	32
 
@@ -170,13 +170,8 @@ config		netbsd	root on ? type ?
 
 mainbus*	at root
 
-# Generic OpenFirmware bus support
-ofbus*		at mainbus?
-ofbus*		at ofbus?
 # Generic OpenFirmware console support
-ofcons*		at ofbus?
-rtas*		at ofbus?
-
+rtas*		at mainbus?
 
 # CPUs
 cpu*		at mainbus?
