@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.348 2007/11/04 01:20:10 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.349 2007/11/04 01:22:56 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10416,4 +10416,9 @@ sys/fs/udf/udf_subr.c				1.40
 	Fix panic when the VAT couldn't be found. It would refer an stale
 	udf_node->vnode.
 	[reinoud, ticket #966]
+
+sys/dev/pci/pucdata.c				1.52
+
+	PR/37259 - Daniel Neri -- typo in EXAR XR17C158 description
+	[jnemeth, ticket #968]
 
