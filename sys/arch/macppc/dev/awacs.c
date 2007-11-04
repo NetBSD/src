@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.32 2007/10/18 04:59:54 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.33 2007/11/04 18:00:55 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.32 2007/10/18 04:59:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.33 2007/11/04 18:00:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -494,13 +494,14 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: found '%s' personality card\n",
 			    sc->sc_dev.dv_xname, compat);
 			sc->sc_have_perch = 1;
-			config_finalize_register(&sc->sc_dev, awacs_setup_sgsmix);
+			config_finalize_register(&sc->sc_dev,
+			    awacs_setup_sgsmix);
 		}
 	}
 
 	/* Set initial volume[s] */
 	awacs_set_volume(sc, 144, 144);
-	awacs_set_loopthrough_volume(sc, 255, 255);
+	awacs_set_loopthrough_volume(sc, 0, 0);
 
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 	
@@ -784,6 +785,7 @@ enum {
 	AWACS_VOL_MASTER,
 	AWACS_INPUT_SELECT,
 	AWACS_VOL_INPUT,
+	AWACS_VOL_MONITOR,
 	AWACS_BASS,
 	AWACS_TREBLE,
 	AWACS_ENUM_LAST
@@ -844,6 +846,10 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		awacs_write_codec(sc, sc->sc_codecctl0);
 		return 0;
 
+	case AWACS_VOL_MONITOR:
+		awacs_set_loopthrough_volume(sc, l, r);
+		return 0;
+
 #if NSGSMIX > 0
 	case AWACS_BASS:
 		awacs_set_bass(sc, l);
@@ -886,6 +892,15 @@ awacs_get_port(void *h, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
 		return 0;
+
+	case AWACS_VOL_MONITOR:
+		vol = sc->sc_codecctl5 & 0x3cf;
+		l = (vol & 0x3c0) >> 6;
+		r = vol & 0xf;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = (15 - l) << 4;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = (15 - r) << 4;
+		return 0;
+
 #if NSGSMIX > 0
 	case AWACS_BASS:
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_bass;
@@ -927,6 +942,15 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	case AWACS_VOL_MASTER:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioNmaster);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		return 0;
+
+	case AWACS_VOL_MONITOR:
+		dip->mixer_class = AWACS_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNmonitor);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
