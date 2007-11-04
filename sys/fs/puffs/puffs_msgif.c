@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.50 2007/10/25 15:22:25 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.51 2007/11/04 17:32:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.50 2007/10/25 15:22:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.51 2007/11/04 17:32:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -385,14 +385,9 @@ puffs_msg_errnotify(struct puffs_mount *pmp, uint8_t type, int error,
 }
 
 /*
- * Wait for the userspace ping-pong game in calling process context.
- *
- * This unlocks vnodes if they are supplied.  vp1 is the vnode
- * before in the locking order, i.e. the one which must be locked
- * before accessing vp2.  This is done here so that operations are
- * already ordered in the queue when vnodes are unlocked (I'm not
- * sure if that's really necessary, but it can't hurt).  Okok, maybe
- * there's a slight ugly-factor also, but let's not worry about that.
+ * Wait for the userspace ping-pong game in calling process context,
+ * unless a FAF / async call, in which case just enqueues the request
+ * and return immediately.
  */
 static int
 touser(struct puffs_mount *pmp, struct puffs_msgpark *park)
@@ -417,7 +412,7 @@ touser(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	preq->preq_lid = l->l_lid;
 
 	/*
-	 * To support PCATCH, yet another movie: check if there are signals
+	 * To support cv_sig, yet another movie: check if there are signals
 	 * pending and we are issueing a non-FAF.  If so, return an error
 	 * directly UNLESS we are issueing INACTIVE.  In that case, convert
 	 * it to a FAF, fire off to the file server and return an error.
@@ -556,6 +551,7 @@ touser(struct puffs_mount *pmp, struct puffs_msgpark *park)
 			fstrans_start(mp, FSTRANS_NORMAL);
 			fstrans_done(mp);
 		}
+
 	} else {
 		/*
 		 * Take extra reference for FAF, i.e. don't free us
@@ -672,7 +668,7 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 		*dlen = preq->preq_frhdr.pfr_len;
 		*parkptr = park;
 	}
-		
+
 	return error;
 }
 
@@ -819,12 +815,17 @@ puffs_userdead(struct puffs_mount *pmp)
 		pmp->pmp_msg_touser_count--;
 
 		/*
-		 * If the waiter is gone, we may *NOT* access preq anymore.
+		 * Even though waiters on QUEUE1 are removed in touser()
+		 * in case of WAITERGONE, it is still possible for us to
+		 * get raced here due to having to retake locks in said
+		 * touser().  In the race case simply "ignore" the item
+		 * on the queue and move on to the next one.
 		 */
 		if (park->park_flags & PARKFLAG_WAITERGONE) {
 			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
 			KASSERT(park->park_flags & PARKFLAG_WANTREPLY);
 			puffs_msgpark_release(park);
+
 		} else {
 			opclass = park->park_preq->preq_opclass;
 			park->park_preq->preq_rv = ENXIO;
@@ -855,9 +856,6 @@ puffs_userdead(struct puffs_mount *pmp)
 		TAILQ_REMOVE(&pmp->pmp_msg_replywait, park, park_entries);
 		park->park_flags &= ~PARKFLAG_ONQUEUE2;
 
-		/*
-		 * If the waiter is gone, we may *NOT* access preq anymore.
-		 */
 		if (park->park_flags & PARKFLAG_WAITERGONE) {
 			KASSERT((park->park_flags & PARKFLAG_CALL) == 0);
 			puffs_msgpark_release(park);
