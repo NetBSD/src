@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.564 2007/11/03 14:26:56 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.565 2007/11/04 12:54:59 ghen Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -596,7 +596,7 @@ additions in our libcurses.
 Package:	OpenPAM
 Version:	20050616
 Current Vers:	20050616
-Maintainer:	Dag-Erling Smè”grav <des@FreeBSD.org>
+Maintainer:	Dag-Erling Sm¯rgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
 Mailing List:
