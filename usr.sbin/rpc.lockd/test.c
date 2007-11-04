@@ -1,14 +1,17 @@
-/*	$NetBSD: test.c,v 1.3 2002/07/20 08:40:20 grant Exp $	*/
+/*	$NetBSD: test.c,v 1.4 2007/11/04 23:12:50 christos Exp $	*/
 
+#include <stdio.h>
+#include <string.h>
 #include <sys/cdefs.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/nlm_prot.h>
+
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
 static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: test.c,v 1.3 2002/07/20 08:40:20 grant Exp $");
+__RCSID("$NetBSD: test.c,v 1.4 2007/11/04 23:12:50 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -16,291 +19,271 @@ __RCSID("$NetBSD: test.c,v 1.3 2002/07/20 08:40:20 grant Exp $");
 static struct timeval TIMEOUT = {0, 0};
 
 nlm_testres *
-nlm_test_1(argp, clnt)
-	struct nlm_testargs *argp;
-	CLIENT *clnt;
+nlm_test_1(struct nlm_testargs *argp, CLIENT *clnt)
 {
 	static nlm_testres res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_TEST, xdr_nlm_testargs, argp, xdr_nlm_testres, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
-	}
-	return (&res);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_TEST, xdr_nlm_testargs, argp, xdr_nlm_testres,
+	    &res, TIMEOUT) != RPC_SUCCESS)
+		return NULL;
+	return &res;
 }
 
 
 nlm_res *
-nlm_lock_1(argp, clnt)
-	struct nlm_lockargs *argp;
-	CLIENT *clnt;
+nlm_lock_1(struct nlm_lockargs *argp, CLIENT *clnt)
 {
 	enum clnt_stat st;
 	static nlm_res res;
 
-	bzero((char *) &res, sizeof(res));
-	if (st = clnt_call(clnt, NLM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res, &res, TIMEOUT) != RPC_SUCCESS) {
+	(void)memset(&res, 0, sizeof(res));
+	if (st = clnt_call(clnt, NLM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
 		printf("clnt_call returns %d\n", st);
 		clnt_perror(clnt, "humbug");
-		return (NULL);
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
 nlm_res *
-nlm_cancel_1(argp, clnt)
-	struct nlm_cancargs *argp;
-	CLIENT *clnt;
+nlm_cancel_1(struct nlm_cancargs *argp, CLIENT *clnt)
 {
 	static nlm_res res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_CANCEL, xdr_nlm_cancargs, argp, xdr_nlm_res, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_CANCEL, xdr_nlm_cancargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
 nlm_res *
-nlm_unlock_1(argp, clnt)
-	struct nlm_unlockargs *argp;
-	CLIENT *clnt;
+nlm_unlock_1(struct nlm_unlockargs *argp, CLIENT *clnt)
 {
 	static nlm_res res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_UNLOCK, xdr_nlm_unlockargs, argp, xdr_nlm_res, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_UNLOCK, xdr_nlm_unlockargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
 nlm_res *
-nlm_granted_1(argp, clnt)
-	struct nlm_testargs *argp;
-	CLIENT *clnt;
+nlm_granted_1(struct nlm_testargs *argp, CLIENT *clnt)
 {
 	static nlm_res res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_GRANTED, xdr_nlm_testargs, argp, xdr_nlm_res, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_GRANTED, xdr_nlm_testargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
-void   *
-nlm_test_msg_1(argp, clnt)
-	struct nlm_testargs *argp;
-	CLIENT *clnt;
+void *
+nlm_test_msg_1(struct nlm_testargs *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_TEST_MSG, xdr_nlm_testargs, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_TEST_MSG, xdr_nlm_testargs, argp, xdr_void,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_lock_msg_1(argp, clnt)
-	struct nlm_lockargs *argp;
-	CLIENT *clnt;
+void *
+nlm_lock_msg_1(struct nlm_lockargs *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_LOCK_MSG, xdr_nlm_lockargs, argp, xdr_void, NULL, TIMEOUT) != RPC_SUCCESS) {
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_LOCK_MSG, xdr_nlm_lockargs, argp, xdr_void,
+	    NULL, TIMEOUT) != RPC_SUCCESS) {
 		clnt_perror(clnt, "nlm_lock_msg_1");
-		return (NULL);
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_cancel_msg_1(argp, clnt)
-	struct nlm_cancargs *argp;
-	CLIENT *clnt;
+void *
+nlm_cancel_msg_1(struct nlm_cancargs *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_CANCEL_MSG, xdr_nlm_cancargs, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_CANCEL_MSG, xdr_nlm_cancargs, argp, xdr_void,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_unlock_msg_1(argp, clnt)
-	struct nlm_unlockargs *argp;
-	CLIENT *clnt;
+void *
+nlm_unlock_msg_1(struct nlm_unlockargs *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_UNLOCK_MSG, xdr_nlm_unlockargs, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_UNLOCK_MSG, xdr_nlm_unlockargs, argp, xdr_void,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_granted_msg_1(argp, clnt)
-	struct nlm_testargs *argp;
-	CLIENT *clnt;
+void *
+nlm_granted_msg_1(struct nlm_testargs *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_GRANTED_MSG, xdr_nlm_testargs, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_GRANTED_MSG, xdr_nlm_testargs, argp, xdr_void,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_test_res_1(argp, clnt)
-	nlm_testres *argp;
-	CLIENT *clnt;
+void *
+nlm_test_res_1(nlm_testres *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_TEST_RES, xdr_nlm_testres, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_TEST_RES, xdr_nlm_testres, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_lock_res_1(argp, clnt)
-	nlm_res *argp;
-	CLIENT *clnt;
+void *
+nlm_lock_res_1(nlm_res *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_LOCK_RES, xdr_nlm_res, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_LOCK_RES, xdr_nlm_res, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_cancel_res_1(argp, clnt)
-	nlm_res *argp;
-	CLIENT *clnt;
+void *
+nlm_cancel_res_1(nlm_res *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_CANCEL_RES, xdr_nlm_res, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_CANCEL_RES, xdr_nlm_res, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_unlock_res_1(argp, clnt)
-	nlm_res *argp;
-	CLIENT *clnt;
+void *
+nlm_unlock_res_1(nlm_res *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_UNLOCK_RES, xdr_nlm_res, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_UNLOCK_RES, xdr_nlm_res, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
-void   *
-nlm_granted_res_1(argp, clnt)
-	nlm_res *argp;
-	CLIENT *clnt;
+void *
+nlm_granted_res_1(nlm_res *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_GRANTED_RES, xdr_nlm_res, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_GRANTED_RES, xdr_nlm_res, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
 nlm_shareres *
-nlm_share_3(argp, clnt)
-	nlm_shareargs *argp;
-	CLIENT *clnt;
+nlm_share_3(nlm_shareargs *argp, CLIENT *clnt)
 {
 	static nlm_shareres res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_SHARE, xdr_nlm_shareargs, argp, xdr_nlm_shareres, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_SHARE, xdr_nlm_shareargs, argp,
+	    xdr_nlm_shareres, &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
 nlm_shareres *
-nlm_unshare_3(argp, clnt)
-	nlm_shareargs *argp;
-	CLIENT *clnt;
+nlm_unshare_3(nlm_shareargs *argp, CLIENT *clnt)
 {
 	static nlm_shareres res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_UNSHARE, xdr_nlm_shareargs, argp, xdr_nlm_shareres, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_UNSHARE, xdr_nlm_shareargs, argp,
+	    xdr_nlm_shareres, &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
 nlm_res *
-nlm_nm_lock_3(argp, clnt)
-	nlm_lockargs *argp;
-	CLIENT *clnt;
+nlm_nm_lock_3(nlm_lockargs *argp, CLIENT *clnt)
 {
 	static nlm_res res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_NM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_NM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return (&res);
+	return &res;
 }
 
 
-void   *
-nlm_free_all_3(argp, clnt)
-	nlm_notify *argp;
-	CLIENT *clnt;
+void *
+nlm_free_all_3(nlm_notify *argp, CLIENT *clnt)
 {
 	static char res;
 
-	bzero((char *) &res, sizeof(res));
-	if (clnt_call(clnt, NLM_FREE_ALL, xdr_nlm_notify, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
+	(void)memset(&res, 0, sizeof(res));
+	if (clnt_call(clnt, NLM_FREE_ALL, xdr_nlm_notify, argp, xdr_void, &res,
+	    TIMEOUT) != RPC_SUCCESS) {
+		return NULL;
 	}
-	return ((void *) &res);
+	return &res;
 }
 
 
@@ -319,12 +302,12 @@ main(int argc, char **argv)
 		errx(1, "Failed to create client");
 		/* NOTREACHED */
 	}
-	clnt_control(cli, CLGET_TIMEOUT, &tim);
+	clnt_control(cli, CLGET_TIMEOUT, (void *)&tim);
 	printf("Default timeout was %d.%d\n", tim.tv_sec, tim.tv_usec);
 	tim.tv_usec = -1;
 	tim.tv_sec = -1;
-	clnt_control(cli, CLSET_TIMEOUT, &tim);
-	clnt_control(cli, CLGET_TIMEOUT, &tim);
+	clnt_control(cli, CLSET_TIMEOUT, (void *)&tim);
+	clnt_control(cli, CLGET_TIMEOUT, (void *)&tim);
 	printf("timeout now %d.%d\n", tim.tv_sec, tim.tv_usec);
 
 

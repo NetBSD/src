@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.27 2007/10/27 18:41:54 christos Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.28 2007/11/04 23:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -87,7 +87,7 @@ fhconv(nfs_fhandle_t *fh, const netobj *rfh)
 		return -1;
 	}
 	fh->fhsize = sz;
-	memcpy(fh->fhdata, rfh->n_bytes, sz);
+	(void)memcpy(fh->fhdata, rfh->n_bytes, sz);
 	return 0;
 }
 
@@ -120,12 +120,12 @@ struct file_lock {
 #define LKST_DYING	4 /* must dies when we get news from the child */
 
 static struct file_lock *lalloc(void);
-void lfree __P((struct file_lock *));
-enum nlm_stats do_lock __P((struct file_lock *, int));
-enum nlm_stats do_unlock __P((struct file_lock *));
-void send_granted __P((struct file_lock *, int));
-void siglock __P((void));
-void sigunlock __P((void));
+void lfree(struct file_lock *);
+enum nlm_stats do_lock(struct file_lock *, int);
+enum nlm_stats do_unlock(struct file_lock *);
+void send_granted(struct file_lock *, int);
+void siglock(void);
+void sigunlock(void);
 
 /* list of hosts we monitor */
 LIST_HEAD(hostlst_head, host);
@@ -138,22 +138,20 @@ struct host {
 	int refcnt;
 };
 
-void do_mon __P((char *));
+void do_mon(const char *);
 
 #define	LL_FH	0x01
 #define	LL_NAME	0x02
 #define	LL_SVID	0x04
 
-static struct file_lock *lock_lookup __P((struct file_lock *, int));
+static struct file_lock *lock_lookup(struct file_lock *, int);
 
 /*
  * lock_lookup: lookup a matching lock.
  * called with siglock held.
  */
 static struct file_lock *
-lock_lookup(newfl, flags)
-	struct file_lock *newfl;
-	int flags;
+lock_lookup(struct file_lock *newfl, int flags)
 {
 	struct file_lock *fl;
 
@@ -181,16 +179,15 @@ lock_lookup(newfl, flags)
  */
 
 struct nlm4_holder *
-testlock(lock, flags)
-	struct nlm4_lock *lock;
-	int flags;
+/*ARGSUSED*/
+testlock(struct nlm4_lock *lock, int flags)
 {
 	struct file_lock *fl;
 	nfs_fhandle_t filehandle;
 
 	/* convert lock to a local filehandle */
 	if (fhconv(&filehandle, &lock->fh)) {
-		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "fhconv failed (%m)");
 		return NULL; /* XXX */
 	}
 
@@ -223,10 +220,7 @@ testlock(lock, flags)
  * will do the blocking lock.
  */
 enum nlm_stats
-getlock(lckarg, rqstp, flags)
-	nlm4_lockargs * lckarg;
-	struct svc_req *rqstp;
-	int flags;
+getlock(nlm4_lockargs * lckarg, struct svc_req *rqstp, int flags)
 {
 	struct file_lock *fl, *newfl;
 	enum nlm_stats retval;
@@ -234,58 +228,58 @@ getlock(lckarg, rqstp, flags)
 
 	if (grace_expired == 0 && lckarg->reclaim == 0)
 		return (flags & LOCK_V4) ?
-		    nlm4_denied_grace_period : nlm_denied_grace_period;
+		    (enum nlm_stats)nlm4_denied_grace_period : nlm_denied_grace_period;
 			
 	/* allocate new file_lock for this request */
 	newfl = lalloc();
 	if (newfl == NULL) {
-		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "malloc failed (%m)");
 		/* failed */
 		return (flags & LOCK_V4) ?
-		    nlm4_denied_nolock : nlm_denied_nolocks;
+		    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 	}
 	if (fhconv(&newfl->filehandle, &lckarg->alock.fh)) {
-		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "fhconv failed (%m)");
 		lfree(newfl);
 		/* failed */
 		return (flags & LOCK_V4) ?
-		    nlm4_denied_nolock : nlm_denied_nolocks;
+		    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 	}
 	addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
-	newfl->addr = malloc(addr->sa_len);
+	newfl->addr = malloc((size_t)addr->sa_len);
 	if (newfl->addr == NULL) {
-		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "malloc failed (%m)");
 		lfree(newfl);
 		/* failed */
 		return (flags & LOCK_V4) ?
-		    nlm4_denied_nolock : nlm_denied_nolocks;
+		    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 	}
-	memcpy(newfl->addr, addr, addr->sa_len);
+	(void)memcpy(newfl->addr, addr, (size_t)addr->sa_len);
 	newfl->client.exclusive = lckarg->exclusive;
 	newfl->client.svid = lckarg->alock.svid;
 	newfl->client.oh.n_bytes = malloc(lckarg->alock.oh.n_len);
 	if (newfl->client.oh.n_bytes == NULL) {
-		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "malloc failed (%m)");
 		lfree(newfl);
 		return (flags & LOCK_V4) ?
-		    nlm4_denied_nolock : nlm_denied_nolocks;
+		    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 	}
 	newfl->client.oh.n_len = lckarg->alock.oh.n_len;
-	memcpy(newfl->client.oh.n_bytes, lckarg->alock.oh.n_bytes,
+	(void)memcpy(newfl->client.oh.n_bytes, lckarg->alock.oh.n_bytes,
 	    lckarg->alock.oh.n_len);
 	newfl->client.l_offset = lckarg->alock.l_offset;
 	newfl->client.l_len = lckarg->alock.l_len;
 	newfl->client_cookie.n_len = lckarg->cookie.n_len;
 	newfl->client_cookie.n_bytes = malloc(lckarg->cookie.n_len);
 	if (newfl->client_cookie.n_bytes == NULL) {
-		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
+		syslog(LOG_NOTICE, "malloc failed (%m)");
 		lfree(newfl);
 		return (flags & LOCK_V4) ? 
-		    nlm4_denied_nolock : nlm_denied_nolocks;
+		    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 	}
-	memcpy(newfl->client_cookie.n_bytes, lckarg->cookie.n_bytes,
+	(void)memcpy(newfl->client_cookie.n_bytes, lckarg->cookie.n_bytes,
 	    lckarg->cookie.n_len);
-	strlcpy(newfl->client_name, lckarg->alock.caller_name,
+	(void)strlcpy(newfl->client_name, lckarg->alock.caller_name,
 	    sizeof(newfl->client_name));
 	newfl->nsm_status = lckarg->state;
 	newfl->status = 0;
@@ -303,19 +297,19 @@ getlock(lckarg, rqstp, flags)
 		switch(fl->status) {
 		case LKST_LOCKED:
 			return (flags & LOCK_V4) ?
-			    nlm4_granted : nlm_granted;
+			    (enum nlm_stats)nlm4_granted : nlm_granted;
 		case LKST_WAITING:
 		case LKST_PROCESSING:
 			return (flags & LOCK_V4) ?
-			    nlm4_blocked : nlm_blocked;
+			    (enum nlm_stats)nlm4_blocked : nlm_blocked;
 		case LKST_DYING:
 			return (flags & LOCK_V4) ?
-			    nlm4_denied : nlm_denied;
+			    (enum nlm_stats)nlm4_denied : nlm_denied;
 		default:
 			syslog(LOG_NOTICE, "bad status %d",
 			    fl->status);
 			return (flags & LOCK_V4) ?
-			    nlm4_failed : nlm_denied;
+			    (enum nlm_stats)nlm4_failed : nlm_denied;
 		}
 		/* NOTREACHED */
 	}
@@ -335,7 +329,7 @@ getlock(lckarg, rqstp, flags)
 			do_mon(lckarg->alock.caller_name);
 			sigunlock();
 			return (flags & LOCK_V4) ?
-			    nlm4_blocked : nlm_blocked;
+			    (enum nlm_stats)nlm4_blocked : nlm_blocked;
 		} else {
 			sigunlock();
 			syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
@@ -344,7 +338,7 @@ getlock(lckarg, rqstp, flags)
 			    lckarg->alock.svid);
 			lfree(newfl);
 			return (flags & LOCK_V4) ?
-			    nlm4_denied : nlm_denied;
+			    (enum nlm_stats)nlm4_denied : nlm_denied;
 		}
 		/* NOTREACHED */
 	}
@@ -370,17 +364,15 @@ getlock(lckarg, rqstp, flags)
 
 /* unlock a filehandle */
 enum nlm_stats
-unlock(lck, flags)
-	nlm4_lock *lck;
-	int flags;
+unlock(nlm4_lock *lck, int flags)
 {
 	struct file_lock *fl;
 	nfs_fhandle_t filehandle;
-	int err = (flags & LOCK_V4) ? nlm4_granted : nlm_granted;
+	int err = (flags & LOCK_V4) ? (enum nlm_stats)nlm4_granted : nlm_granted;
 
 	if (fhconv(&filehandle, &lck->fh)) {
-		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
-		return (flags & LOCK_V4) ? nlm4_denied : nlm_denied;
+		syslog(LOG_NOTICE, "fhconv failed (%m)");
+		return (flags & LOCK_V4) ? (enum nlm_stats)nlm4_denied : nlm_denied;
 	}
 	siglock();
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
@@ -426,7 +418,7 @@ unlock(lck, flags)
 	syslog(LOG_NOTICE, "no matching entry for %s",
 	    lck->caller_name);
 	fhfree(&filehandle);
-	return (flags & LOCK_V4) ? nlm4_granted : nlm_granted;
+	return (flags & LOCK_V4) ? (enum nlm_stats)nlm4_granted : nlm_granted;
 }
 
 static struct file_lock *
@@ -436,8 +428,7 @@ lalloc(void)
 }
 
 void
-lfree(fl)
-	struct file_lock *fl;
+lfree(struct file_lock *fl)
 {
 	free(fl->addr);
 	free(fl->client.oh.n_bytes);
@@ -447,22 +438,20 @@ lfree(fl)
 }
 
 void
-sigchild_handler(sig)
-	int sig;
+/*ARGSUSED*/
+sigchild_handler(int sig)
 {
-	int status;
+	int sstatus;
 	pid_t pid;
 	struct file_lock *fl;
 
-	while (1) {
-		pid = wait4(-1, &status, WNOHANG, NULL);
+	for (;;) {
+		pid = wait4(-1, &sstatus, WNOHANG, NULL);
 		if (pid == -1) {
 			if (errno != ECHILD)
-				syslog(LOG_NOTICE, "wait failed: %s",
-				    strerror(errno));
+				syslog(LOG_NOTICE, "wait failed (%m)");
 			else
-				syslog(LOG_DEBUG, "wait failed: %s",
-				    strerror(errno));
+				syslog(LOG_DEBUG, "wait failed (%m)");
 			return;
 		}
 		if (pid == 0) {
@@ -484,7 +473,7 @@ sigchild_handler(sig)
 			 * protect from pid reusing.
 			 */
 			fl->locker = 0;
-			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+			if (!WIFEXITED(sstatus) || WEXITSTATUS(sstatus) != 0) {
 				syslog(LOG_NOTICE, "child %d failed", pid);
 				/*
 				 * can't do much here; we can't reply
@@ -492,7 +481,7 @@ sigchild_handler(sig)
 				 * Eventually the client will time out
 				 * and retry.
 				 */
-				do_unlock(fl);
+				(void)do_unlock(fl);
 				return;
 			}
 			    
@@ -503,10 +492,10 @@ sigchild_handler(sig)
 			case LKST_PROCESSING:
 				fl->status = LKST_LOCKED;
 				send_granted(fl, (fl->flags & LOCK_V4) ?
-				    nlm4_granted : nlm_granted);
+				    (enum nlm_stats)nlm4_granted : nlm_granted);
 				break;
 			case LKST_DYING:
-				do_unlock(fl);
+				(void)do_unlock(fl);
 				break;
 			default:
 				syslog(LOG_NOTICE, "bad lock status (%d) for"
@@ -523,9 +512,7 @@ sigchild_handler(sig)
  */
 
 enum nlm_stats
-do_lock(fl, block)
-	struct file_lock *fl;
-	int block;
+do_lock(struct file_lock *fl, int block)
 {
 	int lflags, error;
 	struct stat st;
@@ -544,14 +531,14 @@ do_lock(fl, block)
 		}
 		if ((fl->flags & LOCK_V4) == 0)
 			error = nlm_denied;
-		syslog(LOG_NOTICE, "fhopen failed (from %s): %s",
-		    fl->client_name, strerror(errno));
+		syslog(LOG_NOTICE, "fhopen failed (from %s) (%m)",
+		    fl->client_name);
 		LIST_REMOVE(fl, lcklst);
 		return error;
 	}
 	if (fstat(fl->fd, &st) < 0) {
-		syslog(LOG_NOTICE, "fstat failed (from %s): %s",
-		    fl->client_name, strerror(errno));
+		syslog(LOG_NOTICE, "fstat failed (from %s) (%m)",
+		    fl->client_name);
 	}
 	syslog(LOG_DEBUG, "lock from %s.%" PRIu32 " for file%s%s: "
 	    "dev %u ino %llu (uid %d), flags %d",
@@ -567,11 +554,11 @@ do_lock(fl, block)
 	if (error != 0 && errno == EAGAIN && block) {
 		switch (fl->locker = fork()) {
 		case -1: /* fork failed */
-			syslog(LOG_NOTICE, "fork failed: %s", strerror(errno));
+			syslog(LOG_NOTICE, "fork failed (%m)");
 			LIST_REMOVE(fl, lcklst);
-			close(fl->fd);
+			(void)close(fl->fd);
 			return (fl->flags & LOCK_V4) ?
-			    nlm4_denied_nolock : nlm_denied_nolocks;
+			    (enum nlm_stats)nlm4_denied_nolock : nlm_denied_nolocks;
 		case 0:
 			/*
 			 * Attempt a blocking lock. Will have to call
@@ -581,19 +568,19 @@ do_lock(fl, block)
 			    fl->client_name, fl->client.svid);
 			lflags &= ~LOCK_NB;
 			if(flock(fl->fd, lflags) != 0) {
-				syslog(LOG_NOTICE, "flock failed: %s",
-				    strerror(errno));
+				syslog(LOG_NOTICE, "flock failed (%m)");
 				_exit(1);
 			}
 			/* lock granted */	
 			_exit(0);
+			/*NOTREACHED*/
 		default:
 			syslog(LOG_DEBUG, "lock request from %s.%" PRIu32 ": "
 			    "forked %d",
 			    fl->client_name, fl->client.svid, fl->locker);
 			fl->status = LKST_PROCESSING;
 			return (fl->flags & LOCK_V4) ?
-			    nlm4_blocked : nlm_blocked;
+			    (enum nlm_stats)nlm4_blocked : nlm_blocked;
 		}
 	}
 	/* non block case */
@@ -614,22 +601,21 @@ do_lock(fl, block)
 		if ((fl->flags & LOCK_V4) == 0)
 			error = nlm_denied;
 		if (errno != EAGAIN)
-			syslog(LOG_NOTICE, "flock for %s failed: %s",
-			    fl->client_name, strerror(errno));
-		else syslog(LOG_DEBUG, "flock for %s failed: %s",
-			    fl->client_name, strerror(errno));
+			syslog(LOG_NOTICE, "flock for %s failed (%m)",
+			    fl->client_name);
+		else syslog(LOG_DEBUG, "flock for %s failed (%m)",
+			    fl->client_name);
 		LIST_REMOVE(fl, lcklst);
-		close(fl->fd);
+		(void)close(fl->fd);
 		return error;
 	}
 	fl->status = LKST_LOCKED;
-	return (fl->flags & LOCK_V4) ? nlm4_granted : nlm_granted;
+	return (fl->flags & LOCK_V4) ? (enum nlm_stats)nlm4_granted : nlm_granted;
 }
 
 void
-send_granted(fl, opcode)
-	struct file_lock *fl;
-	int opcode;
+/*ARGSUSED*/
+send_granted(struct file_lock *fl, int opcode)
 {
 	CLIENT *cli;
 	static char dummy;
@@ -638,8 +624,8 @@ send_granted(fl, opcode)
 	static struct nlm_res retval;
 	static struct nlm4_res retval4;
 
-	cli = get_client(fl->addr,
-	    (fl->flags & LOCK_V4) ? NLM_VERS4 : NLM_VERS);
+	cli = get_client(fl->addr, (rpcvers_t)
+	    ((fl->flags & LOCK_V4) ? NLM_VERS4 : NLM_VERS));
 	if (cli == NULL) {
 		syslog(LOG_NOTICE, "failed to get CLIENT for %s.%" PRIu32,
 		    fl->client_name, fl->client.svid);
@@ -654,46 +640,48 @@ send_granted(fl, opcode)
 	timeo.tv_usec = (fl->flags & LOCK_ASYNC) ? 0 : 500000; /* 0.5s */
 
 	if (fl->flags & LOCK_V4) {
-		static nlm4_testargs res;
-		res.cookie = fl->client_cookie;
-		res.exclusive = fl->client.exclusive;
-		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = fl->filehandle.fhsize;
-		res.alock.fh.n_bytes = fl->filehandle.fhdata;
-		res.alock.oh = fl->client.oh;
-		res.alock.svid = fl->client.svid;
-		res.alock.l_offset = fl->client.l_offset;
-		res.alock.l_len = fl->client.l_len;
+		static nlm4_testargs result;
+		result.cookie = fl->client_cookie;
+		result.exclusive = fl->client.exclusive;
+		result.alock.caller_name = fl->client_name;
+		result.alock.fh.n_len = fl->filehandle.fhsize;
+		result.alock.fh.n_bytes = fl->filehandle.fhdata;
+		result.alock.oh = fl->client.oh;
+		result.alock.svid = fl->client.svid;
+		result.alock.l_offset = fl->client.l_offset;
+		result.alock.l_len = fl->client.l_len;
 		syslog(LOG_DEBUG, "sending v4 reply%s",
 		    (fl->flags & LOCK_ASYNC) ? " (async)":"");
 		if (fl->flags & LOCK_ASYNC) {
 			success = clnt_call(cli, NLM4_GRANTED_MSG,
-			    xdr_nlm4_testargs, &res, xdr_void, &dummy, timeo);
+			    xdr_nlm4_testargs, &result, xdr_void, &dummy, timeo);
 		} else {
 			success = clnt_call(cli, NLM4_GRANTED,
-			    xdr_nlm4_testargs, &res, xdr_nlm4_res,
+			    xdr_nlm4_testargs, &result, xdr_nlm4_res,
 			    &retval4, timeo);
 		}
 	} else {
-		static nlm_testargs res;
+		static nlm_testargs result;
 
-		res.cookie = fl->client_cookie;
-		res.exclusive = fl->client.exclusive;
-		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = fl->filehandle.fhsize;
-		res.alock.fh.n_bytes = fl->filehandle.fhdata;
-		res.alock.oh = fl->client.oh;
-		res.alock.svid = fl->client.svid;
-		res.alock.l_offset = fl->client.l_offset;
-		res.alock.l_len = fl->client.l_len;
+		result.cookie = fl->client_cookie;
+		result.exclusive = fl->client.exclusive;
+		result.alock.caller_name = fl->client_name;
+		result.alock.fh.n_len = fl->filehandle.fhsize;
+		result.alock.fh.n_bytes = fl->filehandle.fhdata;
+		result.alock.oh = fl->client.oh;
+		result.alock.svid = fl->client.svid;
+		result.alock.l_offset =
+		    (unsigned int)fl->client.l_offset;
+		result.alock.l_len =
+		    (unsigned int)fl->client.l_len;
 		syslog(LOG_DEBUG, "sending v1 reply%s",
 		    (fl->flags & LOCK_ASYNC) ? " (async)":"");
 		if (fl->flags & LOCK_ASYNC) {
 			success = clnt_call(cli, NLM_GRANTED_MSG,
-			    xdr_nlm_testargs, &res, xdr_void, &dummy, timeo);
+			    xdr_nlm_testargs, &result, xdr_void, &dummy, timeo);
 		} else {
 			success = clnt_call(cli, NLM_GRANTED,
-			    xdr_nlm_testargs, &res, xdr_nlm_res,
+			    xdr_nlm_testargs, &result, xdr_nlm_res,
 			    &retval, timeo);
 		}
 	}
@@ -704,27 +692,25 @@ send_granted(fl, opcode)
 }
 
 enum nlm_stats
-do_unlock(rfl)
-	struct file_lock *rfl;
+do_unlock(struct file_lock *rfl)
 {
 	struct file_lock *fl;
 	int error;
 	int lockst;
 
 	/* unlock the file: closing is enough ! */
-	if (close(rfl->fd) < 0) {
+	if (close(rfl->fd) == -1) {
 		if (errno == ESTALE)
 			error = nlm4_stale_fh;
 		else
 			error = nlm4_failed;
 		if ((rfl->flags & LOCK_V4) == 0)
 			error = nlm_denied;
-		syslog(LOG_NOTICE,
-		    "close failed (from %s): %s",
-		    rfl->client_name, strerror(errno));
+		syslog(LOG_NOTICE, "close failed (from %s) (%m)",
+		    rfl->client_name);
 	} else {
 		error = (rfl->flags & LOCK_V4) ?
-		    nlm4_granted : nlm_granted;
+		    (enum nlm_stats)nlm4_granted : nlm_granted;
 	}
 	LIST_REMOVE(rfl, lcklst);
 
@@ -739,7 +725,7 @@ do_unlock(rfl)
 		case nlm4_granted:
 		/* case nlm_granted: same as nlm4_granted */
 			send_granted(fl, (fl->flags & LOCK_V4) ?
-			    nlm4_granted : nlm_granted);
+			    (enum nlm_stats)nlm4_granted : nlm_granted);
 			break;
 		case nlm4_blocked:
 		/* case nlm_blocked: same as nlm4_blocked */
@@ -755,39 +741,39 @@ do_unlock(rfl)
 }
 
 void
-siglock()
+siglock(void)
 {
 	sigset_t block;
 	
-	sigemptyset(&block);
-	sigaddset(&block, SIGCHLD);
+	(void)sigemptyset(&block);
+	(void)sigaddset(&block, SIGCHLD);
 
 	if (sigprocmask(SIG_BLOCK, &block, NULL) < 0) {
-		syslog(LOG_WARNING, "siglock failed: %s", strerror(errno));
+		syslog(LOG_WARNING, "siglock failed (%m)");
 	}
 }
 
 void
-sigunlock()
+sigunlock(void)
 {
 	sigset_t block;
 	
-	sigemptyset(&block);
-	sigaddset(&block, SIGCHLD);
+	(void)sigemptyset(&block);
+	(void)sigaddset(&block, SIGCHLD);
 
 	if (sigprocmask(SIG_UNBLOCK, &block, NULL) < 0) {
-		syslog(LOG_WARNING, "sigunlock failed: %s", strerror(errno));
+		syslog(LOG_WARNING, "sigunlock failed (%m)");
 	}
 }
 
 /* monitor a host through rpc.statd, and keep a ref count */
 void
-do_mon(hostname)
-	char *hostname;
+do_mon(const char *hostname)
 {
+	static char localhost[] = "localhost";
 	struct host *hp;
 	struct mon my_mon;
-	struct sm_stat_res res;
+	struct sm_stat_res result;
 	int retval;
 
 	LIST_FOREACH(hp, &hostlst_head, hostlst) {
@@ -800,29 +786,27 @@ do_mon(hostname)
 	/* not found, have to create an entry for it */
 	hp = malloc(sizeof(struct host));
  	if (hp == NULL) {
- 		syslog(LOG_WARNING, "can't monitor host %s: malloc failed\n",
+ 		syslog(LOG_WARNING, "can't monitor host %s (%m)",
  		    hostname);
  		return;
 	}
-	strlcpy(hp->name, hostname, sizeof(hp->name));
+	(void)strlcpy(hp->name, hostname, sizeof(hp->name));
 	hp->refcnt = 1;
-	syslog(LOG_DEBUG, "monitoring host %s",
-	    hostname);
-	memset(&my_mon, 0, sizeof(my_mon));
+	syslog(LOG_DEBUG, "monitoring host %s", hostname);
+	(void)memset(&my_mon, 0, sizeof(my_mon));
 	my_mon.mon_id.mon_name = hp->name;
-	my_mon.mon_id.my_id.my_name = "localhost";
+	my_mon.mon_id.my_id.my_name = localhost;
 	my_mon.mon_id.my_id.my_prog = NLM_PROG;
 	my_mon.mon_id.my_id.my_vers = NLM_SM;
 	my_mon.mon_id.my_id.my_proc = NLM_SM_NOTIFY;
-	if ((retval =
-	    callrpc("localhost", SM_PROG, SM_VERS, SM_MON, xdr_mon,
-	    (char*)&my_mon, xdr_sm_stat_res, (char*)&res)) != 0) {
-		syslog(LOG_WARNING, "rpc to statd failed: %s",
+	if ((retval = callrpc(localhost, SM_PROG, SM_VERS, SM_MON, xdr_mon,
+	    (void *)&my_mon, xdr_sm_stat_res, (void *)&result)) != 0) {
+		syslog(LOG_WARNING, "rpc to statd failed (%s)",
 		    clnt_sperrno((enum clnt_stat)retval));
 		free(hp);
 		return;
 	}
-	if (res.res_stat == stat_fail) {
+	if (result.res_stat == stat_fail) {
 		syslog(LOG_WARNING, "statd failed");
 		free(hp);
 		return;
@@ -831,9 +815,7 @@ do_mon(hostname)
 }
 
 void
-notify(hostname, state)
-	char *hostname;
-	int state;
+notify(const char *hostname, int state)
 {
 	struct file_lock *fl, *next_fl;
 	int err;
