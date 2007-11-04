@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.351 2007/11/04 12:07:01 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.352 2007/11/04 17:11:19 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10446,4 +10446,34 @@ etc/namedb/root.cache				1.11
 
 	Update to 2007110100 version
 	[martti, ticket #972]
+
+src/sys/arch/cobalt/cobalt/autoconf.c		1.25, 1.26
+src/sys/arch/cobalt/cobalt/machdep.c		1.89
+src/sys/arch/cobalt/stand/boot/Makefile		1.12
+src/sys/arch/cobalt/stand/boot/boot.c		1.10
+src/sys/arch/cobalt/stand/boot/boot.h		1.6
+src/sys/arch/cobalt/stand/boot/cache.c		1.1(new), 1.2
+src/sys/arch/cobalt/stand/boot/clock.c		1.2
+src/sys/arch/cobalt/stand/boot/conf.c		1.5
+src/sys/arch/cobalt/stand/boot/devopen.c	1.4
+src/sys/arch/cobalt/stand/boot/nif_tlp.c	1.1(new)
+src/sys/arch/cobalt/stand/boot/start.S		1.6
+src/sys/arch/cobalt/stand/boot/tlp.c		1.1(new), 1.2, 1.3
+src/sys/arch/cobalt/stand/boot/version		1.6
+src/sys/lib/libsa/dev_net.h			1.5
+
+	Add support for netboot via tlp0 with standalone tlp(4) driver
+	taken from arch/sandpoint/stand/netboot.
+	[tsutsui, ticket #974]
+
+sys/dev/ic/hd44780_subr.c			1.13
+
+	Fix some random LCD corruption on cobalt.
+	[tsutsui, ticket #975]
+
+usr.sbin/cron/config.h				1.7
+
+	Use default timeout parameters when cron invokes sendmail.
+	PR bin/37226.
+	[martin, ticket #971]
 
