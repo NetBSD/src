@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.15 2007/11/03 23:33:50 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.16 2007/11/04 13:59:49 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,13 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.15 2007/11/03 23:33:50 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.16 2007/11/04 13:59:49 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.15 2007/11/03 23:33:50 xtraeme Exp $")
 #else
 #define DPRINTF(x)
 #endif
-
-#define AIBOOST_MAX_SENSORS	15
 
 struct aiboost_elem {
 	ACPI_HANDLE h;
@@ -65,7 +63,7 @@ struct aiboost_softc {
 	struct acpi_devnode *sc_node;	/* ACPI devnode */
 	struct aiboost_comp *sc_aitemp, *sc_aivolt, *sc_aifan;
 	struct sysmon_envsys sc_sme;
-	struct envsys_data sc_data[AIBOOST_MAX_SENSORS];
+	envsys_data_t *sc_sensor;
 	kmutex_t sc_mtx;
 };
 
@@ -136,9 +134,14 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	maxsens = sc->sc_aivolt->num + sc->sc_aitemp->num + sc->sc_aifan->num;
 	DPRINTF(("%s: maxsens=%d\n", __func__, maxsens));
 
+	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t) * maxsens,
+	    KM_NOSLEEP);
+	if (!sc->sc_sensor)
+		return;
+
 	for (i = 0; i < maxsens; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
+		sc->sc_sensor[i].sensor = i;
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
 	}
 
 	aiboost_setup_sensors(sc);
@@ -147,13 +150,16 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	 * Hook into the system monitor.
 	 */
 	sc->sc_sme.sme_name = device_xname(self);
-	sc->sc_sme.sme_sensor_data = sc->sc_data;
+	sc->sc_sme.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sme.sme_cookie = sc;
 	sc->sc_sme.sme_gtredata = aiboost_refresh_sensors;
 	sc->sc_sme.sme_nsensors = maxsens;
 
-	if (sysmon_envsys_register(&sc->sc_sme))
+	if (sysmon_envsys_register(&sc->sc_sme)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
+		kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
+		mutex_destroy(&sc->sc_mtx);
+	}
 }
 
 #define COPYDESCR(x, y)				\
@@ -168,10 +174,10 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 
 	/* Temperatures */
 	for (i = 0; i < sc->sc_aitemp->num; i++) {
-		sc->sc_data[i].units = ENVSYS_STEMP;
-		COPYDESCR(sc->sc_data[i].desc, sc->sc_aitemp->elem[i].desc);
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
+		COPYDESCR(sc->sc_sensor[i].desc, sc->sc_aitemp->elem[i].desc);
 		DPRINTF(("%s: data[%d].desc=%s elem[%d].desc=%s\n", __func__,
-		    i, sc->sc_data[i].desc, i, sc->sc_aitemp->elem[i].desc));
+		    i, sc->sc_sensor[i].desc, i, sc->sc_aitemp->elem[i].desc));
 	}
 
 	/* skip temperatures */
@@ -179,10 +185,10 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 
 	/* Voltages */
 	for (i = 0; i < sc->sc_aivolt->num; i++, j++) {
-		sc->sc_data[j].units = ENVSYS_SVOLTS_DC;
-		COPYDESCR(sc->sc_data[j].desc, sc->sc_aivolt->elem[i].desc);
+		sc->sc_sensor[j].units = ENVSYS_SVOLTS_DC;
+		COPYDESCR(sc->sc_sensor[j].desc, sc->sc_aivolt->elem[i].desc);
 		DPRINTF(("%s: data[%d].desc=%s elem[%d].desc=%s\n", __func__,
-		    j, sc->sc_data[j].desc, i, sc->sc_aivolt->elem[i].desc));
+		    j, sc->sc_sensor[j].desc, i, sc->sc_aivolt->elem[i].desc));
 	}
 
 	/* skip voltages */
@@ -190,10 +196,10 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 
 	/* Fans */
 	for (i = 0; i < sc->sc_aifan->num; i++, j++) {
-		sc->sc_data[j].units = ENVSYS_SFANRPM;
-		COPYDESCR(sc->sc_data[j].desc, sc->sc_aifan->elem[i].desc);
+		sc->sc_sensor[j].units = ENVSYS_SFANRPM;
+		COPYDESCR(sc->sc_sensor[j].desc, sc->sc_aifan->elem[i].desc);
 		DPRINTF(("%s: data[%d].desc=%s elem[%d].desc=%s\n", __func__,
-		    j, sc->sc_data[j].desc, i, sc->sc_aifan->elem[i].desc));
+		    j, sc->sc_sensor[j].desc, i, sc->sc_aifan->elem[i].desc));
 		    
 	}
 }
@@ -309,8 +315,12 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		goto error;
 	}
 
-	c = malloc(sizeof(struct aiboost_comp) + sizeof(struct aiboost_elem) *
-		   (elem->Integer.Value - 1), M_DEVBUF, M_ZERO|M_WAITOK);
+	c = kmem_zalloc(sizeof(struct aiboost_comp) +
+	    sizeof(struct aiboost_elem) * (elem->Integer.Value - 1),
+	    KM_NOSLEEP);
+	if (!c)
+		goto error;
+
 	*comp = c;
 	c->num = elem->Integer.Value;
 
@@ -379,7 +389,7 @@ error:
 	if (buf2.Pointer)
 		AcpiOsFree(buf2.Pointer);
 	if (c)
-		free(c, M_DEVBUF);
+		kmem_free(c, sizeof(*c));
 
 	return AE_BAD_DATA;
 }
