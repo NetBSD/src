@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.49.10.1 2007/10/26 15:48:43 joerg Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.49.10.2 2007/11/04 21:03:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.49.10.1 2007/10/26 15:48:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.49.10.2 2007/11/04 21:03:33 jmcneill Exp $");
 
 #define SYSVMSG
 
@@ -88,6 +88,10 @@ static struct __msg *msghdrs;		/* MSGTQL msg headers */
 kmsq_t	*msqs;				/* MSGMNI msqid_ds struct's */
 kmutex_t msgmutex;			/* subsystem lock */
 
+static u_int	msg_waiters = 0;	/* total number of msgrcv waiters */
+static bool	msg_realloc_state;
+static kcondvar_t msg_realloc_cv;
+
 static void msg_freehdr(struct __msg *);
 
 void
@@ -114,19 +118,21 @@ msginit(void)
 		panic("msginfo.msgseg = %d > 32767", msginfo.msgseg);
 	}
 
-	/* Allocate pageable memory for our structures */
-	sz = msginfo.msgmax +
-	    msginfo.msgseg * sizeof(struct msgmap) +
-	    msginfo.msgtql * sizeof(struct __msg) +
-	    msginfo.msgmni * sizeof(kmsq_t);
+	/* Allocate the wired memory for our structures */
+	sz = ALIGN(msginfo.msgmax) +
+	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)) +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
+	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
 	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
 		panic("sysv_msg: cannot allocate memory");
 	msgpool = (void *)v;
-	msgmaps = (void *)(msgpool + msginfo.msgmax);
-	msghdrs = (void *)(msgmaps + msginfo.msgseg);
-	msqs = (void *)(msghdrs + msginfo.msgtql);
+	msgmaps = (void *)(ALIGN(msgpool) + msginfo.msgmax);
+	msghdrs = (void *)(ALIGN(msgmaps) +
+	    msginfo.msgseg * sizeof(struct msgmap));
+	msqs = (void *)(ALIGN(msghdrs) +
+	    msginfo.msgtql * sizeof(struct __msg));
 
 	for (i = 0; i < (msginfo.msgseg - 1); i++)
 		msgmaps[i].next = i + 1;
@@ -153,6 +159,217 @@ msginit(void)
 	}
 
 	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&msg_realloc_cv, "msgrealc");
+	msg_realloc_state = false;
+}
+
+static int
+msgrealloc(int newmsgmni, int newmsgseg)
+{
+	struct msgmap *new_msgmaps;
+	struct __msg *new_msghdrs, *new_free_msghdrs;
+	char *old_msgpool, *new_msgpool;
+	kmsq_t *new_msqs;
+	vaddr_t v;
+	int i, sz, msqid, newmsgmax, new_nfree_msgmaps;
+	short new_free_msgmaps;
+
+	if (newmsgmni < 1 || newmsgseg < 1)
+		return EINVAL;
+
+	/* Allocate the wired memory for our structures */
+	newmsgmax = msginfo.msgssz * newmsgseg;
+	sz = ALIGN(newmsgmax) +
+	    ALIGN(newmsgseg * sizeof(struct msgmap)) +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
+	    ALIGN(newmsgmni * sizeof(kmsq_t));
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (v == 0)
+		return ENOMEM;
+
+	mutex_enter(&msgmutex);
+	if (msg_realloc_state) {
+		mutex_exit(&msgmutex);
+		uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+		return EBUSY;
+	}
+	msg_realloc_state = true;
+	if (msg_waiters) {
+		/*
+		 * Mark reallocation state, wake-up all waiters,
+		 * and wait while they will all exit.
+		 */
+		for (i = 0; i < msginfo.msgmni; i++)
+			cv_broadcast(&msqs[i].msq_cv);
+		while (msg_waiters)
+			cv_wait(&msg_realloc_cv, &msgmutex);
+	}
+	old_msgpool = msgpool;
+
+	/* We cannot reallocate less memory than we use */
+	i = 0;
+	for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
+		struct msqid_ds *mptr;
+		kmsq_t *msq;
+
+		msq = &msqs[msqid];
+		mptr = &msq->msq_u;
+		if (mptr->msg_qbytes || (mptr->msg_perm.mode & MSG_LOCKED))
+			i = msqid;
+	}
+	if (i >= newmsgmni || (msginfo.msgseg - nfree_msgmaps) > newmsgseg) {
+		mutex_exit(&msgmutex);
+		uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+		return EBUSY;
+	}
+
+	new_msgpool = (void *)v;
+	new_msgmaps = (void *)(ALIGN(new_msgpool) + newmsgmax);
+	new_msghdrs = (void *)(ALIGN(new_msgmaps) +
+	    newmsgseg * sizeof(struct msgmap));
+	new_msqs = (void *)(ALIGN(new_msghdrs) +
+	    msginfo.msgtql * sizeof(struct __msg));
+
+	/* Initialize the structures */
+	for (i = 0; i < (newmsgseg - 1); i++)
+		new_msgmaps[i].next = i + 1;
+	new_msgmaps[newmsgseg - 1].next = -1;
+	new_free_msgmaps = 0;
+	new_nfree_msgmaps = newmsgseg;
+
+	for (i = 0; i < (msginfo.msgtql - 1); i++) {
+		new_msghdrs[i].msg_type = 0;
+		new_msghdrs[i].msg_next = &new_msghdrs[i + 1];
+	}
+	i = msginfo.msgtql - 1;
+	new_msghdrs[i].msg_type = 0;
+	new_msghdrs[i].msg_next = NULL;
+	new_free_msghdrs = &new_msghdrs[0];
+
+	for (i = 0; i < newmsgmni; i++) {
+		new_msqs[i].msq_u.msg_qbytes = 0;
+		new_msqs[i].msq_u.msg_perm._seq = 0;
+		cv_init(&new_msqs[i].msq_cv, "msgwait");
+	}
+
+	/*
+	 * Copy all message queue identifiers, mesage headers and buffer
+	 * pools to the new memory location.
+	 */
+	for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
+		struct __msg *nmsghdr, *msghdr, *pmsghdr;
+		struct msqid_ds *nmptr, *mptr;
+		kmsq_t *nmsq, *msq;
+
+		msq = &msqs[msqid];
+		mptr = &msq->msq_u;
+
+		if (mptr->msg_qbytes == 0 &&
+		    (mptr->msg_perm.mode & MSG_LOCKED) == 0)
+			continue;
+
+		nmsq = &new_msqs[msqid];
+		nmptr = &nmsq->msq_u;
+		memcpy(nmptr, mptr, sizeof(struct msqid_ds));
+
+		/*
+		 * Go through the message headers, and and copy each
+		 * one by taking the new ones, and thus defragmenting.
+		 */
+		nmsghdr = pmsghdr = NULL;
+		msghdr = mptr->_msg_first;
+		while (msghdr) {
+			short nnext = 0, next;
+			u_short msgsz, segcnt;
+
+			/* Take an entry from the new list of free msghdrs */
+			nmsghdr = new_free_msghdrs;
+			KASSERT(nmsghdr != NULL);
+			new_free_msghdrs = nmsghdr->msg_next;
+
+			nmsghdr->msg_next = NULL;
+			if (pmsghdr) {
+				pmsghdr->msg_next = nmsghdr;
+			} else {
+				nmptr->_msg_first = nmsghdr;
+				pmsghdr = nmsghdr;
+			}
+			nmsghdr->msg_ts = msghdr->msg_ts;
+			nmsghdr->msg_spot = -1;
+
+			/* Compute the amount of segments and reserve them */
+			msgsz = msghdr->msg_ts;
+			segcnt = (msgsz + msginfo.msgssz - 1) / msginfo.msgssz;
+			if (segcnt == 0)
+				continue;
+			while (segcnt--) {
+				nnext = new_free_msgmaps;
+				new_free_msgmaps = new_msgmaps[nnext].next;
+				new_nfree_msgmaps--;
+				new_msgmaps[nnext].next = nmsghdr->msg_spot;
+				nmsghdr->msg_spot = nnext;
+			}
+
+			/* Copy all segments */
+			KASSERT(nnext == nmsghdr->msg_spot);
+			next = msghdr->msg_spot;
+			while (msgsz > 0) {
+				size_t tlen;
+
+				if (msgsz >= msginfo.msgssz) {
+					tlen = msginfo.msgssz;
+					msgsz -= msginfo.msgssz;
+				} else {
+					tlen = msgsz;
+					msgsz = 0;
+				}
+
+				/* Copy the message buffer */
+				memcpy(&new_msgpool[nnext * msginfo.msgssz],
+				    &msgpool[next * msginfo.msgssz], tlen);
+
+				/* Next entry of the map */
+				nnext = msgmaps[nnext].next;
+				next = msgmaps[next].next;
+			}
+
+			/* Next message header */
+			msghdr = msghdr->msg_next;
+		}
+		nmptr->_msg_last = nmsghdr;
+	}
+	KASSERT((msginfo.msgseg - nfree_msgmaps) ==
+	    (newmsgseg - new_nfree_msgmaps));
+
+	sz = ALIGN(msginfo.msgmax) +
+	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)) +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
+	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
+
+	for (i = 0; i < msginfo.msgmni; i++)
+		cv_destroy(&msqs[i].msq_cv);
+
+	/* Set the pointers and update the new values */
+	msgpool = new_msgpool;
+	msgmaps = new_msgmaps;
+	msghdrs = new_msghdrs;
+	msqs = new_msqs;
+
+	free_msghdrs = new_free_msghdrs;
+	free_msgmaps = new_free_msgmaps;
+	nfree_msgmaps = new_nfree_msgmaps;
+	msginfo.msgmni = newmsgmni;
+	msginfo.msgseg = newmsgseg;
+	msginfo.msgmax = newmsgmax;
+
+	/* Reallocation completed - notify all waiters, if any */
+	msg_realloc_state = false;
+	cv_broadcast(&msg_realloc_cv);
+	mutex_exit(&msgmutex);
+
+	uvm_km_free(kernel_map, (vaddr_t)old_msgpool, sz, UVM_KMF_WIRED);
+	return 0;
 }
 
 static void
@@ -446,6 +663,11 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	msqid = IPCID_TO_IX(msqidr);
 
 	mutex_enter(&msgmutex);
+	if (msg_realloc_state) {
+		/* In case of reallocation, we will wait for completion */
+		while (msg_realloc_state)
+			cv_wait(&msg_realloc_cv, &msgmutex);
+	}
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -527,12 +749,20 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 				msqptr->msg_perm.mode |= MSG_LOCKED;
 				we_own_it = 1;
 			}
+
+			msg_waiters++;
 			MSG_PRINTF(("goodnight\n"));
 			error = cv_wait_sig(&msq->msq_cv, &msgmutex);
 			MSG_PRINTF(("good morning, error=%d\n", error));
+			msg_waiters--;
+
+			/* Notify reallocator, in case of such state */
+			if (msg_realloc_state)
+				cv_broadcast(&msg_realloc_cv);
+
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			if (error != 0) {
+			if (error || msg_realloc_state) {
 				MSG_PRINTF(("msgsnd: interrupted system "
 				    "call\n"));
 				error = EINTR;
@@ -733,6 +963,11 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	msqid = IPCID_TO_IX(msqidr);
 
 	mutex_enter(&msgmutex);
+	if (msg_realloc_state) {
+		/* In case of reallocation, we will wait for completion */
+		while (msg_realloc_state)
+			cv_wait(&msg_realloc_cv, &msgmutex);
+	}
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -849,11 +1084,17 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		 * Wait for something to happen
 		 */
 
+		msg_waiters++;
 		MSG_PRINTF(("msgrcv:  goodnight\n"));
 		error = cv_wait_sig(&msq->msq_cv, &msgmutex);
 		MSG_PRINTF(("msgrcv: good morning (error=%d)\n", error));
+		msg_waiters--;
 
-		if (error != 0) {
+		/* Notify reallocator, in case of such state */
+		if (msg_realloc_state)
+			cv_broadcast(&msg_realloc_cv);
+
+		if (error || msg_realloc_state) {
 			MSG_PRINTF(("msgsnd: interrupted system call\n"));
 			error = EINTR;
 			goto unlock;
@@ -922,7 +1163,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		else
 			tlen = msgsz - len;
 		mutex_exit(&msgmutex);
-		error = copyout(&msgpool[next * msginfo.msgssz],
+		error = (*put_type)(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		mutex_enter(&msgmutex);
 		if (error != 0) {
@@ -947,4 +1188,73 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 unlock:
 	mutex_exit(&msgmutex);
 	return error;
+}
+
+/*
+ * Sysctl initialization and nodes.
+ */
+
+static int
+sysctl_ipc_msgmni(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = msginfo.msgmni;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	return msgrealloc(newsize, msginfo.msgseg);
+}
+
+static int
+sysctl_ipc_msgseg(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = msginfo.msgseg;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	return msgrealloc(msginfo.msgmni, newsize);
+}
+
+SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "ipc",
+		SYSCTL_DESCR("SysV IPC options"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, KERN_SYSVIPC, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "msgmni",
+		SYSCTL_DESCR("Max number of message queue identifiers"),
+		sysctl_ipc_msgmni, 0, &msginfo.msgmni, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "msgseg",
+		SYSCTL_DESCR("Max number of number of message segments"),
+		sysctl_ipc_msgseg, 0, &msginfo.msgseg, 0,
+		CTL_CREATE, CTL_EOL);
 }

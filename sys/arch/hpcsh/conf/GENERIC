@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74.8.1 2007/10/02 18:27:01 joerg Exp $
+# $NetBSD: GENERIC,v 1.74.8.2 2007/11/04 21:02:56 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -70,12 +70,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	LKM		# loadable kernel modules

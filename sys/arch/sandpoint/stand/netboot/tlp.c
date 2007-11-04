@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.8.2.3 2007/10/31 23:14:02 joerg Exp $ */
+/* $NetBSD: tlp.c,v 1.8.2.4 2007/11/04 21:03:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -141,7 +142,7 @@ tlp_init(unsigned tag, void *data)
 	
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CSR_READ(l, TLP_BMR);
 	CSR_WRITE(l, TLP_BMR, val | BMR_RST);
@@ -291,45 +292,47 @@ size_srom(struct local *l)
 #define CS  	(1U << 0)	/* hold chip select */
 #define CLK	(1U << 1)	/* clk bit */
 #define D1	(1U << 2)	/* bit existence */
-#define D0	0		/* bit absence */
 #define VV 	(1U << 3)	/* taken 0/1 from SEEPROM */
 
 static int
 read_srom(struct local *l, int off)
 {
-	unsigned idx, val, x1, x0, cnt, bit, ret;
+	unsigned data, v, i;
 
-	idx = off & 0xff;		/* A7-A0 */
-	idx |= R110 << l->sromsft;	/* 110 for READ */
+	data = off & 0xff;		/* A7-A0 */
+	data |= R110 << l->sromsft;	/* 110 for READ */
 
-	val = SROM_RD | SROM_SR;
-	CSR_WRITE(l, TLP_APROM, val);
-	val |= CS;			/* hold CS */
-	CSR_WRITE(l, TLP_APROM, val);
+	v = SROM_RD | SROM_SR;
+	CSR_WRITE(l, TLP_APROM, v);
+	v |= CS;			/* hold CS */
+	CSR_WRITE(l, TLP_APROM, v);
 
-	x1 = val | D1;			/* 1 */
-	x0 = val | D0;			/* 0 */
 	/* instruct R110 op. at off in MSB first order */
-	for (cnt = (1 << (l->sromsft + 2)); cnt > 0; cnt >>= 1) {
-		bit = (idx & cnt) ? x1 : x0;
-		CSR_WRITE(l, TLP_APROM, bit);
+	for (i = (1 << (l->sromsft + 2)); i != 0; i >>= 1) {
+		if (data & i)
+			v |= D1;
+		else
+			v &= ~D1;
+		CSR_WRITE(l, TLP_APROM, v);
 		DELAY(10);
-		CSR_WRITE(l, TLP_APROM, bit | CLK);
+		CSR_WRITE(l, TLP_APROM, v | CLK);
 		DELAY(10);
 	}
-	/* read 16bit quantity in MSB first order */
-	ret = 0;
-	for (cnt = 16; cnt > 0; cnt--) {
-		CSR_WRITE(l, TLP_APROM, val);
-		DELAY(10);
-		CSR_WRITE(l, TLP_APROM, val | CLK);
-		DELAY(10);
-		ret = (ret << 1) | !!(CSR_READ(l, TLP_APROM) & VV);
-	}
-	val &= ~CS; /* turn off chip select */
-	CSR_WRITE(l, TLP_APROM, val);
+	v &= ~D1;
 
-	return ret;
+	/* read 16bit quantity in MSB first order */
+	data = 0;
+	for (i = 0; i < 16; i++) {
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(10);
+		CSR_WRITE(l, TLP_APROM, v | CLK);
+		DELAY(10);
+		data = (data << 1) | !!(CSR_READ(l, TLP_APROM) & VV);
+	}
+	/* turn off chip select */
+	CSR_WRITE(l, TLP_APROM, 0);
+
+	return data;
 }
 
 #if 0

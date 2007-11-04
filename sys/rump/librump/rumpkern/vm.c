@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.20.2.3 2007/11/02 13:02:48 joerg Exp $	*/
+/*	$NetBSD: vm.c,v 1.20.2.4 2007/11/04 21:03:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -82,7 +82,6 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 
 	pg = rumpuser_malloc(sizeof(struct vm_page), 0);
 	memset(pg, 0, sizeof(struct vm_page));
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
 	pg->offset = off;
 	pg->uobject = uobj;
 
@@ -90,15 +89,26 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	memset((void *)pg->uanon, 0, PAGE_SIZE);
 	pg->flags = PG_CLEAN;
 
+	simple_lock(&uobj->vmobjlock);
+	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+	simple_unlock(&uobj->vmobjlock);
+
 	return pg;
 }
 
+/*
+ * Release a page.
+ *
+ * Called with the vm object locked.  Returns with the lock released.
+ */
 void
 rumpvm_freepage(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
 
 	TAILQ_REMOVE(&uobj->memq, pg, listq);
+	simple_unlock(&uobj->vmobjlock);
+
 	rumpuser_free((void *)pg->uanon);
 	rumpuser_free(pg);
 }
@@ -110,6 +120,7 @@ struct rumpva {
 	LIST_ENTRY(rumpva) entries;
 };
 static LIST_HEAD(, rumpva) rvahead = LIST_HEAD_INITIALIZER(rvahead);
+static kmutex_t rvamtx;
 
 void
 rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
@@ -119,7 +130,9 @@ rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
 	rva = rumpuser_malloc(sizeof(struct rumpva), 0);
 	rva->addr = addr;
 	rva->pg = pg;
+	mutex_enter(&rvamtx);
 	LIST_INSERT_HEAD(&rvahead, rva, entries);
+	mutex_exit(&rvamtx);
 }
 
 void
@@ -127,10 +140,12 @@ rumpvm_flushva()
 {
 	struct rumpva *rva;
 
+	mutex_enter(&rvamtx);
 	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
 		LIST_REMOVE(rva, entries);
 		rumpuser_free(rva);
 	}
+	mutex_exit(&rvamtx);
 }
 
 /*
@@ -196,8 +211,10 @@ ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0)
 		return 0;
 
+	simple_lock(&uobj->vmobjlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
 		rumpvm_freepage(pg);
+	simple_unlock(&uobj->vmobjlock);
 
 	return 0;
 }
@@ -237,22 +254,28 @@ struct ubc_window {
 };
 
 static LIST_HEAD(, ubc_window) uwinlst = LIST_HEAD_INITIALIZER(uwinlst);
+static kmutex_t uwinmtx;
 
 int
-rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp)
+rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp,
+	struct ubc_window *uwinp)
 {
-	struct ubc_window *uwinp;
 	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, n);
 	int i, rv;
 
-	LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
-		if ((uint8_t *)va >= uwinp->uwin_mem
-		    && (uint8_t *)va < (uwinp->uwin_mem + uwinp->uwin_mapsize))
-			break;
 	if (uwinp == NULL) {
-		KASSERT(rvp != NULL);
-		return 0;
+		mutex_enter(&uwinmtx);
+		LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
+			if ((uint8_t *)va >= uwinp->uwin_mem
+			    && (uint8_t *)va
+			      < (uwinp->uwin_mem + uwinp->uwin_mapsize))
+				break;
+		mutex_exit(&uwinmtx);
+		if (uwinp == NULL) {
+			KASSERT(rvp != NULL);
+			return 0;
+		}
 	}
 
 	pgs = rumpuser_malloc(npages * sizeof(pgs), 0);
@@ -282,19 +305,38 @@ rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp)
 	return 1;
 }
 
-void *
-ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
-	int flags)
+static struct ubc_window *
+uwin_alloc(struct uvm_object *uobj, voff_t off, vsize_t len)
 {
 	struct ubc_window *uwinp; /* pronounced: you wimp! */
 
 	uwinp = kmem_alloc(sizeof(struct ubc_window), KM_SLEEP);
 	uwinp->uwin_obj = uobj;
-	uwinp->uwin_off = offset;
-	uwinp->uwin_mapsize = *lenp;
-	uwinp->uwin_mem = kmem_alloc(*lenp, KM_SLEEP);
+	uwinp->uwin_off = off;
+	uwinp->uwin_mapsize = len;
+	uwinp->uwin_mem = kmem_alloc(len, KM_SLEEP);
 
+	return uwinp;
+}
+
+static void
+uwin_free(struct ubc_window *uwinp)
+{
+
+	kmem_free(uwinp->uwin_mem, uwinp->uwin_mapsize);
+	kmem_free(uwinp, sizeof(struct ubc_window));
+}
+
+void *
+ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
+	int flags)
+{
+	struct ubc_window *uwinp;
+
+	uwinp = uwin_alloc(uobj, offset, *lenp);
+	mutex_enter(&uwinmtx);
 	LIST_INSERT_HEAD(&uwinlst, uwinp, uwin_entries);
+	mutex_exit(&uwinmtx);
 
 	DPRINTF(("UBC_ALLOC offset 0x%llx, uwin %p, mem %p\n",
 	    (unsigned long long)offset, uwinp, uwinp->uwin_mem));
@@ -307,31 +349,32 @@ ubc_release(void *va, int flags)
 {
 	struct ubc_window *uwinp;
 
+	mutex_enter(&uwinmtx);
 	LIST_FOREACH(uwinp, &uwinlst, uwin_entries)
 		if ((uint8_t *)va >= uwinp->uwin_mem
 		    && (uint8_t *)va < (uwinp->uwin_mem + uwinp->uwin_mapsize))
 			break;
+	mutex_exit(&uwinmtx);
 	if (uwinp == NULL)
 		panic("%s: releasing invalid window at %p", __func__, va);
 
 	LIST_REMOVE(uwinp, uwin_entries);
-	kmem_free(uwinp->uwin_mem, uwinp->uwin_mapsize);
-	kmem_free(uwinp, sizeof(struct ubc_window));
+	uwin_free(uwinp);
 }
 
 int
 ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	int advice, int flags)
 {
-	void *win;
+	struct ubc_window *uwinp;
 	vsize_t len;
 
 	while (todo > 0) {
 		len = todo;
 
-		win = ubc_alloc(uobj, uio->uio_offset, &len, 0, flags);
-		rump_ubc_magic_uiomove(win, len, uio, NULL);
-		ubc_release(win, 0);
+		uwinp = uwin_alloc(uobj, uio->uio_offset, len);
+		rump_ubc_magic_uiomove(uwinp->uwin_mem, len, uio, NULL, uwinp);
+		uwin_free(uwinp);
 
 		todo -= len;
 	}
@@ -354,6 +397,9 @@ rumpvm_init()
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+
+	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
+	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
 }
 
 void
@@ -396,9 +442,14 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &uobj->memq, listq)
-		if (pg->offset == off)
+	simple_lock(&uobj->vmobjlock);
+	TAILQ_FOREACH(pg, &uobj->memq, listq) {
+		if (pg->offset == off) {
+			simple_unlock(&uobj->vmobjlock);
 			return pg;
+		}
+	}
+	simple_unlock(&uobj->vmobjlock);
 
 	return NULL;
 }
@@ -408,11 +459,16 @@ uvm_pageratop(vaddr_t va)
 {
 	struct rumpva *rva;
 
+	mutex_enter(&rvamtx);
 	LIST_FOREACH(rva, &rvahead, entries)
 		if (rva->addr == va)
-			return rva->pg;
+			break;
+	mutex_exit(&rvamtx);
 
-	panic("%s: va %llu", __func__, (unsigned long long)va);
+	if (rva == NULL)
+		panic("%s: va %llu", __func__, (unsigned long long)va);
+
+	return rva->pg;
 }
 
 void
