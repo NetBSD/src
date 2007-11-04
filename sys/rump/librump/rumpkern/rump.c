@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.14 2007/10/31 15:57:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.15 2007/11/04 18:43:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -538,4 +538,15 @@ rump_get_curlwp()
 		l = &lwp0;
 
 	return l;
+}
+
+void
+rump_biodone(void *arg, size_t count, int error)
+{
+	struct buf *bp = arg;
+
+	bp->b_resid = bp->b_bcount - count;
+	KASSERT(bp->b_resid >= 0);
+	bp->b_error = error;
+	biodone(bp);
 }
