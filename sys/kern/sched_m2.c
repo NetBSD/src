@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.8 2007/11/04 12:36:01 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.9 2007/11/04 14:15:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.8 2007/11/04 12:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.9 2007/11/04 14:15:34 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -954,8 +954,8 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "balance_period (in ticks)",
-		SYSCTL_DESCR("Balance period"),
+		CTLTYPE_INT, "balance_period",
+		SYSCTL_DESCR("Balance period (in ticks)"),
 		NULL, 0, &balance_period, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
