@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.7.2.3 2007/11/02 12:44:10 joerg Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.7.2.4 2007/11/04 21:03:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,8 +49,8 @@ int rumpuser_ioctl(int, u_long, void *, int *);
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
 
-ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
-ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
+void rumpuser_read(int, void *, size_t, off_t, void *);
+void rumpuser_write(int, const void *, size_t, off_t, void *);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
 
@@ -95,5 +95,8 @@ void rumpuser_cv_signal(struct rumpuser_cv *);
 
 void rumpuser_set_curlwp(struct lwp *);
 struct lwp *rumpuser_get_curlwp(void);
+
+/* actually part of the rumpkern */
+void rump_biodone(void *, size_t, int);
 
 #endif /* _SYS_RUMPUSER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.15.6.2 2007/10/26 15:48:32 joerg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.15.6.3 2007/11/04 21:03:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.2 2007/10/26 15:48:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.3 2007/11/04 21:03:32 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -595,7 +595,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   or preempted).
 		 *
 		 * o At any given time, MUTEX_SET_WAITERS() can only ever
-		 *   be in progress on one CPU in the system - guarenteed
+		 *   be in progress on one CPU in the system - guaranteed
 		 *   by the turnstile chain lock.
 		 *
 		 * o No other operations other than MUTEX_SET_WAITERS()

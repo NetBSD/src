@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.18.4 2007/10/29 02:57:18 joerg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.18.5 2007/11/04 21:02:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BUILD_SYSCALL_PLAIN	/* See bottom of file */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.4 2007/10/29 02:57:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.5 2007/11/04 21:02:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.18.4 2007/10/29 02:57:18 joerg Exp 
 #include <machine/userret.h>
 
 void syscall_intern(struct proc *);
-static void syscall_plain(struct trapframe *);
-static void syscall_fancy(struct trapframe *);
+static void syscall(struct trapframe *);
 
 void
 child_return(void *arg)
@@ -79,12 +77,9 @@ void
 syscall_intern(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_trace_enabled = trace_is_enabled(p);
+	p->p_md.md_syscall = syscall;
 }
-#endif
 
 /*
  * syscall(frame):
@@ -92,7 +87,7 @@ syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 static void
-syscall_fancy(struct trapframe *frame)
+syscall(struct trapframe *frame)
 {
 	const struct sysent *callp;
 	struct proc *p;
@@ -100,12 +95,14 @@ syscall_fancy(struct trapframe *frame)
 	int error;
 	register_t code, args[9], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
+	uvmexp.syscalls++;
+
+	LWP_CACHE_CREDS(l, p);
+
 	callp = p->p_emul->e_sysent;
 
 	if (__predict_false(code == SYS_syscall)
@@ -151,7 +148,8 @@ syscall_fancy(struct trapframe *frame)
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
-	if ((error = trace_enter(l, code, code, NULL, args)) == 0) {
+	if (!__predict_false(p->p_trace_enabled)
+	    || (error = trace_enter(l, code, code, NULL, args)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 
@@ -190,25 +188,9 @@ syscall_fancy(struct trapframe *frame)
 		}
 	}
 
-	trace_exit(l, code, args, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(l, code, args, rval, error);
 
 	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);
 }
-
-#ifndef BUILD_SYSCALL_PLAIN
-#define BUILD_SYSCALL_PLAIN
-
-/*
- * There is a micro-optimiation to avoid a test prior to trace_entry/exit
- * by substituting a different copy of the syscall code.
- * (Which would be very marginal if trace_is_enabled(p) were an inlineable
- * single bit test.)
- * By re-including the current file we avoid having two versions of the source.
- */
-#define syscall_fancy syscall_plain
-#define trace_enter(l, code, code_, NULL_, args) 0
-#define trace_exit(l, code, args, rval, error)
-
-#include "syscall.c"
-#endif

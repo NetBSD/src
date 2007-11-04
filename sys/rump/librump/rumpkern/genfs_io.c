@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.2.2.3 2007/11/02 13:02:46 joerg Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.2.2.4 2007/11/04 21:03:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,6 @@ genfs_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct buf buf;
 	struct vm_page *pg;
 	voff_t curoff, endoff;
 	size_t remain, bufoff, xfersize;
@@ -65,7 +64,14 @@ genfs_getpages(void *v)
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1<<bshift;
 	int count = *ap->a_count;
+	int async;
 	int i, error;
+
+	/*
+	 * Ignore async for now, the structure of this routine
+	 * doesn't exactly allow for it ...
+	 */
+	async = 0;
 
 	if (ap->a_centeridx != 0)
 		panic("%s: centeridx != not supported", __func__);
@@ -104,6 +110,7 @@ genfs_getpages(void *v)
 	tmpbuf = rumpuser_malloc(round_page(remain), 0);
 	memset(tmpbuf, 0, round_page(remain));
 	for (bufoff = 0; remain; remain -= xfersize, bufoff+=xfersize) {
+		struct buf *bp;
 		struct vnode *devvp;
 		daddr_t lbn, bn;
 		int run;
@@ -124,17 +131,27 @@ genfs_getpages(void *v)
 			continue;
 		}
 
-		memset(&buf, 0, sizeof(buf));
-		buf.b_data = tmpbuf + bufoff;
-		buf.b_bcount = xfersize;
-		buf.b_blkno = bn;
-		buf.b_lblkno = 0;
-		buf.b_flags = B_READ | B_BUSY;
-		buf.b_vp = vp;
+		bp = getiobuf();
 
-		VOP_STRATEGY(devvp, &buf);
-		if (buf.b_error)
+		bp->b_data = tmpbuf + bufoff;
+		bp->b_bcount = xfersize;
+		bp->b_blkno = bn;
+		bp->b_lblkno = 0;
+		bp->b_flags = B_READ | B_BUSY;
+
+		if (async) {
+			bp->b_flags |= B_ASYNC | B_CALL;
+			bp->b_iodone = uvm_aio_biodone;
+		}
+
+		bp->b_vp = vp;
+
+		VOP_STRATEGY(devvp, bp);
+		if (bp->b_error)
 			panic("%s: VOP_STRATEGY, lazy bum", __func__);
+		
+		if (!async)
+			putiobuf(bp);
 	}
 
 	/* skip to beginning of pages we're interested in */
@@ -189,12 +206,20 @@ genfs_putpages(void *v)
 	    ap->a_flags, NULL);
 }
 
+/*
+ * This is a slightly strangely structured routine.  It always puts
+ * all the pages for a vnode.  It starts by releasing pages which
+ * are clean and simultaneously looks up the smallest offset for a
+ * dirty page beloning to the object.  If there is no smallest offset,
+ * all pages have been cleaned.  Otherwise, it finds a contiguous range
+ * of dirty pages starting from the smallest offset and writes them out.
+ * After this the scan is restarted.
+ */
 int
 genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	struct vm_page **busypg)
 {
 	char databuf[MAXPHYS];
-	struct buf buf;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, *pg_next;
 	voff_t smallest;
@@ -203,15 +228,21 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
+#if 0
 	int async = (flags & PGO_SYNCIO) == 0;
+#else
+	int async = 0;
+#endif
 
  restart:
 	/* check if all pages are clean */
 	smallest = -1;
+	simple_lock(&uobj->vmobjlock);
 	for (pg = TAILQ_FIRST(&uobj->memq); pg; pg = pg_next) {
 		pg_next = TAILQ_NEXT(pg, listq);
 		if (pg->flags & PG_CLEAN) {
 			rumpvm_freepage(pg);
+			simple_lock(&uobj->vmobjlock);
 			continue;
 		}
 
@@ -222,8 +253,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
 		vp->v_iflag &= ~VI_ONWORKLST;
+		simple_unlock(&uobj->vmobjlock);
 		return 0;
 	}
+	simple_unlock(&uobj->vmobjlock);
 
 	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 
@@ -246,11 +279,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* then we write */
 	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
+		struct buf *bp;
 		struct vnode *devvp;
 		daddr_t bn, lbn;
 		int run, error;
-
-		memset(&buf, 0, sizeof(buf));
 
 		lbn = (smallest + bufoff) >> bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &bn, &run);
@@ -269,37 +301,41 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		if (bn == -1)
 			continue;
 
-		/* only write max what we are allowed to write */
-		buf.b_bcount = xfersize;
-		if (smallest + bufoff + xfersize > eof)
-			buf.b_bcount -= (smallest+bufoff+xfersize) - eof;
-		buf.b_bcount = (buf.b_bcount + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
+		bp = getiobuf();
 
-		KASSERT(buf.b_bcount > 0);
+		/* only write max what we are allowed to write */
+		bp->b_bcount = xfersize;
+		if (smallest + bufoff + xfersize > eof)
+			bp->b_bcount -= (smallest+bufoff+xfersize) - eof;
+		bp->b_bcount = (bp->b_bcount + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
+
+		KASSERT(bp->b_bcount > 0);
 		KASSERT(smallest >= 0);
 
 		DPRINTF(("putpages writing from %x to %x (vp size %x)\n",
 		    (int)(smallest + bufoff),
-		    (int)(smallest + bufoff + buf.b_bcount),
+		    (int)(smallest + bufoff + bp->b_bcount),
 		    (int)eof));
 
-		buf.b_bufsize = round_page(buf.b_bcount);
-		buf.b_lblkno = 0;
-		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
-		buf.b_data = databuf + bufoff;
-		buf.b_vp = vp;
-		buf.b_flags = B_WRITE | B_BUSY;
-		buf.b_iodone = uvm_aio_biodone;
+		bp->b_bufsize = round_page(bp->b_bcount);
+		bp->b_lblkno = 0;
+		bp->b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
+		bp->b_data = databuf + bufoff;
+		bp->b_vp = vp;
+		bp->b_flags = B_WRITE | B_BUSY;
+		bp->b_iodone = uvm_aio_biodone;
 		if (async) {
-			buf.b_flags |= B_CALL | B_ASYNC;
-			buf.b_iodone = uvm_aio_biodone;
+			bp->b_flags |= B_CALL | B_ASYNC;
+			bp->b_iodone = uvm_aio_biodone;
 		}
 
 		vp->v_numoutput++;
-		VOP_STRATEGY(devvp, &buf);
-		if (buf.b_error)
+		VOP_STRATEGY(devvp, bp);
+		if (bp->b_error)
 			panic("%s: VOP_STRATEGY lazy bum %d",
-			    __func__, buf.b_error);
+			    __func__, bp->b_error);
+		if (!async)
+			putiobuf(bp);
 	}
 	rumpvm_flushva();
 

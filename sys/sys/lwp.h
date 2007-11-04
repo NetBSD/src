@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.62.6.3 2007/10/26 15:49:19 joerg Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.62.6.4 2007/11/04 21:03:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
-	if ((l)->l_cred != (p)->p_cred)					\
+	if (__predict_false((l)->l_cred != (p)->p_cred))		\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 

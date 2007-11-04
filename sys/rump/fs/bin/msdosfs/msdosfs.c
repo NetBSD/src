@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs.c,v 1.2.14.2 2007/11/02 12:43:27 joerg Exp $	*/
+/*	$NetBSD: msdosfs.c,v 1.2.14.3 2007/11/04 21:03:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -77,6 +77,8 @@ main(int argc, char *argv[])
 
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
+	args.mask = 0777;
+	args.dirmask = 0777;
 
 	rv = p2k_run_fs(MOUNT_MSDOS, argv[0], argv[1], mntflags, 
 		&args, sizeof(args), pflags);

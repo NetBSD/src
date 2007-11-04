@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1.6.2 2007/10/31 23:14:00 joerg Exp $ */
+/* $NetBSD: main.c,v 1.1.6.3 2007/11/04 21:03:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,13 +47,13 @@
 
 #include "globals.h"
 
-uint8_t en[6];	/* NIC macaddr, fill by netif_init() */
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
 
-extern char bootfile[];			/* filled by DHCP */
-const char rootdev[] = "fxp";		/* Intel 82559 */
+extern char bootfile[];	/* filled by DHCP */
+char rootdev[4];	/* NIF nickname, filled by netif_init() */
+uint8_t en[6];		/* NIC macaddr, fill by netif_init() */
 
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
@@ -104,7 +104,7 @@ main()
 	case BRD_ENCOREPP1:
 		printf("Encore PP1"); break;
 	}
-	printf(", %dMB SDRAM\n", memsize >> 20);
+	printf(", %dMB SDRAM, ", memsize >> 20);
 	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
 	if (n == 0) {
 		tag = ~0;
@@ -113,14 +113,14 @@ main()
 	else {
 		tag = lnif[0][1];
 		pcidecomposetag(tag, &b, &d, &f);
-		printf("%08x NIC %02d:%02d:%02d", lnif[0][0], b, d, f);
+		printf("%08x NIC %02d:%02d:%02d\n", lnif[0][0], b, d, f);
 	}
 
 	pcisetup();
 	pcifixup();
 
 	if (netif_init(tag) == 0)
-		printf("no device driver is found\n");
+		printf("no NIC device driver is found\n");
 
 	printf("Try NFS load /netbsd\n");
 	marks[MARK_START] = 0;

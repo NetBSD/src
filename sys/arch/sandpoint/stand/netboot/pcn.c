@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.4.4.3 2007/10/31 23:14:02 joerg Exp $ */
+/* $NetBSD: pcn.c,v 1.4.4.4 2007/11/04 21:03:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -149,7 +150,7 @@ pcn_init(unsigned tag, void *data)
 
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	(void)CSR_READ_2(l, PCN_16RESET);
 	(void)CSR_READ_2(l, PCN_32RESET);
@@ -278,7 +279,6 @@ printf("recving with %u sec. timeout\n", timo);
 unsigned
 pcn_mii_read(struct local *l, int phy, int reg)
 {
-
 	pcn_bcr_write(l, PCN_BCR33, MREG(reg) | MPHY(phy));
 	return (pcn_bcr_read(l, PCN_BCR34) & MIIMD);
 }

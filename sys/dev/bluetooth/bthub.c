@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.10.10.1 2007/10/29 02:57:24 joerg Exp $	*/
+/*	$NetBSD: bthub.c,v 1.10.10.2 2007/11/04 21:03:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.10.10.1 2007/10/29 02:57:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.10.10.2 2007/11/04 21:03:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,16 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.10.10.1 2007/10/29 02:57:24 joerg Exp $"
  */
 
 struct bthub_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	LIST_HEAD(,btdev)	sc_list;
 };
 
 /* autoconf(9) glue */
-static int	bthub_match(struct device *, struct cfdata *, void *);
-static void	bthub_attach(struct device *, struct device *, void *);
-static int	bthub_detach(struct device *, int);
+static int	bthub_match(device_t, struct cfdata *, void *);
+static void	bthub_attach(device_t, device_t, void *);
+static int	bthub_detach(device_t, int);
 
-CFATTACH_DECL(bthub, sizeof(struct bthub_softc),
+CFATTACH_DECL_NEW(bthub, sizeof(struct bthub_softc),
     bthub_match, bthub_attach, bthub_detach, NULL);
 
 /* control file */
@@ -91,22 +91,22 @@ static int	bthub_pioctl(dev_t, unsigned long, prop_dictionary_t, int, struct lwp
  */
 
 static int
-bthub_match(struct device *self, struct cfdata *cfdata,
-    void *arg)
+bthub_match(device_t self, struct cfdata *cfdata, void *arg)
 {
 
 	return 1;
 }
 
 static void
-bthub_attach(struct device *parent, struct device *self, void *aux)
+bthub_attach(device_t parent, device_t self, void *aux)
 {
-	struct bthub_softc *sc = (struct bthub_softc *)self;
+	struct bthub_softc *sc = device_private(self);
 	bdaddr_t *addr = aux;
 	prop_dictionary_t dict;
 	prop_object_t obj;
 
 	LIST_INIT(&sc->sc_list);
+	sc->sc_dev = self;
 
 	dict = device_properties(self);
 	obj = prop_data_create_data(addr, sizeof(*addr));
@@ -122,19 +122,19 @@ bthub_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-bthub_detach(struct device *self, int flags)
+bthub_detach(device_t self, int flags)
 {
-	struct bthub_softc *sc = (struct bthub_softc *)self;
-	struct btdev *dev;
+	struct bthub_softc *sc = device_private(self);
+	struct btdev *btdev;
 	int err;
 
 	while (!LIST_EMPTY(&sc->sc_list)) {
-		dev = LIST_FIRST(&sc->sc_list);
-		LIST_REMOVE(dev, sc_next);
+		btdev = LIST_FIRST(&sc->sc_list);
+		LIST_REMOVE(btdev, sc_next);
 
-		err = config_detach((struct device *)dev, flags);
+		err = config_detach(btdev->sc_dev, flags);
 		if (err && (flags & DETACH_FORCE) == 0) {
-			LIST_INSERT_HEAD(&sc->sc_list, dev, sc_next);
+			LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
 			return err;
 		}
 	}
@@ -178,11 +178,12 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
     int flag, struct lwp *l)
 {
 	struct bthub_softc *sc;
-	struct btdev *dev;
+	struct btdev *btdev;
 	prop_data_t laddr, raddr;
 	prop_string_t service;
 	prop_dictionary_t prop;
 	prop_object_t obj;
+	device_t dev;
 	int unit;
 
 	/* validate local address */
@@ -195,15 +196,16 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		if (unit == bthub_cd.cd_ndevs)
 			return ENXIO;
 
-		sc = (struct bthub_softc *)bthub_cd.cd_devs[unit];
-		if (sc == NULL)
+		dev = bthub_cd.cd_devs[unit];
+		if (dev == NULL)
 			continue;
 
-		prop = device_properties(&sc->sc_dev);
+		prop = device_properties(dev);
 		obj = prop_dictionary_get(prop, BTDEVladdr);
 		if (prop_data_equals(laddr, obj))
 			break;
 	}
+	sc = device_private(dev);
 
 	/* validate remote address */
 	raddr = prop_dictionary_get(dict, BTDEVraddr);
@@ -217,8 +219,8 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		return EINVAL;
 
 	/* locate matching child device, if any */
-	LIST_FOREACH(dev, &sc->sc_list, sc_next) {
-		prop = device_properties(&dev->sc_dev);
+	LIST_FOREACH(btdev, &sc->sc_list, sc_next) {
+		prop = device_properties(btdev->sc_dev);
 
 		obj = prop_dictionary_get(prop, BTDEVraddr);
 		if (!prop_object_equals(raddr, obj))
@@ -233,28 +235,29 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 
 	switch (cmd) {
 	case BTDEV_ATTACH:	/* attach BTDEV */
-		if (dev != NULL)
+		if (btdev != NULL)
 			return EADDRINUSE;
 
-		dev = (struct btdev *)config_found((struct device *)sc,
-						dict, bthub_print);
+		dev = config_found(sc->sc_dev, dict, bthub_print);
 		if (dev == NULL)
 			return ENXIO;
 
-		prop = device_properties(&dev->sc_dev);
+		prop = device_properties(dev);
 		prop_dictionary_set(prop, BTDEVladdr, laddr);
 		prop_dictionary_set(prop, BTDEVraddr, raddr);
 		prop_dictionary_set(prop, BTDEVservice, service);
 
-		LIST_INSERT_HEAD(&sc->sc_list, dev, sc_next);
+		btdev = device_private(dev);
+		btdev->sc_dev = dev;
+		LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
 		break;
 
 	case BTDEV_DETACH:	/* detach BTDEV */
-		if (dev == NULL)
+		if (btdev == NULL)
 			return ENXIO;
 
-		LIST_REMOVE(dev, sc_next);
-		config_detach((struct device *)dev, DETACH_FORCE);
+		LIST_REMOVE(btdev, sc_next);
+		config_detach(btdev->sc_dev, DETACH_FORCE);
 		break;
 	}
 

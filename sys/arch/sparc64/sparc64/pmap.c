@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190.8.3 2007/10/02 18:27:46 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190.8.4 2007/11/04 21:03:14 jmcneill Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190.8.3 2007/10/02 18:27:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190.8.4 2007/11/04 21:03:14 jmcneill Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -584,7 +584,7 @@ pmap_read_memlist(const char *device, const char *property, void **ml,
 void
 pmap_bootstrap(u_long kernelstart, u_long kernelend)
 {
-	extern int etext, data_start[];	/* start of data segment */
+	extern char etext[], data_start[];	/* start of data segment */
 	extern int msgbufmapped;
 	struct mem_region *mp, *mp1, *avail, *orig;
 	int i, j, pcnt, msgbufsiz;
@@ -606,8 +606,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 */
 	ktext   = kernelstart;
 	ktextp  = pmap_kextract(ktext);
-	ektext  = roundup((vaddr_t)&etext, PAGE_SIZE_4M);
-	ektextp = roundup(pmap_kextract((vaddr_t)&etext), PAGE_SIZE_4M);
+	ektext  = roundup((vaddr_t)etext, PAGE_SIZE_4M);
+	ektextp = roundup(pmap_kextract((vaddr_t)etext), PAGE_SIZE_4M);
 
 	kdata   = (vaddr_t)data_start;
 	kdatap  = pmap_kextract(kdata);

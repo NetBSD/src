@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.270 2007/08/02 13:06:30 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.270.2.1 2007/11/04 21:03:38 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270 2007/08/02 13:06:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270.2.1 2007/11/04 21:03:38 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4086,17 +4086,27 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_requested_s_scale = tb.requested_s_scale;
 		sc->sc_request_r_scale = 0;
 		/*
-		 * Compute proper scaling value from buffer space.
-		 * Leave enough room for the socket buffer to grow
-		 * with auto sizing.  This allows us to scale the
-		 * receive buffer over a wide range while not losing
-		 * any efficiency or fine granularity.
+		 * Pick the smallest possible scaling factor that
+		 * will still allow us to scale up to sb_max.
+		 *
+		 * We do this because there are broken firewalls that
+		 * will corrupt the window scale option, leading to
+		 * the other endpoint believing that our advertised
+		 * window is unscaled.  At scale factors larger than
+		 * 5 the unscaled window will drop below 1500 bytes,
+		 * leading to serious problems when traversing these
+		 * broken firewalls.
+		 *
+		 * With the default sbmax of 256K, a scale factor
+		 * of 3 will be chosen by this algorithm.  Those who
+		 * choose a larger sbmax should watch out
+		 * for the compatiblity problems mentioned above.
 		 *
 		 * RFC1323: The Window field in a SYN (i.e., a <SYN>
 		 * or <SYN,ACK>) segment itself is never scaled.
 		 */
 		while (sc->sc_request_r_scale < TCP_MAX_WINSHIFT &&
-		    (0x1 << sc->sc_request_r_scale) < tcp_minmss)
+		    (TCP_MAXWIN << sc->sc_request_r_scale) < sb_max)
 			sc->sc_request_r_scale++;
 	} else {
 		sc->sc_requested_s_scale = 15;

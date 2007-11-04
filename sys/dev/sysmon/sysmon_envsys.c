@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.45.4.4 2007/10/07 13:25:05 joerg Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.45.4.5 2007/11/04 21:03:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45.4.4 2007/10/07 13:25:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45.4.5 2007/11/04 21:03:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,6 +382,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tred->min.data_s = edata->value_min;
 			tred->avg.data_us = edata->value_avg;
 			tred->avg.data_s = edata->value_avg;
+			if (edata->units == ENVSYS_BATTERY_CHARGE)
+				tred->units = ENVSYS_INDICATOR;
+			else
 			tred->units = edata->units;
 
 			tred->validflags |= ENVSYS_FVALID;
@@ -429,9 +432,21 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		binfo->validflags |= ENVSYS_FVALID;
 
 		if (binfo->sensor < sme->sme_nsensors) {
+			if (edata->units == ENVSYS_BATTERY_CHARGE)
+				binfo->units = ENVSYS_INDICATOR;
+			else
 			binfo->units = edata->units;
-			(void)strlcpy(binfo->desc, edata->desc,
-			    sizeof(binfo->desc));
+
+			/*
+			 * previously, the ACPI sensor names included the
+			 * device name. Include that in compatibility code.
+			 */
+			if (strncmp(sme->sme_name, "acpi", 4) == 0)
+				(void)snprintf(binfo->desc, sizeof(binfo->desc),
+				    "%s %s", sme->sme_name, edata->desc);
+			else
+				(void)strlcpy(binfo->desc, edata->desc,
+				    sizeof(binfo->desc));
 		}
 
 		DPRINTFOBJ(("%s: binfo->units=%d binfo->validflags=%d\n",
@@ -991,14 +1006,15 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<true/>
 	 *		...
 	 * 
-	 * always false on Battery state, Drive and Indicator types.
+	 * always false on Battery {capacity,charge}, Drive and Indicator types.
 	 * They cannot be monitored.
 	 *
 	 */
 	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE) ||
-	    (edata->units == ENVSYS_BATTERY_STATE)) {
+	    (edata->units == ENVSYS_BATTERY_CAPACITY) ||
+	    (edata->units == ENVSYS_BATTERY_CHARGE)) {
 		if (sme_sensor_upbool(dict, "monitoring-supported", false))
 			goto out;
 	} else {
@@ -1041,20 +1057,20 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 
 
 	/*
-	 * Add the battery-state object for battery state sensors:
+	 * Add the object for battery capacity sensors:
 	 *
 	 * 		...
-	 * 		<key>battery-state</key>
+	 * 		<key>battery-capacity</key>
 	 * 		<string>NORMAL</string>
 	 * 		...
 	 */
-	if (edata->units == ENVSYS_BATTERY_STATE) {
-		sdt = sme_get_description_table(SME_DESC_BATTERY_STATES);
+	if (edata->units == ENVSYS_BATTERY_CAPACITY) {
+		sdt = sme_get_description_table(SME_DESC_BATTERY_CAPACITY);
 		for (j = 0; sdt[j].type != -1; j++)
 			if (sdt[j].type == edata->value_cur)
 				break;
 
-		if (sme_sensor_upstring(dict, "battery-state", sdt[j].desc))
+		if (sme_sensor_upstring(dict, "battery-capacity", sdt[j].desc))
 			goto out;
 	}
 
@@ -1262,11 +1278,12 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			break;
 
 		/*
-		 * Integer and Indicator types do not the following
-		 * values, so skip them.
+		 * Battery charge, Integer and Indicator types do not
+		 * need the following objects, so skip them.
 		 */
 		if (edata->units == ENVSYS_INTEGER ||
-		    edata->units == ENVSYS_INDICATOR)
+		    edata->units == ENVSYS_INDICATOR ||
+		    edata->units == ENVSYS_BATTERY_CHARGE)
 			continue;
 
 		/* update sensor flags */
@@ -1335,16 +1352,16 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 				break;
 		}
 
-		/* update 'battery-state' only in ENVSYS_BATTERY_STATE. */
-		if (edata->units == ENVSYS_BATTERY_STATE) {
+		/* update 'battery-capacity' only in ENVSYS_BATTERY_CAPACITY. */
+		if (edata->units == ENVSYS_BATTERY_CAPACITY) {
 			sdt =
-			    sme_get_description_table(SME_DESC_BATTERY_STATES);
+			    sme_get_description_table(SME_DESC_BATTERY_CAPACITY);
 			for (j = 0; sdt[j].type != -1; j++)
 				if (sdt[j].type == edata->value_cur)
 					break;
 
 			error = sme_sensor_upstring(dict,
-						    "battery-state",
+						    "battery-capacity",
 						    sdt[j].desc);
 			if (error)
 				break;

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.57 2007/06/25 13:22:46 tsutsui Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.57.8.1 2007/11/04 21:03:04 jmcneill Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.57 $"
+#ident 		"GENERIC_TINY-$Revision: 1.57.8.1 $"
 
 maxusers	4
 
@@ -21,12 +21,7 @@ options 	KTRACE			# system call tracing support
 #options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options 	SEMMNI=10		# number of semaphore identifiers
-#options 	SEMMNS=60		# number of semaphores in system
-#options 	SEMUME=10		# max number of undo entries per process
-#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.1.6.1 2007/10/28 20:10:47 joerg Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.1.6.2 2007/11/04 21:03:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.1.6.1 2007/10/28 20:10:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.1.6.2 2007/11/04 21:03:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,7 +312,7 @@ nomap:
 			if (OF_getprop(node, "interrupts", &pin, 4) < 0)
 				pin = 1;
 			intr_num = prop_number_create_integer(irq);
-			sprintf(key, "pin-%c", 'A' + pin);
+			sprintf(key, "pin-%c", 'A' + (pin-1));
 			prop_dictionary_set(sub, key, intr_num);
 			prop_object_release(intr_num);
 			sprintf(key, "devfunc-%d", dev*0x8 + func);

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.94.6.4 2007/10/02 18:29:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.94.6.5 2007/11/04 21:03:50 jmcneill Exp $
 
 .include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
-	bootblock.h bswap.h buf.h \
+	bitops.h bootblock.h bswap.h buf.h \
 	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	cpuio.h device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \

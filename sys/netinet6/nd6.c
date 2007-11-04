@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.117.4.2 2007/09/03 16:49:08 jmcneill Exp $	*/
+/*	$NetBSD: nd6.c,v 1.117.4.3 2007/11/04 21:03:44 jmcneill Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117.4.2 2007/09/03 16:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117.4.3 2007/11/04 21:03:44 jmcneill Exp $");
 
 #include "opt_ipsec.h"
 
@@ -109,19 +109,19 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 static struct sockaddr_in6 all1_sa;
 
-static void nd6_setmtu0 __P((struct ifnet *, struct nd_ifinfo *));
-static void nd6_slowtimo __P((void *));
-static int regen_tmpaddr __P((struct in6_ifaddr *));
-static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
-static void nd6_llinfo_timer __P((void *));
-static void clear_llinfo_pqueue __P((struct llinfo_nd6 *));
+static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
+static void nd6_slowtimo(void *);
+static int regen_tmpaddr(struct in6_ifaddr *);
+static struct llinfo_nd6 *nd6_free(struct rtentry *, int);
+static void nd6_llinfo_timer(void *);
+static void clear_llinfo_pqueue(struct llinfo_nd6 *);
 
 callout_t nd6_slowtimo_ch;
 callout_t nd6_timer_ch;
 extern callout_t in6_tmpaddrtimer_ch;
 
-static int fill_drlist __P((void *, size_t *, size_t));
-static int fill_prlist __P((void *, size_t *, size_t));
+static int fill_drlist(void *, size_t *, size_t);
+static int fill_prlist(void *, size_t *, size_t);
 
 MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 

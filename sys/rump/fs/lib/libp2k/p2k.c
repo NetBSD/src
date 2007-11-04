@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.24.2.2 2007/10/31 23:14:14 joerg Exp $	*/
+/*	$NetBSD: p2k.c,v 1.24.2.3 2007/11/04 21:03:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -176,6 +176,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	rv = puffs_mainloop(pu, PUFFSLOOP_NODAEMON);
 
  out:
+	sverrno = errno;
 	ukfs_release(ukfs, 0);
 	if (rv) {
 		errno = sverrno;
