@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.1 2007/05/01 17:18:53 bouyer Exp $ */
+/* $NetBSD: bioctl.c,v 1.2 2007/11/04 08:25:05 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
 
 /*
@@ -30,14 +30,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.1 2007/05/01 17:18:53 bouyer Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.2 2007/11/04 08:25:05 xtraeme Exp $");
 #endif
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/queue.h>
-// #include <scsi/scsipi_disk.h>
-// #include <scsi/scsipi_all.h>
 #include <dev/biovar.h>
 
 #include <errno.h>
@@ -58,40 +56,37 @@ struct locator {
 	int lun;
 };
 
-void usage(void);
-const char *str2locator(const char *, struct locator *);
-void cleanup(void);
+static void usage(void);
+static const char *str2locator(const char *, struct locator *);
 
-void bio_inq(char *);
-void bio_alarm(char *);
-void bio_setstate(char *);
-void bio_setblink(char *, char *, int);
-void bio_blink(char *, int, int);
-void bio_createraid(u_int16_t, char *);
+static void bio_inq(int, char *);
+static void bio_alarm(int, char *);
+static void bio_setstate(int, char *);
+static void bio_setblink(int, char *, char *, int);
+static void bio_blink(int, char *, int, int);
 
-int devh = -1;
-int debug;
-int human;
-int verbose;
+static int debug;
+static int human;
+static int verbose;
 
-struct bio_locate bl;
+static struct bio_locate bl;
 
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	u_int64_t func = 0;
-	/* u_int64_t subfunc = 0; XXX */
-	char *bioc_dev = NULL, *sd_dev = NULL;
-	char /* *realname = NULL, XXX */ *al_arg = NULL;
-	char *bl_arg = NULL, *dev_list = NULL;
-	int ch, rv, blink = 0; /* XXX GCC */
-	u_int16_t cr_level = 0; /* XXX GCC */
+	uint64_t func = 0;
+	char *bioc_dev, *al_arg, *bl_arg;
+	int fd, ch, rv, blink;
+
+	bioc_dev = al_arg = bl_arg = NULL;
+	fd = ch = rv = blink = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:Div")) != -1) {
+	setprogname(*argv);
+
+	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:Dv")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -101,10 +96,6 @@ main(int argc, char *argv[])
 			func |= BIOC_BLINK;
 			blink = BIOC_SBBLINK;
 			bl_arg = optarg;
-			break;
-		case 'c': /* create */
-			func |= BIOC_CREATERAID;
-			cr_level = atoi(optarg);
 			break;
 		case 'u': /* unblink */
 			func |= BIOC_BLINK;
@@ -124,10 +115,6 @@ main(int argc, char *argv[])
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
 			break;
-		case 'l': /* device list */
-			func |= BIOC_DEVLIST;
-			dev_list = optarg;
-			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -144,76 +131,50 @@ main(int argc, char *argv[])
 
 	if (func == 0)
 		func |= BIOC_INQ;
-#if 0
-	/* if at least glob sd[0-9]*, it is a drive identifier */
-	if (strncmp(argv[0], "sd", 2) == 0 && strlen(argv[0]) > 2 &&
-	    isdigit((int)argv[0][2]))
-		sd_dev = argv[0];
-	else
-#endif
-		bioc_dev = argv[0];
+
+	bioc_dev = argv[0];
 
 	if (bioc_dev) {
-		devh = open("/dev/bio", O_RDWR);
-		if (devh == -1)
-			err(1, "Can't open %s", "/dev/bio");
+		fd = open("/dev/bio", O_RDWR);
+		if (fd == -1)
+			err(EXIT_FAILURE, "Can't open %s", "/dev/bio");
 
 		bl.bl_name = bioc_dev;
-		rv = ioctl(devh, BIOCLOCATE, &bl);
+		rv = ioctl(fd, BIOCLOCATE, &bl);
 		if (rv == -1)
-			errx(1, "Can't locate %s device via %s",
+			errx(EXIT_FAILURE, "Can't locate %s device via %s",
 			    bl.bl_name, "/dev/bio");
 	}
-#if 0
-	else if (sd_dev) {
-		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
-		if (devh == -1)
-			err(1, "Can't open %s", sd_dev);
-	}
-#endif
-	else
-		errx(1, "need -d or -f parameter");
 
 	if (debug)
 		warnx("cookie = %p", bl.bl_cookie);
 
 	if (func & BIOC_INQ) {
-		bio_inq(sd_dev);
+		bio_inq(fd, bioc_dev);
 	} else if (func == BIOC_ALARM) {
-		bio_alarm(al_arg);
+		bio_alarm(fd, al_arg);
 	} else if (func == BIOC_BLINK) {
-		bio_setblink(sd_dev, bl_arg, blink);
+		bio_setblink(fd, bioc_dev, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
-		bio_setstate(al_arg);
-	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
-		if (!(func & BIOC_CREATERAID))
-			errx(1, "need -c parameter");
-		if (!(func & BIOC_DEVLIST))
-			errx(1, "need -l parameter");
-		if (sd_dev)
-			errx(1, "can't use sd device");
-		bio_createraid(cr_level, dev_list);
+		bio_setstate(fd, al_arg);
 	}
 
-	return (0);
+	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr,
-		"usage: %s [-Dhiv] [-a alarm-function] "
+	(void)fprintf(stderr,
+		"usage: %s [-Dhv] [-a alarm-function] "
 		"[-b channel:target[.lun]]\n"
-		"\t[-c raidlevel] [-H channel:target[.lun]]\n"
-		"\t[-l special[,special[,...]]] "
-		"[-u channel:target[.lun]] device\n", __progname);
-	
-	exit(1);
+		"\t[-H channel:target[.lun]]\n"
+		"\t[-u channel:target[.lun]] device\n", getprogname());
+	exit(EXIT_FAILURE);
+	/* NOTREACHED */
 }
 
-const char *
+static const char *
 str2locator(const char *string, struct locator *location)
 {
 	const char *errstr;
@@ -230,21 +191,21 @@ str2locator(const char *string, struct locator *location)
 		*lun++ = '\0';
 		location->lun = strtonum(lun, 0, 256, &errstr);
 		if (errstr)
-			return (errstr);
+			return errstr;
 	} else
 		location->lun = 0;
 
 	location->target = strtonum(targ, 0, 256, &errstr);
 	if (errstr)
-		return (errstr);
+		return errstr;
 	location->channel = strtonum(parse, 0, 256, &errstr);
 	if (errstr)
-		return (errstr);
-	return (NULL);
+		return errstr;
+	return NULL;
 }
 
-void
-bio_inq(char *name)
+static void
+bio_inq(int fd, char *name)
 {
 	const char *status;
 	char size[64], scsiname[16], volname[32];
@@ -262,7 +223,7 @@ bio_inq(char *name)
 
 	bi.bi_cookie = bl.bl_cookie;
 
-	rv = ioctl(devh, BIOCINQ, &bi);
+	rv = ioctl(fd, BIOCINQ, &bi);
 	if (rv == -1) {
 		warn("BIOCINQ");
 		return;
@@ -283,7 +244,7 @@ bio_inq(char *name)
 		bv.bv_percent = -1;
 		bv.bv_seconds = 0;
 
-		rv = ioctl(devh, BIOCVOL, &bv);
+		rv = ioctl(fd, BIOCVOL, &bv);
 		if (rv == -1) {
 			warn("BIOCVOL");
 			return;
@@ -361,7 +322,7 @@ bio_inq(char *name)
 			bd.bd_diskid = d;
 			bd.bd_volid = i;
 
-			rv = ioctl(devh, BIOCDISK, &bd);
+			rv = ioctl(fd, BIOCDISK, &bd);
 			if (rv == -1) {
 				warn("BIOCDISK");
 				return;
@@ -429,8 +390,8 @@ bio_inq(char *name)
 	}
 }
 
-void
-bio_alarm(char *arg)
+static void
+bio_alarm(int fd, char *arg)
 {
 	int rv;
 	struct bioc_alarm ba;
@@ -465,7 +426,7 @@ bio_alarm(char *arg)
 		return;
 	}
 
-	rv = ioctl(devh, BIOCALARM, &ba);
+	rv = ioctl(fd, BIOCALARM, &ba);
 	if (rv == -1) {
 		warn("BIOCALARM");
 		return;
@@ -478,8 +439,8 @@ bio_alarm(char *arg)
 	}
 }
 
-void
-bio_setstate(char *arg)
+static void
+bio_setstate(int fd, char *arg)
 {
 	struct bioc_setstate	bs;
 	struct locator		location;
@@ -496,15 +457,15 @@ bio_setstate(char *arg)
 	bs.bs_target = location.target;
 	bs.bs_lun = location.lun;
 
-	rv = ioctl(devh, BIOCSETSTATE, &bs);
+	rv = ioctl(fd, BIOCSETSTATE, &bs);
 	if (rv == -1) {
 		warn("BIOCSETSTATE");
 		return;
 	}
 }
 
-void
-bio_setblink(char *name, char *arg, int blink)
+static void
+bio_setblink(int fd, char *name, char *arg, int blink)
 {
 	struct locator		location;
 	struct bioc_inq		bi;
@@ -524,7 +485,7 @@ bio_setblink(char *name, char *arg, int blink)
 	bb.bb_status = blink;
 	bb.bb_target = location.target;
 	bb.bb_channel = location.channel;
-	rv = ioctl(devh, BIOCBLINK, &bb);
+	rv = ioctl(fd, BIOCBLINK, &bb);
 	if (rv == 0)
 		return;
 
@@ -532,7 +493,7 @@ bio_setblink(char *name, char *arg, int blink)
 
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
-	rv = ioctl(devh, BIOCINQ, &bi);
+	rv = ioctl(fd, BIOCINQ, &bi);
 	if (rv == -1) {
 		warn("BIOCINQ");
 		return;
@@ -542,7 +503,7 @@ bio_setblink(char *name, char *arg, int blink)
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = v;
-		rv = ioctl(devh, BIOCVOL, &bv);
+		rv = ioctl(fd, BIOCVOL, &bv);
 		if (rv == -1) {
 			warn("BIOCVOL");
 			return;
@@ -557,7 +518,7 @@ bio_setblink(char *name, char *arg, int blink)
 			bd.bd_volid = v;
 			bd.bd_diskid = d;
 
-			rv = ioctl(devh, BIOCDISK, &bd);
+			rv = ioctl(fd, BIOCDISK, &bd);
 			if (rv == -1) {
 				warn("BIOCDISK");
 				return;
@@ -567,7 +528,7 @@ bio_setblink(char *name, char *arg, int blink)
 			    bd.bd_target == location.target &&
 			    bd.bd_lun == location.lun) {
 				if (bd.bd_procdev[0] != '\0') {
-					bio_blink(bd.bd_procdev,
+					bio_blink(fd, bd.bd_procdev,
 					    location.target, blink);
 				} else
 					warnx("Disk %s is not in an enclosure", arg);
@@ -580,20 +541,15 @@ bio_setblink(char *name, char *arg, int blink)
 	return;
 }
 
-void
-bio_blink(char *enclosure, int target, int blinktype)
+static void
+bio_blink(int fd, char *enclosure, int target, int blinktype)
 {
-	int			bioh;
 	struct bio_locate	bio;
 	struct bioc_blink	blink;
 	int			rv;
 
-	bioh = open("/dev/bio", O_RDWR);
-	if (bioh == -1)
-		err(1, "Can't open %s", "/dev/bio");
-
 	bio.bl_name = enclosure;
-	rv = ioctl(bioh, BIOCLOCATE, &bio);
+	rv = ioctl(fd, BIOCLOCATE, &bio);
 	if (rv == -1)
 		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
 
@@ -602,60 +558,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 	blink.bb_status = blinktype;
 	blink.bb_target = target;
 
-	rv = ioctl(bioh, BIOCBLINK, &blink);
+	rv = ioctl(fd, BIOCBLINK, &blink);
 	if (rv == -1)
 		warn("BIOCBLINK");
-
-	close(bioh);
-}
-
-void
-bio_createraid(u_int16_t level, char *dev_list)
-{
-	struct bioc_createraid	create;
-	int			rv;
-	u_int16_t		min_disks = 0;
-
-	if (debug)
-		printf("bio_createraid\n");
-
-	if (!dev_list)
-		errx(1, "no devices specified");
-
-	switch (level) {
-	case 0:
-		min_disks = 1;
-		break;
-	case 1:
-		min_disks = 2;
-		break;
-	default:
-		errx(1, "unsuported raid level");
-	}
-
-	/* XXX validate device list for real */
-#if 0
-	if (strncmp(dev_list, "sd", 2) == 0 && strlen(dev_list) > 2 &&
-	    isdigit(dev_list[2])) {
-	    	if (strlen(dev_list) != 3)
-			errx(1, "only one device supported");
-
-		if (debug)
-			printf("bio_createraid: dev_list: %s\n", dev_list);
-	}
-	else
-		errx(1, "no sd device specified");
-#endif
-
-	memset(&create, 0, sizeof(create));
-	create.bc_cookie = bl.bl_cookie;
-	create.bc_level = level;
-	create.bc_dev_list_len = strlen(dev_list);
-	create.bc_dev_list = dev_list;
-
-	rv = ioctl(devh, BIOCCREATERAID, &create);
-	if (rv == -1) {
-		warn("BIOCCREATERAID");
-		return;
-	}
 }
