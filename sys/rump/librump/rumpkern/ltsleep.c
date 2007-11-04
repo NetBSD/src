@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.1 2007/10/31 15:57:21 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.2 2007/11/04 18:46:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,22 +54,17 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 
 	mutex_enter(&sleepermtx);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	/*
-	 * XXX: this is SOOOO WRONG, but I don't have any bright ideas.
-	 * ltsleep() is going away in any case, so considering this as
-	 * a punishment for your wrongdoing for still using it ....
-	 * or something
-	 */
+	/* protected by sleepermtx */
 	if (slock)
 		simple_unlock(slock);
 	cv_wait(&lts.cv, &sleepermtx);
 	LIST_REMOVE(&lts, entries);
 	mutex_exit(&sleepermtx);
 
+	cv_destroy(&lts.cv);
+
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
-
-	cv_destroy(&lts.cv);
 
 	return 0;
 }
