@@ -34,7 +34,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.1 2007/10/12 02:22:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -107,7 +107,9 @@ static struct intrgroup {
 	[4].ig_sources[ 0 ... 31 ].is_group = 4,
 	[5].ig_sources[ 0 ... 31 ].is_group = 5,
 	[6].ig_sources[ 0 ... 31 ].is_group = 6,
+#ifdef OMAP_2430
 	[7].ig_sources[ 0 ... 31 ].is_group = 7,
+#endif
 	[IRQ_SOFTSERIAL/32].ig_sources[IRQ_SOFTSERIAL&31] = {
 		.is_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL,
 					   "soft serial", "intr"),

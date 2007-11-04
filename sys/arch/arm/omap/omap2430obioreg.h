@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430obioreg.h,v 1.1.2.1 2007/10/12 02:22:27 matt Exp $	*/
+/*	$NetBSD: omap2430obioreg.h,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Danger Inc.
@@ -32,10 +32,6 @@
 #define _OMAP2430OBIOREG_H
 
 #include <arm/omap/omap2430reg.h>
-
-#ifndef OMAP_2430
-# error whay are you including this file
-#endif
 
 #define	OMAP2430_OBIO_0_BASE	OMAP2430_L4_CORE_BASE
 #define	OMAP2430_OBIO_0_SIZE	OMAP2430_L4_CORE_SIZE

@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.1.2.1 2007/10/12 02:22:30 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.1.2.1 2007/10/12 02:22:30 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.1 2007/10/12 02:22:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -149,18 +149,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.1 2007/10/12 02:22:30 matt Exp 
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#if defined(OMAP_2430)
-# include <arm/omap/omap2430obioreg.h>
-# include <arm/omap/omap2430obiovar.h>
-#else
-/*
- * we have only used this with OMAP 2430 so far....
- * some of the 2430 stuff may generalize to other OMAP implementations,
- * or not.  Either generalize the include files accordingly, or
- * add your own implementation-specific includes.
- */
-# error unknown OMAP OBIO implementation
-#endif
+#include <arm/omap/omap2430obioreg.h>
+#include <arm/omap/omap2430obiovar.h>
 
 typedef struct {
 	boolean_t	cs_valid;
@@ -170,7 +160,7 @@ typedef struct {
 
 struct obio_softc {
 	struct device		sc_dev;
-	bus_dma_tag_t		sc_dmac;
+	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_base;
@@ -197,7 +187,7 @@ obio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *mb = aux;
 
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 	if ((mb->mb_iobase == OMAP2430_OBIO_0_BASE)
 	&&  (mb->mb_iosize == OMAP2430_OBIO_0_SIZE)
 	&&  (obio_attached[0] == 0))
@@ -225,12 +215,12 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ioh = 0;
 #ifdef NOTYET
-	sc->sc_dmac = &omap_bus_dma_tag;
+	sc->sc_dmat = &omap_bus_dma_tag;
 #endif
 	sc->sc_base = mb->mb_iobase;
 	sc->sc_size = mb->mb_iosize;
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 	if (mb->mb_iobase == OMAP2430_OBIO_0_BASE)
 		obio_attached[0] = 1;
 	if (mb->mb_iobase == OMAP2430_OBIO_1_BASE)
@@ -274,12 +264,13 @@ obio_search(struct device *parent, struct cfdata *cf,
 		}
 	}
 
-	aa.obio_dmac = sc->sc_dmac;
+	aa.obio_dmat = sc->sc_dmat;
 	aa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 	aa.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	aa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+	aa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 
-#if defined(OMAP_2430)
+#if defined(OMAP2)
 	if ((aa.obio_addr >= sc->sc_base)
 	&&  (aa.obio_addr < (sc->sc_base + sc->sc_size))) {
 		/* XXX
@@ -313,6 +304,8 @@ obio_print(void *aux, const char *name)
 	}
 	if (sa->obio_intr != OBIOCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", sa->obio_intr);
+	if (sa->obio_intr != OBIOCF_INTRBASE_DEFAULT)
+		aprint_normal(" intrbase %d", sa->obio_intrbase);
 
 	return UNCONF;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.1.2.1 2007/10/12 02:22:24 matt Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.1 2007/10/12 02:22:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -55,12 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.1 2007/10/12 02:22:24 matt Exp $"
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#if defined(OMAP_2430)
-# include <arm/omap/omap2430obiovar.h>
-# include <arm/omap/omap2430reg.h>
-#else
-# error unknown OMAP implementation
-#endif
+#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2430reg.h>
 #include <arm/omap/omap_com.h>
 
 #include "locators.h"
@@ -88,14 +84,12 @@ obiouart_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 		panic("obiouart must have addr specified in config.");
 
-#if !defined(OMAP_2430)
 	/*
 	 * XXX this should be ifdefed on a board-dependent switch
 	 * We don't know what is the irq for com0 on the sdp2430 
 	 */
 	if (obio->obio_intr == OBIOCF_INTR_DEFAULT)
 		panic("obiouart must have addr specified in config.");
-#endif
 
 	if (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		obio->obio_size = OMAP_COM_SIZE;
@@ -164,7 +158,6 @@ obiouart_callout(void *arg)
 }
 
 
-#if defined(OMAP_2430)
 static int
 uart_enable(struct obio_attach_args *obio)
 {
@@ -226,6 +219,3 @@ err:
 
 	return 0;
 }
-#else
-# error unknown OMAP implementation
-#endif

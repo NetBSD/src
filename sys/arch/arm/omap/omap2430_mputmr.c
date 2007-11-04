@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.1 2007/10/12 02:22:26 matt Exp $	*/
+/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,12 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.1 2007/10/12 02:22:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $");
 
 #include "opt_omap.h"
-#ifndef OMAP_2430
-# error unknown OMAP implementation
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

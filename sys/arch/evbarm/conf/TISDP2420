@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.1.2.2 2007/10/31 16:36:04 matt Exp $
+#	$NetBSD: TISDP2420,v 1.1.2.3 2007/11/04 21:58:06 matt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -172,7 +172,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=128
+options		MEMSIZE=96
 
 # L3 Interconnect
 L3i0		at mainbus?
