@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.347 2007/11/04 01:14:15 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.348 2007/11/04 01:20:10 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10410,4 +10410,10 @@ sys/dev/pci/pcidevs_data.h			patch
 
 	Add support for Marvell 88CO55. Newer iMacs come with that chip.
 	[manu, ticket #954]
+
+sys/fs/udf/udf_subr.c				1.40
+
+	Fix panic when the VAT couldn't be found. It would refer an stale
+	udf_node->vnode.
+	[reinoud, ticket #966]
 
