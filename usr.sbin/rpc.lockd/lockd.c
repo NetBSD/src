@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.8 2002/11/08 00:16:39 fvdl Exp $	*/
+/*	$NetBSD: lockd.c,v 1.9 2007/11/04 23:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.8 2002/11/08 00:16:39 fvdl Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.9 2007/11/04 23:12:50 christos Exp $");
 #endif
 
 /*
@@ -70,21 +70,18 @@ int		_rpcsvcdirty = 0;
 
 int grace_expired;
 
-int	main __P((int, char **));
-void	nlm_prog_0 __P((struct svc_req *, SVCXPRT *));
-void	nlm_prog_1 __P((struct svc_req *, SVCXPRT *));
-void	nlm_prog_3 __P((struct svc_req *, SVCXPRT *));
-void	nlm_prog_4 __P((struct svc_req *, SVCXPRT *));
-void	usage __P((void));
+void	nlm_prog_0(struct svc_req *, SVCXPRT *);
+void	nlm_prog_1(struct svc_req *, SVCXPRT *);
+void	nlm_prog_3(struct svc_req *, SVCXPRT *);
+void	nlm_prog_4(struct svc_req *, SVCXPRT *);
+static void	usage(void) __attribute__((__noreturn__));
 
-void sigalarm_handler __P((int));
+static void sigalarm_handler(int);
 
-char *transports[] = { "udp", "tcp", "udp6", "tcp6" };
+static const char *transports[] = { "udp", "tcp", "udp6", "tcp6" };
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	SVCXPRT *transp;
 	int ch, i, maxindex, s;
@@ -93,6 +90,7 @@ main(argc, argv)
 	struct netconfig *nconf;
 	int maxrec = RPC_MAXDATASIZE;
 
+	(void)setprogname(*argv);
 	while ((ch = getopt(argc, argv, "d:g:")) != (-1)) {
 		switch (ch) {
 		case 'd':
@@ -128,11 +126,11 @@ main(argc, argv)
 	if (s < 0)
 		maxindex = 2;
 	else {
-		close(s);
+		(void)close(s);
 		maxindex = 4;
 	}
 
-	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
+	(void)rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 
 	for (i = 0; i < maxindex; i++) {
 		nconf = getnetconfigent(transports[i]);
@@ -172,11 +170,11 @@ main(argc, argv)
 	 * Note that it is NOT sensible to run this program from inetd - the
 	 * protocol assumes that it will run immediately at boot time.
 	 */
-	if (daemon(0, 0)) {
+	if (daemon(0, 0) == -1) {
 		err(1, "cannot fork");
 		/* NOTREACHED */
 	}
-	pidfile(NULL);
+	(void)pidfile(NULL);
 
 	openlog("rpc.lockd", 0, LOG_DAEMON);
 	if (debug_level)
@@ -185,42 +183,41 @@ main(argc, argv)
 		syslog(LOG_INFO, "Starting");
 
 	sigchild.sa_handler = sigchild_handler;
-	sigemptyset(&sigchild.sa_mask);
+	(void)sigemptyset(&sigchild.sa_mask);
 	sigchild.sa_flags = SA_RESTART;
 	if (sigaction(SIGCHLD, &sigchild, NULL) != 0) {
-		syslog(LOG_WARNING, "sigaction(SIGCHLD) failed: %s",
-		    strerror(errno));
+		syslog(LOG_WARNING, "sigaction(SIGCHLD) failed (%m)");
 		exit(1);
 	}
 	sigalarm.sa_handler = sigalarm_handler;
-	sigemptyset(&sigalarm.sa_mask);
+	(void)sigemptyset(&sigalarm.sa_mask);
 	sigalarm.sa_flags = SA_RESETHAND; /* should only happen once */
 	sigalarm.sa_flags |= SA_RESTART;
 	if (sigaction(SIGALRM, &sigalarm, NULL) != 0) {
-		syslog(LOG_WARNING, "sigaction(SIGALRM) failed: %s",
-		    strerror(errno));
+		syslog(LOG_WARNING, "sigaction(SIGALRM) failed (%m)");
 		exit(1);
 	}
 	grace_expired = 0;
-	if (alarm(10) < 0) {
-		syslog(LOG_WARNING, "alarm failed: %s",
-		    strerror(errno));
+	if (alarm(10) == (unsigned int)-1) {
+		syslog(LOG_WARNING, "alarm failed (%m)");
 		exit(1);
 	}
 
 	svc_run();		/* Should never return */
-	exit(1);
+	return 1;
 }
 
-void
-sigalarm_handler(s)
-	int s;
+static void
+/*ARGSUSED*/
+sigalarm_handler(int s)
 {
 	grace_expired = 1;
 }
 
-void
-usage()
+static void
+usage(void)
 {
-	errx(1, "usage: rpc.lockd [-d <debuglevel>] [-g <grace period>]");
+	(void)fprintf(stderr, "Usage: %s[-d <debuglevel>] [-g <grace period>]",
+	    getprogname());
+	exit(1);
 }
