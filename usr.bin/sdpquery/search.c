@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $	*/
+/*	$NetBSD: search.c,v 1.5 2007/11/04 09:02:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $
+ * $Id: search.c,v 1.5 2007/11/04 09:02:47 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.4 2007/03/30 21:25:00 plunky Exp $");
+__RCSID("$NetBSD: search.c,v 1.5 2007/11/04 09:02:47 plunky Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -585,9 +585,6 @@ do_sdp_search(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char const **argv)
 		}
 		service = s->class;
 	}
-
-	if (service < SDP_SERVICE_CLASS_SERVICE_DISCOVERY_SERVER)
-		goto usage;
 
 	/* Initialize attribute values array */
 	for (n = 0; n < values_len; n ++) {
