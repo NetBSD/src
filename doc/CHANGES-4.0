@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.346 2007/10/31 12:54:27 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.347 2007/11/04 01:14:15 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10402,3 +10402,12 @@ sys/netipsec/xform_ipip.c			1.18
 	Bug report, analysis and initial fix from Karl Knutsson.
 	Final patch and ok from degroote
 	[adrianp, ticket #964]
+
+sys/dev/pci/if_msk.c				1.11
+sys/dev/pci/pcidevs				1.907
+sys/dev/pci/pcidevs.h				patch
+sys/dev/pci/pcidevs_data.h			patch
+
+	Add support for Marvell 88CO55. Newer iMacs come with that chip.
+	[manu, ticket #954]
+
