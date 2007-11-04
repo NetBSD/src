@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.51 2007/11/04 11:20:34 rmind Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.52 2007/11/04 13:09:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.51 2007/11/04 11:20:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.52 2007/11/04 13:09:32 yamt Exp $");
 
 #define SYSVMSG
 
@@ -758,7 +758,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 			/* Notify reallocator, in case of such state */
 			if (msg_realloc_state)
-				cv_signal(&msg_realloc_cv);
+				cv_broadcast(&msg_realloc_cv);
 
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
@@ -1092,7 +1092,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 		/* Notify reallocator, in case of such state */
 		if (msg_realloc_state)
-			cv_signal(&msg_realloc_cv);
+			cv_broadcast(&msg_realloc_cv);
 
 		if (error || msg_realloc_state) {
 			MSG_PRINTF(("msgsnd: interrupted system call\n"));

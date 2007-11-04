@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.74 2007/11/04 11:20:34 rmind Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.75 2007/11/04 13:09:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.74 2007/11/04 11:20:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.75 2007/11/04 13:09:33 yamt Exp $");
 
 #define SYSVSEM
 
@@ -901,7 +901,7 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 
 		/* Notify reallocator, in case of such state */
 		if (sem_realloc_state)
-			cv_signal(&sem_realloc_cv);
+			cv_broadcast(&sem_realloc_cv);
 
 		/*
 		 * Make sure that the semaphore still exists
