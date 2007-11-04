@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.3 2007/10/17 18:48:00 tls Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.4 2007/11/04 15:20:11 rtr Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.13 2006/05/17 08:19:10 mrg Exp $	*/
 
@@ -37,7 +37,7 @@
 
 /* headers */
 struct headers {
-	const char *h_header;
+	/*const*/ char *h_header;
 	/*const*/ char *h_value;	/* this gets free()'ed etc at times */
 	SIMPLEQ_ENTRY(headers)	h_next;
 };
