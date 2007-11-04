@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.252.6.4 2007/10/28 20:11:16 joerg Exp $	*/
+/*	$NetBSD: proc.h,v 1.252.6.5 2007/11/04 21:03:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -246,7 +246,8 @@ struct proc {
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* s: S* process status. */
-	char		p_pad1[3];
+	char		p_trace_enabled; /* Cached by some syscall_intern() */
+	char		p_pad1[2];
 
 	pid_t		p_pid;		/* (: Process identifier. */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */

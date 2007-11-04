@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.296.4.3 2007/10/26 15:48:46 joerg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.296.4.4 2007/11/04 21:03:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296.4.3 2007/10/26 15:48:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296.4.4 2007/11/04 21:03:34 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1614,7 +1614,7 @@ vfs_shutdown(void)
 
 	printf("syncing disks... ");
 
-	/* remove user process from run queue */
+	/* remove user processes from run queue */
 	suspendsched();
 	(void) spl0();
 

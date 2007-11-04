@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.65.8.1 2007/08/09 02:37:01 jmcneill Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.65.8.2 2007/11/04 21:03:12 jmcneill Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.65.8.1 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.65.8.2 $"
 
 maxusers	32
 
@@ -46,12 +46,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	LKM		# loadable kernel modules (XXX: working?)

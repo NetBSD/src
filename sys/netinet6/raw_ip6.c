@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.86.4.1 2007/10/02 18:29:23 joerg Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.86.4.2 2007/11/04 21:03:46 jmcneill Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.86.4.1 2007/10/02 18:29:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.86.4.2 2007/11/04 21:03:46 jmcneill Exp $");
 
 #include "opt_ipsec.h"
 
@@ -294,7 +294,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
-	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
+	void (*notify)(struct in6pcb *, int) = in6_rtchange;
 	int nxt;
 
 	if (sa->sa_family != AF_INET6 ||

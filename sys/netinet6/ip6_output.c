@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.120.6.1 2007/10/02 18:29:23 joerg Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.120.6.2 2007/11/04 21:03:43 jmcneill Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.120.6.1 2007/10/02 18:29:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.120.6.2 2007/11/04 21:03:43 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -125,25 +125,25 @@ struct ip6_exthdrs {
 	struct mbuf *ip6e_dest2;
 };
 
-static int ip6_pcbopt __P((int, u_char *, int, struct ip6_pktopts **,
-	int, int));
-static int ip6_getpcbopt __P((struct ip6_pktopts *, int, struct mbuf **));
-static int ip6_setpktopt __P((int, u_char *, int, struct ip6_pktopts *, int,
-	int, int, int));
-static int ip6_setmoptions __P((int, struct ip6_moptions **, struct mbuf *));
-static int ip6_getmoptions __P((int, struct ip6_moptions *, struct mbuf **));
-static int ip6_copyexthdr __P((struct mbuf **, void *, int));
-static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
-	struct ip6_frag **));
-static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
-static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
+static int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **,
+	int, int);
+static int ip6_getpcbopt(struct ip6_pktopts *, int, struct mbuf **);
+static int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int,
+	int, int, int);
+static int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
+static int ip6_getmoptions(int, struct ip6_moptions *, struct mbuf **);
+static int ip6_copyexthdr(struct mbuf **, void *, int);
+static int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
+	struct ip6_frag **);
+static int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
+static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 static int ip6_getpmtu(struct route *, struct route *, struct ifnet *,
     const struct in6_addr *, u_long *, int *);
-static int copypktopts __P((struct ip6_pktopts *, struct ip6_pktopts *, int));
+static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 
 #ifdef RFC2292
-static int ip6_pcbopts __P((struct ip6_pktopts **, struct mbuf *,
-	struct socket *));
+static int ip6_pcbopts(struct ip6_pktopts **, struct mbuf *,
+	struct socket *);
 #endif
 
 #define	IN6_NEED_CHECKSUM(ifp, csum_flags) \
