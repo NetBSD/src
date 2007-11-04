@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.221 2007/07/29 17:06:02 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.222 2007/11/04 23:28:20 tls Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -72,7 +72,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	kadm5clnt kadm5srv kafs krb5 kvm l \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
 	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
-	usbhid util wrap y z
+	usbhid util wrap y z bind9 dns lwres isccfg isccc isc
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
