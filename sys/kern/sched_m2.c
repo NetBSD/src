@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.7 2007/11/04 11:43:07 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.8 2007/11/04 12:36:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.7 2007/11/04 11:43:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.8 2007/11/04 12:36:01 rmind Exp $");
 
 #include <sys/param.h>
 
+#include <sys/bitops.h>
 #include <sys/cpu.h>
 #include <sys/callout.h>
 #include <sys/errno.h>
@@ -51,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.7 2007/11/04 11:43:07 rmind Exp $");
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
-
-#include <sys/cpu.h>
 
 /*
  * XXX: Some definitions below will disappear
@@ -196,7 +195,7 @@ sched_setup(void)
 
 #ifdef MULTIPROCESSOR
 	/* Minimal count of LWPs for catching: log2(count of CPUs) */
-	min_catch = min(ffs(ncpu) - 1, 4);
+	min_catch = min(ilog2(ncpu), 4);
 
 	/* Initialize balancing callout and run it */
 	callout_init(&balance_ch, CALLOUT_MPSAFE);
@@ -373,8 +372,8 @@ sched_enqueue(struct lwp *l, bool swtch)
 	if (swtch == true) {
 		sil->sl_lrtime = hardclock_ticks;
 		sil->sl_rtsum += (hardclock_ticks - sil->sl_rtime);
-	} else
-		sil->sl_lrtime = 0;
+	} else if (sil->sl_lrtime == 0)
+		sil->sl_lrtime = hardclock_ticks;
 
 	/* Enqueue the thread */
 	q_head = sched_getrq(ci_rq, eprio);
@@ -859,6 +858,7 @@ sysctl_sched_mints(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
+	newsize = mstohz(newsize);
 	if (newsize < 1 || newsize > hz || newsize >= max_ts)
 		return EINVAL;
 
@@ -866,7 +866,7 @@ sysctl_sched_mints(SYSCTLFN_ARGS)
 	for (CPU_INFO_FOREACH(cii, ci))
 		spc_lock(ci);
 
-	min_ts = mstohz(newsize);
+	min_ts = newsize;
 	sched_precalcts();
 
 	for (CPU_INFO_FOREACH(cii, ci))
@@ -891,6 +891,7 @@ sysctl_sched_maxts(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
+	newsize = mstohz(newsize);
 	if (newsize < 10 || newsize > hz || newsize <= min_ts)
 		return EINVAL;
 
@@ -898,7 +899,7 @@ sysctl_sched_maxts(SYSCTLFN_ARGS)
 	for (CPU_INFO_FOREACH(cii, ci))
 		spc_lock(ci);
 
-	max_ts = mstohz(newsize);
+	max_ts = newsize;
 	sched_precalcts();
 
 	for (CPU_INFO_FOREACH(cii, ci))
@@ -934,13 +935,13 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "maxts",
-		SYSCTL_DESCR("Maximal time quantum (in microseconds)"),
+		SYSCTL_DESCR("Maximal time quantum (in miliseconds)"),
 		sysctl_sched_maxts, 0, &max_ts, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mints",
-		SYSCTL_DESCR("Minimal time quantum (in microseconds)"),
+		SYSCTL_DESCR("Minimal time quantum (in miliseconds)"),
 		sysctl_sched_mints, 0, &min_ts, 0,
 		CTL_CREATE, CTL_EOL);
 
@@ -948,19 +949,19 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "cacheht_time",
-		SYSCTL_DESCR("Cache hotness time"),
+		SYSCTL_DESCR("Cache hotness time (in ticks)"),
 		NULL, 0, &cacheht_time, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "balance_period",
+		CTLTYPE_INT, "balance_period (in ticks)",
 		SYSCTL_DESCR("Balance period"),
 		NULL, 0, &balance_period, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "min_catch",
-		SYSCTL_DESCR("Minimal count of threads for catching"),
+		SYSCTL_DESCR("Minimal count of the threads for catching"),
 		NULL, 0, &min_catch, 0,
 		CTL_CREATE, CTL_EOL);
 #endif
