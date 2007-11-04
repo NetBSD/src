@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.349 2007/11/04 01:22:56 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.350 2007/11/04 11:50:11 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10421,4 +10421,9 @@ sys/dev/pci/pucdata.c				1.52
 
 	PR/37259 - Daniel Neri -- typo in EXAR XR17C158 description
 	[jnemeth, ticket #968]
+
+etc/namedb/root.cache				1.11
+
+	Update to 2007110100 version
+	[martti, ticket #972]
 
