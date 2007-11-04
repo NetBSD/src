@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.48.6.3 2007/10/19 05:35:37 wrstuden Exp $	*/
+/*	$NetBSD: pthread.c,v 1.48.6.4 2007/11/04 04:26:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.48.6.3 2007/10/19 05:35:37 wrstuden Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.48.6.4 2007/11/04 04:26:57 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -408,11 +408,13 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		  self, newthread, newthread->pt_name));
 	/* 6. Put on appropriate queue. */
 	if (newthread->pt_flags & PT_FLAG_SUSPENDED) {
+		pthread_spinlock(self, &pthread__runqueue_lock);
 		pthread_spinlock(self, &newthread->pt_statelock);
 		pthread__suspend(self, newthread);
 		pthread_spinunlock(self, &newthread->pt_statelock);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 	} else
-		pthread__sched(self, newthread);
+		pthread__sched(self, newthread, 0);
 
 	*thread = newthread;
 
@@ -448,24 +450,26 @@ pthread_suspend_np(pthread_t thread)
 #endif
 	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p (state %d).\n",
 		     self, thread, thread->pt_state));
+	pthread_spinlock(self, &pthread__runqueue_lock);
 	pthread_spinlock(self, &thread->pt_statelock);
 	if (thread->pt_blockgen != thread->pt_unblockgen) {
 		/* XXX flaglock? */
 		thread->pt_flags |= PT_FLAG_SUSPENDED;
 		pthread_spinunlock(self, &thread->pt_statelock);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 		return 0;
 	}
 	switch (thread->pt_state) {
 	case PT_STATE_RUNNING:
+		/* WRS What if this thread's on a different CPU? */
 		pthread__abort();	/* XXX */
 		break;
 	case PT_STATE_SUSPENDED:
 		pthread_spinunlock(self, &thread->pt_statelock);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 		return 0;
 	case PT_STATE_RUNNABLE:
-		pthread_spinlock(self, &pthread__runqueue_lock);
 		PTQ_REMOVE(&pthread__runqueue, thread, pt_runq);
-		pthread_spinunlock(self, &pthread__runqueue_lock);
 		break;
 	case PT_STATE_BLOCKED_QUEUE:
 		pthread_spinlock(self, thread->pt_sleeplock);
@@ -481,6 +485,7 @@ pthread_suspend_np(pthread_t thread)
 
 out:
 	pthread_spinunlock(self, &thread->pt_statelock);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 	return 0;
 }
 
@@ -496,16 +501,16 @@ pthread_resume_np(pthread_t thread)
 #endif
 	SDPRINTF(("(pthread_resume_np %p) Resume thread %p (state %d).\n",
 		     self, thread, thread->pt_state));
+	pthread_spinlock(self, &pthread__runqueue_lock);
 	pthread_spinlock(self, &thread->pt_statelock);
 	/* XXX flaglock? */
 	thread->pt_flags &= ~PT_FLAG_SUSPENDED;
 	if (thread->pt_state == PT_STATE_SUSPENDED) {
-		pthread_spinlock(self, &pthread__runqueue_lock);
 		PTQ_REMOVE(&pthread__suspqueue, thread, pt_runq);
-		pthread_spinunlock(self, &pthread__runqueue_lock);
-		pthread__sched(self, thread);
+		pthread__sched(self, thread, 1);
 	}
 	pthread_spinunlock(self, &thread->pt_statelock);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 	return 0;
 }
 
@@ -665,7 +670,7 @@ pthread_join(pthread_t thread, void **valptr)
 	}
 
 	num = thread->pt_num;
-	if (pthread_spintrylock(self, &thread->pt_join_lock)) {
+	if (pthread_spintrylock(self, &thread->pt_join_lock) == 0) {
 		pthread_spinunlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &thread->pt_join_lock);
 		pthread_spinlock(self, &thread->pt_flaglock);
@@ -932,11 +937,31 @@ pthread_cancel(pthread_t thread)
 			 * is a cancellation point, and loop and reblock
 			 * otherwise.
 			 */
-			pthread_spinlock(self, thread->pt_sleeplock);
-			PTQ_REMOVE(thread->pt_sleepq, thread,
-			    pt_sleep);
-			pthread_spinunlock(self, thread->pt_sleeplock);
-			pthread__sched(self, thread);
+			if (pthread_spintrylock(self, thread->pt_sleeplock)
+			    == 0) {
+				/* Gotta climb locks the hard way */
+				pthread_spinunlock(self, &thread->pt_statelock);
+				pthread_spinlock(self, thread->pt_sleeplock);
+				pthread_spinlock(self, &thread->pt_statelock);
+			}
+			if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
+				PTQ_REMOVE(thread->pt_sleepq, thread,
+				    pt_sleep);
+				pthread_spinunlock(self, thread->pt_sleeplock);
+				pthread__sched(self, thread, 0);
+			} else {
+				/*
+				 * "This can never happen!!" you think. No,
+				 * it can. If thread->pt_sleeplock was locked
+				 * and thread was taken off of the blocking 
+				 * queue while we were sleeping, we end up
+				 * here. Fortunately for this case, there's
+				 * nothing else to do other than release the
+				 * lock. We flaged the cancelation way earlier,
+				 * and it will get noticed as soon as possible.
+				 */
+				pthread_spinunlock(self, thread->pt_sleeplock);
+			}
 		} else {
 			/*
 			 * Nothing. The target thread is running and will
