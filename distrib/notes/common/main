@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.365 2007/11/05 22:33:42 xtraeme Exp $
+.\"	$NetBSD: main,v 1.366 2007/11/05 22:58:33 xtraeme Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -770,9 +770,7 @@ macppc: this port has gained support to use accelerated wsdisplay drivers by def
 .It
 prep: this port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
 .It
-sparc:
-.Lk ../,,/ports/sparc/ :
-added support from booting off RAID1 mirrors.
+sparc: added support from booting off RAID1 mirrors.
 .It
 Xen: support for Xen3 domU and dom0 (Unprivileged domain and domain 0), including support for hardware virtualization on CPUs that support it.
 .bullet)
