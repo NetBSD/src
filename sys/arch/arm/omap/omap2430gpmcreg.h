@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.3 2007/11/05 18:23:12 matt Exp $	*/
+/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.4 2007/11/05 19:41:34 matt Exp $	*/
 /*
  * Copyright (c) 2007 Danger Inc.
  * All rights reserved.
@@ -38,7 +38,12 @@
 /*
  * GPMC register base address, offsets, and size
  */
+#ifdef OMAP_2430
 #define OMAP2430_GPMC_BASE		0x6e000000
+#endif
+#ifdef OMAP_2420
+#define OMAP2420_GPMC_BASE		0x6800a000
+#endif
 
 #define OMAP_GPMC_REVISION		0x000
 #define OMAP_GPMC_SYSCONFIG		0x010
