@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.21 2007/07/01 18:39:39 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.22 2007/11/05 16:53:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.21 2007/07/01 18:39:39 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.22 2007/11/05 16:53:00 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -182,7 +182,7 @@ puffs_null_setops(struct puffs_ops *pops)
 	PUFFSOP_SET(pops, puffs_null, node, readdir);
 	PUFFSOP_SET(pops, puffs_null, node, read);
 	PUFFSOP_SET(pops, puffs_null, node, write);
-	PUFFSOP_SET(pops, puffs_null, node, reclaim);
+	PUFFSOP_SET(pops, puffs_genfs, node, reclaim);
 }
 
 /*ARGSUSED*/
@@ -561,13 +561,4 @@ puffs_null_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
  out:
 	close(fd);
 	return rv;
-}
-
-/*ARGSUSED*/
-int
-puffs_null_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
-{
-
-	return puffs_genfs_node_reclaim(pcc, opc, pcid);
 }
