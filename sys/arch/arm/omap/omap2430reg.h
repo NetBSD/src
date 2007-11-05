@@ -1,4 +1,4 @@
-/* $NetBSD: omap2430reg.h,v 1.1.2.3 2007/11/05 18:23:13 matt Exp $ */
+/* $NetBSD: omap2430reg.h,v 1.1.2.4 2007/11/05 18:47:14 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Danger Inc.
@@ -389,6 +389,22 @@
 
 #define INTC_ILR_PRIORTY_SHFT		2
 #define	INTC_ILR_FIQNIRQ		0x1	/* intr is a FIQ */
+
+/*
+ * GPT - General Purpose Timers
+ */
+#define	GPT1_BASE			0x48028000
+#define	GPT2_BASE			0x4802a000
+#define	GPT3_BASE			0x48078000
+#define	GPT4_BASE			0x4807a000
+#define	GPT5_BASE			0x4807c000
+#define	GPT6_BASE			0x4807e000
+#define	GPT7_BASE			0x48080000
+#define	GPT8_BASE			0x48082000
+#define	GPT9_BASE			0x48084000
+#define	GPT10_BASE			0x48086000
+#define	GPT11_BASE			0x48088000
+#define	GPT12_BASE			0x4808a000
 
 /*
  * GPIO
