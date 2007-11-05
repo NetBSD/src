@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.26 2007/11/05 15:04:42 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.27 2007/11/05 17:13:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.26 2007/11/05 15:04:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.27 2007/11/05 17:13:02 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -617,10 +617,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 		*rnewlwpp = l2;
 
 	l2->l_addr = UAREA_TO_USER(uaddr);
-	KERNEL_LOCK(1, curlwp);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	mutex_enter(&p2->p_smutex);
 
