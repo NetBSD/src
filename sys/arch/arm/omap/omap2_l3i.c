@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.1.2.3 2007/11/05 18:23:13 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.1.2.3 2007/11/05 18:23:13 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.2.3 2007/11/05 18:23:13 matt Exp $");
 
 #include "locators.h"
 
@@ -254,15 +254,15 @@ L3i_attach(struct device *parent, struct device *self, void *aux)
 static void
 L3i_decode_ta_COMPONENT(uint32_t val)
 {
-	aprint_normal("\tCODE %#x\n", TA_COMPONENT_CODE(val));
-	aprint_normal("\tREV  %#x\n", TA_COMPONENT_REV(val));
+	aprint_normal("\tCODE %#" PRIxMAX "\n", TA_COMPONENT_CODE(val));
+	aprint_normal("\tREV  %#" PRIxMAX "\n", TA_COMPONENT_REV(val));
 }
 
 static void
 L3i_decode_ta_CORE(uint32_t val)
 {
-	aprint_normal("\tCODE %#x\n", TA_AGENT_CORE_CODE(val));
-	aprint_normal("\tREV  %#x\n", TA_AGENT_CORE_REV(val));
+	aprint_normal("\tCODE %#" PRIxMAX "\n", TA_AGENT_CORE_CODE(val));
+	aprint_normal("\tREV  %#" PRIxMAX "\n", TA_AGENT_CORE_REV(val));
 }
 
 static void
@@ -295,7 +295,7 @@ L3i_decode_ta_AGENT_STATUS(uint32_t val)
 			((val & TA_AGENT_STATUS_SERROR) != 0));
 	aprint_normal("\tBURST_CLOSE %d\n",
 			((val & TA_AGENT_STATUS_BURST_CLOSE) != 0));
-	aprint_normal("\tTA_AGENT_STATUS_TIMEBASE %d\n",
+	aprint_normal("\tTA_AGENT_STATUS_TIMEBASE %" PRIdMAX "\n",
 			((val & TA_AGENT_STATUS_TIMEBASE) >> 12));
 	aprint_normal("\tREQ_TIMEOUT %d\n",
 			((val & TA_AGENT_STATUS_REQ_TIMEOUT) != 0));
@@ -314,11 +314,11 @@ L3i_decode_ta_AGENT_STATUS(uint32_t val)
 static void
 L3i_decode_ta_ERROR_LOG(uint32_t val)
 {
-	aprint_normal("\tCMD %d\n",
+	aprint_normal("\tCMD %" PRIdMAX "\n",
 			(val & TA_ERROR_LOG_CMD));
-	aprint_normal("\tINITID %d\n",
+	aprint_normal("\tINITID %" PRIdMAX "\n",
 			(val & TA_ERROR_LOG_INITID) >> 8);
-	aprint_normal("\tCODE %d\n",
+	aprint_normal("\tCODE %" PRIdMAX "\n",
 			(val & TA_ERROR_LOG_CODE) >> 24);
 	aprint_normal("\tMULTI %d\n",
 			((val & TA_ERROR_LOG_MULTI) != 0));
