@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.91 2007/10/28 18:40:30 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.92 2007/11/05 17:48:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -276,9 +276,6 @@ enum {
 #define PUFFSDEV_BLOCK 0
 #define PUFFSDEV_NONBLOCK 1
 
-/* mainloop flags */
-#define PUFFSLOOP_NODAEMON 0x01
-
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
 #define		DENT_ADJ(a)	((a)-2)	/* nth request means dir's n-2th */
@@ -434,7 +431,7 @@ struct puffs_usermount *_puffs_init(int, struct puffs_ops *, const char *,
 				    const char *, void *, uint32_t);
 int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
 int		puffs_exit(struct puffs_usermount *, int);
-int		puffs_mainloop(struct puffs_usermount *, int);
+int		puffs_mainloop(struct puffs_usermount *);
 
 
 int	puffs_getselectable(struct puffs_usermount *);

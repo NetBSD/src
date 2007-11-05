@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.12 2007/07/17 11:34:54 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.13 2007/11/05 17:48:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,8 @@ main(int argc, char *argv[])
 	struct puffs_node *pn_root;
 	struct stat sb;
 	mntoptparse_t mp;
-	int mntflags, pflags, lflags;
+	int mntflags, pflags;
+	int detach;
 	int ch;
 	int i;
 
@@ -110,7 +111,8 @@ main(int argc, char *argv[])
 		usage();
 
 	flipflop = dorot13;
-	pflags = lflags = mntflags = 0;
+	pflags = mntflags = 0;
+	detach = 1;
 	while ((ch = getopt(argc, argv, "fo:s")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -123,7 +125,7 @@ main(int argc, char *argv[])
 			freemntopts(mp);
 			break;
 		case 's':
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		}
 	}
@@ -132,7 +134,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags = PUFFSLOOP_NODAEMON;
+		detach = 0;
 
 	if (argc != 2)
 		usage();
@@ -177,7 +179,14 @@ main(int argc, char *argv[])
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
 
-	return puffs_mainloop(pu, lflags);
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
+	if (puffs_mainloop(pu) == -1)
+		return 1;
+
+	return 0;
 }
 
 int
