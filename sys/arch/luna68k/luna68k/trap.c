@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.48 2007/10/17 19:55:04 garbled Exp $ */
+/* $NetBSD: trap.c,v 1.49 2007/11/05 20:43:03 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2007/10/17 19:55:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2007/11/05 20:43:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -243,7 +243,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
