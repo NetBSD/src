@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2007/11/05 04:58:52 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2007/11/05 18:43:42 tls Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -69,8 +69,12 @@ LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
 
 .if ${NAMED_USE_OPENSSL} == "yes"
 CPPFLAGS+=-DOPENSSL
+.if !defined (LIB) || empty(LIB)
 LDADD+= -lcrypto
-DPADD+= ${LIBCRYPTO}	# XXX see above
+DPADD+= ${LIBCRYPTO}
+.else
+LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto
+.endif
 .endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"
