@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_intr.h,v 1.1.2.1 2007/10/12 02:22:26 matt Exp $ */
+/*	$NetBSD: omap2430_intr.h,v 1.1.2.2 2007/11/05 05:06:40 matt Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -51,8 +51,6 @@
 
 uint32_t omap_microtimer_read(void);
 uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
-
-extern int current_spl_level;
 
 #define	EMUINT_IRQ		0	/* MPU emulation (1) */
 #define	COMMRX_IRQ		1	/* MPU emulation (1) */
