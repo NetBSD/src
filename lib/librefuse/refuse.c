@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.80 2007/11/05 13:38:27 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.81 2007/11/05 13:41:52 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,20 +30,23 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.80 2007/11/05 13:38:27 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.81 2007/11/05 13:41:52 pooka Exp $");
 #endif /* !lint */
+
+#include <sys/types.h>
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fuse.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #ifdef MULTITHREADED_REFUSE
 #include <pthread.h>
 #endif
-
-#include "defs.h"
 
 typedef uint64_t	 fuse_ino_t;
 
