@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.364 2007/10/29 20:28:26 pavel Exp $
+.\"	$NetBSD: main,v 1.365 2007/11/05 22:33:42 xtraeme Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -514,21 +514,27 @@ imported Common Address Redundancy Protocol to allow multiple hosts to share a s
 .It
 ALTQ support for the PF packet filter.
 .It
+.Xr etherip 4 :
+new EtherIP tunneling device. Tt's able to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
+.It
 .Xr ftpd 8
 can now run in standalone mode, instead of from
 .Xr inetd 8 .
 .It
 .Xr tftp 1
 now has support for multicast TFTP operation in open-loop mode, server is in progress.
+.It
+.Xr tcp 4 :
+added support for RFC 3465 Appropriate Byte Counting (ABC) and Explicit Congestion Notification as defined in RFC 3168.
 .bullet)
 .
-.Ss2 Filesystems
+.Ss2 File systems
 .(bullet
 .Xr scan_ffs 8 ,
 .Xr scan_lfs 8 :
-Utilities to find FFSv1/v2 and LFS partitions to recover lost disklabels.
+utilities to find FFSv1/v2 and LFS partitions to recover lost disklabels on disks and image files.
 .It
-tmpfs: Added a new memory-based file system aimed at replacing mfs. Contrary to mfs, it is not based on a disk file system, so it is more efficient both in overall memory consumption and speed. See
+tmpfs: added a new memory-based file system aimed at replacing mfs. Contrary to mfs, it is not based on a disk file system, so it is more efficient both in overall memory consumption and speed. See
 .Xr mount_tmpfs 8 .
 .It
 Added UDF support for optical media and block devices, see
@@ -537,7 +543,10 @@ Read-only for now.
 .It
 NFS export list handling was changed to be filesystem independent.
 .It
-LFS: Lots of stability improvements and new cleaner daemon. It is now also possible to use LFS as root filesystem.
+LFS: lots of stability improvements and new cleaner daemon. It is now also possible to use LFS as root filesystem.
+.It
+.Xr vnd 4 :
+the vnode disk driver can be used on filesystems such as smbfs and tmpfs.
 .It
 Support for System V Boot File System was added, see
 .Xr newfs_sysvbfs 8
@@ -593,6 +602,16 @@ new driver for ASUS Abit uGuru hardware monitor found on newer ASUS motherboards
 .bullet)
 .
 .It
+Miscellaneous:
+.(bullet
+.Xr geodewdog 4 :
+new AMD Geode SC1100 Watchdog Timer driver.
+.It
+.Xr gscpcib 4 :
+new AMD Geode SC1100 PCI-ISA bridge that provides support for the GPIO interface.
+.bullet)
+.
+.It
 Networking:
 .(bullet
 .Xr ath 4 :
@@ -626,7 +645,7 @@ added support for ASIX AX88140A and AX88141.
 added support for the VIA Rhine III.
 .It
 .Xr wm 4 :
-added support for i8003, ICH8, ICH9 and others.
+added support for i8003, ICH8, ICH9 and others. Support for IPv6 Rx TCP/UDP Checksum Offloading and more.
 .It
 .Xr wpi 4 :
 new driver for Intel PRO/Wireless 3945ABG PCI 802.11 network cards, from OpenBSD.
@@ -644,9 +663,15 @@ Power Management:
 .(bullet
 Support for Intel Speedstep SMI on PIIX4 PCI-ISA for i386.
 .It
-Support for AMD PowerNow and Cool'n'Quiet Technology on K7 and K8 CPUs (both in 32 and 64 bit mode), including Athlon Mobile, Athlon64, Opteron or X2.
+Support for AMD PowerNow and Cool'n'Quiet Technology on K7 and K8 CPUs (both in 32 and 64 bit mode), including Athlon Mobile, Athlon64, Opteron or X2. See
+.Xr options 4
+for more information.
 .It
-Support for more Enhanced Speedstep CPUs, including VIA C7/Eden and Intel Core Solo/Duo/Duo2.
+Support for more Enhanced Speedstep CPUs, including VIA C7/Eden and Intel Core Solo/Duo/Duo2. See
+.Xr options 4
+for more information.
+.It
+The Enhanced Speedstep and PowerNow drivers were modified to be able to be scaled in all CPUs available, saving power on SMP systems.
 .bullet)
 .
 .It
@@ -673,8 +698,17 @@ new driver for JMicron Technology JMB36x PCIe to SATA II/PATA controllers.
 .Xr mfi 4 :
 new driver for LSI Logic and Dell MegaRAID SAS controllers, from OpenBSD.
 .It
+.Xr mpt 4 :
+added support for newer SAS and similar devices.
+.It
 .Xr njata 4 :
 new driver for Workbit NinjaATA-32 CardBus IDE controller.
+.It
+.Xr pdcsata 4 :
+added support for the Promise PDC20775, PDC20771, PDC40518, PDC40718 and some bugfixes.
+.It
+.Xr piixide 4 :
+added support for some ICH8/ICH8-M/ICH9 IDE and SATA controllers.
 .It
 .Xr svwsata 4 :
 new driver for Serverworks K2 SATA controllers, from OpenBSD.
@@ -707,6 +741,8 @@ i386:
 .(bullet
 Added support for the for Multiboot specification. This means much improved support for loading the kernel by GRUB, including passing in parameters to the kernel.
 .It
+Added the unichromefb framebuffer driver that supports the VIA Unichrome Graphics adapter.
+.It
 .Xr vesafb 4 :
 added new framebuffer driver that supports VESA BIOS (VBE) 2.0 extensions and up.
 .It
@@ -714,25 +750,31 @@ Added cd9660 file system support to the BIOS bootloader.
 .bullet)
 .
 .It
-evbarm: New platform support for Arcom Viper PXA255-based single board, Atmark Techno Armadillo-9 and Armadillo-210, Linksys NSLU2 (a.k.a. "Slug") and I-O DATA HDL-G Giga LANDISK NAS devices.
+evbarm: new platform support for Arcom Viper PXA255-based single board, Atmark Techno Armadillo-9 and Armadillo-210, Certance CP-3100, Linksys NSLU2 (a.k.a. "Slug") and I-O DATA HDL-G Giga LANDISK NAS devices.
 .It
-evbmips: Add support for Alchemy Au1550 processors, DBAu1550 boards, Alchemy Au15XX PCI host, (OMS-AL400/128) and Atheros AR5312 SoC.
+evbmips: added support for Alchemy Au1550 processors, DBAu1550 boards, Alchemy Au15XX PCI host, (OMS-AL400/128) and Atheros AR5312 SoC.
 .It
 New port
 ews4800mips: NEC's MIPS based EWS4800 workstations.
 .It
-cobalt: Add support from booting off raidframe RAID1 mirrors.
+cobalt: added support from booting off raidframe RAID1 mirrors.
 .It
-hpcmips: Added the
+hpcmips: added the
 .Xr teliosio 4
 driver for the Sharp Telios LCD screen and Battery unit.
 .It
 New port
 landisk: port to the SH4 processor based NAS appliances, supporting models by I-O DATA (USL-5P, HDL-U, HDL-AV, HDL-W and HDLM-U series, SuperTank LAN Tank, UHDL-160U and UHDL-300U) and Plextor PX-EH16L, PX-EH25L and PX-EH40L.
 .It
-prep: This port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
+macppc: this port has gained support to use accelerated wsdisplay drivers by default (if possible), and uses the appropriate driver rather than the Generic Open Firmware Framebuffer.
 .It
-Xen: support for Xen3 domU and dom0, including support for hardware virtualization on CPUs that support it.
+prep: this port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
+.It
+sparc:
+.Lk ../,,/ports/sparc/ :
+added support from booting off RAID1 mirrors.
+.It
+Xen: support for Xen3 domU and dom0 (Unprivileged domain and domain 0), including support for hardware virtualization on CPUs that support it.
 .bullet)
 .
 .Ss2 Kernel subsystems
@@ -765,34 +807,36 @@ and
 .It
 Imported the
 .Xr bio 4
-framework from OpenBSD, to query/control block device controllers. Currently supporting the
+framework from OpenBSD, to query/control block hardware RAID device controllers. Currently supporting the
 .Xr mfi 4
 driver.
 .It
 Kernel uses stateful read-ahead algorithm.
 .It
 .Xr dkctl 8
-can be used to switch buffer queuing strategies on the fly, see also
+can be used to switch buffer queuing strategies on the fly on
+.Xr wd 4
+disks, see also
 .Xr bufq 9 .
 .It
 .Xr fileassoc 9
 is used by Veriexec, it adds in-kernel and file-system independent file meta-data association interface.
 .It
 .Xr firmload 9 :
-An API for loading firmware images used by various hardware devices.
+an API for loading firmware images used by various hardware devices.
 .It
 .Xr gpio 4 :
-Imported General Purpose I/O framework from OpenBSD.
+imported General Purpose I/O framework from OpenBSD.
 .It
 .Xr onewire 4 :
-Imported Dallas Semiconductor 1-wire bus framework from OpenBSD.
+imported Dallas Semiconductor 1-wire bus framework from OpenBSD.
 .It
 The
 .Xr proplib 3
 protocol was added for sending property lists to/from the kernel using ioctls.
 .It
 .Xr spi 4 :
-New SPI (Serial Peripherial Interface) framework.
+new SPI (Serial Peripherial Interface) framework.
 .It
 .Xr timecounter 9
 adds a new time-keeping infrastructure along with NTP API 4 nanokernel implementation. Almost all platforms were changed to support this API.
@@ -868,14 +912,42 @@ pppd 2.4.4
 .bullet)
 .
 .It
+.Xr cdplay 1 :
+added digital transfer mode support.
+.It
 .Xr cksum 1
 can now verify checksums.
+.It
+.Xr csplit 1 :
+new utility that splits a file into pieces. From FreeBSD/OpenBSD.
 .It
 .Xr identd 1 :
 added support for forwarding ident queries and receiving of proxied ident queries.
 .It
 .Xr getent 1 :
 added support for the ethers database.
+.It
+.Xr gkermit 1 :
+new program for transferring files using the Kermit protocol.
+.It
+.Xr mail 1 :
+added support for Mime and multi-character set handling, command line editing and completion.
+.It
+.Xr utoppya 1 :
+new utility to interface to the
+.Xr utoppy 4
+driver.
+.It
+.Xr init 8 :
+added support for running multi-user in a chroot() environment. Allows / file system on e.g.,
+.Xr cgd 4 ,
+.Xr vnd 4
+or
+.Xr ccd 4
+volumes.
+.It
+.Xr gpt 8 :
+new GUID partition table maintenance utility, from FreeBSD.
 .It
 iSCSI target (server) code added, see
 .Xr iscsi-target 8 ;
