@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.79 2007/10/28 18:41:54 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.80 2007/11/05 13:38:27 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.79 2007/10/28 18:41:54 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.80 2007/11/05 13:38:27 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -154,7 +154,7 @@ static ino_t fakeino = 3;
 #ifdef MULTITHREADED_REFUSE
 static pthread_mutex_t		context_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t		context_key;
-static uint64_t			context_refc;
+static unsigned long		context_refc;
 #endif
 
 /* return the fuse_context struct related to this thread */
@@ -166,7 +166,7 @@ fuse_get_context(void)
 
 	if ((ctxt = pthread_getspecific(context_key)) == NULL) {
 		if ((ctxt = calloc(1, sizeof(struct fuse_context))) == NULL) {
-			errx(EXIT_FAILURE, "fuse_get_context: no memory");
+			abort();
 		}
 		pthread_setspecific(context_key, ctxt);
 	}
@@ -187,13 +187,20 @@ free_context(void *ctxt)
 }
 #endif
 
-/* make the pthread key */
+/*
+ * Create the pthread key.  The reason for the complexity is to
+ * enable use of multiple fuse instances within a single process.
+ */
 static int
 create_context_key(void)
 {   
 #ifdef MULTITHREADED_REFUSE
-	if (pthread_mutex_lock(&context_mutex) == 0) {
-		/* we have the lock, attempt to create the key */
+	int rv;
+
+	rv = pthread_mutex_lock(&context_mutex);
+	assert(rv == 0);
+
+	if (context_refc == 0) {
 		if (pthread_key_create(&context_key, free_context) != 0) {
 			warnx("create_context_key: pthread_key_create failed");
 			pthread_mutex_unlock(&context_mutex);
@@ -208,12 +215,12 @@ create_context_key(void)
 #endif
 }
 
-/* delete the pthread key */
 static void
 delete_context_key(void)
 {   
 #ifdef MULTITHREADED_REFUSE
 	pthread_mutex_lock(&context_mutex);
+	/* If we are the last fuse instances using the key, delete it */
 	if (--context_refc == 0) {
 		free(pthread_getspecific(context_key));
 		pthread_key_delete(context_key);
@@ -260,7 +267,7 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 	/* initial? */
 	if (dh->bufsize == 0) {
 		if ((dh->dbuf = calloc(1, DIR_CHUNKSIZE)) == NULL) {
-			err(EXIT_FAILURE, "fill_dirbuf");
+			abort();
 		}
 		dh->d = dh->dbuf;
 		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
@@ -273,7 +280,7 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 	/* try to increase buffer space */
 	dh->dbuf = realloc(dh->dbuf, dh->bufsize + DIR_CHUNKSIZE);
 	if (dh->dbuf == NULL) {
-		err(EXIT_FAILURE, "fill_dirbuf realloc");
+		abort();
 	}
 	dh->d = (void *)((uint8_t *)dh->dbuf + (dh->bufsize - dh->reslen));
 	dh->reslen += DIR_CHUNKSIZE;
@@ -367,7 +374,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 
 	/* grab the pthread context key */
 	if (!create_context_key()) {
-		err(EXIT_FAILURE, "fuse_setup: can't create context key");
+		return NULL;
 	}
 
 	/* stuff name into fuse_args */
@@ -376,7 +383,8 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 		free(args->argv[0]);
 	}
 	if ((args->argv[0] = strdup(name)) == NULL) {
-		err(EXIT_FAILURE, "fuse_setup: can't strdup memory");
+		fuse_opt_free_args(args);
+		return NULL;
 	}
 
 	/* count back from the end over arguments starting with '-' */
@@ -1372,6 +1380,11 @@ fuse_loop(struct fuse *fuse)
 void
 fuse_destroy(struct fuse *fuse)
 {
+
+	/*
+	 * TODO: needs to assert the fs is quiescent, i.e. no other
+	 * threads exist
+	 */
 
 	delete_context_key();
 	/* XXXXXX: missing stuff */
