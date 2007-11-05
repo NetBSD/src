@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.38 2007/08/06 23:38:49 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.39 2007/11/05 17:36:23 ginsbach Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,9 +49,6 @@
 .as doc-str-St--xns5.2d2.0      " (\*[Lq]\*[doc-Tn-font-size]XNS\*[doc-str-St]\^5.2D2.0\*[Rq])
 .ds doc-str-St--ieee1275-94     \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1275-1994
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
-.\" will be in next groff release (after 1.19.1)
-.ds doc-str-St--p1003.1-2004    \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1-2004
-.as doc-str-St--p1003.1-2004    " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
 .
 .\" Default .Os value
 .ds doc-operating-system NetBSD\~4.0
