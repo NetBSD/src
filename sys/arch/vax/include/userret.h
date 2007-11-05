@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2007/10/17 19:57:48 garbled Exp $	*/
+/*	$NetBSD: userret.h,v 1.9 2007/11/05 20:37:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -51,9 +51,6 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 			break;
 		preempt();
 	}
-
-	l->l_priority = l->l_usrpri;
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
