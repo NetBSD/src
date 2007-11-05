@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.6 2006/02/16 20:17:13 perry Exp $ */
+/* $NetBSD: userret.h,v 1.7 2007/11/05 20:37:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ userret(struct lwp *l)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 #endif /* _ALPHA_USERRET_H_ */

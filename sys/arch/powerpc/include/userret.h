@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.13 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: userret.h,v 1.14 2007/11/05 20:37:48 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,6 +87,4 @@ userret(struct lwp *l, struct trapframe *frame)
 		__asm volatile("dssall;sync");
 	}
 #endif
-
-	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2007/10/17 19:56:05 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2007/11/05 20:43:04 ad Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2007/10/17 19:56:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2007/11/05 20:43:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -279,7 +279,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.31 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.31 2007/10/17 19:53:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -385,10 +385,6 @@ undefinedinstruction(trapframe_t *frame)
 
 		/* Invoke MI userret code */
 		mi_userret(l);
-
-		l->l_priority = l->l_usrpri;
-
-		curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 	}
 
 #else

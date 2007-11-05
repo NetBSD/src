@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.12 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: ast.c,v 1.13 2007/11/05 20:43:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.12 2007/10/17 19:53:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13 2007/11/05 20:43:01 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -79,8 +79,6 @@ userret(struct lwp *l)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 

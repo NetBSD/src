@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2007/10/17 19:54:31 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2007/11/05 20:43:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2007/10/17 19:54:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2007/11/05 20:43:02 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -193,7 +193,6 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	l->l_priority = l->l_usrpri;
 	if (curcpu()->ci_want_resched) {
 		preempt();
 	}
@@ -208,8 +207,6 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 
 		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
 /*
