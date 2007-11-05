@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.81 2007/11/05 13:41:52 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.82 2007/11/05 17:48:18 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.81 2007/11/05 13:41:52 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.82 2007/11/05 17:48:18 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1377,7 +1377,7 @@ int
 fuse_loop(struct fuse *fuse)
 {
 
-	return puffs_mainloop(fuse->fc->pu, 0);
+	return puffs_mainloop(fuse->fc->pu);
 }
 
 void

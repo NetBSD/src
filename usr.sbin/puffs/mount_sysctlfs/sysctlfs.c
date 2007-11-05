@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.3 2007/08/10 08:13:11 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.4 2007/11/05 17:48:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.3 2007/08/10 08:13:11 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.4 2007/11/05 17:48:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -219,7 +219,8 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
-	int mntflags, pflags, lflags;
+	int mntflags, pflags;
+	int detach;
 	int ch;
 
 	setprogname(argv[0]);
@@ -228,7 +229,8 @@ main(int argc, char *argv[])
 		errx(1, "usage: %s sysctlfs [-o mntopts] mountpath",
 		    getprogname());
 
-	mntflags = pflags = lflags = 0;
+	mntflags = pflags = 0;
+	detach = 1;
 	while ((ch = getopt(argc, argv, "o:s")) != -1) {
 		switch (ch) {
 		case 'o':
@@ -238,7 +240,7 @@ main(int argc, char *argv[])
 			freemntopts(mp);
 			break;
 		case 's':
-			lflags = PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		}
 	}
@@ -247,7 +249,7 @@ main(int argc, char *argv[])
 	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 
 	if (argc != 2)
 		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
@@ -285,8 +287,12 @@ main(int argc, char *argv[])
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
 
-	if (puffs_mainloop(pu, lflags) == -1)
-		err(1, "mainloop");
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
+	if (puffs_mainloop(pu) == -1)
+		return 1;
 
 	return 0;
 }
