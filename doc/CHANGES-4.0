@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.354 2007/11/05 15:44:49 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.355 2007/11/05 18:10:08 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10483,4 +10483,26 @@ usr.sbin/rpc.lockd/lock_proc.c			1.8
 	Fix off-by-one error accessing "clnt_cache_addr" array which causes heap
 	corruption. This will hopefully fix PR bin/37236.
 	[tron, ticket #976]
+
+sys/arch/amd64/conf/GENERIC			patch
+
+	Reduce difference to i386 GENERIC:
+	- add some comments from that
+	- options SPACE TAB
+	- enable EST
+	- enable DDB and build w/ frame pointer by default
+	- enable ACPI devices
+	- include AGP
+	- include Cardbus and PCMCIA
+	- include Synaptics driver
+	- include atw, ipw, iwi, hme, rtw, txp
+	- include uep, utoppy, ugensa
+
+	This makes GENERIC actually usable for laptops.
+	[joerg, ticket #963]
+
+share/man/man4/agr.4				1.4
+
+	write a HISTORY section.
+	[yamt, ticket #977]
 
