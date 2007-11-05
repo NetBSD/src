@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.2 2007/10/17 19:56:09 garbled Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.3 2007/11/05 15:49:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,39 +37,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.2 2007/10/17 19:56:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2007/11/05 15:49:03 garbled Exp $");
 
 #include <sys/param.h>
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
-bus_space_handle_t ofppc_isa_hdl;
 struct powerpc_isa_chipset genppc_ict;
+static u_int32_t ofppc_isa_iobase;
 
 /*
  * isa_inb and isa_outb are pretty much used to access the 8259's.  This isn't
  * ideal, but, whatever.  Because of this, this is an ultra-stripped down
  * version of those funcitons, just to satisfy the pic driver.
+ * This is completely reliant on the fact that the region should be BAT mapped
+ * in, and NOT mapped via bus_space_map.  If you bus_space_map a register
+ * and then attempt to use isa_*b, you will lose.
  */
 
 int
-map_isa_ioregs(void)
+map_isa_ioregs(u_int32_t addr)
 {
-	return bus_space_map(&genppc_isa_io_space_tag, IO_ISABEGIN, IO_ISAEND,
-	    0, &ofppc_isa_hdl);
+	if (addr) {
+		ofppc_isa_iobase = addr;
+		return 1;
+	}
+	return 0;
 }
 
 uint8_t
 isa_inb(uint32_t addr)
 {
-	return bus_space_read_1(&genppc_isa_io_space_tag, ofppc_isa_hdl, addr);
+	return(inb(ofppc_isa_iobase | addr));
 }
 
 void
 isa_outb(uint32_t addr, uint8_t val)
 {
-	bus_space_write_1(&genppc_isa_io_space_tag, ofppc_isa_hdl, addr, val);
+	outb(ofppc_isa_iobase | addr, val);
 }
