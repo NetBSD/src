@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.26 2007/04/21 15:27:44 kiyohara Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.27 2007/11/05 19:08:57 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -33,18 +33,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohcivar.h,v 1.15 2007/03/16 04:25:02 simokawa Exp $
+ * $FreeBSD: src/sys/dev/firewire/fwohcivar.h,v 1.16 2007/06/06 14:31:36 simokawa Exp $
  *
  */
-
-#if defined(__DragonFly__) || __FreeBSD_version < 500000 || defined(__NetBSD__)
-#define FWOHCI_TASKQUEUE        0
-#else
-#define FWOHCI_TASKQUEUE        1
-#endif
-#if FWOHCI_TASKQUEUE
-#include <sys/taskqueue.h>
-#endif
 
 #if defined(__NetBSD__)
 MALLOC_DECLARE(M_FW);
@@ -64,8 +55,6 @@ typedef struct fwohci_softc {
 	struct resource *irq_res;
 #elif defined(__NetBSD__)
 	bus_size_t bssize;
-	void *sc_shutdownhook;
-	void *sc_powerhook;
 #endif
 	struct fwohci_dbch{
 		u_int ndb;
@@ -89,17 +78,22 @@ typedef struct fwohci_softc {
 	struct fwdma_alloc crom_dma;
 	struct fwdma_alloc dummy_dma;
 	uint32_t intmask, irstat, itstat;
-#if FWOHCI_TASKQUEUE
 	uint32_t intstat;
-	struct task fwohci_task_complete;
-#endif
+	fw_task_t fwohci_task_busreset;
+	fw_task_t fwohci_task_sid;
+	fw_task_t fwohci_task_dma;
 	int cycle_lost;
 } fwohci_softc_t;
 
-FW_INTR(fwohci);
+void fwohci_intr (void *arg);
+int fwohci_filt (void *arg);
 int fwohci_init (struct fwohci_softc *, device_t);
 void fwohci_poll (struct firewire_comm *, int, int);
 void fwohci_reset (struct fwohci_softc *, device_t);
-FWOHCI_DETACH();
+#if defined(__FreeBSD__)
+int fwohci_detach(struct fwohci_softc *, device_t);
+#elif defined(__NetBSD__)
+int fwohci_detach(struct fwohci_softc *, int);
+#endif
 int fwohci_resume (struct fwohci_softc *, device_t);
-FWOHCI_STOP();
+int fwohci_stop (struct fwohci_softc *, device_t dev);
