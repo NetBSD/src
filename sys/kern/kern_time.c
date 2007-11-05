@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.117.2.6 2007/10/23 20:17:12 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.117.2.7 2007/11/05 15:01:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.117.2.6 2007/10/23 20:17:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.117.2.7 2007/11/05 15:01:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -334,7 +334,7 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 	if (rmt != NULL)
 		getnanouptime(rmt);
 
-	error = kpause("nanoslp", true, timo, NULL);
+	error = kpause("sleep", true, timo, NULL);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
@@ -370,7 +370,7 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 		timo = 1;
 	splx(s);
 
-	error = kpause("nanoslp", true, timo, NULL);
+	error = kpause("sleep", true, timo, NULL);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
