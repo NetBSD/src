@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2007/11/05 13:41:48 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.7 2007/11/05 15:56:37 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -621,6 +621,36 @@ pcifixup()
 				irq, STEER(steer, 0x8));
 		}
 
+#if 1
+		/*
+		 * //// IDE fixup ////
+		 * - "native mode" (ide 0x09)
+		 * - use primary only (ide 0x40)
+		 */
+
+		/* ide: 0x09 - programming interface; 1000'SsPp */
+		val = pcicfgread(ide, 0x08) & 0xffff00ff;
+		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+		/* ide: 0x40 - use primary only */
+		val = pcicfgread(ide, 0x40);
+		pcicfgwrite(ide, 0x40, val | 0x02);
+
+		/*
+		 * //// USBx2, audio, and modem fixup ////
+		 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
+		 * - disable AC97 audio and MC97 modem (pcib 0x85)
+		 */
+
+		/* pcib: 0x48 - disable USB #0 at function 2 */
+		val = pcicfgread(pcib, 0x48);
+		pcicfgwrite(pcib, 0x48, val | 04);
+
+		/* pcib: 0x85 - disable USB #1 at function 3 */
+		/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
+		val = pcicfgread(pcib, 0x84);
+		pcicfgwrite(pcib, 0x84, val | 0x1c00);
+#else
 		/*
 		 * //// IDE fixup ////
 		 * - "compatiblity mode" (ide 0x09)
@@ -647,7 +677,7 @@ pcifixup()
 		/* ide: 0x3d/3c - turn off PCI pin/line */
 		val = pcicfgread(ide, 0x3c) & 0xffff0000;
 		pcicfgwrite(ide, 0x3c, val);
-
+#endif
 		/*
 		 * //// fxp fixup ////
 		 * - use PCI pin A line 25 (fxp 0x3d/3c)
