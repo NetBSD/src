@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.11 2007/09/08 15:49:33 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.12 2007/11/05 17:48:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.11 2007/09/08 15:49:33 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.12 2007/11/05 17:48:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -375,12 +375,14 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
-	int pflags, lflags, mntflags;
+	int pflags, mntflags;
+	int detach;
 	int ch;
 
 	setprogname(argv[0]);
 
-	lflags = mntflags = pflags = 0;
+	mntflags = pflags = 0;
+	detach = 1;
 	while ((ch = getopt(argc, argv, "o:s")) != -1) {
 		switch (ch) {
 		case 'o':
@@ -390,7 +392,7 @@ main(int argc, char *argv[])
 			freemntopts(mp);
 			break;
 		case 's': /* stay on top */
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		default:
 			usage();
@@ -399,7 +401,7 @@ main(int argc, char *argv[])
 	}
 	pflags |= PUFFS_KFLAG_NOCACHE | PUFFS_KFLAG_LOOKUP_FULLPNBUF;
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	argc -= optind;
 	argv += optind;
 
@@ -446,8 +448,13 @@ main(int argc, char *argv[])
 	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL,NULL,NULL);
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
-	if (puffs_mainloop(pu, lflags) == -1)
-		err(1, "mainloop");
+
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
+	if (puffs_mainloop(pu) == -1)
+		return 1;
 
 	return 0;
 }

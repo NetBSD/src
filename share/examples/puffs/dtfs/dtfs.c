@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.35 2007/10/11 23:03:00 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.36 2007/11/05 17:48:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	const char *typename;
 	char *rtstr;
 	mntoptparse_t mp;
-	int pflags, lflags, mntflags;
+	int pflags, detach, mntflags;
 	int ch;
 	int khashbuckets;
 	int maxreqsize;
@@ -125,7 +125,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	rtstr = NULL;
-	lflags = mntflags = 0;
+	detach = 1;
+	mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
 	typename = FSNAME;
@@ -172,7 +173,7 @@ main(int argc, char *argv[])
 			rtstr = optarg;
 			break;
 		case 's': /* stay on top */
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		case 't':
 			pflags |= PUFFS_KFLAG_WTCACHE;
@@ -183,7 +184,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	argc -= optind;
 	argv += optind;
 
@@ -255,8 +256,13 @@ main(int argc, char *argv[])
 
 	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");
-	if (puffs_mainloop(pu, lflags) == -1)
-		err(1, "mainloop");
+
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
+	if (puffs_mainloop(pu) == -1)
+		return 1;
 
 	return 0;
 }
