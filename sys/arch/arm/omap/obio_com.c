@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $"
 
 #include "locators.h"
 
-static int	obiouart_match(struct device *, struct cfdata *, void *);
-static void	obiouart_attach(struct device *, struct device *, void *);
+static int	obiouart_match(device_t, cfdata_t, void *);
+static void	obiouart_attach(device_t, device_t, void *);
 static int	uart_enable(struct obio_attach_args *);
 static void	obiouart_callout(void *);
 
@@ -75,7 +75,7 @@ CFATTACH_DECL(obiouart, sizeof(struct com_obio_softc),
     obiouart_match, obiouart_attach, NULL, NULL);
 
 static int
-obiouart_match(struct device *parent, struct cfdata *cf, void *aux)
+obiouart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 	bus_space_handle_t bh;
@@ -84,12 +84,14 @@ obiouart_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 		panic("obiouart must have addr specified in config.");
 
+#if 0
 	/*
 	 * XXX this should be ifdefed on a board-dependent switch
 	 * We don't know what is the irq for com0 on the sdp2430 
 	 */
 	if (obio->obio_intr == OBIOCF_INTR_DEFAULT)
-		panic("obiouart must have addr specified in config.");
+		panic("obiouart must have intr specified in config.");
+#endif
 
 	if (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		obio->obio_size = OMAP_COM_SIZE;
@@ -112,10 +114,10 @@ obiouart_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-obiouart_attach(struct device *parent, struct device *self, void *aux)
+obiouart_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_obio_softc *osc = (struct com_obio_softc *)self;
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_obio_softc *osc = device_private(self);
+	struct com_softc *sc = &osc->sc_sc;
 	struct obio_attach_args *obio = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh = 0;
@@ -173,25 +175,25 @@ uart_enable(struct obio_attach_args *obio)
 
 	KASSERT(obio != NULL);
 
-	err = bus_space_map(obio->obio_iot, OMAP2430_CM_BASE,
-		OMAP2430_CM_SIZE, 0, &ioh);
+	err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
+		OMAP2_CM_SIZE, 0, &ioh);
 	KASSERT(err == 0);
 
 
 	switch(obio->obio_addr) {
 	case 0x4806a000:
-		fclken1 = OMAP2430_CM_FCLKEN1_CORE_EN_UART1;
-		iclken1 = OMAP2430_CM_ICLKEN1_CORE_EN_UART1;
+		fclken1 = OMAP2_CM_FCLKEN1_CORE_EN_UART1;
+		iclken1 = OMAP2_CM_ICLKEN1_CORE_EN_UART1;
 		n = 1;
 		break;
 	case 0x4806c000:
-		fclken1 = OMAP2430_CM_FCLKEN1_CORE_EN_UART2;
-		iclken1 = OMAP2430_CM_ICLKEN1_CORE_EN_UART2;
+		fclken1 = OMAP2_CM_FCLKEN1_CORE_EN_UART2;
+		iclken1 = OMAP2_CM_ICLKEN1_CORE_EN_UART2;
 		n = 2;
 		break;
 	case 0x4806e000:
-		fclken1 = OMAP2430_CM_FCLKEN2_CORE_EN_UART3;
-		iclken1 = OMAP2430_CM_ICLKEN2_CORE_EN_UART3;
+		fclken1 = OMAP2_CM_FCLKEN2_CORE_EN_UART3;
+		iclken1 = OMAP2_CM_ICLKEN2_CORE_EN_UART3;
 		n = 3;
 		break;
 	default:
@@ -201,21 +203,21 @@ uart_enable(struct obio_attach_args *obio)
 printf("%s: UART#%d\n", __func__, n);
 
 #if 0
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_CLKSEL2_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_CLKSEL2_CORE);
 	r |= clksel2;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_CLKSEL2_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_CLKSEL2_CORE, r);
 #endif
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN1_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN1_CORE);
 	r |= fclken1;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN1_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN1_CORE, r);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN1_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN1_CORE);
 	r |= iclken1;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN1_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN1_CORE, r);
 
 err:
-//	bus_space_unmap(obio->obio_iot, ioh, OMAP2430_CM_SIZE);
+//	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
 
 	return 0;
 }
