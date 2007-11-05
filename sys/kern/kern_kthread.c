@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.13 2007/11/01 21:58:18 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.14 2007/11/05 16:51:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.13 2007/11/01 21:58:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.14 2007/11/05 16:51:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 
 	if (pri == PRI_NONE) {
 		/* Minimum kernel priority level. */
-		pri = PRI_KERNEL;
+		pri = PRI_KTHREAD;
 	}
 	mutex_enter(&proc0.p_smutex);
 	lwp_lock(l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.14 2007/11/05 15:04:43 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.15 2007/11/05 16:51:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.14 2007/11/05 15:04:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.15 2007/11/05 16:51:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.14 2007/11/05 15:04:43 ad Exp $
 #define	NUM_B		(NUM_Q / NUM_PPB)
 
 typedef struct runqueue {
-	TAILQ_HEAD(, lwp) rq_rt;		/* realtime */
+	TAILQ_HEAD(, lwp) rq_fixedpri;		/* realtime, kthread */
 	u_int		rq_count;		/* total # jobs */
 	uint32_t	rq_bitmap[NUM_B];	/* bitmap of queues */
 	TAILQ_HEAD(, lwp) rq_queue[NUM_Q];	/* user+kernel */
@@ -350,7 +350,7 @@ runqueue_init(runqueue_t *rq)
 		TAILQ_INIT(&rq->rq_queue[i]);
 	for (i = 0; i < NUM_B; i++)
 		rq->rq_bitmap[i] = 0;
-	TAILQ_INIT(&rq->rq_rt);
+	TAILQ_INIT(&rq->rq_fixedpri);
 	rq->rq_count = 0;
 }
 
@@ -365,14 +365,14 @@ runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 	pri = lwp_eprio(l);
 	rq->rq_count++;
 
-	if (pri >= PRI_USER_RT) {
-		TAILQ_FOREACH(l2, &rq->rq_rt, l_runq) {
+	if (pri >= PRI_KTHREAD) {
+		TAILQ_FOREACH(l2, &rq->rq_fixedpri, l_runq) {
 			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_runq);
 				return;
 			}
 		}
-		TAILQ_INSERT_TAIL(&rq->rq_rt, l, l_runq);
+		TAILQ_INSERT_TAIL(&rq->rq_fixedpri, l, l_runq);
 		return;
 	}
 
@@ -391,8 +391,8 @@ runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 	pri = lwp_eprio(l);
 	rq->rq_count--;
 
-	if (pri >= PRI_USER_RT) {
-		TAILQ_REMOVE(&rq->rq_rt, l, l_runq);
+	if (pri >= PRI_KTHREAD) {
+		TAILQ_REMOVE(&rq->rq_fixedpri, l, l_runq);
 		return;
 	}
 
@@ -413,8 +413,8 @@ runqueue_nextlwp(runqueue_t *rq)
 
 	KASSERT(rq->rq_count != 0);
 
-	if (!TAILQ_EMPTY(&rq->rq_rt))
-		return TAILQ_FIRST(&rq->rq_rt);
+	if (!TAILQ_EMPTY(&rq->rq_fixedpri))
+		return TAILQ_FIRST(&rq->rq_fixedpri);
 
 	if (rq->rq_bitmap[2] != 0)
 		pri = 96 - ffs(rq->rq_bitmap[2]);
@@ -436,7 +436,7 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 
 	printf("PID\tLID\tPRI\tIPRI\tEPRI\tLWP\t\t NAME\n");
 
-	TAILQ_FOREACH(l, &rq->rq_rt, l_runq) {
+	TAILQ_FOREACH(l, &rq->rq_fixedpri, l_runq) {
 		(*pr)("%d\t%d\%d\t%d\t%d\t%016lx %s\n",
 		    l->l_proc->p_pid, l->l_lid, (int)l->l_priority,
 		    (int)l->l_inheritedprio, lwp_eprio(l),
