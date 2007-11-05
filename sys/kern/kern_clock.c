@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.6.9 2007/11/01 21:58:15 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.10 2007/11/05 15:44:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.9 2007/11/01 21:58:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.10 2007/11/05 15:44:45 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -316,7 +316,7 @@ int	profsrc;
 int	schedhz;
 int	profprocs;
 int	hardclock_ticks;
-static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
+static int hardscheddiv; /* hard => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 #ifndef __HAVE_TIMECOUNTER
@@ -391,9 +391,9 @@ initclocks(void)
 	psratio = profhz / i;
 	if (schedhz == 0) {
 		/* 16Hz is best */
-		statscheddiv = i / 16;
-		if (statscheddiv <= 0)
-			panic("statscheddiv");
+		hardscheddiv = hz / 16;
+		if (hardscheddiv <= 0)
+			panic("hardscheddiv");
 	}
 
 #ifndef __HAVE_TIMECOUNTER
@@ -511,6 +511,16 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = hardscheddiv;
+		}
+	}
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
@@ -1033,17 +1043,6 @@ statclock(struct clockframe *frame)
 	if (p != NULL) {
 		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
-	}
-
-	/*
-	 * If no separate schedclock is provided, call it here
-	 * at about 16 Hz.
-	 */
-	if (schedhz == 0) {
-		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-			schedclock(l);
-			ci->ci_schedstate.spc_schedticks = statscheddiv;
-		}
 	}
 }
 
