@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.19 2007/11/05 15:04:44 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.20 2007/11/05 23:18:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -158,11 +158,6 @@ struct lwp {
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
-
-#ifndef _KERNEL
-/* For source compatibility only. */
-#define	l_usrpri	l_priority
-#endif
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
