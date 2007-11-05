@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.255.4.15 2007/11/01 21:58:25 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.255.4.16 2007/11/05 16:51:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -220,16 +220,20 @@
 /*
  * New priority levels.
  */
-#define	PRI_COUNT		192
+#define	PRI_COUNT		224
 #define	PRI_NONE		(-1)
 
-#define	PRI_KERNEL_RT		160
+#define	PRI_KERNEL_RT		192
 #define	NPRI_KERNEL_RT		32
 #define	MAXPRI_KERNEL_RT	(PRI_KERNEL_RT + NPRI_KERNEL_RT - 1)
 
-#define	PRI_USER_RT		96
+#define	PRI_USER_RT		128
 #define	NPRI_USER_RT		64
 #define	MAXPRI_USER_RT		(PRI_USER_RT + NPRI_USER_RT - 1)
+
+#define	PRI_KTHREAD		96
+#define	NPRI_KTHREAD		32
+#define	MAXPRI_KTHREAD		(PRI_KTHREAD + NPRI_KTHREAD - 1)
 
 #define	PRI_KERNEL		64
 #define	NPRI_KERNEL		32
@@ -247,11 +251,11 @@
 #define	PRI_SOFTBIO	(MAXPRI_KERNEL_RT - schedppq * 2)
 #define	PRI_SOFTCLOCK	(MAXPRI_KERNEL_RT - schedppq * 3)
 
-#define	PRI_XCALL	MAXPRI_KERNEL
-#define	PRI_PGDAEMON	(MAXPRI_KERNEL - schedppq * 1)
-#define	PRI_VM		(MAXPRI_KERNEL - schedppq * 2)
-#define	PRI_IOFLUSH	(MAXPRI_KERNEL - schedppq * 3)
-#define	PRI_BIO		(MAXPRI_KERNEL - schedppq * 4)
+#define	PRI_XCALL	MAXPRI_KTHREAD
+#define	PRI_PGDAEMON	(MAXPRI_KTHREAD - schedppq * 1)
+#define	PRI_VM		(MAXPRI_KTHREAD - schedppq * 2)
+#define	PRI_IOFLUSH	(MAXPRI_KTHREAD - schedppq * 3)
+#define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
 
 #define	PRI_IDLE	PRI_USER
 
