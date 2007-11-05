@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.72 2007/10/29 15:52:45 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.73 2007/11/05 17:48:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.72 2007/10/29 15:52:45 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.73 2007/11/05 17:48:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -492,7 +492,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 }
 
 int
-puffs_mainloop(struct puffs_usermount *pu, int flags)
+puffs_mainloop(struct puffs_usermount *pu)
 {
 	struct puffs_getreq *pgr = NULL;
 	struct puffs_putreq *ppr = NULL;
@@ -519,9 +519,6 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		goto out;
 	pfctrl->evs = newevs;
 
-	if ((flags & PUFFSLOOP_NODAEMON) == 0)
-		if (daemon(1, 0) == -1)
-			goto out;
 	pu->pu_state |= PU_INLOOP;
 
 	pu->pu_kq = kqueue();
