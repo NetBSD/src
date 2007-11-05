@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.19 2007/11/01 21:58:18 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.20 2007/11/05 16:03:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.19 2007/11/01 21:58:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.20 2007/11/05 16:03:18 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -810,7 +810,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 			SPINLOCK_BACKOFF_HOOK;
 			SPINLOCK_SPIN_HOOK;
 		}
-		(void)splvm();
+		s = splvm();
 	} while (!__cpu_simple_lock_try(&kernel_lock));
 
 	ci->ci_biglock_wanted = owant;
