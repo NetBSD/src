@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.1.2.2 2007/11/04 21:58:06 matt Exp $
+#	$NetBSD: files.omap2,v 1.1.2.3 2007/11/05 22:01:55 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2 CPU support
 # Based on xscale/files.pxa2x0
@@ -31,17 +31,17 @@ file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
 file	arch/arm/omap/omap2430_intr.c		omap2
 
 # OMAP 2430 General Purpose Timer
-device omap2430mputmr
+device	omap2430mputmr
 file	arch/arm/omap/omap2430_mputmr.c		omap2430mputmr
 defparam opt_omap.h				OMAP_GP_TIMER_CLOCK_FREQ
 
 # OBIO/2430 GP Timer
-attach omap2430mputmr at obio with obiomputmr
+attach 	omap2430mputmr at obio with obiomputmr
 file	arch/arm/omap/obio_mputmr.c		obiomputmr
 
 # Dual Mode (General Purpose) Timer
-device omapgptmr
-attach omapgptmr at obio
+device 	omapgptmr
+attach 	omapgptmr at obio
 file	arch/arm/omap/omap2_gptmr.c		omapgptmr
 #file	arch/arm/omap/omap_pwm.c		omapgptmr
 

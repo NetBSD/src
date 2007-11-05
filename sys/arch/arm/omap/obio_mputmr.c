@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.1.2.4 2007/11/05 18:47:37 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.1.2.5 2007/11/05 22:01:56 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.4 2007/11/05 18:47:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.5 2007/11/05 22:01:56 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -146,10 +146,10 @@ typedef struct {
 		.gptn = (n), \
 		.addr = GPT ## n ## _BASE, \
 		.intr = GPT ## n ## _IRQ, \
-		.clksel2 = OMAP2430_CM_CLKSEL2_CORE_GPTn(n, \
+		.clksel2 = OMAP2_CM_CLKSEL2_CORE_GPTn(n, \
 		    CLKSEL2_CORE_GPT_SYS_CLK), \
-		.fclken1 = OMAP2430_CM_FCLKEN1_CORE_EN_GPT ## n, \
-		.iclken1 = OMAP2430_CM_ICLKEN1_CORE_EN_GPT ## n, \
+		.fclken1 = OMAP2_CM_FCLKEN1_CORE_EN_GPT ## n, \
+		.iclken1 = OMAP2_CM_ICLKEN1_CORE_EN_GPT ## n, \
 	}
 static const gptimer_instance_t gptimer_instance_tab[] = {
 	GPT_ENTRY( 2), GPT_ENTRY( 3), GPT_ENTRY( 4), GPT_ENTRY( 5),
@@ -164,8 +164,8 @@ static const gptimer_instance_t *
 static void	gpt_enable(struct mputmr_softc *,
 			struct obio_attach_args *, const gptimer_instance_t *);
 
-static int	obiomputmr_match(struct device *, struct cfdata *, void *);
-static void	obiomputmr_attach(struct device *, struct device *, void *);
+static int	obiomputmr_match(device_t, struct cfdata *, void *);
+static void	obiomputmr_attach(device_t, device_t, void *);
 
 
 
@@ -173,7 +173,7 @@ CFATTACH_DECL(obiomputmr, sizeof(struct mputmr_softc),
     obiomputmr_match, obiomputmr_attach, NULL, NULL);
 
 static int
-obiomputmr_match(struct device *parent, struct cfdata *match, void *aux)
+obiomputmr_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
@@ -191,12 +191,11 @@ obiomputmr_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-obiomputmr_attach(struct device *parent, struct device *self, void *aux)
+obiomputmr_attach(device_t parent, device_t self, void *aux)
 {
-	struct mputmr_softc *sc = (struct mputmr_softc*)self;
+	struct mputmr_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 	int ints_per_sec;
-
 
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_intr = obio->obio_intr;
@@ -268,19 +267,16 @@ obiomputmr_attach(struct device *parent, struct device *self, void *aux)
 static const gptimer_instance_t *
 gpt_lookup(struct obio_attach_args *obio)
 {
-	const gptimer_instance_t *ip = NULL;
+	const gptimer_instance_t *ip;
 	uint i;
 
-	ip = gptimer_instance_tab;
-	for (i=0; i < GPTIMER_INSTANCE_CNT; i++) {
-		if ((ip->addr == obio->obio_addr)
-		&&  (ip->intr == obio->obio_intr))
-			break;
-		ip++;
+	for (i = 0, ip = gptimer_instance_tab;
+	     i < GPTIMER_INSTANCE_CNT; i++, ip++) {
+		if (ip->addr == obio->obio_addr && ip->intr == obio->obio_intr)
+			return ip;
 	}
 
-
-	return ip;
+	return NULL;
 }
 
 void
@@ -295,25 +291,23 @@ gpt_enable(
 
 	KASSERT(ip != NULL);
 
-
 	aprint_normal(" #%d", ip->gptn);
 
-	err = bus_space_map(obio->obio_iot, OMAP2430_CM_BASE,
-		OMAP2430_CM_SIZE, 0, &ioh);
+	err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
+	    OMAP2_CM_SIZE, 0, &ioh);
 	KASSERT(err == 0);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_CLKSEL2_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_CLKSEL2_CORE);
 	r |= ip->clksel2;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_CLKSEL2_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_CLKSEL2_CORE, r);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN1_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN1_CORE);
 	r |= ip->fclken1;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN1_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN1_CORE, r);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN1_CORE);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN1_CORE);
 	r |= ip->iclken1;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN1_CORE, r);
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN1_CORE, r);
 
-	bus_space_unmap(obio->obio_iot, ioh, OMAP2430_CM_SIZE);
+	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
 }
-

@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.2 2007/11/04 21:58:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -169,10 +169,9 @@ struct obio_softc {
 
 
 /* prototypes */
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
-static int 	obio_search(struct device *, struct cfdata *,
-			     const int *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
+static int 	obio_search(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
 
 /* attach structures */
@@ -182,7 +181,7 @@ CFATTACH_DECL(obio, sizeof(struct obio_softc),
 static int obio_attached[NOBIO];
 
 static int
-obio_match(struct device *parent, struct cfdata *match, void *aux)
+obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 
@@ -204,9 +203,9 @@ obio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct obio_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = (struct mainbus_attach_args *)aux;
 
 	sc->sc_iot = &omap_bs_tag;
@@ -234,8 +233,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-obio_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *)parent;
 	struct obio_attach_args aa;
@@ -288,7 +286,7 @@ obio_search(struct device *parent, struct cfdata *cf,
 	}
 #endif
 
-	return 1;	/* NG */
+	return UNCONF;	/* NG */
 }
 
 static int
