@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $	*/
+/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.3 2007/11/05 05:06:40 matt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.3 2007/11/05 05:06:40 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -175,7 +175,7 @@ clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
 	unsigned int ticks;
-	uint32_t oipl = current_spl_level;
+	uint32_t oipl = curcpu()->ci_cpl;
 
 	_timer_intr_ack(clock_sc);
 
@@ -184,7 +184,7 @@ clockintr(void *arg)
 		return 1;
 	}
 
-	current_spl_level = IPL_CLOCK;
+	curcpu()->ci_cpl = IPL_CLOCK;
 	ticks = ticks_pending;
 	ticks_pending = 0;
 	ticks++;			/* this tick */
@@ -195,7 +195,7 @@ clockintr(void *arg)
 		ticks += ticks_pending;
 		ticks_pending = 0;
 	}
-	current_spl_level = oipl;
+	curcpu()->ci_cpl = oipl;
 	return 1;
 }
 
@@ -203,7 +203,7 @@ int
 statintr(void *arg)
 {
 	struct clockframe *frame = arg;
-	uint32_t oipl = current_spl_level;
+	uint32_t oipl = curcpu()->ci_cpl;
 
 	_timer_intr_ack(stat_sc);
 
@@ -211,13 +211,13 @@ statintr(void *arg)
 	if (oipl >= IPL_STATCLOCK)
 		return 1;
 
-	current_spl_level = IPL_CLOCK;
+	curcpu()->ci_cpl = IPL_CLOCK;
 	enable_interrupts(I32_bit);
 
 	statclock(frame);
 
 	disable_interrupts(I32_bit);
-	current_spl_level = oipl;
+	curcpu()->ci_cpl = oipl;
 	return 1;
 }
 
