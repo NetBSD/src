@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.13 2007/11/01 21:58:21 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.14 2007/11/05 15:04:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.13 2007/11/01 21:58:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.14 2007/11/05 15:04:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -127,7 +127,6 @@ static runqueue_t global_queue;
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
-static void resetprocpriority(struct proc *);
 
 fixpt_t decay_cpu(fixpt_t, fixpt_t);
 
@@ -526,11 +525,18 @@ sched_curcpu_runnable_p(void)
 }
 
 void
-sched_nice(struct proc *chgp, int n)
+sched_nice(struct proc *p, int n)
 {
+	struct lwp *l;
 
-	chgp->p_nice = n;
-	(void)resetprocpriority(chgp);
+	KASSERT(mutex_owned(&p->p_smutex));
+
+	p->p_nice = n;
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		resetpriority(l);
+		lwp_unlock(l);
+	}
 }
 
 /*
@@ -556,23 +562,6 @@ resetpriority(struct lwp *l)
 }
 
 /*
- * Recompute priority for all LWPs in a process.
- */
-static void
-resetprocpriority(struct proc *p)
-{
-	struct lwp *l;
-
-	KASSERT(mutex_owned(&p->p_stmutex));
-
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		resetpriority(l);
-		lwp_unlock(l);
-	}
-}
-
-/*
  * We adjust the priority of the current process.  The priority of a process
  * gets worse as it accumulates CPU time.  The CPU usage estimator (l_estcpu)
  * is increased here.  The formula for computing priorities (in kern_synch.c)
@@ -590,17 +579,14 @@ resetprocpriority(struct proc *p)
 void
 sched_schedclock(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 
 	if (l->l_class != SCHED_OTHER)
 		return;
 
 	KASSERT(!CURCPU_IDLE_P());
-	mutex_spin_enter(&p->p_stmutex);
 	l->l_estcpu = ESTCPULIM(l->l_estcpu + ESTCPU_ACCUM);
 	lwp_lock(l);
 	resetpriority(l);
-	mutex_spin_exit(&p->p_stmutex);
 	lwp_unlock(l);
 }
 
@@ -725,15 +711,28 @@ sched_slept(struct lwp *l)
 }
 
 void
-sched_lwp_fork(struct lwp *l)
+sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
+	l2->l_estcpu = l1->l_estcpu;
 }
 
 void
 sched_lwp_exit(struct lwp *l)
 {
 
+}
+
+void
+sched_lwp_collect(struct lwp *t)
+{
+	lwp_t *l;
+
+	/* Absorb estcpu value of collected LWP. */
+	l = curlwp;
+	lwp_lock(l);
+	l->l_estcpu += t->l_estcpu;
+	lwp_unlock(l);
 }
 
 /*

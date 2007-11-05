@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.3.2.6 2007/11/01 21:58:22 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.3.2.7 2007/11/05 15:04:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.6 2007/11/01 21:58:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.3.2.7 2007/11/05 15:04:43 ad Exp $");
 
 #include <sys/param.h>
 
@@ -185,7 +185,7 @@ sched_rqinit(void)
 
 	/* Initialize the scheduler structure of the primary LWP */
 	lwp0.l_mutex = &ci->ci_schedstate.spc_lwplock;
-	sched_lwp_fork(&lwp0);
+	sched_lwp_fork(NULL, &lwp0);
 	sched_newts(&lwp0);
 }
 
@@ -280,14 +280,14 @@ sched_proc_exit(struct proc *child, struct proc *parent)
 }
 
 void
-sched_lwp_fork(struct lwp *l)
+sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
-	KASSERT(l->l_sched_info == NULL);
-	l->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
-	memset(l->l_sched_info, 0, sizeof(sched_info_lwp_t));
-	if (l->l_priority <= PRI_HIGHEST_TS) /* XXX: For now only.. */
-		l->l_priority = PRI_DEFAULT;
+	KASSERT(l2->l_sched_info == NULL);
+	l2->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
+	memset(l2->l_sched_info, 0, sizeof(sched_info_lwp_t));
+	if (l2->l_priority <= PRI_HIGHEST_TS) /* XXX: For now only.. */
+		l2->l_priority = PRI_DEFAULT;
 }
 
 void
@@ -297,6 +297,12 @@ sched_lwp_exit(struct lwp *l)
 	KASSERT(l->l_sched_info != NULL);
 	pool_put(&sil_pool, l->l_sched_info);
 	l->l_sched_info = NULL;
+}
+
+void
+sched_lwp_collect(struct lwp *l)
+{
+
 }
 
 void
@@ -323,7 +329,7 @@ sched_nice(struct proc *p, int prio)
 	int nprio;
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	p->p_nice = prio;
 	nprio = max(min(PRI_DEFAULT + p->p_nice, PRI_HIGHEST_TS), 0);
@@ -466,7 +472,7 @@ sched_slept(struct lwp *l)
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
 	if (l->l_priority < PRI_HIGHEST_TS && (sil->sl_flags & SL_BATCH) == 0) {
-		KASSERT(l->l_policy == SCHED_OTHER);
+		KASSERT(l->l_class == SCHED_OTHER);
 		l->l_priority++;
 	}
 }
@@ -820,7 +826,7 @@ sched_tick(struct cpu_info *ci)
 	if (CURCPU_IDLE_P())
 		return;
 
-	switch (l->l_policy) {
+	switch (l->l_class) {
 	case SCHED_FIFO:
 		/*
 		 * Update the time-quantum, and continue running,

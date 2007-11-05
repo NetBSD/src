@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.25 2007/11/01 21:58:18 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.26 2007/11/05 15:04:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.25 2007/11/01 21:58:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.26 2007/11/05 15:04:42 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -370,7 +370,6 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	int nfound, error;
 	lwpid_t curlid;
 	bool exiting;
-	fixpt_t estcpu;
 
 	DPRINTF(("lwp_wait1: %d.%d waiting for %d.\n",
 	    p->p_pid, l->l_lid, lid));
@@ -469,16 +468,11 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			p->p_nlwpwait--;
 			if (departed)
 				*departed = l2->l_lid;
-			estcpu = l2->l_estcpu;
+			sched_lwp_collect(l2);
 
 			/* lwp_free() releases the proc lock. */
 			lwp_free(l2, false, false);
 			mutex_enter(&p->p_smutex);
-
-			/* Absorb estcpu value of collected LWP. */
-			lwp_lock(l);
-			l->l_estcpu += estcpu;
-			lwp_unlock(l);
 			return 0;
 		}
 
@@ -593,7 +587,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_kpriority = l1->l_kpriority;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
-	l2->l_estcpu = l1->l_estcpu;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
@@ -612,7 +605,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	}
 
 	lwp_initspecific(l2);
-	sched_lwp_fork(l2);
+	sched_lwp_fork(l1, l2);
 	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
