@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwipvar.h,v 1.3 2007/04/21 15:27:44 kiyohara Exp $	*/
+/*	$NetBSD: if_fwipvar.h,v 1.4 2007/11/05 19:08:57 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwipvar.h,v 1.4 2005/06/10 16:49:08 brooks Exp $
+ * $FreeBSD: src/sys/dev/firewire/if_fwipvar.h,v 1.5 2007/06/06 14:31:36 simokawa Exp $
  */
 
 #ifndef _NET_IF_FWIPVAR_H_
@@ -47,9 +47,7 @@ struct fwip_softc {
 	struct fw_bind fwb;
 	struct fw_eui64 last_dest;
 	struct fw_pkt last_hdr;
-#if defined(__FreeBSD__)
-	struct task start_send;
-#endif
+	fw_task_t start_send;
 	STAILQ_HEAD(, fw_xfer) xferlist;
 	struct crom_chunk unit4;	/* unit directory for IPv4 */
 	struct crom_chunk spec4;	/* specifier description IPv4 */
@@ -64,5 +62,10 @@ struct fwip_softc {
 		struct ifnet *fwip_ifp;
 		struct fwip_softc *fwip;
 	} fw_softc;
+	fw_mtx_t mtx;
 };
+
+#define FWIP_LOCK(fwip)		fw_mtx_lock(&(fwip)->mtx)
+#define FWIP_UNLOCK(fwip)	fw_mtx_unlock(&(fwip)->mtx)
+
 #endif /* !_NET_IF_FWIPVAR_H_ */

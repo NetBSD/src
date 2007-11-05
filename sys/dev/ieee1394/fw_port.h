@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.25 2007/10/19 12:00:13 ad Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.26 2007/11/05 19:08:56 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -45,45 +45,163 @@
 #endif
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
-#define dev2unit(x)	((minor(x) & 0xff) | (minor(x) >> 8))
-#define unit2minor(x)	(((x) & 0xff) | (((x) << 8) & ~0xffff))
-#endif
-
-#ifdef __DragonFly__
-typedef d_thread_t fw_proc;
-typedef d_thread_t fw_thread;
-#include <sys/select.h>
-#define M_DONTWAIT MB_DONTWAIT
-#elif __FreeBSD_version >= 500000
-typedef struct thread fw_proc;
-typedef struct thread fw_thread;
-#include <sys/selinfo.h>
+#define fw_dev_t dev_t
 #else
-typedef struct proc fw_thread;
-typedef struct proc fw_proc;
-#include <sys/select.h>
+#define fw_dev_t struct cdev *
 #endif
-
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
-#define CALLOUT_INIT(x) callout_init(x)
-#define DEV_T dev_t
-#define FW_LOCK
-#define FW_UNLOCK
-#define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create(f, (void *)sc, p, name, arg)
-#define THREAD_EXIT(x)  kthread_exit()
+#define fw_dev2unit(x)	((minor(x) & 0xff) | (minor(x) >> 8))
+#define fw_unit2minor(x) (((x) & 0xff) | (((x) << 8) & ~0xffff))
 #else
-#define CALLOUT_INIT(x) callout_init(x, 0 /* mpsafe */)
-#define DEV_T struct cdev *
-#define FW_LOCK         mtx_lock(&Giant)
-#define FW_UNLOCK       mtx_unlock(&Giant)
-#define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create(f, (void *)sc, p, 0, 0, name, arg)
-#define THREAD_EXIT(x)  kthread_exit(x)
+#define fw_dev2unit(x)	dev2unit(x)
+#define fw_unit2minor(x) unit2minor(x)
 #endif
-#define fw_kthread_create(func, arg) \
-				func((arg))
+
+#define fw_timevalcmp(tv1, tv2, op)	timevalcmp((tv1), (tv2), op)
+#define fw_timevalsub(tv1, tv2)		timevalsub((tv1), (tv2))
+
+#define fw_get_nameunit(dev)		device_get_nameunit((dev))
+#define fw_get_unit(dev)		device_get_unit((dev))
+
+#define fw_printf(dev, fmt, ...) \
+	device_printf((dev), (fmt), __VA_ARGS__);
+
+/* atomic macros */
+#define fw_atomic_set_int(P, V)		atomic_set_int((P), (V))
+#define fw_atomic_readandclear_int(p)	atomic_readandclear_int((p))
+
+/* mutex macros */
+#include <sys/mutex.h>
+typedef struct mtx fw_mtx_t;
+#define fw_mtx_init(mutex, name, type, opts) \
+				mtx_init(mutex, name, type, opts)
+#define fw_mtx_lock(mutex)	mtx_lock(mutex)
+#define fw_mtx_unlock(mutex)	mtx_unlock(mutex)
+#define fw_mtx_destroy(mutex)	mtx_destroy(mutex)
+#define fw_mtx_assert(mutex, what) \
+				mtx_assert(mutex, what)
+
+#define fw_msleep(ident, mtx, priority, wmesg, timo) \
+	msleep(ident, mtx, priority, wmesg, timo);
+
+/* taskqueue macros */
+#include <sys/taskqueue.h>
+typedef struct task fw_task_t;
+#define FW_TASK_INIT(task, priority, func, context) \
+				TASK_INIT((task), (priority), (func), (context))
+#define fw_taskqueue_enqueue(queue, task) \
+				taskqueue_enqueue((queue), (task))
+#define fw_taskqueue_create_fast(name, mflags, enqueue, taskqueue) \
+	taskqueue_create_fast((name), (mflags), (enqueue), (taskqueue))
+#define fw_taskqueue_start_threads(taskqueue, n, x, fmt, ...) \
+	taskqueue_start_threads((taskqueue), (n), (x), (fmt), ...)
+
+/* kthread macros */
+#ifdef __DragonFly__
+typedef d_thread_t fw_thread_t;
+typedef d_thread_t fw_proc_t;
+#define fw_kthread_create(func, arg, newpp, fmt, ...) \
+	kthread_create(func, arg, newpp, fmt, __VA_ARGS__)
+#define fw_kthread_exit(x)	kthread_exit()
+#elif __FreeBSD_version >= 500000
+typedef struct thread fw_thread_t;
+typedef struct thread fw_proc_t;
+#define fw_kthread_create(func, arg, newpp, fmt, ...) \
+	kthread_create(func, arg, newpp, 0, 0, fmt, __VA_ARGS__)
+#define fw_kthread_exit(ecode)	kthread_exit((ecode))
+#else
+typedef struct proc fw_thread_t;
+typedef struct proc fw_proc_t;
+#define fw_kthread_create(func, arg, newpp, fmt, ...) \
+	kproc_create(func, arg, newpp, fmt, __VA_ARGS__)
+#define fw_kthread_exit(ecode)	kproc_exit((ecode))
+#endif
+
+/* callout macros */
+#if defined(__DragonFly__) || __FreeBSD_version < 500000
+#define fw_callout_init(c)	callout_init((c), 0)
+#else
+#define fw_callout_init(c)	callout_init(c, 1 /* mpsafe */)
+#endif
+#define fw_callout_reset(c, ticks, func, arg) \
+				callout_reset((c), (ticks), (func), (arg))
+#define fw_callout_stop(c)	callout_stop((c))
+
+/* bus_dma macros */
+typedef bus_dma_tag_t fw_bus_dma_tag_t;
+#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
+#define fw_bus_dma_tag_create(t,					     \
+	    a, b, laddr, haddr, ffunc, farg, s, ns, mxss, f, lfunc, larg, tp)\
+	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		     \
+	    (ffunc), (farg), (s), (ns), (mxss), (f), (lfunc), (larg), (tp))
+#else
+#define fw_bus_dma_tag_create(t, a, b,					\
+	    laddr, haddr, ffunc, farg, s, ns, mxss, f, lfunc, larg, tp)	\
+	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		\
+	    (ffunc), (farg), (s), (ns), (mxss), (f), (tp))
+#endif
+#define fw_bus_dma_tag_destroy(t) \
+	bus_dma_tag_destroy((t))
+#define fw_bus_dmamap_create(t, f, mp) \
+	bus_dmamap_create((t), 0, (mp))
+#define fw_bus_dmamap_destroy((t), (m)) \
+	bus_dmamap_destroy((t), (m))
+#define fw_bus_dmamap_load(t, m, b, l, func, a, f) \
+	bus_dmamap_load((t), (m), (b), (l), (func), (a), 0)
+#define fw_bus_dmamap_load_mbuf(t, m, b, func, a, f) \
+	bus_dmamap_load((t), (m), (b), (func), (a), 0)
+#define fw_bus_dmamap_unload(t, m) \
+	bus_dmamap_unload((t), (m))
+#if __FreeBSD_version < 500000
+#define fw_bus_dmamap_sync(t, m, op)					\
+	do {								\
+		switch ((op)) {						\
+		(BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE):		\
+			bus_dmamap_sync((t), (m), BUS_DMASYNC_PREWRITE);\
+			bus_dmamap_sync((t), (m), BUS_DMASYNC_PREREAD);	\
+			break;						\
+		(BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE):		\
+			/* BUS_DMASYNC_POSTWRITE is probably a no-op. */\
+			bus_dmamap_sync((t), (m), BUS_DMASYNC_POSTREAD);\
+			break;						\
+		default:						\
+			bus_dmamap_sync((t), (m), (op));		\
+		}							\
+	} while (/*CONSTCOND*/0)
+#else
+#define fw_bus_dmamap_sync(t, m, op) \
+	bus_dmamap_sync((t), (m), (op))
+#endif
+#define fw_bus_dmamem_alloc(t, vp, f, mp) \
+	bus_dmamem_alloc((t), (vp), (f), (mp))
+#define fw_bus_dmamem_free(t, v, m) \
+        bus_dmamem_free((t), (v), (m))
+
+
+#define fw_config_pending_incr()
+#define fw_config_pending_decr()
+
+#define splfw()		splimp()
+#define splfwnet()	splimp()
+#define splfwsbp()	splcam()
+
+#ifdef __DragonFly__
+#include <sys/select.h>
+#elif __FreeBSD_version >= 500000
+#include <sys/selinfo.h>
+#else
+#include <sys/select.h>
+#endif
+
+#define FW_KASSERT(expression, str) \
+				KASSERT(expression, str)
+
+
+#ifdef __DragonFly__
+#define M_DONTWAIT MB_DONTWAIT
+#endif
+
 
 /*
  * fw attach macro for FreeBSD
@@ -109,19 +227,11 @@ typedef struct proc fw_proc;
 	    ((struct __CONCAT(dname,_softc) *)device_get_softc(dev))
 
 /*
- * fw intr macro for FreeBSD
- */
-#define FW_INTR(fwohci)	\
-	void		\
-	fwohci_intr(void *arg)
-#define FW_INTR_RETURN(r)	return
-
-/*
  * fw open macro for FreeBSD
  */
 #define FW_OPEN(dname)	\
 	int		\
-	__CONCAT(dname,_open)(DEV_T dev, int flags, int fmt, fw_proc *td)
+	__CONCAT(dname,_open)(fw_dev_t dev, int flags, int fmt, fw_proc_t td)
 #define FW_OPEN_START			\
 	int unit = DEV2UNIT(dev);	\
 	__attribute__((__unused__))struct firewire_softc *sc = \
@@ -132,8 +242,8 @@ typedef struct proc fw_proc;
  */
 #define FW_CLOSE(dname)		\
 	int			\
-	__CONCAT(dname,_close)(DEV_T dev, int flags, \
-	int fmt, fw_proc *td)
+	__CONCAT(dname,_close)(fw_dev_t dev, int flags, \
+	int fmt, fw_proc_t td)
 #define FW_CLOSE_START
 
 /*
@@ -141,7 +251,7 @@ typedef struct proc fw_proc;
  */
 #define FW_READ(dname)	\
 	int		\
-	__CONCAT(dname,_read)(DEV_T dev, struct uio *uio, int ioflag) 
+	__CONCAT(dname,_read)(fw_dev_t dev, struct uio *uio, int ioflag) 
 #define FW_READ_START
 
 /*
@@ -149,7 +259,7 @@ typedef struct proc fw_proc;
  */
 #define FW_WRITE(dname)	\
 	int		\
-	__CONCAT(dname,_write)(DEV_T dev, struct uio *uio, int ioflag)
+	__CONCAT(dname,_write)(fw_dev_t dev, struct uio *uio, int ioflag)
 #define FW_WRITE_START
 
 /*
@@ -158,19 +268,18 @@ typedef struct proc fw_proc;
 #define FW_IOCTL(dname)					\
 	int						\
 	__CONCAT(dname,_ioctl)				\
-	    (DEV_T dev, u_long cmd, void *data, int flag, fw_proc *td)
+	    (fw_dev_t dev, u_long cmd, void *data, int flag, fw_proc_t td)
 #define FW_IOCTL_START			\
 	int unit = DEV2UNIT(dev);       \
 	__attribute__((__unused__))struct firewire_softc *sc = \
 	    devclass_get_softc(firewire_devclass, unit)
-
 
 /*
  * fw poll macro for FreeBSD
  */
 #define FW_POLL(dname)	\
 	int		\
-	__CONCAT(dname,_poll)(DEV_T dev, int events, fw_proc *td)
+	__CONCAT(dname,_poll)(fw_dev_t dev, int events, fw_proc_t td)
 #define FW_POLL_START
 
 /*
@@ -179,12 +288,12 @@ typedef struct proc fw_proc;
 #if defined(__DragonFly__) || __FreeBSD_version < 500102
 #define FW_MMAP(dname)	\
 	int		\
-	__CONCAT(dname,_mmap)(DEV_T dev, vm_offset_t offset, int nproto)
+	__CONCAT(dname,_mmap)(fw_dev_t dev, vm_offset_t offset, int nproto)
 #else
 #define FW_MMAP(dname)		\
 	int			\
 	__CONCAT(dname,_mmap)	\
-	   (DEV_T dev, vm_offset_t offset, vm_paddr_t *paddr, int nproto)
+	   (fw_dev_t dev, vm_offset_t offset, vm_paddr_t *paddr, int nproto)
 #endif
 #define FW_MMAP_START
 
@@ -192,7 +301,7 @@ typedef struct proc fw_proc;
  * fw strategy macro for FreeBSD
  */
 #define FW_STRATEGY_START		\
-	DEV_T dev = bp->bio_dev;	\
+	fw_dev_t dev = bp->bio_dev;	\
 	int unit = DEV2UNIT(dev);	\
 	__attribute__((__unused__))struct firewire_softc *sc = \
 	    devclass_get_softc(firewire_devclass, unit)
@@ -200,14 +309,12 @@ typedef struct proc fw_proc;
 /*
  * if macro for FreeBSD
  */
-#define IF_STOP(dname)	\
-	static void	\
-	__CONCAT(dname,_stop)(struct __CONCAT(dname,_softc) *fwip)
-#define IF_STOP_START(dname, ifp, sc) \
-	struct ifnet *ifp = (sc)->fw_softc.fwip_ifp;
 #define IF_DETACH_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
 	    (struct __CONCAT(dname,_softc) *)device_get_softc(dev)
+#define IF_IOCTL_START(dname, sc)		\
+	struct __CONCAT(dname,_softc) *sc =	\
+	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
 #define IF_INIT(dname)	\
 	static void	\
 	__CONCAT(dname,_init)(void *arg)
@@ -216,24 +323,21 @@ typedef struct proc fw_proc;
 	    ((struct fwip_eth_softc *)arg)->fwip;	\
 	struct ifnet *ifp = (sc)->fw_softc.fwip_ifp
 #define IF_INIT_RETURN(r)	return
-#define IF_IOCTL_START(dname, sc)		\
-	struct __CONCAT(dname,_softc) *sc =	\
-	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
+#define IF_STOP(dname)	\
+	static void	\
+	__CONCAT(dname,_stop)(struct __CONCAT(dname,_softc) *fwip)
+#define IF_STOP_START(dname, ifp, sc) \
+	struct ifnet *ifp = (sc)->fw_softc.fwip_ifp;
 
 /*
  * fwohci macro for FreeBSD
  */
-#define FWOHCI_INIT_END
 #define FWOHCI_DETACH()	\
 	int		\
 	fwohci_detach(struct fwohci_softc *sc, device_t dev)
 #define FWOHCI_DETACH_START
 #define FWOHCI_DETACH_END
-#define FWOHCI_STOP()	\
-	int		\
-	fwohci_stop(struct fwohci_softc *sc, device_t dev)
-#define FWOHCI_STOP_START
-#define FWOHCI_STOP_RETURN(r)	return (r) 
+#define FWOHCI_INIT_END
 
 /*
  * firewire macro for FreeBSD
@@ -304,6 +408,7 @@ typedef struct proc fw_proc;
 	do {								    \
 		sbp->sim = cam_sim_alloc(sbp_action, sbp_poll, "sbp", sbp,  \
 				 device_get_unit(dev),			    \
+				 &sbp->mtx,				    \
 				 /*untagged*/ 1,			    \
 				 /*tagged*/ SBP_QUEUE_LEN - 1,		    \
 				 devq);					    \
@@ -313,6 +418,7 @@ typedef struct proc fw_proc;
 			return ENXIO;					    \
 		}							    \
 									    \
+		SBP_LOCK(sbp);						    \
 		if (xpt_bus_register(sbp->sim, /*bus*/0) != CAM_SUCCESS)    \
 			goto fail;					    \
 									    \
@@ -323,6 +429,7 @@ typedef struct proc fw_proc;
 			goto fail;					    \
 		}							    \
 		xpt_async(AC_BUS_RESET, sbp->path, /*arg*/ NULL);	    \
+		SBP_UNLOCK(sbp);					    \
 	} while (/*CONSTCOND*/0)
 #define SBP_DEVICE(d)		((d)->path)
 #define SBP_DEVICE_FREEZE(d, x)	xpt_freeze_devq((d)->path, (x))
@@ -389,14 +496,14 @@ typedef struct proc fw_proc;
 		return fwmem_close(dev, flags, fmt, td)
 #define FWDEV_READ_START	\
         if (DEV_FWMEM(dev))	\
-		return physio(dev, uio, ioflag)
+		return (physio(dev, uio, ioflag))
 #define FWDEV_WRITE_START	\
         if (DEV_FWMEM(dev))	\
-		return physio(dev, uio, ioflag)
+		return (physio(dev, uio, ioflag))
 #define FWDEV_IOCTL_START	\
 	if (DEV_FWMEM(dev))	\
 		return fwmem_ioctl(dev, cmd, data, flag, td)
-#define FWDEV_IOCTL_REDIRECT	fc->ioctl (dev, cmd, data, flag, td)
+#define FWDEV_IOCTL_REDIRECT	fc->ioctl(dev, cmd, data, flag, td)
 #define FWDEV_POLL_START	\
 	if (DEV_FWMEM(dev))	\
 		return fwmem_poll(dev, events, td)
@@ -476,66 +583,6 @@ typedef struct scsi_inquiry_data sbp_scsi_inquiry_data;
 	    (((ms) + 0u) / 1000u) * hz : \
 	    (((ms) + 0u) * hz) / 1000u)
 
-#define config_pending_incr()
-#define config_pending_decr()
-
-/*
- * bus_dma macros for FreeBSD
- */
-typedef bus_dma_tag_t fw_bus_dma_tag_t;
-
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
-#define fw_bus_dma_tag_create(t,					     \
-	    a, b, laddr, haddr, ffunc, farg, s, ns, mxss, f, lfunc, larg, tp)\
-	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		     \
-	    (ffunc), (farg), (s), (ns), (mxss), (f), (lfunc), (larg), (tp))
-#else
-#define fw_bus_dma_tag_create(t, a, b,					\
-	    laddr, haddr, ffunc, farg, s, ns, mxss, f, lfunc, larg, tp)	\
-	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		\
-	    (ffunc), (farg), (s), (ns), (mxss), (f), (tp))
-#endif
-#define fw_bus_dma_tag_destroy(t) \
-	bus_dma_tag_destroy((t))
-#define fw_bus_dmamap_create(t, f, mp) \
-	bus_dmamap_create((t), 0, (mp))
-#define fw_bus_dmamap_destroy((t), (m)) \
-	bus_dmamap_destroy((t), (m))
-#define fw_bus_dmamap_load(t, m, b, l, func, a, f) \
-	bus_dmamap_load((t), (m), (b), (l), (func), (a), 0)
-#define fw_bus_dmamap_load_mbuf(t, m, b, func, a, f) \
-	bus_dmamap_load((t), (m), (b), (func), (a), 0)
-#define fw_bus_dmamap_unload(t, m) \
-	bus_dmamap_unload((t), (m))
-#if __FreeBSD_version < 500000
-#define fw_bus_dmamap_sync(t, m, op)					\
-	do {								\
-		switch ((op)) {						\
-		(BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE):		\
-			bus_dmamap_sync((t), (m), BUS_DMASYNC_PREWRITE);\
-			bus_dmamap_sync((t), (m), BUS_DMASYNC_PREREAD);	\
-			break;						\
-		(BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE):		\
-			/* BUS_DMASYNC_POSTWRITE is probably a no-op. */\
-			bus_dmamap_sync((t), (m), BUS_DMASYNC_POSTREAD);\
-			break;						\
-		default:						\
-			bus_dmamap_sync((t), (m), (op));		\
-		}							\
-	} while (/*CONSTCOND*/0)
-#else
-#define fw_bus_dmamap_sync(t, m, op) \
-	bus_dmamap_sync((t), (m), (op))
-#endif
-#define fw_bus_dmamem_alloc(t, vp, f, mp) \
-	bus_dmamem_alloc((t), (vp), (f), (mp))
-#define fw_bus_dmamem_free(t, v, m) \
-        bus_dmamem_free((t), (v), (m))
-
-#define splfw()		splimp()
-#define splfwnet()	splimp()
-#define splfwsbp()	splcam()
-
 
 #elif defined(__NetBSD__)
 #define OS_STR			"NetBSD"
@@ -543,46 +590,246 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define OS_VER_STR		"NetBSD-2"
 #define PROJECT_STR		"NetBSD Project"
 
-#define SSD_CURRENT_ERROR	0x70
-#define SSD_DEFERRED_ERROR	0x71
-
-#define T_RBC				T_SIMPLE_DIRECT
-
-#define SCSI_STATUS_CHECK_COND		SCSI_CHECK
-#define SCSI_STATUS_BUSY		SCSI_BUSY
-#define SCSI_STATUS_CMD_TERMINATED	SCSI_TERMINATED
-
-#define GIANT_REQUIRED
-#define IFF_NEEDSGIANT	0
-
-#define MTAG_FIREWIRE			1394
-#define MTAG_FIREWIRE_HWADDR		0
-#define MTAG_FIREWIRE_SENDER_EUID	1
-
-#define BUS_SPACE_MAXSIZE_32BIT		0xFFFFFFFF
-
-#define DFLTPHYS			(64 * 1024)	/* fake */
-
-#define dev2unit	minor
-#define unit2minor(x)	(((x) & 0xff) | (((x) << 12) & ~0xfffff)) /* XXX */
-
-typedef struct lwp fw_proc;
-typedef struct proc fw_thread;
-#include <sys/select.h>
-
-#define CALLOUT_INIT(x) callout_init(x, 0)
-#define DEV_T dev_t
-#define FW_LOCK
-#define FW_UNLOCK
-#define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create(PRI_NONE, 0, NULL, f, (void *)sc, p, name, arg)
-#define THREAD_EXIT(x)  kthread_exit(x)
-#define fw_kthread_create(func, arg)	(*(func))(arg)
+#define fw_dev_t dev_t
 
 struct fwbus_attach_args {
 	const char *name;
 };
 
+struct fw_hwaddr {
+	uint32_t		sender_unique_ID_hi;
+	uint32_t		sender_unique_ID_lo;
+	uint8_t			sender_max_rec;
+	uint8_t			sspd;
+	uint16_t		sender_unicast_FIFO_hi;
+	uint32_t		sender_unicast_FIFO_lo;
+};
+
+
+#define fw_dev2unit(x)		minor(x)
+#define fw_unit2minor(x)	(((x) & 0xff) | (((x) << 12) & ~0xfffff))
+
+#define fw_timevalcmp(tv1, tv2, op)	timercmp((tv1), (tv2), op)
+#define fw_timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))
+
+#define fw_get_nameunit(dev)		(dev)->dv_xname
+#define fw_get_unit(dev)		device_unit((dev))
+
+#define fw_printf(dev, fmt, ...)		\
+	do {					\
+		printf("%s: ", (dev)->dv_xname);\
+		printf((fmt), ##__VA_ARGS__);	\
+	} while (/*CONSTCOND*/0)
+
+/* atomic macros */
+/* XXXX: unsafe... */
+#define fw_atomic_set_int(P, V)	(*(u_int*)(P) |= (V))
+static __inline int
+fw_atomic_readandclear_int(int *p)
+{
+	int _p = *p;
+
+	*p = 0;
+	return _p;
+}
+
+/* mutex macros */
+/* XXXX: unsafe... */
+typedef void *fw_mtx_t;
+#define fw_mtx_init(mutex, name, type, opts)
+#define fw_mtx_lock(mutex)	(void)(mutex)	/* XXXX */
+#define fw_mtx_unlock(mutex)	(void)(mutex)	/* XXXX */
+#define fw_mtx_destroy(mutex)
+#define fw_mtx_assert(mutex, what)
+
+#define fw_msleep(ident, mtx, priority, wmesg, timo) \
+				tsleep((ident), (priority), (wmesg), (timo))
+
+/* taskqueue macros */
+/* XXXX: unsafe... */
+typedef void (*task_fn_t)(void *context, int pending);
+typedef struct {
+	STAILQ_ENTRY(task) ta_link;	/* link for queue */
+	u_short ta_pending;		/* count times queued */
+	u_short ta_priority;		/* priority of task in queue */
+	task_fn_t ta_func;		/* task handler */
+	void *ta_context;		/* argument for handler */
+} fw_task_t;
+#define fw_taskqueue_enqueue(queue, task) \
+	(task)->ta_func((task)->ta_context, 0)
+#define FW_TASK_INIT(task, priority, func, context)	\
+	do {						\
+		(task)->ta_priority = (priority);	\
+		(task)->ta_func = (func);		\
+		(task)->ta_context = (context);		\
+	} while (/*CONSTCOND*/0)
+#define fw_taskqueue_create_fast(name, mflags, enqueue, taskqueue) \
+	NULL
+#define fw_taskqueue_start_threads(taskqueue, n, x, fmt, ...)
+
+/* kthread macros */
+typedef struct proc fw_thread_t;
+typedef struct lwp *fw_proc_t;
+#define fw_kthread_create(func, arg, newpp, fmt, ...)	\
+	kthread_create(PRI_NONE, 0, NULL,		\
+	    (func), (arg), (newpp), (fmt), __VA_ARGS__)
+#define fw_kthread_exit(ecode)	kthread_exit((ecode))
+
+/* callout macros */
+#define fw_callout_init(c)	callout_init((c), 0)
+#define fw_callout_reset(c, ticks, func, arg) \
+				callout_reset((c), (ticks), (func), (arg))
+#define fw_callout_stop(c)	callout_stop((c))
+
+/* bus_dma macros */
+#include <sys/malloc.h>
+#include <sys/bus.h>
+struct fw_bus_dma_tag {
+	bus_dma_tag_t tag;
+	bus_size_t alignment;
+	bus_size_t boundary;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	int flags;
+};
+typedef struct fw_bus_dma_tag *fw_bus_dma_tag_t;
+typedef int bus_dmasync_op_t;
+typedef void bus_dmamap_callback_t(void *, bus_dma_segment_t *, int, int);
+typedef void
+    bus_dmamap_callback2_t(void *, bus_dma_segment_t *, int, bus_size_t, int);
+
+#define fw_bus_dma_tag_create(				\
+    p, a, b, la, ha, ffunc, farg, maxsz,		\
+    nseg, maxsegsz, f, lfunc, larg, dmat)		\
+							\
+    _fw_bus_dma_tag_create((p), (a), (b), (la), (ha),	\
+	(ffunc), (farg), (maxsz), (nseg), (maxsegsz), (f), (dmat))
+
+static __inline int
+_fw_bus_dma_tag_create(bus_dma_tag_t parent,
+    bus_size_t alignment, bus_size_t boundary,
+    bus_addr_t lowaddr, bus_addr_t highaddr,
+    void *filtfunc, void *filtfuncarg,
+    bus_size_t maxsize, int nsegments, bus_size_t maxsegsz,
+    int flags, fw_bus_dma_tag_t *fwdmat)
+{
+	fw_bus_dma_tag_t tag;
+
+	tag = malloc(sizeof (struct fw_bus_dma_tag), M_DEVBUF, M_NOWAIT);
+	if (tag == NULL)
+		return ENOMEM;
+
+/* XXXX */
+#define BUS_SPACE_MAXADDR_32BIT 0
+#define BUS_SPACE_MAXADDR 0
+
+	tag->tag = parent;
+	tag->alignment = alignment;
+	tag->boundary = boundary;
+	tag->size = maxsize;
+	tag->nsegments = nsegments;
+	tag->maxsegsz = maxsegsz;
+	tag->flags = flags;
+
+	*fwdmat = tag;
+
+	return 0;
+}
+#define fw_bus_dma_tag_destroy(ft) \
+	free(ft, M_DEVBUF)
+#define fw_bus_dmamap_create(ft, f, mp)		\
+	bus_dmamap_create((ft)->tag, (ft)->size,\
+	    (ft)->nsegments, (ft)->maxsegsz, (ft)->boundary, (f), (mp))
+#define fw_bus_dmamap_destroy(ft, m) \
+	bus_dmamap_destroy((ft)->tag, (m))
+static __inline int
+fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
+    void *b, bus_size_t l, bus_dmamap_callback_t *func, void *a, int f)   
+{
+	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_READ | BUS_DMA_WRITE |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	int err = bus_dmamap_load(ft->tag, m, b, l, NULL, lf);
+	(func)(a, m->dm_segs, m->dm_nsegs, err);
+	return err;
+}
+static __inline int
+fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
+    struct mbuf *b, bus_dmamap_callback2_t *func, void *a, int f)   
+{
+	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_READ | BUS_DMA_WRITE |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	int err = bus_dmamap_load_mbuf(ft->tag, m, b, lf);
+	(func)(a, m->dm_segs, m->dm_nsegs, m->dm_mapsize, err);
+	return err;
+}
+#define fw_bus_dmamap_unload(ft, m) \
+	bus_dmamap_unload((ft)->tag, (m))
+#define fw_bus_dmamap_sync(ft, m, op) \
+	bus_dmamap_sync((ft)->tag, (m), 0, (m)->dm_mapsize, (op))
+static __inline int
+fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
+{
+        bus_dma_segment_t segs;
+	int nsegs, err;
+	int af, mf, cf;
+
+	af = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	err = bus_dmamem_alloc(ft->tag, ft->size,
+	    ft->alignment, ft->boundary, &segs, ft->nsegments, &nsegs, af);
+	if (err) {
+		printf("fw_bus_dmamem_alloc: failed(1)\n");
+		return err;
+	}
+
+	mf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4 |
+	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
+	err = bus_dmamem_map(ft->tag,
+	    &segs, nsegs, ft->size, (void **)vp, mf);
+	if (err) {
+		printf("fw_bus_dmamem_alloc: failed(2)\n");
+		bus_dmamem_free(ft->tag, &segs, nsegs);
+		return err;
+	}
+
+	if (*mp != NULL)
+		return err;
+
+	cf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	err = bus_dmamap_create(ft->tag,
+	    ft->size, nsegs, ft->maxsegsz, ft->boundary, cf, mp);
+	if (err) {
+		printf("fw_bus_dmamem_alloc: failed(3)\n");
+		bus_dmamem_unmap(ft->tag, (void *)*vp, ft->size);
+		bus_dmamem_free(ft->tag, &segs, nsegs);\
+	}
+
+	return err;
+}
+#define fw_bus_dmamem_free(ft, v, m)					\
+	do {								\
+		bus_dmamem_unmap((ft)->tag, (v), (ft)->size);		\
+		bus_dmamem_free((ft)->tag, (m)->dm_segs, (m)->dm_nsegs);\
+		bus_dmamap_destroy((ft)->tag, (m));			\
+	} while (/*CONSTCOND*/0)
+
+#define fw_config_pending_incr()	config_pending_incr()
+#define fw_config_pending_decr()	config_pending_decr()
+
+#define splfw()		splvm()
+#define splfwnet()	splnet()
+#define splfwsbp()	splbio()
+#define splsoftvm()	splbio()
+
+#include <sys/select.h>
+
+#define FW_KASSERT(expression, str) \
+				KASSERT(expression)
 
 /*
  * fw attach macro for NetBSD
@@ -609,20 +856,12 @@ struct fwbus_attach_args {
 	    (struct __CONCAT(dname,_softc) *)self
 
 /*
- * fw intr macro for NetBSD
- */
-#define FW_INTR(fwohci)	\
-	int		\
-	fwohci_intr(void *arg)
-#define FW_INTR_RETURN(r)	return (r)
-
-/*
  * fw open macro for NetBSD
  */
 #define FW_OPEN(dname)	\
 	int		\
 	__CONCAT(dname,_open)(dev_t _dev, int flags, int fmt,  \
-	fw_proc *td)
+	fw_proc_t td)
 #define FW_OPEN_START							\
 	struct firewire_softc *sc, *dev;				\
 									\
@@ -636,7 +875,7 @@ struct fwbus_attach_args {
 #define FW_CLOSE(dname)		\
 	int			\
 	__CONCAT(dname,_close)(dev_t _dev, int flags, \
-	int fmt, fw_proc *td)
+	int fmt, fw_proc_t td)
 #define FW_CLOSE_START							  \
 	int unit = DEV2UNIT(_dev);					  \
 	struct firewire_softc *dev = device_lookup(&ieee1394if_cd, unit); \
@@ -679,7 +918,7 @@ struct fwbus_attach_args {
 	int						\
 	__CONCAT(dname,_ioctl)				\
 	    (dev_t _dev, u_long cmd, void *data,	\
-	    int flag, fw_proc *td)
+	    int flag, fw_proc_t td)
 #define FW_IOCTL_START					\
 	int unit = DEV2UNIT(_dev);			\
 	struct firewire_softc *sc, *dev;		\
@@ -694,7 +933,7 @@ struct fwbus_attach_args {
 #define FW_POLL(dname)	\
 	int		\
 	__CONCAT(dname,_poll)(dev_t _dev, int events, \
-	fw_proc *td)
+	fw_proc_t td)
 #define FW_POLL_START					\
 	int unit = DEV2UNIT(_dev);			\
 	struct firewire_softc *dev;			\
@@ -733,15 +972,12 @@ struct fwbus_attach_args {
 /*
  * if macro for NetBSD
  */
-#define IF_STOP(dname)	\
-	void		\
-	__CONCAT(dname,_stop)(struct ifnet *ifp, int disable)
-#define IF_STOP_START(dname, ifp, sc)		\
-	struct __CONCAT(dname,_softc) *sc =	\
-	    ((struct fwip_eth_softc *)(ifp)->if_softc)->fwip
 #define IF_DETACH_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
 	    (struct __CONCAT(dname,_softc) *)self
+#define IF_IOCTL_START(dname, sc)		\
+	struct __CONCAT(dname,_softc) *sc =	\
+	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
 #define IF_INIT(dname)	\
 	int		\
 	__CONCAT(dname,_init)(struct ifnet *ifp)
@@ -749,38 +985,29 @@ struct fwbus_attach_args {
 	struct __CONCAT(dname,_softc) *sc =	\
 	    ((struct fwip_eth_softc *)(ifp)->if_softc)->fwip
 #define IF_INIT_RETURN(r)	return (r)
-#define IF_IOCTL_START(dname, sc)		\
+#define IF_STOP(dname)	\
+	void		\
+	__CONCAT(dname,_stop)(struct ifnet *ifp, int disable)
+#define IF_STOP_START(dname, ifp, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
-	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
+	    ((struct fwip_eth_softc *)(ifp)->if_softc)->fwip
 
 /*
  * fwohci macro for NetBSD
  */
-#define FWOHCI_INIT_END							      \
-	do {								      \
-		struct fwbus_attach_args faa;				      \
-		faa.name = "ieee1394if";				      \
-		sc->sc_shutdownhook = shutdownhook_establish(fwohci_stop, sc);\
-		sc->sc_powerhook = powerhook_establish(sc->fc._dev.dv_xname,  \
-		    fwohci_power, sc);					      \
-		sc->fc.bdev = config_found(sc->fc.dev, &faa, fwohci_print);   \
-	} while (/*CONSTCOND*/0)
 #define FWOHCI_DETACH()	\
 	int		\
 	fwohci_detach(struct fwohci_softc *sc, int flags)
 #define FWOHCI_DETACH_START		\
 	if (sc->fc.bdev != NULL)	\
 		config_detach(sc->fc.bdev, flags) 
-#define FWOHCI_DETACH_END					\
-        if (sc->sc_powerhook != NULL)				\
-		powerhook_disestablish(sc->sc_powerhook);	\
-	if (sc->sc_shutdownhook != NULL)			\
-		shutdownhook_disestablish(sc->sc_shutdownhook)
-#define FWOHCI_STOP()	\
-	void	\
-	fwohci_stop(void *arg)
-#define FWOHCI_STOP_START	struct fwohci_softc *sc = arg
-#define FWOHCI_STOP_RETURN(r)	return
+#define FWOHCI_DETACH_END
+#define FWOHCI_INIT_END							      \
+	do {								      \
+		struct fwbus_attach_args faa;				      \
+		faa.name = "ieee1394if";				      \
+		sc->fc.bdev = config_found(sc->fc.dev, &faa, fwohci_print);   \
+	} while (/*CONSTCOND*/0)
 
 /*
  * firewire macro for NetBSD
@@ -940,7 +1167,7 @@ struct fwbus_attach_args {
 		if ((sbp->sc_bus =					    \
 		    config_found(sbp->fd.dev, sc_channel, scsiprint)) ==    \
 		    NULL) {						    \
-			device_printf(sbp->fd.dev, "attach failed\n");	    \
+			fw_printf(sbp->fd.dev, "attach failed\n");	    \
 			return;						    \
 		}							    \
 	} while (/*CONSTCOND*/0)
@@ -955,9 +1182,20 @@ struct fwbus_attach_args {
 	} while (/*CONSTCOND*/0)
 #define SBP_BUS_FREEZE(b)	scsipi_channel_freeze(&(b)->sc_channel, 1)
 #define SBP_BUS_THAW(b)		scsipi_channel_thaw(&(b)->sc_channel, 1)
-#define SBP_DEVICE_PREATTACH()	\
-	if (!sbp->lwp)		\
-		fw_kthread_create0(sbp)
+#define SBP_DEVICE_PREATTACH()						\
+	do {								\
+		if (!sbp->lwp) {					\
+			/* create thread */				\
+			if (kthread_create(PRI_NONE, 0, NULL,		\
+			    sbp_scsipi_scan_target, &sbp->target,	\
+			    &sbp->lwp, "sbp%d_attach",			\
+			    device_unit(sbp->fd.dev))) {		\
+				fw_printf(sbp->fd.dev,			\
+				    "unable to create thread");		\
+				panic("fw_kthread_create");		\
+			}						\
+		}							\
+	} while (/*CONSTCOND*/0)
 
 /*
  * fwip macro for NetBSD
@@ -1018,7 +1256,7 @@ struct fwbus_attach_args {
 #define FWDEV_IOCTL_START	\
 	if (DEV_FWMEM(_dev))	\
 		return fwmem_ioctl(_dev, cmd, data, flag, td)
-#define FWDEV_IOCTL_REDIRECT	fc->ioctl (_dev, cmd, data, flag, td)
+#define FWDEV_IOCTL_REDIRECT	fc->ioctl(_dev, cmd, data, flag, td)
 #define FWDEV_POLL_START	\
 	if (DEV_FWMEM(_dev))	\
 		return fwmem_poll(_dev, events, td)
@@ -1085,213 +1323,66 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #define CAM_DATA_PHYS		(0)	/* XXX */
 #define XPT_SCSI_IO		(1)	/* XXX */
 
-
-#define splfw()		splvm()
-#define splfwnet()	splnet()
-#define splfwsbp()	splbio()
-#define splsoftvm()	splbio()
-
 #ifndef rounddown
 #define rounddown(x, y) ((x) / (y) * (y))
 #endif
 
-#define timevalcmp(tv1, tv2, op)	timercmp((tv1), (tv2), op)
-#define timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))
-
-#define device_get_nameunit(dev) (dev)->dv_xname
-#define device_get_unit(dev)		device_unit((dev))
 
 /*
- * queue macros for NetBSD
+ * additional queue macros for NetBSD
  */
 #define STAILQ_LAST(head, type, field) \
 	(STAILQ_EMPTY((head)) ? NULL : \
 	(struct type *) \
 	((char *)(head)->stqh_last - (size_t)&((struct type *)0)->field))
-
-#define TASK_INIT(task, priority, func, context)
-
-
-struct fw_hwaddr {
-	uint32_t		sender_unique_ID_hi;
-	uint32_t		sender_unique_ID_lo;
-	uint8_t			sender_max_rec;
-	uint8_t			sspd;
-	uint16_t		sender_unicast_FIFO_hi;
-	uint32_t		sender_unicast_FIFO_lo;
-};
+#define STAILQ_FOREACH_SAFE(var, head, field, _var)	\
+				(void)(_var);		\
+				STAILQ_FOREACH(var, head, field)
 
 
 /*
- * mbuf macros for NetBSD
+ * additional mbuf macros for NetBSD
  */
 #include <sys/mbuf.h>
 #define	M_TRYWAIT	M_WAITOK
+
+#define MTAG_FIREWIRE			1394
+#define MTAG_FIREWIRE_HWADDR		0
+#define MTAG_FIREWIRE_SENDER_EUID	1
 
 #define m_tag_alloc(cookie, type, len, wait) \
 				m_tag_get((type), (len), (wait))
 #define m_tag_locate(m, cookie, type, t) \
 				m_tag_find((m), (type), (t))
 
-/*
- * bus_dma macros for NetBSD
- */
-#include <sys/bus.h>
-struct fw_bus_dma_tag {
-	bus_dma_tag_t tag;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	int flags;
-};
-typedef struct fw_bus_dma_tag *fw_bus_dma_tag_t;
-typedef int bus_dmasync_op_t;
-typedef void bus_dmamap_callback_t(void *, bus_dma_segment_t *, int, int);
-typedef void
-    bus_dmamap_callback2_t(void *, bus_dma_segment_t *, int, bus_size_t, int);
-
-#define fw_bus_dma_tag_create(				\
-    p, a, b, la, ha, ffunc, farg, maxsz,		\
-    nseg, maxsegsz, f, lfunc, larg, dmat)		\
-							\
-    _fw_bus_dma_tag_create((p), (a), (b), (la), (ha),	\
-	(ffunc), (farg), (maxsz), (nseg), (maxsegsz), (f), (dmat))
-
-static __inline int
-_fw_bus_dma_tag_create(bus_dma_tag_t parent,
-    bus_size_t alignment, bus_size_t boundary,
-    bus_addr_t lowaddr, bus_addr_t highaddr,
-    void *filtfunc, void *filtfuncarg,
-    bus_size_t maxsize, int nsegments, bus_size_t maxsegsz,
-    int flags, fw_bus_dma_tag_t *fwdmat)
-{
-	fw_bus_dma_tag_t tag;
-
-	tag = malloc(sizeof (struct fw_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	if (tag == NULL)
-		return ENOMEM;
-
-/* XXXX */
-#define BUS_SPACE_MAXADDR_32BIT 0
-#define BUS_SPACE_MAXADDR 0
-
-	tag->tag = parent;
-	tag->alignment = alignment;
-	tag->boundary = boundary;
-	tag->size = maxsize;
-	tag->nsegments = nsegments;
-	tag->maxsegsz = maxsegsz;
-	tag->flags = flags;
-
-	*fwdmat = tag;
-
-	return 0;
-}
-#define fw_bus_dma_tag_destroy(ft) \
-	free(ft, M_DEVBUF)
-#define fw_bus_dmamap_create(ft, f, mp)		\
-	bus_dmamap_create((ft)->tag, (ft)->size,\
-	    (ft)->nsegments, (ft)->maxsegsz, (ft)->boundary, (f), (mp))
-#define fw_bus_dmamap_destroy(ft, m) \
-	bus_dmamap_destroy((ft)->tag, (m))
-static __inline int
-fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
-    void *b, bus_size_t l, bus_dmamap_callback_t *func, void *a, int f)   
-{
-	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
-	    BUS_DMA_READ | BUS_DMA_WRITE |
-	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
-	int err = bus_dmamap_load(ft->tag, m, b, l, NULL, lf);
-	(func)(a, m->dm_segs, m->dm_nsegs, err);
-	return err;
-}
-static __inline int
-fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
-    struct mbuf *b, bus_dmamap_callback2_t *func, void *a, int f)   
-{
-	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
-	    BUS_DMA_READ | BUS_DMA_WRITE |
-	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
-	int err = bus_dmamap_load_mbuf(ft->tag, m, b, lf);
-	(func)(a, m->dm_segs, m->dm_nsegs, m->dm_mapsize, err);
-	return err;
-}
-#define fw_bus_dmamap_unload(ft, m) \
-	bus_dmamap_unload((ft)->tag, (m))
-#define fw_bus_dmamap_sync(ft, m, op) \
-	bus_dmamap_sync((ft)->tag, (m), 0, (m)->dm_mapsize, (op))
-static __inline int
-fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
-{
-        bus_dma_segment_t segs;
-	int nsegs, err;
-	int af, mf, cf;
-
-	af = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
-	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
-	err = bus_dmamem_alloc(ft->tag, ft->size,
-	    ft->alignment, ft->boundary, &segs, ft->nsegments, &nsegs, af);
-	if (err) {
-		printf("fw_bus_dmamem_alloc: failed(1)\n");
-		return err;
-	}
-
-	mf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT |
-	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4 |
-	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
-	err = bus_dmamem_map(ft->tag,
-	    &segs, nsegs, ft->size, (void **)vp, mf);
-	if (err) {
-		printf("fw_bus_dmamem_alloc: failed(2)\n");
-		bus_dmamem_free(ft->tag, &segs, nsegs);
-		return err;
-	}
-
-	if (*mp != NULL)
-		return err;
-
-	cf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW |
-	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
-	err = bus_dmamap_create(ft->tag,
-	    ft->size, nsegs, ft->maxsegsz, ft->boundary, cf, mp);
-	if (err) {
-		printf("fw_bus_dmamem_alloc: failed(3)\n");
-		bus_dmamem_unmap(ft->tag, (void *)*vp, ft->size);
-		bus_dmamem_free(ft->tag, &segs, nsegs);\
-	}
-
-	return err;
-}
-#define fw_bus_dmamem_free(ft, v, m)					\
-	do {								\
-		bus_dmamem_unmap((ft)->tag, (v), (ft)->size);		\
-		bus_dmamem_free((ft)->tag, (m)->dm_segs, (m)->dm_nsegs);\
-		bus_dmamap_destroy((ft)->tag, (m));			\
-	} while (/*CONSTCOND*/0)
-
-
-#define device_printf(dev, fmt, ...)			\
-	do {						\
-		aprint_normal("%s: ", (dev)->dv_xname);	\
-		aprint_normal((fmt) ,##__VA_ARGS__);	\
-	} while (/*CONSTCOND*/0)
+/* additional bpf macros */
+#define bpf_peers_present(if_bpf)	(if_bpf)
 
 
 #define CTR0(m, format)
 #define CTR1(m, format, p1)
 
-
 #define OHCI_CSR_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->bst, (sc)->bsh, reg, val)
 
-/*
- * XXXXXXXXXXX
- */
-#define atomic_set_int(P, V) (*(u_int*)(P) |= (V))
+#define FILTER_STRAY		0
+#define FILTER_HANDLED		1
 
-#define bpf_peers_present(if_bpf)	(if_bpf)
+#define SSD_CURRENT_ERROR	0x70
+#define SSD_DEFERRED_ERROR	0x71
+
+#define T_RBC				T_SIMPLE_DIRECT
+
+#define SCSI_STATUS_CHECK_COND		SCSI_CHECK
+#define SCSI_STATUS_BUSY		SCSI_BUSY
+#define SCSI_STATUS_CMD_TERMINATED	SCSI_TERMINATED
+
+#define BUS_SPACE_MAXSIZE_32BIT		0xFFFFFFFF
+
+#define DFLTPHYS			(64 * 1024)	/* fake */
+
+#define kdb_backtrace()
+#define kdb_active		0
 
 #endif
 #endif
