@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.1.2.3 2007/11/05 19:53:32 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.1.2.3 2007/11/05 19:53:32 matt Exp $ */
 
 
 /*
@@ -130,7 +130,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.1.2.2 2007/11/04 21:58:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.1.2.3 2007/11/05 19:53:32 matt Exp $");
 
 #include "locators.h"
 
@@ -161,19 +161,19 @@ struct gpmc_softc {
 	bus_dma_tag_t		sc_dmac;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	gpmc_csconfig_t		sc_csconfig[OMAP_GPMC_NCS];
+	gpmc_csconfig_t		sc_csconfig[GPMC_NCS];
 };
 
 
-static bus_size_t csreg7[OMAP_GPMC_NCS] = {
-	OMAP_GPMC_CONFIG7_0,
-	OMAP_GPMC_CONFIG7_1,
-	OMAP_GPMC_CONFIG7_2,
-	OMAP_GPMC_CONFIG7_3,
-	OMAP_GPMC_CONFIG7_4,
-	OMAP_GPMC_CONFIG7_5,
-	OMAP_GPMC_CONFIG7_6,
-	OMAP_GPMC_CONFIG7_7,
+static bus_size_t csreg7[GPMC_NCS] = {
+	GPMC_CONFIG7_0,
+	GPMC_CONFIG7_1,
+	GPMC_CONFIG7_2,
+	GPMC_CONFIG7_3,
+	GPMC_CONFIG7_4,
+	GPMC_CONFIG7_5,
+	GPMC_CONFIG7_6,
+	GPMC_CONFIG7_7,
 };
 
 
@@ -200,11 +200,11 @@ gpmc_match(struct device *parent, struct cfdata *match, void *aux)
 		return 0;
 
 #if defined(OMAP2)
-	if (mb->mb_iobase != OMAP2430_GPMC_BASE)
-		return 0;
+	if (mb->mb_iobase == GPMC_BASE)
+		return 1;
 #endif
 
-	return 1;
+	return 0;
 }
 
 static void
@@ -219,18 +219,18 @@ gpmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &omap_bs_tag;
 
 	err = bus_space_map(sc->sc_iot, mb->mb_iobase,
-		OMAP_GPMC_SIZE, 0, &ioh);
+		GPMC_SIZE, 0, &ioh);
 	if (err != 0)
 		panic("%s: Cannot map registers, error %d",
 			self->dv_xname, err);
 
 	aprint_normal(": General Purpose Memory Controller");
 
-	rev = bus_space_read_4(sc->sc_iot, ioh, OMAP_GPMC_REVISION);
+	rev = bus_space_read_4(sc->sc_iot, ioh, GPMC_REVISION);
 
 	aprint_normal(", rev %d.%d\n",
-		OMAP_GPMC_REVISION_REV_MAJ(rev), 
-		OMAP_GPMC_REVISION_REV_MIN(rev));
+		GPMC_REVISION_REV_MAJ(rev), 
+		GPMC_REVISION_REV_MIN(rev));
 
 	sc->sc_ioh = ioh;
 	sc->sc_dmac = NULL;
@@ -254,10 +254,10 @@ gpmc_csconfig_init(struct gpmc_softc *sc)
 	
 
 	cs = &sc->sc_csconfig[0];
-	for (i=0; i < OMAP_GPMC_NCS; i++) {
+	for (i=0; i < GPMC_NCS; i++) {
 		memset(cs, 0, sizeof(gpmc_csconfig_t));
 		r = bus_space_read_4(sc->sc_iot, sc->sc_ioh, csreg7[i]);
-		if ((r & OMAP_GPMC_CONFIG7_CSVALID) != 0) {
+		if ((r & GPMC_CONFIG7_CSVALID) != 0) {
 			cs->cs_valid = TRUE;
 			cs->cs_addr = omap_gpmc_config7_addr(r);
 			cs->cs_size = omap_gpmc_config7_size(r);
@@ -309,7 +309,7 @@ gpmc_search(struct device *parent, struct cfdata *cf,
 	aa.gpmc_intr = cf->cf_loc[GPMCCF_INTR];
 
 	cs = &sc->sc_csconfig[0];
-	for (i=0; i < OMAP_GPMC_NCS; i++) {
+	for (i=0; i < GPMC_NCS; i++) {
 		if ((aa.gpmc_addr >= cs->cs_addr)
 		&&  (aa.gpmc_addr < (cs->cs_addr + cs->cs_size))) {
 			/* XXX
