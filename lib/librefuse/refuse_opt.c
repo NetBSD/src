@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.12 2007/10/06 07:21:02 xtraeme Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.13 2007/11/05 13:41:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,10 +34,14 @@
  * 	  options or pass values for the matching options.
  */
 
-#include "defs.h"
-#include "fuse.h"
-#include "fuse_opt.h"
+#include <sys/types.h>
+
 #include <err.h>
+#include <fuse.h>
+#include <fuse_opt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef FUSE_OPT_DEBUG
 #define DPRINTF(x)	do { printf x; } while ( /* CONSTCOND */ 0)
