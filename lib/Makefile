@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2007/11/04 23:28:17 tls Exp $
+#	$NetBSD: Makefile,v 1.119 2007/11/05 04:58:52 tls Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -9,12 +9,6 @@ SUBDIR=	csu libc .WAIT libarch libbsdmalloc libbluetooth libbz2 \
 	libmenu libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsdp \
 	libterm libusbhid libutil libwrap liby libz
-
-# XXX These bind9/ISC libraries should depend on each other but the
-# XXX dependency ordering requires considerable investigation.
-# XXX Please preserve the order below so we know the order ISC links
-# XXX them in in their Makefiles.
-SUBDIR+= libbind9 libdns liblwres libisccfg libisccc libisc
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
@@ -86,6 +80,12 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 .if (${MKPUFFS} != "no")
 SUBDIR+=	librefuse	# depends on libpuffs
 .endif
+
+# XXX These bind9/ISC libraries should depend on each other but the
+# XXX dependency ordering requires considerable investigation.
+# XXX Please preserve the order below so we know the order ISC links
+# XXX them in in their Makefiles.
+SUBDIR+= libbind9 libdns liblwres libisccfg libisccc libisc # dep. libpthread
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
