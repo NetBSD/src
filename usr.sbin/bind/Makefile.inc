@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2007/11/04 23:28:20 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2007/11/05 04:58:52 tls Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -59,8 +59,12 @@ CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 .endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"
+.if !defined (LIB) || empty(LIB)
 LDADD+= -lpthread
-DPADD+= ${LIBPTHREAD}	# XXX defined in bsd.prog.mk doesn't work for src/lib
+DPADD+= ${LIBPTHREAD}
+.else
+LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
+.endif
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
