@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.1.2.4 2007/11/05 19:54:10 matt Exp $
+#	$NetBSD: TISDP2420,v 1.1.2.5 2007/11/05 21:13:36 matt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -179,7 +179,7 @@ L3i0		at mainbus?
 
 # OBIO
 obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE 
-obio1		at mainbus? base 0x49000000 size 0x1000000	# L4 WAKEUP 
+obio1		at mainbus? base 0x49000000 size 0x0800000	# L4 WAKEUP 
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6800a000
@@ -218,7 +218,7 @@ omapwdt32k*	at obio? addr 0x48026000 size 2048	# WDT4
 #omapwdt32k*	at obio? addr 0x49016000 size 2048	# WDT2
 
 # On-board SMSC LAN91C96 Ethernet Controller
-sm0		at gpmc? addr 0x08000300 intr 252	# (intr is GPIO92)
+sm0		at gpmc? addr 0x08000300 intr 188	# (intr is GPIO92)
 
 # On-board USB
 ##ohci*		at obio? addr 0x4805e000 size 0x1000 intr 75
