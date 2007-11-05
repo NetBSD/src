@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.7 2007/11/05 00:40:39 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.8 2007/11/05 13:41:49 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
 void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
@@ -67,6 +68,7 @@ int sip_recv(void *, char *, unsigned, unsigned);
 
 struct desc {
 	uint32_t xd0, xd1, xd2;
+	uint32_t hole;
 };
 
 #define SIP_CR		0x00
@@ -96,6 +98,8 @@ struct desc {
 #define  RXCFG_ATX	(1U << 28)
 #define  RXCFG_DMA256	0x300000
 #define SIP_RFCR	0x48
+#define  RFCR_RFEN	(1U << 31)	/* activate Rx filter */
+#define  RFCR_APM	(1U << 27)	/* accept perfect match */
 #define SIP_RFDR	0x4c
 #define SIP_MIBC	0x5c
 #define SIP_BMCR	0x80
@@ -103,8 +107,8 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t store[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
@@ -125,7 +129,7 @@ sip_init(unsigned tag, void *data)
 {
 	unsigned val, i, txc, rxc;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint16_t eedata[4], *ee;
 	uint8_t *en;
 
@@ -133,7 +137,7 @@ sip_init(unsigned tag, void *data)
 	if (PCI_VENDOR(val) != 0x100b && PCI_PRODUCT(val) != 0x0020)
 		return NULL;
 
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
@@ -173,33 +177,46 @@ sip_init(unsigned tag, void *data)
 	   sip_mii_read(l, l->phy, 2), sip_mii_read(l, l->phy, 3));
 
 	mii_dealan(l, 5);
-#endif
 	/*
 	 * speed and duplexity are found in CFG
 	 */
+	i = CSR_READ(l, SIP_CFG);
+	printf("%s", (i & (1U << 30)) ? "100Mbps" : "10Mbps");
+	if (i & (1U << 29))
+		printf("-FDX");
+	printf("\n");
+#endif
 
-	TxD = &l->TxD;
-	TxD->xd0 = htole32(VTOPHYS(TxD));
-	RxD = l->RxD;
-	RxD[0].xd0 = htole32(VTOPHYS(&RxD[1]));
-	RxD[0].xd1 = htole32(XD1_OWN | FRAMESIZE);
-	RxD[0].xd2 = htole32(VTOPHYS(l->store[0]));
-	RxD[1].xd0 = htole32(VTOPHYS(&RxD[0]));
-	RxD[1].xd1 = htole32(XD1_OWN | FRAMESIZE);
-	RxD[1].xd2 = htole32(VTOPHYS(l->store[1]));
+	txd = &l->txd;
+	txd->xd0 = htole32(VTOPHYS(txd));
+	rxd = l->rxd;
+	rxd[0].xd0 = htole32(VTOPHYS(&rxd[1]));
+	rxd[0].xd1 = htole32(XD1_OWN | FRAMESIZE);
+	rxd[0].xd2 = htole32(VTOPHYS(l->store[0]));
+	rxd[1].xd0 = htole32(VTOPHYS(&rxd[0]));
+	rxd[1].xd1 = htole32(XD1_OWN | FRAMESIZE);
+	rxd[1].xd2 = htole32(VTOPHYS(l->store[1]));
 	l->rx = 0;
 
 	wbinv(l, sizeof(struct local));
-	CSR_WRITE(l, SIP_TXDP, VTOPHYS(TxD));
-	CSR_WRITE(l, SIP_RXDP, VTOPHYS(RxD));
+	CSR_WRITE(l, SIP_TXDP, VTOPHYS(txd));
+	CSR_WRITE(l, SIP_RXDP, VTOPHYS(rxd));
 
-	txc = TXCFG_ATP | TXCFG_DMA256 | (01 << 8) | 02;
-	rxc = RXCFG_DMA256 | 02;
+	CSR_WRITE(l, SIP_RFCR, 0);
+	CSR_WRITE(l, SIP_RFDR, (en[1] << 8) | en[0]);
+	CSR_WRITE(l, SIP_RFCR, 2);
+	CSR_WRITE(l, SIP_RFDR, (en[3] << 8) | en[2]);
+	CSR_WRITE(l, SIP_RFCR, 4);
+	CSR_WRITE(l, SIP_RFDR, (en[5] << 8) | en[4]);
+	CSR_WRITE(l, SIP_RFCR, RFCR_RFEN | RFCR_APM);
+
+	txc = TXCFG_ATP | TXCFG_DMA256 | 0x1002;
+	rxc = RXCFG_DMA256 | 0x20;
 	txc |= TXCFG_CSI | TXCFG_HBI;
 	rxc |= RXCFG_ATX;
 	CSR_WRITE(l, SIP_TXCFG, txc);
 	CSR_WRITE(l, SIP_RXCFG, rxc);
-	CSR_WRITE(l, SIP_CR, CR_RXE | CR_TXE);
+	CSR_WRITE(l, SIP_CR, 0);
 
 	return l;
 }
@@ -208,20 +225,21 @@ int
 sip_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(XD1_OWN | (len & 0x7ff));
-	wbinv(TxD, sizeof(struct desc));
+	txd = &l->txd;
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(XD1_OWN | (len & 0x7ff));
+	wbinv(txd, sizeof(struct desc));
+	CSR_WRITE(l, SIP_CR, CR_TXE);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd1) & XD1_OWN) == 0)
+		if ((le32toh(txd->xd1) & XD1_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -233,19 +251,20 @@ int
 sip_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	time_t bound;
 	unsigned rxstat;
 	uint8_t *ptr;
 	int len;
 
 	bound = 1000 * timo;
+	CSR_WRITE(l, SIP_CR, CR_RXE);
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd1);
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd1);
 		if ((rxstat & XD1_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
@@ -254,8 +273,8 @@ printf("recving with %u sec. timeout\n", timo);
 	return -1;
   gotone:
 	if (rxstat & 0x07ff0000) {
-		RxD->xd1 = htole32(XD1_OWN | FRAMESIZE);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
@@ -266,9 +285,10 @@ printf("recving with %u sec. timeout\n", timo);
 	ptr = l->store[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->xd1 = htole32(XD1_OWN | FRAMESIZE);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
+	CSR_WRITE(l, SIP_CR, CR_RXD);
 	return len;
 }
 

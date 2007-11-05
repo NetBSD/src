@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2007/11/02 02:31:11 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.6 2007/11/05 13:41:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -113,7 +113,9 @@ main()
 	else {
 		tag = lnif[0][1];
 		pcidecomposetag(tag, &b, &d, &f);
-		printf("%08x NIC %02d:%02d:%02d\n", lnif[0][0], b, d, f);
+		printf("%04x.%04x NIC %02d:%02d:%02d\n",
+		    PCI_VENDOR(lnif[0][0]), PCI_PRODUCT(lnif[0][0]),
+		    b, d, f);
 	}
 
 	pcisetup();

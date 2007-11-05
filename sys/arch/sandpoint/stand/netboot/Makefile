@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/10/30 00:30:13 nisimura Exp $
+#	$NetBSD: Makefile,v 1.4 2007/11/05 13:41:48 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ CLEANFILES+=	vers.c ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
-#CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4600 -DCONSSPEED=115200
+#CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4500 -DCONSSPEED=115200
 #CPPFLAGS+=	-DDEBUG
 CPPFLAGS+=	-Wall -nostdinc -I. -I${S}
 DBG=		-Os
