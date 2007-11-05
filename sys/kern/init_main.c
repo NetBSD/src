@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.27 2007/10/28 15:47:13 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.28 2007/11/05 17:08:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.27 2007/10/28 15:47:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.28 2007/11/05 17:08:31 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -384,9 +384,6 @@ main(void)
 
 	/* Initialize fstrans. */
 	fstrans_init();
-
-	/* Initialize the file descriptor system. */
-	filedesc_init();
 
 	/* Initialize the file descriptor system. */
 	filedesc_init();
