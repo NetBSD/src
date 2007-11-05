@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.3 2007/11/04 16:28:28 garbled Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.4 2007/11/05 15:49:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.3 2007/11/04 16:28:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4 2007/11/05 15:49:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -210,7 +210,9 @@ cninit_kd(void)
 	 * Attach the console output now (so we can see debugging messages,
 	 * if any).
 	 */
+#if NOFB > 0
 	ofb_cnattach();
+#endif
 
 	/*
 	 * We must determine which keyboard type we have.
