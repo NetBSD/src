@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.33.2.11 2007/11/01 21:58:27 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.33.2.12 2007/11/05 15:04:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -204,8 +204,9 @@ pri_t		sched_kpri(struct lwp *);
 /* Handlers of fork and exit */
 void		sched_proc_fork(struct proc *, struct proc *);
 void		sched_proc_exit(struct proc *, struct proc *);
-void		sched_lwp_fork(struct lwp *);
+void		sched_lwp_fork(struct lwp *, struct lwp *);
 void		sched_lwp_exit(struct lwp *);
+void		sched_lwp_collect(struct lwp *);
 
 void		sched_slept(struct lwp *);
 void		sched_wakeup(struct lwp *);
