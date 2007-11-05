@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.9 2007/10/19 12:00:13 ad Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.10 2007/11/05 19:08:57 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwip.c,v 1.14 2007/03/16 05:39:33 simokawa Exp $
+ * $FreeBSD: src/sys/dev/firewire/if_fwip.c,v 1.16 2007/06/06 14:31:36 simokawa Exp $
  */
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
@@ -106,10 +106,10 @@
 #if defined(__FreeBSD__)
 #define FWIPDEBUG	if (fwipdebug) if_printf
 #elif defined(__NetBSD__)
-#define FWIPDEBUG(ifp, fmt, ...) \
-	if (fwipdebug) {\
-		aprint_normal("%s: ", (ifp)->if_xname); \
-		aprint_normal((fmt) ,##__VA_ARGS__); \
+#define FWIPDEBUG(ifp, fmt, ...)		\
+	if (fwipdebug) {			\
+		printf("%s: ", (ifp)->if_xname);\
+		printf((fmt) , ##__VA_ARGS__);	\
 	}
 #endif
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
@@ -124,15 +124,18 @@ int fwipactivate (struct device *, enum devact);
 /* network interface */
 static void fwip_start (struct ifnet *);
 static int fwip_ioctl (struct ifnet *, u_long, void *);
-IF_INIT(fwip);
-IF_STOP(fwip);
+#if defined(__FreeBSD__)
+static void fwip_init(void *);
+static void fwip_stop(struct fwip_softc *);
+#elif defined(__NetBSD__)
+static int fwip_init(struct ifnet *);
+static void fwip_stop(struct ifnet *, int);
+#endif
 
 static void fwip_post_busreset (void *);
 static void fwip_output_callback (struct fw_xfer *);
 static void fwip_async_output (struct fwip_softc *, struct ifnet *);
-#if defined(__FreeBSD__)
 static void fwip_start_send (void *, int);
-#endif
 static void fwip_stream_input (struct fw_xferq *);
 static void fwip_unicast_input(struct fw_xfer *);
 
@@ -223,7 +226,7 @@ fwip_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 static void
 fwip_identify(driver_t *driver, device_t parent)
 {
-	BUS_ADD_CHILD(parent, 0, "fwip", device_get_unit(parent));
+	BUS_ADD_CHILD(parent, 0, "fwip", fw_get_unit(parent));
 }
 
 static int
@@ -232,7 +235,7 @@ fwip_probe(device_t dev)
 	device_t pa;
 
 	pa = device_get_parent(dev);
-	if(device_get_unit(dev) != device_get_unit(pa)){
+	if(fw_get_unit(dev) != fw_get_unit(pa)){
 		return(ENXIO);
 	}
 
@@ -264,6 +267,7 @@ FW_ATTACH(fwip)
 	if (ifp == NULL)
 		FW_ATTACH_RETURN(ENOSPC);
 
+	fw_mtx_init(&fwip->mtx, "fwip", NULL, MTX_DEF);
 	/* XXX */
 	fwip->dma_ch = -1;
 
@@ -274,7 +278,7 @@ FW_ATTACH(fwip)
 	fwip->fd.post_explore = NULL;
 	fwip->fd.post_busreset = fwip_post_busreset;
 	fwip->fw_softc.fwip = fwip;
-	TASK_INIT(&fwip->start_send, 0, fwip_start_send, fwip);
+	FW_TASK_INIT(&fwip->start_send, 0, fwip_start_send, fwip);
 
 	/*
 	 * Encode our hardware the way that arp likes it.
@@ -299,8 +303,7 @@ FW_ATTACH(fwip)
 	IFQ_SET_READY(&ifp->if_snd);
 #endif
 	SET_IFFUNC(ifp, fwip_start, fwip_ioctl, fwip_init, fwip_stop);
-	ifp->if_flags = (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|
-	    IFF_NEEDSGIANT);
+	ifp->if_flags = (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST);
 	ifp->if_snd.ifq_maxlen = TX_MAX_QUEUE;
 #ifdef DEVICE_POLLING
 	ifp->if_capabilities |= IFCAP_POLLING;
@@ -380,6 +383,7 @@ FW_DETACH(fwip)
 
 	FWIP_STOP(fwip);
 	FIREWIRE_IFDETACH(ifp);
+	fw_mtx_destroy(&fwip->mtx);
 
 	splx(s);
 	return 0;
@@ -422,18 +426,12 @@ IF_INIT(fwip)
 	fc = fwip->fd.fc;
 #define START 0
 	if (fwip->dma_ch < 0) {
-		for (i = START; i < fc->nisodma; i ++) {
-			xferq = fc->ir[i];
-			if ((xferq->flag & FWXFERQ_OPEN) == 0)
-				goto found;
-		}
-		printf("no free dma channel\n");
-		IF_INIT_RETURN(ENXIO);
-found:
-		fwip->dma_ch = i;
-		/* allocate DMA channel and init packet mode */
-		xferq->flag |= FWXFERQ_OPEN | FWXFERQ_EXTBUF |
-				FWXFERQ_HANDLER | FWXFERQ_STREAM;
+		fwip->dma_ch = fw_open_isodma(fc, /* tx */0);
+		if (fwip->dma_ch < 0)
+			IF_INIT_RETURN(ENXIO);
+		xferq = fc->ir[fwip->dma_ch];
+		xferq->flag |=
+		    FWXFERQ_EXTBUF | FWXFERQ_HANDLER | FWXFERQ_STREAM;
 		xferq->flag &= ~0xff;
 		xferq->flag |= broadcast_channel & 0xff;
 		/* register fwip_input handler */
@@ -644,8 +642,6 @@ fwip_output_callback(struct fw_xfer *xfer)
 	struct ifnet *ifp;
 	int s;
 
-	GIANT_REQUIRED;
-
 	fwip = (struct fwip_softc *)xfer->sc;
 	ifp = fwip->fw_softc.fwip_ifp;
 	/* XXX error check */
@@ -657,12 +653,15 @@ fwip_output_callback(struct fw_xfer *xfer)
 	fw_xfer_unload(xfer);
 
 	s = splfwnet();
+	FWIP_LOCK(fwip);
 	STAILQ_INSERT_TAIL(&fwip->xferlist, xfer, link);
+	FWIP_UNLOCK(fwip);
 	splx(s);
 
 	/* for queue full */
-	if (ifp->if_snd.ifq_head != NULL)
+	if (ifp->if_snd.ifq_head != NULL) {
 		fwip_start(ifp);
+	}
 }
 
 static void
@@ -671,8 +670,6 @@ fwip_start(struct ifnet *ifp)
 	struct fwip_softc *fwip =
 	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip;
 	int s;
-
-	GIANT_REQUIRED;
 
 	FWIPDEBUG(ifp, "starting\n");
 
@@ -726,19 +723,29 @@ fwip_async_output(struct fwip_softc *fwip, struct ifnet *ifp)
 	int error;
 	int i = 0;
 
-	GIANT_REQUIRED;
-
 	xfer = NULL;
-	xferq = fwip->fd.fc->atq;
-	while (xferq->queued < xferq->maxq - 1) {
+	xferq = fc->atq;
+	while ((xferq->queued < xferq->maxq - 1) &&
+	    (ifp->if_snd.ifq_head != NULL)) {
+		FWIP_LOCK(fwip);
 		xfer = STAILQ_FIRST(&fwip->xferlist);
 		if (xfer == NULL) {
+			FWIP_UNLOCK(fwip);
+#if 0
 			printf("if_fwip: lack of xfer\n");
-			return;
-		}
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
+#endif
 			break;
+		}
+		STAILQ_REMOVE_HEAD(&fwip->xferlist, link);
+		FWIP_UNLOCK(fwip);
+
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL) {
+			FWIP_LOCK(fwip);
+			STAILQ_INSERT_HEAD(&fwip->xferlist, xfer, link);
+			FWIP_UNLOCK(fwip);
+			break;
+		}
 
 		/*
 		 * Dig out the link-level address which
@@ -751,8 +758,6 @@ fwip_async_output(struct fwip_softc *fwip, struct ifnet *ifp)
 			destfw = 0;
 		else
 			destfw = (struct fw_hwaddr *) (mtag + 1);
-
-		STAILQ_REMOVE_HEAD(&fwip->xferlist, link);
 
 		/*
 		 * We don't do any bpf stuff here - the generic code
@@ -845,7 +850,9 @@ fwip_async_output(struct fwip_softc *fwip, struct ifnet *ifp)
 			 * for later transmission.
 			 */
 			xfer->mbuf = 0;
+			FWIP_LOCK(fwip);
 			STAILQ_INSERT_TAIL(&fwip->xferlist, xfer, link);
+			FWIP_UNLOCK(fwip);
 			IF_PREPEND(&ifp->if_snd, m);
 			break;
 		}
@@ -864,25 +871,17 @@ fwip_async_output(struct fwip_softc *fwip, struct ifnet *ifp)
 	if (i > 1)
 		printf("%d queued\n", i);
 #endif
-	if (i > 0) {
-#if 1
+	if (i > 0)
 		xferq->start(fc);
-#else
-		taskqueue_enqueue(taskqueue_swi_giant, &fwip->start_send);
-#endif
-	}
 }
 
-#if defined(__FreeBSD__)
 static void
 fwip_start_send (void *arg, int count)
 {
 	struct fwip_softc *fwip = arg;
 
-	GIANT_REQUIRED;
 	fwip->fd.fc->atq->start(fwip->fd.fc);
 }
-#endif
 
 /* Async. stream output */
 static void
@@ -896,8 +895,6 @@ fwip_stream_input(struct fw_xferq *xferq)
 	struct fw_pkt *fp;
 	uint16_t src;
 	uint32_t *p;
-
-	GIANT_REQUIRED;
 
 	fwip = (struct fwip_softc *)xferq->sc;
 	ifp = fwip->fw_softc.fwip_ifp;
@@ -998,8 +995,6 @@ fwip_unicast_input_recycle(struct fwip_softc *fwip, struct fw_xfer *xfer)
 {
 	struct mbuf *m;
 
-	GIANT_REQUIRED;
-
 	/*
 	 * We have finished with a unicast xfer. Allocate a new
 	 * cluster and stick it on the back of the input queue.
@@ -1025,8 +1020,6 @@ fwip_unicast_input(struct fw_xfer *xfer)
 	struct fw_pkt *fp;
 	//struct fw_pkt *sfp;
 	int rtcode;
-
-	GIANT_REQUIRED;
 
 	fwip = (struct fwip_softc *)xfer->sc;
 	ifp = fwip->fw_softc.fwip_ifp;

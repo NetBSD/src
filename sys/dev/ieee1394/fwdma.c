@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.9 2007/10/19 12:00:13 ad Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.10 2007/11/05 19:08:56 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __FBSDID
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdma.c,v 1.7 2005/01/06 01:42:41 imp Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
 
 #if defined(__FreeBSD__)
@@ -111,7 +111,7 @@ fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
 		/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
 		/*flags*/ BUS_DMA_ALLOCNOW,
 		/*lockfunc*/busdma_lock_mutex,
-		/*lockarg*/&Giant,
+		/*lockarg*/FW_GMTX(fc),
 		&dma->fw_dma_tag);
 	if (err) {
 		printf("fwdma_malloc: failed(1)\n");
@@ -219,7 +219,7 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 			/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
 			/*flags*/ BUS_DMA_ALLOCNOW,
 			/*lockfunc*/busdma_lock_mutex,
-			/*lockarg*/&Giant,
+			/*lockarg*/FW_GMTX(fc),
 			&am->fw_dma_tag)) {
 		printf("fwdma_malloc_multiseg: tag_create failed\n");
 		free(am, M_FW);
