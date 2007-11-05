@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.355 2007/11/05 18:10:08 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.356 2007/11/05 23:19:39 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10505,4 +10505,9 @@ share/man/man4/agr.4				1.4
 
 	write a HISTORY section.
 	[yamt, ticket #977]
+
+distrib/notes/common/main			1.365-1.366
+
+	Sync the list of changes with NetBSD-4.0.xml.
+	[xtraeme, ticket #978]
 
