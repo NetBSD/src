@@ -1,4 +1,4 @@
-/* $NetBSD: omap2430reg.h,v 1.1.2.5 2007/11/05 22:01:56 matt Exp $ */
+/* $NetBSD: omap2430reg.h,v 1.1.2.6 2007/11/05 22:08:52 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Danger Inc.
@@ -50,7 +50,7 @@
 #define	OMAP2_CM_BASE			0x49006000
 #endif
 #ifdef OMAP_2420
-#define	OMAP2_CM_BASE			0x48000000
+#define	OMAP2_CM_BASE			0x48008000
 #endif
 
 #define	OMAP2_CM_CLKSEL_MPU		0x140
