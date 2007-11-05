@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.20 2007/11/01 21:58:20 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.21 2007/11/05 15:01:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.20 2007/11/01 21:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.21 2007/11/05 15:01:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -682,22 +682,22 @@ softint_overlay(void)
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
 		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);
-			softint_execute(&si[SOFTINT_SERIAL], l, safepri);
+			softint_execute(&si[SOFTINT_SERIAL], l, s);
 			continue;
 		}
 		if ((softints & (1 << SOFTINT_NET)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_NET);
-			softint_execute(&si[SOFTINT_NET], l, safepri);
+			softint_execute(&si[SOFTINT_NET], l, s);
 			continue;
 		}
 		if ((softints & (1 << SOFTINT_BIO)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_BIO);
-			softint_execute(&si[SOFTINT_BIO], l, safepri);
+			softint_execute(&si[SOFTINT_BIO], l, s);
 			continue;
 		}
 		if ((softints & (1 << SOFTINT_CLOCK)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_CLOCK);
-			softint_execute(&si[SOFTINT_CLOCK], l, safepri);
+			softint_execute(&si[SOFTINT_CLOCK], l, s);
 			continue;
 		}
 	}
