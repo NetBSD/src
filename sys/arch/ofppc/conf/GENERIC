@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104 2007/11/04 16:28:27 garbled Exp $
+# $NetBSD: GENERIC,v 1.105 2007/11/05 15:49:02 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 maxusers	32
 
@@ -189,12 +189,17 @@ ppb*		at pci? dev ? function ?
 pcn*		at pci? dev ? function ?
 siop*		at pci? dev ? function ?
 pcib*		at pci? dev ? function ?
-ofb*    at pci? dev ? function ?
+#genfb*		at pci? dev ? function ?
+
 # make sure the console display is always wsdisplay0
-wsdisplay0      at wsemuldisplaydev? console 1
-wsdisplay*      at wsemuldisplaydev?
+#wsdisplay0      at wsemuldisplaydev? console 1
+#wsdisplay*      at wsemuldisplaydev?
 
 isa*		at pcib?
+
+# Parallel Printer Interfaces
+# ISA parallel printer interfaces
+lpt0		at isa? port 0x3bc irq 7	# standard PC parallel ports
 
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
