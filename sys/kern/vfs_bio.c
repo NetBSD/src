@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.24 2007/11/01 21:53:53 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.25 2007/11/05 10:05:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.24 2007/11/01 21:53:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.25 2007/11/05 10:05:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1767,7 +1767,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 		if (rv <= 0)
 			break;
 	}
-	mutex_enter(&bufcache_lock);
+	mutex_exit(&bufcache_lock);
 
 	return 0;
 }
