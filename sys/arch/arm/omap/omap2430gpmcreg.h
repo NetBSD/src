@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.2 2007/11/04 21:58:07 matt Exp $	*/
+/*	$NetBSD: omap2430gpmcreg.h,v 1.1.2.3 2007/11/05 18:23:12 matt Exp $	*/
 /*
  * Copyright (c) 2007 Danger Inc.
  * All rights reserved.
@@ -30,9 +30,6 @@
 
 #ifndef _OMAP2430GPMCREG_H
 #define _OMAP2430GPMCREG_H
-
-#define BITS(hi,lo)	((uint32_t)(~((~0ULL)<<((hi)+1)))&((~0)<<(lo)))
-#define BIT(n)		((uint32_t)(1 << (n)))
 
 /*
  * Header for OMAP2430 General Purpose Memory Controller
@@ -182,16 +179,16 @@
 /*
  * GPMC OMAP2430_GPMC_REVISION
  */
-#define OMAP_GPMC_REVISION_REV		BITS(7,0)
+#define OMAP_GPMC_REVISION_REV		__BITS(7,0)
 #define OMAP_GPMC_REVISION_REV_MAJ(r)	(((r) >> 4) & 0xf)
 #define OMAP_GPMC_REVISION_REV_MIN(r)	(((r) >> 0) & 0xf)
 
 /*
  * GPMC CONFIG7_[0-7] bits
  */
-#define OMAP_GPMC_CONFIG7_BASEADDRESS	BITS(5,0)
-#define OMAP_GPMC_CONFIG7_CSVALID	BIT(6)
-#define OMAP_GPMC_CONFIG7_MASKADDRESS	BITS(11,8)
+#define OMAP_GPMC_CONFIG7_BASEADDRESS	__BITS(5,0)
+#define OMAP_GPMC_CONFIG7_CSVALID	__BIT(6)
+#define OMAP_GPMC_CONFIG7_MASKADDRESS	__BITS(11,8)
 static __inline ulong
 omap_gpmc_config7_addr(uint32_t r)
 {

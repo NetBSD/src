@@ -34,7 +34,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.3 2007/11/05 05:06:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.4 2007/11/05 18:23:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.3 2007/11/05 05:06:40 matt E
 #define	IRQ_SOFTNET	M_IRQ_49
 #define	IRQ_SOFT	M_IRQ_95
 
-#define	SOFTIPL_MASK	(BIT(IPL_SOFT)|BIT(IPL_SOFTCLOCK)|\
-			 BIT(IPL_SOFTNET)|BIT(IPL_SOFTSERIAL))
+#define	SOFTIPL_MASK	(__BIT(IPL_SOFT)|__BIT(IPL_SOFTCLOCK)|\
+			 __BIT(IPL_SOFTNET)|__BIT(IPL_SOFTSERIAL))
 
 struct intrsource {
 	struct evcnt is_ev;
@@ -204,7 +204,7 @@ static void
 init_irq(int irq, int spl, int type)
 {
 	struct intrgroup * const ig = &intrgroups[irq / 32];
-	uint32_t irq_mask = BIT(irq & 31);
+	uint32_t irq_mask = __BIT(irq & 31);
 	uint32_t v;
 
 	KASSERT(irq >= 0 && irq < 256);
@@ -298,12 +298,12 @@ mark_pending_irqs(int group, uint32_t pending)
 		is = &ig->ig_sources[n];
 		KASSERT(ig->ig_irqsbyipl[is->is_ipl] & pending);
 		pending &= ~ig->ig_irqsbyipl[is->is_ipl];
-		ipl_mask |= BIT(is->is_ipl);
-		KASSERT(ipl_mask < BIT(NIPL));
-		pending_igroupsbyipl[is->is_ipl] |= BIT(group);
+		ipl_mask |= __BIT(is->is_ipl);
+		KASSERT(ipl_mask < __BIT(NIPL));
+		pending_igroupsbyipl[is->is_ipl] |= __BIT(group);
 		is->is_marked++;
 	}
-	KASSERT(ipl_mask < BIT(NIPL));
+	KASSERT(ipl_mask < __BIT(NIPL));
 	return ipl_mask;
 }
 
@@ -322,7 +322,7 @@ get_pending_irqs(void)
 	pending[2] = INTC_READ(&intrgroups[2], INTC_PENDING_IRQ);
 
 	/* Get interrupt status of GPIO1 */
-	if (pending[GPIO1_MPU_IRQ / 32] & BIT(GPIO1_MPU_IRQ & 31)) {
+	if (pending[GPIO1_MPU_IRQ / 32] & __BIT(GPIO1_MPU_IRQ & 31)) {
 		KASSERT(intrgroups[3].ig_enabled_irqs);
 		xpending = GPIO_READ(&intrgroups[3], GPIO_IRQSTATUS1);
 		xpending &= intrgroups[3].ig_enabled_irqs;
@@ -330,7 +330,7 @@ get_pending_irqs(void)
 	}
 
 	/* Get interrupt status of GPIO2 */
-	if (pending[GPIO2_MPU_IRQ / 32] & BIT(GPIO2_MPU_IRQ & 31)) {
+	if (pending[GPIO2_MPU_IRQ / 32] & __BIT(GPIO2_MPU_IRQ & 31)) {
 		KASSERT(intrgroups[4].ig_enabled_irqs);
 		xpending = GPIO_READ(&intrgroups[4], GPIO_IRQSTATUS1);
 		xpending &= intrgroups[4].ig_enabled_irqs;
@@ -338,7 +338,7 @@ get_pending_irqs(void)
 	}
 
 	/* Get interrupt status of GPIO3 */
-	if (pending[GPIO3_MPU_IRQ / 32] & BIT(GPIO3_MPU_IRQ & 31)) {
+	if (pending[GPIO3_MPU_IRQ / 32] & __BIT(GPIO3_MPU_IRQ & 31)) {
 		KASSERT(intrgroups[5].ig_enabled_irqs);
 		xpending = GPIO_READ(&intrgroups[5], GPIO_IRQSTATUS1);
 		xpending &= intrgroups[5].ig_enabled_irqs;
@@ -346,28 +346,32 @@ get_pending_irqs(void)
 	}
 
 	/* Get interrupt status of GPIO4 */
-	if (pending[GPIO4_MPU_IRQ / 32] & BIT(GPIO4_MPU_IRQ & 31)) {
+	if (pending[GPIO4_MPU_IRQ / 32] & __BIT(GPIO4_MPU_IRQ & 31)) {
 		KASSERT(intrgroups[6].ig_enabled_irqs);
 		xpending = GPIO_READ(&intrgroups[6], GPIO_IRQSTATUS1);
 		xpending &= intrgroups[6].ig_enabled_irqs;
 		ipl_mask |= mark_pending_irqs(6, xpending);
 	}
 
+#ifdef OMAP_2430
 	/* Get interrupt status of GPIO5 */
-	if (pending[GPIO5_MPU_IRQ / 32] & BIT(GPIO5_MPU_IRQ & 31)) {
+	if (pending[GPIO5_MPU_IRQ / 32] & __BIT(GPIO5_MPU_IRQ & 31)) {
 		KASSERT(intrgroups[7].ig_enabled_irqs);
 		xpending = GPIO_READ(&intrgroups[7], GPIO_IRQSTATUS1);
 		xpending = GPIO_READ(&intrgroups[7], GPIO_IRQSTATUS1);
 		xpending &= intrgroups[7].ig_enabled_irqs;
 		ipl_mask |= mark_pending_irqs(7, xpending);
 	}
+#endif
 
 	/* Clear GPIO indication from summaries */
-	pending[GPIO1_MPU_IRQ / 32] &= ~BIT(GPIO1_MPU_IRQ & 31);
-	pending[GPIO2_MPU_IRQ / 32] &= ~BIT(GPIO2_MPU_IRQ & 31);
-	pending[GPIO3_MPU_IRQ / 32] &= ~BIT(GPIO3_MPU_IRQ & 31);
-	pending[GPIO4_MPU_IRQ / 32] &= ~BIT(GPIO4_MPU_IRQ & 31);
-	pending[GPIO5_MPU_IRQ / 32] &= ~BIT(GPIO5_MPU_IRQ & 31);
+	pending[GPIO1_MPU_IRQ / 32] &= ~__BIT(GPIO1_MPU_IRQ & 31);
+	pending[GPIO2_MPU_IRQ / 32] &= ~__BIT(GPIO2_MPU_IRQ & 31);
+	pending[GPIO3_MPU_IRQ / 32] &= ~__BIT(GPIO3_MPU_IRQ & 31);
+	pending[GPIO4_MPU_IRQ / 32] &= ~__BIT(GPIO4_MPU_IRQ & 31);
+#ifdef OMAP_2430
+	pending[GPIO5_MPU_IRQ / 32] &= ~__BIT(GPIO5_MPU_IRQ & 31);
+#endif
 
 	/* Now handle the primaries interrupt summaries */
 	ipl_mask |= mark_pending_irqs(0, pending[0]);
@@ -392,7 +396,7 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 	uint32_t irq_mask;
 	uint32_t blocked_irqs;
 	volatile uint32_t * const pending_igroups = &pending_igroupsbyipl[ipl];
-	const uint32_t ipl_mask = BIT(ipl);
+	const uint32_t ipl_mask = __BIT(ipl);
 	int n;
 	int saved_ipl = IPL_NONE;	/* XXX stupid GCC */
 	unsigned int group;
@@ -422,7 +426,7 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 		irq_mask = ig->ig_irqsbyipl[ipl];
 		pending_irqs = ig->ig_pending_irqs & irq_mask;
 		blocked_irqs = pending_irqs;
-		if ((*pending_igroups &= ~BIT(group)) == 0)
+		if ((*pending_igroups &= ~__BIT(group)) == 0)
 			pending_ipls &= ~ipl_mask;
 #if 0
 		KASSERT(group < 3 || (GPIO_READ(ig, GPIO_IRQSTATUS1) & blocked_irqs) == 0);
@@ -440,8 +444,8 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 #endif
 		do {
 			n = 31 - __builtin_clz(pending_irqs);
-			KASSERT(ig->ig_irqs & BIT(n));
-			KASSERT(irq_mask & BIT(n));
+			KASSERT(ig->ig_irqs & __BIT(n));
+			KASSERT(irq_mask & __BIT(n));
 
 			/*
 			 * If this was the last bit cleared for this IRQ,
@@ -449,8 +453,8 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 			 * pending_igroupsbyipl[ipl].  Now if that's now 0,
 			 * we need to clear pending_ipls for this IPL.
 			 */
-			ig->ig_pending_irqs &= ~BIT(n);
-			if (irq_mask == BIT(n))
+			ig->ig_pending_irqs &= ~__BIT(n);
+			if (irq_mask == __BIT(n))
 				KASSERT((ig->ig_pending_irqs & irq_mask) == 0);
 			is = &ig->ig_sources[n];
 			if (__predict_false(frame != NULL)) {
@@ -462,10 +466,10 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 			}
 #if 0
 			if (rv && group >= 3) /* XXX */
-				GPIO_WRITE(ig, GPIO_IRQSTATUS1, BIT(n));
+				GPIO_WRITE(ig, GPIO_IRQSTATUS1, __BIT(n));
 #endif
 #if 0
-			if (ig->ig_irqsbyipl[ipl] == BIT(n))
+			if (ig->ig_irqsbyipl[ipl] == __BIT(n))
 				KASSERT((ig->ig_pending_irqs & irq_mask) == 0);
 #endif
 			is->is_ev.ev_count++;
@@ -503,8 +507,8 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 static inline void
 do_pending_ints(register_t psw, int newipl)
 {
-	while ((pending_ipls & ~BIT(newipl)) > BIT(newipl)) {
-		KASSERT(pending_ipls < BIT(NIPL));
+	while ((pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
+		KASSERT(pending_ipls < __BIT(NIPL));
 		for (;;) {
 			int ipl = 31 - __builtin_clz(pending_ipls);
 			KASSERT(ipl < NIPL);
@@ -582,9 +586,9 @@ _setsoftintr(int si)
 		 * Mark the software interrupt for delivery.
 		 */
 		register_t psw = disable_interrupts(I32_bit);
-		ig->ig_pending_irqs |= BIT(is - ig->ig_sources);
-		pending_igroupsbyipl[is->is_ipl] |= BIT(is->is_group);
-		pending_ipls |= BIT(is->is_ipl);
+		ig->ig_pending_irqs |= __BIT(is - ig->ig_sources);
+		pending_igroupsbyipl[is->is_ipl] |= __BIT(is->is_group);
+		pending_ipls |= __BIT(is->is_ipl);
 		is->is_marked++;
 		restore_interrupts(psw);
 	}
@@ -594,7 +598,7 @@ void
 omap_irq_handler(void *frame)
 {
 	const int oldipl = curcpu()->ci_cpl;
-	const uint32_t oldipl_mask = BIT(oldipl);
+	const uint32_t oldipl_mask = __BIT(oldipl);
 
 	/*
 	 * When we enter there must be no pending IRQs for IPL greater than
@@ -610,13 +614,13 @@ omap_irq_handler(void *frame)
 	 * unconditionally so it will always have the interrupted frame.
 	 * The clock intr will handle being called at IPLs != IPL_CLOCK.
 	 */
-	if (__predict_false(pending_ipls & BIT(IPL_STATCLOCK))) {
+	if (__predict_false(pending_ipls & __BIT(IPL_STATCLOCK))) {
 		deliver_irqs(0, IPL_STATCLOCK, frame);
-		pending_ipls &= ~BIT(IPL_STATCLOCK);
+		pending_ipls &= ~__BIT(IPL_STATCLOCK);
 	}
-	if (__predict_false(pending_ipls & BIT(IPL_CLOCK))) {
+	if (__predict_false(pending_ipls & __BIT(IPL_CLOCK))) {
 		deliver_irqs(0, IPL_CLOCK, frame);
-		pending_ipls &= ~BIT(IPL_CLOCK);
+		pending_ipls &= ~__BIT(IPL_CLOCK);
 	}
 
 	/*
@@ -650,7 +654,7 @@ omap_intr_establish(int irq, int ipl, const char *name,
 	init_irq(irq, ipl, IST_LEVEL);
 
 	calculate_irq_masks(ig);
-	unblock_irq(is->is_group, BIT(irq & 31));
+	unblock_irq(is->is_group, __BIT(irq & 31));
 	restore_interrupts(psw);
 	return is;
 }
@@ -667,7 +671,7 @@ omap_intr_disestablish(void *ih)
 
 	ig = &intrgroups[is->is_group];
 	psw = disable_interrupts(I32_bit);
-	mask = BIT(is - ig->ig_sources);
+	mask = __BIT(is - ig->ig_sources);
 	block_irq(is->is_group, mask);
 	ig->ig_pending_irqs &= ~mask;
 	calculate_irq_masks(ig);
@@ -755,16 +759,16 @@ omap2430_intr_init(bus_space_tag_t memt)
 	INTC_WRITE(&intrgroups[1], INTC_MIR_SET, 0xffffffff);
 	INTC_WRITE(&intrgroups[2], INTC_MIR_SET, 0xffffffff);
 	INTC_WRITE(&intrgroups[GPIO1_MPU_IRQ / 32], INTC_MIR_CLEAR,
-	    BIT(GPIO1_MPU_IRQ & 31));
+	    __BIT(GPIO1_MPU_IRQ & 31));
 	INTC_WRITE(&intrgroups[GPIO2_MPU_IRQ / 32], INTC_MIR_CLEAR,
-	    BIT(GPIO2_MPU_IRQ & 31));
+	    __BIT(GPIO2_MPU_IRQ & 31));
 	INTC_WRITE(&intrgroups[GPIO3_MPU_IRQ / 32], INTC_MIR_CLEAR,
-	    BIT(GPIO3_MPU_IRQ & 31));
+	    __BIT(GPIO3_MPU_IRQ & 31));
 	INTC_WRITE(&intrgroups[GPIO4_MPU_IRQ / 32], INTC_MIR_CLEAR,
-	    BIT(GPIO4_MPU_IRQ & 31));
+	    __BIT(GPIO4_MPU_IRQ & 31));
 #ifdef GPIO5_BASE
 	INTC_WRITE(&intrgroups[GPIO5_MPU_IRQ / 32], INTC_MIR_CLEAR,
-	    BIT(GPIO5_MPU_IRQ & 31));
+	    __BIT(GPIO5_MPU_IRQ & 31));
 #endif
 
 	/*
