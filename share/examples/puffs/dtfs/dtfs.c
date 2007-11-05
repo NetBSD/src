@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.36 2007/11/05 17:48:18 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.37 2007/11/05 17:54:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -254,15 +254,14 @@ main(int argc, char *argv[])
 	if (maxreqsize != MAXREQMAGIC)
 		puffs_setmaxreqlen(pu, maxreqsize);
 
-	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
-		err(1, "mount");
-
 	if (detach)
 		if (daemon(1, 1) == -1)
 			err(1, "daemon");
 
+	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
+		err(1, "mount");
 	if (puffs_mainloop(pu) == -1)
-		return 1;
+		err(1, "mainloop");
 
 	return 0;
 }
