@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.353 2007/11/04 21:27:35 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.354 2007/11/05 15:44:49 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10442,10 +10442,11 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c 1.11
 	This makes an X11 server built via "src/x11" with SSP enabled work.
 	[tron, ticket #967]
 
+doc/3RDPARTY					1.562
 etc/namedb/root.cache				1.11
 
 	Update to 2007110100 version
-	[martti, ticket #972]
+	[martti, ticket #972, #973]
 
 src/sys/arch/cobalt/cobalt/autoconf.c		1.25, 1.26
 src/sys/arch/cobalt/cobalt/machdep.c		1.89
