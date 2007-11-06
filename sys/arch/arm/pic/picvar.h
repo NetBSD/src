@@ -1,5 +1,11 @@
-#ifndef _ARM_PIC31_PICVAR_H_
-#define _ARM_PIC31_PICVAR_H_
+#ifndef _ARM_PIC_PICVAR_H_
+#define _ARM_PIC_PICVAR_H_
+
+int	_splraise(int);
+int	_spllower(int);
+void	splx(int);
+const char *
+	intr_typename(int);
 
 struct pic_softc;
 struct intrsource;
@@ -13,6 +19,10 @@ int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
 void	pic_do_pending_ints(register_t psw, int newipl);
 void	pic_dispatch(struct intrsource *is, void *frame);
+
+void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
+	    void *arg);
+void	intr_disestablish(void *);
 
 #ifdef _INTR_PRIVATE
 
