@@ -1,4 +1,4 @@
-.\"	$NetBSD: config.1,v 1.5 2007/01/09 06:58:46 wiz Exp $
+.\"	$NetBSD: config.1,v 1.5.4.1 2007/11/06 23:35:42 matt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 8, 2007
+.Dd September 9, 2007
 .Dt CONFIG 1
 .Os
 .Sh NAME
@@ -55,6 +55,71 @@ In its first synopsis form,
 creates a kernel build directory from the machine description file
 .Ar config-file ,
 which describes the system to configure.
+Refer to section KERNEL BUILD CONFIGURATION for the details of that use
+of
+.Nm .
+.Pp
+In its second synopsis form,
+.Nm
+takes the binary kernel
+.Ar kernel-file
+as its single argument (aside from the mandatory
+.Fl x
+flag), then extracts the embedded configuration file (if any) and
+writes it to standard output.
+If
+.Ar kernel-file
+is not given,
+.Pa /netbsd
+is used.
+Configuration data will be available if the given kernel was compiled
+with either
+.Va INCLUDE_CONFIG_FILE
+or
+.Va INCLUDE_JUST_CONFIG
+options.
+.Pp
+In its third synopsis form,
+.Nm
+is a tool for the kernel developer and generates a
+.Dq lint
+configuration file to be used during regression testing.
+Refer to section LINT CONFIGURATION for the details of that use of
+.Nm .
+.Pp
+.Nm
+accepts the following parameters:
+.Bl -tag -width indent
+.It Fl b Ar builddir
+Use
+.Ar builddir
+as the kernel build directory, instead of computing and creating one
+automatically.
+.It Fl L
+Generate a lint configuration.
+.It Fl P
+Pack locators to save space in the resulting kernel binary.
+The amount of space saved that way is so small that this option should
+be considered historical, and of no actual use.
+.It Fl p
+Generate a build directory suited for kernel profiling.
+However, this options should be avoided in favor of the relevant options
+inside the configuration file as described in section KERNEL BUILD
+CONFIGURATION.
+.It Fl s Ar srcdir
+Point to the top of the kernel source tree.
+It must be an absolute path when
+.Nm
+is used to prepare a kernel build directory, but can be relative
+when it is used in combination with the
+.Fl L
+flag.
+.It Fl v
+Increase verbosity by enabling some more warnings.
+.It Fl x
+Extract the configuration embedded in a kernel binary.
+.El
+.Ss KERNEL BUILD CONFIGURATION
 .Pp
 There are several different ways to run the
 .Nm
@@ -153,18 +218,6 @@ wiser to create a separate machine description file containing the
 .Li makeoptions
 line.
 .Pp
-The
-.Fl v
-option causes
-.Nm
-to be somewhat more verbose by enabling certain warning messages.
-.Pp
-The
-.Fl P
-option causes
-.Nm
-to pack locators, conserving some kernel memory.
-.Pp
 The old undocumented
 .Fl g
 flag is no longer supported.
@@ -203,28 +256,18 @@ if there are configuration errors,
 but this code is not well-tested,
 and some problems (such as running out of disk space)
 are unrecoverable.
+.Ss LINT CONFIGURATION
+A so-called
+.Dq lint
+configuration should include everything from the kernel that can
+possibly be selected.
+The rationale is to provide a way to reach all the code a user might
+select, in order to make sure all options and drivers compile without
+error for a given source tree.
 .Pp
-In its second synopsis form,
-.Nm
-takes the binary kernel
-.Ar kernel-file
-as its single argument (aside from the mandatory
-.Fl x
-flag), then extracts the embedded configuration file (if any) and
-writes it to standard output.
-If
-.Ar kernel-file
-is not given,
-.Pa /netbsd
-is used.
-Configuration data will be available if the given kernel was compiled
-with either
-.Va INCLUDE_CONFIG_FILE
-or
-.Va INCLUDE_JUST_CONFIG
-options.
-.Pp
-In its third synopsis form,
+When used with the
+.Fl L
+flag,
 .Nm
 takes the regular configuration file
 .Ar config-file
@@ -237,7 +280,7 @@ the kernel option definition files used by
 .Pp
 The resulting configuration file is meant as a way to select all
 possible features in order to test that each of them compiles.
-It is not meant to result in a binary kernel that can run on any
+It is not meant to result in a kernel binary that can run on any
 hardware.
 .Pp
 Unlike the first synopsis form, the provided
@@ -265,3 +308,7 @@ The
 .Fl x
 option appeared in
 .Nx 2.0 .
+The
+.Fl L
+option appeared in
+.Nx 5.0 .

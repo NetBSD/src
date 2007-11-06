@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.4.6.1 2007/11/06 23:31:36 matt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,12 +28,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4.6.1 2007/11/06 23:31:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/idle.h>
-#include <sys/lwp.h>
+#include <sys/kthread.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
@@ -41,19 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-#define	PIDLELWP	(MAXPRI + 1)	/* lowest priority */
-
 void
 idle_loop(void *dummy)
 {
-#if defined(DIAGNOSTIC)
 	struct cpu_info *ci = curcpu();
-#endif /* defined(DIAGNOSTIC) */
 	struct lwp *l = curlwp;
 
+	/* Update start time for this thread. */
+	microtime(&l->l_stime);
+
 	KERNEL_UNLOCK_ALL(l, NULL);
-	l->l_usrpri = PIDLELWP;
-	l->l_priority = l->l_usrpri;
 	l->l_stat = LSONPROC;
 	while (1 /* CONSTCOND */) {
 		KERNEL_LOCK_ASSERT_UNLOCKED();
@@ -62,7 +59,7 @@ idle_loop(void *dummy)
 		KASSERT(ci == curcpu());
 		KASSERT(l == curlwp);
 		KASSERT(CURCPU_IDLE_P());
-		KASSERT(l->l_usrpri == PIDLELWP);
+		KASSERT(l->l_priority == PRI_IDLE);
 
 		if (uvm.page_idle_zero) {
 			if (sched_curcpu_runnable_p()) {
@@ -72,7 +69,8 @@ idle_loop(void *dummy)
 		}
 		if (!sched_curcpu_runnable_p()) {
 			cpu_idle();
-			if (!sched_curcpu_runnable_p()) {
+			if (!sched_curcpu_runnable_p() &&
+			    !ci->ci_want_resched) {
 				continue;
 			}
 		}
@@ -88,39 +86,19 @@ schedule:
 int
 create_idle_lwp(struct cpu_info *ci)
 {
-	struct proc *p = &proc0;
-	struct lwp *l;
-	char *name;
-	vaddr_t uaddr;
-	bool inmem;
-	cpuid_t cpuid;
+	lwp_t *l;
 	int error;
 
 	KASSERT(ci->ci_data.cpu_idlelwp == NULL);
-	inmem = uvm_uarea_alloc(&uaddr);
-	if (uaddr == 0) {
-		return ENOMEM;
-	}
-	error = newlwp(&lwp0, p, uaddr, inmem, 0, NULL, 0, idle_loop, NULL, &l);
-	if (error != 0) {
-		panic("create_idle_lwp: newlwp failed");
-	}
-	uvm_lwp_hold(l);
-	l->l_flag |= (LW_IDLE | LW_BOUND);
+	error = kthread_create(PRI_IDLE, KTHREAD_MPSAFE | KTHREAD_IDLE,
+	    ci, idle_loop, NULL, &l, "idle/%d", (int)ci->ci_cpuid);
+	if (error != 0)
+		panic("create_idle_lwp: error %d", error);
+	lwp_lock(l);
+	l->l_flag |= LW_IDLE;
+	lwp_unlock(l);
 	l->l_cpu = ci;
-	l->l_mutex = &ci->ci_schedstate.spc_lwplock;
 	ci->ci_data.cpu_idlelwp = l;
-	name = kmem_alloc(MAXCOMLEN, KM_NOSLEEP);
-	if (name != NULL) {
-#ifdef MULTIPROCESSOR		/* XXX should be mandatory */
-		cpuid = ci->ci_cpuid;
-#else
-		cpuid = 0;
-#endif
-		snprintf(name, MAXCOMLEN, "idle/%d", (int)cpuid);
-		lwp_lock(l);
-		l->l_name = name;
-		lwp_unlock(l);
-	}
+
 	return error;
 }

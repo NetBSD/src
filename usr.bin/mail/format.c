@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.7 2007/07/07 18:04:17 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.7.4.1 2007/11/06 23:35:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.7 2007/07/07 18:04:17 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.7.4.1 2007/11/06 23:35:52 matt Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -51,8 +51,12 @@ __RCSID("$NetBSD: format.c,v 1.7 2007/07/07 18:04:17 christos Exp $");
 #include "glob.h"
 #include "thread.h"
 
-
-#define DEBUG(a)
+#undef DEBUG
+#ifdef DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 static void
 check_bufsize(char **buf, size_t *bufsize, char **p, size_t cnt)
@@ -162,7 +166,7 @@ sfmtfield(const char **fmtbeg, const char *fmtch, struct message *mp)
 			(void)strlcpy(p, fmtch + 2, len);
 			p = sfmtdepth(p, depth);
 			break;
-#endif			
+#endif
 		case '-':
 			skin_it = 1;
 			/* FALLTHROUGH */
@@ -210,7 +214,7 @@ sfmtflag(const char **fmtbeg, const char *fmtch, struct message *mp)
 
 	if (mp == NULL)
 		return NULL;
-	
+
 	is_thread = mp->m_clink != NULL;
 	disp[0] = is_thread ? '+' : ' ';
 	disp[1] = '\0';
@@ -290,7 +294,7 @@ skip_fmt(const char **src, const char *p)
 
 static const char *
 subformat(const char **src, struct message *mp, const char *addr,
-    const char *user, const char *subj, const char *gmtoff, const char *zone)
+    const char *user, const char *subj, int tm_isdst)
 {
 #if 0
 /* XXX - lint doesn't like this, hence skip_fmt(). */
@@ -309,6 +313,9 @@ subformat(const char **src, struct message *mp, const char *addr,
 		continue;
 
 	switch (*p) {
+	/*
+	 * Our format extensions to strftime(3)
+	 */
 	case '?':
 		return sfmtfield(src, p, mp);
 	case 'J':
@@ -325,9 +332,6 @@ subformat(const char **src, struct message *mp, const char *addr,
  		return MP(sfmtstr(src, p, mp == dot ? ">" : " "));
 	case 'Q':
  		return MP(sfmtflag(src, p, mp));
-	case 'Z':
-		*src = p + 1;
-		return zone;
 	case 'f':
 		return sfmtstr(src, p, addr);
 	case 'i':
@@ -338,9 +342,29 @@ subformat(const char **src, struct message *mp, const char *addr,
 		return sfmtstr(src, p, subj);
 	case 't':
 		return sfmtint(src, p, get_msgCount());
+
+	/*
+	 * strftime(3) special cases:
+	 *
+	 * When 'tm_isdst' was not determined (i.e., < 0), a C99
+	 * compliant strftime(3) will output an empty string for the
+	 * "%Z" and "%z" formats.  This messes up alignment so we
+	 * handle these ourselves.
+	 */
+	case 'Z':
+		if (tm_isdst < 0) {
+			*src = p + 1;
+			return "???";	/* XXX - not ideal */
+		}
+		return NULL;
 	case 'z':
-		*src = p + 1;
-		return gmtoff;
+		if (tm_isdst < 0) {
+			*src = p + 1;
+			return "-0000";	/* consistent with RFC 2822 */
+		}
+		return NULL;
+
+	/* everything else is handled by strftime(3) */
 	default:
 		return NULL;
 	}
@@ -360,7 +384,7 @@ snarf_comment(char **buf, char *bufend, const char *string)
 
 	clevel = 1;
 	for (p = string + 1; *p != '\0'; p++) {
-		DEBUG(("snarf_comment: %s\n", p));
+		DPRINTF(("snarf_comment: %s\n", p));
 		if (*p == '(') {
 			clevel++;
 			continue;
@@ -378,7 +402,7 @@ snarf_comment(char **buf, char *bufend, const char *string)
 	}
 	if (buf) {
 		*q = '\0';
-		DEBUG(("snarf_comment: terminating: %s\n", *buf));
+		DPRINTF(("snarf_comment: terminating: %s\n", *buf));
 		*buf = q;
 	}
 	if (*p == '\0')
@@ -397,7 +421,7 @@ snarf_quote(char **buf, char *bufend, const char *string)
 	qend = buf ? bufend : NULL;
 
 	for (p = string + 1; *p != '\0' && *p != '"'; p++) {
-		DEBUG(("snarf_quote: %s\n", p));
+		DPRINTF(("snarf_quote: %s\n", p));
 		if (*p == '\\' && p[1] != '\0')
 			p++;
 
@@ -406,7 +430,7 @@ snarf_quote(char **buf, char *bufend, const char *string)
 	}
 	if (buf) {
 		*q = '\0';
-		DEBUG(("snarf_quote: terminating: %s\n", *buf));
+		DPRINTF(("snarf_quote: terminating: %s\n", *buf));
 		*buf = q;
 	}
 	if (*p == '\0')
@@ -433,8 +457,8 @@ get_comments(char *name)
 	q = nbuf;
 	lastq = nbuf;
 	qend = nbuf + sizeof(nbuf) - 1;
-	for (p = skip_blank(name); *p != '\0'; p++) {
-		DEBUG(("get_comments: %s\n", p));
+	for (p = skip_WSP(name); *p != '\0'; p++) {
+		DPRINTF(("get_comments: %s\n", p));
 		switch (*p) {
 		case '"': /* quoted-string ... skip it! */
 			p = snarf_quote(NULL, NULL, p);
@@ -444,7 +468,7 @@ get_comments(char *name)
 			p = snarf_comment(&q, qend, p);
 			lastq = q;
 			if (q < qend) /* separate comments by space */
-				*q++ = ' ';			
+				*q++ = ' ';
 			break;
 
 		default:
@@ -455,44 +479,225 @@ get_comments(char *name)
 	return savestr(nbuf);
 }
 
-static char *
-my_strptime(const char *buf, const char *fmtstr, struct tm *tm)
+/*
+ * Convert a possible obs_zone (see RFC 2822, sec 4.3) to a valid
+ * gmtoff string.
+ */
+static const char *
+convert_obs_zone(const char *obs_zone)
 {
-	char *tail;
-	char zone[4];
+	static const struct obs_zone_tbl_s {
+		const char *zone;
+		const char *gmtoff;
+	} obs_zone_tbl[] = {
+		{"UT",	"+0000"},
+		{"GMT",	"+0000"},
+		{"EST",	"-0500"},
+		{"EDT",	"-0400"},
+		{"CST",	"-0600"},
+		{"CDT",	"-0500"},
+		{"MST",	"-0700"},
+		{"MDT",	"-0600"},
+		{"PST",	"-0800"},
+		{"PDT",	"-0700"},
+		{NULL,	NULL},
+	};
+	const struct obs_zone_tbl_s *zp;
 
-	zone[0] = '\0';
-	tail = strptime(buf, fmtstr, tm);
-	if (tail) {
-		int len;
-		if (sscanf(tail, " %3[A-Z] %n", zone, &len) == 1) {
-			if (zone[0])
-				tm->tm_zone = savestr(zone);
-			tail += len;
+	if (obs_zone[0] == '+' || obs_zone[0] == '-')
+		return obs_zone;
+
+	if (obs_zone[1] == 0) { /* possible military zones */
+		/* be explicit here - avoid C extensions and ctype(3) */
+		switch((unsigned char)obs_zone[0]) {
+		case 'A': case 'B': case 'C': case 'D':	case 'E':
+		case 'F': case 'G': case 'H': case 'I':
+		case 'K': case 'L': case 'M': case 'N': case 'O':
+		case 'P': case 'Q': case 'R': case 'S': case 'T':
+		case 'U': case 'V': case 'W': case 'X': case 'Y':
+		case 'Z':
+		case 'a': case 'b': case 'c': case 'd':	case 'e':
+		case 'f': case 'g': case 'h': case 'i':
+		case 'k': case 'l': case 'm': case 'n': case 'o':
+		case 'p': case 'q': case 'r': case 's': case 't':
+		case 'u': case 'v': case 'w': case 'x': case 'y':
+		case 'z':
+			return "-0000";	/* See RFC 2822, sec 4.3 */
+		default:
+			return obs_zone;
 		}
-		tail = strptime(tail, " %Y ", tm);
 	}
-	return tail;
+	for (zp = obs_zone_tbl; zp->zone; zp++) {
+		if (strcmp(obs_zone, zp->zone) == 0)
+			return zp->gmtoff;
+	}
+	return obs_zone;
 }
 
-static char *
-mk_gmtoff(struct tm *tm)
+/*
+ * Parse the 'Date:" field into a tm structure and return the gmtoff
+ * string or NULL on error.
+ */
+static const char *
+date_to_tm(char *date, struct tm *tm)
 {
-	char *gmtoff;
-	char sign;
-	int offset;
-	int hour;
-	int min;
+	/****************************************************************
+	 * The header 'date-time' syntax - From RFC 2822 sec 3.3 and 4.3:
+	 *
+	 * date-time       =       [ day-of-week "," ] date FWS time [CFWS]
+	 * day-of-week     =       ([FWS] day-name) / obs-day-of-week
+	 * day-name        =       "Mon" / "Tue" / "Wed" / "Thu" /
+	 *                         "Fri" / "Sat" / "Sun"
+	 * date            =       day month year
+	 * year            =       4*DIGIT / obs-year
+	 * month           =       (FWS month-name FWS) / obs-month
+	 * month-name      =       "Jan" / "Feb" / "Mar" / "Apr" /
+	 *                         "May" / "Jun" / "Jul" / "Aug" /
+	 *                         "Sep" / "Oct" / "Nov" / "Dec"
+	 * day             =       ([FWS] 1*2DIGIT) / obs-day
+	 * time            =       time-of-day FWS zone
+	 * time-of-day     =       hour ":" minute [ ":" second ]
+	 * hour            =       2DIGIT / obs-hour
+	 * minute          =       2DIGIT / obs-minute
+	 * second          =       2DIGIT / obs-second
+	 * zone            =       (( "+" / "-" ) 4DIGIT) / obs-zone
+	 *
+	 * obs-day-of-week =       [CFWS] day-name [CFWS]
+	 * obs-year        =       [CFWS] 2*DIGIT [CFWS]
+	 * obs-month       =       CFWS month-name CFWS
+	 * obs-day         =       [CFWS] 1*2DIGIT [CFWS]
+	 * obs-hour        =       [CFWS] 2DIGIT [CFWS]
+	 * obs-minute      =       [CFWS] 2DIGIT [CFWS]
+	 * obs-second      =       [CFWS] 2DIGIT [CFWS]
+	 ****************************************************************/
+	/*
+	 * For example, a typical date might look like:
+	 *
+	 * Date: Mon,  1 Oct 2007 05:38:10 +0000 (UTC)
+	 */
+	char *tail;
+	char *p;
+	struct tm tmp_tm;
+	/*
+	 * NOTE: Rather than depend on strptime(3) modifying only
+	 * those fields specified in its format string, we use tmp_tm
+	 * and copy the appropriate result to tm.  This is not
+	 * required with the NetBSD strptime(3) implementation.
+	 */
 
-	offset = tm->tm_gmtoff / 60;
-	sign = offset < 0 ? '-' : '+';
-	if (offset < 0)
-		offset = -offset;
-	offset %= 24 * 60;
-	min = offset % 60;
-	hour = offset / 60;
-	(void)sasprintf(&gmtoff, "%c%02d%02d", sign, hour, min);
-	return gmtoff;
+	/* Check for an optional 'day-of-week' */
+	if ((tail = strptime(date, " %a,", &tmp_tm)) == NULL) {
+		tail = date;
+		tm->tm_wday = tmp_tm.tm_wday;
+	}
+
+	/* Get the required 'day' and 'month' */
+	if ((tail = strptime(tail, " %d %b", &tmp_tm)) == NULL)
+		return NULL;
+
+	tm->tm_mday = tmp_tm.tm_mday;
+	tm->tm_mon  = tmp_tm.tm_mon;
+
+	/* Check for 'obs-year' (2 digits) before 'year' (4 digits) */
+	/* XXX - Portable?  This depends on strptime not scanning off
+	 * trailing whitespace unless specified in the format string.
+	 */
+	if ((p = strptime(tail, " %y", &tmp_tm)) != NULL && is_WSP(*p))
+		tail = p;
+	else if ((tail = strptime(tail, " %Y", &tmp_tm)) == NULL)
+		return NULL;
+
+	tm->tm_year = tmp_tm.tm_year;
+
+	/* Get the required 'hour' and 'minute' */
+	if ((tail = strptime(tail, " %H:%M", &tmp_tm)) == NULL)
+		return NULL;
+
+	tm->tm_hour = tmp_tm.tm_hour;
+	tm->tm_min  = tmp_tm.tm_min;
+
+	/* Check for an optional 'seconds' field */
+	if ((p = strptime(tail, ":%S", &tmp_tm)) != NULL) {
+		tail = p;
+		tm->tm_sec = tmp_tm.tm_sec;
+	}
+
+	tail = skip_WSP(tail);
+
+	/*
+	 * The timezone name is frequently in a comment following the
+	 * zone offset.
+	 *
+	 * XXX - this will get overwritten later by timegm(3).
+	 */
+	if ((p = strchr(tail, '(')) != NULL)
+		tm->tm_zone = get_comments(p);
+	else
+		tm->tm_zone = NULL;
+
+	/* what remains should be the gmtoff string */
+	tail = skin(tail);
+	return convert_obs_zone(tail);
+}
+
+/*
+ * Parse the headline string into a tm structure.  Returns a pointer
+ * to first non-whitespace after the date or NULL on error.
+ *
+ * XXX - This needs to be consistent with isdate().
+ */
+static char *
+hl_date_to_tm(const char *buf, struct tm *tm)
+{
+	/****************************************************************
+	 * The BSD and System V headline date formats differ
+	 * and each have an optional timezone field between
+	 * the time and date (see head.c).  Unfortunately,
+	 * strptime(3) doesn't know about timezone fields, so
+	 * we have to handle it ourselves.
+	 *
+	 * char ctype[]        = "Aaa Aaa O0 00:00:00 0000";
+	 * char tmztype[]      = "Aaa Aaa O0 00:00:00 AAA 0000";
+	 * char SysV_ctype[]   = "Aaa Aaa O0 00:00 0000";
+	 * char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
+	 ****************************************************************/
+	char *tail;
+	char *p;
+	char zone[4];
+	struct tm tmp_tm; /* see comment in date_to_tm() */
+	int len;
+
+	zone[0] = '\0';
+	if ((tail = strptime(buf, " %a %b %d %H:%M", &tmp_tm)) == NULL)
+		return NULL;
+
+	tm->tm_wday = tmp_tm.tm_wday;
+	tm->tm_mday = tmp_tm.tm_mday;
+	tm->tm_mon  = tmp_tm.tm_mon;
+	tm->tm_hour = tmp_tm.tm_hour;
+	tm->tm_min  = tmp_tm.tm_min;
+
+	/* Check for an optional 'seconds' field */
+	if ((p = strptime(tail, ":%S", &tmp_tm)) != NULL) {
+		tail = p;
+		tm->tm_sec = tmp_tm.tm_sec;
+	}
+
+	/* Grab an optional timezone name */
+	/*
+	 * XXX - Is the zone name always 3 characters as in isdate()?
+	 */
+	if (sscanf(tail, " %3[A-Z] %n", zone, &len) == 1) {
+		if (zone[0])
+			tm->tm_zone = savestr(zone);
+		tail += len;
+	}
+
+	/* Grab the required year field */
+	tail = strptime(tail, " %Y ", &tmp_tm);
+	tm->tm_year = tmp_tm.tm_year; /* save this even if it failed */
+
+	return tail;
 }
 
 /*
@@ -502,16 +707,14 @@ mk_gmtoff(struct tm *tm)
  * Note: We return the gmtoff as a string as "-0000" has special
  * meaning.  See RFC 2822, sec 3.3.
  */
-PUBLIC const char *
+PUBLIC void
 dateof(struct tm *tm, struct message *mp, int use_hl_date)
 {
 	static int tzinit = 0;
-	char *tail;
-	char *gmtoff;
-	const char *date;
+	char *date = NULL;
+	const char *gmtoff;
 
 	(void)memset(tm, 0, sizeof(*tm));
-	tm->tm_isdst = -1;
 
 	/* Make sure the time zone info is initialized. */
 	if (!tzinit) {
@@ -522,46 +725,30 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		time_t now;
 		(void)time(&now);
 		(void)localtime_r(&now, tm);
-		return mk_gmtoff(tm);
+		return;
 	}
-	gmtoff = NULL; 
-	tail = NULL;
+
 	/*
 	 * See RFC 2822 sec 3.3 for date-time format used in
 	 * the "Date:" field.
 	 *
-	 * Date: Tue, 21 Mar 2006 20:45:30 -0500
+	 * NOTE: The range for the time is 00:00 to 23:60 (to allow
+	 * for a leep second), but I have seen this violated making
+	 * strptime() fail, e.g.,
 	 *
-	 * Notes:
-	 * 1) The 'day-of-week' and 'second' fields are optional so we
-	 *    check 4 possibilities.  This could be optimized.
+	 *   Date: Tue, 24 Oct 2006 24:07:58 +0400
 	 *
-	 * 2) The timezone is frequently in a comment following the
-	 *    zone offset.
-	 *
-	 * 3) The range for the time is 00:00 to 23:60 (for a leep
-	 *    second), but I have seen this violated (e.g., Date: Tue,
-	 *    24 Oct 2006 24:07:58 +0400) making strptime() fail.
-	 *    Thus we fall back on the headline time which was written
-	 *    locally when the message was received.  Of course, this
-	 *    is not the same time as in the Date field.
+	 * In this case we (silently) fall back to the headline time
+	 * which was written locally when the message was received.
+	 * Of course, this is not the same time as in the Date field.
 	 */
 	if (use_hl_date == 0 &&
 	    (date = hfield("date", mp)) != NULL &&
-	    ((tail = strptime(date, " %a, %d %b %Y %T ", tm)) != NULL ||
-	     (tail = strptime(date,     " %d %b %Y %T ", tm)) != NULL ||
-	     (tail = strptime(date, " %a, %d %b %Y %R ", tm)) != NULL ||
-	     (tail = strptime(date,     " %d %b %Y %R ", tm)) != NULL)) {
+	    (gmtoff = date_to_tm(date, tm)) != NULL) {
 		int hour;
 		int min;
 		char sign[2];
-		char *cp;
-
-		if ((cp = strchr(tail, '(')) != NULL)
-			tm->tm_zone = get_comments(cp);
-		else
-			tm->tm_zone = NULL;
-		gmtoff = skin(tail);
+		struct tm save_tm;
 
 		/*
 		 * Scan the gmtoff and use it to convert the time to a
@@ -572,9 +759,14 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		 *
 		 * XXX - This is painful!  Is there a better way?
 		 */
+
+		tm->tm_isdst = -1;	/* let timegm(3) determine tm_isdst */
+		save_tm = *tm;		/* use this if we fail */
+
 		if (strcmp(gmtoff, "-0000") != 0 &&
 		    sscanf(gmtoff, " %1[+-]%2d%2d ", sign, &hour, &min) == 3) {
 			time_t otime;
+
 			if (sign[0] == '-') {
 				tm->tm_hour += hour;
 				tm->tm_min += min;
@@ -583,58 +775,43 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 				tm->tm_hour -= hour;
 				tm->tm_min -= min;
 			}
-			tm->tm_isdst = -1;
-			if ((time_t)(otime = timegm(tm)) == -1)
-				warn("timegm: %s", date);
-			
-			if(localtime_r(&otime, tm) == NULL)
-				warn("localtime: %s", date);
-			
-			/* extract the new gmtoff string */
-			gmtoff = mk_gmtoff(tm);
+			if ((otime = timegm(tm)) == (time_t)-1 ||
+			    localtime_r(&otime, tm) == NULL) {
+				if (debug)
+					warnx("cannot convert date: \"%s\"", date);
+				*tm = save_tm;
+			}
 		}
-		else
+		else {	/* Unable to do the conversion to local time. */
+			*tm = save_tm;
+		     /* tm->tm_isdst = -1; */ /* Set above */
 			tm->tm_gmtoff = 0;
+			tm->tm_zone = NULL;
+		}
 	}
 	else {
-		/*
-		 * The BSD and System V headline date formats differ
-		 * and each have an optional timezone field between
-		 * the time and date (see head.c).  Unfortunately,
-		 * strptime(3) doesn't know about timezone fields, so
-		 * we have to handle it ourselves.
-		 *
-		 * char ctype[]        = "Aaa Aaa O0 00:00:00 0000";
-		 * char tmztype[]      = "Aaa Aaa O0 00:00:00 AAA 0000";
-		 * char SysV_ctype[]   = "Aaa Aaa O0 00:00 0000";
-		 * char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
-		 */
 		struct headline hl;
 		char headline[LINESIZE];
 		char pbuf[LINESIZE];
-		
+
+		if (debug && use_hl_date == 0)
+			warnx("invalid date: \"%s\"", date ? date : "<null>");
+
+		/*
+		 * The headline is written locally so failures here
+		 * should be seen (i.e., not conditional on 'debug').
+		 */
+		tm->tm_isdst = -1; /* let mktime(3) determine tm_isdst */
 		headline[0] = '\0';
-		date = headline;
 		(void)mail_readline(setinput(mp), headline, sizeof(headline));
 		parse(headline, &hl, pbuf);
-		if (hl.l_date != NULL) {
-			if ((tail = my_strptime(hl.l_date, " %a %b %d %T ", tm)) == NULL &&
-			    (tail = my_strptime(hl.l_date, " %a %b %d %R ", tm)) == NULL)
-				warnx("dateof: cannot determine date: %s", hl.l_date);
-			else {
-				tm->tm_isdst = -1;
-				if(mktime(tm) == -1)
-					warn("mktime: %s", date);
+		if (hl.l_date == NULL)
+			warnx("invalid headline: `%s'", headline);
 
-				/* extract the gmtoff string */
-				gmtoff = mk_gmtoff(tm);
-			}
-		}
+		else if (hl_date_to_tm(hl.l_date, tm) == NULL ||
+		    mktime(tm) == -1)
+			warnx("invalid headline date: `%s'", hl.l_date);
 	}
-	/* 'tail' will be NULL here if the mail file is empty, so
-	 * don't check it with an assert(). */
-
-	return gmtoff;
 }
 
 /*
@@ -650,7 +827,7 @@ addrof(struct message *mp)
 }
 
 /************************************************************************
- * The 'address' syntax - from rfc 2822:
+ * The 'address' syntax - from RFC 2822:
  *
  * specials        =       "(" / ")" /     ; Special characters used in
  *                         "<" / ">" /     ;  other parts of the syntax
@@ -716,8 +893,8 @@ get_display_name(char *name)
 	lastq = nbuf;
 	qend = nbuf + sizeof(nbuf) - 1;	/* reserve space for '\0' */
 	quoted = 0;
-	for (p = skip_blank(name); *p != '\0'; p++) {
-		DEBUG(("get_display_name: %s\n", p));
+	for (p = skip_WSP(name); *p != '\0'; p++) {
+		DPRINTF(("get_display_name: %s\n", p));
 		switch (*p) {
 		case '"':	/* quoted-string */
 			q = nbuf;
@@ -741,7 +918,7 @@ get_display_name(char *name)
 		default:
 			if (!quoted && q < qend) {
 				*q++ = *p;
-				if (!isblank((unsigned char)*p)
+				if (!is_WSP(*p)
 				    /* && !is_specials((unsigned char)*p) */ )
 					lastq = q;
 			}
@@ -800,10 +977,10 @@ protect(const char *str)
 {
 	char *p, *q;
 	size_t size;
-	
+
 	if (str == NULL || (size = strlen(str)) == 0)
 		return str;
-	
+
 	p = salloc(2 * size + 1);
 	for (q = p; *str; str++) {
 		*q = *str;
@@ -817,8 +994,6 @@ protect(const char *str)
 static char *
 preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date)
 {
-	const char *gmtoff;
-	const char *zone;
 	const char *subj;
 	const char *addr;
 	const char *user;
@@ -833,8 +1008,7 @@ preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date
 	subj = protect(subjof(mp));
 	addr = protect(addrof(mp));
 	user = protect(userof(mp));
-	gmtoff = dateof(tm, mp, use_hl_date);
-	zone = tm->tm_zone;
+	dateof(tm, mp, use_hl_date);
 	fmtsize = LINESIZE;
 	newfmt = malloc(fmtsize); /* so we can realloc() in check_bufsize() */
 	q = newfmt;
@@ -842,7 +1016,7 @@ preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date
 	while (*p) {
 		if (*p == '%') {
 			const char *fp;
-			fp = subformat(&p, mp, addr, user, subj, gmtoff, zone);
+			fp = subformat(&p, mp, addr, user, subj, tm->tm_isdst);
 			if (fp) {
 				size_t len;
 				len = strlen(fp);
@@ -859,7 +1033,6 @@ preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date
 
 	return newfmt;
 }
-
 
 /*
  * If a format string begins with the USE_HL_DATE string, smsgprintf

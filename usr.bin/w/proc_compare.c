@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.13 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.13.24.1 2007/11/06 23:36:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: proc_compare.c,v 1.13 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.13.24.1 2007/11/06 23:36:18 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: proc_compare.c,v 1.13 2004/02/13 11:36:24 wiz Exp $");
  *
  *	1) Only foreground processes are eligible - implied.
  *	2) Runnable processes are favored over anything else.  The runner
- *	   with the highest CPU utilization is picked (p_estcpu).  Ties are
+ *	   with the highest CPU utilization is picked (p_pctcpu).  Ties are
  *	   broken by picking the highest pid.
  *	3) The sleeper with the shortest sleep time is next.  With ties,
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
@@ -88,9 +88,9 @@ proc_compare(struct kinfo_proc2 *p1, struct kinfo_proc2 *p2)
 		/*
 		 * tie - favor one with highest recent CPU utilization
 		 */
-		if (p2->p_estcpu > p1->p_estcpu)
+		if (p2->p_pctcpu > p1->p_pctcpu)
 			return (1);
-		if (p1->p_estcpu > p2->p_estcpu)
+		if (p1->p_pctcpu > p2->p_pctcpu)
 			return (0);
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}

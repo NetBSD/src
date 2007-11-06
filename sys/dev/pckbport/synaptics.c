@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.15 2007/03/25 20:28:03 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.15.10.1 2007/11/06 23:29:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -56,7 +56,7 @@
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pckbport/pckbportvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.69 2007/07/29 12:15:44 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.69.6.1 2007/11/06 23:30:49 matt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.69 2007/07/29 12:15:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.69.6.1 2007/11/06 23:30:49 matt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.69 2007/07/29 12:15:44 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>
@@ -744,8 +744,6 @@ xdattach(parent, self, aux)
 	 * to start with a clean slate.
 	 */
 	bzero(&xd->sc_dk, sizeof(xd->sc_dk));
-	xd->sc_dk.dk_driver = &xddkdriver;
-	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
 
 	/* if booting, init the xd_softc */
 
@@ -856,6 +854,7 @@ xdattach(parent, self, aux)
 
 	xd->hw_spt = spt;
 	/* Attach the disk: must be before getdisklabel to malloc label */
+	disk_init(&xd->sc_dk, xd->sc_dev.dv_xname, &xddkdriver);
 	disk_attach(&xd->sc_dk);
 
 	if (xdgetdisklabel(xd, buf) != XD_ERR_AOK)

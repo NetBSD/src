@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.24 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.24.24.1 2007/11/06 23:27:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.24 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.24.24.1 2007/11/06 23:27:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.24 2006/11/16 01:33:00 christos Exp 
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

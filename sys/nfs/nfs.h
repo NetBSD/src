@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.67 2007/06/02 03:32:51 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.67.8.1 2007/11/06 23:34:18 matt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -163,16 +163,6 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 #ifndef IO_METASYNC
 #define IO_METASYNC	0
 #endif
-
-/*
- * Set the attribute timeout based on how recently the file has been modified.
- */
-#define	NFS_ATTRTIMEO(nmp, np) \
-    ((nmp->nm_flag & NFSMNT_NOAC) ? 0 : \
-	((((np)->n_flag & NMODIFIED) || \
-	 (time_second - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time_second - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time_second - (np)->n_mtime.tv_sec) / 10)))
 
 /*
  * Export arguments for local filesystem mount calls.

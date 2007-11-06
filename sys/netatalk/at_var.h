@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.6 2007/05/02 20:40:23 dyoung Exp $	 */
+/*	$NetBSD: at_var.h,v 1.6.8.1 2007/11/06 23:33:40 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -92,7 +92,9 @@ sockaddr_at_alloc(const struct at_addr *addr, uint8_t port, int flags)
 {
 	struct sockaddr *sa;
 
-	if ((sa = sockaddr_alloc(AF_APPLETALK, flags)) == NULL)
+	sa = sockaddr_alloc(AF_APPLETALK, sizeof(struct sockaddr_at), flags);
+
+	if (sa == NULL)
 		return NULL;
 
 	sockaddr_at_init1(satosat(sa), addr, port);

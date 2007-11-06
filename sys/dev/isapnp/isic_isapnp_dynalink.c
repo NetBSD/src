@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.8 2007/03/04 06:02:13 christos Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.8.16.1 2007/11/06 23:28:11 matt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -75,7 +75,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.8 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.8.16.1 2007/11/06 23:28:11 matt Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.8 2007/03/04 06:02:13 chr
 #elif defined(__bsdi__)
 #include <i386/isa/pnp.h>
 #else
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #endif
 

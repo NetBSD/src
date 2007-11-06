@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.8 2006/03/29 07:07:41 thorpej Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.8.34.1 2007/11/06 23:28:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.8 2006/03/29 07:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.8.34.1 2007/11/06 23:28:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.8 2006/03/29 07:07:41 thorpej Exp $
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/mvme/lptvar.h>
 #include <dev/mvme/pcctworeg.h>

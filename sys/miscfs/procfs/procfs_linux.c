@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.39 2007/05/26 16:21:04 agc Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.39.8.1 2007/11/06 23:33:21 matt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39 2007/05/26 16:21:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39.8.1 2007/11/06 23:33:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		i += 1;
 	}
 
-	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	timersub(&curlwp->l_stime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
@@ -512,7 +512,7 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	timersub(&curlwp->l_stime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
@@ -542,10 +542,10 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -575,11 +575,11 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	free(bf, M_TEMP);
 
 	if (mtabsz > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.24.1 2007/11/06 23:29:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.24.1 2007/11/06 23:29:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,28 @@ ppbmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
+ppb_fix_pcix(device_t self, struct pci_attach_args *pa)
+{
+	pcireg_t reg;
+	int off;
+
+	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+				&off, &reg))
+		return; /* Not a PCIe device */
+
+	if ((reg & 0x000f0000) != 0x00010000) {
+		aprint_normal_dev(self, "unuspported PCI Express version\n");
+		return;
+	}
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, off + 0x18);
+	if (reg & 0x003f) {
+		aprint_normal_dev(self, "disabling notification events\n");
+		reg &= ~0x003f;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, off + 0x18, reg);
+	}
+}
+
+static void
 ppbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ppb_softc *sc = (void *) self;
@@ -91,6 +113,8 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    self->dv_xname);
 		return;
 	}
+
+	ppb_fix_pcix(self, pa);
 
 #if 0
 	/*

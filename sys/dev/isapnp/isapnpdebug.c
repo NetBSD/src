@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.9 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.9.46.1 2007/11/06 23:28:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.9 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.9.46.1 2007/11/06 23:28:10 matt Exp $");
 
 #ifdef DEBUG_ISAPNP
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.9 2005/12/11 12:22:16 christos Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

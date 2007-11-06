@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.11 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.11.4.1 2007/11/06 23:34:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/lock.h>
 #include <sys/lockf.h>
 #include <sys/stat.h>
@@ -83,6 +84,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
+	vp->v_usecount = 1;
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 
 	uobj = &vp->v_uobj;
@@ -127,7 +129,8 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	vn_lock(vp, lockflag & LK_TYPE_MASK);
+	if (lockflag & LK_TYPE_MASK)
+		vn_lock(vp, lockflag & LK_TYPE_MASK);
 	return 0;
 }
 
@@ -154,6 +157,13 @@ void
 vgone(struct vnode *vp)
 {
 
+	vgonel(vp, curlwp);
+}
+
+void
+vgonel(struct vnode *vp, struct lwp *l)
+{
+
 }
 
 void
@@ -173,9 +183,16 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
 
-	if (vp->v_data != (void *)1) {
+	if (vp->v_usecount == 1) {
+		vp->v_usecount = 0;
+		simple_lock(&vp->v_interlock);
+		if (inter_lkp)
+			simple_unlock(inter_lkp);
+		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+		VOP_INACTIVE(vp, l);
+
 		VOP_RECLAIM(vp, l);
-		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	}
 
@@ -295,6 +312,8 @@ namei(struct nameidata *ndp)
 	}
 
 	vp = makevnode(&sb_node, cnp->cn_pnbuf);
+	if (cnp->cn_flags & LOCKLEAF)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	ndp->ni_vp = vp;
 
 	return 0;
@@ -340,7 +359,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 }
 
 int
-vfs_busy(struct mount *mp, int flags, struct simplelock *interlck)
+vfs_busy(struct mount *mp, int flags, kmutex_t *interlck)
 {
 
 	return 0;

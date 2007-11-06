@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.8 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.8.24.1 2007/11/06 23:28:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.8 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.8.24.1 2007/11/06 23:28:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.8 2006/11/16 01:33:05 christos E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>

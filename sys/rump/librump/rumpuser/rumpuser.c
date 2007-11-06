@@ -1,9 +1,10 @@
-/*	$NetBSD: rumpuser.c,v 1.6 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.6.4.1 2007/11/06 23:34:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by Google Summer of Code
+ * and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,8 +47,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
@@ -138,32 +140,63 @@ rumpuser_ioctl(int fd, u_long cmd, void *data, int *error)
 	DOCALL(int, (ioctl(fd, cmd, data)));
 }
 
-void
-rumpuser_close(int fd)
+int
+rumpuser_close(int fd, int *error)
 {
 
-	close(fd);
-}
-
-ssize_t
-rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
-{
-
-	DOCALL(ssize_t, (pread(fd, data, size, offset)));
-}
-
-ssize_t
-rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
-{
-
-	DOCALL(ssize_t, (pwrite(fd, data, size, offset)));
+	DOCALL(int, close(fd));
 }
 
 int
-rumpuser_gettimeofday(struct timeval *tv)
+rumpuser_fsync(int fd, int *error)
 {
 
-	return gettimeofday(tv, NULL);
+	DOCALL(int, fsync(fd));
+}
+
+void
+rumpuser_read(int fd, void *data, size_t size, off_t offset,
+	void *biodonecookie)
+{
+	ssize_t rv;
+	int error;
+
+	error = 0;
+	rv = pread(fd, data, size, offset);
+
+	/* check against <0 instead of ==-1 to get typing below right */
+	if (rv < 0) {
+		error = errno;
+		rv = 0;
+	}
+
+	rump_biodone(biodonecookie, rv, error);
+}
+
+void
+rumpuser_write(int fd, const void *data, size_t size, off_t offset,
+	void *biodonecookie)
+{
+	ssize_t rv;
+	int error;
+
+	error = 0;
+	rv = pwrite(fd, data, size, offset);
+
+	/* check against <0 instead of ==-1 to get typing below right */
+	if (rv < 0) {
+		error = errno;
+		rv = 0;
+	}
+
+	rump_biodone(biodonecookie, rv, error);
+}
+
+int
+rumpuser_gettimeofday(struct timeval *tv, int *error)
+{
+
+	DOCALL(int, gettimeofday(tv, NULL));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.14 2007/06/04 18:00:51 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.14.4.1 2007/11/06 23:36:36 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -227,7 +227,7 @@ init_transport(struct netconfig *nconf)
 		(nconf->nc_semantics != NC_TPI_COTS) &&
 		(nconf->nc_semantics != NC_TPI_COTS_ORD))
 		return 1;	/* not my type */
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging) {
 		int i;
 		char **s;
@@ -315,7 +315,7 @@ init_transport(struct netconfig *nconf)
 		return 1;
 	}
 	(void)memcpy(taddr.addr.buf, sa, addrlen);
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging) {
 		/* for debugging print out our universal address */
 		char *uaddr;
@@ -448,7 +448,7 @@ init_transport(struct netconfig *nconf)
 
 	/* decide if bound checking works for this transport */
 	status = add_bndlist(nconf, &taddr.addr);
-#ifdef BIND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging) {
 		if (status < 0) {
 			fprintf(stderr, "Error in finding bind status for %s\n",
@@ -468,7 +468,7 @@ init_transport(struct netconfig *nconf)
 	if (nconf->nc_semantics == NC_TPI_CLTS) {
 		status = create_rmtcall_fd(nconf);
 
-#ifdef BIND_DEBUG
+#ifdef RPCBIND_DEBUG
 		if (debugging) {
 			if (status < 0) {
 				fprintf(stderr,

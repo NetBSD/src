@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.35 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.35.24.1 2007/11/06 23:29:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.35 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.35.24.1 2007/11/06 23:29:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/select.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>

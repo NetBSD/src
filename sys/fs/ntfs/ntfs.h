@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.16 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.16.16.1 2007/11/06 23:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -308,7 +308,7 @@ MALLOC_DECLARE(M_NTFSRUN);
 #ifdef __NetBSD__
 typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
-#define bqrelse(bp)		brelse(bp)
+#define bqrelse(bp)		brelse(bp, 0)
 #else /* !NetBSD */
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (d))
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))

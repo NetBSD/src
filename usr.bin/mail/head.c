@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.20 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.20.8.1 2007/11/06 23:35:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.20 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.20.8.1 2007/11/06 23:35:52 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,8 +118,8 @@ static int
 isdate(const char date[])
 {
 
-	return cmatch(date, ctype) || 
-	       cmatch(date, tmztype) || 
+	return cmatch(date, ctype) ||
+	       cmatch(date, tmztype) ||
 	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
 }
 
@@ -127,10 +127,9 @@ static void
 fail(const char linebuf[], const char reason[])
 {
 #ifndef FMT_PROG
-	if (value(ENAME_DEBUG) == NULL)
-		return;
-	(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf,
-	    reason);
+	if (debug)
+		(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n",
+		    linebuf, reason);
 #endif
 }
 
@@ -142,29 +141,24 @@ fail(const char linebuf[], const char reason[])
 static const char *
 nextword(const char *wp, char *wbuf)
 {
-	int c;
-
 	if (wp == NULL) {
 		*wbuf = 0;
 		return NULL;
 	}
-	while ((c = *wp++) && c != ' ' && c != '\t') {
-		*wbuf++ = c;
-		if (c == '"') {
- 			while ((c = *wp++) && c != '"')
- 				*wbuf++ = c;
- 			if (c == '"')
- 				*wbuf++ = c;
-			else
-				wp--;
- 		}
+	while (*wp && !is_WSP(*wp)) {
+		*wbuf++ = *wp;
+		if (*wp++ == '"') {
+ 			while (*wp && *wp != '"')
+ 				*wbuf++ = *wp++;
+ 			if (*wp == '"')
+ 				*wbuf++ = *wp++;
+		}
 	}
 	*wbuf = '\0';
-	for (; c == ' ' || c == '\t'; c = *wp++)
-		continue;
-	if (c == 0)
+	wp = skip_WSP(wp);
+	if (*wp == '\0')
 		return NULL;
-	return wp - 1;
+	return wp;
 }
 
 /*
@@ -191,6 +185,9 @@ copyin(const char *src, char **space)
  * Copy the line into dynamic string space, then set
  * pointers into the copied line in the passed headline
  * structure.  Actually, it scans.
+ *
+ * XXX - line[], pbuf[], and word[] must be LINESIZE in length or
+ * overflow can occur in nextword() or copyin().
  */
 PUBLIC void
 parse(const char line[], struct headline *hl, char pbuf[])

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.40 2007/07/29 21:17:41 rumble Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.40.6.1 2007/11/06 23:31:10 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.40 2007/07/29 21:17:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.40.6.1 2007/11/06 23:31:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,11 +530,11 @@ msdosfs_read(v)
 		    NOCRED, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		error = uiomove((char *)bp->b_data + on, (int) n, uio);
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -1131,7 +1131,7 @@ abortit:
 		    pmp->pm_bpcluster, NOCRED, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
-			brelse(bp);
+			brelse(bp, 0);
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
@@ -1428,7 +1428,7 @@ msdosfs_readdir(v)
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
-	struct dirent dirbuf;
+	struct dirent *dirbuf;
 	struct uio *uio = ap->a_uio;
 	off_t *cookies = NULL;
 	int ncookies = 0, nc = 0;
@@ -1450,11 +1450,6 @@ msdosfs_readdir(v)
 		return (ENOTDIR);
 
 	/*
-	 * To be safe, initialize dirbuf
-	 */
-	memset(dirbuf.d_name, 0, sizeof(dirbuf.d_name));
-
-	/*
 	 * If the user buffer is smaller than the size of one dos directory
 	 * entry or the file offset is not a multiple of the size of a
 	 * directory entry, then we fail the read.
@@ -1467,6 +1462,9 @@ msdosfs_readdir(v)
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
 	uio_off = uio->uio_offset;
+	
+	/* Allocate a temporary dirent buffer. */
+	dirbuf = malloc(sizeof(struct dirent), M_MSDOSFSTMP, M_WAITOK | M_ZERO);
 
 	if (ap->a_ncookies) {
 		nc = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
@@ -1494,29 +1492,28 @@ msdosfs_readdir(v)
 			for (n = (int)offset / sizeof(struct direntry);
 			     n < 2; n++) {
 				if (FAT32(pmp))
-					dirbuf.d_fileno = cntobn(pmp,
+					dirbuf->d_fileno = cntobn(pmp,
 					     (ino_t)pmp->pm_rootdirblk)
 					     * dirsperblk;
 				else
-					dirbuf.d_fileno = 1;
-				dirbuf.d_type = DT_DIR;
+					dirbuf->d_fileno = 1;
+				dirbuf->d_type = DT_DIR;
 				switch (n) {
 				case 0:
-					dirbuf.d_namlen = 1;
-					strlcpy(dirbuf.d_name, ".",
-					    sizeof(dirbuf.d_name));
+					dirbuf->d_namlen = 1;
+					strlcpy(dirbuf->d_name, ".",
+					    sizeof(dirbuf->d_name));
 					break;
 				case 1:
-					dirbuf.d_namlen = 2;
-					strlcpy(dirbuf.d_name, "..",
-					    sizeof(dirbuf.d_name));
+					dirbuf->d_namlen = 2;
+					strlcpy(dirbuf->d_name, "..",
+					    sizeof(dirbuf->d_name));
 					break;
 				}
-				dirbuf.d_reclen = _DIRENT_SIZE(&dirbuf);
-				if (uio->uio_resid < dirbuf.d_reclen)
+				dirbuf->d_reclen = _DIRENT_SIZE(dirbuf);
+				if (uio->uio_resid < dirbuf->d_reclen)
 					goto out;
-				error = uiomove(&dirbuf,
-						dirbuf.d_reclen, uio);
+				error = uiomove(dirbuf, dirbuf->d_reclen, uio);
 				if (error)
 					goto out;
 				offset += sizeof(struct direntry);
@@ -1544,7 +1541,8 @@ msdosfs_readdir(v)
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
+			free(dirbuf, M_MSDOSFSTMP);
 			return (error);
 		}
 		n = MIN(n, blsize - bp->b_resid);
@@ -1565,7 +1563,7 @@ msdosfs_readdir(v)
 			 * If this is an unused entry, we can stop.
 			 */
 			if (dentp->deName[0] == SLOT_EMPTY) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			/*
@@ -1582,7 +1580,8 @@ msdosfs_readdir(v)
 			if (dentp->deAttributes == ATTR_WIN95) {
 				if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 					continue;
-				chksum = win2unixfn((struct winentry *)dentp, &dirbuf, chksum);
+				chksum = win2unixfn((struct winentry *)dentp,
+				    dirbuf, chksum);
 				continue;
 			}
 
@@ -1612,28 +1611,28 @@ msdosfs_readdir(v)
 						fileno = 1;
 				else
 					fileno = cntobn(pmp, fileno) * dirsperblk;
-				dirbuf.d_fileno = fileno;
-				dirbuf.d_type = DT_DIR;
+				dirbuf->d_fileno = fileno;
+				dirbuf->d_type = DT_DIR;
 			} else {
-				dirbuf.d_fileno = offset / sizeof(struct direntry);
-				dirbuf.d_type = DT_REG;
+				dirbuf->d_fileno =
+				    offset / sizeof(struct direntry);
+				dirbuf->d_type = DT_REG;
 			}
 			if (chksum != winChksum(dentp->deName))
-				dirbuf.d_namlen = dos2unixfn(dentp->deName,
-				    (u_char *)dirbuf.d_name,
+				dirbuf->d_namlen = dos2unixfn(dentp->deName,
+				    (u_char *)dirbuf->d_name,
 				    pmp->pm_flags & MSDOSFSMNT_SHORTNAME);
 			else
-				dirbuf.d_name[dirbuf.d_namlen] = 0;
+				dirbuf->d_name[dirbuf->d_namlen] = 0;
 			chksum = -1;
-			dirbuf.d_reclen = _DIRENT_SIZE(&dirbuf);
-			if (uio->uio_resid < dirbuf.d_reclen) {
-				brelse(bp);
+			dirbuf->d_reclen = _DIRENT_SIZE(dirbuf);
+			if (uio->uio_resid < dirbuf->d_reclen) {
+				brelse(bp, 0);
 				goto out;
 			}
-			error = uiomove(&dirbuf,
-					dirbuf.d_reclen, uio);
+			error = uiomove(dirbuf, dirbuf->d_reclen, uio);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				goto out;
 			}
 			uio_off = offset + sizeof(struct direntry);
@@ -1641,12 +1640,12 @@ msdosfs_readdir(v)
 				*cookies++ = offset + sizeof(struct direntry);
 				ncookies++;
 				if (ncookies >= nc) {
-					brelse(bp);
+					brelse(bp, 0);
 					goto out;
 				}
 			}
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 out:
@@ -1665,6 +1664,7 @@ out:
 		} else
 			*ap->a_ncookies = ncookies;
 	}
+	free(dirbuf, M_MSDOSFSTMP);
 	return (error);
 }
 

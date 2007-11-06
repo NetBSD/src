@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2007/06/13 19:39:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27.4.1 2007/11/06 23:35:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2007/06/13 19:39:54 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27.4.1 2007/11/06 23:35:54 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,10 +151,9 @@ lexpand(char *str, int ntype)
 	list = estrdup(str);
 	word = list;
 	for (word = list; *word; word = p) {
-		while (isblank((unsigned char)*word))
-			continue;
+		word = skip_WSP(word);
 		for (p = word;
-		     *p && !isblank((unsigned char)*p) && *p != ',';
+		     *p && !is_WSP(*p) && *p != ',';
 		     p++)
 			continue;
 		if (*p)
@@ -346,7 +345,7 @@ main(int argc, char *argv[])
 			(void)fprintf(stderr,
 			    "%s: option requires an argument -- %c\n",
 			    getprogname(), optopt);
-			
+
 			/* FALLTHROUGH */
 		case '?':
 			/*
@@ -378,7 +377,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	}
 	for (i = optind; (argv[i]) && (*argv[i] != '-'); i++)
 		to = cat(to, nalloc(argv[i], GTO));
-	for (; argv[i]; i++)
+	for (/*EMPTY*/; argv[i]; i++)
 		smopts = cat(smopts, nalloc(argv[i], GSMOPTS));
 	/*
 	 * Check for inconsistent arguments.
@@ -398,7 +397,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	input = stdin;
 	mailmode = Hflag ? mm_hdrsonly :
 	    to ? mm_sending : mm_receiving;
-	    
+
 	spreserve();
 	if (!nosrc)
 		load(_PATH_MASTER_RC);
@@ -460,7 +459,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 		(void)signal(SIGQUIT, SIG_IGN);
 		quit();
 		break;
-		
+
 	default:
 		assert(/*CONSTCOND*/0);
 		break;

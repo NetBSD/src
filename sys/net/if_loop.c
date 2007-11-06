@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.64 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.64.16.1 2007/11/06 23:33:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64.16.1 2007/11/06 23:33:32 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.64 2007/03/04 06:03:16 christos Exp $"
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -445,7 +445,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 
 #ifdef INET
 		case AF_INET:

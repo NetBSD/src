@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.35 2007/02/05 19:46:24 jwise Exp $	*/
+/*	$NetBSD: man.c,v 1.35.4.1 2007/11/06 23:36:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.35 2007/02/05 19:46:24 jwise Exp $");
+__RCSID("$NetBSD: man.c,v 1.35.4.1 2007/11/06 23:36:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: man.c,v 1.35 2007/02/05 19:46:24 jwise Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "manconf.h"
 #include "pathnames.h"
@@ -858,18 +859,10 @@ jump(char **argv, char *flag, char *name)
 static void
 onsig(int signo)
 {
-	sigset_t set;
 
 	(void)cleanup();
 
-	(void)signal(signo, SIG_DFL);
-
-	/* unblock the signal */
-	sigemptyset(&set);
-	sigaddset(&set, signo);
-	sigprocmask(SIG_UNBLOCK, &set, (sigset_t *) NULL);
-
-	(void)kill(getpid(), signo);
+	(void)raise_default_signal(signo);
 
 	/* NOTREACHED */
 	exit (1);

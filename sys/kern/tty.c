@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.197.8.1 2007/11/06 23:32:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.8.1 2007/11/06 23:32:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2473,7 +2473,7 @@ ttyinfo(struct tty *tp, int fromsig)
  *
  *	1) Only foreground processes are eligible - implied.
  *	2) Runnable processes are favored over anything else.  The runner
- *	   with the highest CPU utilization is picked (p_estcpu).  Ties are
+ *	   with the highest CPU utilization is picked (l_pctcpu).  Ties are
  *	   broken by picking the highest pid.
  *	3) The sleeper with the shortest sleep time is next.  With ties,
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
@@ -2490,6 +2490,7 @@ ttyinfo(struct tty *tp, int fromsig)
 static int
 proc_compare(struct proc *p1, struct proc *p2)
 {
+	lwp_t *l1, *l2;
 
 	if (p1 == NULL)
 		return (1);
@@ -2505,10 +2506,10 @@ proc_compare(struct proc *p1, struct proc *p2)
 		/*
 		 * tie - favor one with highest recent CPU utilization
 		 */
-		if (p2->p_estcpu > p1->p_estcpu)
+		l1 = LIST_FIRST(&p1->p_lwps);
+		l2 = LIST_FIRST(&p2->p_lwps);
+		if (l2->l_pctcpu > l1->l_pctcpu)
 			return (1);
-		if (p1->p_estcpu > p2->p_estcpu)
-			return (0);
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}
 	/*
@@ -2645,6 +2646,7 @@ ttymalloc(void)
 	memset(tp, 0, sizeof(*tp));
 	simple_lock_init(&tp->t_slock);
 	callout_init(&tp->t_rstrt_ch, 0);
+	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);
@@ -2652,6 +2654,8 @@ ttymalloc(void)
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
+	selinit(&tp->t_rsel);
+	selinit(&tp->t_wsel);
 	return (tp);
 }
 
@@ -2670,6 +2674,8 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	seldestroy(&tp->t_rsel);
+	seldestroy(&tp->t_wsel);
 	pool_put(&tty_pool, tp);
 }
 

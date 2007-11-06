@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.8 2007/07/01 07:39:47 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.8.4.1 2007/11/06 23:36:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -293,6 +293,7 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	prop_dictionary_t dict;
 	prop_object_t obj;
 	const char *argv[6];
+	char *buf = NULL;
 	int error;
 
 	error = prop_dictionary_recv_ioctl(fd, POWER_EVENT_RECVDICT, &dict);
@@ -303,8 +304,11 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 		return;
 	}
 	
-	if (debug)
-		printf("%s", prop_dictionary_externalize(dict));
+	if (debug) {
+		buf = prop_dictionary_externalize(dict);
+		printf("%s", buf);
+		free(buf);
+	}
 
 	obj = prop_dictionary_get(dict, "powerd-script-name");
 	argv[0] = prop_string_cstring_nocopy(obj);
@@ -318,12 +322,10 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	obj = prop_dictionary_get(dict, "sensor-name");
 	argv[3] = prop_string_cstring_nocopy(obj);
 
-	obj = prop_dictionary_get(dict, "drive-state-desc");
+	obj = prop_dictionary_get(dict, "state-description");
 	argv[4] = prop_string_cstring_nocopy(obj);
 
 	argv[5] = NULL;
-
-	prop_object_release(dict);
 
 	run_script(argv);
 }

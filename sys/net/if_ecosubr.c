@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.24 2007/08/26 22:59:08 dyoung Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.24 2007/08/26 22:59:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -130,7 +130,8 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 /*	ifp->if_baudrate...; */
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
+	    ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = eco_broadcastaddr;
 

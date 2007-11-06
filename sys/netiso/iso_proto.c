@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.24 2007/05/06 02:56:38 dyoung Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.24.8.1 2007/11/06 23:34:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.24 2007/05/06 02:56:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.24.8.1 2007/11/06 23:34:17 matt Exp $");
 
 
 #include <sys/param.h>
@@ -173,9 +173,6 @@ const struct protosw  isosw[] = {
 
 extern struct ifqueue clnlintrq;
 
-POOL_INIT(sockaddr_iso_pool, sizeof(struct sockaddr_iso), 0, 0, 0,
-    "sockaddr_iso_pool", NULL, IPL_NET);
-
 struct domain   isodomain = {
 	.dom_family = PF_ISO,
 	.dom_name = "iso-domain",
@@ -192,8 +189,6 @@ struct domain   isodomain = {
 	.dom_ifqueues = { &clnlintrq, NULL },		/* ifqueues */
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_sa_pool = &sockaddr_iso_pool,
-	.dom_sa_len = sizeof(struct sockaddr_iso),
 	.dom_rtcache = LIST_HEAD_INITIALIZER(isodomain.dom_rtcache),
 	.dom_sockaddr_cmp = sockaddr_iso_cmp
 };

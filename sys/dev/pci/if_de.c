@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.124 2007/07/09 21:00:53 ad Exp $	*/
+/*	$NetBSD: if_de.c,v 1.124.8.1 2007/11/06 23:28:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.124 2007/07/09 21:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.124.8.1 2007/11/06 23:28:56 matt Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -138,8 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.124 2007/07/09 21:00:53 ad Exp $");
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -4832,12 +4832,7 @@ tulip_ifioctl(
 	    /*
 	     * Update multicast listeners
 	     */
-	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti(ifr, TULIP_ETHERCOM(sc));
-	    else
-		error = ether_delmulti(ifr, TULIP_ETHERCOM(sc));
-
-	    if (error == ENETRESET) {
+	    if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING) {
 		    tulip_addr_filter(sc);	/* reset multicast filtering */
 		    tulip_init(sc);

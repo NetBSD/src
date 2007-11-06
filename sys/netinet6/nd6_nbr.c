@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.79 2007/08/26 23:07:17 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.79.2.1 2007/11/06 23:34:09 matt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.79 2007/08/26 23:07:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.79.2.1 2007/11/06 23:34:09 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -351,7 +351,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	struct ip6_moptions im6o;
 	int icmp6len;
 	int maxlen;
-	void *mac;
+	const void *mac;
 	struct route ro;
 
 	memset(&ro, 0, sizeof(ro));
@@ -666,7 +666,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Record link-layer address, and update the state.
 		 */
-		(void)sockaddr_dl_setaddr(sdl, lladdr, ifp->if_addrlen);
+		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
+		    ifp->if_addrlen);
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -740,8 +741,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * Update link-local address, if any.
 			 */
 			if (lladdr != NULL) {
-				sdl->sdl_alen = ifp->if_addrlen;
-				bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
+				(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len,
+				    lladdr, ifp->if_addrlen);
 			}
 
 			/*
@@ -986,8 +987,8 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	return;
 }
 
-void *
-nd6_ifptomac(struct ifnet *ifp)
+const void *
+nd6_ifptomac(const struct ifnet *ifp)
 {
 	switch (ifp->if_type) {
 	case IFT_ARCNET:
@@ -998,7 +999,7 @@ nd6_ifptomac(struct ifnet *ifp)
 	case IFT_CARP:
 	case IFT_L2VLAN:
 	case IFT_IEEE80211:
-		return LLADDR(ifp->if_sadl);
+		return CLLADDR(ifp->if_sadl);
 	default:
 		return NULL;
 	}

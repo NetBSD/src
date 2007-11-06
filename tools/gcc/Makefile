@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2007/06/07 14:36:27 he Exp $
+#	$NetBSD: Makefile,v 1.26.4.1 2007/11/06 23:35:37 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-threads \
 		${VAX_CONFIGURE_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--enable-languages="${GCC_LANGUAGES}"
+		--enable-languages="${GCC_LANGUAGES}" \
+		--enable-__cxa_atexit
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
@@ -76,7 +77,8 @@ native-gcc: .native/.configure_done
 			${VAX_CONFIGURE_ARGS} \
 			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM}) && \
+			--target=${MACHINE_GNU_PLATFORM} \
+			--enable-__cxa_atexit) && \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty)
 .if ${HAVE_GCC} == 4
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \

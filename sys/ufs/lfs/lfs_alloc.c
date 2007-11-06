@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.101 2007/07/10 09:50:08 hannken Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.101.8.1 2007/11/06 23:35:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.101 2007/07/10 09:50:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.101.8.1 2007/11/06 23:35:15 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -239,7 +239,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	     (long long)new_ino, (long long)ifp->if_nextfree));
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
@@ -456,8 +456,8 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	lfs_unmark_vnode(vp);
-	if (vp->v_flag & VDIROP) {
-		vp->v_flag &= ~VDIROP;
+	if (vp->v_uflag & VU_DIROP) {
+		vp->v_uflag &= ~VU_DIROP;
 		simple_lock(&fs->lfs_interlock);
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
@@ -651,7 +651,7 @@ lfs_order_freelist(struct lfs *fs)
 			if (firstino == LFS_UNUSED_INUM)
 				firstino = ino;
 			else {
-				brelse(bp);
+				brelse(bp, 0);
 
 				LFS_IENTRY(ifp, fs, lastino, bp);
 				ifp->if_nextfree = ino;
@@ -665,7 +665,7 @@ lfs_order_freelist(struct lfs *fs)
 		}
 
 		if ((ino + 1) % fs->lfs_ifpb == 0)
-			brelse(bp);
+			brelse(bp, 0);
 	}
 
 	LFS_PUT_HEADFREE(fs, cip, bp, firstino);

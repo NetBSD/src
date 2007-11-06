@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/19 21:24:21 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2007/11/06 23:34:31 matt Exp $
 #
+
+.include <bsd.own.mk>
 
 LIB=		ukfs
 

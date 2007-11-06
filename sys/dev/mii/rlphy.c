@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.15 2007/05/09 23:16:37 tsutsui Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.15.8.1 2007/11/06 23:28:23 matt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15 2007/05/09 23:16:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15.8.1 2007/11/06 23:28:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15 2007/05/09 23:16:37 tsutsui Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/rtl81x9reg.h>
 
 struct rlphy_softc {
@@ -78,7 +78,7 @@ const struct mii_phy_funcs rlphy_funcs = {
 
 static const struct mii_phydesc rlphys[] = {
 	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
-          MII_STR_yyREALTEK_RTL8201L },
+	  MII_STR_yyREALTEK_RTL8201L },
 	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
 	  MII_STR_ICPLUS_IP101 },
 
@@ -116,6 +116,7 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
+	aprint_naive("\n");
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
 		rsc->sc_rtl8201l = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,

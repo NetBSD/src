@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.77 2007/05/06 02:56:37 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.77.8.1 2007/11/06 23:34:00 matt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.77 2007/05/06 02:56:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.77.8.1 2007/11/06 23:34:00 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -200,7 +200,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = icmp6_input,
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
-	.pr_ctloutput = rip6_ctloutput,
+	.pr_ctloutput = icmp6_ctloutput,
 	.pr_usrreq = rip6_usrreq,
 	.pr_init = icmp6_init,
 },
@@ -350,8 +350,14 @@ const struct ip6protosw inet6sw[] = {
 },
 };
 
-POOL_INIT(sockaddr_in6_pool, sizeof(struct sockaddr_in6), 0, 0, 0,
-    "sockaddr_in6_pool", NULL, IPL_NET);
+static const struct sockaddr_in6 in6_any = {
+	  .sin6_len = sizeof(in6_any)
+	, .sin6_family = AF_INET6
+	, .sin6_port = 0
+	, .sin6_flowinfo = 0
+	, .sin6_addr = IN6ADDR_ANY_INIT
+	, .sin6_scope_id = 0
+};
 
 struct domain inet6domain = {
 	.dom_family = AF_INET6, .dom_name = "internet6",
@@ -365,10 +371,9 @@ struct domain inet6domain = {
 	.dom_ifqueues = { &ip6intrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_sa_pool = &sockaddr_in6_pool,
-	.dom_sa_len = sizeof(struct sockaddr_in6),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in6, sin6_addr),
 	.dom_sa_cmplen = sizeof(struct in6_addr),
+	.dom_sa_any = (const struct sockaddr *)&in6_any,
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inet6domain.dom_rtcache)
 };
 

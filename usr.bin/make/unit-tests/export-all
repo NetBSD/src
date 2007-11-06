@@ -1,0 +1,11 @@
+# $Id: export-all,v 1.1.2.2 2007/11/06 23:36:05 matt Exp $
+
+UT_OK=good
+UT_F=fine
+
+.export
+
+.include "export"
+
+UT_TEST=export-all
+UT_ALL=even this gets exported

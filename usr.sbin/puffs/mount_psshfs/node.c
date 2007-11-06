@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.39 2007/08/24 13:33:51 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.39.2.1 2007/11/06 23:36:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.39 2007/08/24 13:33:51 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.39.2.1 2007/11/06 23:36:32 matt Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -296,10 +296,8 @@ psshfs_node_close(struct puffs_cc *pcc, void *opc, int flags,
 	struct psshfs_node *psn = pn->pn_data;
 
 	if (psn->opencount > 0)
-		psn->opencount--;
-
-	if (psn->opencount)
-		closehandles(pcc, psn);
+		if (--psn->opencount == 0)
+			closehandles(pcc, psn);
 
 	return 0;
 }
@@ -318,12 +316,6 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 	return 0;
 }
 
-/*
- * XXXX: I'm not really sure I'll export this symbol eventually,
- * so fix this a bit in the future.
- */
-void puffs_goto(struct puffs_cc *);
-
 int
 psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
@@ -336,13 +328,13 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	int i, rv, set_readdir;
 
 	if (psn->stat & PSN_READDIR) {
-		struct psshfs_dirwait dw;
+		struct psshfs_wait pw;
 
 		set_readdir = 0;
-		dw.dw_cc = pcc;
-		LIST_INSERT_HEAD(&psn->dw, &dw, dw_entries);
+		pw.pw_cc = pcc;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		LIST_REMOVE(&dw, dw_entries);
+		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
 	} else {
 		psn->stat |= PSN_READDIR;
 		set_readdir = 1;
@@ -388,10 +380,11 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
 	if (set_readdir) {
-		struct psshfs_dirwait *dw;
+		struct psshfs_wait *pw;
 
-		while ((dw = LIST_FIRST(&psn->dw)) != NULL)
-			puffs_goto(dw->dw_cc);
+		/* all will likely run to completion because of cache */
+		TAILQ_FOREACH(pw, &psn->pw, pw_entries)
+			puffs_cc_schedule(pw->pw_cc);
 
 		psn->stat &= ~PSN_READDIR;
 	}
@@ -411,13 +404,26 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
-		goto out;
+		goto farout;
 	}
 
 	readlen = *resid;
 	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
 	psbuf_put_8(pb, offset);
 	psbuf_put_4(pb, readlen);
+
+	/*
+	 * Do this *after* accessing the file, the handle might not
+	 * exist after blocking.
+	 */
+	if (max_reads && ++psn->readcount > max_reads) {
+		struct psshfs_wait pw;
+
+		pw.pw_cc = pcc;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+	}
+
 	GETRESPONSE(pb);
 
 	rv = psbuf_do_data(pb, buf, &readlen);
@@ -425,6 +431,16 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		*resid -= readlen;
 
  out:
+	if (max_reads && --psn->readcount >= max_reads) {
+		struct psshfs_wait *pw;
+
+		pw = TAILQ_FIRST(&psn->pw);
+		assert(pw != NULL);
+		TAILQ_REMOVE(&psn->pw, pw, pw_entries);
+		puffs_cc_schedule(pw->pw_cc);
+	}
+
+ farout:
 	PSSHFSRETURN(rv);
 }
 

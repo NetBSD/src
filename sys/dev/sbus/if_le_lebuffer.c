@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.21 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.21.46.1 2007/11/06 23:30:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.21 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.21.46.1 2007/11/06 23:30:09 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.21 2005/12/11 12:23:44 christos
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.32 2007/03/04 06:02:20 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.32.16.1 2007/11/06 23:28:59 matt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32 2007/03/04 06:02:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.16.1 2007/11/06 23:28:59 matt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32 2007/03/04 06:02:20 christos Exp $")
 #include <sys/malloc.h>
 #include <sys/conf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -1733,10 +1733,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
 			error = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.31 2007/07/09 21:00:39 ad Exp $	*/
+/*	$NetBSD: tropic.c,v 1.31.8.1 2007/11/06 23:27:14 matt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.31 2007/07/09 21:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.31.8.1 2007/11/06 23:27:14 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.31 2007/07/09 21:00:39 ad Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>

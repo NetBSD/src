@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.18 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.18.46.1 2007/11/06 23:27:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.18 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.18.46.1 2007/11/06 23:27:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.18 2005/12/11 12:21:28 christos Ex
 #include <dev/ic/tms320av110reg.h>
 #include <dev/ic/tms320av110var.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 int tav_open(void *, int);
 void tav_close(void *);

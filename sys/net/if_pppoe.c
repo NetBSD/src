@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.79.8.1 2007/11/06 23:33:33 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79.8.1 2007/11/06 23:33:33 matt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $");
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
+
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
@@ -65,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.79 2007/07/09 21:11:00 ad Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/intr.h>
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
@@ -215,7 +216,7 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-	pppoe_softintr = softintr_establish(IPL_SOFTNET, pppoe_softintr_handler, NULL);
+	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler, NULL);
 }
 
 static int
@@ -485,6 +486,23 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		case PPPOE_TAG_SNAME:
 			break;	/* ignored */
 		case PPPOE_TAG_ACNAME:
+			error = NULL;
+			if (sc != NULL && len > 0) {
+				error = malloc(len+1, M_TEMP, M_NOWAIT);
+				if (error) {
+					n = m_pulldown(m, off + sizeof(*pt),
+					    len, &noff);
+					if (n) {
+						strncpy(error,
+						    mtod(n, char*) + noff,
+						    len);
+						error[len] = '\0';
+					}
+					printf("%s: connected to %s\n",
+					    devname, error);
+					free(error, M_TEMP);
+				}
+			}
 			break;	/* ignored */
 		case PPPOE_TAG_HUNIQUE:
 			if (sc != NULL)

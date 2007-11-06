@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19.2.1 2007/11/06 23:34:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,23 @@ freecn(struct componentname *cnp, int flags)
 	rump_freecn(cnp, flags | RUMPCN_FREECRED);
 }
 
+static void
+makelwp(struct puffs_cc *pcc)
+{
+	pid_t pid;
+	lwpid_t lid;
+
+	puffs_cc_getcaller(pcc, &pid, &lid);
+	rump_setup_curlwp(pid, lid, 1);
+}
+
+static void
+clearlwp(struct puffs_cc *pcc)
+{
+
+	rump_clear_curlwp();
+}
+
 int
 p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
@@ -95,9 +112,10 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	struct puffs_usermount *pu;
 	struct puffs_node *pn_root;
 	struct ukfs *ukfs;
-	extern int puffs_fakecc;
+	extern int puffs_usethreads;
 	int rv, sverrno;
 
+	rv = -1;
 	ukfs_init();
 	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
 	if (ukfs == NULL)
@@ -143,26 +161,28 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	strlcat(typebuf, vfsname, sizeof(typebuf));
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
+	if (pu == NULL)
+		goto out;
 
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
-	puffs_fakecc = 1;
+	puffs_usethreads = 1;
+
+	puffs_set_prepost(pu, makelwp, clearlwp);
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
 		goto out;
-	if ((rv = puffs_mainloop(pu, PUFFSLOOP_NODAEMON)) == -1)
-		goto out;
+	rv = puffs_mainloop(pu, PUFFSLOOP_NODAEMON);
 
  out:
-	if (rv)
-		sverrno = errno;
-	ukfs_release(ukfs, rv);
+	sverrno = errno;
+	ukfs_release(ukfs, 0);
 	if (rv) {
 		errno = sverrno;
 		rv = -1;
 	}
-	
+
 	return rv;
 }
 
@@ -194,6 +214,8 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	cred = cred_create(pcr);
 	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
 	cred_destroy(cred);
+
+	rump_bioops_sync();
 
 	return rv;
 }
@@ -650,7 +672,7 @@ p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
 	rv = RUMP_VOP_INACTIVE(vp, curlwp);
-	if (vp->v_data == (void *)1)
+	if (vp->v_usecount == 0)
 		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
 
 	return rv;

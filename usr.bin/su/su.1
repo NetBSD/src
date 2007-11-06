@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.45 2005/12/15 05:26:36 hubertf Exp $
+.\"	$NetBSD: su.1,v 1.45.12.1 2007/11/06 23:36:15 matt Exp $
 .\"
-.Dd December 15, 2005
+.Dd October 27, 2007
 .Dt SU 1
 .Os
 .Sh NAME
@@ -38,16 +38,44 @@
 .Nm
 .Op Fl Kdflm
 .Op Fl c Ar login-class
-.Op Ar login Op Ar "shell arguments"
+.Oo
+.Ar login Ns Op : Ns Ar group
+.Op Ar "shell arguments"
+.Oc
+.Nm
+.Op Fl Kdflm
+.Op Fl c Ar login-class
+.Oo
+.Ns : Ns Ar group
+.Op Ar "shell arguments"
+.Oc
 .Sh DESCRIPTION
 .Nm
 allows one user to become another user
 .Ar login
 without logging out and in as
-the new user. 
+the new user.
+If a
+.Ar group
+is specified and
+.Ar login
+is a member of
+.Ar group ,
+then the group is changed to
+.Ar group
+rather than to
+.Ar login Ns 's
+primary group.
+If
+.Ar login
+is omitted and
+.Ar group
+is provided (form two above), then
+.Ar login
+is assumed to be the current username.
 .Pp
-When executed by a user, the 
-.Ar login 
+When executed by a user, the
+.Ar login
 user's password is requested.
 When using Kerberos, the password for
 .Ar login

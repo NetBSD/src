@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.39 2007/06/05 17:50:22 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.39.4.1 2007/11/06 23:35:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.39 2007/06/05 17:50:22 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.39.4.1 2007/11/06 23:35:49 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ out:
  * should shift over and 'f' if not.
  */
 static int
-forward(char ms[], FILE *fp, char *fn, int f)
+interpolate(char ms[], FILE *fp, char *fn, int f)
 {
 	int *msgvec;
 	struct ignoretab *ig;
@@ -213,7 +213,7 @@ forward(char ms[], FILE *fp, char *fn, int f)
 	struct mime_info *mip;
 	int retval;
 #endif
-	msgvec = salloc((get_msgCount() + 1) * sizeof *msgvec);
+	msgvec = salloc((get_msgCount() + 1) * sizeof(*msgvec));
 	if (msgvec == NULL)
 		return 0;
 	if (getmsglist(ms, msgvec, 0) < 0)
@@ -232,7 +232,7 @@ forward(char ms[], FILE *fp, char *fn, int f)
 		tabst = "\t";
 	ig = isupper(f) ? NULL : ignore;
 	(void)printf("Interpolating:");
-	for (; *msgvec != 0; msgvec++) {
+	for (/*EMPTY*/; *msgvec != 0; msgvec++) {
 		struct message *mp;
 		char *fmtstr;
 
@@ -262,7 +262,6 @@ forward(char ms[], FILE *fp, char *fn, int f)
 		}
 		if (tabst && (fmtstr = value(ENAME_INDENT_POSTSCRIPT)) != NULL)
 			fmsgprintf(collf, fmtstr, mp);
-			
 	}
 	(void)printf("\n");
 	return 0;
@@ -564,9 +563,7 @@ cont:
 			/*
 			 * Set the Subject list.
 			 */
-			cp = &linebuf[2];
-			while (isspace((unsigned char)*cp))
-				cp++;
+			cp = skip_WSP(&linebuf[2]);
 			hp->h_subject = savestr(cp);
 			break;
 		case 'c':
@@ -589,11 +586,8 @@ cont:
 			 */
 
 			switch(c) {
-				case 'i':			
-					cp = &linebuf[2];
-					while(isspace((unsigned char) *cp))
-						cp++;
-
+				case 'i':
+					cp = skip_WSP(&linebuf[2]);
 					break;
 				case 'a':
 					cp = "sign";
@@ -606,7 +600,7 @@ cont:
 			}
 
 			if (*cp && (cp = value(cp)) != NULL) {
-				(void)printf("%s\n", cp);			
+				(void)printf("%s\n", cp);
 				if (putline(collf, cp, 1) < 0)
 					goto err;
 			}
@@ -623,9 +617,7 @@ cont:
 			 * Search for the file name,
 			 * then open it and copy the contents to collf.
 			 */
-			cp = &linebuf[2];
-			while (isspace((unsigned char)*cp))
-				cp++;
+			cp = skip_WSP(&linebuf[2]);
 			if (*cp == '\0') {
 				(void)printf("Interpolate what file?\n");
 				break;
@@ -704,9 +696,7 @@ cont:
 			/*
 			 * Write the message on a file.
 			 */
-			cp = &linebuf[2];
-			while (*cp == ' ' || *cp == '\t')
-				cp++;
+			cp = skip_WSP(&linebuf[2]);
 			if (*cp == '\0') {
 				(void)fprintf(stderr, "Write what file!?\n");
 				break;
@@ -726,7 +716,7 @@ cont:
 			 * standard list processing garbage.
 			 * If ~f is given, we don't shift over.
 			 */
-			if (forward(linebuf + 2, collf, mailtempname, c) < 0)
+			if (interpolate(linebuf + 2, collf, mailtempname, c) < 0)
 				goto err;
 			goto cont;
 		case '?':

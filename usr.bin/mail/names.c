@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.25 2006/12/25 18:43:29 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.25.4.1 2007/11/06 23:35:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.25 2006/12/25 18:43:29 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.25.4.1 2007/11/06 23:35:56 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ nalloc(char str[], int ntype)
 {
 	struct name *np;
 
-	np = salloc(sizeof *np);
+	np = salloc(sizeof(*np));
 	np->n_flink = NULL;
 	np->n_blink = NULL;
 	np->n_type = ntype;
@@ -109,7 +109,7 @@ yankword(char *ap, char wbuf[])
 				if (nesting <= 0)
 					break;
 			}
-		} else if (*cp == ' ' || *cp == '\t' || *cp == ',')
+		} else if (is_WSP(*cp) || *cp == ',')
 			cp++;
 		else
 			break;
@@ -156,7 +156,7 @@ extract(char line[], int ntype)
 /* XXX - is this really sufficient? */
 static int need_quotes(char *str)
 {
-	return strchr(str, ' ') || strchr(str, '\t');
+	return strpbrk(str, " \t") != NULL;
 }
 
 /*
@@ -548,7 +548,7 @@ unpack(struct name *np)
 	verbose = value(ENAME_VERBOSE) != NULL;
 	if (verbose)
 		extra++;
-	begin = salloc((t + extra) * sizeof *begin);
+	begin = salloc((t + extra) * sizeof(*begin));
 	ap = begin;
 	*ap++ = "sendmail";
 	*ap++ = "-i";
@@ -556,7 +556,7 @@ unpack(struct name *np)
 		*ap++ = "-m";
 	if (verbose)
 		*ap++ = "-v";
-	for (; n != NULL; n = n->n_flink)
+	for (/*EMPTY*/; n != NULL; n = n->n_flink)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
 	*ap = NULL;
@@ -648,7 +648,7 @@ elide(struct name *names)
 			np = np->n_flink;
 			continue;
 		}
-		
+
 		/*
 		 * Now t points to the last entry with the same name
 		 * as np.  Make np point beyond t.

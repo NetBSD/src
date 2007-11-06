@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.62 2007/03/04 06:02:29 christos Exp $ */
+/*      $NetBSD: if_qe.c,v 1.62.16.1 2007/11/06 23:29:59 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62.16.1 2007/11/06 23:29:59 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.62 2007/03/04 06:02:29 christos Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_qereg.h>
@@ -649,7 +649,6 @@ int
 qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -698,11 +697,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

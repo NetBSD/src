@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 2006/04/09 19:12:17 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.22.12.1 2007/11/06 23:36:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.22 2006/04/09 19:12:17 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.22.12.1 2007/11/06 23:36:10 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -334,10 +334,10 @@ set_signals(int reset)
 	if (!reset) {
 		hupval = signal(SIGHUP, SIG_IGN);
 		if (hupval != SIG_IGN)
-			hupval = my_exit;
+			hupval = my_sig_exit;
 		intval = signal(SIGINT, SIG_IGN);
 		if (intval != SIG_IGN)
-			intval = my_exit;
+			intval = my_sig_exit;
 	}
 	Signal(SIGHUP, hupval);
 	Signal(SIGINT, intval);

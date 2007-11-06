@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.46 2007/06/15 13:26:57 joerg Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.46.8.1 2007/11/06 23:28:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46 2007/06/15 13:26:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.8.1 2007/11/06 23:28:43 matt Exp $");
 
 #include "midi.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46 2007/06/15 13:26:57 joerg Exp $");
 
 #include <dev/pci/cs428x.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/bswap.h>
 
 #define BA1READ4(sc, r) bus_space_read_4((sc)->ba1t, (sc)->ba1h, (r))

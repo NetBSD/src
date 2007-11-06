@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.124 2007/05/29 21:32:29 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.124.8.1 2007/11/06 23:33:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -552,6 +552,7 @@ struct	ifreq {
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
 #define	ifr_broadaddr	ifr_ifru.ifru_broadaddr	/* broadcast address */
+#define	ifr_space	ifr_ifru.ifru_space	/* sockaddr_storage */
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
@@ -564,6 +565,19 @@ struct	ifreq {
 #define	ifr_buf		ifr_ifru.ifru_b.b_buf	/* new interface ioctls */
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
 };
+
+#ifdef _KERNEL
+#define	ifreq_setdstaddr	ifreq_setaddr
+#define	ifreq_setbroadaddr	ifreq_setaddr
+#define	ifreq_getdstaddr	ifreq_getaddr
+#define	ifreq_getbroadaddr	ifreq_getaddr
+
+static inline const struct sockaddr *
+ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
+{
+	return &ifr->ifr_addr;
+}
+#endif /* _KERNEL */
 
 struct ifcapreq {
 	char		ifcr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -796,6 +810,8 @@ extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
 
 void    ether_input(struct ifnet *, struct mbuf *);
+
+int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.79 2007/06/12 07:06:48 kiyohara Exp $
+#	$NetBSD: files.usb,v 1.79.8.1 2007/11/06 23:30:30 matt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -59,10 +59,6 @@ file	dev/usb/ugen.c			ugen			needs-flag
 # HID
 # HID "bus"
 define	uhidbus {[ reportid = -1 ]}
-
-# HID processing
-define	hid
-file	dev/usb/hid.c			hid
 
 # HID root device for multiple report IDs
 device	uhidev: hid, uhidbus
@@ -249,6 +245,11 @@ file	dev/usb/ukyopon.c		ukyopon
 device	uslsa: ucombus
 attach	uslsa at usbdevif
 file	dev/usb/uslsa.c			uslsa
+
+# WinChipHead CH341/340 serial driver
+device	uchcom: ucombus
+attach	uchcom at usbdevif
+file	dev/usb/uchcom.c		uchcom
 
 # Scanners
 # Generic scanner support

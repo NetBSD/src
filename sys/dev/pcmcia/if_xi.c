@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.60 2007/03/04 06:02:28 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.60.16.1 2007/11/06 23:29:46 matt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.60 2007/03/04 06:02:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.60.16.1 2007/11/06 23:29:46 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1015,10 +1015,7 @@ xi_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
@@ -1056,12 +1053,12 @@ xi_set_address(sc)
 	int page, num;
 	int i;
 	u_int8_t x;
-	u_int8_t *enaddr;
+	const u_int8_t *enaddr;
 	u_int8_t indaddr[64];
 
 	DPRINTF(XID_CONFIG, ("xi_set_address()\n"));
 
-	enaddr = (u_int8_t *)LLADDR(ifp->if_sadl);
+	enaddr = (const u_int8_t *)CLLADDR(ifp->if_sadl);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
 		for (i = 0; i < 6; i++)
 			indaddr[i] = enaddr[5 - i];

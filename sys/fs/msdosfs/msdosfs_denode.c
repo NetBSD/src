@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.22 2007/07/23 11:05:47 pooka Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.22.6.1 2007/11/06 23:31:08 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22 2007/07/23 11:05:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22.6.1 2007/11/06 23:31:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ msdosfs_init()
 
 	malloc_type_attach(M_MSDOSFSMNT);
 	malloc_type_attach(M_MSDOSFSFAT);
+	malloc_type_attach(M_MSDOSFSTMP);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
@@ -145,6 +146,7 @@ msdosfs_done()
 {
 	hashdone(dehashtbl, M_MSDOSFSMNT);
 	pool_destroy(&msdosfs_denode_pool);
+	malloc_type_detach(M_MSDOSFSTMP);
 	malloc_type_detach(M_MSDOSFSFAT);
 	malloc_type_detach(M_MSDOSFSMNT);
 }
@@ -285,6 +287,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * need to it.
 	 */
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
+	genfs_node_init(nvp, &msdosfs_genfsops);
 	msdosfs_hashins(ldep);
 
 	ldep->de_pmp = pmp;
@@ -303,7 +306,7 @@ deget(pmp, dirclust, diroffset, depp)
 		 * exists), and then use the time and date from that entry
 		 * as the time and date for the root denode.
 		 */
-		nvp->v_flag |= VROOT; /* should be further down		XXX */
+		nvp->v_vflag |= VV_ROOT; /* should be further down XXX */
 
 		ldep->de_Attributes = ATTR_DIRECTORY;
 		if (FAT32(pmp))
@@ -329,10 +332,14 @@ deget(pmp, dirclust, diroffset, depp)
 		/* leave the other fields as garbage */
 	} else {
 		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
-		if (error)
+		if (error) {
+			ldep->de_devvp = NULL;
+			ldep->de_Name[0] = SLOT_DELETED;
+			vput(nvp);
 			return (error);
+		}
 		DE_INTERNALIZE(ldep, direntptr);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/*
@@ -359,7 +366,6 @@ deget(pmp, dirclust, diroffset, depp)
 		}
 	} else
 		nvp->v_type = VREG;
-	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
 	uvm_vnp_setsize(nvp, ldep->de_FileSize);
@@ -405,7 +411,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 	 * recognize the root directory at this point in a file or
 	 * directory's life.
 	 */
-	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp)) {
+	if ((DETOV(dep)->v_vflag & VV_ROOT) && !FAT32(pmp)) {
 		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
@@ -453,7 +459,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
 			    pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 #ifdef MSDOSFS_DEBUG
 				printf("detrunc(): bread fails %d\n", error);
 #endif
@@ -528,7 +534,7 @@ deextend(dep, length, cred)
 	/*
 	 * The root of a DOS filesystem cannot be extended.
 	 */
-	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp))
+	if ((DETOV(dep)->v_vflag & VV_ROOT) && !FAT32(pmp))
 		return (EINVAL);
 
 	/*

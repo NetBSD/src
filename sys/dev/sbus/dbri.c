@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.15 2007/07/20 22:21:51 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.15.6.1 2007/11/06 23:30:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15 2007/07/20 22:21:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15.6.1 2007/11/06 23:30:07 matt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15 2007/07/20 22:21:51 macallan Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <sparc/sparc/auxreg.h>

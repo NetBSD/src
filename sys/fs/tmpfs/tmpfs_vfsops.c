@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.27 2007/08/03 13:00:19 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.27.4.1 2007/11/06 23:31:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27 2007/08/03 13:00:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.1 2007/11/06 23:31:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27 2007/08/03 13:00:19 pooka Exp 
 #include <fs/tmpfs/tmpfs.h>
 
 MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
+MALLOC_JUSTDEFINE(M_TMPFSTMP, "tmpfs temp", "tmpfs temporary structures");
 
 /* --------------------------------------------------------------------- */
 
@@ -410,6 +411,7 @@ tmpfs_init(void)
 {
 
 	malloc_type_attach(M_TMPFSMNT);
+	malloc_type_attach(M_TMPFSTMP);
 }
 
 /* --------------------------------------------------------------------- */
@@ -418,6 +420,7 @@ static void
 tmpfs_done(void)
 {
 
+	malloc_type_detach(M_TMPFSTMP);
 	malloc_type_detach(M_TMPFSMNT);
 }
 

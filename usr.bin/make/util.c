@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.40 2007/01/17 00:21:44 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.40.4.1 2007/11/06 23:36:03 matt Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.40 2007/01/17 00:21:44 hubertf Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.40.4.1 2007/11/06 23:36:03 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.40 2007/01/17 00:21:44 hubertf Exp $");
+__RCSID("$NetBSD: util.c,v 1.40.4.1 2007/11/06 23:36:03 matt Exp $");
 #endif
 #endif
 
@@ -58,6 +58,33 @@ strdup(const char *str)
     p = emalloc(len);
 
     return memcpy(p, str, len);
+}
+#endif
+
+#if !defined(HAVE_EMALLOC) && !defined(HAVE_STRNDUP)
+#include <string.h>
+
+/* strndup
+ *
+ * Make a duplicate of a string, up to a maximum length.
+ * For systems which lack this function.
+ */
+char *
+strndup(const char *str, size_t maxlen)
+{
+    size_t len;
+    char *p;
+
+    if (str == NULL)
+	return NULL;
+    len = strlen(str);
+    if (len > maxlen)
+	len = maxlen;
+    p = emalloc(len + 1);
+
+    memcpy(p, str, len);
+    p[len] = '\0';
+    return p;
 }
 #endif
 

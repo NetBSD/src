@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.87 2007/06/13 21:08:29 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.87.8.1 2007/11/06 23:33:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87 2007/06/13 21:08:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87.8.1 2007/11/06 23:33:47 matt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -137,11 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87 2007/06/13 21:08:29 dyoung Exp $")
 #ifdef EON
 #include <netiso/eonvar.h>
 #endif /* EON */
-
-#include "gre.h"
-#if NGRE > 0
-#include <netinet/ip_gre.h>
-#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -304,28 +299,6 @@ const struct protosw inetsw[] = {
 	.pr_usrreq = rip_usrreq,
 },
 #endif /* NCARP > 0 */
-#if NGRE > 0
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_GRE,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = gre_input, 
-	.pr_output = rip_output,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_usrreq = rip_usrreq,
-},
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_MOBILE,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = gre_mobile_input, 
-	.pr_output = rip_output,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_usrreq = rip_usrreq,
-},
-#endif /* NGRE > 0 */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IGMP,
@@ -404,8 +377,12 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
-POOL_INIT(sockaddr_in_pool, sizeof(struct sockaddr_in), 0, 0, 0,
-    "sockaddr_in_pool", NULL, IPL_NET);
+const struct sockaddr_in in_any = {
+	  .sin_len = sizeof(struct sockaddr_in)
+	, .sin_family = AF_INET
+	, .sin_port = 0
+	, .sin_addr = {.s_addr = 0 /* INADDR_ANY */}
+};
 
 struct domain inetdomain = {
 	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
@@ -424,16 +401,50 @@ struct domain inetdomain = {
 	.dom_ifqueues = { &ipintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_sa_pool = &sockaddr_in_pool,
-	.dom_sa_len = sizeof(struct sockaddr_in),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
 	.dom_sa_cmplen = sizeof(struct in_addr),
+	.dom_sa_any = (const struct sockaddr *)&in_any,
+	.dom_sockaddr_const_addr = sockaddr_in_const_addr,
+	.dom_sockaddr_addr = sockaddr_in_addr,
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
 u_char	ip_protox[IPPROTO_MAX];
 
 int icmperrppslim = 100;			/* 100pps */
+
+static void
+sockaddr_in_addrlen(const struct sockaddr *sa, socklen_t *slenp)
+{
+	socklen_t slen;
+
+	if (slenp == NULL)
+		return;
+
+	slen = sockaddr_getlen(sa);
+	*slenp = (socklen_t)MIN(sizeof(struct in_addr),
+	    slen - MIN(slen, offsetof(struct sockaddr_in, sin_addr)));
+}
+
+const void *
+sockaddr_in_const_addr(const struct sockaddr *sa, socklen_t *slenp)
+{
+	const struct sockaddr_in *sin;
+
+	sockaddr_in_addrlen(sa, slenp);
+	sin = (const struct sockaddr_in *)sa;
+	return &sin->sin_addr;
+}
+
+void *
+sockaddr_in_addr(struct sockaddr *sa, socklen_t *slenp)
+{
+	struct sockaddr_in *sin;
+
+	sockaddr_in_addrlen(sa, slenp);
+	sin = (struct sockaddr_in *)sa;
+	return &sin->sin_addr;
+}
 
 int
 sockaddr_in_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)

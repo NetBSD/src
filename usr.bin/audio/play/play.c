@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.46 2006/05/23 01:07:16 christos Exp $	*/
+/*	$NetBSD: play.c,v 1.46.10.1 2007/11/06 23:35:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.46 2006/05/23 01:07:16 christos Exp $");
+__RCSID("$NetBSD: play.c,v 1.46.10.1 2007/11/06 23:35:40 matt Exp $");
 #endif
 
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: play.c,v 1.46 2006/05/23 01:07:16 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <paths.h>
 
@@ -207,6 +208,9 @@ cleanup(signo)
 	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
 	(void)ioctl(audiofd, AUDIO_SETINFO, &info);
 	close(audiofd);
+	if (signo != 0) {
+		(void)raise_default_signal(signo);
+	}
 	exit(exitstatus);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.96 2007/07/29 13:31:13 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.96.6.1 2007/11/06 23:35:12 matt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96 2007/07/29 13:31:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.6.1 2007/11/06 23:35:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -209,7 +209,7 @@ static	int softdep_process_worklist(struct mount *);
 static	void softdep_move_dependencies(struct buf *, struct buf *);
 static	int softdep_count_dependencies(struct buf *bp, int);
 
-struct bio_ops bioops = {
+static struct bio_ops bioops_softdep = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
@@ -1184,6 +1184,8 @@ softdep_initialize()
 {
 	int i;
 
+	bioopsp = &bioops_softdep;
+
 	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
 	malloc_type_attach(M_NEWBLK);
@@ -1323,7 +1325,7 @@ softdep_mount(devvp, mp, fs, cred)
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
 		    fs->fs_cgsize, cred, &bp)) != 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		cgp = (struct cg *)bp->b_data;
@@ -1332,7 +1334,7 @@ softdep_mount(devvp, mp, fs, cred)
 		cstotal.cs_nifree += ufs_rw32(cgp->cg_cs.cs_nifree, needswap);
 		cstotal.cs_ndir += ufs_rw32(cgp->cg_cs.cs_ndir, needswap);
 		fs->fs_cs(fs, cyl) = cgp->cg_cs;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 #ifdef DEBUG
 	if (bcmp(&cstotal, &fs->fs_cstotal, sizeof cstotal))
@@ -1909,7 +1911,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		}
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
-				brelse(newindirdep->ir_savebp);
+				brelse(newindirdep->ir_savebp, 0);
 				softdep_trackbufs(-1, false);
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
@@ -2106,9 +2108,8 @@ softdep_setup_freeblocks(
 		bp = vp->v_dirtyblkhd.lh_first;
 		(void) inodedep_lookup(fs, ip->i_number, 0, &inodedep);
 		deallocate_dependencies(bp, inodedep);
-		bp->b_flags |= B_INVAL | B_NOCACHE;
 		FREE_LOCK(&lk);
-		brelse(bp);
+		brelse(bp, BC_INVAL | BC_NOCACHE);
 		ACQUIRE_LOCK(&lk);
 	}
 	softdep_free_pagecache(ip);
@@ -2598,8 +2599,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 		fs->fs_pendingblocks -= nblocks;
 		*countp += nblocks;
 	}
-	bp->b_flags |= B_INVAL | B_NOCACHE;
-	brelse(bp);
+	brelse(bp, BC_INVAL | BC_NOCACHE);
 	softdep_trackbufs(-1, false);
 	return (allerror);
 }
@@ -3437,8 +3437,7 @@ softdep_disk_io_initiation(bp)
 			 * dependency can be freed.
 			 */
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
-				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
-				brelse(indirdep->ir_savebp);
+				brelse(indirdep->ir_savebp, BC_INVAL | BC_NOCACHE);
 				softdep_trackbufs(-1, false);
 
 				/* inline expand WORKLIST_REMOVE(wk); */
@@ -4718,7 +4717,7 @@ softdep_fsync(vp, f)
 		 * not now, but then the user was not asking to have it
 		 * written, so we are not breaking any promises.
 		 */
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			break;
 		/*
 		 * We prevent deadlock by always fetching inodes from the
@@ -5729,7 +5728,7 @@ drain_output(vp, islocked)
 	while (vp->v_numoutput) {
 		int s;
 
-		vp->v_flag |= VBWAIT;
+		vp->v_iflag |= VI_BWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
 		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
 			&global_v_numoutput_slock);

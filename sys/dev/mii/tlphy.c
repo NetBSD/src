@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.50 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.50.24.1 2007/11/06 23:28:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.50 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.50.24.1 2007/11/06 23:28:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.50 2006/11/16 21:24:07 christos Exp $");
 #include <sys/socket.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

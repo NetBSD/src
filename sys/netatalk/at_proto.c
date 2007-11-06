@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.14 2007/05/06 02:56:37 dyoung Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.14.8.1 2007/11/06 23:33:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.14 2007/05/06 02:56:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.14.8.1 2007/11/06 23:33:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,6 @@ const struct protosw atalksw[] = {
     },
 };
 
-POOL_INIT(sockaddr_at_pool, sizeof(struct sockaddr_at), 0, 0, 0,
-    "sockaddr_at_pool", NULL, IPL_NET);
-
 struct domain atalkdomain = {
 	.dom_family = PF_APPLETALK,
 	.dom_name = "appletalk",
@@ -81,8 +78,6 @@ struct domain atalkdomain = {
 	.dom_ifqueues = { &atintrq1, &atintrq2 },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_sa_pool = &sockaddr_at_pool,
-	.dom_sa_len = sizeof(struct sockaddr_at),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_at, sat_addr),
 	.dom_sa_cmplen = sizeof(struct at_addr),
 	.dom_rtcache = LIST_HEAD_INITIALIZER(atalkdomain.dom_rtcache)

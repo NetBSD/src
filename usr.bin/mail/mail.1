@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.49 2007/01/05 03:52:35 christos Exp $
+.\"	$NetBSD: mail.1,v 1.49.4.1 2007/11/06 23:35:53 matt Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd December 31, 2006
+.Dd October 29, 2007
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -576,6 +576,24 @@ If the
 .Ic alternates
 command is given with no argument, the current set of alternative
 names is displayed.
+.It Ic bounce
+Takes a list of messages and prompts for an address to bounce the
+messages to.
+If no message is specified, the current message is used.
+All the original header fields are preserved except for the
+.Ql Delivered-To ,
+.Ql X-Original-To
+and
+.Ql Status
+fields.
+The new
+.Ql To
+field contains the bounce address(es) plus any addresses in the old
+.Ql To
+field minus the user's local address and any on the alternates list.
+(See the
+.Ic alternates
+command.)
 .It Ic chdir
 .Pq Ic c
 Changes the user's working directory to that specified, if given.
@@ -590,7 +608,7 @@ does, except that it does not mark the messages it
 is used on for deletion when you quit.
 .It Ic deldups
 Delete duplicate messages based on their
-.Dq Message-Id
+.Ql Message-Id
 field, keeping the first one in the current sort order.
 This can be useful with replies to a mailing list that are also CCed
 to a subscriber.
@@ -623,9 +641,9 @@ and
 .Ar mime-detach-overwrite
 variables to change this behavior.)
 Only MIME parts with an associated filename in the
-.Ql Content-Type:
+.Ql Content-Type
 or
-.Ql Content-Disposition:
+.Ql Content-Disposition
 fields are decoded.
 (See
 .Ic Detach
@@ -714,6 +732,16 @@ means your
 file, and
 .Ql +file
 means a file in your folder directory.
+.It Ic forward
+Takes a list of messages and prompts for an address (or addresses) to
+forward each message to.
+If no message list is specified, the current message is used.
+The mail editor is run for each message allowing the user to enter a
+message that will precede the forward message.
+The message is sent as a multipart/mixed MIME encoded message.
+All header fields except the
+.Ql Status
+field are included.
 .It Ic from
 .Pq Ic f
 Takes a list of messages and prints their message headers.
@@ -1076,9 +1104,9 @@ Tag all messages of the current thread below the level of the
 current message (dot) or the supplied message number if given.
 .It Ic thread
 By default this threads the current message list based on the
-.Dq In-Reply-To
+.Ql In-Reply-To
 and
-.Dq References
+.Ql References
 header fields (intended for this purpose by RFC 2822).
 If given an argument, it will thread on that header field name
 instead.
@@ -1103,9 +1131,9 @@ act on the entire thread (when it is hidden), otherwise they act on
 just the current message.
 .Pp
 Note: the
-.Dq In-Reply-To
+.Ql In-Reply-To
 and
-.Dq Reference
+.Ql Reference
 header fields are necessary to do threading correctly.
 This version of
 .Nm
@@ -1575,8 +1603,13 @@ The string search is case insensitive.
 If
 .Dq x
 is omitted, it will default to the
-.Dq Subject
+.Ql Subject
 header field.
+If
+.Dq y
+is omitted, only those messages that contain the field
+.Dq x
+will be matched.
 The three forms
 .Dq /from:y ,
 .Dq /to:y ,
@@ -1591,10 +1624,10 @@ with
 The second will match all messages containing the substring
 .Dq y
 in the
-.Dq To ,
-.Dq Cc ,
+.Ql To ,
+.Ql Cc ,
 or
-.Dq Bcc
+.Ql Bcc
 header fields.
 The third will match all messages which contain the substring
 .Dq y
@@ -1609,9 +1642,9 @@ is case sensitive, so that
 and
 .Dq /To:y
 can be used to search the
-.Dq From:
+.Ql From
 and
-.Dq To:
+.Ql To
 fields, respectively.
 (See also
 .Ar "regex-search" . )
@@ -1748,9 +1781,9 @@ The number of body lines in the message.
 The total number of lines in the message.
 .It Ar \&%N
 The sender's full name (as in the
-.Ql From:
+.Ql From
 or
-.Ql Sender:
+.Ql Sender
 fields).
 .It Ar \&%O
 The message size.
@@ -1781,7 +1814,7 @@ If the format string begins with
 .Ql "\&%??"
 then the date will be extracted from the headline.
 Otherwise it will be extracted from the
-.Ar Date:
+.Ql Date
 header falling back to the headline if that extraction fails.
 For example, the default format is:
 .Bd -literal -offset 0
@@ -1997,14 +2030,14 @@ commands).
 It is useful if you have multiple email addresses and wish to ensure
 that replies respect them.
 If set, grab the email address(es) from the
-.Dq To:
+.Ql To
 field of the message being replied to.
 If there is only one such address, and if it does not match any
 address in the value of
 .Ar ReplyAsRecipient
 (a comma or space delimited list of addresses, possibly empty), then
 use this address in the
-.Dq From:
+.Ql From
 field of the reply.
 This is accomplished by passing the address to
 .Xr sendmail 1
@@ -2042,7 +2075,7 @@ decodes
 or
 .Ql quoted-printable
 encoding and is enabled according to the
-.Ql Content-Transfer-Encoding:
+.Ql Content-Transfer-Encoding
 of the part.
 The
 .Em MIME-hook

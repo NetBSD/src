@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.166 2007/08/10 15:12:56 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.166.2.1 2007/11/06 23:34:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.166 2007/08/10 15:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.166.2.1 2007/11/06 23:34:19 matt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	 * Then force a getattr rpc to ensure that you have up to date
 	 * attributes.
 	 * NB: This implies that cache data can be read when up to
-	 * NFS_ATTRTIMEO seconds out of date. If you find that you need current
+	 * nfs_attrtimeo seconds out of date. If you find that you need current
 	 * attributes this could be forced by setting n_attrstamp to 0 before
 	 * the VOP_GETATTR() call.
 	 */
@@ -140,7 +140,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	    /*
 	     * Don't cache symlinks.
 	     */
-	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
+	    if ((vp->v_vflag & VV_ROOT) && vp->v_type == VLNK) {
 		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
 	    baddr = (void *)0;
@@ -187,7 +187,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			bp->b_flags |= B_READ;
 			error = nfs_doio(bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				return (error);
 			}
 		}
@@ -238,7 +238,7 @@ diragain:
 			 * deal with it.
 			 */
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			/*
 			 * nfs_request maps NFSERR_BAD_COOKIE to EINVAL.
 			 */
@@ -265,8 +265,7 @@ diragain:
 			KASSERT(bp->b_bcount != bp->b_resid ||
 			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
-			bp->b_flags |= B_NOCACHE;
-			brelse(bp);
+			brelse(bp, BC_NOCACHE);
 			return 0;
 		}
 
@@ -302,7 +301,7 @@ diragain:
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
 			nfs_putdircache(np, ndp);
-			brelse(bp);
+			brelse(bp, 0);
 			nfs_invaldircache(vp, 0);
 			nfs_vinvalbuf(vp, 0, cred, l, 0);
 			goto diragain;
@@ -398,11 +397,10 @@ diragain:
 				rabp->b_dcookie = nndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp)) {
-				    rabp->b_flags |= B_INVAL;
-				    brelse(rabp);
+				    brelse(rabp, BC_INVAL);
 				}
 			    } else
-				brelse(rabp);
+				brelse(rabp, 0);
 			}
 		}
 		nfs_putdircache(np, nndp);
@@ -433,7 +431,7 @@ diragain:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 	    }
 	    if (got_buf)
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n > 0);
 	return (error);
 }
@@ -520,7 +518,7 @@ nfs_write(v)
 		}
 		overwrite = false;
 		if ((uio->uio_offset & PAGE_MASK) == 0) {
-			if ((vp->v_flag & VMAPPED) == 0 &&
+			if ((vp->v_vflag & VV_MAPPED) == 0 &&
 			    bytelen > PAGE_SIZE) {
 				bytelen = trunc_page(bytelen);
 				overwrite = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.14 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.14.2.1 2007/11/06 23:34:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,10 +46,13 @@ typedef struct kauth_cred *kauth_cred_t;
 #endif
 
 struct lwp;
-extern struct lwp *curlwp;
 
 #include "rumpvnode_if.h"
 #include "rumpdefs.h"
+
+#ifndef curlwp
+#define curlwp rump_get_curlwp()
+#endif
 
 void	rump_init(void);
 struct mount	*rump_mnt_init(struct vfsops *, int);
@@ -103,12 +106,18 @@ void		rump_cred_destroy(kauth_cred_t);
 #define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
 
 int	rump_vfs_unmount(struct mount *, int, struct lwp *);
-int	rump_vfs_root(struct mount *, struct vnode **);
+int	rump_vfs_root(struct mount *, struct vnode **, int);
 #if 0
 int	rump_vfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 #endif
 int	rump_vfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
+
+void	rump_bioops_sync(void);
+
+struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
+struct lwp	*rump_get_curlwp(void);
+void		rump_clear_curlwp(void);
 
 #endif /* _SYS_RUMP_H_ */

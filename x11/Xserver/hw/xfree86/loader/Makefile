@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/02/10 10:39:25 ws Exp $
+#	$NetBSD: Makefile,v 1.5.16.1 2007/11/06 23:36:40 matt Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -33,6 +33,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} -DDLOPEN_SUPPORT -DHAS_SHM \
 		-DFONTENC_COMPATIBILITY -DXFree86LOADER -DFONTCACHE
+
+.if ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DUseMMAP -DDoMMAPedMerge
+.endif
 
 CPPFLAGS.loadmod.c=	${X11FLAGS.EXTENSION} -DDEFAULT_MODULE_PATH=\"${X11USRLIBDIR}/modules\"
 CPPFLAGS.xf86sym.c=	${X11FLAGS.EXTENSION}

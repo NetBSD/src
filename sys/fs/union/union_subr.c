@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.27 2007/07/23 08:52:47 pooka Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.27.6.1 2007/11/06 23:31:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.27 2007/07/23 08:52:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.27.6.1 2007/11/06 23:31:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	voff_t uppersz, lowersz;
 	int hash = 0;
-	int vflag;
+	int vflag, iflag;
 	int try;
 
 	if (uppervp == NULLVP && lowervp == NULLVP)
@@ -357,7 +357,8 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	}
 
 	/* detect the root vnode (and aliases) */
-	vflag = VLAYER;
+	iflag = VI_LAYER;
+	vflag = 0;
 	if ((uppervp == um->um_uppervp) &&
 	    ((lowervp == NULLVP) || lowervp == um->um_lowervp)) {
 		if (lowervp == NULLVP) {
@@ -365,7 +366,8 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 			if (lowervp != NULLVP)
 				VREF(lowervp);
 		}
-		vflag = VROOT;
+		iflag = 0;
+		vflag = VV_ROOT;
 	}
 
 loop:
@@ -539,7 +541,8 @@ loop:
 	MALLOC((*vpp)->v_data, void *, sizeof(struct union_node),
 		M_TEMP, M_WAITOK);
 
-	(*vpp)->v_flag |= vflag;
+	(*vpp)->v_vflag |= vflag;
+	(*vpp)->v_iflag |= iflag;
 	(*vpp)->v_vnlock = NULL;	/* Make upper layers call VOP_LOCK */
 	if (uppervp)
 		(*vpp)->v_type = uppervp->v_type;

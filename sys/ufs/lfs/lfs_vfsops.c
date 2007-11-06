@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.244 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.244.4.1 2007/11/06 23:35:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.244 2007/07/31 21:14:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.244.4.1 2007/11/06 23:35:20 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -212,10 +212,10 @@ lfs_writerd(void *arg)
 		 * Look through the list of LFSs to see if any of them
 		 * have requested pageouts.
 		 */
-		simple_lock(&mountlist_slock);
+		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
@@ -243,11 +243,11 @@ lfs_writerd(void *arg)
 					simple_unlock(&fs->lfs_interlock);
 			}
 
-			simple_lock(&mountlist_slock);
+			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
 		}
-		simple_unlock(&mountlist_slock);
+		mutex_exit(&mountlist_lock);
 
 		/*
 		 * If global state wants a flush, flush everything.
@@ -349,9 +349,9 @@ lfs_mountroot()
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
@@ -610,7 +610,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 						  dfs->dlfs_fsbtodb)));
 				sb_addr = dfs->dlfs_sboffs[0] <<
 					  dfs->dlfs_fsbtodb;
-				brelse(bp);
+				brelse(bp, 0);
 				continue;
 			}
 		}
@@ -705,13 +705,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_ops = &lfs_ufsops;
 	ump->um_fstype = UFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
-		bp->b_flags |= B_INVAL;
-		abp->b_flags |= B_INVAL;
+		brelse(bp, BC_INVAL);
+		brelse(abp, BC_INVAL);
+	} else {
+		brelse(bp, 0);
+		brelse(abp, 0);
 	}
-	brelse(bp);
 	bp = NULL;
-	brelse(abp);
 	abp = NULL;
+
 
 	/* Set up the I/O information */
 	fs->lfs_devbsize = secsize;
@@ -827,7 +829,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (changed)
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 
 #ifdef LFS_KERNEL_RFW
@@ -869,18 +871,17 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	vput(vp);
 
 	/* Start the pagedaemon-anticipating daemon */
-	if (lfs_writer_daemon == 0 &&
-	    kthread_create(PRI_NONE, 0, NULL, lfs_writerd, NULL, NULL,
-	    "lfs_writer") != 0)
+	if (lfs_writer_daemon == 0 && kthread_create(PINOD, 0, NULL,
+	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
 
 	return (0);
 
 out:
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	if (abp)
-		brelse(abp);
+		brelse(abp, 0);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -1141,7 +1142,7 @@ retry:
 			ts.tv_nsec = ifp->if_atime_nsec;
 		}
 
-		brelse(bp);
+		brelse(bp, 0);
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
 			mutex_exit(&ufs_hashlock);
@@ -1185,7 +1186,7 @@ retry:
 		 * list by vput().
 		 */
 		vput(vp);
-		brelse(bp);
+		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -1193,8 +1194,7 @@ retry:
 	dip = lfs_ifind(fs, ino, bp);
 	if (dip == NULL) {
 		/* Assume write has not completed yet; try again */
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		brelse(bp, BC_INVAL);
 		++retries;
 		if (retries > LFS_IFIND_RETRIES) {
 #ifdef DEBUG
@@ -1236,7 +1236,7 @@ retry:
 		goto again;
 	}
 	*ip->i_din.ffs1_din = *dip;
-	brelse(bp);
+	brelse(bp, 0);
 
 	if (fs->lfs_version > 1) {
 		ip->i_ffs1_atime = ts.tv_sec;
@@ -1283,7 +1283,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfh.lfid_ino) == NULLVP) {
 		LFS_IENTRY(ifp, fs, lfh.lfid_ino, bp);
 		daddr = ifp->if_daddr;
-		brelse(bp);
+		brelse(bp, 0);
 		if (daddr == LFS_UNUSED_DADDR)
 			return ESTALE;
 	}
@@ -1379,7 +1379,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VXLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
@@ -1954,7 +1954,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			if (sup->su_flags & SEGUSE_SUPERBLOCK)
 				csbbytes += LFS_SBPAD;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		if (badnews) {
 			error = EBUSY;
 			goto out;
@@ -1979,7 +1979,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	vn_lock(ivp, LK_EXCLUSIVE | LK_RETRY);
 	for (i = 0; i < ilast; i++) {
 		bread(ivp, i, fs->lfs_bsize, NOCRED, &bp);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Allocate new Ifile blocks */
@@ -2014,7 +2014,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 				panic("resize: bread src blk failed");
 			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
 			VOP_BWRITE(bp);
-			brelse(obp);
+			brelse(obp, 0);
 		}
 	}
 

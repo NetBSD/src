@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.18 2006/12/15 20:26:03 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.18.4.1 2007/11/06 23:35:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.18 2006/12/15 20:26:03 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.18.4.1 2007/11/06 23:35:49 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,10 @@ const struct cmd cmdtab[] = {
 	{ "file",	file,		0, CMP(f)	T|M|RAWLIST,	0,		1 },
 	{ "folder",	file,		0, CMP(f)	T|M|RAWLIST,	0,		1 },
 	{ "folders",	folders,	S, CMP(n)	T|M|NOLIST,	0,		0 },
+#ifdef MIME_SUPPORT
+	{ "forward",	forward,	0, CMP(n)	R|I|MSGLIST,	0,		0 },
+#endif
+	{ "bounce",	bounce,		0, CMP(n)	R|I|MSGLIST,	0,		0 },
 	{ "?",		help,		S, CMP(n)	M|NOLIST,	0,		0 },
 	{ "z",		scroll,		S, CMP(n)	M|STRLIST,	0,		0 },
 	{ "headers",	headers,	S, CMP(n)	MSGLIST,	0,		MMNDEL },

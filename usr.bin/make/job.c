@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.124.8.1 2007/11/06 23:35:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.124.8.1 2007/11/06 23:35:59 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.124.8.1 2007/11/06 23:35:59 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -201,14 +201,35 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 /*
  * Descriptions for various shells.
  *
- * DEFSHELL in config.h is usually 0, so shells[0] describes the
- * default shell.  If _BASENAME_DEFSHELL is not defined, then shells[0]
- * describes "sh".  If _BASENAME_DEFSHELL is defined, then shells[0]
- * decsribes whatever shell is named by _BASENAME_DEFSHELL, but this
- * shell is assumed to be sh-compatible.
+ * The build environment may set DEFSHELL_INDEX to one of
+ * DEFSHELL_INDEX_SH, DEFSHELL_INDEX_KSH, or DEFSHELL_INDEX_CSH, to
+ * select one of the prefedined shells as the default shell.
+ *
+ * Alternatively, the build environment may set DEFSHELL_CUSTOM to the
+ * name or the full path of a sh-compatible shell, which will be used as
+ * the default shell.
+ *
+ * ".SHELL" lines in Makefiles can choose the default shell from the
+ # set defined here, or add additional shells.
  */
+
+#ifdef DEFSHELL_CUSTOM
+#define DEFSHELL_INDEX_CUSTOM 0
+#define DEFSHELL_INDEX_SH     1
+#define DEFSHELL_INDEX_KSH    2
+#define DEFSHELL_INDEX_CSH    3
+#else /* !DEFSHELL_CUSTOM */
+#define DEFSHELL_INDEX_SH     0
+#define DEFSHELL_INDEX_KSH    1
+#define DEFSHELL_INDEX_CSH    2
+#endif /* !DEFSHELL_CUSTOM */
+
+#ifndef DEFSHELL_INDEX
+#define DEFSHELL_INDEX 0	/* DEFSHELL_INDEX_CUSTOM or DEFSHELL_INDEX_SH */
+#endif /* !DEFSHELL_INDEX */
+
 static Shell    shells[] = {
-#ifdef _BASENAME_DEFSHELL
+#ifdef DEFSHELL_CUSTOM
     /*
      * An sh-compatible shell with a non-standard name.
      *
@@ -217,18 +238,16 @@ static Shell    shells[] = {
      * sh-compatible shells.
      */
 {
-    _BASENAME_DEFSHELL,
+    DEFSHELL_CUSTOM,
     FALSE, "", "", "", 0,
     FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
     "",
     "",
 },
-#endif /* _BASENAME_DEFSHELL */
+#endif /* DEFSHELL_CUSTOM */
     /*
      * SH description. Echo control is also possible and, under
      * sun UNIX anyway, one can even control error checking.
-     *
-     * This entry will be shells[0] if _BASENAME_DEFSHELL is not defined.
      */
 {
     "sh",
@@ -272,7 +291,7 @@ static Shell    shells[] = {
     NULL, NULL,
 }
 };
-static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
+static Shell *commandShell = &shells[DEFSHELL_INDEX]; /* this is the shell to
 						   * which we pass all
 						   * commands in the Makefile.
 						   * It is set by the
@@ -305,15 +324,16 @@ STATIC GNode   	*lastNode;	/* The node for which output was most recently
 STATIC const char *targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
+static char *targPrefix = NULL; /* What we print at the start of targFmt */
 static Job tokenWaitJob;	/* token wait pseudo-job */
 
 static Job childExitJob;	/* child exit pseudo-job */
 #define	CHILD_EXIT	"."
 #define	DO_JOB_RESUME	"R"
 
-#define TARG_FMT  "--- %s ---\n" /* Default format */
+#define TARG_FMT  "%s %s ---\n" /* Default format */
 #define MESSAGE(fp, gn) \
-	(void)fprintf(fp, targFmt, gn->name)
+	(void)fprintf(fp, targFmt, targPrefix, gn->name)
 
 static sigset_t caught_signals;	/* Set of signals we handle */
 #if defined(SYSV)
@@ -1342,6 +1362,8 @@ JobExec(Job *job, char **argv)
 	(void)setpgid(0, getpid());
 #endif
 
+	Var_ExportVars();
+
 	(void)execv(shellPath, argv);
 	execError("exec", shellPath);
 	_exit(1);
@@ -2025,13 +2047,17 @@ Shell_Init(void)
 {
     if (shellPath == NULL) {
 	/*
-	 * The user didn't specify a shell to use, so we are using the
-	 * default one... Both the absolute path and the last component
-	 * must be set. The last component is taken from the 'name' field
-	 * of the default shell description pointed-to by commandShell.
-	 * All default shells are located in _PATH_DEFSHELLDIR.
+	 * We are using the default shell, which may be an absolute
+	 * path if DEFSHELL_CUSTOM is defined.
 	 */
 	shellName = commandShell->name;
+#ifdef DEFSHELL_CUSTOM
+	if (*shellName == '/') {
+	    shellPath = shellName;
+	    shellName = strrchr(shellPath, '/');
+	    shellName++;
+	} else
+#endif
 	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
     }
     if (commandShell->exit == NULL) {
@@ -2051,6 +2077,19 @@ Shell_GetNewline(void)
 {
 
     return commandShell->newline;
+}
+
+void
+Job_SetPrefix(void)
+{
+    
+    if (targPrefix) {
+	free(targPrefix);
+    } else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
+	Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL, 0);
+    }
+
+    targPrefix = Var_Subst(NULL, "${" MAKE_JOB_PREFIX "}", VAR_GLOBAL, 0);
 }
 
 /*-

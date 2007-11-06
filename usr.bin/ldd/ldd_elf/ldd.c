@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.28 2007/05/19 15:35:04 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.28.4.1 2007/11/06 23:35:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.28 2007/05/19 15:35:04 christos Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.28.4.1 2007/11/06 23:35:47 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,9 +153,9 @@ main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	}
-	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	_rtld_pagesz = sysconf(_SC_PAGESIZE);
+	_rtld_add_paths(argv[0], &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	for (; argc != 0; argc--, argv++) {
 		int fd = open(*argv, O_RDONLY);
@@ -206,17 +206,17 @@ main(int argc, char **argv)
 			while (obj->rpaths != NULL) {
 				const Search_Path *rpath = obj->rpaths;
 				obj->rpaths = rpath->sp_next;
-				free((void *) rpath->sp_path);
-				free((void *) rpath);
+				xfree(__UNCONST(rpath->sp_path));
+				xfree(__UNCONST(rpath));
 			}
 			while (obj->needed != NULL) {
 				const Needed_Entry *needed = obj->needed;
 				obj->needed = needed->next;
-				free((void *) needed);
+				xfree(__UNCONST(needed));
 			}
 			(void) munmap(obj->mapbase, obj->mapsize);
-			free(obj->path);
-			free(obj);
+			xfree(obj->path);
+			xfree(obj);
 		}
 
 		_rtld_objmain = NULL;

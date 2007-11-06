@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.25 2007/03/04 06:02:17 christos Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.25.16.1 2007/11/06 23:28:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.25 2007/03/04 06:02:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.25.16.1 2007/11/06 23:28:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.25 2007/03/04 06:02:17 christos Exp $"
 #include <sys/queue.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

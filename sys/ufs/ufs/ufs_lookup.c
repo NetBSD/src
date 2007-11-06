@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.91 2007/07/23 14:58:04 pooka Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.91.6.1 2007/11/06 23:35:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91 2007/07/23 14:58:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.6.1 2007/11/06 23:35:24 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91 2007/07/23 14:58:04 pooka Exp $"
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
-#include <sys/lwp.h>
+#include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -265,7 +266,7 @@ searchloop:
 		 */
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
-				brelse(bp);
+				brelse(bp, 0);
 			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
@@ -409,7 +410,7 @@ notfound:
 		goto searchloop;
 	}
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -494,7 +495,7 @@ found:
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.
@@ -1320,20 +1321,22 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	struct inode *ip;
 	struct buf *bp;
 	daddr_t lbn;
-	int error;
 	const int dirrablks = ufs_dirrablks;
-	daddr_t blks[1 + dirrablks];
-	int blksizes[1 + dirrablks];
-	int run;
+	daddr_t *blks;
+	int *blksizes;
+	int run, error;
 	struct mount *mp = vp->v_mount;
 	const int bshift = mp->mnt_fs_bshift;
 	const int bsize = 1 << bshift;
 	off_t eof;
 
+	blks = kmem_alloc((1+dirrablks) * sizeof(daddr_t), KM_SLEEP);
+	blksizes = kmem_alloc((1+dirrablks) * sizeof(int), KM_SLEEP);
 	ip = VTOI(vp);
 	KASSERT(vp->v_size == ip->i_size);
 	GOP_SIZE(vp, vp->v_size, &eof, 0);
 	lbn = offset >> bshift;
+
 	for (run = 0; run <= dirrablks;) {
 		const off_t curoff = lbn << bshift;
 		const int size = MIN(eof - curoff, bsize);
@@ -1354,13 +1357,17 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
 	    run - 1, NOCRED, &bp);
 	if (error != 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		*bpp = NULL;
-		return error;
+		goto out;
 	}
 	if (res) {
 		*res = (char *)bp->b_data + (offset & (bsize - 1));
 	}
 	*bpp = bp;
-	return 0;
+
+ out:
+	kmem_free(blks, (1+dirrablks) * sizeof(daddr_t));
+	kmem_free(blksizes, (1+dirrablks) * sizeof(int));
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.69.4.1 2007/08/28 18:43:44 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.69.4.2 2007/11/06 23:31:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -158,12 +158,12 @@
  *
  *	States and their associated locks:
  *
- *	LSIDL, LSZOMB, LSONPROC:
+ *	LSONPROC, LSZOMB:
  *
  *		Always covered by spc_lwplock, which protects running LWPs.
  *		This is a per-CPU lock.
  *
- *	LSRUN:
+ *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
  *		This may be a per-CPU lock, depending on the scheduler.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.1 2007/08/28 18:43:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.2 2007/11/06 23:31:40 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -223,6 +223,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.1 2007/08/28 18:43:44 matt Exp $
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -467,6 +468,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			p->p_nlwpwait--;
 			if (departed)
 				*departed = l2->l_lid;
+			sched_lwp_collect(l2);
 
 			/* lwp_free() releases the proc lock. */
 			lwp_free(l2, false, false);
@@ -544,9 +546,9 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
  * suspended, or stopped by the caller.
  */
 int
-newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
-    int flags, void *stack, size_t stacksize,
-    void (*func)(void *), void *arg, struct lwp **rnewlwpp)
+lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
+	   void *stack, size_t stacksize, void (*func)(void *), void *arg,
+	   lwp_t **rnewlwpp, int sclass)
 {
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
@@ -572,7 +574,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	} else {
 		l2 = isfree;
 		ts = l2->l_ts;
-		KASSERT(l2->l_inheritedprio == MAXPRI);
+		KASSERT(l2->l_inheritedprio == -1);
 		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = ts;
@@ -581,14 +583,13 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_stat = LSIDL;
 	l2->l_proc = p2;
 	l2->l_refcnt = 1;
+	l2->l_class = sclass;
+	l2->l_kpriority = l1->l_kpriority;
 	l2->l_priority = l1->l_priority;
-	l2->l_usrpri = l1->l_usrpri;
-	l2->l_inheritedprio = MAXPRI;
+	l2->l_inheritedprio = -1;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
-	lwp_initspecific(l2);
-	sched_lwp_fork(l2);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -596,10 +597,17 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		 * swapping.
 		 */
 		l2->l_flag |= LW_SYSTEM;
+	} else {
+		/* Look for a CPU to start */
+		l2->l_cpu = sched_takecpu(l2);
+		l2->l_mutex = l2->l_cpu->ci_schedstate.spc_mutex;
 	}
 
+	lwp_initspecific(l2);
+	sched_lwp_fork(l1, l2);
 	lwp_update_creds(l2);
-	callout_init(&l2->l_tsleep_ch, CALLOUT_MPSAFE);
+	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
 	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
@@ -655,7 +663,6 @@ void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
-	curlwp_set(new);
 	if (prev != NULL) {
 		lwp_unlock(prev);
 	}
@@ -723,7 +730,7 @@ lwp_exit(struct lwp *l)
 	 * Release our cached credentials.
 	 */
 	kauth_cred_free(l->l_cred);
-	callout_destroy(&l->l_tsleep_ch);
+	callout_destroy(&l->l_timeout_ch);
 
 	/*
 	 * While we can still block, mark the LWP as unswappable to
@@ -758,6 +765,8 @@ lwp_exit(struct lwp *l)
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(&p->p_smutex);
+			l->l_refcnt++;
+			lwp_drainrefs(l);
 		}
 		p->p_zomblwp = l;
 	}
@@ -824,7 +833,18 @@ lwp_exit_switchaway(struct lwp *l)
 	ci = curcpu();	
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
-	cpu_switchto(NULL, idlelwp);
+
+	/*
+	 * cpu_onproc must be updated with the CPU locked, as
+	 * aston() may try to set a AST pending on the LWP (and
+	 * it does so with the CPU locked).  Otherwise, the LWP
+	 * may be destroyed before the AST can be set, leading
+	 * to a user-after-free.
+	 */
+	spc_lock(ci);
+	ci->ci_data.cpu_onproc = idlelwp;
+	spc_unlock(ci);
+	cpu_switchto(NULL, idlelwp, false);
 }
 
 /*
@@ -910,7 +930,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 #endif
 	uvm_lwp_exit(l);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
-	KASSERT(l->l_inheritedprio == MAXPRI);
+	KASSERT(l->l_inheritedprio == -1);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
 	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
@@ -1200,6 +1220,12 @@ lwp_userret(struct lwp *l)
 
 	p = l->l_proc;
 
+#ifndef __HAVE_FAST_SOFTINTS
+	/* Run pending soft interrupts. */
+	if (l->l_cpu->ci_data.cpu_softints != 0)
+		softint_overlay();
+#endif
+
 	/*
 	 * It should be safe to do this read unlocked on a multiprocessor
 	 * system..
@@ -1302,6 +1328,8 @@ lwp_delref(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(&p->p_smutex);
+	KASSERT(l->l_stat != LSZOMB);
+	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_refcv);
 	mutex_exit(&p->p_smutex);

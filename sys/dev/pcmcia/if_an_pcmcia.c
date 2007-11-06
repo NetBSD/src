@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.31.24.1 2007/11/06 23:29:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31.24.1 2007/11/06 23:29:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos E
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/anreg.h>
 #include <dev/ic/anvar.h>

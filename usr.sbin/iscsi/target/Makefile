@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/05/28 12:06:35 tls Exp $
+# $NetBSD: Makefile,v 1.2.4.1 2007/11/06 23:36:27 matt Exp $
 
 .sinclude "${.CURDIR}/../../Makefile.inc"
 
@@ -11,7 +11,7 @@ DIST=	${.CURDIR}/../../../dist/iscsi
 
 PROG= iscsi-target
 SRCS= iscsi-target.c
-CPPFLAGS+= -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64
+CPPFLAGS+= -DCONFIG_ISCSI_DEBUG
 CPPFLAGS+= -I${DIST}/include
 CPPFLAGS+= -pthread
 LDADD+=  -liscsi

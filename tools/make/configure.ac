@@ -1,6 +1,25 @@
-#	$NetBSD: configure.ac,v 1.7 2006/10/09 20:51:05 apb Exp $
+#	$NetBSD: configure.ac,v 1.7.8.1 2007/11/06 23:35:38 matt Exp $
 #
 # Autoconf definition file for make.
+#
+# When you edit configure.ac:
+# 0. Create the tools version of autoconf:
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#    (This might not work if you try it after editing configure.ac.)
+# 1. edit configure.ac
+# 2. Regenerate "configure" from "configure.ac":
+#        cd ${SRCDIR}/tools/make && \
+#        ${TOOLDIR}/bin/nbmake-${MACHINE} -f Makefile.regen
+#    (Please don't use a non-tools version of autoconf).
+# 3. Test that nbmake still builds
+#        mv ${TOOLDIR}/nbmake ${TOOLDIR}/bin/nbmake.bak
+#        cd ${SRCDIR} && build.sh makewrapper
+# 4. cvs commit files that you edited.
+# 5. Regen again, to pick up changed RCS IDs from the above commit:
+#        cd ${SRCDIR}/tools/make && \
+#        ${TOOLDIR}/bin/nbmake-${MACHINE} -f Makefile.regen
+# 6. cvs commit files that were generated.
+#
 #
 
 AC_INIT([make], [noversion], [bin-bug-people@NetBSD.org])
@@ -8,14 +27,9 @@ AC_CONFIG_FILES(buildmake.sh)
 
 AC_PATH_PROG(BSHELL, sh)
 if test x"$BSHELL" = x; then
-	AC_MSG_ERROR([sh must be somewhere on \$PATH])
+    AC_MSG_ERROR([sh must be somewhere on \$PATH, or BSHELL must be defined])
 fi
-# Make wants to get the directory name and the basename
-# for the default shell in two separate variables.
-nb_path_defshelldir="${BSHELL%/*}"
-nb_basename_defshell="${BSHELL##*/}"
-AC_DEFINE_UNQUOTED(_PATH_DEFSHELLDIR, "$nb_path_defshelldir")
-AC_DEFINE_UNQUOTED(_BASENAME_DEFSHELL, "$nb_basename_defshell")
+AC_DEFINE_UNQUOTED(DEFSHELL_CUSTOM, "${BSHELL}")
 
 # Make sure we have POSIX regex ability.
 AC_CHECK_HEADER(regex.h,, AC_MSG_ERROR([POSIX regex.h is required]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.47 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.47.4.1 2007/11/06 23:31:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.47 2007/07/31 21:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.47.4.1 2007/11/06 23:31:04 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,12 +147,12 @@ cd9660_mountroot()
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
@@ -386,13 +386,13 @@ iso_mountfs(devvp, mp, l, argp)
 		}
 
 		if (isonum_711 (vdp->type) == ISO_VD_END) {
-			brelse(bp);
+			brelse(bp, 0);
 			bp = NULL;
 			break;
 		}
 
 		if (bp != NULL) {
-			brelse(bp);
+			brelse(bp, 0);
 			bp = NULL;
 		}
 	}
@@ -411,8 +411,7 @@ iso_mountfs(devvp, mp, l, argp)
 
 	isomp->volume_space_size += sess;
 
-	pribp->b_flags |= B_AGE;
-	brelse(pribp);
+	brelse(pribp, BC_AGE);
 	pribp = NULL;
 
 	mp->mnt_data = isomp;
@@ -450,8 +449,7 @@ iso_mountfs(devvp, mp, l, argp)
 		 * The contents are valid,
 		 * but they will get reread as part of another vnode, so...
 		 */
-		bp->b_flags |= B_AGE;
-		brelse(bp);
+		brelse(bp, BC_AGE);
 		bp = NULL;
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |
@@ -491,7 +489,7 @@ iso_mountfs(devvp, mp, l, argp)
 	}
 
 	if (supbp != NULL) {
-		brelse(supbp);
+		brelse(supbp, 0);
 		supbp = NULL;
 	}
 
@@ -500,11 +498,11 @@ iso_mountfs(devvp, mp, l, argp)
 	return 0;
 out:
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 	if (pribp)
-		brelse(pribp);
+		brelse(pribp, 0);
 	if (supbp)
-		brelse(supbp);
+		brelse(supbp, 0);
 	if (isomp) {
 		free(isomp, M_ISOFSMNT);
 		mp->mnt_data = NULL;
@@ -778,7 +776,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			      imp->logical_block_size, NOCRED, &bp);
 		if (error) {
 			vput(vp);
-			brelse(bp);
+			brelse(bp, 0);
 			printf("fhtovp: bread error %d\n",error);
 			return (error);
 		}
@@ -788,7 +786,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		    imp->logical_block_size) {
 			vput(vp);
 			if (bp != 0)
-				brelse(bp);
+				brelse(bp, 0);
 			printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
 			    off +isonum_711(isodir->length), off,
 			    isonum_711(isodir->length));
@@ -799,7 +797,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		if (isonum_733(isodir->extent) +
 		    isonum_711(isodir->ext_attr_length) != ifhp->ifid_start) {
 			if (bp != 0)
-				brelse(bp);
+				brelse(bp, 0);
 			printf("fhtovp: file start miss %d vs %d\n",
 			    isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
 			    ifhp->ifid_start);
@@ -820,7 +818,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		 */
 		ip->iso_start = ino >> imp->im_bshift;
 		if (bp != 0)
-			brelse(bp);
+			brelse(bp, 0);
 		if ((error = cd9660_blkatoff(vp, (off_t)0, NULL, &bp)) != 0) {
 			vput(vp);
 			return (error);
@@ -850,7 +848,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		cd9660_defattr(isodir, ip, bp2);
 		cd9660_deftstamp(isodir, ip, bp2);
 		if (bp2)
-			brelse(bp2);
+			brelse(bp2, 0);
 		break;
 	    }
 	case ISO_FTYPE_RRIP:
@@ -859,7 +857,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	}
 
 	if (bp != 0)
-		brelse(bp);
+		brelse(bp, 0);
 
 	/*
 	 * Initialize the associated vnode
@@ -913,7 +911,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		uvm_vnp_setsize(vp, 0);
 
 	if (ip->iso_extent == imp->root_extent)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	/*
 	 * XXX need generation number?

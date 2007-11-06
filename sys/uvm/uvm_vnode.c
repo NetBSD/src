@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.85 2007/08/04 09:42:58 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.85.2.1 2007/11/06 23:35:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.85 2007/08/04 09:42:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.85.2.1 2007/11/06 23:35:33 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -152,7 +152,6 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
-	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 	return error;
 }
 
@@ -194,8 +193,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	LOCK_ASSERT(((flags & PGO_LOCKED) != 0 &&
 		     simple_lock_held(&vp->v_interlock)) ||
-		    ((flags & PGO_LOCKED) == 0 &&
-		     !simple_lock_held(&vp->v_interlock)));
+		    (flags & PGO_LOCKED) == 0);
 	return error;
 }
 
@@ -413,7 +411,7 @@ uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VEXECMAP) != 0;
+	return (vp->v_iflag & VI_EXECMAP) != 0;
 }
 
 bool
@@ -421,7 +419,7 @@ uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VONWORKLST) == 0;
+	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 bool
@@ -430,5 +428,5 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
 	struct vnode *vp = (struct vnode *)uobj;
 
 	return uvn_clean_p(uobj) ||
-	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
+	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.27.24.1 2007/11/06 23:27:42 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.27.24.1 2007/11/06 23:27:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/lemacreg.h>
 #include <dev/ic/lemacvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.42.2.1 2007/11/06 23:28:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42.2.1 2007/11/06 23:28:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.42 2007/08/15 02:26:13 markd Exp $");
 
 #include <sys/agpio.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include "agp_intel.h"
 
@@ -149,6 +149,8 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 	case PCI_PRODUCT_INTEL_82965Q_IGD:
 	case PCI_PRODUCT_INTEL_82965Q_IGD_1:
+	case PCI_PRODUCT_INTEL_82965G_IGD:
+	case PCI_PRODUCT_INTEL_82965G_IGD_1:
 		return (1);
 	}
 
@@ -233,6 +235,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_82965Q_IGD:
 	case PCI_PRODUCT_INTEL_82965Q_IGD_1:
+	case PCI_PRODUCT_INTEL_82965G_IGD:
+	case PCI_PRODUCT_INTEL_82965G_IGD_1:
 		isc->chiptype = CHIP_I965;
 		break;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $ */
+/* $NetBSD: universe_pci.c,v 1.7.46.1 2007/11/06 23:29:34 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.7.46.1 2007/11/06 23:29:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.7 2005/12/11 12:22:51 christos Ex
 #include <dev/pci/pcivar.h>
 /*#include <dev/pci/pcidevs.h>*/
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

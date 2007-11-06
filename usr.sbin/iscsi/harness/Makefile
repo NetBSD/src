@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2006/02/08 18:57:49 agc Exp $
+# $NetBSD: Makefile,v 1.1.10.1 2007/11/06 23:36:26 matt Exp $
+
+.sinclude "${.CURDIR}/../../Makefile.inc"
 
 .include <bsd.own.mk>
 
@@ -7,7 +9,7 @@ DIST=	${.CURDIR}/../../../dist/iscsi
 
 PROG= iscsi-harness
 SRCS= tests.c osd_ops.c initiator.c iscsi-harness.c
-CPPFLAGS+= -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64
+CPPFLAGS+= -DCONFIG_ISCSI_DEBUG
 CPPFLAGS+= -I${DIST}/include -I${.CURDIR}/../include
 CPPFLAGS+= -pthread
 LDADD+=  -L${LIBDIR} -Wl,-R${LIBDIR} -liscsi

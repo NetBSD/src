@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.2 2006/07/26 10:43:02 tron Exp $	*/
+/*	$NetBSD: bthset.c,v 1.2.10.1 2007/11/06 23:35:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthset.c,v 1.2 2006/07/26 10:43:02 tron Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.2.10.1 2007/11/06 23:35:41 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: bthset.c,v 1.2 2006/07/26 10:43:02 tron Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <dev/bluetooth/btdev.h>
 #include <dev/bluetooth/btsco.h>

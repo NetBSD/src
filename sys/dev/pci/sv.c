@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.36 2007/03/04 06:02:25 christos Exp $ */
+/*      $NetBSD: sv.c,v 1.36.16.1 2007/11/06 23:29:31 matt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.36 2007/03/04 06:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.36.16.1 2007/11/06 23:29:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.36 2007/03/04 06:02:25 christos Exp $");
 #include <dev/pci/svreg.h>
 #include <dev/pci/svvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /* XXX
  * The SonicVibes DMA is broken and only works on 24-bit addresses.

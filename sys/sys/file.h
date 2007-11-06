@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.57 2007/06/16 20:48:04 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.57.8.1 2007/11/06 23:34:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,7 +40,8 @@
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
@@ -67,8 +68,9 @@ struct file {
 #define	DTYPE_KQUEUE	4		/* event queue */
 #define	DTYPE_MISC	5		/* misc file descriptor type */
 #define	DTYPE_CRYPTO	6		/* crypto */
+#define	DTYPE_MQUEUE	7		/* message queue */
 #define DTYPE_NAMES \
-    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto"
+    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue"
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
@@ -91,7 +93,8 @@ struct file {
 	} *f_ops;
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
-	struct simplelock f_slock;
+	kmutex_t	f_lock;		/* lock on structure */
+	kcondvar_t	f_cv;		/* used when closing */
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
@@ -124,15 +127,15 @@ do {									\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-	simple_unlock(&(fp)->f_slock);					\
+	mutex_exit(&(fp)->f_lock);					\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
-		simple_lock(&(fp)->f_slock);				\
+		mutex_enter(&(fp)->f_lock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		simple_unlock(&(fp)->f_slock);				\
+		mutex_exit(&(fp)->f_lock);				\
 		/* Will drop usecount */				\
 		(void) closef((fp), (l));				\
 		break;							\
@@ -140,7 +143,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-	simple_unlock(&(fp)->f_slock);					\
+	mutex_exit(&(fp)->f_lock);					\
 } while (/* CONSTCOND */ 0)
 #define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
@@ -158,14 +161,14 @@ extern int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 
-int	dofileread(struct lwp *, int, struct file *, void *, size_t,
+int	dofileread(int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
-int	dofilewrite(struct lwp *, int, struct file *, const void *,
+int	dofilewrite(int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	do_filereadv(struct lwp *, int, const struct iovec *, int, off_t *,
+int	do_filereadv(int, const struct iovec *, int, off_t *,
 	    int, register_t *);
-int	do_filewritev(struct lwp *, int, const struct iovec *, int, off_t *,
+int	do_filewritev(int, const struct iovec *, int, off_t *,
 	    int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
@@ -179,6 +182,10 @@ int	fdclone(struct lwp *, struct file *, int, int, const struct fileops *,
 int	fnullop_fcntl(struct file *, u_int, void *, struct lwp *);
 int	fnullop_poll(struct file *, int, struct lwp *);
 int	fnullop_kqfilter(struct file *, struct knote *);
+int	fbadop_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	fbadop_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	fbadop_ioctl(struct file *, u_long, void *, struct lwp *);
+int	fbadop_close(struct file *, struct lwp *);
 int	fbadop_stat(struct file *, struct stat *, struct lwp *);
 
 #endif /* _KERNEL */

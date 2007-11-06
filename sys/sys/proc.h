@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.253.2.1 2007/08/28 18:33:58 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.253.2.2 2007/11/06 23:34:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/aio.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
+#include <sys/mqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/lwp.h>
@@ -208,13 +209,13 @@ struct emul {
  * s:	p_smutex
  * t:	p_stmutex
  * p:	p_mutex
- * r:	p_rasmutex
+ * r:	p_raslock
  * (:	unlocked, stable
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
 
-	kmutex_t	p_rasmutex;	/* :: RAS mutex */
+	kmutex_t	p_raslock;	/* :: RAS modification lock */
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
@@ -233,6 +234,8 @@ struct proc {
 	struct sigacts	*p_sigacts;	/*    Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
 
+	u_int		p_mqueue_cnt;	/* (: Count of open mqueues */
+
 	specificdata_reference
 			p_specdataref;	/* subsystem proc-specific data */
 
@@ -243,7 +246,8 @@ struct proc {
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* s: S* process status. */
-	char		p_pad1[3];
+	char		p_trace_enabled; /* Cached by some syscall_intern() */
+	char		p_pad1[2];
 
 	pid_t		p_pid;		/* (: Process identifier. */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
@@ -251,7 +255,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
 	LIST_HEAD(, lwp) p_lwps;	/* s: List of LWPs. */
-	LIST_HEAD(, ras) p_raslist;	/* r: List of RAS entries */
+	struct ras	*p_raslist;	/* r: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
@@ -441,14 +445,15 @@ do {									\
 /*
  * Flags passed to fork1().
  */
-#define	FORK_PPWAIT	0x01		/* Block parent until child exit */
-#define	FORK_SHAREVM	0x02		/* Share vmspace with parent */
-#define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
-#define	FORK_SHAREFILES	0x08		/* Share file descriptors */
-#define	FORK_SHARESIGS	0x10		/* Share signal actions */
-#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
-#define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
-#define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
+#define	FORK_PPWAIT	0x0001		/* Block parent until child exit */
+#define	FORK_SHAREVM	0x0002		/* Share vmspace with parent */
+#define	FORK_SHARECWD	0x0004		/* Share cdir/rdir/cmask */
+#define	FORK_SHAREFILES	0x0008		/* Share file descriptors */
+#define	FORK_SHARESIGS	0x0010		/* Share signal actions */
+#define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
+#define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
+#define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
+#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 /*
  * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
@@ -461,11 +466,13 @@ do {									\
 extern struct lwp	*curlwp;		/* Currently running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
-#if !defined(curlwp_set)
-#define curlwp_set(l)	((void)(curlwp = (l)))	/* set currently running lwp */
-#endif
 
-#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+}
 #define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */
@@ -486,6 +493,7 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
 
+extern struct pool	proc_pool;	/* Memory pool for procs */
 extern struct pool	pcred_pool;	/* Memory pool for pcreds */
 extern struct pool	plimit_pool;	/* Memory pool for plimits */
 extern struct pool 	pstats_pool;	/* memory pool for pstats */
@@ -523,7 +531,7 @@ void	exit1(struct lwp *, int) __attribute__((__noreturn__));
 int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free_mem(struct proc *);
+void	proc_free_pid(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);

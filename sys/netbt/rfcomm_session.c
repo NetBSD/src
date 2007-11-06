@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.10 2007/07/09 21:11:10 ad Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.10.8.1 2007/11/06 23:33:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.10 2007/07/09 21:11:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.10.8.1 2007/11/06 23:33:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -227,6 +227,8 @@ rfcomm_session_free(struct rfcomm_session *rs)
 		return;
 
 	rs->rs_flags |= RFCOMM_SESSION_FREE;
+
+	callout_destroy(&rs->rs_timeout);
 
 	/* throw away any remaining credit notes */
 	while ((credit = SIMPLEQ_FIRST(&rs->rs_credits)) != NULL) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2006/11/01 23:48:20 sjg Exp $
+#	$NetBSD: Makefile,v 1.41.8.1 2007/11/06 23:35:59 matt Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -19,7 +19,6 @@ SUBDIR=	PSD.doc
 .if make(obj) || make(clean)
 SUBDIR+= unit-tests
 .endif
-CFLAGS+=-g
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

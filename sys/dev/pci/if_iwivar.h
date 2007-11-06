@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.13 2006/12/20 16:30:20 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.13.20.1 2007/11/06 23:29:00 matt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -111,7 +111,7 @@ struct iwi_node {
 };
 
 struct iwi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,

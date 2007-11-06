@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.18 2007/06/05 17:50:23 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.18.4.1 2007/11/06 23:35:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.18 2007/06/05 17:50:23 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.18.4.1 2007/11/06 23:35:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ argcount(char **argv)
 {
 	char **ap;
 
-	for (ap = argv; *ap++ != NULL;)
+	for (ap = argv; *ap++ != NULL; /*EMPTY*/)
 		continue;
 	return ap - argv - 1;
 }
@@ -187,7 +187,7 @@ ishfield(const char linebuf[], char *colon, const char field[])
 		return 0;
 	}
 	*cp = ':';
-	for (cp++; *cp == ' ' || *cp == '\t'; cp++)
+	for (cp++; is_WSP(*cp); cp++)
 		continue;
 	return cp;
 }
@@ -213,7 +213,8 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 			return -1;
 		if ((c = mail_readline(f, linebuf, LINESIZE)) <= 0)
 			return -1;
-		for (cp = linebuf; isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
+		for (cp = linebuf;
+		     isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
 		     cp++)
 			continue;
 		if (*cp != ':' || cp == linebuf)
@@ -225,19 +226,18 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 		*colon = cp;
 		cp = linebuf + c;
 		for (;;) {
-			while (--cp >= linebuf && (*cp == ' ' || *cp == '\t'))
+			while (--cp >= linebuf && is_WSP(*cp))
 				continue;
 			cp++;
 			if (rem <= 0)
 				break;
 			(void)ungetc(c = getc(f), f);
-			if (c != ' ' && c != '\t')
+			if (!is_WSP(c))
 				break;
 			if ((c = mail_readline(f, line2, LINESIZE)) < 0)
 				break;
 			rem--;
-			for (cp2 = line2; *cp2 == ' ' || *cp2 == '\t'; cp2++)
-				continue;
+			cp2 = skip_WSP(line2);
 			c -= cp2 - line2;
 			if (cp + c >= linebuf + LINESIZE - 2)
 				break;
@@ -413,7 +413,7 @@ blankline(char linebuf[])
 	char *cp;
 
 	for (cp = linebuf; *cp; cp++)
-		if (*cp != ' ' && *cp != '\t')
+		if (!is_WSP(*cp))
 			return 0;
 	return 1;
 }
@@ -465,7 +465,7 @@ skin(char *name)
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
-	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; /* EMPTY */) {
+	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; /*EMPTY*/) {
 		switch (c) {
 		case '(':
 			cp = skip_comment(cp);
@@ -575,10 +575,10 @@ name1(struct message *mp, int reptype)
  newname:
 	for (cp = linebuf; *cp && *cp != ' '; cp++)
 		continue;
-	for (/*EMPTY*/; *cp == ' ' || *cp == '\t'; cp++)
-		continue;
+	cp = skip_WSP(cp);
 	for (cp2 = &namebuf[strlen(namebuf)];
-	     *cp && *cp != ' ' && *cp != '\t' && cp2 < namebuf + LINESIZE - 1;)
+	     *cp && !is_WSP(*cp) && cp2 < namebuf + LINESIZE - 1;
+	     /*EMPTY*/)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
@@ -700,6 +700,25 @@ isign(const char *field, struct ignoretab ignoretabs[2])
 		return !member(realfld, ignoretabs + 1);
 	else
 		return member(realfld, ignoretabs);
+}
+
+PUBLIC void
+add_ignore(const char *name, struct ignoretab *tab)
+{
+	char field[LINESIZE];
+	int h;
+	struct ignore *igp;
+
+	istrcpy(field, name);
+	if (member(field, tab))
+		return;
+	h = hash(field);
+	igp = ecalloc(1, sizeof(struct ignore));
+	igp->i_field = ecalloc(strlen(field) + 1, sizeof(char));
+	(void)strcpy(igp->i_field, field);
+	igp->i_link = tab->i_head[h];
+	tab->i_head[h] = igp;
+	tab->i_count++;
 }
 
 /*

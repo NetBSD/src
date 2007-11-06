@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/07/20 16:39:05 christos Exp $
+#	$NetBSD: Makefile,v 1.25.4.1 2007/11/06 23:36:37 matt Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -92,6 +92,7 @@ AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
 NETBSD_LIBS		= -lcrypt
+DRAGONFLY_LIBS		= -lcrypt
 LINUX_LIBS		= -lcrypt
 CYGWIN_LIBS		= -lcrypt
 CMUCS_LIBS		= -lsys

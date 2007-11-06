@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.26 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.26.24.1 2007/11/06 23:28:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.26 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.26.24.1 2007/11/06 23:28:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.26 2006/11/16 01:33:05 christos Exp
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

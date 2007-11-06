@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.274 2007/08/22 17:52:16 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.274.2.1 2007/11/06 23:34:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499003000	/* NetBSD 4.99.30 */
+#define	__NetBSD_Version__	499003400	/* NetBSD 4.99.34 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -157,12 +157,14 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-/*
- * CPU cache values
- */
-#ifndef CACHE_LINE_SIZE
-#define	CACHE_LINE_SIZE		64
-#endif
+#ifdef _KERNEL
+# ifndef CACHE_LINE_SIZE
+#  define	CACHE_LINE_SIZE		64
+# endif
+# ifndef MAXCPUS
+#  define	MAXCPUS			32
+# endif
+#endif	/* _KERNEL */
 
 /*
  * Stack macros.  On most architectures, the stack grows down,
@@ -196,29 +198,70 @@
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
 /*
- * Priorities.  Note that with 32 run queues, differences less than 4 are
- * insignificant.
+ * Historic priority levels.  These are meaningless and remain only
+ * for source compatibility.  Do not use in new code.
  */
 #define	PSWP	0
 #define	PVM	4
 #define	PINOD	8
 #define	PRIBIO	16
 #define	PVFS	20
-#define	PZERO	22		/* No longer magic, shouldn't be here.  XXX */
+#define	PZERO	22
 #define	PSOCK	24
 #define	PWAIT	32
 #define	PLOCK	36
 #define	PPAUSE	40
 #define	PUSER	50
-#define	MAXPRI	127		/* Priorities range from 0 through MAXPRI. */
+#define	MAXPRI	127
 
-#define	PRIMASK 	0x0ff
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
-#define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
-				   the interlock */
+#define	PNORELOCK	0x200	/* OR'd with pri for tsleep to not relock */
 
-#define	PRI_NONE	(-1)
+/*
+ * New priority levels.
+ */
+#define	PRI_COUNT		224
+#define	PRI_NONE		(-1)
 
+#define	PRI_KERNEL_RT		192
+#define	NPRI_KERNEL_RT		32
+#define	MAXPRI_KERNEL_RT	(PRI_KERNEL_RT + NPRI_KERNEL_RT - 1)
+
+#define	PRI_USER_RT		128
+#define	NPRI_USER_RT		64
+#define	MAXPRI_USER_RT		(PRI_USER_RT + NPRI_USER_RT - 1)
+
+#define	PRI_KTHREAD		96
+#define	NPRI_KTHREAD		32
+#define	MAXPRI_KTHREAD		(PRI_KTHREAD + NPRI_KTHREAD - 1)
+
+#define	PRI_KERNEL		64
+#define	NPRI_KERNEL		32
+#define	MAXPRI_KERNEL		(PRI_KERNEL + NPRI_KERNEL - 1)
+
+#define	PRI_USER		0
+#define	NPRI_USER		64
+#define	MAXPRI_USER		(PRI_USER + NPRI_USER - 1)
+
+/*
+ * Kernel thread priorities.
+ */
+#define	PRI_SOFTSERIAL	MAXPRI_KERNEL_RT
+#define	PRI_SOFTNET	(MAXPRI_KERNEL_RT - schedppq * 1)
+#define	PRI_SOFTBIO	(MAXPRI_KERNEL_RT - schedppq * 2)
+#define	PRI_SOFTCLOCK	(MAXPRI_KERNEL_RT - schedppq * 3)
+
+#define	PRI_XCALL	MAXPRI_KTHREAD
+#define	PRI_PGDAEMON	(MAXPRI_KTHREAD - schedppq * 1)
+#define	PRI_VM		(MAXPRI_KTHREAD - schedppq * 2)
+#define	PRI_IOFLUSH	(MAXPRI_KTHREAD - schedppq * 3)
+#define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
+
+#define	PRI_IDLE	PRI_USER
+
+/*
+ * Miscellaneous.
+ */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
@@ -346,6 +389,12 @@
 	(__predict_false((ms) >= 0x20000) ? \
 	    ((ms +0u) / 1000u) * hz : \
 	    ((ms +0u) * hz) / 1000u)
+#endif
+#ifndef hztoms
+#define hztoms(t) \
+	(__predict_false((t) >= 0x20000) ? \
+	    ((t +0u) / hz) * 1000u : \
+	    ((t +0u) * 1000u) / hz)
 #endif
 #endif /* _KERNEL */
 

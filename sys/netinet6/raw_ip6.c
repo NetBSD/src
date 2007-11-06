@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.86 2007/07/19 20:48:58 dyoung Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.86.6.1 2007/11/06 23:34:10 matt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.86 2007/07/19 20:48:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.86.6.1 2007/11/06 23:34:10 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -294,7 +294,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
-	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
+	void (*notify)(struct in6pcb *, int) = in6_rtchange;
 	int nxt;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -560,43 +560,45 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 {
 	int error = 0;
 
-	switch (level) {
-	case IPPROTO_IPV6:
-		switch (optname) {
-		case MRT6_INIT:
-		case MRT6_DONE:
-		case MRT6_ADD_MIF:
-		case MRT6_DEL_MIF:
-		case MRT6_ADD_MFC:
-		case MRT6_DEL_MFC:
-		case MRT6_PIM:
-			if (op == PRCO_SETOPT) {
-				error = ip6_mrouter_set(optname, so, *mp);
-				if (*mp)
-					(void)m_free(*mp);
-			} else if (op == PRCO_GETOPT)
-				error = ip6_mrouter_get(optname, so, mp);
-			else
-				error = EINVAL;
-			return error;
-		case IPV6_CHECKSUM:
-			return ip6_raw_ctloutput(op, so, level, optname, mp);
-		default:
+	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
+		/* need to fiddle w/ opt(IPPROTO_IPV6, IPV6_CHECKSUM)? */
+		if (optname != SO_NOHEADER)
 			return ip6_ctloutput(op, so, level, optname, mp);
-		}
+		else if (op == PRCO_GETOPT) {
+			*mp = m_intopt(so, 1);
+			return 0;
+		} else if (*mp == NULL || (*mp)->m_len < sizeof(int))
+			error = EINVAL;
+		else if (*mtod(*mp, int *) == 0)
+			error = EINVAL;
+		goto free_m;
+	} else if (level != IPPROTO_IPV6)
+		return ip6_ctloutput(op, so, level, optname, mp);
 
-	case IPPROTO_ICMPV6:
-		/*
-		 * XXX: is it better to call icmp6_ctloutput() directly
-		 * from protosw?
-		 */
-		return icmp6_ctloutput(op, so, level, optname, mp);
-
+	switch (optname) {
+	case MRT6_INIT:
+	case MRT6_DONE:
+	case MRT6_ADD_MIF:
+	case MRT6_DEL_MIF:
+	case MRT6_ADD_MFC:
+	case MRT6_DEL_MFC:
+	case MRT6_PIM:
+		if (op == PRCO_SETOPT)
+			error = ip6_mrouter_set(optname, so, *mp);
+		else if (op == PRCO_GETOPT)
+			error = ip6_mrouter_get(optname, so, mp);
+		else
+			error = EINVAL;
+		break;
+	case IPV6_CHECKSUM:
+		return ip6_raw_ctloutput(op, so, level, optname, mp);
 	default:
-		if (op == PRCO_SETOPT && *mp)
-			m_free(*mp);
-		return EINVAL;
+		return ip6_ctloutput(op, so, level, optname, mp);
 	}
+free_m:
+	if (op == PRCO_SETOPT && *mp != NULL)
+		m_free(*mp);
+	return error;
 }
 
 extern	u_long rip6_sendspace;

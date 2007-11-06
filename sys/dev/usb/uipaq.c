@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.6 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.6.12.1 2007/11/06 23:30:39 matt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbcdc.h>	/*UCDC_* stuff */
 

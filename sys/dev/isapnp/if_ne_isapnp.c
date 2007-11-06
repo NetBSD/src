@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.23 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.23 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.23 2006/11/16 01:33:05 christos E
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
