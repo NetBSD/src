@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.12 2007/07/17 20:18:58 christos Exp $ */
+/*	$NetBSD: installboot.c,v 1.12.8.1 2007/11/06 23:19:29 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

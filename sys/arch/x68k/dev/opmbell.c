@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.20 2007/07/09 20:52:36 ad Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.20.10.1 2007/11/06 23:23:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.20 2007/07/09 20:52:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.20.10.1 2007/11/06 23:23:24 matt Exp $");
 
 #include "bell.h"
 #if NBELL > 0

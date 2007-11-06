@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 2007/08/25 19:16:10 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.60.2.1 2007/11/06 23:22:48 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2007/08/25 19:16:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60.2.1 2007/11/06 23:22:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ int ecache_min_line_size;
 /* Linked list of all CPUs in system. */
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
-static int cpu_instance;
 
 volatile cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
@@ -103,7 +102,7 @@ alloc_cpuinfo(u_int cpu_node)
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
-	vsize_t sz = 16 * PAGE_SIZE;
+	vsize_t sz = 8 * PAGE_SIZE;
 	int portid;
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
@@ -115,7 +114,7 @@ alloc_cpuinfo(u_int cpu_node)
 		panic("alloc_cpuinfo: upa-portid");
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
-		if (cpi->ci_upaid == portid)
+		if (cpi->ci_cpuid == portid)
 			return cpi;
 
 	/* Allocate the aligned VA and determine the size. */
@@ -144,11 +143,9 @@ alloc_cpuinfo(u_int cpu_node)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
-	cpi->ci_number = ++cpu_instance;
 	cpi->ci_cpuid = portid;
-	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
-	cpi->ci_spinup = NULL;						/* XXX */
+	cpi->ci_spinup = NULL;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
@@ -207,6 +204,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	char buf[100];
 	int 	totalsize = 0;
 	int 	linesize;
+	static bool passed = false;
 
 	/* tell them what we have */
 	node = ma->ma_node;
@@ -223,8 +221,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * For other cpus, we need to call mi_cpu_attach()
 	 * and complete setting up cpcb.
 	 */
-	if (ci->ci_number == 0)
+	if (!passed) {
+		passed = true;
 		cpu_reset_fpustate();
+	}
 #ifdef MULTIPROCESSOR
 	else {
 		mi_cpu_attach(ci);
@@ -240,15 +240,16 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		clk = prom_getpropint(findroot(), "clock-frequency", 0);
 	}
 	if (clk) {
-		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
-		cpu_clockrate[1] = clk / 1000000;
+		/* Tell OS what frequency we run on */
+		ci->ci_cpu_clockrate[0] = clk;
+		ci->ci_cpu_clockrate[1] = clk / 1000000;
 	}
 
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
 		prom_getpropstring(node, "name"), clockfreq(clk));
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
 
-	printf(": %s, UPA id %d\n", buf, ci->ci_upaid);
+	printf(": %s, UPA id %d\n", buf, ci->ci_cpuid);
 	printf("%s:", dev->dv_xname);
 
 	bigcache = 0;
@@ -358,7 +359,7 @@ cpu_boot_secondary_processors()
 	sparc64_ipi_init();
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci->ci_upaid == CPU_UPAID)
+		if (ci->ci_cpuid == CPU_UPAID)
 			continue;
 
 		cpu_args->cb_node = ci->ci_node;
@@ -373,20 +374,21 @@ cpu_boot_secondary_processors()
 
 		for (i = 0; i < 2000; i++) {
 			membar_sync();
-			if (CPUSET_HAS(cpus_active, ci->ci_number))
+			if (CPUSET_HAS(cpus_active, ci->ci_index))
 				break;
 			delay(10000);
 		}
 		setpstate(pstate);
 
-		if (!CPUSET_HAS(cpus_active, ci->ci_number))
-			printf("cpu%d: startup failed\n", ci->ci_upaid);
+		if (!CPUSET_HAS(cpus_active, ci->ci_index))
+			printf("cpu%d: startup failed\n", ci->ci_cpuid);
 	}
 }
 
 void
 cpu_hatch()
 {
+	extern void tickintr_establish(void);
 	char *v = (char*)CPUINFO_VA;
 	int i;
 
@@ -398,5 +400,9 @@ cpu_hatch()
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
 	spl0();
+
+#if 0
+	tickintr_establish();
+#endif
 }
 #endif /* MULTIPROCESSOR */

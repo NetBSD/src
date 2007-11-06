@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.50 2007/07/09 20:52:20 ad Exp $	*/
+/*	$NetBSD: asc.c,v 1.50.10.1 2007/11/06 23:18:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.50 2007/07/09 20:52:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.50.10.1 2007/11/06 23:18:27 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>

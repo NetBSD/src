@@ -1,9 +1,27 @@
-/* $NetBSD: sched.h,v 1.4 2006/05/14 21:57:13 elad Exp $ */
+/* $NetBSD: sched.h,v 1.4.40.1 2007/11/06 23:24:15 matt Exp $ */
 /******************************************************************************
  * sched.h
  * 
  * Scheduler state interactions
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
 
@@ -47,10 +65,11 @@
  * @arg == pointer to sched_shutdown structure.
  */
 #define SCHEDOP_shutdown    2
-typedef struct sched_shutdown {
+struct sched_shutdown {
     unsigned int reason; /* SHUTDOWN_* */
-} sched_shutdown_t;
-DEFINE_GUEST_HANDLE(sched_shutdown_t);
+};
+typedef struct sched_shutdown sched_shutdown_t;
+DEFINE_XEN_GUEST_HANDLE(sched_shutdown_t);
 
 /*
  * Poll a set of event-channel ports. Return when one or more are pending. An
@@ -58,12 +77,27 @@ DEFINE_GUEST_HANDLE(sched_shutdown_t);
  * @arg == pointer to sched_poll structure.
  */
 #define SCHEDOP_poll        3
-typedef struct sched_poll {
-    GUEST_HANDLE(evtchn_port_t) ports;
+struct sched_poll {
+    XEN_GUEST_HANDLE(evtchn_port_t) ports;
     unsigned int nr_ports;
     uint64_t timeout;
-} sched_poll_t;
-DEFINE_GUEST_HANDLE(sched_poll_t);
+};
+typedef struct sched_poll sched_poll_t;
+DEFINE_XEN_GUEST_HANDLE(sched_poll_t);
+
+/*
+ * Declare a shutdown for another domain. The main use of this function is
+ * in interpreting shutdown requests and reasons for fully-virtualized
+ * domains.  A para-virtualized domain may use SCHEDOP_shutdown directly.
+ * @arg == pointer to sched_remote_shutdown structure.
+ */
+#define SCHEDOP_remote_shutdown        4
+struct sched_remote_shutdown {
+    domid_t domain_id;         /* Remote domain ID */
+    unsigned int reason;       /* SHUTDOWN_xxx reason */
+};
+typedef struct sched_remote_shutdown sched_remote_shutdown_t;
+DEFINE_XEN_GUEST_HANDLE(sched_remote_shutdown_t);
 
 /*
  * Reason codes for SCHEDOP_shutdown. These may be interpreted by control

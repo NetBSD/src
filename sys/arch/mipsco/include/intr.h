@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2007/06/17 06:04:28 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.10.1 2007/11/06 23:19:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.

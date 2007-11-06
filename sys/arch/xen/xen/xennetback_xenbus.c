@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.16 2007/08/26 22:32:47 dyoung Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.16.2.1 2007/11/06 23:24:37 matt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.25 2007/05/17 14:51:28 yamt Exp $	*/
+/*	$NetBSD: crime.c,v 1.25.10.1 2007/11/06 23:21:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.25 2007/05/17 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.25.10.1 2007/11/06 23:21:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -299,4 +299,13 @@ crime_watchdog_disable(void)
 	reg = bus_space_read_8(crm_iot, crm_ioh, CRIME_CONTROL)
 			& ~CRIME_CONTROL_DOG_ENABLE;
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_CONTROL, reg);
+}
+
+void
+crime_reboot()
+{
+
+	bus_space_write_8(crm_iot, crm_ioh,  CRIME_CONTROL,
+	    CRIME_CONTROL_HARD_RESET);
+	while(1);
 }

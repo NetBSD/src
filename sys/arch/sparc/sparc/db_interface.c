@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.71 2007/02/22 16:48:59 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.71.22.1 2007/11/06 23:22:30 matt Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71 2007/02/22 16:48:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71.22.1 2007/11/06 23:22:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -373,9 +373,9 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_printf(" ctx: %p cpuset %x",
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
-	db_printf("\npmap:%p wchan:%p pri:%d upri:%d\n",
+	db_printf("\npmap:%p wchan:%p pri:%d epri:%d\n",
 		  p->p_vmspace->vm_map.pmap,
-		  l->l_wchan, l->l_priority, l->l_usrpri);
+		  l->l_wchan, l->l_priority, lwp_eprio(l));
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
@@ -543,17 +543,17 @@ db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ "prom",	db_prom_cmd,	0,	0 },
-	{ "proc",	db_proc_cmd,	0,	0 },
-	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "lock",	db_lock_cmd,	0,	0 },
-	{ "slock",	db_simple_lock_cmd,	0,	0 },
-	{ "page",	db_page_cmd,	0,	0 },
-	{ "uvmdump",	db_uvmhistdump,	0,	0 },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("slock",	db_simple_lock_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,	NULL,NULL,NULL) },
 #ifdef MULTIPROCESSOR
-	{ "cpu",	db_cpu_cmd,	0,	0 },
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
 #endif
-	{ (char *)0, }
+	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
 };
 #endif /* DDB */
 

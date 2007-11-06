@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.58 2007/07/12 17:42:17 martin Exp $	*/
+/*	$NetBSD: hme.c,v 1.58.8.1 2007/11/06 23:26:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.58 2007/07/12 17:42:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.58.8.1 2007/11/06 23:26:38 matt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.58 2007/07/12 17:42:17 martin Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>
@@ -1497,11 +1497,7 @@ hme_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.32 2007/05/17 14:51:23 yamt Exp $	*/
+/*	$NetBSD: fp.S,v 1.32.10.1 2007/11/06 23:19:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

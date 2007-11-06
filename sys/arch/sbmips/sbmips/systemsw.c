@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.12 2007/05/17 14:51:28 yamt Exp $ */
+/* $NetBSD: systemsw.c,v 1.12.10.1 2007/11/06 23:21:45 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.12 2007/05/17 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.12.10.1 2007/11/06 23:21:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

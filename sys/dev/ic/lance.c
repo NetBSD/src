@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.38 2007/03/04 06:01:57 christos Exp $	*/
+/*	$NetBSD: lance.c,v 1.38.16.1 2007/11/06 23:26:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.38 2007/03/04 06:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.38.16.1 2007/11/06 23:26:48 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -567,20 +567,13 @@ lance_ioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 	case SIOCSIFFLAGS:
 		error = ether_ioctl(ifp, cmd, data);
 		break;
-
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

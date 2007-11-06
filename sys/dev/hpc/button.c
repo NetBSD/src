@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.12 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.12.34.1 2007/11/06 23:26:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,13 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.12 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.12.34.1 2007/11/06 23:26:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <machine/config_hook.h>
 #include <machine/platid.h>

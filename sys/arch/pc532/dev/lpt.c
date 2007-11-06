@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.50 2007/08/26 23:07:15 dyoung Exp $	*/
+/*	$NetBSD: lpt.c,v 1.50.2.1 2007/11/06 23:20:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.50 2007/08/26 23:07:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.50.2.1 2007/11/06 23:20:08 matt Exp $");
 
 #include "opt_inet.h"
 

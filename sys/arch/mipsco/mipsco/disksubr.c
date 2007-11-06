@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2007/03/07 22:38:33 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19.20.1 2007/11/06 23:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2007/03/07 22:38:33 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19.20.1 2007/11/06 23:19:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 	err = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	
 	if (err)
 		return "error reading disklabel";
@@ -115,7 +115,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 	err = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 
 	if (err)
 		return "error reading volume header";
@@ -244,7 +244,7 @@ writedisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 
 ioerror:
-	brelse(bp);
+	brelse(bp, 0);
 	return error;
 }
 

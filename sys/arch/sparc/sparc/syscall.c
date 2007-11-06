@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2007/08/15 12:07:26 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.14.2.1 2007/11/06 23:22:36 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2007/08/15 12:07:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14.2.1 2007/11/06 23:22:36 matt Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"

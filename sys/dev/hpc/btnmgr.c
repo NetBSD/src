@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.21 2007/03/04 06:01:46 christos Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.21.16.1 2007/11/06 23:26:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.21 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.21.16.1 2007/11/06 23:26:05 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.21 2007/03/04 06:01:46 christos Exp $")
 #include <dev/hpc/pckbd_encode.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/config_hook.h>
 

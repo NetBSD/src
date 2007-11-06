@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.5 2007/03/04 06:00:10 christos Exp $ */
+/* $Id: pbms.c,v 1.5.20.1 2007/11/06 23:18:39 matt Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -243,6 +243,7 @@ static struct pbms_dev pbms_devices[] =
        /* 15 inch PowerBooks */
        POWERBOOK_TOUCHPAD(15, 0x020e, 85, 16, 57), /* XXX Not tested. */
        POWERBOOK_TOUCHPAD(15, 0x020f, 85, 16, 57),
+       POWERBOOK_TOUCHPAD(15, 0x0215, 64, 16, 43),
        /* 17 inch PowerBooks */
        POWERBOOK_TOUCHPAD(17, 0x020d, 71, 26, 68)  /* XXX Not tested. */
 #undef POWERBOOK_TOUCHPAD
@@ -260,9 +261,11 @@ static struct pbms_dev pbms_devices[] =
 /* Device data. */
 struct pbms_softc {
 	struct uhidev sc_hdev;	      /* USB parent (got the struct device). */
+	int is_geyser2;
+	int sc_datalen;
 	int sc_acc[PBMS_SENSORS];     /* Accumulated sensor values. */
-	signed char sc_prev[PBMS_SENSORS];   /* Previous sample. */
-	signed char sc_sample[PBMS_SENSORS]; /* Current sample. */
+	unsigned char sc_prev[PBMS_SENSORS];   /* Previous sample. */
+	unsigned char sc_sample[PBMS_SENSORS]; /* Current sample. */
 	struct device *sc_wsmousedev; /* WSMouse device. */
 	int sc_noise;		      /* Amount of noise. */
 	int sc_theshold;	      /* Threshold value. */
@@ -289,7 +292,7 @@ static void pbms_intr(struct uhidev *, void *, unsigned int);
 static int pbms_enable(void *);
 static void pbms_disable(void *);
 static int pbms_ioctl(void *, unsigned long, void *, int, struct lwp *);
-static void reorder_sample(signed char *, signed char *);
+static void reorder_sample(struct pbms_softc *, unsigned char *, unsigned char *);
 static int compute_delta(struct pbms_softc *, int *, int *, int *, uint32_t *);
 static int detect_pos(int *, int, int, int, int *, int *);
 static int smooth_pos(int, int, int);
@@ -354,6 +357,9 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
+	sc->is_geyser2 = 0;
+	sc->sc_datalen = PBMS_DATA_LEN;
+
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		product = UGETW(udd->idProduct);
@@ -368,6 +374,12 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 				sc->sc_x_sensors = pd->x_sensors;
 				sc->sc_y_factor = pd->y_factor;
 				sc->sc_y_sensors = pd->y_sensors;
+				if (product == 0x215) {
+					sc->is_geyser2 = 1;
+					sc->sc_x_sensors = 15;
+					sc->sc_y_sensors = 9;
+					sc->sc_datalen = 64;
+				}
 				break;
 			}
 		}
@@ -479,20 +491,27 @@ void
 pbms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 {
 	struct pbms_softc *sc = (struct pbms_softc *)addr;
-	signed char *data;
+	unsigned char *data;
 	int dx, dy, dz, i, s;
 	uint32_t buttons;
 
 	/* Ignore incomplete data packets. */
-	if (len != PBMS_DATA_LEN)
+	if (len != sc->sc_datalen)
 		return;
 	data = ibuf;
 
+#if 0
+	printf("(");
+	for (i = 0; i < len; i++)
+		printf(" %d", data[i]);
+	printf(" )\n");
+#endif
+
 	/* The last byte is 1 if the button is pressed and 0 otherwise. */
-	buttons = !!data[PBMS_DATA_LEN - 1];
+	buttons = !!data[sc->sc_datalen - 1];
 
 	/* Everything below assumes that the sample is reordered. */
-	reorder_sample(sc->sc_sample, data);
+	reorder_sample(sc, sc->sc_sample, data);
 
 	/* Is this the first sample? */
 	if (!(sc->sc_status & PBMS_VALID)) {
@@ -505,7 +524,8 @@ pbms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	}
 	/* Accumulate the sensor change while keeping it nonnegative. */
 	for (i = 0; i < PBMS_SENSORS; i++) {
-		sc->sc_acc[i] += sc->sc_sample[i] - sc->sc_prev[i];
+		sc->sc_acc[i] +=
+			(signed char) (sc->sc_sample[i] - sc->sc_prev[i]);
 		if (sc->sc_acc[i] < 0)
 			sc->sc_acc[i] = 0;
 	}
@@ -535,26 +555,40 @@ pbms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
  */
 
 static void 
-reorder_sample(signed char *to, signed char *from)
+reorder_sample(struct pbms_softc *sc, unsigned char *to, unsigned char *from)
 {
 	int i;
 
-	for (i = 0; i < 8; i++) {
-		/* X-sensors. */
-		to[i] = from[5 * i + 2];
-		to[i + 8] = from[5 * i + 4];
-		to[i + 16] = from[5 * i + 42];
-#if 0
-		/* 
-		 * XXX This seems to introduce random ventical jumps, so
-		 * we ignore these sensors until we figure out their meaning.
-		 */
-		if (i < 2)
-			to[i + 24] = from[5 * i + 44];
-#endif /* 0 */
-		/* Y-sensors. */
-		to[i + 26] = from[5 * i + 1];
-		to[i + 34] = from[5 * i + 3];
+	if (sc->is_geyser2) {
+		int j;
+
+		memset(to, 0, PBMS_SENSORS);
+		for (i = 0, j = 19; i < 20; i += 2, j += 3) {
+			to[i] = from[j];
+			to[i + 1] = from[j + 1];
+		}
+		for (i = 0, j = 1; i < 9; i += 2, j += 3) {
+			to[PBMS_X_SENSORS + i] = from[j];
+			to[PBMS_X_SENSORS + i + 1] = from[j + 1];
+		}
+	} else {
+		for (i = 0; i < 8; i++) {
+			/* X-sensors. */
+			to[i] = from[5 * i + 2];
+			to[i + 8] = from[5 * i + 4];
+			to[i + 16] = from[5 * i + 42];
+	#if 0
+			/* 
+			 * XXX This seems to introduce random ventical jumps, so
+			 * we ignore these sensors until we figure out their meaning.
+			 */
+			if (i < 2)
+				to[i + 24] = from[5 * i + 44];
+	#endif /* 0 */
+			/* Y-sensors. */
+			to[i + 26] = from[5 * i + 1];
+			to[i + 34] = from[5 * i + 3];
+		}
 	}
 }
 

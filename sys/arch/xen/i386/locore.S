@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2007/06/28 20:50:30 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.10.1 2007/11/06 23:23:59 matt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -373,8 +373,8 @@ start:
 /*
  * Build initial page tables.
  */
-	/* Calculate end of text segment, rounded to a page. */
-	leal	(RELOC(etext)+PGOFSET),%edx
+	/* Calculate end of text segment. */
+	leal	(RELOC(__data_start)),%edx
 	andl	$~PGOFSET,%edx
 
 	/* Skip over the first 1MB. */
@@ -528,7 +528,7 @@ NENTRY(lwp_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-	DO_DEFERRED_SWITCH(%eax)
+	DO_DEFERRED_SWITCH
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -668,6 +668,9 @@ switch_skipsave:
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
+
 	/*
 	 * Restore the rest of newlwp's context.
 	 *
@@ -680,17 +683,6 @@ switch_skipsave:
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
 
-	movl	$0,CPUVAR(RESCHED)
-
-	/*
-	 *  Check for restartable atomic sequences (RAS)
-	 */
-
-	movl	L_PROC(%edi),%ebx
-	cmpl	$0,P_RASLIST(%ebx)
-	jne	check_ras
-
-switch_return:
 	STIC(%ebx)
 	jz 1f
 	call	_C_LABEL(stipending)
@@ -698,23 +690,32 @@ switch_return:
 	jz 1f
 	pushl  CPUVAR(ILEVEL)
 	call	_C_LABEL(Xspllower) # process pending interrupts
+	addl    $4,%esp
 1:
+
+	/*
+	 *  Check for restartable atomic sequences (RAS)
+	 */
+
+	movl	L_PROC(%edi),%eax
+	cmpl	$0,P_RASLIST(%eax)
+	jz	switch_return
+	movl	L_MD_REGS(%edi),%ebx
+	pushl	TF_EIP(%ebx)
+	pushl	%eax
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	switch_return
+	movl	%eax,TF_EIP(%ebx)
+
+switch_return:
 	movl	%esi,%eax	# return 'oldlwp'
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
 
-check_ras:
-	movl	L_MD_REGS(%edi),%ebx
-	pushl	TF_EIP(%ebx)
-	pushl	L_PROC(%edi)
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	switch_return
-	movl	%eax,TF_EIP(%ebx)
-	jmp	switch_return
 
 /*
  * void savectx(struct pcb *pcb);
@@ -789,7 +790,7 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-1:	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 	STIC(%eax)
 	jz	14f

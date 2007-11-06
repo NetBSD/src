@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.24 2007/02/25 21:06:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.24.18.1 2007/11/06 23:26:32 matt Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.24 2007/02/25 21:06:57 martin Exp $");
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_l4.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ic/daicvar.h>
 #include <dev/ic/daicreg.h>
 #include <dev/microcode/daic/dnload.h>

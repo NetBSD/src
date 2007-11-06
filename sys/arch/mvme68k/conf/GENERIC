@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2007/06/04 08:55:23 martin Exp $
+# $NetBSD: GENERIC,v 1.71.10.1 2007/11/06 23:19:21 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.71.10.1 $"
 
 # Boards this kernel supports
 options 	MVME147

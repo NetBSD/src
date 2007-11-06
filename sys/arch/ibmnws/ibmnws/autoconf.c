@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2007/02/28 04:21:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.20.1 2007/11/06 23:17:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,17 +68,11 @@ static void findroot(void);
 void
 cpu_configure(void)
 {
-	/* startrtclock(); */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO] & 0x1fffffff,
-	    imask[IPL_NET] & 0x1fffffff,
-	    imask[IPL_TTY] & 0x1fffffff);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void

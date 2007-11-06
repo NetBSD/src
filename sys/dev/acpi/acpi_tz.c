@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.8.1 2007/11/06 23:25:34 matt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.8.1 2007/11/06 23:25:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,10 +197,11 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_callout, 0);
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, sc);
+	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
+
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
@@ -240,7 +241,6 @@ acpitz_get_status(void *opaque)
 	sc->sc_data[ATZ_SENSOR_TEMP].value_cur =
 	    sc->sc_zone.tmp * 100000 - 50000;
 	sc->sc_data[ATZ_SENSOR_TEMP].state = ENVSYS_SVALID;
-	sc->sc_data[ATZ_SENSOR_TEMP].monitor = true;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -570,11 +570,9 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
-	    acpitz_tick, opaque);
 	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
 
-	return;
+	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
@@ -585,13 +583,14 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 	for (i = 0; i < ATZ_NUMSENSORS; i++) {
 		sc->sc_data[i].sensor = i;
 		sc->sc_data[i].state = ENVSYS_SVALID;
+		sc->sc_data[i].monitor = true;
 		sc->sc_data[i].flags = 
 		    (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
 	}
 #define INITDATA(index, unit, string) \
 	sc->sc_data[index].units = unit;				   \
-	snprintf(sc->sc_data[index].desc, sizeof(sc->sc_data[index].desc), \
-	    "%s %s", sc->sc_dev.dv_xname, string);
+	strlcpy(sc->sc_data[index].desc, string,			   \
+	    sizeof(sc->sc_data[index].desc));
 
 	INITDATA(ATZ_SENSOR_TEMP, ENVSYS_STEMP, "temperature");
 

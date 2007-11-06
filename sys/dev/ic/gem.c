@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.58 2007/08/26 22:45:56 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.58.2.1 2007/11/06 23:26:37 matt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.58 2007/08/26 22:45:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.58.2.1 2007/11/06 23:26:37 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.58 2007/08/26 22:45:56 dyoung Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1532,7 +1532,7 @@ gem_rint(sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 #ifdef INET
 		/* hardware checksum */

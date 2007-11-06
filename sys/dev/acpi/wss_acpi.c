@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.17 2006/11/16 01:32:47 christos Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.17.24.1 2007/11/06 23:25:38 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.17 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.17.24.1 2007/11/06 23:25:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.17 2006/11/16 01:32:47 christos Exp $
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

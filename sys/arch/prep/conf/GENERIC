@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2007/08/21 02:48:16 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.136.2.1 2007/11/06 23:21:05 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,15 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.136 $"
+#ident		"GENERIC-$Revision: 1.136.2.1 $"
 
 maxusers	32
 
 # Platform support
 
-options 	OPENPIC				# OpenPIC support (7043-140)
+options 	PIC_OPENPIC	# OpenPIC support (7043-140)
+options		PIC_PREPIVR
+options		PIC_I8259
 
 # Standard system options
 
@@ -40,12 +42,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -408,7 +405,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ohci*	at pci? dev ? function ?	# Open Host Controller
 
 # PCMCIA USB controllers
-slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 #usb*	at uhci?

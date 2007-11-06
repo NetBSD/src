@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.52 2007/05/07 12:24:00 he Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.52.8.1 2007/11/06 23:24:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.52 2007/05/07 12:24:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.52.8.1 2007/11/06 23:24:48 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.52 2007/05/07 12:24:00 he Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <sys/syscallargs.h>

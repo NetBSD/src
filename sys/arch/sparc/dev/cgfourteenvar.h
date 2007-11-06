@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.8 2007/07/30 23:28:14 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.8.4.1 2007/11/06 23:22:20 matt Exp $ */
 
 /*
  * Copyright (c) 1996

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.45 2007/07/09 20:52:35 ad Exp $ */
+/*	$NetBSD: smg.c,v 1.45.10.1 2007/11/06 23:23:18 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.45 2007/07/09 20:52:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.45.10.1 2007/11/06 23:23:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

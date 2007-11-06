@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.42 2007/06/25 13:22:46 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.42.10.1 2007/11/06 23:19:37 matt Exp $
 
 #	config for bootable floppy kernel
 #

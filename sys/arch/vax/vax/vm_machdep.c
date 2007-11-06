@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97 2007/05/20 17:04:22 mhitch Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.97.10.1 2007/11/06 23:23:16 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2007/05/20 17:04:22 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.10.1 2007/11/06 23:23:16 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"

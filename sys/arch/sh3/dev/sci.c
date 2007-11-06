@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.47 2007/07/09 20:52:27 ad Exp $ */
+/* $NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47 2007/07/09 20:52:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"

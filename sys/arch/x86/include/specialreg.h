@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.18 2007/07/11 11:56:36 njoly Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.18.10.1 2007/11/06 23:23:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -199,12 +199,6 @@
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
 
-#define CPUID(code, eax, ebx, ecx, edx)                         \
-	__asm("cpuid"                                           \
-	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
-	    : "a" (code));
-
-
 /*
  * Model-specific registers for the i386 family
  */
@@ -226,6 +220,7 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
+#define MSR_IA32_EXT_CONFIG	0x0ee	/* Undocumented. Core Solo/Duo only */
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */

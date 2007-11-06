@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/09 16:08:58 nonaka Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2007/11/06 23:24:38 matt Exp $
 
 # Makefile for zaurus tags file and boot blocks
 

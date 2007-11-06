@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.7 2007/08/14 14:10:52 kiyohara Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.7.2.1 2007/11/06 23:18:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.7 2007/08/14 14:10:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.7.2.1 2007/11/06 23:18:55 matt Exp $");
 
 #include "locators.h"
 

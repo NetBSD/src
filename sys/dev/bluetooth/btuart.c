@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.7 2007/08/15 16:48:31 kiyohara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.7.2.1 2007/11/06 23:25:47 matt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.7 2007/08/15 16:48:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.7.2.1 2007/11/06 23:25:47 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.7 2007/08/15 16:48:31 kiyohara Exp $");
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
@@ -69,7 +69,7 @@ struct bth4hci {
 };
 
 struct btuart_softc {
-	struct device sc_dev;
+	device_t	sc_dev;
 
 	struct tty *sc_tp;
 	struct hci_unit sc_unit;		/* Bluetooth HCI Unit */
@@ -95,9 +95,9 @@ struct btuart_softc {
 };
 
 void btuartattach(int);
-static int btuart_match(struct device *, struct cfdata *, void *);
-static void btuart_attach(struct device *, struct device *, void *);
-static int btuart_detach(struct device *, int);
+static int btuart_match(device_t, struct cfdata *, void *);
+static void btuart_attach(device_t, device_t, void *);
+static int btuart_detach(device_t, int);
 
 static int bth4_waitresp(struct btuart_softc *, struct mbuf **, uint16_t);
 static int bth4_firmload(struct btuart_softc *, char *,
@@ -128,7 +128,7 @@ static void bth4_start(struct hci_unit *);
  * It doesn't need to be exported, as only btuartattach() uses it,
  * but there's no "official" way to make it static.
  */
-CFATTACH_DECL(btuart, sizeof(struct btuart_softc),
+CFATTACH_DECL_NEW(btuart, sizeof(struct btuart_softc),
     btuart_match, btuart_attach, btuart_detach, NULL);
 
 static struct linesw bth4_disc = {
@@ -195,7 +195,7 @@ btuartattach(int num __unused)
  */
 /* ARGSUSED */
 static int
-btuart_match(struct device *self __unused,
+btuart_match(device_t self __unused,
     struct cfdata *cfdata __unused, void *arg __unused)
 {
 
@@ -209,11 +209,13 @@ btuart_match(struct device *self __unused,
  */
 /* ARGSUSED */
 static void
-btuart_attach(struct device *parent __unused,
-    struct device *self, void *aux __unused)
+btuart_attach(device_t parent __unused,
+    device_t self, void *aux __unused)
 {
 	struct btuart_softc *sc = device_private(self);
 	int i;
+
+	sc->sc_dev = self;
 
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -228,7 +230,7 @@ btuart_attach(struct device *parent __unused,
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+	sc->sc_unit.hci_devname = device_xname(self);
 	sc->sc_unit.hci_enable = bth4_enable;
 	sc->sc_unit.hci_disable = bth4_disable;
 	sc->sc_unit.hci_start_cmd = bth4_start;
@@ -242,7 +244,7 @@ btuart_attach(struct device *parent __unused,
  * Autoconf detach routine.  Called when we close the line discipline.
  */
 static int
-btuart_detach(struct device *self, int flags __unused)
+btuart_detach(device_t self, int flags __unused)
 {
 	struct btuart_softc *sc = device_private(self);
 
@@ -297,7 +299,7 @@ static int
 bth4_firmload(struct btuart_softc *sc, char *filename,
 	      int (*func_firmload)(struct btuart_softc *, int, char *))
 {
-	const cfdriver_t cd = device_cfdriver(&sc->sc_dev);
+	const cfdriver_t cd = device_cfdriver(sc->sc_dev);
 	firmware_handle_t fh = NULL;
 	int error, size;
 	char *buf;
@@ -374,9 +376,6 @@ init_ericsson(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -393,7 +392,7 @@ init_ericsson(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: Ericsson_Set_UART_Baud_Rate failed:"
-			    " Status 0x%02x\n", sc->sc_dev.dv_xname, error);
+			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -432,9 +431,6 @@ init_digi(struct btuart_softc *sc)
 	}
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_DIGIANSWER_SET_UART_BAUD_RATE	0xfc07		/* XXXX */
@@ -514,9 +510,6 @@ init_csr(struct btuart_softc *sc)
 	} bccmd;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -550,7 +543,7 @@ init_csr(struct btuart_softc *sc)
 		 */
 		if (error != 0) {
 			printf("%s: CSR set UART speed failed: Status 0x%02x\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -586,9 +579,6 @@ init_swave(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	/* first send 'param access set' command. */
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
@@ -614,7 +604,7 @@ init_swave(struct btuart_softc *sc)
 			if (m != NULL)
 				m_freem(m);
 			printf("%s: swave set baud rate command failed:"
-			    " error 0x%02x\n", sc->sc_dev.dv_xname, error);
+			    " error 0x%02x\n", device_xname(sc->sc_dev), error);
 			return error;
 		}
 		if (m != NULL) {
@@ -671,9 +661,6 @@ init_st(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_ST_SET_UART_BAUD_RATE	0xfc46	/* XXXX */
@@ -706,8 +693,6 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 	uint8_t seq;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 	seq = 0;
 	offset = 0;
 	error = 0;
@@ -731,7 +716,7 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 			if (error != 0) {
 				printf("%s: stlc2500 firmware load failed:"
 				    " Status 0x%02x\n",
-				    sc->sc_dev.dv_xname, error);
+				    device_xname(sc->sc_dev), error);
 				error = EFAULT;
 				break;
 			}
@@ -760,9 +745,6 @@ init_stlc2500(struct btuart_softc *sc)
 	const char *suffix[] = { ".ptc", ".ssf", NULL };
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	opcode = htole16(HCI_CMD_READ_LOCAL_VER);
 	p->type = HCI_CMD_PKT;
@@ -777,7 +759,7 @@ init_stlc2500(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: HCI_Read_Local_Version_Information failed:"
-			    " Status 0x%02x\n", sc->sc_dev.dv_xname, error);
+			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -809,7 +791,7 @@ init_stlc2500(struct btuart_softc *sc)
 			if (error != 0) {
 				printf("%s: HCI_Reset (%d) failed:"
 				    " Status 0x%02x\n",
-				    sc->sc_dev.dv_xname, i, error);
+				    device_xname(sc->sc_dev), i, error);
 				error = EFAULT;
 				m_freem(m);
 			}
@@ -833,7 +815,7 @@ init_stlc2500(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: failed: opcode 0xfc0f Status 0x%02x\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -845,7 +827,7 @@ init_stlc2500(struct btuart_softc *sc)
 	 * We do not know the beginning point of this character string.
 	 * Because it doesn't know the event of this packet.
 	 *
-	 * printf("%s: %s\n", sc->sc_dev.dv_xname, ???);
+	 * printf("%s: %s\n", device_xname(sc->sc_dev), ???);
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
@@ -873,7 +855,7 @@ init_stlc2500(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: failed: opcode 0xfc0f Status 0x%02x\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -895,7 +877,7 @@ init_stlc2500(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: HCI_Reset failed: Status 0x%02x\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -929,8 +911,6 @@ init_bcm2035(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 
 	/*
 	 * XXXX: Should we send some commands?
@@ -953,7 +933,7 @@ init_bcm2035(struct btuart_softc *sc)
 	if (m != NULL) {
 		if (error != 0) {
 			printf("%s: bcm2035 set baud rate failed:"
-			    " Status 0x%02x\n", sc->sc_dev.dv_xname, error);
+			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -1126,7 +1106,7 @@ bth4close(struct tty *tp, int flag __unused)
 		sc->sc_input_event = bth4init_input;
 		splx(s);
 		if ((*sc->sc_bth4hci.init)(sc) != 0)
-			printf("%s: reset speed fail\n", sc->sc_dev.dv_xname);
+			printf("%s: reset speed fail\n", device_xname(sc->sc_dev));
 	}
 
 	s = spltty();
@@ -1136,8 +1116,8 @@ bth4close(struct tty *tp, int flag __unused)
 	if (sc != NULL) {
 		tp->t_sc = NULL;
 		if (sc->sc_tp == tp) {
-			cfdata = sc->sc_dev.dv_cfdata;
-			config_detach(&sc->sc_dev, 0);
+			cfdata = device_cfdata(sc->sc_dev);
+			config_detach(sc->sc_dev, 0);
 			free(cfdata, M_DEVBUF);
 		}
 
@@ -1209,7 +1189,7 @@ bth4input(int c, struct tty *tp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: out of memory\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -1225,7 +1205,7 @@ bth4input(int c, struct tty *tp)
 			MGET(m->m_next, M_DONTWAIT, MT_DATA);
 			if (m->m_next == NULL) {
 				printf("%s: out of memory\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -1271,7 +1251,7 @@ bth4input(int c, struct tty *tp)
 
 		default:
 			printf("%s: Unknown packet type=%#x!\n",
-			    sc->sc_dev.dv_xname, c);
+			    device_xname(sc->sc_dev), c);
 			sc->sc_unit.hci_stats.err_rx++;
 			m_freem(sc->sc_rxp);
 			sc->sc_rxp = NULL;
@@ -1320,7 +1300,7 @@ bth4input(int c, struct tty *tp)
 
 	default:
 		panic("%s: invalid state %d!\n",
-		    sc->sc_dev.dv_xname, sc->sc_state);
+		    device_xname(sc->sc_dev), sc->sc_state);
 	}
 
 	return 0;

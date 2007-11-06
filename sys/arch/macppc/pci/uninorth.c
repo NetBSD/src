@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.11.50.1 2007/11/06 23:18:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11.50.1 2007/11/06 23:18:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,26 +38,26 @@ __KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.11 2005/12/11 12:18:06 christos Exp $
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 
 struct uninorth_softc {
 	struct device sc_dev;
-	struct pci_bridge sc_pc;
+	struct genppc_pci_chipset sc_pc;
+	struct powerpc_bus_space sc_iot;
+	struct powerpc_bus_space sc_memt;
 };
 
-void uninorth_attach __P((struct device *, struct device *, void *));
-int uninorth_match __P((struct device *, struct cfdata *, void *));
+static void uninorth_attach(struct device *, struct device *, void *);
+static int uninorth_match(struct device *, struct cfdata *, void *);
 
-pcireg_t uninorth_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void uninorth_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+static pcireg_t uninorth_conf_read(void *, pcitag_t, int);
+static void uninorth_conf_write(void *, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(uninorth, sizeof(struct uninorth_softc),
     uninorth_match, uninorth_attach, NULL, NULL);
 
-int
-uninorth_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+uninorth_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -73,21 +73,19 @@ uninorth_match(parent, cf, aux)
 	return 1;
 }
 
-void
-uninorth_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+uninorth_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uninorth_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int len, child, node = ca->ca_node;
-	u_int32_t reg[2], busrange[2];
+	uint32_t reg[2], busrange[2];
 	struct ranges {
-		u_int32_t pci_hi, pci_mid, pci_lo;
-		u_int32_t host;
-		u_int32_t size_hi, size_lo;
+		uint32_t pci_hi, pci_mid, pci_lo;
+		uint32_t host;
+		uint32_t size_hi, size_lo;
 	} ranges[6], *rp = ranges;
 
 	printf("\n");
@@ -100,22 +98,17 @@ uninorth_attach(parent, self, aux)
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
 
-	pc->node = node;
-	pc->addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->data = mapiodev(reg[0] + 0xc00000, 8);
-	pc->bus = busrange[0];
-	pc->conf_read = uninorth_conf_read;
-	pc->conf_write = uninorth_conf_write;
-	pc->memt = (bus_space_tag_t)0;
-
 	/* find i/o tag */
 	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
 	if (len == -1)
 		return;
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
-		     OFW_PCI_PHYS_HI_SPACE_IO)
-			pc->iot = (bus_space_tag_t)rp->host;
+		     OFW_PCI_PHYS_HI_SPACE_IO) {
+			sc->sc_iot.pbs_base = rp->host;
+			sc->sc_iot.pbs_limit = rp->host + rp->size_lo;
+			break;
+		}
 		len -= sizeof(ranges[0]);
 		rp++;
 	}
@@ -131,12 +124,34 @@ uninorth_attach(parent, self, aux)
 			*gmac_gbclock_en |= 0x02;
 	}
 
+	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
+	sc->sc_iot.pbs_offset = 0;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
+	    "uninorth io-space") != 0)
+		panic("Can't init uninorth io tag");
+
+	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
+	sc->sc_memt.pbs_base = 0x00000000;
+	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
+	    "uninorth mem-space") != 0)
+		panic("Can't init uninorth mem tag");
+
+	macppc_pci_get_chipset_tag(pc);
+	pc->pc_node = node;
+	pc->pc_addr = mapiodev(reg[0] + 0x800000, 4);
+	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->pc_bus = busrange[0];
+	pc->pc_conf_read = uninorth_conf_read;
+	pc->pc_conf_write = uninorth_conf_write;
+	pc->pc_iot = &sc->sc_iot;
+	pc->pc_memt = &sc->sc_memt;
+
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_memt = pc->memt;
-	pba.pba_iot = pc->iot;
+	pba.pba_memt = pc->pc_memt;
+	pba.pba_iot = pc->pc_iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
-	pba.pba_bus = pc->bus;
+	pba.pba_bus = pc->pc_bus;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -144,16 +159,14 @@ uninorth_attach(parent, self, aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-pcireg_t
-uninorth_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+static pcireg_t
+uninorth_conf_read(void *cookie, pcitag_t tag, int reg)
 {
-	int32_t *daddr = pc->data;
+	pci_chipset_tag_t pc = cookie;
+	int32_t *daddr = pc->pc_data;
 	pcireg_t data;
 	int bus, dev, func, s;
-	u_int32_t x;
+	uint32_t x;
 
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
@@ -168,7 +181,7 @@ uninorth_conf_read(pc, tag, reg)
 	if (func > 7)
 		panic("pci_conf_read: func > 7");
 
-	if (bus == pc->bus) {
+	if (bus == pc->pc_bus) {
 		if (dev < 11)
 			return 0xffffffff;
 		x = (1 << dev) | (func << 8) | reg;
@@ -177,28 +190,25 @@ uninorth_conf_read(pc, tag, reg)
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
-	in32rb(pc->addr);
+	out32rb(pc->pc_addr, x);
+	in32rb(pc->pc_addr);
 	data = 0xffffffff;
 	if (!badaddr(daddr, 4))
 		data = in32rb(daddr);
-	out32rb(pc->addr, 0);
-	in32rb(pc->addr);
+	out32rb(pc->pc_addr, 0);
+	in32rb(pc->pc_addr);
 	splx(s);
 
 	return data;
 }
 
-void
-uninorth_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+static void
+uninorth_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 {
-	int32_t *daddr = pc->data;
+	pci_chipset_tag_t pc = cookie;
+	int32_t *daddr = pc->pc_data;
 	int bus, dev, func, s;
-	u_int32_t x;
+	uint32_t x;
 
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
@@ -209,7 +219,7 @@ uninorth_conf_write(pc, tag, reg, data)
 	if (func > 7)
 		panic("pci_conf_write: func > 7");
 
-	if (bus == pc->bus) {
+	if (bus == pc->pc_bus) {
 		if (dev < 11)
 			panic("pci_conf_write: dev < 11");
 		x = (1 << dev) | (func << 8) | reg;
@@ -218,11 +228,11 @@ uninorth_conf_write(pc, tag, reg, data)
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
-	in32rb(pc->addr);
+	out32rb(pc->pc_addr, x);
+	in32rb(pc->pc_addr);
 	out32rb(daddr, data);
-	out32rb(pc->addr, 0);
-	in32rb(pc->addr);
+	out32rb(pc->pc_addr, 0);
+	in32rb(pc->pc_addr);
 
 	splx(s);
 }

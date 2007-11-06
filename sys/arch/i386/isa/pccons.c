@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.184 2007/07/09 20:52:17 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.184.10.1 2007/11/06 23:17:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.184 2007/07/09 20:52:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.184.10.1 2007/11/06 23:17:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1062,7 +1062,7 @@ pcstart(struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

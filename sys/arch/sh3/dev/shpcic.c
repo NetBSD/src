@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.10.50.1 2007/11/06 23:21:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.10.50.1 2007/11/06 23:21:59 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -51,8 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
 #include <machine/intr.h>
 #include <machine/pci_machdep.h>
 
+
+#if defined(DEBUG) && !defined(SHPCIC_DEBUG)
+#define SHPCIC_DEBUG 0
+#endif
 #if defined(SHPCIC_DEBUG)
-int shpcic_debug = 0;
+int shpcic_debug = SHPCIC_DEBUG + 0;
 #define	DPRINTF(arg)	if (shpcic_debug) printf arg
 #else
 #define	DPRINTF(arg)
@@ -60,74 +64,58 @@ int shpcic_debug = 0;
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 
-static const struct shpcic_product {
-	uint32_t	sp_product;
-	const char	*sp_name;
-} shpcic_products[] = {
-	{ PCI_PRODUCT_HITACHI_SH7751,	"SH7751" },
-	{ PCI_PRODUCT_HITACHI_SH7751R,	"SH7751R" },
 
-	{ 0, NULL },
-};
-
-int	shpcic_match(struct device *, struct cfdata *, void *);
-void	shpcic_attach(struct device *, struct device *, void *);
+static int	shpcic_match(device_t, struct cfdata *, void *);
+static void	shpcic_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(shpcic, sizeof(struct device),
     shpcic_match, shpcic_attach, NULL, NULL);
 
+
 /* There can be only one. */
-int shpcic_found = 0;
+static int shpcic_found = 0;
 
 /* PCIC intr priotiry */
 static int shpcic_intr_priority[2] = { IPL_BIO, IPL_BIO };
 
-static const struct shpcic_product *shpcic_lookup(void);
 
-static const struct shpcic_product *
-shpcic_lookup(void)
+static int
+shpcic_match(device_t parent, struct cfdata *cf, void *aux)
 {
-	const struct shpcic_product *spp;
 	pcireg_t id;
 
+	if (shpcic_found)
+		return (0);
+
+	switch (cpu_product) {
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
+		break;
+
+	default:
+		return (0);
+	}
+
+
 	id = _reg_read_4(SH4_PCICONF0);
+
 	switch (PCI_VENDOR(id)) {
 	case PCI_VENDOR_HITACHI:
 		break;
 
 	default:
-		return (NULL);
-	}
-
-	for (spp = shpcic_products; spp->sp_name != NULL; spp++) {
-		if (PCI_PRODUCT(id) == spp->sp_product) {
-			return (spp);
-		}
-	}
-	return (NULL);
-}
-
-int
-shpcic_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	if (!CPU_IS_SH4)
 		return (0);
+	}
 
-	switch (cpu_product) {
+
+	switch (PCI_PRODUCT(id)) {
+	case PCI_PRODUCT_HITACHI_SH7751: /* FALLTHROUGH */
+	case PCI_PRODUCT_HITACHI_SH7751R:
+		break;
+
 	default:
 		return (0);
-
-	case CPU_PRODUCT_7751:
-	case CPU_PRODUCT_7751R:
-		break;
 	}
-
-	if (shpcic_found)
-		return (0);
-
-	if (shpcic_lookup() == NULL)
-		return (0);
 
 	if (_reg_read_2(SH4_BCR2) & BCR2_PORTEN)
 		return (0);
@@ -135,29 +123,24 @@ shpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
-shpcic_attach(struct device *parent, struct device *self, void *aux)
+static void
+shpcic_attach(device_t parent, device_t self, void *aux)
 {
-	const struct shpcic_product *spp;
 	struct pcibus_attach_args pba;
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #endif
+	pcireg_t id, class;
+	char devinfo[256];
 
 	shpcic_found = 1;
 
-	spp = shpcic_lookup();
-	if (spp == NULL) {
-		printf("\n");
-		panic("shpcic_attach: impossible");
-	}
+	aprint_naive("\n");
 
-	if (_reg_read_2(SH4_BCR2) & BCR2_PORTEN) {
-		printf("\n");
-		panic("shpcic_attach: port enabled");
-	}
-
-	printf(": HITACHI %s\n", spp->sp_name);
+	id = _reg_read_4(SH4_PCICONF0);
+	class = _reg_read_4(SH4_PCICONF2);
+	pci_devinfo(id, class, 1, devinfo, sizeof(devinfo));
+	aprint_normal(": %s\n", devinfo);
 
 	/* allow PCIC request */
 	_reg_write_4(SH4_BCR1, _reg_read_4(SH4_BCR1) | BCR1_BREQEN);

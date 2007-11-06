@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.34 2007/07/21 19:06:20 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.34.6.1 2007/11/06 23:19:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2007/07/21 19:06:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34.6.1 2007/11/06 23:19:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

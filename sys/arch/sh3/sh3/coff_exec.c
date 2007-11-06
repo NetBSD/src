@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.27 2007/06/23 16:58:18 dsl Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.27.10.1 2007/11/06 23:22:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.27 2007/06/23 16:58:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.27.10.1 2007/11/06 23:22:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

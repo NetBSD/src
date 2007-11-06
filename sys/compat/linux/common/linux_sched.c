@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.42 2007/02/15 20:32:48 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.42.20.1 2007/11/06 23:25:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.42 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.42.20.1 2007/11/06 23:25:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -55,12 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.42 2007/02/15 20:32:48 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/ptrace.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
 #include <compat/linux/common/linux_emuldata.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
 

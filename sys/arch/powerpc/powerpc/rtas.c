@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.1 2007/01/14 22:18:02 aymeric Exp $ */
+/*	$NetBSD: rtas.c,v 1.1.28.1 2007/11/06 23:21:03 matt Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1 2007/01/14 22:18:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.28.1 2007/11/06 23:21:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,6 +18,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1 2007/01/14 22:18:02 aymeric Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
+#include <machine/autoconf.h>
 
 struct rtas_softc *rtas0_softc;
 
@@ -79,7 +80,7 @@ struct rtas_call {
 	int nreturns;
 	int args[0];
 };
-
+void rtas_reboot(void);
 static int	rtas_match(struct device *, struct cfdata *, void *);
 static void	rtas_attach(struct device *, struct device *, void *);
 static int	rtas_detach(struct device *, int);
@@ -95,12 +96,9 @@ CFATTACH_DECL(rtas, sizeof (struct rtas_softc),
 
 static int
 rtas_match(struct device *parent, struct cfdata *match, void *aux) {
-	struct ofbus_attach_args *oba = aux;
+	struct confargs *ca = aux;
 
-	if (strcmp(oba->oba_busname, "ofw"))
-		return 0;
-
-	if (strcmp(oba->oba_ofname, "rtas"))
+	if (strcmp(ca->ca_name, "rtas"))
 		return 0;
 
 	return 1;
@@ -108,9 +106,9 @@ rtas_match(struct device *parent, struct cfdata *match, void *aux) {
 
 static void
 rtas_attach(struct device *parent, struct device *self, void *aux) {
-	struct ofbus_attach_args *oba = aux;
+	struct confargs *ca = aux;
 	struct rtas_softc *sc = (struct rtas_softc *) self;
-	int ph = oba->oba_phandle;
+	int ph = ca->ca_node;
 	int ih;
 	int rtas_size;
 	int rtas_entry;
@@ -227,6 +225,20 @@ rtas_call(struct rtas_call *args) {
 	__asm("isync;\n");
 
 	return args->args[args->nargs];
+}
+
+void
+rtas_reboot(void)
+{
+	struct rtas_call rc;
+
+	if (!rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].exists)
+		return;
+
+	rc.token = rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].token;
+	rc.nargs = 0;
+	rc.nreturns = 0;
+	rtas_call(&rc);
 }
 
 /*

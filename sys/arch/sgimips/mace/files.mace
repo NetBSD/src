@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.8 2007/04/13 03:39:44 jmcneill Exp $
+#	$NetBSD: files.mace,v 1.8.12.1 2007/11/06 23:21:53 matt Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -16,7 +16,7 @@ file arch/sgimips/mace/macekbc.c	macekbc
 
 device mcclock
 attach mcclock at mace with mcclock_mace
-file arch/sgimips/mace/mcclock_mace.c	mcclock_mace
+file arch/sgimips/mace/mcclock_mace.c	mcclock_mace	needs-flag
 
 device mec: arp, ether, ifnet, mii
 attach mec at mace

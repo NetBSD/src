@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.22 2007/07/17 03:53:56 macallan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.22.10.1 2007/11/06 23:19:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

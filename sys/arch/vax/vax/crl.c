@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.21 2007/07/29 12:15:41 ad Exp $	*/
+/*	$NetBSD: crl.c,v 1.21.6.1 2007/11/06 23:23:13 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.21 2007/07/29 12:15:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.21.6.1 2007/11/06 23:23:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ crlclose(dev, flag, mode, l)
 	struct lwp *l;
 {
 
-	brelse(crltab.crl_buf);
+	brelse(crltab.crl_buf, 0);
 	crltab.crl_state = CRL_IDLE;
 	return 0;
 }

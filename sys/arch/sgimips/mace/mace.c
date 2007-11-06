@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.12 2007/07/09 20:52:27 ad Exp $	*/
+/*	$NetBSD: mace.c,v 1.12.10.1 2007/11/06 23:21:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.12 2007/07/09 20:52:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.12.10.1 2007/11/06 23:21:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2007/03/04 10:50:30 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.20.1 2007/11/06 23:19:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2007/03/04 10:50:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.20.1 2007/11/06 23:19:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			break;
 		}
 	}
-	brelse(bp);
+	brelse(bp, 0);
 	return msg;
 }
 
@@ -187,6 +187,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 	error = ESRCH;
  done:
-	brelse(bp);
+	brelse(bp, 0);
 	return error;
 }

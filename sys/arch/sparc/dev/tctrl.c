@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.42 2007/07/09 20:52:30 ad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.42.10.1 2007/11/06 23:22:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42 2007/07/09 20:52:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42.10.1 2007/11/06 23:22:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

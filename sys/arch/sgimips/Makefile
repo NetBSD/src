@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2007/08/04 05:32:39 dyoung Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2007/11/06 23:21:45 matt Exp $
 
 # Makefile for sgimips tags file
 

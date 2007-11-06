@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.12 2006/09/10 06:39:00 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.12.26.1 2007/11/06 23:26:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.12 2006/09/10 06:39:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.12.26.1 2007/11/06 23:26:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 

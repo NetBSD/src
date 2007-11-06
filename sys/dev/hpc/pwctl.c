@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.16 2006/10/09 10:33:42 peter Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.16.24.1 2007/11/06 23:26:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.16 2006/10/09 10:33:42 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.16.24.1 2007/11/06 23:26:08 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pwctl.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.16 2006/10/09 10:33:42 peter Exp $");
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.316 2007/07/01 11:29:22 xtraeme Exp $
+#	$NetBSD: INSTALL,v 1.316.10.1 2007/11/06 23:17:13 matt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -125,8 +125,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
-#file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+#file-system 	PTYFS		# /dev/pts/N support
+#file-system 	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas

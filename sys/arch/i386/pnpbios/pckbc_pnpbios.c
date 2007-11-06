@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.11 2007/07/09 20:52:18 ad Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.11.10.1 2007/11/06 23:17:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.11 2007/07/09 20:52:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.11.10.1 2007/11/06 23:17:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

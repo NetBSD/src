@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.44 2007/07/15 23:27:55 macallan Exp $
+#	$NetBSD: files.sgimips,v 1.44.10.1 2007/11/06 23:21:47 matt Exp $
 
 maxpartitions 16
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.62 2007/07/09 21:00:37 ad Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.62.8.1 2007/11/06 23:26:47 matt Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -47,7 +47,7 @@
 #include <sys/user.h>
 #include <sys/kthread.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

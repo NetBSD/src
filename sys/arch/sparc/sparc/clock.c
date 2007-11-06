@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.101 2007/05/17 14:51:29 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.101.10.1 2007/11/06 23:22:29 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2007/05/17 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101.10.1 2007/11/06 23:22:29 matt Exp $");
 
 #include "opt_sparc_arch.h"
 

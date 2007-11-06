@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.51 2007/08/19 09:18:45 jdc Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.51.2.1 2007/11/06 23:22:19 matt Exp $ */
 
 /*
  * Copyright (c) 1996

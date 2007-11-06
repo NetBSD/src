@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.48.8.1 2007/11/06 23:27:10 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.48.8.1 2007/11/06 23:27:10 matt Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $");
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,10 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <sys/kernel.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <machine/mtpr.h>
 
 #include <dev/ic/smc90cx6reg.h>
@@ -215,8 +215,8 @@ bah_attach_subr(sc)
 	arc_ifattach(ifp, linkaddress);
 
 #ifdef BAHSOFTCOPY
-	sc->sc_rxcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
-	sc->sc_txcookie = softintr_establish(IPL_SOFTNET,
+	sc->sc_rxcookie = softint_establish(SOFTINT_NET, bah_srint, sc);
+	sc->sc_txcookie = softint_establish(SOFTINT_NET,
 		(void (*)(void *))bah_start, ifp);
 #endif
 
@@ -737,7 +737,7 @@ bah_tint(sc, isr)
 	/* XXXX TODO */
 #ifdef BAHSOFTCOPY
 	/* schedule soft int to fill a new buffer for us */
-	softintr_schedule(sc->sc_txcookie);
+	softint_schedule(sc->sc_txcookie);
 #else
 	/* call it directly */
 	bah_start(ifp);
@@ -870,7 +870,7 @@ bahintr(arg)
 				 * this one starts a soft int to copy out
 				 * of the hw
 				 */
-				softintr_schedule(sc->sc_rxcookie);
+				softint_schedule(sc->sc_rxcookie);
 #else
 				/* this one does the copy here */
 				bah_srint(sc);
@@ -907,9 +907,9 @@ bah_reconwatch(arg)
  * This code needs some work - it looks pretty ugly.
  */
 int
-bah_ioctl(ifp, command, data)
+bah_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	void *data;
 {
 	struct bah_softc *sc;
@@ -925,10 +925,10 @@ bah_ioctl(ifp, command, data)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: ioctl() called, cmd = 0x%x\n",
-	    sc->sc_dev.dv_xname, command);
+	    sc->sc_dev.dv_xname, cmd);
 #endif
 
-	switch (command) {
+	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -964,7 +964,7 @@ bah_ioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 		case AF_INET:
 		case AF_INET6:
 			error = 0;

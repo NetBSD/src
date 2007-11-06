@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.16 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dzms.c,v 1.16.16.1 2007/11/06 23:25:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.16 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.16.16.1 2007/11/06 23:25:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.16 2007/03/04 06:01:45 christos Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>

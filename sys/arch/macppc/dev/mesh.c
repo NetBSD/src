@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.25 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.25.38.1 2007/11/06 23:18:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.25 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.25.38.1 2007/11/06 23:18:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -265,7 +265,7 @@ mesh_attach(parent, self, aux)
 
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 
-	intr_establish(sc->sc_irq, IST_LEVEL, IPL_BIO, mesh_intr, sc);
+	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(mesh_shutdownhook, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.22 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.22.46.1 2007/11/06 23:26:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ struct eisa_cfg_irq;
 struct eisa_cfg_dma;
 struct eisa_cfg_io;
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.18 2007/03/04 06:00:44 christos Exp $	*/
+/*	$NetBSD: sw.c,v 1.18.20.1 2007/11/06 23:22:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  * reselection failing on Sun Shoebox-type configurations where
  * there are multiple non-SCSI devices behind Emulex or Adaptec
  * bridges.  These devices pre-date the SCSI-I spec, and might not
- * bahve the way the 5380 code expects.  For this reason, only
+ * behave the way the 5380 code expects.  For this reason, only
  * DMA is enabled by default in this driver.
  *
  *	Jason R. Thorpe <thorpej@NetBSD.org>
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.18 2007/03/04 06:00:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.18.20.1 2007/11/06 23:22:22 matt Exp $");
 
 #include "opt_ddb.h"
 

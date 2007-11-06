@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.50.1 2007/11/06 23:20:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,9 +60,8 @@
 /*
  * Globals
  */
-GLOBAL(startsym)
-	.long	0			/* start of symbol table */
-GLOBAL(endsym)
+	.data
+GLOBAL(esym)
 	.long	0			/* end of symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
@@ -89,41 +88,19 @@ __start:
 	isync
 
 	/* compute end of kernel memory */
+        lis	4,_C_LABEL(end)@ha
+        addi	4,4,_C_LABEL(end)@l
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f
 	add	9,6,7			/* r9 = args + l */
-
-	/* If the resulting address is misaligned, abort. */
-	andi.	8,9,3
-	bne	1f			/* misaligned */
-
-	/* First, see if the loader even put the symbols there. */
-	lwz	9,-12(9)
-	lis	8,0x19730224@h		/* magic number */
-	ori	8,8,0x19730224@l
-	cmplw	8,9
-	bne	1f			/* nope */
-
-	/* Okay, ssym and esym are here -- fetch them. */
-	add	9,6,7
-	lwz	9,-8(9)
-	lis	8,_C_LABEL(startsym)@ha
-	stw	9,_C_LABEL(startsym)@l(8)
-
-	add	9,6,7
-	lwz	9,-4(9)
-	lis	8,_C_LABEL(endsym)@ha
-	stw	9,_C_LABEL(endsym)@l(8)
-
-	mr	4,9			/* r8 = end of kernel + symbols */
-	b	2f
+	lwz	9,-8(9)			/* esym */
+	cmpwi	9,0
+	beq	1f
+	mr	4,9
 1:
 #endif
-	lis	4,_C_LABEL(end)@ha
-	addi	4,4,_C_LABEL(end)@l
-2:
 
 	/*
 	 * Initialize cpu_info[0]
@@ -151,3 +128,8 @@ __start:
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Pull in common pio / bus_space code.
+ */
+#include <powerpc/powerpc/pio_subr.S>

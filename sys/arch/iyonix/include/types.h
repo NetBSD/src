@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2007/07/14 21:48:20 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.6.10.1 2007/11/06 23:18:01 matt Exp $	*/
 
 #ifndef _IYONIX_TYPES_H_
 #define	_IYONIX_TYPES_H_

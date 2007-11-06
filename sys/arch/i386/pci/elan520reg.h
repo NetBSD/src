@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.6 2007/08/10 22:39:13 dyoung Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.6.2.1 2007/11/06 23:17:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.84 2007/07/17 01:26:17 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.84.8.1 2007/11/06 23:26:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84 2007/07/17 01:26:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84.8.1 2007/11/06 23:26:23 matt Exp $");
 #endif
 
 /*
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84 2007/07/17 01:26:17 dyoung Exp $");
 #include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/callout.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/endian.h>
 
 #include <net/if.h>
@@ -1959,7 +1959,7 @@ ath_mode_init(struct ath_softc *sc)
 	 *
 	 * XXX should get from lladdr instead of arpcom but that's more work
 	 */
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(sc->sc_if.if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(sc->sc_if.if_sadl));
 	ath_hal_setmac(ah, ic->ic_myaddr);
 
 	/* calculate and install multicast filter */
@@ -5263,10 +5263,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ath_mode_init(sc);
 			error = 0;

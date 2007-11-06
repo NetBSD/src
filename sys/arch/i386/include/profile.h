@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.28 2007/04/16 15:02:25 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.28.12.1 2007/11/06 23:17:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,10 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#ifdef _KERNEL
 #include <machine/cpufunc.h>
 #include <machine/atomic.h>
+#endif
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
@@ -106,13 +108,34 @@ MCOUNT_EXIT_MP(void)
 #define MCOUNT_EXIT_MP()
 #endif
 
+static inline void
+mcount_disable_intr(void)
+{
+	__asm volatile("cli");
+}
+
+static inline u_long
+mcount_read_psl(void)
+{
+	u_long	ef;
+
+	__asm volatile("pushfl; popl %0" : "=r" (ef));
+	return (ef);
+}
+
+static inline void
+mcount_write_psl(u_long ef)
+{
+	__asm volatile("pushl %0; popfl" : : "r" (ef));
+}
+
 #define	MCOUNT_ENTER							\
-	s = (int)read_psl();						\
-	disable_intr();							\
+	s = (int)mcount_read_psl();					\
+	mcount_disable_intr();						\
 	MCOUNT_ENTER_MP();
 
 #define	MCOUNT_EXIT							\
 	MCOUNT_EXIT_MP();						\
-	write_psl(s);
+	mcount_write_psl(s);
 
 #endif /* _KERNEL */

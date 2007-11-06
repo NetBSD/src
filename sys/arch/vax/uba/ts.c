@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.33 2007/07/29 12:15:40 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.33.6.1 2007/11/06 23:23:12 matt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.33 2007/07/29 12:15:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.33.6.1 2007/11/06 23:23:12 matt Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
