@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.h,v 1.3 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.h,v 1.4 2007/11/06 02:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #define PKCS5_PBKDF2_H
 
 __BEGIN_DECLS
-int	pkcs5_pbkdf2(u_int8_t **, int, const u_int8_t *, int,
-		     const u_int8_t *, int, int, int);
-int	pkcs5_pbkdf2_calibrate(int, int);
+int	pkcs5_pbkdf2(u_int8_t **, size_t, const u_int8_t *, size_t,
+		     const u_int8_t *, size_t, size_t, int);
+int	pkcs5_pbkdf2_calibrate(size_t, int);
 __END_DECLS
 #endif
