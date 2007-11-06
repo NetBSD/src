@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.73 2007/11/05 17:48:17 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.74 2007/11/06 15:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.73 2007/11/05 17:48:17 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.74 2007/11/06 15:09:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -123,6 +123,8 @@ int
 puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 {
 	int rv, x;
+
+	assert(puffs_getstate(pu) == PUFFS_STATE_RUNNING);
 
 	if (mode != PUFFSDEV_BLOCK && mode != PUFFSDEV_NONBLOCK) {
 		errno = EINVAL;
@@ -345,7 +347,7 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	void *cookie)
 {
 	char rp[MAXPATHLEN];
-	int rv;
+	int rv, fd;
 
 #if 1
 	/* XXXkludgehere */
@@ -362,6 +364,16 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 		warnx("puffs_mount: using \"%s\" instead.", rp);
 	}
 
+	fd = open(_PATH_PUFFS, O_RDONLY);
+	if (fd == -1) {
+		warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+		return -1;
+	}
+	if (fd <= 2)
+		warnx("puffs_init: device fd %d (<= 2), sure this is "
+		    "what you want?", fd);
+
+	pu->pu_kargp->pa_fd = pu->pu_fd = fd;
 	pu->pu_kargp->pa_root_cookie = cookie;
 	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
 	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
@@ -385,7 +397,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 {
 	struct puffs_usermount *pu;
 	struct puffs_kargs *pargs;
-	int sverrno, fd;
+	int sverrno;
 
 	if (develv != PUFFS_DEVEL_LIBVERSION) {
 		warnx("puffs_init: mounting with lib version %d, need %d",
@@ -393,15 +405,6 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 		errno = EINVAL;
 		return NULL;
 	}
-
-	fd = open(_PATH_PUFFS, O_RDONLY);
-	if (fd == -1) {
-		warnx("puffs_init: cannot open %s", _PATH_PUFFS);
-		return NULL;
-	}
-	if (fd <= 2)
-		warnx("puffs_init: device fd %d (<= 2), sure this is "
-		    "what you want?", fd);
 
 	pu = malloc(sizeof(struct puffs_usermount));
 	if (pu == NULL)
@@ -415,7 +418,6 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 
 	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
-	pargs->pa_fd = pu->pu_fd = fd;
 	fillvnopmask(pops, pargs->pa_vnopmask);
 	(void)strlcpy(pargs->pa_typename, puffsname,
 	    sizeof(pargs->pa_typename));
@@ -459,7 +461,6 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
  failfree:
 	/* can't unmount() from here for obvious reasons */
 	sverrno = errno;
-	close(fd);
 	free(pu);
 	errno = sverrno;
 	return NULL;
