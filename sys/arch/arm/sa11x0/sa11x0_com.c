@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.39.12.1 2007/11/06 23:15:08 matt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39.12.1 2007/11/06 23:15:08 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"

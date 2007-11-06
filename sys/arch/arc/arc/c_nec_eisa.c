@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.12 2007/08/08 17:26:57 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.12.2.1 2007/11/06 23:14:45 matt Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.12 2007/08/08 17:26:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.12.2.1 2007/11/06 23:14:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.12 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.12.4.1 2007/11/06 23:07:36 matt Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -53,9 +53,6 @@
 #  include <time.h>
 # endif
 #endif
-#ifdef ENABLE_HYBRID
-#include <resolv.h>
-#endif
 
 #include PATH_IPSEC_H
 
@@ -86,6 +83,12 @@
 #include "sainfo.h"
 #include "admin.h"
 #include "strnames.h"
+
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#include "isakmp_xauth.h"
+#include "isakmp_cfg.h"
+#endif
 
 /* quick mode */
 static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
@@ -1800,7 +1803,7 @@ static int
 get_sainfo_r(iph2)
 	struct ph2handle *iph2;
 {
-	vchar_t *idsrc = NULL, *iddst = NULL;
+	vchar_t *idsrc = NULL, *iddst = NULL, *client = NULL;
 	int prefixlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 	int remoteid = 0;
@@ -1865,7 +1868,46 @@ get_sainfo_r(iph2)
 		
 	}
 
-	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p, remoteid);
+#ifdef ENABLE_HYBRID
+
+	/* clientaddr check : obtain modecfg address */
+	if (iph2->ph1->mode_cfg != NULL) {
+		if ((iph2->ph1->mode_cfg->flags & ISAKMP_CFG_ADDR4_EXTERN) ||
+		    (iph2->ph1->mode_cfg->flags & ISAKMP_CFG_ADDR4_LOCAL)){
+			struct sockaddr saddr;
+			saddr.sa_family = AF_INET;
+#ifndef __linux__
+			saddr.sa_len = sizeof(struct sockaddr_in);
+#endif
+			((struct sockaddr_in *)&saddr)->sin_port = IPSEC_PORT_ANY;
+			memcpy(&((struct sockaddr_in *)&saddr)->sin_addr, 
+				&iph2->ph1->mode_cfg->addr4, sizeof(struct in_addr));
+			client = ipsecdoi_sockaddr2id(&saddr, 32, IPSEC_ULPROTO_ANY);
+		}
+	}
+
+	/* clientaddr check, fallback to peer address */
+	if (client == NULL)
+	{
+		switch (iph2->dst->sa_family) {
+		case AF_INET:
+			prefixlen = sizeof(struct in_addr) << 3;
+			break;
+		case AF_INET6:
+			prefixlen = sizeof(struct in6_addr) << 3;
+			break;
+		default:
+			plog(LLV_ERROR, LOCATION, NULL,
+				"invalid family: %d\n", iph2->dst->sa_family);
+			goto end;
+		}
+		client = ipsecdoi_sockaddr2id(iph2->dst, prefixlen,
+					IPSEC_ULPROTO_ANY);
+	}
+#endif
+
+	/* obtain a matching sainfo section */
+	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p, client, remoteid);
 	if (iph2->sainfo == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get sainfo.\n");
@@ -1888,6 +1930,8 @@ end:
 		vfree(idsrc);
 	if (iddst)
 		vfree(iddst);
+	if (client)
+		vfree(client);
 
 	return error;
 }

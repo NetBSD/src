@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.31 2007/08/16 14:53:45 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.31.2.1 2007/11/06 23:11:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.31 2007/08/16 14:53:45 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.31.2.1 2007/11/06 23:11:42 matt Exp $");
 
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/types.h>
+#include <sys/lock.h>
+
 #include "pthread.h"
 #include "pthread_int.h"
+
+#ifndef	PTHREAD__HAVE_ATOMIC
 
 static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
 
@@ -119,7 +124,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EBUSY, "Destroying locked mutex",
-	    mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
+	    __SIMPLELOCK_UNLOCKED_P(&mutex->ptm_lock));
 
 	mutex->ptm_magic = _PT_MUTEX_DEAD;
 	if (mutex->ptm_private != NULL &&
@@ -165,7 +170,6 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 	/*
 	 * We have the lock!
 	 */
-	self->pt_mutexhint = mutex;
 	mutex->ptm_owner = self;
 
 	return 0;
@@ -184,11 +188,10 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
-
 	for (;;) {
 		/* Spin for a while. */
 		count = pthread__nspins;
-		while (mutex->ptm_lock == __SIMPLELOCK_LOCKED && --count > 0)
+		while (__SIMPLELOCK_LOCKED_P(&mutex->ptm_lock)  && --count > 0)
 			pthread__smt_pause();
 		if (count > 0) {
 			if (pthread__simple_lock_try(&mutex->ptm_lock) != 0)
@@ -207,7 +210,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		 * again.
 		 */
 		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
-		if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
+		if (__SIMPLELOCK_UNLOCKED_P(&mutex->ptm_lock)) {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
 			pthread_spinunlock(&mutex->ptm_interlock);
 			continue;
@@ -297,7 +300,6 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 	}
 
 	mutex->ptm_owner = self;
-	self->pt_mutexhint = mutex;
 
 	return 0;
 }
@@ -361,18 +363,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * lock that happened between the unlock above and this
 	 * examination of the queue; if so, no harm is done, as the
 	 * waiter will loop and see that the mutex is still locked.
-	 *
-	 * Note that waiters may have been transferred here from a
-	 * condition variable.
 	 */
-	if (self->pt_mutexhint == mutex)
-		self->pt_mutexhint = NULL;
-
 	pthread_spinlock(&mutex->ptm_interlock);
-	if (PTQ_EMPTY(&mutex->ptm_blocked)) {
-		pthread_spinunlock(&mutex->ptm_interlock);
-		return 0;
-	}
 	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
 	return 0;
 }
@@ -475,3 +467,12 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 
 	return 0;
 }
+
+int
+pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *mutex)
+{
+
+	return mutex->ptm_owner == thread;
+}
+
+#endif	/* !PTHREAD__HAVE_ATOMIC */

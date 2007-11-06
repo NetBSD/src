@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.10 2005/05/14 17:58:56 tshiozak Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.10.10.1 2007/11/06 23:11:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -40,39 +40,39 @@
 
 /* *.mo file format */
 struct mo {
-	u_int32_t mo_magic;	/* determines endian */
-	u_int32_t mo_revision;	/* file format revision: 0 */
-	u_int32_t mo_nstring;	/* N: number of strings */
-	u_int32_t mo_otable;	/* O: original text table offset */
-	u_int32_t mo_ttable;	/* T: translated text table offset */
-	u_int32_t mo_hsize;	/* S: size of hashing table */
-	u_int32_t mo_hoffset;	/* H: offset of hashing table */
+	uint32_t mo_magic;	/* determines endian */
+	uint32_t mo_revision;	/* file format revision: 0 */
+	uint32_t mo_nstring;	/* N: number of strings */
+	uint32_t mo_otable;	/* O: original text table offset */
+	uint32_t mo_ttable;	/* T: translated text table offset */
+	uint32_t mo_hsize;	/* S: size of hashing table */
+	uint32_t mo_hoffset;	/* H: offset of hashing table */
 	/* rev 0.1 / 1.1 */
 	/* system dependent string support */
-	u_int32_t mo_sysdep_nsegs;	/* number of sysdep segments */
-	u_int32_t mo_sysdep_segoff;	/* offset of sysdep segment table */
-	u_int32_t mo_sysdep_nstring;	/* number of strings */
-	u_int32_t mo_sysdep_otable;	/* offset of original text table */
-	u_int32_t mo_sysdep_ttable;	/* offset of translated text table */
-} __attribute__((__packed__));
+	uint32_t mo_sysdep_nsegs;	/* number of sysdep segments */
+	uint32_t mo_sysdep_segoff;	/* offset of sysdep segment table */
+	uint32_t mo_sysdep_nstring;	/* number of strings */
+	uint32_t mo_sysdep_otable;	/* offset of original text table */
+	uint32_t mo_sysdep_ttable;	/* offset of translated text table */
+} __packed;
 
 struct moentry {
-	u_int32_t len;		/* strlen(str), so region will be len + 1 */
-	u_int32_t off;		/* offset of \0-terminated string */
-} __attribute__((__packed__));
+	uint32_t len;		/* strlen(str), so region will be len + 1 */
+	uint32_t off;		/* offset of \0-terminated string */
+} __packed;
 
 struct mosysdepsegentry {
-	u_int32_t len;		/* length of this part */
-	u_int32_t ref;		/* reference number of the sysdep string,
+	uint32_t len;		/* length of this part */
+	uint32_t ref;		/* reference number of the sysdep string,
 				 * concatenated just after this segment.
 				 */
-} __attribute__((__packed__));
+} __packed;
 #define MO_LASTSEG		(0xFFFFFFFF)
 
 struct mosysdepstr {
-	u_int32_t off;				/* offset of seed text */
+	uint32_t off;				/* offset of seed text */
 	struct mosysdepsegentry segs[1];	/* text segments */
-} __attribute__((__packed__));
+} __packed;
 
 /* libintl internal data format */
 struct moentry_h {
@@ -86,8 +86,8 @@ struct mosysdepsegs_h {
 };
 
 struct mosysdepsegentry_h {
-	u_int32_t len;
-	u_int32_t ref;
+	uint32_t len;
+	uint32_t ref;
 };
 
 struct mosysdepstr_h {
@@ -99,25 +99,25 @@ struct mosysdepstr_h {
 
 struct gettext_plural;
 struct mo_h {
-	u_int32_t mo_magic;	/* determines endian */
-	u_int32_t mo_revision;	/* file format revision: 0 */
-	u_int32_t mo_nstring;	/* N: number of strings */
+	uint32_t mo_magic;	/* determines endian */
+	uint32_t mo_revision;	/* file format revision: 0 */
+	uint32_t mo_nstring;	/* N: number of strings */
 	struct moentry_h *mo_otable;	/* O: original text table offset */
 	struct moentry_h *mo_ttable;	/* T: translated text table offset */
 	const char *mo_header;
 	struct gettext_plural *mo_plural;
 	unsigned long mo_nplurals;
 	char *mo_charset;
-	u_int32_t mo_hsize;	/* S: size of hashing table */
-	u_int32_t *mo_htable;	/* H: hashing table */
+	uint32_t mo_hsize;	/* S: size of hashing table */
+	uint32_t *mo_htable;	/* H: hashing table */
 #define MO_HASH_SYSDEP_MASK	0x80000000	/* means sysdep entry */
 
-	u_int32_t mo_flags;
+	uint32_t mo_flags;
 #define MO_F_SYSDEP	0x00000001	/* enable sysdep string support */
 
 	/* system dependent string support */
-	u_int32_t mo_sysdep_nsegs;	/* number of sysdep segments */
-	u_int32_t mo_sysdep_nstring;	/* number of sysdep strings */
+	uint32_t mo_sysdep_nsegs;	/* number of sysdep segments */
+	uint32_t mo_sysdep_nstring;	/* number of sysdep strings */
 	struct mosysdepsegs_h *mo_sysdep_segs;	/* sysdep segment table */
 	struct mosysdepstr_h **mo_sysdep_otable;	/* original text */
 	struct mosysdepstr_h **mo_sysdep_ttable;	/* translated text */
@@ -142,7 +142,7 @@ extern struct domainbinding *__bindings;
 extern char __current_domainname[PATH_MAX];
 
 __BEGIN_DECLS
-const char *__gettext_iconv __P((const char *, struct domainbinding *));
-u_int32_t __intl_string_hash __P((const char *));
-const char *__intl_sysdep_get_string_by_tag __P((const char *, size_t *));
+const char *__gettext_iconv(const char *, struct domainbinding *);
+uint32_t __intl_string_hash(const char *);
+const char *__intl_sysdep_get_string_by_tag(const char *, size_t *);
 __END_DECLS

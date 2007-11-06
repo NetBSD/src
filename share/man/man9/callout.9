@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.16 2007/07/14 11:47:15 xtraeme Exp $
+.\"	$NetBSD: callout.9,v 1.16.4.1 2007/11/06 23:13:14 matt Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2007
+.Dd October 16, 2007
 .Dt CALLOUT 9
 .Os
 .Sh NAME
@@ -63,15 +63,15 @@
 .Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
 .Ft bool
 .Fn "callout_stop" "callout_t *c"
-.Ft int
+.Ft bool
 .Fn "callout_pending" "callout_t *c"
-.Ft int
+.Ft bool
 .Fn "callout_expired" "callout_t *c"
-.Ft int
+.Ft bool
 .Fn "callout_active" "callout_t *c"
-.Ft int
+.Ft bool
 .Fn "callout_invoking" "callout_t *c"
-.Ft void
+.Ft bool
 .Fn "callout_ack" "callout_t *c"
 .Sh DESCRIPTION
 The

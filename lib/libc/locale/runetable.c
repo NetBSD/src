@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: runetable.c,v 1.14.4.1 2007/11/06 23:11:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,11 +39,12 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.14.4.1 2007/11/06 23:11:15 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
+#define _CTYPE_PRIVATE
 #include <ctype.h>
 #include <locale.h>
 #include <assert.h>
@@ -276,7 +277,10 @@ _RuneLocale _DefaultRuneLocale = {
 	    { "space", _CTYPE_S },
 	    { "upper", _CTYPE_U },
 	    { "xdigit", _CTYPE_X },
-    }
+    },
+    _C_ctype_,
+    _C_tolower_,
+    _C_toupper_
 };
 
 _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;

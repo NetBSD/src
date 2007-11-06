@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.19 2007/07/14 21:48:18 ad Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.19.12.1 2007/11/06 23:15:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.19 2007/07/14 21:48:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.19.12.1 2007/11/06 23:15:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

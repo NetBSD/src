@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.6 2007/07/09 20:52:11 ad Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.6.10.1 2007/11/06 23:16:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.6 2007/07/09 20:52:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.6.10.1 2007/11/06 23:16:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

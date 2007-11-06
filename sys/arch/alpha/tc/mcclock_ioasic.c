@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.12 2007/07/21 11:59:57 tsutsui Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.12.6.1 2007/11/06 23:13:58 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.12 2007/07/21 11:59:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.12.6.1 2007/11/06 23:13:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

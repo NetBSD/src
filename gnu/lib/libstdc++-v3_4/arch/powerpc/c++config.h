@@ -142,7 +142,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_CEILL */
 
 /* Define to 1 if you have the <complex.h> header file. */
-/* #undef _GLIBCXX_HAVE_COMPLEX_H */
+#define _GLIBCXX_HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `copysign' function. */
 #define _GLIBCXX_HAVE_COPYSIGN 1

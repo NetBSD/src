@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23 2007/07/29 12:15:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23.6.1 2007/11/06 23:15:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -384,20 +384,15 @@ match_best_file(const char *filename, void *cookie)
 		/* Current package is better, remember it. */
 		free(arg->best_current_match);
 		free(arg->best_current_match_filtered);
-		if ((arg->best_current_match = strdup(filename)) == NULL) {
-			arg->best_current_match_filtered = NULL;
-			free(filtered_filename);
-			return -1;
-		}
+		if ((arg->best_current_match = strdup(filename)) == NULL)
+			err(EXIT_FAILURE, "strdup failed");
 		if (filtered_filename != NULL)
 			arg->best_current_match_filtered = filtered_filename;
-		else if ((arg->best_current_match_filtered = strdup(active_filename)) == NULL) {
-			free(arg->best_current_match);
-			return -1;
-		}
+		else if ((arg->best_current_match_filtered = strdup(active_filename)) == NULL)
+			err(EXIT_FAILURE, "strdup failed");
 		return 0;
 	default:
-		return -1;
+		errx(EXIT_FAILURE, "Invalid error from pkg_order");
 	}
 }
 

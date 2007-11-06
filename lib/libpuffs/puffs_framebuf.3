@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.10 2007/07/21 09:36:49 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.10.4.1 2007/11/06 23:11:54 matt Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 21, 2007
+.Dd October 2, 2007
 .Dt PUFFS_FRAMEBUF 3
 .Os
 .Sh NAME
@@ -103,6 +103,10 @@
 .Fa "int flags"
 .Fc
 .Ft int
+.Fo puffs_framev_framebuf_ccpromote
+.Fa "struct puffs_framebuf *pufbuf" "struct puffs_cc *pcc"
+.Fc
+.Ft int
 .Fn puffs_framev_enqueue_waitevent "struct puffs_cc *pcc" "int fd" "int *what"
 .Ft int
 .Fo puffs_framev_readframe_fn
@@ -117,7 +121,11 @@
 .Ft int
 .Fo puffs_framev_cmpframe_fn
 .Fa "struct puffs_usermount *pu"
-.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2"
+.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2" "int *notresp"
+.Fc
+.Ft int
+.Fo puffs_framev_gotframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
 .Fc
 .Ft void
 .Fo puffs_framev_fdnotify_fn
@@ -126,9 +134,9 @@
 .Ft void
 .Fo puffs_framev_init
 .Fa "struct puffs_usermount *pu"
-.Fa "puffs_framebuf_readframe_fn rfb" "puffs_framebuf_writeframe_fn wfb"
-.Fa "puffs_framebuf_cmpframe_fn cmpfb"
-.Fa "puffs_framebuf_fdnotify_fn fdnotfn"
+.Fa "puffs_framev_readframe_fn rfb" "puffs_framev_writeframe_fn wfb"
+.Fa "puffs_framev_cmpframe_fn cmpfb" "puffs_framev_gotframe_fn gotfb"
+.Fa "puffs_framev_fdnotify_fn fdnotfn"
 .Fc
 .Ft int
 .Fn puffs_framev_addfd "struct puffs_usermount *pu" "int fd" "int what"
@@ -158,11 +166,8 @@ It operates on top of the puffs continuation framework,
 .Xr puffs_cc 3 ,
 and multiplexes execution automatically to an instance whenever
 one is runnable.
-Currently only request-response type "client pull" protocols are
-supported, but support for protocols which also feature "server
-push" type messaging may be added at a later date.
 .Pp
-The file system is entered in two different ways:
+The file system is entered in three different ways:
 .Bl -bullet -offset indent
 .It
 An event arrives from the kernel and the
@@ -171,6 +176,10 @@ callbacks are called to start processing the event.
 .It
 A file system which has sent out a request receives a response.
 Execution is resumed from the place where the file system yielded.
+.It
+A request from a peer arrives.
+A request is an incoming PDU which is not a response to any outstanding
+request.
 .El
 .Pp
 .Nm
@@ -203,7 +212,7 @@ The following callbacks can be defined, cf.
 and all are optional.
 None of them should block, because this would cause the entire file server
 to block.
-One option is to make the descriptors non-blocking before using them.
+One option is to make the descriptors non-blocking before adding them.
 .Bl -tag -width "xfdnotfnx"
 .It rfb
 Read a frame from the file descriptor onto the specified buffer.
@@ -211,6 +220,9 @@ Read a frame from the file descriptor onto the specified buffer.
 Write a frame from the the specified buffer into the file descriptor.
 .It cmpfb
 Identify if a buffer is the response to the specified buffer.
+.It gotfb
+Called iff no outstanding request matches the incoming frame.
+In other words, this is called when we receive a request from a peer.
 .It fdnotfn
 Receive notifications about a change-of-state in a file descriptor's
 status.
@@ -390,6 +402,22 @@ See
 .Fn puffs_framev_enqueue_cc
 for
 .Ar flags .
+.It Fn puffs_framev_framebuf_ccpromote pufbuf pcc
+Promote the framebuffer
+.Ar pufbuf
+sent with
+.Fn puffs_framev_enqueue_cb
+or
+.Fn puffs_framev_enqueue_justsend
+to a wait using
+.Ar pcc
+and yield until the result arrives.
+The response from the file server for
+.Ar pufbuf
+must not yet have arrived.
+If sent with
+.Fn puffs_framev_enqueue_justsend ,
+the call must be expecting a response.
 .It Fn puffs_framev_enqueue_waitevent pcc fd what
 Waits for an event in
 .Ar what
@@ -459,7 +487,7 @@ with the flag
 .Dv MSG_NOSIGNAL
 instead of using
 .Fn write .
-.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2
+.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2 notresp
 Compare the file system internal request tags in
 .Ar pufbuf_cmp1
 and
@@ -469,6 +497,19 @@ greater than the second and \-1 if it is smaller.
 The definitions "greater" and "smaller" are used transparently by
 the library, e.g. like
 .Xr qsort 3 .
+If it can be determined from
+.Ar pufbuf_cmp1
+that it is not a response to any outstanding request,
+.Ar notresp
+should be set to non-zero.
+This will cause
+.Nm
+to skip the test of the buffer against the rest of the outstanding
+request.
+May not block.
+.It Fn puffs_framev_gotframe_fn pu pufbuf
+Called when no outstanding request matches an incoming frame.
+The incoming buffer must not be destroyed.
 May not block.
 .It Fn puffs_framev_fdnotify_fn pu fd what
 Is called when the read- or write side of the file descriptor
@@ -481,7 +522,7 @@ specified what is currently closed:
 and
 .Dv PUFFS_FBIO_WRITE
 for read and write, respectively.
-.It Fn puffs_framev_init pu rfb wfb cmpfb fdnotfn
+.It Fn puffs_framev_init pu rfb wfb cmpfb gotfb fdnotfn
 Initializes the given callbacks to the system.
 They will be used when
 .Fn puffs_mainloop
@@ -567,3 +608,10 @@ to indicate the type of error.
 .Xr puffs 3 ,
 .Xr puffs_cc 3 ,
 .Xr puffs_ops 3
+.Rs
+.%A Antti Kantee
+.%D September 2007
+.%I Helsinki University of Technology
+.%R Tech Report TKK-TKO-B157
+.%T Using puffs for Implementing Client-Server Distributed File Systems
+.Re

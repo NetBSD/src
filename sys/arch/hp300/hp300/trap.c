@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2007/06/12 03:35:33 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.131.10.1 2007/11/06 23:16:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2007/06/12 03:35:33 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.10.1 2007/11/06 23:16:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -179,7 +179,7 @@ short	exframesize[] = {
 #define	KDFAULT_040(c)	(cputype == CPU_68040 && \
 			 ((c) & SSW4_TMMASK) == SSW4_TMKD)
 #define	WRFAULT_040(c)	(cputype == CPU_68040 && \
-			 ((c) & SSW4_RW) == 0)
+			 ((c) & (SSW4_LK|SSW4_RW)) != SSW4_RW)
 #else
 #define	KDFAULT_040(c)	0
 #define	WRFAULT_040(c)	0
@@ -189,7 +189,8 @@ short	exframesize[] = {
 #define	KDFAULT_OTH(c)	(cputype <= CPU_68030 && \
 			 ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
 #define	WRFAULT_OTH(c)	(cputype <= CPU_68030 && \
-			 ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+			 (((c) & SSW_DF) != 0 && \
+			 ((((c) & SSW_RW) == 0) || (((c) & SSW_RM) != 0))))
 #else
 #define	KDFAULT_OTH(c)	0
 #define	WRFAULT_OTH(c)	0
@@ -265,7 +266,6 @@ userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
@@ -542,7 +542,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		/*
 		 * Don't go stepping into a RAS.
 		 */
-		if (!LIST_EMPTY(&p->p_raslist) &&
+		if (p->p_raslist != NULL &&
 		    (ras_lookup(p, (void *)fp->f_pc) != (void *)-1))
 			goto out;
 		fp->f_sr &= ~PSL_T;

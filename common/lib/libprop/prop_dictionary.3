@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.8 2007/08/16 16:31:00 thorpej Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.8.2.1 2007/11/06 23:07:24 matt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2007
+.Dd October 11, 2007
 .Dt PROP_DICTIONARY 3
 .Os
 .Sh NAME
@@ -215,7 +215,7 @@ Store a reference to the object
 .Fa obj
 with the key
 .Fa key .
-The object will be retained by the array.
+The object will be retained by the dictionary.
 If the key already exists in the dictionary, the object associated with
 that key will be released and replaced with the new object.
 Returns

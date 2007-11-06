@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.1 2007/08/16 13:54:17 ad Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.1.2.1 2007/11/06 23:11:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.1 2007/08/16 13:54:17 ad Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.1.2.1 2007/11/06 23:11:44 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -84,7 +84,7 @@ pthread_spin_destroy(pthread_spinlock_t *lock)
 #ifdef ERRORCHECK
 	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
 		return EINVAL;
-	if (lock->pts_spin != __SIMPLELOCK_UNLOCKED)
+	if (!__SIMPLELOCK_UNLOCKED_P(&lock->pts_spin))
 		return EBUSY;
 #endif
 

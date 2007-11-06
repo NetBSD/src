@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.16 2006/06/07 16:28:34 tnozaki Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.16.10.1 2007/11/06 23:11:12 matt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.16 2006/06/07 16:28:34 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.16.10.1 2007/11/06 23:11:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -858,6 +858,11 @@ _citrus_ISO2022_mbrtowc_priv(_ISO2022EncodingInfo * __restrict ei,
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(s != NULL);
 
+	if (*s == NULL) {
+		_citrus_ISO2022_init_state(ei, psenc);
+		*nresult = _ENCODING_IS_STATE_DEPENDENT;
+		return 0;
+	}
 	s0 = *s;
 	c = 0;
 	chlenbak = psenc->chlen;

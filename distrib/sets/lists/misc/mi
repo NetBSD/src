@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.145 2007/06/08 22:24:07 pavel Exp $
+# $NetBSD: mi,v 1.145.4.1 2007/11/06 23:10:12 matt Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -557,7 +557,8 @@
 ./usr/share/doc/usd/04.csh/csh.2		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.3		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.4		misc-usd-doc		doc
-./usr/share/doc/usd/04.csh/csh.a		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.a		misc-obsolete		obsolete
+./usr/share/doc/usd/04.csh/csh.ap		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.g		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/tabs			misc-usd-doc		doc
 ./usr/share/doc/usd/07.mail/Makefile		misc-usd-doc		doc

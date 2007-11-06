@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.26 2007/08/14 18:52:48 agc Exp $ */
+/* $NetBSD: disk.c,v 1.26.2.1 2007/11/06 23:07:49 matt Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -759,18 +759,18 @@ static int
 de_allocate(disc_de_t *de, char *filename)
 {
 	off_t	size;
-	char	ch;
+	char	block[DEFAULT_TARGET_BLOCK_LEN];
 
 	size = de_getsize(de);
-	if (de_lseek(de, size - 1, SEEK_SET) == -1) {
+	if (de_lseek(de, size - sizeof(block), SEEK_SET) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\"\n", filename);
 		return 0;
 	}
-	if (de_read(de, &ch, 1) == -1) {
+	if (de_read(de, block, sizeof(block)) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error reading \"%s\"", filename);
 		return 0;
 	}
-	if (de_write(de, &ch, 1) == -1) {
+	if (de_write(de, block, sizeof(block)) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error writing \"%s\"", filename);
 		return 0;
 	}
@@ -929,7 +929,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t			*data;
 	uint8_t			*cdb = args->cdb;
 	uint8_t			lun = (uint8_t) (args->lun >> 32);
-	int			mode_data_len;
+	size_t			mode_data_len;
 
 #if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
 	static int      initialized = 0;
@@ -1059,10 +1059,19 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			case INQUIRY_SUPPORTED_VPD_PAGES:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_SUPPORTED_VPD_PAGES;
-				*totlen = 2;	/* # of supported pages */
+				*totlen = 3;	/* # of supported pages */
 				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
 				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				data[6] = EXTENDED_INQUIRY_DATA_VPD;
 				args->length = *totsize + 1;
+				break;
+			case EXTENDED_INQUIRY_DATA_VPD:
+				data[0] = DISK_PERIPHERAL_DEVICE;
+				data[1] = EXTENDED_INQUIRY_DATA_VPD;
+				data[3] = 0x3c;	/* length is defined to be 60 */
+				data[4] = 0;
+				data[5] = 0;
+				args->length = 64;
 				break;
 			default:
 				iscsi_trace_error(__FILE__, __LINE__, "Unsupported INQUIRY VPD page %x\n", cdb[2]);
@@ -1085,6 +1094,12 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		if (args->status == SCSI_SUCCESS) {
 			args->input = 1;
 		}
+		break;
+
+	case MODE_SELECT_6:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_6 | MODE_SELECT_10\n");
+		args->status = SCSI_SUCCESS;
+		args->length = 0;
 		break;
 
 	case STOP_START_UNIT:
@@ -1135,8 +1150,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6(len %u blocks)\n", len);
-		(void) memset(cp, 0x0, (size_t) mode_data_len);
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6 | MODE_SENSE_10 (len %u blocks)\n", len);
+		(void) memset(cp, 0x0, mode_data_len);
 		/* magic constants courtesy of some values in the Lunix UNH iSCSI target */
 		cp[0] = mode_data_len;
 		cp[1] = 0;
@@ -1150,9 +1165,10 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case WRITE_10:
+	case WRITE_VERIFY:
 		cdb2lba(&lba, &len, cdb);
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10 | WRITE_VERIFY(lba %u, len %u blocks)\n", lba, len);
 		if (disk_write(sess, args, lun, lba, (unsigned) len) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "disk_write() failed\n");
 			args->status = SCSI_CHECK_CONDITION;

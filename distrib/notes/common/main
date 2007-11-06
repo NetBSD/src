@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.353 2007/07/31 05:18:19 jnemeth Exp $
+.\"	$NetBSD: main,v 1.353.2.1 2007/11/06 23:09:51 matt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,11 +49,11 @@
 .as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
 .as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " pc532 pdp10 playstation2 pmax pmppc prep sandpoint sbmips
+.as MACHINE_LIST " pc532 pdp10 playstation2 pmax prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 26, 2007
+.Dd October 29, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -474,10 +474,10 @@ went into the
 .\" {BEGIN from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes
 .Pp
 The complete list of changes can be found in the
-CHANGES: 
+CHANGES:
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-4.0/CHANGES
 and
-CHANGES-4.0: 
+CHANGES-4.0:
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-4.0/CHANGES-4.0
 files in the top level directory of the NetBSD 4.0 release tree. Some highlights include:
 .Ss2 Networking
@@ -510,9 +510,12 @@ Imported
 An authenticator for IEEE 802.11 networks.
 .It
 .Xr carp 4 :
-import Common Address Redundancy Protocol to allow multiple hosts to share a set of IP addresses for high availability / redundancy, from OpenBSD.
+imported Common Address Redundancy Protocol to allow multiple hosts to share a set of IP addresses for high availability / redundancy, from OpenBSD.
 .It
-AltQ support for the PF packet filter.
+ALTQ support for the PF packet filter.
+.It
+.Xr etherip 4 :
+new EtherIP tunneling device. Tt's able to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
 .It
 .Xr ftpd 8
 can now run in standalone mode, instead of from
@@ -520,15 +523,18 @@ can now run in standalone mode, instead of from
 .It
 .Xr tftp 1
 now has support for multicast TFTP operation in open-loop mode, server is in progress.
+.It
+.Xr tcp 4 :
+added support for RFC 3465 Appropriate Byte Counting (ABC) and Explicit Congestion Notification as defined in RFC 3168.
 .bullet)
 .
-.Ss2 Filesystems
+.Ss2 File systems
 .(bullet
 .Xr scan_ffs 8 ,
 .Xr scan_lfs 8 :
-Utilities to find FFSv1/v2 and LFS partitions to recover lost disklabels.
+utilities to find FFSv1/v2 and LFS partitions to recover lost disklabels on disks and image files.
 .It
-tmpfs: Added a new memory-based file system aimed at replacing mfs. Contrary to mfs, it is not based on a disk file system, so it is more efficient both in overall memory consumption and speed. See
+tmpfs: added a new memory-based file system aimed at replacing mfs. Contrary to mfs, it is not based on a disk file system, so it is more efficient both in overall memory consumption and speed. See
 .Xr mount_tmpfs 8 .
 .It
 Added UDF support for optical media and block devices, see
@@ -537,7 +543,10 @@ Read-only for now.
 .It
 NFS export list handling was changed to be filesystem independent.
 .It
-LFS: Lots of stability improvements and new cleaner daemon. It is now also possible to use LFS as root filesystem.
+LFS: lots of stability improvements and new cleaner daemon. It is now also possible to use LFS as root filesystem.
+.It
+.Xr vnd 4 :
+the vnode disk driver can be used on filesystems such as smbfs and tmpfs.
 .It
 Support for System V Boot File System was added, see
 .Xr newfs_sysvbfs 8
@@ -549,12 +558,18 @@ and
 .(bullet
 Audio:
 .(bullet
-Support for new models on drivers, like Intel ICH8, 6300ESB, nForce 3/4, etc.
+Support for new models on drivers such as Intel ICH8/6300ESB, NVIDIA nForce 3/4, etc.
 .It
 Added support for AC'97 modems.
 .It
 .Xr auich 4 :
-added support to handle the AC'97 modem as audio device.
+added support to handle the AC'97 modem as audio device, enabled with the kernel option
+.Dq AUICH_ATTACH_MODEM
+
+.
+.It
+.Xr azalia 4 :
+added support for S/PDIF.
 .bullet)
 .
 .It
@@ -576,8 +591,24 @@ The
 .Xr lm 4
 driver was rewritten and support for more chips was added, for example for Winbond W83627HF, W83627THF, W83627DHG and Asus AS99127F.
 .It
+.Xr owtemp 4 :
+new driver for the 1-Wire temperature sensors.
+.It
+.Xr tmp121temp 4 :
+new driver for the Texas Instruments TMP121 temperature sensor.
+.It
 .Xr ug 4 :
 new driver for ASUS Abit uGuru hardware monitor found on newer ASUS motherboards.
+.bullet)
+.
+.It
+Miscellaneous:
+.(bullet
+.Xr geodewdog 4 :
+new AMD Geode SC1100 Watchdog Timer driver.
+.It
+.Xr gscpcib 4 :
+new AMD Geode SC1100 PCI-ISA bridge that provides support for the GPIO interface.
 .bullet)
 .
 .It
@@ -585,6 +616,9 @@ Networking:
 .(bullet
 .Xr ath 4 :
 updated HALs with support for WiSOC (AR531x) and 32bit SPARC.
+.It
+.Xr bge 4 :
+added support for the following chips: BCM5753, BCM5753M, BCM5715, BCM5754, BCM5755 and BCM5787. Numerous improvements and bugfixes were made too.
 .It
 .Xr kse 4 :
 new driver for Micrel KSZ8842/8841 PCI network cards.
@@ -604,23 +638,40 @@ new 802.11 driver for USB Ralink RT2501 and RT2601 chipsets, from OpenBSD.
 .Xr sip 4 :
 now works on sparc64.
 .It
+.Xr tlp 4 :
+added support for ASIX AX88140A and AX88141.
+.It
+.Xr vr 4 :
+added support for the VIA Rhine III.
+.It
 .Xr wm 4 :
-added support for the following chips: i82801H IFE (GT), i82801H IFE (G), i82801H (M_AMT), i82801H (AMT), i82801H, i82801H (IFE), i82801H (M), i8003, etc.
+added support for i8003, ICH8, ICH9 and others. Support for IPv6 Rx TCP/UDP Checksum Offloading and more.
 .It
 .Xr wpi 4 :
 new driver for Intel PRO/Wireless 3945ABG PCI 802.11 network cards, from OpenBSD.
 .bullet)
 .
 .It
+Security:
+.(bullet
+.Xr glxsb 4 :
+new driver for the AMD Geode LX AES Security Block that provides random numbers and AES acceleration, from OpenBSD.
+.bullet)
+.
+.It
 Power Management:
 .(bullet
-Support for Intel Speedstep SMI on PIIX4 PCI-ISA.
+Support for Intel Speedstep SMI on PIIX4 PCI-ISA for i386.
 .It
-Support for AMD PowerNow and Cool'n'Quiet Technology on K7 and K8 CPUs, both in 32 and 64 bit mode.
+Support for AMD PowerNow and Cool'n'Quiet Technology on K7 and K8 CPUs (both in 32 and 64 bit mode), including Athlon Mobile, Athlon64, Opteron or X2. See
+.Xr options 4
+for more information.
 .It
-Enhanced Speedstep supports more CPUs than before and for CPUs without a table with the list of supported frequencies, it will create a fake table with the the current, maximal and minimal supported frequency; to be able to use it on Core Solo/Duo CPUs.
+Support for more Enhanced Speedstep CPUs, including VIA C7/Eden and Intel Core Solo/Duo/Duo2. See
+.Xr options 4
+for more information.
 .It
-Also the powernow and speedstep drivers were modified to be able to be used on SMP systems, that means that the new frequency will be set in all CPUs available.
+The Enhanced Speedstep and PowerNow drivers were modified to be able to be scaled in all CPUs available, saving power on SMP systems.
 .bullet)
 .
 .It
@@ -638,17 +689,32 @@ new driver for HP/Compaq 5th+ generation Smart ARRAY controllers, from OpenBSD.
 .Xr fdc 4 :
 added support for SBus based sparc64 machines and fixed formatting on sparc.
 .It
+.Xr gcscide 4 :
+new driver for the AMD Geode CS5535 Companion Device IDE controller.
+.It
+.Xr jmide 4 :
+new driver for JMicron Technology JMB36x PCIe to SATA II/PATA controllers.
+.It
 .Xr mfi 4 :
 new driver for LSI Logic and Dell MegaRAID SAS controllers, from OpenBSD.
 .It
+.Xr mpt 4 :
+added support for newer SAS and similar devices.
+.It
 .Xr njata 4 :
 new driver for Workbit NinjaATA-32 CardBus IDE controller.
+.It
+.Xr pdcsata 4 :
+added support for the Promise PDC20775, PDC20771, PDC40518, PDC40718 and some bugfixes.
+.It
+.Xr piixide 4 :
+added support for some ICH8/ICH8-M/ICH9 IDE and SATA controllers.
 .It
 .Xr svwsata 4 :
 new driver for Serverworks K2 SATA controllers, from OpenBSD.
 .It
 .Xr viaide 4
-now support the VIA VT8237A SATA controller.
+added support for the VIA VT8237A SATA controller and AMD CS5536 Companion Device IDE Controller.
 .bullet)
 .
 .It
@@ -660,6 +726,9 @@ new driver for Cypress microcontroller based serial devices.
 .Xr uipaq 4 :
 new driver for the iPAQ devices.
 .It
+.Xr uslsa 4 :
+new driver for Silicon Labs CP210x series serial adapters.
+.It
 .Xr utoppy 4 :
 new driver for the Topfield TF5000PVR range of digital video recorders.
 .bullet)
@@ -668,21 +737,42 @@ new driver for the Topfield TF5000PVR range of digital video recorders.
 .
 .Ss2 Platforms
 .(bullet
-i386: added support for the Multiboot specification. This means much improved support for loading the kernel by GRUB, including passing in parameters to the kernel.
+i386:
+.(bullet
+Added support for the for Multiboot specification. This means much improved support for loading the kernel by GRUB, including passing in parameters to the kernel.
 .It
-evbarm: New platform support for Arcom Viper PXA255-based single board, Atmark Techno Armadillo-9 and Armadillo-210, Linksys NSLU2 (a.k.a. "Slug") and I-O DATA HDL-G Giga LANDISK NAS devices.
+Added the unichromefb framebuffer driver that supports the VIA Unichrome Graphics adapter.
 .It
-evbmips: Add support for Alchemy Au1550 processors, DBAu1550 boards, Alchemy Au15XX PCI host, 4G Systems MTX-1 board (MeshCube/AccessCube), Plat'home OpenMicroServer (OMS-AL400/128) and Atheros AR5312 SoC.
+.Xr vesafb 4 :
+added new framebuffer driver that supports VESA BIOS (VBE) 2.0 extensions and up.
+.It
+Added cd9660 file system support to the BIOS bootloader.
+.bullet)
+.
+.It
+evbarm: new platform support for Arcom Viper PXA255-based single board, Atmark Techno Armadillo-9 and Armadillo-210, Certance CP-3100, Linksys NSLU2 (a.k.a. "Slug") and I-O DATA HDL-G Giga LANDISK NAS devices.
+.It
+evbmips: added support for Alchemy Au1550 processors, DBAu1550 boards, Alchemy Au15XX PCI host, (OMS-AL400/128) and Atheros AR5312 SoC.
 .It
 New port
 ews4800mips: NEC's MIPS based EWS4800 workstations.
 .It
+cobalt: added support from booting off raidframe RAID1 mirrors.
+.It
+hpcmips: added the
+.Xr teliosio 4
+driver for the Sharp Telios LCD screen and Battery unit.
+.It
 New port
 landisk: port to the SH4 processor based NAS appliances, supporting models by I-O DATA (USL-5P, HDL-U, HDL-AV, HDL-W and HDLM-U series, SuperTank LAN Tank, UHDL-160U and UHDL-300U) and Plextor PX-EH16L, PX-EH25L and PX-EH40L.
 .It
-prep: This port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
+macppc: this port has gained support to use accelerated wsdisplay drivers by default (if possible), and uses the appropriate driver rather than the Generic Open Firmware Framebuffer.
 .It
-Xen: support for Xen3 domU and dom0, including support for hardware virtualization on CPUs that support it.
+prep: this port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
+.It
+sparc: added support from booting off RAID1 mirrors.
+.It
+Xen: support for Xen3 domU and dom0 (Unprivileged domain and domain 0), including support for hardware virtualization on CPUs that support it.
 .bullet)
 .
 .Ss2 Kernel subsystems
@@ -699,9 +789,9 @@ hardware drivers:
 .Xr ubt 4
 for USB controllers, and
 .Xr bt3c 4
-for the 3Com Bluetooth PC-Card
+for the 3Com Bluetooth PC-Card.
 .It
-socket based access to the HCI, L2CAP, RFCOMM and SCO protocols
+socket based access to the HCI, L2CAP, RFCOMM and SCO protocols.
 .It
 pseudo drivers for integrating services on remote Bluetooth devices such as Keyboards, Mice and SCO Audio into the NetBSD device framework.
 .bullet)
@@ -715,28 +805,39 @@ and
 .It
 Imported the
 .Xr bio 4
-framework from OpenBSD, to query/control block device controllers. Currently supporting the
+framework from OpenBSD, to query/control block hardware RAID device controllers. Currently supporting the
 .Xr mfi 4
 driver.
 .It
 Kernel uses stateful read-ahead algorithm.
 .It
-.Xr timecounter 9
-adds a new time-keeping infrastructure along with NTP API 4 nanokernel implementation.
-.It
 .Xr dkctl 8
-can be used to switch buffer queuing strategies on the fly, see also
+can be used to switch buffer queuing strategies on the fly on
+.Xr wd 4
+disks, see also
 .Xr bufq 9 .
-.It
-.Xr firmload 9 :
-An API for loading firmware images used by various hardware devices.
 .It
 .Xr fileassoc 9
 is used by Veriexec, it adds in-kernel and file-system independent file meta-data association interface.
 .It
+.Xr firmload 9 :
+an API for loading firmware images used by various hardware devices.
+.It
+.Xr gpio 4 :
+imported General Purpose I/O framework from OpenBSD.
+.It
+.Xr onewire 4 :
+imported Dallas Semiconductor 1-wire bus framework from OpenBSD.
+.It
 The
 .Xr proplib 3
 protocol was added for sending property lists to/from the kernel using ioctls.
+.It
+.Xr spi 4 :
+new SPI (Serial Peripherial Interface) framework.
+.It
+.Xr timecounter 9
+adds a new time-keeping infrastructure along with NTP API 4 nanokernel implementation. Almost all platforms were changed to support this API.
 .It
 Start of 32bit-Linux-emulation for amd64 (COMPAT_LINUX32).
 .It
@@ -773,7 +874,7 @@ NetBSD's kernel authorization is a hybrid clean-room implementation of a similar
 .(bullet
 3rd party software updates:
 .(bullet
-BIND 9.4.1
+BIND 9.4.1-P1
 .It
 OpenSSL 0.9.8d
 .It
@@ -787,7 +888,7 @@ PF from OpenBSD 3.7
 .It
 (n)awk 20050424
 .It
-Postfix 2.4.1
+Postfix 2.4.5
 .It
 am-utils 6.1.3
 .It
@@ -803,40 +904,80 @@ IPFilter 4.1.23
 .It
 GNU gcc 4.1.1
 .It
-NTP 4.2.2p2
+NTP 4.2.4p2
 .It
 pppd 2.4.4
 .bullet)
 .
 .It
+.Xr cdplay 1 :
+added digital transfer mode support.
+.It
 .Xr cksum 1
-can now verify checksums
+can now verify checksums.
+.It
+.Xr csplit 1 :
+new utility that splits a file into pieces. From FreeBSD/OpenBSD.
+.It
+.Xr identd 1 :
+added support for forwarding ident queries and receiving of proxied ident queries.
+.It
+.Xr getent 1 :
+added support for the ethers database.
+.It
+.Xr gkermit 1 :
+new program for transferring files using the Kermit protocol.
+.It
+.Xr mail 1 :
+added support for Mime and multi-character set handling, command line editing and completion.
+.It
+.Xr utoppya 1 :
+new utility to interface to the
+.Xr utoppy 4
+driver.
+.It
+.Xr init 8 :
+added support for running multi-user in a chroot() environment. Allows / file system on e.g.,
+.Xr cgd 4 ,
+.Xr vnd 4
+or
+.Xr ccd 4
+volumes.
+.It
+.Xr gpt 8 :
+new GUID partition table maintenance utility, from FreeBSD.
 .It
 iSCSI target (server) code added, see
 .Xr iscsi-target 8 ;
 Initiator (client) code is underway.
 .It
+.Xr lockstat 8 :
+new command to display a summary of kernel locking events recorded over the lifetime of a called program.
+.It
+.Xr ofctl 8 :
+new command to display the OpenPROM or OpenFirmware device tree for the macppc, shark and sparc64.
+.It
 Various utilities to support Bluetooth were added:
 .(bullet
 .Xr btconfig 8
-for controller configuration
+for controller configuration.
 .It
 .Xr btdevctl 8
-to manage pseudo devices relating to remote services
+to manage pseudo devices relating to remote services.
 .It
 .Xr bthcid 8
 and
 .Xr btpin 1
-for authenticating radio connections
+for authenticating radio connections.
 .It
 .Xr sdpd 8
-for providing service discovery to remote devices
+for providing service discovery to remote devices.
 .It
 .Xr sdpquery 1
-for querying services on remote devices
+for querying services on remote devices.
 .It
 .Xr rfcomm_sppd 1
-to access remote services over RFCOMM via stdio or pty
+to access remote services over RFCOMM via stdio or pty.
 .It
 .Xr bthset 1
 for making connections to Bluetooth headsets.
@@ -850,14 +991,20 @@ Besides this list, there there have also been innumerable bug fixes and other mi
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
 .(bullet
-Sushi ...
+Sushi was removed from the base system due to lack of interest and maintenance. If you really want it, it is available in the CVS repository at othersrc/usr.sbin/sushi. However, be warned that it is unmaintained and is most likely out of date.
 .It
-Vinum ...
+Vinum was removed due to lack of interest and maintenance. At the time of removal, it had several known serious issues (including not being compilable). RAIDframe provides similar functionality. If you were using Vinum you will need to back up your data, delete the Vinum partitions, create RAIDframe partitions, and restore your data to them. Details about RAIDframe can be found in
+.Xr raid 4 ,
+.Xr raidctl 8 ,
+and the
+NetBSD
+      Guide:
+.Lk http://www.NetBSD.org/docs/guide/en/chap-rf.html .
 .It
 Sendmail was removed. Postfix is the MTA and provides the
 .Xr sendmail 1
 command line tool. Postfix has been included with NetBSD since NetBSD 1.5 was released in December 2005. Details about Postfix can be found in the
-NetBSD Guide: 
+NetBSD Guide:
 .Lk http://www.NetBSD.org/docs/guide/en/chap-mail.html .
 For those who need Sendmail, it is available from pkgsrc in the
 .Pa mail/sendmail
@@ -865,9 +1012,7 @@ and
 .Pa mail/sendmail813
 packages.
 .It
-NETCCITT ...
-.It
-NETNS ...
+NETCCITT and NETNS were removed due to lack of interest and maintenance. They had known serious issues (including being out of date with respect to other network code) and there were no known users at the time of their removal. Unfortunately, there is no replacement or option for them.
 .It
 UUCP was removed. The NetBSD improvements were merged into the pkgsrc version. For those who use UUCP tools, they are available from pkgsrc in the
 .Pa net/uucp
@@ -1168,12 +1313,22 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V .
+.Pp
+N.B. when using
+.Ic sysinst
+for upgrading, it will automatically invoke
+.(disp
+postinstall fix
+.disp)
+and thus all issues that are fixed by
+.Ic postinstall
+by default (see below) will be handled.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
 See the section below on upgrading from NetBSD 3.x as well.
 .Pp
 It is
-.Ic very important
+.Sy very important
 that you populate the directory
 .Pa /etc/pam.d
 with appropriate configuration files for the Pluggable Authentication Modules
@@ -1183,10 +1338,11 @@ as described below will take care of this. Please refer to
 .Lk http://www.netbsd.org/guide/en/chap-pam.html
 for documentation about PAM.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1239,10 +1395,11 @@ need to be created.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
 
-The following issues can generally be resolved by extracting the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
 .Sy etc
-set into a temporary directory and running
-.Em postinstall :
+set :
 .(disp
 postinstall -s /path/to/etc.tgz check
 postinstall -s /path/to/etc.tgz fix
@@ -1285,13 +1442,15 @@ The following issues need to be resolved manually:
 .
 .(bullet -offset indent
 The users
-.Sq _proxy
+.Sq _proxy ,
+.Sq _rwhod ,
 and
-.Sq authpf
+.Sq _sdpd
 and the groups
-.Sq _proxy
+.Sq _proxy ,
+.Sq _rwhod 
 and
-.Sq rwhod 
+.Sq _sdpd
 need to be created and the user
 .Sq uucp
 needs to be updated.
@@ -1303,6 +1462,42 @@ including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
 then please see the "Components removed from NetBSD" section near the
 beginning of this document.
+.It
+The replacement of Sendmail by Postfix can be handled automatically by
+.Em postinstall
+but it is not done by default.
+If you want to transition to Postfix, the command
+.(disp
+postinstall -s /path/to/etc.tgz fix mailerconf
+.disp)
+will update your
+.Pa /etc/mailer.conf
+file to use Postfix as the MTA. When using
+.Ic sysinst
+to upgrade the system, it will ask if you want this to be done.
+.Pp
+Note that if you have a customized
+Sendmail setup, you need to set up Postfix in an equivalent way; there
+is no tool for automatic conversion of Sendmail configuration to a
+Postfix one.
+.Pp
+Postfix will be started up automatically when the system boots.
+You may see messages like "$sendmail is not set properly" at boot.
+You can suppress them by removing
+.Pa /etc/rc.d/sendmail
+and
+.Pa /etc/rc.d/smmsp .
+Those files and other parts of sendmail configuration like files under
+.Pa /usr/share/sendmail
+are not removed by default
+while upgrading for those who want to continue using sendmail from
+outside the base system.
+If you want to delete them,
+.Em postinstall
+can be used:
+.(disp
+postinstall -s /path/to/etc.tgz fix sendmail
+.disp)
 .bullet)
 .
 .

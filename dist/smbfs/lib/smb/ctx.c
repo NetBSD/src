@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.11 2006/05/02 10:09:18 tron Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.11.10.1 2007/11/06 23:09:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -312,7 +312,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 int
 smb_ctx_setuser(struct smb_ctx *ctx, const char *name)
 {
-	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
+	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_user)) {
 		smb_error("user name '%s' too long", 0, name);
 		return ENAMETOOLONG;
 	}

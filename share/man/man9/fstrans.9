@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.8 2007/07/26 08:43:52 pooka Exp $
+.\"     $NetBSD: fstrans.9,v 1.8.4.1 2007/11/06 23:13:15 matt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2007
+.Dd October 7, 2007
 .Dt FSTRANS 9
 .Os
 .Sh NAME
@@ -44,7 +44,10 @@
 .Nm fstrans_start ,
 .Nm fstrans_start_nowait ,
 .Nm fstrans_done ,
-.Nm fstrans_is_owner
+.Nm fstrans_is_owner ,
+.Nm fscow_establish ,
+.Nm fscow_disestablish ,
+.Nm fscow_run
 .Nd file system suspension helper subsystem
 .Sh SYNOPSIS
 .In sys/mount.h
@@ -61,6 +64,14 @@
 .Fn fstrans_done "struct mount *mp"
 .Ft int
 .Fn fstrans_is_owner "struct mount *mp"
+.Ft int
+.Fn fscow_establish "struct mount *mp" "int (*func)(void *, struct buf *)" \
+"void *cookie"
+.Ft int
+.Fn fscow_disestablish "struct mount *mp" "int (*func)(void *, struct buf *)" \
+"void *cookie"
+.Ft int
+.Fn fscow_run "struct buf *bp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -132,6 +143,17 @@ returns
 .Dv true
 if this thread is currently suspending the file system
 .Fa mp .
+.It Fn fscow_establish "mp" "func" "cookie"
+Establish a copy-on-write callback for the file system
+.Fa mp .
+.Fa func
+will be called for every buffer written through this file system.
+.It Fn fscow_disestablish "mp" "func" "cookie"
+Disestablish a copy-on-write callback registered with
+.Fn fscow_establish .
+.It Fn fscow_run "bp"
+Run all copy-on-write callbacks established for the file system this buffer
+belongs to.
 .El
 .Sh RETURN VALUES
 The functions

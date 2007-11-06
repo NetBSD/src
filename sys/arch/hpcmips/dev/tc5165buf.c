@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.14 2007/07/09 20:52:12 ad Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.14.10.1 2007/11/06 23:16:54 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.14 2007/07/09 20:52:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.14.10.1 2007/11/06 23:16:54 matt Exp $");
 
 #include "opt_use_poll.h"
 

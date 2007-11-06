@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.340 2007/06/09 11:20:56 kiyohara Exp $
+#	$NetBSD: NetBSD.dist,v 1.340.4.1 2007/11/06 23:10:28 matt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -723,6 +723,7 @@
 ./usr/share/man/cat4/dreamcast
 ./usr/share/man/cat4/evbarm
 ./usr/share/man/cat4/evbmips
+./usr/share/man/cat4/evbppc
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp700
 ./usr/share/man/cat4/hpcarm
@@ -734,7 +735,6 @@
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
-./usr/share/man/cat4/pmppc
 ./usr/share/man/cat4/prep
 ./usr/share/man/cat4/sgimips
 ./usr/share/man/cat4/sparc
@@ -785,7 +785,6 @@
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/playstation2
 ./usr/share/man/cat8/pmax
-./usr/share/man/cat8/pmppc
 ./usr/share/man/cat8/prep
 ./usr/share/man/cat8/sandpoint
 ./usr/share/man/cat8/sbmips
@@ -830,6 +829,7 @@
 ./usr/share/man/man4/dreamcast
 ./usr/share/man/man4/evbarm
 ./usr/share/man/man4/evbmips
+./usr/share/man/man4/evbppc
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hp700
 ./usr/share/man/man4/hpcarm
@@ -841,7 +841,6 @@
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
-./usr/share/man/man4/pmppc
 ./usr/share/man/man4/prep
 ./usr/share/man/man4/sgimips
 ./usr/share/man/man4/sparc
@@ -892,7 +891,6 @@
 ./usr/share/man/man8/pc532
 ./usr/share/man/man8/playstation2
 ./usr/share/man/man8/pmax
-./usr/share/man/man8/pmppc
 ./usr/share/man/man8/prep
 ./usr/share/man/man8/sandpoint
 ./usr/share/man/man8/sbmips
@@ -937,6 +935,7 @@
 ./usr/share/man/html4/dreamcast
 ./usr/share/man/html4/evbarm
 ./usr/share/man/html4/evbmips
+./usr/share/man/html4/evbppc
 ./usr/share/man/html4/hp300
 ./usr/share/man/html4/hp700
 ./usr/share/man/html4/hpcarm
@@ -948,7 +947,6 @@
 ./usr/share/man/html4/mvme68k
 ./usr/share/man/html4/pc532
 ./usr/share/man/html4/pmax
-./usr/share/man/html4/pmppc
 ./usr/share/man/html4/prep
 ./usr/share/man/html4/sgimips
 ./usr/share/man/html4/sparc
@@ -999,7 +997,6 @@
 ./usr/share/man/html8/pc532
 ./usr/share/man/html8/playstation2
 ./usr/share/man/html8/pmax
-./usr/share/man/html8/pmppc
 ./usr/share/man/html8/prep
 ./usr/share/man/html8/sandpoint
 ./usr/share/man/html8/sbmips
@@ -1134,5 +1131,6 @@
 ./var/spool/sockets		mode=0777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
+./var/www
 ./var/yp
 ./var/yp/binding

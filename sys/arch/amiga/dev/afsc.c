@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.40 2007/08/20 19:23:44 is Exp $ */
+/*	$NetBSD: afsc.c,v 1.40.2.1 2007/11/06 23:14:30 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.40 2007/08/20 19:23:44 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.40.2.1 2007/11/06 23:14:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

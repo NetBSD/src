@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2007/05/18 21:44:08 christos Exp $
+#	$NetBSD: Makefile,v 1.79.4.1 2007/11/06 23:12:08 matt Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -33,8 +33,14 @@ LDFLAGS+=	-Wl,-static
 
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
-SRCS+=		rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
+SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c
+
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/sys
+SRCS+=		stack_protector.c
+
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
+SRCS+=		exit.c
 
 BINDIR=		${SHLINKINSTALLDIR}
 

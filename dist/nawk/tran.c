@@ -285,6 +285,7 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 {
 	int fldno;
 
+	f += 0.0;		/* normalise negative zero to positive zero */
 	if ((vp->tval & (NUM | STR)) == 0) 
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
@@ -404,6 +405,17 @@ char *tostring(const char *s)	/* make a copy of string s */
 	char *p;
 
 	p = strdup(s);
+	if (p == NULL)
+		FATAL("out of space in tostring on %s", s);
+	strcpy(p, s);
+	return(p);
+}
+
+char *tostringN(const char *s, size_t n)	/* make a copy of string s */
+{
+	char *p;
+
+	p = malloc(n);
 	if (p == NULL)
 		FATAL("out of space in tostring on %s", s);
 	strcpy(p, s);

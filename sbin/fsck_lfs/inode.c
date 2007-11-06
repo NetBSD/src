@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.36 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.36.8.1 2007/11/06 23:12:34 matt Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ ginode(ino_t ino)
 		LFS_IENTRY(ifp, fs, ino, bp);
 		din_table[ino] = ifp->if_daddr;
 		seg_table[dtosn(fs, ifp->if_daddr)].su_nbytes += DINODE1_SIZE;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	return (VTOI(vp)->i_din.ffs1_din);
 }
@@ -291,7 +291,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 				if (diddirty)
 					VOP_BWRITE(bp);
 				else
-					brelse(bp);
+					brelse(bp, 0);
 				return (n);
 			}
 		} else {
@@ -312,7 +312,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 					if (diddirty)
 						VOP_BWRITE(bp);
 					else
-						brelse(bp);
+						brelse(bp, 0);
 					return (STOP);
 				}
 			}
@@ -322,7 +322,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	if (diddirty)
 		VOP_BWRITE(bp);
 	else
-		brelse(bp);
+		brelse(bp, 0);
 	return (KEEPON);
 }
 
@@ -465,7 +465,7 @@ clearinode(ino_t inumber)
 	LFS_IENTRY(ifp, fs, inumber, bp);
 	daddr = ifp->if_daddr;
 	if (daddr == LFS_UNUSED_DADDR) {
-		brelse(bp);
+		brelse(bp, 0);
 		return;
 	}
 	ifp->if_daddr = LFS_UNUSED_DADDR;

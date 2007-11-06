@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.720 2007/08/09 22:01:25 pooka Exp $
+# $NetBSD: mi,v 1.720.2.1 2007/11/06 23:10:05 matt Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -931,6 +931,7 @@
 ./usr/libexec/getty				base-sysutil-bin
 ./usr/libexec/hprop				base-obsolete		obsolete
 ./usr/libexec/hpropd				base-krb5-bin		kerberos
+./usr/libexec/httpd				base-netutil-bin
 ./usr/libexec/identd				base-netutil-bin
 ./usr/libexec/kadmind				base-krb5-bin		kerberos
 ./usr/libexec/kdc				base-obsolete		obsolete
@@ -2607,6 +2608,7 @@
 ./usr/share/man/cat4/dreamcast			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
 ./usr/share/man/cat4/evbmips			base-man-share
+./usr/share/man/cat4/evbppc			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/hp700			base-man-share
 ./usr/share/man/cat4/hpcarm			base-man-share
@@ -2618,7 +2620,7 @@
 ./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
-./usr/share/man/cat4/pmppc			base-man-share
+./usr/share/man/cat4/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat4/prep			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
@@ -2674,7 +2676,7 @@
 ./usr/share/man/cat8/pc532			base-man-share
 ./usr/share/man/cat8/playstation2		base-man-share
 ./usr/share/man/cat8/pmax			base-man-share
-./usr/share/man/cat8/pmppc			base-man-share
+./usr/share/man/cat8/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat8/prep			base-man-share
 ./usr/share/man/cat8/sandpoint			base-man-share
 ./usr/share/man/cat8/sbmips			base-man-share
@@ -2725,6 +2727,7 @@
 ./usr/share/man/html4/dreamcast			base-man-share
 ./usr/share/man/html4/evbarm			base-man-share
 ./usr/share/man/html4/evbmips			base-man-share
+./usr/share/man/html4/evbppc			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
 ./usr/share/man/html4/hp700			base-man-share
 ./usr/share/man/html4/hpcarm			base-man-share
@@ -2736,7 +2739,7 @@
 ./usr/share/man/html4/mvme68k			base-man-share
 ./usr/share/man/html4/pc532			base-man-share
 ./usr/share/man/html4/pmax			base-man-share
-./usr/share/man/html4/pmppc			base-man-share
+./usr/share/man/html4/pmppc			base-obsolete		obsolete
 ./usr/share/man/html4/prep			base-man-share
 ./usr/share/man/html4/sgimips			base-man-share
 ./usr/share/man/html4/sparc			base-man-share
@@ -2792,7 +2795,7 @@
 ./usr/share/man/html8/playstation		base-obsolete		obsolete
 ./usr/share/man/html8/playstation2		base-man-share
 ./usr/share/man/html8/pmax			base-man-share
-./usr/share/man/html8/pmppc			base-man-share
+./usr/share/man/html8/pmppc			base-obsolete		obsolete
 ./usr/share/man/html8/prep			base-man-share
 ./usr/share/man/html8/sandpoint			base-man-share
 ./usr/share/man/html8/sbmips			base-man-share
@@ -2844,6 +2847,7 @@
 ./usr/share/man/man4/dreamcast			base-man-share
 ./usr/share/man/man4/evbarm			base-man-share
 ./usr/share/man/man4/evbmips			base-man-share
+./usr/share/man/man4/evbppc			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
 ./usr/share/man/man4/hp700			base-man-share
 ./usr/share/man/man4/hpcarm			base-man-share
@@ -2855,7 +2859,7 @@
 ./usr/share/man/man4/mvme68k			base-man-share
 ./usr/share/man/man4/pc532			base-man-share
 ./usr/share/man/man4/pmax			base-man-share
-./usr/share/man/man4/pmppc			base-man-share
+./usr/share/man/man4/pmppc			base-obsolete		obsolete
 ./usr/share/man/man4/prep			base-man-share
 ./usr/share/man/man4/sgimips			base-man-share
 ./usr/share/man/man4/sparc			base-man-share
@@ -2911,7 +2915,7 @@
 ./usr/share/man/man8/pc532			base-man-share
 ./usr/share/man/man8/playstation2		base-man-share
 ./usr/share/man/man8/pmax			base-man-share
-./usr/share/man/man8/pmppc			base-man-share
+./usr/share/man/man8/pmppc			base-obsolete		obsolete
 ./usr/share/man/man8/prep			base-man-share
 ./usr/share/man/man8/sandpoint			base-man-share
 ./usr/share/man/man8/sbmips			base-man-share
@@ -2997,16 +3001,6 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
-./usr/share/sendmail				base-obsolete		obsolete
-./usr/share/sendmail/cf				base-obsolete		obsolete
-./usr/share/sendmail/domain			base-obsolete		obsolete
-./usr/share/sendmail/feature			base-obsolete		obsolete
-./usr/share/sendmail/hack			base-obsolete		obsolete
-./usr/share/sendmail/m4				base-obsolete		obsolete
-./usr/share/sendmail/mailer			base-obsolete		obsolete
-./usr/share/sendmail/ostype			base-obsolete		obsolete
-./usr/share/sendmail/sh				base-obsolete		obsolete
-./usr/share/sendmail/siteconfig			base-obsolete		obsolete
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
@@ -3511,6 +3505,7 @@
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
@@ -4102,5 +4097,6 @@
 ./var/spool/uucppublic				base-obsolete		obsolete
 ./var/tmp					base-sys-root
 ./var/tmp/vi.recover				base-util-root
+./var/www					base-netutil-root
 ./var/yp					base-nis-root
 ./var/yp/binding				base-nis-root

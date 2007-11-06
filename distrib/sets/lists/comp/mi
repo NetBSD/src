@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1064 2007/08/20 16:01:28 drochner Exp $
+#	$NetBSD: mi,v 1.1064.2.1 2007/11/06 23:10:08 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -161,6 +161,7 @@
 ./usr/include/dev/audiovar.h			comp-obsolete		obsolete
 ./usr/include/dev/biovar.h			comp-c-include
 ./usr/include/dev/bluetooth			comp-c-include
+./usr/include/dev/bluetooth/bcsp.h		comp-c-include
 ./usr/include/dev/bluetooth/btdev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthset.h		comp-obsolete		obsolete
@@ -1282,6 +1283,7 @@
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
 ./usr/include/mpool.h				comp-c-include
+./usr/include/mqueue.h				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
 ./usr/include/msdosfs/bpb.h			comp-c-include
 ./usr/include/msdosfs/denode.h			comp-c-include
@@ -1398,7 +1400,7 @@
 ./usr/include/netinet/ip_encap.h		comp-c-include
 ./usr/include/netinet/ip_fil.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_frag.h			comp-ipf-include	ipfilter
-./usr/include/netinet/ip_gre.h			comp-c-include
+./usr/include/netinet/ip_gre.h			comp-obsolete		obsolete
 ./usr/include/netinet/ip_htable.h		comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_icmp.h			comp-c-include
 ./usr/include/netinet/ip_lookup.h		comp-ipf-include	ipfilter
@@ -1753,6 +1755,7 @@
 ./usr/include/sys/ansi.h			comp-c-include
 ./usr/include/sys/ataio.h			comp-c-include
 ./usr/include/sys/audioio.h			comp-c-include
+./usr/include/sys/bitops.h			comp-c-include
 ./usr/include/sys/bootblock.h			comp-c-include
 ./usr/include/sys/bootinfo.h			comp-obsolete		obsolete
 ./usr/include/sys/bswap.h			comp-c-include
@@ -1811,6 +1814,7 @@
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
 ./usr/include/sys/fstypes.h			comp-c-include
+./usr/include/sys/gcq.h				comp-c-include
 ./usr/include/sys/gmon.h			comp-c-include
 ./usr/include/sys/gpio.h			comp-c-include
 ./usr/include/sys/hash.h			comp-c-include
@@ -1842,6 +1846,7 @@
 ./usr/include/sys/midiio.h			comp-c-include
 ./usr/include/sys/mman.h			comp-c-include
 ./usr/include/sys/mount.h			comp-c-include
+./usr/include/sys/mqueue.h			comp-c-include
 ./usr/include/sys/msg.h				comp-c-include
 ./usr/include/sys/msgbuf.h			comp-c-include
 ./usr/include/sys/mtio.h			comp-c-include
@@ -2065,6 +2070,8 @@
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
+./usr/lib/libbind9.a				comp-bind-lib
+./usr/lib/libbind9_p.a				comp-bind-proflib	profile
 ./usr/lib/libbluetooth.a			comp-c-lib
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib
@@ -2093,6 +2100,8 @@
 ./usr/lib/libcurses_p.a				comp-c-proflib		profile
 ./usr/lib/libdes.a				comp-c-lib		crypto
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libdns.a				comp-bind-lib
+./usr/lib/libdns_p.a				comp-bind-proflib	profile
 ./usr/lib/libedit.a				comp-c-lib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
 ./usr/lib/libevent.a				comp-c-lib
@@ -2123,6 +2132,12 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
+./usr/lib/libisc.a				comp-bind-lib
+./usr/lib/libisc_p.a				comp-bind-lib		profile
+./usr/lib/libisccc.a				comp-bind-lib
+./usr/lib/libisccc_p.a				comp-bind-profilb	profile
+./usr/lib/libisccfg.a				comp-bind-lib
+./usr/lib/libisccfg_p.a				comp-bind-profilb	profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
@@ -2145,6 +2160,8 @@
 ./usr/lib/libkvm_p.a				comp-c-proflib		profile
 ./usr/lib/libl.a				comp-c-lib
 ./usr/lib/libl_p.a				comp-c-proflib		profile
+./usr/lib/liblwres.a				comp-bind-lib
+./usr/lib/liblwres_p.a				comp-bind-profilb	profile
 ./usr/lib/libm.a				comp-c-lib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
 ./usr/lib/libmagic.a				comp-c-lib
@@ -2748,6 +2765,7 @@
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/kadmind.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kpasswdd.debug	comp-krb5-debug		kerberos,debug
@@ -3039,6 +3057,7 @@
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
@@ -3051,15 +3070,20 @@
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lisc.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
 ./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
@@ -3306,7 +3330,7 @@
 ./usr/share/man/cat1/objdump.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/openssl_ocsp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat1/ranlib.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/rcs2log.0			comp-cvs-catman		.cat
+./usr/share/man/cat1/rcs2log.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/readelf.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/rpcgen.0			comp-c-catman		.cat
 ./usr/share/man/cat1/size.0			comp-util-catman	bfd,.cat
@@ -5947,6 +5971,7 @@
 ./usr/share/man/cat3/queue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/radixsort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/raise.0			comp-c-catman		.cat
+./usr/share/man/cat3/raise_default_signal.0	comp-c-catman		.cat
 ./usr/share/man/cat3/rand.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rand_r.0			comp-c-catman		.cat
@@ -6798,11 +6823,21 @@
 ./usr/share/man/cat9/allocbuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/altq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_debug.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_debug_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_debug_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_error.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_error_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_error_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_get_error_count.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_naive.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_naive_dev.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_naive_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_normal.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_normal_dev.0	comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_normal_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_verbose.0		comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_verbose_dev.0	comp-sys-catman		.cat
+./usr/share/man/cat9/aprint_verbose_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/arc4random.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
@@ -7105,6 +7140,9 @@
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/free.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_establish.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fscow_run.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fsetown.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans_done.0		comp-sys-catman		.cat
@@ -7624,6 +7662,7 @@
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ucom.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uiomove.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
@@ -7684,7 +7723,7 @@
 ./usr/share/man/cat9/uvmspace_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvmspace_share.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvmspace_unshare.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvn_attach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvn_attach.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvn_findpages.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vaccess.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
@@ -7753,8 +7792,8 @@
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_close.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_fcntl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		obsolete
@@ -7879,7 +7918,7 @@
 ./usr/share/man/man1/objdump.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/openssl_ocsp.1		comp-c-man		crypto,.man
 ./usr/share/man/man1/ranlib.1			comp-util-man		bfd,.man
-./usr/share/man/man1/rcs2log.1			comp-cvs-man		.man
+./usr/share/man/man1/rcs2log.1			comp-cvs-man		cvs,.man
 ./usr/share/man/man1/readelf.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/rpcgen.1			comp-c-man		.man
 ./usr/share/man/man1/size.1			comp-util-man		bfd,.man
@@ -10518,6 +10557,7 @@
 ./usr/share/man/man3/queue.3			comp-c-man		.man
 ./usr/share/man/man3/radixsort.3		comp-c-man		.man
 ./usr/share/man/man3/raise.3			comp-c-man		.man
+./usr/share/man/man3/raise_default_signal.3	comp-c-man		.man
 ./usr/share/man/man3/rand.3			comp-c-man		.man
 ./usr/share/man/man3/rand48.3			comp-c-man		.man
 ./usr/share/man/man3/rand_r.3			comp-c-man		.man
@@ -11364,11 +11404,21 @@
 ./usr/share/man/man9/allocbuf.9			comp-sys-man		.man
 ./usr/share/man/man9/altq.9			comp-sys-man		.man
 ./usr/share/man/man9/aprint_debug.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_debug_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_debug_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_error.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_error_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_error_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_get_error_count.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_naive.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_naive_dev.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_naive_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_normal.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_normal_dev.9	comp-sys-man		.man
+./usr/share/man/man9/aprint_normal_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose.9		comp-sys-man		.man
+./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
+./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
@@ -11671,6 +11721,9 @@
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/free.9			comp-sys-man		.man
+./usr/share/man/man9/fscow_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/fscow_establish.9		comp-sys-man		.man
+./usr/share/man/man9/fscow_run.9		comp-sys-man		.man
 ./usr/share/man/man9/fsetown.9			comp-sys-man		.man
 ./usr/share/man/man9/fstrans.9			comp-sys-man		.man
 ./usr/share/man/man9/fstrans_done.9		comp-sys-man		.man
@@ -12190,6 +12243,7 @@
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
+./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man
 ./usr/share/man/man9/ucom.9			comp-sys-man		.man
 ./usr/share/man/man9/uiomove.9			comp-sys-man		.man
 ./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
@@ -12250,7 +12304,7 @@
 ./usr/share/man/man9/uvmspace_free.9		comp-sys-man		.man
 ./usr/share/man/man9/uvmspace_share.9		comp-sys-man		.man
 ./usr/share/man/man9/uvmspace_unshare.9		comp-sys-man		.man
-./usr/share/man/man9/uvn_attach.9		comp-sys-man		.man
+./usr/share/man/man9/uvn_attach.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvn_findpages.9		comp-sys-man		.man
 ./usr/share/man/man9/vaccess.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
@@ -12319,8 +12373,8 @@
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_close.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man		.man
-./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		.man
-./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		.man
+./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		obsolete
+./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		obsolete
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_fcntl.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_finished_write.9	comp-sys-man		obsolete

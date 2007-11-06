@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2007/06/03 19:46:23 uwe Exp $
+# $NetBSD: GENERIC,v 1.74.10.1 2007/11/06 23:16:57 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -70,12 +70,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	LKM		# loadable kernel modules
@@ -258,6 +253,8 @@ options 	J6X0TP_WSMOUSE_EXCLUSIVE
 # HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
 #
 com0		at hd64461if?
+
+psh3pwr*	at adc?			# PERSONA SH3 battery, on/off, etc
 
 psh3lcd*	at shb?			# LCD power, brightness, contrast
 

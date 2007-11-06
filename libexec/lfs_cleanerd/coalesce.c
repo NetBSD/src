@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.13 2006/05/12 19:35:27 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.13.10.1 2007/11/06 23:12:12 matt Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ get_dinode(struct clfs *fs, ino_t ino)
 
 	lfs_ientry(&ifp, fs, ino, &bp);
 	daddr = ifp->if_daddr;
-	brelse(bp);
+	brelse(bp, 0);
 
 	if (daddr == 0x0)
 		return NULL;
@@ -131,10 +131,10 @@ get_dinode(struct clfs *fs, ino_t ino)
 		if (dip->di_inumber == ino) {
 			r = (struct ufs1_dinode *)malloc(sizeof(*r));
 			memcpy(r, dip, sizeof(*r));
-			brelse(bp);
+			brelse(bp, 0);
 			return r;
 		}
-	brelse(bp);
+	brelse(bp, 0);
 	return NULL;
 }
 
@@ -302,8 +302,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		do {
 			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, &bp);
 			cip = *(CLEANERINFO *)bp->b_data;
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, B_INVAL);
 
 			if (cip.clean < 4) /* XXX magic number 4 */
 				fcntl(fs->clfs_ifilefd, LFCNSEGWAIT, NULL);

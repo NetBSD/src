@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20 2007/07/03 05:25:25 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.20.4.1 2007/11/06 23:07:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.20 2007/07/03 05:25:25 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20.4.1 2007/11/06 23:07:17 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,11 +47,11 @@ __RCSID("$NetBSD: misc.c,v 1.20 2007/07/03 05:25:25 lukem Exp $");
 #include <sys/time.h>
 
 #include <err.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include <inttypes.h>
 
 #include "dd.h"
@@ -120,7 +120,6 @@ terminate(int signo)
 {
 
 	summary();
-	(void)signal(signo, SIG_DFL);
-	raise(signo);
-	/* NOTREACHED */
+	(void)raise_default_signal(signo);
+	_exit(127);
 }

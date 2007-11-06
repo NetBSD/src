@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.15 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.15.2.1 2007/11/06 23:07:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -634,7 +634,7 @@ match_start:
 			break;
 	}
 	if (poi == NULL) {
-		while (_prop_stack_pop(&stack, &obj, &data, &iter)) {
+		while (_prop_stack_pop(&stack, &obj, &iter, &data, NULL)) {
 			iter_func = (prop_object_internalizer_continue_t)iter;
 			(*iter_func)(&stack, &obj, ctx, data, NULL);
 		}
@@ -647,7 +647,7 @@ match_start:
 		goto match_start;
 
 	parent_obj = obj;
-	while (_prop_stack_pop(&stack, &parent_obj, &data, &iter)) {
+	while (_prop_stack_pop(&stack, &parent_obj, &iter, &data, NULL)) {
 		iter_func = (prop_object_internalizer_continue_t)iter;
 		if (!(*iter_func)(&stack, &parent_obj, ctx, data, obj))
 			goto match_start;
@@ -1023,7 +1023,7 @@ prop_object_retain(prop_object_t obj)
  *	free that. Do not recurse to avoid stack overflows.
  *
  *	This is a slow edge condition, but necessary to
- *	guaranty that an object can always be freed.
+ *	guarantee that an object can always be freed.
  */
 static void
 prop_object_release_emergency(prop_object_t obj)
@@ -1071,7 +1071,6 @@ prop_object_release(prop_object_t obj)
 {
 	struct _prop_object *po;
 	struct _prop_stack stack;
-	void *dummy1, *dummy2;
 	int ret;
 	uint32_t ocnt;
 
@@ -1103,7 +1102,7 @@ prop_object_release(prop_object_t obj)
 		} while (ret == _PROP_OBJECT_FREE_RECURSE);
 		if (ret == _PROP_OBJECT_FREE_FAILED)
 			prop_object_release_emergency(obj);
-	} while (_prop_stack_pop(&stack, &obj, &dummy1, &dummy2));
+	} while (_prop_stack_pop(&stack, &obj, NULL, NULL, NULL));
 }
 
 /*
@@ -1128,13 +1127,62 @@ prop_object_type(prop_object_t obj)
 bool
 prop_object_equals(prop_object_t obj1, prop_object_t obj2)
 {
-	struct _prop_object *po1 = obj1;
-	struct _prop_object *po2 = obj2;
+	return (prop_object_equals_with_error(obj1, obj2, NULL));
+}
+
+bool
+prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
+    bool *error_flag)
+{
+	struct _prop_object *po1;
+	struct _prop_object *po2;
+	void *stored_pointer1, *stored_pointer2;
+	prop_object_t next_obj1, next_obj2;
+	struct _prop_stack stack;
+	int ret;
+
+	_prop_stack_init(&stack);
+	if (error_flag)
+		*error_flag = false;
+
+ start_subtree:
+	stored_pointer1 = NULL;
+	stored_pointer2 = NULL;
+	po1 = obj1;
+	po2 = obj2;
 
 	if (po1->po_type != po2->po_type)
 		return (false);
+    
+ continue_subtree:
+	ret = (*po1->po_type->pot_equals)(obj1, obj2, &stored_pointer1, &stored_pointer2,
+	    &next_obj1, &next_obj2);
+	if (ret == _PROP_OBJECT_EQUALS_FALSE)
+		goto finish;
+	if (ret == _PROP_OBJECT_EQUALS_TRUE) {
+		if (!_prop_stack_pop(&stack, &obj1, &obj2,
+				     &stored_pointer1, &stored_pointer2))
+			return true;
+		goto continue_subtree;
+	}
+	_PROP_ASSERT(ret == _PROP_OBJECT_EQUALS_RECURSE);
 
-	return ((*po1->po_type->pot_equals)(obj1, obj2));
+	if (!_prop_stack_push(&stack, obj1, obj2,
+			      stored_pointer1, stored_pointer2)) {
+		if (error_flag)
+			*error_flag = true;
+		goto finish;
+	}
+	obj1 = next_obj1;
+	obj2 = next_obj2;
+	goto start_subtree;
+
+finish:
+	while (_prop_stack_pop(&stack, &obj1, &obj2, NULL, NULL)) {
+		po1 = obj1;
+		(*po1->po_type->pot_equals_finish)(obj1, obj2);
+	}
+	return (false);		
 }
 
 /*

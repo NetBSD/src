@@ -1,4 +1,4 @@
-.\"	$NetBSD: kse.4,v 1.4 2006/07/06 06:20:52 wiz Exp $
+.\"	$NetBSD: kse.4,v 1.4.10.1 2007/11/06 23:13:00 matt Exp $
 .\"
 .\" Copyright (c) 2006 Tohru Nishimura.
 .\"
@@ -38,8 +38,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Ethernet interfaces based on the Micrel
-8842/8841 PCI Ethernet chips.
+driver supports Ethernet interfaces based on the Micrel 8842/8841
+PCI Ethernet chips.  The 8842 has 2 Ethernet ports which behave as
+a managed switch to bridge each other.  It works like a T-shape
+connector of Ethernet data flow in which an Ethernet controller
+sits at the leg of the T.  Frames can flow between the two ports
+while traffic destined for the 8842 reaches the EMAC. The 8841 is
+a plain 10/100 Ethernet.
+The
+.Nm
+driver distinguishs and handles them according to the HW model.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -52,23 +60,12 @@ The
 driver was written by
 .An Tohru Nishimura .
 .Sh BUGS
-The 8842 has 2 Ethernet ports which behave as a managed switch to
-bridge each other.
-It works like a T-shape connector of Ethernet data flow in which
-the Ethernet controller sits at the leg of the T.
-Frames can flow between the two ports while traffic destined
-for the 8842 reaches the EMAC.
-The
-.Nm
-driver is not aware of the second port's existence and treats the
-8842 as if it was a single port 8841.
-The second port PHY is always auto select.
-The PDF documentation is unclear and inconsistent about whether
-the Rx DMA alignment restriction is removed or not.
-The __STRICT_ALIGNMENT case is not written.
-Advanced features like flow volume bound, VLAN tag insertion/removal,
-and detailed MIB counters are not implemented and remain uncontrollable
-by the
+__STRICT_ALIGNMENT case is not written.  8842 media selection
+keeps "auto" and indicates "up 100baseTX-FX flow" when either of
+two ports is found link-up.  There is no functional provision to
+see and control the media selection of them this moment.  Advanced
+features like flow volume bound, VLAN tag insertion/removal, QoS
+DiffServ are not implemented and remain uncontrollable by the
 .Nm
 driver.
 UDP4CSUM is not very useful since the HW has an implementation

@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.h,v 1.2 2005/04/11 23:19:24 perseant Exp $ */
+/* $NetBSD: vnode.h,v 1.2.10.1 2007/11/06 23:12:37 matt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,9 +47,7 @@ struct uvnode {
 	int (*v_strategy_op) (struct ubuf *);
 	int (*v_bwrite_op) (struct ubuf *);
 	int (*v_bmap_op) (struct uvnode *, daddr_t, daddr_t *);
-#define VDIROP          0x1000	/* vnode is involved in a directory op */
-#define	VDIRTY		0x8000	/* vnode is dirty */
-	u_int32_t v_flag;
+	u_int32_t v_uflag;
 	void *v_fs;
 	void *v_data;
 #undef v_usecount

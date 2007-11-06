@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2007/07/12 19:31:01 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.10.1 2007/11/06 23:16:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2007/07/12 19:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.10.1 2007/11/06 23:16:46 matt Exp $");
 
 #define __MUTEX_PRIVATE
 

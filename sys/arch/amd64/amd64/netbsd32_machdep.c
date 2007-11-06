@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.43 2007/07/08 10:19:21 pooka Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.43.10.1 2007/11/06 23:14:08 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.43 2007/07/08 10:19:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.43.10.1 2007/11/06 23:14:08 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"

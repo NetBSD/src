@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.9 2007/07/01 16:04:57 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9.10.1 2007/11/06 23:16:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

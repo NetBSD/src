@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.27 2007/08/18 09:45:08 he Exp $
+#	$NetBSD: IXM1200,v 1.27.2.1 2007/11/06 23:15:55 matt Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #

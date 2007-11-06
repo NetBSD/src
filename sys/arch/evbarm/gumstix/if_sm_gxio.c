@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.3 2007/08/14 14:07:01 kiyohara Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.3.2.1 2007/11/06 23:16:00 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.3 2007/08/14 14:07:01 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.3.2.1 2007/11/06 23:16:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

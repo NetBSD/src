@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.22 2007/08/20 19:23:46 is Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.22.2.1 2007/11/06 23:14:35 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.22 2007/08/20 19:23:46 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.22.2.1 2007/11/06 23:14:35 matt Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0

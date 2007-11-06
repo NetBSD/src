@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.4 2004/10/21 16:49:47 fvdl Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4.18.1 2007/11/06 23:11:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,3 +135,35 @@ ENTRY(_swapcontext_u)
 	movq	%rax, (UC_REGS + _REG_URSP * 8)(%rdi)
 	movq	%rsi, %rdi
 	SETC
+
+ENTRY(pthread__atomic_cas_ptr)
+	movq	(%rsi), %rax
+	lock
+	cmpxchgq %rdx, (%rdi)
+	jnz	1f
+	movq	$1, %rax
+	ret
+1:
+	movq	%rax, (%rsi)
+	movq	$0, %rax
+	ret
+
+ENTRY(pthread__atomic_swap_ptr)
+	movq	%rsi, %rax
+	xchgq	%rax, (%rdi)
+	ret
+
+ENTRY(pthread__membar_full)
+	lock
+	addq	$0, -8(%rsp)
+	ret
+
+ENTRY(pthread__membar_producer)
+	/* A store is enough */
+	movq	$0, -8(%rsp)
+	ret
+
+ENTRY(pthread__membar_consumer)
+	lock
+	addq	$0, -8(%rsp)
+	ret

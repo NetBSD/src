@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: envsys,v 1.2 2007/07/25 12:47:44 xtraeme Exp $
+# $NetBSD: envsys,v 1.2.4.1 2007/11/06 23:10:31 matt Exp $
 #
 
 # PROVIDE: envsys
@@ -10,78 +10,21 @@ $_rc_subr_loaded . /etc/rc.subr
 
 name="envsys"
 rcvar=${name}
+command="/usr/sbin/envstat"
 required_files="/etc/envsys.conf"
-start_cmd="do_envsys start"
-stop_cmd="do_envsys stop"
-envsys_bin="/usr/sbin/envstat"
+start_cmd="do_start"
+stop_cmd="do_stop"
 
-do_envsys()
+do_start()
 {
-	IFS=":"
-	if [ "$1" = "start" ]; then
-		TARGET="Starting"
-	else
-		TARGET="Stopping"
-	fi
+	${command} -c ${required_files}
+	[ $? -eq 0 ] && echo "Setting new sensor properties."
+}
 
-	while read -r device sensname target value; do
-		case "${device}" in
-		\#*|"")
-			continue
-			;;
-		esac
-
-		case "${value}" in
-		*degF)
-			add_arg="-f"
-			;;
-		esac
-
-		case "$1" in
-		start)
-			case "${target}" in
-			*desc)
-				continue
-				;;
-			esac
-			;;
-		stop)
-			case "${target}" in
-			*desc|*rfact)
-				continue
-				;;
-			esac
-			;;
-		esac
-
-		[ -z ${device} ] && err_msg="missing device"
-		[ -z ${target} ] && err_msg="missing target"
-		[ -z ${value} ] && err_msg="missing value"
-
-		if [ -n "${err_msg}" ]; then
-			echo "${name}: invalid entry (${err_msg})."
-			return 1
-		fi
-
-		if [ "$1" = "start" ]; then
-			${envsys_bin} \
-			    ${add_arg} \
-			    -d ${device} \
-			    -s "${sensname}" \
-			    -m ${target}=${value%%degF}
-		else
-			${envsys_bin} \
-			    ${add_arg} \
-			    -d ${device} \
-			    -s "${sensname}" \
-			    -m ${target}=remove
-		fi
-
-		# reinitialize the var
-		add_arg=
-	done < ${required_files}
-
-	echo "$TARGET sensors monitoring."
+do_stop()
+{
+	${command} -S
+	[ $? -eq 0 ] && echo "Removing sensor properties."
 }
 
 load_rc_config ${name}

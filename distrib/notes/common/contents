@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.126 2007/07/24 10:22:02 pavel Exp $
+.\"	$NetBSD: contents,v 1.126.4.1 2007/11/06 23:09:48 matt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,11 +231,18 @@ The install kernel.
 .\}
 .
 .if \n[sgimips] \{\
-.			It Pa netbsd-GENERIC_INDY.gz
+.			It Pa netbsd-GENERIC32_IP12.gz
+A kernel suitable for booting on R3000 Indigo, IRIS 4D/3x and similar machines.
+.			It Pa netbsd.ecoff-GENERIC32_IP12.gz
+GENERIC32_IP2x targeted for being bootable on the above machines
+with PROMs that do not understand the ELF binary format.
+.			It Pa netbsd-GENERIC32_IP2x.gz
 A kernel suitable for booting on Indy, Indigo 2 and similar machines.
-.			It Pa netbsd.ecoff-GENERIC_INDY.gz
-GENERIC_INDY targeted for being bootable on older Indigo 2 and possibly 
+.			It Pa netbsd.ecoff-GENERIC32_IP2x.gz
+GENERIC32_IP2x targeted for being bootable on older Indigo 2 and possibly
 Indy machines with PROMs that do not understand the ELF binary format.
+.			It Pa netbsd-GENERIC32_IP3x.gz
+A kernel suitable for booting on O2.
 .\}
 .
 .if \n[evbppc] \{\
@@ -270,8 +277,9 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
-\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
+.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
+\n[i386]:\n[news68k]:\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\
+\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
@@ -558,6 +566,7 @@ everything described below.
 .if \n[evbmips] .setsize 20 72
 .if \n[evbppc] .setsize 18 51
 .if \n[evbsh3] .setsize 17 46
+.if \n[ews4800mips] .setsize 20 72
 .if \n[hp300] .setsize 16 46
 .if \n[hp700] .setsize 20 67		\" XXX old
 .if \n[hpcarm] .setsize 18 50
@@ -579,7 +588,6 @@ everything described below.
 .if \n[next68k] .setsize 16 45
 .if \n[ofppc] .setsize 19 52
 .if \n[pmax] .setsize 20 73
-.if \n[pmppc] .setsize 19 52
 .if \n[prep] .setsize 19 53
 .if \n[sandpoint] .setsize 19 52
 .if \n[sbmips] .setsize 20 72
@@ -622,6 +630,7 @@ system call and library manual pages.
 .if \n[evbmips] .setsize 21 88
 .if \n[evbppc] .setsize 23 83
 .if \n[evbsh3] .setsize 20 71
+.if \n[ews4800mips] .setsize 21 88
 .if \n[hp300] .setsize 18 69
 .if \n[hp700] .setsize 9 42			\" XXX old
 .if \n[hpcarm] .setsize 21 76
@@ -643,7 +652,6 @@ system call and library manual pages.
 .if \n[next68k] .setsize 18 69
 .if \n[ofppc] .setsize 23 83
 .if \n[pmax] .setsize 21 88
-.if \n[pmppc] .setsize 23 83
 .if \n[prep] .setsize 23 83
 .if \n[sandpoint] .setsize 23 83
 .if \n[sbmips] .setsize 21 88
@@ -692,6 +700,7 @@ This set includes the games and their manual pages.
 .if \n[evbmips] .setsize 4 9
 .if \n[evbppc] .setsize 3 8
 .if \n[evbsh3] .setsize 3 7
+.if \n[ews4800mips] .setsize 4 9
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 3 8
@@ -712,7 +721,6 @@ This set includes the games and their manual pages.
 .if \n[next68k] .setsize 3 7
 .if \n[ofppc] .setsize 3 8
 .if \n[pmax] .setsize 4 9
-.if \n[pmppc] .setsize 3 8
 .if \n[prep] .setsize 3 8
 .if \n[sandpoint] .setsize 3 8
 .if \n[sbmips] .setsize 4 9
@@ -818,19 +826,36 @@ kernel, which will use multiple processors (if present), named
 .\}
 .el \{\
 .ie \n[sgimips] \{\
-.It Sy kern-GENERIC_INDY
+.It Sy kern-GENERIC32_IP2x
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC_INDY
+.Li GENERIC32_IP12
+kernel (for R3000 Indigo, IRIS 4D/3x machines), named
+.Pa /netbsd .
+This set also contains an ECOFF kernel named
+.Pa /netbsd.ecoff
+that your system may need to boot.
+.It Sy kern-GENERIC32_IP2x
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC32_IP2x
 kernel (for Indy, Indigo 2 and Challenge S/M machines), named
 .Pa /netbsd .
 This set also contains an ECOFF kernel named
 .Pa /netbsd.ecoff
 that your system may need to boot.
+.It Sy kern-GENERIC32_IP3x
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC32_IP3x
+kernel (for O2), named
+.Pa /netbsd .
 You
 .Em must
-install this distribution set.
+install one of these distribution sets for your machine.
 .showsize 3 7				\" XXX old
 .\}
 .el \{\
@@ -942,6 +967,7 @@ that your system may need to boot.
 .if \n[cats] .setsize 5 10
 .if \n[cobalt] .setsize 2 3
 .if \n[dreamcast] .setsize 1 2
+.if \n[ews4800mips] .setsize 2 3
 .if \n[hp300] .setsize 2 3
 .if \n[hpcmips] .setsize 2 4
 .if \n[hpcsh] .setsize 1 2
@@ -1019,6 +1045,7 @@ all related programs, and their manual pages.
 .if \n[evbmips] .setsize 3 9
 .if \n[evbppc] .setsize 2 7
 .if \n[evbsh3] .setsize 2 7
+.if \n[ews4800mips] .setsize 3 9
 .if \n[hp300] .setsize 2 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 2 7
@@ -1039,7 +1066,6 @@ all related programs, and their manual pages.
 .if \n[next68k] .setsize 2 7
 .if \n[ofppc] .setsize 2 7
 .if \n[pmax] .setsize 3 9
-.if \n[pmppc] .setsize 2 7
 .if \n[prep] .setsize 2 7
 .if \n[sandpoint] .setsize 2 7
 .if \n[sbmips] .setsize 3 9
@@ -1097,6 +1123,7 @@ This does not include the X servers.
 .if \n[evbmips] .setsize 7 24
 .if \n[evbppc] .setsize 7 19
 .if \n[evbsh3] .setsize 7 18
+.if \n[ews4800mips] .setsize 7 24
 .if \n[hp300] .setsize 6 17
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 6 18
@@ -1117,7 +1144,6 @@ This does not include the X servers.
 .if \n[next68k] .setsize 6 17
 .if \n[ofppc] .setsize 7 19
 .if \n[pmax] .setsize 7 24
-.if \n[pmppc] .setsize 7 19
 .if \n[prep] .setsize 7 19
 .if \n[sandpoint] .setsize 7 19
 .if \n[sbmips] .setsize 7 24
@@ -1152,6 +1178,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[evbmips] .setsize 10 39
 .if \n[evbppc] .setsize 13 44
 .if \n[evbsh3] .setsize 12 39
+.if \n[ews4800mips] .setsize 10 39
 .if \n[hp300] .setsize 10 37
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 13 44
@@ -1172,7 +1199,6 @@ The extra libraries and include files needed to compile X source code.
 .if \n[next68k] .setsize 10 37
 .if \n[ofppc] .setsize 13 44
 .if \n[pmax] .setsize 10 40
-.if \n[pmppc] .setsize 13 44
 .if \n[prep] .setsize 13 44
 .if \n[sandpoint] .setsize 13 44
 .if \n[sbmips] .setsize 10 39
@@ -1206,6 +1232,7 @@ Fonts needed by the X server and by X clients.
 .if \n[evbmips] .setsize 31 39
 .if \n[evbppc] .setsize 31 39
 .if \n[evbsh3] .setsize 31 39
+.if \n[ews4800mips] .setsize 31 39
 .if \n[hp300] .setsize 31 39
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 31 39
@@ -1226,7 +1253,6 @@ Fonts needed by the X server and by X clients.
 .if \n[next68k] .setsize 31 39
 .if \n[ofppc] .setsize 31 39
 .if \n[pmax] .setsize 31 39
-.if \n[pmppc] .setsize 31 39
 .if \n[prep] .setsize 31 39
 .if \n[sandpoint] .setsize 31 39
 .if \n[sbmips] .setsize 31 39
@@ -1316,6 +1342,7 @@ servers with man pages and the runtime configuration file.
 .if \n[evbmips] .setsize 4 14
 .if \n[evbppc] .setsize 4 10
 .if \n[evbsh3] .setsize 4 8
+.if \n[ews4800mips] .setsize 4 14
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 5 11
@@ -1336,7 +1363,6 @@ servers with man pages and the runtime configuration file.
 .if \n[next68k] .setsize 3 7
 .if \n[ofppc] .setsize 4 10
 .if \n[pmax] .setsize 5 15
-.if \n[pmppc] .setsize 4 10
 .if \n[prep] .setsize 4 10
 .if \n[sandpoint] .setsize 4 10
 .if \n[sbmips] .setsize 4 14
@@ -1889,23 +1915,23 @@ The following are included in the
 .Pa sgimips/binary/kernel
 directory:
 .
-.(tag netbsd-INDY_INSTALL.symbols.gz
-.It Pa netbsd.ecoff-GENERIC_INDY.gz
+.(tag netbsd-INSTALL32_IPxx.symbols.gz
+.It Pa netbsd.ecoff-GENERIC32_IPxx.gz
 An ECOFF
 version of the 
-.Li GENERIC_INDY
+.Li GENERIC32_IPxx
 kernel (gzipped).  This kernel can be used when booting machines
 whose PROMs do not understand the ELF binary format.
-.It Pa netbsd-INDY_INSTALL.gz
+.It Pa netbsd-INSTALL32_IPxx.gz
 A gzipped
-.Li INDY_INSTALL
+.Li INSTALL32_IPxx
 kernel, which includes an embedded ramdisk with the installation tools.
-.It Pa netbsd-INDY_INSTALL.ecoff.gz
+.It Pa netbsd-INSTALL32_IPxx.ecoff.gz
 An ECOFF version of the
-.Li netbsd-INDY_INSTALL kernel (also gzipped).
-.It Pa netbsd-INDY_INSTALL.symbols.gz
+.Li netbsd-INSTALL32_IPxx kernel (also gzipped).
+.It Pa netbsd-INSTALL32_IPxx.symbols.gz
 Symbols for
-.Pa netbsd-INDY_INSTALL.gz .
+.Pa netbsd-INSTALL32_IPxx.gz .
 .tag)
 .\}
 .

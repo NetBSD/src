@@ -570,7 +570,10 @@ iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family, 
 	(void) memset(&hints, 0x0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
+	hints.ai_flags = AI_PASSIVE;
+#ifdef AI_NUMERICSERV
+	hints.ai_flags |= AI_NUMERICSERV;
+#endif
 	(void) snprintf(portnum, sizeof(portnum), "%d", port);
 	if ((error = getaddrinfo(NULL, portnum, &hints, &res0)) != 0) {
 		hints.ai_flags = AI_PASSIVE;
@@ -759,7 +762,9 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 	for (i = 0; i < ISCSI_SOCK_CONNECT_TIMEOUT; i++) {
 
 		/* Attempt connection */
+#ifdef AI_NUMERICSERV
 		hints.ai_flags = AI_NUMERICSERV;
+#endif
 		if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0) {
 			hints.ai_flags = 0;
 			if ((rc = getaddrinfo(hostname, "iscsi-target", &hints, &res)) != 0 ||

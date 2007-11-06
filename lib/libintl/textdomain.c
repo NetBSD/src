@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.11 2004/09/23 16:44:26 tshiozak Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.11.16.1 2007/11/06 23:11:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: textdomain.c,v 1.11 2004/09/23 16:44:26 tshiozak Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.11.16.1 2007/11/06 23:11:30 matt Exp $");
 
 #include <sys/param.h>
 
@@ -44,14 +44,13 @@ static struct domainbinding __default_binding = {
 struct domainbinding *__bindings = &__default_binding;
 char __current_domainname[PATH_MAX] = DEFAULT_DOMAINNAME;
 
-static struct domainbinding *domainbinding_lookup __P((const char *, int));
+static struct domainbinding *domainbinding_lookup(const char *, int);
 
 /*
  * set the default domainname for dcngettext() and friends.
  */
 char *
-textdomain(domainname)
-	const char *domainname;
+textdomain(const char *domainname)
 {
 
 	/* NULL pointer gives the current setting */
@@ -70,9 +69,7 @@ textdomain(domainname)
 }
 
 char *
-bindtextdomain(domainname, dirname)
-	const char *domainname;
-	const char *dirname;
+bindtextdomain(const char *domainname, const char *dirname)
 {
 	struct domainbinding *p;
 
@@ -108,9 +105,7 @@ bindtextdomain(domainname, dirname)
 }
 
 char *
-bind_textdomain_codeset(domainname, codeset)
-	const char *domainname;
-	const char *codeset;
+bind_textdomain_codeset(const char *domainname, const char *codeset)
 {
 	struct domainbinding *p;
 
@@ -131,9 +126,7 @@ bind_textdomain_codeset(domainname, codeset)
  * lookup binding for the domainname
  */
 static struct domainbinding *
-domainbinding_lookup(domainname, alloc)
-	const char *domainname;
-	int alloc;
+domainbinding_lookup(const char *domainname, int alloc)
 {
 	struct domainbinding *p;
 

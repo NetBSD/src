@@ -93,12 +93,13 @@ int pipe_to_system_end(pipe_to_system_t *to_pipe)
 	int wait_ret;
 
 	fclose(to_pipe->fp);
-	wait_ret = waitpid(to_pipe->pid, &status, 0);
+	do {
+		wait_ret = waitpid(to_pipe->pid, &status, 0);
+	} while (wait_ret == -1 && errno == EINTR);
+
 	if (wait_ret < 0) {
-		if (errno != EINTR) {
-			call_callback(to_pipe->cleanup);
-			errx(2, "waitpid returned failure");
-		}
+		call_callback(to_pipe->cleanup);
+		errx(2, "waitpid returned failure");
 	}
 	if (!WIFEXITED(status)) {
 		call_callback(to_pipe->cleanup);

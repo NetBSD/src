@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.38 2007/08/15 14:19:19 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.38.2.1 2007/11/06 23:12:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	struct puffs_node *pn_dir = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct dtfs_dirent *dfd;
+	extern int straightflush;
 	int rv;
 
 	/* parent dir? */
@@ -63,6 +64,11 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		puffs_newinfo_setvtype(pni, dfd->dfd_node->pn_va.va_type);
 		puffs_newinfo_setsize(pni, dfd->dfd_node->pn_va.va_size);
 		puffs_newinfo_setrdev(pni, dfd->dfd_node->pn_va.va_rdev);
+
+		if (straightflush)
+			puffs_flush_pagecache_node(puffs_cc_getusermount(pcc),
+			    dfd->dfd_node);
+
 		return 0;
 	}
 

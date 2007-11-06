@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.113 2007/05/18 21:44:08 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.113.4.1 2007/11/06 23:12:10 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.113 2007/05/18 21:44:08 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.113.4.1 2007/11/06 23:12:10 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -148,7 +148,7 @@ _rtld_call_init_functions(Obj_Entry *first)
  * define __HAVE_FUNCTION_DESCRIPTORS
  */
 static void
-_rtld_init(caddr_t mapbase, caddr_t relocbase, const char *argv0)
+_rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 {
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
@@ -174,7 +174,8 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *argv0)
 	assert(!_rtld_objself.textrel);
 #endif
 
-	_rtld_add_paths(argv0, &_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
+	_rtld_add_paths(execname, &_rtld_default_paths,
+	    RTLD_DEFAULT_LIBRARY_PATH);
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
@@ -230,6 +231,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	bool            bind_now = 0;
 	const char     *ld_bind_now;
 	const char    **argv;
+	const char     *execname;
 	long		argc;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -273,6 +275,8 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	pAUX_euid = pAUX_ruid = pAUX_egid = pAUX_rgid = NULL;
 	pAUX_pagesz = NULL;
 
+	execname = NULL;
+
 	/* Digest the auxiliary vector. */
 	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
@@ -308,6 +312,11 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 			pAUX_rgid = auxp;
 			break;
 #endif
+#ifdef AT_SUN_EXECNAME
+		case AT_SUN_EXECNAME:
+			execname = (const char *)(const void *)auxp->a_v;
+			break;
+#endif
 		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
 			break;
@@ -321,7 +330,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 	assert(pAUX_pagesz != NULL);
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
-	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase, argv[0]);
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase, execname);
 
 	__progname = _rtld_objself.path;
 	environ = env;
@@ -343,12 +352,14 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
-		_rtld_add_paths(argv[0], &_rtld_paths, getenv("LD_LIBRARY_PATH"));
+		_rtld_add_paths(execname, &_rtld_paths,
+		    getenv("LD_LIBRARY_PATH"));
 	} else {
+		execname = NULL;
 		unsetenv("LD_DEBUG");
 		unsetenv("LD_LIBRARY_PATH");
 	}
-	_rtld_process_hints(argv[0], &_rtld_paths, &_rtld_xforms,
+	_rtld_process_hints(execname, &_rtld_paths, &_rtld_xforms,
 	    _PATH_LD_HINTS);
 	dbg(("dynamic linker is initialized, mapbase=%p, relocbase=%p",
 	     _rtld_objself.mapbase, _rtld_objself.relocbase));
@@ -398,7 +409,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 	
-	_rtld_digest_dynamic(argv[0], _rtld_objmain);
+	_rtld_digest_dynamic(execname, _rtld_objmain);
 
 	/* Link the main program into the list of objects. */
 	*_rtld_objtail = _rtld_objmain;
@@ -933,6 +944,6 @@ _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 	
 	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
 		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
-		free(elm);
+		xfree(elm);
 	}
 }

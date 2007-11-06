@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.115 2007/06/12 03:34:45 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.115.10.1 2007/11/06 23:14:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2007/06/12 03:34:45 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115.10.1 2007/11/06 23:14:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,6 @@ userret(l, pc, oticks)
 
 		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
@@ -407,9 +406,9 @@ trapmmufault(type, code, v, fp, l, sticks)
 #ifdef M68060
 	    machineid & AMIGA_68060 ? code & FSLW_RW_W :
 #endif
-	    mmutype == MMU_68040 ? (code & SSW_RW040) == 0 :
-	    (code & (SSW_DF|SSW_RW)) == SSW_DF)
-							/* what about RMW? */
+	    mmutype == MMU_68040 ? (code & (SSW_LK|SSW_RW040)) != SSW_RW040 :
+	    ((code & SSW_DF) != 0 &&
+	    ((code & SSW_RW) == 0 || (code & SSW_RM) != 0)))
 		ftype = VM_PROT_WRITE;
 	else
 		ftype = VM_PROT_READ;

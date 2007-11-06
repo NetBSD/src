@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.9 2007/07/09 20:52:06 ad Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.9.12.1 2007/11/06 23:15:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9 2007/07/09 20:52:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9.12.1 2007/11/06 23:15:09 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

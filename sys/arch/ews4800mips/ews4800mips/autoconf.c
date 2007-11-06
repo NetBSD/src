@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2007/06/29 16:03:04 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.10.1 2007/11/06 23:16:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2007/06/29 16:03:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.10.1 2007/11/06 23:16:29 matt Exp $");
 
 #include "opt_sbd.h"
 

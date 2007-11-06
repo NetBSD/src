@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2006/11/11 18:47:09 jmmv Exp $
+# $NetBSD: GENERIC,v 1.46.28.1 2007/11/06 23:15:39 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -54,10 +54,6 @@ options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVMSG		# System V-style message queues
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support

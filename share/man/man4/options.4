@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.352 2007/07/30 18:01:41 mjf Exp $
+.\"	$NetBSD: options.4,v 1.352.4.1 2007/11/06 23:13:01 matt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -587,6 +587,10 @@ This option overrides using break to enter the kernel debugger
 on the serial console.
 The value given is the ascii value to be used instead.
 This is currently only supported by the com driver.
+.It Cd options DDB_VERBOSE_HELP
+This option adds more verbose descriptions to the
+.Em help
+command.
 .It Cd options KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the

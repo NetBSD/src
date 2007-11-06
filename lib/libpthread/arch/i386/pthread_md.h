@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_md.h,v 1.7 2006/03/29 22:55:15 cube Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.7.12.1 2007/11/06 23:11:47 matt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -180,5 +180,8 @@ pthread__sp(void)
 	sizeof(struct xmmregs));					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FXSAVE) & ~_UC_USER;	\
 	} while (/*CONSTCOND*/0)
+
+#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	PTHREAD__HAVE_ATOMIC
 
 #endif /* _LIB_PTHREAD_I386_MD_H */

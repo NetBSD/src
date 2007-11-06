@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.3 2007/09/09 00:39:48 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.4 2007/11/06 23:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -316,12 +316,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 
 #define cpu_signotify(l)            setsoftast()
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern int want_resched;	/* resched() was called */
 
 /*
  * Give a profiling tick to the current process when the user profiling

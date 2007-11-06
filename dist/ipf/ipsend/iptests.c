@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.12 2007/04/14 20:34:22 martin Exp $	*/
+/*	$NetBSD: iptests.c,v 1.12.4.1 2007/11/06 23:07:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -12,6 +12,7 @@ static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.8 2007/02/17 12:41:51 dar
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #if defined(__NetBSD__) && defined(__vax__)
 /*
  * XXX need to declare boolean_t for _KERNEL <sys/files.h>
@@ -24,6 +25,7 @@ typedef	int	boolean_t;
 #if !defined(__osf__)
 # ifdef __NetBSD__ 
 #  include <machine/lock.h>
+#  include <sys/mutex.h>
 # endif
 # define _KERNEL
 # define KERNEL

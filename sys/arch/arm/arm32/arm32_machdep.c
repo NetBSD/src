@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.49.12.2 2007/08/29 04:18:44 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.49.12.3 2007/11/06 23:14:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.2 2007/08/29 04:18:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.3 2007/11/06 23:14:58 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_cpuoptions.h"
@@ -284,7 +284,6 @@ cpu_startup()
 	    USPACE_UNDEF_STACK_TOP;
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
-	pmap_set_pcb_pagedir(pmap_kernel(), curpcb);
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.29 2006/03/19 02:54:38 christos Exp $	*/
+/*	$NetBSD: rune.c,v 1.29.10.1 2007/11/06 23:11:14 matt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.29 2006/03/19 02:54:38 christos Exp $");
+__RCSID("$NetBSD: rune.c,v 1.29.10.1 2007/11/06 23:11:14 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -339,6 +339,9 @@ _NukeRune(rl)
 			free(__UNCONST(rl->rl_codeset));
 		if (rl->rl_citrus_ctype)
 			_citrus_ctype_close(rl->rl_citrus_ctype);
+		free(__UNCONST(rl->rl_ctype_tab));
+		free(__UNCONST(rl->rl_tolower_tab));
+		free(__UNCONST(rl->rl_toupper_tab));
 		free(rl);
 	}
 }
@@ -472,7 +475,7 @@ _Read_CTypeAsRune(fp)
 
 	/*
 	 * __runetable_to_netbsd_ctype() will be called from
-	 * setlocale.c:loadlocale(), and fill old ctype table.
+	 * setrunelocale.c:_newrunelocale(), and fill old ctype table.
 	 */
 
 	free(new_ctype);

@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.2 2007/05/31 05:44:14 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.2.4.1 2007/11/06 23:11:58 matt Exp $
 
 .PATH: ${.CURDIR}/sys
 
 ASM=		aio_cancel.S aio_error.S aio_fsync.S aio_read.S aio_return.S \
-		aio_suspend.S aio_write.S lio_listio.S
+		aio_write.S lio_listio.S \
+		mq_close.S mq_getattr.S mq_notify.S mq_open.S \
+		mq_setattr.S mq_unlink.S
 
 SRCS+=		${ASM}
 CLEANFILES+=	${ASM}

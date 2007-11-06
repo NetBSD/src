@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.22 2007/07/11 19:50:27 he Exp $	*/
+/*	$NetBSD: plcom.c,v 1.22.10.1 2007/11/06 23:15:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22 2007/07/11 19:50:27 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22.10.1 2007/11/06 23:15:57 matt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"

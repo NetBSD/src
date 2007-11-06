@@ -73,7 +73,7 @@ typedef struct {
 	iscsi_cond_t    cond;
 }               initiator_wait_t;
 
-typedef struct iscsi_session_t {
+typedef struct initiator_session_t {
 	iscsi_socket_t  sock;
 	uint32_t        CmdSN;
 	uint32_t        ExpStatSN;
@@ -105,13 +105,14 @@ typedef struct initiator_cmd_t {
 	char            targetname[TARGET_HOSTNAME_SIZE];
 }               initiator_cmd_t;
 
-typedef struct iscsi_target_t {
+typedef struct initiator_target_t {
 	char            name[TARGET_HOSTNAME_SIZE];
 	char            ip[TARGET_IP_SIZE];
 	int             port;
 	char            TargetName[TARGET_NAME_SIZE];
 	initiator_session_t *sess;
 	int             has_session;
+	char		iqnwanted[TARGET_NAME_SIZE];
 }               initiator_target_t;
 
 DEFINE_ARRAY(strv_t, char *);
@@ -133,5 +134,9 @@ int             initiator_enqueue(initiator_cmd_t *);
 int             initiator_abort(initiator_cmd_t *);
 int             initiator_shutdown(void);
 int             initiator_discover(char *, uint64_t, int);
+
+void		get_target_info(uint64_t, initiator_target_t *);
+
+int		ii_initiator_init(const char *, int, int, const char *, char *, int, int, int);
 
 #endif				/* _INITIATOR_H_ */

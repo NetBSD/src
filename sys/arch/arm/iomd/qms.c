@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.12 2007/07/09 20:52:05 ad Exp $	*/
+/*	$NetBSD: qms.c,v 1.12.12.1 2007/11/06 23:15:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.12 2007/07/09 20:52:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.12.12.1 2007/11/06 23:15:06 matt Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>

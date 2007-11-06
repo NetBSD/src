@@ -39,6 +39,11 @@ DDEESSCCRRIIPPTTIIOONN
 
                     The default is @ftp@.
 
+     FETCH_PRE_ARGS
+                    Specifies optional arguments for the
+                    _d_o_w_n_l_o_a_d_-_v_u_l_n_e_r_a_b_i_l_i_t_y_-_l_i_s_t client. These options appear
+                    before FETCH_CMD.
+
      FETCH_ARGS     Specifies optional arguments for the client used to down-
                     load the _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s file.
 

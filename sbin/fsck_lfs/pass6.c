@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.18 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: pass6.c,v 1.18.8.1 2007/11/06 23:12:36 matt Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
 		VOP_BWRITE(sbp);
 		seg_table[dtosn(fs, daddr)].su_nbytes -= DINODE1_SIZE;
 	} else
-		brelse(bp);
+		brelse(bp, 0);
 
 	/* Do on-disk accounting */
 	if (vp) {
@@ -348,13 +348,13 @@ account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t d
 	bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_bsize, NULL, &bp);
 	buf = emalloc(fs->lfs_bsize);
 	memcpy(buf, bp->b_data, fs->lfs_bsize);
-	brelse(bp);
+	brelse(bp, 0);
 
 	obuf = emalloc(fs->lfs_bsize);
 	if (vp) {
 		bread(vp, ilbn, fs->lfs_bsize, NULL, &bp);
 		memcpy(obuf, bp->b_data, fs->lfs_bsize);
-		brelse(bp);
+		brelse(bp, 0);
 	} else
 		memset(obuf, 0, fs->lfs_bsize);
 
@@ -519,7 +519,7 @@ alloc_inode(ino_t thisino, ufs_daddr_t daddr)
 				break;
 			} else
 				ino = ifp->if_nextfree;
-			brelse(bp);
+			brelse(bp, 0);
 		}
 	}
 	
@@ -663,7 +663,7 @@ pass6(void)
 			bread(devvp, fsbtodb(fs, ibdaddr), fs->lfs_ibsize,
 			      NOCRED, &ibp);
 			memcpy(ibbuf, ibp->b_data, fs->lfs_ibsize);
-			brelse(ibp);
+			brelse(ibp, 0);
 
 			j = 0;
 			for (dp = (struct ufs1_dinode *)ibbuf;
@@ -681,7 +681,7 @@ pass6(void)
 				) {
 					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
 						ibdaddr);
-					brelse(bp);
+					brelse(bp, 0);
 					free(inums);
 					goto out;
 				}
@@ -769,7 +769,7 @@ pass6(void)
 				       sizeof(ufs_daddr_t));
 				VTOD(vp)->di_blocks = 0;
 
-				vp->v_flag |= VDIROP;
+				vp->v_uflag |= VU_DIROP;
 				inodirty(VTOI(vp));
 			}
 			free(inums);
@@ -779,7 +779,7 @@ pass6(void)
 		if (bc == 0) {
 			pwarn("unexpected bad seg ptr at 0x%x with serial=%d\n",
 				(int)daddr, (int)sp->ss_serial);
-			brelse(bp);
+			brelse(bp, 0);
 			break;
 		} else {
 			if (debug)
@@ -794,7 +794,7 @@ pass6(void)
 			btofsb(fs, fs->lfs_sumsize + fs->lfs_bsize) - 1)) {
 			daddr = ((SEGSUM *)bp->b_data)->ss_next;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
     out:
@@ -813,7 +813,7 @@ pass6(void)
 	idesc.id_func = pass6check;
 	idesc.id_lblkno = 0;
 	LIST_FOREACH(vp, &vnodelist, v_mntvnodes) {
-		if ((vp->v_flag & VDIROP) == 0)
+		if ((vp->v_uflag & VU_DIROP) == 0)
 			--n_files; /* Don't double count */
 		checkinode(VTOI(vp)->i_number, &idesc);
 	}
@@ -854,7 +854,7 @@ pass6(void)
 		if (bc == 0) {
 			pwarn("unexpected bad seg ptr [2] at 0x%x with serial=%d\n",
 				(int)daddr, (int)sp->ss_serial);
-			brelse(bp);
+			brelse(bp, 0);
 			break;
 		}
 		odaddr = daddr;
@@ -869,7 +869,7 @@ pass6(void)
 		LFS_CLEANERINFO(cip, fs, cbp);
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
 		bp->b_flags |= B_AGE;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Final address could also be a superblock */
@@ -897,7 +897,7 @@ pass6(void)
 			VOP_BWRITE(bp);
 			break;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	fs->lfs_nextseg = sntod(fs, sn);
 

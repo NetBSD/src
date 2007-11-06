@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.1.1.3.2.1 2007/11/06 23:09:43 matt Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.1.1.3.2.1 2007/11/06 23:09:43 matt Exp $");
 #endif
 
 /*-
@@ -128,11 +128,6 @@ __RCSID("$NetBSD: ftpio.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef EXPECT_DEBUG
-#if HAVE_VIS_H
-#include <vis.h>
-#endif
-#endif
 
 #include "../lib/lib.h"
 
@@ -155,9 +150,6 @@ typedef struct {
 } fds;
 
 
-#if EXPECT_DEBUG
-static int	 expect_debug = 1;
-#endif /* EXPECT_DEBUG */
 static int	 needclose=0;
 static int	 ftp_started=0;
 static fds	 ftpio;
@@ -183,9 +175,6 @@ expect(int fd, const char *str, int *ftprc)
 {
 	int rc;
 	char buf[256];  
-#if EXPECT_DEBUG
-	char *vstr;
-#endif /* EXPECT_DEBUG */
 	regex_t rstr;
 	int done;
 	struct pollfd set[1];
@@ -193,22 +182,8 @@ expect(int fd, const char *str, int *ftprc)
 	regmatch_t match;
 	int verbose_expect=0;
 
-#if EXPECT_DEBUG
-	vstr=malloc(2*sizeof(buf));
-	if (vstr == NULL)
-		err(EXIT_FAILURE, "expect: malloc() failed");
-	strvis(vstr, str, VIS_NL|VIS_SAFE|VIS_CSTYLE);
-#endif /* EXPECT_DEBUG */
-	    
 	if (regcomp(&rstr, str, REG_EXTENDED) != 0)
 		err(EXIT_FAILURE, "expect: regcomp() failed");
-
-#if EXPECT_DEBUG
-	if (expect_debug)
-		printf("expecting \"%s\" on fd %d ...\n", vstr, fd);
-#endif /* EXPECT_DEBUG */
-
-	if(0) setbuf(stdout, NULL);
 
 	memset(buf, '\n', sizeof(buf));
 
@@ -264,23 +239,7 @@ expect(int fd, const char *str, int *ftprc)
 			if (verbose_expect)
 				putchar(buf[sizeof(buf)-1]);
 
-#if EXPECT_DEBUG
-			{
-				char *v=malloc(2*sizeof(buf));
-				strvis(v, buf, VIS_NL|VIS_SAFE|VIS_CSTYLE);
-				if (expect_debug)
-					printf("expect=<%s>, buf=<%*s>\n", vstr, strlen(v), v);
-				free(v);
-			}
-#endif /* EXPECT_DEBUG */
-
 			if (regexec(&rstr, buf, 1, &match, 0) == 0) {
-#if EXPECT_DEBUG
-				if (expect_debug)
-					printf("Gotcha -> %s!\n", buf+match.rm_so+1);
-				fflush(stdout);
-#endif /* EXPECT_DEBUG */
-
 				if (ftprc && isdigit((unsigned char)buf[match.rm_so+1])) 
 					*ftprc = atoi(buf+match.rm_so+1);
 
@@ -292,13 +251,6 @@ expect(int fd, const char *str, int *ftprc)
 			break;
 		}
 	}
-
-#if EXPECT_DEBUG
-	printf("done.\n");
-
-	if (str)
-		free(vstr);
-#endif /* EXPECT_DEBUG */
 
 	return retval;
 }

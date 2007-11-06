@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10.24.2 2007/10/12 02:22:21 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.10.24.3 2007/11/06 23:14:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.2 2007/10/12 02:22:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.3 2007/11/06 23:14:54 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -79,7 +79,6 @@ userret(struct lwp *l)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 #ifdef CPU_ARM11
 	/*
 	 * This is a hack to work around an unknown cache bug on the ARM11

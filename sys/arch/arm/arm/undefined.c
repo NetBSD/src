@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.29.24.1 2007/08/28 19:23:42 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.29.24.2 2007/11/06 23:14:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.29.24.1 2007/08/28 19:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.29.24.2 2007/11/06 23:14:58 matt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -370,14 +370,11 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef FAST_FPE
 	/* Optimised exit code */
 	{
-		struct cpu_info * const ci = curcpu();
-
 		/*
 		 * Check for reschedule request, at the moment there is only
 		 * 1 ast so this code should always be run
 		 */
-
-		if (ci->ci_want_resched) {
+		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -386,12 +383,7 @@ undefinedinstruction(trapframe_t *frame)
 
 		/* Invoke MI userret code */
 		mi_userret(l);
-
-		l->l_priority = l->l_usrpri;
-
-		ci->ci_schedstate.spc_curpriority = l->l_priority;
 	}
-
 #else
 	userret(l);
 #endif

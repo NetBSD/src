@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2007/08/16 13:54:16 ad Exp $
+#	$NetBSD: Makefile,v 1.42.2.1 2007/11/06 23:11:38 matt Exp $
 #
 
 WARNS=	4
@@ -54,7 +54,9 @@ SRCS+=	pthread_cond.c
 SRCS+=	pthread_lock.c 
 SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
+SRCS+=	pthread_mutex2.c
 SRCS+=	pthread_rwlock.c
+SRCS+=	pthread_rwlock2.c
 SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
@@ -70,6 +72,7 @@ SRCS+= pthread_md.c
 
 # The TSD routines are used in the implementation of profiling, and so
 # can't be profiled themselves.
+COPTS.pthread_specific.c+=	-fomit-frame-pointer -falign-functions=32
 pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
@@ -80,6 +83,8 @@ COPTS.pthread_lock.c+=	-fomit-frame-pointer -falign-functions=32
 pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
+
+COPTS.pthread.c += -Wno-stack-protector
 
 _context_u.po: _context_u.o
 	${_MKTARGET_CREATE}

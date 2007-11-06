@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $ */
+/*	$NetBSD: if_ed.c,v 1.52.2.1 2007/11/06 23:14:37 matt Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.52.2.1 2007/11/06 23:14:37 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -855,16 +855,15 @@ edintr(void *arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-ed_ioctl(register struct ifnet *ifp, u_long command, void *data)
+ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ed_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -928,11 +927,7 @@ ed_ioctl(register struct ifnet *ifp, u_long command, void *data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.13 2007/08/22 17:57:48 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.13.2.1 2007/11/06 23:11:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.13 2007/08/22 17:57:48 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.13.2.1 2007/11/06 23:11:52 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: opdump.c,v 1.13 2007/08/22 17:57:48 pooka Exp $");
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdio.h>
+
+#include "puffs_priv.h"
 
 /* XXX! */
 const char *vfsop_revmap[] = {
@@ -112,8 +114,19 @@ const char *vnop_revmap[] = {
 	"PUFFS_VN_DELETEEXTATTR",
 	"PUFFS_VN_SETEXTATTR",
 };
+/* XXX! */
 const char *cacheop_revmap[] = {
 	"PUFFS_CACHE_WRITE"
+};
+/* XXX! */
+const char *errnot_revmap[] = {
+	"PUFFS_ERR_MAKENODE",
+	"PUFFS_ERR_LOOKUP",
+	"PUFFS_ERR_READDIR",
+	"PUFFS_ERR_READLINK",
+	"PUFFS_ERR_READ",
+	"PUFFS_ERR_WRITE",
+	"PUFFS_ERR_VPTOFH"
 };
 
 void
@@ -136,14 +149,18 @@ puffsdump_req(struct puffs_req *preq)
 	case PUFFSOP_CACHE:
 		map = cacheop_revmap;
 		break;
+	case PUFFSOP_ERROR:
+		map = errnot_revmap;
+		break;
 	}
 
 	printf("\treqid: %" PRIu64 ", opclass %d%s, optype: %s, "
-	    "cookie: %p,\n\t\taux: %p, auxlen: %zu\n",
+	    "cookie: %p,\n\t\taux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
 	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
-	    preq->preq_buf, preq->preq_buflen);
+	    preq->preq_buf, preq->preq_buflen,
+	    preq->preq_pid, preq->preq_lid);
 
 	if (isvn) {
 		switch (preq->preq_optype) {
@@ -159,10 +176,12 @@ puffsdump_req(struct puffs_req *preq)
 		}
 	}
 	
+	PU_LOCK();
 	gettimeofday(&tv_now, NULL);
 	timersub(&tv_now, &tv_prev, &tv);
 	printf("\t\tsince previous call: %ld.%06ld\n", tv.tv_sec, tv.tv_usec);
 	gettimeofday(&tv_prev, NULL);
+	PU_UNLOCK();
 }
 
 void
@@ -213,28 +232,28 @@ puffsdump_cn(struct puffs_kcn *pkcn)
 void
 puffsdump_lookup(struct puffs_req *preq)
 {
-	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
-	puffsdump_cn(&lookup_vnreq->pvnr_cn);
+	puffsdump_cn(&lookup_msg->pvnr_cn);
 }
 
 void
 puffsdump_lookup_rv(struct puffs_req *preq)
 {
-	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
 	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%x\n",
-	    lookup_vnreq->pvnr_newnode, lookup_vnreq->pvnr_vtype,
-	    lookup_vnreq->pvnr_size, lookup_vnreq->pvnr_rdev);
+	    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
+	    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev);
 }
 
 void
 puffsdump_readwrite(struct puffs_req *preq)
 {
-	struct puffs_vnreq_readwrite *rw_vnreq = (void *)preq;
+	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
 	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
-	    rw_vnreq->pvnr_offset, rw_vnreq->pvnr_resid, rw_vnreq->pvnr_ioflag);
+	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
 }
 
 void

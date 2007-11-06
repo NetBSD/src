@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.6 2007/08/21 12:01:55 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.6.2.1 2007/11/06 23:15:59 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.6 2007/08/21 12:01:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.6.2.1 2007/11/06 23:15:59 matt Exp $");
 
 #include "opt_gxio.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.8 2007/06/08 17:08:46 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.8.10.1 2007/11/06 23:14:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.8 2007/06/08 17:08:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.8.10.1 2007/11/06 23:14:53 matt Exp $");
 
 #include "bpfilter.h"
 

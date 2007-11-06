@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1 2004/07/19 03:39:02 chs Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.18.1 2007/11/06 23:11:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -140,3 +140,38 @@ ENTRY(_swapcontext_u, 0)
 	GETC(%arg0)
 	SETC(%arg1)
 EXIT(_swapcontext_u)
+
+LEAF_ENTRY(pthread__ras_simple_lock_init)
+	ldi	1,%ret0			/* 1 == unlocked */
+	stw	%ret0,0(%arg0)
+	stw	%ret0,4(%arg0)
+	stw	%ret0,8(%arg0)
+	stw	%ret0,12(%arg0)
+	bv,n	%r0(%rp)
+EXIT(pthread__ras_simple_lock_init)
+
+	.global pthread__lock_ras_start
+	.global pthread__lock_ras_end
+
+LEAF_ENTRY(pthread__ras_simple_lock_try)
+	ldo	15(%arg0),%arg0
+	depi	0,31,4,%arg0
+
+pthread__lock_ras_start:
+	ldw	0(%arg0),%ret0
+	stw	%r0,0(%arg0)		/* 0 == locked */
+pthread__lock_ras_end:
+
+	comiclr,= 0,%ret0,%ret0		/* if locked return 0 */
+	ldi	1,%ret0			/* else return 1 */
+	bv,n	%r0(%rp)
+EXIT(pthread__ras_simple_lock_try)
+
+
+LEAF_ENTRY(pthread__ras_simple_unlock)
+	ldo	15(%arg0),%arg0
+	depi	0,31,4,%arg0
+	ldi	1,%ret0			/* 1 == unlocked */
+	bv	%r0(%rp)
+	stw	%ret0,0(%arg0)
+EXIT(pthread__ras_simple_unlock)

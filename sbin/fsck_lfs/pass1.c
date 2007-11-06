@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.28 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: pass1.c,v 1.28.8.1 2007/11/06 23:12:35 matt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -117,7 +117,7 @@ pass1(void)
 		else {
 			LFS_IENTRY(ifp, fs, i, bp);
 			dins[i]->daddr = ifp->if_daddr;
-			brelse(bp);
+			brelse(bp, 0);
 		}
 	}
 	qsort(dins, maxino, sizeof(*dins), i_d_cmp);
@@ -289,7 +289,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			zlnp->next = orphead;
 			orphead = zlnp;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	typemap[inumber] = IFTODT(mode);

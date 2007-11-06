@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.176 2007/07/17 17:42:07 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.176.4.1 2007/11/06 23:11:20 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -97,9 +97,10 @@ ASM=	access.S acct.S \
 	umask.S undelete.S unlink.S unmount.S utimes.S utrace.S uuidgen.S \
 	vadvise.S
 
-WEAKASM= accept.S close.S connect.S execve.S \
+WEAKASM= accept.S aio_suspend.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
-	kill.S msgrcv.S msgsnd.S __msync13.S \
+	kill.S mq_receive.S mq_send.S mq_timedreceive.S mq_timedsend.S \
+	msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S pollts.S pselect.S read.S readlink.S readv.S \
 	sched_yield.S select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S

@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.6 2007/07/09 20:52:10 ad Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.6.10.1 2007/11/06 23:15:58 matt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.6 2007/07/09 20:52:10 ad Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.6.10.1 2007/11/06 23:15:58 matt Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2007/05/17 14:51:18 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.12.10.1 2007/11/06 23:16:46 matt Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -61,6 +61,7 @@ include <machine/pte.h>
 include <machine/frame.h>
 include <machine/pmap.h>
 include <machine/iomod.h>
+include <machine/lock.h>
 
 include <hp700/hp700/intr.h>
 
@@ -72,6 +73,7 @@ export	USRSTACK
 export	HPPA_PID_KERNEL
 export	HPPA_SID_KERNEL
 export	VM_MAXUSER_ADDRESS
+export	HPPA_LDCW_ALIGN
 
 # `break' entry points
 export	HPPA_BREAK_KERNEL
@@ -128,7 +130,6 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
-
 
 # saved state fields
 struct	trapframe

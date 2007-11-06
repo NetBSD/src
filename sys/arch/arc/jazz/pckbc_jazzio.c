@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.15 2007/07/09 20:52:04 ad Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.15.10.1 2007/11/06 23:14:54 matt Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.15 2007/07/09 20:52:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.15.10.1 2007/11/06 23:14:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

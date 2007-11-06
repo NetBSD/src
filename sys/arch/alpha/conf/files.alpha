@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.174 2007/07/21 11:59:56 tsutsui Exp $
+# $NetBSD: files.alpha,v 1.174.6.1 2007/11/06 23:13:51 matt Exp $
 #
 # alpha-specific configuration info
 

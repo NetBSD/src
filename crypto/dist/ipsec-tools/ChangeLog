@@ -1,3 +1,49 @@
+2007-10-18  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/{isakmp_unity.[ch]|isakmp_cfg.c|racoon.conf.5}:
+	  Add SPLITNET_{INCLUDR_LOCAL}_CIDR to hook scripts
+
+2007-10-15  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/libipsec/pfkey.c: Try to increase the buffer size of the
+	  pfkey socket, this may help things when we have a huge SPD.
+
+2007-10-02  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Scott Lamb <slamb@slamb.org>
+	* src/racoon/plog.[ch]: new plog macro
+	* src/racoon/kmpstat.c: plog changed to _plog to work with new plog macro
+	* src/racoon/crypto_openssl.c: includes plog.h to work with the
+	  new plog macro
+	
+2007-09-19  Matthew Grooms <mgrooms@shrew.net>
+	From Gabriel Somlo <somlo@cmu.edu>
+	* src/racoon/isakmp.c: Set REUSE option on sockets to prevent failures
+	associated with closing and immediately re-opening.
+
+2007-09-19  Matthew Grooms <mgrooms@shrew.net>
+	From Gabriel Somlo <somlo@cmu.edu>
+	* src/racoon/isakmp_unity.c: Prevent duplicate entries in splitnet list.
+
+2007-09-12  Matthew Grooms <mgrooms@shrew.net>
+	From Joy Latten <latten@austin.ibm.com>
+	* configure.ac: Fix autoconf check for selinux support.
+
+2007-09-12  Matthew Grooms <mgrooms@shrew.net>
+	* src/racoon/cfparse.y
+	src/racoon/cftoken.l
+	src/racoon/handler.c
+	src/racoon/isakmp_quick.c
+	src/racoon/pfkey.c
+	src/racoon/sainfo.c
+	src/racoon/sainfo.h
+	src/racoon/racoon.conf.5 : Implement clientaddr sainfo remote id option
+	and cleanup sainfo syntax in the man page.
+
+2007-09-05  Matthew Grooms <mgrooms@shrew.net>
+	* src/racoon/sainfo.c: Sort sainfos on insert and improve matching logic.
+
+2007-09-03  Matthew Grooms <mgrooms@shrew.net>
+	* src/racoon/racoon.conf.5: Correct wins4 and nbns4 modecfg option syntax.
+	* src/racoon/cftoken.l: Add nbns4 as an alias for wins4.
+
 2007-08-07  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp_xauth.c: Don't mix up RADIUS authentication and
 	  authorization ports. Allow interoperability with freeradius
@@ -184,7 +230,8 @@
 	* configure.ac src/libipsec/{libpfkey.h|pfkey.c}
 	  src/racoon/{Makefile.am|backupsa.c|backupsa.h|cftoken.l|ipsec_doi.c}
 	  src/racoon/{ipsec_doi.h|isakmp_inf.c|isakmp_quick.c|pfkey.c|policy.c}
-	  src/racoon/{policy.h|proposal.c|proposal.h|remoteconf.c}: Add 		  support for SELinux security contexts. Also cleanup the libipsec
+	  src/racoon/{policy.h|proposal.c|proposal.h|remoteconf.c}: Add
+ 		  support for SELinux security contexts. Also cleanup the libipsec
 	  interface for adding and updating security associations.
 
 	From Simon Chang <simonychang@gmail.com>

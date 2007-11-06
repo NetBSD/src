@@ -138,7 +138,7 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 
 case $host in
-*-*-dragonfly*)
+*-*-dragonfly* |*-*-freebsd*)
 	AC_DEFINE([NUMERIC_VERSION_ONLY], [1], [Defined when to retain only the numeric OS version])
 	;;
 esac

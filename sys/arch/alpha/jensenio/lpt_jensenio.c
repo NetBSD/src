@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_jensenio.c,v 1.6 2007/07/19 12:58:29 tsutsui Exp $ */
+/* $NetBSD: lpt_jensenio.c,v 1.6.6.1 2007/11/06 23:13:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.6 2007/07/19 12:58:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.6.6.1 2007/11/06 23:13:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.19 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: runetype.h,v 1.19.10.1 2007/11/06 23:11:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -89,14 +89,14 @@ typedef struct {
 	int32_t		fre_map;	/* What first maps to in maps */
 	uint32_t	fre_pad1;	/* backward compatibility */
 	__runepad_t	fre_pad2;	/* backward compatibility */
-} __attribute__((__packed__)) _FileRuneEntry;
+} __packed _FileRuneEntry;
 
 
 typedef struct {
 	uint32_t	frr_nranges;	/* Number of ranges stored */
 	uint32_t	frr_pad1;	/* backward compatibility */
 	__runepad_t	frr_pad2;	/* backward compatibility */
-} __attribute__((__packed__)) _FileRuneRange;
+} __packed _FileRuneRange;
 
 
 typedef struct {
@@ -126,7 +126,7 @@ typedef struct {
 	uint32_t	frl_pad5;	/* backward compatibility */
 
 	/* variable size data follows */
-} __attribute__((__packed__)) _FileRuneLocale;
+} __packed _FileRuneLocale;
 
 
 /*
@@ -207,6 +207,10 @@ typedef struct _NBRuneLocale {
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
 	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
+
+	const unsigned char		*rl_ctype_tab;
+	const short			*rl_tolower_tab;
+	const short			*rl_toupper_tab;
 } _NBRuneLocale;
 
 

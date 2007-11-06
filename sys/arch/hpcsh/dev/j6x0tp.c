@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.20.10.1 2007/11/06 23:16:58 matt Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.20.10.1 2007/11/06 23:16:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_comvar.h,v 1.3 2007/07/14 21:48:18 ad Exp $        */
+/*      $NetBSD: sa11x0_comvar.h,v 1.3.12.1 2007/11/06 23:15:08 matt Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.

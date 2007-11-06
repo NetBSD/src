@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
+#	$NetBSD: build.sh,v 1.171.4.1 2007/11/06 23:07:12 matt Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -230,6 +230,7 @@ initdefaults()
 	do_sourcesets=false
 	do_syspkgs=false
 	do_iso_image=false
+	do_iso_image_source=false
 	do_params=false
 
 	# Create scratch directory
@@ -336,7 +337,7 @@ getarch()
 		MACHINE_ARCH=powerpc64
 		;;
 
-	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|pmppc|prep|sandpoint)
+	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|prep|sandpoint)
 		MACHINE_ARCH=powerpc
 		;;
 
@@ -498,9 +499,9 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
-		[-M obj] [-m mach] [-N noisy] [-O obj] [-R release] [-T tools]
-		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cddir] [-D dest]
+		[-j njob] [-M obj] [-m mach] [-N noisy] [-O obj] [-R release]
+		[-T tools] [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
 		operation [...]
 
  Build operations (all imply "obj" and "tools"):
@@ -522,12 +523,15 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
 			DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
-    iso-image           Create CD-ROM image in RELEASEDIR/MACHINE/installation.
+    iso-image           Create CD-ROM image in RELEASEDIR/iso.
+    iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    iso-dir=cddir       Add the contents of \`cddir' to a CD-ROM image.
     params              Display various make(1) parameters.
 
  Options:
     -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
     -B buildId  Set BUILDID to buildId.
+    -C cddir    Set CDEXTRA to cddir.
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system.
@@ -566,7 +570,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bD:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
+	opts='a:B:bC:D:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -608,6 +612,11 @@ parseoptions()
 
 		-b)
 			usage "'-b' has been replaced by 'makewrapper'"
+			;;
+
+		-C)
+			eval ${optargcmd}; resolvepath
+			iso_dir=${OPTARG}
 			;;
 
 		-D)
@@ -767,6 +776,10 @@ parseoptions()
 
 		iso-image)
 			op=iso_image	# used as part of a variable name
+			;;
+
+		iso-image-source)
+			op=iso_image_source   # used as part of a variable name
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1083,7 +1096,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.171.4.1 2007/11/06 23:07:12 matt Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1266,8 +1279,15 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		obj|build|distribution|iso-image|release|sourcesets|syspkgs|params)
+		obj|build|distribution|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
+
+		iso-image|iso-image-source)
+			${runcmd} "${makewrapper}" ${parallel} \
+			    CDEXTRA=$iso_dir ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
 			;;

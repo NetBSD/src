@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.206 2007/08/27 15:57:00 matt Exp $
+#	$NetBSD: BRANCHES,v 1.206.2.1 2007/11/06 23:10:19 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -254,6 +254,15 @@ Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
 
+Branch:		bouyer-xenamd64
+Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
+Status:		Active
+Start Date:	18 Oct 2007
+End Date:	
+Base Tag:	bouyer-xenamd64-base
+Scope:		kernel
+Notes:		
+
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
 Status:		Active
@@ -413,10 +422,10 @@ Notes:		As per the newlock branch, however given the amount of time
 
 Branch:		nick-csl-alignment
 Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
-Status:		Active
+Status:		Terminated
 Start Date:	2007-07-18
 End Date:
-Base Tag:	nick-csl-alignment-base2
+Base Tag:	nick-csl-alignment-base5
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
 Scope:		sys, lib/libpthread, lib/libpthread_dbg
 Notes:	
@@ -435,9 +444,9 @@ Notes:		A more flexible infrastructure for third-party packages by
 
 Branch:		ppcoea-renovation
 Description:	General renovation and cleanup of all OEA PowerPC ports.
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	30 April 2007
-End Date:
+End Date:	15 October 2007
 Base Tag:	ppcoea-renovation-base
 Maintainer:	Tim Rightnour <garbled@netbsd.org>
 Scope:		src/sys/arch
@@ -512,53 +521,74 @@ Notes:		This branch is based off of the netbsd-4 branch!
 		able to pthread_kill() running threads.
 
 Branch:		vmlocking
-Description:	Make memory allocators and trap handling MP safe
+Description:	Make VM and file system framework MP safe
 Status:		Active
 Start Date:	13 March 2007
 End Date:
 Base Tag:	vmlocking-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
-Notes:
-		- Replace all simplelocks with mutexes
-		- Remove spinlockmgr
-		- Make memory allocators MP safe
-		- Make trap handling MP safe: push kernel lock acquire
-		  back into pager ops.
+Notes:		Goals:
 
-		Only i386 is currently update.  Most per architecture
-		changes need to be made in the pmap module.  LFS is not
-		currently stable due interaction between the pagedaemon (?)
-		and the HOLDRELE() in lfs_segment.c.  It may trash your
-		filesystem..
+		- Make VM system / trap handling MP safe.
+		- Replace simplelocks with mutexes.
+		- Make file system framework MP safe.
 
-		Most of the locks replaced are now sleep/adaptive locks or
-		spin locks at IPL_VM.  Assuming audio interrupt handlers
-		are made MP safe there are far fewer potential deadlocks
-		against the kernel lock.
+		Status by architecture:
 
-		v_interlock becomes an adaptive mutex so now acquring
-		it can potentially block, similarly for other locks
-		that were before simplelocks.  This needs to be audited
-		carefully.
+		  alpha			partial: pmap.c/trap.c need work
+		  i386			done
+		  amd64			done
+		  mips			partial: !pmax needs work
+		  sparc			
+		  sparc64		
+		  arm			
+		  macppc/powerpc	
+		  hppa			
+		  sh3			
+		  vax			
+		  m68k			
 
-		Use vnodes in general needs to be audited, as vnodes can
-		now be inspected without the kernel lock held.
+		Remaining MD work to do:
 
-		Acquiring locks in the pmap module can now block, meaning
-		that the current pmap, cpu or lazy pmap status can change
-		out from underneath the requestor.  This also needs to be
-		audited.
+		- Defer x86 npxsave interrupts to an process context (do
+		  aston() and handle from trap.c).
 
-		Currently, i386 has the necessary modifications, and has
-		trap handling and a few calls to allocators out from under
-		the kernel lock.  There are still problems that need to be
-		debugged.
+		- Port other architectures.
 
-		Need to check that whenever a lock is initialized, it is
-		also destroyed.
+		Remaining MI work to do:
 
-		Lots of testing required.
+		- Clean up vfs_busy/vfs_unbusy and mount/dounmount semantics
+		  so that lockmgr is not being used any more. Reference
+		  counting on struct mount is probably the best solution.
+
+		- Check + document locking around fields in struct mount.
+
+		- Check file systems that traverse mountpoint vnode lists.
+		  They need to use marker vnodes. Most already done.
+
+		- Re-write the itimer code to be MP safe and work in the
+		  presence of threaded soft interrupts.
+
+		- Check aliased vnode handling. There may be problems.
+
+		Remaining problems:
+
+		- tmpfs_rmdir occasionally leaks tmpfs_nodes. This could be
+		  an old problem but either way it needs to be fixed.
+
+		- UVM_FLAG_TRYLOCK is not sufficient in uvm_km.c because
+		  allocations will fail too often. It's needed for !kmem_map
+		  because sometimes allocations are made by threads that
+		  hold the map locked, which could cause other threads to
+		  wait long term even if they are trying to make a NOWAIT
+		  allocation.
+
+		- ffs+snapshots needs testing.
+
+		- LFS port has been fudged and it's probably borked.
+
+		- ext2fs panic on unmount.
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
@@ -573,7 +603,7 @@ Description:	implement and evaluate lazy mapping of mbuf external data pages
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base4
+Base Tag:	yamt-lazymbuf-base5
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
@@ -1460,6 +1490,16 @@ Base Tag:	yamt-vop-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		http://mail-index.NetBSD.org/tech-kern/2005/09/27/0000.html
+
+Branch:		yamt-x86pmap
+Description:	merge i386 and amd64 pmap
+Status:		Terminated; merged to -current
+Start Date:	Mon Sep 24 2007
+End Date:	Fri Oct 19 2007
+Base Tag:	yamt-x86pmap-base4
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
 
 Branch:		gdamore-uart
 Description:	Add register table support to com driver.

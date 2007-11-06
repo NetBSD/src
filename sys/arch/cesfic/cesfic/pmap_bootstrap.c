@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 2007/05/18 10:45:58 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.10.1 2007/11/06 23:15:38 matt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11 2007/05/18 10:45:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.10.1 2007/11/06 23:15:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>

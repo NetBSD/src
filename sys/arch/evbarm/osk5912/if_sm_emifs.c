@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_emifs.c,v 1.2 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: if_sm_emifs.c,v 1.2.6.1 2007/11/06 23:16:03 matt Exp $	*/
 
 /*
  * OSK5912 SMC91Cxx wrapper, based on sys/arch/evbarm/viper/if_sm_pxaip.c
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.2 2007/07/24 14:41:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.2.6.1 2007/11/06 23:16:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.11 2007/05/17 01:55:43 christos Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.11.4.1 2007/11/06 23:11:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without
- *    specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,10 +34,14 @@
  * 	  options or pass values for the matching options.
  */
 
-#include "defs.h"
-#include "fuse.h"
-#include "fuse_opt.h"
+#include <sys/types.h>
+
 #include <err.h>
+#include <fuse.h>
+#include <fuse_opt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef FUSE_OPT_DEBUG
 #define DPRINTF(x)	do { printf x; } while ( /* CONSTCOND */ 0)

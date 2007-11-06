@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2007/07/08 10:19:21 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.10.1 2007/11/06 23:14:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2007/07/08 10:19:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.10.1 2007/11/06 23:14:07 matt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -211,7 +211,7 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 
 #ifdef MTRR
@@ -648,7 +648,7 @@ cpu_dump(void)
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->ptdpaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
@@ -1377,13 +1377,13 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
-
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
 	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
@@ -1504,22 +1504,20 @@ init_x86_64(paddr_t first_avail)
 
 	softintr_init();
 	splraise(IPL_IPI);
-	enable_intr();
+	x86_enable_intr();
 
 	x86_init();
 
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
-
-	curlwp = &lwp0;
 }
 
 void
 cpu_reset(void)
 {
 
-	disable_intr();
+	x86_disable_intr();
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
@@ -1540,7 +1538,7 @@ cpu_reset(void)
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
-	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	breakpoint();
 
 #if 0
 	/*
@@ -1840,7 +1838,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 			dt = ldtp;
 			len = llen;
 		} else if (pmap->pm_flags & PMF_USER_LDT) {
-			len = pmap->pm_ldt_len;
+			len = pmap->pm_ldt_len; /* XXX broken */
 			dt = (char *)pmap->pm_ldt;
 		} else {
 			dt = ldtstore;

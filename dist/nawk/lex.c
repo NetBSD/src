@@ -392,6 +392,7 @@ int string(void)
 		case '\\':
 			c = input();
 			switch (c) {
+			case '\n': break;
 			case '"': *bp++ = '"'; break;
 			case 'n': *bp++ = '\n'; break;	
 			case 't': *bp++ = '\t'; break;

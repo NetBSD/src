@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.76 2007/03/04 11:55:04 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.76.20.1 2007/11/06 23:16:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.76 2007/03/04 11:55:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.76.20.1 2007/11/06 23:16:35 matt Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -1226,7 +1226,7 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct lwp *l)
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
 		printf("hilqmap(%d): qnum %d device %x\n",
-		    p->p_pid, qnum, device);
+		    l->l_proc->p_pid, qnum, device);
 #endif
 	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != l->l_proc)
 		return EINVAL;
@@ -1245,7 +1245,8 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct lwp *l)
 #ifdef DEBUG
 	if (hildebug & HDB_MASK)
 		printf("hilqmap(%d): devmask %x qmask %x\n",
-		    p->p_pid, hilp->hl_queue[qnum].hq_devmask, dptr->hd_qmask);
+		    l->l_proc->p_pid, hilp->hl_queue[qnum].hq_devmask,
+		    dptr->hd_qmask);
 #endif
 	return 0;
 }

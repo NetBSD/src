@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.9 2006/12/28 10:02:43 martin Exp $	*/
+/*	$NetBSD: cerror.S,v 1.9.4.1 2007/11/06 23:11:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: cerror.S,v 1.9 2006/12/28 10:02:43 martin Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.9.4.1 2007/11/06 23:11:10 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,8 @@ FUNC(CERROR)
 	.globl	_C_LABEL(errno)
 #ifdef PIC
 FUNC(CERROR)
-	ld	[%g1 + _C_LABEL(errno)], %g1
+	set	_C_LABEL(errno), %g2
+	ld	[%g1 + %g2], %g1
 	st	%o0, [%g1]
 	mov	-1, %o0
 	retl

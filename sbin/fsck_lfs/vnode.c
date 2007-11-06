@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.6 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: vnode.c,v 1.6.8.1 2007/11/06 23:12:37 matt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,7 +93,7 @@ raw_vop_bwrite(struct ubuf * bp)
 {
 	bp->b_flags &= ~(B_READ | B_DELWRI | B_DONE | B_ERROR);
 	raw_vop_strategy(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	return 0;
 }
 
@@ -181,7 +181,7 @@ vget(void *fs, ino_t ino)
 		}
 		if (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    vp->v_usecount == 0 &&
-		    !(vp->v_flag & VDIROP))
+		    !(vp->v_uflag & VU_DIROP))
 			tossvp = vp;
 	}
 	/* Don't let vnode list grow arbitrarily */

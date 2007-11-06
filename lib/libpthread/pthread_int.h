@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.49 2007/08/16 13:54:16 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.49.2.1 2007/11/06 23:11:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * NOTE: when changing anything in this file, please ensure that
+ * libpthread_dbg still compiles.
+ */
+
 #ifndef _LIB_PTHREAD_INT_H
 #define _LIB_PTHREAD_INT_H
 
@@ -47,10 +52,14 @@
 #include "pthread_debug.h"
 #include "pthread_md.h"
 
+#include <sys/tree.h>
+
 #include <lwp.h>
 #include <signal.h>
 
-#define PTHREAD_KEYS_MAX 256
+#define PTHREAD_KEYS_MAX 	256
+#define	PTHREAD__UNPARK_MAX	32
+
 /*
  * The size of this structure needs to be no larger than struct
  * __pthread_cleanup_store, defined in pthread.h.
@@ -74,11 +83,10 @@ struct	__pthread_st {
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_num;		/* ID XXX should die */
 	int		pt_state;	/* running, blocked, etc. */
-	pthread_spin_t	pt_lock;	/* lock on state */
+	pthread_mutex_t	pt_lock;	/* lock on state */
 	int		pt_flags;	/* see PT_FLAG_* below */
 	int		pt_cancel;	/* Deferred cancellation */
 	int		pt_spinlocks;	/* Number of spinlocks held. */
-	void		*pt_mutexhint;	/* Last mutex held. */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	void		*pt_exitval;	/* Read by pthread_join() */
@@ -86,6 +94,10 @@ struct	__pthread_st {
 	int		pt_willpark;	/* About to park */
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	void		*pt_unparkhint;	/* Hint for the above */
+
+	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
+	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
+	size_t		pt_nwaiters;
 
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
@@ -96,7 +108,8 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	PTQ_ENTRY(__pthread_st)	pt_allq;
+	RB_ENTRY(__pthread_st) pt_alltree;
+	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
 	/*
@@ -104,10 +117,12 @@ struct	__pthread_st {
 	 * on other CPUs will access this data frequently.
 	 */
 	int		pt_dummy1 __aligned(128);
-	int		pt_sleeponq;	/* on a sleep queue */
-	int		pt_signalled;	/* Received pthread_cond_signal() */
-	void		*pt_sleepobj;	/* object slept on */
-	PTQ_ENTRY(__pthread_st)	pt_sleep;
+	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
+	volatile int	pt_sleeponq;	/* On a sleep queue */
+	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
+	void * volatile	pt_sleepobj;	/* Object slept on */
+	PTQ_ENTRY(__pthread_st) pt_sleep;
+	void		(*pt_early)(void *);
 	int		pt_dummy2 __aligned(128);
 
 	/* Thread-specific data.  Large so it sits close to the end. */
@@ -119,6 +134,12 @@ struct	__pthread_st {
 	 * and then only ever passed to _lwp_create(). 
 	 */
 	ucontext_t	pt_uc;
+};
+
+struct pthread_lock_ops {
+	void	(*plo_init)(__cpu_simple_lock_t *);
+	int	(*plo_try)(__cpu_simple_lock_t *);
+	void	(*plo_unlock)(__cpu_simple_lock_t *);
 };
 
 /* Thread states */
@@ -145,9 +166,11 @@ struct	__pthread_st {
 extern int	pthread__stacksize_lg;
 extern size_t	pthread__stacksize;
 extern vaddr_t	pthread__stackmask;
+extern vaddr_t	pthread__threadmask;
 extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
+extern int 	pthread__unpark_max;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
@@ -177,9 +200,10 @@ void	pthread_spinunlock(pthread_spin_t *);
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
-void	pthread__simple_lock_init(__cpu_simple_lock_t *);
-int	pthread__simple_lock_try(__cpu_simple_lock_t *);
-void	pthread__simple_unlock(__cpu_simple_lock_t *);
+int	pthread__simple_locked_p(__cpu_simple_lock_t *);
+#define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
+#define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
+#define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
 
 #ifndef _getcontext_u
 int	_getcontext_u(ucontext_t *);
@@ -212,7 +236,7 @@ int	pthread__find(pthread_t);
 #else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
-	((pthread_t) (((vaddr_t)(sp)) & ~pthread__stackmask))
+	((pthread_t) (((vaddr_t)(sp)) & pthread__threadmask))
 
 #define pthread__id_reg() pthread__sp()
 #endif
@@ -240,11 +264,38 @@ void	pthread__assertfunc(const char *file, int line, const char *function,
 void	pthread__errorfunc(const char *file, int line, const char *function,
 		const char *msg);
 
-#if defined(i386) || defined(__x86_64__)
-#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-#define	PTHREAD__CHEAP_UNLOCK
-#else
+int	pthread__atomic_cas_ptr(volatile void *, void **, void *);
+void	*pthread__atomic_swap_ptr(volatile void *, void *);
+void	pthread__membar_full(void);
+void	pthread__membar_producer(void);
+void	pthread__membar_consumer(void);
+
+int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *);
+int	pthread__mutex_catchup(pthread_mutex_t *);
+
+#ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
 #endif
+
+/*
+ * Bits in the owner field of the lock that indicate lock state.  If the
+ * WRITE_LOCKED bit is clear, then the owner field is actually a count of
+ * the number of readers.
+ */
+#define	RW_HAS_WAITERS		0x01	/* lock has waiters */
+#define	RW_WRITE_WANTED		0x02	/* >= 1 waiter is a writer */
+#define	RW_WRITE_LOCKED		0x04	/* lock is currently write locked */
+#define	RW_UNUSED		0x08	/* currently unused */
+
+#define	RW_FLAGMASK		0x0f
+
+#define	RW_READ_COUNT_SHIFT	4
+#define	RW_READ_INCR		(1 << RW_READ_COUNT_SHIFT)
+#define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
+#define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
+#define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
+#define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
+
+#define	ptr_owner		ptr_writer
 
 #endif /* _LIB_PTHREAD_INT_H */

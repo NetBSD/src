@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.14 2007/05/17 14:51:11 yamt Exp $
+# $NetBSD: genassym.cf,v 1.14.10.1 2007/11/06 23:13:42 matt Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2007/07/01 21:41:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.55.4.1 2007/11/06 23:11:58 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -15,6 +15,7 @@ SRCS=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pw_policy.c pidfile.c pidlock.c pty.c \
+	raise_default_signal.c \
 	secure_path.c snprintb.c sockaddr_snprintf.c stat_flags.c \
 	ttyaction.c ttymsg.c
 
@@ -25,6 +26,7 @@ MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 	disklabel_dkcksum.3 disklabel_scan.3 \
 	opendisk.3 openpty.3 parsedate.3 pidfile.3 pidlock.3 \
 	pw_getconf.3 pw_init.3 pw_lock.3 pw_policy.3 secure_path.3 \
+	raise_default_signal.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 ttyaction.3 \
 	ttymsg.3 util.3
 

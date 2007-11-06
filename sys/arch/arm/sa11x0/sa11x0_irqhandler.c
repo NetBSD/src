@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.11 2007/08/13 02:04:51 tsutsui Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.11.2.1 2007/11/06 23:15:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.11 2007/08/13 02:04:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.11.2.1 2007/11/06 23:15:08 matt Exp $");
 
 #include "opt_irqstats.h"
 

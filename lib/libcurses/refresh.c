@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $	*/
+/*	$NetBSD: refresh.c,v 1.67.4.1 2007/11/06 23:11:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.67 2007/05/29 19:07:19 veego Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.67.4.1 2007/11/06 23:11:25 matt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -794,19 +794,6 @@ makech(int wy)
 		while (wx <= lch && memcmp(nsp, csp, sizeof(__LDATA)) != 0) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
-				/* Are we continuing a multircell character? */
-				if ((nsp->attr & __WCWIDTH) == __WCWIDTH) {
-#ifdef DEBUG
-					__CTRACE(__CTRACE_REFRESH,
-						"Skipping continuation cell\n");
-					wx++;
-					csp->ch = nsp->ch;
-					csp->attr = nsp->attr;
-					nsp++;
-					csp++;
-					continue;
-				}
-#endif
 #else
 		while (!cellcmp(nsp, csp) && wx <= lch) {
 			if (ce != NULL && wx >= nlsp
@@ -866,7 +853,13 @@ makech(int wy)
 				    nsp->attr & WA_ATTRIBUTES);
 #endif
 
-			off = (~nsp->attr & curscr->wattr) & WA_ATTRIBUTES;
+			off = (~nsp->attr & curscr->wattr)
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+				;
 
 			/*
 			 * Unset attributes as appropriate.  Unset first
@@ -905,23 +898,22 @@ makech(int wy)
 				off &= __mask_se;
 			}
 
-#ifndef HAVE_WCHAR
 			if (off & __ALTCHARSET && __tc_ae != NULL) {
 				tputs(__tc_ae, 0, __cputchar);
 				curscr->wattr &= ~__ALTCHARSET;
 			}
-#else
-			if (off & WA_ALTCHARSET && __tc_ae != NULL) {
-				tputs(__tc_ae, 0, __cputchar);
-				curscr->wattr &= ~WA_ALTCHARSET;
-			}
-#endif /* HAVE_WCHAR */
 
 			/* Set/change colour as appropriate. */
 			if (__using_color)
 				__set_color(curscr, nsp->attr & __COLOR);
 
-			on = (nsp->attr & ~curscr->wattr) & WA_ATTRIBUTES;
+			on = (nsp->attr & ~curscr->wattr)
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+				 ;
 
 			/*
 			 * Enter standout mode if appropriate.
@@ -1000,19 +992,11 @@ makech(int wy)
 			}
 
 			/* Enter/exit altcharset mode as appropriate. */
-#ifndef HAVE_WCHAR
 			if (on & __ALTCHARSET && __tc_as != NULL &&
 			    __tc_ae != NULL) {
 				tputs(__tc_as, 0, __cputchar);
 				curscr->wattr |= __ALTCHARSET;
 			}
-#else
-			if (on & WA_ALTCHARSET && __tc_as != NULL &&
-			    __tc_ae != NULL) {
-				tputs(__tc_as, 0, __cputchar);
-				curscr->wattr |= WA_ALTCHARSET;
-			}
-#endif /* HAVE_WCHAR */
 
 			wx++;
 			if (wx >= win->maxx &&
@@ -1723,17 +1707,10 @@ __unsetattr(int checkms)
 		curscr->wattr &= __mask_me;
 	}
 	/* Don't leave the screen with altcharset set (don't check ms). */
-#ifndef HAVE_WCHAR
 	if (curscr->wattr & __ALTCHARSET) {
 		tputs(__tc_ae, 0, __cputchar);
 		curscr->wattr &= ~__ALTCHARSET;
 	}
-#else
-	if (curscr->wattr & WA_ALTCHARSET) {
-		tputs(__tc_ae, 0, __cputchar);
-		curscr->wattr &= ~WA_ALTCHARSET;
-	}
-#endif /* HAVE_WCHAR */
 	/* Don't leave the screen with colour set (check against ms). */
 	if (__using_color && isms)
 		__unset_color(curscr);
