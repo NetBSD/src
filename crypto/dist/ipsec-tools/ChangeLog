@@ -1,3 +1,10 @@
+2007-11-06  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Scott Lamb <slamb@slamb.org>
+	* src/racoon/plog.[ch]: new plog macro
+	* src/racoon/kmpstat.c: plog changed to _plog to work with new plog macro
+	* src/racoon/crypto_openssl.c: includes plog.h to work with the
+	  new plog macro
+
 2007-10-15  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/libipsec/pfkey.c: Try to increase the buffer size of the
 	  pfkey socket, this may help things when we have a huge SPD.
