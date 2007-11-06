@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.4.3 2007/10/02 18:29:02 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.4 2007/11/06 14:27:37 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.3 2007/10/02 18:29:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.4 2007/11/06 14:27:37 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -364,6 +364,7 @@ configure(void)
 
 	/* Initialize data structures. */
 	config_init();
+	pnp_init();
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -1078,7 +1079,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	device_t dev;
 	void *dev_private;
 	const struct cfiattrdata *ia;
-	pnp_device_t *pnp;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1132,18 +1132,21 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
 
-	pnp = device_pnp(dev);
-
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
 	dev->dv_cfattach = ca;
 	dev->dv_unit = myunit;
+	dev->dv_activity_count = 0;
+	dev->dv_activity_handlers = NULL;
 	dev->dv_private = dev_private;
-	callout_init(&pnp->pnp_idle, 0);
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
+	if (parent != NULL)
+		dev->dv_depth = parent->dv_depth + 1;
+	else
+		dev->dv_depth = 0;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
 	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
 	if (locs) {
@@ -1167,6 +1170,9 @@ config_devdealloc(device_t dev)
 	KASSERT(dev->dv_properties != NULL);
 	prop_object_release(dev->dv_properties);
 
+	if (dev->dv_activity_handlers)
+		panic("config_devdealloc with registered handlers");
+
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
 
@@ -1184,7 +1190,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	const int *locs, void *aux, cfprint_t print)
 {
 	device_t dev;
-	pnp_device_t *pnp;
 	struct cftable *ct;
 	const char *drvname;
 
@@ -1264,10 +1269,8 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		splash_progress_update(splash_progress_state);
 #endif
 
-	pnp = device_pnp(dev);
-	if (pnp->pnp_power == NULL)
-		aprint_error("%s: WARNING: power management not supported\n",
-		    device_xname(dev));
+	if (!device_pnp_is_registered(dev))
+		aprint_error_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
@@ -1701,18 +1704,23 @@ device_parent(device_t dev)
 	return (dev->dv_parent);
 }
 
-pnp_device_t *
-device_pnp(device_t dev)
-{
-
-	return (&dev->dv_pnp);
-}
-
 bool
 device_is_active(device_t dev)
 {
+	int active_flags;
 
-	return ((dev->dv_flags & DVF_ACTIVE) != 0);
+	active_flags = DVF_ACTIVE;
+	active_flags |= DVF_CLASS_SUSPENDED;
+	active_flags |= DVF_DRIVER_SUSPENDED;
+	active_flags |= DVF_BUS_SUSPENDED;
+
+	return ((dev->dv_flags & active_flags) == DVF_ACTIVE);
+}
+
+bool
+device_is_enabled(device_t dev)
+{
+	return (dev->dv_flags & DVF_ACTIVE) == DVF_ACTIVE;
 }
 
 int
@@ -1728,18 +1736,6 @@ device_private(device_t dev)
 {
 
 	return (dev->dv_private);
-}
-
-void *
-device_power_private(device_t dev)
-{
-	return (dev->dv_power);
-}
-
-void
-device_power_set_private(device_t dev, void *dv_power)
-{
-	dev->dv_power = dv_power;
 }
 
 prop_dictionary_t
@@ -1760,4 +1756,279 @@ device_is_a(device_t dev, const char *dname)
 {
 
 	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+}
+
+/*
+ * Power management related functions.
+ */
+
+bool
+device_pnp_is_registered(device_t dev)
+{
+	return (dev->dv_flags & DVF_POWER_HANDLERS) != 0;
+}
+
+bool
+device_pnp_driver_suspend(device_t dev)
+{
+	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
+		return true;
+	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
+		return false;
+	if (*dev->dv_driver_suspend != NULL &&
+	    !(*dev->dv_driver_suspend)(dev))
+		return false;
+
+	dev->dv_flags |= DVF_DRIVER_SUSPENDED;
+	return true;
+}
+
+bool
+device_pnp_driver_resume(device_t dev)
+{
+	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
+		return true;
+	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
+		return false;
+	if (*dev->dv_driver_resume != NULL &&
+	    !(*dev->dv_driver_resume)(dev))
+		return false;
+
+	dev->dv_flags &= ~DVF_DRIVER_SUSPENDED;
+	return true;
+}
+
+void
+device_pnp_driver_register(device_t dev,
+    bool (*suspend)(device_t), bool (*resume)(device_t))
+{
+	dev->dv_driver_suspend = suspend;
+	dev->dv_driver_resume = resume;
+	dev->dv_flags |= DVF_POWER_HANDLERS;
+}
+
+void
+device_pnp_driver_deregister(device_t dev)
+{
+	dev->dv_driver_suspend = NULL;
+	dev->dv_driver_resume = NULL;
+	dev->dv_flags &= ~DVF_POWER_HANDLERS;
+}
+
+bool
+device_pnp_driver_child_register(device_t dev)
+{
+	device_t parent = device_parent(dev);
+
+	if (parent == NULL || parent->dv_driver_child_register == NULL)
+		return true;
+	return (*parent->dv_driver_child_register)(dev);
+}
+
+void
+device_pnp_driver_set_child_register(device_t dev,
+    bool (*child_register)(device_t))
+{
+	dev->dv_driver_child_register = child_register;
+}
+
+void *
+device_pnp_bus_private(device_t dev)
+{
+	return dev->dv_bus_private;
+}
+
+bool
+device_pnp_bus_suspend(device_t dev)
+{
+	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
+		return true;
+	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0 ||
+	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
+		return false;
+	if (*dev->dv_bus_suspend != NULL &&
+	    !(*dev->dv_bus_suspend)(dev))
+		return false;
+
+	dev->dv_flags |= DVF_BUS_SUSPENDED;
+	return true;
+}
+
+bool
+device_pnp_bus_resume(device_t dev)
+{
+	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
+		return true;
+	if (*dev->dv_bus_resume != NULL &&
+	    !(*dev->dv_bus_resume)(dev))
+		return false;
+
+	dev->dv_flags &= ~DVF_BUS_SUSPENDED;
+	return true;
+}
+
+void
+device_pnp_bus_register(device_t dev, void *priv,
+    bool (*suspend)(device_t), bool (*resume)(device_t),
+    void (*deregister)(device_t))
+{
+	dev->dv_bus_private = priv;
+	dev->dv_bus_resume = resume;
+	dev->dv_bus_suspend = suspend;
+	dev->dv_bus_deregister = deregister;
+}
+
+void
+device_pnp_bus_deregister(device_t dev)
+{
+	if (dev->dv_bus_deregister == NULL)
+		return;
+	(*dev->dv_bus_deregister)(dev);
+	dev->dv_bus_private = NULL;
+	dev->dv_bus_suspend = NULL;
+	dev->dv_bus_resume = NULL;
+	dev->dv_bus_deregister = NULL;
+}
+
+void *
+device_pnp_class_private(device_t dev)
+{
+	return dev->dv_class_private;
+}
+
+bool
+device_pnp_class_suspend(device_t dev)
+{
+	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
+		return true;
+	if (*dev->dv_class_suspend != NULL &&
+	    !(*dev->dv_class_suspend)(dev))
+		return false;
+
+	dev->dv_flags |= DVF_CLASS_SUSPENDED;
+	return true;
+}
+
+bool
+device_pnp_class_resume(device_t dev)
+{
+	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
+		return true;
+	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0 ||
+	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
+		return false;
+	if (*dev->dv_class_resume != NULL &&
+	    !(*dev->dv_class_resume)(dev))
+		return false;
+
+	dev->dv_flags &= ~DVF_CLASS_SUSPENDED;
+	return true;
+}
+
+void
+device_pnp_class_register(device_t dev, void *priv,
+    bool (*suspend)(device_t), bool (*resume)(device_t),
+    void (*deregister)(device_t))
+{
+	dev->dv_class_private = priv;
+	dev->dv_class_suspend = suspend;
+	dev->dv_class_resume = resume;
+	dev->dv_class_deregister = deregister;
+}
+
+void
+device_pnp_class_deregister(device_t dev)
+{
+	if (dev->dv_class_deregister == NULL)
+		return;
+	(*dev->dv_class_deregister)(dev);
+	dev->dv_class_private = NULL;
+	dev->dv_class_suspend = NULL;
+	dev->dv_class_resume = NULL;
+	dev->dv_class_deregister = NULL;
+}
+
+bool
+device_active(device_t dev, devactive_t type)
+{
+	size_t i;
+
+	if (dev->dv_activity_count == 0)
+		return false;
+
+	for (i = 0; i < dev->dv_activity_count; ++i)
+		(*dev->dv_activity_handlers[i])(dev, type);
+
+	return true;
+}
+
+bool
+device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
+{
+	void (**new_handlers)(device_t, devactive_t);
+	void (**old_handlers)(device_t, devactive_t);
+	size_t i, new_size;
+	int s;
+
+	old_handlers = dev->dv_activity_handlers;
+
+	for (i = 0; i < dev->dv_activity_count; ++i) {
+		if (old_handlers[i] == handler)
+			panic("Double registering of idle handlers");
+	}
+
+	new_size = dev->dv_activity_count + 1;
+	new_handlers = malloc(sizeof(void *) * new_size, M_DEVBUF, M_WAITOK);
+
+	memcpy(new_handlers, old_handlers,
+	    sizeof(void *) * dev->dv_activity_count);
+	new_handlers[new_size - 1] = handler;
+
+	s = splhigh();
+	dev->dv_activity_count = new_size;
+	dev->dv_activity_handlers = new_handlers;
+	splx(s);
+
+	if (old_handlers != NULL)
+		free(old_handlers, M_DEVBUF);
+
+	return true;
+}
+
+void
+device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
+{
+	void (**new_handlers)(device_t, devactive_t);
+	void (**old_handlers)(device_t, devactive_t);
+	size_t i, new_size;
+	int s;
+
+	old_handlers = dev->dv_activity_handlers;
+
+	for (i = 0; i < dev->dv_activity_count; ++i) {
+		if (old_handlers[i] == handler)
+			break;
+	}
+
+	if (i == dev->dv_activity_count)
+		return; /* XXX panic? */
+
+	new_size = dev->dv_activity_count - 1;
+
+	if (new_size == 0) {
+		new_handlers = NULL;
+	} else {
+		new_handlers = malloc(sizeof(void *) * new_size, M_DEVBUF,
+		    M_WAITOK);
+		memcpy(new_handlers, old_handlers, sizeof(void *) * i);
+		memcpy(new_handlers + i, old_handlers + i + 1,
+		    sizeof(void *) * (new_size - i));
+	}
+
+	s = splhigh();
+	dev->dv_activity_count = new_size;
+	dev->dv_activity_handlers = new_handlers;
+	splx(s);
+
+	free(old_handlers, M_DEVBUF);
 }

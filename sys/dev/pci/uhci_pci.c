@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.36.2.3 2007/10/26 15:46:57 joerg Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.36.2.4 2007/11/06 14:27:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.2.3 2007/10/26 15:46:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.2.4 2007/11/06 14:27:29 joerg Exp $");
 
 #include "ehci.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.2.3 2007/10/26 15:46:57 joerg Exp 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-static void	uhci_pci_resume(device_t);
+static bool	uhci_pci_resume(device_t);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -95,7 +95,6 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	pnp_status_t status;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -182,12 +181,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
 
-	status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    uhci_suspend, uhci_pci_resume);
-	if (status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, uhci_suspend, uhci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -200,7 +195,7 @@ uhci_pci_detach(device_ptr_t self, int flags)
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	int rv;
 
-	pci_generic_power_deregister(self);
+	pnp_device_deregister(self);
 
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
@@ -219,7 +214,7 @@ uhci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-static void
+static bool
 uhci_pci_resume(device_t dv)
 {
 	struct uhci_pci_softc *sc = device_private(dv);
@@ -228,7 +223,7 @@ uhci_pci_resume(device_t dv)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_LEGSUP,
 	    PCI_LEGSUP_USBPIRQDEN);
 
-	uhci_resume(dv);
+	return uhci_resume(dv);
 }
 
 CFATTACH_DECL(uhci_pci, sizeof(struct uhci_pci_softc),

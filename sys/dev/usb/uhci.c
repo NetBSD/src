@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.209.2.4 2007/10/26 15:47:52 joerg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.209.2.5 2007/11/06 14:27:33 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.4 2007/10/26 15:47:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.5 2007/11/06 14:27:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,7 +735,7 @@ uhci_shutdown(void *v)
  * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
-void
+bool
 uhci_resume(device_t dv)
 {
 	uhci_softc_t *sc = device_private(dv);
@@ -772,9 +772,11 @@ uhci_resume(device_t dv)
 #endif
 
 	splx(s);
+
+	return true;
 }
 
-void
+bool
 uhci_suspend(device_t dv)
 {
 	uhci_softc_t *sc = device_private(dv);
@@ -807,6 +809,8 @@ uhci_suspend(device_t dv)
 	sc->sc_bus.use_polling--;
 
 	splx(s);
+
+	return true;
 }
 
 #ifdef UHCI_DEBUG
@@ -1216,7 +1220,7 @@ uhci_intr(void *arg)
 {
 	uhci_softc_t *sc = arg;
 
-	if (sc->sc_dying)
+	if (sc->sc_dying || !device_is_active(&sc->sc_bus.bdev))
 		return (0);
 
 	if (sc->sc_bus.use_polling) {

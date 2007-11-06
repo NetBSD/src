@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.25.6.4 2007/11/04 21:03:21 jmcneill Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25.6.5 2007/11/06 14:27:12 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.4 2007/11/04 21:03:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.5 2007/11/06 14:27:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,8 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = AACAD_F_VERBOSE;
 #endif
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpiacad_init_envsys(self);
 }

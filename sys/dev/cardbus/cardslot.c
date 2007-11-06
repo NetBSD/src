@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.35.6.1 2007/10/26 15:44:19 joerg Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.35.6.2 2007/11/06 14:27:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.6.1 2007/10/26 15:44:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.6.2 2007/11/06 14:27:15 joerg Exp $");
 
 #include "opt_cardslot.h"
 
@@ -165,6 +165,9 @@ cardslotattach(struct device *parent, struct device *self,
 		/* attach deferred */
 		cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
 	}
+
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 

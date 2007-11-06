@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.13 2007/10/01 05:37:23 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.14 2007/11/06 14:27:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.13 2007/10/01 05:37:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.14 2007/11/06 14:27:10 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,8 +104,8 @@ struct lpcib_softc {
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
-static void lpcib_suspend(device_t);
-static void lpcib_resume(device_t);
+static bool lpcib_suspend(device_t);
+static bool lpcib_resume(device_t);
 
 static void pmtimer_configure(struct lpcib_softc *);
 
@@ -191,7 +191,6 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = device_private(self);
 	struct lpcib_device *lpcib_dev;
-	pnp_status_t pnp_status;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -257,15 +256,11 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Install power handler */
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    lpcib_suspend, lpcib_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, lpcib_suspend, lpcib_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
+static bool
 lpcib_suspend(device_t dv)
 {
 	struct lpcib_softc *sc = device_private(dv);
@@ -296,9 +291,11 @@ lpcib_suspend(device_t dv)
 		sc->sc_hpet_reg = pci_conf_read(pc, tag, LPCIB_PCI_GEN_CNTL);
 #endif
 	}
+
+	return true;
 }
 
-static void
+static bool
 lpcib_resume(device_t dv)
 {
 	struct lpcib_softc *sc = device_private(dv);
@@ -329,6 +326,8 @@ lpcib_resume(device_t dv)
 		pci_conf_write(pc, tag, LPCIB_PCI_GEN_CNTL, sc->sc_hpet_reg);
 #endif
 	}
+
+	return true;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1.12.2 2007/10/01 05:37:33 joerg Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.12.3 2007/11/06 14:27:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.2 2007/10/01 05:37:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.3 2007/11/06 14:27:20 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -58,7 +58,7 @@ struct ahci_pci_softc {
 
 static int  ahci_pci_match(struct device *, struct cfdata *, void *);
 static void ahci_pci_attach(struct device *, struct device *, void *);
-static void ahci_pci_resume(device_t);
+static bool ahci_pci_resume(device_t);
 
 
 CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_pci_softc),
@@ -102,7 +102,6 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	void *ih;
-	pnp_status_t pnp_status;
 
 	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
@@ -132,15 +131,11 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	ahci_attach(sc);
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    NULL, ahci_pci_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, ahci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
+static bool
 ahci_pci_resume(device_t dv)
 {
 	struct ahci_pci_softc *psc = device_private(dv);
@@ -153,4 +148,6 @@ ahci_pci_resume(device_t dv)
 	ahci_reprobe_drives(sc);
 	ahci_enable_intrs(sc);
 	splx(s);
+
+	return true;
 }

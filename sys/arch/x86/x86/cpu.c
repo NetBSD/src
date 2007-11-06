@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.15 2007/10/28 17:25:22 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.16 2007/11/06 14:27:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.15 2007/10/28 17:25:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.16 2007/11/06 14:27:10 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -125,12 +125,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.15 2007/10/28 17:25:22 joerg Exp $");
 int     cpu_match(struct device *, struct cfdata *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 
-static pnp_status_t	cpu_power(device_t, pnp_request_t, void *);
+static bool	cpu_suspend(device_t);
+static bool	cpu_resume(device_t);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
-	pnp_state_t sc_pmstate;		/* power management state */
 };
 
 int mp_cpu_start(struct cpu_info *); 
@@ -398,10 +398,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	cpus_attached |= ci->ci_cpumask;
 
-	sc->sc_pmstate = PNP_STATE_D0;
-	if (pnp_register(self, cpu_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, cpu_suspend, cpu_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
@@ -418,97 +416,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		);
 	}
 #endif
-}
-
-#ifdef MULTIPROCESSOR
-static void
-cpu_power_resume(void)
-{
-	struct cpu_info *sci;
-	CPU_INFO_ITERATOR cii;
-	int s;
-
-	s = splhigh();
-	for (CPU_INFO_FOREACH(cii, sci)) {
-		if (sci->ci_flags & CPUF_PRIMARY)
-			continue;
-		cpu_start_secondary(sci);
-		cpu_init_idle_lwp(sci);
-	}
-	splx(s);
-	cpu_boot_secondary_processors();
-}
-#endif
-
-static pnp_status_t
-cpu_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct cpu_softc *sc;
-	struct cpu_info *ci;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-#ifdef MULTIPROCESSOR
-	int err;
-#endif
-
-	sc = (struct cpu_softc *)dv;
-	ci = sc->sc_info;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = sc->sc_pmstate;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		if (*pstate != PNP_STATE_D0 && *pstate != PNP_STATE_D3)
-			return PNP_STATUS_UNSUPPORTED;
-
-		if (ci->ci_flags & CPUF_PRIMARY) {
-#ifdef MULTIPROCESSOR
-			switch (*pstate) {
-			case PNP_STATE_D3:
-				x86_mp_online = false;
-				break;
-			case PNP_STATE_D0:
-				cpu_power_resume();
-				break;
-			default:
-				break;	/* not possible */
-			}
-#endif
-
-			return PNP_STATUS_SUCCESS;
-		}
-
-		if (ci->ci_data.cpu_idlelwp == NULL)
-			return PNP_STATUS_SUCCESS;
-		if ((ci->ci_flags & CPUF_PRESENT) == 0)
-			return PNP_STATUS_SUCCESS;
-
-#ifdef MULTIPROCESSOR
-		if (*pstate == PNP_STATE_D3) {
-			ci->ci_flags &= ~CPUF_GO;
-			ci->ci_flags &= ~CPUF_RUNNING;
-		}
-
-		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
-		mutex_exit(&cpu_lock);
-		if (err)
-			return PNP_STATUS_BUSY;
-#endif
-		sc->sc_pmstate = *pstate;
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
 }
 
 /*
@@ -981,3 +888,71 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 #endif	/* __x86_64__ */
+
+/* XXX joerg restructure and restart CPUs individually */
+static bool
+cpu_suspend(device_t dv)
+{
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+	int err;
+
+	if (ci->ci_flags & CPUF_PRIMARY) {
+		x86_mp_online = false;
+		return true;
+	}
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		return true;
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	ci->ci_flags &= ~CPUF_GO;
+	ci->ci_flags &= ~CPUF_RUNNING;
+
+	mutex_enter(&cpu_lock);
+	err = cpu_setonline(ci, false);
+	mutex_exit(&cpu_lock);
+	if (err)
+		return false;
+	return true;
+}
+
+static bool
+cpu_resume(device_t dv)
+{
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+	int err;
+
+	if (ci->ci_flags & CPUF_PRIMARY) {
+#ifdef MULTIPROCESSOR
+		struct cpu_info *sci;
+		CPU_INFO_ITERATOR cii;
+		int s;
+
+		s = splhigh();
+		for (CPU_INFO_FOREACH(cii, sci)) {
+			if (sci->ci_flags & CPUF_PRIMARY)
+				continue;
+			cpu_start_secondary(sci);
+			cpu_init_idle_lwp(sci);
+		}
+		splx(s);
+		cpu_boot_secondary_processors();
+#endif
+		return true;
+	}
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		return true;
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	mutex_enter(&cpu_lock);
+	err = cpu_setonline(ci, true);
+	mutex_exit(&cpu_lock);
+	if (err)
+		return false;
+	return true;
+}

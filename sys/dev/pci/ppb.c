@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.8 2007/10/26 15:46:53 joerg Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.9 2007/11/06 14:27:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.8 2007/10/26 15:46:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.9 2007/11/06 14:27:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ struct ppb_softc {
 	pcireg_t sc_pciconfext[48];
 };
 
-static void		ppb_resume(device_t);
-static void		ppb_suspend(device_t);
+static bool		ppb_resume(device_t);
+static bool		ppb_suspend(device_t);
 
 static int
 ppbmatch(struct device *parent, struct cfdata *match,
@@ -73,12 +73,13 @@ ppbmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-ppb_fix_pcix(device_t self, struct pci_attach_args *pa)
+ppb_fix_pcix(device_t self)
 {
+	struct ppb_softc *sc = device_private(self);
 	pcireg_t reg;
 	int off;
 
-	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	if (!pci_get_capability(sc->sc_pc, sc->sc_tag, PCI_CAP_PCIEXPRESS,
 				&off, &reg))
 		return; /* Not a PCIe device */
 
@@ -86,11 +87,11 @@ ppb_fix_pcix(device_t self, struct pci_attach_args *pa)
 		aprint_normal_dev(self, "unuspported PCI Express version\n");
 		return;
 	}
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, off + 0x18);
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x18);
 	if (reg & 0x003f) {
 		aprint_normal_dev(self, "disabling notification events\n");
 		reg &= ~0x003f;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, off + 0x18, reg);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, off + 0x18, reg);
 	}
 }
 
@@ -103,7 +104,6 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
 	char devinfo[256];
-	pnp_status_t pnp_status;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
@@ -121,9 +121,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	ppb_fix_pcix(self, pa);
-
-	ppb_fix_pcix(self, pa);
+	ppb_fix_pcix(self);
 
 #if 0
 	/*
@@ -137,12 +135,8 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    ppb_suspend, ppb_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, ppb_suspend, ppb_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Attach the PCI bus than hangs off of it.
@@ -164,7 +158,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-static void
+static bool
 ppb_resume(device_t dv)
 {
 	struct ppb_softc *sc = device_private(dv);
@@ -177,9 +171,13 @@ ppb_resume(device_t dv)
 			pci_conf_write(sc->sc_pc, sc->sc_tag, off,
 			    sc->sc_pciconfext[(off - 0x40)/4]);
 	}
+
+	ppb_fix_pcix(dv);
+
+	return true;
 }
 
-static void
+static bool
 ppb_suspend(device_t dv)
 {
 	struct ppb_softc *sc = device_private(dv);
@@ -188,6 +186,8 @@ ppb_suspend(device_t dv)
 	for (off = 0x40; off <= 0xff; off += 4)
 		sc->sc_pciconfext[(off - 0x40) / 4] =
 		    pci_conf_read(sc->sc_pc, sc->sc_tag, off);
+
+	return true;
 }
 
 CFATTACH_DECL(ppb, sizeof(struct ppb_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.16.14.2 2007/10/26 15:45:53 joerg Exp $	*/
+/*	$NetBSD: auacer.c,v 1.16.14.3 2007/11/06 14:27:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.14.2 2007/10/26 15:45:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.14.3 2007/11/06 14:27:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ static int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
 				struct auacer_dma *);
 static int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
-static void	auacer_resume(device_t);
+static bool	auacer_resume(device_t);
 static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 
 static void auacer_reset(struct auacer_softc *sc);
@@ -265,7 +265,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t v;
 	const char *intrstr;
 	int i;
-	pnp_status_t pnp_status;
 
 	sc = (struct auacer_softc *)self;
 	pa = aux;
@@ -351,12 +350,8 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	auacer_reset(sc);
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    NULL, auacer_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, auacer_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
@@ -1029,7 +1024,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	return error;
 }
 
-static void
+static bool
 auacer_resume(device_t dv)
 {
 	struct auacer_softc *sc = device_private(dv);
@@ -1037,4 +1032,6 @@ auacer_resume(device_t dv)
 	auacer_reset_codec(sc);
 	delay(1000);
 	sc->codec_if->vtbl->restore_ports(sc->codec_if);
+
+	return true;
 }

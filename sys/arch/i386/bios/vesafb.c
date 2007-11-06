@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.22.12.2 2007/10/02 18:27:05 joerg Exp $ */
+/* $NetBSD: vesafb.c,v 1.22.12.3 2007/11/06 14:27:09 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.22.12.2 2007/10/02 18:27:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.22.12.3 2007/11/06 14:27:09 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ static void	vesafb_init_screen(void *, struct vcons_screen *,
 					int, long *);
 
 static void	vesafb_init(struct vesafb_softc *, int);
-static pnp_status_t	vesafb_power(device_t, pnp_request_t, void *);
 
 static int	vesafb_svideo(struct vesafb_softc *, int);
 static int	vesafb_gvideo(struct vesafb_softc *, u_int *);
@@ -92,6 +91,12 @@ static int	vesafb_getcmap(struct vesafb_softc *,
 				    struct wsdisplay_cmap *);
 
 static void	vesafb_set_palette(struct vesafb_softc *, int, struct paletteentry);
+
+static void	vesafb_display_on(device_t);
+static void	vesafb_display_standby(device_t);
+static void	vesafb_display_suspend(device_t);
+static void	vesafb_display_off(device_t);
+static void	vesafb_display_reduced(device_t);
 
 struct wsdisplay_accessops vesafb_accessops = {
 	vesafb_ioctl,
@@ -143,7 +148,6 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
 	bus_space_handle_t h;
-	pnp_status_t stat;
 
 	aprint_naive("\n");
 	aprint_normal(": VESA frame buffer\n");
@@ -334,10 +338,33 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	sc->sc_isconsole = 1;
 
-	stat = pnp_register(dev, vesafb_power);
-	if (stat != PNP_STATUS_SUCCESS)
-		aprint_error("%s: unable to establish power handler\n",
-		    sc->sc_dev.dv_xname);
+	if (!pnp_device_register(dev, NULL, NULL))
+		aprint_error_dev(dev, "couldn't establish power handler\n");
+	else if (!pnp_class_display_register(dev))
+		aprint_error_dev(dev, "couldn't set display class\n");
+
+	if (!pnp_event_register(dev, PNPE_DISPLAY_ON, vesafb_display_on, true))
+		aprint_error_dev(dev, "couldn't register DISPLAY ON event\n");
+	if ((sc->sc_pmstates & 1) != 0 &&
+	    !pnp_event_register(dev, PNPE_DISPLAY_STANDBY,
+				vesafb_display_standby, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY STANDBY event\n");
+	if ((sc->sc_pmstates & 2) != 0 &&
+	    !pnp_event_register(dev, PNPE_DISPLAY_SUSPEND,
+				vesafb_display_suspend, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY SUSPEND event\n");
+	if ((sc->sc_pmstates & 4) != 0 &&
+	    !pnp_event_register(dev, PNPE_DISPLAY_OFF,
+				vesafb_display_off, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY OFF event\n");
+	if ((sc->sc_pmstates & 8) != 0 &&
+	    !pnp_event_register(dev, PNPE_DISPLAY_REDUCED,
+				vesafb_display_reduced, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY REDUCED event\n");
 
 	config_found(dev, &aa, wsemuldisplaydevprint);
 
@@ -692,98 +719,49 @@ out:
 	return;
 }
 
-static pnp_status_t
-vesafb_power(device_t dv, pnp_request_t req, void *opaque)
+static void
+vesafb_display_on(device_t dv)
 {
-	struct vesafb_softc *sc;
-	pnp_status_t stat;
-	pnp_display_power_t *ppower;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	int bh;
+	struct vesafb_softc *sc = device_private(dv);
 
-	sc = (struct vesafb_softc *)dv;
-	stat = PNP_STATUS_UNSUPPORTED;
-	bh = 0;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 0);
+}
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
+static void
+vesafb_display_standby(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
 
-		pcaps->display_power = PNP_DISPLAY_POWER_ON;
-		if (sc->sc_pmstates & 1)
-			pcaps->display_power |= PNP_DISPLAY_POWER_STANDBY;
-		if (sc->sc_pmstates & 2)
-			pcaps->display_power |= PNP_DISPLAY_POWER_SUSPEND;
-		if (sc->sc_pmstates & 4)
-			pcaps->display_power |= PNP_DISPLAY_POWER_OFF;
-		if (sc->sc_pmstates & 8)
-			pcaps->display_power |= PNP_DISPLAY_POWER_REDUCED;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+	vesafb_svideo(sc, 1);
+}
 
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+static void
+vesafb_display_suspend(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
 
-		stat = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_DISPLAY_POWER:
-		ppower = opaque;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 2);
+}
 
-		/* If we're not a normal console, don't handle PM requests;
-		 * let the windowing system manage it for us.
-		 */
-		if (sc->sc_wsmode != WSDISPLAYIO_MODE_EMUL)
-			return PNP_STATUS_BUSY;
+static void
+vesafb_display_off(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
 
-		/* BH 0:on, 1:standby, 2:suspend, 4:off, 8:reduced_on */
-		switch (*ppower) {
-		case PNP_DISPLAY_POWER_ON:
-			bh = 0;
-			break;
-		case PNP_DISPLAY_POWER_REDUCED:
-			bh = 8;
-			break;
-		case PNP_DISPLAY_POWER_STANDBY:
-			bh = 1;
-			break;
-		case PNP_DISPLAY_POWER_SUSPEND:
-			bh = 2;
-			break;
-		case PNP_DISPLAY_POWER_OFF:
-			bh = 4;
-			break;
-		}
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 4);
+}
 
-		if (vesafb_svideo(sc, bh) == 0)
-			stat = PNP_STATUS_SUCCESS;
-		break;
+static void
+vesafb_display_reduced(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
 
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0;
-		stat = PNP_STATUS_SUCCESS;
-		break;
-
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		stat = PNP_STATUS_SUCCESS;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-#if notyet
-			vesafb_init(sc, 1);
-			vesafb_svideo(sc, 0);
-#endif
-			break;
-		case PNP_STATE_D3:
-			break;
-		default:
-			break;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	return stat;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 8);
 }
 
 static void

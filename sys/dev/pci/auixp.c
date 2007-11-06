@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.23.6.3 2007/10/26 15:45:53 joerg Exp $ */
+/* $NetBSD: auixp.c,v 1.23.6.4 2007/11/06 14:27:21 joerg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.3 2007/10/26 15:45:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.4 2007/11/06 14:27:21 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -194,7 +194,7 @@ static void	auixp_program_dma_chain(struct auixp_softc *,
 static void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
 static void	auixp_update_busbusy(struct auixp_softc *);
 
-static void	auixp_resume(device_t);
+static bool	auixp_resume(device_t);
 
 
 #ifdef DEBUG_AUIXP
@@ -1101,7 +1101,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t data;
 	char devinfo[256];
 	int revision, error;
-	pnp_status_t pnp_status;
 
 	sc = (struct auixp_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1196,12 +1195,8 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    NULL, auixp_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, auixp_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * delay further configuration of codecs and audio after interrupts
@@ -1372,7 +1367,7 @@ auixp_detach(struct device *self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	pci_generic_power_deregister(self);
+	pnp_device_deregister(self);
 
 	return 0;
 }
@@ -1763,7 +1758,7 @@ auixp_init(struct auixp_softc *sc)
 	return 0;
 }
 
-static void
+static bool
 auixp_resume(device_t dv)
 {
 	struct auixp_softc *sc = device_private(dv);
@@ -1771,6 +1766,8 @@ auixp_resume(device_t dv)
 	auixp_reset_codec(sc);
 	delay(1000);
 	(sc->sc_codec[0].codec_if->vtbl->restore_ports)(sc->sc_codec[0].codec_if);
+
+	return true;
 }
 
 #ifdef DEBUG_AUIXP

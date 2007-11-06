@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.50.6.3 2007/10/01 05:37:35 joerg Exp $	*/
+/*	$NetBSD: azalia.c,v 1.50.6.4 2007/11/06 14:27:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.3 2007/10/01 05:37:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.4 2007/11/06 14:27:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,8 +160,7 @@ static int	azalia_pci_match(struct device *, struct cfdata *, void *);
 static void	azalia_pci_attach(struct device *, struct device *, void *);
 static int	azalia_pci_activate(struct device *, enum devact);
 static int	azalia_pci_detach(struct device *, int);
-static void	azalia_pci_suspend(device_t);
-static void	azalia_pci_resume(device_t);
+static bool	azalia_pci_resume(device_t);
 static int	azalia_intr(void *);
 static int	azalia_attach(azalia_t *);
 static void	azalia_attach_intr(struct device *);
@@ -307,7 +306,6 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	const char *intrrupt_str;
 	const char *name;
 	const char *vendor;
-	pnp_status_t pnp_status;
 
 	sc = (azalia_t*)self;
 	pa = aux;
@@ -346,12 +344,8 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	}
 	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    azalia_pci_suspend, azalia_pci_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, azalia_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->pciid = pa->pa_id;
 	vendor = pci_findvendor(pa->pa_id);
@@ -433,13 +427,7 @@ azalia_pci_detach(struct device *self, int flags)
 	return 0;
 }
 
-static void
-azalia_pci_suspend(device_t dv)
-{
-	/* XXX stop input/output */
-}
-
-static void
+static bool
 azalia_pci_resume(device_t dv)
 {
 	azalia_t *az = device_private(dv);
@@ -449,7 +437,9 @@ azalia_pci_resume(device_t dv)
 	azalia_attach(az);
 	splx(s);
 
-	azalia_attach_intr((struct device *)az);
+	azalia_attach_intr(&az->dev);
+
+	return true;
 }
 
 static int
@@ -462,6 +452,9 @@ azalia_intr(void *v)
 
 	az = v;
 	ret = 0;
+
+	if (!device_is_active(&az->dev))
+		return 0;
 
 	intsts = AZ_READ_4(az, INTSTS);
 	if (intsts == 0)

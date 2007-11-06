@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.65.6.3 2007/10/26 15:47:09 joerg Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.65.6.4 2007/11/06 14:27:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.6.3 2007/10/26 15:47:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.6.4 2007/11/06 14:27:30 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -159,7 +159,6 @@ struct ray_softc {
 	struct pcmcia_function		*sc_pf;
 	void				*sc_ih;
 	int				sc_attached;
-	pnp_state_t			sc_power_state;
 
 	int				sc_resetloop;
 
@@ -308,7 +307,6 @@ static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
 static int ray_match(struct device *, struct cfdata *, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
-static pnp_status_t ray_power(device_t, pnp_request_t, void *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
 static void ray_read_region(struct ray_softc *, bus_size_t,void *,size_t);
 static void ray_recv(struct ray_softc *, bus_size_t);
@@ -512,7 +510,6 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	int error;
 
 	sc->sc_pf = pa->pf;
-	sc->sc_power_state = PNP_STATE_D0;
 
 	/*XXXmem8|common*/
 	error = pcmcia_function_configure(pa->pf, ray_validate_config);
@@ -607,9 +604,10 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-	if (pnp_register(self, ray_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, ifp);
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;
@@ -661,7 +659,7 @@ ray_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
                 return (0);
 
-	pnp_deregister(self);
+	pnp_device_deregister(self);
 
 	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);
@@ -721,18 +719,6 @@ ray_disable(sc)
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		sc->sc_ih = 0;
 	}
-}
-
-/*
- * power management support
- */
-static pnp_status_t
-ray_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct ray_softc *sc = device_private(dv);
-
-	return pcmcia_net_generic_power(dv, req, opaque, &sc->sc_power_state,
-	    &sc->sc_if);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.11 2007/10/26 15:44:12 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.12 2007/11/06 14:27:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.11 2007/10/26 15:44:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.12 2007/11/06 14:27:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ static void acpiec_attach(device_t, device_t, void *);
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
     bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
 
-static pnp_status_t acpiec_power(device_t, pnp_request_t, void *);
+static bool acpiec_resume(device_t);
+static bool acpiec_suspend(device_t);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
     ACPI_HANDLE *, uint8_t *);
@@ -223,7 +224,8 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	if (ec_singleton != NULL) {
 		aprint_naive(": ACPI Embedded Controller (disabled)\n");
 		aprint_normal(": ACPI Embedded Controller (disabled)\n");
-		pnp_register(self, pnp_generic_power);
+		if (!pnp_device_register(self, NULL, NULL))
+			aprint_error_dev(self, "couldn't establish power handler\n");
 		return;
 	}
 
@@ -340,7 +342,8 @@ acpiec_common_attach(device_t parent, device_t self,
 
 	ec_singleton = self;
 
-	pnp_register(self, acpiec_power);
+	if (!pnp_device_register(self, acpiec_suspend, acpiec_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -354,42 +357,20 @@ post_data_map:
 	bus_space_unmap(sc->sc_data_st, sc->sc_data_sh, 1);
 }
 
-static pnp_status_t
-acpiec_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+acpiec_suspend(device_t dv)
 {
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
+	acpiec_cold = true;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		if (acpiec_cold)
-			*pstate = PNP_STATE_D3;
-		else
-			*pstate = PNP_STATE_D0;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			acpiec_cold = false;
-			break;
-		case PNP_STATE_D3:
-			acpiec_cold = true;
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
+	return true;
+}
 
-	return PNP_STATUS_SUCCESS;
+static bool
+acpiec_resume(device_t dv)
+{
+	acpiec_cold = false;
+
+	return true;
 }
 
 static bool
