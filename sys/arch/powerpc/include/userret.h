@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.14 2007/11/05 20:37:48 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.15 2007/11/06 02:52:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,7 +44,9 @@
 static __inline void
 userret(struct lwp *l, struct trapframe *frame)
 {
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct cpu_info * const ci = curcpu();
+#endif
 #ifdef PPC_HAVE_FPU
 	struct pcb * const pcb = &l->l_addr->u_pcb;
 #endif
