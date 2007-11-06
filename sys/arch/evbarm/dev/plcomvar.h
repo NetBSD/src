@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.4 2007/07/14 21:48:19 ad Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.4.10.1 2007/11/06 23:15:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

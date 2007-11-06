@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.2 2007/08/21 11:39:11 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.2.2.1 2007/11/06 23:15:13 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.2 2007/08/21 11:39:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.2.2.1 2007/11/06 23:15:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

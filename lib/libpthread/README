@@ -1,0 +1,4 @@
+$NetBSD: README,v 1.5.2.2 2007/11/06 23:11:39 matt Exp $
+
+When making changes to libpthread, please ensure that libpthread_dbg
+still compiles.

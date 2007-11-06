@@ -1,4 +1,4 @@
-# $NetBSD: audit-packages.conf.in,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $
+# $NetBSD: audit-packages.conf.in,v 1.1.1.1.4.1 2007/11/06 23:09:40 matt Exp $
 
 #
 # sample configuration file for audit-packages(8) and 
@@ -52,6 +52,15 @@
 # Used by:	download-vulnerability-list
 # Supported: 	/path/to/curl /path/to/ftp /path/to/wget /path/to/fetch 
 # Default: 	FETCH_CMD=@ftp@
+
+# FETCH_PRE_ARGS
+#
+# Specifies optional arguments for the download-vulnerability-list client.
+# These options appear before ${FETCH_CMD}.
+#
+# Used by:	download-vulnerability-list
+# Supported:	Any valid arguments for FETCH_CMD
+# Default: 	FETCH_PRE_ARGS=
 
 # FETCH_ARGS
 #

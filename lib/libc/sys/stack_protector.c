@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.4 2006/11/22 17:23:25 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.4.8.1 2007/11/06 23:11:22 matt Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,17 +28,25 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.4 2006/11/22 17:23:25 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.4.8.1 2007/11/06 23:11:22 matt Exp $");
 
+#ifdef _LIBC
 #include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <ssp/ssp.h>
 #include <signal.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
+#ifdef _LIBC
+#include <syslog.h>
 #include "extern.h"
+#else
+#define __sysctl sysctl
+extern int xprintf(const char *fmt, ...);
+#include <stdlib.h>
+#endif
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __guard_setup(void) __attribute__((__constructor__, __used__));
@@ -75,7 +83,9 @@ __guard_setup(void)
 static void
 __fail(const char *msg)
 {
+#ifdef _LIBC
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
+#endif
 	struct sigaction sa;
 	sigset_t mask;
 
@@ -84,8 +94,12 @@ __fail(const char *msg)
 	(void)sigdelset(&mask, SIGABRT);
 	(void)sigprocmask(SIG_BLOCK, &mask, NULL);
 
+#ifdef _LIBC
 	/* This may fail on a chroot jail... */
 	syslog_ss(LOG_CRIT, &sdata, msg);
+#else
+	xprintf("%s: %s\n", getprogname(), msg);
+#endif
 
 	(void)memset(&sa, 0, sizeof(sa));
 	(void)sigemptyset(&sa.sa_mask);

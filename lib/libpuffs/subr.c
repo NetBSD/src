@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.18 2007/07/01 17:22:19 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.18.4.1 2007/11/06 23:11:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.18 2007/07/01 17:22:19 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.18.4.1 2007/11/06 23:11:55 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -140,7 +140,7 @@ puffs_zerostatvfs(struct statvfs *sbp)
 }
 
 /*
- * Set vattr values for those applicable (i.e. not PUFFS_PUFFS_VNOVAL).
+ * Set vattr values for those applicable (i.e. not PUFFS_VNOVAL).
  */
 void
 puffs_setvattr(struct vattr *vap, const struct vattr *sva)

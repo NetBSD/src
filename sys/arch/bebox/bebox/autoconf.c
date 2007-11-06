@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.50.1 2007/11/06 23:15:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2005/12/11 12:17:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.50.1 2007/11/06 23:15:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,27 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2005/12/11 12:17:02 christos Exp $
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
+#include <machine/pte.h>
 #include <machine/intr.h>
-#include <powerpc/pte.h>
 
-void findroot __P((void));
+/*
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>
+#include <machine/isa_machdep.h>
+#include <dev/isa/isareg.h>
+#include <prep/pnpbus/pnpbusvar.h>
+*/
+
+void genppc_cpu_configure(void);
+static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -65,16 +81,11 @@ void findroot __P((void));
 void
 cpu_configure()
 {
-	/* startrtclock(); */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
-
-	spl0();
+	genppc_cpu_configure();
 }
 
 void
@@ -82,7 +93,7 @@ cpu_rootconf()
 {
 	findroot();
 
-	printf("boot device: %s\n",
+	aprint_normal("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
@@ -98,20 +109,19 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 void
 findroot(void)
 {
-	int majdev, unit, part;
+	int unit, part;
 	struct device *dv;
-	const char *name;
 	char buf[32];
+	const char *name;
 
 #if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
+	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
 #endif
 
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	name = devsw_blk2name(majdev);
+	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
 	if (name == NULL)
 		return;
 
@@ -127,3 +137,10 @@ findroot(void)
 		}
 	}
 }
+
+void
+device_register(struct device *dev, void *aux)
+{
+	/* do nothing */
+}
+

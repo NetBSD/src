@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.16 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.16.10.1 2007/11/06 23:11:16 matt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -96,13 +96,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.16 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.16.10.1 2007/11/06 23:11:16 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include "rune.h"
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
@@ -176,6 +177,8 @@ found:
 	ret = _citrus_ctype_open(&rl->rl_citrus_ctype, rl->rl_encoding,
 				 rl->rl_variable, rl->rl_variable_len,
 				 _PRIVSIZE);
+	if (!ret)
+		ret = __runetable_to_netbsd_ctype(rl);
 	if (ret) {
 		_NukeRune(rl);
 		return ret;
@@ -260,6 +263,9 @@ _xpg4_setrunelocale(encoding)
 		return ENOENT;
 
 found:
+	_ctype_ = rl->rl_ctype_tab;
+	_tolower_tab_ = rl->rl_tolower_tab;
+	_toupper_tab_ = rl->rl_toupper_tab;
 	_CurrentRuneLocale = rl;
 	__mb_cur_max = _citrus_ctype_get_mb_cur_max(rl->rl_citrus_ctype);
 

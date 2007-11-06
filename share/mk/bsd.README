@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.196 2007/07/29 17:06:01 joerg Exp $
+#	$NetBSD: bsd.README,v 1.196.4.1 2007/11/06 23:13:20 matt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -299,6 +299,11 @@ USE_INET6	If "no", disables building INET6 (IPv6) support into
 		various system utilities/libraries that support it.
 		If ${MKINET6} is "no", USE_INET6 will also be
 		forced to "no".
+
+USE_JEMALLOC	If "no", disables building the "jemalloc" allocator
+		designed for improved performance with threaded
+		applications.  The "phkmalloc" allocator as used up
+		before NetBSD-5.0 will be substituted.
 
 USE_KERBEROS	If "no", disables building Kerberos v5
 		support into various system utilities/libraries that

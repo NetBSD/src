@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 2007/06/04 23:15:00 xtraeme Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8.10.1 2007/11/06 23:14:03 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8 2007/06/04 23:15:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.10.1 2007/11/06 23:14:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -73,9 +73,10 @@ void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
-	{ "cpu",	db_mach_cpu,	0,	0 },
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
+	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-	{ (char *)0, },
+	{ DDB_ADD_CMD(NULL,     NULL,          0,NULL,NULL,NULL) },
 };
 
 void kdbprinttrap(int, int);

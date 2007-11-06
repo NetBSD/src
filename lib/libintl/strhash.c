@@ -1,4 +1,4 @@
-/*	$NetBSD: strhash.c,v 1.2 2005/04/27 09:50:26 yamt Exp $	*/
+/*	$NetBSD: strhash.c,v 1.2.10.1 2007/11/06 23:11:30 matt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2004 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strhash.c,v 1.2 2005/04/27 09:50:26 yamt Exp $");
+__RCSID("$NetBSD: strhash.c,v 1.2.10.1 2007/11/06 23:11:30 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -40,14 +40,14 @@ __RCSID("$NetBSD: strhash.c,v 1.2 2005/04/27 09:50:26 yamt Exp $");
  * string hash function by P.J.Weinberger.
  * this implementation is derived from src/lib/libc/citrus/citrus_db_hash.c.
  */
-u_int32_t
+uint32_t
 /*ARGSUSED*/
 __intl_string_hash(const char *str)
 {
-	const u_int8_t *p;
-	u_int32_t hash = 0, tmp;
+	const uint8_t *p;
+	uint32_t hash = 0, tmp;
 
-	for (p = (const u_int8_t *)str; *p; p++) {
+	for (p = (const uint8_t *)str; *p; p++) {
 		hash <<= 4;
 		hash += *p;
 		tmp = hash & 0xF0000000;

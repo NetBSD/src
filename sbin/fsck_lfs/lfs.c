@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.26 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: lfs.c,v 1.26.8.1 2007/11/06 23:12:34 matt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,7 +152,7 @@ lfs_vop_bwrite(struct ubuf * bp)
 	}
 	bp->b_flags |= B_DELWRI | B_LOCKED;
 	reassignbuf(bp, bp->b_vp);
-	brelse(bp);
+	brelse(bp, 0);
 	return 0;
 }
 
@@ -206,7 +206,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 		 * or we have a disk address for it, go fetch it.
 		 */
 		if (bp)
-			brelse(bp);
+			brelse(bp, 0);
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, fs->lfs_bsize);
@@ -219,7 +219,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 		daddr = ((ufs_daddr_t *) bp->b_data)[xap->in_off];
 	}
 	if (bp)
-		brelse(bp);
+		brelse(bp, 0);
 
 	daddr = fsbtodb(fs, (ufs_daddr_t) daddr);
 	*bnp = daddr == 0 ? -1 : daddr;
@@ -376,13 +376,13 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
-			brelse(bp);
+			brelse(bp, 0);
 			free(ip);
 			free(vp);
 			return NULL;
 		}
 		memcpy(ip->i_din.ffs1_din, dip, sizeof(*dip));
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	ip->i_number = ino;
 	/* ip->i_devvp = fs->lfs_devvp; */
@@ -421,7 +421,7 @@ lfs_vget(void *vfs, ino_t ino)
 
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
-	brelse(bp);
+	brelse(bp, 0);
 	if (daddr <= 0 || dtosn(fs, daddr) >= fs->lfs_nseg)
 		return NULL;
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
@@ -488,7 +488,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
 		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		brelse(bp, 0);
 	
 		if (tryalt) {
 			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
@@ -497,7 +497,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			brelse(bp, 0);
 	
 			if (check_sb(fs) || fs->lfs_idaddr <= 0) {
 				if (debug)
@@ -610,7 +610,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		    sp->ss_serial < serial ||	/* XXX strengthen this */
 		    sp->ss_sumsum != cksum(&sp->ss_datasum, osb->lfs_sumsize -
 			sizeof(sp->ss_sumsum))) {
-			brelse(bp);
+			brelse(bp, 0);
 			if (debug) {
 				if (sp->ss_magic != SS_MAGIC)
 					pwarn("pseg at 0x%x: "
@@ -639,7 +639,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		++serial;
 		bc = check_summary(osb, sp, daddr, debug, devvp, NULL);
 		if (bc == 0) {
-			brelse(bp);
+			brelse(bp, 0);
 			break;
 		}
 		if (debug)
@@ -666,7 +666,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		if (hitclean == 0 && (sp->ss_flags & SS_CONT) == 0)
 			nodirop_daddr = daddr;
 
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	if (goal == 0)
@@ -796,7 +796,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
 			bread(devvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NOCRED, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
-			brelse(bp);
+			brelse(bp, 0);
 
 			++j;
 			daddr += btofsb(fs, fs->lfs_ibsize);
@@ -811,7 +811,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 				       : fs->lfs_bsize);
 				bread(devvp, fsbtodb(fs, daddr), len, NOCRED, &bp);
 				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
-				brelse(bp);
+				brelse(bp, 0);
 				daddr += btofsb(fs, len);
 			}
 			fp = (FINFO *) (fp->fi_blocks + fp->fi_nblocks);
@@ -878,7 +878,7 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
-	brelse(bp);
+	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
@@ -1209,7 +1209,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 	 * Don't bother to read in that case.
 	 */
 	if (bpp && (error = bread(vp, lbn, osize, NOCRED, bpp))) {
-		brelse(*bpp);
+		brelse(*bpp, 0);
 		goto out;
 	}
 

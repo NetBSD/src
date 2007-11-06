@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.10 2007/07/09 20:52:14 ad Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.10.10.1 2007/11/06 23:17:00 matt Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.

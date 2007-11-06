@@ -1,4 +1,4 @@
-/*	$NetBSD: sigalarm.c,v 1.1 2003/09/12 21:15:06 christos Exp $	*/
+/*	$NetBSD: sigalarm.c,v 1.1.22.1 2007/11/06 23:12:20 matt Exp $	*/
 
 /*
  * Regression test for sigsuspend in libpthread when pthread lib is
@@ -39,6 +39,7 @@ static void *
 setup(void *dummy)
 {
 	struct sigaction sa;
+	sigset_t ss;
 #ifdef SA_SIGINFO
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = alarm_handler;
@@ -46,6 +47,8 @@ setup(void *dummy)
 	sa.sa_flags = 0;
 	sa.sa_handler = alarm_handler;
 #endif
+	sigfillset(&ss);
+	sigprocmask(SIG_SETMASK, &ss, NULL);
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGALRM, &sa, NULL);
 	alarm(1);

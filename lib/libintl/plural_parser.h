@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.h,v 1.1 2005/05/14 17:58:57 tshiozak Exp $	*/
+/*	$NetBSD: plural_parser.h,v 1.1.10.1 2007/11/06 23:11:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -33,11 +33,11 @@
 struct gettext_plural;
 
 __BEGIN_DECLS
-extern int	_gettext_parse_plural(struct gettext_plural **,
-				      unsigned long *, const char *, size_t);
-extern unsigned long _gettext_calculate_plural(const struct gettext_plural *,
-					       unsigned long);
-extern void	_gettext_free_plural(struct gettext_plural *);
+int _gettext_parse_plural(struct gettext_plural **, unsigned long *,
+			  const char *, size_t);
+unsigned long _gettext_calculate_plural(const struct gettext_plural *,
+					unsigned long);
+void _gettext_free_plural(struct gettext_plural *);
 __END_DECLS
 
 #endif

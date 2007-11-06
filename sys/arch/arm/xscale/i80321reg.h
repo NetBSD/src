@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.16 2007/05/12 14:34:03 gavan Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.16.12.1 2007/11/06 23:15:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

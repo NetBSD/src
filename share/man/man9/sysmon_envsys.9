@@ -1,5 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.5 2007/07/17 17:10:58 xtraeme Exp $
-.\"
+.\"	$NetBSD: sysmon_envsys.9,v 1.5.4.1 2007/11/06 23:13:17 matt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 17, 2007
+.Dd November 1, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -47,15 +46,13 @@
 .Fn sysmon_envsys_register "struct sysmon_envsys *sme"
 .Ft void
 .Fn sysmon_envsys_unregister "struct sysmon_envsys *sme"
-.Ft struct sysmon_envsys *
-.Fn sysmon_envsys_find "const char *name"
 .Sh DESCRIPTION
 .Pp
 .Nm
 is the kernel part of the
 .Xr envsys 4
 framework.
-With this framework you are able to register/unregister/find a
+With this framework you are able to register and unregister a
 .Nm
 driver, define what sensors the driver will support, enable or
 disable them on demand (for example if the values are not reporting
@@ -66,28 +63,39 @@ etc.
 .Pp
 To register a new driver with the
 .Nm
-framework, a
+framework a
 .Sy sysmon_envsys
-structure must be used. It's defined as follow
+structure must be allocated and at least the required members
+must be specified, continue reading if you want to know what are
+the required and optional members.
+.Pp
+The
+.Em sysmon_envsys
+structure is defined as follow
 (only the public members are shown):
 .Bd -literal
 struct sysmon_envsys {
 	const char 	*sme_name;
 	uint32_t 	sme_nsensors;
 	int		sme_flags;
+	int		sme_class;
 	envsys_data_t 	*sme_sensor_data;
 	void 		*sme_cookie;
 	int (*sme_gtredata)(struct sysmon_envsys *sme, envsys_data_t *edata);
 };
 .Ed
 .Pp
-The four required members have the following meaning:
+The members have the following meaning:
 .Pp
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
+.It Fa sme_class
+This specifies the class of the sysmon envsys device. See the
+.Sy DEVICE CLASSES
+section for more information (OPTIONAL).
 .It Fa sme_name
-The name that will be used in the driver.
+The name that will be used in the driver (REQUIRED).
 .It Fa sme_nsensors
-Total number of sensors that the driver supports.
+Total number of sensors that the driver supports (REQUIRED).
 .It Fa sme_flags
 Additional flags for the
 .Nm
@@ -99,41 +107,37 @@ function callback won't be used
 to refresh sensors data and the driver will use its own method.
 Hence
 .Ar sme_cookie
-won't be necessary either.
+won't be necessary either (OPTIONAL).
 .It Fa sme_sensor_data
 Pointer to the first
 .Sy envsys_data_t
-structure specified in the driver.
+structure specified in the driver (REQUIRED).
 .El
+.Pp
 .Pp
 If the driver wants to refresh sensors data via the
 .Nm
-framework, the following members must be set:
+framework, the following members must be specified:
 .Pp
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
 .It Fa sme_cookie
-Pointer to the driver's struct, also called
-.Dq softc ,
-to be used in the
+Pointer to the device struct (also called
+.Dq softc )
+This will be used in the
 .Sy sme_gtredata
 function callback.
 .It Fa sme_gtredata
-Pointer to a function that will be used to refresh sensor data.
+Pointer to a function that will be used to refresh sensor data in
+the device.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
 .Sy edata->sensor
 .Em index.
 .El
 .Pp
-Note that it's not necessary to refresh sensors data before the
-driver is registered, because at register time,
-.Nm
-will execute the
-.Sy sme_gtredata
-function callback to get the current data if the
-.Ar SME_DISABLE_GTREDATA
-flag is not set on
-.Ar sme_flags .
+Note that it's not necessary to refresh the sensors data before the
+driver is registered, only do it if you need the data in your driver
+to check for a specific condition.
 .Pp
 Before registering a driver, the properties for all supported sensors
 must be set, see the section
@@ -147,12 +151,10 @@ function must be used to register the driver.
 If the required fields to enable automatic monitoring were set,
 .Nm
 will register all these events and a timeout of 10 seconds will check
-if any condition was triggered. If it was triggered, an event of the same type
-will be sent to
+if any condition was triggered and  an event of the same type
+will be sent to the
 .Xr powerd 8
-with the
-.Xr sysmon_power 9
-framework.
+daemon (if running).
 .Pp
 The timeout value may be changed via sysctl(8) like:
 .Bd -literal -offset indent
@@ -164,18 +166,75 @@ To unregister a driver previously registered with the
 framework, the
 .Fn sysmon_envsys_unregister
 function must be used. If there were monitoring events registered for the
-driver, they all will be unregistered before the device unregistered.
+driver, they all will be destroyed before the device is unregistered.
 .Pp
-To find a specific driver, the
-.Fn sysmon_envsys_find
-function must be used. It accepts a name as argument, this
-should be the same name that was used at register time.
+.Ss DEVICE CLASSES
+The
+.Fa sme_class
+member of the
+.Fa sysmon_envsys
+structure is an optional flag that specifies the class of the
+sysmon envsys device. Currently there are two classes:
 .Pp
+.Bl -tag -width ident
+.It SME_CLASS_ACADAPTER
+.Pp
+This class is for devices that want to act as an
+.Em AC adapter .
+The device writer must ensure that at least there is a
+sensor with
+.Em units
+of
+.Sy ENVSYS_INDICATOR .
+This will be used to report its current state (on/off).
+.It SME_CLASS_BATTERY
+.Pp
+This class is for devices that want to act as an
+.Em Battery .
+The device writer must ensure that at least there are two sensors with
+units of
+.Sy ENVSYS_BATTERY_CAPACITY
+and
+.Sy ENVSYS_BATTERY_CHARGE .
+.Pp
+These two sensors are used to ensure that the battery device won't
+never send a
+.Em low-power
+event to the
+.Xr powerd 8 
+daemon (if running) when all battery devices are in a critical state.
+The critical state means that a battery is not currently charging
+and its charge state is low or critical.
+When the
+.Em low-power
+condition is met, an event is sent to the
+.Xr powerd 8
+daemon (if running) and will shutdown the system gracefully via the
+.Fa /etc/powerd/scripts/sensor_battery
+script.
+.Pp
+If
+.Xr powerd 8
+is not running, the system will be powered off via the
+.Xr cpu_reboot 9
+call with the
+.Em RB_POWERDOWN
+flag.
+.Pp
+.El
+.Em NOTE:
+If a
+.Em SME_CLASS_ACADAPTER
+or
+.Em SME_CLASS_BATTERY
+class don't have the sensors required, the
+.Em low-power
+event will never be sent, and the graceful shutdown won't be possible.
 .Ss SENSOR DETAILS
 .Pp
 Each sensor uses a
 .Sy envsys_data_t
-structure, which is defined as:
+structure, it's defined as follow (only the public members are shown);
 .Bd -literal
 typedef struct envsys_data {
 	uint32_t	sensor;
@@ -224,19 +283,22 @@ Used to set the minimum value.
 Used to set the average value.
 .It Fa monitor
 Used to enable automatic sensor monitoring (by default
-it's disabled). The monitoring events will be registered when this flag
+it's disabled). The automatic sensor monitoring will check if
+a condition is met periodically and will send an event to the
+.Xr powerd 8
+daemon (if running). The monitoring event will be registered when this flag
 is
 .Em true
-and one or more
+and one or more of the
 .Em ENVSYS_FMONFOO
-flags were enabled in the
+flags were set in the
 .Ar flags
 member.
 .It Fa desc
 Used to set the description string.
 .Em NOTE
 .Em that the description string must be unique in a device, and sensors with
-.Em duplicate description will simply be ignored.
+.Em duplicate or empty description will simply be ignored.
 .El
 .Pp
 Users of this framework must take care about the following points:
@@ -276,9 +338,27 @@ For sensors that only want a boolean type.
 For sensors that only want an integer type.
 .It ENVSYS_DRIVE
 For drive sensors.
+.It ENVSYS_BATTERY_CAPACITY
+For Battery device classes. This sensor unit uses the ENVSYS_BATTERY_CAPACITY_*
+values in
+.Ar value_cur
+to report its current capacity to userland. Mandatory if
+.Em sme_class
+is set to
+.Em SME_CLASS_BATTERY .
+.It ENVSYS_BATTERY_CHARGE
+For Battery device classes. This sensor is equivalent to the Indicator type,
+it's a boolean. Use it to specify in what state is the Battery state:
+.Sy true
+if the battery is currently charging or
+.Sy false
+otherwise. Mandatory if
+.Em sme_class
+is set to
+.Em SME_CLASS_BATTERY .
 .El
 .It
-When initializing the sensor, the
+When initializing the sensor the
 .Ar state
 field must be set to
 .Em ENVSYS_SVALID
@@ -343,13 +423,18 @@ Enables and registers a new event to monitor a critical over state.
 Enables and registers a new event to monitor a warning under state.
 .It ENVSYS_FMONWARNOVER
 Enables and registers a new event to monitor a warning over state.
-.It ENVSYS_FMONDRVSTATE
-Enables and registers a new event to monitor drive's state.
+.It ENVSYS_FMONSTCHANGED
+Enables and registers a new event to monitor Battery capacity or drive state
+sensors. It won't be effective if the
+.Ar units
+member is not set to
+.Ar ENVSYS_DRIVE
+or
+.Ar ENVSYS_BATTERY_CAPACITY .
 .It ENVSYS_FMONNOTSUPP
-Disables monitoring for userland limits, so that
-.Xr envstat 8
-is not able to set a critical limit. This flag has not any
-effect for monitoring flags set in the driver.
+Disallows to set a critical limit via the
+.Xr ioctl(9) .
+This flag has not any effect for monitoring flags set in the driver.
 .El
 .Pp
 .Em If the driver has to use any of the
@@ -391,6 +476,27 @@ Drive has failed.
 .It ENVSYS_DRIVE_PFAIL
 Drive has been degraded.
 .El
+.Pp
+.It
+If
+.Ar units
+is set to
+.Ar ENVSYS_BATTERY_CAPACITY ,
+there are some predefined capacity states that must be set (only one)
+to the
+.Ar value_cur
+member:
+.Pp
+.Bl -tag -width "ENVSYS_BATTERY_CAPACITY_WARNING" -compact
+.It ENVSYS_BATTERY_CAPACITY_NORMAL
+Battery charge is in normal capacity.
+.It ENVSYS_BATTERY_CAPACITY_CRITICAL
+Battery charge is in critical capacity.
+.It ENVSYS_BATTERY_CAPACITY_LOW
+Battery charge is in low capacity.
+.It ENVSYS_BATTERY_CAPACITY_WARNING
+Battery charge is in warning capacity.
+.El
 .It
 The
 .Xr envsys 4
@@ -408,6 +514,8 @@ Ampere to
 etc.
 .Pp
 The following types shouldn't need any conversion:
+.Ar ENVSYS_BATTERY_CAPACITY ,
+.Ar ENVSYS_BATTERY_CHARGE ,
 .Ar ENVSYS_INDICATOR ,
 .Ar ENVSYS_INTEGER
 and
@@ -484,18 +592,36 @@ framework is implemented within the files:
 .Pp
 .Pa sys/dev/sysmon/sysmon_envsys.c
 .Pp
-.Pa sys/dev/sysmon/sysmon_envsys_events.c .
-.Sh AUTHORS
-The
-.Sy envsys
-2 framework was designed and implemented by
-.An Juan Romero Pardines
-for
-.Nx 5.0 .
-Many useful comments for this framework were from
-Jason R. Thorpe, Tim Rightnour and Michael Lorenz. The previous
-framework was implemented by Jason R. Thorpe, Tim Rightnour
-and Bill Squier.
+.Pa sys/dev/sysmon/sysmon_envsys_events.c
+.Pp
+.Pa sys/dev/sysmon/sysmon_envsys_tables.c
+.Pp
+.Pa sys/dev/sysmon/sysmon_envsys_util.c
+.Pp
+There's an example LKM driver that shows how the framework works in:
+.Pa sys/lkm/misc/envsys2/lkminit_envsys2.c .
 .Sh SEE ALSO
 .Xr envsys 4 ,
-.Xr sysmon_power 9
+.Xr envstat 8
+.Sh HISTORY
+The first
+.Em envsys
+framework first appeared in
+.Nx 1.5 .
+The
+.Em envsys 2
+framework first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+The (current)
+.Em envsys 2
+framework was implemented by
+.An Juan Romero Pardines .
+Additional input on the design was provided by many
+.Nx
+developers around the world.
+.Pp
+The first
+.Em envsys
+framework was implemented by Jason R. Thorpe, Tim Rightnour
+and Bill Squier.

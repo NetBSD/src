@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.10 2006/10/16 03:15:46 christos Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.10.8.1 2007/11/06 23:12:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.10 2006/10/16 03:15:46 christos Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.10.8.1 2007/11/06 23:12:37 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -788,7 +788,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
                                 fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) -
                                     fs->lfs_start;
                 }
-		brelse(bp);
+		brelse(bp, 0);
         }
         /* Also may be available bytes in current seg */
         i = dtosn(fs, fs->lfs_offset);

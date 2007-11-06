@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.23 2007/05/01 01:01:35 rmind Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.23.4.1 2007/11/06 23:11:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.23 2007/05/01 01:01:35 rmind Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.23.4.1 2007/11/06 23:11:14 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -306,6 +306,21 @@ sysconf(int name)
 		    NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
 		goto yesno;
+	case _SC_MESSAGE_PASSING:
+		if (sysctlgetmibinfo("kern.posix_msg", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		goto yesno;
+	case _SC_MQ_OPEN_MAX:
+		if (sysctlgetmibinfo("kern.mq_open_max", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		break; 
+	case _SC_MQ_PRIO_MAX:
+		if (sysctlgetmibinfo("kern.mq_prio_max", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))
+			return -1;
+		break; 
 	case _SC_ATEXIT_MAX:
 		mib[0] = CTL_USER;
 		mib[1] = USER_ATEXIT_MAX;
@@ -324,6 +339,17 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		return (value);
 		/*NOTREACHED*/
 		break;
+
+/* Extensions */
+	case _SC_NPROCESSORS_CONF:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPU;
+		break;
+	case _SC_NPROCESSORS_ONLN:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPUONLINE;
+		break;
+
 	default:
 		errno = EINVAL;
 		return (-1);

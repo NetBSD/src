@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2006/08/08 18:41:11 wiz Exp $
+#	$NetBSD: Makefile,v 1.29.8.1 2007/11/06 23:13:18 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -13,16 +13,16 @@ FILESDIR=${BINDIR}/misc
 
 # According to iana@ISI.EDU, the URL below is the authoritative list
 # distributed by the ISO 3166 Maintenance Agency.
+DOMAIN_URL=	http://www.iana.org/root-whois/index.html 
 update-domains:
 	( \
-	  mkdir /tmp/domains.$$$$; cd /tmp/domains.$$$$ ; \
-	  ftp -o - http://www.iana.org/cctld/cctld-whois.htm | \
-	  sed -f ${.CURDIR}/domains.sed > list ;\
-	  echo '# $$''NetBSD: $$' ;  \
-	  echo '# ISO 3166 country codes, from http://www.iana.org/cctld/cctld-whois.htm' ; \
-	  cat top ; echo '#' ; cat list ; \
+	  echo '# $$''NetBSD''$$' ;  \
+	  echo '# ISO 3166 country codes, from ${DOMAIN_URL}' ; \
+	  echo '# Last update:' `date` ; \
+	  echo '#' ; \
+	  ftp -o - ${DOMAIN_URL} \
+	  | sed -n -f ${.CURDIR}/domains.sed \
 	 ) > domains ; \
-	rm -r /tmp/domains.$$$$
 
 update-na.phone:
 	< /dev/null awk -f nanpa.awk > na.phone

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.100 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.100.4.1 2007/11/06 23:07:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.100 2007/04/23 18:40:22 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.100.4.1 2007/11/06 23:07:18 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -2072,20 +2072,20 @@ void
 pax_usage(void)
 {
 	fprintf(stderr,
-"usage: pax [-cdjnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
+"usage: pax [-0cdjnvzVO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
 "           [-U user] ... [-G group] ... [-T [from_date][,to_date]] ...\n"
 "           [pattern ...]\n");
 	fprintf(stderr,
-"       pax -r [-cdijknuvzADOYZ] [-E limit] [-f archive] [-N dbdir]\n"
+"       pax -r [-cdijknuvzADOVYZ] [-E limit] [-f archive] [-N dbdir]\n"
 "           [-o options] ... [-p string] ... [-s replstr] ... [-U user] ...\n"
 "           [-G group] ... [-T [from_date][,to_date]] ... [pattern ...]\n");
 	fprintf(stderr,
-"       pax -w [-dijtuvzAHLMOPX] [-b blocksize] [[-a] [-f archive]] [-x format]\n"
+"       pax -w [-dijtuvzAHLMOPVX] [-b blocksize] [[-a] [-f archive]] [-x format]\n"
 "           [-B bytes] [-N dbdir] [-o options] ... [-s replstr] ...\n"
 "           [-U user] ... [-G group] ...\n"
 "           [-T [from_date][,to_date][/[c][m]]] ... [file ...]\n");
 	fprintf(stderr,
-"       pax -r -w [-dijklntuvzADHLMOPXYZ] [-N dbdir] [-p string] ...\n"
+"       pax -r -w [-dijklntuvzADHLMOPVXYZ] [-N dbdir] [-p string] ...\n"
 "           [-s replstr] ... [-U user] ... [-G group] ...\n"
 "           [-T [from_date][,to_date][/[c][m]]] ... [file ...] directory\n");
 	exit(1);
@@ -2100,7 +2100,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("usage: tar [-]{crtux}[-befhjlmopqvwzHOPSXZ014578] [archive] "
+	(void)fputs("usage: tar [-]{crtux}[-befhjklmopqvwzHOPSXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);

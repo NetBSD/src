@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.55 2007/05/13 14:18:57 he Exp $
+#	$NetBSD: IQ80310,v 1.55.10.1 2007/11/06 23:15:54 matt Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #

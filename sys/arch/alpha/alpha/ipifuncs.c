@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.36 2007/07/21 11:59:56 tsutsui Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.36.6.1 2007/11/06 23:13:43 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.36 2007/07/21 11:59:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.36.6.1 2007/11/06 23:13:43 matt Exp $");
 
 /*
  * Interprocessor interrupt handlers.

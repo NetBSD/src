@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.11 2007/05/18 02:48:06 mhitch Exp $ */
+/* $NetBSD: multiproc.s,v 1.11.10.1 2007/11/06 23:13:46 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.11 2007/05/18 02:48:06 mhitch Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.11.10.1 2007/11/06 23:13:46 matt Exp $")
 
 /*
  * Multiprocessor glue code.

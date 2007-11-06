@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.105.4.1 2007/11/06 23:12:32 matt Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.105.4.1 2007/11/06 23:12:32 matt Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -113,6 +113,10 @@ static char lbuf[LBUF];
 #if HAVE_LONG_LONG
 #define PRId64 "lld"
 #endif
+#endif
+
+#ifndef PRId32
+#define PRId32 "ld"
 #endif
 
 #ifndef _PATH_DEFDISK
@@ -589,7 +593,7 @@ print_s0(int which)
 		}
 #endif
 
-		if (mboot.mbr_dsn != 0)
+		if (!sh_flag && mboot.mbr_dsn != 0)
 			printf("Drive serial number: %"PRId32" (0x%08x)\n",
 			    le32toh(mboot.mbr_dsn),
 			    le32toh(mboot.mbr_dsn));

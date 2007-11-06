@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_led.c,v 1.2 2007/07/09 20:52:10 ad Exp $ */
+/*	$NetBSD: ixdp425_led.c,v 1.2.10.1 2007/11/06 23:16:01 matt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_led.c,v 1.2 2007/07/09 20:52:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_led.c,v 1.2.10.1 2007/11/06 23:16:01 matt Exp $");
 
 /*
  * LED support for IXDP425

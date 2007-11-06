@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.39 2007/07/18 22:50:48 mgrooms Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.39.4.1 2007/11/06 23:07:38 matt Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -606,6 +606,10 @@ SPLIT_INCLUDE and SPLIT_LOCAL are mutually exclusive.
 The space separated list of IPv4 addresses and masks (address slash mask)
 that define the networks to be considered local, and thus excluded from the
 tunnels ; obtained by ISAKMP mode config.
+.It SPLIT_INCLUDE_CIDR
+Same as SPLIT_INCLUDE, with netmasks in CIDR notation.
+.It SPLIT_LOCAL_CIDR
+Same as SPLIT_LOCAL, with netmasks in CIDR notation.
 .It DEFAULT_DOMAIN
 The DNS default domain name obtained by ISAKMP mode config.
 .El
@@ -906,14 +910,16 @@ and policies in the kernel.
 .Ss Sainfo Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic sainfo ( Ar source_id destination_id | Ar source_id Ic anonymous | Ic anonymous Ar destination_id | Ic anonymous ) [ from Ar idtype [ Ar string ] ] [ Ic group Ar string ]
+.Ic sainfo ( Ar local_id | Ic anonymous ) ( Ar remote_id | Ic clientaddr | Ic anonymous ) [ from Ar idtype [ Ar string ] ] [ Ic group Ar string ]
 .Ic { Ar statements Ic }
 .Xc
-defines the parameters of the IKE phase 2 (IPsec-SA establishment).
-.Ar source_id
+Defines the parameters of the IKE phase 2 (IPsec-SA establishment).
+.Pp
+The
+.Ar local_id
 and
-.Ar destination_id
-are constructed like:
+.Ar remote_id
+strings are constructed like:
 .Pp
 .Ic address Ar address
 .Bq Ic / Ar prefix
@@ -927,17 +933,11 @@ or
 .Bq Ic [ Ar port ]
 .Ar ul_proto
 .Pp
-or
-.Pp
-.Ar idtype Ar string
-.Pp
-An id string should be expressed to match the exact value of an ID payload
-(source is the local end, destination is the remote end).
+An id string should be expressed to match the exact value of an ID payload.
 This is not like a filter rule.
 For example, if you define 3ffe:501:4819::/48 as
-.Ar source_id .
+.Ar local_id .
 3ffe:501:4819:1000:/64 will not match.
-.Pp
 In the case of a longest prefix (selecting a single host),
 .Ar address
 instructs to send ID type of ADDRESS while
@@ -945,7 +945,22 @@ instructs to send ID type of ADDRESS while
 instructs to send ID type of SUBNET.
 Otherwise, these instructions are identical.
 .Pp
-The group keyword allows an XAuth group membership check to be performed
+The
+.Ic anonymous
+keyword can be used to match any id. The
+.Ic clientaddr
+keyword can be used to match a remote id that is equal to either the peer
+ip address or the mode_cfg ip address ( if assigned ). This can be useful
+to restrict policy generation when racoon is acting as a client gateway
+for peers with dynamic ip addresses.
+.Pp
+The
+.Ic from
+keyword allows an sainfo to only match for peers that use a specific phase1
+id value during authentication.
+The
+.Ic group
+keyword allows an XAuth group membership check to be performed
 for this sainfo section.
 When the mode_cfg auth source is set to
 .Ic system
@@ -1199,8 +1214,11 @@ Default is
 A list of IPv4 addresses for DNS servers, separated by commas, or on multiple
 .Ic dns4
 lines.
-.It Ic nbns4 Ar addresses ;
-A list of IPv4 address for WINS servers.
+.It Ic wins4 Ar addresses ;
+A list of IPv4 address for WINS servers. The keyword
+.It nbns4
+can also be used as an alias for
+.It wins4 .
 .It Ic split_network (include | local_lan) Ar network/mask, ...
 The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).
 If

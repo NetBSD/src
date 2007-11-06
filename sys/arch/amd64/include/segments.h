@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.7 2006/08/19 16:27:58 dsl Exp $	*/
+/*	$NetBSD: segments.h,v 1.7.32.1 2007/11/06 23:14:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -325,8 +325,6 @@ int valid_user_selector(struct lwp *, uint64_t, char *, int);
 #define	GLDT_SEL	0	/* Default LDT descriptor */
 #define NGDT_SYS	1
 
-#define GDT_SYS_OFFSET	(NGDT_MEM << 3)
-
 #define GDT_ADDR_MEM(s,i)	\
     ((struct mem_segment_descriptor *)((s) + ((i) << 3)))
 #define GDT_ADDR_SYS(s,i)	\
@@ -354,9 +352,12 @@ int valid_user_selector(struct lwp *, uint64_t, char *, int);
  * ldt is active.
  */
 #define VALID_USER_DSEL32(s) \
-    ((s) == GSEL(GUDATA32_SEL, SEL_UPL) || (s) == LSEL(LUDATA32_SEL, SEL_UPL))
+    (((s) & 0xffff) == GSEL(GUDATA32_SEL, SEL_UPL) || \
+     ((s) & 0xffff) == LSEL(LUDATA32_SEL, SEL_UPL))
+#if 0 /* not used */
 #define VALID_USER_CSEL32(s) \
     ((s) == GSEL(GUCODE32_SEL, SEL_UPL) || (s) == LSEL(LUCODE32_SEL, SEL_UPL))
+#endif
 
 #define VALID_USER_CSEL(s) \
     ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))

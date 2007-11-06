@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 2007/06/29 16:41:31 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.10.1 2007/11/06 23:16:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5 2007/06/29 16:41:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5.10.1 2007/11/06 23:16:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

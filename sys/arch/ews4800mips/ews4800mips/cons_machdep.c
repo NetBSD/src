@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.4 2007/08/25 00:25:44 tsutsui Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.4.2.1 2007/11/06 23:16:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.4 2007/08/25 00:25:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.4.2.1 2007/11/06 23:16:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.85 2007/08/11 19:16:21 pooka Exp $
+.\"	$NetBSD: uvm.9,v 1.85.2.1 2007/11/06 23:13:17 matt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 11, 2007
+.Dd October 15, 2007
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -433,9 +433,6 @@ describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
 .Sh MEMORY MAPPING FILES AND DEVICES
-.Ft struct uvm_object *
-.br
-.Fn uvn_attach "void *arg" "vm_prot_t accessprot" ;
 .Pp
 .Ft void
 .br
@@ -450,11 +447,10 @@ returns a standard UVM return value.
 .br
 .Fn ubc_release "void *va" "int flags" ;
 .Pp
-.Fn uvn_attach
-attaches a UVM object to vnode
-.Fa arg ,
-creating the object if necessary.
-The object is returned.
+int
+.br
+.Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
+"int advice" "int flags" ;
 .Pp
 .Fn uvm_vnp_setsize
 sets the size of vnode
@@ -486,10 +482,19 @@ Random access hint
 Sequential access hint (from lower offset to higher offset)
 .El
 .Pp
-The flags must be one of
-.Bd -literal
-#define UBC_READ        0x01    /* mapping will be accessed for read */
-#define UBC_WRITE       0x02    /* mapping will be accessed for write */
+The possible
+.Fa flags
+are
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UBC_READ
+Mapping will be accessed for read.
+.It UBC_WRITE
+Mapping will be accessed for write.
+.It UBC_FAULTBUSY
+Fault in window's pages already during mapping operation.
+Makes sense only for write.
+.El
 .Ed
 .Pp
 Currently,
@@ -511,9 +516,28 @@ for reuse.
 The mapping may be cached to speed future accesses to the same region
 of the object.
 The flags can be any of
-.Bd -literal
-#define UBC_UNMAP       0x01    /* do not cache mapping */
-.Ed
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UBC_UNMAP
+Do not cache mapping.
+.El
+.Pp
+.Fn ubc_uiomove
+allocates an UBC memory window, performs I/O on it and unmaps the window.
+The
+.Fa advice
+parameter takes the same values as the respective parameter in
+.Fn ubc_alloc
+and the
+.Fa flags
+parameter takes the same arguments as
+.Fn ubc_alloc
+and
+.Fn ubc_unmap .
+Additionally, the flag
+.Dv UBC_PARTIALOK
+can be provided to indicate that it is acceptable to return if an error
+occurs mid-transfer.
 .Sh VIRTUAL MEMORY I/O
 .Ft int
 .br

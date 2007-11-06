@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2007/05/20 17:06:26 he Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6.10.1 2007/11/06 23:16:06 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2007/05/20 17:06:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6.10.1 2007/11/06 23:16:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

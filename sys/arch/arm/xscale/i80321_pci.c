@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.8 2007/05/12 14:34:03 gavan Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.8.12.1 2007/11/06 23:15:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.8 2007/05/12 14:34:03 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.8.12.1 2007/11/06 23:15:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

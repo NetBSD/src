@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.2 2007/05/18 21:46:39 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.2.4.1 2007/11/06 23:12:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.2 2007/05/18 21:46:39 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.2.4.1 2007/11/06 23:12:08 matt Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: expand.c,v 1.2 2007/05/18 21:46:39 christos Exp $");
 #include <stdio.h>
 #include <err.h>
 #define xwarn warn
+#define xerr err
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,
     const char *);
 #else
@@ -75,7 +76,7 @@ static int mib[3][2] = {
 };
 
 static size_t
-expand(char *buf, const char *av, int what, size_t bl)
+expand(char *buf, const char *execname, int what, size_t bl)
 {
 	const char *p, *ep;
 	char *bp = buf;
@@ -88,11 +89,10 @@ expand(char *buf, const char *av, int what, size_t bl)
 		return 0;
 
 	case 2:	/* ORIGIN */
-		ep = strrchr(p = av, '/');
-		if (ep == NULL) {
-			p = ".";
-			ep = p + 1;
-		}
+		if (execname == NULL)
+			xerr(1, "execname not specified in AUX vector");
+		if ((ep = strrchr(p = execname, '/')) == NULL)
+			xerr(1, "bad execname `%s' in AUX vector", execname);
 		break;
 
 	case 3:	/* OSNAME */
@@ -117,8 +117,8 @@ expand(char *buf, const char *av, int what, size_t bl)
 		
 
 size_t
-_rtld_expand_path(char *buf, size_t bufsize, const char *av, const char *bp,
-    const char *ep)
+_rtld_expand_path(char *buf, size_t bufsize, const char *execname,
+    const char *bp, const char *ep)
 {
 	size_t i, ds = bufsize;
 	char *dp = buf;
@@ -142,7 +142,7 @@ _rtld_expand_path(char *buf, size_t bufsize, const char *av, const char *bp,
 					continue;
 
 				if (strncmp(bltn[i].name, p, s) == 0) {
-					size_t ls = expand(dp, av, i, ds);
+					size_t ls = expand(dp, execname, i, ds);
 					if (ls >= ds)
 						return bufsize;
 					ds -= ls;

@@ -19,6 +19,7 @@ staff:*:20:root
 _proxy:*:21:
 _timedc:*:22:
 _sdpd:*:23:
+_httpd:*:24:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.20 2007/05/18 13:29:37 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.20.10.1 2007/11/06 23:17:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

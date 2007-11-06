@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.33 2007/08/09 21:54:27 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.33.2.1 2007/11/06 23:12:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -55,6 +55,7 @@
 static struct puffs_usermount *gpu;
 static struct dtfs_mount gdtm;
 int dynamicfh;
+int straightflush;
 
 static void usage(void);
 
@@ -62,9 +63,9 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: %s detrempe [-bsdft] [-c hashbuckets] "
-	    "[-m maxreqsize]\n       [-n typename] [-o mntopt] [-o puffsopt] "
-	    "[-p prot] [-r rootnodetype]\n       mountpath\n", getprogname());
+	fprintf(stderr, "usage: %s [-bsdftl] [-c hashbuckets] [-m maxreqsize] "
+	    "[-n typename]\n       [-o mntopt] [-o puffsopt] [-p prot] "
+	    "[-r rootnodetype]\n       detrempe /mountpoint\n", getprogname());
 	exit(1);
 }
 
@@ -116,7 +117,7 @@ main(int argc, char *argv[])
 	const char *typename;
 	char *rtstr;
 	mntoptparse_t mp;
-	int pflags, lflags, mntflags;
+	int pflags, detach, mntflags;
 	int ch;
 	int khashbuckets;
 	int maxreqsize;
@@ -124,13 +125,14 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	rtstr = NULL;
-	lflags = mntflags = 0;
+	detach = 1;
+	mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
 	typename = FSNAME;
 	maxreqsize = MAXREQMAGIC;
 	gdtm.dtm_allowprot = VM_PROT_ALL;
-	while ((ch = getopt(argc, argv, "bc:dfim:n:o:p:r:st")) != -1) {
+	while ((ch = getopt(argc, argv, "bc:dfilm:n:o:p:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -146,6 +148,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			pflags &= ~PUFFS_KFLAG_IAONDEMAND;
+			break;
+		case 'l':
+			straightflush = 1;
 			break;
 		case 'm':
 			maxreqsize = atoi(optarg);
@@ -168,7 +173,7 @@ main(int argc, char *argv[])
 			rtstr = optarg;
 			break;
 		case 's': /* stay on top */
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		case 't':
 			pflags |= PUFFS_KFLAG_WTCACHE;
@@ -179,7 +184,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	argc -= optind;
 	argv += optind;
 
@@ -249,9 +254,13 @@ main(int argc, char *argv[])
 	if (maxreqsize != MAXREQMAGIC)
 		puffs_setmaxreqlen(pu, maxreqsize);
 
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
 	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");
-	if (puffs_mainloop(pu, lflags) == -1)
+	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
 
 	return 0;

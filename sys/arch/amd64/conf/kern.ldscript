@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.2 2007/05/12 20:59:19 christos Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.2.10.1 2007/11/06 23:14:14 matt Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
@@ -13,14 +13,21 @@ SECTIONS
      *(.text)
      *(.text.*)
      *(.stub)
-     *(.rodata)
    } =0
    _etext = . ;
    PROVIDE (etext = .) ;
 
+   .rodata :
+   AT (LOADADDR(.text) + (ADDR(.rodata) - ADDR(.text)))
+   {
+     *(.rodata)
+     *(.rodata.*)
+   }
+ 
    /* Adjust the address for the data segment.  We want to adjust up to
       the same address within the page on the next page up.  */
    . = ALIGN(0x100000) + (. & (0x100000 - 1));
+   __data_start = . ;
    .data :
    AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
    {

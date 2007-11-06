@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247 2007/03/06 21:56:47 bouyer Exp $
+#	$NetBSD: Makefile,v 1.247.4.1 2007/11/06 23:07:10 matt Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -62,9 +62,13 @@
 #   syspkgs:
 #	Populate ${RELEASEDIR}/${MACHINE}/binary/syspkgs from ${DESTDIR}
 #   iso-image:
-#	Create CD-ROM image in RELEASEDIR/MACHINE/installation.
+#	Create CD-ROM image in RELEASEDIR/iso.
 #	RELEASEDIR must already have been populated by `make release'
 #	or equivalent.
+#   iso-image-source:
+#	Create CD-ROM image with source in RELEASEDIR/iso.
+#	RELEASEDIR must already have been populated by
+#	`make release sourcesets' or equivalent.
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
@@ -75,9 +79,9 @@
 #   do-tools-compat: builds the "libnbcompat" library; needed for some
 #                    random host tool programs in the source tree.
 #   do-lib-csu:      builds and installs prerequisites from lib/csu.
-#   do-gnu-lib-crtstuff3: builds and installs prerequisites from
-#			  gnu/lib/crtstuff3
-#   do-gnu-lib-libgcc3: builds and installs prerequisites from gnu/lib/libgcc3
+#   do-libgcc:       builds and installs prerequisites from
+#                    gnu/lib/crtstuff${LIBGCC_EXT} (if necessary) and
+#                    gnu/lib/libgcc${LIBGCC_EXT}.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
@@ -154,7 +158,7 @@ _POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
 
 postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
-	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check
+	${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN .PHONY
@@ -196,10 +200,7 @@ BUILDTARGETS+=	includes
 BUILDTARGETS+=	do-tools-compat
 BUILDTARGETS+=	do-lib-csu
 .if ${MKGCC} != "no"
-.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
-BUILDTARGETS+=	do-gnu-lib-crtstuff${LIBGCC_EXT}
-.endif
-BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
+BUILDTARGETS+=	do-libgcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib do-gnu-lib
@@ -319,6 +320,12 @@ iso-image: .PHONY
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
+iso-image-source: .PHONY
+	${MAKEDIRTARGET} distrib iso_image CDSOURCE=true
+	${MAKEDIRTARGET} etc iso-image
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
 #
 # Special components of the "make build" process.
 #
@@ -352,6 +359,14 @@ do-${dir:S/\//-/g}: .PHONY .MAKE
 	${MAKEDIRTARGET} ${dir} ${targ}
 .endfor
 .endfor
+
+do-libgcc: .PHONY .MAKE
+.if ${MKGCC} != "no"
+.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
+	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
+.endif
+	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
+.endif
 
 do-ld.so: .PHONY .MAKE
 .for targ in dependall install

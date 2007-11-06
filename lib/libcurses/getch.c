@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.48 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.48.4.1 2007/11/06 23:11:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.48 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.48.4.1 2007/11/06 23:11:24 matt Exp $");
 #endif
 #endif					/* not lint */
 
@@ -395,6 +395,19 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	current = screen->base_keymap;	/* always start with
 					 * base keymap. */
 	length = (int) strlen(sequence);
+
+	/*
+	 * OK - we really should never get a zero length string here, either
+	 * the termcap entry is there and it has a value or we are not called
+	 * at all.  Unfortunately, if someone assigns a termcap string to the
+	 * ^@ value we get passed a null string which messes up our length.
+	 * So, if we get a null string then just insert a leaf value in
+	 * the 0th char position of the root keymap.  Note that we are
+	 * totally screwed if someone terminates a multichar sequence
+	 * with ^@... oh well.
+	 */
+	if (length == 0)
+		length = 1;
 
 	for (j = 0; j < length - 1; j++) {
 		  /* add the entry to the struct */

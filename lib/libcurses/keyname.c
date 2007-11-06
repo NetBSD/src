@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.4 2007/08/04 08:36:49 jdc Exp $	*/
+/*	$NetBSD: keyname.c,v 1.4.2.1 2007/11/06 23:11:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.4 2007/08/04 08:36:49 jdc Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.4.2.1 2007/11/06 23:11:25 matt Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: keyname.c,v 1.4 2007/08/04 08:36:49 jdc Exp $");
 #include "curses_private.h"
 
 #define KEYNAMEMAX (size_t) 14	/* "KEY_BACKSPACE\0" */
+static char name[KEYNAMEMAX + 1];
+
 /*
  * keyname --
  *	Return name of key or NULL;
@@ -57,19 +59,19 @@ keyname(int key)
 {
 /* We don't bother with the large keyname table if SMALL is defined. */
 #ifdef SMALL
-	return NULL;
+	strcpy(name, "-1\0");
+	return name;
 #else
-	char *name;
-
-	if (key < 0)
-		return NULL;
+	if (key < 0) {
+		strcpy(name, "-1\0");
+		return name;
+	}
 
 	/* No name. */
-	if (key == 0x100)
-		return NULL;
-
-	if ((name = malloc(KEYNAMEMAX + 1)) == NULL)
-		return NULL;
+	if (key == 0x100) {
+		strcpy(name, "-1\0");
+		return name;
+	}
 
 	/* Control codes */
 	if (key < 0x20) {
@@ -500,20 +502,14 @@ key_name(wchar_t key)
 #ifndef HAVE_WCHAR
 	return NULL;
 #else
-/* We don't bother with the large keyname table if SMALL is defined. */
-#ifdef SMALL
-	return NULL;
-#else
-	char *name = keyname(( int )key );
+	(void) keyname((int) key);
 
-	if ( !name )
-		return NULL;
-	if (!strncmp( name, "M-", 2 )) {
-		free( name );
-		name = NULL;
+	if (!strncmp(name, "M-", 2)) {
+		/* Remove the "M-" */
+		name[0] = name[2];
+		name[1] = '\0';
 	}
 	return name;
-#endif
 #endif /* HAVE_WCHAR */
 }
 

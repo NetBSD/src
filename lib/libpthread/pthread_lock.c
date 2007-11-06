@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.24 2007/08/16 23:37:08 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.24.2.1 2007/11/06 23:11:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.24 2007/08/16 23:37:08 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.24.2.1 2007/11/06 23:11:41 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -56,91 +56,101 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.24 2007/08/16 23:37:08 ad Exp $");
 #include "pthread_int.h"
 
 /* How many times to try acquiring spin locks on MP systems. */
-#define	PTHREAD__NSPINS		1024
-
-#ifdef PTHREAD_SPIN_DEBUG_PRINT
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
+#define	PTHREAD__NSPINS		64
 
 static void pthread_spinlock_slow(pthread_spin_t *);
 
-static int pthread__atomic;
-
 RAS_DECL(pthread__lock);
-RAS_DECL(pthread__lock2);
-
-void
-pthread__simple_lock_init(__cpu_simple_lock_t *alp)
-{
-
-	if (pthread__atomic) {
-		__cpu_simple_lock_init(alp);
-		return;
-	}
-
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
 
 int
-pthread__simple_lock_try(__cpu_simple_lock_t *alp)
+pthread__simple_locked_p(__cpu_simple_lock_t *alp)
 {
-	__cpu_simple_lock_t old;
+	return __SIMPLELOCK_LOCKED_P(alp);
+}
 
-	if (pthread__atomic)
-		return __cpu_simple_lock_try(alp);
+#ifdef PTHREAD__ASM_RASOPS
+
+void pthread__ras_simple_lock_init(__cpu_simple_lock_t *);
+int pthread__ras_simple_lock_try(__cpu_simple_lock_t *);
+void pthread__ras_simple_unlock(__cpu_simple_lock_t *);
+
+#else
+
+static void
+pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_lock_clear(alp);
+}
+
+static int
+pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	int locked;
 
 	RAS_START(pthread__lock);
-	old = *alp;
-	*alp = __SIMPLELOCK_LOCKED;
+	locked = __SIMPLELOCK_LOCKED_P(alp);
+	__cpu_simple_lock_set(alp);
 	RAS_END(pthread__lock);
 
-	return old == __SIMPLELOCK_UNLOCKED;
+	return !locked;
 }
 
-inline void
-pthread__simple_unlock(__cpu_simple_lock_t *alp)
+static void
+pthread__ras_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
-#ifdef PTHREAD__CHEAP_UNLOCK
-	__cpu_simple_unlock(alp);
-#else
-	if (pthread__atomic) {
-		__cpu_simple_unlock(alp);
-		return;
-	}
-	*alp = __SIMPLELOCK_UNLOCKED;
-#endif
+	__cpu_simple_lock_clear(alp);
 }
+
+#endif /* PTHREAD__ASM_RASOPS */
+
+static const struct pthread_lock_ops pthread__lock_ops_ras = {
+	pthread__ras_simple_lock_init,
+	pthread__ras_simple_lock_try,
+	pthread__ras_simple_unlock,
+};
+
+static void
+pthread__atomic_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_lock_init(alp);
+}
+
+static int
+pthread__atomic_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+
+	return (__cpu_simple_lock_try(alp));
+}
+
+static void
+pthread__atomic_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_unlock(alp);
+}
+
+static const struct pthread_lock_ops pthread__lock_ops_atomic = {
+	pthread__atomic_simple_lock_init,
+	pthread__atomic_simple_lock_try,
+	pthread__atomic_simple_unlock,
+};
+
+/*
+ * We default to pointing to the RAS primitives; we might need to use
+ * locks early, but before main() starts.  This is safe, since no other
+ * threads will be active for the process, so atomicity will not be
+ * required.
+ */
+const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 
 void
 pthread_spinlock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-
-	SDPRINTF(("(pthread_spinlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-	pthread__assert(thread->pt_spinlocks >= 0);
-	thread->pt_spinlocks++;
-	PTHREADD_ADD(PTHREADD_SPINLOCKS);
-#endif
-
-	if (pthread__atomic) {
-		if (__predict_true(__cpu_simple_lock_try(lock)))
-			return;
-	} else {
-		__cpu_simple_lock_t old;
-
-		RAS_START(pthread__lock2);
-		old = *lock;
-		*lock = __SIMPLELOCK_LOCKED;
-		RAS_END(pthread__lock2);
-
-		if (__predict_true(old == __SIMPLELOCK_UNLOCKED))
-			return;
-	}
+	if (__predict_true(pthread__simple_lock_try(lock)))
+		return;
 
 	pthread_spinlock_slow(lock);
 }
@@ -156,70 +166,30 @@ static void
 pthread_spinlock_slow(pthread_spin_t *lock)
 {
 	int count;
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-#endif
 
 	do {
 		count = pthread__nspins;
-		while (*lock == __SIMPLELOCK_LOCKED && --count > 0)
+		while (pthread__simple_locked_p(lock) && --count > 0)
 			pthread__smt_pause();
 		if (count > 0) {
 			if (pthread__simple_lock_try(lock))
 				break;
 			continue;
 		}
-
-#ifdef PTHREAD_SPIN_DEBUG
-		SDPRINTF(("(pthread_spinlock %p) retrying spinlock %p "
-		    "(count %d)\n", thread, lock,
-		    thread->pt_spinlocks));
-		thread->pt_spinlocks--;
-		/* XXXLWP far from ideal */
 		sched_yield();
-		thread->pt_spinlocks++;
-#else
-		/* XXXLWP far from ideal */
-		sched_yield();
-#endif
 	} while (/*CONSTCOND*/ 1);
 }
 
 int
 pthread_spintrylock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-	int ret;
-
-	SDPRINTF(("(pthread_spintrylock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-	thread->pt_spinlocks++;
-	ret = pthread__simple_lock_try(lock);
-	if (!ret)
-		thread->pt_spinlocks--;
-	return ret;
-#else
 	return pthread__simple_lock_try(lock);
-#endif
 }
 
 void
 pthread_spinunlock(pthread_spin_t *lock)
 {
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread_t thread = pthread__self();
-
-	SDPRINTF(("(pthread_spinunlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-
 	pthread__simple_unlock(lock);
-	thread->pt_spinlocks--;
-	pthread__assert(thread->pt_spinlocks >= 0);
-	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
-#else
-	pthread__simple_unlock(lock);
-#endif
 }
 
 /*
@@ -240,20 +210,14 @@ pthread__lockprim_init(void)
 		pthread__nspins = 1;
 
 	if (pthread__concurrency != 1) {
-		pthread__atomic = 1;
+		pthread__lock_ops = &pthread__lock_ops_atomic;
 		return;
 	}
 
 	if (rasctl(RAS_ADDR(pthread__lock), RAS_SIZE(pthread__lock),
 	    RAS_INSTALL) != 0) {
-	    	pthread__atomic = 1;
-	    	return;
-	}
-
-	if (rasctl(RAS_ADDR(pthread__lock2), RAS_SIZE(pthread__lock2),
-	    RAS_INSTALL) != 0) {
-	    	pthread__atomic = 1;
-	    	return;
+		pthread__lock_ops = &pthread__lock_ops_atomic;
+		return;
 	}
 }
 

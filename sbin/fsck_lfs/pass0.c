@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.29 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: pass0.c,v 1.29.8.1 2007/11/06 23:12:35 matt Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ pass0(void)
 	lowfreeino = maxino;
 	LFS_CLEANERINFO(cip, fs, cbp);
 	freehd = ino = cip->free_head;
-	brelse(cbp);
+	brelse(cbp, 0);
 
 	while (ino) {
 		if (lowfreeino > ino)
@@ -149,7 +149,7 @@ pass0(void)
 		LFS_IENTRY(ifp, fs, ino, bp);
 		nextino = ifp->if_nextfree;
 		daddr = ifp->if_daddr;
-		brelse(bp);
+		brelse(bp, 0);
 		if (daddr) {
 			pwarn("INO %llu WITH DADDR 0x%llx ON FREE LIST\n",
 			    (unsigned long long)ino, (long long) daddr);
@@ -180,7 +180,7 @@ pass0(void)
 
 		LFS_IENTRY(ifp, fs, ino, bp);
 		if (ifp->if_daddr) {
-			brelse(bp);
+			brelse(bp, 0);
 			continue;
 		}
 		pwarn("INO %llu FREE BUT NOT ON FREE LIST\n",
@@ -197,7 +197,7 @@ pass0(void)
 			if (plastino == 0)
 				plastino = ino;
 		} else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 
 	LFS_CLEANERINFO(cip, fs, cbp);
@@ -227,7 +227,7 @@ pass0(void)
 	if (writeit)
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, writeit);
 	else
-		brelse(cbp);
+		brelse(cbp, 0);
 
 	if (fs->lfs_freehd == 0) {
 		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");

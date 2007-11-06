@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.9 2003/08/07 16:42:26 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.9.22.1 2007/11/06 23:11:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.9 2003/08/07 16:42:26 agc Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.9.22.1 2007/11/06 23:11:11 matt Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -60,7 +60,8 @@ CURBRK:	.long	_end
 ENTRY(_sbrk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
-	ld	[%o5 + CURBRK], %o2
+	set	CURBRK, %o2
+	ld	[%o5 + %o2], %o2
 	ld	[%o2], %o3			! %o3 = old break
 	add	%o3, %o0, %o4			! %o4 = new break
 	mov	%o4, %o0			! copy for syscall

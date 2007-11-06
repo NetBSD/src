@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.78 2007/06/05 12:14:33 yamt Exp $
+#	$NetBSD: Makefile.alpha,v 1.78.10.1 2007/11/06 23:13:50 matt Exp $
 
 # Makefile for NetBSD
 #

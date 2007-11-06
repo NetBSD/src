@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap16.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: bswap16.S,v 1.1.18.1 2007/11/06 23:07:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -28,7 +28,11 @@
 
 #include <machine/asm.h>
 
-ENTRY(bswap16)
+#if defined(_KERNEL) || defined(_STANDALONE)
+_ENTRY(_C_LABEL(bswap16))
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+_ENTRY(_C_LABEL(__bswap16))
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 	movl	%sp@(4),%d0
 	rolw	#8,%d0
 	rts

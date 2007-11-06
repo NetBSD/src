@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.35 2007/02/15 12:00:15 rillig Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.35.4.1 2007/11/06 23:10:13 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,9 @@ message hello
 Dieses Programm wird Ihnen helfen, NetBSD auf eine Festplatte zu installieren
 oder aber eine bereits bestehende Installation von NetBSD zu aktualisieren.
 In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
-die verschiedenen Menüeinträge wählen oder durch Drücken von CTRL+N/CTRL+P
+die verschiedenen Menüeinträge wählen oder durch Drücken von Strg-N/Strg-P
 die Markierung auf- oder abbewegen. Die Cursor- und Bildlauftasten
-(Page-up/Page-down) sollten ebenfalls funktionieren. 
+(Seite vor/zurück) sollten ebenfalls funktionieren. 
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 }
 
@@ -249,7 +249,7 @@ message fspart
 }
 
 message fspart_header
-{   Start %3s  Ende %3s Größe %3s FS Typ     Newfs Mount Mount Verz.
+{   Start %3s Ende  %3s Größe  %3s FS Typ     Newfs Mount Mount Verz.
    --------- --------- ---------- ---------- ----- ----- -----------
 }
 
@@ -912,13 +912,13 @@ message Logging {Logging}
 
 message Status  {  Status: }
 message Command {Kommando: }
-message Running {Wird ausgeführt}
-message Finished {Beendet}
-message Command_failed {Kommando fehlgeschlagen}
-message Command_ended_on_signal {Kommando wurde von einem Signal abgebrochen}
+message Running {ausführen}
+message Finished {fertig}
+message Command_failed {fehlgeschlagen}
+message Command_ended_on_signal {abgebrochen}
 
-message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationssystem}
-message Exit_Install_System {Installationssystem beenden}
+message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationsprogramm}
+message Exit_Install_System {Installationsprogramm beenden}
 message Install_NetBSD_to_hard_disk {NetBSD auf die Festplatte installieren}
 message Upgrade_NetBSD_on_a_hard_disk {Aktualisierung einer bestehenden NetBSD-Installation}
 message Re_install_sets_or_install_additional_sets {Erneute Installation oder zusätzliche Pakete installieren}
@@ -1000,3 +1000,13 @@ System gestartet ist, müssen Sie das neu erstellte /emul/aout mit dem alten
 Verzeichnis abgleichen.
 }
 .endif
+
+message oldsendmail
+{Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
+Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
+eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
+vorhandene Sendmail-Programm verweist. 
+Möchten Sie /etc/mailer.conf automatisch auf eine Version für
+Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
+manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
+zu gewährleisten.}

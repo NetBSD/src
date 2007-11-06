@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2.52.2 2007/10/12 02:22:21 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2.52.3 2007/11/06 23:14:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -77,9 +77,6 @@ ENTRY(arm11_tlb_flushI_SE)
  *
  * These is the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
- *
- * NOTE: Special calling convention
- *	r1, r4-r13 must be preserved
  */
 ENTRY(arm11_context_switch)
 	/*

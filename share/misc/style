@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.40 2007/05/26 18:48:48 christos Exp $ */
+/* $NetBSD: style,v 1.40.4.1 2007/11/06 23:13:20 matt Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.40 2007/05/26 18:48:48 christos Exp $");
+__RCSID("$NetBSD: style,v 1.40.4.1 2007/11/06 23:13:20 matt Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 	 * for accuracy.  Code that cannot be reached should have a
 	 * NOTREACHED comment.
 	 */
-	while ((ch = getopt(argc, argv, "abn")) != -1) {
+	while ((ch = getopt(argc, argv, "abn:")) != -1) {
 		switch (ch) {		/* Indent the switch. */
 		case 'a':		/* Don't indent the case. */
 			aflag = 1;

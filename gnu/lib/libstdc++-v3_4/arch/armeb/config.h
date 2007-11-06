@@ -36,7 +36,7 @@
 /* #undef HAVE_CEILL */
 
 /* Define to 1 if you have the <complex.h> header file. */
-/* #undef HAVE_COMPLEX_H */
+#define HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `copysign' function. */
 #define HAVE_COPYSIGN 1

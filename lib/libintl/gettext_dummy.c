@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_dummy.c,v 1.2 2003/03/09 01:02:35 lukem Exp $	*/
+/*	$NetBSD: gettext_dummy.c,v 1.2.22.1 2007/11/06 23:11:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -27,9 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext_dummy.c,v 1.2 2003/03/09 01:02:35 lukem Exp $");
+__RCSID("$NetBSD: gettext_dummy.c,v 1.2.22.1 2007/11/06 23:11:29 matt Exp $");
 
-/* 
+/*
  * The symbol is referenced by gettext.m4 (autoconf m4 macro fragment
  * that ships with GNU gettext), to check if libintl is GNU origin or not.
  * Since we are trying to mimic GNU gettext, we supply the symbol just to

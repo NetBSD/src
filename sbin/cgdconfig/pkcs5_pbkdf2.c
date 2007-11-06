@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.10 2007/01/27 08:29:14 cbiere Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.10.4.1 2007/11/06 23:12:31 matt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.10 2007/01/27 08:29:14 cbiere Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.10.4.1 2007/11/06 23:12:31 matt Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -70,39 +70,39 @@ __RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.10 2007/01/27 08:29:14 cbiere Exp $");
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
 
-static void	prf_iterate(u_int8_t *, const u_int8_t *, int,
-			    const u_int8_t *, int, int, int);
-static int	pkcs5_pbkdf2_time(int, int);
+static void	prf_iterate(u_int8_t *, const u_int8_t *, size_t,
+			    const u_int8_t *, size_t, size_t, size_t);
+static int	pkcs5_pbkdf2_time(size_t, size_t);
 
 #define PRF_BLOCKLEN	20
 
 static void
-prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
-	    const u_int8_t *S, int Slen, int c, int ind)
+prf_iterate(u_int8_t *r, const u_int8_t *P, size_t Plen,
+	    const u_int8_t *S, size_t Slen, size_t c, size_t ind)
 {
 	int		 first_time = 1;
-	int		 i;
-	int		 datalen;
-	u_int		 tmplen;
+	size_t		 i;
+	size_t		 datalen;
+	size_t		 tmplen;
 	u_int8_t	*data;
 	u_int8_t	 tmp[EVP_MAX_MD_SIZE];
 
 	data = emalloc(Slen + 4);
-	memcpy(data, S, Slen);
+	(void)memcpy(data, S, Slen);
 	be32enc(data + Slen, ind);
 	datalen = Slen + 4;
 
 	for (i=0; i < c; i++) {
-		HMAC(EVP_sha1(), P, Plen, data, datalen, tmp, &tmplen);
+		(void)HMAC(EVP_sha1(), P, Plen, data, datalen, tmp, &tmplen);
 
 		assert(tmplen == PRF_BLOCKLEN);
 
 		if (first_time) {
-			memcpy(r, tmp, PRF_BLOCKLEN);
+			(void)memcpy(r, tmp, PRF_BLOCKLEN);
 			first_time = 0;
 		} else 
 			memxor(r, tmp, PRF_BLOCKLEN);
-		memcpy(data, tmp, PRF_BLOCKLEN);
+		(void)memcpy(data, tmp, PRF_BLOCKLEN);
 		datalen = PRF_BLOCKLEN;
 	}
 	free(data);
@@ -113,16 +113,16 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
  */
 
 int
-pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
-	     const u_int8_t *S, int Slen, int c, int compat)
+pkcs5_pbkdf2(u_int8_t **r, size_t dkLen, const u_int8_t *P, size_t Plen,
+	     const u_int8_t *S, size_t Slen, size_t c, int compat)
 {
-	int	i;
-	int	l;
+	size_t	i;
+	size_t	l;
 
 	/* sanity */
 	if (!r)
 		return -1;
-	if (dkLen <= 0)
+	if (dkLen == 0)
 		return -1;
 	if (c < 1)
 		return -1;
@@ -134,7 +134,7 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
 	*r = emalloc(l * PRF_BLOCKLEN);
 
 	/* Step 3 */
-	for (i=0; i < l; i++)
+	for (i = 0; i < l; i++)
 		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, 
 			(compat?i:i+1));
 
@@ -170,7 +170,7 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
  */
 
 static int
-pkcs5_pbkdf2_time(int dkLen, int c)
+pkcs5_pbkdf2_time(size_t dkLen, size_t c)
 {
 	struct rusage	 start;
 	struct rusage	 end;
@@ -179,12 +179,12 @@ pkcs5_pbkdf2_time(int dkLen, int c)
 	u_int8_t	 P[CAL_PASSLEN];
 	u_int8_t	 S[CAL_SALTLEN];
 
-	getrusage(RUSAGE_SELF, &start);
+	(void)getrusage(RUSAGE_SELF, &start);
 	/* XXX compat flag at end to be removed when _OLD keygen method is */
 	ret = pkcs5_pbkdf2(&r, dkLen, P, sizeof(P), S, sizeof(S), c, 0);
 	if (ret)
 		return ret;
-	getrusage(RUSAGE_SELF, &end);
+	(void)getrusage(RUSAGE_SELF, &end);
 	free(r);
 
 	return (end.ru_utime.tv_sec - start.ru_utime.tv_sec) * 1000000
@@ -192,25 +192,25 @@ pkcs5_pbkdf2_time(int dkLen, int c)
 }
 
 int
-pkcs5_pbkdf2_calibrate(int dkLen, int microseconds)
+pkcs5_pbkdf2_calibrate(size_t dkLen, int microseconds)
 {
-	int	c;
+	size_t	c;
 	int	t = 0;
-	int	ret;
+	size_t	ret;
 
 	/*
 	 * First we get a meaningfully long time by doubling the
 	 * iteration count until it takes longer than CAL_TIME.  This
 	 * should take approximately 2 * CAL_TIME.
 	 */
-	for (c=1;; c *= 2) {
+	for (c = 1;; c *= 2) {
 		t = pkcs5_pbkdf2_time(dkLen, c);
 		if (t > CAL_TIME)
 			break;
 	}
 
 	/* Now that we know that, we scale it. */
-	ret = (int) ((u_int64_t) c * microseconds / t);
+	ret = (size_t) ((u_int64_t) c * microseconds / t);
 
 	/*
 	 * Since it is quite important to not get this wrong,

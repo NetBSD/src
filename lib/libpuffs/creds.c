@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.12 2007/07/01 17:22:18 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.12.4.1 2007/11/06 23:11:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.12 2007/07/01 17:22:18 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.12.4.1 2007/11/06 23:11:50 matt Exp $");
 #endif /* !lint */
 
 /*
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: creds.c,v 1.12 2007/07/01 17:22:18 pooka Exp $");
 
 #include <errno.h>
 #include <puffs.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "puffs_priv.h"
@@ -94,7 +95,7 @@ puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *rgids, short *ngids)
 	return 0;
 }
 
-int
+bool
 puffs_cred_isuid(const struct puffs_cred *pcr, uid_t uid)
 {
 	PUFFS_MAKEKCRED(pkcr, pcr);
@@ -102,25 +103,25 @@ puffs_cred_isuid(const struct puffs_cred *pcr, uid_t uid)
 	return UUCCRED(pkcr) && pkcr->pkcr_uuc.cr_uid == uid;
 }
 
-int
+bool
 puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t gid)
 {
 	PUFFS_MAKEKCRED(pkcr, pcr);
 	short i;
 
 	if (!UUCCRED(pkcr))
-		return 0;
+		return false;
 
 	if (pkcr->pkcr_uuc.cr_gid == gid)
-		return 1;
+		return true;
 	for (i = 0; i < pkcr->pkcr_uuc.cr_ngroups; i++)
 		if (pkcr->pkcr_uuc.cr_groups[i] == gid)
-			return 1;
+			return true;
 
-	return 0;
+	return false;
 }
 
-int
+bool
 puffs_cred_isregular(const struct puffs_cred *pcr)
 {
 	PUFFS_MAKEKCRED(pkcr, pcr);
@@ -128,7 +129,7 @@ puffs_cred_isregular(const struct puffs_cred *pcr)
 	return UUCCRED(pkcr);
 }
 
-int
+bool
 puffs_cred_iskernel(const struct puffs_cred *pcr)
 {
 	PUFFS_MAKEKCRED(pkcr, pcr);
@@ -136,7 +137,7 @@ puffs_cred_iskernel(const struct puffs_cred *pcr)
 	return INTCRED(pkcr) && pkcr->pkcr_internal == PUFFCRED_CRED_NOCRED;
 }
 
-int
+bool
 puffs_cred_isfs(const struct puffs_cred *pcr)
 {
 	PUFFS_MAKEKCRED(pkcr, pcr);
@@ -144,7 +145,7 @@ puffs_cred_isfs(const struct puffs_cred *pcr)
 	return INTCRED(pkcr) && pkcr->pkcr_internal == PUFFCRED_CRED_FSCRED;
 }
 
-int
+bool
 puffs_cred_isjuggernaut(const struct puffs_cred *pcr)
 {
 
@@ -160,8 +161,10 @@ puffs_cid_getpid(const struct puffs_cid *pcid, pid_t *pid)
 	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
 		*pid = pkcid->pkcid_pid;
 		return 0;
-	} else
-		return ESRCH;
+	} else {
+		errno = ESRCH;
+		return -1;
+	}
 }
 
 int
@@ -172,12 +175,31 @@ puffs_cid_getlwpid(const struct puffs_cid *pcid, lwpid_t *lid)
 	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
 		*lid = pkcid->pkcid_lwpid;
 		return 0;
-	} else
-		return ESRCH;
+	} else {
+		errno = ESRCH;
+		return -1;
+	}
+}
+
+bool
+puffs_cid_isequal(const struct puffs_cid *pc1, const struct puffs_cid *pc2)
+{
+	PUFFS_MAKEKCID(pkc1, pc1);
+	PUFFS_MAKEKCID(pkc2, pc2);
+
+	if (pkc1->pkcid_type != PUFFCID_TYPE_REAL
+	    || pkc2->pkcid_type != PUFFCID_TYPE_REAL)
+		return false;
+
+	if (pkc1->pkcid_lwpid == pkc1->pkcid_lwpid
+	    && pkc2->pkcid_pid == pkc2->pkcid_pid)
+		return true;
+
+	return false;
 }
 
 /*
- * Gerneic routine for checking file access rights.  Modeled after
+ * Generic routine for checking file access rights.  Modeled after
  * vaccess() in the kernel.
  */
 int

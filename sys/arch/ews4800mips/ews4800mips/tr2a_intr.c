@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.7 2007/08/22 12:45:41 tsutsui Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.7.2.1 2007/11/06 23:16:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.7 2007/08/22 12:45:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.7.2.1 2007/11/06 23:16:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

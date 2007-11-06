@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.12 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.12.4.1 2007/11/06 23:07:32 matt Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -237,6 +237,7 @@ hexstring	0x{hexdigit}+
 <S_CFG>network4		{ YYD; return(CFG_NET4); }
 <S_CFG>netmask4		{ YYD; return(CFG_MASK4); }
 <S_CFG>dns4		{ YYD; return(CFG_DNS4); }
+<S_CFG>nbns4		{ YYD; return(CFG_NBNS4); }
 <S_CFG>wins4		{ YYD; return(CFG_NBNS4); }
 <S_CFG>default_domain	{ YYD; return(CFG_DEFAULT_DOMAIN); }
 <S_CFG>auth_source	{ YYD; return(CFG_AUTH_SOURCE); }
@@ -276,6 +277,7 @@ hexstring	0x{hexdigit}+
 	/* sainfo */
 <S_INI>sainfo		{ BEGIN S_SAINF; YYDB; return(SAINFO); }
 <S_SAINF>anonymous	{ YYD; return(ANONYMOUS); }
+<S_SAINF>clientaddr	{ YYD; return(CLIENTADDR); }
 <S_SAINF>{blcl}any{elcl}	{ YYD; return(PORTANY); }
 <S_SAINF>any		{ YYD; return(ANY); }
 <S_SAINF>from		{ YYD; return(FROM); }

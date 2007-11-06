@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $ */
+/* $NetBSD: defs.h,v 1.1.1.1.4.1 2007/11/06 23:09:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999-2000 Alistair G. Crooks.  All rights reserved.
@@ -46,38 +46,6 @@
 #if HAVE_STRING_H
 #include <string.h>
 #endif
-
-#define NEWARRAY(type,ptr,size,where,action) do {			\
-	if ((ptr = (type *) calloc(sizeof(type), (unsigned)(size))) == NULL) { \
-		warn("%s: can't allocate %lu bytes", where,		\
-			(unsigned long)(size * sizeof(type)));		\
-		action;							\
-	}								\
-} while( /* CONSTCOND */ 0)
-
-#define RENEW(type,ptr,size,where,action) do {				\
-	type *newptr;							\
-	if ((newptr = (type *) realloc(ptr, sizeof(type) * (size))) == NULL) { \
-		warn("%s: can't realloc %lu bytes", where,		\
-			(unsigned long)(size * sizeof(type)));		\
-		action;							\
-	}								\
-	ptr = newptr;							\
-} while( /* CONSTCOND */ 0)
-
-#define NEW(type, ptr, where, action)	NEWARRAY(type, ptr, 1, where, action)
-
-#define FREE(ptr)	(void) free(ptr)
-
-#define ALLOC(type, v, size, c, init, where, action) do {		\
-	if (size == 0) {						\
-		size = init;						\
-		NEWARRAY(type, v, size, where ": new", action);		\
-	} else if (c == size) {						\
-		size *= 2;						\
-		RENEW(type, v, size, where ": renew", action);		\
-	}								\
-} while( /* CONSTCOND */ 0)
 
 #ifndef MIN
 #define MIN(a,b)	(((a) < (b)) ? (a) : (b))

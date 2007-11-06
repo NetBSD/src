@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.32 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: setup.c,v 1.32.8.1 2007/11/06 23:12:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ setup(const char *dev)
 			if (sp->ss_sumsum != cksum(&sp->ss_datasum,
 						   fs->lfs_sumsize -
 						   sizeof(sp->ss_sumsum))) {
-				brelse(bp);
+				brelse(bp, 0);
 				if (debug)
 					printf("bad cksum at %x\n",
 					       (unsigned)tdaddr);
@@ -292,7 +292,7 @@ setup(const char *dev)
 			tdaddr += btofsb(fs, bc) + 1;
 			fs->lfs_offset = tdaddr;
 			fs->lfs_serial = sp->ss_serial + 1;
-			brelse(bp);
+			brelse(bp, 0);
 		}
 
 		/*
@@ -307,7 +307,7 @@ setup(const char *dev)
 				errx(1, "init: no clean segments");
 			LFS_SEGENTRY(sup, fs, sn, bp);
 			isdirty = sup->su_flags & SEGUSE_DIRTY;
-			brelse(bp);
+			brelse(bp, 0);
 
 			if (!isdirty)
 				break;
@@ -425,7 +425,7 @@ setup(const char *dev)
 	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += fs->lfs_bsize) {
 		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, &bp);
 		/* XXX check B_ERROR */
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/*
@@ -439,7 +439,7 @@ setup(const char *dev)
 		seg_table[i].su_flags = sup->su_flags & ~SEGUSE_ACTIVE;
 		if (preen)
 			seg_table[i].su_nbytes = sup->su_nbytes;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Initialize Ifile entry */

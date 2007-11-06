@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.20 2007/08/18 10:26:05 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.20.2.1 2007/11/06 23:11:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -34,12 +34,24 @@
 #include <puffs.h>
 #include <ucontext.h>
 
+#ifdef PUFFS_WITH_THREADS
+#include <pthread.h>
+
+extern pthread_mutex_t pu_lock;
+#define PU_LOCK() pthread_mutex_lock(&pu_lock)
+#define PU_UNLOCK() pthread_mutex_unlock(&pu_lock)
+#else
+#define PU_LOCK()
+#define PU_UNLOCK()
+#endif
+
 #define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
 
 struct puffs_framectrl {
 	puffs_framev_readframe_fn rfb;
 	puffs_framev_writeframe_fn wfb;
 	puffs_framev_cmpframe_fn cmpfb;
+	puffs_framev_gotframe_fn gotfb;
 	puffs_framev_fdnotify_fn fdnotfn;
 
 	struct kevent *evs;
@@ -86,6 +98,11 @@ struct puffs_fctrl_io {
         || (fio->stat & FIO_ENABLE_W) == 0))	\
 	&& (fio->wwait == 0)))
 
+struct puffs_executor {
+	struct puffs_req		*pex_preq;
+	TAILQ_ENTRY(puffs_executor)	pex_entries;
+};
+
 /*
  * usermount: describes one file system instance
  */
@@ -96,20 +113,23 @@ struct puffs_usermount {
 	size_t			pu_maxreqlen;
 
 	uint32_t		pu_flags;
-	size_t			pu_cc_stacksize;
+	int			pu_cc_stackshift;
 
 	int			pu_kq;
-	int			pu_haskq;
 	int			pu_state;
 #define PU_STATEMASK	0xff
 #define PU_INLOOP	0x100
 #define PU_ASYNCFD	0x200
+#define PU_HASKQ	0x400
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 
 	struct puffs_node	*pu_pn_root;
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 	LIST_HEAD(, puffs_cc)	pu_ccnukelst;
+	TAILQ_HEAD(, puffs_cc)	pu_sched;
+
+	TAILQ_HEAD(, puffs_executor) pu_exq;
 
 	struct puffs_node	*(*pu_cmap)(void *);
 
@@ -118,6 +138,11 @@ struct puffs_usermount {
 	pu_pathcmp_fn		pu_pathcmp;
 	pu_pathfree_fn		pu_pathfree;
 	pu_namemod_fn		pu_namemod;
+
+	pu_errnotify_fn		pu_errnotify;
+
+	pu_prepost_fn		pu_oppre;
+	pu_prepost_fn		pu_oppost;
 
 	struct puffs_framectrl	pu_framectrl;
 
@@ -140,6 +165,9 @@ struct puffs_cc {
 	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
 	void			*pcc_stack;
 
+	pid_t			pcc_pid;
+	lwpid_t			pcc_lid;
+
 	int			pcc_flags;
 	struct puffs_putreq	*pcc_ppr;
 
@@ -150,14 +178,16 @@ struct puffs_cc {
 #define PCC_REALCC	0x02
 #define PCC_DONE	0x04
 #define PCC_BORROWED	0x08
+#define PCC_HASCALLER	0x10
+#define PCC_THREADED	0x20
 
 #define pcc_callstat(a)	   (a->pcc_flags & PCC_CALL_MASK)
 #define pcc_callset(a, b)  (a->pcc_flags = (a->pcc_flags & ~PCC_CALL_MASK) | b)
 
-#define pcc_init_local(ap)   						\
+#define pcc_init_unreal(ap, type) 					\
 do {									\
 	memset(ap, 0, sizeof(*ap));					\
-	(ap)->pcc_flags = PCC_FAKECC;					\
+	(ap)->pcc_flags = type;						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -167,31 +197,13 @@ do {									\
 struct puffs_getreq {
 	struct puffs_usermount	*pgr_pu;
 
-	struct puffs_reqh_get	pgr_phg;
-	struct puffs_reqh_get	pgr_phg_orig;
-
-	struct puffs_req	*pgr_nextpreq;
-	size_t			pgr_advance;
-
-	/* diagnostics */
-	int			pgr_nppr;
+	void			*pgr_buf;
 };
 
 struct puffs_putreq {
 	struct puffs_usermount *ppr_pu;
 
-	struct puffs_reqh_put	ppr_php;
-
-	/* to adjust next request info */
-	void			**ppr_buf;
-	size_t			*ppr_buflen;
-	uint64_t 		*ppr_id;
-
-	/* for delayed action freeing of preq's */
 	TAILQ_HEAD(, puffs_cc)	ppr_pccq;
-
-	/* diagnostics */
-	struct puffs_getreq	*ppr_pgr;
 };
 
 struct puffs_newinfo {
@@ -236,9 +248,11 @@ void	puffs_framev_writeclose(struct puffs_usermount *,
 				struct puffs_fctrl_io *, int);
 void	puffs_framev_notify(struct puffs_fctrl_io *, int);
 
-struct puffs_cc 	*puffs_cc_create(struct puffs_usermount *);
-void			puffs_cc_destroy(struct puffs_cc *);
-void			puffs_goto(struct puffs_cc *);
+int	puffs_cc_create(struct puffs_usermount *, struct puffs_req *,
+			int, struct puffs_cc **);
+void	puffs_cc_destroy(struct puffs_cc *);
+void	puffs_cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
+void	puffs_goto(struct puffs_cc *);
 
 __END_DECLS
 

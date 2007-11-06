@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.27 2007/07/18 22:23:37 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.27.4.1 2007/11/06 23:11:52 matt Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -76,7 +76,7 @@
 .Ft void
 .Fn puffs_ml_settimeout "struct puffs_usermount *pu" "struct timespec *ts"
 .Ft int
-.Fn puffs_mainloop "struct puffs_usermount *pu" "int flags"
+.Fn puffs_mainloop "struct puffs_usermount *pu"
 .Sh DESCRIPTION
 .Em IMPORTANT NOTE!
 This document describes interfaces which are not yet guaranteed to be
@@ -414,12 +414,6 @@ is called
 Handle all requests automatically until the file system is unmounted.
 It returns 0 if the file system was succesfully unmounted or \-1 if it
 was killed in action.
-Unless
-.Fa flags
-is used to pass
-.Dv PUFFSLOOP_NODAEMON ,
-.Fn puffs_mainloop
-will also detach from the terminal.
 .Pp
 In case
 .Xr puffs_framebuf 3
@@ -459,6 +453,7 @@ to provide an alternative cookie-to-node mapping function.
 .Xr puffs_path 3 ,
 .Xr puffs_req 3 ,
 .Xr puffs_suspend 3 ,
+.Xr refuse 3 ,
 .Xr puffs 4
 .Rs
 .%A Antti Kantee
@@ -466,6 +461,20 @@ to provide an alternative cookie-to-node mapping function.
 .%J Proceedings of AsiaBSDCon 2007
 .%P pp. 29-42
 .%T puffs - Pass-to-Userspace Framework File System
+.Re
+.Rs
+.%A Antti Kantee
+.%D September 2007
+.%I Helsinki University of Technology
+.%R Tech Report TKK-TKO-B157
+.%T Using puffs for Implementing Client-Server Distributed File Systems
+.Re
+.Rs
+.%A Antti Kantee
+.%A Alistair Crooks
+.%D September 2007
+.%J EuroBSDCon 2007
+.%T ReFUSE: Userspace FUSE Reimplementation Using puffs
 .Re
 .Sh HISTORY
 An unsupported experimental version of
