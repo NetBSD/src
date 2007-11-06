@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183 2007/06/02 06:23:56 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.183.10.1 2007/11/06 23:23:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2007/06/02 06:23:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183.10.1 2007/11/06 23:23:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

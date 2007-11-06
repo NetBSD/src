@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.12 2007/07/15 23:24:47 macallan Exp $ */
+/* $NetBSD: if_mec.c,v 1.12.10.1 2007/11/06 23:21:53 matt Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.12 2007/07/15 23:24:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.12.10.1 2007/11/06 23:21:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"

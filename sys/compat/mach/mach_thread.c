@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.41 2007/05/17 14:51:37 yamt Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.41.8.1 2007/11/06 23:25:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.41 2007/05/17 14:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.41.8.1 2007/11/06 23:25:07 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,10 +122,8 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 	 */
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	if (l->l_stat == LSONPROC) {
-		l->l_priority = l->l_usrpri;
+	if (l->l_stat == LSONPROC)
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
-	}
 	*retval = mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 
@@ -207,10 +205,11 @@ mach_thread_create_running(args)
                 return (ENOMEM);
 
 	flags = 0;
-	if ((error = newlwp(l, p, uaddr, inmem, flags, NULL, 0,
-	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp)) != 0)
+	if ((error = lwp_create(l, p, uaddr, inmem, flags, NULL, 0,
+	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp,
+	    SCHED_OTHER)) != 0)
 	{
-		uvm_uarea_free(uaddr);
+		uvm_uarea_free(uaddr, curcpu());
 		return mach_msg_error(args, error);
 	}
 
@@ -321,11 +320,11 @@ mach_thread_info(args)
 
 		pti = (struct mach_policy_timeshare_info *)rep->rep_out;
 
-		pti->max_priority = tl->l_usrpri;
-		pti->base_priority = tl->l_usrpri;
-		pti->cur_priority = tl->l_usrpri;
+		pti->max_priority = tl->l_priority;
+		pti->base_priority = tl->l_priority;
+		pti->cur_priority = tl->l_priority;
 		pti->depressed = 0;
-		pti->depress_priority = tl->l_usrpri;
+		pti->depress_priority = tl->l_priority;
 		break;
 	}
 

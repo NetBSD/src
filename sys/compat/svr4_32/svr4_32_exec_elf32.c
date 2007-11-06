@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.17 2007/04/22 08:30:00 dsl Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.17.8.1 2007/11/06 23:25:17 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.17 2007/04/22 08:30:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.17.8.1 2007/11/06 23:25:17 matt Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.17 2007/04/22 08:30:00 dsl 
 
 #include <sys/mman.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

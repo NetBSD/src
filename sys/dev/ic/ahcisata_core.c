@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.4 2007/07/09 21:00:34 ad Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4 2007/07/09 21:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -71,6 +71,7 @@ void ahci_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
 void ahci_bio_start(struct ata_channel *, struct ata_xfer *);
 int  ahci_bio_complete(struct ata_channel *, struct ata_xfer *, int);
 void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
+void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
 void ahci_channel_start(struct ahci_softc *, struct ata_channel *);
 void ahci_timeout(void *);
 int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
@@ -347,8 +348,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
 			return;
 		/* stop channel */
-		AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
-		    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & ~AHCI_P_CMD_ST);
+		ahci_channel_stop(sc, chp, 0);
 		if (slot != 0) {
 			printf("ahci_intr_port: slot %d\n", slot);
 			panic("ahci_intr_port");
@@ -364,6 +364,10 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			chp->ch_status = WDCS_ERR;
 		}
 		xfer->c_intr(chp, xfer, is);
+		/* if channel has not been restarted, do it now */
+		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR)
+		    == 0)
+			ahci_channel_start(sc, chp);
 	} else {
 		slot = 0; /* XXX */
 		is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
@@ -392,26 +396,8 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	int i;
 
-	/* stop channel */
-	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
-	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & ~AHCI_P_CMD_ST);
-	/* wait 1s for channel to stop */
-	for (i = 0; i <100; i++) {
-		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR)
-		    == 0)
-			break;
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcirst", mstohz(10));
-		else
-			delay(10000);
-	}
-	if (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) {
-		printf("%s: channel wouldn't stop\n", AHCINAME(sc));
-		/* XXX controller reset ? */
-		return;
-	}
+	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus) != SStatus_DET_DEV) {
 		printf("%s: port reset failed\n", AHCINAME(sc));
@@ -621,6 +607,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		    AHCI_READ(sc, AHCI_GHC) & ~AHCI_GHC_IE);
 	}
 	chp->ch_flags |= ATACH_IRQ_WAIT;
+	chp->ch_status = 0;
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << slot);
 	/* and says we started this command */
@@ -865,6 +852,7 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		    AHCI_READ(sc, AHCI_GHC) & ~AHCI_GHC_IE);
 	}
 	chp->ch_flags |= ATACH_IRQ_WAIT;
+	chp->ch_status = 0;
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << slot);
 	/* and says we started this command */
@@ -944,7 +932,12 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 
 	achp->ahcic_cmds_active &= ~(1 << slot);
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
-	callout_stop(&chp->ch_callout);
+	if (xfer->c_flags & C_TIMEOU) {
+		ata_bio->error = TIMEOUT;
+	} else {
+		callout_stop(&chp->ch_callout);
+		ata_bio->error = 0;
+	}
 
 	chp->ch_queue->active_xfer = NULL;
 	bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
@@ -978,6 +971,30 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 	atastart(chp);
 	return 0;
+}
+
+void
+ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
+{
+	int i;
+	/* stop channel */
+	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
+	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & ~AHCI_P_CMD_ST);
+	/* wait 1s for channel to stop */
+	for (i = 0; i <100; i++) {
+		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR)
+		    == 0)
+			break;
+		if (flags & AT_WAIT)
+			tsleep(&sc, PRIBIO, "ahcirst", mstohz(10));
+		else
+			delay(10000);
+	}
+	if (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) {
+		printf("%s: channel wouldn't stop\n", AHCINAME(sc));
+		/* XXX controller reset ? */
+		return;
+	}
 }
 
 void

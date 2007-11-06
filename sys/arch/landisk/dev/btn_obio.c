@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.2 2007/07/09 20:52:19 ad Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.2.10.1 2007/11/06 23:18:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,7 +29,7 @@
 #include "pwrsw_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.2 2007/07/09 20:52:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.2.10.1 2007/11/06 23:18:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,11 +1,8 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.6 2007/08/07 19:00:42 ad Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.6.2.1 2007/11/06 23:25:10 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
  *  All rights reserved.
- *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -33,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.6 2007/08/07 19:00:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.6.2.1 2007/11/06 23:25:10 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

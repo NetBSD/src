@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.5 2007/07/16 18:24:29 xtraeme Exp $ */
+/*	$NetBSD: battery.c,v 1.5.10.1 2007/11/06 23:18:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.5 2007/07/16 18:24:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.5.10.1 2007/11/06 23:18:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.5 2007/07/16 18:24:29 xtraeme Exp $");
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/batteryvar.h>
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include "opt_battery.h"
 
 #ifdef BATTERY_DEBUG
@@ -315,6 +316,7 @@ static void
 battery_poll(void *cookie)
 {
 	struct battery_softc *sc = cookie;
+
 
 	battery_update(sc, 0);
 	if ((sc->sc_flags & PMU_PWR_AC_PRESENT) == sc->sc_oflags)

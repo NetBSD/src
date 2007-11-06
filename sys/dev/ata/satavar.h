@@ -1,4 +1,4 @@
-/*	$NetBSD: satavar.h,v 1.3 2006/11/20 23:42:21 bouyer Exp $	*/
+/*	$NetBSD: satavar.h,v 1.3.24.1 2007/11/06 23:25:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _DEV_ATA_SATAVAR_H_
 #define	_DEV_ATA_SATAVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/ata/atavar.h>
 
 /*

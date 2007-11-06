@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.40 2007/08/27 00:22:20 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.40.2.1 2007/11/06 23:22:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.40 2007/08/27 00:22:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.40.2.1 2007/11/06 23:22:04 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -432,12 +432,6 @@ ast(struct lwp *l, struct trapframe *tf)
 {
 
 	if (KERNELMODE(tf->tf_ssr)) {
-		extern char _lock_cas_ras_start[];
-		extern char _lock_cas_ras_end[];
-
-		if ((uintptr_t)tf->tf_spc > (uintptr_t)_lock_cas_ras_start
-		    && (uintptr_t)tf->tf_spc < (uintptr_t)_lock_cas_ras_end)
-			tf->tf_spc = (uintptr_t)_lock_cas_ras_start;
 		return;
 	}
 
@@ -453,7 +447,7 @@ ast(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 
-		if (want_resched) {
+		if (l->l_cpu->ci_want_resched) {
 			/* We are being preempted. */
 			preempt();
 		}

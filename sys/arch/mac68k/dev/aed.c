@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.24 2007/07/09 20:52:20 ad Exp $	*/
+/*	$NetBSD: aed.c,v 1.24.10.1 2007/11/06 23:18:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.24 2007/07/09 20:52:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.24.10.1 2007/11/06 23:18:17 matt Exp $");
 
 #include "opt_adb.h"
 

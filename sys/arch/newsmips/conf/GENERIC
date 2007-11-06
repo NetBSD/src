@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2007/07/18 15:19:07 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.99.6.1 2007/11/06 23:19:43 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.99.6.1 $"
 
 maxusers	16
 
@@ -37,12 +37,7 @@ options 	KTRACE			# system call tracing support
 #options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options 	SEMMNI=10		# number of semaphore identifiers
-#options 	SEMMNS=60		# number of semaphores in system
-#options 	SEMUME=10		# max number of undo entries per process
-#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	NTP			# network time protocol

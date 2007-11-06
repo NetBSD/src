@@ -1,9 +1,10 @@
-/*	$NetBSD: machdep.c,v 1.92 2007/07/14 21:48:22 ad Exp $	*/
-
-/*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+/*	$NetBSD: machdep.c,v 1.92.10.1 2007/11/06 23:20:03 matt Exp $	*/
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,270 +16,88 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2007/07/14 21:48:22 ad Exp $");
-
-#include "opt_compat_netbsd.h"
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.10.1 2007/11/06 23:20:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/syslog.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
-#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-
 #include <dev/ofw/openfirm.h>
+#include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-#include <machine/platform.h>
+#include <machine/bus.h>
+#include <machine/isa_machdep.h>
 
 #include <powerpc/oea/bat.h>
-
-#include <dev/cons.h>
-
-#include "ksyms.h"
-/*
- * Global variables used here and there
- */
-char bootpath[256];
-
-int lcsplx(int);			/* called from locore.S */
-
-static int fake_spl __P((int));
-static void fake_splx __P((int));
-static void fake_setsoft __P((int));
-static void fake_clock_return __P((struct clockframe *, int, long));
-static void *fake_intr_establish __P((int, int, int, int (*)(void *), void *));
-static void fake_intr_disestablish __P((void *));
-
-struct machvec machine_interface = {
-	fake_spl,
-	fake_spl,
-	fake_splx,
-	fake_setsoft,
-	fake_clock_return,
-	fake_intr_establish,
-	fake_intr_disestablish,
-};
-
-void	ofppc_bootstrap_console(void);
+#include <powerpc/ofw_cons.h>
 
 struct pmap ofw_pmap;
+char bootpath[256];
+
+void ofwppc_batinit(void);
+void	ofppc_bootstrap_console(void);
 
 void
-initppc(startkernel, endkernel, args)
-	u_int startkernel, endkernel;
-	char *args;
+initppc(u_int startkernel, u_int endkernel, char *args)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
-	extern void *startsym, *endsym;
-#endif
-
-	/* Initialize the bootstrap console. */
-	ofppc_bootstrap_console();
-
-	/*
-	 * Initialize the bat registers
-	 */
-	oea_batinit(0);
-
-	/*
-	 * Initialize the platform structure.  This may add entries
-	 * to the BAT table.
-	 */
-	platform_init();
-
-#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
-	OF_set_callback(callback);
-#endif
-
-	oea_init(NULL);
-
-	/*
-	 * Now that translation is enabled (and we can access bus space),
-	 * initialize the console.
-	 */
-	(*platform.cons_init)();
-
-	/*
-	 * Parse arg string.
-	 */
-	strcpy(bootpath, args);
-	while (*++args && *args != ' ');
-	if (*args) {
-		for(*args++ = 0; *args; args++)
-			BOOT_FLAG(*args, boothowto);
-	}
-
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
+	ofwoea_initppc(startkernel, endkernel, args);
 }
 
-/*
- * Machine dependent startup code.
- */
 void
-cpu_startup()
+cpu_startup(void)
 {
-
 	oea_startup(NULL);
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	splhigh();
-	mtmsr(mfmsr() | PSL_EE | PSL_RI);
-	softintr__init();
-	if (platform.softintr_init != NULL)
-		platform.softintr_init();
 }
+
 
 void
-consinit()
+consinit(void)
 {
-
-	(*cn_tab->cn_probe)(cn_tab);
+	ofwoea_consinit();
 }
 
-void	ofcons_cnprobe(struct consdev *);
-int	ofppc_cngetc(dev_t);
-void	ofppc_cnputc(dev_t, int);
-
-struct consdev ofppc_bootcons = {
-	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
-	    NULL, NULL, makedev(0,0), 1,
-};
-
-int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
-int	ofppc_stdin_phandle, ofppc_stdout_phandle;
 
 void
-ofppc_bootstrap_console(void)
+dumpsys(void)
 {
-	int chosen;
-	char data[4];
-
-	chosen = OF_finddevice("/chosen");
-
-	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdin_ihandle = of_decode_int(data);
-	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
-
-	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdout_ihandle = of_decode_int(data);
-	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
-
-	cn_tab = &ofppc_bootcons;
-
- nocons:
-	return;
-}
-
-int
-ofppc_cngetc(dev_t dev)
-{
-	u_char ch = '\0';
-	int l;
-
-	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return (-1);
-
-	return (ch);
-}
-
-void
-ofppc_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(ofppc_stdout_ihandle, &ch, 1);
-}
-
-/*
- * Crash dump handling.
- */
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(irq)
-	int irq;
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
+	printf("dumpsys: TBD\n");
 }
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
+void rtas_reboot(void);
+
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
@@ -287,8 +106,8 @@ cpu_reboot(howto, what)
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
-		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
+		vfs_shutdown();         /* sync */
+		resettodr();            /* set wall clock */
 	}
 	splhigh();
 	if (howto & RB_HALT) {
@@ -300,6 +119,9 @@ cpu_reboot(howto, what)
 		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
+
+	rtas_reboot();
+
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
 			printf("boot string too large, ignored\n");
@@ -318,85 +140,4 @@ cpu_reboot(howto, what)
 	if (ap[-2] == '-')
 		*ap1 = 0;
 	ppc_boot(str);
-}
-
-#ifdef notyet
-/*
- * OpenFirmware callback routine
- */
-void
-callback(p)
-	void *p;
-{
-	panic("callback");	/* for now			XXX */
-}
-#endif
-
-/*
- * Perform an `splx()' for locore.
- */
-int
-lcsplx(int ipl)
-{
-
-	return (_spllower(ipl));
-}
-
-/*
- * Initial Machine Interface.
- */
-static int
-fake_spl(int new)
-{
-	int scratch;
-
-	__asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
-	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
-	return (-1);
-}
-
-static void
-fake_setsoft(int ipl)
-{
-	/* Do nothing */
-}
-
-static void
-fake_splx(new)
-	int new;
-{
-
-	(void) fake_spl(0);
-}
-
-static void
-fake_clock_return(frame, nticks, ticks)
-	struct clockframe *frame;
-	int nticks;
-	long ticks;
-{
-
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = mftb() + ticks - ticks_per_intr;
-}
-
-static void *
-fake_intr_establish(irq, level, ist, handler, arg)
-	int irq, level, ist;
-	int (*handler) __P((void *));
-	void *arg;
-{
-
-	panic("fake_intr_establish");
-}
-
-static void
-fake_intr_disestablish(cookie)
-	void *cookie;
-{
-
-	panic("fake_intr_disestablish");
 }

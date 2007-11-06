@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2007/05/21 15:06:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122.10.1 2007/11/06 23:19:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2007/05/21 15:06:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122.10.1 2007/11/06 23:19:27 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -227,13 +227,6 @@ int	mem_cluster_cnt;
 int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 512;	/* assume some reasonable value to start */
 
-/*
- * Since mvme68k boards can have anything from 4MB of onboard RAM, we
- * would rather set the PAGER_MAP_SIZE at runtime based on the amount
- * of onboard RAM.
- */
-int	mvme68k_pager_map_size;
-
 /* Machine-dependent initialization routines. */
 void	mvme68k_init __P((void));
 
@@ -256,13 +249,17 @@ mvme68k_init()
 	int i;
 
 	/*
-	 * Set PAGER_MAP_SIZE to half the size of onboard RAM, up to a
+	 * Since mvme68k boards can have anything from 4MB of onboard RAM, we
+	 * would rather set the pager_map_size at runtime based on the amount
+	 * of onboard RAM.
+	 *
+	 * Set pager_map_size to half the size of onboard RAM, up to a
 	 * maximum of 16MB.
 	 * (Note: Just use ps_end here since onboard RAM starts at 0x0)
 	 */
-	mvme68k_pager_map_size = phys_seg_list[0].ps_end / 2;
-	if (mvme68k_pager_map_size > (16 * 1024 * 1024))
-		mvme68k_pager_map_size = 16 * 1024 * 1024;
+	pager_map_size = phys_seg_list[0].ps_end / 2;
+	if (pager_map_size > (16 * 1024 * 1024))
+		pager_map_size = 16 * 1024 * 1024;
 
 	/*
 	 * Tell the VM system about available physical memory.

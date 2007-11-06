@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.33 2007/07/28 20:28:56 mjf Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.33.6.1 2007/11/06 23:27:01 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.33 2007/07/28 20:28:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.33.6.1 2007/11/06 23:27:01 matt Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>

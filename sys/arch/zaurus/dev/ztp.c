@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.4 2007/07/09 20:52:41 ad Exp $	*/
+/*	$NetBSD: ztp.c,v 1.4.10.1 2007/11/06 23:24:41 matt Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.4 2007/07/09 20:52:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.4.10.1 2007/11/06 23:24:41 matt Exp $");
 
 #include "lcd.h"
 

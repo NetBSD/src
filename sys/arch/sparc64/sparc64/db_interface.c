@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.97 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.97.10.1 2007/11/06 23:22:49 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97 2007/05/17 14:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97.10.1 2007/11/06 23:22:49 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97 2007/05/17 14:51:31 yamt Exp $
 #include <machine/intr.h>
 
 #include "fb.h"
-#include "esp_sbus.h"
 
 /* pointer to the saved DDB registers */
 db_regs_t *ddb_regp;
@@ -286,7 +285,7 @@ void db_dump_itsb(db_expr_t, bool, db_expr_t, const char *);
 void db_pmap_kernel(db_expr_t, bool, db_expr_t, const char *);
 void db_pload_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_pmap_cmd(db_expr_t, bool, db_expr_t, const char *);
-void db_lock_cmd(db_expr_t, bool, db_expr_t, const char *);
+/* void db_lock_cmd(db_expr_t, bool, db_expr_t, const char *); */
 void db_traptrace(db_expr_t, bool, db_expr_t, const char *);
 void db_watch(db_expr_t, bool, db_expr_t, const char *);
 void db_pm_extract(db_expr_t, bool, db_expr_t, const char *);
@@ -562,32 +561,7 @@ db_dump_dtlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	extern void print_dtlb(void);
 
-	if (have_addr) {
-		int i;
-		int64_t* p = (int64_t*)addr;
-		static int64_t buf[128];
-		extern void dump_dtlb(int64_t *);
-		
-		dump_dtlb(buf);
-		p = buf;
-		for (i=0; i<64;) {
-#ifdef __arch64__
-			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
-			p += 2;
-#else
-			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
-			p += 2;
-#endif
-		}
-	} else {
-#ifdef DEBUG
-		print_dtlb();
-#endif
-	}
+	print_dtlb();
 }
 
 void
@@ -595,32 +569,7 @@ db_dump_itlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	extern void print_itlb(void);
 
-	if (have_addr) {
-		int i;
-		int64_t* p = (int64_t*)addr;
-		static int64_t buf[128];
-		extern void dump_itlb(int64_t *);
-		
-		dump_itlb(buf);
-		p = buf;
-		for (i=0; i<64;) {
-#ifdef __arch64__
-			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
-			p += 2;
-#else
-			db_printf("%2d:%16.16qx %16.16qx ", i++, p[0], p[1]);
-			p += 2;
-			db_printf("%2d:%16.16qx %16.16qx\n", i++, p[0], p[1]);
-			p += 2;
-#endif
-		}
-	} else {
-#ifdef DEBUG
-		print_itlb();
-#endif
-	}
+	print_itlb();
 }
 
 void
@@ -788,6 +737,7 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 }
 
 
+#if 0
 void
 db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -809,6 +759,7 @@ db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("locks unsupported\n");
 #endif
 }
+#endif
 
 #define TSBENTS (512 << tsbsize)
 extern pte_t *tsb_dmmu, *tsb_immu;
@@ -882,8 +833,8 @@ db_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		return;
 	}
 	db_printf("lwp %p: lid %d\n", l, l->l_lid);
-	db_printf("wchan:%p pri:%d upri:%d tf:%p\n",
-		  l->l_wchan, l->l_priority, l->l_usrpri, l->l_md.md_tf);
+	db_printf("wchan:%p pri:%d epri:%d tf:%p\n",
+		  l->l_wchan, l->l_priority, lwp_eprio(l), l->l_md.md_tf);
 	db_printf("pcb: %p fpstate: %p\n", &l->l_addr->u_pcb, 
 		l->l_md.md_fpstate);
 	return;
@@ -1185,7 +1136,7 @@ cpu_debug_dump(void)
 
 	for (ci = cpus; ci; ci = ci->ci_next) {
 		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
-			  ci->ci_number, (u_long)ci->ci_self,
+			  ci->ci_index, (u_long)ci->ci_self,
 			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
 	}
 }
@@ -1207,14 +1158,14 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		return;
 	}
 	for (ci = cpus; ci != NULL; ci = ci->ci_next)
-		if (ci->ci_number == addr)
+		if (ci->ci_index == addr)
 			break;
 	if (ci == NULL) {
 		db_printf("CPU %ld not configured\n", addr);
 		return;
 	}
 	if (ci != curcpu()) {
-		if (!mp_cpu_is_paused(ci->ci_number)) {
+		if (!mp_cpu_is_paused(ci->ci_index)) {
 			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}
@@ -1252,42 +1203,102 @@ db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	uvmhist_dump(LIST_FIRST(&uvm_histories));
 }
 
-#if NESP_SBUS
-extern void db_esp(db_expr_t, bool, db_expr_t, const char*);
-#endif
-
 const struct db_command db_machine_command_table[] = {
-	{ "ctx",	db_ctx_cmd,	0,	0 },
-	{ "dtlb",	db_dump_dtlb,	0,	0 },
-	{ "itlb",	db_dump_itlb,	0,	0 },
-	{ "dtsb",	db_dump_dtsb,	0,	0 },
-	{ "itsb",	db_dump_itsb,	0,	0 },
-#if NESP_SBUS
-	{ "esp",	db_esp,		0,	0 },
+	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,	
+	  "Print process MMU context information", NULL,NULL) },
+#ifdef MULTIPROCESSOR
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,
+	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-	{ "extract",	db_pm_extract,	0,	0 },
-	{ "fpstate",	db_dump_fpstate,0,	0 },
-	{ "kmap",	db_pmap_kernel,	0,	0 },
-	{ "lock",	db_lock_cmd,	0,	0 },
-	{ "lwp",	db_lwp_cmd,	0,	0 },
-	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "pctx",	db_setpcb,	0,	0 },
-	{ "page",	db_page_cmd,	0,	0 },
-	{ "phys",	db_pload_cmd,	0,	0 },
-	{ "pmap",	db_pmap_cmd,	0,	0 },
-	{ "proc",	db_proc_cmd,	0,	0 },
-	{ "prom",	db_prom_cmd,	0,	0 },
-	{ "pv",		db_dump_pv,	0,	0 },
-	{ "stack",	db_dump_stack,	0,	0 },
-	{ "tf",		db_dump_trap,	0,	0 },
-	{ "ts",		db_dump_ts,	0,	0 },
-	{ "traptrace",	db_traptrace,	0,	0 },
-	{ "uvmdump",	db_uvmhistdump,	0,	0 },
-	{ "watch",	db_watch,	0,	0 },
-	{ "window",	db_dump_window,	0,	0 },
-	{ "cpu",	db_cpu_cmd,	0,	0 },
-	{ "sir",	db_sir_cmd,	0,	0 },
-	{ .name = NULL, }
+	{ DDB_ADD_CMD("dtlb",	db_dump_dtlb,	0,
+	  "Print data translation look-aside buffer context information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("itlb",	db_dump_itlb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("dtsb",	db_dump_dtsb,	0,
+	  "Display data translation storage buffer information.", NULL,NULL) },
+	{ DDB_ADD_CMD("itsb",	db_dump_itsb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("extract",	db_pm_extract,	0,
+	  "Extract the physical address from the kernel pmap.",
+	  "address", "   address:\tvirtual address to look up") },
+	{ DDB_ADD_CMD("fpstate",	db_dump_fpstate,0,
+	  "Dump the FPU state." ,NULL,NULL) },
+	{ DDB_ADD_CMD("kmap",	db_pmap_kernel,	0,
+	  "Display information about mappings in the kernel pmap.",
+	  "[/f] [address]",
+	  "   address:\tdisplay the mapping for this virtual address\n"
+	  "   /f:\tif no address is given, display a full dump of the pmap") },
+#if 0
+	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
+#endif
+	{ DDB_ADD_CMD("lwp",	db_lwp_cmd,	0,
+	  "Display a struct lwp",
+	  "[address]",
+	  "   address:\tthe struct lwp to print (curlwp otherwise)") },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,
+	  "Display information about a struct pcb",
+	  "[address]",
+	  "   address:\tthe struct pcb to print (curpcb otherwise)") },
+	{ DDB_ADD_CMD("pctx",	db_setpcb,	0,
+	  "Attempt to change MMU process context","pid",
+	  "   pid:\tthe process id to switch the MMU context to") },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,
+	  "Display the address of a struct vm_page given a physical address",
+	   "pa", "   pa:\tphysical address to look up") },
+	{ DDB_ADD_CMD("phys",	db_pload_cmd,	0,
+	   "Display physical memory.", "[address][,count]",
+	   "   adddress:\tphysical address to start (8 byte aligned)\n"
+	   "   count:\tnumber of bytes to display") },
+	{ DDB_ADD_CMD("pmap",	db_pmap_cmd,	0,
+	   "Display the pmap", "[/f] [pm_addr]",
+	   "   pm_addr:\tAddress of struct pmap to display\n"
+	   "   /f:\tdo a full dump of the pmap") },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,
+	  "Display some information about a process",
+	  "[addr]","   addr:\tstruct proc address (curproc otherwise)") },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,
+	  "Enter the OFW PROM.", NULL,NULL) },
+	{ DDB_ADD_CMD("pv",		db_dump_pv,	0,
+	  "Display a struct pv for a physical address",
+	  "pa", "   pa:\tphysical address of a managed page") },
+	{ DDB_ADD_CMD("sir",	db_sir_cmd,	0,
+	  "do a Software Initiated Reset (entering PROM)", NULL,NULL) },
+	{ DDB_ADD_CMD("stack",		db_dump_stack,	0,
+	  "Dump the window stack.", "[/u] [addr]",
+	  "   addr:\tstart address of dump (current stack otherwise)\n"
+	  "   /u:\tcontinue trace into userland") },
+	{ DDB_ADD_CMD("tf",		db_dump_trap,	0,
+	  "Display full trap frame state.",
+	  "[/u] [addr]",
+	  "   addr:\tdisplay this trap frame (current kernel frame otherwise)\n"
+	  "   /u:\tdisplay the current userland trap frame") },
+	{ DDB_ADD_CMD("ts",		db_dump_ts,	0,
+	  "Display trap state.", NULL,NULL) },
+	{ DDB_ADD_CMD("traptrace",	db_traptrace,	0,
+	  "Display or set trap trace information.",
+	  "[/fr] [addr]",
+	  "   addr:\tstart address of trace\n"
+	  "   /f:\tdisplay full information\n"
+	  "   /r:\treverse the trace order") },
+	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,
+	  "Dumps the UVM histories.",NULL,NULL) },
+	{ DDB_ADD_CMD("watch",	db_watch,	0,
+	  "Set or clear a physical or virtual hardware watchpoint.",
+	  "[/prbhlL] [addr]",
+	  "   addr:\tset the breakpoint (clear watchpoint if not present)\n"
+	  "   /p:\taddress is physical\n"
+	  "   /r:\ttrap on reads too (otherwise only write access)\n"
+	  "   /b:\t8 bit\n"
+	  "   /h:\t16 bit\n"
+	  "   /l:\t32 bit\n"
+	  "   /L:\t64 bit") },
+	{ DDB_ADD_CMD("window",	db_dump_window,	0,
+	  "Print register window information",
+	  "[no]", "   no:\tstack frame number (0, i.e. top, if missing)") },
+	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };
 
 #endif	/* DDB */

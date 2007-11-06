@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2007/02/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.24.1 2007/11/06 23:20:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,30 @@
 
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
+
+static __inline int
+__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_LOCKED;
+}
+
+static __inline int
+__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
+{
+	*__ptr = __SIMPLELOCK_LOCKED;
+}
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

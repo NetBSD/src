@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.11 2007/07/09 21:00:37 ad Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.11.8.1 2007/11/06 23:26:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.11 2007/07/09 21:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.11.8.1 2007/11/06 23:26:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.11 2007/07/09 21:00:37 ad Exp $");
 #include <sys/scsiio.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2387,8 +2387,8 @@ njsc32_intr(void *arg)
 
 		idbit = njsc32_read_1(sc, NJSC32_REG_RESELECT_ID);
 		if ((idbit & (1 << NJSC32_INITIATOR_ID)) == 0 ||
-		    (sc->sc_reselid = ffs(idbit & ~NJSC32_INITIATOR_ID) -1)
-		    < 0) {
+		    (sc->sc_reselid =
+		     ffs(idbit & ~(1 << NJSC32_INITIATOR_ID)) - 1) < 0) {
 			printf("%s: invalid reselection (id: %#x)\n",
 			    sc->sc_dev.dv_xname, idbit);
 			sc->sc_stat = NJSC32_STAT_IDLE;	/* XXX ? */

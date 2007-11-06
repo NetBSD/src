@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.6 2007/08/26 23:07:15 dyoung Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.6.2.1 2007/11/06 23:17:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1998

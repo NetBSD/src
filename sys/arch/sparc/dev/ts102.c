@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.8 2007/07/09 20:52:30 ad Exp $ */
+/*	$NetBSD: ts102.c,v 1.8.10.1 2007/11/06 23:22:23 matt Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *

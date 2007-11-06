@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.12 2006/11/16 01:32:51 christos Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.12.24.1 2007/11/06 23:26:24 matt Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.12 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.12.24.1 2007/11/06 23:26:24 matt Exp $");
 #endif
 
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.12 2006/11/16 01:32:51 christos
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <sys/socket.h>
  

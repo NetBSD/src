@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.4 2007/07/09 20:52:41 ad Exp $	*/
+/*	$NetBSD: zrc.c,v 1.4.10.1 2007/11/06 23:24:41 matt Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.4 2007/07/09 20:52:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.4.10.1 2007/11/06 23:24:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2007/07/10 12:15:01 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.99.10.1 2007/11/06 23:19:53 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,12 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.99.10.1 $"
 
 maxusers	32
+
+options		PIC_OPENPIC
+options		PIC_I8259
 
 # various hacks due to bugs in Openfirmware implementation
 options 	FIRMWORKSBUGS
@@ -37,12 +40,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -54,8 +52,10 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+#options	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options		DDB_VERBOSE_HELP
 options 	TRAP_PANICWAIT
 
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -146,6 +146,21 @@ options 	NMBCLUSTERS=1024
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options		MIIVERBOSE	# verbose PHY autoconfig messages
+options		PCIVERBOSE	# verbose PCI device autoconfig messages
+#options		PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options		SCSIVERBOSE	# human readable SCSI error messages
+options		USBVERBOSE	# verbose USB device autoconfig messages
+
+options		WSEMUL_VT100
+options		WS_DEFAULT_FG=WSCOL_BLACK
+options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options		FONT_GALLANT12x22
+
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
 
@@ -155,24 +170,39 @@ config		netbsd	root on ? type ?
 
 mainbus*	at root
 
-# Generic OpenFirmware bus support
-ofbus*		at mainbus?
-ofbus*		at ofbus?
+# Generic OpenFirmware console support
+rtas*		at mainbus?
 
 # CPUs
 cpu*		at mainbus?
 
-# Generic OpenFirmware disk support
-ofdisk*		at ofbus?
+# PCI root nodes
+ofwpci*		at mainbus?
+pci*		at ofwpci? bus ?
 
-# Generic OpenFirmware network interface support
-ofnet*		at ofbus?
+pegasospci*	at mainbus?
+pci*		at pegasospci? bus ?
 
-# Generic OpenFirmware console support
-ofcons*		at ofbus?
+# PCI devices
+pchb*		at pci? dev ? function ?
+ppb*		at pci? dev ? function ?
+pcn*		at pci? dev ? function ?
+siop*		at pci? dev ? function ?
+pcib*		at pci? dev ? function ?
+#genfb*		at pci? dev ? function ?
 
-# Generic OpenFirmware real-time clock support
-ofrtc*		at ofbus?
+# make sure the console display is always wsdisplay0
+#wsdisplay0      at wsemuldisplaydev? console 1
+#wsdisplay*      at wsemuldisplaydev?
+
+isa*		at pcib?
+
+# Parallel Printer Interfaces
+# ISA parallel printer interfaces
+lpt0		at isa? port 0x3bc irq 7	# standard PC parallel ports
+
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)

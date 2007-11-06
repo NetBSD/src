@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.101 2007/05/28 12:06:24 tls Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.101.8.1 2007/11/06 23:25:19 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -89,7 +89,7 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
-.if ${USE_FORT:Uno} == "yes"
+.if ${USE_SSP:Uno} == "yes"
 CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
@@ -453,7 +453,7 @@ EXTRA_CLEAN+= .gdbinit
 # The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.
 VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
-    nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
+    nfs/nfs_bio.c uvm/uvm_bio.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c
 
 . if ${HAVE_GCC} > 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.21 2007/07/02 17:49:47 xtraeme Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.21.8.1 2007/11/06 23:26:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -163,14 +163,13 @@ struct lm_softc {
 	bus_space_tag_t	lm_iot;
 	bus_space_handle_t lm_ioh;
 
-	int	sc_flags;
-	struct	timeval lastread; /* only allow reads every 1.5 seconds */
+	callout_t sc_callout;
 
 	envsys_data_t sensors[WB_MAX_SENSORS];
 	struct sysmon_envsys sc_sysmon;
 	uint8_t numsensors;
 
-	void (*refresh_sensor_data)(struct lm_softc *, int);
+	void (*refresh_sensor_data)(struct lm_softc *);
 
 	uint8_t (*lm_readreg)(struct lm_softc *, int);
 	void (*lm_writereg)(struct lm_softc *, int, int);
@@ -189,7 +188,8 @@ struct lm_sensor {
 	int rfact;
 };
 
-void lm_attach(struct lm_softc *);
-int lm_probe(bus_space_tag_t, bus_space_handle_t);
+void 	lm_attach(struct lm_softc *);
+void	lm_detach(struct lm_softc *);
+int 	lm_probe(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */

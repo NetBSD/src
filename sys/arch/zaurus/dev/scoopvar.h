@@ -1,4 +1,4 @@
-/*	$NetBSD: scoopvar.h,v 1.3 2007/07/29 14:29:38 nonaka Exp $	*/
+/*	$NetBSD: scoopvar.h,v 1.3.6.1 2007/11/06 23:24:40 matt Exp $	*/
 /*	$OpenBSD: zaurus_scoopvar.h,v 1.10 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*

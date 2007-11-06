@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.6 2007/07/09 21:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.6.8.1 2007/11/06 23:26:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.6 2007/07/09 21:00:37 ad Exp $")
 #include <sys/types.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

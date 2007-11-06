@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.223 2007/05/17 14:51:29 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.223.10.1 2007/11/06 23:22:27 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223 2007/05/17 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223.10.1 2007/11/06 23:22:27 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

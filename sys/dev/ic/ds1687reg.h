@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.8 2005/12/11 12:21:26 christos Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.8.46.1 2007/11/06 23:26:34 matt Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -164,6 +164,23 @@
 #define DS1687_BANK1_START	0x40	/* BANK1: Start of BANK1 registers */
 #define	DS1687_BANK1_CENTURY	0x48 	/* BANK1: Time of yr: Century (0-99) */
 #define	DS1687_BANK1_ADATE	0x49	/* BANK1: Alarm: Date (1-31) */
+#define DS1687_BANK1_XCTRL4A	0x4a
+	#define DS1687_X4A_VRT	0x80	/* valid RAM / time */
+	#define DS1687_X4A_INCR	0x40	/* increment status */
+	#define DS1687_X4A_BME	0x20	/* burst mode enable */
+	#define DS1687_X4A_PAB	0x08	/* power active bar */
+	#define DS1687_X4A_RCF	0x04	/* read clear flag */
+	#define DS1687_X4A_WAF	0x02	/* wakeup alarm flag */
+	#define DS1687_X4A_KF	0x01	/* kickstart flag */
+#define DS1687_BANK1_XCTRL4B	0x4b
+	#define DS1687_X4B_ABE	0x80	/* auxillary battery enable */
+	#define DS1687_X4B_E32K	0x40	/* enable 32.768kHz output */
+	#define DS1687_X4B_CS	0x20	/* chrystal select */
+	#define DS1687_X4B_RCE	0x10	/* RAM clear enable */
+	#define DS1687_X4B_PRS	0x08	/* PAB reset select */
+	#define DS1687_X4B_RCIE	0x04	/* RAM clear interrupt enable */
+	#define DS1687_X4B_WIE	0x02	/* wakeup interrupt enable */
+	#define DS1687_X4B_KIE	0x01	/* kickstart interrupt enable */
 
 #define	DS1687_NBASEREGS	0x0d	/* 14 registers; CMOS follows */
 

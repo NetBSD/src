@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.50.1 2007/11/06 23:21:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,9 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Exp $");
-
-#include "opt_openpic.h"
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.50.1 2007/11/06 23:21:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,16 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2005/12/11 12:18:51 christos Ex
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/intr.h>
-#include <machine/openpicreg.h>
+#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
-
-#include <sandpoint/isa/icu.h>
+#include <dev/pci/pcidevs.h>
 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
@@ -89,32 +85,75 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+#define	EPIC_DEBUGIRQ
+
+static int brdtype;
+#define BRD_SANDPOINTX2		2
+#define BRD_SANDPOINTX3		3
+#define BRD_ENCOREPP1		10
+#define BRD_KUROBOX		100
+#define BRD_QNAPTS101		101
+#define BRD_SYNOLOGY		102
+#define BRD_UNKNOWN		-1
+
 #define	PCI_CONFIG_ENABLE	0x80000000UL
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
+	pcitag_t tag;
+	pcireg_t dev11, dev22, dev15;
+
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 11, 0);
+	dev11 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(dev11) == PCI_CLASS_BRIDGE) {
+		/* WinBond/Symphony Lab 83C553 at dev 11 */
+		/*
+		 * XXX distinguish SP3 from SP2 by fiddling ISA GPIO #7/6.
+		 * XXX SP3 #7 output values loopback to #6 input.
+		 */
+		brdtype = BRD_SANDPOINTX3;
+		return;
+	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 22, 0);
+	dev22 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(dev22) == PCI_CLASS_BRIDGE) {
+		/* VIA 82C686B at dev 22 */
+		brdtype = BRD_ENCOREPP1;
+		return;
+	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 11, 0);
+	dev11 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(dev11) == PCI_CLASS_NETWORK) {
+		/* tlp (ADMtek AN985) or re (RealTek 8169S) at dev 11 */
+		brdtype = BRD_KUROBOX;
+		return;
+	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 15, 0);
+	dev15 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL) {
+		/* Intel GbE at dev 15 */
+		brdtype = BRD_QNAPTS101;
+		return;
+	}
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
+		/* Marvell GbE at dev 15 */
+		brdtype = BRD_SYNOLOGY;
+		return;
+	}
+	brdtype = BRD_UNKNOWN;
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return (32);
+	return 32;
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -127,10 +166,8 @@ pci_make_tag(pc, bus, device, function)
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
+    int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -148,49 +185,37 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
  * DINK32 ROM doesn't do it that way (I peeked at 0xfec00000 after running
  * the DINK32 "pcf" command).
  */
-#define SP_PCI(tag, reg) ((tag) | (reg))
-
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, SP_PCI(tag,reg));
+	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	data = in32rb(SANDPOINT_PCI_CONFIG_DATA);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 	return data;
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, SP_PCI(tag, reg));
+
+	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, data);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 }
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
 
-	if (pin == 0) {
-		/* No IRQ used. */
+	/* No IRQ used. */
+	if (pin == 0)
 		goto bad;
-	}
-
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -209,90 +234,126 @@ pci_intr_map(pa, ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		aprint_error("pci_intr_map: no mapping for pin %c\n",
+		    '@' + pin);
 		goto bad;
 	}
-#if defined(OPENPIC_SERIAL_MODE)
-	if (line == 11) {
-		switch (pin) {
-		case PCI_INTERRUPT_PIN_A:
-			*ihp = SANDPOINT_INTR_WINBOND_A;
-			break;
-		case PCI_INTERRUPT_PIN_B:
-			*ihp = SANDPOINT_INTR_WINBOND_B;
-			break;
-		case PCI_INTERRUPT_PIN_C:
-			*ihp = SANDPOINT_INTR_WINBOND_C;
-			break;
-		case PCI_INTERRUPT_PIN_D:
-			*ihp = SANDPOINT_INTR_WINBOND_D;
-			break;
-		default:
-			printf("pci_intr_map: bad interrupt line %d,%c\n",
-				line, pin + '@');
-			goto bad;
+#ifdef EPIC_DEBUGIRQ
+printf("line %d, pin %c", line, pin + '@');
+#endif
+	switch (brdtype) {
+	/* Sandpoint has 4 PCI slots in a weird order.
+	 * From next to MPMC mezzanine card toward the board edge,
+	 * 	64bit slot PCI AD14
+	 * 	64bit slot PCI AD13
+	 * 	32bit slot PCI AD16
+	 * 	32bit slot PCI AD15
+	 * Don't believe identifying labels printed on PCB and
+	 * documents confusing as well since Moto names the slots
+	 * as number 1 origin.
+	 */
+	case BRD_SANDPOINTX3:
+	/*
+	 * Sandpoint X3 brd uses EPIC serial mode IRQ.
+	 * - i8259 PIC interrupt to EPIC IRQ0.
+	 * - WinBond IDE PCI C/D to EPIC IRQ8/9.
+	 * - PCI AD13 pin A,B,C,D to EPIC IRQ2,5,4,3.
+	 * - PCI AD14 pin A,B,C,D to EPIC IRQ3,2,5,4.
+	 * - PCI AD15 pin A,B,C,D to EPIC IRQ4,3,2,5.
+	 * - PCI AD16 pin A,B,C,D to EPIC IRQ5,4,3,2.
+	 */
+		if (line == 11
+		    && pa->pa_function == 1 && pa->pa_bus == 0) {
+			/* X3 wires 83c553 pin C,D to EPIC IRQ8,9 */
+			*ihp = 8; /* pin C only, indeed */
 			break;
 		}
-			*ihp = SANDPOINT_INTR_WINBOND_C;
-	} else {
-#else
-	if (1) {
-#endif
-		/*
-		 * Sandpoint has 4 PCI slots.
-		 * Sandpoint rev. X2 has them in a weird order.  Counting
-		 * from center out toward the edge, we have:
-		 * 	Slot 1 (dev 14?) (labelled 1)
-		 * 	Slot 0 (dev 13?) (labelled 2)
-		 * 	Slot 3 (dev 16)  (labelled 3)
-		 * 	Slot 2 (dev 15)  (labelled 4)
-		 * To keep things confusing, we will consistently use a zero-
-		 * based numbering scheme where Motorola's is usually 1-based.
-		 */
 		if (line < 13 || line > 16) {
-			printf("pci_intr_map: bad interrupt line %d,%c\n",
+			aprint_error("pci_intr_map: bad interrupt line %d,%c\n",
 				line, pin + '@');
 			goto bad;
 		}
-
-		/*
-		 * In the PCI configuration code, we simply assign the dev
-		 * number to the interrupt line.  We extract it here for the
-		 * interrupt, but subtract off the lowest dev (13) to get
-		 * the IRQ.
-		 */
-#if defined(OPENPIC_SERIAL_MODE)
-		*ihp = line - 11;
-#else
-		*ihp = line - 13;
-#endif
+		line -= 13; pin -= 1;
+		*ihp = 2 + ((line + (4 - pin)) & 03);
+		break;
+	case BRD_SANDPOINTX2:
+	/*
+	 * Sandpoint X2 brd uses EPIC direct mode IRQ.
+	 * - i8259 PIC interrupt EPIC IRQ2.
+	 * - PCI AD13 pin A,B,C,D to EPIC IRQ0,1,2,3.
+	 * - PCI AD14 pin A,B,C,D to EPIC IRQ1,2,3,0.
+	 * - PCI AD15 pin A,B,C,D to EPIC IRQ2,3,0,1.
+	 * - PCI AD16 pin A,B,C,D to EPIC IRQ3,0,1,2.
+	 * - PCI AD12 is wired to PMPC device itself.
+	 */
+		if (line == 11
+		    && pa->pa_function == 1 && pa->pa_bus == 0) {
+			/* 83C553 PCI IDE comes thru EPIC IRQ2 */
+			*ihp = 2;
+			break;
+		}
+		if (line < 13 || line > 16) {
+			aprint_error("pci_intr_map: bad interrupt line %d,%c\n",
+				line, pin + '@');
+			goto bad;
+		}
+		line -= 13; pin -= 1;
+		*ihp = (line + pin) & 03;
+		break;
+	case BRD_ENCOREPP1:
+	/*
+	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ. VIA 686B SB
+	 * i8259 interrupt goes through EPC IRQ0.  PCI pin A-D are
+	 * tied with EPIC IRQ1-4.
+	 * - PCI AD22 pin A,B,C,D to EPIC IRQ 1,2,3,4.
+	 * - PCI AD23 pin A,B,C,D to EPIC IRQ 2,3,4,1.
+	 * - PCI AD24 pin A,B,C,D to EPIC IRQ 3,4,1,2.
+	 * - PCI AD25 pin A,B,C,D to EPIC IRQ 4,1,2,3.
+	 */
+		line -= 22; pin -= 1;
+		*ihp = 1 + ((line + pin) & 3);
+		break;
+	case BRD_KUROBOX:
+		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
+		*ihp = (line == 13) ? 4 : line - 11;
+		break;
+	case BRD_QNAPTS101:
+		/* map line 12-15 to EPIC IRQ0-3 */
+		*ihp = line - 12;
+		break;
+	case BRD_SYNOLOGY:
+		/* map line 12,13-15 to EPIC IRQ4,0-2 */
+		*ihp = (line == 12) ? 4 : line - 13;
+		break;
+	default:
+		/* map line 12-15 to EPIC IRQ0-3 */
+		*ihp = line - 12;
+		break;
 	}
+#ifdef EPIC_DEBUGIRQ
+printf(" = EPIC %d\n", *ihp);
+#endif
 	return 0;
-
-bad:
+  bad:
 	*ihp = -1;
 	return 1;
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih < 0 || ih >= ICU_LEN)
+	if (ih < 0 || ih >= OPENPIC_ICU)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	sprintf(irqstr, "irq %d", ih + I8259_ICU);
 	return (irqstr);
 	
 }
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -300,36 +361,26 @@ pci_intr_evcnt(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg)
 {
-#if 0
-	if (ih < SANDPOINT_INTR_PCI0 || ih > SANDPOINT_INTR_PCI3)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-#endif
-
 	/*
 	 * ih is the value assigned in pci_intr_map(), above.
-	 * For the Sandpoint, this is the zero-based slot #,
-	 * configured when the bus is set up.
+	 * It's the EPIC IRQ #.
 	 */
-	return intr_establish(ih, IST_LEVEL, level, func, arg);
+	return intr_establish(ih + I8259_ICU, IST_LEVEL, level, func, arg);
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(void *v, void *cookie)
 {
+
 	intr_disestablish(cookie);
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
-    int *iline)
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
+    int pin, int swiz, int *iline)
 {
 	if (bus == 0) {
 		*iline = dev;

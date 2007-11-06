@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 2007/04/20 13:37:05 njoly Exp $
+	$NetBSD: syscalls.master,v 1.15.8.1 2007/11/06 23:25:06 matt Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -63,7 +63,7 @@
 %%
 
 0	NOARGS	{ int linux_sys_nosys(void); } syscall
-1	NOARGS	{ int sys_exit(int rval); }
+1	NOARGS	{ int netbsd32_exit(int rval); }
 2	NOARGS	{ int sys_fork(void); }
 3	NOARGS	{ netbsd32_ssize_t netbsd32_read(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte); }
@@ -71,20 +71,20 @@
 		    const netbsd32_voidp buf, netbsd32_size_t nbyte); }
 5	STD	{ int linux32_sys_open(const netbsd32_charp path, int flags, \
 		    int mode); }
-6	NOARGS	{ int sys_close(int fd); }
+6	NOARGS	{ int netbsd32_close(int fd); }
 7	STD	{ int linux32_sys_waitpid(int pid, netbsd32_intp status, \
 		    int options);}
 8	STD	{ int linux32_sys_creat(const netbsd32_charp path, int mode); }
-9	STD	{ int linux32_sys_link(const netbsd32_charp path, \
+9	NOARGS	{ int netbsd32_link(const netbsd32_charp path, \
 		    const netbsd32_charp link); }
 10	STD	{ int linux32_sys_unlink(const netbsd32_charp path); }
 11	NOARGS	{ int netbsd32_execve(const netbsd32_charp path, \
 		    netbsd32_charpp argp, netbsd32_charpp envp); }
-12	STD	{ int linux32_sys_chdir(const netbsd32_charp path); }
+12	NOARGS	{ int netbsd32_chdir(const netbsd32_charp path); }
 13	STD	{ int linux32_sys_time(linux32_timep_t t); }
 14	STD	{ int linux32_sys_mknod(const netbsd32_charp path, \
 		    int mode, int dev); }
-15	STD	{ int linux32_sys_chmod(const netbsd32_charp path, int mode); }
+15	NOARGS	{ int netbsd32_chmod(const netbsd32_charp path, int mode); }
 16	STD	{ int linux32_sys_lchown16(const netbsd32_charp path, \
 		    int uid, int gid); }
 17	STD	{ int linux32_sys_break(netbsd32_charp nsize); }
@@ -94,7 +94,7 @@
 20	STD	{ pid_t linux_sys_getpid(void); }
 21	UNIMPL	mount
 22	UNIMPL	umount
-23	NOARGS	linux_setuid16 { int sys_setuid(uid_t uid); }
+23	NOARGS	linux_setuid16 { int netbsd32_setuid(uid_t uid); }
 24	NOARGS	linux_getuid16 { uid_t sys_getuid(void); }
 25	STD	{ int linux32_sys_stime(linux32_timep_t t); }
 26	UNIMPL	ptrace
@@ -105,7 +105,7 @@
 		    linux32_utimbufp_t times); }
 31	OBSOL	stty
 32	OBSOL	gtty
-33	STD	{ int linux32_sys_access(const netbsd32_charp path, \
+33	NOARGS	{ int netbsd32_access(const netbsd32_charp path, \
 		    int flags); }
 34	NOARGS	{ int linux_sys_nice(int incr); }
 35	OBSOL	ftime
@@ -113,14 +113,14 @@
 37	STD	{ int linux32_sys_kill(int pid, int signum); }
 38	STD	{ int linux32_sys_rename(const netbsd32_charp from, \
 		    const netbsd32_charp to); }
-39	STD	{ int linux32_sys_mkdir(const netbsd32_charp path, int mode); }
-40	STD	{ int linux32_sys_rmdir(const netbsd32_charp path); }
+39	NOARGS	{ int netbsd32_mkdir(const netbsd32_charp path, int mode); }
+40	NOARGS	{ int netbsd32_rmdir(const netbsd32_charp path); }
 41	NOARGS	{ int netbsd32_dup(u_int fd); }
 42	STD	{ int linux32_sys_pipe(netbsd32_intp fd); }
 43	STD	{ int linux32_sys_times(linux32_tmsp_t tms); }
 44	OBSOL	prof
 45	STD	{ int linux32_sys_brk(netbsd32_charp nsize); }
-46	NOARGS	linux_setgid16 { int sys_setgid(gid_t gid); }
+46	NOARGS	linux_setgid16 { int netbsd32_setgid(gid_t gid); }
 47	NOARGS	linux_getgid16 { gid_t sys_getgid(void); }
 48	STD	{ int linux32_sys_signal(int signum, \
 		    linux32_handler_t handler); }
@@ -134,11 +134,11 @@
 55	STD	{ int linux32_sys_fcntl(int fd, \
 		    int cmd, netbsd32_voidp arg); }
 56	OBSOL	mpx
-57	NOARGS	{ int sys_setpgid(int pid, int pgid); }
+57	NOARGS	{ int netbsd32_setpgid(int pid, int pgid); }
 58	OBSOL	ulimit
 59	STD	{ int linux32_sys_oldolduname( \
 		    linux32_oldold_utsnamep_t up); }
-60	NOARGS	{ int sys_umask(int newmask); }
+60	NOARGS	{ int netbsd32_umask(int newmask); }
 61	NOARGS	{ int netbsd32_chroot(netbsd32_charp path); }
 62	UNIMPL	ustat
 63	NOARGS	{ int netbsd32_dup2(u_int from, u_int to); }
@@ -169,7 +169,7 @@
 81	STD	{ int linux32_sys_setgroups16(int gidsetsize, \
 		    linux32_gidp_t gidset); }
 82	STD	{ int linux32_sys_oldselect(linux32_oldselectp_t lsp); }
-83	STD	{ int linux32_sys_symlink(netbsd32_charp path, \
+83	NOARGS	{ int netbsd32_symlink(netbsd32_charp path, \
 		    const netbsd32_charp link); }
 84	NOARGS	{ int compat_43_netbsd32_lstat43(const netbsd32_charp \
 		    path, netbsd32_stat43p_t ub); }
@@ -186,7 +186,7 @@
 		    netbsd32_long length); }
 93	NOARGS	{ int compat_43_netbsd32_oftruncate(int fd, \
 		    netbsd32_long length); }
-94	NOARGS	{ int sys_fchmod(int fd, int mode); }
+94	NOARGS	{ int netbsd32_fchmod(int fd, int mode); }
 95	STD	{ int linux32_sys_fchown16(int fd, int uid, int gid); }
 96	STD	{ int linux32_sys_getpriority(int which, int who); }
 97	STD	{ int linux32_sys_setpriority(int which, int who, int prio); }
@@ -214,7 +214,7 @@
 115	STD	{ int linux32_sys_swapoff(const netbsd32_charp path); }
 116	STD	{ int linux32_sys_sysinfo(linux32_sysinfop_t arg); }
 117	UNIMPL	ipc
-118	NOARGS	{ int sys_fsync(int fd); }
+118	NOARGS	{ int netbsd32_fsync(int fd); }
 119	STD	{ int linux32_sys_sigreturn(linux32_sigcontextp_t scp); }
 120	STD	{ int linux32_sys_clone(int flags, netbsd32_voidp stack); }
 121	UNIMPL	setdomainname
@@ -230,7 +230,7 @@
 130	UNIMPL	get_kernel_syms
 131	UNIMPL	quotactl
 132	UNIMPL	getpgid
-133	NOARGS	{ int sys_fchdir(int fd); }
+133	NOARGS	{ int netbsd32_fchdir(int fd); }
 134	UNIMPL	bdflush
 135	UNIMPL	sysfs
 136	UNIMPL	personality
@@ -246,18 +246,18 @@
 		    netbsd32_fd_setp_t writefds, \
 		    netbsd32_fd_setp_t exceptfds, \
 		    netbsd32_timevalp_t timeout); }
-143	NOARGS	{ int sys_flock(int fd, int how); } 
+143	NOARGS	{ int netbsd32_flock(int fd, int how); } 
 144	UNIMPL	msync
 145	NOARGS	{ int netbsd32_readv(int fd, \
 		    const netbsd32_iovecp_t iovp, u_int iovcnt); }
 146	NOARGS	{ netbsd32_ssize_t netbsd32_writev(int fd, \
 		    const netbsd32_iovecp_t iovp, int iovcnt); }
-147	NOARGS	{ pid_t sys_getsid(pid_t pid); }
+147	NOARGS	{ pid_t netbsd32_getsid(pid_t pid); }
 148	NOARGS	{ int linux_sys_fdatasync(int fd); }
 149	STD	{ int linux32_sys___sysctl(linux32___sysctlp_t lsp); }
 150	UNIMPL	mlock
 151	UNIMPL	munlock
-152	NOARGS	{ int sys_mlockall(int flags); }
+152	NOARGS	{ int netbsd32_mlockall(int flags); }
 153	NOARGS	{ int sys_munlockall(void); }
 154	UNIMPL	sched_setparam
 155	STD	{ int linux32_sys_sched_getparam(pid_t pid, \
@@ -303,7 +303,8 @@
 		    netbsd32_size_t sigsetsize); }
 180	UNIMPL	pread
 181	UNIMPL	pwrite
-182	UNIMPL	chown16
+182	STD	{ int linux32_sys_chown16(const netbsd32_charp path, \
+		    int uid, int gid); }
 183	NOARGS	{ int netbsd32___getcwd(netbsd32_charp bufp, \
 		    netbsd32_size_t length); } 
 184	UNIMPL	capget
@@ -326,27 +327,29 @@
 		    linux32_stat64p sp); }
 197	STD	{ int linux32_sys_fstat64(int fd, \
 		    linux32_stat64p sp); }
-198	UNIMPL	lchown
+198	NOARGS	{ int netbsd32___posix_lchown(const netbsd32_charp path, \
+		    int uid, int gid); }
 199	NOARGS	{ uid_t sys_getuid(void); }
 200	NOARGS	{ gid_t sys_getgid(void); }
 201	NOARGS	{ uid_t sys_geteuid(void); }
 202	NOARGS	{ gid_t sys_getegid(void); }
-203	NOARGS	{ int sys_setreuid(uid_t ruid, uid_t euid); }
-204	NOARGS	{ int sys_setregid(gid_t rgid, gid_t egid); }
+203	NOARGS	{ int netbsd32_setreuid(uid_t ruid, uid_t euid); }
+204	NOARGS	{ int netbsd32_setregid(gid_t rgid, gid_t egid); }
 205	NOARGS	{ int netbsd32_getgroups(int gidsetsize, \
 		    netbsd32_gid_tp gidset); }
 206	NOARGS	{ int netbsd32_setgroups(int gidsetsize, \
 		    netbsd32_gid_tp gidset); }
-207	NOARGS	{ int sys___posix_fchown(int fd, uid_t uid, gid_t gid); }
+207	NOARGS	{ int netbsd32___posix_fchown(int fd, uid_t uid, gid_t gid); }
 208	STD	{ int linux32_sys_setresuid(uid_t ruid, uid_t euid, \
 		    uid_t suid); }
 209	UNIMPL	getresuid
 210	STD	{ int linux32_sys_setresgid(gid_t rgid, gid_t egid, \
 		    gid_t sgid); }
 211	UNIMPL	getresgid
-212	UNIMPL	chown
-213 	NOARGS	{ int sys_setuid(uid_t uid); }
-214	NOARGS	{ int sys_setgid(gid_t gid); }
+212	NOARGS	{ int netbsd32___posix_chown(const netbsd32_charp path, \
+		    int uid, int gid); }
+213 	NOARGS	{ int netbsd32_setuid(uid_t uid); }
+214	NOARGS	{ int netbsd32_setgid(gid_t gid); }
 215	NOARGS	{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS	{ int linux_sys_getfsuid(void); }
 217	UNIMPL	pivot_root

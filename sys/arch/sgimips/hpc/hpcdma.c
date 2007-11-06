@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.13 2007/07/23 22:28:23 he Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.13.6.1 2007/11/06 23:21:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.13 2007/07/23 22:28:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.13.6.1 2007/11/06 23:21:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
