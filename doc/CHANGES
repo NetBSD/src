@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.940 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.941 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -227,3 +227,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
 		[xtraeme 20071029]
+	x86: Added support for Intel 82G965 chipset.  [jnemeth 20071030]
