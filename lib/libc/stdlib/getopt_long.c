@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.21 2007/07/05 16:05:40 ginsbach Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.22 2007/11/06 19:13:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,9 +33,14 @@
 #include "nbtool_config.h"
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H && !HAVE_GETOPT_LONG && !HAVE_DECL_OPTIND
+#define REPLACE_GETOPT
+#endif
+
+#ifdef REPLACE_GETOPT
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.21 2007/07/05 16:05:40 ginsbach Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.22 2007/11/06 19:13:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,11 +56,6 @@ __RCSID("$NetBSD: getopt_long.c,v 1.21 2007/07/05 16:05:40 ginsbach Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_NBTOOL_CONFIG_H && !HAVE_GETOPT_LONG && !HAVE_DECL_OPTIND
-#define REPLACE_GETOPT
-#endif
-
-#ifdef REPLACE_GETOPT
 #ifdef __weak_alias
 __weak_alias(getopt,_getopt)
 #endif
