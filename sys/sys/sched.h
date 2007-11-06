@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.41 2007/11/06 00:42:45 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.42 2007/11/06 17:59:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -195,11 +195,6 @@ bool		sched_curcpu_runnable_p(void);
 void		sched_dequeue(struct lwp *);
 void		sched_enqueue(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
-
-struct cpu_info *sched_takecpu(struct lwp *);		/* Take CPU on wake up and new LWP */
-int sched_migrate(struct lwp *, struct cpu_info *);	/* Migrate to the other CPU */
-int sched_setaffinity(pid_t, lwpid_t, cpuid_t);
-int sched_getaffinity(pid_t, lwpid_t);
 
 /* Priority adjustment */
 void		sched_nice(struct proc *, int);
