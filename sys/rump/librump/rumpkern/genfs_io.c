@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.4 2007/11/06 11:35:04 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.5 2007/11/06 15:25:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,7 +141,6 @@ genfs_getpages(void *v)
 		/* not found?  make a new page */
 		} else {
 			pg = rumpvm_makepage(uobj, curoff);
-			printf("made page %p\n", pg);
 		}
 		ap->a_m[i] = pg;
 	}
