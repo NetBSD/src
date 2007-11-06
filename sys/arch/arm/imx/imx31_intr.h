@@ -1,4 +1,4 @@
-/* $NetBSD: imx31_intr.h,v 1.1.2.3 2007/09/12 06:19:28 matt Exp $ */
+/* $NetBSD: imx31_intr.h,v 1.1.2.4 2007/11/06 19:19:47 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -138,7 +138,6 @@ const char *
 	intr_typename(int);
 
 void imx31_irq_handler(void *);
-void imx31_icu_init(void);
 
 #endif /* !_LOCORE */
 
