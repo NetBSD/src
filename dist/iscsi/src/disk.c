@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.30 2007/10/26 18:36:47 agc Exp $ */
+/* $NetBSD: disk.c,v 1.31 2007/11/06 15:59:10 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -1111,7 +1111,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case READ_CAPACITY:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_CAPACITY\n");
 		data = args->send_data;
-		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blockc - 1);	/* Max LBA */
+		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blockc);	/* Max LBA */
 		*((uint32_t *) (void *)(data + 4)) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blocklen);	/* Block len */
 		args->input = 8;
 		args->length = 8;
