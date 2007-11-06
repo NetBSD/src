@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.356 2007/11/05 23:19:39 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.357 2007/11/06 16:18:08 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10511,3 +10511,8 @@ distrib/notes/common/main			1.365-1.366
 	Sync the list of changes with NetBSD-4.0.xml.
 	[xtraeme, ticket #978]
 
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0_RC4.
+	[liamjfoy]
