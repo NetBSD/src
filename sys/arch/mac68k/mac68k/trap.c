@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128.8.1 2007/09/03 16:47:31 jmcneill Exp $	*/
+/*	$NetBSD: trap.c,v 1.128.8.2 2007/11/06 19:25:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.8.1 2007/09/03 16:47:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.8.2 2007/11/06 19:25:01 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -254,7 +254,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

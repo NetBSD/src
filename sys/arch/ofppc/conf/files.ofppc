@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.27.8.3 2007/11/04 21:03:05 jmcneill Exp $
+#	$NetBSD: files.ofppc,v 1.27.8.4 2007/11/06 19:25:04 joerg Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -20,6 +20,7 @@ defflag zsc.h NO_ZSC_DEVICE
 defflag adb.h NO_ADB_DEVICE
 defflag ukbd.h NO_UKBD_DEVICE
 defflag zstty.h NO_ZSTTY_DEVICE
+defflag ofb.h NO_OFB_DEVICE
 
 file	arch/ofppc/ofppc/autoconf.c
 file	arch/powerpc/powerpc/clock.c
@@ -28,7 +29,6 @@ file	arch/powerpc/oea/ofwoea_machdep.c
 file	arch/powerpc/oea/ofw_consinit.c
 file	arch/ofppc/ofppc/machdep.c
 #file	arch/ofppc/ofppc/platform.c
-file	arch/macppc/dev/ofb_cons.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
@@ -114,10 +114,6 @@ file	arch/powerpc/pci/pchb.c			pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/powerpc/pci/pcib.c			pcib
-
-device ofb: wsemuldisplaydev, rasops8, vcons
-attach ofb at pci
-file arch/macppc/dev/ofb.c			ofb needs-flag
 
 #
 # ISA bus support

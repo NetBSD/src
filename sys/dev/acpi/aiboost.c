@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.12.4.3 2007/11/04 21:03:22 jmcneill Exp $ */
+/* $NetBSD: aiboost.c,v 1.12.4.4 2007/11/06 19:25:16 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.12.4.3 2007/11/04 21:03:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.12.4.4 2007/11/06 19:25:16 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static int	aiboost_refresh_sensors(struct sysmon_envsys *,
 
 /* autoconf(9) glue */
 static int	aiboost_acpi_match(device_t, struct cfdata *, void *);
-static void	aiboost_acpi_attach(device_t, struct device *, void *);
+static void	aiboost_acpi_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(aiboost, sizeof(struct aiboost_softc), aiboost_acpi_match,
     aiboost_acpi_attach, NULL, NULL);

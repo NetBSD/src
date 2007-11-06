@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.h,v 1.3 2006/11/16 15:59:28 jdolecek Exp $	*/
+/*	$NetBSD: firewire.h,v 1.3.22.1 2007/11/06 19:25:18 joerg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewire.h,v 1.20 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: src/sys/dev/firewire/firewire.h,v 1.21 2007/04/24 12:15:05 simokawa Exp $
  *
  */
 
@@ -413,14 +413,14 @@ struct fw_crom_buf {
 #define FWMAXNDMA 0x100 /* 8 bits DMA channel id. in device No. */
 
 #define MAKEMINOR(f, u, s)	\
-	unit2minor((f) | (((u) & 0xff) << 8) | (s & 0xff))
-#define DEV2UNIT(x)	((dev2unit(x) & 0xff00) >> 8)
-#define DEV2SUB(x)	(dev2unit(x) & 0xff)
+	fw_unit2minor((f) | (((u) & 0xff) << 8) | (s & 0xff))
+#define DEV2UNIT(x)	((fw_dev2unit(x) & 0xff00) >> 8)
+#define DEV2SUB(x)	(fw_dev2unit(x) & 0xff)
 #define FW_UNITMASK	MAKEMINOR(0, -1, 0)
 #define FW_UNIT(unit)	MAKEMINOR(0, unit, 0)
 
 #define FWMEM_FLAG	0x10000
-#define DEV_FWMEM(x)	(dev2unit(x) & FWMEM_FLAG)
+#define DEV_FWMEM(x)	(fw_dev2unit(x) & FWMEM_FLAG)
 
 struct fw_attach_args {
 	const char *name;

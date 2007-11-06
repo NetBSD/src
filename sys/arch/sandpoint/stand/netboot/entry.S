@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.1.6.1 2007/11/02 13:34:50 joerg Exp $ */
+/* $NetBSD: entry.S,v 1.1.6.2 2007/11/06 19:25:07 joerg Exp $ */
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
@@ -6,20 +6,6 @@
 	.text
 	.globl _start
 _start:
-	/*
-	 * depending on the runtime circumstance and condition
-	 * of this program, the following may make severe trouble.
-	 * will make revival someday to make cache enabled.
-	 */
-#if 0
-	li	0,0
-	mtmsr	0			/* Disable FPU/MMU/exceptions */
-	isync
-
-        mfspr   8,1008
-        ori     8,8,(HID0_ICE | HID0_DCE)@l
-        mtspr   1008,8
-
 	mfspr	11,SPR_HID0
 	andi.	0,11,HID0_DCE
 	ori	11,11,HID0_ICE|HID0_DCE
@@ -33,7 +19,6 @@ _start:
 	mtspr	SPR_HID0,11		/* enable caches */
 	sync
 	isync
-#endif
 
 	/* make sure .bss gets zeroed. */
 	li	0,0
