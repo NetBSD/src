@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.4.8.2 2007/09/03 16:48:45 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.4.8.3 2007/11/06 19:25:23 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4.8.2 2007/09/03 16:48:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4.8.3 2007/11/06 19:25:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4.8.2 2007/09/03 16:48:45 jmcneill Exp $
 
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
+
+#ifdef GENFB_DEBUG
+#define GPRINTF panic
+#else
+#define GPRINTF aprint_verbose
+#endif
 
 static int	genfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	genfb_mmap(void *, void *, off_t, int);
@@ -89,16 +95,25 @@ genfb_init(struct genfb_softc *sc)
 #ifdef GENFB_DEBUG
 	printf(prop_dictionary_externalize(dict));
 #endif
-	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width))
-		panic("no width property");
-	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height))
-		panic("no height property");
-	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth))
-		panic("no depth property");
+	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
+		GPRINTF("no width property");
+		return;
+	}
+	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height)) {
+		GPRINTF("no height property");
+		return;
+	}
+	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
+		GPRINTF("no depth property");
+		return;
+	}
 
 	/* XXX should be a 64bit value */
-	if (!prop_dictionary_get_uint32(dict, "address", &fboffset))
-		panic("no address property");
+	if (!prop_dictionary_get_uint32(dict, "address", &fboffset)) {
+		GPRINTF("no address property");
+		return;
+	}
+
 	sc->sc_fboffset = fboffset;
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
@@ -234,6 +249,12 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
+
+				/* notify the bus backend */
+				if (sc->sc_ops.genfb_ioctl)
+					return sc->sc_ops.genfb_ioctl(sc, vs,
+					    cmd, data, flag, l);
+
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {

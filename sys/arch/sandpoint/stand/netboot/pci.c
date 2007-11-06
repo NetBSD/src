@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.1.6.2 2007/10/31 23:14:01 joerg Exp $ */
+/* $NetBSD: pci.c,v 1.1.6.3 2007/11/06 19:25:08 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -210,11 +210,11 @@ deviceinit(bus, dev, func)
 	/* 0x00 */
 	printf("%02d:%02d:%02d:", bus, dev, func);
 	val = cfgread(bus, dev, func, 0x00);
-	printf(" chip %04x,%04x", val & 0xffff, val>>16);
+	printf(" chip %04x.%04x", val & 0xffff, val>>16);
 	val = cfgread(bus, dev, func, 0x2c);
-	printf(" card %04x,%04x", val & 0xffff, val>>16);
+	printf(" card %04x.%04x", val & 0xffff, val>>16);
 	val = cfgread(bus, dev, func, 0x08);
-	printf(" rev %02x class %02x,%02x,%02x",
+	printf(" rev %02x class %02x.%02x.%02x",
 		val & 0xff, (val>>24), (val>>16) & 0xff, (val>>8) & 0xff);
 	val = cfgread(bus, dev, func, 0x0c);
 	printf(" hdr %02x\n", (val>>16) & 0xff);
@@ -387,7 +387,9 @@ _pcilookup(type, list, bus, index, limit)
 		class = cfgread(bus, device, 0, PCI_CLASS_REG);
 		if ((class >> 16) == PCI_CLASS_PPB) {
 			/* exploring bus beyond PCI-PCI bridge */
-			index += _pcilookup(type, list, bus + 1, index, limit);
+			index = _pcilookup(type, list, bus + 1, index, limit);
+			if (index >= limit)
+				goto out;
 			continue;
 		}
 		bhlcr = cfgread(bus, device, 0, PCI_BHLC_REG);

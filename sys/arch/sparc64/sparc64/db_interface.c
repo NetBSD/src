@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.97.8.1 2007/10/02 18:27:44 joerg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.97.8.2 2007/11/06 19:25:12 joerg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97.8.1 2007/10/02 18:27:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.97.8.2 2007/11/06 19:25:12 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -833,8 +833,8 @@ db_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		return;
 	}
 	db_printf("lwp %p: lid %d\n", l, l->l_lid);
-	db_printf("wchan:%p pri:%d upri:%d tf:%p\n",
-		  l->l_wchan, l->l_priority, l->l_usrpri, l->l_md.md_tf);
+	db_printf("wchan:%p pri:%d epri:%d tf:%p\n",
+		  l->l_wchan, l->l_priority, lwp_eprio(l), l->l_md.md_tf);
 	db_printf("pcb: %p fpstate: %p\n", &l->l_addr->u_pcb, 
 		l->l_md.md_fpstate);
 	return;

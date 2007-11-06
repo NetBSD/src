@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43.8.1 2007/10/26 15:43:14 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.43.8.2 2007/11/06 19:25:05 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.8.1 2007/10/26 15:43:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.8.2 2007/11/06 19:25:05 joerg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -360,8 +360,6 @@ trap(struct trapframe *frame)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
  done:
 	return;
 }
@@ -682,6 +680,4 @@ startlwp(arg)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
