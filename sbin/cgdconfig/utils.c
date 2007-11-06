@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.16 2007/02/06 00:48:37 cbiere Exp $ */
+/* $NetBSD: utils.c,v 1.17 2007/11/06 02:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.16 2007/02/06 00:48:37 cbiere Exp $");
+__RCSID("$NetBSD: utils.c,v 1.17 2007/11/06 02:50:49 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -141,19 +141,19 @@ memxor(void *res, const void *src, size_t len)
 /* for now we use a very simple encoding */
 
 struct string {
-	int	 length;
 	char	*text;
+	size_t	 length;
 };
 
 string_t *
-string_new(const char *intext, int inlength)
+string_new(const char *intext, size_t inlength)
 {
 	string_t *out;
 
 	out = emalloc(sizeof(*out));
 	out->length = inlength;
 	out->text = emalloc(out->length + 1);
-	memcpy(out->text, intext, out->length);
+	(void)memcpy(out->text, intext, out->length);
 	out->text[out->length] = '\0';
 	return out;
 }
@@ -191,8 +191,8 @@ string_add(const string_t *a1, const string_t *a2)
 	sum = emalloc(sizeof(*sum));
 	sum->length = a1->length + a2->length;
 	sum->text = emalloc(sum->length + 1);
-	memcpy(sum->text, a1->text, a1->length);
-	memcpy(sum->text + a1->length, a2->text, a2->length);
+	(void)memcpy(sum->text, a1->text, a1->length);
+	(void)memcpy(sum->text + a1->length, a2->text, a2->length);
 	sum->text[sum->length] = '\0';
 	return sum;
 }
@@ -229,7 +229,7 @@ string_fromint(int in)
 
 	ret = emalloc(sizeof(*ret));
 	ret->length = asprintf(&ret->text, "%d", in);
-	if (ret->length == -1)
+	if (ret->text == NULL)
 		err(1, NULL);
 	return ret;
 }
@@ -237,24 +237,23 @@ string_fromint(int in)
 void
 string_fprint(FILE *f, const string_t *s)
 {
-
-	fwrite(s->text, s->length, 1, f);
+	(void)fwrite(s->text, s->length, 1, f);
 }
 
 struct bits {
-	int	 length;
+	size_t	 length;
 	char	*text;
 };
 
 bits_t *
-bits_new(const void *buf, int len)
+bits_new(const void *buf, size_t len)
 {
 	bits_t	*b;
 
 	b = emalloc(sizeof(*b));
 	b->length = len;
 	b->text = emalloc(BITS2BYTES(b->length));
-	memcpy(b->text, buf, BITS2BYTES(b->length));
+	(void)memcpy(b->text, buf, BITS2BYTES(b->length));
 	return b;
 }
 
@@ -290,7 +289,7 @@ bits_getbuf(bits_t *in)
 	return in->text;
 }
 
-int
+size_t
 bits_len(bits_t *in)
 {
 
@@ -348,32 +347,32 @@ bits_t *
 bits_decode(const string_t *in)
 {
 	bits_t	*ret;
-	int	 len;
-	int	 nbits;
-	u_char	*tmp;
+	size_t	 len;
+	size_t	 nbits;
+	u_int32_t	*tmp;
 
 	len = in->length;
 	tmp = emalloc(len);
 
-	len = __b64_pton(in->text, tmp, len);
+	len = __b64_pton(in->text, (void *)tmp, len);
 
-	if (len == -1) {
-		fprintf(stderr, "bits_decode: mangled base64 stream\n");
-		fprintf(stderr, "  %s\n", in->text);
+	if (len == (size_t)-1) {
+		warnx("bits_decode: mangled base64 stream");
+		warnx("  %s", in->text);
 		free(tmp);
 		return NULL;
 	}
 
-	nbits = ntohl(*((u_int32_t *)tmp));
-	if (nbits > (len - 4) * 8) {
-		fprintf(stderr, "bits_decode: encoded bits claim to be "
-		    "longer than they are (nbits=%u, stream len=%u bytes)\n",
-		    (unsigned)nbits, (unsigned)len);
+	nbits = ntohl(*tmp);
+	if (nbits > (len - sizeof(*tmp)) * NBBY) {
+		warnx("bits_decode: encoded bits claim to be "
+		    "longer than they are (nbits=%zu, stream len=%zu bytes)",
+		    nbits, len);
 		free(tmp);
 		return NULL;
 	}
 
-	ret = bits_new(tmp+4, nbits);
+	ret = bits_new(tmp + 1, nbits);
 	free(tmp);
 	return ret;
 }
@@ -392,23 +391,23 @@ string_t *
 bits_encode(const bits_t *in)
 {
 	string_t *ret;
-	int	 len;
+	size_t	 len;
 	char	*out;
-	u_char	*tmp;
+	u_int32_t *tmp;
 
 	if (!in)
 		return NULL;
 
 	/* compute the total size of the input stream */
-	len = BITS2BYTES(in->length) + 4;
+	len = BITS2BYTES(in->length) + sizeof(*tmp);
 
 	tmp = emalloc(len);
 	out = emalloc(len * 2);
 	/* stuff the length up front */
-	*((u_int32_t *)tmp) = htonl(in->length);
-	memcpy(tmp + 4, in->text, len - 4);
+	*tmp = htonl(in->length);
+	(void)memcpy(tmp + 1, in->text, len - sizeof(*tmp));
 
-	if ((len = __b64_ntop(tmp, len, out, len * 2)) == -1) {
+	if ((len = __b64_ntop((void *)tmp, len, out, len * 2)) == (size_t)-1) {
 		free(out);
 		free(tmp);
 		return NULL;
@@ -430,7 +429,7 @@ bits_encode_d(bits_t *in)
 }
 
 bits_t *
-bits_fget(FILE *f, int len)
+bits_fget(FILE *f, size_t len)
 {
 	bits_t	*bits;
 	int	 ret;
@@ -447,7 +446,7 @@ bits_fget(FILE *f, int len)
 }
 
 bits_t *
-bits_cget(const char *fn, int len)
+bits_cget(const char *fn, size_t len)
 {
 	bits_t	*bits;
 	FILE	*f;
@@ -457,12 +456,12 @@ bits_cget(const char *fn, int len)
 		return NULL;
 
 	bits = bits_fget(f, len);
-	fclose(f);
+	(void)fclose(f);
 	return bits;
 }
 
 bits_t *
-bits_getrandombits(int len, int hard)
+bits_getrandombits(size_t len, int hard)
 {
 
 	return bits_cget((hard ? "/dev/random" : "/dev/urandom"), len);

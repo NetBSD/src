@@ -1,4 +1,4 @@
-/* $NetBSD: utils.h,v 1.6 2006/08/26 18:14:28 christos Exp $ */
+/* $NetBSD: utils.h,v 1.7 2007/11/06 02:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ void		  memxor(void *, const void *, size_t);
 
 void		  free_notnull(void *);
 
-string_t	 *string_new(const char *, int);
+string_t	 *string_new(const char *, size_t);
 string_t	 *string_dup(const string_t *);
 void		  string_assign(string_t **, string_t *);
 void		  string_free(string_t *);
@@ -69,12 +69,12 @@ string_t	 *string_fromint(int);
 
 void		  string_fprint(FILE *, const string_t *);
 
-bits_t		 *bits_new(const void *, int);
+bits_t		 *bits_new(const void *, size_t);
 bits_t		 *bits_dup(const bits_t *);
 void		  bits_assign(bits_t **, bits_t *);
 void		  bits_free(bits_t *);
 const void	 *bits_getbuf(bits_t *);
-int		  bits_len(bits_t *);
+size_t		  bits_len(bits_t *);
 int		  bits_match(const bits_t *, const bits_t *);
 
 bits_t		 *bits_xor(const bits_t *, const bits_t *);
@@ -85,9 +85,9 @@ bits_t		 *bits_decode_d(string_t *);
 string_t	 *bits_encode(const bits_t *);
 string_t	 *bits_encode_d(bits_t *);
 
-bits_t		 *bits_cget(const char *, int);
-bits_t		 *bits_fget(FILE *, int);
-bits_t		 *bits_getrandombits(int, int);
+bits_t		 *bits_cget(const char *, size_t);
+bits_t		 *bits_fget(FILE *, size_t);
+bits_t		 *bits_getrandombits(size_t, int);
 
 void		  bits_fprint(FILE *, const bits_t *);
 __END_DECLS

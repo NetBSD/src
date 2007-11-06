@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.7 2004/08/13 15:03:57 tv Exp $ */
+/* $NetBSD: params.h,v 1.8 2007/11/06 02:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 struct keygen {
 	int		 kg_method;
-	int		 kg_iterations;
+	size_t		 kg_iterations;
 	bits_t		*kg_salt;
 	bits_t		*kg_key;
 	struct keygen	*next;
@@ -53,8 +53,8 @@ struct params {
 	string_t	*algorithm;
 	string_t	*ivmeth;
 	bits_t		*key;
-	int		 keylen;
-	int		 bsize;
+	size_t		 keylen;
+	size_t		 bsize;
 	int		 verify_method;
 	struct keygen	*dep_keygen;
 	struct keygen	*keygen;
@@ -87,8 +87,8 @@ int		 params_verify(const struct params *);
 struct params	*params_combine(struct params *, struct params *);
 struct params	*params_algorithm(string_t *);
 struct params	*params_ivmeth(string_t *);
-struct params	*params_keylen(int);
-struct params	*params_bsize(int);
+struct params	*params_keylen(size_t);
+struct params	*params_bsize(size_t);
 struct params	*params_verify_method(string_t *);
 struct params	*params_keygen(struct keygen *);
 struct params	*params_dep_keygen(struct keygen *);
@@ -101,7 +101,7 @@ int		 params_cput(struct params *, const char *);
 struct keygen	*keygen_new(void);
 void		 keygen_free(struct keygen *);
 
-int		 keygen_filldefaults(struct keygen *, int);
+int		 keygen_filldefaults(struct keygen *, size_t);
 int		 keygen_verify(const struct keygen *);
 void		 keygen_addlist(struct keygen **, struct keygen *);
 
@@ -110,7 +110,7 @@ struct keygen	*keygen_generate(int);
 struct keygen	*keygen_method(string_t *);
 struct keygen	*keygen_set_method(struct keygen *, string_t *);
 struct keygen	*keygen_salt(bits_t *);
-struct keygen	*keygen_iterations(int);
+struct keygen	*keygen_iterations(size_t);
 struct keygen	*keygen_key(bits_t *);
 
 int		 keygen_fput(struct keygen *, int, FILE *);
