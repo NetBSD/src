@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.2.1 2007/10/29 19:23:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.2.2 2007/11/06 04:12:16 matt Exp $");
 
 #include "locators.h"
 
@@ -113,6 +113,7 @@ sm_gpmc_attach(struct device *parent, struct device *self, void *aux)
 	struct gpmc_attach_args *gpmc = aux;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	unsigned int count = 0;
 
 	bst = gpmc->gpmc_iot;
@@ -144,6 +145,14 @@ sm_gpmc_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&gpmcsc->sc_incomplete_ev, EVCNT_TYPE_INTR, NULL,
 	    self->dv_xname, "incomplete intr");
 
+	SMC_SELECT_BANK(sc, 1);
+	for (count = 0; count < ETHER_ADDR_LEN; count += 2) {
+		uint16_t tmp;
+		tmp = bus_space_read_2(bst, bsh, IAR_ADDR0_REG_W + count);
+		enaddr[count + 1] = (tmp >> 8) & 0xff;
+		enaddr[count] = tmp & 0xff;
+	}
+
 	/*
 	 * Reset the SMC
 	 */
@@ -163,5 +172,5 @@ sm_gpmc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Perform generic attach. */
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
-	smc91cxx_attach(sc, NULL);
+	smc91cxx_attach(sc, enaddr);
 }
