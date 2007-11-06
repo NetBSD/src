@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.7.24.1 2007/10/02 23:37:19 jmcneill Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.7.24.2 2007/11/06 19:25:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.7.24.1 2007/10/02 23:37:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.7.24.2 2007/11/06 19:25:16 joerg Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -987,7 +987,7 @@ acpi_pci_link_choose_irq(struct acpi_pci_link_softc *sc, struct link *link)
 	 * If this is an ISA IRQ, try using the SCI if it is also an ISA
 	 * interrupt as a fallback.
 	 */
-	if (link->l_isa_irq) {
+	if (link->l_isa_irq && !PCI_INTERRUPT_VALID(best_irq)) {
 		pos_irq = AcpiGbl_FADT.SciInterrupt;
 		pos_weight = pci_link_interrupt_weights[pos_irq];
 		if (pos_weight < best_weight) {

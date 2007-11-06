@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.6.2.3 2007/11/04 21:03:33 jmcneill Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.6.2.4 2007/11/06 19:25:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.2.3 2007/11/04 21:03:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.2.4 2007/11/06 19:25:33 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -54,23 +54,24 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.2.3 2007/11/04 21:03:33 jmcneill Ex
 #include <sys/types.h>
 
 /*
- * XXX: Some definitions below will disappear
- * XXX: with the merge of vmlocking branch.
+ * Priority related defintions.
  */
-#define	PRI_MAX		MAXPRI
-#define	PRI_COUNT	(PRI_MAX + 1)			/* 0 .. 127  -> 128 */
-#define	PRI_RT_COUNT	(50)				/* 0 .. 49   -> 50  */
-#define	PRI_TS_COUNT	(PRI_COUNT - PRI_RT_COUNT)	/* 50 .. 127 -> 78  */
+#define	PRI_TS_COUNT	(NPRI_USER)
+#define	PRI_RT_COUNT	(PRI_COUNT - PRI_TS_COUNT)
+#define	PRI_HTS_RANGE	(PRI_TS_COUNT / 10)
 
-#define	PRI_DEFAULT	70				/* 70 */
-#define	PRI_REALTIME	50				/* 50 */
-#define	PRI_HTS_RANGE	10				/* 50 .. 60  -> 10 */
+#define	PRI_HIGHEST_TS	(PRI_KERNEL - 1)
+#define	PRI_DEFAULT	(NPRI_USER >> 1)
+
+const int schedppq = 1;
 
 /*
  * Bits per map.
  */
-#define	BITMAP_SHIFT		5		/* 32 bits */
-#define	BITMAP_SIZE		PRI_COUNT >> BITMAP_SHIFT
+#define	BITMAP_BITS	(32)
+#define	BITMAP_SHIFT	(5)
+#define	BITMAP_MSB	(0x80000000)
+#define	BITMAP_MASK	(BITMAP_BITS - 1)
 
 /*
  * Time-slices and priorities.
@@ -109,7 +110,7 @@ typedef struct {
 typedef struct {
 	/* Lock and bitmap */
 	kmutex_t	r_rq_mutex;
-	uint32_t	r_bitmap[BITMAP_SIZE];
+	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
 	/* Counters */
 	u_int		r_count;	/* Count of the threads */
 	pri_t		r_highest_pri;	/* Highest priority */
@@ -185,7 +186,7 @@ sched_rqinit(void)
 
 	/* Initialize the scheduler structure of the primary LWP */
 	lwp0.l_mutex = &ci->ci_schedstate.spc_lwplock;
-	sched_lwp_fork(&lwp0);
+	sched_lwp_fork(NULL, &lwp0);
 	sched_newts(&lwp0);
 }
 
@@ -229,7 +230,7 @@ sched_cpuattach(struct cpu_info *ci)
 		TAILQ_INIT(&ci_rq->r_rt_queue[i].q_head);
 	for (i = 0; i < PRI_TS_COUNT; i++)
 		TAILQ_INIT(&ci_rq->r_ts_queue[i].q_head);
-	ci_rq->r_highest_pri = PRI_MAX;
+	ci_rq->r_highest_pri = 0;
 
 	ci->ci_schedstate.spc_sched_info = ci_rq;
 	ci->ci_schedstate.spc_mutex = &ci_rq->r_rq_mutex;
@@ -240,18 +241,19 @@ static void
 sched_precalcts(void)
 {
 	pri_t p;
-	u_int i;
 
-	for (p = 0; p < PRI_REALTIME; p++) {
-		ts_map[p] = rt_ts;
-		high_pri[p] = p;
+	/* Time-sharing range */
+	for (p = 0; p <= PRI_HIGHEST_TS; p++) {
+		ts_map[p] = max_ts -
+		    (p * 100 / (PRI_TS_COUNT - 1) * (max_ts - min_ts) / 100);
+		high_pri[p] = (PRI_HIGHEST_TS - PRI_HTS_RANGE) +
+		    ((p * PRI_HTS_RANGE) / (PRI_TS_COUNT - 1));
 	}
 
-	for (p = PRI_REALTIME, i = 0; p < PRI_COUNT; p++, i++) {
-		ts_map[p] = min_ts +
-		    (i * 100 / (PRI_TS_COUNT - 1) * (max_ts - min_ts) / 100);
-		high_pri[p] = PRI_REALTIME + (i * PRI_HTS_RANGE /
-		    (PRI_MAX - PRI_REALTIME));
+	/* Real-time range */
+	for (p = (PRI_HIGHEST_TS + 1); p < PRI_COUNT; p++) {
+		ts_map[p] = rt_ts;
+		high_pri[p] = p;
 	}
 }
 
@@ -279,14 +281,14 @@ sched_proc_exit(struct proc *child, struct proc *parent)
 }
 
 void
-sched_lwp_fork(struct lwp *l)
+sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
-	KASSERT(l->l_sched_info == NULL);
-	l->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
-	memset(l->l_sched_info, 0, sizeof(sched_info_lwp_t));
-	if (l->l_usrpri >= PRI_REALTIME) /* XXX: For now only.. */
-		l->l_usrpri = l->l_priority = PRI_DEFAULT;
+	KASSERT(l2->l_sched_info == NULL);
+	l2->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
+	memset(l2->l_sched_info, 0, sizeof(sched_info_lwp_t));
+	if (l2->l_priority <= PRI_HIGHEST_TS) /* XXX: For now only.. */
+		l2->l_priority = PRI_DEFAULT;
 }
 
 void
@@ -296,6 +298,12 @@ sched_lwp_exit(struct lwp *l)
 	KASSERT(l->l_sched_info != NULL);
 	pool_put(&sil_pool, l->l_sched_info);
 	l->l_sched_info = NULL;
+}
+
+void
+sched_lwp_collect(struct lwp *l)
+{
+
 }
 
 void
@@ -322,10 +330,10 @@ sched_nice(struct proc *p, int prio)
 	int nprio;
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	p->p_nice = prio;
-	nprio = max(PRI_DEFAULT + p->p_nice, PRI_REALTIME);
+	nprio = max(min(PRI_DEFAULT + p->p_nice, PRI_HIGHEST_TS), 0);
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
@@ -352,9 +360,9 @@ sched_getrq(runqueue_t *ci_rq, const pri_t prio)
 {
 
 	KASSERT(prio < PRI_COUNT);
-	return (prio < PRI_REALTIME) ?
-	    &ci_rq->r_rt_queue[prio].q_head :
-	    &ci_rq->r_ts_queue[prio - PRI_REALTIME].q_head;
+	return (prio <= PRI_HIGHEST_TS) ?
+	    &ci_rq->r_ts_queue[prio].q_head :
+	    &ci_rq->r_rt_queue[prio - PRI_HIGHEST_TS - 1].q_head;
 }
 
 void
@@ -383,9 +391,9 @@ sched_enqueue(struct lwp *l, bool swtch)
 
 		/* Mark bit */
 		i = eprio >> BITMAP_SHIFT;
-		q = eprio - (i << BITMAP_SHIFT);
-		KASSERT((ci_rq->r_bitmap[i] & (1 << q)) == 0);
-		ci_rq->r_bitmap[i] |= 1 << q;
+		q = BITMAP_MSB >> (eprio & BITMAP_MASK);
+		KASSERT((ci_rq->r_bitmap[i] & q) == 0);
+		ci_rq->r_bitmap[i] |= q;
 	}
 	TAILQ_INSERT_TAIL(q_head, l, l_runq);
 	ci_rq->r_count++;
@@ -396,7 +404,7 @@ sched_enqueue(struct lwp *l, bool swtch)
 	 * Update the value of highest priority in the runqueue,
 	 * if priority of this thread is higher.
 	 */
-	if (eprio < ci_rq->r_highest_pri)
+	if (eprio > ci_rq->r_highest_pri)
 		ci_rq->r_highest_pri = eprio;
 
 	sched_newts(l);
@@ -411,7 +419,7 @@ sched_dequeue(struct lwp *l)
 
 	ci_rq = l->l_cpu->ci_schedstate.spc_sched_info;
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-	KASSERT(ci_rq->r_highest_pri <= eprio); 
+	KASSERT(eprio <= ci_rq->r_highest_pri); 
 	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
 	KASSERT(ci_rq->r_count > 0);
 
@@ -427,9 +435,9 @@ sched_dequeue(struct lwp *l)
 
 		/* Unmark bit */
 		i = eprio >> BITMAP_SHIFT;
-		q = eprio - (i << BITMAP_SHIFT);
-		KASSERT((ci_rq->r_bitmap[i] & (1 << q)) != 0);
-		ci_rq->r_bitmap[i] &= ~(1 << q);
+		q = BITMAP_MSB >> (eprio & BITMAP_MASK);
+		KASSERT((ci_rq->r_bitmap[i] & q) != 0);
+		ci_rq->r_bitmap[i] &= ~q;
 
 		/*
 		 * Update the value of highest priority in the runqueue, in a
@@ -442,13 +450,13 @@ sched_dequeue(struct lwp *l)
 			q = ffs(ci_rq->r_bitmap[i]);
 			if (q) {
 				ci_rq->r_highest_pri =
-				    (i << BITMAP_SHIFT) + q - 1;
+				    (i << BITMAP_SHIFT) + (BITMAP_BITS - q);
 				return;
 			}
-		} while (++i < BITMAP_SIZE);
+		} while (i--);
 
-		/* If not found - set the maximal value */
-		ci_rq->r_highest_pri = PRI_MAX;
+		/* If not found - set the lowest value */
+		ci_rq->r_highest_pri = 0;
 	}
 }
 
@@ -461,11 +469,13 @@ sched_slept(struct lwp *l)
 	sil->sl_slept = hardclock_ticks;
 
 	/*
-	 * If thread is not a real-time and batch flag is not marked,
-	 * increase the the priority, and run with lower time-quantum.
+	 * If thread is in time-sharing queue and batch flag is not marked,
+	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_usrpri > PRI_REALTIME && (sil->sl_flags & SL_BATCH) == 0)
-		l->l_usrpri--;
+	if (l->l_priority < PRI_HIGHEST_TS && (sil->sl_flags & SL_BATCH) == 0) {
+		KASSERT(l->l_class == SCHED_OTHER);
+		l->l_priority++;
+	}
 }
 
 void
@@ -479,7 +489,7 @@ sched_wakeup(struct lwp *l)
 
 	/* If thread was sleeping a second or more - set a high priority */
 	if (l->l_slptime > 1 || (hardclock_ticks - sil->sl_slept) >= hz)
-		l->l_usrpri = l->l_priority = high_pri[l->l_usrpri];
+		l->l_priority = high_pri[l->l_priority];
 
 	/* Also, consider looking for a better CPU to wake up */
 	if ((l->l_flag & (LW_BOUND | LW_SYSTEM)) == 0)
@@ -490,32 +500,40 @@ void
 sched_pstats_hook(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
+	bool batch;
+
+	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
+	    l->l_stat == LSSUSPENDED)
+		l->l_slptime++;
 
 	/*
 	 * Set that thread is more CPU-bound, if sum of run time exceeds the
-	 * sum of sleep time.  If it is CPU-bound not a first time - decrease
-	 * the priority.
+	 * sum of sleep time.  Check if thread is CPU-bound a first time.
 	 */
-	if (sil->sl_rtsum > sil->sl_slpsum) {
-		if ((sil->sl_flags & SL_BATCH) && (l->l_usrpri < PRI_MAX))
-			l->l_usrpri++;
+	batch = (sil->sl_rtsum > sil->sl_slpsum);
+	if (batch) {
+		if ((sil->sl_flags & SL_BATCH) == 0)
+			batch = false;
 		sil->sl_flags |= SL_BATCH;
-	} else {
+	} else
 		sil->sl_flags &= ~SL_BATCH;
-	}
+
+	/* Reset the time sums */
 	sil->sl_slpsum = 0;
 	sil->sl_rtsum = 0;
 
-	/*
-	 * Estimate only threads on time-sharing run queue, also,
-	 * ignore the highest time-sharing priority.
-	 */
-	if (l->l_stat != LSRUN || l->l_usrpri <= PRI_REALTIME)
+	/* Estimate threads on time-sharing queue only */
+	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
 
+	/* If it is CPU-bound not a first time - decrease the priority */
+	if (batch && l->l_priority != 0)
+		l->l_priority--;
+
 	/* If thread was not ran a second or more - set a high priority */
-	if (sil->sl_lrtime && (hardclock_ticks - sil->sl_lrtime >= hz))
-		lwp_changepri(l, high_pri[l->l_usrpri]);
+	if (l->l_stat == LSRUN && sil->sl_lrtime &&
+	    (hardclock_ticks - sil->sl_lrtime >= hz))
+		lwp_changepri(l, high_pri[l->l_priority]);
 }
 
 /*
@@ -568,33 +586,31 @@ sched_takecpu(struct lwp *l)
 
 	/* Stay if thread is cache-hot */
 	if (l->l_stat == LSSLEEP && l->l_slptime <= 1 &&
-	    CACHE_HOT(sil) && eprio <= spc->spc_curpriority)
+	    CACHE_HOT(sil) && eprio >= spc->spc_curpriority)
 		return ci;
 
 	/* Run on current CPU if priority of thread is higher */
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
-	if (eprio < spc->spc_curpriority && sched_migratable(l, ci))
+	if (eprio > spc->spc_curpriority && sched_migratable(l, ci))
 		return ci;
 
 	/*
 	 * Look for the CPU with the lowest priority thread.  In case of
 	 * equal the priority - check the lower count of the threads.
 	 */
-	lpri = 0;
-	ci_rq = NULL;
-	tci = l->l_cpu;
+	lpri = PRI_COUNT;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		runqueue_t *ici_rq;
 		pri_t pri;
 
 		spc = &ci->ci_schedstate;
 		ici_rq = spc->spc_sched_info;
-		pri = min(spc->spc_curpriority, ici_rq->r_highest_pri);
-		if (pri < lpri)
+		pri = max(spc->spc_curpriority, ici_rq->r_highest_pri);
+		if (pri > lpri)
 			continue;
 
-		if (pri == lpri && ci_rq && ci_rq->r_count < ici_rq->r_count)
+		if (pri == lpri && tci && ci_rq->r_count < ici_rq->r_count)
 			continue;
 
 		if (sched_migratable(l, ci) == false)
@@ -605,6 +621,7 @@ sched_takecpu(struct lwp *l)
 		ci_rq = ici_rq;
 	}
 
+	KASSERT(tci != NULL);
 	return tci;
 }
 
@@ -810,7 +827,7 @@ sched_tick(struct cpu_info *ci)
 	if (CURCPU_IDLE_P())
 		return;
 
-	switch (l->l_policy) {
+	switch (l->l_class) {
 	case SCHED_FIFO:
 		/*
 		 * Update the time-quantum, and continue running,
@@ -819,11 +836,14 @@ sched_tick(struct cpu_info *ci)
 		spc->spc_ticks = sil->sl_timeslice;
 		return;
 	case SCHED_OTHER:
-		/* Decrease the priority, and run with a higher time-quantum */
-		if (l->l_usrpri < PRI_REALTIME)
+		/*
+		 * If thread is in time-sharing queue, decrease the priority,
+		 * and run with a higher time-quantum.
+		 */
+		if (l->l_priority > PRI_HIGHEST_TS)
 			break;
-		l->l_usrpri = min(l->l_usrpri + 1, PRI_MAX);
-		l->l_priority = l->l_usrpri;
+		if (l->l_priority != 0)
+			l->l_priority--;
 		break;
 	}
 
@@ -831,7 +851,7 @@ sched_tick(struct cpu_info *ci)
 	 * If there are higher priority threads or threads in the same queue,
 	 * mark that thread should yield, otherwise, continue running.
 	 */
-	if (lwp_eprio(l) >= ci_rq->r_highest_pri) {
+	if (lwp_eprio(l) <= ci_rq->r_highest_pri) {
 		spc->spc_flags |= SPCF_SHOULDYIELD;
 		cpu_need_resched(ci, 0);
 	} else
@@ -993,16 +1013,16 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		    "avgcount = %u, highest pri = %d\n",
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 		    ci_rq->r_count, ci_rq->r_avgcount, ci_rq->r_highest_pri);
-		i = 0;
+		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
 		do {
-			int b;
-			b = ci_rq->r_bitmap[i];
-			(*pr)(" bitmap[%d] => [ %d (0x%x) ]\n", i, ffs(b), b);
-		} while (++i < BITMAP_SIZE);
+			uint32_t q;
+			q = ci_rq->r_bitmap[i];
+			(*pr)(" bitmap[%d] => [ %d (0x%x) ]\n", i, ffs(q), q);
+		} while (i--);
 	}
 
 	(*pr)("   %5s %4s %4s %10s %3s %4s %11s %3s %s\n",
-	    "LID", "PRI", "UPRI", "FL", "ST", "TS", "LWP", "CPU", "LRTIME");
+	    "LID", "PRI", "EPRI", "FL", "ST", "TS", "LWP", "CPU", "LRTIME");
 
 	PROCLIST_FOREACH(p, &allproc) {
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
@@ -1011,7 +1031,7 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 			ci = l->l_cpu;
 			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3d "
 			    "%u ST=%d RT=%d %d\n",
-			    (int)l->l_lid, l->l_priority, l->l_usrpri,
+			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
 			    sil->sl_timeslice, l, ci->ci_cpuid,

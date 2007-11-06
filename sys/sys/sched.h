@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.35.6.4 2007/10/31 23:14:19 joerg Exp $	*/
+/*	$NetBSD: sched.h,v 1.35.6.5 2007/11/06 19:25:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ struct schedstate_percpu {
 #ifdef _KERNEL
 
 extern int schedhz;			/* ideally: 16 */
+extern const int schedppq;
 
 struct proc;
 struct cpu_info;
@@ -195,6 +196,11 @@ void		sched_dequeue(struct lwp *);
 void		sched_enqueue(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
 
+struct cpu_info *sched_takecpu(struct lwp *);		/* Take CPU on wake up and new LWP */
+int sched_migrate(struct lwp *, struct cpu_info *);	/* Migrate to the other CPU */
+int sched_setaffinity(pid_t, lwpid_t, cpuid_t);
+int sched_getaffinity(pid_t, lwpid_t);
+
 /* Priority adjustment */
 void		sched_nice(struct proc *, int);
 pri_t		sched_kpri(struct lwp *);
@@ -202,8 +208,9 @@ pri_t		sched_kpri(struct lwp *);
 /* Handlers of fork and exit */
 void		sched_proc_fork(struct proc *, struct proc *);
 void		sched_proc_exit(struct proc *, struct proc *);
-void		sched_lwp_fork(struct lwp *);
+void		sched_lwp_fork(struct lwp *, struct lwp *);
 void		sched_lwp_exit(struct lwp *);
+void		sched_lwp_collect(struct lwp *);
 
 void		sched_slept(struct lwp *);
 void		sched_wakeup(struct lwp *);
@@ -217,7 +224,7 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 void		preempt(void);
 int		mi_switch(struct lwp *);
-inline void	resched_cpu(struct lwp *);
+void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct timeval *);
 
 #endif	/* _KERNEL */

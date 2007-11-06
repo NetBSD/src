@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.32.6.1 2007/10/26 15:48:41 joerg Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.32.6.2 2007/11/06 19:25:34 joerg Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.6.1 2007/10/26 15:48:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.6.2 2007/11/06 19:25:34 joerg Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1203,7 +1203,7 @@ vmem_rehash_start(void)
 	int error;
 
 	error = workqueue_create(&vmem_rehash_wq, "vmem_rehash",
-	    vmem_rehash_all, NULL, PVM, IPL_SOFTCLOCK, 0);
+	    vmem_rehash_all, NULL, PRI_VM, IPL_SOFTCLOCK, 0);
 	if (error) {
 		panic("%s: workqueue_create %d\n", __func__, error);
 	}

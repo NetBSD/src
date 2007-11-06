@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.141.6.3 2007/10/28 20:11:11 joerg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.141.6.4 2007/11/06 19:25:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141.6.3 2007/10/28 20:11:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141.6.4 2007/11/06 19:25:27 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -433,9 +433,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize,
-	    (func != NULL) ? func : child_return,
-	    arg, &l2);
+	lwp_create(l1, p2, uaddr, inmem, 0, stack, stacksize,
+	    (func != NULL) ? func : child_return, arg, &l2,
+	    l1->l_class);
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the

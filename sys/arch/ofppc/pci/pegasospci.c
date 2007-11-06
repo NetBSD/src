@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.2.4.3 2007/11/04 21:03:07 jmcneill Exp $ */
+/* $NetBSD: pegasospci.c,v 1.2.4.4 2007/11/06 19:25:05 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.4.3 2007/11/04 21:03:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.4.4 2007/11/06 19:25:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -171,7 +171,7 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
-			map_isa_ioregs();
+			map_isa_ioregs(sc->sc_iot.pbs_offset);
 		}
 		/* If we are, regarless of isa above, now we wire up interrupt
 		 * controllers.  We had to wait because of ISA.

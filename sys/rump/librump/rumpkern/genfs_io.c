@@ -1,9 +1,10 @@
-/*	$NetBSD: genfs_io.c,v 1.2.2.4 2007/11/04 21:03:48 jmcneill Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.2.2.5 2007/11/06 19:25:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by Google Summer of Code
+ * and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +29,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/kmem.h>
+#include <sys/lock.h>
 #include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs_node.h>
@@ -43,6 +46,15 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	panic("%s: not implemented", __func__);
 }
 
+/*
+ * miscfs/genfs getpages routine.  This is a fair bit simpler than the
+ * kernel counterpart since we're not being executed from a fault handler
+ * and generally don't need to care about PGO_LOCKED or other cruft.
+ * We do, however, need to care about page locking and we keep trying until
+ * we get all the pages within the range.  The object locking protocol
+ * is the same as for the kernel: enter with the object lock held,
+ * return with it released.
+ */
 int
 genfs_getpages(void *v)
 {
@@ -57,9 +69,10 @@ genfs_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct uvm_object *uobj = (struct uvm_object *)vp;
 	struct vm_page *pg;
 	voff_t curoff, endoff;
-	size_t remain, bufoff, xfersize;
+	size_t bufsize, remain, bufoff, xfersize;
 	uint8_t *tmpbuf;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1<<bshift;
@@ -81,19 +94,67 @@ genfs_getpages(void *v)
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
-		pg = uvm_pagelookup(&vp->v_uobj, curoff);
+ retrylookup:
+		pg = uvm_pagelookup(uobj, curoff);
 		if (pg == NULL)
+			break;
+
+		/* page is busy?  we need to wait until it's released */
+		if (pg->flags & PG_BUSY) {
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0, "getpg",0);
+			simple_lock(&uobj->vmobjlock);
+			goto retrylookup;
+		}
+		pg->flags |= PG_BUSY;
+		if (pg->flags & PG_FAKE)
 			break;
 		ap->a_m[i] = pg;
 	}
 
 	/* got everything?  if so, just return */
-	if (i == count)
+	if (i == count) {
+		simple_unlock(&uobj->vmobjlock);
 		return 0;
+	}
 
 	/*
-	 * else, transfer entire range for simplicity and copy into
-	 * page buffers
+	 * didn't?  Ok, allocate backing pages.  Start from the first
+	 * one we missed.
+	 */
+	for (; i < count; i++, curoff += PAGE_SIZE) {
+ retrylookup2:
+		pg = uvm_pagelookup(uobj, curoff);
+
+		/* found?  busy it and be happy */
+		if (pg) {
+			if (pg->flags & PG_BUSY) {
+				pg->flags = PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+				    "getpg2", 0);
+				simple_lock(&uobj->vmobjlock);
+				goto retrylookup2;
+			} else {
+				pg->flags |= PG_BUSY;
+			}
+
+		/* not found?  make a new page */
+		} else {
+			pg = rumpvm_makepage(uobj, curoff);
+		}
+		ap->a_m[i] = pg;
+	}
+
+	/*
+	 * We have done all the clerical work and have all pages busied.
+	 * Release the vm object for other consumers.
+	 */
+	simple_unlock(&uobj->vmobjlock);
+
+	/*
+	 * Now, we have all the pages here & busy.  Transfer the range
+	 * starting from the missing offset and transfer into the
+	 * page buffers.
 	 */
 
 	/* align to boundaries */
@@ -107,8 +168,8 @@ genfs_getpages(void *v)
 	    (unsigned long long)endoff));
 
 	/* read everything into a buffer */
-	tmpbuf = rumpuser_malloc(round_page(remain), 0);
-	memset(tmpbuf, 0, round_page(remain));
+	bufsize = round_page(remain);
+	tmpbuf = kmem_zalloc(bufsize, KM_SLEEP);
 	for (bufoff = 0; remain; remain -= xfersize, bufoff+=xfersize) {
 		struct buf *bp;
 		struct vnode *devvp;
@@ -167,17 +228,18 @@ genfs_getpages(void *v)
 			break;
 
 		pg = uvm_pagelookup(&vp->v_uobj, curoff + bufoff);
+		KASSERT(pg);
 		DPRINTF(("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff)));
-		if (pg == NULL) {
-			pg = rumpvm_makepage(&vp->v_uobj, curoff + bufoff);
+		if (pg->flags & PG_FAKE) {
 			memcpy((void *)pg->uanon, tmpbuf+bufoff, PAGE_SIZE);
+			pg->flags &= ~PG_FAKE;
 			pg->flags |= PG_CLEAN;
 		}
 		ap->a_m[i] = pg;
 	}
 	*ap->a_count = i;
 
-	rumpuser_free(tmpbuf);
+	kmem_free(tmpbuf, bufsize);
 
 	return 0;
 }
@@ -237,12 +299,20 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
  restart:
 	/* check if all pages are clean */
 	smallest = -1;
-	simple_lock(&uobj->vmobjlock);
 	for (pg = TAILQ_FIRST(&uobj->memq); pg; pg = pg_next) {
 		pg_next = TAILQ_NEXT(pg, listq);
+
+		/*
+		 * XXX: this is not correct at all.  But it's based on
+		 * assumptions we can make when accessing the pages
+		 * only through the file system and not through the
+		 * virtual memory subsystem.  Well, at least I hope
+		 * so ;)
+		 */
+		KASSERT((pg->flags & PG_BUSY) == 0);
+
 		if (pg->flags & PG_CLEAN) {
-			rumpvm_freepage(pg);
-			simple_lock(&uobj->vmobjlock);
+			uvm_pagefree(pg);
 			continue;
 		}
 
@@ -256,11 +326,9 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		simple_unlock(&uobj->vmobjlock);
 		return 0;
 	}
-	simple_unlock(&uobj->vmobjlock);
-
-	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 
 	/* we need to flush */
+	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 	for (curoff = smallest; curoff < eof; curoff += PAGE_SIZE) {
 		void *curva;
 
@@ -269,6 +337,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg == NULL)
 			break;
+
+		/* XXX: see comment about above KASSERT */
+		KASSERT((pg->flags & PG_BUSY) == 0);
+
 		curva = databuf + (curoff-smallest);
 		memcpy(curva, (void *)pg->uanon, PAGE_SIZE);
 		rumpvm_enterva((vaddr_t)curva, pg);
@@ -276,6 +348,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		pg->flags |= PG_CLEAN;
 	}
 	assert(curoff > smallest);
+
+	simple_unlock(&uobj->vmobjlock);
 
 	/* then we write */
 	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
@@ -339,6 +413,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	rumpvm_flushva();
 
+	simple_lock(&uobj->vmobjlock);
 	goto restart;
 }
 

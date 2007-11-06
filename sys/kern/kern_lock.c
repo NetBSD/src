@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.118.4.3 2007/10/31 23:14:09 joerg Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.118.4.4 2007/11/06 19:25:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118.4.3 2007/10/31 23:14:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118.4.4 2007/11/06 19:25:28 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118.4.3 2007/10/31 23:14:09 joerg Ex
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
@@ -325,7 +326,7 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
-	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
+	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	simple_lock(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
@@ -684,7 +685,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (panicstr != NULL)
 		return;
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
-	if (CURCPU_IDLE_P()) {
+	if (CURCPU_IDLE_P() && !cold) {
 		panic("assert_sleepable: idle");
 	}
 }

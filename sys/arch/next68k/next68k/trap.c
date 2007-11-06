@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67.8.1 2007/09/03 16:47:36 jmcneill Exp $	*/
+/*	$NetBSD: trap.c,v 1.67.8.2 2007/11/06 19:25:03 joerg Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.8.1 2007/09/03 16:47:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.8.2 2007/11/06 19:25:03 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -279,7 +279,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

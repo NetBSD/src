@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.10.5 2007/11/04 21:03:31 jmcneill Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.10.6 2007/11/06 19:25:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.10.5 2007/11/04 21:03:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.10.6 2007/11/06 19:25:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,11 @@ mi_cpu_attach(struct cpu_info *ci)
 		/* XXX revert sched_cpuattach */
 		return error;
 	}
+
+	if (ci == curcpu())
+		ci->ci_data.cpu_onproc = curlwp;
+	else
+		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
 
 	softint_init(ci);
 	xc_init_cpu(ci);
@@ -261,8 +266,13 @@ cpu_xc_offline(struct cpu_info *ci)
 		lwp_unlock(l);
 	}
 
-	/* Double-lock the runqueues */
-	if (ci < mci) {
+	/*
+	 * Runqueues are locked with the global lock if pointers match,
+	 * thus hold only one.  Otherwise, double-lock the runqueues.
+	 */
+	if (spc->spc_mutex == mspc->spc_mutex) {
+		spc_lock(ci);
+	} else if (ci < mci) {
 		spc_lock(ci);
 		spc_lock(mci);
 	} else {
@@ -284,8 +294,12 @@ cpu_xc_offline(struct cpu_info *ci)
 			lwp_setlock(l, mspc->spc_mutex);
 		}
 	}
-	spc_unlock(ci);
-	spc_unlock(mci);
+	if (spc->spc_mutex == mspc->spc_mutex) {
+		spc_unlock(ci);
+	} else {
+		spc_unlock(ci);
+		spc_unlock(mci);
+	}
 
 	mutex_exit(&proclist_lock);
 }

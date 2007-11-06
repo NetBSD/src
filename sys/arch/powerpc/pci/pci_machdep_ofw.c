@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.1.6.2 2007/11/04 21:03:08 jmcneill Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.1.6.3 2007/11/06 19:25:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.1.6.2 2007/11/04 21:03:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.1.6.3 2007/11/06 19:25:06 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -320,7 +320,7 @@ nomap:
 			prop_object_release(sub);
 		}
 	}
-	aprint_normal("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
+	aprint_debug("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
 }
 
 int

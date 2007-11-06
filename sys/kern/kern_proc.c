@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.113.6.4 2007/10/28 20:11:12 joerg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.113.6.5 2007/11/06 19:25:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.4 2007/10/28 20:11:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.5 2007/11/06 19:25:30 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -359,13 +359,13 @@ proc0_init(void)
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
 	l->l_cpu = curcpu();
-	l->l_priority = PUSER;
-	l->l_usrpri = PUSER;
-	l->l_inheritedprio = MAXPRI;
+	l->l_priority = PRI_USER + NPRI_USER - 1;
+	l->l_inheritedprio = -1;
+	l->l_class = SCHED_OTHER;
 	SLIST_INIT(&l->l_pi_lenders);
 	l->l_name = __UNCONST("swapper");
 
-	callout_init(&l->l_timeout_ch, 0);
+	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
 	cv_init(&l->l_sigcv, "sigwait");
 

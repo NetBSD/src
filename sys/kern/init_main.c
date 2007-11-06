@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311.4.6 2007/10/26 15:48:26 joerg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311.4.7 2007/11/06 19:25:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.6 2007/10/26 15:48:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.7 2007/11/06 19:25:24 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -640,17 +640,17 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PVM, 0, NULL, uvm_pageout,
+	if (kthread_create(PRI_PGDAEMON, 0, NULL, uvm_pageout,
 	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PRI_IOFLUSH, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PRI_VM, IPL_BIO, 0))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
