@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.123 2007/10/08 20:06:19 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.124 2007/11/06 00:42:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123 2007/10/08 20:06:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.124 2007/11/06 00:42:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,13 +224,13 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (kauth_authorize_process(cred, KAUTH_PROCESS_NICE, chgp,
 	    KAUTH_ARG(n), NULL, NULL))
 		return (EACCES);
-	mutex_spin_enter(&chgp->p_stmutex);
+	mutex_spin_enter(&chgp->p_smutex);
 	if (onice != chgp->p_nice) {
-		mutex_spin_exit(&chgp->p_stmutex);
+		mutex_spin_exit(&chgp->p_smutex);
 		goto again;
 	}
 	sched_nice(chgp, n);
-	mutex_spin_exit(&chgp->p_stmutex);
+	mutex_spin_exit(&chgp->p_smutex);
 	return (0);
 }
 

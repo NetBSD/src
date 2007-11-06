@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.12 2007/11/05 03:36:14 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.13 2007/11/06 00:42:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12 2007/11/05 03:36:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.13 2007/11/06 00:42:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,11 @@ mi_cpu_attach(struct cpu_info *ci)
 		/* XXX revert sched_cpuattach */
 		return error;
 	}
+
+	if (ci == curcpu())
+		ci->ci_data.cpu_onproc = curlwp;
+	else
+		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
 
 	softint_init(ci);
 	xc_init_cpu(ci);

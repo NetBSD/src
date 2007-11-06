@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.7 2007/09/01 23:40:23 pooka Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.8 2007/11/06 00:42:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.7 2007/09/01 23:40:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.8 2007/11/06 00:42:44 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ aio_init(struct proc *p)
 {
 	struct aioproc *aio;
 	struct lwp *l;
+	int error;
 	bool inmem;
 	vaddr_t uaddr;
 
@@ -118,11 +119,12 @@ aio_init(struct proc *p)
 		aio_exit(p, aio);
 		return EAGAIN;
 	}
-	if (newlwp(curlwp, p, uaddr, inmem, 0, NULL, 0,
-	    aio_worker, NULL, &l)) {
-		uvm_uarea_free(uaddr);
+	error = lwp_create(curlwp, p, uaddr, inmem, 0, NULL, 0, aio_worker,
+	    NULL, &l, curlwp->l_class);
+	if (error != 0) {
+		uvm_uarea_free(uaddr, curcpu());
 		aio_exit(p, aio);
-		return EAGAIN;
+		return error;
 	}
 
 	/* Recheck if we are really first */
@@ -142,7 +144,7 @@ aio_init(struct proc *p)
 	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
-	l->l_usrpri = PUSER - 1; /* XXX */
+	l->l_priority = PRI_KERNEL - 1;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
