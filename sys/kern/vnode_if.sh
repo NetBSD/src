@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.45 2007/10/10 20:42:28 ad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.46 2007/11/06 21:59:43 ad Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -256,16 +256,14 @@ __KERNEL_RCSID(0, \"\$NetBSD\$\");
 "
 
 echo '
-/*
- * If we have LKM support, always include the non-inline versions for
- * LKMs.  Otherwise, do it based on the option.
- */
-#include "opt_vnode_lockdebug.h"'
+#include "opt_vnode_lockdebug.h"
+#include "opt_multiprocessor.h"'
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/lock.h>
 
 const struct vnodeop_desc vop_default_desc = {
 	0,
@@ -352,8 +350,7 @@ function doit() {
 		if (i < (argc-1)) printf(",\n    ");
 	}
 	printf(")\n");
-	printf("{\n\tstruct %s_args a;\n", name);
-	printf("\tint rv;\n");
+	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n", name);
 	printf("#ifdef VNODE_LOCKDEBUG\n");
 	for (i=0; i<argc; i++) {
 		if (lockstate[i] != -1)
@@ -373,17 +370,20 @@ function doit() {
 			printf("#endif\n");
 		}
 	}
-	printf("\n\trv = VCALL(%s%s, VOFFSET(%s), &a);\n",
+	printf("\tmpsafe = (%s%s->v_vflag & VV_MPSAFE);\n", argname[0], arg0special);
+	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
+	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
+	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
-		printf("\tif (rv == 0)\n"				\
+		printf("\tif (error == 0)\n"				\
 		    "\t\tKASSERT((*%s)->v_size != VSIZENOTSET\n"	\
 		    "\t\t    && (*%s)->v_writesize != VSIZENOTSET);\n",
 		    argname[willmake], argname[willmake]);
 		printf("#endif /* DIAGNOSTIC */\n");
 	}
-	printf("\treturn (rv);\n}\n");
+	printf("\treturn error;\n}\n");
 }
 BEGIN	{
 	printf("\n/* Special cases: */\n");
