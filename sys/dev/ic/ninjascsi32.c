@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.14 2007/11/06 11:35:35 itohy Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.15 2007/11/06 12:30:42 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.14 2007/11/06 11:35:35 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.15 2007/11/06 12:30:42 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ njsc32_attach(struct njsc32_softc *sc)
 	/* init */
 	TAILQ_INIT(&sc->sc_freecmd);
 	TAILQ_INIT(&sc->sc_reqcmd);
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 #if 1	/* test */
 	/*
