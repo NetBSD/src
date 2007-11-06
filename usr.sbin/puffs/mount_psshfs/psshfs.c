@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.38 2007/11/05 17:54:32 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.39 2007/11/06 15:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.38 2007/11/05 17:54:32 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.39 2007/11/06 15:09:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -200,8 +200,6 @@ main(int argc, char *argv[])
 
 	pssh_connect(&pctx, sshargs);
 
-	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
-		err(1, "setblockingmode");
 	if (exportfs)
 		puffs_setfhsize(pu, sizeof(struct psshfs_fid),
 		    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3);
@@ -224,6 +222,9 @@ main(int argc, char *argv[])
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
+	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
+		err(1, "setblockingmode");
+
 	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
 
