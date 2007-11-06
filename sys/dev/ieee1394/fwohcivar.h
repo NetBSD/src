@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.27 2007/11/05 19:08:57 kiyohara Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.28 2007/11/06 12:32:12 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -85,7 +85,7 @@ typedef struct fwohci_softc {
 	int cycle_lost;
 } fwohci_softc_t;
 
-void fwohci_intr (void *arg);
+int fwohci_intr (void *arg);
 int fwohci_filt (void *arg);
 int fwohci_init (struct fwohci_softc *, device_t);
 void fwohci_poll (struct firewire_comm *, int, int);
