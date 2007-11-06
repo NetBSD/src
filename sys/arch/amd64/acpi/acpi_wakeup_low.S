@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.7 2007/10/29 04:30:49 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.8 2007/11/06 00:09:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
