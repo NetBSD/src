@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.111 2007/08/18 10:07:55 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.111.2.1 2007/11/06 23:35:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.111 2007/08/18 10:07:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.111.2.1 2007/11/06 23:35:28 matt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -99,8 +99,6 @@ static void uvm_swapout(struct lwp *);
 #define	UVM_NUAREA_LOWAT	16
 
 #define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
-
-void uvm_uarea_free(vaddr_t);
 
 /*
  * XXXCDC: do these really belong here?
@@ -331,11 +329,8 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
  */
 
 void
-uvm_uarea_free(vaddr_t uaddr)
+uvm_uarea_free(vaddr_t uaddr, struct cpu_info *ci)
 {
-	struct cpu_info *ci;
-
-	ci = curcpu();
 
 	mutex_enter(&ci->ci_data.cpu_uarea_lock);
 	UAREA_NEXTFREE(uaddr) = ci->ci_data.cpu_uarea_list;
@@ -430,7 +425,7 @@ uvm_lwp_exit(struct lwp *l)
 	vaddr_t va = USER_TO_UAREA(l->l_addr);
 
 	l->l_flag &= ~LW_INMEM;
-	uvm_uarea_free(va);
+	uvm_uarea_free(va, l->l_cpu);
 	l->l_addr = NULL;
 }
 
@@ -479,7 +474,7 @@ uvm_swapin(struct lwp *l)
 	vaddr_t addr;
 	int error;
 
-	KASSERT(mutex_owned(&l->l_swaplock));
+	/* XXXSMP notyet KASSERT(mutex_owned(&l->l_swaplock)); */
 	KASSERT(l != curlwp);
 
 	addr = USER_TO_UAREA(l->l_addr);
@@ -540,8 +535,8 @@ uvm_scheduler(void)
 
 	l = curlwp;
 	lwp_lock(l);
-	l->l_priority = PVM;
-	l->l_usrpri = PVM;
+	l->l_priority = PRI_VM;
+	l->l_class = SCHED_FIFO;
 	lwp_unlock(l);
 
 	for (;;) {

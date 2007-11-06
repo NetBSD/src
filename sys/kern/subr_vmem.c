@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.32 2007/07/12 20:39:56 rmind Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.32.8.1 2007/11/06 23:32:19 matt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32 2007/07/12 20:39:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.8.1 2007/11/06 23:32:19 matt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1168,17 +1168,13 @@ vmem_rehash_all(struct work *wk, void *dummy)
 	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
 		size_t desired;
 		size_t current;
-		int s;
 
-		s = splvm();
 		if (!VMEM_TRYLOCK(vm)) {
-			splx(s);
 			continue;
 		}
 		desired = vm->vm_nbusytag;
 		current = vm->vm_hashsize;
 		VMEM_UNLOCK(vm);
-		splx(s);
 
 		if (desired > VMEM_HASHSIZE_MAX) {
 			desired = VMEM_HASHSIZE_MAX;
@@ -1186,9 +1182,7 @@ vmem_rehash_all(struct work *wk, void *dummy)
 			desired = VMEM_HASHSIZE_MIN;
 		}
 		if (desired > current * 2 || desired * 2 < current) {
-			s = splvm();
 			vmem_rehash(vm, desired, VM_NOSLEEP);
-			splx(s);
 		}
 	}
 	mutex_exit(&vmem_list_lock);
@@ -1209,7 +1203,7 @@ vmem_rehash_start(void)
 	int error;
 
 	error = workqueue_create(&vmem_rehash_wq, "vmem_rehash",
-	    vmem_rehash_all, NULL, PVM, IPL_SOFTCLOCK, 0);
+	    vmem_rehash_all, NULL, PRI_VM, IPL_SOFTCLOCK, 0);
 	if (error) {
 		panic("%s: workqueue_create %d\n", __func__, error);
 	}

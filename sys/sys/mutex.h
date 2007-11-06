@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.10 2007/05/29 21:23:30 alc Exp $	*/
+/*	$NetBSD: mutex.h,v 1.10.8.1 2007/11/06 23:34:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ void	mutex_wakeup(kmutex_t *);
 #endif	/* __MUTEX_PRIVATE */
 
 #ifdef _KERNEL
-#include <machine/intr.h>
+#include <sys/intr.h>
 #endif
 
 #include <machine/mutex.h>

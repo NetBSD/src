@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.3.2.1 2007/11/06 23:30:04 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3.2.1 2007/11/06 23:30:04 matt Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -53,14 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 #include <dev/sun/btreg.h>
 #include <dev/sun/btvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -81,10 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $");
 
 static int	agten_match(struct device *, struct cfdata *, void *);
 static void	agten_attach(struct device *, struct device *, void *);
-
-#if 0
-static void	agten_unblank(struct device *);
-#endif
 
 static int	agten_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	agten_mmap(void *, void *, off_t, int);
@@ -114,11 +110,17 @@ struct agten_softc {
 	uint32_t	sc_height;	/* panel width / height */
 	uint32_t	sc_stride;
 	uint32_t	sc_depth;
-	
+
+	int sc_cursor_x;
+	int sc_cursor_y;
+	int sc_video;			/* video output enabled */
+
+	/* some /dev/fb* stuff */
+	int sc_fb_is_open;
+
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 
 	int sc_mode;
-	int sc_video, sc_powerstate;
 	uint32_t sc_bg;
 	struct vcons_data vd;
 };
@@ -133,11 +135,22 @@ static int 	agten_putpalreg(struct agten_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 static void	agten_init(struct agten_softc *);
 static void	agten_gfx(struct agten_softc *);
+static void	agten_set_video(struct agten_softc *, int);
+static int	agten_get_video(struct agten_softc *);
 
 static void	agten_copycols(void *, int, int, int, int);
 static void	agten_erasecols(void *, int, int, int, long);
 static void	agten_copyrows(void *, int, int, int);
 static void	agten_eraserows(void *, int, int, long);
+
+static void	agten_move_cursor(struct agten_softc *, int, int);
+static int	agten_do_cursor(struct agten_softc *sc,
+				struct wsdisplay_cursor *);
+static int	agten_do_sun_cursor(struct agten_softc *sc,
+				struct fbcursor *);
+
+static uint16_t util_interleave(uint8_t, uint8_t);
+static uint16_t util_interleave_lin(uint8_t, uint8_t);
 
 extern const u_char rasops_cmap[768];
 
@@ -150,6 +163,20 @@ struct wsdisplay_accessops agten_accessops = {
 	NULL, 	/* load_font */
 	NULL,	/* pollc */
 	NULL	/* scroll */
+};
+
+/* /dev/fb* stuff */
+extern struct cfdriver agten_cd;
+
+static int agten_fb_open(dev_t, int, int, struct lwp *);
+static int agten_fb_close(dev_t, int, int, struct lwp *);
+static int agten_fb_ioctl(dev_t, u_long, void *, int, struct lwp *);
+static paddr_t agten_fb_mmap(dev_t, off_t, int);
+static void agten_fb_unblank(struct device *);
+
+static struct fbdriver agtenfbdriver = {
+	agten_fb_unblank, agten_fb_open, agten_fb_close, agten_fb_ioctl,
+	nopoll, agten_fb_mmap, nokqfilter
 };
 
 static inline void
@@ -209,14 +236,9 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	sc->sc_fb_is_open = 0;
+	sc->sc_video = -1;
 	sc->sc_bustag = sa->sa_bustag;
-#if 0
-	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
-
-	dict = device_properties(&sc->sc_dev);
-
-	prop_dictionary_get_bool(dict, "is_console", &console);
-#endif
 
 	reg = prom_getpropint(node, "i128_fb_physaddr", -1);
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
@@ -253,22 +275,24 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	reg = prom_getpropint(node, "glint_fb0_physaddr", -1);
 	sc->sc_glint_fb = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
-	sc->sc_glint_fbsz = prom_getpropint(node, "glint_fb0_size", -1);
+	sc->sc_glint_fbsz = prom_getpropint(node, "glint_lb_size", -1);
 	reg = prom_getpropint(node, "glint_reg_physaddr", -1);
 	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
 	    agten_intr, sc);
 #endif
 
-	sc->sc_width = prom_getpropint(node, "ffb_width", 800);
-	sc->sc_height = prom_getpropint(node, "ffb_height", 600);
+	sc->sc_width = prom_getpropint(node, "ffb_width", 1152);
+	sc->sc_height = prom_getpropint(node, "ffb_height", 900);
 	sc->sc_depth = prom_getpropint(node, "ffb_depth", 8);
 	sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
 
+	printf(": %dx%d\n", sc->sc_width, sc->sc_height);
 	agten_init(sc);
 
 	console = fb_is_console(node);
@@ -308,6 +332,19 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+
+	fb->fb_driver = &agtenfbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_type.fb_type = FBTYPE_AG10E;
+	fb->fb_type.fb_cmsize = 256;	/* doesn't matter, we're always 24bit */
+	fb->fb_type.fb_size = sc->sc_glint_fbsz;
+	fb->fb_type.fb_width = sc->sc_width;
+	fb->fb_type.fb_height = sc->sc_height;
+	fb->fb_type.fb_depth = 32;
+	fb->fb_linebytes = sc->sc_stride;
+	fb_attach(fb, console);
+	agten_set_video(sc, 1);	/* make sure video's on */
 }
 
 static int
@@ -333,6 +370,14 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf->width = ms->scr_ri.ri_width;
 			wdf->depth = 32;
 			wdf->cmsize = 256;
+			return 0;
+
+		case WSDISPLAYIO_GVIDEO:
+			*(int *)data = sc->sc_video;
+			return 0;
+
+		case WSDISPLAYIO_SVIDEO:
+			agten_set_video(sc, *(int *)data);
 			return 0;
 
 		case WSDISPLAYIO_GETCMAP:
@@ -361,6 +406,39 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				agten_move_cursor(sc, cp->x, cp->y);
+			}
+			return 0;
+
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 64;
+				cp->y = 64;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return agten_do_cursor(sc, cursor);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -533,6 +611,11 @@ agten_init(struct agten_softc *sc)
 	agten_write_idx(sc, IBM561_CONFIG_REG1);
 	agten_write_dac(sc, IBM561_CMD, 0x2c);
 
+	/* use internal PLL, enable video output */
+	agten_write_idx(sc, IBM561_CONFIG_REG2);
+	agten_write_dac(sc, IBM561_CMD, CR2_ENABLE_CLC | CR2_PLL_REF_SELECT |
+	    CR2_PIXEL_CLOCK_SELECT | CR2_ENABLE_RGB_OUTPUT);
+
 	/* now set up some window attributes */
 	
 	/* 
@@ -564,6 +647,9 @@ agten_init(struct agten_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, srcw);
 	junk = bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
 
+	/* initialize the cursor registers */
+	
+	/* initialize the Imagine 128 */
 	i128_init(sc->sc_bustag, sc->sc_i128_regh, sc->sc_stride, 8);
 }
 
@@ -580,6 +666,29 @@ agten_gfx(struct agten_softc *sc)
 
 	/* ... so we can see the 24bit framebuffer */	
 }	
+
+static void
+agten_set_video(struct agten_softc *sc, int flag)
+{
+	uint8_t reg = 
+	    CR2_ENABLE_CLC | CR2_PLL_REF_SELECT | CR2_PIXEL_CLOCK_SELECT;
+
+	if (flag == sc->sc_video)
+		return;
+
+	agten_write_idx(sc, IBM561_CONFIG_REG2);
+	agten_write_dac(sc, IBM561_CMD, flag ? reg | CR2_ENABLE_RGB_OUTPUT :
+	    reg);
+
+	sc->sc_video = flag;
+}
+
+static int
+agten_get_video(struct agten_softc *sc)
+{
+
+	return sc->sc_video;
+}
 
 static void
 agten_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
@@ -651,4 +760,319 @@ agten_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
 	i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, x, y, width, height, bg);
+}
+
+static void
+agten_move_cursor(struct agten_softc *sc, int x, int y)
+{
+
+	sc->sc_cursor_x = x;
+	sc->sc_cursor_y = y;
+	agten_write_idx(sc, IBM561_CURSOR_X_REG);
+	agten_write_dac(sc, IBM561_CMD, x & 0xff);
+	agten_write_dac(sc, IBM561_CMD, (x >> 8) & 0xff);
+	agten_write_dac(sc, IBM561_CMD, y & 0xff);
+	agten_write_dac(sc, IBM561_CMD, (y >> 8) & 0xff);
+}
+
+static int
+agten_do_cursor(struct agten_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		agten_write_idx(sc, IBM561_CURS_CNTL_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->enable ?
+		    CURS_ENABLE : 0);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		agten_write_idx(sc, IBM561_HOTSPOT_X_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.x);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		agten_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+	
+		agten_write_idx(sc, IBM561_CURSOR_LUT + cur->cmap.index + 2);
+		for (i = 0; i < cur->cmap.count; i++) {
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.red[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.green[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.blue[i]);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int i;
+		uint16_t tmp;
+
+		agten_write_idx(sc, IBM561_CURSOR_BITMAP);
+		for (i = 0; i < 512; i++) {
+			tmp = util_interleave(cur->mask[i], cur->image[i]);
+			agten_write_dac(sc, IBM561_CMD, (tmp >> 8) & 0xff);
+			agten_write_dac(sc, IBM561_CMD, tmp & 0xff);
+		}
+	}
+	return 0;
+}
+
+static int
+agten_do_sun_cursor(struct agten_softc *sc, struct fbcursor *cur)
+{
+	if (cur->set & FB_CUR_SETCUR) {
+
+		agten_write_idx(sc, IBM561_CURS_CNTL_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->enable ?
+		    CURS_ENABLE : 0);
+	}
+	if (cur->set & FB_CUR_SETHOT) {
+
+		agten_write_idx(sc, IBM561_HOTSPOT_X_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.x);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.y);
+	}
+	if (cur->set & FB_CUR_SETPOS) {
+
+		agten_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->set & FB_CUR_SETCMAP) {
+		int i;
+	
+		agten_write_idx(sc, IBM561_CURSOR_LUT + cur->cmap.index + 2);
+		for (i = 0; i < cur->cmap.count; i++) {
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.red[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.green[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.blue[i]);
+		}
+	}
+	if (cur->set & FB_CUR_SETSHAPE) {
+		int i;
+		uint16_t tmp;
+
+		agten_write_idx(sc, IBM561_CURSOR_BITMAP);
+		for (i = 0; i < 512; i++) {
+			tmp = util_interleave_lin(cur->mask[i], cur->image[i]);
+			agten_write_dac(sc, IBM561_CMD, (tmp >> 8) & 0xff);
+			agten_write_dac(sc, IBM561_CMD, tmp & 0xff);
+		}
+	}
+	return 0;
+}
+
+uint16_t
+util_interleave(uint8_t b1, uint8_t b2)
+{
+	int i;
+	uint16_t ret = 0;
+	uint16_t mask = 0x8000;
+	uint8_t mask8 = 0x01;
+
+	for (i = 0; i < 8; i++) {
+		if (b1 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		if (b2 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		mask8 = mask8 << 1;
+	}
+	return ret;
+}
+
+uint16_t
+util_interleave_lin(uint8_t b1, uint8_t b2)
+{
+	int i;
+	uint16_t ret = 0;
+	uint16_t mask = 0x8000;
+	uint8_t mask8 = 0x80;
+
+	for (i = 0; i < 8; i++) {
+		if (b1 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		if (b2 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		mask8 = mask8 >> 1;
+	}
+	return ret;
+}
+
+/* and now the /dev/fb* stuff */
+static void
+agten_fb_unblank(struct device *dev)
+{
+	struct agten_softc *sc = (void *)dev;
+
+	agten_init(sc);
+	agten_set_video(sc, 1);
+}
+
+static int
+agten_fb_open(dev_t dev, int flags, int mode, struct lwp *l)
+{
+	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	int unit = minor(dev);
+
+	if (unit >= agten_cd.cd_ndevs || agten_cd.cd_devs[unit] == NULL)
+		return (ENXIO);
+	if (sc->sc_fb_is_open)
+		return 0;
+
+	sc->sc_fb_is_open++;
+	agten_gfx(sc);
+
+	return (0);
+}
+
+static int
+agten_fb_close(dev_t dev, int flags, int mode, struct lwp *l)
+{
+	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+
+	sc->sc_fb_is_open--;
+	if (sc->sc_fb_is_open < 0)
+		sc->sc_fb_is_open = 0;
+
+	if (sc->sc_fb_is_open == 0) {
+		agten_init(sc);
+		vcons_redraw_screen(sc->vd.active);
+	}
+
+	return (0);
+}
+
+static int
+agten_fb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
+{
+	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	struct fbgattr *fba;
+	int error;
+
+	switch (cmd) {
+
+	case FBIOGTYPE:
+		*(struct fbtype *)data = sc->sc_fb.fb_type;
+		break;
+
+	case FBIOGATTR:
+		fba = (struct fbgattr *)data;
+		fba->real_type = sc->sc_fb.fb_type.fb_type;
+		fba->owner = 0;		/* XXX ??? */
+		fba->fbtype = sc->sc_fb.fb_type;
+		fba->sattr.flags = 0;
+		fba->sattr.emu_type = sc->sc_fb.fb_type.fb_type;
+		fba->sattr.dev_specific[0] = -1;
+		fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
+		fba->emu_types[1] = -1;
+		break;
+
+	case FBIOGETCMAP:
+#define p ((struct fbcmap *)data)
+		return (bt_getcmap(p, &sc->sc_cmap, 256, 1));
+
+	case FBIOPUTCMAP:
+		/* copy to software map */
+		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
+		if (error)
+			return (error);
+		/* now blast them into the chip */
+		/* don't bother - we're 24bit */
+#undef p
+		break;
+
+	case FBIOGVIDEO:
+		*(int *)data = agten_get_video(sc);
+		break;
+
+	case FBIOSVIDEO:
+		agten_set_video(sc, *(int *)data);
+		break;
+
+/* these are for both FBIOSCURSOR and FBIOGCURSOR */
+#define p ((struct fbcursor *)data)
+#define pc (&sc->sc_cursor)
+
+	case FBIOGCURSOR:
+		/* does anyone use this ioctl?! */
+		p->set = FB_CUR_SETALL;	/* close enough, anyway */
+		p->enable = 1;
+		p->pos.x = sc->sc_cursor_x;
+		p->pos.y = sc->sc_cursor_y;
+		p->size.x = 64;
+		p->size.y = 64;
+		break;
+
+	case FBIOSCURSOR:
+		agten_do_sun_cursor(sc, p);
+	break;
+
+#undef p
+#undef cc
+
+	case FBIOGCURPOS:
+	{
+		struct fbcurpos *cp = (struct fbcurpos *)data;
+		cp->x = sc->sc_cursor_x;
+		cp->y = sc->sc_cursor_y;
+	}
+	break;
+
+	case FBIOSCURPOS:
+	{
+		struct fbcurpos *cp = (struct fbcurpos *)data;
+		agten_move_cursor(sc, cp->x, cp->y);
+	}
+	break;
+
+	case FBIOGCURMAX:
+		/* max cursor size is 64x64 */
+		((struct fbcurpos *)data)->x = 64;
+		((struct fbcurpos *)data)->y = 64;
+		break;
+
+	default:
+		return (ENOTTY);
+	}
+	return (0);
+}
+
+static paddr_t
+agten_fb_mmap(dev_t dev, off_t off, int prot)
+{
+	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+
+	/*
+	 * mappings are subject to change
+	 * for now we put the framebuffer at offset 0 and the GLint registers
+	 * right after that. We may want to expose more register ranges and
+	 * probably will want to map the 2nd framebuffer as well
+	 */
+
+	if (off < 0)
+		return EINVAL;
+
+	if (off >= sc->sc_glint_fbsz + 0x10000)
+		return EINVAL;
+
+	if (off < sc->sc_glint_fbsz) {
+		return (bus_space_mmap(sc->sc_bustag,
+			sc->sc_glint_fb,
+			off,
+			prot,
+			BUS_SPACE_MAP_LINEAR));
+	}
+
+	off -= sc->sc_glint_fbsz;
+	if (off < 0x10000) {
+		return (bus_space_mmap(sc->sc_bustag,
+			sc->sc_glint_regs,
+			off,
+			prot,
+			BUS_SPACE_MAP_LINEAR));
+	}
+	return EINVAL;
 }

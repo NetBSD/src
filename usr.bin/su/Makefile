@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2007/05/28 12:06:31 tls Exp $
+#	$NetBSD: Makefile,v 1.46.4.1 2007/11/06 23:36:15 matt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -8,7 +8,12 @@ PROG=	su
 BINOWN=	root
 BINMODE=4555
 
+.PATH.c: ${.CURDIR}/../newgrp
+CPPFLAGS+=-I${.CURDIR}/../newgrp
 CPPFLAGS+=-DLOGIN_CAP
+CPPFLAGS+=-DALLOW_GROUP_CHANGE
+CPPFLAGS+=-DALLOW_EMPTY_USER
+CPPFLAGS+=-DGRUTIL_SETGROUPS_MAKESPACE
 
 .if ${USE_PAM} != "no"
 
@@ -16,11 +21,11 @@ CPPFLAGS+=-DUSE_PAM
 # XXX: Need libcrypt here, because libcrypto defines it too.
 DPADD+=	${LIBPAM} ${LIBCRYPT} ${LIBUTIL} ${PAM_STATIC_DPADD}
 LDADD+= -lpam -lcrypt -lutil ${PAM_STATIC_LDADD}
-SRCS=su_pam.c
+SRCS=su_pam.c grutil.c suutil.c
 
 .else
 
-SRCS=su.c
+SRCS=su.c grutil.c suutil.c
 
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
@@ -47,7 +52,6 @@ LDADD+= -lkrb5 -lasn1
 DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
 LDADD+=	-lcrypto -lroken -lcom_err
 .endif
-
 
 .if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY

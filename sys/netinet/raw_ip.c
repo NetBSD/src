@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.97 2007/05/12 02:10:25 dyoung Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.97.8.1 2007/11/06 23:33:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.97 2007/05/12 02:10:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.97.8.1 2007/11/06 23:33:51 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -131,6 +131,24 @@ rip_init(void)
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
+static void
+rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
+    int hlen, struct mbuf *opts, struct mbuf *n)
+{
+	if (last->inp_flags & INP_NOHEADER)
+		m_adj(n, hlen);
+	if (last->inp_flags & INP_CONTROLOPTS ||
+	    last->inp_socket->so_options & SO_TIMESTAMP)
+		ip_savecontrol(last, &opts, ip, n);
+	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
+		/* should notify about lost packet */
+		m_freem(n);
+		if (opts)
+			m_freem(opts);
+	} else
+		sorwakeup(last->inp_socket);
+}
+
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -139,7 +157,7 @@ rip_init(void)
 void
 rip_input(struct mbuf *m, ...)
 {
-	int proto;
+	int hlen, proto;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
@@ -160,7 +178,8 @@ rip_input(struct mbuf *m, ...)
 	 * XXX to have the header length subtracted, and in host order.
 	 * XXX ip_off is also expected to be host order.
 	 */
-	ip->ip_len = ntohs(ip->ip_len) - (ip->ip_hl << 2);
+	hlen = ip->ip_hl << 2;
+	ip->ip_len = ntohs(ip->ip_len) - hlen;
 	NTOHS(ip->ip_off);
 
 	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
@@ -184,18 +203,9 @@ rip_input(struct mbuf *m, ...)
 			/* do not inject data to pcb */
 		}
 #endif /*IPSEC*/
-		else if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-			if (last->inp_flags & INP_CONTROLOPTS ||
-			    last->inp_socket->so_options & SO_TIMESTAMP)
-				ip_savecontrol(last, &opts, ip, n);
-			if (sbappendaddr(&last->inp_socket->so_rcv,
-			    sintosa(&ripsrc), n, opts) == 0) {
-				/* should notify about lost packet */
-				m_freem(n);
-				if (opts)
-					m_freem(opts);
-			} else
-				sorwakeup(last->inp_socket);
+		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
+			rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts,
+			    n);
 			opts = NULL;
 		}
 		last = inp;
@@ -209,18 +219,9 @@ rip_input(struct mbuf *m, ...)
 		/* do not inject data to pcb */
 	} else
 #endif /*IPSEC*/
-	if (last != NULL) {
-		if (last->inp_flags & INP_CONTROLOPTS ||
-		    last->inp_socket->so_options & SO_TIMESTAMP)
-			ip_savecontrol(last, &opts, ip, m);
-		if (sbappendaddr(&last->inp_socket->so_rcv,
-		    sintosa(&ripsrc), m, opts) == 0) {
-			m_freem(m);
-			if (opts)
-				m_freem(opts);
-		} else
-			sorwakeup(last->inp_socket);
-	} else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
+	if (last != NULL)
+		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts, m);
+	else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 		    0, 0);
 		ipstat.ips_noproto++;
@@ -378,26 +379,34 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
-	if (level != IPPROTO_IP) {
-		error = ENOPROTOOPT;
-		if (op == PRCO_SETOPT && *m != 0)
-			(void) m_free(*m);
-	} else switch (op) {
+	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
+		if (op == PRCO_GETOPT) {
+			*m = m_intopt(so,
+			    (inp->inp_flags & INP_NOHEADER) ? 1 : 0);
+			return 0;
+		} else if (*m == NULL || (*m)->m_len < sizeof(int))
+			error = EINVAL;
+		else if (*mtod(*m, int *)) {
+			inp->inp_flags &= ~INP_HDRINCL;
+			inp->inp_flags |= INP_NOHEADER;
+		} else
+			inp->inp_flags &= ~INP_NOHEADER;
+		goto free_m;
+	} else if (level != IPPROTO_IP)
+		return ip_ctloutput(op, so, level, optname, m);
+
+	switch (op) {
 
 	case PRCO_SETOPT:
 		switch (optname) {
 		case IP_HDRINCL:
-			if (*m == 0 || (*m)->m_len < sizeof (int))
+			if (*m == NULL || (*m)->m_len < sizeof(int))
 				error = EINVAL;
-			else {
-				if (*mtod(*m, int *))
-					inp->inp_flags |= INP_HDRINCL;
-				else
-					inp->inp_flags &= ~INP_HDRINCL;
-			}
-			if (*m != 0)
-				(void) m_free(*m);
-			break;
+			else if (*mtod(*m, int *))
+				inp->inp_flags |= INP_HDRINCL;
+			else
+				inp->inp_flags &= ~INP_HDRINCL;
+			goto free_m;
 
 #ifdef MROUTING
 		case MRT_INIT:
@@ -423,10 +432,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	case PRCO_GETOPT:
 		switch (optname) {
 		case IP_HDRINCL:
-			*m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM((*m), so->so_mowner);
-			(*m)->m_len = sizeof (int);
-			*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL ? 1 : 0;
+			*m = m_intopt(so, inp->inp_flags & INP_HDRINCL ? 1 : 0);
 			break;
 
 #ifdef MROUTING
@@ -444,7 +450,11 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 		}
 		break;
 	}
-	return (error);
+	return error;
+free_m:
+	if (op == PRCO_SETOPT && *m != NULL)
+		(void)m_free(*m);
+	return error;
 }
 
 int

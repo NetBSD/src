@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.34 2007/07/27 09:46:27 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.34.4.1 2007/11/06 23:36:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.34 2007/07/27 09:46:27 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.34.4.1 2007/11/06 23:36:32 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -65,6 +65,8 @@ static void	usage(void);
 static void	add_ssharg(char ***, int *, char *);
 
 #define SSH_PATH "/usr/bin/ssh"
+
+unsigned int max_reads;
 
 static void
 add_ssharg(char ***sshargs, int *nargs, char *arg)
@@ -97,7 +99,8 @@ main(int argc, char *argv[])
 	char **sshargs;
 	char *userhost;
 	char *hostpath;
-	int mntflags, pflags, lflags, ch;
+	int mntflags, pflags, ch;
+	int detach;
 	int exportfs;
 	int nargs, x;
 
@@ -106,13 +109,14 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	mntflags = pflags = lflags = exportfs = nargs = 0;
+	mntflags = pflags = exportfs = nargs = 0;
+	detach = 1;
 	sshargs = NULL;
 	add_ssharg(&sshargs, &nargs, SSH_PATH);
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eo:O:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eo:O:r:s")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
@@ -127,8 +131,11 @@ main(int argc, char *argv[])
 				err(1, "getmntopts");
 			freemntopts(mp);
 			break;
+		case 'r':
+			max_reads = atoi(optarg);
+			break;
 		case 's':
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		default:
 			usage();
@@ -139,7 +146,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	pflags |= PUFFS_FLAG_BUILDPATH;
 	pflags |= PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
 
@@ -205,16 +212,22 @@ main(int argc, char *argv[])
 	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
 		err(1, "nonblocking descriptor");
 
-	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp,
+	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp, NULL,
 	    puffs_framev_unmountonclose);
 	if (puffs_framev_addfd(pu, pctx.sshfd,
 	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 		err(1, "framebuf addfd");
 
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
+	if (puffs_mainloop(pu) == -1)
+		err(1, "mainloop");
 
-	return puffs_mainloop(pu, lflags);
+	return 0;
 }
 
 static void

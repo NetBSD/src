@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.131 2007/07/19 20:48:56 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.131.6.1 2007/11/06 23:33:58 matt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.131 2007/07/19 20:48:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.131.6.1 2007/11/06 23:33:58 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -447,7 +447,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSPFXFLUSH_IN6:
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCGIFALIFETIME_IN6:
-	case SIOCSIFALIFETIME_IN6:
 	case SIOCGIFSTAT_IN6:
 	case SIOCGIFSTAT_ICMP6:
 		sa6 = &ifr->ifr_addr;
@@ -512,26 +511,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ia == NULL)
 			return EADDRNOTAVAIL;
 		break;
-	case SIOCSIFALIFETIME_IN6:
-	    {
-		struct in6_addrlifetime *lt;
-
-		if (!privileged)
-			return EPERM;
-		if (ia == NULL)
-			return EADDRNOTAVAIL;
-		/* sanity for overflow - beware unsigned */
-		lt = &ifr->ifr_ifru.ifru_lifetime;
-		if (lt->ia6t_vltime != ND6_INFINITE_LIFETIME
-		 && lt->ia6t_vltime + time_second < time_second) {
-			return EINVAL;
-		}
-		if (lt->ia6t_pltime != ND6_INFINITE_LIFETIME
-		 && lt->ia6t_pltime + time_second < time_second) {
-			return EINVAL;
-		}
-		break;
-	    }
 	}
 
 	switch (cmd) {
@@ -618,21 +597,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			} else
 				retlt->ia6t_preferred = maxexpire;
 		}
-		break;
-
-	case SIOCSIFALIFETIME_IN6:
-		ia->ia6_lifetime = ifr->ifr_ifru.ifru_lifetime;
-		/* for sanity */
-		if (ia->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
-			ia->ia6_lifetime.ia6t_expire =
-				time_second + ia->ia6_lifetime.ia6t_vltime;
-		} else
-			ia->ia6_lifetime.ia6t_expire = 0;
-		if (ia->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
-			ia->ia6_lifetime.ia6t_preferred =
-				time_second + ia->ia6_lifetime.ia6t_pltime;
-		} else
-			ia->ia6_lifetime.ia6t_preferred = 0;
 		break;
 
 	case SIOCAIFADDR_IN6:
@@ -1418,23 +1382,22 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 		}
 	}
 
-	if (!LIST_EMPTY(&oia->ia6_multiaddrs)) {
-		/*
-		 * XXX thorpej@NetBSD.org -- if the interface is going
-		 * XXX away, don't save the multicast entries, delete them!
-		 */
-		if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
-			struct in6_multi *in6m, *next;
+	/*
+	 * XXX thorpej@NetBSD.org -- if the interface is going
+	 * XXX away, don't save the multicast entries, delete them!
+	 */
+	if (LIST_EMPTY(&oia->ia6_multiaddrs))
+		;
+	else if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
+		struct in6_multi *in6m, *next;
 
-			for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-			       in6m != NULL;
-			       in6m = next) {
-				next = LIST_NEXT(in6m, in6m_entry);
-				in6_delmulti(in6m);
-			}
-		} else
-			in6_savemkludge(oia);
-	}
+		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs); in6m != NULL;
+		     in6m = next) {
+			next = LIST_NEXT(in6m, in6m_entry);
+			in6_delmulti(in6m);
+		}
+	} else
+		in6_savemkludge(oia);
 
 	/*
 	 * Release the reference to the base prefix.  There should be a
@@ -1901,7 +1864,7 @@ ip6_sprintf(const struct in6_addr *addr)
  * Determine if an address is on a local network.
  */
 int
-in6_localaddr(struct in6_addr *in6)
+in6_localaddr(const struct in6_addr *in6)
 {
 	struct in6_ifaddr *ia;
 

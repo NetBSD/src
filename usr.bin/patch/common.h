@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.17 2005/03/25 23:00:55 skd Exp $	*/
+/*	$NetBSD: common.h,v 1.17.12.1 2007/11/06 23:36:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -161,3 +161,4 @@ EXT char *revision INIT(NULL);		/* prerequisite revision, if any */
 #endif
 
 void my_exit(int) __attribute__((__noreturn__));
+void my_sig_exit(int) __attribute__((__noreturn__));

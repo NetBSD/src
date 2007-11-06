@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.7 2007/07/16 17:48:52 xtraeme Exp $	*/
+/*	$NetBSD: power.h,v 1.7.8.1 2007/11/06 23:34:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -159,31 +159,34 @@ struct pswitch_state {
  * 	PENVSYS_EVENT_NORMAL		Normal state in the sensor.
  */
 
-#define PENVSYS_EVENT_NORMAL		 90
+#define PENVSYS_EVENT_NORMAL 		90
 #define PENVSYS_EVENT_CRITICAL 		100
 #define PENVSYS_EVENT_CRITOVER 		110
 #define PENVSYS_EVENT_CRITUNDER 	120
 #define PENVSYS_EVENT_WARNOVER 		130
 #define PENVSYS_EVENT_WARNUNDER 	140
-#define PENVSYS_EVENT_USER_CRITMAX	150
-#define PENVSYS_EVENT_USER_CRITMIN	160
+#define PENVSYS_EVENT_USER_CRITMAX 	150
+#define PENVSYS_EVENT_USER_CRITMIN  	160
 
 /*
  * The following events apply for battery sensors:
  *
  * 	PENVSYS_EVENT_BATT_USERCAP	User capacity.
  *
+ * 	PENVSYS_EVENT_LOW_POWER		AC Adapter is OFF and all batteries
+ * 					are discharged.
  */
 
-#define PENVSYS_EVENT_BATT_USERCAP	170
+#define PENVSYS_EVENT_BATT_USERCAP 	170
+#define PENVSYS_EVENT_LOW_POWER 	180
 
 /*
- * The following events apply for drive sensors:
+ * The following event apply for battery state and drive sensors:
  *
- * 	PENVSYS_EVENT_DRIVE_STCHANGED	Drive state changed.
+ * 	PENVSYS_EVENT_STATE_CHANGED	State has changed.
  *
  */
-#define PENVSYS_EVENT_DRIVE_STCHANGED	180
+#define PENVSYS_EVENT_STATE_CHANGED 	190
 
 
 /*
@@ -194,7 +197,6 @@ struct penvsys_state {
 	char	pes_sensname[32];	/* sensor name */
 	char	pes_statedesc[64];	/* sensor state description */
 	int32_t	pes_type;		/* envsys power type */
-	int32_t	pes_state;		/* state for the event */
 };
 
 /*

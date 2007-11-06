@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.13 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: tcom.c,v 1.13.24.1 2007/11/06 23:28:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,15 +77,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.13 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.13.24.1 2007/11/06 23:28:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

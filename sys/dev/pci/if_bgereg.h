@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.43 2007/08/06 12:23:08 markd Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.43.2.1 2007/11/06 23:28:55 matt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2380,7 +2380,7 @@ struct txdmamap_pool_entry {
 #define BGE_JUMBO_RXRING_VALID	0x0004
 
 struct bge_softc {
-	struct device		bge_dev;
+	device_t		bge_dev;
 	struct ethercom		ethercom;		/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;

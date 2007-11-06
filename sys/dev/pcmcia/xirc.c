@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.20 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: xirc.c,v 1.20.24.1 2007/11/06 23:29:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.20 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.20.24.1 2007/11/06 23:29:52 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.20 2006/11/16 01:33:20 christos Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

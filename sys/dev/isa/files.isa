@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.150 2007/06/01 14:11:59 blymn Exp $
+#	$NetBSD: files.isa,v 1.150.8.1 2007/11/06 23:27:36 matt Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -468,6 +468,11 @@ file	dev/isa/it.c			it_isa
 # Abit uGuru hardware monitor
 attach	ug at isa with ug_isa
 file	dev/isa/ug_isa.c		ug_isa
+
+# IBM ThinkPad Active Protection System
+device	aps: sysmon_envsys
+attach	aps at isa with aps
+file	dev/isa/aps.c 			aps
 
 # ISDN devices
 attach	isic at isa with isic_isa

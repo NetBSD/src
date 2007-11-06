@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.197 2007/08/01 10:57:07 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.197.4.1 2007/11/06 23:35:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -92,6 +92,7 @@ extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
+extern int ncpuonline;		/* number of CPUs online */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
@@ -171,6 +172,32 @@ void	aprint_verbose(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	aprint_debug(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
+
+struct device;
+
+void	aprint_normal_dev(struct device *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_error_dev(struct device *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_naive_dev(struct device *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_verbose_dev(struct device *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_debug_dev(struct device *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+
+struct ifnet;
+
+void	aprint_normal_ifnet(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_error_ifnet(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_naive_ifnet(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_verbose_ifnet(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
+void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
+    __attribute__((__format__(__printf__,2,3)));
 
 int	aprint_get_error_count(void);
 
@@ -449,28 +476,23 @@ void scdebug_call(struct lwp *, register_t, register_t[]);
 void scdebug_ret(struct lwp *, register_t, int, register_t[]);
 #endif /* SYSCALL_DEBUG */
 
-#if defined(MULTIPROCESSOR)
-void	_kernel_lock_init(void);
+void	kernel_lock_init(void);
 void	_kernel_lock(int, struct lwp *);
 void	_kernel_unlock(int, struct lwp *, int *);
 
-#define	KERNEL_LOCK_INIT()		_kernel_lock_init()
+#if defined(MULTIPROCESSOR) || defined(_LKM)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
 		_kernel_lock((count), (lwp));	\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (lwp), (p))
-
-#else /* ! MULTIPROCESSOR */
-
-#define	KERNEL_LOCK_INIT()		/* nothing */
+#else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
+#endif
 
-#endif /* MULTIPROCESSOR */
-
-#if defined(MULTIPROCESSOR) && defined(DEBUG)
+#if defined(DEBUG)
 #define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
 #define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
 void _kernel_lock_assert_locked(void);
@@ -483,5 +505,9 @@ void _kernel_lock_assert_unlocked(void);
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
 #define	KERNEL_UNLOCK_ALL(l, p)		KERNEL_UNLOCK(0, (l), (p))
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
+
+/* Preemption control. */
+void	crit_enter(void);
+void	crit_exit(void);
 
 #endif	/* !_SYS_SYSTM_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_isapnp_itkix.c,v 1.6 2005/12/11 12:22:16 christos Exp $ */
+/* $NetBSD: isic_isapnp_itkix.c,v 1.6.46.1 2007/11/06 23:28:12 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.6 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.6.46.1 2007/11/06 23:28:12 matt Exp $");
 
 #include "opt_isicpnp.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.6 2005/12/11 12:22:16 christ
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/callout.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 

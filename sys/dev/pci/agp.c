@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.48 2007/08/15 02:26:13 markd Exp $	*/
+/*	$NetBSD: agp.c,v 1.48.2.1 2007/11/06 23:28:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48 2007/08/15 02:26:13 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48.2.1 2007/11/06 23:28:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48 2007/08/15 02:26:13 markd Exp $");
 #include <dev/pci/agpreg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 
@@ -156,6 +156,8 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82945GM_HB,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965Q_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965G_HB,
 	  NULL,			agp_i810_attach },
 #endif
 

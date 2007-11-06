@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $	*/
+/*	$NetBSD: fio.c,v 1.29.2.1 2007/11/06 23:35:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $");
+__RCSID("$NetBSD: fio.c,v 1.29.2.1 2007/11/06 23:35:51 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ PUBLIC struct message *
 next_message(struct message *mp)
 {
 	if (mp + 1 < message || mp + 1 >= message + msgCount)
-		return NULL;		
-	    
+		return NULL;
+
 	return mp + 1;
 }
 
@@ -69,8 +69,8 @@ PUBLIC struct message *
 prev_message(struct message *mp)
 {
 	if (mp - 1 < message || mp - 1 >= message + msgCount)
-		return NULL;		
-	    
+		return NULL;
+
 	return mp - 1;
 }
 
@@ -160,7 +160,7 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 static int
 append(struct message *mp, FILE *f)
 {
-	return fwrite(mp, sizeof *mp, 1, f) != 1;
+	return fwrite(mp, sizeof(*mp), 1, f) != 1;
 }
 
 /*
@@ -228,12 +228,12 @@ setptr(FILE *ibuf, off_t offset)
 		 * This allows mail to be able to read Eudora mailboxes
 		 * that reside on a DOS partition.
 		 */
-		if (len >= 2 && linebuf[len-1] == '\n' &&
-		    linebuf[len-2] == '\r') {
-			linebuf[len-2] = '\n';
+		if (len >= 2 && linebuf[len - 1] == '\n' &&
+		    linebuf[len - 2] == '\r') {
+			linebuf[len - 2] = '\n';
 			len--;
 		}
-		(void)fwrite(linebuf, sizeof *linebuf, len, otf);
+		(void)fwrite(linebuf, sizeof(*linebuf), len, otf);
 		if (ferror(otf)) {
 			warn("/tmp");
 			exit(1);
@@ -298,7 +298,7 @@ putline(FILE *obuf, const char *linebuf, int outlf)
 	size_t c;
 
 	c = strlen(linebuf);
-	(void)fwrite(linebuf, sizeof *linebuf, c, obuf);
+	(void)fwrite(linebuf, sizeof(*linebuf), c, obuf);
 	if (outlf) {
 		(void)putc('\n', obuf);
 		c++;

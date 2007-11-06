@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.5 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.5.8.1 2007/11/06 23:35:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.5 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.5.8.1 2007/11/06 23:35:55 matt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -203,7 +203,7 @@ mime_ficonv(FILE *fi, FILE *fo, void *cookie)
 
 /*
  * Decode a base64 buffer.
- *   
+ *
  *   bin:  buffer to hold the decoded (binary) result (see note 1).
  *   b64:  buffer holding the encoded (base64) source.
  *   cnt:  number of bytes in the b64 buffer to decode (see note 2).
@@ -231,7 +231,7 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 	};
 	unsigned char *p;
 	const unsigned char *q, *end;
-	
+
 #define EQU	(unsigned)-2
 #define BAD	(unsigned)-1
 #define uchar64(c)  (unsigned)((c) >= sizeof(b64index) ? BAD : b64index[(c)])
@@ -243,7 +243,7 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 		unsigned b = uchar64(q[1]);
 		unsigned c = uchar64(q[2]);
 		unsigned d = uchar64(q[3]);
-		
+
 		*p++ = ((a << 2) | ((b & 0x30) >> 4));
 		if (c == EQU)	{ /* got '=' */
 			if (d != EQU)
@@ -255,11 +255,11 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 			break;
 		}
 		*p++ = (((c & 0x03) << 6) | d);
-		
+
 		if (a == BAD || b == BAD || c == BAD || d == BAD)
 			return -1;
 	}
-	
+
 #undef uchar64
 #undef EQU
 #undef BAD
@@ -269,7 +269,7 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 
 /*
  * Encode a buffer as a base64 result.
- *   
+ *
  *   b64:  buffer to hold the encoded (base64) result (see note).
  *   bin:  buffer holding the binary source.
  *   cnt:  number of bytes in the bin buffer to encode.
@@ -361,11 +361,11 @@ mime_fB64_decode(FILE *fi, FILE *fo, void *add_lf)
 			len--;
 
 		/* trash trailing white space */
-		for (/* EMPTY */; len > 0 && isblank((unsigned char)line[len-1]); len--)
+		for (/*EMPTY*/; len > 0 && is_WSP(line[len-1]); len--)
 			continue;
 
 		/* skip leading white space */
-		for (/* EMPTY */; len > 0 && isblank((unsigned char)line[0]); len--, line++)
+		for (/*EMPTY*/; len > 0 && is_WSP(line[0]); len--, line++)
 			continue;
 
 		if (len == 0)
@@ -435,7 +435,7 @@ mustquote(unsigned char *p, unsigned char *end, size_t l)
 	/* The remainder are special start-of-line cases. */
 	if (l != 0)
 		return 0;
-		
+
 	if (flag == XF)	/* line may start with "From" */
 		return p + 4 < end && p[1] == 'r' && p[2] == 'o' && p[3] == 'm';
 
@@ -500,7 +500,7 @@ fput_quoted_line(FILE *fo, char *line, size_t len, size_t limit)
 	/*
 	 * Lines ending in a blank must escape the newline.
 	 */
-	if (len && isblank((unsigned char)p[-1]))
+	if (len && is_WSP(p[-1]))
 		(void)fputs("=\n", fo);
 }
 
@@ -544,7 +544,7 @@ mime_fQP_decode(FILE *fi, FILE *fo, void *cookie __unused)
 		for (p = line; p < end; p++) {
 			if (*p == '=') {
 				p++;
-				while (p < end && isblank((unsigned char)*p))
+				while (p < end && is_WSP(*p))
 					p++;
 				if (*p != '\n' && p + 1 < end) {
 					char buf[3];

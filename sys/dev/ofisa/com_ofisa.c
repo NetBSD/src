@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.11 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.11.30.1 2007/11/06 23:28:29 matt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,15 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.11 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.11.30.1 2007/11/06 23:28:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

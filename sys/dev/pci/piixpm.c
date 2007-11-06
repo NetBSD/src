@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.16 2007/08/27 15:57:13 xtraeme Exp $ */
+/* $NetBSD: piixpm.c,v 1.16.2.1 2007/11/06 23:29:29 matt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/rwlock.h>
 #include <sys/proc.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

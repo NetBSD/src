@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.23 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.23.4.1 2007/11/06 23:36:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -98,6 +98,7 @@
 #include <sys/dir.h>
 #endif
 #include <sys/file.h>
+#include <limits.h>
 #include <unistd.h>
 #include "supcdefs.h"
 #include "supextern.h"
@@ -706,9 +707,8 @@ listdir(char *name, int always)
 	struct direct *dentry;
 #endif
 	DIR *dirp;
-	char ename[STRINGLENGTH], newname[STRINGLENGTH], filename[STRINGLENGTH];
+	char newname[STRINGLENGTH], filename[STRINGLENGTH];
 	char *p, *newp;
-	int i;
 
 	dirp = opendir(".");
 	if (dirp == 0)
@@ -736,14 +736,15 @@ listdir(char *name, int always)
 			continue;
 		if (strcmp(dentry->d_name, "..") == 0)
 			continue;
-		for (i = 0; i <= MAXNAMLEN && dentry->d_name[i]; i++)
-			ename[i] = dentry->d_name[i];
-		ename[i] = 0;
-		if (*newname)
-			(void) sprintf(filename, "%s/%s", newname, ename);
-		else
-			(void) strcpy(filename, ename);
-		listentry(ename, filename, newname, always);
+		if (*newname) {
+			(void)snprintf(filename, sizeof(filename), "%s/%s",
+			    newname, dentry->d_name);
+		} else {
+			(void)strncpy(filename, dentry->d_name,
+			    sizeof(filename) - 1);
+			filename[sizeof(filename) - 1] = '\0';
+		}
+		listentry(dentry->d_name, filename, newname, always);
 	}
 	closedir(dirp);
 }

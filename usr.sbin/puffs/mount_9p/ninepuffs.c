@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.16 2007/07/17 11:34:53 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.16.4.1 2007/11/06 23:36:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.16 2007/07/17 11:34:53 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.16.4.1 2007/11/06 23:36:30 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -57,8 +57,9 @@ static void
 usage(void)
 {
 
-	errx(1, "usage: %s [-o mntopts] [-p port] [-u user] [-s] server mount",
-	    getprogname());
+	fprintf(stderr, "usage: %s [-o mntopts] [-p port] [-s] "
+	    "[user@]server[:path] mountpoint\n", getprogname());
+	exit(1);
 }
 
 /*
@@ -104,7 +105,7 @@ main(int argc, char *argv[])
 	const char *user, *srvhost, *srvpath;
 	char *p;
 	unsigned short port;
-	int mntflags, pflags, lflags, ch;
+	int mntflags, pflags, ch;
 	int detach;
 
 	setprogname(argv[0]);
@@ -112,7 +113,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	mntflags = pflags = lflags = 0;
+	mntflags = pflags = 0;
 	detach = 1;
 	port = DEFPORT_9P;
 
@@ -128,7 +129,7 @@ main(int argc, char *argv[])
 			port = atoi(optarg);
 			break;
 		case 's':
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		default:
 			usage();
@@ -142,7 +143,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	pflags |= PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
 
 	PUFFSOP_INIT(pops);
@@ -211,14 +212,20 @@ main(int argc, char *argv[])
 	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
 		err(1, "setblockingmode");
 
-	puffs_framev_init(pu, p9pbuf_read, p9pbuf_write, p9pbuf_cmp,
+	puffs_framev_init(pu, p9pbuf_read, p9pbuf_write, p9pbuf_cmp, NULL,
 	    puffs_framev_unmountonclose);
 	if (puffs_framev_addfd(pu, p9p.servsock,
 	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 		err(1, "puffs_framebuf_addfd");
 
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
+	if (puffs_mainloop(pu) == -1)
+		err(1, "mainloop");
 
-	return puffs_mainloop(pu, lflags);
+	return 0;
 }

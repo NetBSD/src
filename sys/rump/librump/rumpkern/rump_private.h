@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.1 2007/08/20 23:05:46 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.1.2.1 2007/11/06 23:34:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,10 +43,15 @@
 
 #include "rump.h"
 
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
+
 struct lwp;
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
-extern struct lwp *curlwp;
 
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
@@ -66,10 +71,16 @@ void abort(void) __attribute__((__noreturn__));
 void	rump_putnode(struct vnode *);
 int	rump_recyclenode(struct vnode *);
 
-int	rump_ubc_magic_uiomove(size_t, struct uio *);
+struct ubc_window;
+int	rump_ubc_magic_uiomove(void *, size_t, struct uio *, int *,
+			       struct ubc_window *);
 
 void		rumpvm_init(void);
+void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 void		rumpvm_freepage(struct vm_page *);
+
+void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
+void		rumpvm_flushva(void);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

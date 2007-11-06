@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2006/05/11 15:37:07 sjg Exp $
+# $NetBSD: Makefile,v 1.20.12.1 2007/11/06 23:36:04 matt Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -21,6 +21,8 @@ UNIT_TESTS:= ${.PARSEDIR}
 SUBFILES= \
 	comment \
 	cond1 \
+	export \
+	export-all \
 	dotwait \
 	moderrs \
 	modmatch \

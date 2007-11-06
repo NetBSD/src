@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.64 2007/08/07 08:27:41 apb Exp $
+#	$NetBSD: configure.ac,v 1.64.2.1 2007/11/06 23:35:36 matt Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.64 2007/08/07 08:27:41 apb Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.64.2.1 2007/11/06 23:35:36 matt Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -145,14 +145,26 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	esetfunc fgetln flock fparseln futimes getopt getopt_long \
-	group_from_gid \
+	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwrite random setenv \
+	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
+	raise_default_signal random setenv \
 	setgroupent setprogname setpassent snprintf strlcat strlcpy strmode \
 	strndup strsep strsuftoll strtoll \
-	user_from_uid vasprintf vasnprintf vsnprintf)
+	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
+AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
+#include <pwd.h>
+])
+AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
+#include <grp.h>
+])
+AC_CHECK_DECLS([strndup],,,[#include <string.h>])
 AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
+AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
+#include <sys/stat.h>
+#include <unistd.h>
+])
 
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [#include <sys/types.h>])
 

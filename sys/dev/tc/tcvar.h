@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.22 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: tcvar.h,v 1.22.46.1 2007/11/06 23:30:27 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
  * Definitions for TURBOchannel autoconfiguration.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/tc/tcreg.h>
 
 /*
@@ -51,7 +51,7 @@
 /*
  * Map the new definitions to the old.
  */
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #define tc_intrlevel_t	int
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.13 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.13.16.1 2007/11/06 23:31:10 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -93,6 +93,7 @@ struct msdosfs_args {
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_MSDOSFSMNT);
+MALLOC_DECLARE(M_MSDOSFSTMP);
 
 /*
  * Layout of the mount control block for a msdos file system.

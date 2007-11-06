@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.39 2007/03/07 22:20:05 liamjfoy Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.39.16.1 2007/11/06 23:33:27 matt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.39 2007/03/07 22:20:05 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.39.16.1 2007/11/06 23:33:27 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.39 2007/03/07 22:20:05 liamjfoy Exp
 #include <sys/errno.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

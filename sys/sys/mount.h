@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.165 2007/07/31 21:14:21 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.165.4.1 2007/11/06 23:34:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -46,6 +46,7 @@
 #include <sys/lock.h>
 #include <sys/statvfs.h>
 #include <sys/specificdata.h>
+#include <sys/mutex.h>
 
 /*
  * file system statistics
@@ -322,13 +323,16 @@ int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
 void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
-int 	vfs_busy(struct mount *, int, struct simplelock *);
+int 	vfs_busy(struct mount *, int, kmutex_t *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
 struct vfsops *vfs_getopsbyname(const char *);
+void	vfs_delref(struct vfsops *);
+void	vfs_destroy(struct mount *);
+void	vfs_scrubvnlist(struct mount *);
 
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *, struct lwp *);
@@ -336,8 +340,10 @@ int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern	struct simplelock mountlist_slock;
+extern	kmutex_t mountlist_lock;
 extern	struct simplelock spechash_slock;
+extern  kmutex_t vfs_list_lock;
+
 long	makefstype(const char *);
 int	dounmount(struct mount *, int, struct lwp *);
 int	do_sys_mount(struct lwp *, struct vfsops *, const char *, const char *,

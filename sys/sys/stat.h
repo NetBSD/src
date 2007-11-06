@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.54 2006/02/24 22:01:30 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.54.40.1 2007/11/06 23:34:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993

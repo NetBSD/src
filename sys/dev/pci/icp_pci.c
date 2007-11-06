@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.13 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.13.24.1 2007/11/06 23:28:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.13 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.13.24.1 2007/11/06 23:28:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.13 2006/11/16 01:33:08 christos Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

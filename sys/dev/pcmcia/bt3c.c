@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.10 2007/07/23 18:08:20 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.10.6.1 2007/11/06 23:29:40 matt Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,16 +69,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.10 2007/07/23 18:08:20 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.10.6.1 2007/11/06 23:29:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.10 2007/07/23 18:08:20 plunky Exp $");
  */
 
 struct bt3c_softc {
-	struct device	sc_dev;			/* required */
+	device_t	sc_dev;
 
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
@@ -126,14 +126,13 @@ struct bt3c_softc {
 /* sc_flags */
 #define BT3C_SLEEPING		(1 << 0)	/* but not with the fishes */
 
-static int bt3c_match(struct device *, struct cfdata *, void *);
-static void bt3c_attach(struct device *, struct device *, void *);
-static int bt3c_detach(struct device *, int);
-static int bt3c_activate(struct device *, enum devact);
+static int bt3c_match(device_t, struct cfdata *, void *);
+static void bt3c_attach(device_t, device_t, void *);
+static int bt3c_detach(device_t, int);
 static void bt3c_power(int, void *);
 
-CFATTACH_DECL(bt3c, sizeof(struct bt3c_softc),
-    bt3c_match, bt3c_attach, bt3c_detach, bt3c_activate);
+CFATTACH_DECL_NEW(bt3c, sizeof(struct bt3c_softc),
+    bt3c_match, bt3c_attach, bt3c_detach, NULL);
 
 static void bt3c_start(struct hci_unit *);
 static int bt3c_enable(struct hci_unit *);
@@ -281,7 +280,7 @@ bt3c_receive(struct bt3c_softc *sc)
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
 					printf("%s: out of memory\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -297,7 +296,7 @@ bt3c_receive(struct bt3c_softc *sc)
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
 					printf("%s: out of memory\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -346,7 +345,7 @@ bt3c_receive(struct bt3c_softc *sc)
 
 			default:
 				printf("%s: Unknown packet type=%#x!\n",
-					sc->sc_dev.dv_xname, b);
+					device_xname(sc->sc_dev), b);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -398,7 +397,7 @@ bt3c_receive(struct bt3c_softc *sc)
 
 		default:
 			panic("%s: invalid state %d!\n",
-				sc->sc_dev.dv_xname, sc->sc_state);
+				device_xname(sc->sc_dev), sc->sc_state);
 		}
 	}
 
@@ -478,7 +477,7 @@ bt3c_intr(void *arg)
 		isr = bt3c_read(sc, BT3C_ISR);
 		if ((isr & 0xff) == 0x7f) {
 			printf("%s: bt3c_intr got strange ISR=%04x\n",
-				sc->sc_dev.dv_xname, isr);
+				device_xname(sc->sc_dev), isr);
 		} else if ((isr & 0xff) != 0xff) {
 
 			if (isr & BT3C_ISR_RXRDY)
@@ -491,10 +490,10 @@ bt3c_intr(void *arg)
 			if (isr & BT3C_ISR_ANTENNA) {
 				if (bt3c_read(sc, BT3C_CSR) & BT3C_CSR_ANTENNA)
 					printf("%s: Antenna Out\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 				else
 					printf("%s: Antenna In\n",
-						sc->sc_dev.dv_xname);
+						device_xname(sc->sc_dev));
 			}
 #endif
 
@@ -558,13 +557,14 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	int32_t addr, data;
 	int err, sum, len;
 	firmware_handle_t fh;
+	struct cfdata *cf = device_cfdata(sc->sc_dev);
 	size_t size;
 
-	err = firmware_open(sc->sc_dev.dv_cfdata->cf_name,
+	err = firmware_open(cf->cf_name,
 			    BT3C_FIRMWARE_FILE, &fh);
 	if (err) {
-		printf("%s: Cannot open firmware %s/%s\n", sc->sc_dev.dv_xname,
-		    sc->sc_dev.dv_cfdata->cf_name, BT3C_FIRMWARE_FILE);
+		printf("%s: Cannot open firmware %s/%s\n",
+		    device_xname(sc->sc_dev), cf->cf_name, BT3C_FIRMWARE_FILE);
 		return err;
 	}
 
@@ -572,7 +572,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 #ifdef DIAGNOSTIC
 	if (size > 10 * 1024) {	/* sanity check */
 		printf("%s: firmware file seems WAY too big!\n",
-			sc->sc_dev.dv_xname);
+			device_xname(sc->sc_dev));
 		firmware_close(fh);
 		return EFBIG;
 	}
@@ -584,7 +584,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	err = firmware_read(fh, 0, buf, size);
 	if (err) {
 		printf("%s: Firmware read failed (%d)\n",
-				sc->sc_dev.dv_xname, err);
+				device_xname(sc->sc_dev), err);
 		goto out;
 	}
 
@@ -829,8 +829,7 @@ bt3c_disable(struct hci_unit *unit)
  */
 
 static int
-bt3c_match(struct device *parent, struct cfdata *match,
-    void *aux)
+bt3c_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -842,12 +841,13 @@ bt3c_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-bt3c_attach(struct device *parent, struct device *self, void *aux)
+bt3c_attach(device_t parent, device_t self, void *aux)
 {
-	struct bt3c_softc *sc = (struct bt3c_softc *)self;
+	struct bt3c_softc *sc = device_private(self);
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 
+	sc->sc_dev = self;
 	sc->sc_pf = pa->pf;
 
 	/* Find a PCMCIA config entry we can use */
@@ -880,7 +880,7 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 	sc->sc_unit.hci_enable = bt3c_enable;
 	sc->sc_unit.hci_disable = bt3c_disable;
 	sc->sc_unit.hci_start_cmd = bt3c_start;
@@ -890,7 +890,7 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    bt3c_power, sc);
 	return;
 
@@ -903,9 +903,9 @@ no_config_entry:
 }
 
 static int
-bt3c_detach(struct device *self, int flags)
+bt3c_detach(device_t self, int flags)
 {
-	struct bt3c_softc *sc = (struct bt3c_softc *)self;
+	struct bt3c_softc *sc = device_private(self);
 	int err = 0;
 
 	bt3c_disable(&sc->sc_unit);
@@ -926,25 +926,6 @@ bt3c_detach(struct device *self, int flags)
 	return err;
 }
 
-static int
-bt3c_activate(struct device *self, enum devact act)
-{
-	// struct bt3c_softc *sc = (struct bt3c_softc *)self;
-	int err = 0;
-
-	switch(act) {
-	case DVACT_ACTIVATE:
-		err = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		// could notify unit somehow?
-		break;
-	}
-
-	return err;
-}
-
 static void
 bt3c_power(int why, void *arg)
 {
@@ -957,18 +938,18 @@ bt3c_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BT3C_SLEEPING;
-			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
+			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BT3C_SLEEPING) {
-			printf_nolog("%s: waking up\n", sc->sc_dev.dv_xname);
+			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
 			sc->sc_flags &= ~BT3C_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
 			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 			sc->sc_unit.hci_enable = bt3c_enable;
 			sc->sc_unit.hci_disable = bt3c_disable;
 			sc->sc_unit.hci_start_cmd = bt3c_start;

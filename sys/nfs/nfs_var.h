@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.72 2007/08/10 15:12:56 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.72.2.1 2007/11/06 23:34:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ int nfsrv_access(struct vnode *, int, kauth_cred_t, int, struct lwp *, int);
 
 /* nfs_socket.c */
 int nfs_connect(struct nfsmount *, struct nfsreq *, struct lwp *);
-int nfs_reconnect(struct nfsreq *, struct lwp *);
+int nfs_reconnect(struct nfsreq *);
 void nfs_disconnect(struct nfsmount *);
 void nfs_safedisconnect(struct nfsmount *);
 int nfs_send(struct socket *, struct mbuf *, struct mbuf *, struct nfsreq *,
@@ -255,6 +255,7 @@ int nfsrv_fhtovp(nfsrvfh_t *, int, struct vnode **, kauth_cred_t,
 	struct nfssvc_sock *, struct mbuf *, int *, int, int);
 int nfs_ispublicfh __P((const nfsrvfh_t *));
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
+time_t nfs_attrtimeo(struct nfsmount *, struct nfsnode *);
 
 /* flags for nfs_loadattrcache and friends */
 #define	NAC_NOTRUNC	1	/* don't truncate file size */

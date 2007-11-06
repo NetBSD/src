@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.14 2007/08/20 03:44:17 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.14.2.1 2007/11/06 23:36:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.14 2007/08/20 03:44:17 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.14.2.1 2007/11/06 23:36:15 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -310,7 +310,7 @@ consume(FILE *fscript, off_t len, char *buf, int reg)
 	size_t l;
 
 	if (reg) {
-		if (fseek(fscript, len, SEEK_CUR) == -1)
+		if (fseeko(fscript, len, SEEK_CUR) == -1)
 			err(1, NULL);
 	}
 	else {

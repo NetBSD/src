@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.37 2007/07/29 12:15:43 ad Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.37.6.1 2007/11/06 23:28:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.37 2007/07/29 12:15:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.37.6.1 2007/11/06 23:28:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -134,8 +134,7 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_phandle = oba->oba_phandle;
 	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
-	of->sc_dk.dk_driver = &ofdisk_dkdriver;
-	of->sc_dk.dk_name = of->sc_dev.dv_xname;
+	disk_init(&of->sc_dk, of->sc_dev.dv_xname, &ofdisk_dkdriver);
 	disk_attach(&of->sc_dk);
 	printf("\n");
 

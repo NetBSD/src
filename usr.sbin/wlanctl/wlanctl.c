@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.8 2006/06/30 21:30:19 martin Exp $ */
+/* $NetBSD: wlanctl.c,v 1.8.10.1 2007/11/06 23:36:39 matt Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -61,6 +61,7 @@ struct flagname {
 struct cmdflags {
 	int	cf_v;	/* verbose */
 	int	cf_a;	/* all 802.11 interfaces */
+  	int     cf_p;   /* public (i.e. non-private) dests */
 };
 
 static void		print_flags(u_int32_t, const struct flagname *, u_int);
@@ -258,6 +259,8 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 			warn("if_indextoname");
 			return -1;
 		}
+		if (cf->cf_p && (pns->ns_capinfo & IEEE80211_CAPINFO_PRIVACY))
+		  	continue;
 		printf("%s: mac %s ", ifname, ether_string(pns->ns_macaddr));
 		printf("bss %s\n", ether_string(pns->ns_bssid));
 		print_node_flags(pns->ns_flags);
@@ -288,7 +291,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [ -v ] -a\n"
+	fprintf(stderr, "usage: %s [ -p ] [ -v ] -a\n"
 	    "\t[ -v ] interface [ interface ... ]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -300,10 +303,13 @@ parse_args(int *argcp, char ***argvp, struct cmdflags *cf)
 
 	(void)memset(cf, 0, sizeof(*cf));
 
-	while ((ch = getopt(*argcp, *argvp, "av")) != -1) {
+	while ((ch = getopt(*argcp, *argvp, "apv")) != -1) {
 		switch (ch) {
 		case 'a':
 			cf->cf_a = 1;
+			break;
+		case 'p':
+			cf->cf_p = 1;
 			break;
 		case 'v':
 			cf->cf_v = 1;

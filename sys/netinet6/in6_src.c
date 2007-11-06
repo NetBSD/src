@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.38 2007/05/23 17:15:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.38.8.1 2007/11/06 23:34:01 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -881,7 +881,7 @@ found:
 }
 
 void
-addrsel_policy_init()
+addrsel_policy_init(void)
 {
 	init_policy_queue();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.13 2007/07/29 13:31:10 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.13.6.1 2007/11/06 23:31:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.13 2007/07/29 13:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.13.6.1 2007/11/06 23:31:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.13 2007/07/29 13:31:10 ad Exp $"
 #define	ROUND_SECTOR(x)		(((x) + 511) & ~511)
 
 MALLOC_JUSTDEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
+MALLOC_DECLARE(M_BFS);
 
 int
 sysvbfs_lookup(void *arg)
@@ -527,7 +528,7 @@ sysvbfs_readdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs *bfs = bnode->bmp->bfs;
-	struct dirent d;
+	struct dirent *dp;
 	struct bfs_dirent *file;
 	int i, n, error;
 
@@ -536,6 +537,8 @@ sysvbfs_readdir(void *v)
 
 	KDASSERT(vp->v_type == VDIR);
 	KDASSERT(uio->uio_offset >= 0);
+
+	dp = malloc(sizeof(struct dirent), M_BFS, M_WAITOK | M_ZERO);
 
 	i = uio->uio_offset / sizeof(struct dirent);
 	n = uio->uio_resid / sizeof(struct dirent);
@@ -551,20 +554,22 @@ sysvbfs_readdir(void *v)
 			break;
 		}
 		i++;
-		memset(&d, 0, sizeof d);
-		d.d_fileno = file->inode;
-		d.d_type = file->inode == BFS_ROOT_INODE ? DT_DIR : DT_REG;
-		d.d_namlen = strlen(file->name);
-		strncpy(d.d_name, file->name, BFS_FILENAME_MAXLEN);
-		d.d_reclen = sizeof(struct dirent);
-		if ((error = uiomove(&d, d.d_reclen, uio)) != 0) {
+		memset(dp, 0, sizeof(struct dirent));
+		dp->d_fileno = file->inode;
+		dp->d_type = file->inode == BFS_ROOT_INODE ? DT_DIR : DT_REG;
+		dp->d_namlen = strlen(file->name);
+		strncpy(dp->d_name, file->name, BFS_FILENAME_MAXLEN);
+		dp->d_reclen = sizeof(struct dirent);
+		if ((error = uiomove(dp, dp->d_reclen, uio)) != 0) {
 			DPRINTF("%s: uiomove failed.\n", __FUNCTION__);
+			free(dp, M_BFS);
 			return error;
 		}
 	}
 	DPRINTF("%s: %d %d %d\n", __FUNCTION__, i, n, bfs->n_dirent);
-	*ap->a_eofflag = i == bfs->n_dirent;
+	*ap->a_eofflag = (i == bfs->n_dirent);
 
+	free(dp, M_BFS);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.23 2007/06/17 10:21:25 dsl Exp $	*/
+/*	$NetBSD: sem.h,v 1.23.8.1 2007/11/06 23:34:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -197,11 +197,6 @@ struct sem_sysctl_info {
  */
 extern struct seminfo seminfo;
 extern struct semid_ds *sema;		/* semaphore id pool */
-
-/*
- * Macro to find a particular sem_undo vector
- */
-#define SEMU(ix)	((struct sem_undo *)(((long)semu)+ix * SEMUSZ))
 
 /*
  * Parameters to the semconfig system call

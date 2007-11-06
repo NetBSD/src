@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.8 2007/03/07 23:17:01 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.8.16.1 2007/11/06 23:29:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.8 2007/03/07 23:17:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.8.16.1 2007/11/06 23:29:55 matt Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.8 2007/03/07 23:17:01 bjh21 Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ic/wd33c93reg.h>
 #include <dev/ic/wd33c93var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.16.24.1 2007/11/06 23:27:44 matt Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.16.24.1 2007/11/06 23:27:44 matt Exp $");
 
 #undef TRISADEBUG
 
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/isa/isavar.h>
 

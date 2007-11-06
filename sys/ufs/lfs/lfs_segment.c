@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.204 2007/08/09 08:51:21 pooka Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.204.2.1 2007/11/06 23:35:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.204 2007/08/09 08:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.204.2.1 2007/11/06 23:35:18 matt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -291,7 +291,7 @@ lfs_vflush(struct vnode *vp)
 	splx(s);
 	simple_unlock(&vp->v_interlock);
 
-	/* Protect against VXLOCK deadlock in vinvalbuf() */
+	/* Protect against VI_XLOCK deadlock in vinvalbuf() */
 	lfs_seglock(fs, SEGM_SYNC);
 
 	/* If we're supposed to flush a freed inode, just toss it */
@@ -302,7 +302,7 @@ lfs_vflush(struct vnode *vp)
 		/* Drain v_numoutput */
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf4", 0,
 				&global_v_numoutput_slock);
 		}
@@ -328,7 +328,7 @@ lfs_vflush(struct vnode *vp)
 				bp->b_flags |= B_DONE;
 				bp->b_error = 0;
 				reassignbuf(bp, vp);
-				brelse(bp);
+				brelse(bp, 0);
 			}
 		}
 		splx(s);
@@ -355,7 +355,7 @@ lfs_vflush(struct vnode *vp)
 		s = splbio();
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf3", 0,
 				&global_v_numoutput_slock);
 		}
@@ -385,9 +385,9 @@ lfs_vflush(struct vnode *vp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (vp->v_flag & VDIROP) {
-		DLOG((DLOG_VNODE, "lfs_vflush: flushing VDIROP\n"));
-		/* panic("lfs_vflush: VDIROP being flushed...this can\'t happen"); */
+	if (vp->v_uflag & VU_DIROP) {
+		DLOG((DLOG_VNODE, "lfs_vflush: flushing VU_DIROP\n"));
+		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
 	}
 	if (vp->v_usecount < 0) {
 		printf("usecount=%ld\n", (long)vp->v_usecount);
@@ -470,7 +470,7 @@ lfs_vflush(struct vnode *vp)
 	s = splbio();
 	simple_lock(&global_v_numoutput_slock);
 	while (vp->v_numoutput > 0) {
-		vp->v_flag |= VBWAIT;
+		vp->v_iflag |= VI_BWAIT;
 		ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf2", 0,
 			&global_v_numoutput_slock);
 	}
@@ -518,9 +518,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		}
 
 		ip = VTOI(vp);
-		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
+		if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
 		    (op != VN_DIROP && op != VN_CLEAN &&
-		    (vp->v_flag & VDIROP))) {
+		    (vp->v_uflag & VU_DIROP))) {
 			vndebug(vp,"dirop");
 			continue;
 		}
@@ -703,7 +703,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			if (dirty)
 				error = LFS_BWRITE_LOG(bp); /* Ifile */
 			else
-				brelse(bp);
+				brelse(bp, 0);
 			segleft -= fs->lfs_sepb;
 			curseg += fs->lfs_sepb;
 		}
@@ -838,7 +838,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	fip = sp->fip;
 	lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
-	if (vp->v_flag & VDIROP)
+	if (vp->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	if (sp->seg_flags & SEGM_CLEAN) {
@@ -1114,8 +1114,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		((int32_t *)(sp->segsum))[ndx] = daddr;
 	}
 
-	/* Check VDIROP in case there is a new file with no data blocks */
-	if (ITOV(ip)->v_flag & VDIROP)
+	/* Check VU_DIROP in case there is a new file with no data blocks */
+	if (ITOV(ip)->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	/* Update the inode times and copy the inode onto the inode page. */
@@ -1144,12 +1144,12 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	/*
 	 * If cleaning, link counts and directory file sizes cannot change,
 	 * since those would be directory operations---even if the file
-	 * we are writing is marked VDIROP we should write the old values.
+	 * we are writing is marked VU_DIROP we should write the old values.
 	 * If we're not cleaning, of course, update the values so we get
 	 * current values the next time we clean.
 	 */
 	if (sp->seg_flags & SEGM_CLEAN) {
-		if (ITOV(ip)->v_flag & VDIROP) {
+		if (ITOV(ip)->v_uflag & VU_DIROP) {
 			cdp->di_nlink = ip->i_lfs_odnlink;
 			/* if (ITOV(ip)->v_type == VDIR) */
 			cdp->di_size = ip->i_lfs_osize;
@@ -1247,7 +1247,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/* Increment inode count in segment summary block. */
@@ -1686,7 +1686,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	for (sn = 0; sn < fs->lfs_nseg; ++sn) {
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
-		brelse(bp);
+		brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -1743,7 +1743,7 @@ lfs_initseg(struct lfs *fs)
 			fs->lfs_offset += btofsb(fs, LFS_SBPAD);
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
 		    fs->lfs_start < btofsb(fs, LFS_LABELPAD)) {
@@ -1828,7 +1828,7 @@ lfs_unset_inval_all(struct lfs *fs)
 			sup->su_flags &= ~SEGUSE_INVAL;
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		} else
-			brelse(bp);
+			brelse(bp, 0);
 	}
 }
 
@@ -1897,7 +1897,7 @@ lfs_newseg(struct lfs *fs)
 		    !(sup->su_flags & SEGUSE_EMPTY))
 			LFS_WRITESEGENTRY(sup, fs, sn, bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -2696,7 +2696,7 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 }
 
 /*
- * Call vget with LK_NOWAIT.  If we are the one who holds VXLOCK/VFREEING,
+ * Call vget with LK_NOWAIT.  If we are the one who holds VI_XLOCK/VI_FREEING,
  * however, we must press on.  Just fake success in that case.
  */
 int

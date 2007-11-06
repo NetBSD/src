@@ -1,4 +1,4 @@
-/*	$NetBSD: csplit.c,v 1.2 2007/07/18 01:32:33 lukem Exp $	*/
+/*	$NetBSD: csplit.c,v 1.2.4.1 2007/11/06 23:35:44 matt Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp$	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: csplit.c,v 1.2 2007/07/18 01:32:33 lukem Exp $");
+__RCSID("$NetBSD: csplit.c,v 1.2.4.1 2007/11/06 23:35:44 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: csplit.c,v 1.2 2007/07/18 01:32:33 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 static void	 cleanup(void);
 static void	 do_lineno(const char *);
@@ -228,24 +229,13 @@ handlesig(int sig)
 {
 	char msg[BUFSIZ];
 	size_t len;
-	struct sigaction n_hand;
-	sigset_t n_mask;
 
 	len = snprintf(msg, sizeof(msg), "%s: Caught %s, cleaning up\n",
 	    getprogname(), strsignal(sig));
 	if (len < sizeof(msg))
 		(void)write(STDERR_FILENO, msg, len);
 	cleanup();
-	/* Reset to default signal handler, clear mask, raise signal */
-	memset(&n_hand, 0, sizeof n_hand);
-	sigemptyset(&n_hand.sa_mask);
-	n_hand.sa_handler = SIG_DFL;
-	if ((sigaction(sig, &n_hand, NULL) == 0) &&
-	    (sigemptyset(&n_mask) == 0) &&
-	    (sigaddset(&n_mask, sig) == 0) &&
-	    (sigprocmask(SIG_UNBLOCK, &n_mask, 0) == 0)) {
-		raise(sig);
-	}
+	(void)raise_default_signal(sig);
 	_exit(2);
 }
 

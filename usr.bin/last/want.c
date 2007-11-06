@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.10 2007/01/06 14:29:44 cbiere Exp $	*/
+/*	$NetBSD: want.c,v 1.10.4.1 2007/11/06 23:35:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -305,7 +305,9 @@ onintr(int signo)
 	/* FIXME: None of this is allowed in a signal handler */
 	printf("\ninterrupted %s\n", fmttime(buf[FIRSTVALID].ut_timefld,
 	    FULLTIME));
-	if (signo == SIGINT)
+	if (signo == SIGINT) {
+		(void)raise_default_signal(signo);
 		exit(EXIT_FAILURE);
+	}
 	(void)fflush(stdout);		/* fix required for rsh */
 }

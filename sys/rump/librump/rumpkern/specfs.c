@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.6 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.6.4.1 2007/11/06 23:34:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -89,7 +89,9 @@ rump_specopen(void *v)
 		memset(&sp->rsp_dl, 0, sizeof(sp->rsp_dl));
 
 		if (rumpuser_stat(sp->rsp_path, &sb, &error) == -1) {
-			rumpuser_close(fd);
+			int dummy;
+
+			rumpuser_close(fd, &dummy);
 			return error;
 		}
 		sp->rsp_pi.p_size = sb.st_size >> DEV_BSHIFT;
@@ -145,8 +147,9 @@ rump_specclose(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rump_specpriv *sp = vp->v_data;
+	int error;
 
-	rumpuser_close(sp->rsp_fd);
+	rumpuser_close(sp->rsp_fd, &error);
 	return 0;
 }
 
@@ -186,7 +189,6 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
-	ssize_t rv;
 	off_t off;
 	int error;
 
@@ -194,22 +196,21 @@ rump_specstrategy(void *v)
 	sp = vp->v_data;
 
 	off = bp->b_blkno << DEV_BSHIFT;
-	printf("specfs: %x bytes %s offset %x (%x - %x)\n", (int)bp->b_bcount,
-	    bp->b_flags & B_READ ? "READ" : "WRITE", (int)off, (int)off,
-	    (int)(off + bp->b_bcount));
-	if (bp->b_flags & B_READ)
-		rv = rumpuser_pread(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
-	else
-		rv = rumpuser_pwrite(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
+	DPRINTF(("specstrategy: 0x%x bytes %s off 0x%" PRIx64
+	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
+	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
+	    off, off, (off + bp->b_bcount)));
 
-	bp->b_error = 0;
-	if (rv == -1)
-		bp->b_error = error;
-	else
-		bp->b_resid = bp->b_bcount - rv;
-	biodone(bp);
+	if (bp->b_flags & B_READ)
+		rumpuser_read(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
+	else {
+		rumpuser_write(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
+	}
+
+#ifdef notyet
+	if ((bp->b_flags & B_ASYNC) == 0)
+#endif
+		biowait(bp);
 
 	return error;
 }

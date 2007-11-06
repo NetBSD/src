@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/08/26 23:49:42 pooka Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2007/11/06 23:34:34 matt Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,28 +8,36 @@ LIB=	rump
 
 .PATH:	${NETBSDSRCDIR}/sys/kern ${NETBSDSRCDIR}/sys/lib/libkern	\
 	${NETBSDSRCDIR}/sys/conf ${NETBSDSRCDIR}/sys/dev		\
+	${NETBSDSRCDIR}/sys/miscfs/genfs				\
 	${NETBSDSRCDIR}/sys/miscfs/syncfs
 
-# implements something
-SRCS=	rump.c auth.c emul.c lock.c genfs.c pool.c specfs.c vfs.c vm.c 
+# implement something
+SRCS=	rump.c auth.c emul.c genfs_io.c locks.c ltsleep.c pool.c	\
+	specfs.c vfs.c vm.c
 
 # just stubs
-SRCS+=	fstrans_stub.c lock_stub.c misc_stub.c		\
-	pmap_stub.c vfsops_stub.c
+SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 # sys/kern
-SRCS+=	clock_subr.c kern_stub.c param.c subr_hash.c subr_prf2.c	\
-	subr_specificdata.c subr_time.c sync_subr.c			\
+SRCS+=	clock_subr.c kern_lock.c kern_stub.c param.c subr_bufq.c	\
+	subr_hash.c subr_prf2.c subr_specificdata.c subr_time.c		\
 	vfs_bio.c vfs_cache.c vfs_vnops.c vfs_init.c vfs_subr2.c	\
-	vnode_if.c param.c
+	vnode_if.c subr_workqueue.c
+
+# sys/miscfs
+SRCS+=	genfs_vnops.c sync_subr.c
+
+# src/kern bufq
+SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
+	bufq_readprio.c
 
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
 
 SRCS+=	rumpvnode_if.c
 
-RUMUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
-OBJS+=	${RUMUSEROBJDIR}/rumpuser.o
+RUMPUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
+OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
@@ -66,6 +74,8 @@ rumpvnode_if.c: vnode_if.c
 	printf "#endif /* EJUSTRETURN */\n" >> rumpdefs.h
 
 CLEANFILES+=	rumpvnode_if.c rumpvnode_if.h rumpdefs.h
+
+beforedepend: rumpvnode_if.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

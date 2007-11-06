@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.27 2007/03/04 15:55:29 yamt Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.27.16.1 2007/11/06 23:30:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.27 2007/03/04 15:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.27.16.1 2007/11/06 23:30:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.27 2007/03/04 15:55:29 yamt Exp $");
 #endif
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/cons.h>
 

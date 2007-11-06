@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.24 2007/07/29 12:15:45 ad Exp $	*/
+/*	$NetBSD: advnops.c,v 1.24.6.1 2007/11/06 23:31:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.24 2007/07/29 12:15:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.24.6.1 2007/11/06 23:31:02 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -310,7 +310,7 @@ adosfs_read(v)
 		 */
 		error = bread(sp->a_vp, lbn, amp->bsize, NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			goto reterr;
 		}
 		if (!IS_FFS(amp)) {
@@ -332,7 +332,7 @@ adosfs_read(v)
 		}
 
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			goto reterr;
 		}
 #ifdef ADOSFS_DIAGNOSTIC
@@ -341,7 +341,7 @@ adosfs_read(v)
 		n = MIN(n, size - bp->b_resid);
 		error = uiomove((char *)bp->b_data + on +
 				amp->bsize - amp->dbsize, (int)n, uio);
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -524,7 +524,7 @@ adosfs_bmap(v)
 	}
 	while (flblk >= 0) {
 		if (flbp)
-			brelse(flbp);
+			brelse(flbp, 0);
 		if (nb == 0) {
 #ifdef DIAGNOSTIC
 			printf("adosfs: bad file list chain.\n");
@@ -535,14 +535,14 @@ adosfs_bmap(v)
 		error = bread(ap->amp->devvp, nb * ap->amp->bsize / DEV_BSIZE,
 			      ap->amp->bsize, NOCRED, &flbp);
 		if (error) {
-			brelse(flbp);
+			brelse(flbp, 0);
 			goto reterr;
 		}
 		if (adoscksum(flbp, ap->nwords)) {
 #ifdef DIAGNOSTIC
 			printf("adosfs: blk %ld failed cksum.\n", nb);
 #endif
-			brelse(flbp);
+			brelse(flbp, 0);
 			error = EINVAL;
 			goto reterr;
 		}
@@ -571,7 +571,7 @@ adosfs_bmap(v)
 #endif
 		error = EINVAL;
 	}
-	brelse(flbp);
+	brelse(flbp, 0);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	if (error == 0 && bnp)

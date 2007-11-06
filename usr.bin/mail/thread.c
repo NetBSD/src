@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.3 2006/12/05 03:47:41 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.3.4.1 2007/11/06 23:35:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.3 2006/12/05 03:47:41 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.3.4.1 2007/11/06 23:35:58 matt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -71,8 +71,8 @@ typedef int state_t;
 #define S_STATE_INIT	0
 #define S_EXPOSE	1	/* flag to expose the thread */
 #define S_RESTRICT	2	/* flag to restrict to tagged messages */
-#define S_IS_EXPOSE(a)		((a) & S_EXPOSE)	
-#define S_IS_RESTRICT(a)	((a) & S_RESTRICT)	
+#define S_IS_EXPOSE(a)		((a) & S_EXPOSE)
+#define S_IS_RESTRICT(a)	((a) & S_RESTRICT)
 
 /* XXX - this isn't really a thread */
 static struct thread_s message_array  = THREAD_INIT;	/* the basic message array */
@@ -176,7 +176,7 @@ next_message1(struct message *mp)
 
 	if (S_IS_EXPOSE(state) == 0)
 		return mp->m_flink;
-		
+
 	if (mp->m_clink)
 		return mp->m_clink;
 
@@ -194,7 +194,7 @@ prev_message1(struct message *mp)
 
 	if (S_IS_EXPOSE(state) && mp->m_blink == NULL && has_parent(mp))
 		return mp->m_plink;
-		
+
 	return mp->m_blink;
 }
 
@@ -275,7 +275,7 @@ next_abs_message(struct message *mp)
 	int i;
 
 	i = mp - message_array.t_head;
-	
+
 	if (i < 0 || i + 1 >= message_array.t_msgCount)
 		return NULL;
 
@@ -380,7 +380,7 @@ reindex(struct thread_s *tp)
 		i = reindex_core(tp->t_head);
 	}
 	else {
-		i = 0;			
+		i = 0;
 		for (mp = first_message(tp->t_head); mp; mp = next_message(mp))
 			mp->m_index = ++i;
 	}
@@ -825,7 +825,7 @@ adopt_child(struct message *parent, struct message *child)
 	if (child->m_flink != NULL) {
 		child->m_flink->m_blink = child->m_blink;
 	}
-	
+
 	/*
 	 * Link the child to the parent.
 	 */
@@ -1140,7 +1140,7 @@ upcmd(void *v)
 	int upone;
 
 	str = v;
-	str = skip_blank(str);
+	str = skip_WSP(str);
 	if (*str == '\0')
 		upcnt = 1;
 	else
@@ -1419,7 +1419,7 @@ subj_load(struct key_sort_s *marray, size_t mcount, struct message *mp,
 	for (i = 0; i < mcount; i++) {
 		char *subj = hfield(key, mp);
 		while( strncasecmp(subj, "Re:", 3) == 0 )
-			subj = skip_blank(subj + 3);
+			subj = skip_WSP(subj + 3);
 		marray[i].mp = mp;
 		marray[i].key.str = subj;
 		marray[i].index = mp->m_index;
@@ -1603,7 +1603,7 @@ thread_current_on(char *str, int modflags, int cutit)
 	cmp.fn = get_cmpfn(kp, modflags & MF_IGNCASE);
 	cmp.inv = modflags & MF_REVERSE;
 	thread_array(marray, mcount, cutit);
-	
+
 	if (!S_IS_EXPOSE(oldstate))
 		dot = thread_top(dot);
 
@@ -1619,7 +1619,7 @@ threadcmd(void *v)
 {
 	char *str;
 
-	str = v;	
+	str = v;
 	if (*str == '\0')
 		thread_on_reference(current_thread.t_head);
 	else {

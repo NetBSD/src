@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.5 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.5.46.1 2007/11/06 23:28:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.5 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.5.46.1 2007/11/06 23:28:28 matt Exp $");
 
 #include "vmetwo.h"
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.5 2005/12/11 12:22:48 christos Exp $")
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>

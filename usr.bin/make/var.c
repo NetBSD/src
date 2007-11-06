@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.117.4.1 2007/11/06 23:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.117.4.1 2007/11/06 23:36:03 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.117.4.1 2007/11/06 23:36:03 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,8 +187,24 @@ typedef struct Var {
 #define VAR_KEEP	8	    /* Variable is VAR_JUNK, but we found
 				     * a use for it in some modifier and
 				     * the value is therefore valid */
+#define VAR_EXPORTED	16 	    /* Variable is exported */
+#define VAR_REEXPORT	32	    /* Indicate if var needs re-export.
+				     * This would be true if it contains $'s
+				     */
 }  Var;
 
+/*
+ * Exporting vars is expensive so skip it if we can
+ */
+#define VAR_EXPORTED_NONE	0
+#define VAR_EXPORTED_YES	1
+#define VAR_EXPORTED_ALL	2
+static int var_exportedVars = VAR_EXPORTED_NONE;
+/*
+ * We pass this to Var_Export when doing the initial export
+ * or after updating an exported var.
+ */
+#define VAR_EXPORT_FORCE 1
 
 /* Var*Pattern flags */
 #define VAR_SUB_GLOBAL	0x01	/* Apply substitution globally */
@@ -292,8 +308,6 @@ static char *VarOrder(const char *, const char);
 static char *VarUniq(const char *);
 static int VarWordCompare(const void *, const void *);
 static void VarPrintVar(ClientData);
-
-#define WR(a)	((char *)UNCONST(a))
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -509,12 +523,186 @@ Var_Delete(const char *name, GNode *ctxt)
 	Var 	  *v;
 
 	v = (Var *)Hash_GetValue(ln);
+	if ((v->flags & VAR_EXPORTED)) {
+	    unsetenv(v->name);
+	}
 	if (v->name != ln->name)
 		free(v->name);
 	Hash_DeleteEntry(&ctxt->context, ln);
 	Buf_Destroy(v->val, TRUE);
 	free(v);
     }
+}
+
+
+/*
+ * Export a var.
+ * We ignore make internal variables (those which start with '.')
+ * Also we jump through some hoops to avoid calling setenv
+ * more than necessary since it can leak.
+ */
+static int
+Var_Export1(const char *name, int force)
+{
+    char tmp[BUFSIZ];
+    Var *v;
+    char *val = NULL;
+    int n;
+
+    if (*name == '.')
+	return 0;			/* skip internals */
+    if (!name[1]) {
+	/*
+	 * A single char.
+	 * If it is one of the vars that should only appear in
+	 * local context, skip it, else we can get Var_Subst
+	 * into a loop.
+	 */
+	switch (name[0]) {
+	case '@':
+	case '%':
+	case '*':
+	case '!':
+	    return 0;
+	}
+    }
+    v = VarFind(name, VAR_GLOBAL, 0);
+    if (v == (Var *)NIL) {
+	return 0;
+    }
+    if (!force &&
+	(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED) {
+	return 0;			/* nothing to do */
+    }
+    val = (char *)Buf_GetAll(v->val, NULL);
+    if (strchr(val, '$')) {
+	/* Flag this as something we need to re-export */
+	v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
+	if (force) {
+	    /*
+	     * No point actually exporting it now though,
+	     * the child can do it at the last minute.
+	     */
+	    return 1;
+	}
+	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
+	if (n < sizeof(tmp)) {
+	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+	    setenv(name, val, 1);
+	    free(val);
+	}
+    } else {
+	v->flags &= ~VAR_REEXPORT;	/* once will do */
+	if (force || !(v->flags & VAR_EXPORTED)) {
+	    setenv(name, val, 1);
+	}
+    }
+    /*
+     * This is so Var_Set knows to call Var_Export again...
+     */
+    v->flags |= VAR_EXPORTED;
+    return 1;
+}
+
+/*
+ * This gets called from our children.
+ */
+void
+Var_ExportVars(void)
+{
+    char tmp[BUFSIZ];
+    Hash_Entry         	*var;
+    Hash_Search 	state;
+    Var *v;
+    char *val;
+    int n;
+
+    if (VAR_EXPORTED_NONE == var_exportedVars)
+	return;
+
+    if (VAR_EXPORTED_ALL == var_exportedVars) {
+	/*
+	 * Ouch! This is crazy...
+	 */
+	for (var = Hash_EnumFirst(&VAR_GLOBAL->context, &state);
+	     var != NULL;
+	     var = Hash_EnumNext(&state)) {
+	    v = (Var *)Hash_GetValue(var);
+	    Var_Export1(v->name, 0);
+	}
+	return;
+    }
+    /*
+     * We have a number of exported vars,
+     */
+    n = snprintf(tmp, sizeof(tmp), "${" MAKE_EXPORTED ":O:u}");
+    if (n < sizeof(tmp)) {
+	char **av;
+	char *as;
+	int ac;
+	int i;
+	
+	val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+	av = brk_string(val, &ac, FALSE, &as);
+	for (i = 0; i < ac; i++) {
+	    Var_Export1(av[i], 0);
+	}
+	free(val);
+	free(as);
+	free(av);
+    }
+}
+
+/*
+ * This is called when .export is seen or
+ * .MAKE.EXPORTED is modified.
+ * It is also called when any exported var is modified.
+ */
+void
+Var_Export(char *str, int isExport)
+{
+    char *name;
+    char *val;
+    char **av;
+    char *as;
+    int ac;
+    int i;
+
+    if (isExport && (!str || !str[0])) {
+	var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
+	return;
+    }
+
+    val = Var_Subst(NULL, str, VAR_GLOBAL, 0);
+    av = brk_string(val, &ac, FALSE, &as);
+    for (i = 0; i < ac; i++) {
+	name = av[i];
+	if (!name[1]) {
+	    /*
+	     * A single char.
+	     * If it is one of the vars that should only appear in
+	     * local context, skip it, else we can get Var_Subst
+	     * into a loop.
+	     */
+	    switch (name[0]) {
+	    case '@':
+	    case '%':
+	    case '*':
+	    case '!':
+		continue;
+	    }
+	}
+	if (Var_Export1(name, VAR_EXPORT_FORCE)) {
+	    if (VAR_EXPORTED_ALL != var_exportedVars)
+		var_exportedVars = VAR_EXPORTED_YES;
+	    if (isExport) {
+		Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
+	    }
+	}
+    }
+    free(val);
+    free(as);
+    free(av);
 }
 
 /*-
@@ -567,6 +755,9 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
+	}
+	if ((v->flags & VAR_EXPORTED)) {
+	    Var_Export1(name, VAR_EXPORT_FORCE);
 	}
     }
     /*
@@ -1450,7 +1641,7 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
     	av = emalloc((ac + 1) * sizeof(char *));
-	as = strdup(str);
+	as = estrdup(str);
 	av[0] = as;
 	av[1] = NULL;
     } else {
@@ -1543,7 +1734,7 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
     	av = emalloc((ac + 1) * sizeof(char *));
-	as = strdup(str);
+	as = estrdup(str);
 	av[0] = as;
 	av[1] = NULL;
     } else {
@@ -1985,8 +2176,8 @@ ApplyModifiers(char *nstr, const char *tstr,
     const char 	   *start;
     const char     *cp;    	/* Secondary pointer into str (place marker
 				 * for tstr) */
-    char	*newStr;	/* New value to return */
-    char	termc;		/* Character which terminated scan */
+    char	   *newStr;	/* New value to return */
+    char	    termc;	/* Character which terminated scan */
     int             cnt;	/* Used to count brace pairs when variable in
 				 * in parens or braces */
     char	delim;
@@ -2036,6 +2227,10 @@ ApplyModifiers(char *nstr, const char *tstr,
 		free(freeIt);
 	    if (*tstr == ':')
 		tstr++;
+	    else if (!*tstr && endc) {
+		Error("Unclosed variable specification for %s", v->name);
+		goto out;
+	    }
 	    continue;
 	}
 	if (DEBUG(VAR)) {
@@ -2062,11 +2257,11 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    ++tstr;
 		    if (v->flags & VAR_JUNK) {
 			/*
-			 * We need to strdup() it incase
+			 * We need to estrdup() it incase
 			 * VarGetPattern() recurses.
 			 */
 			sv_name = v->name;
-			v->name = strdup(v->name);
+			v->name = estrdup(v->name);
 		    } else if (ctxt != VAR_GLOBAL) {
 			Var *gv = VarFind(v->name, ctxt, 0);
 			if (gv == (Var *)NIL)
@@ -2226,7 +2421,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    {
 		if ((v->flags & VAR_JUNK) != 0)
 		    v->flags |= VAR_KEEP;
-		newStr = strdup(v->name);
+		newStr = estrdup(v->name);
 		cp = ++tstr;
 		termc = *tstr;
 		break;
@@ -2241,12 +2436,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 		if (gn == NILGNODE || gn->type & OP_NOPATH) {
 		    newStr = NULL;
 		} else if (gn->path) {
-		    newStr = strdup(gn->path);
+		    newStr = estrdup(gn->path);
 		} else {
 		    newStr = Dir_FindFile(v->name, Suff_FindPath(gn));
 		}
 		if (!newStr) {
-		    newStr = strdup(v->name);
+		    newStr = estrdup(v->name);
 		}
 		cp = ++tstr;
 		termc = *tstr;
@@ -2524,8 +2719,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'M':
 	    {
 		char    *pattern;
+		const char *endpat; /* points just after end of pattern */
 		char    *cp2;
-		Boolean copy;
+		Boolean copy;	/* pattern should be, or has been, copied */
 		int nest;
 
 		copy = FALSE;
@@ -2556,7 +2752,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			}
 		    }
 		termc = *cp;
-		*WR(cp) = '\0';
+		endpat = cp;
 		if (copy) {
 		    /*
 		     * Need to compress the \:'s out of the pattern, so
@@ -2567,20 +2763,30 @@ ApplyModifiers(char *nstr, const char *tstr,
 		     */
 		    pattern = emalloc(cp - tstr);
 		    for (cp2 = pattern, cp = tstr + 1;
-			 *cp != '\0';
+			 cp < endpat;
 			 cp++, cp2++)
 			{
-			    if ((*cp == '\\') &&
+			    if ((*cp == '\\') && (cp+1 < endpat) &&
 				(cp[1] == ':' || cp[1] == endc)) {
 				cp++;
 			    }
 			    *cp2 = *cp;
 			}
 		    *cp2 = '\0';
+		    endpat = cp2;
 		} else {
-		    pattern = UNCONST(&tstr[1]);
+		    /*
+		     * Either Var_Subst or VarModify will need a
+		     * nul-terminated string soon, so construct one now.
+		     */
+		    pattern = estrndup(tstr+1, endpat - (tstr + 1));
+		    copy = TRUE;
 		}
-		if ((cp2 = strchr(pattern, '$'))) {
+		if (strchr(pattern, '$') != NULL) {
+		    /*
+		     * pattern contains embedded '$', so use Var_Subst to
+		     * expand it.
+		     */
 		    cp2 = pattern;
 		    pattern = Var_Subst(NULL, cp2, ctxt, errnum);
 		    if (copy)
@@ -2955,10 +3161,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	if (termc == '\0' && endc != '\0') {
 	    Error("Unclosed variable specification for %s", v->name);
 	} else if (termc == ':') {
-	    *WR(cp) = termc;
 	    cp++;
-	} else {
-	    *WR(cp) = termc;
 	}
 	tstr = cp;
     }
@@ -2995,15 +3198,15 @@ ApplyModifiers(char *nstr, const char *tstr,
  *	ctxt		The context for the variable
  *	errnum		TRUE if undefined variables are an error
  *	lengthPtr	OUT: The length of the specification
- *	freePtr		OUT: TRUE if caller should free result
+ *	freePtr		OUT: Non-NULL if caller should free *freePtr
  *
  * Results:
  *	The (possibly-modified) value of the variable or var_Error if the
  *	specification is invalid. The length of the specification is
  *	placed in *lengthPtr (for invalid specifications, this is just
  *	2...?).
- *	A Boolean in *freePtr telling whether the returned string should
- *	be freed by the caller.
+ *	If *freePtr is non-NULL then it's a pointer that the caller
+ *	should pass to free() to free memory used by the result.
  *
  * Side Effects:
  *	None.
@@ -3023,8 +3226,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     char	    startc=0;	/* Starting character when variable in parens
 				 * or braces */
     int		    vlen;	/* Length of variable name */
-    const char 	   *start;
-    char	   *nstr;
+    const char 	   *start;	/* Points to original start of str */
+    char	   *nstr;	/* New string, used during expansion */
     Boolean 	    dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
 				 * is done to support dynamic sources. The
@@ -3085,7 +3288,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     } else if (str[1] == '\0') {
 	*lengthPtr = 1;
 	return (errnum ? var_Error : varNoError);
-    } else { 
+    } else {
 	Buffer buf;	/* Holds the variable name */
 
 	startc = str[1];
@@ -3130,10 +3333,20 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	    Buf_Destroy(buf, TRUE);
 	    return (var_Error);
 	}
-	*WR(tstr) = '\0';
 	Buf_AddByte(buf, (Byte)'\0');
 	str = Buf_GetAll(buf, NULL);
 	vlen = strlen(str);
+
+	/*
+	 * At this point, str points into newly allocated memory from
+	 * buf, containing only the name of the variable.
+	 *
+	 * start and tstr point into the const string that was pointed
+	 * to by the original value of the str parameter.  start points
+	 * to the '$' at the beginning of the string, while tstr points
+	 * to the char just after the end of the variable name -- this
+	 * will be '\0', ':', PRCLOSE, or BRCLOSE.
+	 */
 
 	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
@@ -3182,7 +3395,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 			 */
 			*freePtr = val;
 			*lengthPtr = tstr-start+1;
-			*WR(tstr) = endc;
 			Buf_Destroy(buf, TRUE);
 			VarFreeEnv(v, TRUE);
 			return(val);
@@ -3237,11 +3449,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		 * now.
 		 */
 		*lengthPtr = tstr - start + 1;
-		*WR(tstr) = endc;
 		if (dynamic) {
-		    char *pstr = emalloc(*lengthPtr + 1);
-		    strncpy(pstr, start, *lengthPtr);
-		    pstr[*lengthPtr] = '\0';
+		    char *pstr = estrndup(start, *lengthPtr);
 		    *freePtr = pstr;
 		    Buf_Destroy(buf, TRUE);
 		    return(pstr);
@@ -3263,7 +3472,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	} else
 	    Buf_Destroy(buf, TRUE);
     }
-
 
     if (v->flags & VAR_IN_USE) {
 	Fatal("Variable %s is recursive.", v->name);
@@ -3291,18 +3499,18 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     if ((nstr != NULL) && haveModifier) {
 	int used;
 	/*
-	 * Skip initial colon while putting it back.
+	 * Skip initial colon.
 	 */
-	*WR(tstr) = ':';
 	tstr++;
 
 	nstr = ApplyModifiers(nstr, tstr, startc, endc,
 			      v, ctxt, errnum, &used, freePtr);
 	tstr += used;
+    }
+    if (*tstr) {
 	*lengthPtr = tstr - start + 1;
     } else {
-	*lengthPtr = tstr - start + 1;
-	*WR(tstr) = endc;
+	*lengthPtr = tstr - start;
     }
 
     if (v->flags & VAR_FROM_ENV) {
@@ -3320,7 +3528,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	VarFreeEnv(v, destroy);
     } else if (v->flags & VAR_JUNK) {
 	/*
-	 * Perform any free'ing needed and set *freePtr to FALSE so the caller
+	 * Perform any free'ing needed and set *freePtr to NULL so the caller
 	 * doesn't try to free a static pointer.
 	 * If VAR_KEEP is also set then we want to keep str as is.
 	 */
@@ -3330,9 +3538,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = emalloc(*lengthPtr + 1);
-		strncpy(nstr, start, *lengthPtr);
-		nstr[*lengthPtr] = '\0';
+		nstr = estrndup(start, *lengthPtr);
 		*freePtr = nstr;
 	    } else {
 		nstr = var_Error;
