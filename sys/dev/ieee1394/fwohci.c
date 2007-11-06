@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.110 2007/11/05 19:08:56 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.111 2007/11/06 12:32:12 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -57,16 +57,10 @@
 #include <sys/endian.h>
 #include <sys/kdb.h>
 
-<<<<<<< fwohci.c
-#include <machine/bus.h>
-=======
+#include <sys/bus.h>
 #include <sys/cdefs.h>
-<<<<<<< fwohci.c
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.110 2007/11/05 19:08:56 kiyohara Exp $");
->>>>>>> 1.108
-=======
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.110 2007/11/05 19:08:56 kiyohara Exp $");
->>>>>>> 1.109
+
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.111 2007/11/06 12:32:12 dogcow Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -2222,12 +2216,13 @@ fwohci_filt(void *arg)
 	return (fwohci_check_stat(sc));
 }
 
-void
+int
 fwohci_intr(void *arg)
 {
 
 	fwohci_filt(arg);
 	CTR0(KTR_DEV, "fwohci_intr end");
+	return 0;
 }
 
 void
