@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.88 2007/11/01 20:33:58 dyoung Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.89 2007/11/06 23:40:38 dyoung Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.88 2007/11/01 20:33:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.89 2007/11/06 23:40:38 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -163,10 +163,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	bzero(&rip6src, sizeof(rip6src));
-	rip6src.sin6_len = sizeof(struct sockaddr_in6);
-	rip6src.sin6_family = AF_INET6;
-	rip6src.sin6_addr = ip6->ip6_src;
+	sockaddr_in6_init(&rip6src, &ip6->ip6_src, 0, 0, 0);
 	if (sa6_recoverscope(&rip6src) != 0) {
 		/* XXX: should be impossible. */
 		m_freem(m);
@@ -805,11 +802,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 				break;
 			}
 			/* XXX */
-			bzero(&tmp, sizeof(tmp));
-			tmp.sin6_family = AF_INET6;
-			tmp.sin6_len = sizeof(struct sockaddr_in6);
-			bcopy(&in6p->in6p_faddr, &tmp.sin6_addr,
-			    sizeof(struct in6_addr));
+			sockaddr_in6_init(&tmp, &in6p->in6p_faddr, 0, 0, 0);
 			dst = &tmp;
 		} else {
 			if (nam == NULL) {
