@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2007/07/14 21:48:19 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.8.10.1 2007/11/06 23:15:43 matt Exp $	*/
 
 #include <mips/types.h>
 

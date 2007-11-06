@@ -80,6 +80,7 @@ openpam_dynamic(const char *path)
 		*strrchr(vpath, '.') = '\0';
 		if ((dlh = dlopen(vpath, RTLD_NOW)) == NULL) {
 			openpam_log(PAM_LOG_DEBUG, "%s: %s", vpath, dlerror());
+			FREE(vpath);
 			FREE(module);
 			return (NULL);
 		}

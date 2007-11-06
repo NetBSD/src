@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.39 2007/07/11 19:37:22 he Exp $	*/
+/*	$NetBSD: isabus.c,v 1.39.10.1 2007/11/06 23:14:53 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.39 2007/07/11 19:37:22 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.39.10.1 2007/11/06 23:14:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

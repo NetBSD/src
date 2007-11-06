@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.248 2007/07/21 15:35:46 dsieger Exp $
+#       $NetBSD: Makefile,v 1.248.4.1 2007/11/06 23:13:13 matt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -245,7 +245,10 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fstrans_getstate.9 \
 	fstrans.9 fstrans_setstate.9 \
 	fstrans.9 fstrans_start.9 \
-	fstrans.9 fstrans_start_nowait.9
+	fstrans.9 fstrans_start_nowait.9 \
+	fstrans.9 fscow_establish.9 \
+	fstrans.9 fscow_disestablish.9 \
+	fstrans.9 fscow_run.9
 MLINKS+=getiobuf.9 getiobuf_nowait.9 \
 	getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
@@ -306,7 +309,13 @@ MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9 \
 	kprintf.9 aprint_normal.9 kprintf.9 aprint_naive.9 \
 	kprintf.9 aprint_verbose.9 kprintf.9 aprint_debug.9 \
-	kprintf.9 aprint_error.9 kprintf.9 aprint_get_error_count.9
+	kprintf.9 aprint_error.9 \
+	kprintf.9 aprint_normal_dev.9 kprintf.9 aprint_naive_dev.9 \
+	kprintf.9 aprint_verbose_dev.9 kprintf.9 aprint_debug_dev.9 \
+	kprintf.9 aprint_error_dev.9 \
+	kprintf.9 aprint_normal_ifnet.9 kprintf.9 aprint_naive_ifnet.9 \
+	kprintf.9 aprint_verbose_ifnet.9 kprintf.9 aprint_debug_ifnet.9 \
+	kprintf.9 aprint_error_ifnet.9 kprintf.9 aprint_get_error_count.9
 MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
 	kthread.9 kthread_destroy.9
@@ -564,7 +573,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
 	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
 	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
-	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvn_attach.9 \
+	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \
 	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 \
 	uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
@@ -578,6 +587,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
 	uvm.9 ubc_alloc.9 \
 	uvm.9 ubc_release.9 \
+	uvm.9 ubc_uiomove.9 \
 	uvm.9 uvn_findpages.9 \
 	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9
 MLINKS+=vme.9 vme_probe.9 \
@@ -719,9 +729,7 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_setrecurse.9 \
 	vnsubr.9 vn_stat.9 \
 	vnsubr.9 vn_open.9 \
-	vnsubr.9 vn_writechk.9 \
-	vnsubr.9 vn_cow_establish.9 \
-	vnsubr.9 vn_cow_disestablish.9
+	vnsubr.9 vn_writechk.9
 MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
 	wsdisplay.9 wsdisplay_cnattach.9 \
 	wsdisplay.9 wsdisplaydevprint.9 \

@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.2 2006/12/13 16:16:56 tnozaki Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.2.4.1 2007/11/06 23:11:12 matt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.2 2006/12/13 16:16:56 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.2.4.1 2007/11/06 23:11:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -333,8 +333,6 @@ _citrus_JOHAB_stdenc_cstowc(_JOHABEncodingInfo * __restrict ei,
 	switch (csid) {
 	case 0:
 	case 1:
-		if (idx > 0x7F)
-			return EILSEQ;
 		*wc = (wchar_t)idx;
 		break;
 	case 2:

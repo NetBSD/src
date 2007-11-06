@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.26 2007/08/20 19:23:46 is Exp $ */
+/*	$NetBSD: cbsc.c,v 1.26.2.1 2007/11/06 23:14:32 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.26 2007/08/20 19:23:46 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.26.2.1 2007/11/06 23:14:32 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

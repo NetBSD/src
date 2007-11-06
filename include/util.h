@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.46 2007/07/01 21:41:16 pooka Exp $	*/
+/*	$NetBSD: util.h,v 1.46.4.1 2007/11/06 23:11:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -73,7 +73,7 @@ struct sockaddr;
 
 typedef struct pw_policy *pw_policy_t; 
 
-char	       *flags_to_string(u_long, const char *);
+char	       *flags_to_string(unsigned long, const char *);
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
 off_t		getlabeloffset(void);
@@ -113,11 +113,12 @@ int		pw_policy_test(pw_policy_t, char *);
 void		pw_policy_free(pw_policy_t);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
+int		raise_default_signal(int);
 int		secure_path(const char *);
 int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);
-int		string_to_flags(char **, u_long *, u_long *);
+int		string_to_flags(char **, unsigned long *, unsigned long *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);

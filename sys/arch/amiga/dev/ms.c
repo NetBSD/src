@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.32 2007/07/09 20:52:02 ad Exp $ */
+/*	$NetBSD: ms.c,v 1.32.10.1 2007/11/06 23:14:39 matt Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.32 2007/07/09 20:52:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.32.10.1 2007/11/06 23:14:39 matt Exp $");
 
 /*
  * Mouse driver.

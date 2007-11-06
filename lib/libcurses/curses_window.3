@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.10 2006/01/15 16:57:45 jdc Exp $
+.\"	$NetBSD: curses_window.3,v 1.10.12.1 2007/11/06 23:11:23 matt Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 15, 2006
+.Dd October 24, 2007
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -192,9 +192,6 @@ for the window is set to
 .Fa begin_y
 +
 .Fa cols .
-If the terminal, or in the case of a subwindow the enclosing window,
-is resized then the window size will be recalculated so that the window
-ends the same number of columns from the far edge.
 .Pp
 .Fn subwin
 is similar to
@@ -227,7 +224,13 @@ destination without exception.
 .Fn wresize
 resizes the specified window to the new number of lines and columns
 given, all internal curses structures are resized.
-The application must redraw the window after it has been resized.
+Any subwindows of the specified window will also be resized if any part
+of them falls outside the new parent window size.
+The application must redraw the window after it has been resized.  Note that
+.Dv curscr
+and
+.Dv stdscr
+can not be resized to be larger than the size of the screen.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL

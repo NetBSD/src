@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.13 2007/07/13 11:16:11 jdc Exp $
+.\"	$NetBSD: curses_screen.3,v 1.13.4.1 2007/11/06 23:11:23 matt Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd February 24, 2004
+.Dd October 24, 2007
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -151,6 +151,12 @@ The size of the screen may be changed  by calling
 with the updated number of lines and columns.
 This will resize the curses internal data structures to accommodate the
 changed terminal geometry.
+The
+.Dv curscr
+and
+.Dv stdscr
+windows and any of their subwindows will be resized to fit the new
+screen size.
 The application must redraw the screen after a call to
 .Fn resizeterm .
 .Pp

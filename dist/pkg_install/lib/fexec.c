@@ -65,7 +65,7 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.1.1.1.4.1 2007/11/06 23:09:42 matt Exp $");
 #endif
 
 static int	vfcexec(const char *, int, const char *, va_list);
@@ -108,37 +108,23 @@ pfcexec(const char *path, const char *file, const char **argv)
 static int
 vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 {
-	static unsigned int	max = 4;
-	static const char	**argv = NULL;
-	unsigned int		argc;
+	const char **argv;
+	size_t argv_size, argc;
+	int retval;
 
-	if (argv == NULL) {
-		argv = malloc(max * sizeof(const char *));
-		if (argv == NULL) {
-			warn("vfcexec: Can't alloc arg space");
-			return -1;
-		}
-	}
+	argv_size = 16;
+	if ((argv = malloc(argv_size * sizeof(*argv))) == NULL)
+		err(EXIT_FAILURE, "vfcexec: malloc failed");
 
 	argv[0] = arg;
 	argc = 1;
 
 	do {
-		if (argc == max) {
-			unsigned int	new;
-			const char	**ptr;
-
-			new = max * 2;
-			ptr = realloc(argv, new * sizeof(const char *));
-			if (ptr == NULL) {
-				warn("vfcexec: Can't alloc arg space");
-				free(argv);
-				argv = NULL;
-				max = 4;
-				return -1;
-			}
-			argv = ptr;
-			max = new;
+		if (argc == argv_size) {
+			argv_size *= 2;
+			argv = realloc(argv, argv_size * sizeof(*argv));
+			if (argv == NULL)
+				err(EXIT_FAILURE, "vfcexec: realloc failed");
 		}
 		arg = va_arg(ap, const char *);
 		if (skipempty && arg && strlen(arg) == 0)
@@ -146,7 +132,9 @@ vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 		argv[argc++] = arg;
 	} while (arg != NULL);
 
-	return pfcexec(path, argv[0], argv);
+	retval = pfcexec(path, argv[0], argv);
+	free(argv);
+	return retval;
 }
 
 int

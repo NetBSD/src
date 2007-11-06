@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.12 2007/06/01 07:04:54 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.12.10.1 2007/11/06 23:13:30 matt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -462,4 +462,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.12 2007/06/01 07:04:54 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.12.10.1 2007/11/06 23:13:30 matt Exp $")

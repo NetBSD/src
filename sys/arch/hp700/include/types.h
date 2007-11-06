@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2007/07/14 21:48:19 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.8.10.1 2007/11/06 23:16:49 matt Exp $	*/
 
 #ifndef	_HP700_TYPES_H_
 #define	_HP700_TYPES_H_

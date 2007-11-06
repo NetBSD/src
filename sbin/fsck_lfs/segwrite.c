@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.15 2006/11/09 19:36:36 christos Exp $ */
+/* $NetBSD: segwrite.c,v 1.15.8.1 2007/11/06 23:12:36 matt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -216,7 +216,7 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *) (sp->segsum))->ss_nfinfo;
 
-	if (vp->v_flag & VDIROP)
+	if (vp->v_uflag & VU_DIROP)
 		((SEGSUM *) (sp->segsum))->ss_flags |= (SS_DIROP | SS_CONT);
 
 	fip = sp->fip;
@@ -224,7 +224,7 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 	fip->fi_ino = ip->i_number;
 	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
 	fip->fi_version = ifp->if_version;
-	brelse(bp);
+	brelse(bp, 0);
 
 	lfs_gather(fs, sp, vp, lfs_match_data);
 	lfs_gather(fs, sp, vp, lfs_match_indir);
@@ -319,7 +319,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
 		assert(!(bp->b_flags & B_INVAL));
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *) (sp->segsum))->ss_ninos;
@@ -638,7 +638,7 @@ lfs_initseg(struct lfs * fs)
 			fs->lfs_offset += btofsb(fs, LFS_SBPAD);
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
 		    fs->lfs_start < btofsb(fs, LFS_LABELPAD)) {
@@ -683,7 +683,7 @@ lfs_initseg(struct lfs * fs)
 	sp->sum_bytes_left = fs->lfs_sumsize - SEGSUM_SIZE(fs);
 
 	LFS_LOCK_BUF(sbp);
-	brelse(sbp);
+	brelse(sbp, 0);
 	return repeat;
 }
 
@@ -719,7 +719,7 @@ lfs_newseg(struct lfs * fs)
 			errx(1, "lfs_nextseg: no clean segments");
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
-		brelse(bp);
+		brelse(bp, 0);
 
 		if (!isdirty)
 			break;
@@ -943,7 +943,7 @@ lfs_segunlock(struct lfs * fs)
 			bp->b_flags &= ~B_DELWRI;
 			reassignbuf(bp, bp->b_vp);
 			bp->b_flags |= B_BUSY; /* XXX */
-			brelse(bp);
+			brelse(bp, 0);
 		} else
 			printf("unlock to 0 with no summary");
 
@@ -980,8 +980,8 @@ lfs_writevnodes(struct lfs *fs, struct segment *sp, int op)
 
 		ip = VTOI(vp);
 
-		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
-		    (op != VN_DIROP && (vp->v_flag & VDIROP))) {
+		if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
+		    (op != VN_DIROP && (vp->v_uflag & VU_DIROP))) {
 			continue;
 		}
 		/*

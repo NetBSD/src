@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.12 2007/07/09 20:52:04 ad Exp $	*/
+/*	$NetBSD: epe.c,v 1.12.12.1 2007/11/06 23:15:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.12 2007/07/09 20:52:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.12.12.1 2007/11/06 23:15:01 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

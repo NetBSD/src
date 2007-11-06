@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.7 2005/06/26 08:41:42 wiz Exp $
+.\"	$NetBSD: sysctl.9,v 1.7.12.1 2007/11/06 23:13:16 matt Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,7 +101,7 @@ functions:
 .Ft int
 .Fn sysctl_null "const int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "const void *newp" "size_t newlen" "const int *oname" \
-"struct lwp *l" "const struct sysctlnode *rnode""
+"struct lwp *l" "const struct sysctlnode *rnode"
 .Sh DESCRIPTION
 The SYSCTL subsystem instruments a number of kernel tunables and other
 data structures via a simple MIB-like interface, primarily for

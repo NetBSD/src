@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.4 2007/08/23 15:19:12 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.4.2.1 2007/11/06 23:09:37 matt Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.4 2007/08/23 15:19:12 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.4.2.1 2007/11/06 23:09:37 matt Exp $");
 #endif
 #endif
 
@@ -212,6 +212,9 @@ pkg_do_installed(int *replacing, char replace_via[MaxPathSize], char replace_to[
 	char    buf[MaxPathSize];
 	char *best_installed;
 
+	const size_t replace_via_size = MaxPathSize;
+	const size_t replace_to_size = MaxPathSize;
+
 	if ((s = strrchr(PkgName, '-')) == NULL) {
 		warnx("Package name %s does not contain a version, bailing out", PkgName);
 		return -1;
@@ -241,9 +244,9 @@ pkg_do_installed(int *replacing, char replace_via[MaxPathSize], char replace_to[
 	/* XXX Should list the steps in Fake mode */
 	snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
 		 dbdir, best_installed);
-	snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
+	snprintf(replace_via, replace_via_size, "%s/.%s." REQUIRED_BY_FNAME,
 		 dbdir, best_installed);
-	snprintf(replace_to, sizeof(replace_to), "%s/%s/" REQUIRED_BY_FNAME,
+	snprintf(replace_to, replace_to_size, "%s/%s/" REQUIRED_BY_FNAME,
 		 dbdir, PkgName);
 
 	if (Verbose)
@@ -354,7 +357,7 @@ ignore_replace_depends_check:
 		if (Verbose)
 			printf("mv %s %s\n", replace_from, replace_via);						
 		if (rename(replace_from, replace_via) != 0)
-			err(EXIT_FAILURE, "rename failed");
+			err(EXIT_FAILURE, "renaming \"%s\" to \"%s\" failed", replace_from, replace_via);
 
 		*replacing = 1;
 	}
@@ -382,7 +385,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	char    replace_to[MaxPathSize];
 	char   *buildinfo[BI_ENUM_COUNT];
 	int	replacing = 0;
-	char   *where_to;
 	char   dbdir[MaxPathSize];
 	const char *exact;
 	const char *tmppkg;
@@ -391,7 +393,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	plist_t *p;
 	struct stat sb;
 	struct utsname host_uname;
-	int	rc;
 	uint64_t needed;
 	Boolean	is_depoted_pkg = FALSE;
 	lfile_t	*lfp;
@@ -418,7 +419,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		if (Home == NULL) {
 			warnx("unable to fetch `%s' by URL", pkg);
 		}
-		where_to = Home;
 
 		/* make sure the pkg is verified */
 		if (!verify(pkg)) {
@@ -448,7 +448,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		if (!Home)
 			warnx("unable to make playpen for %ld bytes",
 			      (long) (sb.st_size * 4));
-		where_to = Home;
 		result = unpack(pkg, &files);
 		while ((lfp = TAILQ_FIRST(&files)) != NULL) {
 			TAILQ_REMOVE(&files, lfp, lf_link);
@@ -855,10 +854,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	if (!NoRecord && !Fake) {
 		char    contents[MaxPathSize];
 
-#ifndef __INTERIX
-		if (getuid() != 0)
-			warnx("not running as root - trying to record install anyway");
-#endif
 		if (!PkgName) {
 			warnx("no package name! can't record package, sorry");
 			errc = 1;
@@ -986,8 +981,8 @@ success:
 		 * Upgrade step 3/4: move back +REQUIRED_BY file
 		 * (see also step 2/4)
 		 */
-		rc = rename(replace_via, replace_to);
-		assert(rc == 0);
+		if (rename(replace_via, replace_to) != 0)
+			err(EXIT_FAILURE, "renaming \"%s\" to \"%s\" failed", replace_via, replace_to);
 		
 		/*
 		 * Upgrade step 4/4: Fix pkgs that depend on us to

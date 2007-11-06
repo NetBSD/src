@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.21 2007/06/11 13:05:46 joerg Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.21.4.1 2007/11/06 23:11:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.21 2007/06/11 13:05:46 joerg Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.21.4.1 2007/11/06 23:11:37 matt Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -434,10 +434,21 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if (retval < 0)
 			return retval;
 		break;
+	case SNDCTL_DSP_GETODELAY:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		idat = tmpinfo.play.seek + tmpinfo.blocksize / 2;
+		INTARG = idat;
+		break;
+	case SNDCTL_DSP_PROFILE:
+		/* This gives just a hint to the driver,
+		 * implementing it as a NOP is ok
+		 */     
+		break;
 	case SNDCTL_DSP_MAPINBUF:
 	case SNDCTL_DSP_MAPOUTBUF:
 	case SNDCTL_DSP_SETSYNCRO:
-	case SNDCTL_DSP_PROFILE:
 		errno = EINVAL;
 		return -1; /* XXX unimplemented */
 	default:

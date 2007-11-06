@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.62.2.1 2007/11/06 23:11:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.62.2.1 2007/11/06 23:11:52 matt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -58,6 +58,11 @@ const struct mntopt puffsmopts[] = {
 	PUFFSMOPT_STD,
 	MOPT_NULL,
 };
+
+#ifdef PUFFS_WITH_THREADS
+#include <pthread.h>
+pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 #define FILLOP(lower, upper)						\
 do {									\
@@ -94,13 +99,18 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
-
-	/* XXX: not implemented in the kernel */
-	FILLOP(getextattr, GETEXTATTR);
-	FILLOP(setextattr, SETEXTATTR);
-	FILLOP(listextattr, LISTEXTATTR);
 }
 #undef FILLOP
+
+/*ARGSUSED*/
+static void
+puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
+	int error, const char *str, void *cookie)
+{
+
+	fprintf(stderr, "%s\n", str);
+	abort();
+}
 
 int
 puffs_getselectable(struct puffs_usermount *pu)
@@ -142,8 +152,16 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
-
-	pu->pu_cc_stacksize = ss;
+	int stackshift;
+ 
+	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
+	stackshift = -1;
+	while (ss) {
+		ss >>= 1;
+		stackshift++;
+	}
+	pu->pu_cc_stackshift = stackshift;
+	assert(1<<stackshift == ss);
 }
 
 struct puffs_pathobj *
@@ -213,7 +231,7 @@ puffs_setmaxreqlen(struct puffs_usermount *pu, size_t reqlen)
 		warnx("puffs_setmaxreqlen: call has effect only "
 		    "before mount\n");
 
-	pu->pu_kargp->pa_maxreqlen = reqlen;
+	pu->pu_kargp->pa_maxmsglen = reqlen;
 }
 
 void
@@ -273,6 +291,13 @@ puffs_set_namemod(struct puffs_usermount *pu, pu_namemod_fn fn)
 }
 
 void
+puffs_set_errnotify(struct puffs_usermount *pu, pu_errnotify_fn fn)
+{
+
+	pu->pu_errnotify = fn;
+}
+
+void
 puffs_ml_setloopfn(struct puffs_usermount *pu, puffs_ml_loop_fn lfn)
 {
 
@@ -289,6 +314,15 @@ puffs_ml_settimeout(struct puffs_usermount *pu, struct timespec *ts)
 		pu->pu_ml_timeout = *ts;
 		pu->pu_ml_timep = &pu->pu_ml_timeout;
 	}
+}
+
+void
+puffs_set_prepost(struct puffs_usermount *pu,
+	pu_prepost_fn pre, pu_prepost_fn pst)
+{
+
+	pu->pu_oppre = pre;
+	pu->pu_oppost = pst;
 }
 
 void
@@ -332,8 +366,10 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
 	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
 		goto out;
+#if 0
 	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
 		goto out;
+#endif
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
@@ -391,17 +427,19 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_root_vtype = VDIR;
 	pargs->pa_root_vsize = 0;
 	pargs->pa_root_rdev = 0;
-	pargs->pa_maxreqlen = 0;
+	pargs->pa_maxmsglen = 0;
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
 	free(pops); /* XXX */
 
 	pu->pu_privdata = priv;
-	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
+	pu->pu_cc_stackshift = PUFFS_CC_STACKSHIFT_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_framectrl.fb_ios);
 	LIST_INIT(&pu->pu_ccnukelst);
+	TAILQ_INIT(&pu->pu_sched);
+	TAILQ_INIT(&pu->pu_exq);
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -411,6 +449,8 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pu->pu_pathcmp = puffs_stdpath_cmppath;
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
+
+	pu->pu_errnotify = puffs_defaulterror;
 
 	PU_SETSTATE(pu, PUFFS_STATE_BEFOREMOUNT);
 
@@ -444,7 +484,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 		puffs_pn_put(pn);
 
 	puffs_framev_exit(pu);
-	if (pu->pu_haskq)
+	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
 	free(pu);
 
@@ -452,12 +492,13 @@ puffs_exit(struct puffs_usermount *pu, int force)
 }
 
 int
-puffs_mainloop(struct puffs_usermount *pu, int flags)
+puffs_mainloop(struct puffs_usermount *pu)
 {
 	struct puffs_getreq *pgr = NULL;
 	struct puffs_putreq *ppr = NULL;
 	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_fctrl_io *fio;
+	struct puffs_cc *pcc;
 	struct kevent *curev, *newevs;
 	size_t nchanges;
 	int puffsfd, sverrno;
@@ -478,15 +519,12 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		goto out;
 	pfctrl->evs = newevs;
 
-	if ((flags & PUFFSLOOP_NODAEMON) == 0)
-		if (daemon(1, 0) == -1)
-			goto out;
 	pu->pu_state |= PU_INLOOP;
 
 	pu->pu_kq = kqueue();
 	if (pu->pu_kq == -1)
 		goto out;
-	pu->pu_haskq = 1;
+	pu->pu_state |= PU_HASKQ;
 
 	curev = pfctrl->evs;
 	LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
@@ -616,6 +654,14 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			}
 			if (what)
 				puffs_framev_notify(fio, what);
+		}
+
+		/*
+		 * Schedule continuations.
+		 */
+		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
+			TAILQ_REMOVE(&pu->pu_sched, pcc, entries);
+			puffs_goto(pcc);
 		}
 
 		/*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2005/12/12 22:26:53 wiz Exp $
+#	$NetBSD: Makefile,v 1.56.12.1 2007/11/06 23:13:10 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
@@ -14,7 +14,7 @@ MAN=	a.out.5 acct.5 ar.5 core.5 daily.conf.5 dir.5 disktab.5 elf.5 \
 	printcap.5 protocols.5 ranlib.5 rc.conf.5 remote.5 \
 	resolv.conf.5 route.conf.5 rpc.5 \
 	security.conf.5 services.5 shells.5 \
-	stab.5 statvfs.5 ttyaction.5 types.5 \
+	stab.5 statvfs.5 sysctl.conf.5 ttyaction.5 types.5 \
 	utmp.5 utmpx.5 weekly.conf.5 wscons.conf.5
 
 MLINKS=	dir.5 dirent.5 fs.5 inode.5 hosts.equiv.5 rhosts.5

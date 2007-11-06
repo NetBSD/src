@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2007/07/18 22:38:59 pooka Exp $
+# $NetBSD: Makefile,v 1.6.4.1 2007/11/06 23:11:56 matt Exp $
 
 USE_FORT?=	yes	# data driven bugs?
 
 LIB=		refuse
-LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs
+LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs		\
+		pthread	${.CURDIR}/../libpthread
 
 .ifdef DEBUG
 FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
@@ -11,7 +12,6 @@ FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
 
 CFLAGS+=	${FUSE_OPT_DEBUG_FLAGS}
 SRCS=		refuse.c refuse_opt.c
-CPPFLAGS+=	-I.
 MAN=		refuse.3
 WARNS=		4
 INCS=           fuse.h fuse_opt.h

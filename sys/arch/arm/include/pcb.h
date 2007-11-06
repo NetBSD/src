@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14.22.1 2007/08/28 16:57:42 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14.22.2 2007/11/06 23:15:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -44,17 +44,12 @@
 struct trapframe;
 
 struct pcb_arm32 {
-	paddr_t	pcb32_pagedir;			/* PT hooks */
-	pd_entry_t *pcb32_pl1vec;		/* PTR to vector_base L1 entry*/
-	pd_entry_t pcb32_l1vec;			/* Value to stuff on ctx sw */
-	u_int	pcb32_dacr;			/* Domain Access Control Reg */
-	void	*pcb32_cstate;			/* &pmap->pm_cstate */
 	/*
 	 * WARNING!
 	 * cpuswitch.S relies on pcb32_r8 being quad-aligned in struct pcb
 	 * (due to the use of "strd" when compiled for XSCALE)
 	 */
-	u_int	pcb32_r8;			/* used */
+	u_int	pcb32_r8 __aligned(8);		/* used */
 	u_int	pcb32_r9;			/* used */
 	u_int	pcb32_r10;			/* used */
 	u_int	pcb32_r11;			/* used */

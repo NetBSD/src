@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.41 2007/05/28 15:01:57 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.41.4.1 2007/11/06 23:11:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.41 2007/05/28 15:01:57 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.41.4.1 2007/11/06 23:11:26 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,11 +257,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	if (screen->tc_me != NULL && does_ctrl_o(screen->tc_me))
 		screen->mask_me = 0;
 	else
-#ifndef HAVE_WCHAR
 		screen->mask_me = __ALTCHARSET;
-#else
-		screen->mask_me = WA_ALTCHARSET;
-#endif /* HAVE_WCHAR */
 
 	/* Check what turning off the attributes also turns off */
 #ifndef HAVE_WCHAR

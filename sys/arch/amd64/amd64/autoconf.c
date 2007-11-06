@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2007/05/17 14:51:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.10.1 2007/11/06 23:13:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2007/05/17 14:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.10.1 2007/11/06 23:13:59 matt Exp $");
 
 #include "opt_multiprocessor.h"
 

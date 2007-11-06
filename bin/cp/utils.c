@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.32 2006/07/16 16:22:24 jschauma Exp $ */
+/* $NetBSD: utils.c,v 1.32.10.1 2007/11/06 23:07:14 matt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.32 2006/07/16 16:22:24 jschauma Exp $");
+__RCSID("$NetBSD: utils.c,v 1.32.10.1 2007/11/06 23:07:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,8 @@ mmap_failed:
 	 */
 #define	RETAINBITS \
 	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	else if (fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
+	if (!pflag && dne
+	    && fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
 		if (fstat(to_fd, &to_stat)) {
 			warn("%s", to.p_path);
 			rval = 1;
@@ -341,8 +342,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-R [-H | -L | -P]] [-f | -i] [-pv] src target\n"
-	    "       %s [-R [-H | -L | -P]] [-f | -i] [-pv] src1 ... srcN directory\n",
+	    "usage: %s [-R [-H | -L | -P]] [-f | -i] [-Npv] src target\n"
+	    "       %s [-R [-H | -L | -P]] [-f | -i] [-Npv] src1 ... srcN directory\n",
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */

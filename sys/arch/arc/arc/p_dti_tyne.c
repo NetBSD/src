@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.14 2007/08/08 17:26:57 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.14.2.1 2007/11/06 23:14:47 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.14 2007/08/08 17:26:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.14.2.1 2007/11/06 23:14:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

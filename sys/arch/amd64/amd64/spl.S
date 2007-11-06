@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.7 2007/05/17 14:51:14 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.7.10.1 2007/11/06 23:14:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,37 +76,13 @@
 #define ALIGN_TEXT	.align 16,0x90
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
-
-#if 0
-#if defined(PROF) || defined(GPROF)
-/*
- * XXXX TODO
- */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	CPUVAR(ILEVEL), %eax
-	movl	$IPL_HIGH, CPUVAR(ILEVEL)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movq	%rdi, %rcx
-	SPLLOWER(_C_LABEL(Xspllower))
-	ret
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * int splraise(int s);
@@ -265,11 +241,13 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-	movq	CPUVAR(CURLWP),%r14
-5:	CHECK_ASTPENDING(%r14)
-	je	3f
+5:
 	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
+	jz	6f
+.Ldoreti_checkast:
+	movq	CPUVAR(CURLWP),%r14
+	CHECK_ASTPENDING(%r14)
+	je	3f
 	CLEAR_ASTPENDING(%r14)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
@@ -277,5 +255,14 @@ IDTVEC(doreti)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	cli
-	jmp	5b
-3: 	INTRFASTEXIT
+	jmp	.Ldoreti_checkast
+3:
+	CHECK_DEFERRED_SWITCH
+	jnz	9f
+6:
+	INTRFASTEXIT
+9:
+	sti
+	call	_C_LABEL(do_pmap_load)
+	cli
+	jmp	.Ldoreti_checkast	/* recheck ASTs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.h,v 1.1 2001/11/18 08:19:40 takemura Exp $	*/
+/*	$NetBSD: bus_machdep.h,v 1.1.98.1 2007/11/06 23:16:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCMIPS_BUS_H_
-#define _HPCMIPS_BUS_H_
+#ifndef _HPCMIPS_BUS_MACHDEP_H_
+#define _HPCMIPS_BUS_MACHDEP_H_
 
 #ifdef BUS_SPACE_DEBUG
 #include <sys/systm.h> /* for printf() prototype */
@@ -67,4 +67,4 @@
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* BUS_SPACE_DEBUG */
 
-#endif /* _HPCMIPS_BUS_H_ */
+#endif /* _HPCMIPS_BUS_MACHDEP_H_ */

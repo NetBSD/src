@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.130 2007/07/29 17:06:00 joerg Exp $
+# $NetBSD: shl.elf,v 1.130.4.1 2007/11/06 23:10:06 matt Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -82,6 +82,8 @@
 ./usr/lib/libasn1.so				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.6				base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.8				base-sys-shlib		bfd
+./usr/lib/libbind9.so				base-bind-shlib
+./usr/lib/libbind9.so.0				base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.3			base-sys-shlib
 ./usr/lib/libbsdmalloc.so			base-sys-shlib
@@ -102,6 +104,8 @@
 ./usr/lib/libcurses.so.6			base-sys-shlib
 ./usr/lib/libdes.so				base-crypto-shlib	crypto
 ./usr/lib/libdes.so.7				base-crypto-shlib	crypto
+./usr/lib/libdns.so				base-bind-shlib
+./usr/lib/libdns.so.0				base-bind-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.2				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
@@ -122,6 +126,12 @@
 ./usr/lib/libintl.so.0				base-sys-shlib
 ./usr/lib/libipsec.so				base-net-shlib
 ./usr/lib/libipsec.so.2				base-net-shlib
+./usr/lib/libisc.so				base-bind-shlib
+./usr/lib/libisc.so.0				base-bind-shlib
+./usr/lib/libisccc.so				base-bind-shlib
+./usr/lib/libisccc.so.0				base-bind-shlib
+./usr/lib/libisccfg.so				base-bind-shlib
+./usr/lib/libisccfg.so.0			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.0				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
@@ -142,6 +152,8 @@
 ./usr/lib/libkstream.so.2			base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.5				base-sys-shlib
+./usr/lib/liblwres.so				base-bind-shlib
+./usr/lib/liblwres.so.0				base-bind-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
@@ -165,7 +177,8 @@
 ./usr/lib/libpthread.so				base-sys-shlib
 ./usr/lib/libpthread.so.0			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib
-./usr/lib/libpthread_dbg.so.0			base-sys-shlib
+./usr/lib/libpthread_dbg.so.0			base-obsolete		obsolete
+./usr/lib/libpthread_dbg.so.1			base-sys-shlib
 ./usr/lib/libpuffs.so				base-sys-shlib
 ./usr/lib/libpuffs.so.0				base-sys-shlib
 ./usr/lib/libradius.so				base-net-shlib

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pxaip.c,v 1.3 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: if_sm_pxaip.c,v 1.3.6.1 2007/11/06 23:16:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.3 2007/07/24 14:41:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.3.6.1 2007/11/06 23:16:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

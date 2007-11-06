@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.22 2007/08/17 17:59:15 pavel Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.22.2.1 2007/11/06 23:12:39 matt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,6 @@ prop_dictionary_t load_params;
 
 %union {
 	char *string;
-	int intval;
 }
 
 %token <string> PATH

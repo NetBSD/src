@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.12 2007/05/29 11:10:55 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.12.4.1 2007/11/06 23:11:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.12 2007/05/29 11:10:55 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.12.4.1 2007/11/06 23:11:23 matt Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -119,6 +119,9 @@ wbkgd(WINDOW *win, chtype ch)
 			else
 				win->lines[y]->line[x].attr =
 				    ch & __ATTRIBUTES;
+#ifdef HAVE_WCHAR
+			SET_WCOL(win->lines[y]->line[x], 1);
+#endif
 		}
 	__touchwin(win);
 	return(OK);

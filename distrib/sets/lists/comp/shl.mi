@@ -1,7 +1,8 @@
-# $NetBSD: shl.mi,v 1.58 2007/07/29 17:06:01 joerg Exp $
+# $NetBSD: shl.mi,v 1.58.4.1 2007/11/06 23:10:10 matt Exp $
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
+./usr/lib/libbind9_pic.a			comp-bind-piclib
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
@@ -13,6 +14,7 @@
 ./usr/lib/libcrypto_pic.a			comp-c-piclib		crypto
 ./usr/lib/libcurses_pic.a			comp-c-piclib
 ./usr/lib/libdes_pic.a				comp-c-piclib		crypto
+./usr/lib/libdns_pic.a				comp-bind-piclib
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
 ./usr/lib/libform_pic.a				comp-c-piclib
@@ -27,6 +29,9 @@
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libintl_pic.a				comp-c-piclib
 ./usr/lib/libipsec_pic.a			comp-c-piclib
+./usr/lib/libisc_pic.a				comp-bind-piclib
+./usr/lib/libisccc_pic.a			comp-bind-piclib
+./usr/lib/libisccfg_pic.a			comp-bind-piclib
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		iscsi
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
@@ -37,6 +42,7 @@
 ./usr/lib/libkrb_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libkstream_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libkvm_pic.a				comp-c-piclib
+./usr/lib/liblwres_pic.a			comp-bind-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib

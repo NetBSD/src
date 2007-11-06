@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.52 2007/07/11 19:12:09 dsl Exp $
+.\" $NetBSD: kauth.9,v 1.52.4.1 2007/11/06 23:13:15 matt Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 11, 2007
+.Dd September 24, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -873,7 +873,7 @@ Return the group-id of the group at index
 in the group list of
 .Ar cred .
 .It Ft int Fn kauth_cred_setgroups "kauth_cred_t cred" "gid_t *groups" \
-"size_t ngroups" "uid_t gmuid" "unsigned int flags"
+"size_t ngroups" "uid_t gmuid" "enum uio_seg seg"
 Copy
 .Ar ngroups
 groups from array pointed to by
@@ -883,8 +883,8 @@ to the group list in
 adjusting the number of groups in
 .Ar cred
 appropriately.
-.Ar flags
-should contain either
+.Ar seg
+should be either
 .Dv UIO_USERSPACE
 or
 .Dv UIO_SYSSPACE
@@ -900,15 +900,15 @@ KPI.
 .Pp
 The return value is an error code, or zero for success.
 .It Ft int Fn kauth_cred_getgroups "kauth_cred_t cred" "gid_t *groups" \
-"size_t ngroups" "unsigned int flags"
+"size_t ngroups" "enum uio_seg seg"
 Copy
 .Ar ngroups
 groups from the group list in
 .Ar cred
 to the buffer pointed to by
 .Ar groups .
-.Ar flags
-should contain either
+.Ar seg
+should be either
 .Dv UIO_USERSPACE
 or
 .Dv UIO_SYSSPACE

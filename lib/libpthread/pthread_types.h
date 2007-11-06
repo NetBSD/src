@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.7 2007/08/04 13:37:50 ad Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.7.2.1 2007/11/06 23:11:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct	__pthread_mutex_st {
 	unsigned int	ptm_magic;
 	pthread_spin_t	ptm_lock; 
 	pthread_spin_t	ptm_interlock;
-	pthread_t	ptm_owner;
+	volatile pthread_t ptm_owner;
 	pthread_queue_t	ptm_blocked;
 	void		*ptm_private;
 };
@@ -185,7 +185,7 @@ struct	__pthread_rwlock_st {
 	pthread_queue_t	ptr_rblocked;
 	pthread_queue_t	ptr_wblocked;
 	unsigned int	ptr_nreaders;
-	pthread_t	ptr_writer;
+	volatile pthread_t ptr_writer;
 	void	*ptr_private;
 };
 

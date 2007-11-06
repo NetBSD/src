@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

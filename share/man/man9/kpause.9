@@ -1,4 +1,4 @@
-.\"	$NetBSD: kpause.9,v 1.1 2007/07/18 12:18:07 yamt Exp $
+.\"	$NetBSD: kpause.9,v 1.1.4.1 2007/11/06 23:13:16 matt Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft int
 .Fn kpause \
-"conat char *wmesg" "bool intr" "int timeo" "kmutex_t *mtx"
+"const char *wmesg" "bool intr" "int timeo" "kmutex_t *mtx"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn kpause

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3.12.1 2007/11/06 23:11:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _LIB_PTHREAD_ALPHA_MD_H
 #define _LIB_PTHREAD_ALPHA_MD_H
+
+#define	PTHREAD__ASM_RASOPS
 
 static inline long
 pthread__sp(void)

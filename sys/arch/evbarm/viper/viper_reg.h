@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_reg.h,v 1.3 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: viper_reg.h,v 1.3.6.1 2007/11/06 23:16:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.

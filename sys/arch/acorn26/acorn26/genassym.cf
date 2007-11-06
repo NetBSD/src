@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.8 2007/06/01 07:04:53 skrll Exp $
+# $NetBSD: genassym.cf,v 1.8.10.1 2007/11/06 23:13:30 matt Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.

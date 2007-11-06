@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.34.4.1 2007/11/06 23:12:10 matt Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.34 2007/05/18 21:44:08 christos Exp $");
+__RCSID("$NetBSD: paths.c,v 1.34.4.1 2007/11/06 23:12:10 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -171,13 +171,14 @@ _rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
 
 static Search_Path **
 _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
-    const char *argv0, const char *bp, const char *ep)
+    const char *execname, const char *bp, const char *ep)
 {
 	Search_Path *path;
 	char epath[MAXPATHLEN];
 	size_t len;
 
-	if ((len = _rtld_expand_path(epath, sizeof(epath), argv0, bp, ep)) == 0)
+	len = _rtld_expand_path(epath, sizeof(epath), execname, bp, ep);
+	if (len == 0)
 		return path_p;
 
 	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
@@ -195,7 +196,7 @@ _rtld_append_path(Search_Path **head_p, Search_Path **path_p,
 }
 
 void
-_rtld_add_paths(const char *argv0, Search_Path **path_p, const char *pathstr)
+_rtld_add_paths(const char *execname, Search_Path **path_p, const char *pathstr)
 {
 	Search_Path **head_p = path_p;
 
@@ -217,7 +218,7 @@ _rtld_add_paths(const char *argv0, Search_Path **path_p, const char *pathstr)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, argv0, bp, ep);
+		path_p = _rtld_append_path(head_p, path_p, execname, bp, ep);
 
 		if (ep[0] == '\0')
 			break;
@@ -327,12 +328,12 @@ no_more:
 
 cleanup:
 	if (hwptr->name)
-		free(hwptr->name);
-	free(hwptr);
+		xfree(hwptr->name);
+	xfree(hwptr);
 }
 
 void
-_rtld_process_hints(const char *argv0, Search_Path **path_p,
+_rtld_process_hints(const char *execname, Search_Path **path_p,
     Library_Xform **lib_p, const char *fname)
 {
 	int fd;
@@ -379,7 +380,7 @@ _rtld_process_hints(const char *argv0, Search_Path **path_p,
 			 */
 			while (b[-1] == ' ' || b[-1] == '\t')
 				b--;
-			path_p = _rtld_append_path(head_p, path_p, argv0,
+			path_p = _rtld_append_path(head_p, path_p, execname,
 			    ptr, b);
 		} else
 			_rtld_process_mapping(lib_p, ptr, b);
@@ -406,7 +407,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 
 	/* Start with 16 entries, will grow it up as needed. */
 	res_size = 16 * sizeof(struct sysctlnode);
-	result = (struct sysctlnode *)malloc(res_size);
+	result = xmalloc(res_size);
 	if (result == NULL)
 		return (-1);
 
@@ -423,17 +424,17 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 		query.sysctl_flags = SYSCTL_VERSION;
 
 		n = res_size;
-		if (sysctl(mib, miblen+1, result, &n, &query,
+		if (sysctl(mib, miblen + 1, result, &n, &query,
 		    sizeof(query)) == -1) {
 			if (errno != ENOMEM)
 				goto bad;
 			/* Grow up result */
 			res_size = n;
-			newresult = (struct sysctlnode *)realloc(result, res_size);
+			newresult = xrealloc(result, res_size);
 			if (newresult == NULL)
 				goto bad;
 			result = newresult;
-			if (sysctl(mib, miblen+1, result, &n, &query,
+			if (sysctl(mib, miblen + 1, result, &n, &query,
 			    sizeof(query)) == -1)
 				goto bad;
 		}
@@ -453,12 +454,12 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 		goto bad;
 	r = SYSCTL_TYPE(result[i].sysctl_flags);
 
-	free(result);
+	xfree(result);
 	if (sysctl(mib, miblen, oldp, oldlen, NULL, 0) == -1)
 		return (-1);
 	return r;
 
 bad:
-	free(result);
+	xfree(result);
 	return (-1);
 }

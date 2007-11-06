@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.496 2007/07/03 16:29:24 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.496.4.1 2007/11/06 23:13:21 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -690,9 +690,9 @@ USE_${var}?= yes
 #
 # USE_* options which default to "yes".
 #
-#.for var in 
-#USE_${var}?= yes
-#.endfor
+.for var in JEMALLOC
+USE_${var}?= yes
+.endfor
 
 #
 # USE_* options which default to "no".

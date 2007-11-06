@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.22 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.22.4.1 2007/11/06 23:07:37 matt Exp $	*/
 
-/* $Id: pfkey.c,v 1.22 2007/07/18 12:07:52 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.22.4.1 2007/11/06 23:07:37 matt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1861,7 +1861,7 @@ pk_recvacquire(mhp)
 			remoteid=0;
 		}
 	}
-	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL, remoteid);
+	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL, NULL, remoteid);
 	vfree(idsrc);
 	vfree(iddst);
 	if (iph2[n]->sainfo == NULL) {

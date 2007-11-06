@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.25 2007/08/20 19:23:50 is Exp $ */
+/*	$NetBSD: grf_et.c,v 1.25.2.1 2007/11/06 23:14:36 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.25 2007/08/20 19:23:50 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.25.2.1 2007/11/06 23:14:36 matt Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0

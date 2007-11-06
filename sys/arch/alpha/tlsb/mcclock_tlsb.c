@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.13 2007/07/21 11:59:57 tsutsui Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.13.6.1 2007/11/06 23:13:59 matt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.13 2007/07/21 11:59:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.13.6.1 2007/11/06 23:13:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

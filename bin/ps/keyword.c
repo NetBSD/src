@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.50 2006/10/29 22:32:53 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.50 2006/10/29 22:32:53 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,7 @@ VAR var[] = {
 	LVAR("laddr", "LADDR", 0, l_laddr, KPTR, PRIx64),
 	LVAR("lid", "LID", 0, l_lid, INT32, "d"),
 	VAR4("lim", "LIM", 0, maxrss),
+	VAR4("lname", "LNAME", LJUST|LWP, lname),
 	VAR4("login", "LOGIN", LJUST, logname),
 	VAR3("logname", "login", ALIAS),
 	VAR6("lstart", "STARTED", LJUST, lstarted, POFF(p_ustart_sec), UINT32),

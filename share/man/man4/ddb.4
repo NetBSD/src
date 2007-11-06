@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.103 2007/03/28 14:45:35 uwe Exp $
+.\"	$NetBSD: ddb.4,v 1.103.4.1 2007/11/06 23:12:59 matt Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,9 @@ To specify commands which will be executed on each entry to
 .Ic ddb :
 .Cd options DDB_COMMANDONENTER="trace;show registers"
 In this case, "trace" and then "show registers" will be executed automatically.
+.Pp
+To enable extended online help:
+.Cd options DDB_VERBOSE_HELP .
 .Sh DESCRIPTION
 .Nm
 is the in-kernel debugger.
@@ -1081,10 +1084,10 @@ Exit to the Sun PROM monitor.
 .El
 .Ss SPARC64
 .Bl -tag -width "intrchain" -compact
-.It Ic buf
-Print buffer information.
 .It Ic ctx
 Print process context information.
+.It Ic cpu
+Switch to another cpu.
 .It Ic dtlb
 Print data translation look-aside buffer context information.
 .It Ic dtsb
@@ -1094,6 +1097,16 @@ Display information about the listed mapping in the kernel pmap.
 Use the
 .Dq f
 modifier to get a full listing.
+.It Ic extract
+Extract the physical address for a given virtual address from the kernel pmap.
+.It Ic fpstate
+Dump the FPU state.
+.It Ic itlb
+Print instruction translation look-aside buffer context information.
+.It Ic itsb
+Display instruction translation storage buffer information.
+.It Ic lwp
+Display a struct lwp
 .It Ic pcb
 Display information about the
 .Dq struct pcb
@@ -1119,6 +1132,8 @@ Enter the OFW PROM.
 Display the
 .Dq struct pv_entry
 pointed to.
+.It Ic sir
+Reset the machine and enter prom (do a Software Initiated Reset).
 .It Ic stack
 Dump the window stack.
 Use the
@@ -1142,12 +1157,23 @@ Dumps the UVM histories.
 Set or clear a physical or virtual hardware watchpoint.
 Pass the address to be watched, or
 .Dq 0
-to clear the watchpoint.
-Append
+(or ommit the address) to clear the watchpoint.
+Optional modifiers are
 .Dq p
-to the watch point to use the physical watchpoint registers.
+for physical address,
+.Dq r
+for trap on read access (default: trap on write access only),
+.Dq b
+for 8 bit width,
+.Dq h
+for 16 bit,
+.Dq l
+for 32 bit or 
+.Dq L
+for 64 bit.
 .It Ic window
-Print register window information about given address.
+Print register window information. Argument is a stack frame number (0 is
+top of stack, which is used when no index is given).
 .El
 .Ss SUN3 and SUN3X
 .Bl -tag -width "intrchain" -compact

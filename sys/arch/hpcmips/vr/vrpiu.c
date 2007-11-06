@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.40 2007/07/09 20:52:13 ad Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.40.10.1 2007/11/06 23:16:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.40 2007/07/09 20:52:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.40.10.1 2007/11/06 23:16:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

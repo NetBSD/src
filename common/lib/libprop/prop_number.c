@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.13 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.13.2.1 2007/11/06 23:07:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -75,7 +75,9 @@ static int		_prop_number_free(prop_stack_t, prop_object_t *);
 static bool	_prop_number_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_number_equals(void *, void *);
+static bool	_prop_number_equals(prop_object_t, prop_object_t,
+				    void **, void **,
+				    prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_number = {
 	.pot_type	=	PROP_TYPE_NUMBER,
@@ -188,15 +190,14 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	return (true);
 }
 
+/* ARGSUSED */
 static bool
-_prop_number_equals(void *v1, void *v2)
+_prop_number_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_number_t num1 = v1;
 	prop_number_t num2 = v2;
-
-	if (! (prop_object_is_number(num1) &&
-	       prop_object_is_number(num2)))
-		return (false);
 
 	/*
 	 * There is only ever one copy of a number object at any given
@@ -204,14 +205,14 @@ _prop_number_equals(void *v1, void *v2)
 	 * in the common case.
 	 */
 	if (num1 == num2)
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 
 	/*
 	 * If the numbers are the same signed-ness, then we know they
 	 * cannot be equal because they would have had pointer equality.
 	 */
 	if (num1->pn_value.pnv_is_unsigned == num2->pn_value.pnv_is_unsigned)
-		return (false);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 
 	/*
 	 * We now have one signed value and one unsigned value.  We can
@@ -226,20 +227,23 @@ _prop_number_equals(void *v1, void *v2)
 		 * num1 is unsigned and num2 is signed.
 		 */
 		if (num1->pn_value.pnv_unsigned > INT64_MAX)
-			return (false);
+			return (_PROP_OBJECT_EQUALS_FALSE);
 		if (num2->pn_value.pnv_signed < 0)
-			return (false);
+			return (_PROP_OBJECT_EQUALS_FALSE);
 	} else {
 		/*
 		 * num1 is signed and num2 is unsigned.
 		 */
 		if (num1->pn_value.pnv_signed < 0)
-			return (false);
+			return (_PROP_OBJECT_EQUALS_FALSE);
 		if (num2->pn_value.pnv_unsigned > INT64_MAX)
-			return (false);
+			return (_PROP_OBJECT_EQUALS_FALSE);
 	}
 
-	return (num1->pn_value.pnv_signed == num2->pn_value.pnv_signed);
+	if (num1->pn_value.pnv_signed == num2->pn_value.pnv_signed)
+		return _PROP_OBJECT_EQUALS_TRUE;
+	else
+		return _PROP_OBJECT_EQUALS_FALSE;
 }
 
 static prop_number_t
@@ -439,8 +443,10 @@ prop_number_unsigned_integer_value(prop_number_t pn)
 bool
 prop_number_equals(prop_number_t num1, prop_number_t num2)
 {
+	if (!prop_object_is_number(num1) || !prop_object_is_number(num2))
+		return (false);
 
-	return (_prop_number_equals(num1, num2));
+	return (prop_object_equals(num1, num2));
 }
 
 /*

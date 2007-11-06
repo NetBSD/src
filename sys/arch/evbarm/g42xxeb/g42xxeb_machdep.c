@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.11 2007/08/21 11:39:11 kiyohara Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.11.2.1 2007/11/06 23:15:58 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  

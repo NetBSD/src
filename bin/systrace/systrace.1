@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.36 2007/04/13 00:40:11 plunky Exp $
+.\"	$NetBSD: systrace.1,v 1.36.4.1 2007/11/06 23:07:21 matt Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Bk -words
-.Op Fl AaCitUuV
+.Op Fl AaCeitUuV
 .Op Fl c Ar user:group
 .Op Fl d Ar policydir
 .Op Fl E Ar logfile
@@ -108,6 +108,11 @@ which policies are loaded and to which changed policies are stored.
 .It Fl E Ar logfile
 Logs all policy violations or specifically logged system calls to
 .Ar logfile .
+.It Fl e
+Specifies to log to
+.Em stderr
+instead of
+.Xr syslog 3 .
 .It Fl f Ar file
 The policies specified in
 .Ar file

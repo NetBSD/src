@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.17 2007/08/16 21:44:08 joerg Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.17.2.1 2007/11/06 23:07:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,6 +111,12 @@ enum {
 	_PROP_OBJECT_FREE_FAILED
 };
 
+enum {
+	_PROP_OBJECT_EQUALS_FALSE,
+	_PROP_OBJECT_EQUALS_TRUE,
+	_PROP_OBJECT_EQUALS_RECURSE
+};
+
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
 	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || \
@@ -190,14 +196,24 @@ struct _prop_object_type {
 	/*
 	 * func to free the child returned by pot_free with stack == NULL.
 	 *
-	 * Must be implemented if pot_free can return non-0.
+	 * Must be implemented if pot_free can return anything other than
+	 * _PROP_OBJECT_FREE_DONE.
 	 */
 	void	(*pot_emergency_free)(prop_object_t);
 	/* func to externalize object */
 	bool	(*pot_extern)(struct _prop_object_externalize_context *,
 			      void *);
 	/* func to test quality */
-	bool	(*pot_equals)(void *, void *);
+	bool	(*pot_equals)(prop_object_t, prop_object_t,
+			      void **, void **,
+			      prop_object_t *, prop_object_t *);
+	/*
+	 * func to finish equality iteration.
+	 *
+	 * Must be implemented if pot_equals can return
+	 * _PROP_OBJECT_EQUALS_RECURSE
+	 */
+	void	(*pot_equals_finish)(prop_object_t, prop_object_t);
 };
 
 struct _prop_object {

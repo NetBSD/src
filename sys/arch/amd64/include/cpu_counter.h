@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.4 2007/07/07 17:38:26 tsutsui Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.4.10.1 2007/11/06 23:14:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

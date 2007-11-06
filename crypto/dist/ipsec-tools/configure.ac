@@ -767,6 +767,10 @@ yes
 esac
 AC_MSG_RESULT($kernel_secctx)
 
+AC_CHECK_HEADER(selinux/selinux.h,
+	[AC_CHECK_LIB(selinux, avc_init, [selinux_support=yes], 
+	[selinux_support=no])], [selinux_support=no])
+
 AC_MSG_CHECKING(whether to support Security Context)
 AC_ARG_ENABLE(security-context,
 	[  --enable-security-context    enable Security Context(yes/no/kernel)],
@@ -779,10 +783,14 @@ if test "$enable_security_context" = "yes"; then
 	if test "$kernel_secctx" = "no" ; then
 		AC_MSG_ERROR([Security Context requested, but no kernel support! Aborting.])
 	else
-		AC_DEFINE([HAVE_SECCTX], [], [Enable Security Context])
-		SECCTX_OBJS="security.o"
-		AC_SUBST(SECCTX_OBJS)
-		LIBS="$LIBS -lselinux"
+		if test "$selinux_support" = "no"; then
+			AC_MSG_ERROR([Security Context requested, but no selinux support! Aborting.])
+		else
+			AC_DEFINE([HAVE_SECCTX], [], [Enable Security Context])
+			SECCTX_OBJS="security.o"
+			AC_SUBST(SECCTX_OBJS)
+			LIBS="$LIBS -lselinux"
+		fi
 	fi
 fi
 

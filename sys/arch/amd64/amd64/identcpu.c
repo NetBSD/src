@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.23 2007/06/14 12:28:51 njoly Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.23.10.1 2007/11/06 23:14:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23 2007/06/14 12:28:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.10.1 2007/11/06 23:14:04 matt Exp $");
 
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
@@ -58,20 +59,32 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	u_int64_t last_tsc;
-	u_int32_t dummy, val;
+	u_int32_t val;
 	char buf[512];
-	u_int32_t brand[12];
+	u_int32_t brand[12], descs[4];
 	int vendor;
 	const char *feature_str[3];
 
-	CPUID(1, ci->ci_signature, val,
-	    ci->ci_feature2_flags, ci->ci_feature_flags);
-	CPUID(0x80000001, dummy, dummy, dummy, val);
-	ci->ci_feature_flags |= val;
+	x86_cpuid(0, descs);
 
-	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
-	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
-	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+	ci->ci_cpuid_level = descs[0];
+	ci->ci_vendor[0] = descs[1];
+	ci->ci_vendor[2] = descs[2];
+	ci->ci_vendor[1] = descs[3];
+	ci->ci_vendor[3] = 0;
+
+	x86_cpuid(1, descs);
+	ci->ci_signature = descs[0];
+	val = descs[1];
+	ci->ci_feature2_flags = descs[2];
+	ci->ci_feature_flags = descs[3];
+
+	x86_cpuid(0x80000001, descs);
+	ci->ci_feature_flags |= descs[3];
+
+	x86_cpuid(0x80000002, brand);
+	x86_cpuid(0x80000003, brand + 4);
+	x86_cpuid(0x80000004, brand + 8);
 
 	strcpy(cpu_model, (char *)brand);
 
@@ -166,6 +179,10 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif
 
+#ifdef INTEL_CORETEMP
+	if (vendor == CPUVENDOR_INTEL)
+		coretemp_register(ci);
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.21 2006/10/16 03:21:05 christos Exp $	 */
+/* $NetBSD: dir.c,v 1.21.8.1 2007/11/06 23:12:34 matt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -186,7 +186,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		dp = (struct direct *) (bp->b_data + idesc->id_loc);
 		if (dircheck(idesc, dp))
 			goto dpok;
-		brelse(bp);
+		brelse(bp, 0);
 		if (idesc->id_fix == IGNORE)
 			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
@@ -200,14 +200,14 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		if (fix)
 			VOP_BWRITE(bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 		idesc->id_loc += DIRBLKSIZ;
 		idesc->id_filesize -= DIRBLKSIZ;
 		return (dp);
 	}
 dpok:
 	if (idesc->id_filesize <= 0 || idesc->id_loc >= blksiz) {
-		brelse(bp);
+		brelse(bp, 0);
 		return NULL;
 	}
 	dploc = idesc->id_loc;
@@ -215,13 +215,13 @@ dpok:
 	idesc->id_loc += dp->d_reclen;
 	idesc->id_filesize -= dp->d_reclen;
 	if ((idesc->id_loc % DIRBLKSIZ) == 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		return dp;
 	}
 	ndp = (struct direct *) (bp->b_data + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
-		brelse(bp);
+		brelse(bp, 0);
 		size = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
@@ -234,9 +234,9 @@ dpok:
 		if (fix)
 			VOP_BWRITE(bp);
 		else
-			brelse(bp);
+			brelse(bp, 0);
 	} else
-		brelse(bp);
+		brelse(bp, 0);
 
 	return (dp);
 }
@@ -630,7 +630,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	dp = VTOD(vp);
 	bread(vp, dp->di_db[0], fs->lfs_fsize, NOCRED, &bp);
 	if (bp->b_flags & B_ERROR) {
-		brelse(bp);
+		brelse(bp, 0);
 		freeino(ino);
 		return (0);
 	}

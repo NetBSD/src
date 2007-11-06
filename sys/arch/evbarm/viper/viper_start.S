@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_start.S,v 1.4 2007/07/24 14:41:29 pooka Exp $	*/
+/*	$NetBSD: viper_start.S,v 1.4.6.1 2007/11/06 23:16:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
