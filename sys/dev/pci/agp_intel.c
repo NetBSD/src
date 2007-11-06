@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.22.8.3 2007/10/26 15:45:51 joerg Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.22.8.4 2007/11/06 14:27:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.3 2007/10/26 15:45:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.4 2007/11/06 14:27:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
 static int agp_intel_init(struct agp_softc *);
-static void agp_intel_resume(device_t);
+static bool agp_intel_resume(device_t);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -114,7 +114,6 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_intel_softc *isc;
 	struct agp_gatt *gatt;
 	u_int32_t value;
-	pnp_status_t pnp_status;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
@@ -189,12 +188,8 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 	isc->gatt = gatt;
 
-	pnp_status = pci_generic_power_register(self,
-    	    pa->pa_pc, pa->pa_tag, NULL, agp_intel_resume);
-
-	if (pnp_status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, NULL, agp_intel_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return agp_intel_init(sc);
 }
@@ -399,11 +394,13 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	}
 }
 
-static
-void agp_intel_resume(device_t dv)
+static bool
+agp_intel_resume(device_t dv)
 {
 	struct agp_softc *sc = device_private(dv);
 
 	agp_intel_init(sc);
 	agp_flush_cache();
+
+	return true;
 }

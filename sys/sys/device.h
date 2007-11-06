@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96.6.4 2007/10/02 18:29:26 joerg Exp $ */
+/* $NetBSD: device.h,v 1.96.6.5 2007/11/06 14:27:37 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -109,6 +109,11 @@ typedef enum devact {
 	DVACT_DEACTIVATE	/* deactivate the device */
 } devact_t;
 
+typedef enum {
+	DVA_SYSTEM,
+	DVA_HARDWARE
+} devactive_t;
+
 typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
@@ -124,17 +129,37 @@ struct device {
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pseudo- or root node) */
+	int		dv_depth;	/* number of parents until root */
 	int		dv_flags;	/* misc. flags; see below */
 	void		*dv_private;	/* this device's private storage */
 	int		*dv_locators;	/* our actual locators (optional) */
-	pnp_device_t	dv_pnp;		/* device pnp messaging */
 	prop_dictionary_t dv_properties;/* properties dictionary */
-	void		*dv_power;	/* storage for power handler */
+
+	size_t		dv_activity_count;
+	void		(**dv_activity_handlers)(device_t, devactive_t);
+
+	bool		(*dv_driver_suspend)(device_t);
+	bool		(*dv_driver_resume)(device_t);
+	bool		(*dv_driver_child_register)(device_t);
+
+	void		*dv_bus_private;
+	bool		(*dv_bus_suspend)(device_t);
+	bool		(*dv_bus_resume)(device_t);
+	void		(*dv_bus_deregister)(device_t);
+
+	void		*dv_class_private;
+	bool		(*dv_class_suspend)(device_t);
+	bool		(*dv_class_resume)(device_t);
+	void		(*dv_class_deregister)(device_t);
 };
 
 /* dv_flags */
-#define	DVF_ACTIVE	0x0001		/* device is activated */
-#define	DVF_PRIV_ALLOC	0x0002		/* device private storage != device */
+#define	DVF_ACTIVE		0x0001	/* device is activated */
+#define	DVF_PRIV_ALLOC		0x0002	/* device private storage != device */
+#define	DVF_POWER_HANDLERS	0x0004	/* device has suspend/resume support */
+#define	DVF_CLASS_SUSPENDED	0x0008	/* device class suspend was called */
+#define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
+#define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -400,14 +425,49 @@ int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
 bool		device_is_active(device_t);
+bool		device_is_enabled(device_t);
 int		device_locator(device_t, u_int);
-pnp_device_t	*device_pnp(device_t);
 void		*device_private(device_t);
-void		*device_power_private(device_t);
-void		device_power_set_private(device_t, void *);
 prop_dictionary_t device_properties(device_t);
 
+bool		device_active(device_t, devactive_t);
+bool		device_active_register(device_t,
+				       void (*)(device_t, devactive_t));
+void		device_active_deregister(device_t,
+				         void (*)(device_t, devactive_t));
+
 bool		device_is_a(device_t, const char *);
+
+bool		device_pnp_is_registered(device_t);
+
+bool		device_pnp_driver_suspend(device_t);
+bool		device_pnp_driver_resume(device_t);
+
+void		device_pnp_driver_register(device_t,
+		    bool (*)(device_t), bool (*)(device_t));
+void		device_pnp_driver_deregister(device_t);
+
+bool		device_pnp_driver_child_register(device_t);
+void		device_pnp_driver_set_child_register(device_t,
+		    bool (*)(device_t));
+
+void		*device_pnp_bus_private(device_t);
+bool		device_pnp_bus_suspend(device_t);
+bool		device_pnp_bus_resume(device_t);
+
+void		device_pnp_bus_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pnp_bus_deregister(device_t);
+
+void		*device_pnp_class_private(device_t);
+bool		device_pnp_class_suspend(device_t);
+bool		device_pnp_class_resume(device_t);
+
+void		device_pnp_class_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pnp_class_deregister(device_t);
 
 #endif /* _KERNEL */
 

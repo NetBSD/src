@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.52.6.2 2007/10/26 15:48:09 joerg Exp $ */
+/* $NetBSD: wsmouse.c,v 1.52.6.3 2007/11/06 14:27:36 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52.6.2 2007/10/26 15:48:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52.6.3 2007/11/06 14:27:36 joerg Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -275,7 +275,8 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

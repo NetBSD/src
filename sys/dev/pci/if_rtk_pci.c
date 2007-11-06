@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.32.8.3 2007/10/26 15:46:16 joerg Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.32.8.4 2007/11/06 14:27:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.3 2007/10/26 15:46:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.4 2007/11/06 14:27:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,6 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	int ioh_valid, memh_valid;
-	pnp_status_t pnp_status;
 
 	t = rtk_pci_lookup(pa);
 	if (t == NULL) {
@@ -217,11 +216,10 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, &sc->ethercom.ec_if, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	else
+		pnp_class_network_register(self, &sc->ethercom.ec_if);
 
 	rtk_attach(sc);
 }

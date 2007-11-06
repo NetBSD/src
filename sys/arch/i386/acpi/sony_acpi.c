@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.5 2007/09/09 20:52:13 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.6 2007/11/06 14:27:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.5 2007/09/09 20:52:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.6 2007/11/06 14:27:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,13 +117,14 @@ static const struct sony_acpi_quirk_table {
 
 static int	sony_acpi_match(struct device *, struct cfdata *, void *);
 static void	sony_acpi_attach(struct device *, struct device *, void *);
-static pnp_status_t sony_acpi_power(device_t, pnp_request_t, void *);
 static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
 static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
-static void	sony_acpi_brightness_down(struct sony_acpi_softc *);
-static void	sony_acpi_brightness_up(struct sony_acpi_softc *);
+static bool	sony_acpi_suspend(device_t);
+static bool	sony_acpi_resume(device_t);
+static void	sony_acpi_brightness_down(device_t);
+static void	sony_acpi_brightness_up(device_t);
 
 CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
@@ -297,7 +298,7 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Install notify handler */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, sc);
+	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, self);
 	if (ACPI_FAILURE(rv))
 		aprint_error("%s: couldn't install notify handler (%d)\n",
 		    device_xname(self), rv);
@@ -311,9 +312,16 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    device_xname(self), rv);
 #endif
 
-	if (pnp_register(self, sony_acpi_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, sony_acpi_suspend, sony_acpi_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	if (!pnp_event_register(self, PNPE_DISPLAY_BRIGHTNESS_UP,
+				 sony_acpi_brightness_up, true))
+		aprint_error_dev(self, "couldn't register BRIGHTNESS UP handler\n");
+
+	if (!pnp_event_register(self, PNPE_DISPLAY_BRIGHTNESS_DOWN,
+				 sony_acpi_brightness_down, true))
+		aprint_error_dev(self, "couldn't register BRIGHTNESS DOWN handler\n");
 
 	wska.console = 0;
 	wska.keymap = &sony_acpi_keymapdata;
@@ -359,12 +367,11 @@ sony_acpi_quirk_setup(struct sony_acpi_softc *sc)
 static void
 sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 {
-	struct sony_acpi_softc *sc;
+	device_t dv = opaque;
+	struct sony_acpi_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 	ACPI_INTEGER arg;
 	int s;
-
-	sc = (struct sony_acpi_softc *)opaque;
 
 	if (notify == SONY_NOTIFY_FnKeyEvent) {
 		rv = sony_acpi_eval_set_integer(hdl, "SN07", 0x202, &arg);
@@ -377,10 +384,10 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	s = spltty();
 	switch (notify) {
 	case SONY_NOTIFY_BrightnessDownPressed:
-		sony_acpi_brightness_down(sc);
+		sony_acpi_brightness_down(dv);
 		break;
 	case SONY_NOTIFY_BrightnessUpPressed:
-		sony_acpi_brightness_up(sc);
+		sony_acpi_brightness_up(dv);
 		break;
 	case SONY_NOTIFY_BrightnessDownReleased:
 	case SONY_NOTIFY_BrightnessUpReleased:
@@ -412,59 +419,26 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	return;
 }
 
-static pnp_status_t
-sony_acpi_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+sony_acpi_suspend(device_t dv)
 {
-	struct sony_acpi_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	pnp_display_brightness_t *pdisplaybrt;
+	struct sony_acpi_softc *sc = device_private(dv);
 
-	sc = (struct sony_acpi_softc *)dv;
+	acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &sc->sc_pmstate.brt);
 
-	switch (req) {
-	case PNP_REQUEST_SET_DISPLAY_BRIGHTNESS:
-		pdisplaybrt = opaque;
-		switch (*pdisplaybrt) {
-		case PNP_DISPLAY_BRIGHTNESS_UP:
-			sony_acpi_brightness_up(sc);
-			break;
-		case PNP_DISPLAY_BRIGHTNESS_DOWN:
-			sony_acpi_brightness_down(sc);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			sony_acpi_eval_set_integer(sc->sc_node->ad_handle,
-			    "SBRT", sc->sc_pmstate.brt, NULL);
-			sony_acpi_quirk_setup(sc);
-			break;
-		case PNP_STATE_D3:
-			acpi_eval_integer(sc->sc_node->ad_handle, "GBRT",
-			    &sc->sc_pmstate.brt);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
+	return true;
+}
 
-	return PNP_STATUS_SUCCESS;
+static bool
+sony_acpi_resume(device_t dv)
+{
+	struct sony_acpi_softc *sc = device_private(dv);
+
+	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT",
+	    sc->sc_pmstate.brt, NULL);
+	sony_acpi_quirk_setup(sc);
+
+	return true;
 }
 
 static int
@@ -498,8 +472,9 @@ sony_acpi_wskbd_ioctl(void *opaque, u_long cmd, void *data, int flags,
 }
 
 static void
-sony_acpi_brightness_up(struct sony_acpi_softc *sc)
+sony_acpi_brightness_up(device_t dv)
 {
+	struct sony_acpi_softc *sc = device_private(dv);
 	ACPI_INTEGER arg;
 	ACPI_STATUS rv;
 
@@ -513,8 +488,9 @@ sony_acpi_brightness_up(struct sony_acpi_softc *sc)
 }
 
 static void
-sony_acpi_brightness_down(struct sony_acpi_softc *sc)
+sony_acpi_brightness_down(device_t dv)
 {
+	struct sony_acpi_softc *sc = device_private(dv);
 	ACPI_INTEGER arg;
 	ACPI_STATUS rv;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.18.5 2007/10/26 15:47:47 joerg Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.18.6 2007/11/06 14:27:32 joerg Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.5 2007/10/26 15:47:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.6 2007/11/06 14:27:32 joerg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -535,7 +535,7 @@ ehci_intr(void *v)
 {
 	ehci_softc_t *sc = v;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || sc->sc_dying || !device_is_active(&sc->sc_bus.bdev))
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
@@ -961,7 +961,7 @@ ehci_activate(device_ptr_t self, enum devact act)
  * Note that this power handler isn't to be registered directly; the
  * bus glue needs to call out to it.
  */
-void
+bool
 ehci_suspend(device_t dv)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)dv;
@@ -1008,9 +1008,11 @@ ehci_suspend(device_t dv)
 
 	sc->sc_bus.use_polling--;
 	splx(s);
+
+	return true;
 }
 
-void
+bool
 ehci_resume(device_t dv)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)dv;
@@ -1069,6 +1071,8 @@ ehci_resume(device_t dv)
 	sc->sc_bus.use_polling--;
 
 	splx(s);
+
+	return true;
 }
 
 /*

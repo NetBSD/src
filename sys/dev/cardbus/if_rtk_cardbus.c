@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.32.8.2 2007/10/26 15:44:20 joerg Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.32.8.3 2007/11/06 14:27:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.32.8.2 2007/10/26 15:44:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.32.8.3 2007/11/06 14:27:16 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -188,7 +188,6 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct rtk_type *t;
 	bus_addr_t adr;
-	pnp_status_t pnp_status;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -250,11 +249,10 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 
 	rtk_attach(sc);
 
-	pnp_status = cardbus_net_generic_power_register(self,
-	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->ethercom.ec_if, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	else
+		pnp_class_network_register(self, &sc->ethercom.ec_if);
 
 	/*
 	 * Power down the socket.

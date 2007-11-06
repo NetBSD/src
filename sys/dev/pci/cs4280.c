@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.46.6.2 2007/10/26 15:45:55 joerg Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.46.6.3 2007/11/06 14:27:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.6.2 2007/10/26 15:45:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.6.3 2007/11/06 14:27:22 joerg Exp $");
 
 #include "midi.h"
 
@@ -110,8 +110,8 @@ static int cs4280_reset_codec(void *);
 #endif
 static enum ac97_host_flags cs4280_flags_codec(void *);
 
-static void cs4280_resume(device_t);
-static void cs4280_suspend(device_t);
+static bool cs4280_resume(device_t);
+static bool cs4280_suspend(device_t);
 
 /* Internal functions */
 static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
@@ -247,7 +247,6 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	uint32_t mem;
 	int error;
-	pnp_status_t pnp_status;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -366,12 +365,8 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    cs4280_suspend, cs4280_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, cs4280_suspend, cs4280_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /* Interrupt handling function */
@@ -916,7 +911,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-static void
+static bool
 cs4280_suspend(device_t dv)
 {
 	struct cs428x_softc *sc = device_private(dv);
@@ -947,9 +942,11 @@ cs4280_suspend(device_t dv)
 	/* Stop DMA */
 	BA1WRITE4(sc, CS4280_PCTL, sc->sc_suspend_state.cs4280.pctl & ~PCTL_MASK);
 	BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
+
+	return true;
 }
 
-static void
+static bool
 cs4280_resume(device_t dv)
 {
 	struct cs428x_softc *sc = device_private(dv);
@@ -985,6 +982,8 @@ cs4280_resume(device_t dv)
 		BA1WRITE4(sc, CS4280_CIE,  sc->sc_suspend_state.cs4280.cie);
 		BA1WRITE4(sc, CS4280_CCTL, sc->sc_suspend_state.cs4280.cctl);
 	}
+
+	return true;
 }
 
 static int

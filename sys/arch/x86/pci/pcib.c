@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.4.2 2007/10/28 20:11:00 joerg Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.4.3 2007/11/06 14:27:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.4.2 2007/10/28 20:11:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.4.3 2007/11/06 14:27:10 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,8 +63,6 @@ struct pcib_softc {
 
 int	pcibmatch(struct device *, struct cfdata *, void *);
 void	pcibattach(struct device *, struct device *, void *);
-
-static pnp_status_t	pcib_power(device_t, pnp_request_t, void *);
 
 CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
@@ -197,7 +195,6 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcib_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	pnp_device_t *pnp;
 	char devinfo[256];
 
 	aprint_naive("\n");
@@ -214,60 +211,15 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
-	pnp = device_pnp(self);
-
 	/* If a more specific pcib implementation has already registered a
 	 * power handler, don't overwrite it.
 	 */
-	if (pnp->pnp_power == NULL) {
-		if (pnp_register(self, pcib_power) != PNP_STATUS_SUCCESS)
-			aprint_error("%s: couldn't establish power handler\n",
-			    device_xname(self));
+ 	if (!device_pnp_is_registered(self)) {
+ 		if (!pnp_device_register(self, NULL, NULL))
+ 	    		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 
 	config_defer(self, pcib_callback);
-}
-
-static pnp_status_t
-pcib_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct pcib_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-
-	sc = device_private(dv);
-	pc = sc->sc_pc;
-	tag = sc->sc_tag;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			break;
-		case PNP_STATE_D3:
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
 }
 
 void

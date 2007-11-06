@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.8 2007/10/26 15:46:27 joerg Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.9 2007/11/06 14:27:26 joerg Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.8 2007/10/26 15:46:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.9 2007/11/06 14:27:26 joerg Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -163,6 +163,7 @@ static int  wpi_reset(struct wpi_softc *);
 static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
+static bool wpi_resume(device_t);
 
 CFATTACH_DECL(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
@@ -199,21 +200,18 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	int error, ac, revision;
-	pnp_status_t pnp_status;
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
 	callout_init(&sc->calib_to, 0);
+	callout_setfunc(&sc->calib_to, wpi_calib_timeout, sc);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(pa->pa_pc, pa->pa_tag);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -352,12 +350,10 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, wpi_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, ifp);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -952,7 +948,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* start periodic calibration timer */
 		sc->calib_cnt = 0;
-		callout_reset(&sc->calib_to, hz/2, wpi_calib_timeout, sc);
+		callout_schedule(&sc->calib_to, hz/2);
 
 		/* link LED always on while associated */
 		wpi_set_led(sc, WPI_LED_LINK, 0, 1);
@@ -1024,7 +1020,7 @@ wpi_mem_lock(struct wpi_softc *sc)
 		DELAY(10);
 	}
 	if (ntries == 1000)
-		aprint_error("%s: could not lock memory\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "could not lock memory\n");
 }
 
 /*
@@ -1306,7 +1302,7 @@ wpi_calib_timeout(void *arg)
 		sc->calib_cnt = 0;
 	}
 
-	callout_reset(&sc->calib_to, hz/2, wpi_calib_timeout, sc);
+	callout_schedule(&sc->calib_to, hz/2);
 }
 
 static void
@@ -3168,4 +3164,15 @@ wpi_stop(struct ifnet *ifp, int disable)
 
 	tmp = WPI_READ(sc, WPI_RESET);
 	WPI_WRITE(sc, WPI_RESET, tmp | WPI_SW_RESET);
+}
+
+static bool
+wpi_resume(device_t dv)
+{
+	struct wpi_softc *sc = device_private(dv);
+
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+	(void)wpi_reset(sc);
+
+	return true;
 }

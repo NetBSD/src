@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.4.4 2007/11/04 22:19:52 jmcneill Exp $ */
+/*	$NetBSD: pchb.c,v 1.1.4.5 2007/11/06 14:27:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.4 2007/11/04 22:19:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.5 2007/11/06 14:27:10 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.4 2007/11/04 22:19:52 jmcneill Exp $"
 int	pchbmatch(struct device *, struct cfdata *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
-static pnp_status_t pchb_power(device_t, pnp_request_t, void *);
+static bool	pchb_resume(device_t);
+static bool	pchb_suspend(device_t);
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
@@ -350,7 +351,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pchb_attach_rnd(sc, pa);
 #endif
 
-	if (pnp_register(self, pchb_power) != PNP_STATUS_SUCCESS)
+	if (!pnp_device_register(self, pchb_suspend, pchb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
@@ -380,51 +381,36 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-static pnp_status_t
-pchb_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+pchb_suspend(device_t dv)
 {
-	struct pchb_softc *sc;
-	pnp_state_t *pstate;
-	pnp_capabilities_t *pcaps;
+	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int off;
 
-	sc = (struct pchb_softc *)dv;
 	pc = sc->sc_pc;
 	tag = sc->sc_tag;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			for (off = 0x40; off <= 0xff; off += 4)
-				pci_conf_write(pc, tag, off,
-				    sc->sc_pciconfext[(off - 0x40) / 4]);
-			break;
-		case PNP_STATE_D3:
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			for (off = 0x40; off <= 0xff; off += 4)
-				sc->sc_pciconfext[(off - 0x40) / 4] =
-				    pci_conf_read(pc, tag, off); 
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
+	for (off = 0x40; off <= 0xff; off += 4)
+		sc->sc_pciconfext[(off - 0x40) / 4] = pci_conf_read(pc, tag, off);
 
-	return PNP_STATUS_SUCCESS;
+	return true;
+}
+
+static bool
+pchb_resume(device_t dv)
+{
+	struct pchb_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int off;
+
+	pc = sc->sc_pc;
+	tag = sc->sc_tag;
+
+	for (off = 0x40; off <= 0xff; off += 4)
+		pci_conf_write(pc, tag, off, sc->sc_pciconfext[(off - 0x40) / 4]);
+
+	return true;
 }

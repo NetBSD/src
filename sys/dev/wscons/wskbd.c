@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.104.6.4 2007/10/26 15:48:08 joerg Exp $ */
+/* $NetBSD: wskbd.c,v 1.104.6.5 2007/11/06 14:27:35 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.4 2007/10/26 15:48:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.5 2007/11/06 14:27:35 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -462,7 +462,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else if (!pnp_class_input_register(self))
+		aprint_error_dev(self, "couldn't register as input device\n");
 }
 
 void
@@ -619,8 +622,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 		callout_stop(&sc->sc_repeat_ch);
 	}
 
-	/* notify power management framework */
-	pnp_power_input(dev, PNP_ACTION_KEYBOARD);
+	device_active(dev, DVA_HARDWARE);
 
 #if NWSDISPLAY > 0
 	/*
@@ -1457,15 +1459,15 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	switch (ksym) {
 	case KS_Cmd_VolumeToggle:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_power_audio(NULL, PNP_ACTION_VOLUME_MUTE);
+			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_TOGGLE);
 		break;
 	case KS_Cmd_VolumeUp:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_power_audio(NULL, PNP_ACTION_VOLUME_UP);
+			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_UP);
 		break;
 	case KS_Cmd_VolumeDown:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_power_audio(NULL, PNP_ACTION_VOLUME_DOWN);
+			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_DOWN);
 		break;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	case KS_Cmd_ScrollFastUp:

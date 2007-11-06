@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.9 2007/10/31 23:14:06 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.10 2007/11/06 14:27:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.9 2007/10/31 23:14:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.10 2007/11/06 14:27:25 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -928,7 +928,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
 	pcireg_t preg, memtype;
 	uint32_t reg;
-	pnp_status_t pnp_status;
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -1612,12 +1611,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, ifp);
 
 	return;
 

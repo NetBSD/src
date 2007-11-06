@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.37.14.4 2007/10/02 18:28:35 joerg Exp $	*/
+/*	$NetBSD: piixide.c,v 1.37.14.5 2007/11/06 14:27:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.4 2007/10/02 18:28:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.5 2007/11/06 14:27:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
-static void piixide_resume(device_t);
-static void piixide_suspend(device_t);
+static bool piixide_resume(device_t);
+static bool piixide_suspend(device_t);
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
 
@@ -274,20 +274,15 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
-	pnp_status_t status;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
-	status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    piixide_suspend, piixide_resume);
-	if (status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, piixide_suspend, piixide_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
+static bool
 piixide_resume(device_t dv)
 {
 	struct pciide_softc *sc = device_private(dv);
@@ -296,9 +291,11 @@ piixide_resume(device_t dv)
 	    sc->sc_idetim);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
 	    sc->sc_udmatim);
+
+	return true;
 }
 
-static void
+static bool
 piixide_suspend(device_t dv)
 {
 	struct pciide_softc *sc = device_private(dv);
@@ -307,6 +304,8 @@ piixide_suspend(device_t dv)
 	    PIIX_IDETIM);
 	sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PIIX_UDMATIM);
+
+	return true;
 }
 
 static void

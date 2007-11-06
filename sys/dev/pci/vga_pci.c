@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32.8.3 2007/10/01 05:37:56 joerg Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.4 2007/11/06 14:27:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.3 2007/10/01 05:37:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.4 2007/11/06 14:27:29 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@ struct vga_pci_softc {
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
-static pnp_status_t vga_pci_power(device_t, pnp_request_t, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
+static bool	vga_pci_resume(device_t dv);
 
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
@@ -170,7 +170,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct vga_pci_softc *psc = (void *) self;
 	struct vga_softc *sc = &psc->sc_vga;
 	struct pci_attach_args *pa = aux;
-	pnp_status_t status;
 	char devinfo[256];
 	int bar, reg;
 
@@ -226,54 +225,19 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX it would power down the device when the console
 	 * XXX is still using it.
 	 */
-	status = pnp_register(self, vga_pci_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, NULL, vga_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found_ia(self, "drm", aux, vga_drm_print);
 }
 
-static pnp_status_t
-vga_pci_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+vga_pci_resume(device_t dv)
 {
-	struct vga_pci_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+	struct vga_pci_softc *sc = device_private(dv);
 
-	sc = (struct vga_pci_softc *)dv;
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
+	vga_resume(&sc->sc_vga);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			vga_resume(&sc->sc_vga);
-			break;
-		case PNP_STATE_D3:
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	return true;
 }
 
 int

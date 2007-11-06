@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.14.4 2007/10/26 15:46:49 joerg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.14.5 2007/11/06 14:27:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -249,25 +249,6 @@ int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
     int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
 void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
-
-/*
- * Device power management
- */
-pnp_state_t	pci_pnp_powerstate(pcireg_t);
-pnp_state_t	pci_pnp_capabilities(pcireg_t);
-
-pnp_status_t	pci_generic_power_register(device_t dv,
-					   pci_chipset_tag_t, pcitag_t,
-					   void (*)(device_t),
-					   void (*)(device_t));
-void		pci_generic_power_deregister(device_t);
-
-pnp_status_t	pci_net_generic_power_register(device_t,
-					       pci_chipset_tag_t, pcitag_t,
-					       struct ifnet *,
-					       void (*)(device_t),
-					       void (*)(device_t));
-void		pci_net_generic_power_deregister(device_t);
 
 #endif /* _KERNEL */
 

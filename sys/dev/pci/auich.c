@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.117.14.4 2007/10/26 15:45:53 joerg Exp $	*/
+/*	$NetBSD: auich.c,v 1.117.14.5 2007/11/06 14:27:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.4 2007/10/26 15:45:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.5 2007/11/06 14:27:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,8 +285,7 @@ static int	auich_allocmem(struct auich_softc *, size_t, size_t,
 		    struct auich_dma *);
 static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-static void	auich_suspend(device_t);
-static void	auich_resume(device_t);
+static bool	auich_resume(device_t);
 static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(struct device *);
@@ -457,7 +456,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	const struct auich_devtype *d;
 	const struct sysctlnode *node, *node_ac97clock;
 	int err, node_mib, i;
-	pnp_status_t pnp_status;
 
 	sc = (struct auich_softc *)self;
 	pa = aux;
@@ -642,12 +640,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Watch for power change */
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    auich_suspend, auich_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, auich_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_interrupts(self, auich_finish_attach);
 
@@ -1585,13 +1579,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return error;
 }
 
-static void
-auich_suspend(device_t dv)
-{
-	/* XXX stop input/output */
-}
-
-static void
+static bool
 auich_resume(device_t dv)
 {
 	struct auich_softc *sc = device_private(dv);
@@ -1599,7 +1587,7 @@ auich_resume(device_t dv)
 	auich_reset_codec(sc);
 	DELAY(1000);
 	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-	/* XXX restart input/output */
+	return true;
 }
 
 /*

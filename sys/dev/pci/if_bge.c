@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.7 2007/10/02 18:28:31 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.8 2007/11/06 14:27:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.7 2007/10/02 18:28:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.8 2007/11/06 14:27:24 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2427,7 +2427,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 	u_int32_t		pm_ctl;
-	pnp_status_t		pnp_status;
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -2767,11 +2766,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, ifp, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	else
+		pnp_class_network_register(self, ifp);
 }
 
 static void

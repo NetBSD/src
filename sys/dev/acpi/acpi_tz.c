@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.5 2007/11/04 21:03:22 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.6 2007/11/06 14:27:13 joerg Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.5 2007/11/04 21:03:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.6 2007/11/06 14:27:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,8 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	acpitz_init_envsys(sc);
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }

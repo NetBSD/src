@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.37.22.2 2007/10/26 15:46:58 joerg Exp $	*/
+/*	$NetBSD: yds.c,v 1.37.22.3 2007/11/06 14:27:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.2 2007/10/26 15:46:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.3 2007/11/06 14:27:29 joerg Exp $");
 
 #include "mpu.h"
 
@@ -678,7 +678,7 @@ yds_init(struct yds_softc *sc)
 	return 0;
 }
 
-static void
+static bool
 yds_suspend(device_t dv)
 {
 	struct yds_softc *sc = device_private(dv);
@@ -689,9 +689,11 @@ yds_suspend(device_t dv)
 	sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
 	sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
 	sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
+
+	return true;
 }
 
-static void
+static bool
 yds_resume(device_t dv)
 {
 	struct yds_softc *sc = device_private(dv);
@@ -711,11 +713,13 @@ yds_resume(device_t dv)
 	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	if (yds_init(sc)) {
 		aprint_error_dev(dv, "reinitialize failed\n");
-		return;
+		return false;
 	}
 
 	pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
 	sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
+
+	return true;
 }
 
 static void
@@ -732,7 +736,6 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 	int i, r, to;
 	int revision;
 	int ac97_id2;
-	pnp_status_t pnp_status;
 
 	sc = (struct yds_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -909,12 +912,8 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    yds_suspend, yds_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, yds_suspend, yds_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

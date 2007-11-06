@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.29.2.5 2007/10/26 15:45:58 joerg Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.29.2.6 2007/11/06 14:27:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29.2.5 2007/10/26 15:45:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29.2.6 2007/11/06 14:27:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ extern int ehcidebug;
 
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static void ehci_pci_resume(device_t);
+static bool ehci_pci_resume(device_t);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -101,7 +101,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	pnp_status_t status;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -214,12 +213,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    ehci_suspend, ehci_pci_resume);
-	if (status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, ehci_suspend, ehci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -232,7 +227,7 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
 
-	pci_generic_power_deregister(self);
+	pnp_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
@@ -330,11 +325,11 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	}
 }
 
-static void
+static bool
 ehci_pci_resume(device_t dv)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
-	ehci_resume(dv);
+	return ehci_resume(dv);
 }
