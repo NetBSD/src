@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.19 2007/11/06 02:50:48 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.20 2007/11/06 10:44:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.19 2007/11/06 02:50:48 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.20 2007/11/06 10:44:23 martin Exp $");
 #endif
 
 #include <err.h>
@@ -598,7 +598,7 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 	ci.ci_keylen = p->keylen;
 	ci.ci_blocksize = p->bsize;
 
-	VPRINTF(1, ("    with alg %s keylen %d blocksize %d ivmethod %s\n",
+	VPRINTF(1, ("    with alg %s keylen %zu blocksize %zu ivmethod %s\n",
 	    string_tocharstar(p->algorithm), p->keylen, p->bsize,
 	    string_tocharstar(p->ivmeth)));
 	VPRINTF(2, ("key: "));
