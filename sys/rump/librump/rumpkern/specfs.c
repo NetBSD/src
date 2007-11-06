@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.11 2007/11/04 18:43:55 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.12 2007/11/06 11:35:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@ static int rump_specclose(void *);
 static int rump_specfsync(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
+static int rump_specsimpleul(void *);
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
@@ -61,6 +62,8 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
+	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
+	{ &vop_putpages_desc, rump_specsimpleul },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
@@ -213,4 +216,20 @@ rump_specstrategy(void *v)
 		biowait(bp);
 
 	return error;
+}
+
+int
+rump_specsimpleul(void *v)
+{
+	struct vop_generic_args *ap = v;
+	struct vnode *vp;
+	int offset;
+
+	offset = ap->a_desc->vdesc_vp_offsets[0];
+	KASSERT(offset != VDESC_NO_OFFSET);
+
+	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+	simple_unlock(&vp->v_interlock);
+
+	return 0;
 }
