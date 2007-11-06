@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.4 2007/09/12 06:20:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.5 2007/11/06 19:21:35 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -460,4 +460,30 @@ splx(int savedipl)
 		restore_interrupts(psw);
 	}
 	ci->ci_cpl = savedipl;
+}
+
+void *
+intr_establish(int irq, int ipl, int type, int (*func)(void *), void *arg)
+{
+	int slot;
+
+	for (slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic == NULL || pic->pic_irqbase < 0)
+			continue;
+		if (pic->pic_irqbase <= irq
+		    && irq < pic->pic_irqbase + pic->pic_maxsources) {
+			return pic_establish_intr(pic, irq - pic->pic_irqbase,
+			    ipl, type, func, arg);
+		}
+	}
+
+	return NULL;
+}
+
+void
+intr_disestablish(void *ih)
+{
+	struct intrsource * const is = ih;
+	pic_disestablish_source(is);
 }
