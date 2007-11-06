@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.1.4.4 2007/10/26 15:45:10 joerg Exp $	*/
+/*	$NetBSD: aps.c,v 1.1.4.5 2007/11/06 14:27:18 joerg Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.4 2007/10/26 15:45:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.5 2007/11/06 14:27:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,8 @@ static uint8_t  aps_mem_read_1(bus_space_tag_t, bus_space_handle_t,
 			       int, uint8_t);
 static void 	aps_refresh_sensor_data(struct aps_softc *sc);
 static void 	aps_refresh(void *);
-static void 	aps_suspend(device_t);
-static void 	aps_resume(device_t);
+static bool 	aps_suspend(device_t);
+static bool 	aps_resume(device_t);
 
 CFATTACH_DECL(aps, sizeof(struct aps_softc),
 	      aps_match, aps_attach, aps_detach, NULL);
@@ -195,7 +195,6 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	struct aps_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int iobase, i;
-	pnp_status_t pnp_status;
 
 	sc->sc_iot = ia->ia_iot;
 	iobase = ia->ia_io[0].ir_addr;
@@ -249,11 +248,8 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pnp_status = isa_generic_power_register(self, aps_suspend, aps_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, aps_suspend, aps_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Refresh sensor data every 0.5 seconds */
 	callout_init(&sc->sc_callout, 0);
@@ -401,15 +397,17 @@ aps_refresh(void *arg)
 	callout_schedule(&sc->sc_callout, (hz) / 2);
 }
 
-static void
+static bool
 aps_suspend(device_t dv)
 {
 	struct aps_softc *sc = device_private(dv);
 
 	callout_stop(&sc->sc_callout);
+
+	return true;
 }
 
-static void
+static bool
 aps_resume(device_t dv)
 {
 	struct aps_softc *sc = device_private(dv);
@@ -429,4 +427,6 @@ aps_resume(device_t dv)
 		callout_schedule(&sc->sc_callout, (hz) / 2);
 	else
 		aprint_error_dev(dv, "failed to wake up\n");
+
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.39.46.2 2007/10/01 05:38:04 joerg Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.39.46.3 2007/11/06 14:27:33 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -155,5 +155,5 @@ int		ohci_intr(void *);
 int		ohci_detach(ohci_softc_t *, int);
 int		ohci_activate(device_ptr_t, enum devact);
 #endif
-void		ohci_resume(device_t);
-void		ohci_suspend(device_t);
+bool		ohci_resume(device_t);
+bool		ohci_suspend(device_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.34.6.2 2007/10/26 15:45:55 joerg Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.34.6.3 2007/11/06 14:27:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.6.2 2007/10/26 15:45:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.6.3 2007/11/06 14:27:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ static void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
 static int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
-static void cs4281_suspend(device_t);
-static void cs4281_resume(device_t);
+static bool cs4281_suspend(device_t);
+static bool cs4281_resume(device_t);
 
 static const struct audio_hw_if cs4281_hw_if = {
 	NULL,			/* open */
@@ -191,7 +191,6 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	char devinfo[256];
 	int error;
-	pnp_status_t pnp_status;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -294,12 +293,8 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    cs4281_suspend, cs4281_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, cs4281_suspend, cs4281_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -726,7 +721,7 @@ cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-static void
+static bool
 cs4281_suspend(device_t dv)
 {
 	struct cs428x_softc *sc = device_private(dv);
@@ -749,9 +744,11 @@ cs4281_suspend(device_t dv)
 	/* Stop DMA */
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
+
+	return true;
 }
 
-static void
+static bool
 cs4281_resume(device_t dv)
 {
 	struct cs428x_softc *sc = device_private(dv);
@@ -780,6 +777,8 @@ cs4281_resume(device_t dv)
 	/* enable intterupts */
 	if (sc->sc_prun || sc->sc_rrun)
 		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
+
+	return true;
 }
 
 /* control AC97 codec */

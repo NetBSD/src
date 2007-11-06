@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62.14.5 2007/10/26 15:46:05 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.6 2007/11/06 14:27:24 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.5 2007/10/26 15:46:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.6 2007/11/06 14:27:24 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -201,12 +201,14 @@ iwi_match(device_t parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-static void
+static bool
 iwi_pci_resume(device_t dv)
 {
 	struct iwi_softc *sc = device_private(dv);
 
 	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+
+	return true;
 }
 
 /* Base Address Register */
@@ -227,7 +229,6 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	pcireg_t data;
 	uint16_t val;
 	int error, revision, i;
-	pnp_status_t pnp_status;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -436,10 +437,10 @@ iwi_attach(device_t parent, device_t self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, ifp, NULL, iwi_pci_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS)
+	if (!pnp_device_register(self, NULL, iwi_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, ifp);
 
 	ieee80211_announce(ic);
 
@@ -454,7 +455,7 @@ iwi_detach(device_t self, int flags)
 	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
-	pci_net_generic_power_deregister(self);
+	pnp_device_deregister(self);
 
 	if (ifp != NULL)
 		iwi_stop(ifp, 1);

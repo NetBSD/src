@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.28.4.3 2007/10/26 15:46:16 joerg Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.28.4.4 2007/11/06 14:27:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -189,7 +189,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t		iot, memt;
 	bus_space_handle_t	ioh, memh;
 	bus_size_t		iosize, memsize, bsize;
-	pnp_status_t		pnp_status;
 
 	/*
 	 * Map control/status registers.
@@ -301,9 +300,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, &sc->ethercom.ec_if, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	else
+		pnp_class_network_register(self, &sc->ethercom.ec_if);
 }

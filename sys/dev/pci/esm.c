@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.42.14.2 2007/10/26 15:45:59 joerg Exp $      */
+/*      $NetBSD: esm.c,v 1.42.14.3 2007/11/06 14:27:23 joerg Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42.14.2 2007/10/26 15:45:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42.14.3 2007/11/06 14:27:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ static void		esmch_set_format(struct esm_chinfo *,
 static void		esmch_combine_input(struct esm_softc *,
 			    struct esm_chinfo *);
 
-static void		esm_suspend(device_t);
-static void		esm_resume(device_t);
+static bool		esm_suspend(device_t);
+static bool		esm_resume(device_t);
 
 CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
@@ -1572,7 +1572,6 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t codec_data;
 	uint16_t pcmbar;
 	int error;
-	pnp_status_t pnp_status;
 
 	ess = (struct esm_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1701,15 +1700,11 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    esm_suspend, esm_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, esm_suspend, esm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
+static bool
 esm_suspend(device_t dv)
 {
 	struct esm_softc *ess = device_private(dv);
@@ -1728,9 +1723,11 @@ esm_suspend(device_t dv)
 	delay(20);
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL, 0);
 	delay(1);
+
+	return true;
 }
 
-static void
+static bool
 esm_resume(device_t dv)
 {
 	struct esm_softc *ess = device_private(dv);
@@ -1766,4 +1763,6 @@ esm_resume(device_t dv)
 		wp_starttimer(ess);
 	}
 	splx(x);
+
+	return true;
 }

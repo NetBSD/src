@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.90.6.2 2007/10/26 15:44:15 joerg Exp $	*/
+/*	$NetBSD: ata.c,v 1.90.6.3 2007/11/06 14:27:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.2 2007/10/26 15:44:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.3 2007/11/06 14:27:14 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -106,7 +106,8 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
-static pnp_status_t atabus_power(device_t, pnp_request_t, void *);
+static bool atabus_resume(device_t);
+static bool atabus_suspend(device_t);
 
 /*
  * atabusprint:
@@ -396,7 +397,6 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
-	pnp_status_t status;
 	int error;
 
 	sc->sc_chan = chp;
@@ -417,11 +417,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 
-	sc->sc_pmstate = PNP_STATE_D0;
-	status = pnp_register(self, atabus_power);
-	if (status != PNP_STATUS_SUCCESS)
-		printf("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, atabus_suspend, atabus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -1472,56 +1469,38 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	return (error);
 };
 
-static pnp_status_t
-atabus_power(device_t dv, pnp_request_t req, void *hdl)
+static bool
+atabus_suspend(device_t dv)
 {
-	struct atabus_softc *sc = (struct atabus_softc *)dv;
+	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
+
+	ata_queue_idle(chp->ch_queue);
+
+	return true;
+}
+
+static bool
+atabus_resume(device_t dv)
+{
+	struct atabus_softc *sc = device_private(dv);
+	struct ata_channel *chp = sc->sc_chan;
 	int s;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = (pnp_capabilities_t *)hdl;
-		caps->state = PNP_STATE_D0 | PNP_STATE_D1 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = (pnp_state_t *)hdl;
-		*state = sc->sc_pmstate;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = (pnp_state_t *)hdl;
-
-		if (*state == sc->sc_pmstate)
-			break;
-
-		switch (*state) {
-		case PNP_STATE_D1:
-		case PNP_STATE_D3:
-			/*
-			 * freeze the queue and wait for the controller
-			 * to be idle
-			 */
-			ata_queue_idle(chp->ch_queue);
-			sc->sc_pmstate = *state;
-			break;
-		case PNP_STATE_D0:
-			s = splbio();
-			KASSERT(chp->ch_queue->queue_freeze > 0);
-			/* unfreeze the queue and reset drives */
-			chp->ch_queue->queue_freeze--;
-			ata_reset_channel(chp, AT_WAIT);
-			splx(s);
-			sc->sc_pmstate = *state;
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
+	/*
+	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * Move this the reset and queue idling into wdc.
+	 */
+	s = splbio();
+	if (chp->ch_queue->queue_freeze == 0) {
+		splx(s);
+		return true;
 	}
+	KASSERT(chp->ch_queue->queue_freeze > 0);
+	/* unfreeze the queue and reset drives */
+	chp->ch_queue->queue_freeze--;
+	ata_reset_channel(chp, AT_WAIT);
+	splx(s);
 
-	return PNP_STATUS_SUCCESS;
+	return true;
 }

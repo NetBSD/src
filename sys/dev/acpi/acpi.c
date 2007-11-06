@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.22 2007/10/28 17:20:43 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.23 2007/11/06 14:27:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.22 2007/10/28 17:20:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.23 2007/11/06 14:27:11 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -393,7 +393,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Register null power management handler
 	 */
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Bring ACPI on-line.
@@ -1179,8 +1180,10 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		if (state != ACPI_STATE_S1)
-			pnp_global_transition(PNP_STATE_D3);
+		if (state != ACPI_STATE_S1 && !pnp_system_suspend(false)) {
+			aprint_error_dev(&sc->sc_dev, "aborting suspend");
+			break;
+		}
 
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
@@ -1201,7 +1204,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 			AcpiLeaveSleepState((UINT8)state);
-			pnp_global_transition(PNP_STATE_D0);
+			pnp_system_resume();
 		}
 
 		break;

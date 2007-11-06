@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.28.18.1 2007/08/16 11:03:14 jmcneill Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.28.18.2 2007/11/06 14:27:27 joerg Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -132,9 +132,6 @@ struct pccbb_softc {
 	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
 	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
 
-	pcireg_t sc_sockbase;		/* Socket base register */
-	pcireg_t sc_busnum;		/* bus number */
-
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;
 
@@ -156,8 +153,6 @@ struct pccbb_softc {
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
 	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
 
-	int sc_pwrmgt_offs;	/* Offset for power management capability */
-	struct pci_conf_state sc_pciconf;
 	pcireg_t sc_ricoh_misc_ctrl;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.33.10.1 2007/08/09 02:37:09 jmcneill Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.33.10.2 2007/11/06 14:27:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.33.10.1 2007/08/09 02:37:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.33.10.2 2007/11/06 14:27:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,9 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

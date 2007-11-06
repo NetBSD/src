@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.22.8.3 2007/10/26 15:46:01 joerg Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.22.8.4 2007/11/06 14:27:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.8.3 2007/10/26 15:46:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.8.4 2007/11/06 14:27:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
 	u_int32_t csr;
-	pnp_status_t pnp_status;
 
 	psc->sc_pct = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
@@ -178,10 +177,8 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}
 
-	pnp_status = pci_net_generic_power_register(self,
-	    pa->pa_pc, pa->pa_tag, &sc->sc_if, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, &sc->sc_if);
 }

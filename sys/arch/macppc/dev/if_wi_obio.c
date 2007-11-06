@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.13.26.2 2007/10/26 15:42:47 joerg Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.13.26.3 2007/11/06 14:27:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13.26.2 2007/10/26 15:42:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13.26.3 2007/11/06 14:27:09 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -57,7 +57,6 @@ static int wi_obio_match(struct device *, struct cfdata *, void *);
 static void wi_obio_attach(struct device *, struct device *, void *);
 static int wi_obio_enable(struct wi_softc *);
 static void wi_obio_disable(struct wi_softc *);
-static pnp_status_t wi_obio_power(device_t, pnp_request_t, void *);
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
@@ -117,9 +116,10 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pnp_register(self, wi_obio_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, &sc->sc_wi.sc_if);
 
 	/* Disable the card. */
 	wisc->sc_enabled = 0;
@@ -173,61 +173,4 @@ wi_obio_disable(struct wi_softc *wisc)
 	x &= ~0x4;
 	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
 	/* out8(gpio + 0x10, 0); */
-}
-
-static pnp_status_t
-wi_obio_power(device_t self, pnp_request_t req, void *opaque)
-{
-	struct wi_obio_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_wi.sc_if;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	int s;
-
-	status = PNP_STATUS_UNSUPPORTED;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-		caps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			s = splnet();
-
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				(*ifp->if_init)(ifp);
-				(*ifp->if_start)(ifp);
-			}
-
-			splx(s);
-			break;
-		case PNP_STATE_D3:
-			s = splnet();
-			(*ifp->if_stop)(ifp, 1);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		sc->sc_state = *state;
-		status = PNP_STATUS_SUCCESS;
-
-		break;
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-
-		*state = sc->sc_state;
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-	}
-
-	return status;
 }

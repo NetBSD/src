@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.34.22.2 2007/10/26 15:45:54 joerg Exp $	*/
+/*	$NetBSD: autri.c,v 1.34.22.3 2007/11/06 14:27:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.34.22.2 2007/10/26 15:45:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.34.22.3 2007/11/06 14:27:21 joerg Exp $");
 
 #include "midi.h"
 
@@ -97,7 +97,7 @@ static int	autri_write_codec(void *, uint8_t, uint16_t);
 static int	autri_reset_codec(void *);
 static enum ac97_host_flags	autri_flags_codec(void *);
 
-static void autri_resume(device_t);
+static bool autri_resume(device_t);
 static int  autri_init(void *);
 static struct autri_dma *autri_find_dma(struct autri_softc *, void *);
 static void autri_setup_channel(struct autri_softc *, int,
@@ -523,7 +523,6 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int r;
 	uint32_t reg;
-	pnp_status_t pnp_status;
 
 	sc = (struct autri_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -593,12 +592,8 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    NULL, autri_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, autri_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&autri_hw_if, sc, &sc->sc_dev);
 
@@ -610,13 +605,15 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
-static void
+static bool
 autri_resume(device_t dv)
 {
 	struct autri_softc *sc = device_private(dv);
 
 	autri_init(sc);
 	(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
+
+	return true;
 }
 
 static int

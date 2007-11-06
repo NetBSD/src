@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.20.6.5 2007/10/26 15:44:14 joerg Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.20.6.6 2007/11/06 14:27:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.5 2007/10/26 15:44:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.6 2007/11/06 14:27:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.5 2007/10/26 15:44:14 joerg Ex
 
 static int	pckbc_acpi_match(struct device *, struct cfdata *, void *);
 static void	pckbc_acpi_attach(struct device *, struct device *, void *);
-static pnp_status_t pckbc_acpi_power(device_t, pnp_request_t, void *);
 
 struct pckbc_acpi_softc {
 	struct pckbc_softc sc_pckbc;
@@ -146,7 +145,6 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh_d, ioh_c;
 	pckbc_slot_t peer;
-	pnp_status_t status;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1, *ioswap;
 	struct acpi_irq *irq;
@@ -234,16 +232,14 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 		t->t_sc = &first->sc_pckbc;
 		first->sc_pckbc.id = t;
 
-		status = pnp_register(self, pckbc_acpi_power);
-		if (status != PNP_STATUS_SUCCESS)
-			aprint_error("%s: couldn't establish power handler\n",
-			    device_xname(self));
+		if (!pnp_device_register(self, NULL, pckbc_resume))
+			aprint_error_dev(self, "couldn't establish power handler\n");
 
 		first->sc_pckbc.intr_establish = pckbc_acpi_intr_establish;
 		config_defer(&first->sc_pckbc.sc_dv,
 			     (void(*)(struct device *))pckbc_attach);
-	} else
-		(void)pnp_register(self, pnp_generic_power);
+	} else if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
  out:
 	acpi_resource_cleanup(&res);
 }
@@ -279,10 +275,4 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc,
 		aprint_normal("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
 		    irq, pckbc_slot_names[slot]);
 	}
-}
-
-static pnp_status_t
-pckbc_acpi_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	return pckbc_power(dv, req, opaque);
 }

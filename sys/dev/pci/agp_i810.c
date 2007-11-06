@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.9 2007/10/31 23:14:05 joerg Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.10 2007/11/06 14:27:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.9 2007/10/31 23:14:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.10 2007/11/06 14:27:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-static void agp_i810_resume(device_t);
+static bool agp_i810_resume(device_t);
 static int agp_i810_init(struct agp_softc *);
 
 static struct agp_methods agp_i810_methods = {
@@ -188,7 +188,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt *gatt;
 	int error, apbase;
 	bus_size_t mmadrsize;
-	pnp_status_t pnp_status;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
@@ -323,12 +322,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
-	pnp_status = pci_generic_power_register(self,
-    	    isc->vga_pa.pa_pc, isc->vga_pa.pa_tag, NULL, agp_i810_resume);
-
-	if (pnp_status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, NULL, agp_i810_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return agp_i810_init(sc);
 }
@@ -875,7 +870,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	return 0;
 }
 
-static void
+static bool
 agp_i810_resume(device_t dv)
 {
 	struct agp_softc *sc = device_private(dv);
@@ -883,4 +878,6 @@ agp_i810_resume(device_t dv)
 
 	isc->pgtblctl = READ4(AGP_I810_PGTBL_CTL);
 	agp_flush_cache();
+
+	return true;
 }

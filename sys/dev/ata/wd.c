@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.4.4 2007/10/31 23:14:04 joerg Exp $ */
+/*	$NetBSD: wd.c,v 1.343.4.5 2007/11/06 14:27:14 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.4 2007/10/31 23:14:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.5 2007/11/06 14:27:14 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -139,7 +139,7 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
-static pnp_status_t	wd_power(device_t, pnp_request_t, void *);
+static bool	wd_suspend(device_t);
 
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
     wdprobe, wdattach, wddetach, wdactivate);
@@ -191,7 +191,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
-int   wd_standby(struct wd_softc *, int);
+static int   wd_standby(struct wd_softc *, int);
 int   wd_flushcache(struct wd_softc *, int);
 
 int   wd_getcache(struct wd_softc *, int *);
@@ -423,55 +423,20 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
 
-	wd->sc_device_down = false;
-	if (pnp_register(self, wd_power) != PNP_STATUS_SUCCESS)
+	if (!pnp_device_register(self, wd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static pnp_status_t
-wd_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+wd_suspend(device_t dv)
 {
 	struct wd_softc *sc = device_private(dv);
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-		caps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
+	wd_flushcache(sc, AT_WAIT | AT_POLL);
+	wd_standby(sc, AT_WAIT | AT_POLL);
 
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			sc->sc_device_down = false;
-			break;
-		case PNP_STATE_D3:
-			sc->sc_device_down = true;
-			wd_flushcache(sc, AT_POLL);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (sc->sc_device_down)
-			*state = PNP_STATE_D3;
-		else
-			*state = PNP_STATE_D0;
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	return true;
 }
-
 
 int
 wdactivate(struct device *self, enum devact act)
@@ -535,7 +500,7 @@ wddetach(struct device *self, int flags)
 	sc->sc_bscount = 0;
 #endif
 
-	pnp_deregister(self);
+	pnp_device_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -1900,7 +1865,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	return 0;
 }
 
-int
+static int
 wd_standby(struct wd_softc *wd, int flags)
 {
 	struct ata_command ata_c;
@@ -1912,8 +1877,8 @@ wd_standby(struct wd_softc *wd, int flags)
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
-		printf("%s: standby immediate command didn't complete\n",
-		    wd->sc_dev.dv_xname);
+		aprint_error_dev(&wd->sc_dev,
+		    "standby immediate command didn't complete\n");
 		return EIO;
 	}
 	if (ata_c.flags & AT_ERROR) {
@@ -1923,8 +1888,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
-		printf("%s: wd_standby: status=%s\n", wd->sc_dev.dv_xname,
-		    sbuf);
+		aprint_error_dev(&wd->sc_dev, "wd_standby: status=%s\n", sbuf);
 		return EIO;
 	}
 	return 0;

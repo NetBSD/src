@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.128.18.3 2007/10/26 15:45:21 joerg Exp $	*/
+/*	$NetBSD: isa.c,v 1.128.18.4 2007/11/06 14:27:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.18.3 2007/10/26 15:45:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.18.4 2007/11/06 14:27:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,8 @@ isaattach(struct device *parent, struct device *self, void *aux)
 	/* Attach all indrect-config children. */
 	isarescan(self, "isa", wildcard);
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
@@ -467,100 +468,4 @@ isa_intr_typename(int type)
 	default:
 		panic("isa_intr_typename: invalid type %d", type);
 	}
-}
-
-struct isa_generic_power {
-	pnp_state_t p_cur_state;
-	void (*p_resume)(device_t);
-	void (*p_suspend)(device_t);
-};
-
-static pnp_status_t
-isa_generic_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct isa_generic_power *arg = device_power_private(dv);
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-
-		caps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		return PNP_STATUS_SUCCESS;
-
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			if (arg->p_resume)
-				(*arg->p_resume)(dv);
-			break;
-		case PNP_STATE_D3:
-			if (arg->p_suspend)
-				(*arg->p_suspend)(dv);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		arg->p_cur_state = *state;
-		return PNP_STATUS_SUCCESS;
-
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		*state = arg->p_cur_state;
-		return PNP_STATUS_SUCCESS;
-
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-}
-
-static pnp_status_t
-isa_generic_power_register_internal(device_t dv,
-    void (*p_suspend)(device_t), void (*p_resume)(device_t))
-{
-	struct isa_generic_power *arg = device_power_private(dv);
-
-	arg->p_cur_state = PNP_STATE_D0;
-	arg->p_resume = p_resume;
-	arg->p_suspend = p_suspend;
-
-	return pnp_register(dv, isa_generic_power);
-}
-
-static void
-isa_generic_power_deregister_internal(device_t dv)
-{
-	pnp_deregister(dv);
-}
-
-pnp_status_t
-isa_generic_power_register(device_t dv,
-    void (*p_suspend)(device_t), void (*p_resume)(device_t))
-{
-	struct isa_generic_power *arg;
-	pnp_status_t status;
-
-	arg = malloc(sizeof(*arg), M_DEVBUF, M_ZERO | M_WAITOK);
-	device_power_set_private(dv, arg);
-
-	status = isa_generic_power_register_internal(dv, p_suspend, p_resume);
-	if (status != PNP_STATUS_SUCCESS) {
-		free(arg, M_DEVBUF);
-		device_power_set_private(dv, NULL);
-	}
-	return status;
-}
-
-void
-isa_generic_power_deregister(device_t dv)
-{
-	struct isa_generic_power *arg = device_power_private(dv);
-
-	if (arg == NULL)
-		return;
-
-	isa_generic_power_deregister_internal(dv);
-	free(arg, M_DEVBUF);
 }

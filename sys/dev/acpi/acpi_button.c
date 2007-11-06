@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.22.22.3 2007/10/26 15:44:12 joerg Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.22.22.4 2007/11/06 14:27:12 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22.22.3 2007/10/26 15:44:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.22.22.4 2007/11/06 14:27:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,8 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = ACPIBUT_F_VERBOSE;
 #endif
 
-	(void)pnp_register(self, pnp_generic_power);
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.35.44.2 2007/10/04 21:43:29 joerg Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.35.44.3 2007/11/06 14:27:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -322,24 +322,10 @@ int cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
 int cardbus_get_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t *);
 int cardbus_set_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t);
 
-struct ifnet;
-
 void cardbus_conf_capture(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, struct cardbus_conf_state *);
 void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, struct cardbus_conf_state *);
-
-pnp_status_t cardbus_generic_power_register(device_t dv,
-   cardbus_chipset_tag_t, cardbus_function_tag_t, cardbustag_t,
-   void (*)(device_t), void (*)(device_t));
-void cardbus_generic_power_deregister(device_t);
-
-struct ifnet;
-
-pnp_status_t cardbus_net_generic_power_register(device_t,
-   cardbus_chipset_tag_t, cardbus_function_tag_t, cardbustag_t,
-   struct ifnet *, void (*)(device_t), void (*)(device_t));
-void cardbus_net_generic_power_deregister(device_t);
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)

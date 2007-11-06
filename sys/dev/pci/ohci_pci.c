@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.31.24.3 2007/10/26 15:46:40 joerg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.31.24.4 2007/11/06 14:27:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.3 2007/10/26 15:46:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.4 2007/11/06 14:27:26 joerg Exp $");
 
 #include "ehci.h"
 
@@ -100,7 +100,6 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status r;
 	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
-	pnp_status_t status;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -160,12 +159,8 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
 
-	status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    ohci_suspend, ohci_resume);
-	if (status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, ohci_suspend, ohci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,

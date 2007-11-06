@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.5 2007/10/19 00:49:32 jmcneill Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.6 2007/11/06 14:27:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,32 +38,6 @@
 #include <sys/callout.h>
 
 typedef enum {
-	PNP_STATUS_SUCCESS = 0,
-	PNP_STATUS_UNSUPPORTED,
-	PNP_STATUS_BUSY,
-	PNP_STATUS_NO_MEMORY
-} pnp_status_t;
-
-typedef enum {
-	PNP_REQUEST_UNKNOWN = -1,
-	PNP_REQUEST_GET_CAPABILITIES,
-	PNP_REQUEST_SET_STATE,
-	PNP_REQUEST_GET_STATE,
-	PNP_REQUEST_NOTIFY,
-	PNP_REQUEST_SET_DISPLAY_POWER,
-	PNP_REQUEST_SET_DISPLAY_BRIGHTNESS,
-	PNP_REQUEST_SET_VOLUME,
-} pnp_request_t;
-
-typedef enum {
-	PNP_STATE_UNKNOWN = 0x00,
-	PNP_STATE_D0 = 0x01,
-	PNP_STATE_D1 = 0x02,
-	PNP_STATE_D2 = 0x04,
-	PNP_STATE_D3 = 0x08,
-} pnp_state_t;
-
-typedef enum {
 	PNP_DISPLAY_POWER_ON = 0x01,
 	PNP_DISPLAY_POWER_REDUCED = 0x02,
 	PNP_DISPLAY_POWER_STANDBY = 0x04,
@@ -71,68 +45,49 @@ typedef enum {
 	PNP_DISPLAY_POWER_OFF = 0x10
 } pnp_display_power_t;
 
-typedef enum {
-	PNP_DISPLAY_BRIGHTNESS_UNKNOWN = -1,
-	PNP_DISPLAY_BRIGHTNESS_UP,
-	PNP_DISPLAY_BRIGHTNESS_DOWN
-} pnp_display_brightness_t;
+void	pnp_event_display_power_set(device_t, pnp_display_power_t);
+bool	pnp_event_display_power_get(device_t, pnp_display_power_t);
 
 typedef enum {
-	PNP_AUDIO_VOLUME_UNKNOWN = -1,
-	PNP_AUDIO_VOLUME_UP,
-	PNP_AUDIO_VOLUME_DOWN,
-	PNP_AUDIO_VOLUME_TOGGLE
-} pnp_audio_volume_t;
+	PNPE_DISPLAY_ON,
+	PNPE_DISPLAY_REDUCED,
+	PNPE_DISPLAY_STANDBY,
+	PNPE_DISPLAY_SUSPEND,
+	PNPE_DISPLAY_OFF,
+	PNPE_DISPLAY_BRIGHTNESS_UP,
+	PNPE_DISPLAY_BRIGHTNESS_DOWN,
+	PNPE_AUDIO_VOLUME_UP,
+	PNPE_AUDIO_VOLUME_DOWN,
+	PNPE_AUDIO_VOLUME_TOGGLE,
+	PNPE_CHASSIS_LID_CLOSE,
+	PNPE_CHASSIS_LID_OPEN
+} pnp_generic_event_t;
 
-typedef enum {
-	PNP_ACTION_OPEN,
-	PNP_ACTION_CLOSE,
-	PNP_ACTION_PAUSE,
-	PNP_ACTION_IDLE,
-	PNP_ACTION_KEYBOARD,
-	PNP_ACTION_LID_CLOSE,
-	PNP_ACTION_LID_OPEN,
-	PNP_ACTION_VOLUME_UP,
-	PNP_ACTION_VOLUME_DOWN,
-	PNP_ACTION_VOLUME_MUTE,
-	PNP_ACTION_BRIGHTNESS_UP,
-	PNP_ACTION_BRIGHTNESS_DOWN
-} pnp_action_t;
+void	pnp_init(void);
 
-typedef struct pnp_capabilities {
-	pnp_state_t		state;
-	pnp_display_power_t	display_power;
-} pnp_capabilities_t;
+bool	pnp_event_inject(device_t, pnp_generic_event_t);
+bool	pnp_event_register(device_t, pnp_generic_event_t,
+			   void (*)(device_t), bool);
+void	pnp_event_deregister(device_t, pnp_generic_event_t,
+			     void (*)(device_t), bool);
 
-typedef struct pnp_device {
-	pnp_status_t		(*pnp_power)(device_t, pnp_request_t, void *);
-	pnp_state_t		pnp_state;
-	struct callout		pnp_idle;
-	void			*pnp_lock; /* XXX */
-	int			pnp_depth;
-} pnp_device_t;
+bool		pnp_set_platform(const char *, const char *);
+const char	*pnp_get_platform(const char *);
 
-pnp_status_t		pnp_set_platform(const char *, const char *);
-const char *		pnp_get_platform(const char *);
+bool		pnp_system_resume(void);
+bool		pnp_system_suspend(bool);
 
-pnp_state_t		pnp_get_state(device_t);
-pnp_status_t		pnp_set_state(device_t, pnp_state_t);
-pnp_capabilities_t	pnp_get_capabilities(device_t);
-pnp_status_t		pnp_notify(device_t);
+bool		pnp_device_register(device_t,
+		    bool (*)(device_t),
+		    bool (*)(device_t));
+void		pnp_device_deregister(device_t);
+bool		pnp_device_suspend(device_t);
+bool		pnp_device_resume(device_t);
 
-pnp_status_t	pnp_register(device_t,
-		    pnp_status_t (*)(device_t, pnp_request_t, void *));
-pnp_status_t	pnp_deregister(device_t);
-pnp_status_t	pnp_generic_power(device_t, pnp_request_t, void *);
+struct ifnet;
+void		pnp_class_network_register(device_t, struct ifnet *);
 
-pnp_status_t	pnp_power(device_t, pnp_request_t, void *);
-
-pnp_status_t	pnp_power_audio(device_t, pnp_action_t);
-pnp_status_t	pnp_power_input(device_t, pnp_action_t);
-pnp_status_t	pnp_power_display(device_t, pnp_action_t);
-
-pnp_status_t	pnp_global_transition(pnp_state_t);
-
-void		pnp_active(device_t);
+bool		pnp_class_input_register(device_t);
+bool		pnp_class_display_register(device_t);
 
 #endif /* !_SYS_PNP_H */

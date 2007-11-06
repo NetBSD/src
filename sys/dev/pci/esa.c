@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.41.14.2 2007/10/26 15:45:59 joerg Exp $ */
+/* $NetBSD: esa.c,v 1.41.14.3 2007/11/06 14:27:23 joerg Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41.14.2 2007/10/26 15:45:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41.14.3 2007/11/06 14:27:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -162,8 +162,8 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static void		esa_suspend(device_t);
-static void		esa_resume(device_t);
+static bool		esa_suspend(device_t);
+static bool		esa_resume(device_t);
 
 
 #define ESA_NENCODINGS 8
@@ -1003,7 +1003,6 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	int revision, len;
 	int i;
 	int error;
-	pnp_status_t pnp_status;
 
 	sc = (struct esa_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1136,12 +1135,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
 	}
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    esa_suspend, esa_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, esa_suspend, esa_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 }
@@ -1638,7 +1633,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 	return;
 }
 
-static void
+static bool
 esa_suspend(device_t dv)
 {
 	struct esa_softc *sc = device_private(dv);
@@ -1662,9 +1657,11 @@ esa_suspend(device_t dv)
 	    i++)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
+
+	return true;
 }
 
-static void
+static bool
 esa_resume(device_t dv)
 {
 	struct esa_softc *sc = device_private(dv);
@@ -1699,6 +1696,8 @@ esa_resume(device_t dv)
 
 	esa_enable_interrupts(sc);
 	esa_amp_enable(sc);
+
+	return true;
 }
 
 static uint32_t

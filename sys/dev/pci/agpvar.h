@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.14.14.3 2007/10/01 05:37:33 joerg Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.14.14.4 2007/11/06 14:27:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -178,7 +178,6 @@ struct agp_memory *agp_generic_alloc_memory(struct agp_softc *, int, vsize_t);
 int agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 int agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
-void agp_resume(device_t);
 
 /* The vendor has already been matched when these functions are called */
 int agp_amd_match(const struct pci_attach_args *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.13.8.3 2007/10/26 15:44:20 joerg Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.13.8.4 2007/11/06 14:27:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.8.3 2007/10/26 15:44:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.8.4 2007/11/06 14:27:16 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -169,7 +169,6 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct rtk_type *t;
 	bus_addr_t adr;
-	pnp_status_t pnp_status;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -232,11 +231,10 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
-	pnp_status = cardbus_net_generic_power_register(self,
-	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->ethercom.ec_if, NULL, NULL);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	else
+		pnp_class_network_register(self, &sc->ethercom.ec_if);
 
 	/*
 	 * Power down the socket.
@@ -257,9 +255,13 @@ re_cardbus_detach(struct device *self, int flags)
 		panic("%s: cardbus softc, cardbus_devfunc NULL",
 		      sc->sc_dev.dv_xname);
 #endif
+
 	rv = re_detach(sc);
 	if (rv)
 		return rv;
+
+	pnp_device_deregister(self);
+
 	/*
 	 * Unhook the interrupt handler.
 	 */

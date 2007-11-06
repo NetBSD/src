@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.14.2 2007/10/26 15:47:01 joerg Exp $ */
+/* $NetBSD: pckbd.c,v 1.15.14.3 2007/11/06 14:27:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.2 2007/10/26 15:47:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.3 2007/11/06 14:27:29 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ struct pckbd_softc {
 };
 
 static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
-static pnp_status_t pckbd_power(device_t, pnp_request_t, void *);
 
 int pckbdprobe(struct device *, struct cfdata *, void *);
 void pckbdattach(struct device *, struct device *, void *);
@@ -247,77 +246,55 @@ pckbd_is_console(pckbport_tag_t tag, pckbport_slot_t slot)
 	    tag == pckbd_consdata.t_kbctag && slot == pckbd_consdata.t_kbcslot;
 }
 
-static pnp_status_t
-pckbd_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+pckbd_suspend(device_t dv)
 {
-	struct pckbd_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
+	struct pckbd_softc *sc = device_private(dv);
+	u_char cmd[1];
 	int res;
+
+	/* XXX duped from pckbd_enable, but we want to disable
+	 *     it even if it's the console kbd
+	 */
+	cmd[0] = KBC_DISABLE;
+	res = pckbport_enqueue_cmd(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, cmd, 1, 0, 1, 0);
+	if (res)
+		return false;
+
+	pckbport_slot_enable(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, 0);
+
+	sc->sc_enabled = 0;
+	return true;
+}
+
+static bool
+pckbd_resume(device_t dv)
+{
+	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1], resp[1];
+	int res;
 
-	sc = (struct pckbd_softc *)dv;
+	/* XXX jmcneill reset the keyboard */
+	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D1 | PNP_STATE_D3;
-		break;
-
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-
-		switch (*pstate) {
-		case PNP_STATE_D1:
-		case PNP_STATE_D3:
-			/* XXX duped from pckbd_enable, but we want to disable
-			 *     it even if it's the console kbd
-			 */
-			cmd[0] = KBC_DISABLE;
-			res = pckbport_enqueue_cmd(sc->id->t_kbctag,
-			    sc->id->t_kbcslot, cmd, 1, 0, 1, 0);
-			if (res)
-				return PNP_STATUS_BUSY;
-
-			pckbport_slot_enable(sc->id->t_kbctag,
-			    sc->id->t_kbcslot, 0);
-
-			sc->sc_enabled = 0;
-			break;
-		case PNP_STATE_D0:
-			/* XXX jmcneill reset the keyboard */
-			pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
-
-			cmd[0] = KBC_RESET;
-			res = pckbport_poll_cmd(sc->id->t_kbctag,
-			    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
+	cmd[0] = KBC_RESET;
+	res = pckbport_poll_cmd(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
 #ifdef DEBUG
-			if (res)
-				printf("pckbdprobe: reset error %d\n", res);
+	if (res)
+		printf("pckbdprobe: reset error %d\n", res);
 #endif
-			if (resp[0] != KBR_RSTDONE)
-				printf("pckbdprobe: reset response 0x%x\n",
-				    resp[0]);
+	if (resp[0] != KBR_RSTDONE)
+		printf("pckbdprobe: reset response 0x%x\n",
+		    resp[0]);
 
-			pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
+	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 
-			pckbd_enable(sc, 1);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
+	pckbd_enable(sc, 1);
 
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	return true;
 }
 
 /*
@@ -381,7 +358,6 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wskbddev_attach_args a;
-	pnp_status_t status;
 	int isconsole;
 	u_char cmd[1];
 
@@ -424,10 +400,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
-	status = pnp_register(self, pckbd_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, pckbd_suspend, pckbd_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Attach the wskbd, saving a handle to it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.182.18.4 2007/10/26 15:47:50 joerg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.182.18.5 2007/11/06 14:27:33 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.18.4 2007/10/26 15:47:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.18.5 2007/11/06 14:27:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1013,7 +1013,7 @@ ohci_shutdown(void *v)
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 }
 
-void
+bool
 ohci_resume(device_t dv)
 {
 	ohci_softc_t *sc = device_private(dv);
@@ -1043,9 +1043,11 @@ ohci_resume(device_t dv)
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_bus.use_polling--;
+
+	return true;
 }
 
-void
+bool
 ohci_suspend(device_t dv)
 {
 	ohci_softc_t *sc = device_private(dv);
@@ -1069,6 +1071,8 @@ ohci_suspend(device_t dv)
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 	sc->sc_bus.use_polling--;
 	splx(s);
+
+	return true;
 }
 
 #ifdef OHCI_DEBUG
@@ -1119,7 +1123,7 @@ ohci_intr(void *p)
 {
 	ohci_softc_t *sc = p;
 
-	if (sc == NULL || sc->sc_dying)
+	if (sc == NULL || sc->sc_dying || !device_is_active(&sc->sc_bus.bdev))
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */

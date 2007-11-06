@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.60.14.1 2007/10/04 19:10:13 joerg Exp $	*/
+/*	$NetBSD: auvia.c,v 1.60.14.2 2007/11/06 14:27:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.14.1 2007/10/04 19:10:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.14.2 2007/11/06 14:27:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static void	auvia_resume(device_t);
+static bool	auvia_resume(device_t);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -302,7 +302,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t pr;
 	int r;
 	const char *revnum;	/* VT823xx revision number */
-	pnp_status_t pnp_status;
 
 	pa = aux;
 	sc = (struct auvia_softc *)self;
@@ -454,12 +453,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    NULL, auvia_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, auvia_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
@@ -1116,7 +1111,7 @@ auvia_intr(void *arg)
 	return rval;
 }
 
-static void
+static bool
 auvia_resume(device_t dv)
 {
 	struct auvia_softc *sc = device_private(dv);
@@ -1124,4 +1119,6 @@ auvia_resume(device_t dv)
 	auvia_reset_codec(sc);
 	DELAY(1000);
 	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+	return true;
 }

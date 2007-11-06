@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.13.14.4 2007/10/26 15:46:51 joerg Exp $ */
+/* $NetBSD: piixpm.c,v 1.13.14.5 2007/11/06 14:27:28 joerg Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ struct piixpm_softc {
 int	piixpm_match(struct device *, struct cfdata *, void *);
 void	piixpm_attach(struct device *, struct device *, void *);
 
-static void	piixpm_suspend(device_t);
-static void	piixpm_resume(device_t);
+static bool	piixpm_suspend(device_t);
+static bool	piixpm_resume(device_t);
 
 int	piixpm_i2c_acquire_bus(void *, int);
 void	piixpm_i2c_release_bus(void *, int);
@@ -139,7 +139,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	char devinfo[256];
 	const char *intrstr = NULL;
-	pnp_status_t pnp_status;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -150,12 +149,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
-	pnp_status = pci_generic_power_register(self, pa->pa_pc, pa->pa_tag,
-	    piixpm_suspend, piixpm_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, piixpm_suspend, piixpm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
@@ -241,7 +236,7 @@ nopowermanagement:
 	return;
 }
 
-static void
+static bool
 piixpm_suspend(device_t dv)
 {
 	struct piixpm_softc *sc = device_private(dv);
@@ -250,9 +245,11 @@ piixpm_suspend(device_t dv)
 	    PIIX_DEVACTA);
 	sc->sc_devact[1] = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 	    PIIX_DEVACTB);
+
+	return true;
 }
 
-static void
+static bool
 piixpm_resume(device_t dv)
 {
 	struct piixpm_softc *sc = device_private(dv);
@@ -261,6 +258,8 @@ piixpm_resume(device_t dv)
 	    sc->sc_devact[0]);
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_DEVACTB,
 	    sc->sc_devact[1]);
+
+	return true;
 }
 
 int

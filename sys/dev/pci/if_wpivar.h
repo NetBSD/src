@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6.6.5 2007/10/01 05:37:49 joerg Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.6.6 2007/11/06 14:27:26 joerg Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -166,7 +166,6 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	pcireg_t		sc_pmstate_e8;
 
 #if NBPFILTER > 0
 	void *			sc_drvbpf;

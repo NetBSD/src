@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.46.14.8 2007/10/31 23:14:05 joerg Exp $	*/
+/*	$NetBSD: agp.c,v 1.46.14.9 2007/11/06 14:27:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.8 2007/10/31 23:14:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.9 2007/11/06 14:27:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static int agp_deallocate_user(struct agp_softc *, int);
 static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
+static bool agp_resume(device_t);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -284,7 +285,6 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = (void *)self;
-	pnp_device_t *pnp;
 	const struct agp_product *ap;
 	int memsize, i, ret;
 
@@ -330,16 +330,9 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->as_chipc = NULL;
 
-	pnp = device_pnp(self);
-	if (pnp->pnp_power == NULL) {
-		pnp_status_t pnp_status;
-
-		pnp_status = pci_generic_power_register(self,
-    		    pa->pa_pc, pa->pa_tag, NULL, agp_resume);
-
-		if (pnp_status != PNP_STATUS_SUCCESS)
-			aprint_error("%s: couldn't establish power handler\n",
-			    device_xname(self));
+	if (!device_pnp_is_registered(self)) {
+		if (!pnp_device_register(self, NULL, agp_resume))
+			aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 }
 
@@ -1090,8 +1083,10 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 	bus_dmamem_free(tag, seg, nseg);
 }
 
-void
+static bool
 agp_resume(device_t dv)
 {
 	agp_flush_cache();
+
+	return true;
 }

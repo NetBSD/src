@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.12 2007/10/31 01:58:12 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.13 2007/11/06 14:27:36 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.12 2007/10/31 01:58:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.13 2007/11/06 14:27:36 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,840 +44,417 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.12 2007/10/31 01:58:12 jmcneill E
 #include <sys/device.h>
 #include <sys/pnp.h>
 #include <sys/queue.h>
-#include <sys/mutex.h>
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <prop/proplib.h>
+
+#ifdef PNP_DEBUG
+int pnp_debug_event;
+int pnp_debug_idle;
+int pnp_debug_transition;
+
+#define	PNP_EVENT_PRINTF(x)		if (pnp_debug_event) printf x
+#define	PNP_IDLE_PRINTF(x)		if (pnp_debug_idle) printf x
+#define	PNP_TRANSITION_PRINTF(x)	if (pnp_debug_transition) printf x
+#define	PNP_TRANSITION_PRINTF2(y,x)	if (pnp_debug_transition>y) printf x
+#else
+#define	PNP_EVENT_PRINTF(x)		do { } while (0)
+#define	PNP_IDLE_PRINTF(x)		do { } while (0)
+#define	PNP_TRANSITION_PRINTF(x)	do { } while (0)
+#define	PNP_TRANSITION_PRINTF2(y,x)	do { } while (0)
+#endif
 
 /* #define PNP_DEBUG */
 
 MALLOC_DEFINE(M_PNP, "pnp", "device pnp messaging memory");
 
-#ifdef PNP_DEBUG
-static const struct pnp_state_names {
-	pnp_state_t	sn_state;
-	const char	*sn_name;
-} pnp_state_names[] = {
-	{ PNP_STATE_UNKNOWN,	"Unknown" },
-	{ PNP_STATE_D0,	"D0" },
-	{ PNP_STATE_D1,	"D1" },
-	{ PNP_STATE_D2,	"D2" },
-	{ PNP_STATE_D3,	"D3" },
-	{ -1,			"" },
-};
-static const struct pnp_display_power_names {
-	pnp_display_power_t	dpn_power;
-	const char		*dpn_name;
-} pnp_display_power_names[] = {
-	{ PNP_DISPLAY_POWER_ON,	"on" },
-	{ PNP_DISPLAY_POWER_REDUCED,	"reduced" },
-	{ PNP_DISPLAY_POWER_STANDBY,	"standby" },
-	{ PNP_DISPLAY_POWER_SUSPEND,	"suspend" },
-	{ PNP_DISPLAY_POWER_OFF,	"off" },
-	{ -1,				"" },
-};
-
-static const char *	pnp_statename(pnp_state_t);
-static const char *	pnp_displaypowername(pnp_display_power_t);
-#endif
-
 static prop_dictionary_t pnp_platform = NULL;
 
-static void		pnp_print(device_t, pnp_capabilities_t *);
-static void		pnp_idle_audio(void *);
-static void		pnp_idle_display(void *);
-static pnp_status_t	pnp_set_child_state(device_t, pnp_state_t);
-
-static LIST_HEAD(pnp_displaydevhead, pnp_displaydev) displaydevhead =
-    LIST_HEAD_INITIALIZER(displaydevhead);
-struct pnp_displaydev {
-	device_t			dv;
-	pnp_display_power_t		power;
-	LIST_ENTRY(pnp_displaydev)	next;
-};
-
-static LIST_HEAD(pnp_audiodevhead, pnp_audiodev) audiodevhead =
-    LIST_HEAD_INITIALIZER(audiodevhead);
-struct pnp_audiodev {
-	device_t			dv;
-	LIST_ENTRY(pnp_audiodev)	next;
-};
-
-static int pnp_displaydev_reduced = 60;
-static int pnp_displaydev_standby = 600;
-static int pnp_displaydev_suspend = 900;
-static int pnp_displaydev_off = 1200;
-
-static int pnp_audiodev_idle = 30;
-
-#ifdef PNP_DEBUG
-static const char *
-pnp_statename(pnp_state_t state)
+static bool
+pnp_check_system_drivers(void)
 {
-	int i;
+	device_t curdev;
+	bool unsupported_devs;
 
-	for (i = 0; pnp_state_names[i].sn_state != -1; i++)
-		if (pnp_state_names[i].sn_state == state)
-			return pnp_state_names[i].sn_name;
-
-	return pnp_state_names[0].sn_name;
-}
-
-static const char *
-pnp_displaypowername(pnp_display_power_t power)
-{
-	int i;
-
-	for (i = 0; pnp_display_power_names[i].dpn_power != -1; i++)
-		if (pnp_display_power_names[i].dpn_power == power)
-			return pnp_display_power_names[i].dpn_name;
-
-	return pnp_display_power_names[0].dpn_name;
-}
-#endif
-
-static void
-pnp_print(device_t dv, pnp_capabilities_t *caps)
-{
-	const char *class_string;
-
-	KASSERT(dv != NULL);
-	KASSERT(caps != NULL);
-
-	switch (device_class(dv)) {
-	case DV_DULL:
-		class_string = "generic";
-		break;
-	case DV_CPU:
-		class_string = "processor";
-		break;
-	case DV_DISK:
-		class_string = "disk";
-		break;
-	case DV_IFNET:
-		class_string = "network";
-		break;
-	case DV_TAPE:
-		class_string = "tape";
-		break;
-	case DV_TTY:
-		class_string = "communications";
-		break;
-	case DV_AUDIODEV:
-		class_string = "audio";
-		break;
-	case DV_DISPLAYDEV:
-		class_string = "display";
-		break;
-	case DV_BUS:
-		class_string = "bus";
-		break;
-	default:
-		class_string = "unknown";
-		break;
+	unsupported_devs = false;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (device_pnp_is_registered(curdev))
+			continue;
+		if (!unsupported_devs)
+			printf("Devices without suspend/resume support:");
+		printf(" %s", device_xname(curdev));
+		unsupported_devs = true;
 	}
-
-	aprint_verbose("%s: using %s power management",
-	    device_xname(dv), class_string);
-
-	if (caps->state != 0) {
-		const char *state_prefix = "";
-		aprint_verbose(" <");
-		if (caps->state & PNP_STATE_D0) {
-			aprint_verbose("%sD0", state_prefix);
-			state_prefix = ",";
-		}
-		if (caps->state & PNP_STATE_D1) {
-			aprint_verbose("%sD1", state_prefix);
-			state_prefix = ",";
-		}
-		if (caps->state & PNP_STATE_D2) {
-			aprint_verbose("%sD2", state_prefix);
-			state_prefix = ",";
-		}
-		if (caps->state & PNP_STATE_D3) {
-			aprint_verbose("%sD3", state_prefix);
-			state_prefix = ",";
-		}
-		aprint_verbose(">\n");
-	} else
-		aprint_verbose("\n");
-
-	if (caps->display_power != 0) {
-		KASSERT(device_class(dv) == DV_DISPLAYDEV);
-
-		aprint_verbose("%s: display states:", device_xname(dv));
-		if (caps->display_power & PNP_DISPLAY_POWER_ON)
-			aprint_verbose(" on");
-		if (caps->display_power & PNP_DISPLAY_POWER_REDUCED)
-			aprint_verbose(" reduced");
-		if (caps->display_power & PNP_DISPLAY_POWER_STANDBY)
-			aprint_verbose(" standby");
-		if (caps->display_power & PNP_DISPLAY_POWER_SUSPEND)
-			aprint_verbose(" suspend");
-		if (caps->display_power & PNP_DISPLAY_POWER_OFF)
-			aprint_verbose(" off");
-		aprint_verbose("\n");
+	if (unsupported_devs) {
+		printf("\n");
+		return false;
 	}
-
-	return;
+	return true;
 }
 
-pnp_status_t
-pnp_power(device_t dv, pnp_request_t req, void *opaque)
+bool
+pnp_system_resume(void)
 {
-	pnp_device_t *pnp;
-	pnp_status_t status;
+	int depth;
+	bool rv;
+	bool got_change;
+	device_t curdev, parent;
 
-	pnp = device_pnp(dv);
-	if (pnp->pnp_power == NULL)
-		return PNP_STATUS_UNSUPPORTED;
+	if (!pnp_check_system_drivers())
+		return false;
 
-	mutex_enter((kmutex_t *)pnp->pnp_lock);
-	status = pnp->pnp_power(dv, req, opaque);
-	mutex_exit((kmutex_t *)pnp->pnp_lock);
+	printf("Resuming devices:");
+	/* D0 handlers are run in order */
+	depth = 0;
+	rv = true;
+	do {
+		got_change = false;
+		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+			if (device_is_active(curdev) ||
+			    !device_is_enabled(curdev))
+				continue;
+			if (curdev->dv_depth != depth)
+				continue;
+			parent = device_parent(curdev);
+			if (parent != NULL &&
+			    !device_is_active(parent))
+				continue;
 
-	return status;
+			printf(" %s", device_xname(curdev));
+
+			if (!pnp_device_resume(curdev)) {
+				rv = false;
+				printf("(failed)");
+			} else
+				got_change = true;
+		}
+		++depth;
+	} while (got_change);
+	printf(".\n");
+
+	return rv;
 }
 
-pnp_state_t
-pnp_get_state(device_t dv)
+bool
+pnp_system_suspend(bool ignore_errors)
 {
-	pnp_device_t *pnp;
-	pnp_status_t status;
-	pnp_state_t ds;
+	int depth, maxdepth;
+	device_t curdev;
 
-	pnp = device_pnp(dv);
-	status = pnp_power(dv, PNP_REQUEST_GET_STATE, &ds);
-	if (status == PNP_STATUS_UNSUPPORTED)
-		ds = PNP_STATE_UNKNOWN;
-	
-	pnp->pnp_state = ds;
-
-	return ds;
-}
-
-pnp_status_t
-pnp_set_state(device_t dv, pnp_state_t ds)
-{
-	pnp_device_t *pnp;
-	pnp_status_t status;
-	pnp_capabilities_t caps;
-	pnp_state_t curstate;
-	pnp_state_t on;
-	device_t bus;
-
-	on = PNP_STATE_D0;
-	pnp = device_pnp(dv);
-	bus = device_parent(dv);
-	curstate = pnp->pnp_state;
-	if (curstate == ds)
-		return PNP_STATUS_SUCCESS;
-
-	caps = pnp_get_capabilities(dv);
-	if (!(caps.state & ds))
-		return PNP_STATUS_UNSUPPORTED;
+	if (!pnp_check_system_drivers() && !ignore_errors)
+		return false;
 
 	/*
-	 * For a transition from a low power state to a higher power state,
-	 * we need to ensure that our bus is powered up as well.
+	 * Flush buffers only if the shutdown didn't do so
+	 * already and if there was no panic.
 	 */
-	if (bus && curstate > ds && pnp_get_state(bus) != ds)
-		pnp_power(bus, PNP_REQUEST_SET_STATE, &on);
-
-	status = pnp_power(dv, PNP_REQUEST_SET_STATE, &ds);
-	if (status != PNP_STATUS_SUCCESS)
-		return status;
-
-	pnp->pnp_state = ds;
-
-	return pnp_notify(dv);
-}
-
-pnp_capabilities_t
-pnp_get_capabilities(device_t dv)
-{
-	pnp_capabilities_t caps;
-	pnp_status_t status;
-
-	KASSERT(dv != NULL);
-
-	memset(&caps, 0, sizeof(pnp_capabilities_t));
-	status = pnp_power(dv, PNP_REQUEST_GET_CAPABILITIES, &caps);
-	//if (status != PNP_STATUS_SUCCESS)
-	//	aprint_error("%s: PNP_REQUEST_GET_CAPABILITIES failed\n",
-	//	    device_xname(dv));
-
-	return caps;
-}
-
-pnp_status_t
-pnp_notify(device_t dv)
-{
-	KASSERT(dv != NULL);
-	if (device_parent(dv) == NULL)
-		return PNP_STATUS_SUCCESS;
-
-	return pnp_power(device_parent(dv), PNP_REQUEST_NOTIFY, dv);
-}
-
-pnp_status_t
-pnp_register(device_t dv,
-    pnp_status_t (*power)(device_t, pnp_request_t, void *))
-{
-	pnp_device_t *pnp;
-	struct pnp_displaydev *pdisplaydev;
-	struct pnp_audiodev *paudiodev;
-	struct callout *c;
-	device_t curdev;
-	pnp_capabilities_t caps;
-
-	pnp = device_pnp(dv);
-	c = &pnp->pnp_idle;
-	pnp->pnp_power = power;
-
-	KASSERT(power != NULL);
-
-	/* XXX */
-	pnp->pnp_lock = malloc(sizeof(kmutex_t), M_DEVBUF, M_NOWAIT);
-	if (pnp->pnp_lock == NULL)
-		return PNP_STATUS_NO_MEMORY;
-
-	mutex_init((kmutex_t *)pnp->pnp_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	caps = pnp_get_capabilities(dv);
-	pnp->pnp_state = pnp_get_state(dv);
-#ifdef PNP_DEBUG
-	printf("%s: current device state: %s\n", device_xname(dv),
-	    pnp_statename(pnp->pnp_state));
-#endif
-
-	/* determine depth in device tree of instance */
-	curdev = dv;
-	while ((curdev = device_parent(curdev)) != NULL)
-		++pnp->pnp_depth;
-
-	switch (device_class(dv)) {
-	case DV_DISPLAYDEV:
-		pdisplaydev = malloc(sizeof(struct pnp_displaydev),
-		    M_PNP, M_NOWAIT|M_ZERO);
-		if (pdisplaydev == NULL) {
-			free(pnp->pnp_lock, M_DEVBUF);
-			return PNP_STATUS_NO_MEMORY;
-		}
-		pdisplaydev->dv = dv;
-		pdisplaydev->power = PNP_DISPLAY_POWER_ON;
-		LIST_INSERT_HEAD(&displaydevhead, pdisplaydev, next);
-		callout_setfunc(c, pnp_idle_display, dv);
-		callout_schedule(c, hz * pnp_displaydev_reduced);
-
-		break;
-	case DV_AUDIODEV:
-		paudiodev = malloc(sizeof(struct pnp_audiodev),
-		    M_PNP, M_NOWAIT|M_ZERO);
-		if (paudiodev == NULL) {
-			free(pnp->pnp_lock, M_DEVBUF);
-			return PNP_STATUS_NO_MEMORY;
-		}
-		paudiodev->dv = dv;
-		LIST_INSERT_HEAD(&audiodevhead, paudiodev, next);
-
-		callout_setfunc(c, pnp_idle_audio, dv);
-		callout_schedule(c, hz * pnp_audiodev_idle);
-
-		break;
-	default:
-		break;
-	}
-
-	pnp_print(dv, &caps);
-
-	return PNP_STATUS_SUCCESS;
-}
-
-pnp_status_t
-pnp_deregister(device_t dv)
-{
-	pnp_device_t *pnp;
-	struct pnp_audiodev *paudiodev;
-
-	pnp = device_pnp(dv);
-	callout_stop(&pnp->pnp_idle);
-
-	if (pnp->pnp_lock)
-		free(pnp->pnp_lock, M_DEVBUF);
-
-	switch (device_class(dv)) {
-	case DV_AUDIODEV:
-		LIST_FOREACH(paudiodev, &audiodevhead, next) {
-			if (paudiodev->dv == dv) {
-				LIST_REMOVE(paudiodev, next);
-				free(paudiodev, M_PNP);
-				break;
-			}
-		}
-		break;
-	default:
-		/* nothing to do yet */
-		break;
-	}
-
-	return PNP_STATUS_SUCCESS;
-}
-
-/*
- * Null power management handler.
- *
- * DO NOT USE THIS UNLESS YOU ARE ABSOLUTELY SURE THAT YOUR DEVICE
- * DRIVER DOES NOT REQUIRE POWER MANAGEMENT SUPPORT.
- */
-pnp_status_t
-pnp_generic_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
-}
-
-/*
- * Audio device class policy
- *
- * When the device is active, it is in D0 state. When paused, we transition
- * to D1. On close, we switch to D2, and after 30 seconds we drop to D3.
- *
- * We also handle volume actions here.
- */
-pnp_status_t
-pnp_power_audio(device_t dv, pnp_action_t act)
-{
-	pnp_device_t *pnp;
-	pnp_status_t status;
-	pnp_state_t state, curstate;
-	pnp_capabilities_t caps;
-	pnp_audio_volume_t vol;
-	struct pnp_audiodev *paudiodev;
-	struct callout *c;
-
-	pnp = device_pnp(dv);
-	vol = PNP_AUDIO_VOLUME_UNKNOWN;
-
-	switch (act) {
-	case PNP_ACTION_VOLUME_UP:
-		vol = PNP_AUDIO_VOLUME_UP;
-		/* FALLTHROUGH */
-	case PNP_ACTION_VOLUME_DOWN:
-		if (vol == PNP_AUDIO_VOLUME_UNKNOWN)
-			vol = PNP_AUDIO_VOLUME_DOWN;
-		/* FALLTHROUGH */
-	case PNP_ACTION_VOLUME_MUTE:
-		if (vol == PNP_AUDIO_VOLUME_UNKNOWN)
-			vol = PNP_AUDIO_VOLUME_TOGGLE;
-
-		LIST_FOREACH(paudiodev, &audiodevhead, next) {
-			pnp_power_audio(paudiodev->dv, PNP_ACTION_OPEN);
-			pnp_power(paudiodev->dv, PNP_REQUEST_SET_VOLUME,
-			    &vol);
-		}
-		return PNP_STATUS_SUCCESS;
-	default:
-		break;
-	}
-
-	if (dv == NULL)
-		return PNP_STATUS_UNSUPPORTED;
-
-	KASSERT(device_class(dv) == DV_AUDIODEV);
-
-	c = &pnp->pnp_idle;
-
-	caps = pnp_get_capabilities(dv);
-	curstate = pnp->pnp_state;
-	if (curstate == PNP_STATE_UNKNOWN) {
-#ifdef PNP_DEBUG
-		printf("%s: couldn't determine state\n", device_xname(dv));
-#endif
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	switch (act) {
-	case PNP_ACTION_OPEN:
-		callout_stop(c);
-		state = PNP_STATE_D0;
-		break;
-	case PNP_ACTION_CLOSE:
-		callout_stop(c);
-		callout_schedule(c, hz * pnp_audiodev_idle);
-		state = PNP_STATE_D2;
-		break;
-	case PNP_ACTION_PAUSE:
-		state = PNP_STATE_D1;
-		break;
-	case PNP_ACTION_IDLE:
-		state = PNP_STATE_D3;
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	if (state == curstate)
-		return PNP_STATUS_SUCCESS;
-	if (!(caps.state & state))
-		return PNP_STATUS_UNSUPPORTED;
-
-#ifdef PNP_DEBUG
-	printf("%s: transitioning to %s\n", device_xname(dv),
-	    pnp_statename(state));
-#endif
-	status = pnp_set_state(dv, state);
-	if (status == PNP_STATUS_SUCCESS && state != PNP_STATE_D0)
-		status = pnp_power(device_parent(dv),
-		    PNP_REQUEST_SET_STATE, &state);
-
-	return status;
-}
-
-void
-pnp_idle_audio(void *opaque)
-{
-	pnp_device_t *pnp;
-	device_t dv;
-	pnp_status_t status;
-	struct callout *c;
-
-	dv = opaque;
-	pnp = device_pnp(dv);
-	c = &pnp->pnp_idle;
-
-	status = pnp_power_audio(dv, PNP_ACTION_IDLE);
-	if (status == PNP_STATUS_BUSY)
-		callout_schedule(c, hz * pnp_audiodev_idle);
-
-	return;
-}
-
-/*
- * Input device class policy
- *
- * When an event is generated, we need to notify the display device class
- * so it can wake up.
- */
-pnp_status_t
-pnp_power_input(device_t dv, pnp_action_t act)
-{
-	pnp_status_t status;
-
-	status = PNP_STATUS_UNSUPPORTED;
-
-	switch (act) {
-	case PNP_ACTION_KEYBOARD:
-	case PNP_ACTION_BRIGHTNESS_UP:
-	case PNP_ACTION_BRIGHTNESS_DOWN:
-		status = pnp_power_display(NULL, act);
-		break;
-	default:
-#ifdef PNP_DEBUG
-		printf("%s: unknown power action %d\n", device_xname(dv), act);
-#endif
-		break;
-	}
-
-	return status;
-}
-
-/*
- * Display device class policy
- *
- * On timeout, we step down the device brightness until it's off. On wakeup
- * actions (keyboard, mouse, switch mode) we turn the device back on.
- */
-pnp_status_t
-pnp_power_display(device_t dv, pnp_action_t act)
-{
-	pnp_device_t *pnp;
-	pnp_status_t status;
-	pnp_display_power_t power;
-	pnp_display_brightness_t pdb;
-	struct pnp_displaydev *pdisplay;
-	struct callout *c;
-	int timeo;
-
-	status = PNP_STATUS_UNSUPPORTED;
-	switch (act) {
-	case PNP_ACTION_BRIGHTNESS_UP:
-	case PNP_ACTION_BRIGHTNESS_DOWN:
-		if (act == PNP_ACTION_BRIGHTNESS_UP)
-			pdb = PNP_DISPLAY_BRIGHTNESS_UP;
+	if (doing_shutdown == 0 && panicstr == NULL) {
+		printf("Flushing disk caches: ");
+		sys_sync(NULL, NULL, NULL);
+		if (buf_syncwait() != 0)
+			printf("giving up\n");
 		else
-			pdb = PNP_DISPLAY_BRIGHTNESS_DOWN;
-		LIST_FOREACH(pdisplay, &displaydevhead, next) {
-			pnp_power(pdisplay->dv,
-			    PNP_REQUEST_SET_DISPLAY_BRIGHTNESS, &pdb);
-		}
-		break;
-	case PNP_ACTION_LID_CLOSE:
-		LIST_FOREACH(pdisplay, &displaydevhead, next) {
-			pnp = device_pnp(pdisplay->dv);
-			c = &pnp->pnp_idle;
-			callout_stop(c);
-			pdisplay->power = PNP_DISPLAY_POWER_OFF;
-			(void)pnp_power(pdisplay->dv,
-			    PNP_REQUEST_SET_DISPLAY_POWER,
-			    &pdisplay->power);
-		}
-		break;
-	case PNP_ACTION_LID_OPEN:
-	case PNP_ACTION_KEYBOARD:
-		LIST_FOREACH(pdisplay, &displaydevhead, next) {
-			pnp = device_pnp(pdisplay->dv);
-			c = &pnp->pnp_idle;
-
-			if (pdisplay->power != PNP_DISPLAY_POWER_ON) {
-				pdisplay->power = PNP_DISPLAY_POWER_ON;
-#ifdef PNP_DEBUG
-				printf("%s: %s\n", device_xname(pdisplay->dv),
-				    pnp_displaypowername(pdisplay->power));
-#endif
-				(void)pnp_power(pdisplay->dv,
-				    PNP_REQUEST_SET_DISPLAY_POWER,
-				    &pdisplay->power);
-			}
-
-			callout_stop(c);
-			callout_schedule(c, hz * pnp_displaydev_reduced);
-		}
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_ACTION_IDLE:
-		KASSERT(dv != NULL);
-		pnp = device_pnp(dv);
-		c = &pnp->pnp_idle;
-		power = -1;
-
-		LIST_FOREACH(pdisplay, &displaydevhead, next)
-			if (pdisplay->dv == dv) {
-				power = pdisplay->power;
-				break;
-			}
-
-		KASSERT(power != -1);
-
-		switch (power) {
-		case PNP_DISPLAY_POWER_ON:
-			pdisplay->power = PNP_DISPLAY_POWER_REDUCED;
-			timeo = hz * pnp_displaydev_standby -
-			    pnp_displaydev_reduced;
-			break;
-		case PNP_DISPLAY_POWER_REDUCED:
-			pdisplay->power = PNP_DISPLAY_POWER_STANDBY;
-			timeo = hz * pnp_displaydev_suspend -
-			    pnp_displaydev_standby;
-			break;
-		case PNP_DISPLAY_POWER_STANDBY:
-			pdisplay->power = PNP_DISPLAY_POWER_SUSPEND;
-			timeo = hz * pnp_displaydev_off -
-			    pnp_displaydev_suspend;
-			break;
-		case PNP_DISPLAY_POWER_SUSPEND:
-			pdisplay->power = PNP_DISPLAY_POWER_OFF;
-			/* FALLTHROUGH */
-		default:
-			timeo = 0;
-			break;
-		}
-
-#ifdef PNP_DEBUG
-		printf("%s: %s\n", device_xname(pdisplay->dv),
-		    pnp_displaypowername(pdisplay->power));
-#endif
-		(void)pnp_power(pdisplay->dv,
-		    PNP_REQUEST_SET_DISPLAY_POWER, &pdisplay->power);
-
-		if (timeo > 0) {
-			callout_stop(c);
-			callout_schedule(c, timeo);
-		}
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		break;
+			printf("done\n");
 	}
 
-	return status;
-}
+	printf("Suspending devices:");
 
-void
-pnp_idle_display(void *opaque)
-{
-	device_t dv;
-
-	dv = opaque;
-	KASSERT(device_class(dv) == DV_DISPLAYDEV);
-
-	pnp_power_display(dv, PNP_ACTION_IDLE);
-
-	return;
-}
-
-void
-pnp_active(device_t dv)
-{
-	pnp_device_t *pnp;
-	struct callout *c;
-
-	pnp = device_pnp(dv);
-	c = &pnp->pnp_idle;
-
-	switch (device_class(dv)) {
-	case DV_AUDIODEV:
-		pnp_power_audio(dv, PNP_ACTION_OPEN); /* XXX */
-		callout_schedule(c, hz * pnp_audiodev_idle);
-		break;
-	default:
-#ifdef PNP_DEBUG
-		aprint_error("%s: active called with unsupported devclass\n",
-		    device_xname(dv));
-#endif
-		break;
+	maxdepth = 0;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (curdev->dv_depth > maxdepth)
+			maxdepth = curdev->dv_depth;
 	}
 
-	return;
-}
-
-/*
- * Functional equivalent of dopowerhooks
- * XXX we need to check return values and abort the request on failure
- */
-pnp_status_t
-pnp_global_transition(pnp_state_t newstate)
-{
-	pnp_device_t *pnp;
-	device_t curdev;
-
-	if (newstate == PNP_STATE_D0) {
-		printf("Resuming devices:");
-		/* D0 handlers are run in order */
-		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-			/* find root nodes */
-			if (device_parent(curdev) == NULL) {
-				(void)pnp_set_state(curdev, newstate);
-				(void)pnp_set_child_state(curdev, newstate);
-			}
-		}
-		printf(".\n");
-	} else {
-		/* D1, D2, and D3 handlers are run in reverse order */
-		int maxdepth, curdepth;
-
-		maxdepth = 0;
-
-		/*
-		 * Flush buffers only if the shutdown didn't do so
-		 * already and if there was no panic.
-		 */
-		if (doing_shutdown == 0 && panicstr == NULL) {
-			printf("Flushing disk caches: ");
-			sys_sync(NULL, NULL, NULL);
-			if (buf_syncwait() != 0)
-				printf("giving up\n");
-			else
-				printf("done\n");
-		}
-
-		printf("Suspending devices:");
-
-		/* Determine maximum depth of device tree */
-		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-			pnp = device_pnp(curdev);
-			if (pnp->pnp_power == NULL)
+	for (depth = maxdepth; depth >= 0; --depth) {
+		TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist, dv_list) {
+			if (curdev->dv_depth != depth)
 				continue;
-			if (pnp->pnp_depth > maxdepth)
-				maxdepth = pnp->pnp_depth;
-		}
+			if (!device_is_active(curdev))
+				continue;
 
-		curdepth = maxdepth;
-		while (curdepth >= 0) {
-			TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist,
-			    dv_list) {
-				pnp = device_pnp(curdev);
-				if (pnp->pnp_power == NULL)
-					continue;
-				if (pnp->pnp_depth != curdepth)
-					continue;
-				printf(" %s", device_xname(curdev));
-				pnp_set_state(curdev, newstate);
-				/* DELAY(100000); */
-			}
-			--curdepth;
-		}
+			printf(" %s", device_xname(curdev));
 
-		printf(".\n");
+			/* XXX joerg check return value and abort suspend */
+			if (!pnp_device_suspend(curdev))
+				printf("(failed)");
+		}
 	}
 
-	return PNP_STATUS_SUCCESS;
+	printf(".\n");
+
+	return true;
 }
 
-static pnp_status_t
-pnp_set_child_state(device_t dv, pnp_state_t newstate)
-{
-	device_t curdev;
-	pnp_device_t *pnp;
-
-	pnp = device_pnp(dv);
-	if (pnp->pnp_power != NULL) {
-		printf(" %s", device_xname(dv));
-		(void)pnp_set_state(dv, newstate);
-	}
-	TAILQ_FOREACH(curdev, &alldevs, dv_list)
-		if (device_parent(curdev) == dv)
-			(void)pnp_set_child_state(curdev, newstate);
-
-	return PNP_STATUS_SUCCESS;
-}
-
-pnp_status_t
+bool
 pnp_set_platform(const char *key, const char *value)
 {
-	boolean_t rv;
-
 	if (pnp_platform == NULL)
 		pnp_platform = prop_dictionary_create();
 	if (pnp_platform == NULL)
-		return PNP_STATUS_NO_MEMORY;
+		return false;
 
-	rv = prop_dictionary_set_cstring(pnp_platform, key, value);
-	if (rv == false)
-		return PNP_STATUS_UNSUPPORTED;
-
-	return PNP_STATUS_SUCCESS;
+	return prop_dictionary_set_cstring(pnp_platform, key, value);
 }
 
 const char *
 pnp_get_platform(const char *key)
 {
 	const char *value;
-	boolean_t rv;
 
 	if (pnp_platform == NULL)
 		return NULL;
 
-	rv = prop_dictionary_get_cstring_nocopy(pnp_platform, key, &value);
-	if (rv == false)
+	if (!prop_dictionary_get_cstring_nocopy(pnp_platform, key, &value))
 		return NULL;
 
 	return value;
+}
+
+bool
+pnp_device_register(device_t dev,
+    bool (*suspend)(device_t), bool (*resume)(device_t))
+{
+	device_pnp_driver_register(dev, suspend, resume);
+
+	if (!device_pnp_driver_child_register(dev)) {
+		device_pnp_driver_deregister(dev);
+		return false;
+	}
+
+	return true;
+}
+
+void
+pnp_device_deregister(device_t dev)
+{
+	device_pnp_class_deregister(dev);
+	device_pnp_bus_deregister(dev);
+	device_pnp_driver_deregister(dev);
+}
+
+bool
+pnp_device_suspend(device_t dev)
+{
+	PNP_TRANSITION_PRINTF(("%s: suspend enter\n", device_xname(dev)));
+	if (!device_pnp_is_registered(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
+	if (!device_pnp_class_suspend(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
+	if (!device_pnp_driver_suspend(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
+	if (!device_pnp_bus_suspend(dev))
+		return false;
+	PNP_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+	return true;
+}
+
+bool
+pnp_device_resume(device_t dev)
+{
+	PNP_TRANSITION_PRINTF(("%s: resume enter\n", device_xname(dev)));
+	if (!device_pnp_is_registered(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
+	if (!device_pnp_bus_resume(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
+	if (!device_pnp_driver_resume(dev))
+		return false;
+	PNP_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
+	if (!device_pnp_class_resume(dev))
+		return false;
+	PNP_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
+	return true;
+}
+
+#include <net/if.h>
+
+static bool
+pnp_class_network_suspend(device_t dev)
+{
+	struct ifnet *ifp = device_pnp_class_private(dev);
+	int s;
+
+	s = splnet();
+	(*ifp->if_stop)(ifp, 1);
+	splx(s);
+
+	return true;
+}
+
+static bool
+pnp_class_network_resume(device_t dev)
+{
+	struct ifnet *ifp = device_pnp_class_private(dev);
+	int s;
+
+	s = splnet();
+	if (ifp->if_flags & IFF_UP) {
+		ifp->if_flags &= ~IFF_RUNNING;
+		(*ifp->if_init)(ifp);
+		(*ifp->if_start)(ifp);
+	}
+	splx(s);
+
+	return true;
+}
+
+void
+pnp_class_network_register(device_t dev, struct ifnet *ifp)
+{
+	device_pnp_class_register(dev, ifp, pnp_class_network_suspend,
+	    pnp_class_network_resume, NULL);
+}
+
+struct pnp_event_handler {
+	TAILQ_ENTRY(pnp_event_handler) pnp_link;
+	pnp_generic_event_t pnp_event;
+	void (*pnp_handler)(device_t);
+	device_t pnp_device;
+	bool pnp_global;
+};
+
+static TAILQ_HEAD(, pnp_event_handler) pnp_all_events =
+    TAILQ_HEAD_INITIALIZER(pnp_all_events);
+
+bool
+pnp_event_inject(device_t dv, pnp_generic_event_t ev)
+{
+	struct pnp_event_handler *event;
+	bool rv = false;
+
+	PNP_EVENT_PRINTF(("%s: PNP event %d injected\n", device_xname(dv),
+	    ev));
+
+	TAILQ_FOREACH(event, &pnp_all_events, pnp_link) {
+		if (event->pnp_event != ev)
+			continue;
+		if (event->pnp_device != dv || event->pnp_global) {
+			(*event->pnp_handler)(dv);
+			rv = true;
+		}
+	}
+	return rv;
+}
+
+bool
+pnp_event_register(device_t dv, pnp_generic_event_t ev,
+    void (*handler)(device_t), bool global)
+{
+	struct pnp_event_handler *event; 
+	
+	event = malloc(sizeof(*event), M_DEVBUF, M_WAITOK);
+	event->pnp_event = ev;
+	event->pnp_handler = handler;
+	event->pnp_device = dv;
+	event->pnp_global = global;
+	TAILQ_INSERT_TAIL(&pnp_all_events, event, pnp_link);
+
+	return true;
+}
+
+void
+pnp_event_deregister(device_t dv, pnp_generic_event_t ev,
+    void (*handler)(device_t), bool global)
+{
+	struct pnp_event_handler *event;
+
+	TAILQ_FOREACH(event, &pnp_all_events, pnp_link) {
+		if (event->pnp_event != ev)
+			continue;
+		if (event->pnp_device != dv)
+			continue;
+		if (event->pnp_global != global)
+			continue;
+		if (event->pnp_handler != handler)
+			continue;
+		TAILQ_REMOVE(&pnp_all_events, event, pnp_link);
+		free(event, M_WAITOK);
+	}
+}
+
+struct display_class_softc {
+	TAILQ_ENTRY(display_class_softc) dc_link;
+	device_t dc_dev;
+};
+
+static TAILQ_HEAD(, display_class_softc) all_displays;
+static callout_t global_idle_counter;
+static int idle_timeout = 30;
+
+static void
+input_idle(void *dummy)
+{
+	PNP_IDLE_PRINTF(("Input idle handler called\n"));
+	pnp_event_inject(NULL, PNPE_DISPLAY_OFF);
+}
+
+static void
+input_activity_handler(device_t dv, devactive_t type)
+{
+	if (!TAILQ_EMPTY(&all_displays))
+		callout_schedule(&global_idle_counter, idle_timeout * hz);
+}
+
+static void
+pnp_class_input_deregister(device_t dv)
+{
+	device_active_deregister(dv, input_activity_handler);
+}
+
+bool
+pnp_class_input_register(device_t dv)
+{
+	if (!device_active_register(dv, input_activity_handler))
+		return false;
+	
+	device_pnp_class_register(dv, NULL, NULL, NULL,
+	    pnp_class_input_deregister);
+
+	return true;
+}
+
+static void
+pnp_class_display_deregister(device_t dv)
+{
+	struct display_class_softc *sc = device_pnp_class_private(dv);
+	int s;
+
+	s = splsoftclock();
+	TAILQ_REMOVE(&all_displays, sc, dc_link);
+	if (TAILQ_EMPTY(&all_displays))
+		callout_stop(&global_idle_counter);
+	splx(s);
+
+	free(sc, M_DEVBUF);
+}
+
+bool
+pnp_class_display_register(device_t dv)
+{
+	struct display_class_softc *sc;
+	int s;
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
+
+	s = splsoftclock();
+	if (TAILQ_EMPTY(&all_displays))
+		callout_schedule(&global_idle_counter, idle_timeout * hz);
+
+	TAILQ_INSERT_HEAD(&all_displays, sc, dc_link);
+	splx(s);
+
+	device_pnp_class_register(dv, sc, NULL, NULL,
+	    pnp_class_display_deregister);
+
+	return true;
+}
+
+void
+pnp_init(void)
+{
+	callout_init(&global_idle_counter, 0);
+	callout_setfunc(&global_idle_counter, input_idle, NULL);
 }

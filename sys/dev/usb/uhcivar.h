@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.40.46.2 2007/10/01 05:38:07 joerg Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.46.3 2007/11/06 14:27:34 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ int		uhci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int		uhci_detach(uhci_softc_t *, int);
 int		uhci_activate(device_ptr_t, enum devact);
-void		uhci_resume(device_t);
-void		uhci_suspend(device_t);
+bool		uhci_resume(device_t);
+bool		uhci_suspend(device_t);
 #endif
 

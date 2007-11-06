@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.19.4.3 2007/10/26 15:47:01 joerg Exp $ */
+/* $NetBSD: pms.c,v 1.19.4.4 2007/11/06 14:27:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.3 2007/10/26 15:47:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.4.4 2007/11/06 14:27:29 joerg Exp $");
 
 #include "opt_pms.h"
 
@@ -85,7 +85,9 @@ static void	pms_reset_thread(void*);
 int	pms_enable(void *);
 int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	pms_disable(void *);
-pnp_status_t	pms_power(device_t, pnp_request_t, void *);
+
+static bool	pms_suspend(device_t);
+static bool	pms_resume(device_t);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -171,7 +173,6 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
-	pnp_status_t status;
 	u_char cmd[2], resp[2];
 	int res;
 
@@ -230,10 +231,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_suspended = 0;
 #endif
-	status = pnp_register(self, pms_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	if (!pnp_device_register(self, pms_suspend, pms_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void
@@ -335,61 +334,35 @@ pms_disable(void *v)
 	splx(s);
 }
 
-pnp_status_t
-pms_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+pms_suspend(device_t dv)
 {
-#ifndef PMS_DISABLE_POWERHOOK
-	struct pms_softc *sc = (struct pms_softc *)dv;
-	pnp_state_t *pstate;
-	pnp_capabilities_t *pcaps;
+	struct pms_softc *sc = device_private(dv);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
-		break;
+	if (sc->sc_enabled)
+		do_disable(sc);
 
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
+	return true;
+}
 
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
+static bool
+pms_resume(device_t dv)
+{
+	struct pms_softc *sc = device_private(dv);
 
-		switch (*pstate) {
-		case PNP_STATE_D3:
-			if (sc->sc_enabled) {
-				do_disable(sc);
-				sc->sc_suspended = 1;
-			}
-			break;
-		case PNP_STATE_D0:
 #ifdef PMS_SYNAPTICS_TOUCHPAD
-			if (sc->protocol == PMS_SYNAPTICS) {
-				pms_synaptics_resume(sc);
-				sc->sc_suspended = 0;
-				do_enable(sc);
-			}
+	if (sc->protocol == PMS_SYNAPTICS) {
+		pms_synaptics_resume(sc);
+		do_enable(sc);
+	} else
 #endif
-			if (sc->sc_enabled && sc->sc_suspended) {
-				/* recheck protocol & init mouse */
-				sc->protocol = PMS_UNKNOWN;
-				sc->sc_suspended = 0;
-				do_enable(sc); /* only if we were suspended */
-			}
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-
-	default:
-		return PNP_STATUS_UNSUPPORTED;
+	if (sc->sc_enabled) {
+		/* recheck protocol & init mouse */
+		sc->protocol = PMS_UNKNOWN;
+		do_enable(sc); /* only if we were suspended */
 	}
 
-#endif /* !PMS_DISABLE_POWERHOOK */
-	return PNP_STATUS_SUCCESS;
+	return true;
 }
 
 int

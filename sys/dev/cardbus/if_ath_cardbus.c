@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.4 2007/10/26 15:44:19 joerg Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.5 2007/11/06 14:27:15 joerg Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.4 2007/10/26 15:44:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.5 2007/11/06 14:27:15 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,7 +121,7 @@ void	ath_cardbus_setup(struct ath_cardbus_softc *);
 int	ath_cardbus_enable(struct ath_softc *);
 void	ath_cardbus_disable(struct ath_softc *);
 
-static void
+static bool
 ath_cardbus_resume(device_t dv)
 {
 	struct ath_cardbus_softc *csc = device_private(dv);
@@ -131,6 +131,8 @@ ath_cardbus_resume(device_t dv)
 
 	cardbus_disable_retry(cc, cf, csc->sc_tag);
 	ath_resume(&csc->sc_ath);
+
+	return true;
 }
 
 int
@@ -158,7 +160,6 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t adr;
-	pnp_status_t pnp_status;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -201,13 +202,10 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	pnp_status = cardbus_net_generic_power_register(self,
-    	    ct->ct_cc, ct->ct_cf, ca->ca_tag, &sc->sc_if, NULL,
-	    ath_cardbus_resume);
-	if (pnp_status != PNP_STATUS_SUCCESS) {
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
-	}
+	if (!pnp_device_register(self, NULL, ath_cardbus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pnp_class_network_register(self, &sc->sc_if);
 
 	/*
 	 * Finish off the attach.
@@ -232,7 +230,7 @@ ath_cardbus_detach(struct device *self, int flags)
 	if (rv)
 		return (rv);
 
-	cardbus_net_generic_power_deregister(self);
+	pnp_device_deregister(self);
 
 	/*
 	 * Unhook the interrupt handler.

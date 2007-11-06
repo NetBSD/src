@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20.6.6 2007/10/26 15:47:39 joerg Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.6.7 2007/11/06 14:27:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.6 2007/10/26 15:47:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.7 2007/11/06 14:27:32 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -898,10 +898,10 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 	if (smpsw->smpsw_type == PSWITCH_TYPE_LID) {
 		switch (event) {
 		case PSWITCH_EVENT_PRESSED:
-			pnp_power_display(NULL, PNP_ACTION_LID_CLOSE);
+			pnp_event_inject(NULL, PNPE_CHASSIS_LID_CLOSE);
 			break;
 		case PSWITCH_EVENT_RELEASED:
-			/* pnp_power_display(NULL, PNP_ACTION_LID_OPEN); */
+			pnp_event_inject(NULL, PNPE_CHASSIS_LID_OPEN);
 			break;
 		default:
 			break;

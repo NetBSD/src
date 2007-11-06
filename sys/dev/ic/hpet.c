@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.1.16.3 2007/10/26 15:44:45 joerg Exp $ */
+/* $NetBSD: hpet.c,v 1.1.16.4 2007/11/06 14:27:17 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.3 2007/10/26 15:44:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.4 2007/11/06 14:27:17 joerg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,13 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.3 2007/10/26 15:44:45 joerg Exp $");
 #include <dev/ic/hpetvar.h>
 
 static u_int	hpet_get_timecount(struct timecounter *);
-static pnp_status_t hpet_power(device_t, pnp_request_t, void *);
+static bool	hpet_resume(device_t);
 
 void
 hpet_attach_subr(struct hpet_softc *sc) {
 	struct timecounter *tc;
 	uint32_t val;
-	pnp_status_t status;
 
 	tc = &sc->sc_tc;
 
@@ -78,10 +77,8 @@ hpet_attach_subr(struct hpet_softc *sc) {
 	tc->tc_priv = sc;
 	tc_init(tc);
 
-	status = pnp_register(&sc->sc_dev, hpet_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(&sc->sc_dev));
+	if (!pnp_device_register(&sc->sc_dev, NULL, hpet_resume))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 
 static u_int
@@ -91,46 +88,15 @@ hpet_get_timecount(struct timecounter *tc) {
 	return bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 }
 
-static pnp_status_t
-hpet_power(device_t dv, pnp_request_t req, void *opaque)
+static bool
+hpet_resume(device_t dv)
 {
-	struct hpet_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
+	struct hpet_softc *sc = device_private(dv);
 	uint32_t val;
 
-	sc = (struct hpet_softc *)dv;
+	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG);
+	val |= HPET_CONFIG_ENABLE;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG, val);
 
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = PNP_STATE_D0; /* XXX */
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			val = bus_space_read_4(sc->sc_memt, sc->sc_memh,
-			    HPET_CONFIG);
-			if ((val & HPET_CONFIG_ENABLE) == 0) {
-				val |= HPET_CONFIG_ENABLE;
-				bus_space_write_4(sc->sc_memt, sc->sc_memh,
-				    HPET_CONFIG, val);
-			}
-			break;
-		case PNP_STATE_D3:
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
+	return true;
 }
