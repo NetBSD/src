@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.11.6.1 2006/12/18 10:18:10 vanhu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.11.6.2 2007/11/06 16:41:40 vanhu Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -89,6 +89,7 @@
 #include "crypto/sha2/sha2.h"
 #endif
 #endif
+#include "plog.h"
 
 /* 0.9.7 stuff? */
 #if OPENSSL_VERSION_NUMBER < 0x0090700fL
