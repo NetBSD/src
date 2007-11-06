@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.19 2007/02/06 01:55:40 cbiere Exp $ */
+/* $NetBSD: params.c,v 1.20 2007/11/06 02:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.19 2007/02/06 01:55:40 cbiere Exp $");
+__RCSID("$NetBSD: params.c,v 1.20 2007/11/06 02:50:49 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static void	params_init(struct params *);
 
 static void	print_kvpair_cstr(FILE *, int, const char *, const char *);
 static void	print_kvpair_string(FILE *, int, const char *, const string_t *);
-static void	print_kvpair_int(FILE *, int, const char *, int);
+static void	print_kvpair_int(FILE *, int, const char *, size_t);
 static void	print_kvpair_b64(FILE *, int, int, const char *, bits_t *);
 
 static void	spaces(FILE *, int);
@@ -97,8 +97,8 @@ params_init(struct params *p)
 	p->algorithm = NULL;
 	p->ivmeth = NULL;
 	p->key = NULL;
-	p->keylen = -1;
-	p->bsize = -1;
+	p->keylen = (size_t)-1;
+	p->bsize = (size_t)-1;
 	p->verify_method = VERIFY_UNKNOWN;
 	p->dep_keygen = NULL;
 	p->keygen = NULL;
@@ -133,9 +133,9 @@ params_combine(struct params *p1, struct params *p2)
 		string_assign(&p->algorithm, p2->algorithm);
 	if (p2->ivmeth)
 		string_assign(&p->ivmeth, p2->ivmeth);
-	if (p2->keylen != -1)
+	if (p2->keylen != (size_t)-1)
 		p->keylen = p2->keylen;
-	if (p2->bsize != -1)
+	if (p2->bsize != (size_t)-1)
 		p->bsize = p2->bsize;
 	if (p2->verify_method != VERIFY_UNKNOWN)
 		p->verify_method = p2->verify_method;
@@ -154,15 +154,15 @@ params_combine(struct params *p1, struct params *p2)
 int
 params_filldefaults(struct params *p)
 {
-	int	i;
+	size_t	i;
 
 	if (p->verify_method == VERIFY_UNKNOWN)
 		p->verify_method = VERIFY_NONE;
 	if (!p->ivmeth)
 		p->ivmeth = string_fromcharstar("encblkno");
-	if (p->keylen == -1) {
+	if (p->keylen == (size_t)-1) {
 		i = crypt_defaults_lookup(string_tocharstar(p->algorithm));
-		if (i != -1) {
+		if (i != (size_t)-1) {
 			p->keylen = crypto_defaults[i].keylen;
 		} else {
 			warnx("could not determine key length for unknown "
@@ -206,7 +206,7 @@ params_verify(const struct params *p)
 	if (strcmp("encblkno", string_tocharstar(p->ivmeth)))
 		warnx("unknown IV method \"%s\" (warning)",
 		    string_tocharstar(p->ivmeth));
-	if (p->keylen == -1) {
+	if (p->keylen == (size_t)-1) {
 		warnx("unspecified key length");
 		return 0;
 	}
@@ -233,7 +233,7 @@ params_ivmeth(string_t *in)
 }
 
 struct params *
-params_keylen(int in)
+params_keylen(size_t in)
 {
 	struct params *p = params_new();
 
@@ -242,7 +242,7 @@ params_keylen(int in)
 }
 
 struct params *
-params_bsize(int in)
+params_bsize(size_t in)
 {
 	struct params *p = params_new();
 
@@ -298,7 +298,7 @@ keygen_new(void)
 
 	kg = emalloc(sizeof(*kg));
 	kg->kg_method = KEYGEN_UNKNOWN;
-	kg->kg_iterations = -1;
+	kg->kg_iterations = (size_t)-1;
 	kg->kg_salt = NULL;
 	kg->kg_key = NULL;
 	kg->next = NULL;
@@ -330,7 +330,7 @@ keygen_verify(const struct keygen *kg)
 		return 1;
 	switch (kg->kg_method) {
 	case KEYGEN_PKCS5_PBKDF2_OLD:
-		if (kg->kg_iterations == -1) {
+		if (kg->kg_iterations == (size_t)-1) {
 			warnx("keygen pkcs5_pbkdf2 must provide `iterations'");
 			return 0;
 		}
@@ -342,7 +342,7 @@ keygen_verify(const struct keygen *kg)
 		}
 		break;
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
-		if (kg->kg_iterations == -1) {
+		if (kg->kg_iterations == (size_t)-1) {
 			warnx("keygen pkcs5_pbkdf2/sha1 must provide `iterations'");
 			return 0;
 		}
@@ -354,7 +354,7 @@ keygen_verify(const struct keygen *kg)
 		}
 		break;
 	case KEYGEN_STOREDKEY:
-		if (kg->kg_iterations != -1)
+		if (kg->kg_iterations != (size_t)-1)
 			warnx("keygen storedkey does not need `iterations'");
 		if (!kg->kg_key) {
 			warnx("keygen storedkey must provide a key");
@@ -365,7 +365,7 @@ keygen_verify(const struct keygen *kg)
 		break;
 	case KEYGEN_RANDOMKEY:
 	case KEYGEN_URANDOMKEY:
-		if (kg->kg_iterations != -1)
+		if (kg->kg_iterations != (size_t)-1)
 			warnx("keygen [u]randomkey does not need `iterations'");
 		if (kg->kg_key)
 			warnx("keygen [u]randomkey does not need `key'");
@@ -398,7 +398,7 @@ keygen_generate(int method)
  */
 
 int
-keygen_filldefaults(struct keygen *kg, int keylen)
+keygen_filldefaults(struct keygen *kg, size_t keylen)
 {
 
 	if (!kg)
@@ -500,7 +500,7 @@ keygen_salt(bits_t *in)
 }
 
 struct keygen *
-keygen_iterations(int in)
+keygen_iterations(size_t in)
 {
 	struct keygen *kg = keygen_new();
 
@@ -552,7 +552,7 @@ params_fget(FILE *f)
 	 */
 
 	if (p->dep_keygen) {
-		if (p->dep_keygen->kg_iterations == -1)
+		if (p->dep_keygen->kg_iterations == (size_t)-1)
 			p->dep_keygen->kg_iterations = 128;
 		p->dep_keygen->next = p->keygen;
 		if (p->dep_keygen->kg_key) {
@@ -579,7 +579,7 @@ params_cget(const char *fn)
 		return NULL;
 	}
 	p = params_fget(f);
-	fclose(f);
+	(void)fclose(f);
 	return p;
 }
 
@@ -591,7 +591,7 @@ spaces(FILE *f, int len)
 {
 
 	while (len-- > 0)
-		fputc(' ', f);
+		(void)fputc(' ', f);
 }
 
 static void
@@ -599,7 +599,7 @@ print_kvpair_cstr(FILE *f, int ts, const char *key, const char *val)
 {
 
 	spaces(f, ts);
-	fprintf(f, "%s %s;\n", key, val);
+	(void)fprintf(f, "%s %s;\n", key, val);
 }
 
 static void
@@ -610,14 +610,14 @@ print_kvpair_string(FILE *f, int ts, const char *key, const string_t *val)
 }
 
 static void
-print_kvpair_int(FILE *f, int ts, const char *key, int val)
+print_kvpair_int(FILE *f, int ts, const char *key, size_t val)
 {
 	char	*tmp;
 
-	if (!key || val == -1)
+	if (!key || val == (size_t)-1)
 		return;
 
-	if (asprintf(&tmp, "%d", val) == -1)
+	if (asprintf(&tmp, "%zu", val) == -1)
 		err(1, NULL);
 	print_kvpair_cstr(f, ts, key, tmp);
 	free(tmp);
@@ -646,19 +646,19 @@ print_kvpair_b64(FILE *f, int curpos, int ts, const char *key, bits_t *val)
 	len = strlen(out);
 
 	spaces(f, ts);
-	fprintf(f, "%s ", key);
+	(void)fprintf(f, "%s ", key);
 	curpos += ts + strlen(key) + 1;
 	ts = curpos;
 
 	for (i=0, pos=curpos; i < len; i++, pos++) {
 		if (pos > WRAP_COL) {
-			fprintf(f, " \\\n");
+			(void)fprintf(f, " \\\n");
 			spaces(f, ts);
 			pos = ts;
 		}
-		fputc(out[i], f);
+		(void)fputc(out[i], f);
 	}
-	fprintf(f, ";\n");
+	(void)fprintf(f, ";\n");
 	string_free(str);
 }
 
@@ -669,31 +669,31 @@ keygen_fput(struct keygen *kg, int ts, FILE *f)
 
 	if (!kg)
 		return 0;
-	fprintf(f, "keygen ");
+	(void)fprintf(f, "keygen ");
 	curpos += strlen("keygen ");
 	switch (kg->kg_method) {
 	case KEYGEN_STOREDKEY:
-		fprintf(f, "storedkey ");
+		(void)fprintf(f, "storedkey ");
 		curpos += strlen("storedkey ");
 		print_kvpair_b64(f, curpos, 0, "key", kg->kg_key);
 		break;
 	case KEYGEN_RANDOMKEY:
-		fprintf(f, "randomkey;\n");
+		(void)fprintf(f, "randomkey;\n");
 		break;
 	case KEYGEN_URANDOMKEY:
-		fprintf(f, "urandomkey;\n");
+		(void)fprintf(f, "urandomkey;\n");
 		break;
 	case KEYGEN_PKCS5_PBKDF2_OLD:
-		fprintf(f, "pkcs5_pbkdf2 {\n");
+		(void)fprintf(f, "pkcs5_pbkdf2 {\n");
 		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
 		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
-		fprintf(f, "};\n");
+		(void)fprintf(f, "};\n");
 		break;
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
-		fprintf(f, "pkcs5_pbkdf2/sha1 {\n");
+		(void)fprintf(f, "pkcs5_pbkdf2/sha1 {\n");
 		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
 		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
-		fprintf(f, "};\n");
+		(void)fprintf(f, "};\n");
 		break;
 	default:
 		warnx("keygen_fput: %d not a valid method", kg->kg_method);
@@ -728,8 +728,7 @@ params_fput(struct params *p, FILE *f)
 		warnx("unsupported verify_method (%d)", p->verify_method);
 		return -1;
 	}
-	keygen_fput(p->keygen, TAB_COL, f);
-	return 0;
+	return keygen_fput(p->keygen, TAB_COL, f);
 }
 
 int
