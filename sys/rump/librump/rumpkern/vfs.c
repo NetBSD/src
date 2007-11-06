@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.17 2007/10/27 19:36:34 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.18 2007/11/06 11:35:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -130,7 +130,10 @@ vget(struct vnode *vp, int lockflag)
 {
 
 	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, lockflag & LK_TYPE_MASK);
+		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
+	if (lockflag & LK_INTERLOCK)
+		simple_unlock(&vp->v_interlock);
+
 	return 0;
 }
 
