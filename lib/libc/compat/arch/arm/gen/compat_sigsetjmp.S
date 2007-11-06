@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.1.10.1 2007/11/06 18:39:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,16 +46,45 @@
  */
 
 ENTRY(sigsetjmp)
+#ifdef __thumb__
+	XPUSH	{lr}
+	sub	sp, #4	/* stack align */
+	cmp	r1, #0
+	bne	1f
+	bl	PLT_SYM(_C_LABEL(_setjmp))
+	b	2f
+1:	bl	PLT_SYM(_C_LABEL(setjmp))
+2:	add	sp, #4
+	XPOPRET
+#else
 	teq	r1, #0
-	beq	PIC_SYM(_C_LABEL(_setjmp), PLT)
-	b	PIC_SYM(_C_LABEL(setjmp), PLT)
-
-.L_setjmp_magic:
-	.word	_JB_MAGIC__SETJMP
+	beq	PLT_SYM(_C_LABEL(_setjmp))
+	b	PLT_SYM(_C_LABEL(setjmp))
+#endif
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
+#ifdef __thumb__
+	XPUSH	{lr}
+	sub	sp, #4	/* stack align */
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
-	teq	r2, r3
-	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
-	b	PIC_SYM(_C_LABEL(longjmp), PLT)
+	cmp	r2, r3
+	bne	1f
+	bl	PLT_SYM(_C_LABEL(longjmp))
+	b	2f
+1:	bl	PLT_SYM(_C_LABEL(_longjmp))
+2:	add	sp, #4
+	XPOPRET
+#else
+	ldr	r2, .L_setjmp_magic
+	ldr	r3, [r0]
+	cmp	r2, r3
+	beq	PLT_SYM(_C_LABEL(_longjmp))
+	b	PLT_SYM(_C_LABEL(longjmp))
+#endif
+
+	.align	0
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+END(siglongjmp)
