@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.11 2007/10/27 01:23:25 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.12 2007/11/06 00:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.11 2007/10/27 01:23:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.12 2007/11/06 00:42:43 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -589,7 +589,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 					    "not held by current CPU", true);
 				continue;
 			}
-			if (ld->ld_cpu == cpuno && (l->l_flag & LW_INTR) == 0)
+			if (ld->ld_cpu == cpuno && (l->l_pflag & LP_INTR) == 0)
 				lockdebug_abort1(ld, &ld_spinner_lk,
 				    __func__, "spin lock held", true);
 		}
