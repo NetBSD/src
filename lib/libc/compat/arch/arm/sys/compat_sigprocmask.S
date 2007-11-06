@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.1.10.1 2007/11/06 18:39:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,13 +37,29 @@ WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
-	teq	r1, #0x00000000
-	moveq	r0, #0x00000001
-	moveq	r1, #0x00000000
+#ifdef __thumb__
+	cmp	r1, #0
+	bne	1f
+	mov	r0, #1
+	b	2f
+1:	ldr	r1, [r1]
+2:
+#else
+	teq	r1, #0
+	moveq	r0, #1
+	moveq	r1, #0
 	ldrne	r1, [r1]
+#endif
 	SYSTRAP(compat_13_sigprocmask13)
-	bcs	PIC_SYM(CERROR, PLT)
-	teq	r2, #0x00000000
+	_SYSCALL_CERROR_CHECK
+#ifdef __thumb__
+	cmp	r2, #0
+	beq	3f
+	str	r0, [r2]
+3:
+#else
+	teq	r2, #0
 	strne	r0, [r2]
-	mov	r0, #0x00000000
+#endif
+	mov	r0, #0
 	RET

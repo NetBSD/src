@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1.10.1 2007/11/06 18:39:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,11 +46,46 @@
  */
 
 ENTRY(setjmp)
+#ifdef __thumb__
+	/* Block all signals and retrieve the old signal mask */
+	push	{r0, r4-r7, lr}
+
+	mov	r0, #0
+	bl	PLT_SYM(_C_LABEL(sigblock))
+
+	pop	{r1}
+
+	/* Store signal mask */
+	mov	r2, #(25 * 4)
+	add	r2, r2, r1
+	str	r0, [r2]
+
+	ldr	r2, .Lsetjmp_magic
+	str	r2, [r1]
+
+	add	r1, r1, #56
+	/* Store integer registers */
+        stmia	r1!, {r4-r7}
+
+	mov	r4, r8
+	mov	r5, r9
+	mov	r6, r10
+	mov	r7, r11
+        stmia	r1!, {r4-r7}
+
+	add	r1, r1, #4		/* skip ip (r12) */
+	mov	r4, sp
+	mov	r5, lr
+        stmia	r1!, {r4-r5}
+
+        mov	r0, #0
+        pop	{r4-r7, pc}
+#else
 	/* Block all signals and retrieve the old signal mask */
 	stmfd	sp!, {r0, r14}
 	mov	r0, #0x00000000
 
-	bl	PIC_SYM(_C_LABEL(sigblock), PLT)
+	bl	PLT_SYM(_C_LABEL(sigblock))
 	mov	r1, r0
 
 	ldmfd	sp!, {r0, r14}
@@ -74,34 +109,72 @@ ENTRY(setjmp)
         stmia	r0, {r4-r14}
         mov	r0, #0x00000000
         RET
+#endif /* __thumb__ */
 
-.Lsetjmp_magic:
-	.word	_JB_MAGIC_SETJMP
 
 
 ENTRY(longjmp)
 	ldr	r2, .Lsetjmp_magic
 	ldr	r3, [r0]
-	teq	r2, r3
-	bne	botch
+	cmp	r2, r3
+	bne	.Lbotch
 
+#ifdef __thumb__
 	/* Fetch signal mask */
-	ldr	r2, [r0, #(25 * 4)]
+	mov	r2, #(25 * 4)
+	add	r2, r2, r0
+	ldr	r2, [r2]
 
-	/* Set signal mask */
-	stmfd	sp!, {r0, r1, r14}
+	push	{r0, r1, lr}
 	sub	sp, sp, #4	/* align the stack */
 
 	mov	r0, r2
-	bl	PIC_SYM(_C_LABEL(sigsetmask), PLT)
+	bl	PLT_SYM(_C_LABEL(sigsetmask))
 
 	add	sp, sp, #4	/* unalign the stack */
-	ldmfd	sp!, {r0, r1, r14} 
+	pop	{r0, r1}
 
-	add	r0, r0, #4
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
+	/* Restore integer registers */
+	add	r0, r0, #56
+	ldmia	r0!, {r4-r7}
+	push	{r4-r7}
+
+	ldmia	r0!, {r4-r7}
+	mov	r8, r4
+	mov	r9, r5
+	mov	r10, r6
+	mov	r11, r7
+
+	add	r0, r0, #4	/* skip ip (r12) */
+	ldmia	r0!, {r4-r5}
+
+	cmp	r4, #0
+	beq	.Lbotch
+	cmp	r5, #0
+	beq	.Lbotch
+
+	mov	sp, r4
+	mov	lr, r5
+	mov	r0, r1
+	bne	1f
+	mov	r0, #1
+1:	pop	{r4-r7, pc}
 #else
+	/* Fetch signal mask */
+	ldr	r2, [r0, #(25 * 4)]
+
+	stmfd	sp!, {r0, r1, lr}
+	sub	sp, sp, #4		/* align the stack */
+	mov	r0, r2
+	bl	PLT_SYM(_C_LABEL(sigsetmask))
+
+	add	sp, sp, #4		/* unalign the stack */
+	ldmfd	sp!, {r0, r1, lr} 
+
+#if defined(SOFTFLOAT)
+	add	r0, r0, #56
+#else
+	add	r0, r0, #4
 	/* Restore fp registers */
 	lfm	f4, 4, [r0], #48
 	/* Restore FPSR */
@@ -114,7 +187,7 @@ ENTRY(longjmp)
 	/* Validate sp and r14 */
 	teq	sp, #0
 	teqne	r14, #0
-	beq	botch
+	beq	.Lbotch
 
 	/* Set return value */
 
@@ -122,9 +195,14 @@ ENTRY(longjmp)
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
 	RET
+#endif
 
 	/* validation failed, die die die. */
-botch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
+.Lbotch:
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
 	b	. - 8		/* Cannot get here */
+
+	.align	0
+.Lsetjmp_magic:
+	.word	_JB_MAGIC_SETJMP
