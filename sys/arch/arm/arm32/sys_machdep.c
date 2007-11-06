@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.26.1 2007/11/06 19:19:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.26.1 2007/11/06 19:19:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:02 ad Exp $");
 #include <machine/sysarch.h>
 
 /* Prototypes */
-static int arm32_sync_icache __P((struct proc *, char *, register_t *));
-static int arm32_drain_writebuf __P((struct proc *, char *, register_t *));
+static int arm32_sync_icache(struct lwp *, void *, register_t *);
+static int arm32_drain_writebuf(struct lwp *, void *, register_t *);
 
 static int
-arm32_sync_icache(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_sync_icache(struct lwp *l, void *args, register_t *retval)
 {
 	struct arm_sync_icache_args ua;
 	int error;
@@ -77,10 +74,7 @@ arm32_sync_icache(p, args, retval)
 }
 
 static int
-arm32_drain_writebuf(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_drain_writebuf(struct lwp *l, void *args, register_t *retval)
 {
 	/* No args. */
 
@@ -91,25 +85,21 @@ arm32_drain_writebuf(p, args, retval)
 }
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
 	case ARM_SYNC_ICACHE : 
-		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
+		error = arm32_sync_icache(l, SCARG(uap, parms), retval);
 		break;
 
 	case ARM_DRAIN_WRITEBUF : 
-		error = arm32_drain_writebuf(p, SCARG(uap, parms), retval);
+		error = arm32_drain_writebuf(l, SCARG(uap, parms), retval);
 		break;
 
 	default:
