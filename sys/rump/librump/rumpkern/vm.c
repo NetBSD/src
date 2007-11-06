@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.22 2007/11/06 11:35:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.23 2007/11/06 12:57:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -189,14 +189,23 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 	/* loop over pages */
 	off = trunc_page(off);
 	for (i = 0; i < *npages; i++) {
+ retrylookup:
 		pg = uvm_pagelookup(uobj, off + (i << PAGE_SHIFT));
 		if (pg) {
+			if (pg->flags & PG_BUSY) {
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+				    "aogetpg", 0);
+				goto retrylookup;
+			}
+			pg->flags |= PG_BUSY;
 			pgs[i] = pg;
 		} else {
 			pg = rumpvm_makepage(uobj, off + (i << PAGE_SHIFT));
 			pgs[i] = pg;
 		}
 	}
+	simple_unlock(&uobj->vmobjlock);
 
 	return 0;
 
@@ -208,10 +217,11 @@ ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct vm_page *pg;
 
 	/* we only free all pages for now */
-	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0)
+	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0) {
+		simple_unlock(&uobj->vmobjlock);
 		return 0;
+	}
 
-	simple_lock(&uobj->vmobjlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
 		uvm_pagefree(pg);
 	simple_unlock(&uobj->vmobjlock);
@@ -228,6 +238,7 @@ uao_create(vsize_t size, int flags)
 	memset(uobj, 0, sizeof(struct uvm_object));
 	uobj->pgops = &aobj_pager;
 	TAILQ_INIT(&uobj->memq);
+	simple_lock_init(&uobj->vmobjlock);
 
 	return uobj;
 }
@@ -480,7 +491,6 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->flags & PG_BUSY);
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
-		printf("releasing page %p\n", pg);
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
