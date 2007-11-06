@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.66 2007/07/17 20:36:11 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.66.8.1 2007/11/06 23:25:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -64,6 +64,8 @@ typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef u_int32_t netbsd32_uintptr_t;
 
+/* netbsd32_[u]int64 are machine dependant and defined below */
+
 /*
  * machine depedant section; must define:
  *	netbsd32_pointer_t
@@ -118,6 +120,15 @@ NETBSD32IPTR64(NETBSD32_POINTER_TYPE p32) { return (void *)(intptr_t)p32; }
 
 /* Nothing should be using the raw type, so kill it */
 #undef NETBSD32_POINTER_TYPE
+
+/*
+ * 64 bit integers only have 4-byte alignment on some 32 bit ports,
+ * but always have 8-byte alignment on 64 bit systems.
+ * NETBSD32_INT64_ALIGN may be __attribute__((__aligned__(4)))
+ */
+typedef int64_t netbsd32_int64 NETBSD32_INT64_ALIGN;
+typedef uint64_t netbsd32_uint64 NETBSD32_INT64_ALIGN;
+#undef NETBSD32_INT64_ALIGN
 
 /*
  * all pointers are netbsd32_pointer_t (defined in <machine/netbsd32_machdep.h>)
@@ -569,18 +580,18 @@ struct netbsd32_statvfs {
 	netbsd32_u_long	f_bsize;	/* system block size */
 	netbsd32_u_long	f_frsize;	/* system fragment size */
 	netbsd32_u_long	f_iosize;	/* optimal file system block size */
-	fsblkcnt_t	f_blocks;	/* number of blocks in file system */
-	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
-	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
-	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
-	fsfilcnt_t	f_files;	/* total file nodes in file system */
-	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
-	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
-	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
-	uint64_t  	f_syncreads;	/* count of sync reads since mount */
-	uint64_t  	f_syncwrites;	/* count of sync writes since mount */
-	uint64_t  	f_asyncreads;	/* count of async reads since mount */
-	uint64_t  	f_asyncwrites;	/* count of async writes since mount */
+	netbsd32_uint64	f_blocks;	/* number of blocks in file system */
+	netbsd32_uint64	f_bfree;	/* free blocks avail in file system */
+	netbsd32_uint64	f_bavail;	/* free blocks avail to non-root */
+	netbsd32_uint64	f_bresvd;	/* blocks reserved for root */
+	netbsd32_uint64	f_files;	/* total file nodes in file system */
+	netbsd32_uint64	f_ffree;	/* free file nodes in file system */
+	netbsd32_uint64	f_favail;	/* free file nodes avail to non-root */
+	netbsd32_uint64	f_fresvd;	/* file nodes reserved for root */
+	netbsd32_uint64	f_syncreads;	/* count of sync reads since mount */
+	netbsd32_uint64	f_syncwrites;	/* count of sync writes since mount */
+	netbsd32_uint64	f_asyncreads;	/* count of async reads since mount */
+	netbsd32_uint64	f_asyncwrites;	/* count of async writes since mount */
 	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
 	netbsd32_u_long	f_fsid;		/* Posix compatible fsid */
 	netbsd32_u_long	f_namemax;	/* maximum filename length */
@@ -589,7 +600,7 @@ struct netbsd32_statvfs {
 	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
 	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
 	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
-} __attribute__((packed));
+};
 
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;

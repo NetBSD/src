@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.43 2007/03/04 06:00:57 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.43.20.1 2007/11/06 23:23:12 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.43 2007/03/04 06:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.43.20.1 2007/11/06 23:23:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Init and attach the disk structure.
 	 */
-	sc->sc_disk.dk_name = sc->sc_dev.dv_xname;
+	disk_init(&sc->sc_disk, sc->sc_dev.dv_xname, NULL);
 	disk_attach(&sc->sc_disk);
 
 	/*

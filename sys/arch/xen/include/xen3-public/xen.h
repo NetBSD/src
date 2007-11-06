@@ -1,45 +1,57 @@
-/* $NetBSD: xen.h,v 1.4 2006/05/07 10:56:37 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.4.40.1 2007/11/06 23:24:18 matt Exp $ */
 /******************************************************************************
  * xen.h
  * 
  * Guest OS interface to Xen.
  * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
  * Copyright (c) 2004, K A Fraser
  */
 
 #ifndef __XEN_PUBLIC_XEN_H__
 #define __XEN_PUBLIC_XEN_H__
 
-#if defined(__i386__)
-#include "arch-x86_32.h"
-#elif defined(__x86_64__)
-#include "arch-x86_64.h"
+#include "xen-compat.h"
+
+#if defined(__i386__) || defined(__x86_64__)
+#include "arch-x86/xen.h"
 #elif defined(__ia64__)
 #include "arch-ia64.h"
+#elif defined(__powerpc__)
+#include "arch-powerpc.h"
 #else
 #error "Unsupported architecture"
 #endif
 
 /*
- * XEN "SYSTEM CALLS" (a.k.a. HYPERCALLS).
+ * HYPERCALLS
  */
 
-/*
- * x86_32: EAX = vector; EBX, ECX, EDX, ESI, EDI = args 1, 2, 3, 4, 5.
- *         EAX = return value
- *         (argument registers may be clobbered on return)
- * x86_64: RAX = vector; RDI, RSI, RDX, R10, R8, R9 = args 1, 2, 3, 4, 5, 6. 
- *         RAX = return value
- *         (argument registers not clobbered on return; RCX, R11 are)
- */
 #define __HYPERVISOR_set_trap_table        0
 #define __HYPERVISOR_mmu_update            1
 #define __HYPERVISOR_set_gdt               2
 #define __HYPERVISOR_stack_switch          3
 #define __HYPERVISOR_set_callbacks         4
 #define __HYPERVISOR_fpu_taskswitch        5
-#define __HYPERVISOR_sched_op_compat       6 /* compat as of 0x00030101 */
-#define __HYPERVISOR_dom0_op               7
+#define __HYPERVISOR_sched_op_compat       6 /* compat since 0x00030101 */
+#define __HYPERVISOR_platform_op           7
 #define __HYPERVISOR_set_debugreg          8
 #define __HYPERVISOR_get_debugreg          9
 #define __HYPERVISOR_update_descriptor    10
@@ -47,10 +59,10 @@
 #define __HYPERVISOR_multicall            13
 #define __HYPERVISOR_update_va_mapping    14
 #define __HYPERVISOR_set_timer_op         15
-#define __HYPERVISOR_event_channel_op     16
+#define __HYPERVISOR_event_channel_op_compat 16 /* compat since 0x00030202 */
 #define __HYPERVISOR_xen_version          17
 #define __HYPERVISOR_console_io           18
-#define __HYPERVISOR_physdev_op           19
+#define __HYPERVISOR_physdev_op_compat    19 /* compat since 0x00030202 */
 #define __HYPERVISOR_grant_table_op       20
 #define __HYPERVISOR_vm_assist            21
 #define __HYPERVISOR_update_va_mapping_otherdomain 22
@@ -61,18 +73,78 @@
 #define __HYPERVISOR_acm_op               27
 #define __HYPERVISOR_nmi_op               28
 #define __HYPERVISOR_sched_op             29
+#define __HYPERVISOR_callback_op          30
+#define __HYPERVISOR_xenoprof_op          31
+#define __HYPERVISOR_event_channel_op     32
+#define __HYPERVISOR_physdev_op           33
+#define __HYPERVISOR_hvm_op               34
+#define __HYPERVISOR_sysctl               35
+#define __HYPERVISOR_domctl               36
+#define __HYPERVISOR_kexec_op             37
+
+/* Architecture-specific hypercall definitions. */
+#define __HYPERVISOR_arch_0               48
+#define __HYPERVISOR_arch_1               49
+#define __HYPERVISOR_arch_2               50
+#define __HYPERVISOR_arch_3               51
+#define __HYPERVISOR_arch_4               52
+#define __HYPERVISOR_arch_5               53
+#define __HYPERVISOR_arch_6               54
+#define __HYPERVISOR_arch_7               55
+
+/*
+ * HYPERCALL COMPATIBILITY.
+ */
+
+/* New sched_op hypercall introduced in 0x00030101. */
+#if __XEN_INTERFACE_VERSION__ < 0x00030101
+#undef __HYPERVISOR_sched_op
+#define __HYPERVISOR_sched_op __HYPERVISOR_sched_op_compat
+#endif
+
+/* New event-channel and physdev hypercalls introduced in 0x00030202. */
+#if __XEN_INTERFACE_VERSION__ < 0x00030202
+#undef __HYPERVISOR_event_channel_op
+#define __HYPERVISOR_event_channel_op __HYPERVISOR_event_channel_op_compat
+#undef __HYPERVISOR_physdev_op
+#define __HYPERVISOR_physdev_op __HYPERVISOR_physdev_op_compat
+#endif
+
+/* New platform_op hypercall introduced in 0x00030204. */
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
+#define __HYPERVISOR_dom0_op __HYPERVISOR_platform_op
+#endif
 
 /* 
  * VIRTUAL INTERRUPTS
  * 
  * Virtual interrupts that a guest OS may receive from Xen.
+ * 
+ * In the side comments, 'V.' denotes a per-VCPU VIRQ while 'G.' denotes a
+ * global VIRQ. The former can be bound once per VCPU and cannot be re-bound.
+ * The latter can be allocated only once per guest: they must initially be
+ * allocated to VCPU0 but can subsequently be re-bound.
  */
-#define VIRQ_TIMER      0  /* Timebase update, and/or requested timeout.  */
-#define VIRQ_DEBUG      1  /* Request guest to dump debug info.           */
-#define VIRQ_CONSOLE    2  /* (DOM0) Bytes received on emergency console. */
-#define VIRQ_DOM_EXC    3  /* (DOM0) Exceptional event for some domain.   */
-#define VIRQ_DEBUGGER   6  /* (DOM0) A domain has paused for debugging.   */
-#define NR_VIRQS        8
+#define VIRQ_TIMER      0  /* V. Timebase update, and/or requested timeout.  */
+#define VIRQ_DEBUG      1  /* V. Request guest to dump debug info.           */
+#define VIRQ_CONSOLE    2  /* G. (DOM0) Bytes received on emergency console. */
+#define VIRQ_DOM_EXC    3  /* G. (DOM0) Exceptional event for some domain.   */
+#define VIRQ_TBUF       4  /* G. (DOM0) Trace buffer has records available.  */
+#define VIRQ_DEBUGGER   6  /* G. (DOM0) A domain has paused for debugging.   */
+#define VIRQ_XENOPROF   7  /* V. XenOprofile interrupt: new sample available */
+#define VIRQ_CON_RING   8  /* G. (DOM0) Bytes received on console            */
+
+/* Architecture-specific VIRQ definitions. */
+#define VIRQ_ARCH_0    16
+#define VIRQ_ARCH_1    17
+#define VIRQ_ARCH_2    18
+#define VIRQ_ARCH_3    19
+#define VIRQ_ARCH_4    20
+#define VIRQ_ARCH_5    21
+#define VIRQ_ARCH_6    22
+#define VIRQ_ARCH_7    23
+
+#define NR_VIRQS       24
 
 /*
  * MMU-UPDATE REQUESTS
@@ -162,11 +234,11 @@
 #define MMUEXT_NEW_USER_BASEPTR 15
 
 #ifndef __ASSEMBLY__
-typedef struct mmuext_op {
+struct mmuext_op {
     unsigned int cmd;
     union {
         /* [UN]PIN_TABLE, NEW_BASEPTR, NEW_USER_BASEPTR */
-        unsigned long mfn;
+        xen_pfn_t     mfn;
         /* INVLPG_LOCAL, INVLPG_ALL, SET_LDT */
         unsigned long linear_addr;
     } arg1;
@@ -174,10 +246,11 @@ typedef struct mmuext_op {
         /* SET_LDT */
         unsigned int nr_ents;
         /* TLB_FLUSH_MULTI, INVLPG_MULTI */
-        void *vcpumask;
+        XEN_GUEST_HANDLE_00030205(void) vcpumask;
     } arg2;
-} mmuext_op_t;
-DEFINE_GUEST_HANDLE(mmuext_op_t);
+};
+typedef struct mmuext_op mmuext_op_t;
+DEFINE_XEN_GUEST_HANDLE(mmuext_op_t);
 #endif
 
 /* These are passed as 'flags' to update_va_mapping. They can be ORed. */
@@ -202,10 +275,24 @@ DEFINE_GUEST_HANDLE(mmuext_op_t);
  */
 #define VMASST_CMD_enable                0
 #define VMASST_CMD_disable               1
+
+/* x86/32 guests: simulate full 4GB segment limits. */
 #define VMASST_TYPE_4gb_segments         0
+
+/* x86/32 guests: trap (vector 15) whenever above vmassist is used. */
 #define VMASST_TYPE_4gb_segments_notify  1
+
+/*
+ * x86 guests: support writes to bottom-level PTEs.
+ * NB1. Page-directory entries cannot be written.
+ * NB2. Guest must continue to remove all writable mappings of PTEs.
+ */
 #define VMASST_TYPE_writable_pagetables  2
-#define MAX_VMASST_TYPE 2
+
+/* x86/PAE guests: support PDPTs above 4GB. */
+#define VMASST_TYPE_pae_extended_cr3     3
+
+#define MAX_VMASST_TYPE                  3
 
 #ifndef __ASSEMBLY__
 
@@ -240,21 +327,23 @@ typedef uint16_t domid_t;
  * Send an array of these to HYPERVISOR_mmu_update().
  * NB. The fields are natural pointer/address size for this architecture.
  */
-typedef struct mmu_update {
+struct mmu_update {
     uint64_t ptr;       /* Machine address of PTE. */
     uint64_t val;       /* New contents of PTE.    */
-} mmu_update_t;
-DEFINE_GUEST_HANDLE(mmu_update_t);
+};
+typedef struct mmu_update mmu_update_t;
+DEFINE_XEN_GUEST_HANDLE(mmu_update_t);
 
 /*
  * Send an array of these to HYPERVISOR_multicall().
  * NB. The fields are natural register size for this architecture.
  */
-typedef struct multicall_entry {
+struct multicall_entry {
     unsigned long op, result;
     unsigned long args[6];
-} multicall_entry_t;
-DEFINE_GUEST_HANDLE(multicall_entry_t);
+};
+typedef struct multicall_entry multicall_entry_t;
+DEFINE_XEN_GUEST_HANDLE(multicall_entry_t);
 
 /*
  * Event channel endpoints per domain:
@@ -262,7 +351,7 @@ DEFINE_GUEST_HANDLE(multicall_entry_t);
  */
 #define NR_EVENT_CHANNELS (sizeof(unsigned long) * sizeof(unsigned long) * 64)
 
-typedef struct vcpu_time_info {
+struct vcpu_time_info {
     /*
      * Updates to the following values are preceded and followed by an
      * increment of 'version'. The guest can therefore detect updates by
@@ -278,16 +367,18 @@ typedef struct vcpu_time_info {
     uint64_t system_time;     /* Time, in nanosecs, since boot.    */
     /*
      * Current system time:
-     *   system_time + ((tsc - tsc_timestamp) << tsc_shift) * tsc_to_system_mul
+     *   system_time +
+     *   ((((tsc - tsc_timestamp) << tsc_shift) * tsc_to_system_mul) >> 32)
      * CPU frequency (Hz):
      *   ((10^9 << 32) / tsc_to_system_mul) >> tsc_shift
      */
     uint32_t tsc_to_system_mul;
     int8_t   tsc_shift;
     int8_t   pad1[3];
-} vcpu_time_info_t; /* 32 bytes */
+}; /* 32 bytes */
+typedef struct vcpu_time_info vcpu_time_info_t;
 
-typedef struct vcpu_info {
+struct vcpu_info {
     /*
      * 'evtchn_upcall_pending' is written non-zero by Xen to indicate
      * a pending notification for a particular VCPU. It is then cleared 
@@ -316,20 +407,23 @@ typedef struct vcpu_info {
     uint8_t evtchn_upcall_pending;
     uint8_t evtchn_upcall_mask;
     unsigned long evtchn_pending_sel;
-    arch_vcpu_info_t arch;
-    vcpu_time_info_t time;
-} vcpu_info_t; /* 64 bytes (x86) */
-
-/* Xen2 compat */
-#define vcpu_data vcpu_info
-#define evtchn_pending_sel vcpu_info[0].evtchn_pending_sel /* XXX smp */
+    struct arch_vcpu_info arch;
+    struct vcpu_time_info time;
+}; /* 64 bytes (x86) */
+#ifndef __XEN__
+typedef struct vcpu_info vcpu_info_t;
+#endif
 
 /*
  * Xen/kernel shared data -- pointer provided in start_info.
- * NB. We expect that this struct is smaller than a page.
+ *
+ * This structure is defined to be both smaller than a page, and the
+ * only data on the shared page, but may vary in actual size even within
+ * compatible Xen versions; guests should not rely on the size
+ * of this structure remaining constant.
  */
-typedef struct shared_info {
-    vcpu_info_t vcpu_info[MAX_VIRT_CPUS];
+struct shared_info {
+    struct vcpu_info vcpu_info[MAX_VIRT_CPUS];
 
     /*
      * A domain can create "event channels" on which it can send and receive
@@ -373,46 +467,55 @@ typedef struct shared_info {
     uint32_t wc_sec;          /* Secs  00:00:00 UTC, Jan 1, 1970.  */
     uint32_t wc_nsec;         /* Nsecs 00:00:00 UTC, Jan 1, 1970.  */
 
-    arch_shared_info_t arch;
+    struct arch_shared_info arch;
 
-} shared_info_t;
+};
+#ifndef __XEN__
+typedef struct shared_info shared_info_t;
+#endif
 
 /*
- * Start-of-day memory layout for the initial domain (DOM0):
+ * Start-of-day memory layout:
  *  1. The domain is started within contiguous virtual-memory region.
- *  2. The contiguous region begins and ends on an aligned 4MB boundary.
- *  3. The region start corresponds to the load address of the OS image.
- *     If the load address is not 4MB aligned then the address is rounded down.
- *  4. This the order of bootstrap elements in the initial virtual region:
+ *  2. The contiguous region ends on an aligned 4MB boundary.
+ *  3. This the order of bootstrap elements in the initial virtual region:
  *      a. relocated kernel image
  *      b. initial ram disk              [mod_start, mod_len]
  *      c. list of allocated page frames [mfn_list, nr_pages]
  *      d. start_info_t structure        [register ESI (x86)]
  *      e. bootstrap page tables         [pt_base, CR3 (x86)]
  *      f. bootstrap stack               [register ESP (x86)]
- *  5. Bootstrap elements are packed together, but each is 4kB-aligned.
- *  6. The initial ram disk may be omitted.
- *  7. The list of page frames forms a contiguous 'pseudo-physical' memory
+ *  4. Bootstrap elements are packed together, but each is 4kB-aligned.
+ *  5. The initial ram disk may be omitted.
+ *  6. The list of page frames forms a contiguous 'pseudo-physical' memory
  *     layout for the domain. In particular, the bootstrap virtual-memory
  *     region is a 1:1 mapping to the first section of the pseudo-physical map.
- *  8. All bootstrap elements are mapped read-writable for the guest OS. The
+ *  7. All bootstrap elements are mapped read-writable for the guest OS. The
  *     only exception is the bootstrap page table, which is mapped read-only.
- *  9. There is guaranteed to be at least 512kB padding after the final
+ *  8. There is guaranteed to be at least 512kB padding after the final
  *     bootstrap element. If necessary, the bootstrap virtual region is
  *     extended by an extra 4MB to ensure this.
  */
 
 #define MAX_GUEST_CMDLINE 1024
-typedef struct start_info {
+struct start_info {
     /* THE FOLLOWING ARE FILLED IN BOTH ON INITIAL BOOT AND ON RESUME.    */
     char magic[32];             /* "xen-<version>-<platform>".            */
     unsigned long nr_pages;     /* Total pages allocated to this domain.  */
     unsigned long shared_info;  /* MACHINE address of shared info struct. */
     uint32_t flags;             /* SIF_xxx flags.                         */
-    unsigned long store_mfn;    /* MACHINE page number of shared page.    */
+    xen_pfn_t store_mfn;        /* MACHINE page number of shared page.    */
     uint32_t store_evtchn;      /* Event channel for store communication. */
-    unsigned long console_mfn;  /* MACHINE address of console page.       */
-    uint32_t console_evtchn;    /* Event channel for console messages.    */
+    union {
+        struct {
+            xen_pfn_t mfn;      /* MACHINE page number of console page.   */
+            uint32_t  evtchn;   /* Event channel for console page.        */
+        } domU;
+        struct {
+            uint32_t info_off;  /* Offset of console_info struct.         */
+            uint32_t info_size; /* Size of console_info struct from start.*/
+        } dom0;
+    } console;
     /* THE FOLLOWING ARE ONLY FILLED IN ON INITIAL BOOT (NOT RESUME).     */
     unsigned long pt_base;      /* VIRTUAL address of page directory.     */
     unsigned long nr_pt_frames; /* Number of bootstrap p.t. frames.       */
@@ -420,19 +523,63 @@ typedef struct start_info {
     unsigned long mod_start;    /* VIRTUAL address of pre-loaded module.  */
     unsigned long mod_len;      /* Size (bytes) of pre-loaded module.     */
     int8_t cmd_line[MAX_GUEST_CMDLINE];
-} start_info_t;
+};
+typedef struct start_info start_info_t;
+
+/* New console union for dom0 introduced in 0x00030203. */
+#if __XEN_INTERFACE_VERSION__ < 0x00030203
+#define console_mfn    console.domU.mfn
+#define console_evtchn console.domU.evtchn
+#endif
 
 /* These flags are passed in the 'flags' field of start_info_t. */
 #define SIF_PRIVILEGED    (1<<0)  /* Is the domain privileged? */
 #define SIF_INITDOMAIN    (1<<1)  /* Is this the initial control domain? */
 
-typedef uint64_t cpumap_t;
+typedef struct dom0_vga_console_info {
+    uint8_t video_type; /* DOM0_VGA_CONSOLE_??? */
+#define XEN_VGATYPE_TEXT_MODE_3 0x03
+#define XEN_VGATYPE_VESA_LFB    0x23
+
+    union {
+        struct {
+            /* Font height, in pixels. */
+            uint16_t font_height;
+            /* Cursor location (column, row). */
+            uint16_t cursor_x, cursor_y;
+            /* Number of rows and columns (dimensions in characters). */
+            uint16_t rows, columns;
+        } text_mode_3;
+
+        struct {
+            /* Width and height, in pixels. */
+            uint16_t width, height;
+            /* Bytes per scan line. */
+            uint16_t bytes_per_line;
+            /* Bits per pixel. */
+            uint16_t bits_per_pixel;
+            /* LFB physical address, and size (in units of 64kB). */
+            uint32_t lfb_base;
+            uint32_t lfb_size;
+            /* RGB mask offsets and sizes, as defined by VBE 1.2+ */
+            uint8_t  red_pos, red_size;
+            uint8_t  green_pos, green_size;
+            uint8_t  blue_pos, blue_size;
+            uint8_t  rsvd_pos, rsvd_size;
+        } vesa_lfb;
+    } u;
+} dom0_vga_console_info_t;
 
 typedef uint8_t xen_domain_handle_t[16];
 
 /* Turn a plain number into a C unsigned long constant. */
 #define __mk_unsigned_long(x) x ## UL
 #define mk_unsigned_long(x) __mk_unsigned_long(x)
+
+DEFINE_XEN_GUEST_HANDLE(uint8_t);
+DEFINE_XEN_GUEST_HANDLE(uint16_t);
+DEFINE_XEN_GUEST_HANDLE(uint32_t);
+DEFINE_XEN_GUEST_HANDLE(uint64_t);
 
 #else /* __ASSEMBLY__ */
 
@@ -441,7 +588,15 @@ typedef uint8_t xen_domain_handle_t[16];
 
 #endif /* !__ASSEMBLY__ */
 
-#include "xen-compat.h"
+/* Default definitions for macros used by domctl/sysctl. */
+#if defined(__XEN__) || defined(__XEN_TOOLS__)
+#ifndef uint64_aligned_t
+#define uint64_aligned_t uint64_t
+#endif
+#ifndef XEN_GUEST_HANDLE_64
+#define XEN_GUEST_HANDLE_64(name) XEN_GUEST_HANDLE(name)
+#endif
+#endif
 
 #endif /* __XEN_PUBLIC_XEN_H__ */
 

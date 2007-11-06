@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/07/29 14:31:24 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2007/11/06 23:24:41 matt Exp $
 
 INCSDIR= /usr/include/zaurus
 

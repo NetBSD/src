@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.8 2007/06/17 05:53:01 tsutsui Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.8.10.1 2007/11/06 23:19:41 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.

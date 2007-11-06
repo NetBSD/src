@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.12 2007/05/21 16:37:03 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.12.10.1 2007/11/06 23:18:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

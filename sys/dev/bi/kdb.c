@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.40 2007/03/04 06:01:45 christos Exp $ */
+/*	$NetBSD: kdb.c,v 1.40.16.1 2007/11/06 23:25:43 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.40 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.40.16.1 2007/11/06 23:25:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.40 2007/03/04 06:01:45 christos Exp $");
 #include <machine/pte.h>
 #include <machine/pcb.h>
 #endif
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>

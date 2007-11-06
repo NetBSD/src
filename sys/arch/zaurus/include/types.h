@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2007/07/14 21:48:24 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.4.10.1 2007/11/06 23:24:42 matt Exp $	*/
 
 #ifndef _ZAURUS_TYPES_H_
 #define	_ZAURUS_TYPES_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.4 2007/06/26 19:41:11 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.4.12.1 2007/11/06 23:24:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4 2007/06/26 19:41:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4.12.1 2007/11/06 23:24:01 matt Exp $");
 
 #include <sys/param.h>
 
@@ -74,14 +74,14 @@ spllower(int nlevel)
 	__insn_barrier();
 
 	imask = IUNMASK(ci, nlevel);
-	psl = read_psl();
-	disable_intr();
+	psl = x86_read_psl();
+	x86_disable_intr();
 	if (ci->ci_ipending & imask) {
 		Xspllower(nlevel);
 		/* Xspllower does enable_intr() */
 	} else {
 		ci->ci_ilevel = nlevel;
-		write_psl(psl);
+		x86_write_psl(psl);
 	}
 }
 
@@ -98,4 +98,35 @@ softintr(int sir)
 	struct cpu_info *ci = curcpu();
 
 	__asm volatile("orl %1, %0" : "=m"(ci->ci_ipending) : "ir" (1 << sir));
+}
+
+void
+x86_disable_intr(void)
+{
+	__cli();
+}
+
+void
+x86_enable_intr(void)
+{
+	__sti();
+}
+
+u_long
+x86_read_psl(void)
+{
+
+	return (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask);
+}
+
+void
+x86_write_psl(u_long psl)
+{
+
+	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = psl;
+	x86_lfence();
+	if (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending &&
+	    psl == 0) {
+	    	hypervisor_force_callback();
+	}
 }

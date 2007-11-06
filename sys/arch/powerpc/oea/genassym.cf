@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2007/05/18 11:16:27 rjs Exp $
+#	$NetBSD: genassym.cf,v 1.11.10.1 2007/11/06 23:20:43 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.

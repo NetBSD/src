@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,19 +81,17 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
- 
-#include <uvm/uvm_extern.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
-
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-
-#include <machine/pmap.h>
-
 #include <machine/mpbiosvar.h>
+#include <machine/pio.h>
+#include <machine/pmap.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"
@@ -121,7 +119,6 @@ static void ioapic_delroute(struct pic *, struct cpu_info *, int, int, int);
 int apic_verbose = 0;
 
 int ioapic_bsp_id = 0;
-int ioapic_cold = 1;
 
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
@@ -132,8 +129,8 @@ ioapic_lock(struct ioapic_softc *sc)
 {
 	u_long flags;
 
-	flags = read_psl();
-	disable_intr();
+	flags = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&sc->sc_pic.pic_lock);
 	return flags;
 }
@@ -142,7 +139,7 @@ static inline void
 ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 {
 	__cpu_simple_unlock(&sc->sc_pic.pic_lock);
-	write_psl(flags);
+	x86_write_psl(flags);
 }
 
 #ifndef _IOAPIC_CUSTOM_RW
@@ -344,10 +341,25 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_WAITOK);
 
 	for (i=0; i<sc->sc_apic_sz; i++) {
+		uint32_t redlo;
+
 		sc->sc_pins[i].ip_next = NULL;
 		sc->sc_pins[i].ip_map = NULL;
 		sc->sc_pins[i].ip_vector = 0;
 		sc->sc_pins[i].ip_type = IST_NONE;
+
+		/* Mask all pins by default. */
+		redlo = IOAPIC_REDLO_MASK;
+		/*
+		 * ISA interrupts are connect to pin 0-15 and
+		 * edge triggered on high, which is the default.
+		 *
+		 * Expect all other interrupts to be PCI-like
+		 * level triggered on low.
+		 */  
+		if (i >= 16)
+			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
+		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
 	}
 	
 	/*
@@ -399,7 +411,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	map = pp->ip_map;
 	redlo = map == NULL ? IOAPIC_REDLO_MASK : map->redir;
 	delmode = (redlo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
-	
+
 	/* XXX magic numbers */
 	if ((delmode != 0) && (delmode != 1))
 		;
@@ -433,8 +445,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 				redlo &= ~IOAPIC_REDLO_ACTLO;
 		}
 	}
-	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
+	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	if (mp_verbose)
 		ioapic_print_redir(sc, "int", pin);
 }
@@ -446,12 +458,6 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 void
 ioapic_enable(void)
 {
-	int p;
-	struct ioapic_softc *sc;
-	struct ioapic_pin *ip;
-
-	ioapic_cold = 0;
-
 	if (ioapics == NULL)
 		return;
 
@@ -460,17 +466,6 @@ ioapic_enable(void)
 		    ioapics->sc_pic.pic_dev.dv_xname);
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
-	}
-			
-	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		aprint_debug("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
-
-		for (p = 0; p < sc->sc_apic_sz; p++) {
-			ip = &sc->sc_pins[p];
-			if (ip->ip_type != IST_NONE)
-				apic_set_redir(sc, p, ip->ip_vector,
-				    ip->ip_cpu);
-		}
 	}
 }
 
@@ -481,8 +476,6 @@ ioapic_hwmask(struct pic *pic, int pin)
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	u_long flags;
 
-	if (ioapic_cold)
-		return;
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo |= IOAPIC_REDLO_MASK;
@@ -497,9 +490,6 @@ ioapic_hwunmask(struct pic *pic, int pin)
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	u_long flags;
 
-	if (ioapic_cold) {
-		return;
-	}
 	flags = ioapic_lock(sc);
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
 	redlo &= ~IOAPIC_REDLO_MASK;
@@ -519,9 +509,6 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	pp->ip_type = type;
 	pp->ip_vector = idtvec;
 	pp->ip_cpu = ci;
-	if (ioapic_cold) {
-		return;
-	}
 	apic_set_redir(sc, pin, idtvec, ci);
 }
 
@@ -529,19 +516,12 @@ static void
 ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
     int idtvec, int type)
 {
-	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
-	struct ioapic_pin *pp;
-
-	if (ioapic_cold) {
-		pp = &sc->sc_pins[pin];
-		pp->ip_type = IST_NONE;
-		return;
-	}
 	ioapic_hwmask(pic, pin);
 }
 
 #ifdef DDB
 void ioapic_dump(void);
+void ioapic_dump_raw(void);
 
 void
 ioapic_dump(void)
@@ -556,6 +536,27 @@ ioapic_dump(void)
 			if (ip->ip_type != IST_NONE)
 				ioapic_print_redir(sc, "dump", p);
 		}
+	}
+}
+
+void
+ioapic_dump_raw(void)
+{
+	struct ioapic_softc *sc;
+	int i;
+	uint32_t reg;
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		printf("Register dump of %s\n", sc->sc_pic.pic_dev.dv_xname);
+		i = 0;
+		do {
+			if (i % 0x08 == 0)
+				printf("%02x", i);
+			reg = ioapic_read(sc, i);
+			printf(" %08x", (u_int)reg);
+			if (++i % 0x08 == 0)
+				printf("\n");
+		} while (i < 0x40);
 	}
 }
 #endif

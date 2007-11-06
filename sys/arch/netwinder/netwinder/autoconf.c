@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2007/07/30 12:25:14 jmmv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.6.1 2007/11/06 23:19:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2007/07/30 12:25:14 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.6.1 2007/11/06 23:19:36 matt Exp $");
 
 #include "opt_md.h"
 

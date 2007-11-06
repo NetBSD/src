@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.14 2007/07/09 20:52:30 ad Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.14.10.1 2007/11/06 23:22:22 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.14 2007/07/09 20:52:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.14.10.1 2007/11/06 23:22:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

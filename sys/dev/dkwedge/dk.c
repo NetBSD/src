@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.28 2007/07/29 12:50:20 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.28.6.1 2007/11/06 23:25:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28 2007/07/29 12:50:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28.6.1 2007/11/06 23:25:57 matt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -400,7 +400,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 		free(sc, M_DKWEDGE);
 		return (ENOMEM);
 	}
-	sc->sc_dk.dk_name = sc->sc_dev->dv_xname;
 
 	/* Return the devname to the caller. */
 	strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
@@ -410,6 +409,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 * of state to RUNNING atomic.
 	 */
 
+	disk_init(&sc->sc_dk, sc->sc_dev->dv_xname, NULL);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */

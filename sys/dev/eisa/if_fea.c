@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.34 2007/03/04 06:01:46 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.34.16.1 2007/11/06 23:26:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.34 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.34.16.1 2007/11/06 23:26:03 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.34 2007/03/04 06:01:46 christos Exp $")
 #include <dev/pdq/pdqvar.h>
 #include <dev/pdq/pdqreg.h>
 #elif defined(__NetBSD__)
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/ic/pdqvar.h>
 #include <dev/ic/pdqreg.h>

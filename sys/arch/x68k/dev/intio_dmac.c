@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.26 2007/05/12 06:31:18 isaki Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.26.10.1 2007/11/06 23:23:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.26 2007/05/12 06:31:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.26.10.1 2007/11/06 23:23:21 matt Exp $");
 
 #include "opt_m680x0.h"
 

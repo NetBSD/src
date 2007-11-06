@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 2007/08/21 05:29:18 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.42.2.1 2007/11/06 23:18:00 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.42.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -51,12 +51,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options

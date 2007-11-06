@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.33 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.33.24.1 2007/11/06 23:26:01 matt Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.33 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.33.24.1 2007/11/06 23:26:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.33 2006/11/16 01:32:50 christos Exp $
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

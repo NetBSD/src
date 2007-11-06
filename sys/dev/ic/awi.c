@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.75 2007/08/26 22:45:55 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.75.2.1 2007/11/06 23:26:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.75 2007/08/26 22:45:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.75.2.1 2007/11/06 23:26:27 matt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -136,8 +136,8 @@ __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #ifdef __NetBSD__
 #include <dev/ic/am79c930reg.h>
@@ -954,9 +954,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef __FreeBSD__
 		error = ENETRESET;	/* XXX */
 #else
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
+		error = ether_ioctl(ifp, cmd, data);
 #endif
 		if (error == ENETRESET) {
 			/* do not rescan */

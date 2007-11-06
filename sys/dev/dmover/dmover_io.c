@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.27 2007/07/12 20:39:56 rmind Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.27.8.1 2007/11/06 23:25:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.27 2007/07/12 20:39:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.27.8.1 2007/11/06 23:25:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -448,6 +448,7 @@ dmio_usrreq_done(struct dmover_request *dreq)
 		dmover_request_free(dreq);
 		if (ds->ds_nreqs == 0) {
 			simple_unlock(&ds->ds_slock);
+			seldestroy(&ds->ds_selq);
 			pool_put(&dmio_state_pool, ds);
 			return;
 		}
@@ -710,6 +711,7 @@ dmio_close(struct file *fp, struct lwp *l)
 	if (ds->ds_nreqs == 0) {
 		dses = ds->ds_session;
 		simple_unlock(&ds->ds_slock);
+		seldestroy(&ds->ds_selq);
 		pool_put(&dmio_state_pool, ds);
 	} else {
 		dses = NULL;
@@ -761,6 +763,7 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	simple_lock_init(&ds->ds_slock);
 	TAILQ_INIT(&ds->ds_pending);
 	TAILQ_INIT(&ds->ds_complete);
+	selinit(&ds->ds_selq);
 
 	return fdclone(l, fp, fd, flag, &dmio_fileops, ds);
 }

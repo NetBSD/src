@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.18 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.18.50.1 2007/11/06 23:18:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,66 +30,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-specific definitions for PCI autoconfiguration.
- */
+#ifndef MACPPC_PCI_MACHDEP_H
+#define MACPPC_PCI_MACHDEP_H
 
-/*
- * Forward declarations.
- */
-struct pci_attach_args;
+#include <powerpc/pci_machdep.h>
 
-/*
- * macppc-specific PCI structure and type definitions.
- * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- *
- * Configuration tag; created from a {bus,device,function} triplet by
- * pci_make_tag(), and passed to pci_conf_read() and pci_conf_write().
- * We could instead always pass the {bus,device,function} triplet to
- * the read and write routines, but this would cause extra overhead.
- */
-
-/*
- * Types provided to machine-independent PCI code
- */
-typedef struct pci_bridge *pci_chipset_tag_t;
-typedef int pcitag_t;
-typedef int pci_intr_handle_t;
-
-struct pci_bridge {
-	int node;
-	u_int *addr;
-	u_int *data;
-	int bus;
-	bus_space_tag_t memt;
-	bus_space_tag_t iot;
-	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
-	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-};
-
-extern struct macppc_bus_dma_tag pci_bus_dma_tag;
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook(struct device *, struct device *,
+void	macppc_pci_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
-int		pci_bus_maxdevs(pci_chipset_tag_t, int);
-pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
-void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *);
-pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
-		    pcireg_t);
-int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
-const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 /*
  * Internal functions.
  */
-void		pci_init(int);
-int		pcidev_to_ofdev(pci_chipset_tag_t, pcitag_t);
+void	pci_init(int);
+int	pcidev_to_ofdev(pci_chipset_tag_t, pcitag_t);
+void	macppc_pci_get_chipset_tag(pci_chipset_tag_t);
+
+#endif /* MACPPC_PCI_MACHDEP_H */

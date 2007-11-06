@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.53 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: aha.c,v 1.53.16.1 2007/11/06 23:26:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.53 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.53.16.1 2007/11/06 23:26:18 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.53 2007/03/04 06:01:48 christos Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

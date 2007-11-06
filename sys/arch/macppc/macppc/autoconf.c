@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2007/08/07 01:59:23 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58.2.1 2007/11/06 23:18:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2007/08/07 01:59:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.2.1 2007/11/06 23:18:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2007/08/07 01:59:23 macallan Exp $
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -63,7 +62,7 @@ extern char bootpath[256];
 char cbootpath[256];
 int    console_node = 0, console_instance = 0;
 
-u_int *heathrow_FCR = NULL;
+volatile uint32_t *heathrow_FCR = NULL;
 
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
@@ -570,6 +569,15 @@ copyprops(int node, prop_dictionary_t dict)
 	}
 	OF_to_dataprop(dict, console_node, "EDID", "EDID");
 	add_model_specifics(dict);
+
+	temp = 0;
+	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+
+		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		    sizeof(temp));
+	}
+	if (temp != 0)
+		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
 }
 
 static void

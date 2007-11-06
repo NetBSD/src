@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.21 2007/08/07 11:28:26 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.21.2.1 2007/11/06 23:23:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.21 2007/08/07 11:28:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.21.2.1 2007/11/06 23:23:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -75,10 +75,11 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.21 2007/08/07 11:28:26 ad Exp $");
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
-void		lapic_delay(int);
-void		lapic_microtime(struct timeval *);
-static u_int32_t lapic_gettick(void);
+/* Referenced from vector.S */
 void		lapic_clockintr(void *, struct intrframe *);
+
+static void	lapic_delay(unsigned int);
+static uint32_t	lapic_gettick(void);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -107,7 +108,7 @@ lapic_map(lapic_base)
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
 
-	disable_intr();
+	x86_disable_intr();
 	s = lapic_tpr;
 
 	/*
@@ -128,7 +129,7 @@ lapic_map(lapic_base)
 #endif
 
 	lapic_tpr = s;
-	enable_intr();
+	x86_enable_intr();
 }
 
 /*
@@ -211,6 +212,10 @@ lapic_boot_init(lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
+	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
@@ -365,7 +370,7 @@ lapic_initclocks()
 	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
 }
 
-extern int gettick(void);	/* XXX put in header file */
+extern unsigned int gettick(void);	/* XXX put in header file */
 extern int rtclock_tval; /* XXX put in header file */
 extern void (*initclock_func)(void); /* XXX put in header file */
 
@@ -451,7 +456,7 @@ lapic_calibrate_timer(ci)
 		/*
 		 * Compute fixed-point ratios between cycles and
 		 * microseconds to avoid having to do any division
-		 * in lapic_delay and lapic_microtime.
+		 * in lapic_delay.
 		 */
 
 		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
@@ -486,8 +491,8 @@ lapic_calibrate_timer(ci)
  * delay for N usec.
  */
 
-void lapic_delay(usec)
-	int usec;
+static void
+lapic_delay(unsigned int usec)
 {
 	int32_t xtick, otick;
 	int64_t deltat;		/* XXX may want to be 64bit */

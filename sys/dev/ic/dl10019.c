@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.7 2002/10/22 00:01:55 fair Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.7.80.1 2007/11/06 23:26:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.7 2002/10/22 00:01:55 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.7.80.1 2007/11/06 23:26:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.7 2002/10/22 00:01:55 fair Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>

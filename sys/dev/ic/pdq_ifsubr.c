@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.48 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.48.16.1 2007/11/06 23:27:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.48 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.48.16.1 2007/11/06 23:27:02 matt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -463,12 +463,7 @@ pdq_ifioctl(
 	    /*
 	     * Update multicast listeners
 	     */
-	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, PDQ_FDDICOM(sc));
-	    else
-		error = ether_delmulti((struct ifreq *)data, PDQ_FDDICOM(sc));
-
-	    if (error == ENETRESET) {
+	    if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		if (sc->sc_if.if_flags & IFF_RUNNING)
 		    pdq_run(sc->sc_pdq);
 		error = 0;

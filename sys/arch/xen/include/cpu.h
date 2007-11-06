@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2007/05/17 14:51:36 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.10.1 2007/11/06 23:24:03 matt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -133,7 +133,6 @@ struct cpu_info {
 	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
-	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
@@ -270,7 +269,7 @@ extern void	cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -352,12 +351,12 @@ void	lwp_trampoline(void);
 #ifdef ISA_CLOCK
 void	initrtclock(void);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #else
 void	startrtclock(void);
-void	xen_delay(int);
+void	xen_delay(unsigned int);
 void	xen_initclocks(void);
 #endif
 

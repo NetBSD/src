@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.10 2006/03/29 06:37:35 thorpej Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.10.34.1 2007/11/06 23:26:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.10 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.10.34.1 2007/11/06 23:26:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/config_hook.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.36 2007/05/21 14:05:02 tsutsui Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.36.10.1 2007/11/06 23:22:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.36 2007/05/21 14:05:02 tsutsui Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.36.10.1 2007/11/06 23:22:06 matt Exp $")
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.10 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.10.16.1 2007/11/06 23:26:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.10 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.10.16.1 2007/11/06 23:26:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.10 2007/03/04 06:01:59 christos Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/ic/oosiopreg.h>
 #include <dev/ic/oosiopvar.h>

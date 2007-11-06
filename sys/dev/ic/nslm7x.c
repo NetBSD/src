@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.39 2007/08/08 10:09:43 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.39.2.1 2007/11/06 23:26:58 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39 2007/08/08 10:09:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39.2.1 2007/11/06 23:26:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39 2007/08/08 10:09:43 xtraeme Exp $");
 #include <sys/conf.h>
 #include <sys/time.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39 2007/08/08 10:09:43 xtraeme Exp $");
 
 #include <dev/ic/nslm7xvar.h>
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -75,19 +75,22 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39 2007/08/08 10:09:43 xtraeme Exp $");
 #define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
 #define NRFACT(x, y)	(-RFACT_NONE * (x) / (y))
 
+#define LM_REFRESH_TIMO	(2 * hz)	/* 2 seconds */
+
 static int lm_match(struct lm_softc *);
 static int wb_match(struct lm_softc *);
 static int def_match(struct lm_softc *);
 
+static void lm_refresh(void *);
+
 static void lm_generic_banksel(struct lm_softc *, int);
 static void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
-
-static void lm_refresh_sensor_data(struct lm_softc *, int);
+static void lm_refresh_sensor_data(struct lm_softc *);
 static void lm_refresh_volt(struct lm_softc *, int);
 static void lm_refresh_temp(struct lm_softc *, int);
 static void lm_refresh_fanrpm(struct lm_softc *, int);
 
-static void wb_refresh_sensor_data(struct lm_softc *, int);
+static void wb_refresh_sensor_data(struct lm_softc *);
 static void wb_w83637hf_refresh_vcore(struct lm_softc *, int);
 static void wb_refresh_nvolt(struct lm_softc *, int);
 static void wb_w83627ehf_refresh_nvolt(struct lm_softc *, int);
@@ -96,8 +99,6 @@ static void wb_refresh_fanrpm(struct lm_softc *, int);
 static void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 
 static void as_refresh_temp(struct lm_softc *, int);
-
-static int lm_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
@@ -1642,7 +1643,7 @@ lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
 
 	/* Perform LM78 reset */
-	//bus_space_write_1(iot, ioh, LMC_DATA, 0x80);
+	/* bus_space_write_1(iot, ioh, LMC_DATA, 0x80); */
 
 	/* XXX - Why do I have to reselect the register? */
 	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
@@ -1675,28 +1676,54 @@ lm_attach(struct lm_softc *lmsc)
 	/* Start the monitoring loop */
 	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x01);
 
-	/* Indicate we have never read the registers */
-	timerclear(&lmsc->lastread);
-
 	/* Initialize sensors */
-	for (i = 0; i < lmsc->numsensors; ++i) {
+	for (i = 0; i < lmsc->numsensors; i++) {
 		lmsc->sensors[i].sensor = i;
 		lmsc->sensors[i].state = ENVSYS_SVALID;
 	}
 
 	/*
+	 * Setup the callout to refresh sensor data every 2 seconds.
+	 */
+	callout_init(&lmsc->sc_callout, 0);
+	callout_setfunc(&lmsc->sc_callout, lm_refresh, lmsc);
+	callout_schedule(&lmsc->sc_callout, LM_REFRESH_TIMO);
+
+	/*
 	 * Hook into the System Monitor.
 	 */
 	lmsc->sc_sysmon.sme_sensor_data = lmsc->sensors;
-	lmsc->sc_sysmon.sme_cookie = lmsc;
 	lmsc->sc_sysmon.sme_name = lmsc->sc_dev.dv_xname;
-	lmsc->sc_sysmon.sme_gtredata = lm_gtredata;
-
 	lmsc->sc_sysmon.sme_nsensors = lmsc->numsensors;
+	lmsc->sc_sysmon.sme_flags |= SME_DISABLE_GTREDATA;
 
 	if (sysmon_envsys_register(&lmsc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
 		    lmsc->sc_dev.dv_xname);
+}
+
+/*
+ * Stop, destroy the callout and unregister the driver with the
+ * sysmon_envsys(9) framework.
+ */
+void
+lm_detach(struct lm_softc *lmsc)
+{
+	callout_stop(&lmsc->sc_callout);
+	callout_destroy(&lmsc->sc_callout);
+	sysmon_envsys_unregister(&lmsc->sc_sysmon);
+}
+
+static void
+lm_refresh(void *arg)
+{
+	struct lm_softc *lmsc = arg;
+
+	if (lmsc->numsensors != lmsc->sc_sysmon.sme_nsensors)
+		lmsc->numsensors = lmsc->sc_sysmon.sme_nsensors;
+
+	lmsc->refresh_sensor_data(lmsc);
+	callout_schedule(&lmsc->sc_callout, LM_REFRESH_TIMO);
 }
 
 static int
@@ -1758,7 +1785,6 @@ wb_match(struct lm_softc *sc)
 	/* Read vendor ID */
 	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
 	lm_generic_banksel(sc, WB_BANKSEL_HBAC);
-
 	vendid = (*sc->lm_readreg)(sc, WB_VENDID) << 8;
 	lm_generic_banksel(sc, 0);
 	vendid |= (*sc->lm_readreg)(sc, WB_VENDID);
@@ -1870,10 +1896,12 @@ lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
 }
 
 static void
-lm_refresh_sensor_data(struct lm_softc *sc, int n)
+lm_refresh_sensor_data(struct lm_softc *sc)
 {
-	/* Refresh our stored data for the current sensor */
-	sc->lm_sensors[n].refresh(sc, n);
+	int i;
+
+	for (i = 0; i < sc->numsensors; i++)
+		sc->lm_sensors[i].refresh(sc, i);
 }
 
 static void
@@ -1896,6 +1924,8 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 		sc->sensors[n].value_cur /= 10;
 		sc->sensors[n].rfact = sc->lm_sensors[n].rfact;
 	}
+
+	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	    __func__, n, data, sc->sensors[n].value_cur));
 }
@@ -1955,14 +1985,13 @@ lm_refresh_fanrpm(struct lm_softc *sc, int n)
 }
 
 static void
-wb_refresh_sensor_data(struct lm_softc *sc, int n)
+wb_refresh_sensor_data(struct lm_softc *sc)
 {
 	int banksel, bank, i;
 
 	/*
 	 * Properly save and restore bank selection register.
 	 */
-
 	banksel = bank = sc->lm_readreg(sc, WB_BANKSEL);
 	for (i = 0; i < sc->numsensors; i++) {
 		if (bank != sc->lm_sensors[i].bank) {
@@ -2175,22 +2204,4 @@ as_refresh_temp(struct lm_softc *sc, int n)
 	}
 	DPRINTF(("%s: temp[%d] data=0x%x value_cur=%d\n",
 	    __func__, n, data, sc->sensors[n].value_cur));
-}
-
-static int
-lm_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
-{
-	static const struct timeval onepointfive = { 1, 500000 };
-	struct timeval t, utv;
-	struct lm_softc *sc = sme->sme_cookie;
-
-	/* read new values at most once every 1.5 seconds */
-	getmicrouptime(&utv);
-	timeradd(&sc->lastread, &onepointfive, &t);
-	if (timercmp(&utv, &t, >)) {
-		sc->lastread = utv;
-		sc->refresh_sensor_data(sc, edata->sensor);
-	}
-
-	return 0;
 }

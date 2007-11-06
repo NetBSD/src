@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.51 2007/06/12 03:34:29 mhitch Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.51.10.1 2007/11/06 23:18:12 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.51 2007/06/12 03:34:29 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.51.10.1 2007/11/06 23:18:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

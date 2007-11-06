@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.20 2005/12/11 12:21:27 christos Exp $
+ *	$Id: isac.c,v 1.20.46.1 2007/11/06 23:26:45 matt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.20 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.20.46.1 2007/11/06 23:26:45 matt Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.20 2005/12/11 12:21:27 christos Exp $");
 #include <i386/isa/isa_device.h>
 #else
 #ifndef __bsdi__
-#include <machine/bus.h>
+#include <sys/bus.h>
 #endif
 #include <sys/device.h>
 #endif

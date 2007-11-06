@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.61 2006/09/27 17:10:34 cube Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.61.28.1 2007/11/06 23:17:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,11 +102,11 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t)(PDSLOT_PTE << PDSHIFT))
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)(PDIR_SLOT_PTE << L2_SHIFT))
 #define	VM_MAX_ADDRESS		\
-		((vaddr_t)((PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT)))
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_KERN << PDSHIFT))
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_APTE << PDSHIFT))
+	((vaddr_t)((PDIR_SLOT_PTE << L2_SHIFT) + (PDIR_SLOT_PTE << L1_SHIFT)))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDIR_SLOT_KERN << L2_SHIFT))
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDIR_SLOT_APTE << L2_SHIFT))
 
 /*
  * The address to which unspecified mapping requests default
@@ -135,21 +135,22 @@
 #define	VM_FREELIST_FIRST16	1
 
 #define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg)					\
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));		\
-	simple_lock_init(&(pg)->mdpage.mp_pvhead.pvh_lock);	\
+#define	VM_MDPAGE_INIT(pg)							\
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
+	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
 	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
 
 struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv in this tree */
+	kmutex_t pvh_lock;		/* locks every pv in this tree */
 	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
 					/* head of tree (locked by pvh_lock) */
 };
 
 struct vm_page_md {
 	struct pv_head mp_pvhead;
+	struct vm_page *mp_link;
 	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
 };
 

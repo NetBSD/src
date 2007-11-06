@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.126.2.1 2007/11/06 23:25:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.126.2.1 2007/11/06 23:25:11 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2276,40 +2276,44 @@ netbsd32_adjust_limits(struct proc *p)
 		{ RLIMIT_DATA,	MAXDSIZ32 },
 		{ RLIMIT_STACK, MAXSSIZ32 },
 	};
-	struct rlimit val[__arraycount(lm)];
 	size_t i;
-	int needcopy = 0;
+	struct plimit *lim;
+	struct rlimit *rlim;
 
-	mutex_enter(&p->p_mutex);
-	for (i = 0; i < __arraycount(val); i++) {
-		val[i] = p->p_rlimit[lm[i].id];
-		if (LIMITCHECK(val[i].rlim_cur, lm[i].lim)) {
-			val[i].rlim_cur = lm[i].lim;
-			needcopy++;
-		}
-		if (LIMITCHECK(val[i].rlim_max, lm[i].lim)) {
-			val[i].rlim_max = lm[i].lim;
-			needcopy++;
-		}
+	/*
+	 * We can only reduce the current limits, we cannot stop external
+	 * processes from changing them (eg via sysctl) later on.
+	 * So there is no point trying to lock out such changes here.
+	 *
+	 * If we assume that rlim_cur/max are accessed using atomic
+	 * operations, we don't need to lock against any other updates
+	 * that might happen if the plimit structure is shared writable
+	 * between multiple processes.
+	 */
+
+	/* Scan to determine is any limits are out of range */
+	lim = p->p_limit;
+	for (i = 0; ; i++) {
+		if (i >= __arraycount(lm))
+			/* All in range */
+			return;
+		rlim = lim->pl_rlimit + lm[i].id;
+		if (LIMITCHECK(rlim->rlim_cur, lm[i].lim))
+			break;
+		if (LIMITCHECK(rlim->rlim_max, lm[i].lim))
+			break;
 	}
 
-	if (needcopy == 0) {
-		mutex_exit(&p->p_mutex);
-		return;
+	lim_privatise(p, false);
+
+	lim = p->p_limit;
+	for (i = 0; i < __arraycount(lm); i++) {
+		rlim = lim->pl_rlimit + lm[i].id;
+		if (LIMITCHECK(rlim->rlim_cur, lm[i].lim))
+			rlim->rlim_cur = lm[i].lim;
+		if (LIMITCHECK(rlim->rlim_max, lm[i].lim))
+			rlim->rlim_max = lm[i].lim;
 	}
-
-	if (p->p_limit->p_refcnt > 1 &&
-	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-		struct plimit *oldplim;
-		oldplim = p->p_limit;
-		p->p_limit = limcopy(p);
-		limfree(oldplim);
-	}
-
-	for (i = 0; i < __arraycount(val); i++)
-		p->p_rlimit[lm[i].id] = val[i];
-
-	mutex_exit(&p->p_mutex);
 }
 
 int

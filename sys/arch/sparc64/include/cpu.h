@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2007/08/25 19:16:10 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.64.2.1 2007/11/06 23:22:44 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,12 +122,14 @@ struct cpu_info {
 	void			(*ci_spinup)(void);
 	paddr_t			ci_paddr;
 
-	int			ci_number;
-	int			ci_upaid;
 	int			ci_cpuid;
 
 	/* CPU PROM information. */
 	u_int			ci_node;
+
+	/* %tick and cpu frequency information */
+	u_long			ci_tick_increment;
+	uint64_t		ci_cpu_clockrate[2];
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -164,7 +166,7 @@ extern int sparc_ncpus;
 extern struct cpu_info *cpus;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
-#define	cpu_number()	(curcpu()->ci_number)
+#define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 #define CPU_INFO_ITERATOR		int
@@ -211,8 +213,6 @@ void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
 void	sparc64_broadcast_ipi (ipifunc_t);
 void	sparc64_send_ipi (int, ipifunc_t);
 #endif
-
-extern uint64_t cpu_clockrate[];
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.57 2007/07/29 12:15:39 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.57.6.1 2007/11/06 23:23:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2007/07/29 12:15:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57.6.1 2007/11/06 23:23:02 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -561,8 +561,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
-	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_init(&fd->sc_dk, fd->sc_dv.dv_xname, &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 #ifdef	sparc

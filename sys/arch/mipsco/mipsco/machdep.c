@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2007/05/17 14:51:25 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.10.1 2007/11/06 23:19:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2007/05/17 14:51:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.10.1 2007/11/06 23:19:20 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 

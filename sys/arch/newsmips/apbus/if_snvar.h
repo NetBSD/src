@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.10 2007/06/17 05:53:02 tsutsui Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.10.10.1 2007/11/06 23:19:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)

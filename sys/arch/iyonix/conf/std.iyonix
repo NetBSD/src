@@ -1,4 +1,4 @@
-#	$NetBSD: std.iyonix,v 1.4 2007/05/12 14:34:04 gavan Exp $
+#	$NetBSD: std.iyonix,v 1.4.10.1 2007/11/06 23:18:01 matt Exp $
 #
 # standard NetBSD/iyonix for GENERIC options
 

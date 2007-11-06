@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.8 2007/01/12 19:33:21 cube Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.8.20.1 2007/11/06 23:26:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/event.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 
