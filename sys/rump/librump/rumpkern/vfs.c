@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.18 2007/11/06 11:35:05 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.19 2007/11/06 12:14:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -85,6 +85,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
+	simple_lock_init(&vp->v_interlock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 
 	uobj = &vp->v_uobj;
@@ -271,6 +272,7 @@ makevnode(struct stat *sb, const char *path)
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
+	simple_lock_init(&vp->v_interlock);
 
 	return vp;
 }
