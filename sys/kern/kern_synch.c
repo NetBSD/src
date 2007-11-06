@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.8 2007/11/06 19:25:31 joerg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.9 2007/11/06 21:16:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.8 2007/11/06 19:25:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.9 2007/11/06 21:16:25 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -581,11 +581,13 @@ void
 setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
+	struct cpu_info *ci;
 	sigset_t *ss;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
 	KASSERT(mutex_owned(&p->p_smutex));
 	KASSERT(lwp_locked(l, NULL));
+	KASSERT(l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex);
 
 	switch (l->l_stat) {
 	case LSSTOP:
@@ -638,18 +640,23 @@ setrunnable(struct lwp *l)
 	}
 
 	/*
-	 * Set the LWP runnable.  If it's swapped out, we need to wake the swapper
-	 * to bring it back in.  Otherwise, enter it into a run queue.
+	 * Look for a CPU to run.
+	 * Set the LWP runnable.
 	 */
-	if (l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex) {
-		spc_lock(l->l_cpu);
-		lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
-	}
+	ci = sched_takecpu(l);
+	ci = l->l_cpu;
+	spc_lock(ci);
+	l->l_cpu = ci;
+	lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
 
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 
+	/*
+	 * If thread is swapped out - wake the swapper to bring it back in.
+	 * Otherwise, enter it into a run queue.
+	 */
 	if (l->l_flag & LW_INMEM) {
 		sched_enqueue(l, false);
 		resched_cpu(l);
