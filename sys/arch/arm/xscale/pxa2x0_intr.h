@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10 2007/02/28 23:26:10 bjh21 Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.1 2007/11/06 19:22:44 matt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -58,7 +58,6 @@ vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
 #define write_icu(offset,value) \
  (*(volatile uint32_t *)(pxaic_base + (offset)) = (value))
 
-extern volatile int current_spl_level;
 extern volatile int intr_mask;
 extern volatile int softint_pending;
 extern int pxa2x0_imask[];
@@ -74,8 +73,8 @@ static inline void
 pxa2x0_setipl(int new)
 {
 
-	current_spl_level = new;
-	intr_mask = pxa2x0_imask[current_spl_level];
+	curcpu()->ci_cpl = new;
+	intr_mask = pxa2x0_imask[curcpu()->ci_cpl];
 	write_icu(SAIPIC_MR, intr_mask);
 }
 
@@ -100,8 +99,8 @@ pxa2x0_splraise(int ipl)
 {
 	int old, psw;
 
-	old = current_spl_level;
-	if (ipl > current_spl_level) {
+	old = curcpu()->ci_cpl;
+	if (ipl > curcpu()->ci_cpl) {
 		psw = disable_interrupts(I32_bit);
 		pxa2x0_setipl(ipl);
 		restore_interrupts(psw);
@@ -113,7 +112,7 @@ pxa2x0_splraise(int ipl)
 static inline int
 pxa2x0_spllower(int ipl)
 {
-	int old = current_spl_level;
+	int old = curcpu()->ci_cpl;
 	int psw = disable_interrupts(I32_bit);
 
 	pxa2x0_splx(ipl);
@@ -180,7 +179,6 @@ void *pxa2x0_intr_establish(int irqno, int level,
 			    int (*func)(void *), void *cookie);
 void pxa2x0_intr_disestablish(void *cookie);
 void pxa2x0_update_intr_masks(int irqno, int level);
-extern volatile int current_spl_level;
 
 #endif /* ! _LOCORE */
 
