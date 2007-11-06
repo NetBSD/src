@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.122 2007/11/01 20:33:57 dyoung Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.123 2007/11/06 23:48:24 dyoung Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.122 2007/11/01 20:33:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.123 2007/11/06 23:48:24 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -528,10 +528,7 @@ skip_ipsec2:;
 			  * the information from the
 			  * application.
 			  */
-			 bzero(&sa, sizeof(sa));
-			 sa.sin6_family = AF_INET6;
-			 sa.sin6_len = sizeof(sa);
-			 sa.sin6_addr = addr[0];
+			 sockaddr_in6_init(&sa, addr, 0, 0, 0);
 			 if ((error = sa6_embedscope(&sa,
 			     ip6_use_defzone)) != 0) {
 				 goto bad;
@@ -676,10 +673,7 @@ skip_ipsec2:;
 	/* adjust pointer */
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	bzero(&dst_sa, sizeof(dst_sa));
-	dst_sa.sin6_family = AF_INET6;
-	dst_sa.sin6_len = sizeof(dst_sa);
-	dst_sa.sin6_addr = ip6->ip6_dst;
+	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
 	    &ifp, &rt, 0)) != 0) {
 		if (ifp != NULL)
@@ -719,10 +713,7 @@ skip_ipsec2:;
 	src0 = ip6->ip6_src;
 	if (in6_setscope(&src0, origifp, &zone))
 		goto badscope;
-	bzero(&src_sa, sizeof(src_sa));
-	src_sa.sin6_family = AF_INET6;
-	src_sa.sin6_len = sizeof(src_sa);
-	src_sa.sin6_addr = ip6->ip6_src;
+	sockaddr_in6_init(&src_sa, &ip6->ip6_src, 0, 0, 0);
 	if (sa6_recoverscope(&src_sa) || zone != src_sa.sin6_scope_id)
 		goto badscope;
 
@@ -730,10 +721,7 @@ skip_ipsec2:;
 	if (in6_setscope(&dst0, origifp, &zone))
 		goto badscope;
 	/* re-initialize to be sure */
-	bzero(&dst_sa, sizeof(dst_sa));
-	dst_sa.sin6_family = AF_INET6;
-	dst_sa.sin6_len = sizeof(dst_sa);
-	dst_sa.sin6_addr = ip6->ip6_dst;
+	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 	if (sa6_recoverscope(&dst_sa) || zone != dst_sa.sin6_scope_id)
 		goto badscope;
 
@@ -2719,10 +2707,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 * check if there's ambiguity with the default scope
 			 * zone as the last resort.
 			 */
-			bzero(&sa6_mc, sizeof(sa6_mc));
-			sa6_mc.sin6_family = AF_INET6;
-			sa6_mc.sin6_len = sizeof(sa6_mc);
-			sa6_mc.sin6_addr = mreq->ipv6mr_multiaddr;
+			sockaddr_in6_init(&sa6_mc, &mreq->ipv6mr_multiaddr,
+			    0, 0, 0);
 			error = sa6_embedscope(&sa6_mc, ip6_use_defzone);
 			if (error != 0)
 				break;
