@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.208 2007/08/09 07:34:28 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.208.2.1 2007/11/06 23:35:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.208 2007/08/09 07:34:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.208.2.1 2007/11/06 23:35:13 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -163,12 +163,12 @@ ffs_mountroot(void)
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
@@ -518,7 +518,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	error = bread(devvp, fs->fs_sblockloc / size, fs->fs_sbsize,
 		      NOCRED, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return (error);
 	}
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
@@ -534,7 +534,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	     newfs->fs_magic != FS_UFS2_MAGIC)||
 	     newfs->fs_bsize > MAXBSIZE ||
 	     newfs->fs_bsize < sizeof(struct fs)) {
-		brelse(bp);
+		brelse(bp, 0);
 		free(newfs, M_UFSMNT);
 		return (EIO);		/* XXX needs translation */
 	}
@@ -551,7 +551,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	newfs->fs_ronly = fs->fs_ronly;
 	newfs->fs_active = fs->fs_active;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
-	brelse(bp);
+	brelse(bp, 0);
 	free(newfs, M_UFSMNT);
 
 	/* Recheck for apple UFS filesystem */
@@ -571,14 +571,14 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
 			APPLEUFS_LABEL_SIZE, cred, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 		error = ffs_appleufs_validate(fs->fs_fsmnt,
 			(struct appleufslabel *)bp->b_data,NULL);
 		if (error == 0)
 			ump->um_flags |= UFS_ISAPPLEUFS;
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 #else
@@ -600,11 +600,13 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	mutex_enter(&ump->um_lock);
 	ump->um_maxfilesize = fs->fs_maxfilesize;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
 	}
+	mutex_exit(&ump->um_lock);
 
 	ffs_statvfs(mp, &mp->mnt_stat, l);
 	/*
@@ -619,7 +621,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
 			      NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 #ifdef FFS_EI
@@ -630,7 +632,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 #endif
 			memcpy(space, bp->b_data, (size_t)size);
 		space = (char *)space + size;
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
 		softdep_mount(devvp, mp, fs, cred);
@@ -678,13 +680,13 @@ loop:
 		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			      (int)fs->fs_bsize, NOCRED, &bp);
 		if (error) {
-			brelse(bp);
+			brelse(bp, 0);
 			vput(vp);
 			return (error);
 		}
 		ffs_load_inode(bp, ip, fs, ip->i_number);
 		ip->i_ffs_effnlink = ip->i_nlink;
-		brelse(bp);
+		brelse(bp, 0);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
 	}
@@ -711,7 +713,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	void *space;
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
-	int error, i, size, ronly;
+	int error, i, size, ronly, bset = 0;
 #ifdef FFS_EI
 	int needswap = 0;		/* keep gcc happy */
 #endif
@@ -746,8 +748,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 	for (i = 0; ; i++) {
 		if (bp != NULL) {
-			bp->b_flags |= B_NOCACHE;
-			brelse(bp);
+			brelse(bp, BC_NOCACHE);
 			bp = NULL;
 		}
 		if (sblock_try[i] == -1) {
@@ -822,6 +823,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
+	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -843,8 +845,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump->um_fstype = fstype;
 	if (fs->fs_sbsize < SBLOCKSIZE)
-		bp->b_flags |= B_INVAL;
-	brelse(bp);
+		brelse(bp, BC_INVAL);
+	else
+		brelse(bp, 0);
 	bp = NULL;
 
 	/* First check to see if this is tagged as an Apple UFS filesystem
@@ -868,7 +871,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (error == 0) {
 			ump->um_flags |= UFS_ISAPPLEUFS;
 		}
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 #else
@@ -888,10 +891,11 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		    cred, &bp);
 		if (bp->b_bcount != fs->fs_fsize)
 			error = EINVAL;
-		bp->b_flags |= B_INVAL;
-		if (error)
+		if (error) {
+			bset = BC_INVAL;
 			goto out;
-		brelse(bp);
+		}
+		brelse(bp, BC_INVAL);
 		bp = NULL;
 	}
 
@@ -926,7 +930,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			memcpy(space, bp->b_data, (u_int)size);
 
 		space = (char *)space + size;
-		brelse(bp);
+		brelse(bp, 0);
 		bp = NULL;
 	}
 	if (fs->fs_contigsumsize > 0) {
@@ -1016,10 +1020,11 @@ out:
 		free(fs, M_UFSMNT);
 	devvp->v_specmountpoint = NULL;
 	if (bp)
-		brelse(bp);
+		brelse(bp, bset);
 	if (ump) {
 		if (ump->um_oldfscompat)
 			free(ump->um_oldfscompat, M_UFSMNT);
+		mutex_destroy(&ump->um_lock);
 		free(ump, M_UFSMNT);
 		mp->mnt_data = NULL;
 	}
@@ -1173,6 +1178,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		if ((error = ffs_flushfiles(mp, flags, l)) != 0)
 			return (error);
 	}
+	mutex_enter(&ump->um_lock);
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		printf("%s: unmount pending error: blocks %" PRId64
 		       " files %d\n",
@@ -1181,6 +1187,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		fs->fs_pendinginodes = 0;
 		penderr = 1;
 	}
+	mutex_exit(&ump->um_lock);
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
@@ -1206,6 +1213,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	free(fs, M_UFSMNT);
 	if (ump->um_oldfscompat != NULL)
 		free(ump->um_oldfscompat, M_UFSMNT);
+	mutex_destroy(&ump->um_lock);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -1270,6 +1278,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	mutex_enter(&ump->um_lock);
 	sbp->f_bsize = fs->fs_bsize;
 	sbp->f_frsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
@@ -1286,7 +1295,9 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
+	mutex_exit(&ump->um_lock);
 	copy_statvfs_info(sbp, mp);
+
 	return (0);
 }
 
@@ -1447,7 +1458,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		goto retry;
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_vflag |= VV_LOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
@@ -1489,7 +1500,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 */
 
 		vput(vp);
-		brelse(bp);
+		brelse(bp, 0);
 		*vpp = NULL;
 		return (error);
 	}
@@ -1502,7 +1513,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		softdep_load_inodeblock(ip);
 	else
 		ip->i_ffs_effnlink = ip->i_nlink;
-	brelse(bp);
+	brelse(bp, 0);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.

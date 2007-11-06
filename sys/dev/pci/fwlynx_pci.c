@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.11.46.1 2007/11/06 23:28:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.11.46.1 2007/11/06 23:28:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

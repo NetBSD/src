@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.21 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.21.24.1 2007/11/06 23:28:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.21.24.1 2007/11/06 23:28:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.21 2006/11/16 01:33:08 christos Exp
 #include <net/if_hippi.h>
 #include <net/if_media.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ic/rrunnerreg.h>
 #include <dev/ic/rrunnervar.h>

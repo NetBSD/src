@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.15 2006/03/29 07:09:33 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.15.34.1 2007/11/06 23:28:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.15 2006/03/29 07:09:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.15.34.1 2007/11/06 23:28:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.15 2006/03/29 07:09:33 thorpej Exp
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

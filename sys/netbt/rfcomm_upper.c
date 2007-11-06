@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.7 2007/07/09 21:11:10 ad Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.7.8.1 2007/11/06 23:33:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.7 2007/07/09 21:11:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.7.8.1 2007/11/06 23:33:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -292,8 +292,10 @@ rfcomm_detach(struct rfcomm_dlc **handle)
 	 */
 	if (callout_invoking(&dlc->rd_timeout))
 		dlc->rd_flags |= RFCOMM_DLC_DETACH;
-	else
+	else {
+		callout_destroy(&dlc->rd_timeout);
 		free(dlc, M_BLUETOOTH);
+	}
 
 	return 0;
 }

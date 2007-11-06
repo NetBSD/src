@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.50 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.50.12.1 2007/11/06 23:30:32 matt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.50 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.50.12.1 2007/11/06 23:30:32 matt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1031,7 +1031,7 @@ cue_init(void *xsc)
 	struct cue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			i, s, ctl;
-	u_char			*eaddr;
+	const u_char		*eaddr;
 
 	if (sc->cue_dying)
 		return;
@@ -1057,7 +1057,7 @@ cue_init(void *xsc)
 #if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 #endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)

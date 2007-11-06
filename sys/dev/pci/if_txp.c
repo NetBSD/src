@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.20 2007/07/09 21:00:55 ad Exp $ */
+/* $NetBSD: if_txp.c,v 1.20.8.1 2007/11/06 23:29:08 matt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20 2007/07/09 21:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20.8.1 2007/11/06 23:29:08 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.20 2007/07/09 21:00:55 ad Exp $");
 #endif
 
 #include <uvm/uvm_extern.h>              /* for PAGE_SIZE */
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1300,11 +1300,7 @@ txp_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.

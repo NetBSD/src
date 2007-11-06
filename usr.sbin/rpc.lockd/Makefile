@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.14 2007/05/28 12:06:40 tls Exp $
+#	$NetBSD: Makefile,v 1.14.4.1 2007/11/06 23:36:34 matt Exp $
 
 USE_FORT?= yes	# network server
+WARNS=4
 
 PROG=		rpc.lockd
 SRCS=		nlm_prot_svc.c lockd.c lock_proc.c lockd_lock.c

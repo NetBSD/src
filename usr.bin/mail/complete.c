@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.12 2006/12/25 18:43:29 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.12.4.1 2007/11/06 23:35:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.12 2006/12/25 18:43:29 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.12.4.1 2007/11/06 23:35:50 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -432,17 +432,17 @@ find_execs(char *word, char *path, StringList *list)
 		if ((sep=strchr(dir, ':')) != NULL) {
 			*sep=0;
 		}
-		
+
 		if ((dd = opendir(dir)) == NULL) {
 			perror("dir");
 			return -1;
 		}
-		
+
 		for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
 
 			if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 				continue;
-			
+
 #if defined(DIRENT_MISSING_D_NAMLEN)
 			if (len > strlen(dp->d_name))
 				continue;
@@ -473,7 +473,7 @@ find_execs(char *word, char *path, StringList *list)
 					mail_sl_add(list, tcp);
 				}
 			}
-		
+
 		}
 
 		(void)closedir(dd);
@@ -558,7 +558,7 @@ complete_set(EditLine *el, char *word, int dolist)
 	for (h = 0; h < HSHSIZE; h++)
 		for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 			s++;
-	ap = salloc(s * sizeof *ap);
+	ap = salloc(s * sizeof(*ap));
 
 	/* save the pointers */
 	for (h = 0, p = ap; h < HSHSIZE; h++)
@@ -598,7 +598,7 @@ complete_alias(EditLine *el, char *word, int dolist)
 		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 			s++;
 	ap = salloc(s * sizeof(*ap));
-	
+
 	/* save pointers */
 	p = ap;
 	for (h = 0; h < HSHSIZE; h++)
@@ -611,7 +611,7 @@ complete_alias(EditLine *el, char *word, int dolist)
 	for (p = ap; *p != NULL; p++)
 		if (len == 0 || strncmp(*p, word, len) == 0)
 			mail_sl_add(words, estrdup(*p));
-	
+
 	rv = complete_ambiguous(el, word, dolist, words);
 	if (rv == CC_REFRESH) {
 		if (el_insertstr(el, " ") == -1)
@@ -650,7 +650,7 @@ complete_smopts(EditLine *el, char *word, int dolist)
 	}
 
 	/* allocate sufficient space for the pointers */
-	ap = salloc(MAX(s1, s2) * sizeof *ap);
+	ap = salloc(MAX(s1, s2) * sizeof(*ap));
 
 	/*
 	 * First do the smoptstbl pointers. (case _insensitive_)
@@ -710,7 +710,7 @@ complete_thread_key(EditLine *el, char *word, int dolist)
 		cnt++;
 
 	/* allocate sufficient space for the pointers */
-	ap = salloc(cnt * sizeof *ap);
+	ap = salloc(cnt * sizeof(*ap));
 
 	/* load the array */
 	p = ap;
@@ -755,7 +755,7 @@ emacs_ctrl_d(EditLine *el, const LineInfo *lf, int ch)
 {
 	static char delunder[3] = { CTRL('f'), CTRL('h'), '\0' };
 	if (ch == CTRL('d') && is_emacs_mode(el)) {	/* CTRL-D is special */
-		if (lf->buffer == lf->lastchar) 
+		if (lf->buffer == lf->lastchar)
 			return CC_EOF;
 		if (lf->cursor != lf->lastchar) { /* delete without using ^D */
 			el_push(el, delunder); /* ^F^H */
@@ -816,8 +816,8 @@ split_line(const char **cmplarray, const LineInfo *lf)
 
 	li.cursor   = line + len;
 	li.lastchar = line + len;
-	
-	cp = skip_blank(line);
+
+	cp = skip_WSP(line);
 	cmdname = get_cmdname(cp);
 	cp += strlen(cmdname);
 
@@ -830,23 +830,23 @@ split_line(const char **cmplarray, const LineInfo *lf)
 	c = lex(cmdname);
 	if (c == NULL)
 		return NULL;
-	
+
 	*cmplarray = c->c_complete;
 	if (c->c_pipe) {
 		char *cp2;
 		if ((cp2 = shellpr(cp)) != NULL) {
 			cp = cp2;
-# define XX(a)  a + (a[1] == '>' ? 2 : 1)
+# define XX(a)  ((a) + ((a)[1] == '>' ? 2 : 1))
 			while ((cp2 = shellpr(XX(cp))) != NULL)
 				cp = cp2;
-			
+
 			if (*cp == '|') {
 				*cmplarray = "xF";
-				cp = skip_blank(cp + 1);
+				cp = skip_WSP(cp + 1);
 			}
 			else {
 				assert(*cp == '>');
-				cp = skip_blank(XX(cp));
+				cp = skip_WSP(XX(cp));
 				*cmplarray = "f";
 			}
 # undef XX
@@ -880,7 +880,7 @@ split_word(int *cmpltype, const char *cmplarray, LineInfo *li)
 	}
 	if (tok_line(t, li, &argc, &argv, &cursorc, &cursoro) == -1)
 		err(EXIT_FAILURE, "tok_line");
-	
+
 	if (cursorc >= argc)
 		word = __UNCONST("");
 	else {
@@ -894,10 +894,10 @@ split_word(int *cmpltype, const char *cmplarray, LineInfo *li)
 	    arraylen > 0 &&
 	    isupper((unsigned char)cmplarray[arraylen - 1]))
 		cursorc = arraylen - 1;
-	
+
 	if (cursorc >= arraylen)
 		return NULL;
-	
+
 	*cmpltype = cmplarray[cursorc];
 	return word;
 }
@@ -938,23 +938,23 @@ mail_complete(EditLine *el, int ch)
 	case 'a':			/* alias complete */
 	case 'A':
 		return complete_alias(el, word, dolist);
-			
+
 	case 'c':			/* command complete */
 	case 'C':
 		return complete_command(el, word, dolist);
-		
+
 	case 'f':			/* filename complete */
 	case 'F':
 		return complete_filename(el, word, dolist);
-		
+
 	case 'm':
 	case 'M':
 		return complete_smopts(el, word, dolist);
-		
+
 	case 'n':			/* no complete */
 	case 'N':			/* no complete */
 		return CC_ERROR;
-		
+
 	case 's':
 	case 'S':
 		return complete_set(el, word, dolist);
@@ -966,7 +966,7 @@ mail_complete(EditLine *el, int ch)
 		case 'x':			/* executable complete */
 	case 'X':
 		return complete_executable(el, word, dolist);
-		
+
 	default:
 		warnx("unknown complete type `%c'", cmpltype);
 #if 0
@@ -1085,7 +1085,7 @@ mime_enc_complete(EditLine *el, int ch)
 
 static const char *el_prompt;
 
-/*ARGSUSED*/ 
+/*ARGSUSED*/
 static const char *
 show_prompt(EditLine *e __unused)
 {
@@ -1123,7 +1123,7 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 	/* enter non-empty lines into history */
 	if (em->hist) {
 		const char *p;
-		p = skip_blank(line);
+		p = skip_WSP(line);
 		if (*p && history(em->hist, &ev, H_ENTER, line) == 0)
 			(void)printf("Failed history entry: %s", line);
 	}
@@ -1163,11 +1163,11 @@ my_getline(el_mode_t *em, const char *prompt, const char *str)
 
 	/* strip trailing white space */
 	for (cp = line + strlen(line) - 1;
-	     cp >= line && isblank((unsigned char)*cp); cp--)
+	     cp >= line && is_WSP(*cp); cp--)
 		*cp = '\0';
 
 	/* skip leading white space */
-	cp = skip_blank(line);
+	cp = skip_WSP(line);
 
 	return cp;
 }
@@ -1190,7 +1190,7 @@ init_el_mode(
 
 	(void)el_set(em.el, EL_PROMPT, show_prompt);
 	(void)el_set(em.el, EL_SIGNAL, 1); /* editline handles the signals. */
-	
+
 	if (el_editor)
 		(void)el_set(em.el, EL_EDITOR, el_editor);
 
@@ -1238,7 +1238,7 @@ init_editline(void)
 	char *cp;
 
 	mode = value(ENAME_EL_EDITOR);
-	
+
 	cp = value(ENAME_EL_HISTORY_SIZE);
 	hist_size = cp ? atoi(cp) : 0;
 

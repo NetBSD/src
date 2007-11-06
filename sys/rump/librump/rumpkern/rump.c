@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.10 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.10.2.1 2007/11/06 23:34:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,13 +30,13 @@
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -57,25 +57,51 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
+static void
+rump_aiodone_worker(struct work *wk, void *dummy)
+{
+	struct buf *bp = (struct buf *)wk;
+
+	KASSERT(&bp->b_work == wk);
+	bp->b_iodone(bp);
+}
+
 void
 rump_init()
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 
-	curlwp = &lwp0;
+	l = &lwp0;
+	p = &rump_proc;
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+	p->p_pid = 0;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+	l->l_lid = 1;
+
 	rumpvm_init();
 
-	curlwp->l_proc = &rump_proc;
-	curlwp->l_cred = rump_cred;
-	rump_proc.p_stats = &rump_stats;
-	rump_proc.p_cwdi = &rump_cwdi;
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	rump_proc.p_limit = &rump_limits;
+
+	/* should be "enough" */
+	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
+
+	rump_sleepers_init();
+	rumpuser_thrinit();
+
+	/* aieeeedondest */
+	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+	    rump_aiodone_worker, NULL, 0, 0, 0))
+		panic("aiodoned");
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
@@ -334,6 +360,8 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 	case RUMPUIO_WRITE:
 		uiorw = UIO_WRITE;
 		break;
+	default:
+		panic("%s: invalid rw %d", __func__, rw);
 	}
 
 	uio = rumpuser_malloc(sizeof(struct uio), 0);
@@ -414,10 +442,18 @@ rump_vfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 }
 
 int
-rump_vfs_root(struct mount *mp, struct vnode **vpp)
+rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 {
+	int rv;
 
-	return VFS_ROOT(mp, vpp);
+	rv = VFS_ROOT(mp, vpp);
+	if (rv)
+		return rv;
+
+	if (!lock)
+		VOP_UNLOCK(*vpp, 0);
+
+	return 0;
 }
 
 /* XXX: statvfs is different from system to system */
@@ -449,4 +485,68 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 {
 
 	return VFS_VPTOFH(vp, fid, fidsize);
+}
+
+void
+rump_bioops_sync()
+{
+
+	if (bioopsp)
+		bioopsp->io_sync(NULL);
+}
+
+struct lwp *
+rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+{
+	struct lwp *l;
+	struct proc *p;
+
+	l = kmem_alloc(sizeof(struct lwp), KM_SLEEP);
+	p = kmem_alloc(sizeof(struct proc), KM_SLEEP);
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+        p->p_pid = pid;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+        l->l_lid = lid;
+
+	if (set)
+		rumpuser_set_curlwp(l);
+
+	return l;
+}
+
+void
+rump_clear_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	kmem_free(l->l_proc, sizeof(struct proc));
+	kmem_free(l, sizeof(struct lwp));
+	rumpuser_set_curlwp(NULL);
+}
+
+struct lwp *
+rump_get_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	if (l == NULL)
+		l = &lwp0;
+
+	return l;
+}
+
+void
+rump_biodone(void *arg, size_t count, int error)
+{
+	struct buf *bp = arg;
+
+	bp->b_resid = bp->b_bcount - count;
+	KASSERT(bp->b_resid >= 0);
+	bp->b_error = error;
+	biodone(bp);
 }

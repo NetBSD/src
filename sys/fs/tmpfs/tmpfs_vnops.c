@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.39 2007/07/23 15:41:01 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.39.6.1 2007/11/06 23:31:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.39 2007/07/23 15:41:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.39.6.1 2007/11/06 23:31:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1024,6 +1024,7 @@ tmpfs_rmdir(void *v)
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_DIR(vp);
+	error = 0;
 
 	/* Directories with more than two entries ('.' and '..') cannot be
 	 * removed. */
@@ -1061,24 +1062,16 @@ tmpfs_rmdir(void *v)
 
 	/* Release the parent. */
 	cache_purge(dvp); /* XXX Is this needed? */
-	vput(dvp);
 
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
-	/* Release the deleted vnode (will destroy the node, notify
-	 * interested parties and clean it from the cache). */
+ out:
+	/* Release the nodes. */
+	vput(dvp);
 	vput(vp);
-
-	error = 0;
-
-out:
-	if (error != 0) {
-		vput(dvp);
-		vput(vp);
-	}
 
 	return error;
 }

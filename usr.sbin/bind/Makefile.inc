@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2007/05/28 12:06:33 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.28.4.1 2007/11/06 23:36:20 matt Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -48,31 +48,33 @@ CPPFLAGS+=	-DWANT_IPV6
 COPTS+=	-Wno-pointer-sign
 .endif
 
-.if !defined(LIB) || empty(LIB)						# {
+.if !defined(LIB) || empty(LIB)
 # NOTE: the order of these libraries is important...
-.for _LL in	bind9 dns lwres isccfg isccc isc
-.if !defined(BOBJDIR.${_LL})
-BOBJDIR.${_LL}!=cd ${BIND_SRCDIR}/lib${_LL} && ${PRINTOBJDIR}
-.MAKEOVERRIDES+=BOBJDIR.${_LL}
+LDADD+=		-lbind9 -ldns -llwres -lisccfg -lisccc -lisc
+DPADD+=		${LIBBIND9} ${LIBDNS} ${LIBLWRES}
+DPADD+=		${LIBISCCFG} ${LIBISCCC} ${LIBISC}
+.else
+CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
+	   -DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
 .endif
-LDADD+=		-L${BOBJDIR.${_LL}} -l${_LL}
-DPADD+=		${BOBJDIR.${_LL}}/lib${_LL}.a
-.endfor
 
 .if ${NAMED_USE_PTHREADS} == "yes"
+.if !defined (LIB) || empty(LIB)
 LDADD+= -lpthread
 DPADD+= ${LIBPTHREAD}
+.else
+LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
 .endif
-.else									# }
-MKPRIVATELIB=yes
-CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
-	-DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
 CPPFLAGS+=-DOPENSSL
+.if !defined (LIB) || empty(LIB)
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
+.else
+LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto
+.endif
 .endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"

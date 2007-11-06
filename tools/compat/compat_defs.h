@@ -1,10 +1,10 @@
-/*	$NetBSD: compat_defs.h,v 1.60 2007/08/07 08:22:04 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.60.2.1 2007/11/06 23:35:35 matt Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
-/* Work around some complete brain damage. */
 
+/* Work around some complete brain damage. */
 /*
  * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
  * program (not the OS) should do that.  Preload <features.h> to keep any
@@ -274,18 +274,6 @@ int issetugid(void);
 #define isblank(x) ((x) == ' ' || (x) == '\t')
 #endif
 
-#if !HAVE_LCHFLAGS
-int lchflags(const char *, u_long);
-#endif
-
-#if !HAVE_LCHMOD
-int lchmod(const char *, mode_t);
-#endif
-
-#if !HAVE_LCHOWN
-int lchown(const char *, uid_t, gid_t);
-#endif
-
 #define __nbcompat_bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
 
 #define __nbcompat_bswap32(x)	((((x) << 24) & 0xff000000) | \
@@ -338,21 +326,66 @@ int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 /* Make them use our version */
 #  define heapsort __nbcompat_heapsort
 
-#if !HAVE_PWCACHE_USERDB
-int uid_from_user(const char *, uid_t *);
-int pwcache_userdb(int (*)(int), void (*)(void),
-		struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
-int gid_from_group(const char *, gid_t *);
-int pwcache_groupdb(int (*)(int), void (*)(void),
-		struct group * (*)(const char *), struct group * (*)(gid_t));
-#endif
+/*
+ * HAVE_X_FROM_Y and HAVE_PWCACHE_FOODB go together, because we cannot
+ * supply an implementation of one without the others -- some parts are
+ * libc internal and this varies from system to system.
+ *
+ * XXX this is dubious anyway: we assume (see HAVE_DECLs below) that if the
+ * XXX host system has all of these functions, all of their interfaces
+ * XXX and interactions are exactly the same as in our libc/libutil -- ugh.
+ */
+#if !HAVE_USER_FROM_UID || !HAVE_UID_FROM_USER || !HAVE_GROUP_FROM_GID || \
+    !HAVE_GID_FROM_GROUP || !HAVE_PWCACHE_USERDB || !HAVE_PWCACHE_GROUDB
 /* Make them use our version */
 #  define user_from_uid __nbcompat_user_from_uid
-/* Make them use our version */
+#  define uid_from_user __nbcompat_uid_from_user
+#  define pwcache_userdb __nbcompat_pwcache_userdb
 #  define group_from_gid __nbcompat_group_from_gid
+#  define gid_from_group __nbcompat_gid_from_group
+#  define pwcache_groupdb __nbcompat_pwcache_groupdb
+#endif
+
+#if !HAVE_DECL_UID_FROM_USER
+int uid_from_user(const char *, uid_t *);
+#endif
+#if !HAVE_DECL_USER_FROM_UID
+const char *user_from_uid(uid_t, int);
+#endif
+#if !HAVE_DECL_PWCACHE_USERDB
+int pwcache_userdb(int (*)(int), void (*)(void),
+                struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
+#endif
+#if !HAVE_DECL_GID_FROM_GROUP
+int gid_from_group(const char *, gid_t *);
+#endif
+#if !HAVE_DECL_GROUP_FROM_GID
+const char *group_from_gid(gid_t, int);
+#endif
+#if !HAVE_DECL_PWCACHE_GROUPDB
+int pwcache_groupdb(int (*)(int), void (*)(void),
+                struct group * (*)(const char *), struct group * (*)(gid_t));
+#endif
+
+#if !HAVE_DECL_STRNDUP
+char		*strndup(const char *, size_t);
+#endif
+#if !HAVE_DECL_LCHFLAGS
+int		lchflags(const char *, unsigned long);
+#endif
+#if !HAVE_DECL_LCHMOD
+int		lchmod(const char *, mode_t);
+#endif
+#if !HAVE_DECL_LCHOWN
+int		lchown(const char *, uid_t, gid_t);
+#endif
 
 #if !HAVE_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
+#endif
+
+#if !HAVE_RAISE_DEFAULT_SIGNAL
+int raise_default_signal(int);
 #endif
 
 #if !HAVE_SETENV

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.13 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.13.20.1 2007/11/06 23:27:11 matt Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.13 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.13.20.1 2007/11/06 23:27:11 matt Exp $");
 
 #ifndef __NetBSD__
 #include "opt_aic7xxx.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.13 2007/01/29 01:52:45 hubertf Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #ifdef __NetBSD__
 #include <dev/ic/smc93cx6var.h>
 #else

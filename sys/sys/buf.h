@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.96 2007/07/29 13:53:46 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.96.6.1 2007/11/06 23:34:42 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -221,6 +221,10 @@ do {									\
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
 
+/* XXX Compat for vmlocking branch. */
+#define	BC_AGE		B_AGE
+#define	BC_INVAL	B_INVAL
+#define	BC_NOCACHE	B_NOCACHE
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
@@ -262,7 +266,7 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	struct bio_ops bioops;
+extern	struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 __BEGIN_DECLS
@@ -277,7 +281,7 @@ int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
 	       struct buf **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 	       struct kauth_cred *, struct buf **);
-void	brelse(struct buf *);
+void	brelse(struct buf *, int);
 void	bremfree(struct buf *);
 void	bufinit(void);
 int	bwrite(struct buf *);

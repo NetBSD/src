@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_debug.c,v 1.3 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_debug.c,v 1.3.8.1 2007/11/06 23:32:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.3 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.3.8.1 2007/11/06 23:32:12 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.3 2007/07/09 21:10:55 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/lock.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 /*
  * Allocation/free validation by pointer address.  Introduces

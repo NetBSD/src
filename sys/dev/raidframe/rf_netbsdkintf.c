@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.230 2007/07/29 12:50:22 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.230.6.1 2007/11/06 23:30:02 matt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230 2007/07/29 12:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.6.1 2007/11/06 23:30:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -169,6 +169,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230 2007/07/29 12:50:22 ad Exp 
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
+
+#include <prop/proplib.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -300,6 +302,7 @@ static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
+static void rf_set_properties(struct raid_softc *, RF_Raid_t *);
 
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
@@ -413,7 +416,6 @@ rf_autoconfig(struct device *self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
-	int i;
 
 	if (raidautoconfig == 0)
 		return (0);
@@ -435,10 +437,6 @@ rf_autoconfig(struct device *self)
 	 * This gets done in rf_buildroothack().
 	 */
 	rf_buildroothack(config_sets);
-
-	for (i = 0; i < numraid; i++)
-		if (raidPtrs[i] != NULL && raidPtrs[i]->valid)
-			dkwedge_discover(&raid_softc[i].sc_dkdev);
 
 	return 1;
 }
@@ -584,11 +582,141 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, void *va,
-    size_t  size)
+raiddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
-	/* Not implemented. */
-	return ENXIO;
+	int     unit = raidunit(dev);
+	struct raid_softc *rs;
+	const struct bdevsw *bdev;
+	struct disklabel *lp;
+	RF_Raid_t *raidPtr;
+	daddr_t offset;
+	int     part, c, sparecol, j, scol, dumpto;
+	int     error = 0;
+
+	if (unit >= numraid)
+		return (ENXIO);
+
+	rs = &raid_softc[unit];
+	raidPtr = raidPtrs[unit];
+
+	if ((rs->sc_flags & RAIDF_INITED) == 0)
+		return ENXIO;
+
+	/* we only support dumping to RAID 1 sets */
+	if (raidPtr->Layout.numDataCol != 1 || 
+	    raidPtr->Layout.numParityCol != 1)
+		return EINVAL;
+
+
+	if ((error = raidlock(rs)) != 0)
+		return error;
+
+	if (size % DEV_BSIZE != 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if (blkno + size / DEV_BSIZE > rs->sc_size) {
+		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
+		    "sc->sc_size (%" PRIu64 ")\n", __func__, blkno,
+		    size / DEV_BSIZE, rs->sc_size);
+		error = EINVAL;
+		goto out;
+	}
+
+	part = DISKPART(dev);
+	lp = rs->sc_dkdev.dk_label;
+	offset = lp->d_partitions[part].p_offset + RF_PROTECTED_SECTORS;
+
+	/* figure out what device is alive.. */
+
+	/* 
+	   Look for a component to dump to.  The preference for the
+	   component to dump to is as follows:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	*/
+
+	dumpto = -1;
+	for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status == rf_ds_optimal) {
+			/* this might be the one */
+			dumpto = c;
+			break;
+		}
+	}
+	
+	/* 
+	   At this point we have possibly selected a live master or a
+	   live slave.  We now check to see if there is a spared
+	   master (or a spared slave), if we didn't find a live master
+	   or a live slave.  
+	*/
+
+	for (c = 0; c < raidPtr->numSpare; c++) {
+		sparecol = raidPtr->numCol + c;
+		if (raidPtr->Disks[sparecol].status ==  rf_ds_used_spare) {
+			/* How about this one? */
+			scol = -1;
+			for(j=0;j<raidPtr->numCol;j++) {
+				if (raidPtr->Disks[j].spareCol == sparecol) {
+					scol = j;
+					break;
+				}
+			}
+			if (scol == 0) {
+				/* 
+				   We must have found a spared master!
+				   We'll take that over anything else
+				   found so far.  (We couldn't have
+				   found a real master before, since
+				   this is a used spare, and it's
+				   saying that it's replacing the
+				   master.)  On reboot (with
+				   autoconfiguration turned on)
+				   sparecol will become the 1st
+				   component (component0) of this set.  
+				*/
+				dumpto = sparecol;
+				break;
+			} else if (scol != -1) {
+				/* 
+				   Must be a spared slave.  We'll dump
+				   to that if we havn't found anything
+				   else so far. 
+				*/
+				if (dumpto == -1)
+					dumpto = sparecol;
+			}
+		}
+	}
+	
+	if (dumpto == -1) {
+		/* we couldn't find any live components to dump to!?!?
+		 */
+		error = EINVAL;
+		goto out;
+	}
+
+	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+
+	/* 
+	   Note that blkno is relative to this particular partition.
+	   By adding the offset of this partition in the RAID
+	   set, and also adding RF_PROTECTED_SECTORS, we get a
+	   value that is relative to the partition used for the
+	   underlying component.
+	*/
+	   
+	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
+				blkno + offset, va, size);
+	
+out:
+	raidunlock(rs);
+		
+	return error;
 }
 /* ARGSUSED */
 int
@@ -726,7 +854,8 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			free(cf, M_RAIDFRAME);
 			
 			/* Detach the disk. */
-			pseudo_disk_detach(&rs->sc_dkdev);
+			disk_detach(&rs->sc_dkdev);
+			disk_destroy(&rs->sc_dkdev);
 		}
 	}
 
@@ -1070,7 +1199,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		free(cf, M_RAIDFRAME);
 
 		/* Detach the disk. */
-		pseudo_disk_detach(&rs->sc_dkdev);
+		disk_detach(&rs->sc_dkdev);
+		disk_destroy(&rs->sc_dkdev);
 
 		raidunlock(rs);
 
@@ -1720,8 +1850,6 @@ raidinit(RF_Raid_t *raidPtr)
 	/* XXX doesn't check bounds. */
 	snprintf(rs->sc_xname, sizeof(rs->sc_xname), "raid%d", unit);
 
-	rs->sc_dkdev.dk_name = rs->sc_xname;
-
 	/* attach the pseudo device */
 	cf = malloc(sizeof(*cf), M_RAIDFRAME, M_WAITOK);
 	cf->cf_name = raid_cd.cd_name;
@@ -1740,12 +1868,18 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
+	disk_init(&rs->sc_dkdev, rs->sc_xname, NULL);
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
+
+	dkwedge_discover(&rs->sc_dkdev);
+
+	rf_set_properties(rs, raidPtr);
+
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 /* wake up the daemon & tell it to get us a spare table
@@ -2308,7 +2442,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 		       sizeof(RF_ComponentLabel_t));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 /* ARGSUSED */
@@ -2339,7 +2473,7 @@ raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 		return (ENXIO);
 	(*bdev->d_strategy)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	if (error) {
 #if 1
 		printf("Failed to write RAID component info!\n");
@@ -2520,9 +2654,6 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct lwp *l;
-
-	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2531,7 +2662,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, curlwp->l_cred, curlwp);
 		}
 	}
 }
@@ -3481,4 +3612,32 @@ raid_detach(struct device *self, int flags)
 	return 0;
 }
 
-
+static void
+rf_set_properties(struct raid_softc *rs, RF_Raid_t *raidPtr)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	disk_info = prop_dictionary_create();
+	geom = prop_dictionary_create();
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+				   raidPtr->totalSectors);
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   raidPtr->bytesPerSector);
+	
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   raidPtr->Layout.dataSectorsPerStripe);
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   4 * raidPtr->numCol);
+	
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	   raidPtr->totalSectors / (raidPtr->Layout.dataSectorsPerStripe *
+	   (4 * raidPtr->numCol)));
+				   
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+	prop_dictionary_set(device_properties(rs->sc_dev),
+			    "disk-info", disk_info);
+	odisk_info = rs->sc_dkdev.dk_info;
+	rs->sc_dkdev.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}

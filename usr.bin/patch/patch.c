@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.24 2005/03/25 23:55:02 wiz Exp $	*/
+/*	$NetBSD: patch.c,v 1.24.12.1 2007/11/06 23:36:10 matt Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.24 2005/03/25 23:55:02 wiz Exp $");
+__RCSID("$NetBSD: patch.c,v 1.24.12.1 2007/11/06 23:36:10 matt Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: patch.c,v 1.24 2005/03/25 23:55:02 wiz Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 /* procedures */
 static void reinitialize_almost_everything(void);
@@ -911,8 +912,8 @@ similar(const char *a, const char *b, size_t len)
 
 /* Exit with cleanup. */
 
-void
-my_exit(int status)
+static void
+my_cleanup(void)
 {
     Unlink(TMPINNAME);
     if (!toutkeep) {
@@ -922,5 +923,20 @@ my_exit(int status)
 	Unlink(TMPREJNAME);
     }
     Unlink(TMPPATNAME);
+}
+
+
+void
+my_exit(int status)
+{
+    my_cleanup();
     exit(status);
+}
+
+void
+my_sig_exit(int signo)
+{
+    my_cleanup();
+    (void)raise_default_signal(signo);
+    _exit(1);
 }

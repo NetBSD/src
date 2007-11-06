@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.24 2007/08/26 22:45:57 dyoung Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.24.2.1 2007/11/06 23:28:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.24 2007/08/26 22:45:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.24.2.1 2007/11/06 23:28:17 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.24 2007/08/26 22:45:57 dyoung Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -471,10 +471,7 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI)
-		    ? ether_addmulti(ifr, &sc->sc_ec)
-		    : ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				error = gfe_whack(sc, GE_WHACK_CHANGE);
 			else

@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.5 2007/07/18 18:49:17 degroote Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.5.6.1 2007/11/06 23:29:12 matt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,6 @@
  */
 
 #define WPI_TX_RING_COUNT	256
-#define WPI_SVC_RING_COUNT	256
 #define WPI_CMD_RING_COUNT	256
 #define WPI_RX_RING_COUNT	64
 
@@ -402,7 +401,6 @@ struct wpi_cmd_data {
 	uint8_t		data_ntries;
 	uint16_t	timeout;
 	uint16_t	txop;
-	struct		ieee80211_frame wh;
 } __attribute__((__packed__));
 
 /* structure for command WPI_CMD_SET_BEACON */

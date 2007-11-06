@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.19 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.19.20.1 2007/11/06 23:31:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.19 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.19.20.1 2007/11/06 23:31:25 matt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.19 2007/01/29 01:52:44 hubertf Exp
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -54,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.19 2007/01/29 01:52:44 hubertf Exp
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 
 #include <ipkdb/ipkdb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.9 2007/08/22 03:42:06 dogcow Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.9.2.1 2007/11/06 23:35:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.9 2007/08/22 03:42:06 dogcow Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.9.2.1 2007/11/06 23:35:56 matt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -111,7 +111,7 @@ show_one_mime_info(FILE *fp, struct mime_info *mip)
 	(void)fprintf(fp, "** mi_msgstr: %s\n", mip->mi_msgstr);
 
 	(void)fflush(fp);
-	    
+
 #undef XX
 }
 
@@ -121,7 +121,7 @@ show_mime_info(FILE *fp, struct mime_info *mip, struct mime_info *end_mip)
 {
 	for (/* EMTPY */; mip != end_mip; mip = mip->mi_flink)
 		show_one_mime_info(fp, mip);
-	
+
 	(void)fprintf(fp, "++ =========\n");
 	(void)fflush(fp);
 }
@@ -188,12 +188,12 @@ get_param(char *dst, char *src)
 		}
 	}
 	/* remove trailing white space */
-	while (cp2 > lastq && isblank((unsigned char)cp2[-1]))
+	while (cp2 > lastq && is_WSP(cp2[-1]))
 		cp2--;
 	*cp2 = '\0';
 	if (*cp == ';')
 		cp++;
-	cp = skip_blank(cp);
+	cp = skip_WSP(cp);
 	return cp;
 }
 
@@ -211,12 +211,12 @@ cparam(const char field[], char *src, int downcase)
 		return NULL;
 
 	dst = salloc(strlen(src) + 1); /* large enough for any param in src */
-	cp = skip_blank(src);
+	cp = skip_WSP(src);
 	cp = get_param(dst, cp);
-	
+
 	if (field == NULL)
 		return dst;
-	
+
 	while (*cp != '\0') {
 		size_t len = strlen(field);
 		cp = get_param(dst, cp);
@@ -447,7 +447,7 @@ split_message(struct mime_info *top_mip)
 			in_header = 0;	/* never in header again */
 		}
 	}
-	
+
 	/* close the last message */
 	this_mp->m_size = ftello(fp) - beg_pos;
 }
@@ -709,7 +709,7 @@ prefix_line(FILE *fi, FILE *fo, void *cookie)
 		if (length > 1)
 			(void)fputs(prefix, fo);
 		else
-			(void)fwrite(prefix, sizeof *prefix,
+			(void)fwrite(prefix, sizeof(*prefix),
 			    prefixlen, fo);
 		(void)fwrite(line, sizeof(*line), length, fo);
 	}
@@ -758,7 +758,7 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
 		static struct prefix_line_args_s prefix_line_args;
 		const char *dp, *dp2 = NULL;
 		for (dp = prefix; *dp; dp++)
-			if (*dp != ' ' && *dp != '\t')
+			if (!is_WSP(*dp))
 				dp2 = dp;
 		prefix_line_args.prefixlen = dp2 == 0 ? 0 : dp2 - prefix + 1;
 		prefix_line_args.prefix = prefix;
@@ -767,7 +767,7 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
 
 	end_of_prefix = last_registered_file(0);
 	error = 0;
-	for (/* EMPTY */; mip; mip = mip->mi_flink) {
+	for (/*EMPTY*/; mip; mip = mip->mi_flink) {
 		mip->mi_fo = obuf;
 		mip->mi_head_end = obuf;
 		mip->mi_detachdir = detachdir;
@@ -804,14 +804,14 @@ run_mime_ficonv(struct mime_info *mip, const char *charset)
 		(void)fflush(fo);	/* flush here or see double! */
 		return;
 	}
-	
+
 	if (mip->mi_detachdir == NULL && /* don't contaminate the detach! */
 	    value(ENAME_MIME_CHARSET_VERBOSE))
 		(void)fprintf(fo, "\t[ converting %s -> %s ]\n\n",
 		    mip->mi_charset, charset);
 
 	mime_run_function(mime_ficonv, fo, cd);
-	
+
 	(void)iconv_close(cd);
 }
 #endif /* CHARSET_SUPPORT */
@@ -822,7 +822,7 @@ run_decoder(struct mime_info *mip, void(*fn)(FILE*, FILE*, void *))
 {
 #ifdef CHARSET_SUPPORT
 	char *charset;
-	
+
 	charset = value(ENAME_MIME_CHARSET);
 	if (charset && mip->mi_type && strcasecmp(mip->mi_type, "text") == 0)
 		run_mime_ficonv(mip, charset);
@@ -891,7 +891,7 @@ get_display_mode(struct mime_info *mip, mime_codec_t dec)
 	};
 	static const struct mime_subtype_s application_subtype_tbl[] = {
 		{ "octet-stream",	APPLICATION_OCTET_STREAM },
-                { "pgp-encrypted",      DM_PGPENCR },   /* rfc3156 */
+		{ "pgp-encrypted",      DM_PGPENCR },   /* rfc3156 */
 		{ "pgp-keys",           DM_PGPKEYS },   /* rfc3156 */
 		{ "pgp-signature",      DM_PGPSIGN },   /* rfc3156 */
 		{ "pdf",		DM_BINARY },	/* rfc3778 */
@@ -1073,14 +1073,16 @@ get_folded_hfield(FILE *f, char *linebuf, size_t bufsize, int rem, char **colon)
 	char *cp, *cp2;
 	char *line;
 	size_t len;
-	
+
 	for (;;) {
 		if (--rem <= 0)
 			return -1;
 		if ((cp = fgetln(f, &len)) == NULL)
 			return -1;
-		for (cp2 = cp; isprint((unsigned char)*cp2) &&
-			 !isblank((unsigned char)*cp2) && *cp2 != ':'; cp2++)
+		for (cp2 = cp;
+		     isprint((unsigned char)*cp2) &&
+			 !is_WSP(*cp2) && *cp2 != ':';
+		     cp2++)
 			continue;
 		len = MIN(bufsize - 1, len);
 		bufsize -= len;
@@ -1090,9 +1092,9 @@ get_folded_hfield(FILE *f, char *linebuf, size_t bufsize, int rem, char **colon)
 		for (/*EMPTY*/; rem > 0; rem--) {
 			int c;
 			(void)ungetc(c = getc(f), f);
-			if (c == EOF || !isblank((unsigned char)c))
+			if (!is_WSP(c))
 				break;
-						    
+
 			if ((cp = fgetln(f, &len)) == NULL)
 				break;
 			len = MIN(bufsize - 1, len);
@@ -1145,7 +1147,7 @@ mime_decode_header(struct mime_info *mip)
 		(void)fprintf(fo, "----- Part %s -----\n", mip->mi_partstr);
 
 	(void)fflush(fo);	/* Flush so the childern don't see it. */
-	
+
 	/*
 	 * install the message hook before the head hook.
 	 */
@@ -1159,11 +1161,11 @@ mime_decode_header(struct mime_info *mip)
 		cmd = get_command_hook(mip, "-head");
 		mip->mi_head_end = last_registered_file(0);
 		flags = mime_run_command(cmd, pipe_end(mip));
-	}		
+	}
 
 	if (value(ENAME_MIME_DECODE_HDR) && (flags & CMD_FLAG_NO_DECODE) == 0)
 		mime_run_function(decode_header, pipe_end(mip), NULL);
-	
+
 	return pipe_end(mip);
 }
 

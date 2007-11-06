@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.17 2007/04/29 20:23:37 msaitoh Exp $	*/
+/*	$NetBSD: pr.c,v 1.17.4.1 2007/11/06 23:36:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.17 2007/04/29 20:23:37 msaitoh Exp $");
+__RCSID("$NetBSD: pr.c,v 1.17.4.1 2007/11/06 23:36:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: pr.c,v 1.17 2007/04/29 20:23:37 msaitoh Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pr.h"
 #include "extern.h"
@@ -1564,6 +1565,7 @@ terminate(which_sig)
 	int which_sig;
 {
 	flsh_errs();
+	(void)raise_default_signal(which_sig);
 	exit(1);
 }
 

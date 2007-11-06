@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.2 2007/08/05 03:23:02 macallan Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.2.2.1 2007/11/06 23:30:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -32,7 +32,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.2 2007/08/05 03:23:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.2.2.1 2007/11/06 23:30:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.2 2007/08/05 03:23:02 macallan Exp 
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 

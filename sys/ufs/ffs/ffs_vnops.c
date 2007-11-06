@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.91 2007/08/21 09:27:33 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.91.2.1 2007/11/06 23:35:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.91 2007/08/21 09:27:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.91.2.1 2007/11/06 23:35:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ ffs_fsync(void *v)
 	if (ap->a_flags & FSYNC_WAIT) {
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			ltsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
 				&global_v_numoutput_slock);
 		}
@@ -425,7 +425,7 @@ loop:
 	if (ap->a_flags & FSYNC_WAIT) {
 		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
+			vp->v_iflag |= VI_BWAIT;
 			(void) ltsleep(&vp->v_numoutput, PRIBIO + 1,
 			    "ffsfsync", 0, &global_v_numoutput_slock);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.67 2007/08/07 02:17:21 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.67.2.1 2007/11/06 23:34:09 matt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.67 2007/08/07 02:17:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.67.2.1 2007/11/06 23:34:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,23 +62,23 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.67 2007/08/07 02:17:21 dyoung Exp $");
 
 #include <net/net_osdep.h>
 
-static int rtpref __P((struct nd_defrouter *));
-static struct nd_defrouter *defrtrlist_update __P((struct nd_defrouter *));
-static int prelist_update __P((struct nd_prefixctl *, struct nd_defrouter *,
-    struct mbuf *, int));
-static struct in6_ifaddr *in6_ifadd __P((struct nd_prefixctl *, int));
-static struct nd_pfxrouter *pfxrtr_lookup __P((struct nd_prefix *,
-	struct nd_defrouter *));
-static void pfxrtr_add __P((struct nd_prefix *, struct nd_defrouter *));
-static void pfxrtr_del __P((struct nd_pfxrouter *));
+static int rtpref(struct nd_defrouter *);
+static struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);
+static int prelist_update(struct nd_prefixctl *, struct nd_defrouter *,
+    struct mbuf *, int);
+static struct in6_ifaddr *in6_ifadd(struct nd_prefixctl *, int);
+static struct nd_pfxrouter *pfxrtr_lookup(struct nd_prefix *,
+	struct nd_defrouter *);
+static void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
+static void pfxrtr_del(struct nd_pfxrouter *);
 static struct nd_pfxrouter *find_pfxlist_reachable_router
-	__P((struct nd_prefix *));
-static void defrouter_delreq __P((struct nd_defrouter *));
-static void nd6_rtmsg __P((int, struct rtentry *));
+	(struct nd_prefix *);
+static void defrouter_delreq(struct nd_defrouter *);
+static void nd6_rtmsg(int, struct rtentry *);
 
-static int in6_init_prefix_ltimes __P((struct nd_prefix *));
-static void in6_init_address_ltimes __P((struct nd_prefix *ndpr,
-	struct in6_addrlifetime *lt6));
+static int in6_init_prefix_ltimes(struct nd_prefix *);
+static void in6_init_address_ltimes(struct nd_prefix *ndpr,
+	struct in6_addrlifetime *lt6);
 
 static int rt6_deleteroute(struct rtentry *, void *);
 

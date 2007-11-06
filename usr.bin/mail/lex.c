@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.33 2007/01/03 00:39:16 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.33.4.1 2007/11/06 23:35:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.33 2007/01/03 00:39:16 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.33.4.1 2007/11/06 23:35:53 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ setmsize(int sz)
 {
 	if (msgvec != 0)
 		free(msgvec);
-	msgvec = ecalloc((size_t) (sz + 1), sizeof *msgvec);
+	msgvec = ecalloc((size_t) (sz + 1), sizeof(*msgvec));
 }
 
 /*
@@ -360,7 +360,7 @@ setup_piping(char *cmdline, int c_pipe)
 			if (*cp == '>')
 				cp++;
 
-			cp = skip_blank(cp);
+			cp = skip_WSP(cp);
 			if ((fout = Fopen(cp, mode)) == NULL) {
 				warn("Fopen: %s", cp);
 				return -1;
@@ -492,7 +492,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 	 * lexical conventions.
 	 */
 
-	cp = skip_blank(linebuf);
+	cp = skip_space(linebuf);
 	if (*cp == '!') {
 		if (sourcing) {
 			(void)printf("Can't \"!\" while sourcing\n");
@@ -605,8 +605,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 		 * Just the straight string, with
 		 * leading blanks removed.
 		 */
-		while (isspace((unsigned char)*cp))
-			cp++;
+		cp = skip_space(cp);
 		e = (*com->c_func)(cp);
 		break;
 
@@ -615,7 +614,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 		 * A vector of strings, in shell style.
 		 */
 		if ((c = getrawlist(cp, arglist,
-				sizeof arglist / sizeof *arglist)) < 0)
+				sizeof(arglist) / sizeof(*arglist))) < 0)
 			break;
 		if (c < com->c_minargs) {
 			(void)printf("%s requires at least %d arg(s)\n",

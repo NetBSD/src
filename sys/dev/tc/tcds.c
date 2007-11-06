@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.19 2006/03/31 17:39:33 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.19.34.1 2007/11/06 23:30:27 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.19 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.19.34.1 2007/11/06 23:30:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.19 2006/03/31 17:39:33 thorpej Exp $");
 
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsreg.h>

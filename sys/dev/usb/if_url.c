@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.28 2007/08/27 17:49:54 xtraeme Exp $	*/
+/*	$NetBSD: if_url.c,v 1.28.2.1 2007/11/06 23:30:33 matt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.28 2007/08/27 17:49:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.28.2.1 2007/11/06 23:30:33 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -505,7 +505,7 @@ url_init(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
 	struct mii_data *mii = GET_MII(sc);
-	u_char *eaddr;
+	const u_char *eaddr;
 	int i, s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -518,7 +518,7 @@ url_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	url_stop(ifp, 1);
 
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		url_csr_write_1(sc, URL_IDR0 + i, eaddr[i]);
 

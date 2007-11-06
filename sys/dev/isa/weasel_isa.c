@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_isa.c,v 1.3 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: weasel_isa.c,v 1.3.46.1 2007/11/06 23:28:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -42,14 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.3 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.3.46.1 2007/11/06 23:28:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/wdog.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/weaselreg.h>
 #include <dev/isa/weaselvar.h>

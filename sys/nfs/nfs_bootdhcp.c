@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.35 2007/05/08 09:29:50 manu Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.35.8.1 2007/11/06 23:34:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.35 2007/05/08 09:29:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.35.8.1 2007/11/06 23:34:20 matt Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -286,7 +286,7 @@ out:
 
 struct bootpcontext {
 	int xid;
-	u_char *haddr;
+	const u_char *haddr;
 	u_char halen;
 	struct bootp *replybuf;
 	int replylen;
@@ -451,7 +451,7 @@ bootpc_call(nd, lwp)
 	struct mbuf *m, *nam;
 	struct sockaddr_in *sin;
 	int error;
-	u_char *haddr;
+	const u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
 #ifdef NFS_BOOT_DHCP
@@ -489,7 +489,7 @@ bootpc_call(nd, lwp)
 			goto out;
 		}
 		halen = sdl->sdl_alen;
-		haddr = (unsigned char *)LLADDR(sdl);
+		haddr = (const unsigned char *)CLLADDR(sdl);
 	}
 
 	/*

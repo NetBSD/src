@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.110 2007/08/09 07:36:18 pooka Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.110.2.1 2007/11/06 23:31:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.110 2007/08/09 07:36:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.110.2.1 2007/11/06 23:31:30 matt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -292,17 +292,6 @@ long pps_stbcnt = 0;		/* stability limit exceeded */
  */
 int clock_count = 0;		/* CPU clock counter */
 
-#ifdef HIGHBALL
-/*
- * The clock_offset and clock_cpu variables are used by the HIGHBALL
- * interface. The clock_offset variable defines the offset between
- * system time and the HIGBALL counters. The clock_cpu variable contains
- * the offset between the system clock and the HIGHBALL clock for use in
- * disciplining the kernel time variable.
- */
-extern struct timeval clock_offset; /* Highball clock offset */
-long clock_cpu = 0;		/* CPU clock adjust */
-#endif /* HIGHBALL */
 #endif /* EXT_CLOCK */
 #endif /* NTP */
 
@@ -327,7 +316,7 @@ int	profsrc;
 int	schedhz;
 int	profprocs;
 int	hardclock_ticks;
-static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
+static int hardscheddiv; /* hard => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 #ifndef __HAVE_TIMECOUNTER
@@ -402,9 +391,9 @@ initclocks(void)
 	psratio = profhz / i;
 	if (schedhz == 0) {
 		/* 16Hz is best */
-		statscheddiv = i / 16;
-		if (statscheddiv <= 0)
-			panic("statscheddiv");
+		hardscheddiv = hz / 16;
+		if (hardscheddiv <= 0)
+			panic("hardscheddiv");
 	}
 
 #ifndef __HAVE_TIMECOUNTER
@@ -501,7 +490,7 @@ hardclock(struct clockframe *frame)
 #endif /* NTP */
 #endif /* __HAVE_TIMECOUNTER */
 
-	l = curlwp;
+	l = ci->ci_data.cpu_onproc;
 	if (!CURCPU_IDLE_P()) {
 		p = l->l_proc;
 		/*
@@ -522,6 +511,16 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = hardscheddiv;
+		}
+	}
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
@@ -591,35 +590,7 @@ hardclock(struct clockframe *frame)
 		time_phase -= ltemp << SHIFT_SCALE;
 		time_update += ltemp;
 	}
-
-#ifdef HIGHBALL
-	/*
-	 * If the HIGHBALL board is installed, we need to adjust the
-	 * external clock offset in order to close the hardware feedback
-	 * loop. This will adjust the external clock phase and frequency
-	 * in small amounts. The additional phase noise and frequency
-	 * wander this causes should be minimal. We also need to
-	 * discipline the kernel time variable, since the PLL is used to
-	 * discipline the external clock. If the Highball board is not
-	 * present, we discipline kernel time with the PLL as usual. We
-	 * assume that the external clock phase adjustment (time_update)
-	 * and kernel phase adjustment (clock_cpu) are less than the
-	 * value of tick.
-	 */
-	clock_offset.tv_usec += time_update;
-	if (clock_offset.tv_usec >= 1000000) {
-		clock_offset.tv_sec++;
-		clock_offset.tv_usec -= 1000000;
-	}
-	if (clock_offset.tv_usec < 0) {
-		clock_offset.tv_sec--;
-		clock_offset.tv_usec += 1000000;
-	}
-	time.tv_usec += clock_cpu;
-	clock_cpu = 0;
-#else
 	time.tv_usec += time_update;
-#endif /* HIGHBALL */
 
 	/*
 	 * On rollover of the second the phase adjustment to be used for
@@ -850,11 +821,7 @@ hardclock(struct clockframe *frame)
 				delta.tv_sec = 0;
 				delta.tv_usec = 0;
 			}
-#ifdef HIGHBALL
-			clock_cpu = delta.tv_usec;
-#else /* HIGHBALL */
 			hardupdate(delta.tv_usec);
-#endif /* HIGHBALL */
 		}
 #endif /* EXT_CLOCK */
 	}
@@ -929,7 +896,7 @@ proftick(struct clockframe *frame)
 	struct lwp *l;
 	struct proc *p;
 
-	l = curlwp;
+	l = curcpu()->ci_data.cpu_onproc;
 	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
 		mutex_spin_enter(&p->p_stmutex);
@@ -947,13 +914,9 @@ proftick(struct clockframe *frame)
 			}
 		}
 #endif
-#ifdef PROC_PC
-		if (p != NULL) {
-			mutex_spin_enter(&p->p_stmutex);
-			if (p->p_stflag & PST_PROFIL))
-				addupc_intr(l, PROC_PC(p));
-			mutex_spin_exit(&p->p_stmutex);
-		}
+#ifdef LWP_PC
+		if (p != NULL && (p->p_stflag & PST_PROFIL) != 0)
+			addupc_intr(l, LWP_PC(l));
 #endif
 	}
 }
@@ -998,7 +961,7 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);
 		}
 	}
-	l = curlwp;
+	l = ci->ci_data.cpu_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		/*
 		 * don't account idle lwps as swapper.
@@ -1063,7 +1026,7 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
+		if (CLKF_INTR(frame) || (curlwp->l_pflag & LP_INTR) != 0) {
 			if (p != NULL) {
 				p->p_iticks++;
 			}
@@ -1080,17 +1043,6 @@ statclock(struct clockframe *frame)
 	if (p != NULL) {
 		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
-	}
-
-	/*
-	 * If no separate schedclock is provided, call it here
-	 * at about 16 Hz.
-	 */
-	if (schedhz == 0) {
-		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-			schedclock(l);
-			ci->ci_schedstate.spc_schedticks = statscheddiv;
-		}
 	}
 }
 

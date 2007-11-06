@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.29 2007/03/04 06:02:18 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.29.16.1 2007/11/06 23:28:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.29 2007/03/04 06:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.29.16.1 2007/11/06 23:28:51 matt Exp $");
 
 #include "mpu.h"
 
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.29 2007/03/04 06:02:18 christos Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

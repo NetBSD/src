@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.5 2007/03/04 06:02:15 christos Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.5.16.1 2007/11/06 23:28:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.5 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.5.16.1 2007/11/06 23:28:28 matt Exp $");
 
 #include "opt_atppc.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.5 2007/03/04 06:02:15 christos Exp
 #include <sys/proc.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

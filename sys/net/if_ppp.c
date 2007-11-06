@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.116 2007/07/14 21:02:40 ad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.116.8.1 2007/11/06 23:33:32 matt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.116 2007/07/14 21:02:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.116.8.1 2007/11/06 23:33:32 matt Exp $");
 
 #include "ppp.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.116 2007/07/14 21:02:40 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -134,8 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.116 2007/07/14 21:02:40 ad Exp $");
 #ifdef PPP_FILTER
 #include <net/bpf.h>
 #endif
-
-#include <machine/intr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -160,7 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.116 2007/07/14 21:02:40 ad Exp $");
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #ifdef PPP_COMPRESS
 #define PACKETPTR	struct mbuf *
@@ -374,7 +373,7 @@ pppalloc(pid_t pid)
     if (sc == NULL)
 	sc = ppp_create(ppp_cloner.ifc_name, -1);
 
-    sc->sc_si = softintr_establish(IPL_SOFTNET, pppintr, sc);
+    sc->sc_si = softint_establish(SOFTINT_NET, pppintr, sc);
     if (sc->sc_si == NULL) {
 	printf("%s: unable to establish softintr\n", sc->sc_if.if_xname);
 	return (NULL);
@@ -410,7 +409,7 @@ pppdealloc(struct ppp_softc *sc)
 {
     struct mbuf *m;
 
-    softintr_disestablish(sc->sc_si);
+    softint_disestablish(sc->sc_si);
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
     sc->sc_devp = NULL;
@@ -810,11 +809,11 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 
     case SIOCADDMULTI:
     case SIOCDELMULTI:
-	if (ifr == 0) {
+	if (ifr == NULL) {
 	    error = EAFNOSUPPORT;
 	    break;
 	}
-	switch (ifr->ifr_addr.sa_family) {
+	switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 	case AF_INET:
 	    break;
@@ -1109,7 +1108,7 @@ ppp_restart(struct ppp_softc *sc)
     int s = splhigh();	/* XXX IMP ME HARDER */
 
     sc->sc_flags &= ~SC_TBUSY;
-    softintr_schedule(sc->sc_si);
+    softint_schedule(sc->sc_si);
     splx(s);
 }
 
@@ -1414,7 +1413,7 @@ ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost)
     if (lost)
 	m->m_flags |= M_ERRMARK;
     IF_ENQUEUE(&sc->sc_rawq, m);
-    softintr_schedule(sc->sc_si);
+    softint_schedule(sc->sc_si);
     splx(s);
 }
 

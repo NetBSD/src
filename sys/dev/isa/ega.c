@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.23 2007/07/28 20:28:57 mjf Exp $ */
+/* $NetBSD: ega.c,v 1.23.6.1 2007/11/06 23:27:33 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.23 2007/07/28 20:28:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.23.6.1 2007/11/06 23:27:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.23 2007/07/28 20:28:57 mjf Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 

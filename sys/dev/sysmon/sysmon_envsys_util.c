@@ -1,11 +1,8 @@
-/* $NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_util.c,v 1.2.10.1 2007/11/06 23:30:20 matt Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,29 +12,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2.10.1 2007/11/06 23:30:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,9 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtrae
 
 /*
  * Functions to create objects in a dictionary if they do not exist, or
- * for updating its value it value provided doesn't match with the value
+ * for updating its value if value provided doesn't match with the value
  * in dictionary.
  */
+
 int
 sme_sensor_upbool(prop_dictionary_t dict, const char *key, bool val)
 {
@@ -146,16 +136,14 @@ sme_sensor_upstring(prop_dictionary_t dict, const char *key, const char *str)
 
 	obj = prop_dictionary_get(dict, key);
 	if (obj == NULL) {
-		if (!prop_dictionary_set_cstring_nocopy(dict, key, str)) {
+		if (!prop_dictionary_set_cstring(dict, key, str)) {
 			DPRINTF(("%s: (up) set_cstring %s:%s\n",
 			    __func__, key, str));
 			return EINVAL;
 		}
 	} else {
 		if (!prop_string_equals_cstring(obj, str)) {
-			if (!prop_dictionary_set_cstring_nocopy(dict,
-								key,
-								str)) {
+			if (!prop_dictionary_set_cstring(dict, key, str)) {
 				DPRINTF(("%s: (set) set_cstring %s:%s\n",
 				    __func__, key, str));
 				return EINVAL;

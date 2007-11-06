@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.35 2007/02/09 21:55:32 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.35.20.1 2007/11/06 23:32:46 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.35 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.35.20.1 2007/11/06 23:32:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ unionread:
 	 * Deal with mount -o union, which unions only the
 	 * root directory of the mount.
 	 */
-	if ((uvp->v_flag & VROOT) &&
+	if ((uvp->v_vflag & VV_ROOT) &&
 	    (uvp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = uvp;
 
@@ -401,7 +401,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		/*
 		 * step up if we're a covered vnode..
 		 */
-		while (lvp->v_flag & VROOT) {
+		while (lvp->v_vflag & VV_ROOT) {
 			struct vnode *tvp;
 
 			if (lvp == rvp)
@@ -525,6 +525,7 @@ sys___getcwd(struct lwp *l, void *v, register_t *retval)
 	char   *bp, *bend;
 	int     len = SCARG(uap, length);
 	int	lenused;
+	struct	cwdinfo *cwdi;
 
 	if (len > MAXPATHLEN * 4)
 		len = MAXPATHLEN * 4;
@@ -544,8 +545,11 @@ sys___getcwd(struct lwp *l, void *v, register_t *retval)
 	 * Since each entry takes up at least 2 bytes in the output buffer,
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
-	error = getcwd_common(l->l_proc->p_cwdi->cwdi_cdir, NULL, &bp, path, 
+	cwdi = l->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, 
 	    len/2, GETCWD_CHECK_ACCESS, l);
+	rw_exit(&cwdi->cwdi_lock);
 
 	if (error)
 		goto out;

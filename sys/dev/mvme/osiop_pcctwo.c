@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.10.34.1 2007/11/06 23:28:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.10.34.1 2007/11/06 23:28:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.10 2006/03/29 07:07:41 thorpej Ex
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/ic/osiopreg.h>

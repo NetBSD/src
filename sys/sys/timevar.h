@@ -1,11 +1,8 @@
-/*	$NetBSD: timevar.h,v 1.13 2007/08/07 11:39:18 ad Exp $	*/
+/*	$NetBSD: timevar.h,v 1.13.2.1 2007/11/06 23:35:01 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
  *  All rights reserved.
- *
- *  This code is derived from software contributed to the NetBSD Foundation
- *   by Quentin Garnier.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -15,11 +12,7 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. All advertising materials mentioning features or use of this software
- *     must display the following acknowledgement:
- *         This product includes software developed by the NetBSD
- *         Foundation, Inc. and its contributors.
- *  4. Neither the name of The NetBSD Foundation nor the names of its
+ *  3. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -130,8 +123,9 @@ struct	ptimers {
  *
  * Functions with the "get" prefix returns a less precise result
  * much faster than the functions without "get" prefix and should
- * be used where a precision of 10 msec is acceptable or where
- * performance is priority. (NB: "precision", _not_ "resolution" !) 
+ * be used where a precision of 1/HZ (eg 10 msec on a 100HZ machine)
+ * is acceptable or where performance is priority.
+ * (NB: "precision", _not_ "resolution" !) 
  * 
  */
 

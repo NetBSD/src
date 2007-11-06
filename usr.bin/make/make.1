@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.131 2007/08/13 06:14:08 rillig Exp $
+.\"	$NetBSD: make.1,v 1.131.2.1 2007/11/06 23:36:01 matt Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -580,6 +580,35 @@ The preferred variable to use is the environment variable
 because it is more compatible with other versions of
 .Nm
 and cannot be confused with the special target with the same name.
+.It Va .MAKE.EXPORTED
+The list of variables exported by
+.Nm .
+.It Va .MAKE.MAKEFILES
+The list of makefiles read by
+.Nm ,
+which is useful for tracking dependencies.
+Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.PID
+The process-id of 
+.Nm .
+.It Va .MAKE.PPID
+The parent process-id of 
+.Nm .
+.It Va .MAKE.JOB.PREFIX
+If 
+.Nm
+is run with
+.Ar j
+then output for each target is prefixed with a token 
+.Ql --- target ---
+the first part of which can be controlled via
+.Va .MAKE.JOB.PREFIX .
+.br
+For example: 
+.Li .MAKE.JOB.PREFIX=${.newline}---${.MAKE:T}[${.MAKE.PID}]
+would produce tokens like
+.Ql ---make[1234] target ---
+making it easier to track the degree of parallelism being achieved.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
@@ -1161,6 +1190,18 @@ Conditional expressions are also preceded by a single dot as the first
 character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
+.It Ic .export Ar variable
+Export the specified global variable.
+If no variable is provided, all globals are exported
+except for internal variables (those that start with
+.Ql \&.
+).
+This is not affected by the
+.Fl X
+flag, so should be used with caution.
+Appending a variable name to
+.Va .MAKE.EXPORTED
+is equivalent to exporting a variable.
 .It Ic .undef Ar variable
 Un-define the specified global variable.
 Only global variables may be un-defined.

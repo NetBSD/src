@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.65 2005/07/05 20:15:13 kleink Exp $	*/
+/*	$NetBSD: su.c,v 1.65.12.1 2007/11/06 23:36:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.65 2005/07/05 20:15:13 kleink Exp $");
+__RCSID("$NetBSD: su.c,v 1.65.12.1 2007/11/06 23:36:16 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,34 +62,25 @@ __RCSID("$NetBSD: su.c,v 1.65 2005/07/05 20:15:13 kleink Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 
 #ifdef LOGIN_CAP
 #include <login_cap.h>
 #endif
 
-#ifdef KERBEROS
-#include <des.h>
-#include <krb.h>
-#include <netdb.h>
-
-static int kerberos(char *, char *, int);
-static int koktologin(char *, char *, char *);
-
-#endif
-
 #ifdef KERBEROS5
 #include <krb5.h>
-
-static int kerberos5(char *, char *, int);
-
 #endif
 
-#if defined(KERBEROS) || defined(KERBEROS5)
+#ifdef ALLOW_GROUP_CHANGE
+#include "grutil.h"
+#endif
+#include "suutil.h"
 
+#ifdef KERBEROS5
 #define	ARGSTRX	"-Kdflm"
-
+static int kerberos5(char *, const char *, uid_t);
 int use_kerberos = 1;
-
 #else
 #define	ARGSTRX	"-dflm"
 #endif
@@ -98,17 +89,15 @@ int use_kerberos = 1;
 #define	SU_GROUP	"wheel"
 #endif
 
+#define GROUP_PASSWORD	"Group Password:"
+
 #ifdef LOGIN_CAP
 #define ARGSTR	ARGSTRX "c:"
 #else
 #define ARGSTR ARGSTRX
 #endif
 
-static int chshell(const char *);
-static char *ontty(void);
 static int check_ingroup(int, const char *, const char *, int);
-
-int main(int, char **);
 
 int
 main(int argc, char **argv)
@@ -122,12 +111,16 @@ main(int argc, char **argv)
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio, gohome;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *avshell, *username, **np;
+	const char *user, *shell, *avshell;
+	char *username, **np;
 	char *userpass, *class;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
 #ifdef LOGIN_CAP
 	login_cap_t *lc;
+#endif
+#ifdef ALLOW_GROUP_CHANGE
+	char *gname;
 #endif
 
 	asme = asthem = fastlogin = 0;
@@ -135,7 +128,7 @@ main(int argc, char **argv)
 	shell = class = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
-#if defined(KERBEROS) || defined(KERBEROS5)
+#ifdef KERBEROS5
 		case 'K':
 			use_kerberos = 0;
 			break;
@@ -165,9 +158,13 @@ main(int argc, char **argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
+#ifdef ALLOW_GROUP_CHANGE
+			    "usage: %s [%s] [login[:group] [shell arguments]]\n",
+#else
 			    "usage: %s [%s] [login [shell arguments]]\n",
+#endif
 			    getprogname(), ARGSTR);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	argv += optind;
 
@@ -187,16 +184,13 @@ main(int argc, char **argv)
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL)
-		errx(1, "who are you?");
-	username = strdup(pwd->pw_name);
-	userpass = strdup(pwd->pw_passwd);
-	if (username == NULL || userpass == NULL)
-		err(1, "strdup");
-
+		errx(EXIT_FAILURE, "who are you?");
+	username = estrdup(pwd->pw_name);
+	userpass = estrdup(pwd->pw_passwd);
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			(void)estrlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
 			shell = shellbuf;
 		} else {
 			shell = _PATH_BSHELL;
@@ -205,33 +199,43 @@ main(int argc, char **argv)
 	}
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
-	np = *argv ? argv : argv-1;
+	np = *argv ? argv : argv - 1;
 
+#ifdef ALLOW_GROUP_CHANGE
+	if ((p = strchr(user, ':')) != NULL) {
+		*p = '\0';
+		gname = ++p;
+	}
+	else
+		gname = NULL;
+
+#ifdef ALLOW_EMPTY_USER
+	if (user[0] == '\0' && gname != NULL)
+		user = username;
+#endif
+#endif
 	if ((pwd = getpwnam(user)) == NULL)
-		errx(1, "unknown login %s", user);
+		errx(EXIT_FAILURE, "unknown login `%s'", user);
 
 #ifdef LOGIN_CAP
 	/* force the usage of specified class */
 	if (class) {
 		if (ruid)
-			errx(1, "Only root may use -c");
+			errx(EXIT_FAILURE, "Only root may use -c");
 
 		pwd->pw_class = class;
 	}
 	if ((lc = login_getclass(pwd->pw_class)) == NULL)
-		errx(1, "Unknown class %s\n", pwd->pw_class);
+		errx(EXIT_FAILURE, "Unknown class %s\n", pwd->pw_class);
 
-	pw_warntime = login_getcaptime(lc, "password-warn",  
-                                    _PASSWORD_WARNDAYS * SECSPERDAY,
-                                    _PASSWORD_WARNDAYS * SECSPERDAY);
+	pw_warntime = (time_t)login_getcaptime(lc, "password-warn",
+	    _PASSWORD_WARNDAYS * SECSPERDAY,
+	    _PASSWORD_WARNDAYS * SECSPERDAY);
 #endif
 
 	if (ruid
 #ifdef KERBEROS5
 	    && (!use_kerberos || kerberos5(username, user, pwd->pw_uid))
-#endif
-#ifdef KERBEROS
-	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    ) {
 		char *pass = pwd->pw_passwd;
@@ -254,20 +258,20 @@ main(int argc, char **argv)
 		 * but only if that group has any members.
 		 * If SU_GROUP has no members, allow anyone to su root
 		 */
-		if (!ok) {
-			ok = check_ingroup(-1, SU_GROUP, username, 1);
-		}
 		if (!ok)
-			errx(1,
+			ok = check_ingroup(-1, SU_GROUP, username, 1);
+		if (!ok)
+			errx(EXIT_FAILURE,
 	    "you are not listed in the correct secondary group (%s) to su %s.",
 					    SU_GROUP, user);
 		/* if target requires a password, verify it */
-		if (*pass) {
+		if (*pass && pwd->pw_uid != ruid) {	/* XXX - OK? */
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
 				if (skey_haskey(user))
-					errx(1, "Sorry, you have no s/key.");
+					errx(EXIT_FAILURE,
+					    "Sorry, you have no s/key.");
 				else {
 					if (skey_authenticate(user)) {
 						goto badlogin;
@@ -276,23 +280,23 @@ main(int argc, char **argv)
 
 			} else
 #endif
-			if (strcmp(pass, crypt(p, pass))) {
+			if (strcmp(pass, crypt(p, pass)) != 0) {
 #ifdef SKEY
-badlogin:
+ badlogin:
 #endif
-				fprintf(stderr, "Sorry\n");
+				(void)fprintf(stderr, "Sorry\n");
 				syslog(LOG_WARNING,
 					"BAD SU %s to %s%s", username,
 					pwd->pw_name, ontty());
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
-		if (!chshell(pwd->pw_shell) && ruid)
-			errx(1,"permission denied (shell).");
+		if (chshell(pwd->pw_shell) == 0 && ruid)
+			errx(EXIT_FAILURE, "permission denied (shell).");
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -312,37 +316,55 @@ badlogin:
 
 	/* set permissions */
 #ifdef LOGIN_CAP
+# ifdef ALLOW_GROUP_CHANGE
+	/* if we aren't changing users, keep the current group members */
+	if (ruid != pwd->pw_uid &&
+	    setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) == -1)
+		err(EXIT_FAILURE, "setting user context");
+
+	addgroup(lc, gname, pwd, ruid, GROUP_PASSWORD);
+
 	if (setusercontext(lc, pwd, pwd->pw_uid,
-	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
-	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
-		err(1, "setting user context");
+		(u_int)(asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+		LOGIN_SETRESOURCES | LOGIN_SETUSER) == -1)
+		err(EXIT_FAILURE, "setting user context");
+# else
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+		(u_int)(asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+		LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER) == -1)
+		err(EXIT_FAILURE, "setting user context");
+# endif
 #else
-	if (setgid(pwd->pw_gid) < 0)
-		err(1, "setgid");
-	if (initgroups(user, pwd->pw_gid))
-		errx(1, "initgroups failed");
-	if (setuid(pwd->pw_uid) < 0)
-		err(1, "setuid");
+	if (setgid(pwd->pw_gid) == -1)
+		err(EXIT_FAILURE, "setgid");
+	/* if we aren't changing users, keep the current group members */
+	if (ruid != pwd->pw_uid && initgroups(user, pwd->pw_gid) != 0)
+		errx(EXIT_FAILURE, "initgroups failed");
+# ifdef ALLOW_GROUP_CHANGE
+	addgroup(/*EMPTY*/, gname, pwd, ruid, GROUP_PASSWORD);
+# endif
+	if (setuid(pwd->pw_uid) == -1)
+		err(EXIT_FAILURE, "setuid");
 #endif
 
 	if (!asme) {
 		if (asthem) {
 			p = getenv("TERM");
 			/* Create an empty environment */
-			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(1, NULL);
+			environ = emalloc(sizeof(char *));
 			environ[0] = NULL;
 #ifdef LOGIN_CAP
-			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
-				err(1, "setting user context");
+			if (setusercontext(lc, pwd, pwd->pw_uid,
+				LOGIN_SETPATH) == -1)
+				err(EXIT_FAILURE, "setting user context");
 #else
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 #endif
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (gohome && chdir(pwd->pw_dir) < 0)
-				errx(1, "no directory");
-		} 
+			if (gohome && chdir(pwd->pw_dir) == -1)
+				errx(EXIT_FAILURE, "no directory");
+		}
 
 		if (asthem || pwd->pw_uid) {
 			(void)setenv("LOGNAME", pwd->pw_name, 1);
@@ -355,25 +377,25 @@ badlogin:
 
 	if (iscsh == YES) {
 		if (fastlogin)
-			*np-- = "-f";
+			*np-- = __UNCONST("-f");
 		if (asme)
-			*np-- = "-m";
+			*np-- = __UNCONST("-m");
 	} else {
 		if (fastlogin)
-			unsetenv("ENV");
+			(void)unsetenv("ENV");
 	}
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		(void)estrlcpy(avshellbuf + 1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		(void)estrlcpy(avshellbuf + 1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}
-	*np = avshell;
+	*np = __UNCONST(avshell);
 
 #ifdef BSD4_4
 	if (pwd->pw_change || pwd->pw_expire)
@@ -383,7 +405,7 @@ badlogin:
 			(void)printf("%s -- %s's password has expired.\n",
 				     (ruid ? "Sorry" : "Note"), user);
 			if (ruid != 0)
-				exit(1);
+				exit(EXIT_FAILURE);
 		} else if (pwd->pw_change - tp.tv_sec < pw_warntime)
 			(void)printf("Warning: %s's password expires on %s",
 				     user, ctime(&pwd->pw_change));
@@ -393,12 +415,12 @@ badlogin:
 			(void)printf("%s -- %s's account has expired.\n",
 				     (ruid ? "Sorry" : "Note"), user);
 			if (ruid != 0)
-				exit(1);
+				exit(EXIT_FAILURE);
 		} else if (pwd->pw_expire - tp.tv_sec <
 		    _PASSWORD_WARNDAYS * SECSPERDAY)
 			(void)printf("Warning: %s's account expires on %s",
 				     user, ctime(&pwd->pw_expire));
- 	}
+	}
 #endif
 	if (ruid != 0)
 		syslog(LOG_NOTICE, "%s to %s%s",
@@ -407,39 +429,15 @@ badlogin:
 	/* Raise our priority back to what we had before */
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
-	execv(shell, np);
-	err(1, "%s", shell);
-        /* NOTREACHED */
+	(void)execv(shell, np);
+	err(EXIT_FAILURE, "%s", shell);
+	/* NOTREACHED */
 }
 
-
-static int
-chshell(const char *sh)
-{
-	const char *cp;
-
-	setusershell();
-	while ((cp = getusershell()) != NULL)
-		if (!strcmp(cp, sh))
-			return 1;
-	return 0;
-}
-
-static char *
-ontty(void)
-{
-	char *p;
-	static char buf[MAXPATHLEN + 4];
-
-	buf[0] = 0;
-	if ((p = ttyname(STDERR_FILENO)) != NULL)
-		(void)snprintf(buf, sizeof buf, " on %s", p);
-	return buf;
-}
 
 #ifdef KERBEROS5
 static int
-kerberos5(char *username, char *user, int uid)
+kerberos5(char *username, const char *user, uid_t uid)
 {
 	krb5_error_code ret;
 	krb5_context context;
@@ -450,9 +448,9 @@ kerberos5(char *username, char *user, int uid)
 
 	ret = krb5_init_context(&context);
 	if (ret)
-		return (1);
+		return 1;
 
-	if (strcmp (user, "root") == 0)
+	if (strcmp(user, "root") == 0)
 		ret = krb5_make_principal(context, &princ,
 					  NULL, username, "root", NULL);
 	else
@@ -461,7 +459,7 @@ kerberos5(char *username, char *user, int uid)
 	if (ret)
 		goto fail;
 	if (!krb5_kuserok(context, princ, user) && !uid) {
-		warnx ("kerberos5: not in %s's ACL.", user);
+		warnx("kerberos5: not in %s's ACL.", user);
 		goto fail;
 	}
 	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
@@ -497,9 +495,9 @@ kerberos5(char *username, char *user, int uid)
 	}
 
 	filename = krb5_cc_get_name(context, ccache2);
-	asprintf(&cc_name, "%s:%s", krb5_cc_get_type(context, ccache2),
+	(void)easprintf(&cc_name, "%s:%s", krb5_cc_get_type(context, ccache2),
 		 filename);
-	if (chown (filename, uid, -1) < 0) {
+	if (chown(filename, uid, NOGROUP) == -1) {
 		warn("chown %s", filename);
 		free(cc_name);
 		krb5_cc_destroy(context, ccache);
@@ -507,167 +505,22 @@ kerberos5(char *username, char *user, int uid)
 		goto fail;
 	}
 
-	setenv("KRB5CCNAME", cc_name, 1);
+	(void)setenv("KRB5CCNAME", cc_name, 1);
 	free(cc_name);
 	krb5_cc_close(context, ccache2);
 	krb5_cc_destroy(context, ccache);
-	return (0);
+	return 0;
 
  fail:
 	if (princ != NULL)
-		krb5_free_principal (context, princ);
-	krb5_free_context (context);
-	return (1);
+		krb5_free_principal(context, princ);
+	krb5_free_context(context);
+	return 1;
 }
-#endif
-
-#ifdef KERBEROS
-static int
-kerberos(char *username, char *user, int uid)
-{
-	KTEXT_ST ticket;
-	AUTH_DAT authdata;
-	struct hostent *hp;
-	int kerno;
-	u_long faddr;
-	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
-	char hostname[MAXHOSTNAMELEN + 1], savehost[MAXHOSTNAMELEN + 1];
-
-	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
-		return (1);
-	if (koktologin(username, lrealm, user) && !uid) {
-		warnx("kerberos: not in %s's ACL.", user);
-		return (1);
-	}
-	(void)snprintf(krbtkfile, sizeof krbtkfile, "%s_%s_%d", TKT_ROOT,
-	    user, getuid());
-
-	(void)setenv("KRBTKFILE", krbtkfile, 1);
-	(void)krb_set_tkt_string(krbtkfile);
-	/*
-	 * Set real as well as effective ID to 0 for the moment,
-	 * to make the kerberos library do the right thing.
-	 */
-	if (setuid(0) < 0) {
-		warn("setuid");
-		return (1);
-	}
-
-	/*
-	 * Little trick here -- if we are su'ing to root,
-	 * we need to get a ticket for "xxx.root", where xxx represents
-	 * the name of the person su'ing.  Otherwise (non-root case),
-	 * we need to get a ticket for "yyy.", where yyy represents
-	 * the name of the person being su'd to, and the instance is null
-	 *
-	 * We should have a way to set the ticket lifetime,
-	 * with a system default for root.
-	 */
-	{
-		char prompt[128];
-		char passw[256];
-
-		(void)snprintf (prompt, sizeof(prompt),
-			  "%s's Password: ",
-			  krb_unparse_name_long ((uid == 0 ? username : user),
-						 (uid == 0 ? "root" : ""),
-						 lrealm));
-		if (des_read_pw_string (passw, sizeof (passw), prompt, 0)) {
-			memset (passw, 0, sizeof (passw));
-			return (1);
-		}
-		if (strlen(passw) == 0)
-			return (1); /* Empty passwords are not allowed */
-
-		kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
-					  (uid == 0 ? "root" : ""), lrealm,
-					  KRB_TICKET_GRANTING_TICKET,
-					  lrealm,
-					  DEFAULT_TKT_LIFE,
-					  passw);
-		memset (passw, 0, strlen (passw));
-	}
-
-	if (kerno != KSUCCESS) {
-		if (kerno == KDC_PR_UNKNOWN) {
-			warnx("kerberos: principal unknown: %s.%s@%s",
-				(uid == 0 ? username : user),
-				(uid == 0 ? "root" : ""), lrealm);
-			return (1);
-		}
-		warnx("kerberos: unable to su: %s", krb_err_txt[kerno]);
-		syslog(LOG_WARNING,
-		    "BAD Kerberos SU: %s to %s%s: %s",
-		    username, user, ontty(), krb_err_txt[kerno]);
-		return (1);
-	}
-
-	if (chown(krbtkfile, uid, -1) < 0) {
-		warn("chown");
-		(void)unlink(krbtkfile);
-		return (1);
-	}
-
-	(void)setpriority(PRIO_PROCESS, 0, -2);
-
-	if (gethostname(hostname, sizeof(hostname)) == -1) {
-		warn("gethostname");
-		dest_tkt();
-		return (1);
-	}
-	hostname[sizeof(hostname) - 1] = '\0';
-
-	(void)strlcpy(savehost, krb_get_phost(hostname), sizeof(savehost));
-	savehost[sizeof(savehost) - 1] = '\0';
-
-	kerno = krb_mk_req(&ticket, "rcmd", savehost, lrealm, 33);
-
-	if (kerno == KDC_PR_UNKNOWN) {
-		warnx("Warning: TGT not verified.");
-		syslog(LOG_WARNING,
-		    "%s to %s%s, TGT not verified (%s); %s.%s not registered?",
-		    username, user, ontty(), krb_err_txt[kerno],
-		    "rcmd", savehost);
-	} else if (kerno != KSUCCESS) {
-		warnx("Unable to use TGT: %s", krb_err_txt[kerno]);
-		syslog(LOG_WARNING, "failed su: %s to %s%s: %s",
-		    username, user, ontty(), krb_err_txt[kerno]);
-		dest_tkt();
-		return (1);
-	} else {
-		if (!(hp = gethostbyname(hostname))) {
-			warnx("can't get addr of %s", hostname);
-			dest_tkt();
-			return (1);
-		}
-		memmove((char *)&faddr, (char *)hp->h_addr, sizeof(faddr));
-
-		if ((kerno = krb_rd_req(&ticket, "rcmd", savehost, faddr,
-		    &authdata, "")) != KSUCCESS) {
-			warnx("kerberos: unable to verify rcmd ticket: %s",
-			    krb_err_txt[kerno]);
-			syslog(LOG_WARNING,
-			    "failed su: %s to %s%s: %s", username,
-			     user, ontty(), krb_err_txt[kerno]);
-			dest_tkt();
-			return (1);
-		}
-	}
-	return (0);
-}
+#endif /* KERBEROS5 */
 
 static int
-koktologin(char *name, char *realm, char *toname)
-{
-	return krb_kuserok(name,
-			   strcmp (toname, "root") == 0 ? "root" : "",
-			   realm,
-			   toname);
-}
-#endif
-
-static int
-check_ingroup (int gid, const char *gname, const char *user, int ifempty)
+check_ingroup(int gid, const char *gname, const char *user, int ifempty)
 {
 	struct group *gr;
 	char **g;
@@ -710,22 +563,20 @@ check_ingroup (int gid, const char *gname, const char *user, int ifempty)
 	 * each member to see if it is a group, and if so whether user is
 	 * in it.
 	 */
-	gr_mem = malloc((n + 1) * sizeof (char *));
-	for  (g = gr->gr_mem, i = 0; *g; ++g) {
-		gr_mem[i] = strdup(*g);
-		if (!gr_mem[i])
-			err(1, "strdup");
+	gr_mem = emalloc((n + 1) * sizeof (char *));
+	for (g = gr->gr_mem, i = 0; *g; ++g) {
+		gr_mem[i] = estrdup(*g);
 		i++;
 	}
 	gr_mem[i++] = NULL;
-    
-	for  (g = gr_mem; ok == 0 && *g; ++g) {
+
+	for (g = gr_mem; ok == 0 && *g; ++g) {
 		/*
 		 * If we get this far we don't accept empty/missing groups.
 		 */
 		ok = check_ingroup(-1, *g, user, 0);
 	}
-	for  (g = gr_mem; *g; ++g) {
+	for (g = gr_mem; *g; ++g) {
 		free(*g);
 	}
 	free(gr_mem);

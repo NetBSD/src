@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.6 2006/09/23 22:16:35 manu Exp $ */
+/*	$NetBSD: twareg.h,v 1.6.24.1 2007/11/06 23:29:33 matt Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -39,7 +39,7 @@
 #define	_PCI_TWAREG_H_
 
 #if defined(_KERNEL)
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 /*
  * The following macro has no business being in twa_reg.h.  It should probably

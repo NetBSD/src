@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.97 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.97.16.1 2007/11/06 23:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.97 2007/03/04 06:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.97.16.1 2007/11/06 23:33:37 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.97 2007/03/04 06:03:17 christos Exp $")
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -457,7 +457,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	        	error = EAFNOSUPPORT;           /* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 #ifdef INET
 		case AF_INET:
 			break;

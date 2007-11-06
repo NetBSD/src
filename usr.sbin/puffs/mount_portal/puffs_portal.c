@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.9.2.1 2007/11/06 23:36:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.9.2.1 2007/11/06 23:36:31 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -320,16 +320,14 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 
 	data = PUFBUF_FD;
 	if (puffs_framebuf_putdata(pufbuf, &data, sizeof(int)) == -1)
-		return errno;
+		goto bad;
 
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1) {
-		puffs_framebuf_destroy(pufbuf);
-		return errno;
-	}
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
+		goto bad;
 
 	switch (fork()) {
 	case -1:
-		return errno;
+		goto bad;
 	case 0:
 		error = activate_argv(portc, portn->path, v, &fd);
 		sendfd(s[1], fd, error);
@@ -341,8 +339,8 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 		close(s[0]);
 		close(s[1]);
 		if (puffs_framebuf_tellsize(pufbuf) != 2*sizeof(int)) {
-			puffs_framebuf_destroy(pufbuf);
-			return EIO;
+			errno = EIO;
+			goto bad;
 		}
 
 		puffs_framebuf_getdata_atoff(pufbuf, 0, &error, sizeof(int));
@@ -363,6 +361,10 @@ provide(struct puffs_cc *pcc, struct portal_node *portn,
 		portn->fd = fd;
 		return 0;
 	}
+
+ bad:
+	puffs_framebuf_destroy(pufbuf);
+	return errno;
 }
 
 int
@@ -373,12 +375,14 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
-	int pflags, lflags, mntflags;
+	int pflags, mntflags;
+	int detach;
 	int ch;
 
 	setprogname(argv[0]);
 
-	lflags = mntflags = pflags = 0;
+	mntflags = pflags = 0;
+	detach = 1;
 	while ((ch = getopt(argc, argv, "o:s")) != -1) {
 		switch (ch) {
 		case 'o':
@@ -388,7 +392,7 @@ main(int argc, char *argv[])
 			freemntopts(mp);
 			break;
 		case 's': /* stay on top */
-			lflags |= PUFFSLOOP_NODAEMON;
+			detach = 0;
 			break;
 		default:
 			usage();
@@ -397,7 +401,7 @@ main(int argc, char *argv[])
 	}
 	pflags |= PUFFS_KFLAG_NOCACHE | PUFFS_KFLAG_LOOKUP_FULLPNBUF;
 	if (pflags & PUFFS_FLAG_OPDUMP)
-		lflags |= PUFFSLOOP_NODAEMON;
+		detach = 0;
 	argc -= optind;
 	argv += optind;
 
@@ -441,10 +445,15 @@ main(int argc, char *argv[])
 		err(1, "cannot read cfg \"%s\"", cfg);
 
 	puffs_ml_setloopfn(pu, portal_loopfn);
-	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL, NULL);
+	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL,NULL,NULL);
+
+	if (detach)
+		if (daemon(1, 1) == -1)
+			err(1, "daemon");
+
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
-	if (puffs_mainloop(pu, lflags) == -1)
+	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
 
 	return 0;

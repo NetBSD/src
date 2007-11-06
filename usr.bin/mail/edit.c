@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.22 2007/08/22 03:42:06 dogcow Exp $	*/
+/*	$NetBSD: edit.c,v 1.22.2.1 2007/11/06 23:35:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.22 2007/08/22 03:42:06 dogcow Exp $");
+__RCSID("$NetBSD: edit.c,v 1.22.2.1 2007/11/06 23:35:51 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	}
 	nf = NULL;
 	if ((editcmd =
-	         value(editortype == 'e' ? ENAME_EDITOR : ENAME_VISUAL)) == NULL)
+		value(editortype == 'e' ? ENAME_EDITOR : ENAME_VISUAL)) == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
 	if (run_command(editcmd, 0, 0, -1, tempname, NULL) < 0) {
 		(void)unlink(tempname);
@@ -170,10 +170,9 @@ edit1(int *msgvec, int editortype)
 			char *p;
 
 			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof buf, stdin) == 0)
+			if (fgets(buf, sizeof(buf), stdin) == 0)
 				break;
-			for (p = buf; *p == ' ' || *p == '\t'; p++)
-				continue;
+			p = skip_WSP(buf);
 			if (*p == 'q')
 				break;
 			if (*p == 'n')

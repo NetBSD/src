@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.21 2007/06/05 04:04:14 briggs Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.21.8.1 2007/11/06 23:28:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.21 2007/06/05 04:04:14 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.21.8.1 2007/11/06 23:28:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.21 2007/06/05 04:04:14 briggs Exp $");
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

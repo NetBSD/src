@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.26 2007/08/01 23:23:41 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.26.4.1 2007/11/06 23:32:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.26 2007/08/01 23:23:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.26.4.1 2007/11/06 23:32:05 matt Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -100,8 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.26 2007/08/01 23:23:41 ad Exp $")
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
 #include <sys/evcnt.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -218,9 +217,9 @@ callout_barrier(callout_impl_t *c)
 		ci->ci_data.cpu_callout_nwait++;
 		callout_ev_block.ev_count++;
 
+		l->l_kpriority = true;
 		sleepq_enter(&callout_sleepq, l);
-		sleepq_enqueue(&callout_sleepq, sched_kpri(l), ci,
-		    "callout", &sleep_syncobj);
+		sleepq_enqueue(&callout_sleepq, ci, "callout", &sleep_syncobj);
 		sleepq_block(0, false);
 		mutex_spin_enter(&callout_lock);
 	}
@@ -279,7 +278,7 @@ void
 callout_startup2(void)
 {
 
-	callout_si = softintr_establish(IPL_SOFTCLOCK,
+	callout_si = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	    callout_softclock, NULL);
 	if (callout_si == NULL)
 		panic("callout_startup2: unable to register softclock intr");
@@ -553,7 +552,7 @@ callout_hardclock(void)
 	mutex_spin_exit(&callout_lock);
 
 	if (needsoftclock)
-		softintr_schedule(callout_si);
+		softint_schedule(callout_si);
 }
 
 /* ARGSUSED */

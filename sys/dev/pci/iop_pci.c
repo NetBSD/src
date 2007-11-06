@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.20 2007/07/09 21:00:57 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.20.8.1 2007/11/06 23:29:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.20 2007/07/09 21:00:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.20.8.1 2007/11/06 23:29:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.20 2007/07/09 21:00:57 ad Exp $");
 #include <sys/proc.h>
 
 #include <machine/endian.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

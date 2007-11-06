@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.19 2007/07/09 21:11:01 ad Exp $	 */
+/*	$NetBSD: at_control.c,v 1.19.8.1 2007/11/06 23:33:39 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.19 2007/07/09 21:11:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.19.8.1 2007/11/06 23:33:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,19 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.19 2007/07/09 21:11:01 ad Exp $");
 #include <netatalk/phase2.h>
 #include <netatalk/at_extern.h>
 
-static int aa_dorangeroute __P((struct ifaddr * ifa,
-    u_int first, u_int last, int cmd));
-static int aa_addsingleroute __P((struct ifaddr * ifa,
-    struct at_addr * addr, struct at_addr * mask));
-static int aa_delsingleroute __P((struct ifaddr * ifa,
-    struct at_addr * addr, struct at_addr * mask));
-static int aa_dosingleroute __P((struct ifaddr * ifa, struct at_addr * addr,
-    struct at_addr * mask, int cmd, int flags));
-static int at_scrub __P((struct ifnet * ifp, struct at_ifaddr * aa));
-static int at_ifinit __P((struct ifnet * ifp, struct at_ifaddr * aa,
-    struct sockaddr_at * sat));
+static int aa_dorangeroute(struct ifaddr * ifa,
+    u_int first, u_int last, int cmd);
+static int aa_addsingleroute(struct ifaddr * ifa,
+    struct at_addr * addr, struct at_addr * mask);
+static int aa_delsingleroute(struct ifaddr * ifa,
+    struct at_addr * addr, struct at_addr * mask);
+static int aa_dosingleroute(struct ifaddr * ifa, struct at_addr * addr,
+    struct at_addr * mask, int cmd, int flags);
+static int at_scrub(struct ifnet * ifp, struct at_ifaddr * aa);
+static int at_ifinit(struct ifnet *, struct at_ifaddr *,
+    const struct sockaddr_at *);
 #if 0
-static void aa_clean __P((void));
+static void aa_clean(void);
 #endif
 
 #define sateqaddr(a,b)	((a)->sat_len == (b)->sat_len && \
@@ -79,8 +79,9 @@ at_control(cmd, data, ifp, l)
 	struct lwp     *l;
 {
 	struct ifreq   *ifr = (struct ifreq *) data;
-	struct sockaddr_at *sat;
+	const struct sockaddr_at *csat;
 	struct netrange *nr;
+	const struct netrange *cnr;
 	struct at_aliasreq *ifra = (struct at_aliasreq *) data;
 	struct at_ifaddr *aa0;
 	struct at_ifaddr *aa = 0;
@@ -134,9 +135,9 @@ at_control(cmd, data, ifp, l)
 		    NULL) != 0)
 			return (EPERM);
 
-		sat = satosat(&ifr->ifr_addr);
-		nr = (struct netrange *) sat->sat_zero;
-		if (nr->nr_phase == 1) {
+		csat = satocsat(ifreq_getaddr(cmd, ifr));
+		cnr = (const struct netrange *)csat->sat_zero;
+		if (cnr->nr_phase == 1) {
 			/*
 		         * Look for a phase 1 address on this interface.
 		         * This may leave aa pointing to the first address on
@@ -221,7 +222,7 @@ at_control(cmd, data, ifp, l)
 			/*
 		         * Set/clear the phase 2 bit.
 		         */
-			if (nr->nr_phase == 1)
+			if (cnr->nr_phase == 1)
 				aa->aa_flags &= ~AFA_PHASE2;
 			else
 				aa->aa_flags |= AFA_PHASE2;
@@ -240,9 +241,9 @@ at_control(cmd, data, ifp, l)
 		break;
 
 	case SIOCGIFADDR:
-		sat = satosat(&ifr->ifr_addr);
-		nr = (struct netrange *) sat->sat_zero;
-		if (nr->nr_phase == 1) {
+		csat = satocsat(ifreq_getaddr(cmd, ifr));
+		cnr = (const struct netrange *)csat->sat_zero;
+		if (cnr->nr_phase == 1) {
 			/*
 		         * If the request is specifying phase 1, then
 		         * only look at a phase one address
@@ -252,7 +253,7 @@ at_control(cmd, data, ifp, l)
 				    (aa->aa_flags & AFA_PHASE2) == 0)
 					break;
 			}
-		} else if (nr->nr_phase == 2) {
+		} else if (cnr->nr_phase == 2) {
 			/*
 		         * If the request is specifying phase 2, then
 		         * only look at a phase two address
@@ -282,34 +283,37 @@ at_control(cmd, data, ifp, l)
          * the "aa" pointer is valid when needed.
          */
 	switch (cmd) {
-	case SIOCGIFADDR:
+	case SIOCGIFADDR: {
+		union {
+			struct sockaddr sa;
+			struct sockaddr_at sat;
+		} u;
 
 		/*
 		 * copy the contents of the sockaddr blindly.
 		 */
-		sat = (struct sockaddr_at *) & ifr->ifr_addr;
-		*sat = aa->aa_addr;
-
+		sockaddr_copy(&u.sa, sizeof(u),
+		    (const struct sockaddr *)&aa->aa_addr);
 		/*
 		 * and do some cleanups
 		 */
-		((struct netrange *) &sat->sat_zero)->nr_phase =
-		    (aa->aa_flags & AFA_PHASE2) ? 2 : 1;
-		((struct netrange *) &sat->sat_zero)->nr_firstnet =
-		    aa->aa_firstnet;
-		((struct netrange *) &sat->sat_zero)->nr_lastnet =
-		    aa->aa_lastnet;
+		nr = (struct netrange *)&u.sat.sat_zero;
+		nr->nr_phase = (aa->aa_flags & AFA_PHASE2) ? 2 : 1;
+		nr->nr_firstnet = aa->aa_firstnet;
+		nr->nr_lastnet = aa->aa_lastnet;
+		ifreq_setaddr(cmd, ifr, &u.sa);
 		break;
+	}
 
 	case SIOCSIFADDR:
-		return (at_ifinit(ifp, aa,
-		    (struct sockaddr_at *) &ifr->ifr_addr));
+		return at_ifinit(ifp, aa,
+		    (const struct sockaddr_at *)ifreq_getaddr(cmd, ifr));
 
 	case SIOCAIFADDR:
 		if (sateqaddr(&ifra->ifra_addr, &aa->aa_addr))
 			return 0;
-		return (at_ifinit(ifp, aa,
-		    (struct sockaddr_at *) &ifr->ifr_addr));
+		return at_ifinit(ifp, aa,
+		    (const struct sockaddr_at *)ifreq_getaddr(cmd, ifr));
 
 	case SIOCDIFADDR:
 		at_purgeaddr((struct ifaddr *) aa, ifp);
@@ -396,7 +400,7 @@ static int
 at_ifinit(ifp, aa, sat)
 	struct ifnet   *ifp;
 	struct at_ifaddr *aa;
-	struct sockaddr_at *sat;
+	const struct sockaddr_at *sat;
 {
 	struct netrange nr, onr;
 	struct sockaddr_at oldaddr;

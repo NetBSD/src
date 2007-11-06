@@ -1,11 +1,8 @@
-/*	$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.22.2.1 2007/11/06 23:30:21 matt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Juan Romero Pardines.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Juan Romero Pardines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Juan Romero Pardines
- *      for the NetBSD Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -80,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22.2.1 2007/11/06 23:30:21 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -91,15 +80,20 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp 
 #include <sys/vnode.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
-static kmutex_t sysmon_power_event_queue_mtx;
-static kcondvar_t sysmon_power_event_queue_cv;
-static struct lwp *sysmon_power_daemon;
-static prop_dictionary_t sysmon_power_dict;
+/*
+ * Singly linked list for dictionaries to be stored/sent.
+ */
+struct power_event_dictionary {
+	SLIST_ENTRY(power_event_dictionary) pev_dict_head;
+	prop_dictionary_t dict;
+	int flags;
+};
 
 struct power_event_description {
 	int type;
@@ -140,7 +134,8 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_USER_CRITMAX,	"critical-over" },
 	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
 	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
-	{ PENVSYS_EVENT_DRIVE_STCHANGED,"state-changed" },
+	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
+	{ PENVSYS_EVENT_LOW_POWER,	"low-power" },
 	{ -1, NULL }
 };
 
@@ -160,17 +155,28 @@ static const struct power_event_description penvsys_type_desc[] = {
 };
 
 #define SYSMON_MAX_POWER_EVENTS		32
+#define SYSMON_POWER_DICTIONARY_BUSY	0x01
 
 static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
 static int sysmon_power_event_queue_head;
 static int sysmon_power_event_queue_tail;
 static int sysmon_power_event_queue_count;
+
+static SLIST_HEAD(, power_event_dictionary) pev_dict_list =
+    SLIST_HEAD_INITIALIZER(&pev_dict_list);
+
 static struct selinfo sysmon_power_event_queue_selinfo;
+static struct lwp *sysmon_power_daemon;
+
+static kmutex_t sysmon_power_event_queue_mtx;
+static kcondvar_t sysmon_power_event_queue_cv;
 
 static char sysmon_power_type[32];
 
-static int sysmon_power_make_dictionary(void *, int, int);
-static int sysmon_power_daemon_task(void *, int);
+static int sysmon_power_make_dictionary(prop_dictionary_t, void *, int, int);
+static int sysmon_power_daemon_task(struct power_event_dictionary *,
+				    void *, int);
+static void sysmon_power_destroy_dictionary(struct power_event_dictionary *);
 
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
@@ -196,6 +202,7 @@ sysmon_power_init(void)
 static int
 sysmon_queue_power_event(power_event_t *pev)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
 
 	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
 		return 0;
@@ -217,6 +224,8 @@ sysmon_queue_power_event(power_event_t *pev)
 static int
 sysmon_get_power_event(power_event_t *pev)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+
 	if (sysmon_power_event_queue_count == 0)
 		return 0;
 
@@ -236,6 +245,8 @@ sysmon_get_power_event(power_event_t *pev)
 static void
 sysmon_power_event_queue_flush(void)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+
 	sysmon_power_event_queue_head = 0;
 	sysmon_power_event_queue_tail = 0;
 	sysmon_power_event_queue_count = 0;
@@ -248,18 +259,21 @@ sysmon_power_event_queue_flush(void)
  *	to the process to notify that an event was enqueued succesfully.
  */
 static int
-sysmon_power_daemon_task(void *pev_data, int event)
+sysmon_power_daemon_task(struct power_event_dictionary *ped,
+			 void *pev_data, int event)
 {
 	power_event_t pev;
 	int rv, error = 0;
 
-	/*
-	 * If a power management daemon is connected, then simply
-	 * deliver the event to them.  If not, we need to try to
-	 * do something reasonable ourselves.
-	 */
+	if (!pev_data)
+		return EINVAL;
+
+	mutex_enter(&sysmon_power_event_queue_mtx);
+	
 	switch (event) {
-	/* Power switch events */
+	/* 
+	 * Power switch events.
+	 */
 	case PSWITCH_EVENT_PRESSED:
 	case PSWITCH_EVENT_RELEASED:
 	    {
@@ -278,16 +292,21 @@ sysmon_power_daemon_task(void *pev_data, int event)
 			          sizeof(pev.pev_switch.psws_name));
 		}
 #endif
-		error = sysmon_power_make_dictionary(pswitch,
+		error = sysmon_power_make_dictionary(ped->dict,
+						     pswitch,
 						     event,
 						     pev.pev_type);
-		if (error)
+		if (error) {
+			mutex_exit(&sysmon_power_event_queue_mtx);
 			goto out;
+		}
 
 		break;
 	    }
 
-	/* Power envsys events */
+	/* 
+	 * ENVSYS events.
+	 */
 	case PENVSYS_EVENT_NORMAL:
 	case PENVSYS_EVENT_CRITICAL:
 	case PENVSYS_EVENT_CRITUNDER:
@@ -297,33 +316,51 @@ sysmon_power_daemon_task(void *pev_data, int event)
 	case PENVSYS_EVENT_USER_CRITMAX:
 	case PENVSYS_EVENT_USER_CRITMIN:
 	case PENVSYS_EVENT_BATT_USERCAP:
-	case PENVSYS_EVENT_DRIVE_STCHANGED:
+	case PENVSYS_EVENT_STATE_CHANGED:
+	case PENVSYS_EVENT_LOW_POWER:
 	    {
 		struct penvsys_state *penvsys =
 		    (struct penvsys_state *)pev_data;
 
 		pev.pev_type = POWER_EVENT_ENVSYS_STATE_CHANGE;
 
-		error = sysmon_power_make_dictionary(penvsys,
+		error = sysmon_power_make_dictionary(ped->dict,
+						     penvsys,
 						     event, 
 						     pev.pev_type);
-		if (error)
+		if (error) {
+			mutex_exit(&sysmon_power_event_queue_mtx);
 			goto out;
+		}
 
 		break;
 	    }
 	default:
 		error = ENOTTY;
+		mutex_exit(&sysmon_power_event_queue_mtx);
 		goto out;
 	}
 
+	/*
+	 * The dictionary for the event was created successfully
+	 * at this point, time to add it into the list.
+	 */
+	SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
+
+	/*
+	 * Enqueue the event.
+	 */
 	rv = sysmon_queue_power_event(&pev);
 	if (rv == 0) {
 		printf("%s: WARNING: state change event %d lost; "
 		    "queue full\n", __func__, pev.pev_type);
+		mutex_exit(&sysmon_power_event_queue_mtx);
 		error = EINVAL;
 		goto out;
 	} else {
+		/*
+		 * Notify the daemon that an event is ready.
+		 */
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		selnotify(&sysmon_power_event_queue_selinfo, 0);
@@ -518,15 +555,45 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case POWER_EVENT_RECVDICT:
 	    {
 		struct plistref *plist = (struct plistref *)data;
+		struct power_event_dictionary *ped;
 
-		if (!sysmon_power_dict) {
+		/*
+		 * Get the first dictionary enqueued and mark it
+		 * as busy.
+		 */
+		mutex_enter(&sysmon_power_event_queue_mtx);
+		ped = SLIST_FIRST(&pev_dict_list);
+		if (!ped) {
+			mutex_exit(&sysmon_power_event_queue_mtx);
 			error = ENOTSUP;
 			break;
 		}
-			
+
+		if (ped->flags & SYSMON_POWER_DICTIONARY_BUSY) {
+			mutex_exit(&sysmon_power_event_queue_mtx);
+			error = EBUSY;
+			break;
+		}
+
+		ped->flags |= SYSMON_POWER_DICTIONARY_BUSY;
+		mutex_exit(&sysmon_power_event_queue_mtx);
+
+		/*
+		 * Send it now.
+		 */
 		error = prop_dictionary_copyout_ioctl(plist,
 						      cmd,
-						      sysmon_power_dict);
+						      ped->dict);
+
+		/*
+		 * Remove the dictionary now that we don't need it.
+		 */
+		mutex_enter(&sysmon_power_event_queue_mtx);
+		ped->flags &= ~SYSMON_POWER_DICTIONARY_BUSY;
+		SLIST_REMOVE_HEAD(&pev_dict_list, pev_dict_head);
+		mutex_exit(&sysmon_power_event_queue_mtx);
+		sysmon_power_destroy_dictionary(ped);
+
 		break;
 	    }
 	default:
@@ -539,26 +606,15 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 /*
  * sysmon_power_make_dictionary:
  *
- * 	Creates a dictionary with all properties specified in the
- * 	sysmon_pswitch or sysmon_penvsys struct.
+ * 	Adds the properties for an event in a dictionary.
  */
 int
-sysmon_power_make_dictionary(void *power_data, int event, int type)
+sysmon_power_make_dictionary(prop_dictionary_t dict, void *power_data,
+			     int event, int type)
 {
-	int i = 0;
+	int i;
 
-	mutex_exit(&sysmon_power_event_queue_mtx);
-
-	/* 
-	 * if there's a dictionary already created, destroy it
-	 * and make a new one to make sure it's always the latest
-	 * used by the event.
-	 */
-	if (sysmon_power_dict)
-		prop_object_release(sysmon_power_dict);
-
-	sysmon_power_dict = prop_dictionary_create();
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
 
 	switch (type) {
 	/*
@@ -576,14 +632,14 @@ sysmon_power_make_dictionary(void *power_data, int event, int type)
 
 #define SETPROP(key, str)						\
 do {									\
-	if ((str) &&							\
-	    !prop_dictionary_set_cstring_nocopy(sysmon_power_dict,	\
-						(key),			\
-						(str))) {		\
+	if ((str) && !prop_dictionary_set_cstring(dict,			\
+						  (key),		\
+						  (str))) {		\
 		printf("%s: failed to set %s\n", __func__, (str));	\
 		return EINVAL;						\
 	}								\
 } while (/* CONSTCOND */ 0)
+
 
 		SETPROP("driver-name", smpsw->smpsw_name);
 
@@ -616,7 +672,7 @@ do {									\
 
 		SETPROP("driver-name", pes->pes_dvname);
 		SETPROP("sensor-name", pes->pes_sensname);
-		SETPROP("drive-state-desc", pes->pes_statedesc);
+		SETPROP("state-description", pes->pes_statedesc);
 
 		for (i = 0; peevent[i].type != -1; i++)
 			if (peevent[i].type == event)
@@ -637,6 +693,37 @@ do {									\
 	}
 
 	return 0;
+}
+
+/*
+ * sysmon_power_destroy_dictionary:
+ *
+ * 	Destroys a power_event_dictionary object and all its
+ * 	properties in the dictionary.
+ */
+static void
+sysmon_power_destroy_dictionary(struct power_event_dictionary *ped)
+{
+	prop_object_iterator_t iter;
+	prop_object_t obj;
+
+	KASSERT(ped != NULL);
+	KASSERT((ped->flags & SYSMON_POWER_DICTIONARY_BUSY) == 0);
+
+	iter = prop_dictionary_iterator(ped->dict);
+	if (iter == NULL)
+		return;
+
+	while ((obj = prop_object_iterator_next(iter)) != NULL) {
+		prop_dictionary_remove(ped->dict,
+		    prop_dictionary_keysym_cstring_nocopy(obj));
+		prop_object_iterator_reset(iter);
+	}
+
+	prop_object_iterator_release(iter);
+	prop_object_release(ped->dict);
+
+	kmem_free(ped, sizeof(*ped));
 }
 
 /*
@@ -667,37 +754,48 @@ sysmon_power_settype(const char *type)
  * sysmon_penvsys_event:
  *
  * 	Puts an event onto the sysmon power queue and sends the
- * 	appropiate event.
+ * 	appropiate event if the daemon is running, otherwise a
+ * 	message is shown.
  */
 void
 sysmon_penvsys_event(struct penvsys_state *pes, int event)
 {
+	struct power_event_dictionary *ped;
 	const char *mystr = NULL;
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
-	if (sysmon_power_daemon != NULL)
-		if (sysmon_power_daemon_task(pes, event) == 0)
+	KASSERT(pes != NULL);
+
+	if (sysmon_power_daemon != NULL) {
+		/*
+		 * Create a dictionary for the new event.
+		 */
+		ped = kmem_zalloc(sizeof(*ped), KM_NOSLEEP);
+		if (!ped)
 			return;
-	mutex_exit(&sysmon_power_event_queue_mtx);
+		ped->dict = prop_dictionary_create();
+
+		if (sysmon_power_daemon_task(ped, pes, event) == 0)
+			return;
+	}
 
 	switch (pes->pes_type) {
 	case PENVSYS_TYPE_BATTERY:
 		switch (event) {
-		case PENVSYS_EVENT_WARNUNDER:
-			mystr = "warning capacity";
-			PENVSYS_SHOWSTATE(mystr);
+		case PENVSYS_EVENT_LOW_POWER:
+			printf("sysmon: LOW POWER! SHUTTING DOWN.\n");
+			cpu_reboot(RB_POWERDOWN, NULL);
 			break;
-		case PENVSYS_EVENT_CRITUNDER:
-			mystr = "low capacity";
-			PENVSYS_SHOWSTATE(mystr);
+		case PENVSYS_EVENT_STATE_CHANGED:
+			printf("%s: state changed on '%s' to '%s'\n",
+			    pes->pes_dvname, pes->pes_sensname,
+			    pes->pes_statedesc);
 			break;
-		case PENVSYS_EVENT_CRITICAL:
 		case PENVSYS_EVENT_BATT_USERCAP:
 			mystr = "critical capacity";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_NORMAL:
-			printf("%s: acceptable capacity on '%s'\n",
+			printf("%s: normal capacity on '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname);
 			break;
 		}
@@ -741,7 +839,7 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 		break;
 	case PENVSYS_TYPE_DRIVE:
 		switch (event) {
-		case PENVSYS_EVENT_DRIVE_STCHANGED:
+		case PENVSYS_EVENT_STATE_CHANGED:
 			printf("%s: state changed on '%s' to '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname,
 			    pes->pes_statedesc);
@@ -789,11 +887,22 @@ sysmon_pswitch_unregister(struct sysmon_pswitch *smpsw)
 void
 sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 {
-	mutex_enter(&sysmon_power_event_queue_mtx);
-	if (sysmon_power_daemon != NULL)
-		if (sysmon_power_daemon_task(smpsw, event) == 0)
+	struct power_event_dictionary *ped = NULL;
+
+	KASSERT(smpsw != NULL);
+
+	if (sysmon_power_daemon != NULL) {
+		/*
+		 * Create a new dictionary for the event.
+		 */
+		ped = kmem_zalloc(sizeof(*ped), KM_NOSLEEP);
+		if (!ped)
 			return;
-	mutex_exit(&sysmon_power_event_queue_mtx);
+		ped->dict = prop_dictionary_create();
+
+		if (sysmon_power_daemon_task(ped, smpsw, event) == 0)
+			return;
+	}
 	
 	switch (smpsw->smpsw_type) {
 	case PSWITCH_TYPE_POWER:

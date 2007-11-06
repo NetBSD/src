@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_child.c,v 1.5 2006/11/29 01:29:46 christos Exp $	*/
+/*	$NetBSD: mime_child.c,v 1.5.8.1 2007/11/06 23:35:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_child.c,v 1.5 2006/11/29 01:29:46 christos Exp $");
+__RCSID("$NetBSD: mime_child.c,v 1.5.8.1 2007/11/06 23:35:55 matt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -167,7 +167,7 @@ mime_run_command(const char *cmd, FILE *fo)
 
 	default:	/* parent */
 		(void)close(p[READ]);
-		
+
 		nfo = fdopen(p[WRITE], "w");
 		if (nfo == NULL) {
 			warn("mime_run_command: fdopen");
@@ -188,7 +188,7 @@ mime_run_function(void (*fn)(FILE *, FILE *, void *), FILE *fo, void *cookie)
 	FILE *nfo;
 	pid_t pid;
 	int p[2];
-	
+
 	if (prepare_pipe(&nset, p) != 0) {
 		warn("mime_run_function: pipe");
 		return;

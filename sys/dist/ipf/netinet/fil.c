@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.39 2007/07/19 14:04:34 gdt Exp $	*/
+/*	$NetBSD: fil.c,v 1.39.6.1 2007/11/06 23:30:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.39 2007/07/19 14:04:34 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.39.6.1 2007/11/06 23:30:55 matt Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
@@ -364,7 +364,7 @@ static	INLINE int	frpr_hopopts6 __P((fr_info_t *));
 static	INLINE int	frpr_mobility6 __P((fr_info_t *));
 static	INLINE int	frpr_routing6 __P((fr_info_t *));
 static	INLINE int	frpr_dstopts6 __P((fr_info_t *));
-static	INLINE void	frpr_fragment6 __P((fr_info_t *));
+static	INLINE int	frpr_fragment6 __P((fr_info_t *));
 static	INLINE int	frpr_ipv6exthdr __P((fr_info_t *, int, int));
 
 
@@ -482,8 +482,9 @@ fr_info_t *fin;
 			break;
 
 		case IPPROTO_FRAGMENT :
-			frpr_fragment6(fin);
-			go = 0;
+			p = frpr_fragment6(fin);
+			if (fin->fin_off != 0)
+				go = 0;
 			break;
 
 		default :
@@ -654,7 +655,7 @@ fr_info_t *fin;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    frpr_fragment6                                              */
-/* Returns:     void                                                        */
+/* Returns:     int    - value of the next header or IPPROTO_NONE if error  */
 /* Parameters:  fin(I) - pointer to packet information                      */
 /*                                                                          */
 /* IPv6 Only                                                                */
@@ -666,7 +667,7 @@ fr_info_t *fin;
 /* upper layer header has been seen (or where it ends) and thus we are not  */
 /* able to continue processing beyond this header with any confidence.      */
 /* ------------------------------------------------------------------------ */
-static INLINE void frpr_fragment6(fin)
+static INLINE int frpr_fragment6(fin)
 fr_info_t *fin;
 {
 	struct ip6_frag *frag;
@@ -675,12 +676,12 @@ fr_info_t *fin;
 	fin->fin_flx |= FI_FRAG;
 
 	if (frpr_ipv6exthdr(fin, 0, IPPROTO_FRAGMENT) == IPPROTO_NONE)
-		return;
+		return IPPROTO_NONE;
 
 	extoff = (char *)fin->fin_exthdr - (char *)fin->fin_dp;
 
 	if (frpr_pullup(fin, sizeof(*frag)) == -1)
-		return;
+		return IPPROTO_NONE;
 
 	fin->fin_exthdr = (char *)fin->fin_dp + extoff;
 	frag = fin->fin_exthdr;
@@ -689,16 +690,18 @@ fr_info_t *fin;
 	 */
 	if (frag->ip6f_offlg == 0) {
 		fin->fin_flx |= FI_BAD;
-		return;
+		return IPPROTO_NONE;
 	}
 
-	fin->fin_off = frag->ip6f_offlg & IP6F_OFF_MASK;
+	fin->fin_off = ntohs(frag->ip6f_offlg & IP6F_OFF_MASK);
 	fin->fin_off <<= 3;
 	if (fin->fin_off != 0)
 		fin->fin_flx |= FI_FRAGBODY;
 
 	fin->fin_dp = (char *)fin->fin_dp + sizeof(*frag);
 	fin->fin_dlen -= sizeof(*frag);
+
+	return frag->ip6f_nxt;
 }
 
 
@@ -754,14 +757,14 @@ fr_info_t *fin;
 		case ICMP6_TIME_EXCEEDED :
 		case ICMP6_PARAM_PROB :
 			fin->fin_flx |= FI_ICMPERR;
-			if ((fin->fin_m != NULL) &&
-			    (M_LEN(fin->fin_m) < fin->fin_plen)) {
+			minicmpsz = ICMP6ERR_IPICMPHLEN - sizeof(ip6_t);
+			if (fin->fin_plen < ICMP6ERR_IPICMPHLEN)
+				break;
+
+			if (M_LEN(fin->fin_m) < fin->fin_plen) {
 				if (fr_coalesce(fin) != 1)
 					return;
 			}
-
-			if (frpr_pullup(fin, ICMP6ERR_MINPKTLEN) == -1)
-				return;
 
 			/*
 			 * If the destination of this packet doesn't match the
@@ -774,7 +777,6 @@ fr_info_t *fin;
 				    &ip6->ip6_src))
 				fin->fin_flx |= FI_BAD;
 
-			minicmpsz = ICMP6ERR_IPICMPHLEN - sizeof(ip6_t);
 			break;
 		default :
 			break;
@@ -915,6 +917,14 @@ fr_info_t *fin;
 /* Short inline function to cut down on code duplication to perform a call  */
 /* to fr_pullup to ensure there is the required amount of data,             */
 /* consecutively in the packet buffer.                                      */
+/*                                                                          */
+/* This function pulls up 'extra' data at the location of fin_dp.  fin_dp   */
+/* points to the first byte after the complete layer 3 header, which will   */
+/* include all of the known extension headers for IPv6 or options for IPv4. */
+/*                                                                          */
+/* Since fr_pullup() expects the total length of bytes to be pulled up, it  */
+/* is necessary to add those we can already assume to be pulled up (fin_dp  */
+/* - fin_ip) to what is passed through.                                     */
 /* ------------------------------------------------------------------------ */
 static INLINE int frpr_pullup(fin, plen)
 fr_info_t *fin;
@@ -2566,11 +2576,15 @@ int out;
 	if (!out)
 		(void) fr_acctpkt(fin, NULL);
 
-	if (fr == NULL)
-		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG)
+	if (fr == NULL) {
+		if ((fin->fin_flx & (FI_FRAG|FI_BAD)) == FI_FRAG) {
 			fr = fr_knownfrag(fin, &pass);
-	if (fr == NULL)
-		fr = fr_checkstate(fin, &pass);
+			if (fr != NULL)
+				pass &= ~FR_KEEPSTATE;
+		}
+		if (fr == NULL)
+			fr = fr_checkstate(fin, &pass);
+	}
 
 	if ((pass & FR_NOMATCH) || (fr == NULL))
 		fr = fr_firewall(fin, &pass);

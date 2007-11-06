@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.120 2007/05/16 19:11:37 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.120.8.1 2007/11/06 23:35:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ struct lfid {
 
 /* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !(vp->v_type == VREG && (vp)->v_flag & VONWORKLST) &&\
+			  !(vp->v_type == VREG && (vp)->v_iflag & VI_ONWORKLST) &&\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
@@ -543,7 +543,7 @@ typedef struct _cleanerinfo {
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
     } else {							 	\
 	simple_unlock(&(fs)->lfs_interlock);				\
-	brelse(bp);						 	\
+	brelse(bp, 0);						 	\
     }									\
 } while (0)
 
@@ -555,7 +555,7 @@ typedef struct _cleanerinfo {
 	if ((FS)->lfs_version > 1) {					\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(FS)->lfs_freehd = (CIP)->free_head;			\
-		brelse(BP);						\
+		brelse(BP, 0);						\
 	}								\
 	*(FREEP) = (FS)->lfs_freehd;					\
 } while (0)
@@ -575,7 +575,7 @@ typedef struct _cleanerinfo {
 #define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {			\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	*(FREEP) = (CIP)->free_tail;					\
-	brelse(BP);							\
+	brelse(BP, 0);							\
 } while (0)
 
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\

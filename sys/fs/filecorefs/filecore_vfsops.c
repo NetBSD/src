@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.40.4.1 2007/11/06 23:31:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40.4.1 2007/11/06 23:31:07 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40 2007/07/31 21:14:17 pooka E
 
 MALLOC_JUSTDEFINE(M_FILECOREMNT,
     "filecore mount", "Filecore FS mount structures");
+MALLOC_JUSTDEFINE(M_FILECORETMP,
+    "filecore temp", "Filecore FS temporary structures");
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
@@ -169,7 +171,7 @@ filecore_mountroot()
 	if ((error = filecore_mountfs(rootvp, mp, p, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -331,11 +333,10 @@ filecore_mountfs(devvp, mp, l, argp)
 	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
 	    << fcdr->log2bpmb) >> fcdr->log2secsize;
 	log2secsize = fcdr->log2secsize;
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf1\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/* Read the bootblock in the map */
@@ -365,11 +366,10 @@ filecore_mountfs(devvp, mp, l, argp)
 		fcmp->nblks=fcdr->disc_size / fcmp->blksize;
 	}
 
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf2\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	mp->mnt_data = fcmp;
@@ -399,7 +399,7 @@ out:
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf3\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
@@ -633,7 +633,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vf4\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}
@@ -644,7 +644,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf5\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	ip->i_mnt = fcmp;
@@ -681,7 +681,7 @@ filecore_vget(mp, ino, vpp)
 	}
 
 	if (ino == FILECORE_ROOTINO)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	/*
 	 * XXX need generation number?

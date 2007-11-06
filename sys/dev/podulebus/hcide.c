@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.20 2006/10/01 21:34:30 bjh21 Exp $	*/
+/*	$NetBSD: hcide.c,v 1.20.24.1 2007/11/06 23:29:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.20 2006/10/01 21:34:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.20.24.1 2007/11/06 23:29:54 matt Exp $");
 
 #include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>

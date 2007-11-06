@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2005/11/19 02:09:27 christos Exp $
+#	$NetBSD: Makefile,v 1.15.10.1 2007/11/06 23:36:20 matt Exp $
 
-SUBDIR= libbind9 libdns libisc libisccc libisccfg liblwres .WAIT \
-	html dig host named nslookup nsupdate rndc rndc-confgen dnssec check
+SUBDIR= html dig host named nslookup nsupdate rndc rndc-confgen dnssec check
 
 .include "Makefile.inc"
 

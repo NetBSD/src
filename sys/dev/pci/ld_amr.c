@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.13 2007/07/29 12:50:22 ad Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.13.6.1 2007/11/06 23:29:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.13 2007/07/29 12:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.13.6.1 2007/11/06 23:29:16 matt Exp $");
 
 #include "rnd.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.13 2007/07/29 12:50:22 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/ldvar.h>
 

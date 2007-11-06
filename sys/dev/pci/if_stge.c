@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.38 2007/08/26 22:45:58 dyoung Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.38 2007/08/26 22:45:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.38 2007/08/26 22:45:58 dyoung Exp $");
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
