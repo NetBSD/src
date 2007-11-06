@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.11.26.1 2007/11/06 19:22:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11.26.1 2007/11/06 19:22:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ static struct intrhandler {
 } handler[ICU_LEN];
 
 volatile int softint_pending;
-volatile int current_spl_level;
 volatile int intr_mask;
 /* interrupt masks for each level */
 int pxa2x0_imask[NIPL];
@@ -150,7 +149,7 @@ static inline void
 __raise(int ipl)
 {
 
-	if (current_spl_level < ipl)
+	if (curcpu()->ci_cpl < ipl)
 		pxa2x0_setipl(ipl);
 }
 
@@ -176,7 +175,7 @@ pxa2x0_irq_handler(void *arg)
 	int irqno;
 	int saved_spl_level;
 
-	saved_spl_level = current_spl_level;
+	saved_spl_level = curcpu()->ci_cpl;
 
 	/* get pending IRQs */
 	irqbits = read_icu(SAIPIC_IP);
@@ -288,7 +287,7 @@ pxa2x0_update_intr_masks(int irqno, int level)
 	 */
 	pxa2x0_imask[IPL_SERIAL] &= pxa2x0_imask[IPL_HIGH];
 
-	write_icu(SAIPIC_MR, pxa2x0_imask[current_spl_level]);
+	write_icu(SAIPIC_MR, pxa2x0_imask[curcpu()->ci_cpl]);
 
 	restore_interrupts(psw);
 }
@@ -344,7 +343,7 @@ pxa2x0_do_pending(void)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	spl_save = current_spl_level;
+	spl_save = curcpu()->ci_cpl;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
@@ -431,7 +430,7 @@ pxa2x0_intr_establish(int irqno, int level,
 	extirq_level[irqno] = level;
 	pxa2x0_update_intr_masks(irqno, level);
 
-	intr_mask = pxa2x0_imask[current_spl_level];
+	intr_mask = pxa2x0_imask[curcpu()->ci_cpl];
 
 	restore_interrupts(psw);
 
