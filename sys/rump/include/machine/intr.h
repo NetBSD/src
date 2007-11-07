@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2007/11/07 00:20:22 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2007/11/07 15:41:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,14 +35,17 @@ typedef struct {
         ipl_t _ipl;
 } ipl_cookie_t;
 
+int  rump_splfoo(void);
+void rump_splx(int);
+
 #define spllower(x) ((void)0)
 #define splraise(x) 0
-#define splsoftnet() 0
-#define splhigh() 0
-#define splclock() 0
-#define splbio() 0
-#define splvm() 0
-#define splx(x) ((void)x)
+#define splsoftnet() rump_splfoo()
+#define splhigh() rump_splfoo()
+#define splclock() rump_splfoo()
+#define splbio() rump_splfoo()
+#define splvm() rump_splfoo()
+#define splx(x) rump_splx(x)
 
 #define IPL_NONE 0
 #define IPL_BIO 0
