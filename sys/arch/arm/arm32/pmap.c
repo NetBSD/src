@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.12.3 2007/11/06 23:15:00 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.12.4 2007/11/07 06:38:29 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.3 2007/11/06 23:15:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.4 2007/11/07 06:38:29 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4220,7 +4220,9 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 		panic("pmap_copy_page: dst page has mappings");
 #endif
 
+#ifdef PMAP_CACHE_VIPT
 	KASSERT(src_pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
+#endif
 	KDASSERT((src & PGOFSET) == 0);
 	KDASSERT((dst & PGOFSET) == 0);
 
