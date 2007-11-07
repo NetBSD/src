@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.348 2007/10/31 09:51:20 jnemeth Exp $ */
+/*	$NetBSD: wd.c,v 1.349 2007/11/07 08:56:41 itohy Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.348 2007/10/31 09:51:20 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.349 2007/11/07 08:56:41 itohy Exp $");
 
 #include "opt_ata.h"
 
@@ -763,10 +763,10 @@ wddone(void *v)
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
-	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_XFERS);
 	int nblks;
 
+	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
+	    DEBUG_XFERS);
 	if (bp == NULL)
 		return;
 	bp->b_resid = wd->sc_wdc_bio.bcount;
