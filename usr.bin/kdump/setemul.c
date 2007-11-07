@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $	*/
+/*	$NetBSD: setemul.c,v 1.24 2007/11/07 22:20:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.24 2007/11/07 22:20:20 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -416,7 +416,7 @@ mach_traps_dispatch(int *code, const struct emulation **emul)
 		return 1;
 
 	default:
-		if (*code < 0) {
+		if (*code < 0 && *code > -MACH_SYS_MAXSYSCALL) {
 			*emul = mach;
 			*code = -*code;
 			return 1;
