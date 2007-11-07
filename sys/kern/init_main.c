@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.326 2007/11/07 15:56:21 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.327 2007/11/07 16:51:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.326 2007/11/07 15:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.327 2007/11/07 16:51:28 matt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -262,9 +262,9 @@ main(void)
 	struct cpu_info *ci;
 
 	l = &lwp0;
+#ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
-	l->l_proc = &proc0;
-	l->l_lid = 1;
+#endif
 
 	/*
 	 * XXX This is a temporary check to be removed before
@@ -701,7 +701,7 @@ check_console(struct lwp *l)
 /*
  * List of paths to try when searching for "init".
  */
-static const char *initpaths[] = {
+static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
