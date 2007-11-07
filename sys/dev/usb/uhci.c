@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.209.2.5 2007/11/06 14:27:33 joerg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.209.2.6 2007/11/07 01:14:18 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.5 2007/11/06 14:27:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.6 2007/11/07 01:14:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1220,7 +1220,7 @@ uhci_intr(void *arg)
 {
 	uhci_softc_t *sc = arg;
 
-	if (sc->sc_dying || !device_is_active(&sc->sc_bus.bdev))
+	if (sc->sc_dying || !device_has_power(&sc->sc_bus.bdev))
 		return (0);
 
 	if (sc->sc_bus.use_polling) {

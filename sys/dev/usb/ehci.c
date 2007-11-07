@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.18.6 2007/11/06 14:27:32 joerg Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.18.7 2007/11/07 01:14:16 joerg Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.6 2007/11/06 14:27:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.7 2007/11/07 01:14:16 joerg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -535,7 +535,7 @@ ehci_intr(void *v)
 {
 	ehci_softc_t *sc = v;
 
-	if (sc == NULL || sc->sc_dying || !device_is_active(&sc->sc_bus.bdev))
+	if (sc == NULL || sc->sc_dying || !device_has_power(&sc->sc_bus.bdev))
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
