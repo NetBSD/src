@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.44 2007/07/09 21:00:48 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.45 2007/11/07 15:56:18 ad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.44 2007/07/09 21:00:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.45 2007/11/07 15:56:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -628,7 +628,6 @@ irframet_read(void *h, struct uio *uio, int flag)
 int
 irt_putc(struct tty *tp, int c)
 {
-	int s;
 	int error;
 
 #if IRFRAMET_DEBUG
@@ -638,18 +637,18 @@ irt_putc(struct tty *tp, int c)
 #endif
 	if (tp->t_outq.c_cc > tp->t_hiwat) {
 		irframetstart(tp);
-		s = spltty();
+		mutex_spin_enter(&tty_lock);
 		/*
 		 * This can only occur if FLUSHO is set in t_lflag,
 		 * or if ttstart/oproc is synchronous (or very fast).
 		 */
 		if (tp->t_outq.c_cc <= tp->t_hiwat) {
-			splx(s);
+			mutex_spin_exit(&tty_lock);
 			goto go;
 		}
 		SET(tp->t_state, TS_ASLEEP);
-		error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
-		splx(s);
+		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		mutex_spin_exit(&tty_lock);
 		if (error)
 			return (error);
 	}
