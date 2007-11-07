@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.295 2007/07/28 10:51:57 kiyohara Exp $
+#	$NetBSD: files.pci,v 1.296 2007/11/07 19:09:09 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -907,3 +907,10 @@ file	dev/pci/nfsmb.c			nfsmbc | nfsmb
 device	ichsmb: i2cbus
 attach	ichsmb at pci
 file	dev/pci/ichsmb.c		ichsmb
+
+# ATI Rage 128 framebuffer console driver
+device	r128fb: wsemuldisplaydev, rasops8, vcons, videomode, iic, i2c_bitbang
+attach	r128fb at pci
+file	dev/pci/r128fb.c		r128fb
+defflag	opt_r128fb.h	R128FB_DEBUG
+defflag	opt_r128fb.h	R128FB_WAIT
