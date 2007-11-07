@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.19 2007/11/07 16:24:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.20 2007/11/07 16:31:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -123,6 +123,8 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
 
+	mount_initspecific(mp);
+
 	return mp;
 }
 
@@ -153,6 +155,7 @@ void
 rump_mnt_destroy(struct mount *mp)
 {
 
+	mount_finispecific(mp);
 	rumpuser_free(mp);
 }
 
