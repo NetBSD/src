@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.18 2007/11/07 15:41:18 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.19 2007/11/07 16:24:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,8 @@ struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
 
+kmutex_t rump_giantlock;
+
 struct fakeblk {
 	char path[MAXPATHLEN];
 	LIST_ENTRY(fakeblk) entries;
@@ -97,6 +99,8 @@ rump_init()
 
 	rump_sleepers_init();
 	rumpuser_thrinit();
+
+	mutex_init(&rump_giantlock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* aieeeedondest */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
