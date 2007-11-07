@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.1 2007/10/31 15:57:22 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.2 2007/11/07 15:41:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,15 +38,26 @@
 
 #include "rumpuser.h"
 
-pthread_key_t curlwpkey;
+static pthread_key_t curlwpkey;
+static pthread_key_t isintr;
 
 #define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
+
+struct rumpuser_rw {
+	pthread_rwlock_t pthrw;
+};
+
+struct rumpuser_rw rumpspl;
 
 int
 rumpuser_thrinit()
 {
 
 	pthread_key_create(&curlwpkey, NULL);
+	pthread_key_create(&isintr, NULL);
+
+	pthread_rwlock_init(&rumpspl.pthrw, NULL);
+
 	return 0;
 }
 
@@ -112,10 +123,6 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	NOFAIL(pthread_mutex_destroy(&mtx->pthmtx) == 0);
 	free(mtx);
 }
-
-struct rumpuser_rw {
-	pthread_rwlock_t pthrw;
-};
 
 void
 rumpuser_rw_init(struct rumpuser_rw **rw)
@@ -211,4 +218,29 @@ rumpuser_get_curlwp()
 {
 
 	return pthread_getspecific(curlwpkey);
+}
+
+/*
+ * I am the interrupt
+ */
+
+void
+rumpuser_set_intr()
+{
+
+	pthread_setspecific(isintr, rumpuser_set_intr);
+}
+
+int
+rumpuser_is_intr()
+{
+
+	return pthread_getspecific(isintr) != NULL;
+}
+
+void
+rumpuser_clear_intr()
+{
+
+	pthread_setspecific(isintr, NULL);
 }

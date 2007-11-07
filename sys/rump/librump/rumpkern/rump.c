@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.17 2007/11/07 12:11:30 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.18 2007/11/07 15:41:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -551,6 +551,40 @@ rump_get_curlwp()
 	return l;
 }
 
+int
+rump_splfoo()
+{
+
+	if (!rumpuser_is_intr())
+		rumpuser_rw_enter(&rumpspl, 0);
+
+	return 0;
+}
+
+static void
+rump_intr_enter(void)
+{
+
+	rumpuser_set_intr();
+	rumpuser_rw_enter(&rumpspl, 1);
+}
+
+static void
+rump_intr_exit(void)
+{
+
+	rumpuser_rw_exit(&rumpspl);
+	rumpuser_clear_intr();
+}
+
+void
+rump_splx(int dummy)
+{
+
+	if (!rumpuser_is_intr())
+		rumpuser_rw_exit(&rumpspl);
+}
+
 void
 rump_biodone(void *arg, size_t count, int error)
 {
@@ -559,5 +593,8 @@ rump_biodone(void *arg, size_t count, int error)
 	bp->b_resid = bp->b_bcount - count;
 	KASSERT(bp->b_resid >= 0);
 	bp->b_error = error;
+
+	rump_intr_enter();
 	biodone(bp);
+	rump_intr_exit();
 }
