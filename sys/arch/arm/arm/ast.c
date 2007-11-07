@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10.24.3 2007/11/06 23:14:54 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.10.24.4 2007/11/07 02:13:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.3 2007/11/06 23:14:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.4 2007/11/07 02:13:36 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,12 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.3 2007/11/06 23:14:54 matt Exp $");
 /*
  * Prototypes
  */
-void ast __P((struct trapframe *));
+void ast(struct trapframe *);
  
 void
 userret(struct lwp *l)
 {
+#ifdef CPU_ARM11
 	struct cpu_info * const ci = curcpu();
+#endif
 
 	/* Invoke MI userret code */
 	mi_userret(l);
