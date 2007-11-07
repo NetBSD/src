@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.177 2007/10/09 18:18:33 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.178 2007/11/07 00:52:25 ad Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -73,6 +73,7 @@ ASM=	access.S acct.S \
 		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
 		_lwp_getprivate.S _lwp_setprivate.S \
+		_lwp_setname.S _lwp_getname.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
 		mlock.S mlockall.S __mount50.S mprotect.S __msgctl13.S \
 		mremap.S msgget.S munlock.S munlockall.S munmap.S \
