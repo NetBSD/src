@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.86 2007/10/25 11:08:35 aymeric Exp $
+#	$NetBSD: files.macppc,v 1.87 2007/11/07 19:47:00 garbled Exp $
 #
 # macppc-specific configuration info
 
@@ -11,7 +11,7 @@ include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
 include "arch/powerpc/pic/files.ipi"
 
-file arch/macppc/macppc/autoconf.c
+file arch/powerpc/oea/ofw_autoconf.c
 file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
 file arch/macppc/macppc/interrupts.c
