@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.16 2007/11/07 12:08:45 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.17 2007/11/07 12:11:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -560,16 +560,4 @@ rump_biodone(void *arg, size_t count, int error)
 	KASSERT(bp->b_resid >= 0);
 	bp->b_error = error;
 	biodone(bp);
-}
-
-int
-rump_splfoo()
-{
-
-}
-
-void
-rump_splx(int dummy)
-{
-
 }
