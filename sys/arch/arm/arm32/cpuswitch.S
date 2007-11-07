@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.48.12.3 2007/11/06 23:14:58 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.48.12.4 2007/11/07 06:24:51 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -176,6 +176,7 @@ ENTRY(cpu_switchto)
 	bl	_C_LABEL(panic)
 .Lnewlwp_panicstr:
 	.asciz	"cpu_switchto: new lwp is NULL!"
+	.p2align 2
 #endif
 1:	mov	r4, r0		/* save old lwp, it's the return value */
 	mov	r6, r1		/* save new lwp */
