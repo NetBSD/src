@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.281 2007/11/06 00:42:45 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.282 2007/11/07 00:23:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -157,14 +157,12 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-#ifdef _KERNEL
-# ifndef CACHE_LINE_SIZE
-#  define	CACHE_LINE_SIZE		64
-# endif
-# ifndef MAXCPUS
-#  define	MAXCPUS			32
-# endif
-#endif	/* _KERNEL */
+#ifndef CACHE_LINE_SIZE
+#define	CACHE_LINE_SIZE		64
+#endif
+#ifndef MAXCPUS
+#define	MAXCPUS			32
+#endif
 
 /*
  * Stack macros.  On most architectures, the stack grows down,

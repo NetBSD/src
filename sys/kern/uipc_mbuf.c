@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.121 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.122 2007/11/07 00:23:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.121 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.122 2007/11/07 00:23:24 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -92,12 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.121 2007/03/12 18:18:34 ad Exp $");
 
 #include <uvm/uvm.h>
 
-
-struct	pool mbpool;		/* mbuf pool */
-struct	pool mclpool;		/* mbuf cluster pool */
-
-struct pool_cache mbpool_cache;
-struct pool_cache mclpool_cache;
+pool_cache_t mb_cache;	/* mbuf cache */
+pool_cache_t mcl_cache;	/* mbuf cluster cache */
 
 struct mbstat mbstat;
 int	max_linkhdr;
@@ -156,22 +152,24 @@ mbinit(void)
 	KASSERT(sizeof(struct mbuf) == MSIZE);
 
 	mclpool_allocator.pa_backingmap = mb_map;
-	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL, IPL_VM);
-	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator,
-	    IPL_VM);
 
-	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
-	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
+	mb_cache = pool_cache_init(msize, 0, 0, 0, "mbpl",
+	    NULL, IPL_VM, mb_ctor, NULL, NULL);
+	KASSERT(mb_cache != NULL);
 
-	pool_cache_init(&mbpool_cache, &mbpool, mb_ctor, NULL, NULL);
-	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
+	mcl_cache = pool_cache_init(mclbytes, 0, 0, 0, "mclpl",
+	    &mclpool_allocator, IPL_VM, NULL, NULL, NULL);
+	KASSERT(mcl_cache != NULL);
+
+	pool_cache_set_drain_hook(mb_cache, m_reclaim, NULL);
+	pool_cache_set_drain_hook(mcl_cache, m_reclaim, NULL);
 
 	/*
 	 * Set the hard limit on the mclpool to the number of
 	 * mbuf clusters the kernel is to support.  Log the limit
 	 * reached message max once a minute.
 	 */
-	pool_sethardlimit(&mclpool, nmbclusters, mclpool_warnmsg, 60);
+	pool_cache_sethardlimit(mcl_cache, nmbclusters, mclpool_warnmsg, 60);
 
 	/*
 	 * Set a low water mark for both mbufs and clusters.  This should
@@ -179,8 +177,8 @@ mbinit(void)
 	 * situation.  This is important for e.g. diskless systems which
 	 * must allocate mbufs in order for the pagedaemon to clean pages.
 	 */
-	pool_setlowat(&mbpool, mblowat);
-	pool_setlowat(&mclpool, mcllowat);
+	pool_cache_setlowat(mb_cache, mblowat);
+	pool_cache_setlowat(mcl_cache, mcllowat);
 
 #ifdef MBUFTRACE
 	{
@@ -235,15 +233,16 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		if (newval < nmbclusters)
 			return (EINVAL);
 		nmbclusters = newval;
-		pool_sethardlimit(&mclpool, nmbclusters, mclpool_warnmsg, 60);
+		pool_cache_sethardlimit(mcl_cache, nmbclusters,
+		    mclpool_warnmsg, 60);
 		break;
 	case MBUF_MBLOWAT:
 		mblowat = newval;
-		pool_setlowat(&mbpool, mblowat);
+		pool_cache_setlowat(mb_cache, mblowat);
 		break;
 	case MBUF_MCLLOWAT:
 		mcllowat = newval;
-		pool_setlowat(&mclpool, mcllowat);
+		pool_cache_setlowat(mcl_cache, mcllowat);
 		break;
 	}
 
@@ -379,8 +378,10 @@ m_reclaim(void *arg, int flags)
 	struct domain *dp;
 	const struct protosw *pr;
 	struct ifnet *ifp;
-	int s = splvm();
+	int s;
 
+	KERNEL_LOCK(1, NULL);
+	s = splvm();
 	DOMAIN_FOREACH(dp) {
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++)
@@ -393,6 +394,7 @@ m_reclaim(void *arg, int flags)
 	}
 	splx(s);
 	mbstat.m_drain++;
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*

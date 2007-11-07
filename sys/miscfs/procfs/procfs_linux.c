@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.42 2007/10/11 18:46:19 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.43 2007/11/07 00:23:37 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.42 2007/10/11 18:46:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.43 2007/11/07 00:23:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	char *bf;
 	int offset = 0;
 	int i, error = ENAMETOOLONG;
+	extern kmutex_t devsw_lock;
 
 	/* XXX elad - may need filtering. */
 
@@ -185,6 +186,7 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	if (offset >= LBFSZ)
 		goto out;
 
+	mutex_enter(&devsw_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
 		    (devsw_conv[i].d_cmajor == -1))
@@ -192,13 +194,17 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
-		if (offset >= LBFSZ)
+		if (offset >= LBFSZ) {
+			mutex_exit(&devsw_lock);
 			goto out;
+		}
 	}
 
 	offset += snprintf(&bf[offset], LBFSZ - offset, "\nBlock devices:\n");
-	if (offset >= LBFSZ)
+	if (offset >= LBFSZ) {
+		mutex_exit(&devsw_lock);
 		goto out;
+	}
 
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
@@ -207,9 +213,12 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
-		if (offset >= LBFSZ)
+		if (offset >= LBFSZ) {
+			mutex_exit(&devsw_lock);
 			goto out;
+		}
 	}
+	mutex_exit(&devsw_lock);
 
 	error = uiomove_frombuf(bf, offset, uio);
 out:
@@ -575,7 +584,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		mutex_enter(&mountlist_lock);
+		mutex_exit(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
