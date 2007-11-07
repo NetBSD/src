@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.9 2007/11/07 15:41:18 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.10 2007/11/07 18:59:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -73,6 +73,7 @@ void rumpuser_thread_exit(void);
 struct rumpuser_mtx;
 
 void rumpuser_mutex_init(struct rumpuser_mtx **);
+void rumpuser_mutex_recursive_init(struct rumpuser_mtx **);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
@@ -99,10 +100,29 @@ struct lwp *rumpuser_get_curlwp(void);
 /* actually part of the rumpkern */
 void rump_biodone(void *, size_t, int);
 
+/* "aio" stuff for being able to fire of a B_ASYNC I/O and continue */
+struct rumpuser_aio {
+	int	rua_fd;
+	uint8_t	*rua_data;
+	size_t	rua_dlen;
+	off_t	rua_off;
+	void	*rua_bp;
+	int	rua_op;
+};
+
+#define N_AIOS 128
+extern struct rumpuser_mtx rua_mtx;
+extern struct rumpuser_cv rua_cv;
+extern struct rumpuser_aio *rua_aios[N_AIOS];
+extern int rua_head, rua_tail;
+
 extern struct rumpuser_rw rumpspl;
 
-void rumpuser_set_intr(void);
-int  rumpuser_is_intr(void);
-void rumpuser_clear_intr(void);
+#define RUMPUSER_IPL_SPLFOO 1
+#define RUMPUSER_IPL_INTR (-1)
+
+void rumpuser_set_ipl(int);
+int  rumpuser_whatis_ipl(void);
+void rumpuser_clear_ipl(int);
 
 #endif /* _SYS_RUMPUSER_H_ */
