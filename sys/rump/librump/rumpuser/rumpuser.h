@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.8 2007/11/04 18:43:55 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.9 2007/11/07 15:41:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -98,5 +98,11 @@ struct lwp *rumpuser_get_curlwp(void);
 
 /* actually part of the rumpkern */
 void rump_biodone(void *, size_t, int);
+
+extern struct rumpuser_rw rumpspl;
+
+void rumpuser_set_intr(void);
+int  rumpuser_is_intr(void);
+void rumpuser_clear_intr(void);
 
 #endif /* _SYS_RUMPUSER_H_ */
