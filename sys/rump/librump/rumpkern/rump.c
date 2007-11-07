@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.20 2007/11/07 16:31:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.21 2007/11/07 18:59:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,7 @@ rump_init()
 	rump_sleepers_init();
 	rumpuser_thrinit();
 
-	mutex_init(&rump_giantlock, MUTEX_DEFAULT, IPL_NONE);
+	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
 	/* aieeeedondest */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
@@ -562,8 +562,10 @@ int
 rump_splfoo()
 {
 
-	if (!rumpuser_is_intr())
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
 		rumpuser_rw_enter(&rumpspl, 0);
+		rumpuser_set_ipl(RUMPUSER_IPL_SPLFOO);
+	}
 
 	return 0;
 }
@@ -572,7 +574,7 @@ static void
 rump_intr_enter(void)
 {
 
-	rumpuser_set_intr();
+	rumpuser_set_ipl(RUMPUSER_IPL_INTR);
 	rumpuser_rw_enter(&rumpspl, 1);
 }
 
@@ -581,15 +583,17 @@ rump_intr_exit(void)
 {
 
 	rumpuser_rw_exit(&rumpspl);
-	rumpuser_clear_intr();
+	rumpuser_clear_ipl(RUMPUSER_IPL_INTR);
 }
 
 void
 rump_splx(int dummy)
 {
 
-	if (!rumpuser_is_intr())
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
+		rumpuser_clear_ipl(RUMPUSER_IPL_SPLFOO);
 		rumpuser_rw_exit(&rumpspl);
+	}
 }
 
 void
