@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.3 2007/11/07 00:23:41 ad Exp $	*/
+/*	$NetBSD: pool.c,v 1.4 2007/11/07 16:22:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,7 +63,7 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 
 	ptr = rumpuser_malloc(sizeof(*pc) + CACHE_LINE_SIZE, 0);
 	pc = (pool_cache_t)(((uintptr_t)ptr + CACHE_LINE_SIZE - 1) &
-	    (CACHE_LINE_SIZE - 1));
+	    ~(CACHE_LINE_SIZE - 1));
 
 	pool_init(&pc->pc_pool, size, align, align_offset, flags,
 	    wchan, palloc, ipl);
