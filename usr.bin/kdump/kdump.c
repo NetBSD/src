@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.93 2007/08/08 20:28:11 agc Exp $	*/
+/*	$NetBSD: kdump.c,v 1.94 2007/11/07 22:22:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.93 2007/08/08 20:28:11 agc Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.94 2007/11/07 22:22:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,7 +336,7 @@ dumpheader(struct ktr_header *kth)
 		type = "EMUL";
 		break;
 	case KTR_USER:
-		type = "USER";
+		type = "MISC";
 		break;
 	case KTR_MMSG:
 		type = "MMSG";
@@ -560,8 +560,8 @@ ktrsysret(struct ktr_sysret *ktr, int len)
 	} else
 		emul = cur_emul;
 
-	if ((code >= emul->nsysnames || code < 0 || plain > 1) &&
-	    (mach_traps_dispatch(&code, &emul) == 0))
+	if (numeric || ((code >= emul->nsysnames || code < 0 || plain > 1) &&
+	    mach_traps_dispatch(&code, &emul) == 0))
 		(void)printf("[%d] ", code);
 	else
 		(void)printf("%s ", emul->sysnames[code]);
