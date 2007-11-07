@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.257 2007/10/28 22:24:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.258 2007/11/07 00:23:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.257 2007/10/28 22:24:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.258 2007/11/07 00:23:39 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1279,7 +1279,7 @@ nfs_writerpc_extfree(struct mbuf *m, void *tbuf, size_t size, void *arg)
 
 	KASSERT(m != NULL);
 	KASSERT(ctx != NULL);
-	pool_cache_put(&mbpool_cache, m);
+	pool_cache_put(mb_cache, m);
 	mutex_enter(&ctx->nwc_lock);
 	if (--ctx->nwc_mbufcount == 0) {
 		cv_signal(&ctx->nwc_cv);

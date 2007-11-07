@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.52 2007/09/23 16:00:08 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.53 2007/11/07 00:23:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.52 2007/09/23 16:00:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.53 2007/11/07 00:23:20 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,9 +59,18 @@ struct kauth_key {
  * relevant.
  */
 struct kauth_cred {
+	/*
+	 * Ensure that the first part of the credential resides in its own
+	 * cache line.  Due to sharing there aren't many kauth_creds in a
+	 * typical system, but the reference counts change very often.
+	 * Keeping it seperate from the rest of the data prevents false
+	 * sharing between CPUs.
+	 */
 	kmutex_t cr_lock;		/* lock on cr_refcnt */
 	u_int cr_refcnt;		/* reference count */
-	uid_t cr_uid;			/* user id */
+
+	uid_t cr_uid
+	    __aligned(CACHE_LINE_SIZE);	/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
 	gid_t cr_gid;			/* group id */
@@ -94,9 +103,8 @@ struct kauth_scope {
 };
 
 static int kauth_cred_hook(kauth_cred_t, kauth_action_t, void *, void *);
-
-static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
-    "kauthcredpl", &pool_allocator_nointr, IPL_NONE);
+static int kauth_cred_ctor(void *, void *, int);
+static void kauth_cred_dtor(void *, void *);
 
 /* List of scopes and its lock. */
 static SIMPLEQ_HEAD(, kauth_scope) scope_list;
@@ -113,6 +121,7 @@ static kauth_scope_t kauth_builtin_scope_cred;
 static unsigned int nsecmodels = 0;
 
 static specificdata_domain_t kauth_domain;
+static pool_cache_t kauth_cred_cache;
 krwlock_t	kauth_lock;
 
 /* Allocate new, empty kauth credentials. */
@@ -121,14 +130,41 @@ kauth_cred_alloc(void)
 {
 	kauth_cred_t cred;
 
-	cred = pool_get(&kauth_cred_pool, PR_WAITOK);
-	memset(cred, 0, sizeof(*cred));
-	mutex_init(&cred->cr_lock, MUTEX_DEFAULT, IPL_NONE);
+	cred = pool_cache_get(kauth_cred_cache, PR_WAITOK);
+
 	cred->cr_refcnt = 1;
+	cred->cr_uid = 0;
+	cred->cr_euid = 0;
+	cred->cr_svuid = 0;
+	cred->cr_gid = 0;
+	cred->cr_egid = 0;
+	cred->cr_svgid = 0;
+	cred->cr_ngroups = 0;
+
 	specificdata_init(kauth_domain, &cred->cr_sd);
 	kauth_cred_hook(cred, KAUTH_CRED_INIT, NULL, NULL);
 
 	return (cred);
+}
+
+static int
+kauth_cred_ctor(void *arg, void *obj, int flags)
+{
+	kauth_cred_t cred;
+
+	cred = obj;
+	mutex_init(&cred->cr_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	return 0;
+}
+
+static void
+kauth_cred_dtor(void *arg, void *obj)
+{
+	kauth_cred_t cred;
+
+	cred = obj;
+	mutex_destroy(&cred->cr_lock);
 }
 
 /* Increment reference count to cred. */
@@ -159,8 +195,7 @@ kauth_cred_free(kauth_cred_t cred)
 	if (refcnt == 0) {
 		kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
 		specificdata_fini(kauth_domain, &cred->cr_sd);
-		mutex_destroy(&cred->cr_lock);
-		pool_put(&kauth_cred_pool, cred);
+		pool_cache_put(kauth_cred_cache, cred);
 	}
 }
 
@@ -764,6 +799,10 @@ kauth_init(void)
 	SIMPLEQ_INIT(&scope_list);
 	rw_init(&kauth_lock);
 
+	kauth_cred_cache = pool_cache_init(sizeof(struct kauth_cred),
+	    CACHE_LINE_SIZE, 0, 0, "kcredpl", NULL, IPL_NONE,
+	    kauth_cred_ctor, kauth_cred_dtor, NULL);
+
 	/* Create specificdata domain. */
 	kauth_domain = specificdata_domain_create();
 
@@ -895,11 +934,6 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 {
 	kauth_listener_t listener;
 	int error, allow, fail;
-
-#if 0 /* defined(LOCKDEBUG) */
-	spinlock_switchcheck();
-	simple_lock_only_held(NULL, "kauth_authorize_action");
-#endif
 
 	KASSERT(cred != NULL);
 	KASSERT(action != 0);
