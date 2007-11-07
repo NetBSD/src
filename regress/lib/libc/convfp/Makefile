@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2003/05/03 19:33:52 martin Exp $
+#	$NetBSD: Makefile,v 1.2 2007/11/07 00:08:50 martin Exp $
 
 NOMAN=		# defined
 
 PROG=		convfp
+CFLAGS+=	-O0
 
 regress: ${PROG}
 	@./${PROG}
