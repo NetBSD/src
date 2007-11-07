@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2007/10/17 19:58:15 garbled Exp $	*/
+/*	$NetBSD: lock.h,v 1.19 2007/11/07 16:02:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -43,13 +43,11 @@
 #ifndef _X86_LOCK_H_
 #define	_X86_LOCK_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
-
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
 #endif
+#include <machine/atomic.h>
+
 
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
@@ -76,17 +74,6 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 
 	*__ptr = __SIMPLELOCK_UNLOCKED;
 }
-
-#ifdef LOCKDEBUG
-
-extern void __cpu_simple_lock_init(__cpu_simple_lock_t *);
-extern void __cpu_simple_lock(__cpu_simple_lock_t *);
-extern int __cpu_simple_lock_try(__cpu_simple_lock_t *);
-extern void __cpu_simple_unlock(__cpu_simple_lock_t *);
-
-#else
-
-#include <machine/atomic.h>
 
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
@@ -190,8 +177,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 	__insn_barrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
-
-#endif /* !LOCKDEBUG */
 
 #define	SPINLOCK_SPIN_HOOK	/* nothing */
 #define	SPINLOCK_BACKOFF_HOOK	x86_pause()
