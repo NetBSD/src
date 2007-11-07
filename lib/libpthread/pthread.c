@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.85 2007/10/16 15:07:02 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.86 2007/11/07 00:55:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.85 2007/10/16 15:07:02 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.86 2007/11/07 00:55:22 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -428,15 +428,26 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 static void
 pthread__create_tramp(void *(*start)(void *), void *arg)
 {
+	pthread_t self;
 	void *retval;
 
 	/*
 	 * Throw away some stack in a feeble attempt to reduce cache
 	 * thrash.  May help for SMT processors.  XXX We should not
 	 * be allocating stacks on fixed 2MB boundaries.  Needs a
-	 * thread register or decent thread local storage.
+	 * thread register or decent thread local storage.  Note
+	 * that pt_lid may not be set by this point, but we don't
+	 * care.
 	 */
-	(void)alloca(((unsigned)pthread__self()->pt_lid & 7) << 8);
+	self = pthread__self();
+	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
+
+	if (self->pt_name != NULL) {
+		pthread_mutex_lock(&self->pt_lock);
+		if (self->pt_name != NULL)
+			(void)_lwp_setname(_lwp_self(), self->pt_name);
+		pthread_mutex_unlock(&self->pt_lock);
+	}
 
 	retval = (*start)(arg);
 
@@ -667,6 +678,7 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 	pthread_mutex_lock(&thread->pt_lock);
 	oldname = thread->pt_name;
 	thread->pt_name = cp;
+	(void)_lwp_setname(thread->pt_lid, cp);
 	pthread_mutex_unlock(&thread->pt_lock);
 
 	if (oldname != NULL)
