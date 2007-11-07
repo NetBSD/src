@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.1 2007/11/07 19:29:11 garbled Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.2 2007/11/07 19:47:02 garbled Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.1 2007/11/07 19:29:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.2 2007/11/07 19:47:02 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.1 2007/11/07 19:29:11 garbled Exp
 extern char bootpath[256];
 char cbootpath[256];
 int console_node = 0, console_instance = 0;
+
+#ifdef macppc
+volatile uint32_t *heathrow_FCR = NULL;
+#endif
 
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);

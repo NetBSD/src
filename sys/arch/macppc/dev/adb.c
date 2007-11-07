@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.23 2007/10/17 19:55:17 garbled Exp $	*/
+/*	$NetBSD: adb.c,v 1.24 2007/11/07 19:47:00 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.23 2007/10/17 19:55:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.24 2007/11/07 19:47:00 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,14 +129,14 @@ adbattach(parent, self, aux)
 	else if (strcmp(ca->ca_name, "via-pmu") == 0)
 		adbHardware = ADB_HW_PMU;
 
-	node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
+	node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (node)
 		OF_getprop(node, "interrupts", &irq, 4);
 
 	printf(" irq %d: ", irq);
 
 	adb_polling = 1;
-	adb_node = getnodebyname(ca->ca_node, "adb");
+	adb_node = of_getnode_byname(ca->ca_node, "adb");
 	if (adb_node)
 		ADBReInit();
 
