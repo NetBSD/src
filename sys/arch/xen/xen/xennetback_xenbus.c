@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.18 2007/11/07 00:23:17 ad Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.19 2007/11/07 15:38:11 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -225,9 +225,9 @@ xvifattach(int n)
 #if MCLBYTES != PAGE_SIZE
 	xmit_pages_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
 	    IPL_VM, NULL, NULL, NULL);
-	xmit_pages_cachep = &xmit_pages_cache;
+	xmit_pages_cachep = xmit_pages_cache;
 #else
-	xmit_pages_cachep = &mcl_cache;
+	xmit_pages_cachep = mcl_cache;
 #endif
 
 	SLIST_INIT(&xnetback_instances);
