@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.11 2007/10/22 14:59:39 manu Exp $ */
+/* $NetBSD: if_msk.c,v 1.12 2007/11/07 00:23:18 ad Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
 
 	if (__predict_true(m != NULL))
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 
