@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_request.c,v 1.3 2007/11/07 00:23:18 ad Exp $	*/
+/*	$NetBSD: dmover_request.c,v 1.4 2007/11/07 14:04:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.3 2007/11/07 00:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.4 2007/11/07 14:04:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -58,18 +58,26 @@ static struct simplelock initialized_slock = SIMPLELOCK_INITIALIZER;
 void
 dmover_request_initialize(void)
 {
+	pool_cache_t pc;
 	int s;
+
+	if (initialized == 0) {
+		pc = pool_cache_init(sizeof(struct dmover_request), 0, 0, 0,
+		        "dmreq", NULL, IPL_BIO, NULL, NULL, NULL);
+	}
 
 	s = splbio();
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
-		dmover_request_cache =
-		    pool_cache_init(sizeof(struct dmover_request), 0, 0, 0,
-		        "dmreq", NULL, IPL_BIO, NULL, NULL, NULL);
+		dmover_request_cache = pc
+		pc = NULL;
 		initialized = 1;
 	}
 	simple_unlock(&initialized_slock);
 	splx(s);
+
+	if (pc != NULL)
+		pool_cache_destroy(pc);
 }
 
 /*
@@ -83,18 +91,8 @@ dmover_request_alloc(struct dmover_session *dses, dmover_buffer *inbuf)
 	struct dmover_request *dreq;
 	int inputs = dses->dses_ninputs;
 
-	if (__predict_false(initialized == 0)) {
-		int error;
-
-		s = splbio();
-		simple_lock(&initialized_slock);
-		error = (initialized == 0);
-		simple_unlock(&initialized_slock);
-		splx(s);
-
-		if (error)
-			return (NULL);
-	}
+	if (__predict_false(initialized == 0))
+		return (NULL);
 
 	dreq = pool_cache_get(dmover_request_cache, PR_NOWAIT);
 	if (dreq == NULL)
