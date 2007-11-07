@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.50.6.4 2007/11/06 14:27:22 joerg Exp $	*/
+/*	$NetBSD: azalia.c,v 1.50.6.5 2007/11/07 01:14:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.4 2007/11/06 14:27:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.5 2007/11/07 01:14:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -453,7 +453,7 @@ azalia_intr(void *v)
 	az = v;
 	ret = 0;
 
-	if (!device_is_active(&az->dev))
+	if (!device_has_power(&az->dev))
 		return 0;
 
 	intsts = AZ_READ_4(az, INTSTS);

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.4.4 2007/11/06 14:27:37 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.5 2007/11/07 01:14:15 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.4 2007/11/06 14:27:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.5 2007/11/07 01:14:15 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1721,6 +1721,16 @@ bool
 device_is_enabled(device_t dev)
 {
 	return (dev->dv_flags & DVF_ACTIVE) == DVF_ACTIVE;
+}
+
+bool
+device_has_power(device_t dev)
+{
+	int active_flags;
+
+	active_flags = DVF_ACTIVE | DVF_BUS_SUSPENDED;
+
+	return ((dev->dv_flags & active_flags) == DVF_ACTIVE);
 }
 
 int
