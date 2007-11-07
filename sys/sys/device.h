@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96.6.5 2007/11/06 14:27:37 joerg Exp $ */
+/* $NetBSD: device.h,v 1.96.6.6 2007/11/07 01:14:14 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -426,6 +426,7 @@ const char	*device_xname(device_t);
 device_t	device_parent(device_t);
 bool		device_is_active(device_t);
 bool		device_is_enabled(device_t);
+bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
