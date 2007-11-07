@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.52 2007/10/17 19:58:32 garbled Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.53 2007/11/07 00:23:17 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.52 2007/10/17 19:58:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.53 2007/11/07 00:23:17 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -674,7 +674,7 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	xennet_rx_push_buffer(sc, id);
 
 	if (m != NULL) {
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	}
 }
 
