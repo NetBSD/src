@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.7 2007/08/07 19:04:21 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.8 2007/11/07 00:34:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ int	_lwp_detach(lwpid_t);
 int	_lwp_park(const struct timespec *, lwpid_t, const void *, const void *);
 int	_lwp_unpark(lwpid_t, const void *);
 ssize_t	_lwp_unpark_all(const lwpid_t *, size_t, const void *);
+int	_lwp_setname(lwpid_t, const char *);
+int	_lwp_getname(lwpid_t, char *, size_t);
 __END_DECLS
 
 #endif /* !_LWP_H_ */
