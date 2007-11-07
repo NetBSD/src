@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.4 2007/11/05 15:49:03 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.5 2007/11/07 19:31:10 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.4 2007/11/05 15:49:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.5 2007/11/07 19:31:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,10 +173,6 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			genppc_isa_mem_space_tag = sc->sc_memt;
 			map_isa_ioregs(sc->sc_iot.pbs_offset);
 		}
-		/* If we are, regarless of isa above, now we wire up interrupt
-		 * controllers.  We had to wait because of ISA.
-		 */
-		ofppc_setup_pics();
 	}
 
 	pegasospci_get_chipset_tag(pc);
