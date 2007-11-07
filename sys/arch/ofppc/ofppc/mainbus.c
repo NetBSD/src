@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2007/11/06 19:22:59 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2007/11/07 19:31:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2007/11/06 19:22:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2007/11/07 19:31:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,7 +161,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-ofppc_setup_pics(void)
+init_interrupt(void)
 {
 	int node, i, isa_cascade = 0;
 	char name[32];
