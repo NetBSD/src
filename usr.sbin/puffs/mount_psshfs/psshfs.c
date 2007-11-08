@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.40 2007/11/08 16:40:15 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.41 2007/11/08 16:42:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.40 2007/11/08 16:40:15 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.41 2007/11/08 16:42:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -140,6 +140,8 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			refreshival = atoi(optarg);
+			if (refreshival < 0 && refreshival != -1)
+				errx(1, "invalid timeout %d", refreshival);
 			break;
 		default:
 			usage();
