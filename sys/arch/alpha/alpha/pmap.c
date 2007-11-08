@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.224.10.1 2007/11/06 23:13:46 matt Exp $ */
+/* $NetBSD: pmap.c,v 1.224.10.2 2007/11/08 10:59:31 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.10.1 2007/11/06 23:13:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224.10.2 2007/11/08 10:59:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,10 +258,9 @@ static TAILQ_HEAD(, pmap) pmap_all_pmaps;
 /*
  * The pools from which pmap structures and sub-structures are allocated.
  */
-static struct pool pmap_pmap_pool;
-static struct pool pmap_l1pt_pool;
+static struct pool_cache pmap_pmap_cache;
 static struct pool_cache pmap_l1pt_cache;
-static struct pool pmap_pv_pool;
+static struct pool_cache pmap_pv_cache;
 
 /*
  * Address Space Numbers.
@@ -385,25 +384,14 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	with the pmap already locked by the caller (which will be
  *	an interface function).
  */
-/* static struct lock pmap_main_lock; */
+/* static struct lock pmap_main_lock; */ 
 static struct simplelock pmap_all_pmaps_slock;
 static struct simplelock pmap_growkernel_slock;
 
-#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */ 
-#define	PMAP_MAP_TO_HEAD_LOCK() \
-	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
-#define	PMAP_MAP_TO_HEAD_UNLOCK() \
-	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
-#define	PMAP_HEAD_TO_MAP_LOCK() \
-	spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
-#define	PMAP_HEAD_TO_MAP_UNLOCK() \
-	spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
-#else
 #define	PMAP_MAP_TO_HEAD_LOCK()		/* nothing */
 #define	PMAP_MAP_TO_HEAD_UNLOCK()	/* nothing */
 #define	PMAP_HEAD_TO_MAP_LOCK()		/* nothing */
 #define	PMAP_HEAD_TO_MAP_UNLOCK()	/* nothing */
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 #if defined(MULTIPROCESSOR)
 /*
@@ -507,8 +495,8 @@ static struct pool_allocator pmap_pv_page_allocator = {
 void	pmap_pv_dump(paddr_t);
 #endif
 
-#define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
-#define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
+#define	pmap_pv_alloc()		pool_cache_get(&pmap_pv_cache, PR_NOWAIT)
+#define	pmap_pv_free(pv)	pool_cache_put(&pmap_pv_cache, (pv))
 
 /*
  * ASN management functions.
@@ -943,15 +931,12 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Initialize the pmap pools and list.
 	 */
 	pmap_ncpuids = ncpuids;
-	pool_init(&pmap_pmap_pool,
-	    PMAP_SIZEOF(pmap_ncpuids), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
-	    &pmap_l1pt_allocator, IPL_NONE);
-	pool_cache_init(&pmap_l1pt_cache, &pmap_l1pt_pool, pmap_l1pt_ctor,
-	    NULL, NULL);
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator, IPL_NONE);
+	pool_cache_bootstrap(&pmap_pmap_cache, PMAP_SIZEOF(pmap_ncpuids), 0,
+	    0, 0, "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_l1pt_cache, PAGE_SIZE, 0, 0, 0, "l1ptpl",
+	    &pmap_l1pt_allocator, IPL_NONE, pmap_l1pt_ctor, NULL, NULL);
+	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
+	    0, "pvpl", &pmap_pv_page_allocator, IPL_NONE, NULL, NULL, NULL);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 
@@ -1158,7 +1143,7 @@ pmap_init(void)
 	 * more likely to have these around even in extreme memory
 	 * starvation.
 	 */
-	pool_setlowat(&pmap_pv_pool, pmap_pv_lowat);
+	pool_cache_setlowat(&pmap_pv_cache, pmap_pv_lowat);
 
 	/*
 	 * Now it is safe to enable pv entry recording.
@@ -1196,7 +1181,7 @@ pmap_create(void)
 		printf("pmap_create()\n");
 #endif
 
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	pmap = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
 
 	/*
@@ -1267,7 +1252,7 @@ pmap_destroy(pmap_t pmap)
 	 */
 	KASSERT(pmap->pm_lev1map == kernel_lev1map);
 
-	pool_put(&pmap_pmap_pool, pmap);
+	pool_cache_put(&pmap_pmap_cache, pmap);
 }
 
 /*

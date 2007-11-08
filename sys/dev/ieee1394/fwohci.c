@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.107.8.1 2007/11/06 23:27:23 matt Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.107.8.2 2007/11/08 10:59:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -36,6 +36,8 @@
  * $FreeBSD: src/sys/dev/firewire/fwohci.c,v 1.93 2007/06/08 09:04:30 simokawa Exp $
  *
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.8.2 2007/11/08 10:59:51 matt Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -57,16 +59,7 @@
 #include <sys/endian.h>
 #include <sys/kdb.h>
 
-<<<<<<< fwohci.c
 #include <machine/bus.h>
-=======
-#include <sys/cdefs.h>
-<<<<<<< fwohci.c
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.8.1 2007/11/06 23:27:23 matt Exp $");
->>>>>>> 1.108
-=======
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.8.1 2007/11/06 23:27:23 matt Exp $");
->>>>>>> 1.109
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */

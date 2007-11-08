@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.28.8.1 2007/11/06 23:25:56 matt Exp $	*/
+/*	$NetBSD: dz.c,v 1.28.8.2 2007/11/08 10:59:48 matt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28.8.1 2007/11/06 23:25:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28.8.2 2007/11/08 10:59:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,6 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int unit, line;
 	struct	dz_softc *sc;
 	int error = 0;
-	int s;
 
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
@@ -405,17 +404,16 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;
-	s = spltty();
+	mutex_spin_enter(&tty_lock);
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (void *)&tp->t_rawq,
-				TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;
 	}
-	(void) splx(s);
+	mutex_spin_exit(&tty_lock);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));

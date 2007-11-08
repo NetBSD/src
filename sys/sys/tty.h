@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73 2007/03/04 06:03:42 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.16.1 2007/11/08 11:00:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,8 @@
 #include <sys/termios.h>
 #include <sys/select.h>
 #include <sys/selinfo.h>	/* For struct selinfo. */
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 
@@ -55,6 +56,8 @@
  * *DON'T* play with c_cs, c_ce, c_cq, or c_cl outside tty_subr.c!!!
  */
 struct clist {
+	kcondvar_t c_cv;	/* notifier 1, locked by tty lock */
+	kcondvar_t c_cvf;	/* notifier 2, locked by tty lock */
 	int	c_cc;		/* count of characters in queue */
 	int	c_cn;		/* total ring buffer length */
 	u_char	*c_cf;		/* points to first character */
@@ -73,13 +76,12 @@ struct clist {
  */
 struct tty {
 	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
-	struct	simplelock t_slock;	/* mutex for all access to this tty */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
-	struct	callout t_rstrt_ch;	/* for delayed output start */
+	callout_t t_rstrt_ch;		/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
@@ -104,16 +106,12 @@ struct tty {
 	short	t_hiwat;		/* High water mark. */
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
+	sigset_t t_sigpg1;		/* Signals to PG (set 1) */
+	sigset_t t_sigpg2;		/* Signals to PG (set 2) */
+	sigset_t t_sigleader;		/* Signals to session leader */
+	int	t_sigcount;		/* # pending signals */
+	TAILQ_ENTRY(tty) t_sigqueue;	/* entry on pending signal list */
 };
-
-#define __TTY_ENABLE_SLOCK
-#ifdef __TTY_ENABLE_SLOCK
-#define TTY_LOCK(tp) simple_lock(&(tp)->t_slock)
-#define TTY_UNLOCK(tp) simple_unlock(&(tp)->t_slock)
-#else /* __TTY_ENABLE_SLOCK */
-#define TTY_LOCK(tp)	/**/
-#define TTY_UNLOCK(tp)	/**/
-#endif /* __TTY_ENABLE_SLOCK */
 
 #define	t_cc		t_termios.c_cc
 #define	t_cflag		t_termios.c_cflag
@@ -201,6 +199,8 @@ TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 
+extern kmutex_t	tty_lock;
+
 MALLOC_DECLARE(M_TTYS);
 
 extern	int tty_count;			/* number of ttys in global ttylist */
@@ -208,6 +208,12 @@ extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
 extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
+
+enum ttysigtype {
+	TTYSIG_PG1,
+	TTYSIG_PG2,
+	TTYSIG_LEADER
+};
 
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);
@@ -246,12 +252,13 @@ int	 ttyoutput(int, struct tty *);
 void	 ttypend(struct tty *);
 void	 ttyretype(struct tty *);
 void	 ttyrub(int, struct tty *);
-int	 ttysleep(struct tty *, void *, int, const char *, int);
+int	 ttysleep(struct tty *, kcondvar_t *, bool, int);
 int	 ttywait(struct tty *);
 int	 ttywflush(struct tty *);
-
+void	 ttysig(struct tty *, enum ttysigtype, int);
 void	 tty_attach(struct tty *);
 void	 tty_detach(struct tty *);
+void	 tty_init(void);
 struct tty
 	*ttymalloc(void);
 void	 ttyfree(struct tty *);
