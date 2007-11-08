@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_request.c,v 1.4 2007/11/07 14:04:27 ad Exp $	*/
+/*	$NetBSD: dmover_request.c,v 1.5 2007/11/08 07:53:11 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.4 2007/11/07 14:04:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.5 2007/11/08 07:53:11 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -69,7 +69,7 @@ dmover_request_initialize(void)
 	s = splbio();
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
-		dmover_request_cache = pc
+		dmover_request_cache = pc;
 		pc = NULL;
 		initialized = 1;
 	}
