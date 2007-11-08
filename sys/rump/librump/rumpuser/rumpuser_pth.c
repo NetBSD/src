@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.3 2007/11/07 18:59:19 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4 2007/11/08 10:57:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -283,8 +283,8 @@ rumpuser_set_ipl(int what)
 	if (what == RUMPUSER_IPL_INTR) {
 		pthread_setspecific(isintr, (void *)RUMPUSER_IPL_INTR);
 	} else  {
-		cur = (int)pthread_getspecific(isintr);
-		pthread_setspecific(isintr, (void *)(cur+1));
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
+		pthread_setspecific(isintr, (void *)(intptr_t)(cur+1));
 	}
 }
 
@@ -292,7 +292,7 @@ int
 rumpuser_whatis_ipl()
 {
 
-	return (int)pthread_getspecific(isintr);
+	return (int)(intptr_t)pthread_getspecific(isintr);
 }
 
 void
@@ -303,8 +303,8 @@ rumpuser_clear_ipl(int what)
 	if (what == RUMPUSER_IPL_INTR)
 		cur = 1;
 	else
-		cur = (int)pthread_getspecific(isintr);
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
 	cur--;
 
-	pthread_setspecific(isintr, (void *)cur);
+	pthread_setspecific(isintr, (void *)(intptr_t)cur);
 }
