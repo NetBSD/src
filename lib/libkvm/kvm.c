@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.88 2007/11/08 17:32:30 joerg Exp $	*/
+/*	$NetBSD: kvm.c,v 1.89 2007/11/08 20:48:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.88 2007/11/08 17:32:30 joerg Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.89 2007/11/08 20:48:05 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,8 @@ __RCSID("$NetBSD: kvm.c,v 1.88 2007/11/08 17:32:30 joerg Exp $");
 static int	_kvm_get_header(kvm_t *);
 static kvm_t	*_kvm_open(kvm_t *, const char *, const char *,
 		    const char *, int, char *);
-static int	clear_gap(kvm_t *, FILE *, int);
+static int	clear_gap(kvm_t *, bool (*)(void *, const void *, size_t),
+		    void *, size_t);
 static int	open_cloexec(const char *, int, int);
 static off_t	Lseek(kvm_t *, int, off_t, int);
 static ssize_t	Pread(kvm_t *, int, void *, size_t, off_t);
@@ -559,29 +560,36 @@ fail:
 }
 
 static int
-clear_gap(kvm_t *kd, FILE *fp, int size)
+clear_gap(kvm_t *kd, bool (*write_buf)(void *, const void *, size_t),
+    void *cookie, size_t size)
 {
-	if (size <= 0) /* XXX - < 0 should never happen */
-		return (0);
-	while (size-- > 0) {
-		if (fputc(0, fp) == EOF) {
+	char buf[1024];
+	size_t len;
+
+	(void)memset(buf, 0, size > sizeof(buf) ? sizeof(buf) : size);
+
+	while (size > 0) {
+		len = size > sizeof(buf) ? sizeof(buf) : size;
+		if (!(*write_buf)(cookie, buf, len)) {
 			_kvm_syserr(kd, kd->program, "clear_gap");
-			return (-1);
+			return -1;
 		}
-	}
-	return (0);
+		size -= len;
+	} 
+
+	return 0;
 }
 
 /*
- * Write the dump header info to 'fp'. Note that we can't use fseek(3) here
- * because 'fp' might be a file pointer obtained by zopen().
+ * Write the dump header by calling write_buf with cookie as first argument.
  */
 int
-kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
+kvm_dump_header(kvm_t *kd, bool (*write_buf)(void *, const void *, size_t),
+    void *cookie, int dumpsize)
 {
 	kcore_seg_t	seghdr;
 	long		offset;
-	int		gap;
+	size_t		gap;
 
 	if (kd->kcore_hdr == NULL || kd->cpu_data == NULL) {
 		_kvm_err(kd, kd->program, "no valid dump header(s)");
@@ -592,13 +600,13 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 * Write the generic header
 	 */
 	offset = 0;
-	if (fwrite((void*)kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) == 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
+	if (!(*write_buf)(cookie, kd->kcore_hdr, sizeof(kcore_hdr_t))) {
+		_kvm_syserr(kd, kd->program, "kvm_dump_header");
 		return (-1);
 	}
 	offset += kd->kcore_hdr->c_hdrsize;
 	gap     = kd->kcore_hdr->c_hdrsize - sizeof(kcore_hdr_t);
-	if (clear_gap(kd, fp, gap) == -1)
+	if (clear_gap(kd, write_buf, cookie, gap) == -1)
 		return (-1);
 
 	/*
@@ -606,22 +614,22 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
 	seghdr.c_size = ALIGN(kd->cpu_dsize);
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) == 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
+	if (!(*write_buf)(cookie, &seghdr, sizeof(seghdr))) {
+		_kvm_syserr(kd, kd->program, "kvm_dump_header");
 		return (-1);
 	}
 	offset += kd->kcore_hdr->c_seghdrsize;
 	gap     = kd->kcore_hdr->c_seghdrsize - sizeof(seghdr);
-	if (clear_gap(kd, fp, gap) == -1)
+	if (clear_gap(kd, write_buf, cookie, gap) == -1)
 		return (-1);
 
-	if (fwrite((void*)kd->cpu_data, kd->cpu_dsize, 1, fp) == 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
+	if (!(*write_buf)(cookie, kd->cpu_data, kd->cpu_dsize)) {
+		_kvm_syserr(kd, kd->program, "kvm_dump_header");
 		return (-1);
 	}
 	offset += seghdr.c_size;
 	gap     = seghdr.c_size - kd->cpu_dsize;
-	if (clear_gap(kd, fp, gap) == -1)
+	if (clear_gap(kd, write_buf, cookie, gap) -1)
 		return (-1);
 
 	/*
@@ -629,16 +637,28 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_DATA);
 	seghdr.c_size = dumpsize;
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) == 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
+	if (!(*write_buf)(cookie, &seghdr, sizeof(seghdr))) {
+		_kvm_syserr(kd, kd->program, "kvm_dump_header");
 		return (-1);
 	}
 	offset += kd->kcore_hdr->c_seghdrsize;
 	gap     = kd->kcore_hdr->c_seghdrsize - sizeof(seghdr);
-	if (clear_gap(kd, fp, gap) == -1)
+	if (clear_gap(kd, write_buf, cookie, gap) == -1)
 		return (-1);
 
 	return (int)offset;
+}
+
+static bool
+kvm_dump_header_stdio(void *cookie, const void *buf, size_t len)
+{
+	return fwrite(buf, len, 1, (FILE *)cookie) == 1;
+}
+
+int
+kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
+{
+	return kvm_dump_header(kd, kvm_dump_header_stdio, fp, dumpsize);
 }
 
 kvm_t *
