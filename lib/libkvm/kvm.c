@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.87 2006/05/11 12:00:20 yamt Exp $	*/
+/*	$NetBSD: kvm.c,v 1.88 2007/11/08 17:32:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.87 2006/05/11 12:00:20 yamt Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.88 2007/11/08 17:32:30 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,17 +74,16 @@ __RCSID("$NetBSD: kvm.c,v 1.87 2006/05/11 12:00:20 yamt Exp $");
 
 #include "kvm_private.h"
 
-static int	_kvm_get_header __P((kvm_t *));
-static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
-		    const char *, int, char *));
-static int	clear_gap __P((kvm_t *, FILE *, int));
-static int	open_cloexec  __P((const char *, int, int));
-static off_t	Lseek __P((kvm_t *, int, off_t, int));
-static ssize_t	Pread __P((kvm_t *, int, void *, size_t, off_t));
+static int	_kvm_get_header(kvm_t *);
+static kvm_t	*_kvm_open(kvm_t *, const char *, const char *,
+		    const char *, int, char *);
+static int	clear_gap(kvm_t *, FILE *, int);
+static int	open_cloexec(const char *, int, int);
+static off_t	Lseek(kvm_t *, int, off_t, int);
+static ssize_t	Pread(kvm_t *, int, void *, size_t, off_t);
 
 char *
-kvm_geterr(kd)
-	kvm_t *kd;
+kvm_geterr(kvm_t *kd)
 {
 	return (kd->errbuf);
 }
@@ -135,9 +134,7 @@ _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 }
 
 void *
-_kvm_malloc(kd, n)
-	kvm_t *kd;
-	size_t n;
+_kvm_malloc(kvm_t *kd, size_t n)
 {
 	void *p;
 
@@ -150,9 +147,7 @@ _kvm_malloc(kd, n)
  * Open a file setting the close on exec bit.
  */
 static int
-open_cloexec(fname, flags, mode)
-	const char *fname;
-	int flags, mode;
+open_cloexec(const char *fname, int flags, int mode)
 {
 	int fd;
 
@@ -174,11 +169,7 @@ error:
  * in the event of emergency.
  */
 static off_t
-Lseek(kd, fd, offset, whence)
-	kvm_t *kd;
-	int fd;
-	off_t offset;
-	int whence;
+Lseek(kvm_t *kd, int fd, off_t offset, int whence)
 {
 	off_t off;
 
@@ -196,12 +187,7 @@ Lseek(kd, fd, offset, whence)
  * in the event of emergency.
  */
 static ssize_t
-Pread(kd, fd, buf, nbytes, offset)
-	kvm_t *kd;
-	int fd;
-	void *buf;
-	size_t nbytes;
-	off_t offset;
+Pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
 {
 	ssize_t rv;
 
@@ -214,13 +200,8 @@ Pread(kd, fd, buf, nbytes, offset)
 }
 
 static kvm_t *
-_kvm_open(kd, uf, mf, sf, flag, errout)
-	kvm_t *kd;
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	char *errout;
+_kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
+    char *errout)
 {
 	struct stat st;
 	int ufgiven;
@@ -400,8 +381,7 @@ failed:
  * cpu_hdr and mem_hdr are padded to khdr.c_seghdrsize
  */
 static int
-_kvm_get_header(kd)
-	kvm_t	*kd;
+_kvm_get_header(kvm_t *kd)
 {
 	kcore_hdr_t	kcore_hdr;
 	kcore_seg_t	cpu_hdr;
@@ -498,9 +478,7 @@ fail:
  *	(memory)    mem_data; (size is mem_hdr.c_size)
  */
 int
-kvm_dump_mkheader(kd, dump_off)
-kvm_t	*kd;
-off_t	dump_off;
+kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 {
 	kcore_seg_t	cpu_hdr;
 	size_t hdr_size;
@@ -581,10 +559,7 @@ fail:
 }
 
 static int
-clear_gap(kd, fp, size)
-kvm_t	*kd;
-FILE	*fp;
-int	size;
+clear_gap(kvm_t *kd, FILE *fp, int size)
 {
 	if (size <= 0) /* XXX - < 0 should never happen */
 		return (0);
@@ -602,10 +577,7 @@ int	size;
  * because 'fp' might be a file pointer obtained by zopen().
  */
 int
-kvm_dump_wrtheader(kd, fp, dumpsize)
-kvm_t	*kd;
-FILE	*fp;
-int	dumpsize;
+kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 {
 	kcore_seg_t	seghdr;
 	long		offset;
@@ -670,12 +642,8 @@ int	dumpsize;
 }
 
 kvm_t *
-kvm_openfiles(uf, mf, sf, flag, errout)
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	char *errout;
+kvm_openfiles(const char *uf, const char *mf, const char *sf,
+    int flag, char *errout)
 {
 	kvm_t *kd;
 
@@ -688,12 +656,8 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 }
 
 kvm_t *
-kvm_open(uf, mf, sf, flag, program)
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	const char *program;
+kvm_open(const char *uf, const char *mf, const char *sf, int flag,
+    const char *program)
 {
 	kvm_t *kd;
 
@@ -707,8 +671,7 @@ kvm_open(uf, mf, sf, flag, program)
 }
 
 int
-kvm_close(kd)
-	kvm_t *kd;
+kvm_close(kvm_t *kd)
 {
 	int error = 0;
 
@@ -747,9 +710,7 @@ kvm_close(kd)
 }
 
 int
-kvm_nlist(kd, nl)
-	kvm_t *kd;
-	struct nlist *nl;
+kvm_nlist(kvm_t *kd, struct nlist *nl)
 {
 	int rv, nlfd;
 
@@ -781,8 +742,8 @@ kvm_nlist(kd, nl)
 	return (rv);
 }
 
-int kvm_dump_inval(kd)
-kvm_t	*kd;
+int
+kvm_dump_inval(kvm_t *kd)
 {
 	struct nlist	nl[2];
 	u_long		pa, val;
@@ -812,11 +773,7 @@ kvm_t	*kd;
 }
 
 ssize_t
-kvm_read(kd, kva, buf, len)
-	kvm_t *kd;
-	u_long kva;
-	void *buf;
-	size_t len;
+kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 {
 	int cc;
 	void *cp;
@@ -878,11 +835,7 @@ kvm_read(kd, kva, buf, len)
 }
 
 ssize_t
-kvm_write(kd, kva, buf, len)
-	kvm_t *kd;
-	u_long kva;
-	const void *buf;
-	size_t len;
+kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 {
 	int cc;
 
