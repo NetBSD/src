@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.724 2007/10/19 12:32:32 pavel Exp $
+# $NetBSD: mi,v 1.725 2007/11/08 20:14:07 drochner Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -4014,7 +4014,9 @@
 ./usr/share/zoneinfo/W-SU			base-sys-share		share
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
+./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
+./usr/share/zoneinfo/zone.tab			base-sys-share		share
 ./var						base-sys-root
 ./var/account					base-sys-root
 ./var/at					base-cron-root
