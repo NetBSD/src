@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.89 2007/11/08 20:48:05 joerg Exp $	*/
+/*	$NetBSD: kvm.c,v 1.90 2007/11/08 21:58:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.89 2007/11/08 20:48:05 joerg Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.90 2007/11/08 21:58:26 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -629,7 +629,7 @@ kvm_dump_header(kvm_t *kd, bool (*write_buf)(void *, const void *, size_t),
 	}
 	offset += seghdr.c_size;
 	gap     = seghdr.c_size - kd->cpu_dsize;
-	if (clear_gap(kd, write_buf, cookie, gap) -1)
+	if (clear_gap(kd, write_buf, cookie, gap) == -1)
 		return (-1);
 
 	/*
