@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.25 2007/10/20 19:14:28 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.26 2007/11/08 16:40:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -42,11 +42,9 @@ extern unsigned int max_reads;
  */
 #define SFTP_PROTOVERSION 3
 
-/*
- * Refresh directories every n seconds as indicated by the following macro.
- * Note that local changes will still be visible immediately.
- */
-#define PSSHFS_REFRESHIVAL 30
+#define DEFAULTREFRESH 30
+#define REFRESHTIMEOUT(pctx, t) \
+  (!(pctx)->refreshival || ((pctx->refreshival!=-1) && ((t)>pctx->refreshival)))
 
 PUFFSOP_PROTOS(psshfs);
 
@@ -156,6 +154,8 @@ struct psshfs_ctx {
 
 	int canexport;
 	time_t mounttime;
+
+	int refreshival;
 };
 
 int	psshfs_domount(struct puffs_usermount *);
