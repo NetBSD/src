@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.30 2007/10/20 19:14:28 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.31 2007/11/08 16:40:15 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.30 2007/10/20 19:14:28 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.31 2007/11/08 16:40:15 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -224,11 +224,12 @@ int
 getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *psn = pn->pn_data;
 	struct vattr va;
 	int rv, dohardway;
 
-	if ((time(NULL) - psn->attrread) >= PSSHFS_REFRESHIVAL) {
+	if (!psn->attrread || REFRESHTIMEOUT(pctx, time(NULL)-psn->attrread)) {
 		dohardway = 1;
 		if (psn->getattr_pb) {
 			rv=puffs_framev_framebuf_ccpromote(psn->getattr_pb,pcc);
@@ -283,7 +284,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	olddir = psn->dir;
 	nent = psn->dentnext;
 
-	if (psn->dir && (time(NULL) - psn->dentread) < PSSHFS_REFRESHIVAL)
+	if (psn->dir && !REFRESHTIMEOUT(pctx, time(NULL) - psn->dentread))
 		return 0;
 
 	if ((rv = puffs_inval_namecache_dir(pu, pn)))

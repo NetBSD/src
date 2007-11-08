@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.39 2007/11/06 15:09:08 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.40 2007/11/08 16:40:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.39 2007/11/06 15:09:08 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.40 2007/11/08 16:40:15 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 	char *hostpath;
 	int mntflags, pflags, ch;
 	int detach;
-	int exportfs;
+	int exportfs, refreshival;
 	int nargs, x;
 
 	setprogname(argv[0]);
@@ -111,12 +111,13 @@ main(int argc, char *argv[])
 
 	mntflags = pflags = exportfs = nargs = 0;
 	detach = 1;
+	refreshival = DEFAULTREFRESH;
 	sshargs = NULL;
 	add_ssharg(&sshargs, &nargs, SSH_PATH);
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eo:O:r:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eo:O:r:st:")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
@@ -136,6 +137,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			detach = 0;
+			break;
+		case 't':
+			refreshival = atoi(optarg);
 			break;
 		default:
 			usage();
@@ -186,6 +190,7 @@ main(int argc, char *argv[])
 
 	memset(&pctx, 0, sizeof(pctx));
 	pctx.mounttime = time(NULL);
+	pctx.refreshival = refreshival;
 
 	userhost = argv[0];
 	hostpath = strchr(userhost, ':');
