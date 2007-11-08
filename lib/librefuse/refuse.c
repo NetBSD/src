@@ -1,7 +1,8 @@
-/*	$NetBSD: refuse.c,v 1.82 2007/11/05 17:48:18 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.83 2007/11/08 17:08:46 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
+ * Copyright © 2007 Antti Kantee.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.82 2007/11/05 17:48:18 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.83 2007/11/08 17:08:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
