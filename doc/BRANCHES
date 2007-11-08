@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.216 2007/10/27 13:27:24 ad Exp $
+#	$NetBSD: BRANCHES,v 1.217 2007/11/08 20:15:48 joerg Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -392,44 +392,6 @@ Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:	
 
-Branch:		newlock
-Description:	New locking primitives, based on Solaris's
-Status:		Terminated
-Start Date:	March 9, 2002
-End Date:	Febuary 12, 2007
-Base Tag:	newlock-base
-Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
-Scope:		Kernel
-Notes:		The goal is to replace the existing lockmgr() and
-		simple_lock() based locking mechanisms with the
-		primitives found in Solaris: mutexes and rwlocks.
-		Superseeded by the newlock2 branch.
-
-Branch:		newlock2
-Description:	New locking primitives, based on Solaris's
-Status:		Terminated
-Start Date:	September 9, 2006
-End Date:	Febuary 12, 2007
-Base Tag:	newlock2-base
-Maintainer:	Andrew Doran <ad@NetBSD.org>
-Scope:		Kernel
-Notes:		As per the newlock branch, however given the amount of time
-		the original branch has lain dormant, a new one has been
-		created.  Goals:
-		- Implement new locking primitives on most-used ports.
-		- Minor locking improvements.
-		- Remove spinlockmgr().
-
-Branch:		nick-csl-alignment
-Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
-Status:		Terminated
-Start Date:	2007-07-18
-End Date:
-Base Tag:	nick-csl-alignment-base5
-Maintainer:	Nick Hudson <skrll@NetBSD.org>
-Scope:		sys, lib/libpthread, lib/libpthread_dbg
-Notes:	
-
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
 Status:		Active
@@ -441,21 +403,6 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
-
-Branch:		ppcoea-renovation
-Description:	General renovation and cleanup of all OEA PowerPC ports.
-Status:		Terminated; merged to -current
-Start Date:	30 April 2007
-End Date:	15 October 2007
-Base Tag:	ppcoea-renovation-base
-Maintainer:	Tim Rightnour <garbled@netbsd.org>
-Scope:		src/sys/arch
-Notes:		This branch is for a general cleanup of all OEA-based PowerPC
-		ports. OEA (Operating Environment Architecture) PowerPC refers
-		to the 601, 603, 604, and similar chips.  Specifically, not the
-		403/401 and other embedded chips. The general concept is to get
-		them all compiling, and sharing as much code as possible.  All
-		developers are welcome to commit to this branch.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
@@ -982,6 +929,44 @@ Notes:		The idea of scheduler activations is described in the
 		"nathanw_sa_end" to indicate the ending revision of
 		the branch.
 
+Branch:		newlock
+Description:	New locking primitives, based on Solaris's
+Status:		Terminated
+Start Date:	March 9, 2002
+End Date:	Febuary 12, 2007
+Base Tag:	newlock-base
+Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
+Scope:		Kernel
+Notes:		The goal is to replace the existing lockmgr() and
+		simple_lock() based locking mechanisms with the
+		primitives found in Solaris: mutexes and rwlocks.
+		Superseeded by the newlock2 branch.
+
+Branch:		newlock2
+Description:	New locking primitives, based on Solaris's
+Status:		Terminated
+Start Date:	September 9, 2006
+End Date:	Febuary 12, 2007
+Base Tag:	newlock2-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		Kernel
+Notes:		As per the newlock branch, however given the amount of time
+		the original branch has lain dormant, a new one has been
+		created.  Goals:
+		- Implement new locking primitives on most-used ports.
+		- Minor locking improvements.
+		- Remove spinlockmgr().
+
+Branch:		nick-csl-alignment
+Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
+Status:		Terminated
+Start Date:	2007-07-18
+End Date:
+Base Tag:	nick-csl-alignment-base5
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys, lib/libpthread, lib/libpthread_dbg
+Notes:	
+
 Branch:		perseant-lfsv2
 Description:	LFS incompatible on-disk data structure changes
 Status:		Terminated
@@ -992,6 +977,21 @@ Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
+
+Branch:		ppcoea-renovation
+Description:	General renovation and cleanup of all OEA PowerPC ports.
+Status:		Terminated; merged to -current
+Start Date:	30 April 2007
+End Date:	15 October 2007
+Base Tag:	ppcoea-renovation-base
+Maintainer:	Tim Rightnour <garbled@netbsd.org>
+Scope:		src/sys/arch
+Notes:		This branch is for a general cleanup of all OEA-based PowerPC
+		ports. OEA (Operating Environment Architecture) PowerPC refers
+		to the 601, 603, 604, and similar chips.  Specifically, not the
+		403/401 and other embedded chips. The general concept is to get
+		them all compiling, and sharing as much code as possible.  All
+		developers are welcome to commit to this branch.
 
 Branch:		thorpej-devvp
 Description:	replace dev_t with struct vnode * in devsw entry points
