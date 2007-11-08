@@ -1,7 +1,7 @@
-/* $NetBSD: vmstat.c,v 1.153 2006/10/17 15:13:08 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.153.8.1 2007/11/08 11:46:05 matt Exp $ */
 
 /*-
- * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation by:
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.153 2006/10/17 15:13:08 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.153.8.1 2007/11/08 11:46:05 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,7 @@ kvm_t *kd;
 #define	HASHSTAT	1<<8
 #define	HASHLIST	1<<9
 #define	VMTOTAL		1<<10
+#define	POOLCACHESTAT	1<<11
 
 /*
  * Print single word.  `ovflow' is number of characters didn't fit
@@ -276,7 +277,7 @@ void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
 void	domem(void);
 void	dopool(int, int);
-void	dopoolcache(struct pool *, int);
+void	dopoolcache(void);
 void	dosum(void);
 void	dovmstat(struct timespec *, int);
 void	print_total_hdr(void);
@@ -318,10 +319,13 @@ main(int argc, char *argv[])
 	reps = todo = verbose = wide = 0;
 	interval.tv_sec = 0;
 	interval.tv_nsec = 0;
-	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:stu:UvWw:")) != -1) {
+	while ((c = getopt(argc, argv, "Cc:efh:HilLM:mN:stu:UvWw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
+			break;
+		case 'C':
+			todo |= POOLCACHESTAT;
 			break;
 		case 'e':
 			todo |= EVCNTSTAT;
@@ -480,6 +484,10 @@ main(int argc, char *argv[])
 			if (todo & MEMSTAT) {
 				domem();
 				dopool(verbose, wide);
+				(void)putchar('\n');
+			}
+			if (todo & POOLCACHESTAT) {
+				dopoolcache();
 				(void)putchar('\n');
 			}
 			if (todo & SUMSTAT) {
@@ -1261,7 +1269,6 @@ dopool(int verbose, int wide)
 				    (100.0 * this_inuse) / this_total);
 		}
 		(void)printf("\n");
-		dopoolcache(pp, verbose);
 	}
 
 	inuse /= KILO;
@@ -1272,61 +1279,77 @@ dopool(int verbose, int wide)
 }
 
 void
-dopoolcache(struct pool *pp, int verbose)
+dopoolcache(void)
 {
 	struct pool_cache pool_cache, *pc = &pool_cache;
-	struct pool_cache_group pool_cache_group, *pcg = &pool_cache_group;
-	void *addr, *pcg_addr;
-	int i;
+	pool_cache_cpu_t cache_cpu, *cc = &cache_cpu;
+	LIST_HEAD(,pool) pool_head;
+	struct pool pool, *pp = &pool;
+	char name[32];
+	uint64_t cpuhit, cpumiss, tot;
+	void *addr;
+	int first, ovflw, i;
+	double p;
 
-	if (verbose < 1)
-		return;
+	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
+	addr = LIST_FIRST(&pool_head);
 
-#define PR_GROUPLIST							\
-	deref_kptr(pcg_addr, pcg, sizeof(*pcg),				\
-	    "pool cache group trashed");				\
-	(void)printf("\t\tgroup %p: avail %d\n", pcg_addr,		\
-	    pcg->pcg_avail);						\
-	for (i = 0; i < PCG_NOBJECTS; i++) {				\
-		if (pcg->pcg_objects[i].pcgo_pa !=			\
-		    POOL_PADDR_INVALID) {				\
-			(void)printf("\t\t\t%p, 0x%llx\n",		\
-			    pcg->pcg_objects[i].pcgo_va,		\
-			    (unsigned long long)			\
-			    pcg->pcg_objects[i].pcgo_pa);		\
-		} else {						\
-			(void)printf("\t\t\t%p\n",			\
-			    pcg->pcg_objects[i].pcgo_va);		\
-		}							\
-	}
-
-	for (addr = LIST_FIRST(&pp->pr_cachelist); addr != NULL;
-	    addr = LIST_NEXT(pc, pc_poollist)) {
-		deref_kptr(addr, pc, sizeof(*pc), "pool cache trashed");
-		(void)printf(
-		    "\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
-		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
-		if (verbose < 2)
+	for (first = 1; addr != NULL; addr = LIST_NEXT(pp, pr_poollist) ) {
+		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
+		if (pp->pr_cache == NULL)
 			continue;
-		(void)printf("\t    full groups:\n");
-		for (pcg_addr = LIST_FIRST(&pc->pc_fullgroups);
-		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
-			PR_GROUPLIST;
+		deref_kptr(pp->pr_wchan, name, sizeof(name),
+		    "pool wait channel trashed");
+		deref_kptr(pp->pr_cache, pc, sizeof(*pc), "pool cache trashed");
+		name[sizeof(name)-1] = '\0';
+
+		cpuhit = 0;
+		cpumiss = 0;
+		for (i = 0; i < sizeof(pc->pc_cpus) / sizeof(pc->pc_cpus[0]);
+		    i++) {
+		    	if ((addr = pc->pc_cpus[i]) == NULL)
+		    		continue;
+			deref_kptr(addr, cc, sizeof(*cc),
+			    "pool cache cpu trashed");
+			cpuhit += cc->cc_hits;
+			cpumiss += cc->cc_misses;
 		}
-		(void)printf("\t    partial groups:\n");
-		for (pcg_addr = LIST_FIRST(&pc->pc_partgroups);
-		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
-			PR_GROUPLIST;
+
+		if (first) {
+			(void)printf("Pool cache statistics.\n");
+			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+			    12, "Name",
+			    6, "Spin",
+			    6, "Full",
+			    6, "Empty",
+			    12, "PoolLayer",
+			    12, "CacheLayer",
+			    6, "Hit%",
+			    12, "CpuLayer",
+			    6, "Hit%"
+			);
+			first = 0;
 		}
-		(void)printf("\t    empty groups:\n");
-		for (pcg_addr = LIST_FIRST(&pc->pc_emptygroups);
-		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
-			PR_GROUPLIST;
-		}
+
+		ovflw = 0;
+		PRWORD(ovflw, "%-*s", 13, 1, name);
+		PRWORD(ovflw, " %*llu", 6, 1, (long long)pc->pc_contended);
+		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nfull);
+		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nempty);
+
+		PRWORD(ovflw, " %*llu", 12, 1, (long long)pc->pc_misses);
+
+		tot = pc->pc_hits + pc->pc_misses;
+		p = pc->pc_hits * 100.0 / (tot);
+		PRWORD(ovflw, " %*llu", 12, 1, (long long)tot);
+		PRWORD(ovflw, " %*.1f", 6, 1, p);
+
+		tot = cpuhit + cpumiss;
+		p = cpuhit * 100.0 / (tot);
+		PRWORD(ovflw, " %*llu", 12, 1, (long long)tot);
+		PRWORD(ovflw, " %*.1f", 6, 1, p);
+		printf("\n");
 	}
-
-#undef PR_GROUPLIST
-
 }
 
 enum hashtype {			/* from <sys/systm.h> */
