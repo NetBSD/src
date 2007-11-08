@@ -69,6 +69,7 @@
 #define	float128_to_int32_round_to_zero	_softfloat_float128_to_int32_round_to_zero
 #define	float128_to_int64		_softfloat_float128_to_int64
 #define	float128_to_int64_round_to_zero	_softfloat_float128_to_int64_round_to_zero
+#define	float128_to_uint64_round_to_zero	_softfloat_float128_to_uint64_round_to_zero
 #define	float32_to_float128		_softfloat_float32_to_float128
 #define	float64_to_float128		_softfloat_float64_to_float128
 #define	int32_to_float128		_softfloat_int32_to_float128
