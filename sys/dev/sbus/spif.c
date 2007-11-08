@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.10.16.1 2007/11/06 23:30:12 matt Exp $	*/
+/*	$NetBSD: spif.c,v 1.10.16.2 2007/11/08 10:59:57 matt Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.10.16.1 2007/11/06 23:30:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.10.16.2 2007/11/08 10:59:57 matt Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -335,7 +335,6 @@ stty_open(dev, flags, mode, l)
 	struct tty *tp;
 	int card = SPIF_CARD(dev);
 	int port = SPIF_PORT(dev);
-	int s;
 
 	if (card >= stty_cd.cd_ndevs || card >= spif_cd.cd_ndevs)
 		return (ENXIO);
@@ -355,6 +354,7 @@ stty_open(dev, flags, mode, l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
+	mutex_spin_enter(&tty_lock);
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -371,8 +371,6 @@ stty_open(dev, flags, mode, l)
 
 		sp->sp_rput = sp->sp_rget = sp->sp_rbuf;
 
-		s = spltty();
-
 		STC_WRITE(csc, STC_CAR, sp->sp_channel);
 		stty_write_ccr(csc, CD180_CCR_CMD_RESET|CD180_CCR_RESETCHAN);
 		STC_WRITE(csc, STC_CAR, sp->sp_channel);
@@ -387,24 +385,20 @@ stty_open(dev, flags, mode, l)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else {
-		s = spltty();
 	}
 
 	if (!ISSET(flags, O_NONBLOCK)) {
 		while (!ISSET(tp->t_cflag, CLOCAL) &&
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			int error;
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "sttycd", 0);
+			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 			if (error != 0) {
-				splx(s);
+				mutex_spin_exit(&tty_lock);
 				return (error);
 			}
 		}
 	}
-
-	splx(s);
+	mutex_spin_exit(&tty_lock);
 
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }

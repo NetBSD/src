@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.69.4.2 2007/11/06 23:31:40 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.69.4.3 2007/11/08 11:00:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.2 2007/11/06 23:31:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.3 2007/11/08 11:00:01 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -569,7 +569,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	if (isfree == NULL) {
 		l2 = pool_get(&lwp_pool, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
-		l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
+		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
 		SLIST_INIT(&l2->l_pi_lenders);
 	} else {
 		l2 = isfree;
@@ -924,7 +924,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sched_lwp_exit(l);
 
 	if (!recycle && l->l_ts != &turnstile0)
-		pool_cache_put(&turnstile_cache, l->l_ts);
+		pool_cache_put(turnstile_cache, l->l_ts);
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
@@ -1331,7 +1331,7 @@ lwp_delref(struct lwp *l)
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
-		cv_broadcast(&p->p_refcv);
+		cv_broadcast(&p->p_lwpcv);
 	mutex_exit(&p->p_smutex);
 }
 
@@ -1348,7 +1348,7 @@ lwp_drainrefs(struct lwp *l)
 
 	l->l_refcnt--;
 	while (l->l_refcnt != 0)
-		cv_wait(&p->p_refcv, &p->p_smutex);
+		cv_wait(&p->p_lwpcv, &p->p_smutex);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.183.8.1 2007/11/06 23:24:58 matt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.183.8.2 2007/11/08 10:59:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183.8.1 2007/11/06 23:24:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183.8.2 2007/11/08 10:59:45 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -1032,6 +1032,7 @@ linux_sys_personality(struct lwp *l, void *v, register_t *retval)
 /*
  * The calls are here because of type conversions.
  */
+#ifndef COMPAT_LINUX32
 int
 linux_sys_setreuid16(l, v, retval)
 	struct lwp *l;
@@ -1117,6 +1118,7 @@ linux_sys_setresgid16(l, v, retval)
 
 	return linux_sys_setresgid(l, &lsa, retval);
 }
+#endif /* COMPAT_LINUX32 */
 
 int
 linux_sys_getgroups16(l, v, retval)

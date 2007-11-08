@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.114.2.3 2007/11/06 23:31:49 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.114.2.4 2007/11/08 11:00:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114.2.3 2007/11/06 23:31:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114.2.4 2007/11/08 11:00:03 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -229,8 +229,7 @@ struct proc proc0 = {
 	.p_sigwaiters = LIST_HEAD_INITIALIZER(&proc0.p_sigwaiters),
 	.p_nlwps = 1,
 	.p_nrlwps = 1,
-	.p_nlwpid = 1,		/* must match lwp.l_lid */
-	.p_refcnt = 1,
+	.p_nlwpid = 1,		/* must match lwp0.l_lid */
 	.p_pgrp = &pgrp0,
 	.p_comm = "system",
 	/*
@@ -363,13 +362,15 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
+	KASSERT(l->l_lid == p->p_nlwpid);
+
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 
-	cv_init(&p->p_refcv, "drainref");
+	rw_init(&p->p_reflock);
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
@@ -1380,64 +1381,6 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 		if (oc != scred)
 			kauth_cred_free(oc);
 	}
-}
-
-/*
- * Acquire a reference on a process, to prevent it from exiting or execing.
- */
-int
-proc_addref(struct proc *p)
-{
-
-	KASSERT(mutex_owned(&p->p_mutex));
-
-	if (p->p_refcnt <= 0)
-		return EAGAIN;
-	p->p_refcnt++;
-
-	return 0;
-}
-
-/*
- * Release a reference on a process.
- */
-void
-proc_delref(struct proc *p)
-{
-
-	KASSERT(mutex_owned(&p->p_mutex));
-
-	if (p->p_refcnt < 0) {
-		if (++p->p_refcnt == 0)
-			cv_broadcast(&p->p_refcv);
-	} else {
-		p->p_refcnt--;
-		KASSERT(p->p_refcnt != 0);
-	}
-}
-
-/*
- * Wait for all references on the process to drain, and prevent new
- * references from being acquired.
- */
-void
-proc_drainrefs(struct proc *p)
-{
-
-	KASSERT(mutex_owned(&p->p_mutex));
-	KASSERT(p->p_refcnt >= 0);
-
-	/*
-	 * The process itself holds the last reference.  Once it's released,
-	 * no new references will be granted.  If we have already locked out
-	 * new references (refcnt <= 0), potentially due to a failed exec,
-	 * there is nothing more to do.
-	 */
-	if (p->p_refcnt == 0)
-		return;
-	p->p_refcnt = 1 - p->p_refcnt;
-	while (p->p_refcnt != 0)
-		cv_wait(&p->p_refcv, &p->p_mutex);
 }
 
 /*

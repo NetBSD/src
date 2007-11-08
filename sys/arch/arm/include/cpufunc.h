@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.40.22.3 2007/11/06 23:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40.22.4 2007/11/08 10:59:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,6 +45,7 @@
 #ifdef _KERNEL
 
 #include <sys/types.h>
+#include <arm/armreg.h>
 #include <arm/cpuconf.h>
 
 struct cpu_functions {

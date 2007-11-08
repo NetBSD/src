@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.253.2.2 2007/11/06 23:34:53 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.253.2.3 2007/11/08 11:00:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -219,10 +219,9 @@ struct proc {
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
-	kcondvar_t	p_refcv;	/* p: reference count CV */
+	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
 	kcondvar_t	p_waitcv;	/* s: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* s: wait, stop CV on LWPs */
-	int		p_refcnt;	/* p: ref count for procfs etc */
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
