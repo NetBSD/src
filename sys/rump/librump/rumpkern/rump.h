@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.14.2.1 2007/11/06 23:34:37 matt Exp $	*/
+/*	$NetBSD: rump.h,v 1.14.2.2 2007/11/08 11:00:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -113,11 +113,15 @@ int	rump_vfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	rump_vfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
+void	rump_vfs_syncwait(struct mount *);
 
 void	rump_bioops_sync(void);
 
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
 void		rump_clear_curlwp(void);
+
+int	rump_splfoo(void);
+void	rump_splx(int);
 
 #endif /* _SYS_RUMP_H_ */

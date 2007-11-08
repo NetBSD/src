@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.7.2.1 2007/11/06 23:34:31 matt Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.7.2.2 2007/11/08 11:00:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -135,11 +135,12 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
-		rv += rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
+		rv |= rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
+		rv |= rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
 		assert(rv == 0);
 	}
 
+	rump_vfs_syncwait(fs->ukfs_mp);
 	rump_mnt_destroy(fs->ukfs_mp);
 
 	free(fs);

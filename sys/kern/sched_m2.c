@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.10.2.2 2007/11/06 23:32:09 matt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.10.2.3 2007/11/08 11:00:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.10.2.2 2007/11/06 23:32:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.10.2.3 2007/11/08 11:00:04 matt Exp $");
 
 #include <sys/param.h>
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.10.2.2 2007/11/06 23:32:09 matt Exp $
 #define	PRI_RT_COUNT	(PRI_COUNT - PRI_TS_COUNT)
 #define	PRI_HTS_RANGE	(PRI_TS_COUNT / 10)
 
-#define	PRI_HIGHEST_TS	(PRI_KERNEL - 1)
+#define	PRI_HIGHEST_TS	(MAXPRI_USER)
 #define	PRI_DEFAULT	(NPRI_USER >> 1)
 
 const int schedppq = 1;
@@ -70,7 +70,7 @@ const int schedppq = 1;
  */
 #define	BITMAP_BITS	(32)
 #define	BITMAP_SHIFT	(5)
-#define	BITMAP_MSB	(0x80000000)
+#define	BITMAP_MSB	(0x80000000U)
 #define	BITMAP_MASK	(BITMAP_BITS - 1)
 
 /*
@@ -377,7 +377,7 @@ sched_enqueue(struct lwp *l, bool swtch)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	/* Update the last run time on switch */
-	if (swtch == true) {
+	if (__predict_true(swtch == true)) {
 		sil->sl_lrtime = hardclock_ticks;
 		sil->sl_rtsum += (hardclock_ticks - sil->sl_rtime);
 	} else if (sil->sl_lrtime == 0)
@@ -500,6 +500,7 @@ void
 sched_pstats_hook(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
+	pri_t prio;
 	bool batch;
 
 	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
@@ -527,13 +528,21 @@ sched_pstats_hook(struct lwp *l)
 		return;
 
 	/* If it is CPU-bound not a first time - decrease the priority */
-	if (batch && l->l_priority != 0)
-		l->l_priority--;
+	prio = l->l_priority;
+	if (batch && prio != 0)
+		prio--;
 
 	/* If thread was not ran a second or more - set a high priority */
-	if (l->l_stat == LSRUN && sil->sl_lrtime &&
-	    (hardclock_ticks - sil->sl_lrtime >= hz))
-		lwp_changepri(l, high_pri[l->l_priority]);
+	if (l->l_stat == LSRUN) {
+		if (sil->sl_lrtime && (hardclock_ticks - sil->sl_lrtime >= hz))
+			prio = high_pri[prio];
+		/* Re-enqueue the thread if priority has changed */
+		if (prio != l->l_priority)
+			lwp_changepri(l, prio);
+	} else {
+		/* In other states, change the priority directly */
+		l->l_priority = prio;
+	}
 }
 
 /*
@@ -764,7 +773,7 @@ sched_nextlwp(void)
 
 #ifdef MULTIPROCESSOR
 	/* If runqueue is empty, try to catch some thread from other CPU */
-	if (spc->spc_flags & SPCF_OFFLINE) {
+	if (__predict_false(spc->spc_flags & SPCF_OFFLINE)) {
 		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
 			return NULL;
 	} else if (ci_rq->r_count == 0) {
@@ -801,6 +810,11 @@ sched_curcpu_runnable_p(void)
 {
 	const struct cpu_info *ci = curcpu();
 	const runqueue_t *ci_rq = ci->ci_schedstate.spc_sched_info;
+
+#ifndef __HAVE_FAST_SOFTINTS
+	if (ci->ci_data.cpu_softints)
+		return true;
+#endif
 
 	if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
 		return (ci_rq->r_count - ci_rq->r_mcount);

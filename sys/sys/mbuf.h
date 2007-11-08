@@ -1,7 +1,7 @@
-/*	$NetBSD: mbuf.h,v 1.135 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.135.16.1 2007/11/08 11:00:20 matt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -449,7 +449,7 @@ do {									\
  */
 #define	MGET(m, how, type)						\
 MBUFLOCK(								\
-	(m) = pool_cache_get(&mbpool_cache,				\
+	(m) = pool_cache_get(mb_cache,					\
 		(how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
@@ -464,7 +464,7 @@ MBUFLOCK(								\
 
 #define	MGETHDR(m, how, type)						\
 MBUFLOCK(								\
-	(m) = pool_cache_get(&mbpool_cache,				\
+	(m) = pool_cache_get(mb_cache,					\
 	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
@@ -573,7 +573,7 @@ do {									\
 /*
  * The standard mbuf cluster pool.
  */
-#define	MCLGET(m, how)	_MCLGET((m), &mclpool_cache, MCLBYTES, (how))
+#define	MCLGET(m, how)	_MCLGET((m), mcl_cache, MCLBYTES, (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
@@ -642,7 +642,7 @@ do {									\
 		if ((m)->m_flags & M_EXT) {				\
 			m_ext_free(m, TRUE);				\
 		} else {						\
-			pool_cache_put(&mbpool_cache, (m));		\
+			pool_cache_put(mb_cache, (m));			\
 		}							\
 	)
 
@@ -834,7 +834,7 @@ struct name {							\
 /*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
- * pool headers (mbpool and mclpool).
+ * pool headers (mb_cache and mcl_cache).
  */
 struct mbstat {
 	u_long	_m_spare;	/* formerly m_mbufs */
@@ -881,10 +881,8 @@ extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
-extern struct pool mbpool;
-extern struct pool mclpool;
-extern struct pool_cache mbpool_cache;
-extern struct pool_cache mclpool_cache;
+extern pool_cache_t mb_cache;
+extern pool_cache_t mcl_cache;
 #ifdef MBUFTRACE
 LIST_HEAD(mownerhead, mowner);
 extern struct mownerhead mowners;
@@ -1018,7 +1016,7 @@ m_ext_free(struct mbuf *m, bool dofree)
 		free(m->m_ext.ext_buf, m->m_ext.ext_type);
 	}
 	if (dofree)
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...));

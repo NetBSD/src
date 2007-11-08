@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.77.16.1 2007/11/06 23:34:12 matt Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.77.16.2 2007/11/08 11:00:14 matt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.77.16.1 2007/11/06 23:34:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.77.16.2 2007/11/08 11:00:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -275,9 +275,11 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 				   (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
+		s = splsoftnet();
 		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&udbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
@@ -361,7 +363,10 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		break;
 
 	case PRU_SEND:
-		return (udp6_output(in6p, m, addr6, control, l));
+		s = splsoftnet();
+		error = udp6_output(in6p, m, addr6, control, l);
+		splx(s);
+		return error;
 
 	case PRU_ABORT:
 		soisdisconnected(so);

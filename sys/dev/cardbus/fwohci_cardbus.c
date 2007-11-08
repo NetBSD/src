@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.18.24.1 2007/11/06 23:25:50 matt Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.18.24.2 2007/11/08 10:59:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.18.24.1 2007/11/06 23:25:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.18.24.2 2007/11/08 10:59:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	    csr | CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-					   IPL_BIO, fwohci_intr, sc);
+					   IPL_BIO, fwohci_filt, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;

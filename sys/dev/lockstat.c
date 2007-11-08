@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.10 2007/07/14 13:30:44 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.10.8.1 2007/11/08 10:59:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,11 +40,14 @@
  * Lock statistics driver, providing kernel support for the lockstat(8)
  * command.
  *
+ * We use a global lock word (lockstat_lock) to track device opens.
+ * Only one thread can hold the device at a time, providing a global lock.
+ *
  * XXX Timings for contention on sleep locks are currently incorrect.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10 2007/07/14 13:30:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10.8.1 2007/11/08 10:59:47 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10 2007/07/14 13:30:44 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
 
@@ -73,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10 2007/07/14 13:30:44 ad Exp $");
 #define	LOCKSTAT_DEFBUFS	10000
 #define	LOCKSTAT_MAXBUFS	50000
 
-#define	LOCKSTAT_HASH_SIZE	64
+#define	LOCKSTAT_HASH_SIZE	128
 #define	LOCKSTAT_HASH_MASK	(LOCKSTAT_HASH_SIZE - 1)
 #define	LOCKSTAT_HASH(key)	\
 	((key >> LOCKSTAT_HASH_SHIFT) & LOCKSTAT_HASH_MASK)
@@ -98,7 +101,6 @@ dev_type_close(lockstat_close);
 dev_type_read(lockstat_read);
 dev_type_ioctl(lockstat_ioctl);
 
-/* Protected against write by lockstat_lock().  Used by lockstat_event(). */
 volatile u_int	lockstat_enabled;
 uintptr_t	lockstat_csstart;
 uintptr_t	lockstat_csend;
@@ -106,21 +108,17 @@ uintptr_t	lockstat_csmask;
 uintptr_t	lockstat_lamask;
 uintptr_t	lockstat_lockstart;
 uintptr_t	lockstat_lockend;
-
-/* Protected by lockstat_lock(). */
-struct simplelock lockstat_slock;
+__cpu_simple_lock_t lockstat_lock;
+lwp_t		*lockstat_lwp;
 lsbuf_t		*lockstat_baseb;
 size_t		lockstat_sizeb;
 int		lockstat_busy;
-int		lockstat_devopen;
 struct timespec	lockstat_stime;
 
 const struct cdevsw lockstat_cdevsw = {
 	lockstat_open, lockstat_close, lockstat_read, nowrite, lockstat_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, 0
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
 };
-
-MALLOC_DEFINE(M_LOCKSTAT, "lockstat", "lockstat event buffers");
 
 /*
  * Called when the pseudo-driver is attached.
@@ -131,43 +129,7 @@ lockstatattach(int nunits)
 
 	(void)nunits;
 
-	__cpu_simple_lock_init(&lockstat_slock.lock_data);
-}
-
-/*
- * Grab the global lock.  If busy is set, we want to block out operations on
- * the control device.
- */
-static inline int
-lockstat_lock(int busy)
-{
-
-	if (!__cpu_simple_lock_try(&lockstat_slock.lock_data))
-		return (EBUSY);
-	if (busy) {
-		if (lockstat_busy) {
-			__cpu_simple_unlock(&lockstat_slock.lock_data);
-			return (EBUSY);
-		}
-		lockstat_busy = 1;
-	}
-	KASSERT(lockstat_busy);
-
-	return 0;
-}
-
-/*
- * Release the global lock.  If unbusy is set, we want to allow new
- * operations on the control device.
- */
-static inline void
-lockstat_unlock(int unbusy)
-{
-
-	KASSERT(lockstat_busy);
-	if (unbusy)
-		lockstat_busy = 0;
-	__cpu_simple_unlock(&lockstat_slock.lock_data);
+	__cpu_simple_lock_init(&lockstat_lock);
 }
 
 /*
@@ -187,7 +149,7 @@ lockstat_init_tables(lsenable_t *le)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_lockstat != NULL) {
-			free(ci->ci_lockstat, M_LOCKSTAT);
+			kmem_free(ci->ci_lockstat, sizeof(lscpu_t));
 			ci->ci_lockstat = NULL;
 		}
 	}
@@ -200,7 +162,7 @@ lockstat_init_tables(lsenable_t *le)
 	slop = le->le_nbufs - (per * ncpu);
 	cpuno = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		lc = malloc(sizeof(*lc), M_LOCKSTAT, M_WAITOK);
+		lc = kmem_alloc(sizeof(*lc), KM_SLEEP);
 		lc->lc_overflow = 0;
 		ci->ci_lockstat = lc;
 
@@ -272,10 +234,9 @@ lockstat_stop(lsdisable_t *ld)
 	 * to exit lockstat_event().
 	 */
 	lockstat_enabled = 0;
-	lockstat_unlock(0);
+	mb_write();
 	getnanotime(&ts);
 	tsleep(&lockstat_stop, PPAUSE, "lockstat", mstohz(10));
- 	(void)lockstat_lock(0);
 
 	/*
 	 * Did we run out of buffers while tracing?
@@ -294,7 +255,7 @@ lockstat_stop(lsdisable_t *ld)
 	lockstat_init_tables(NULL);
 
 	if (ld == NULL)
-		return (error);
+		return error;
 
 	/*
 	 * Fill out the disable struct for the caller.
@@ -311,7 +272,7 @@ lockstat_stop(lsdisable_t *ld)
 		ld->ld_freq[cpuno++] = cpu_frequency(ci);
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -328,10 +289,7 @@ lockstat_alloc(lsenable_t *le)
 
 	sz = sizeof(*lb) * le->le_nbufs;
 
-	lockstat_unlock(0);
-	lb = malloc(sz, M_LOCKSTAT, M_WAITOK | M_ZERO);
-	(void)lockstat_lock(0);
-
+	lb = kmem_zalloc(sz, KM_SLEEP);
 	if (lb == NULL)
 		return (ENOMEM);
 
@@ -353,7 +311,7 @@ lockstat_free(void)
 	KASSERT(!lockstat_enabled);
 
 	if (lockstat_baseb != NULL) {
-		free(lockstat_baseb, M_LOCKSTAT);
+		kmem_free(lockstat_baseb, lockstat_sizeb);
 		lockstat_baseb = NULL;
 	}
 }
@@ -385,10 +343,10 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	 * Find the table for this lock+callsite pair, and try to locate a
 	 * buffer with the same key.
 	 */
+	s = splhigh();
 	lc = curcpu()->ci_lockstat;
 	ll = &lc->lc_hash[LOCKSTAT_HASH(lock ^ callsite)];
 	event = (flags & LB_EVENT_MASK) - 1;
-	s = splhigh();
 
 	LIST_FOREACH(lb, ll, lb_chain.list) {
 		if (lb->lb_lock == lock && lb->lb_callsite == callsite)
@@ -433,58 +391,38 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
  * Accept an open() on /dev/lockstat.
  */
 int
-lockstat_open(dev_t dev, int flag, int mode,
-	struct lwp *l)
+lockstat_open(dev_t dev, int flag, int mode, lwp_t *l)
 {
-	int error;
 
-	if ((error = lockstat_lock(1)) != 0)
-		return error;
-
-	if (lockstat_devopen)
-		error = EBUSY;
-	else {
-		lockstat_devopen = 1;
-		error = 0;
-	}
-
-	lockstat_unlock(1);
-
-	return error;
+	if (!__cpu_simple_lock_try(&lockstat_lock))
+		return EBUSY;
+	lockstat_lwp = curlwp;
+	return 0;
 }
 
 /*
  * Accept the last close() on /dev/lockstat.
  */
 int
-lockstat_close(dev_t dev, int flag, int mode,
-	struct lwp *l)
+lockstat_close(dev_t dev, int flag, int mode, lwp_t *l)
 {
-	int error;
 
-	if ((error = lockstat_lock(1)) == 0) {
-		if (lockstat_enabled)
-			(void)lockstat_stop(NULL);
-		lockstat_free();
-		lockstat_devopen = 0;
-		lockstat_unlock(1);
-	}
-
-	return error;
+	lockstat_lwp = NULL;
+	__cpu_simple_unlock(&lockstat_lock);
+	return 0;
 }
 
 /*
  * Handle control operations.
  */
 int
-lockstat_ioctl(dev_t dev, u_long cmd, void *data,
-	int flag, struct lwp *l)
+lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	lsenable_t *le;
 	int error;
 
-	if ((error = lockstat_lock(1)) != 0)
-		return error;
+	if (lockstat_lwp != curlwp)
+		return EBUSY;
 
 	switch (cmd) {
 	case IOC_LOCKSTAT_GVERSION:
@@ -523,9 +461,9 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data,
 			le->le_lockend = le->le_lockstart - 1;
 		}
 		if ((le->le_mask & LB_EVENT_MASK) == 0)
-			return (EINVAL);
+			return EINVAL;
 		if ((le->le_mask & LB_LOCK_MASK) == 0)
-			return (EINVAL);
+			return EINVAL;
 
 		/*
 		 * Start tracing.
@@ -546,7 +484,6 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data,
 		break;
 	}
 
-	lockstat_unlock(1);
 	return error;
 }
 
@@ -556,21 +493,8 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data,
 int
 lockstat_read(dev_t dev, struct uio *uio, int flag)
 {
-	int error;
 
-	if ((error = lockstat_lock(1)) != 0)
-		return (error);
-
-	if (lockstat_enabled) {
-		lockstat_unlock(1);
-		return (EBUSY);
-	}
-
-	lockstat_unlock(0);
-	error = uiomove(lockstat_baseb, lockstat_sizeb, uio);
-	lockstat_lock(0);
-
-	lockstat_unlock(1);
-
-	return (error);
+	if (curlwp != lockstat_lwp || lockstat_enabled)
+		return EBUSY;
+	return uiomove(lockstat_baseb, lockstat_sizeb, uio);
 }

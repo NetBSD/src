@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.312.2.2 2007/11/06 23:31:27 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.2 2007/11/06 23:31:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.2 2007/11/06 23:31:27 matt Exp
 #include <sys/extent.h>
 #include <sys/disk.h>
 #include <sys/mqueue.h>
+#include <sys/msgbuf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -365,6 +366,9 @@ main(void)
 	/* Initialize I/O statistics. */
 	iostat_init();
 
+	/* Initialize the log device. */
+	loginit();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -417,6 +421,10 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Initialize tty subsystem. */
+	tty_init();
+	ttyldisc_init();
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();

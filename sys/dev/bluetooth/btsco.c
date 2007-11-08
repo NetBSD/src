@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.14.8.1 2007/11/06 23:25:46 matt Exp $	*/
+/*	$NetBSD: btsco.c,v 1.14.8.2 2007/11/08 10:59:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.14.8.1 2007/11/06 23:25:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.14.8.2 2007/11/08 10:59:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1161,7 +1161,7 @@ btsco_extfree(struct mbuf *m, void *addr, size_t size,
 	struct btsco_softc *sc = arg;
 
 	if (m != NULL)
- 		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 
 	sc->sc_tx_refcnt--;
 }

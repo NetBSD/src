@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.47.16.1 2007/11/06 23:29:57 matt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.47.16.2 2007/11/08 10:59:56 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.16.1 2007/11/06 23:29:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.16.2 2007/11/08 10:59:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ dhuopen(dev, flag, mode, l)
 	struct tty *tp;
 	int unit, line;
 	struct dhu_softc *sc;
-	int s, error = 0;
+	int error = 0;
 
 	unit = DHU_M2U(minor(dev));
 	line = DHU_LINE(minor(dev));
@@ -438,27 +438,24 @@ dhuopen(dev, flag, mode, l)
 	if (line >= sc->sc_lines)
 		return ENXIO;
 
-	if (sc->sc_type == IS_DHU) {
-		s = spltty();	/* CSR 3:0 must be 0 */
-		DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE);
-		DHU_WRITE_BYTE(DHU_UBA_RXTIME, 10);
-		splx(s);	/* RX int delay 10ms */
-	}
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 
-	s = spltty();
+	mutex_spin_enter(&tty_lock);
+	if (sc->sc_type == IS_DHU) {
+		/* CSR 3:0 must be 0 */
+		DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE);
+		/* RX int delay 10ms */
+		DHU_WRITE_BYTE(DHU_UBA_RXTIME, 10);
+	}
 	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
-	(void) splx(s);
 
 	tp = sc->sc_dhu[line].dhu_tty;
-
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;
 	tp->t_dev = dev;
-
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
-		return (EBUSY);
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
@@ -475,17 +472,15 @@ dhuopen(dev, flag, mode, l)
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;
-	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (void *)&tp->t_rawq,
-				TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;
 	}
-	(void) splx(s);
+	mutex_spin_exit(&tty_lock);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));

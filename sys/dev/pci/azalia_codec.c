@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.42.8.1 2007/11/06 23:28:40 matt Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.42.8.2 2007/11/08 10:59:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42.8.1 2007/11/06 23:28:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.42.8.2 2007/11/08 10:59:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1596,7 +1596,7 @@ generic_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 		printf("unknown target: %d\n", target);
 		dmax = 255;
 	}
-	return uv * dmax / AUDIO_MAX_GAIN;
+	return (uv * dmax + AUDIO_MAX_GAIN - 1) / AUDIO_MAX_GAIN;
 #else
 	return uv;
 #endif
