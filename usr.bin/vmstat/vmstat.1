@@ -1,6 +1,6 @@
-.\"	$NetBSD: vmstat.1,v 1.16 2005/03/10 16:29:04 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.16.20.1 2007/11/08 11:46:05 matt Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 10, 2005
+.Dd November 6, 2007
 .Dt VMSTAT 1
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl efHiLlmstUvW
+.Op Fl CefHiLlmstUvW
 .Op Fl c Ar count
 .Op Fl h Ar hashname
 .Op Fl M Ar core
@@ -83,6 +83,11 @@ disk, trap, and CPU activity.
 .Pp
 The options are as follows:
 .Bl -tag -width xxxhistname
+.It Fl C
+Report on kernel memory caches.
+Combine with the
+.Fl m
+option to see information about memory pools that back the caches.
 .It Fl c Ar count
 Repeat the display
 .Ar count
