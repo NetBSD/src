@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.234 2007/11/01 04:11:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.235 2007/11/08 04:10:09 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.234 2007/11/01 04:11:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.235 2007/11/08 04:10:09 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -238,6 +238,8 @@ const struct cdevsw raid_cdevsw = {
 	raidopen, raidclose, raidread, raidwrite, raidioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that...
@@ -1868,7 +1870,7 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
-	disk_init(&rs->sc_dkdev, rs->sc_xname, NULL);
+	disk_init(&rs->sc_dkdev, rs->sc_xname, &rf_dkdriver);
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
