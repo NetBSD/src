@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.12 2007/11/08 16:40:14 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.13 2007/11/08 17:49:43 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -94,6 +94,11 @@ This option is used to adjust the timeout period to
 seconds.
 A value 0 means the cache is never valid and \-1 means it is
 valid indefinitely.
+It is possible to force a re-read regardless of timeout status by sending
+.Dv SIGHUP
+to the
+.Nm
+process.
 .Pp
 Note: the file system will still free nodes when requested by the
 kernel and will lose all cached information in doing so.

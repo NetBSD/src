@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.41 2007/11/08 16:42:31 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.42 2007/11/08 17:49:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.41 2007/11/08 16:42:31 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.42 2007/11/08 17:49:43 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -61,12 +61,14 @@ __RCSID("$NetBSD: psshfs.c,v 1.41 2007/11/08 16:42:31 pooka Exp $");
 #include "psshfs.h"
 
 static void	pssh_connect(struct psshfs_ctx *, char **);
+static void	psshfs_loopfn(struct puffs_usermount *);
 static void	usage(void);
 static void	add_ssharg(char ***, int *, char *);
 
 #define SSH_PATH "/usr/bin/ssh"
 
 unsigned int max_reads;
+static int sighup;
 
 static void
 add_ssharg(char ***sshargs, int *nargs, char *arg)
@@ -87,6 +89,13 @@ usage()
 	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath\n",
 	    getprogname());
 	exit(1);
+}
+
+static void
+takehup(int sig)
+{
+
+	sighup = 1;
 }
 
 int
@@ -205,6 +214,9 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, argv[0]);
 	add_ssharg(&sshargs, &nargs, "sftp");
 
+	signal(SIGHUP, takehup);
+	puffs_ml_setloopfn(pu, psshfs_loopfn);
+
 	pssh_connect(&pctx, sshargs);
 
 	if (exportfs)
@@ -272,5 +284,26 @@ pssh_connect(struct psshfs_ctx *pctx, char **sshargs)
 		pctx->sshfd = fds[1];
 		close(fds[0]);
 		break;
+	}
+}
+
+static void *
+invalone(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+	struct psshfs_node *psn = pn->pn_data;
+
+	psn->attrread = 0;
+	psn->dentread = 0;
+
+	return NULL;
+}
+
+static void
+psshfs_loopfn(struct puffs_usermount *pu)
+{
+
+	if (sighup) {
+		puffs_pn_nodewalk(pu, invalone, NULL);
+		sighup = 0;
 	}
 }
