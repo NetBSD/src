@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2007/11/07 00:23:15 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2007/11/07 00:23:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4188,9 +4188,9 @@ pmap_postinit(void)
 	u_int loop, needed;
 	int error;
 
-	pool_setlowat(&pmap_l2ptp_pool,
+	pool_cache_setlowat(&pmap_l2ptp_cache,
 	    (PAGE_SIZE / L2_TABLE_SIZE_REAL) * 4);
-	pool_setlowat(&pmap_l2dtable_pool,
+	pool_cache_setlowat(&pmap_l2dtable_cache,
 	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
 
 	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);
