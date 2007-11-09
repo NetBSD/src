@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1032 2007/10/29 00:54:18 xtraeme Exp $
+# $NetBSD: mi,v 1.1033 2007/11/09 21:18:24 plunky Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -62,6 +62,7 @@
 ./usr/share/man/cat1/biff.0			man-mail-catman		.cat
 ./usr/share/man/cat1/bpm.0			man-pkgutil-catman	.cat
 ./usr/share/man/cat1/bthset.0			man-util-catman		.cat
+./usr/share/man/cat1/btkey.0			man-util-catman		.cat
 ./usr/share/man/cat1/btpin.0			man-util-catman		.cat
 ./usr/share/man/cat1/bunzip2.0			man-util-catman		.cat
 ./usr/share/man/cat1/bzcat.0			man-util-catman		.cat
@@ -2559,6 +2560,7 @@
 ./usr/share/man/man1/biff.1			man-mail-man		.man
 ./usr/share/man/man1/bpm.1			man-pkgutil-man		.man
 ./usr/share/man/man1/bthset.1			man-util-man		.man
+./usr/share/man/man1/btkey.1			man-util-man		.man
 ./usr/share/man/man1/btpin.1			man-util-man		.man
 ./usr/share/man/man1/bunzip2.1			man-util-man		.man
 ./usr/share/man/man1/bzcat.1			man-util-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1077 2007/11/06 23:39:25 ad Exp $
+#	$NetBSD: mi,v 1.1078 2007/11/09 21:18:23 plunky Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2388,6 +2388,7 @@
 ./usr/libdata/debug/usr/bin/bdes.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/biff.debug		comp-mail-debug		debug
 ./usr/libdata/debug/usr/bin/bthset.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/btkey.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/btpin.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bzip2.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bzip2recover.debug	comp-util-debug		debug
