@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.13 2007/09/12 23:39:50 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.14 2007/11/09 16:27:42 vanhu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2083,8 +2083,13 @@ get_proposal_r(iph2)
 				    "buffer allocation failed.\n");
 				return ISAKMP_INTERNAL_ERROR;
 			}
+		} else {
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "Family (%d - %d) or types (%d - %d) of ID"
+			     "from initiator differ.\n",
+			     spidx.src.ss_family, spidx.dst.ss_family,
+			     _XIDT(iph2->id_p),idi2type);
 		}
-
 	} else {
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"get a source address of SP index "
