@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.200 2007/10/15 14:12:54 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.201 2007/11/09 14:54:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -125,6 +125,7 @@ extern int nsysent;
 #endif
 
 #define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
+#define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)
