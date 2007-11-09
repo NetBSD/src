@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.24 2007/11/07 15:56:17 ad Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.25 2007/11/09 00:05:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.24 2007/11/07 15:56:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.25 2007/11/09 00:05:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,6 +271,12 @@ zs_loadchannelregs(cs)
 	zs_write_reg(cs, 1, reg[1]);
 }
 
+void
+zs_lock_init(struct zs_chanstate *cs)
+{
+
+	mutex_init(&cs->cs_lock, MUTEX_NODEBUG, IPL_ZS);
+}
 
 /*
  * ZS hardware interrupt.  Scan all ZS channels.  NB: we know here that
