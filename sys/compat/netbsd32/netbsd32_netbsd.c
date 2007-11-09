@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.128 2007/09/29 12:22:31 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.129 2007/11/09 15:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.128 2007/09/29 12:22:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.129 2007/11/09 15:05:34 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2826,3 +2826,20 @@ netbsd32_fremovexattr(struct lwp *l, void *v, register_t *retval)
 	NETBSD32TOP_UAP(name, const char);
 	return sys_fremovexattr(l, &ua, retval);
 }
+
+/*
+ * MI indirect system call support.
+ * Only used if the MD netbsd32_syscall.c doesn't intercept the calls.
+ */
+
+#define NETBSD32_SYSCALL
+#undef SYS_NSYSENT
+#define SYS_NSYSENT NETBSD32_SYS_NSYSENT
+
+#define SYS_SYSCALL netbsd32_sys_syscall
+#include "../../kern/sys_syscall.c"
+#undef SYS_SYSCALL
+
+#define SYS_SYSCALL netbsd32_sys___syscall
+#include "../../kern/sys_syscall.c"
+#undef SYS_SYSCALL
