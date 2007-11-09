@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2007/11/03 12:20:44 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33 2007/11/09 14:59:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2007/11/03 12:20:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2007/11/09 14:59:37 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,62 +93,39 @@ syscall(struct trapframe *frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, args[9], rval[2];
+	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
 
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame->tf_rax;
+	code = frame->tf_rax & (SYS_NSYSENT - 1);
 	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
-	callp = p->p_emul->e_sysent;
-
-	if (__predict_false(code == SYS_syscall)
-	    || __predict_false(code == SYS___syscall)) {
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		SYSCALL_COUNT(syscall_counts, code);
-		code = frame->tf_rdi & (SYS_NSYSENT - 1);
-		callp += code;
-		if (callp->sy_argsize != 0) {
-			args[0] = frame->tf_rsi;
-			args[1] = frame->tf_rdx;
-			args[2] = frame->tf_r10;
-			args[3] = frame->tf_r8;
-			args[4] = frame->tf_r9;
-			if (__predict_false(callp->sy_argsize > 5 * 8)) {
-				error = copyin((register_t *)frame->tf_rsp + 1,
-				    &args[5], callp->sy_argsize - 5 * 8);
-				if (error != 0)
-					goto bad;
-			}
-		}
-	} else {
-		code &= (SYS_NSYSENT - 1);
-		callp += code;
-		if (callp->sy_argsize != 0) {
-			args[0] = frame->tf_rdi;
-			args[1] = frame->tf_rsi;
-			args[2] = frame->tf_rdx;
-			args[3] = frame->tf_r10;
-			args[4] = frame->tf_r8;
-			args[5] = frame->tf_r9;
-			if (__predict_false(callp->sy_argsize > 6 * 8)) {
-				error = copyin((register_t *)frame->tf_rsp + 1,
-				    &args[6], callp->sy_argsize - 6 * 8);
-				if (error != 0)
-					goto bad;
-			}
-		}
-	}
+	callp = p->p_emul->e_sysent + code;
 
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
+	if (callp->sy_argsize != 0) {
+		args[0] = frame->tf_rdi;
+		args[1] = frame->tf_rsi;
+		args[2] = frame->tf_rdx;
+		args[3] = frame->tf_r10;
+		args[4] = frame->tf_r8;
+		args[5] = frame->tf_r9;
+		if (__predict_false(callp->sy_argsize > 6 * 8)) {
+			error = copyin((register_t *)frame->tf_rsp + 1,
+			    &args[6], callp->sy_argsize - 6 * 8);
+			if (error != 0)
+				goto bad;
+			code = frame->tf_rax & (SYS_NSYSENT - 1);
+		}
+	}
+
 	if (!__predict_false(p->p_trace_enabled)
+	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(l, code, code, NULL, args)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
@@ -162,6 +139,12 @@ syscall(struct trapframe *frame)
 		}
 	}
 
+	if (__predict_false(p->p_trace_enabled)
+	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
+		code = frame->tf_rax & (SYS_NSYSENT - 1);
+		trace_exit(l, code, args, rval, error);
+	}
+
 	if (__predict_true(error == 0)) {
 		frame->tf_rax = rval[0];
 		frame->tf_rdx = rval[1];
@@ -172,8 +155,7 @@ syscall(struct trapframe *frame)
 			/*
 			 * The offset to adjust the PC by depends on whether we
 			 * entered the kernel through the trap or call gate.
-			 * We pushed the size of the instruction into tf_err
-			 * on entry.
+			 * We saved the instruction size in tf_err on entry.
 			 */
 			frame->tf_rip -= frame->tf_err;
 			break;
@@ -187,9 +169,6 @@ syscall(struct trapframe *frame)
 			break;
 		}
 	}
-
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(l, code, args, rval, error);
 
 	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);
