@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2007/11/09 05:21:30 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -890,20 +890,12 @@ addfsoption(const char *name)
 
 	/*
 	 * Convert to lower case.  This will be used in the select
-	 * table, to verify root file systems, and when the initial
-	 * VFS list is created.
+	 * table, to verify root file systems.
 	 */
 	n = strtolower(name);
 
 	if (do_option(fsopttab, &nextfsopt, name, n, "file-system"))
 		return;
-
-	/*
-	 * Add a lower-case version to the table for root file system
-	 * verification.
-	 */
-	if (ht_insert(fsopttab, n, __UNCONST(n)))
-		panic("addfsoption: already in table");
 
 	/* Add to select table. */
 	(void)ht_insert(selecttab, n, __UNCONST(n));
@@ -916,8 +908,6 @@ delfsoption(const char *name)
 
 	n = strtolower(name);
 	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system"))
-		return;
-	if (undo_option(fsopttab, NULL, NULL, n, "file-system"))
 		return;
 	if (undo_option(selecttab, NULL, NULL, n, "file-system"))
 		return;
@@ -983,15 +973,6 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
 	  const char *value, const char *type)
 {
 	struct nvlist *nv;
-
-	/*
-	 * If a defopt'ed or defflag'ed option was enabled but without
-	 * an explicit value (always the case for defflag), supply a
-	 * default value of 1, as for non-defopt options (where cc
-	 * treats -DBAR as -DBAR=1.) 
-	 */
-	if ((OPT_DEFOPT(name) || OPT_DEFFLAG(name)) && value == NULL)
-		value = "1";
 
 	/* assume it will work */
 	nv = newnv(name, value, NULL, 0, NULL);
