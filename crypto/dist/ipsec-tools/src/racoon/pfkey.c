@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.23 2007/09/12 23:39:50 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.24 2007/11/09 16:27:58 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.23 2007/09/12 23:39:50 mgrooms Exp $ */
+/* $Id: pfkey.c,v 1.24 2007/11/09 16:27:58 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2833,6 +2833,11 @@ pk_recv(so, lenp)
 		return NULL;
 
 	reallen = PFKEY_UNUNIT64(buf.sadb_msg_len);
+	if (reallen < sizeof(buf)) {
+		*lenp = -1;
+		errno = EIO;
+		return NULL;    /*fatal*/
+	}
 	if ((newmsg = racoon_calloc(1, reallen)) == NULL)
 		return NULL;
 
