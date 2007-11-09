@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.725 2007/11/08 20:14:07 drochner Exp $
+# $NetBSD: mi,v 1.726 2007/11/09 21:18:22 plunky Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -421,6 +421,7 @@
 ./usr/bin/bdes					base-crypto-bin		crypto
 ./usr/bin/biff					base-mail-bin
 ./usr/bin/bthset				base-util-bin
+./usr/bin/btkey					base-util-bin
 ./usr/bin/btpin					base-util-bin
 ./usr/bin/bunzip2				base-util-bin
 ./usr/bin/bzcat					base-util-bin
