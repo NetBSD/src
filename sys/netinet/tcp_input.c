@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.271 2007/11/04 11:04:26 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.271 2007/11/04 11:04:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3269,30 +3269,6 @@ do {									\
 } while (/*CONSTCOND*/0)
 #endif /* INET6 */
 
-#define	SYN_CACHE_RM(sc)						\
-do {									\
-	TAILQ_REMOVE(&tcp_syn_cache[(sc)->sc_bucketidx].sch_bucket,	\
-	    (sc), sc_bucketq);						\
-	(sc)->sc_tp = NULL;						\
-	LIST_REMOVE((sc), sc_tpq);					\
-	tcp_syn_cache[(sc)->sc_bucketidx].sch_length--;			\
-	callout_stop(&(sc)->sc_timer);					\
-	syn_cache_count--;						\
-} while (/*CONSTCOND*/0)
-
-#define	SYN_CACHE_PUT(sc)						\
-do {									\
-	if ((sc)->sc_ipopts)						\
-		(void) m_free((sc)->sc_ipopts);				\
-	rtcache_free(&(sc)->sc_route);					\
-	if (callout_invoking(&(sc)->sc_timer))				\
-		(sc)->sc_flags |= SCF_DEAD;				\
-	else {								\
-		callout_destroy(&sc->sc_timer);				\
-		pool_put(&syn_cache_pool, (sc));			\
-	}								\
-} while (/*CONSTCOND*/0)
-
 POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
     IPL_SOFTNET);
 
@@ -3310,6 +3286,32 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
+
+static inline void
+syn_cache_rm(struct syn_cache *sc)
+{
+	TAILQ_REMOVE(&tcp_syn_cache[sc->sc_bucketidx].sch_bucket,
+	    sc, sc_bucketq);
+	sc->sc_tp = NULL;
+	LIST_REMOVE(sc, sc_tpq);
+	tcp_syn_cache[sc->sc_bucketidx].sch_length--;
+	callout_stop(&sc->sc_timer);
+	syn_cache_count--;
+}
+
+static inline void
+syn_cache_put(struct syn_cache *sc)
+{
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
+	rtcache_free(&sc->sc_route);
+	if (callout_invoking(&sc->sc_timer))
+		sc->sc_flags |= SCF_DEAD;
+	else {
+		callout_destroy(&sc->sc_timer);
+		pool_put(&syn_cache_pool, sc);
+	}
+}
 
 void
 syn_cache_init(void)
@@ -3361,8 +3363,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		if (sc2 == NULL)
 			panic("syn_cache_insert: bucketoverflow: impossible");
 #endif
-		SYN_CACHE_RM(sc2);
-		SYN_CACHE_PUT(sc2);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc2);
+		syn_cache_put(sc2);	/* calls pool_put but see spl above */
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		struct syn_cache_head *scp2, *sce;
 
@@ -3395,8 +3397,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 #endif
 		}
 		sc2 = TAILQ_FIRST(&scp2->sch_bucket);
-		SYN_CACHE_RM(sc2);
-		SYN_CACHE_PUT(sc2);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc2);
+		syn_cache_put(sc2);	/* calls pool_put but see spl above */
 	}
 
 	/*
@@ -3466,8 +3468,8 @@ syn_cache_timer(void *arg)
 
  dropit:
 	tcpstat.tcps_sc_timed_out++;
-	SYN_CACHE_RM(sc);
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_rm(sc);
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -3491,8 +3493,8 @@ syn_cache_cleanup(struct tcpcb *tp)
 		if (sc->sc_tp != tp)
 			panic("invalid sc_tp in syn_cache_cleanup");
 #endif
-		SYN_CACHE_RM(sc);
-		SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc);
+		syn_cache_put(sc);	/* calls pool_put but see spl above */
 	}
 	/* just for safety */
 	LIST_INIT(&tp->t_sc);
@@ -3589,7 +3591,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 
 	/* Remove this cache entry */
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	splx(s);
 
 	/*
@@ -3844,7 +3846,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 
 	tcpstat.tcps_sc_completed++;
 	s = splsoftnet();
-	SYN_CACHE_PUT(sc);
+	syn_cache_put(sc);
 	splx(s);
 	return (so);
 
@@ -3854,7 +3856,7 @@ abort:
 	if (so != NULL)
 		(void) soabort(so);
 	s = splsoftnet();
-	SYN_CACHE_PUT(sc);
+	syn_cache_put(sc);
 	splx(s);
 	tcpstat.tcps_sc_aborted++;
 	return ((struct socket *)(-1));
@@ -3882,9 +3884,9 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 		splx(s);
 		return;
 	}
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	tcpstat.tcps_sc_reset++;
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -3921,9 +3923,9 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 		return;
 	}
 
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	tcpstat.tcps_sc_unreach++;
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -4132,7 +4134,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tcpstat.tcps_sndtotal++;
 	} else {
 		s = splsoftnet();
-		SYN_CACHE_PUT(sc);
+		syn_cache_put(sc);
 		splx(s);
 		tcpstat.tcps_sc_dropped++;
 	}
