@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.7 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.8 2007/11/09 05:06:08 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,7 @@ PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
 QCHARS	([^"\n]|\\\")+
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 FILENAME	({PATH}|\"{QCHARS}\")
+RESTOFLINE	[ \t]*(#[^\n]*)?\n
 
 %%
 		/* Local variables for yylex() */
@@ -134,7 +135,8 @@ with		return WITH;
 \+=		return PLUSEQ;
 :=		return COLONEQ;
 
-include[ \t]+{FILENAME}	{
+include[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (getincludepath()) {
 			include(curinclpath, 0, 0, 1);
 		} else {
@@ -142,7 +144,8 @@ include[ \t]+{FILENAME}	{
 		}
 	}
 
-cinclude[ \t]+{FILENAME}	{
+cinclude[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (getincludepath()) {
 			include(curinclpath, 0, 1, 1);
 		} else {
@@ -150,7 +153,8 @@ cinclude[ \t]+{FILENAME}	{
 		}
 	}
 
-package[ \t]+{FILENAME}	{
+package[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (!oktopackage) {
 			yyerror("package not allowed here");
 		} else if (getincludepath()) {
@@ -394,27 +398,31 @@ static int
 getincludepath()
 {
 	const char *p = yytext;
+	ptrdiff_t len;
+	const char *e;
 
-	while (*p && isascii((signed char)*p) && !isspace((signed char)*p))
+	while (*p && isascii((unsigned int)*p) && !isspace((unsigned int)*p))
 		p++;
-	while (*p && isascii((signed char)*p) && isspace((signed char)*p))
+	while (*p && isascii((unsigned int)*p) && isspace((unsigned int)*p))
 		p++;
 	if (!*p)
 		return 0;
 	if (*p == '"') {
-		ptrdiff_t len;
-		const char *e = strchr(p+1, '"');
-
+		p++;
+		e = strchr(p, '"');
 		if (!e) return 0;
-		len = e-p-1;
-		if (len > sizeof(curinclpath)-1)
-			len = sizeof(curinclpath)-1;
-		strncpy(curinclpath, p+1, sizeof(curinclpath));
-		curinclpath[len] = '\0';
 	} else {
-		strncpy(curinclpath, p, sizeof(curinclpath));
-		curinclpath[sizeof(curinclpath)-1] = '\0';
+		e = p;
+		while (*e && isascii((unsigned int)*e)
+		    && !isspace((unsigned int)*e))
+			e++;
 	}
+
+	len = e-p;
+	if (len > sizeof(curinclpath)-1)
+		len = sizeof(curinclpath)-1;
+	strncpy(curinclpath, p, sizeof(curinclpath));
+	curinclpath[len] = '\0';
 
 	return 1;
 }
