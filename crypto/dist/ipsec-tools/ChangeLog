@@ -1,3 +1,11 @@
+2007-11-09  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Arnaud Ebalard <arno@natisbad.org>:
+	* src/racoon/pfkey.c: Some sanity check in pk_recv()
+	* src/racoon/policy.c: better matching of SPD entries in
+	  getsp_r().
+	* src/racoon/isakmp_quick.c: added some debug in get_proposal_r().
+	
+
 2007-10-18  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/{isakmp_unity.[ch]|isakmp_cfg.c|racoon.conf.5}:
 	  Add SPLITNET_{INCLUDR_LOCAL}_CIDR to hook scripts
