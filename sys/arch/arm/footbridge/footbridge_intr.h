@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.10 2007/03/09 06:45:20 thorpej Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.10.22.1 2007/11/09 05:37:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -101,7 +101,6 @@ static inline void __attribute__((__unused__))
 footbridge_splx(int newspl)
 {
 	extern volatile uint32_t intr_enabled;
-	extern volatile int current_spl_level;
 	extern volatile int footbridge_ipending;
 	extern void footbridge_do_pending(void);
 	int oldirqstate, hwpend;
@@ -109,7 +108,7 @@ footbridge_splx(int newspl)
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	current_spl_level = newspl;
+	set_curcpl(newspl);
 
 	hwpend = (footbridge_ipending & ICU_INT_HWMASK) & ~newspl;
 	if (hwpend != 0) {
@@ -126,12 +125,11 @@ footbridge_splx(int newspl)
 static inline int __attribute__((__unused__))
 footbridge_splraise(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int footbridge_imask[];
 	int	old;
 
-	old = current_spl_level;
-	current_spl_level |= footbridge_imask[ipl];
+	old = curcpl();
+	set_curcpl(old | footbridge_imask[ipl]);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -142,9 +140,8 @@ footbridge_splraise(int ipl)
 static inline int __attribute__((__unused__))
 footbridge_spllower(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int footbridge_imask[];
-	int old = current_spl_level;
+	int old = curcpl();
 
 	footbridge_splx(footbridge_imask[ipl]);
 	return(old);

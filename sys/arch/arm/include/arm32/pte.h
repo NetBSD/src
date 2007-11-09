@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7.82.1 2007/08/28 18:46:16 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.7.82.2 2007/11/09 05:37:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_ADDR_MASK	0xfff00000	/* phys address of section */
 
 #define	L1_S_XSCALE_P	0x00000200	/* ECC enable for this section */
-#define	L1_S_XSCALE_TEX(x) ((x) << 12)	/* Type Extension */
+#define	L1_S_XS_TEX(x) ((x) << 12)	/* Type Extension */
 #define	L1_S_V6_TEX(x)	((x) << 12)	/* Type Extension */
 #define	L1_S_V6_P	0x00000200	/* ECC enable for this section */
 #define	L1_S_V6_SUPER	0x00040000	/* ARMv6 SuperSection (16MB) bit */
@@ -214,7 +214,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_AP3(x)	((x) << 10)	/* access permissions (sp 3) */
 #define	L2_AP(x)	(L2_AP0(x) | L2_AP1(x) | L2_AP2(x) | L2_AP3(x))
 
-#define	L2_XSCALE_L_TEX(x) ((x) << 12)	/* Type Extension */
+#define	L2_XS_L_TEX(x)	((x) << 12)	/* Type Extension */
 #define	L2_XS_T_TEX(x)	((x) << 6)	/* Type Extension */
 #define	L2_XS_XN	0x00000001	/* ARMv6 eXecute Never */
 #define	L2_XS_APX	0x00000200	/* ARMv6 AP eXtension */
