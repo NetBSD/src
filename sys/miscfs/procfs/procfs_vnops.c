@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.161 2007/11/07 00:23:38 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.162 2007/11/09 22:45:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.161 2007/11/07 00:23:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.162 2007/11/09 22:45:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.161 2007/11/07 00:23:38 ad Exp $"
 
 static int procfs_validfile_linux(struct lwp *, struct mount *);
 static int procfs_root_readdir_callback(struct proc *, void *);
-static void procfs_dir(pfstype, struct lwp *, struct proc *,
-				char **, char *, int);
+static void procfs_dir(pfstype, struct lwp *, struct proc *, char **, char *,
+    size_t);
 
 /*
  * This is a list of the valid names in the
@@ -558,8 +558,8 @@ procfs_symlink(v)
  * returned for the vnode.
  */
 static void
-procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
-	   char **bpp, char *path, int len)
+procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
+    char *path, size_t len)
 {
 	struct cwdinfo *cwdi;
 	struct vnode *vp, *rvp;
