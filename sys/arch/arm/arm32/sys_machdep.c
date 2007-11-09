@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8.26.1 2007/11/06 19:19:15 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.26.2 2007/11/09 19:24:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.26.1 2007/11/06 19:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.26.2 2007/11/09 19:24:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,8 @@ arm32_sync_icache(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	cpu_icache_sync_range(ua.addr, ua.len);
+	pmap_icache_sync_range(vm_map_pmap(&l->l_proc->p_vmspace->vm_map),
+	    ua.addr, ua.addr + ua.len);
 
 	*retval = 0;
 	return(0);

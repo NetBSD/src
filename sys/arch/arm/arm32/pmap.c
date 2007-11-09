@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.12.6 2007/11/09 05:37:37 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.12.7 2007/11/09 19:24:47 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.6 2007/11/09 05:37:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.7 2007/11/09 19:24:47 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3343,6 +3343,43 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (PV_BEEN_REFD(flags))
 			pmap_tlb_flushD(pm);
 	}
+}
+
+void
+pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
+{
+	struct l2_bucket *l2b;
+	pt_entry_t *ptep;
+	vaddr_t next_bucket;
+
+	NPDEBUG(PDB_EXEC,
+	    printf("pmap_icache_sync_range: pm %p sva 0x%lx eva 0x%lx\n",
+	    pm, sva, eva));
+
+	PMAP_MAP_TO_HEAD_LOCK();
+	pmap_acquire_pmap_lock(pm);
+
+	while (sva < eva) {
+		next_bucket = L2_NEXT_BUCKET(sva);
+		if (next_bucket > eva)
+			next_bucket = eva;
+
+		l2b = pmap_get_l2_bucket(pm, sva);
+		if (l2b == NULL) {
+			sva = next_bucket;
+			continue;
+		}
+
+		for (ptep = &l2b->l2b_kva[l2pte_index(sva)];
+		     sva < next_bucket;
+		     sva += PAGE_SIZE, ptep++) {
+			if (l2pte_valid(*ptep))
+				cpu_icache_sync_range(sva, PAGE_SIZE);
+		}
+	}
+
+	pmap_release_pmap_lock(pm);
+	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.81.24.3 2007/11/09 05:37:39 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.81.24.4 2007/11/09 19:24:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -278,6 +278,8 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
 #endif
+
+void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
 
 /* Functions we use internally. */
 #ifdef PMAP_STEAL_MEMORY
