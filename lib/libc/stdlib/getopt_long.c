@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.23 2007/11/06 22:08:51 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.24 2007/11/09 03:29:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.23 2007/11/06 22:08:51 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.24 2007/11/09 03:29:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -72,7 +72,6 @@ static int optreset;
 __weak_alias(getopt_long,_getopt_long)
 #endif
 
-#if !HAVE_GETOPT_LONG
 #define IGNORE_FIRST	(*options == '-' || *options == '+')
 #define PRINT_ERROR	((opterr) && ((*options != ':') \
 				      || (IGNORE_FIRST && options[1] != ':')))
@@ -496,4 +495,3 @@ getopt_long(nargc, nargv, options, long_options, idx)
 	return retval;
 #undef IDENTICAL_INTERPRETATION
 }
-#endif /* !GETOPT_LONG */
