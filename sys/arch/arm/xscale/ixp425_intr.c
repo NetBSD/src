@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.15.30.1 2007/11/09 05:37:46 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.30.1 2007/11/09 05:37:46 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -97,9 +97,6 @@ struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
 int ixp425_imask[NIPL];
-
-/* Current interrupt priority level. */
-volatile int current_spl_level;  
 
 /* Interrupts pending. */
 volatile int ixp425_ipending;
@@ -317,18 +314,18 @@ ixp425_do_pending(void)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	new = current_spl_level;
+	new = curcpl();
 
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
 	if ((ixp425_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
 		ixp425_ipending &= ~SI_TO_IRQBIT(si);			\
-		current_spl_level |= ixp425_imask[si_to_ipl[(si)]];	\
+		set_curcpl(new | ixp425_imask[si_to_ipl[(si)]]);	\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
-		current_spl_level = new;				\
+		set_curcpl(new);					\
 	}
 
 	DO_SOFTINT(SI_SOFTSERIAL);
@@ -372,7 +369,7 @@ _setsoftintr(int si)
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((ixp425_ipending & INT_SWMASK) & ~current_spl_level)
+	if ((ixp425_ipending & INT_SWMASK) & ~curcpl())
 		ixp425_do_pending();
 }
 
@@ -483,7 +480,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
 
-	pcpl = current_spl_level;
+	pcpl = curcpl();
 
 	hwpend = ixp425_irq_read();
 
@@ -514,7 +511,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		current_spl_level |= iq->iq_mask;
+		set_curcpl(pcpl | iq->iq_mask);
 
 		/* Clear down non-level triggered GPIO interrupts now */
 		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist != IST_LEVEL) {
@@ -535,7 +532,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 			    ixp425_irq2gpio_bit(irq);
 		}
 
-		current_spl_level = pcpl;
+		set_curcpl(pcpl);
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
@@ -549,7 +546,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	}
 
 	/* Check for pendings soft intrs. */
-	if ((ixp425_ipending & INT_SWMASK) & ~current_spl_level) {
+	if ((ixp425_ipending & INT_SWMASK) & ~curcpl()) {
 		oldirqstate = enable_interrupts(I32_bit);
 		ixp425_do_pending();
 		restore_interrupts(oldirqstate);

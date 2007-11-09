@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.11 2006/11/24 21:20:05 wiz Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.11.30.1 2007/11/09 05:37:42 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11.30.1 2007/11/09 05:37:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ volatile uint32_t *s3c2xx0_intr_mask_reg;
 static inline void
 __raise(int ipl)
 {
-	if (current_spl_level < ipl) {
+	if (curcpl() < ipl) {
 		s3c2xx0_setipl(ipl);
 	}
 }
@@ -164,7 +164,7 @@ s3c2xx0_do_pending(int enable_int)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	spl_save = current_spl_level;
+	spl_save = curcpl();
 
 	oldirqstate = irqstate = disable_interrupts(I32_bit);
 

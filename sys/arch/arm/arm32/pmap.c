@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.12.5 2007/11/08 10:59:33 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.12.6 2007/11/09 05:37:37 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.5 2007/11/08 10:59:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.6 2007/11/09 05:37:37 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4091,7 +4091,7 @@ pmap_zero_page_xscale(paddr_t phys)
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
-	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -4320,11 +4320,11 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 	 */
 	*csrc_pte = L2_S_PROTO | src |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
-	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(csrc_pte);
 	*cdst_pte = L2_S_PROTO | dst |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
-	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	PTE_SYNC(cdst_pte);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
@@ -5692,9 +5692,9 @@ pmap_pte_init_xscale(void)
 	 * is significantly faster than the traditional, write-through
 	 * behavior of this case.
 	 */
-	pte_l1_s_cache_mode |= L1_S_XSCALE_TEX(TEX_XSCALE_X);
-	pte_l2_l_cache_mode |= L2_XSCALE_L_TEX(TEX_XSCALE_X);
-	pte_l2_s_cache_mode |= L2_XSCALE_T_TEX(TEX_XSCALE_X);
+	pte_l1_s_cache_mode |= L1_S_XS_TEX(TEX_XSCALE_X);
+	pte_l2_l_cache_mode |= L2_XS_L_TEX(TEX_XSCALE_X);
+	pte_l2_s_cache_mode |= L2_XS_T_TEX(TEX_XSCALE_X);
 #endif /* XSCALE_CACHE_READ_WRITE_ALLOCATE */
 
 #ifdef XSCALE_CACHE_WRITE_THROUGH
@@ -5803,7 +5803,7 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 		pte[l2pte_index(va)] =
 #endif
 		    L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
-		    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);
+		    L2_C | L2_XS_T_TEX(TEX_XSCALE_X);
 	}
 
 	/*

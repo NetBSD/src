@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.8.2.1 2007/11/06 23:15:07 matt Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.8.2.2 2007/11/09 05:37:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -75,12 +75,6 @@
 Ldisabled_mask:
 	.word	_C_LABEL(disabled_mask)
 
-Lcurrent_spl_level:	
-	.word	_C_LABEL(current_spl_level)
-
-Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
-
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
@@ -100,6 +94,7 @@ AST_ALIGNMENT_FAULT_LOCALS
 /*
  * Regsister usage
  *
+ *  r4	- Address of cpu_info
  *  r6  - Address of current handler
  *  r7  - Pointer to handler pointer list
  *  r8  - Current IRQ requests.
@@ -174,7 +169,7 @@ ASENTRY_NP(irq_entry)
 	 *  Soon, we will have to schedule it for later action.
 	 */
 	ldr	r0, Lcurrent_spl_level
-	ldr	r0, [r0]
+	ldr	r0, [r4, #CI_CPL]
 	cmp	r0, #_SPL_CLOCK
 	blt	ofwtakeint
 
@@ -204,10 +199,9 @@ ofwtakeint:
 	 * each time the interrupt handler is nested.
 	 */
 
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	add	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	/* Block the current requested interrupts */
 	ldr	r1, Ldisabled_mask
@@ -246,8 +240,8 @@ Lfind_highest_ipl:
 	str	r0, [r1]	
 
 	ldr	r0, Lcurrent_spl_level
-	ldr	r1, [r0]
-	str	r9, [r0]
+	ldr	r1, [r4, #CI_CPL]
+	str	r9, [r4, #CI_CPL]
 	stmfd	sp!, {r1}
 
 	/* Update the irq masks */
@@ -305,8 +299,7 @@ nextirq:
 	bne	irqloop			/* no - loop back. */
 
 	ldmfd	sp!, {r2}
-	ldr	r1, Lcurrent_spl_level
-	str	r2, [r1]
+	str	r2, [r4, #CI_CPL]
 
 	/* Restore previous disabled mask */
 	ldmfd	sp!, {r2}
@@ -322,10 +315,9 @@ nextirq:
 	msr     cpsr_all, r0
 
 	/* Decrement the nest count */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	LOCK_CAS_CHECK
 

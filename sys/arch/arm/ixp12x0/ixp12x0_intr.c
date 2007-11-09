@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.15.30.1 2007/11/09 05:37:40 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.15.30.1 2007/11/09 05:37:40 matt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -73,7 +73,6 @@ static u_int32_t imask[NIPL];
 static u_int32_t pci_imask[NIPL];
 
 /* Current interrupt priority level. */
-volatile int current_spl_level;
 volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
@@ -358,18 +357,18 @@ ixp12x0_do_pending(void)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	new = current_spl_level;
+	new = curcpl();
 
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
 	if ((ipending & ~imask[new]) & SI_TO_IRQBIT(si)) {		\
 		ipending &= ~SI_TO_IRQBIT(si);				\
-		current_spl_level = si_to_ipl[(si)];			\
+		set_curcpl(si_to_ipl[(si)]);				\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
-		current_spl_level = new;				\
+		set_curcpl(new);					\
 	}
 
 	DO_SOFTINT(SI_SOFTSERIAL);
@@ -389,8 +388,8 @@ splx(int new)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = new;
+	old = curcpl();
+	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
 		ixp12x0_set_intrmask(imask[new], pci_imask[new]);
@@ -409,8 +408,8 @@ _splraise(int ipl)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = ipl;
+	old = curcpl();
+	set_curcpl(ipl);
 	restore_interrupts(oldirqstate);
 	return (old);
 }
@@ -418,7 +417,7 @@ _splraise(int ipl)
 int
 _spllower(int ipl)
 {
-	int	old = current_spl_level;
+	int	old = curcpl();
 
 	if (old <= ipl)
 		return (old);
@@ -436,7 +435,7 @@ _setsoftintr(int si)
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((ipending & INT_SWMASK) & ~imask[current_spl_level])
+	if ((ipending & INT_SWMASK) & ~imask[curcpl()])
 		ixp12x0_do_pending();
 }
 
@@ -463,8 +462,8 @@ ixp12x0_intr_init(void)
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 				     NULL, "ixpintr", iq->iq_name);
 	}
-	current_intr_depth = 0;
-	current_spl_level = 0;
+	curcpu()->ci_intr_depth = 0;
+	curcpu()->ci_cpl = 0;
 	hardware_spl_level = 0;
 
 	ixp12x0_intr_calculate_masks();
@@ -533,7 +532,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 	int			irq;
 	u_int32_t		ibit;
 
-	pcpl = current_spl_level;
+	pcpl = curcpl();
 
 	hwpend = ixp12x0_irq_read();
 	pci_hwpend = ixp12x0_pci_irq_read();
@@ -556,7 +555,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			int	ipl;
 
-			current_spl_level = ipl = ih->ih_ipl;
+			curcpu()->ci_cpl = ipl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -574,7 +573,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			int	ipl;
 
-			current_spl_level = ipl = ih->ih_ipl;
+			curcpu()->ci_cpl = ipl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -582,7 +581,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 		}
 	}
 
-	current_spl_level = pcpl;
+	curcpu()->ci_cpl = pcpl;
 	hardware_spl_level = pcpl;
 	ixp12x0_set_intrmask(imask[pcpl], pci_imask[pcpl]);
 

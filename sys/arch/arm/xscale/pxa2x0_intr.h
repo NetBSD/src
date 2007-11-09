@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.1 2007/11/06 19:22:44 matt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.2 2007/11/09 05:37:49 matt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -63,6 +63,8 @@ extern volatile int softint_pending;
 extern int pxa2x0_imask[];
 void pxa2x0_do_pending(void);
 
+#ifdef __PROG32
+
 /*
  * Cotulla's integrated ICU doesn't have IRQ0..7, so
  * we map software interrupts to bit 0..3
@@ -72,9 +74,8 @@ void pxa2x0_do_pending(void);
 static inline void
 pxa2x0_setipl(int new)
 {
-
-	curcpu()->ci_cpl = new;
-	intr_mask = pxa2x0_imask[curcpu()->ci_cpl];
+	set_curcpl(new);
+	intr_mask = pxa2x0_imask[new];
 	write_icu(SAIPIC_MR, intr_mask);
 }
 
@@ -99,8 +100,8 @@ pxa2x0_splraise(int ipl)
 {
 	int old, psw;
 
-	old = curcpu()->ci_cpl;
-	if (ipl > curcpu()->ci_cpl) {
+	old = curcpl();
+	if (ipl > old) {
 		psw = disable_interrupts(I32_bit);
 		pxa2x0_setipl(ipl);
 		restore_interrupts(psw);
@@ -112,7 +113,7 @@ pxa2x0_splraise(int ipl)
 static inline int
 pxa2x0_spllower(int ipl)
 {
-	int old = curcpu()->ci_cpl;
+	int old = curcpl();
 	int psw = disable_interrupts(I32_bit);
 
 	pxa2x0_splx(ipl);
@@ -150,6 +151,7 @@ find_first_bit(uint32_t bits)
 	return 31 - count;
 }
 
+#endif /* __PROG32 */
 
 int	_splraise(int);
 int	_spllower(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2006/12/18 15:32:10 nonaka Exp $ */
+/*	$NetBSD: obio.c,v 1.5.24.1 2007/11/09 05:37:55 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -152,7 +152,7 @@ obio_softintr(void *arg)
 {
 	struct obio_softc *sc = (struct obio_softc *)arg;
 	int irqno;
-	int spl_save = current_spl_level;
+	int spl_save = curcpl();
 	int psw;
 
 	psw = disable_interrupts(I32_bit);

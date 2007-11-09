@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.4 2007/11/06 23:15:03 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.5 2007/11/09 05:37:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -83,7 +83,6 @@
 
 #include <arm/cpuconf.h>
 
-#include <machine/intr.h>
 #ifndef _LOCORE
 #include <sys/user.h>
 #include <machine/frame.h>
@@ -220,6 +219,8 @@ void	arm32_vector_init(vaddr_t, int);
 /*
  * Per-CPU information.  For now we assume one CPU.
  */
+static inline int curcpl(void);
+static inline void set_curcpl(int);
 
 #include <sys/device.h>
 #include <sys/cpu_data.h>
@@ -269,7 +270,6 @@ _curlwp_set(struct lwp *l)
 
 #define	curlwp		(_curlwp())
 #define	curcpu()	(curlwp->l_cpu)
-#define	curlwp_set(l)	_curlwp_set(l)
 #elif defined(PROCESS_ID_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
@@ -280,13 +280,6 @@ curcpu(void)
 }
 #else
 #define	curcpu()	(&cpu_info_store)
-static inline void
-_curlwp_set(struct lwp *l)
-{
-	KASSERT(l);
-	curcpu()->ci_curlwp = l;
-}
-#define curlwp_set(l)	_curlwp_set(l)
 #endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
 #ifndef curpcb
 #define	curpcb		(curcpu()->ci_curpcb)
@@ -297,6 +290,18 @@ _curlwp_set(struct lwp *l)
 #define cpu_number()	0
 #define	LWP0_CPU_INFO	(&cpu_info_store)
 #endif /* !MULTIPROCESSOR */
+
+static inline int
+curcpl(void)
+{
+	return curcpu()->ci_cpl;
+}
+
+static inline void
+set_curcpl(int pri)
+{
+	curcpu()->ci_cpl = pri;
+}
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);

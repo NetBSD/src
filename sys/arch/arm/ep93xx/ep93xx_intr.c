@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.8 2006/11/24 21:20:05 wiz Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.8.30.1 2007/11/09 05:37:38 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.8 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.8.30.1 2007/11/09 05:37:38 matt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -69,7 +69,6 @@ static u_int32_t vic1_imask[NIPL];
 static u_int32_t vic2_imask[NIPL];
 
 /* Current interrupt priority level. */
-volatile int current_spl_level;
 volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
@@ -302,18 +301,18 @@ ep93xx_do_pending(void)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	new = current_spl_level;
+	new = curcpl();
 
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
 	if ((ipending & ~vic1_imask[new]) & SI_TO_IRQBIT(si)) {		\
 		ipending &= ~SI_TO_IRQBIT(si);				\
-		current_spl_level = si_to_ipl[(si)];			\
+		set_curcpl(si_to_ipl[(si)]);				\
 		oldirqstate2 = enable_interrupts(I32_bit);		\
 		softintr_dispatch(si);					\
 		restore_interrupts(oldirqstate2);			\
-		current_spl_level = new;				\
+		set_curcpl(new);					\
 	}
 
 	DO_SOFTINT(SI_SOFTSERIAL);
@@ -333,8 +332,8 @@ splx(int new)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = new;
+	old = curcpl();
+	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
 		ep93xx_set_intrmask(vic1_imask[new], vic2_imask[new]);
@@ -353,8 +352,8 @@ _splraise(int ipl)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = ipl;
+	old = curcpl();
+	set_curcpl(ipl);
 	restore_interrupts(oldirqstate);
 	return (old);
 }
@@ -362,7 +361,7 @@ _splraise(int ipl)
 int
 _spllower(int ipl)
 {
-	int	old = current_spl_level;
+	int	old = curcpl();
 
 	if (old <= ipl)
 		return (old);
@@ -380,7 +379,7 @@ _setsoftintr(int si)
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((ipending & INT_SWMASK) & ~vic1_imask[current_spl_level])
+	if ((ipending & INT_SWMASK) & ~vic1_imask[curcpl()])
 		ep93xx_do_pending();
 }
 
@@ -408,8 +407,8 @@ ep93xx_intr_init(void)
 				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
 		                     iq->iq_name);
 	}
-	current_intr_depth = 0;
-	current_spl_level = 0;
+	curcpu()->ci_intr_depth = 0;
+	set_curcpl(0);
 	hardware_spl_level = 0;
 
 	/* All interrupts should use IRQ not FIQ */
@@ -477,7 +476,7 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 	u_int32_t		vic2_hwpend;
 	int			irq;
 
-	pcpl = current_spl_level;
+	pcpl = curcpl();
 
 	vic1_hwpend = VIC1REG(EP93XX_VIC_IRQStatus);
 	vic2_hwpend = VIC2REG(EP93XX_VIC_IRQStatus);
@@ -497,7 +496,7 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 		uvmexp.intrs++;
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			current_spl_level = ih->ih_ipl;
+			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -510,14 +509,14 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 		uvmexp.intrs++;
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			current_spl_level = ih->ih_ipl;
+			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
 		}
 	}
 
-	current_spl_level = pcpl;
+	set_curcpl(pcpl);
 	hardware_spl_level = pcpl;
 	ep93xx_set_intrmask(vic1_imask[pcpl], vic2_imask[pcpl]);
 

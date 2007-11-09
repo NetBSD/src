@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.81.24.2 2007/11/06 23:15:05 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.81.24.3 2007/11/09 05:37:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -408,8 +408,8 @@ do {									\
 #define	l2pte_valid(pte)	(((pte) & L2_TYPE_MASK) != L2_TYPE_INV)
 #define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
 #define l2pte_minidata(pte)	(((pte) & \
-				 (L2_B | L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X)))\
-				 == (L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X)))
+				 (L2_B | L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))\
+				 == (L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))
 
 /* L1 and L2 page table macros */
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
@@ -513,14 +513,14 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L1_S_PROT_MASK		(L1_S_PROT_U|L1_S_PROT_W)
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
-#define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
+#define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_XSCALE_X))
 
 #define	L2_L_PROT_U		(L2_AP(AP_U))
 #define	L2_L_PROT_W		(L2_AP(AP_W))
 #define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
 
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
-#define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
+#define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_L_TEX(TEX_XSCALE_X))
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
@@ -531,7 +531,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
 
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
-#define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
+#define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_T_TEX(TEX_XSCALE_X))
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
@@ -542,7 +542,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_PROTO		(L2_TYPE_L)
 
 #define	L2_S_PROTO_generic	(L2_TYPE_S)
-#define	L2_S_PROTO_xscale	(L2_TYPE_XSCALE_XS)
+#define	L2_S_PROTO_xscale	(L2_TYPE_XS)
 
 /*
  * User-visible names for the ones that vary with MMU class.
