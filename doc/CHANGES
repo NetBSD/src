@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.943 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.944 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -232,3 +232,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		14 voltage sensors in addition to the previous 3 temperature
 		sensors provided in the TMS logical device. From OpenBSD.
 		[xtraeme 20071109]
+	btkey(1): A new utility to manage Bluetooth link keys in OS and
+		and device storage. [plunky 20071109]
