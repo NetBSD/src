@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.7 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: policy.c,v 1.8 2007/11/09 16:27:47 vanhu Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -91,13 +91,17 @@ getsp_r(spidx)
 	struct policyindex *spidx;
 {
 	struct secpolicy *p;
+	struct secpolicy *found = NULL;
 
 	for (p = TAILQ_FIRST(&sptree); p; p = TAILQ_NEXT(p, chain)) {
-		if (!cmpspidxwild(spidx, &p->spidx))
+		if (!cmpspidxstrict(spidx, &p->spidx))
 			return p;
+
+		if (!found && !cmpspidxwild(spidx, &p->spidx))
+			found = p;
 	}
 
-	return NULL;
+	return found;
 }
 #else
 struct secpolicy *
