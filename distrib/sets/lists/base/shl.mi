@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.406 2007/11/08 21:02:32 joerg Exp $
+# $NetBSD: shl.mi,v 1.407 2007/11/09 05:54:42 dogcow Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.154				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
@@ -78,7 +78,7 @@
 ./usr/lib/libkrb.so.6.0				base-obsolete		obsolete
 ./usr/lib/libkrb5.so.20.1			base-krb5-shlib		kerberos
 ./usr/lib/libkstream.so.2.0			base-obsolete		obsolete
-./usr/lib/libkvm.so.5.2				base-sys-shlib
+./usr/lib/libkvm.so.5.3				base-sys-shlib
 ./usr/lib/liblwres.so.0.0			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
 ./usr/lib/libmagic.so.1.0			base-sys-shlib
