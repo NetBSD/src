@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.14.22.1 2007/08/29 07:31:57 matt Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.14.22.2 2007/11/09 05:37:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -121,9 +121,9 @@ ASENTRY_NP(irq_entry)
 .Lextirq_return:
 
 	/* Decremement the nest count. */
-	ldr	r1, [r4, #CI_INTRDEPTH]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
-	str	r1, [r4, #CI_INTRDEPTH]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	LOCK_CAS_CHECK
 

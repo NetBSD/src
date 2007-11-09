@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.14 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.14.30.1 2007/11/09 05:37:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.30.1 2007/11/09 05:37:44 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -65,9 +65,6 @@ struct intrq intrq[NIRQ];
 
 /* Interrupts to mask at each level. */
 int i80321_imask[NIPL];
-
-/* Current interrupt priority level. */
-volatile int current_spl_level;  
 
 /* Interrupts pending. */
 volatile int i80321_ipending;
@@ -307,18 +304,18 @@ i80321_do_pending(void)
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
-	new = current_spl_level;
+	new = curcpl();
 
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
 	if ((i80321_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
 		i80321_ipending &= ~SI_TO_IRQBIT(si);			\
-		current_spl_level |= i80321_imask[si_to_ipl[(si)]];	\
+		set_curcpl(new | i80321_imask[si_to_ipl[(si)]]);	\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
-		current_spl_level = new;				\
+		set_curcpl(new);					\
 	}
 
 	DO_SOFTINT(SI_SOFTSERIAL);
@@ -362,7 +359,7 @@ _setsoftintr(int si)
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((i80321_ipending & INT_SWMASK) & ~current_spl_level)
+	if ((i80321_ipending & INT_SWMASK) & ~curcpl())
 		i80321_do_pending();
 }
 
@@ -503,7 +500,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 	int oldpending;
 #endif
 
-	pcpl = current_spl_level;
+	pcpl = curcpl();
 
 	hwpend = i80321_iintsrc_read();
 
@@ -560,7 +557,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		current_spl_level |= iq->iq_mask;
+		set_curcpl(pcpl | iq->iq_mask);
 #ifdef I80321_HPI_ENABLED
 		/*
 		 * Re-enable interrupts iff an HPI is not pending
@@ -587,7 +584,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 			frame->cf_if.if_spsr &= ~I32_bit;
 		}
 #endif
-		current_spl_level = pcpl;
+		set_curcpl(pcpl);
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
@@ -601,7 +598,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 	}
 
 	/* Check for pendings soft intrs. */
-	if ((i80321_ipending & INT_SWMASK) & ~current_spl_level) {
+	if ((i80321_ipending & INT_SWMASK) & ~curcpl()) {
 #ifdef I80321_HPI_ENABLED
 		/* XXX: This is only necessary if HPI is < IPL_SOFT* */
 		if (__predict_true((i80321_ipending & INT_HPIMASK) == 0))

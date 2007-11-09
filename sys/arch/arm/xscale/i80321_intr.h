@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.9 2006/11/08 23:45:41 scw Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.9.30.1 2007/11/09 05:37:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #ifndef _I80321_INTR_H_
+#ifndef _NO_INTR_H_
 #define _I80321_INTR_H_
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(i80321_intr_dispatch)
@@ -44,9 +45,11 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/cpu.h>
 
 #include <arm/xscale/i80321reg.h>
 
+#ifdef __PROG32
 void i80321_do_pending(void);
 
 static inline void __attribute__((__unused__))
@@ -64,20 +67,20 @@ i80321_set_intrmask(void)
 	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
 #define INT_HPIMASK	(1u << ICU_INT_HPI)
+extern volatile uint32_t intr_enabled;
+extern volatile int i80321_ipending;
+extern void i80321_do_pending(void);
+extern int i80321_imask[];
 
 static inline void __attribute__((__unused__))
 i80321_splx(int new)
 {
-	extern volatile uint32_t intr_enabled;
-	extern volatile int current_spl_level;
-	extern volatile int i80321_ipending;
-	extern void i80321_do_pending(void);
 	int oldirqstate, hwpend;
 
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	current_spl_level = new;
+	set_curcpl(new);
 
 	hwpend = (i80321_ipending & ICU_INT_HWMASK) & ~new;
 	if (hwpend != 0) {
@@ -98,12 +101,8 @@ i80321_splx(int new)
 static inline int __attribute__((__unused__))
 i80321_splraise(int ipl)
 {
-	extern volatile int current_spl_level;
-	extern int i80321_imask[];
-	int	old;
-
-	old = current_spl_level;
-	current_spl_level |= i80321_imask[ipl];
+	int old = curcpl();
+	set_curcpl(old | i80321_imask[ipl]);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -114,13 +113,13 @@ i80321_splraise(int ipl)
 static inline int __attribute__((__unused__))
 i80321_spllower(int ipl)
 {
-	extern volatile int current_spl_level;
-	extern int i80321_imask[];
-	int old = current_spl_level;
+	int old = curcpl();
 
 	i80321_splx(i80321_imask[ipl]);
 	return(old);
 }
+
+#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
@@ -140,4 +139,5 @@ void	_setsoftintr(int);
 
 #endif /* _LOCORE */
 
+#endif /* _NO_INTR_H_ */
 #endif /* _I80321_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.6 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.6.52.1 2007/11/09 05:37:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,11 +44,13 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/cpu.h>
 
 #include <arm/xscale/ixp425reg.h>
 
 #define IXPREG(reg)     *((volatile u_int32_t*) (reg))
 
+#ifdef __PROG32
 void ixp425_do_pending(void);
 
 static inline void __attribute__((__unused__))
@@ -67,7 +69,6 @@ static inline void __attribute__((__unused__))
 ixp425_splx(int new)
 {
 	extern volatile uint32_t intr_enabled;
-	extern volatile int current_spl_level;
 	extern volatile int ixp425_ipending;
 	extern void ixp425_do_pending(void);
 	int oldirqstate, hwpend;
@@ -75,7 +76,7 @@ ixp425_splx(int new)
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	current_spl_level = new;
+	set_curcpl(new);
 
 	hwpend = (ixp425_ipending & IXP425_INT_HWMASK) & ~new;
 	if (hwpend != 0) {
@@ -92,12 +93,10 @@ ixp425_splx(int new)
 static inline int __attribute__((__unused__))
 ixp425_splraise(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int ixp425_imask[];
-	int	old;
+	int old = curcpl();
 
-	old = current_spl_level;
-	current_spl_level |= ixp425_imask[ipl];
+	set_curcpl(old | ixp425_imask[ipl]);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -108,13 +107,14 @@ ixp425_splraise(int ipl)
 static inline int __attribute__((__unused__))
 ixp425_spllower(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int ixp425_imask[];
-	int old = current_spl_level;
+	int old = curcpl();
 
 	ixp425_splx(ixp425_imask[ipl]);
 	return(old);
 }
+
+#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 

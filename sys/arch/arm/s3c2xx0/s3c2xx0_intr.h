@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.10 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.10.52.1 2007/11/09 05:37:42 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -85,7 +85,6 @@ typedef int (* s3c2xx0_irq_handler_t)(void *);
 
 extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-extern volatile int current_spl_level;
 extern volatile int intr_mask;
 extern volatile int global_intr_mask;
 extern volatile int softint_pending;
@@ -116,8 +115,8 @@ s3c2xx0_unmask_interrupts(int mask)
 static inline void
 s3c2xx0_setipl(int new)
 {
-	current_spl_level = new;
-	intr_mask = s3c2xx0_imask[current_spl_level];
+	set_curcpl(new);
+	intr_mask = s3c2xx0_imask[curcpl()];
 	s3c2xx0_update_hw_mask();
 	update_softintr_mask();
 }
@@ -143,8 +142,8 @@ s3c2xx0_splraise(int ipl)
 {
 	int	old, psw;
 
-	old = current_spl_level;
-	if( ipl > current_spl_level ){
+	old = curcpl();
+	if( ipl > old ){
 		psw = disable_interrupts(I32_bit);
 		s3c2xx0_setipl(ipl);
 		restore_interrupts(psw);
@@ -156,7 +155,7 @@ s3c2xx0_splraise(int ipl)
 static inline int
 s3c2xx0_spllower(int ipl)
 {
-	int old = current_spl_level;
+	int old = curcpl();
 	int psw = disable_interrupts(I32_bit);
 	s3c2xx0_splx(ipl);
 	restore_interrupts(psw);
