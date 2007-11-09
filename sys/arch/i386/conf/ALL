@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.133 2007/11/01 13:54:28 xtraeme Exp $
+# $NetBSD: ALL,v 1.134 2007/11/09 22:31:47 dsl Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.133 $"
+#ident 		"ALL-$Revision: 1.134 $"
 
 maxusers	32		# estimated number of users
 
@@ -155,7 +155,7 @@ options 	COMPAT_MACH	# binary compatibility with Mach binaries
 options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 options 	EXEC_MACHO	# exec MACH-O binaries
 options 	COMPAT_NDIS	# NDIS network driver
-options 	COMPAT_PECOFF	# kernel support to run Win32 apps
+# options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
