@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.5 2007/10/17 19:54:22 garbled Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.6 2007/11/09 00:05:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.5 2007/10/17 19:54:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.6 2007/11/09 00:05:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ zs_sbdio_attach(struct device *parent, struct device *self, void *aux)
 			zsc_args.hwflags = 0;
 		}
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_brg_clk = PCLK / 16;
 		cs->cs_defcflag = zs_def_cflag;
 

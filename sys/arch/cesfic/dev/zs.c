@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 2007/03/05 13:06:44 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 2007/11/09 00:05:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.11 2007/03/05 13:06:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.12 2007/11/09 00:05:04 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,7 +146,7 @@ zs_config(zsc, base)
 			cs->cs_defspeed = 9600;
 		}
 		zsc->zsc_cs[channel] = cs;
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 
 		cs->cs_defcflag = CREAD | CS8 | HUPCL;
 
