@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.21 2007/03/04 09:23:32 dogcow Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.21 2007/03/04 09:23:32 dogcow Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ static const struct emulation emulations[] = {
 	{ "irix",	irix_syscallnames,	IRIX_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL },
-	{ "netbsd32",	netbsd32_syscallnames,	netbsd32_SYS_MAXSYSCALL },
+	{ "netbsd32",	netbsd32_syscallnames,	NETBSD32_SYS_MAXSYSCALL },
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },
 	{ "pecoff",	pecoff_syscallnames,	PECOFF_SYS_MAXSYSCALL },
 	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL },
