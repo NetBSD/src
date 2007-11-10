@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.134 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.135 2007/11/10 07:29:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.134 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.135 2007/11/10 07:29:28 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.134 2007/11/07 00:23:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bitops.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -83,7 +84,8 @@ LIST_HEAD(,pool_cache) pool_cache_head =
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
 static struct pool phpool[PHPOOL_MAX];
-#define	PHPOOL_FREELIST_NELEM(idx)	(((idx) == 0) ? 0 : (1 << (idx)))
+#define	PHPOOL_FREELIST_NELEM(idx) \
+	(((idx) == 0) ? 0 : BITMAP_SIZE * (1 << (idx)))
 
 #ifdef POOL_SUBPAGE
 /* Pool of subpages for use by normal pools. */
@@ -112,7 +114,9 @@ static struct pool	*drainpp;
 static kmutex_t pool_head_lock;
 static kcondvar_t pool_busy;
 
-typedef uint8_t pool_item_freelist_t;
+typedef uint32_t pool_item_bitmap_t;
+#define	BITMAP_SIZE	(CHAR_BIT * sizeof(pool_item_bitmap_t))
+#define	BITMAP_MASK	(BITMAP_SIZE - 1)
 
 struct pool_item_header {
 	/* Page headers */
@@ -122,6 +126,7 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	void *			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
+	uint16_t		ph_nmissing;	/* # of chunks in use */
 	union {
 		/* !PR_NOTOUCH */
 		struct {
@@ -130,21 +135,14 @@ struct pool_item_header {
 		} phu_normal;
 		/* PR_NOTOUCH */
 		struct {
-			uint16_t
-				phu_off;	/* start offset in page */
-			pool_item_freelist_t
-				phu_firstfree;	/* first free item */
-			/*
-			 * XXX it might be better to use
-			 * a simple bitmap and ffs(3)
-			 */
+			uint16_t phu_off;	/* start offset in page */
+			pool_item_bitmap_t phu_bitmap[];
 		} phu_notouch;
 	} ph_u;
-	uint16_t		ph_nmissing;	/* # of chunks in use */
 };
 #define	ph_itemlist	ph_u.phu_normal.phu_itemlist
 #define	ph_off		ph_u.phu_notouch.phu_off
-#define	ph_firstfree	ph_u.phu_notouch.phu_firstfree
+#define	ph_bitmap	ph_u.phu_notouch.phu_bitmap
 
 struct pool_item {
 #ifdef DIAGNOSTIC
@@ -330,12 +328,12 @@ pr_enter_check(struct pool *pp, void (*pr)(const char *, ...))
 #define	pr_enter_check(pp, pr)
 #endif /* POOL_DIAGNOSTIC */
 
-static inline int
+static inline unsigned int
 pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
     const void *v)
 {
 	const char *cp = v;
-	int idx;
+	unsigned int idx;
 
 	KASSERT(pp->pr_roflags & PR_NOTOUCH);
 	idx = (cp - (char *)ph->ph_page - ph->ph_off) / pp->pr_size;
@@ -343,35 +341,55 @@ pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
 	return idx;
 }
 
-#define	PR_FREELIST_ALIGN(p) \
-	roundup((uintptr_t)(p), sizeof(pool_item_freelist_t))
-#define	PR_FREELIST(ph)	((pool_item_freelist_t *)PR_FREELIST_ALIGN((ph) + 1))
-#define	PR_INDEX_USED	((pool_item_freelist_t)-1)
-#define	PR_INDEX_EOL	((pool_item_freelist_t)-2)
-
 static inline void
 pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
     void *obj)
 {
-	int idx = pr_item_notouch_index(pp, ph, obj);
-	pool_item_freelist_t *freelist = PR_FREELIST(ph);
+	unsigned int idx = pr_item_notouch_index(pp, ph, obj);
+	pool_item_bitmap_t *bitmap = ph->ph_bitmap + (idx / BITMAP_SIZE);
+	pool_item_bitmap_t mask = 1 << (idx & BITMAP_MASK);
 
-	KASSERT(freelist[idx] == PR_INDEX_USED);
-	freelist[idx] = ph->ph_firstfree;
-	ph->ph_firstfree = idx;
+	KASSERT((*bitmap & mask) == 0);
+	*bitmap |= mask;
 }
 
 static inline void *
 pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 {
-	int idx = ph->ph_firstfree;
-	pool_item_freelist_t *freelist = PR_FREELIST(ph);
+	pool_item_bitmap_t *bitmap = ph->ph_bitmap;
+	unsigned int idx;
+	int i;
 
-	KASSERT(freelist[idx] != PR_INDEX_USED);
-	ph->ph_firstfree = freelist[idx];
-	freelist[idx] = PR_INDEX_USED;
+	for (i = 0; ; i++) {
+		int bit;
 
+		KASSERT((i * BITMAP_SIZE) < pp->pr_itemsperpage);
+		bit = ffs32(bitmap[i]);
+		if (bit) {
+			pool_item_bitmap_t mask;
+
+			bit--;
+			idx = (i * BITMAP_SIZE) + bit;
+			mask = 1 << bit;
+			KASSERT((bitmap[i] & mask) != 0);
+			bitmap[i] &= ~mask;
+			break;
+		}
+	}
+	KASSERT(idx < pp->pr_itemsperpage);
 	return (char *)ph->ph_page + ph->ph_off + idx * pp->pr_size;
+}
+
+static inline void
+pr_item_notouch_init(const struct pool *pp, struct pool_item_header *ph)
+{
+	pool_item_bitmap_t *bitmap = ph->ph_bitmap;
+	const int n = howmany(pp->pr_itemsperpage, BITMAP_SIZE);
+	int i;
+
+	for (i = 0; i < n; i++) {
+		bitmap[i] = (pool_item_bitmap_t)-1;
+	}
 }
 
 static inline int
@@ -603,9 +621,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	size_t trysize, phsize;
 	int off, slack;
 
-	KASSERT((1UL << (CHAR_BIT * sizeof(pool_item_freelist_t))) - 2 >=
-	    PHPOOL_FREELIST_NELEM(PHPOOL_MAX - 1));
-
 #ifdef DEBUG
 	/*
 	 * Check that the pool hasn't already been initialised and
@@ -808,8 +823,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			    "phpool-%d", nelem);
 			sz = sizeof(struct pool_item_header);
 			if (nelem) {
-				sz = PR_FREELIST_ALIGN(sz)
-				    + nelem * sizeof(pool_item_freelist_t);
+				sz = offsetof(struct pool_item_header,
+				    ph_bitmap[howmany(nelem, BITMAP_SIZE)]);
 			}
 			pool_init(&phpool[idx], sz, 0, 0, 0,
 			    phpool_names[idx], &pool_allocator_meta, IPL_VM);
@@ -1433,14 +1448,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	pp->pr_nitems += n;
 
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		pool_item_freelist_t *freelist = PR_FREELIST(ph);
-		int i;
-
-		ph->ph_off = (char *)cp - (char *)storage;
-		ph->ph_firstfree = 0;
-		for (i = 0; i < n - 1; i++)
-			freelist[i] = i + 1;
-		freelist[n - 1] = PR_INDEX_EOL;
+		pr_item_notouch_init(pp, ph);
 	} else {
 		while (n--) {
 			pi = (struct pool_item *)cp;
