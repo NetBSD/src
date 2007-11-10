@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.32 2007/11/08 17:49:43 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.33 2007/11/10 18:36:06 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.32 2007/11/08 17:49:43 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.33 2007/11/10 18:36:06 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -500,6 +500,8 @@ doreclaim(struct puffs_node *pn)
 		psn->denttot = psn->dentnext = 0;
 		free(psn->da);
 	}
+	if (psn->symlink)
+		free(psn->symlink);
 
 	puffs_pn_put(pn);
 }
