@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.11 2007/07/19 20:48:51 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.12 2007/11/10 23:12:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.11 2007/07/19 20:48:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.12 2007/11/10 23:12:23 plunky Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -293,7 +293,7 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 	sbappendrecord(&pcb->hp_socket->so_snd, m0);
 	M_SETCTX(m, pcb->hp_socket);	/* enable drop callback */
 
-	DPRINTFN(2, "(%s) opcode (%03x|%04x)\n", unit->hci_devname,
+	DPRINTFN(2, "(%s) opcode (%03x|%04x)\n", device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(hdr.opcode)), HCI_OCF(le16toh(hdr.opcode)));
 
 	/* Sendss it */
