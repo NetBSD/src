@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.12.24.1 2007/02/21 18:36:02 snj Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.12.24.1.4.1 2007/11/10 02:56:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -33,6 +33,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Portions Copyright (c) 2007 Danger Inc
  */
 
 #ifndef _ARM_CPUCONF_H_
@@ -74,7 +76,8 @@
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
 			 defined(__CPU_XSCALE_PXA2XX) +			\
-			 defined(CPU_XSCALE_IXP425))
+			 defined(CPU_XSCALE_IXP425))			\
+			 defined(CPU_ARM1136))
 #else
 #define	CPU_NTYPES	2
 #endif /* _KERNEL_OPT */
@@ -114,7 +117,7 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11)
+#if defined(CPU_ARM11) || defined(CPU_ARM1136)
 #define ARM_ARCH_6	1
 #else
 #define ARM_ARCH_6	0
@@ -148,6 +151,10 @@
  *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
+ *
+ *	ARM_MMU_V6		ARM v6 MMU.  Compatible with generic ARM
+ *				MMU, but also has several extensions which
+ *				require different PTE layouts to use.
  */
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
@@ -159,7 +166,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
-     defined(CPU_ARM10) || defined(CPU_ARM11))
+     defined(CPU_ARM10))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
@@ -181,8 +188,15 @@
 #define	ARM_MMU_XSCALE		0
 #endif
 
+#if !defined(_KERNEL_OPT) ||						\
+     (defined(CPU_ARM11) || defined(CPU_ARM1136))
+#define	ARM_MMU_V6		1
+#else
+#define	ARM_MMU_V6		0
+#endif
+
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V6)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
 #endif

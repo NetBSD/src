@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.1.6.2 2007/02/21 18:27:17 snj Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.1.6.2.4.1 2007/11/10 02:56:49 matt Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1.6.2 2007/02/21 18:27:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1.6.2.4.1 2007/11/10 02:56:49 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -248,12 +248,6 @@ clockintr(void *arg)
 	if (ticks == 0)
 		ticks = 1;
 
-#ifdef DEBUG
-	if (ticks > 1)
-		printf("Missed %d ticks.\n", ticks-1);
-#endif
-
-
 	for (i = 0; i < ticks; i++)
 		hardclock(frame);
 
@@ -325,6 +319,23 @@ cpu_initclocks(void)
 			    clock_sc->sc_dev.dv_xname, clockintr, 0);
 	omap_intr_establish(stat_sc->sc_intr, IPL_STATCLOCK,
 			    stat_sc->sc_dev.dv_xname, statintr, 0);
+}
+
+uint32_t omap_microtimer_read(void)
+{
+	if (ref_sc != NULL)
+		return bus_space_read_4(ref_sc->sc_iot, ref_sc->sc_ioh,
+					MPU_READ_TIMER);
+	else
+		return 0;
+}
+
+uint32_t omap_microtimer_interval(uint32_t start, uint32_t end)
+{
+	if (counts_per_usec)
+		return (start - end) / counts_per_usec;
+	else
+		return 0;
 }
 
 void

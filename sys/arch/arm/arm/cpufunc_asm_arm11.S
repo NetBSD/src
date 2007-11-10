@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.2.54.1 2007/11/10 02:56:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -45,7 +45,7 @@
  */
 ENTRY(arm11_setttb)
 	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv5_idcache_wbinv_all)
+	bl	_C_LABEL(armv6_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */

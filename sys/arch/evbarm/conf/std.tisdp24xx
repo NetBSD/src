@@ -1,0 +1,26 @@
+#	$NetBSD: std.tisdp24xx,v 1.1.6.2 2007/11/10 02:56:57 matt Exp $
+#
+# standard NetBSD/evbarm for SDP2430 options
+
+machine	evbarm arm
+include		"conf/std"	# MI standard options
+
+# Pull in SDP2430 config definitions.
+include "arch/evbarm/conf/files.tisdp24xx"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+options 	ARM1136_PMC
+
+makeoptions	LOADADDRESS="0xc0000000"
+makeoptions	BOARDTYPE="tisdp24xx"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tisdp24xx"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+##makeoptions	CPPFLAGS+="-I$S/../../../target/netbsd/m2/include"
+
+options 	ARM_INTR_IMPL="<arch/arm/omap/omap2430_intr.h>"
+options		ARM_GENERIC_TODR

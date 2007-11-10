@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_emifs.c,v 1.1.6.2 2007/02/21 18:27:16 snj Exp $ */
+/*	$NetBSD: omap_emifs.c,v 1.1.6.2.4.1 2007/11/10 02:56:48 matt Exp $ */
 
 
 /*
@@ -125,8 +125,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_emifs.c,v 1.1.6.2 2007/02/21 18:27:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_emifs.c,v 1.1.6.2.4.1 2007/11/10 02:56:48 matt Exp $");
 
+#include "omapdmac.h"	/* for NOMAPDMAC */
 #include "locators.h"
 
 #include <sys/param.h>
@@ -233,8 +234,7 @@ emifs_attach(struct device *parent, struct device *self, void *aux)
 	emifs_attached = 1;
 
 #if NOMAPDMAC > 0
-#error DMA not implemented
-	sc->sc_dmac = &omap_bus_dma_tag;
+	sc->sc_dmac = omap_bus_dma_init(&omap_bus_dma_tag);
 #else
 	sc->sc_dmac = NULL;
 #endif
@@ -286,9 +286,9 @@ emifs_cvt_nsec(const timing_parm_info *tp, u_int source_freq, int nsec)
 static void
 emifs_set_timing(struct emifs_softc *sc, struct cfdata *cf)
 {
-	static const u_int tc_freq = OMAP_TC_CLOCK_FREQ;
+	const u_int tc_freq = OMAP_TC_CLOCK_FREQ;
 	/* We force REF to be the same frequency as TC. */
-	static const u_int ref_freq = tc_freq;
+	const u_int ref_freq = tc_freq;
 
 	int cs, i;
 	uint32_t ccs, acs;

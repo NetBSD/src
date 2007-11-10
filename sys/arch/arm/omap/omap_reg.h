@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_reg.h,v 1.1.6.2 2007/02/21 18:27:17 snj Exp $ */
+/*	$NetBSD: omap_reg.h,v 1.1.6.2.4.1 2007/11/10 02:56:50 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,17 @@
 #endif
 #define MEMSIZE_BYTES (MEMSIZE * 1024 * 1024)
 
+#if !defined(OMAP_2430)
+/*
+ * these assertions belong in platform specific files that care
+ */
 #ifndef OMAP_TIPB_PBASE
 #error Specify the TIPB physical address with the OMAP_TIPB_PBASE option.
 #endif
 #ifndef OMAP_TIPB_SIZE
 #error Specify the TIPB size with the OMAP_TIPB_SIZE option.
 #endif
+
+#endif	/* OMAP_2430 */
 
 #endif /* _ARM_OMAP_OMAP_REG_H_ */

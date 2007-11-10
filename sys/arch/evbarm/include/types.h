@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6.6.1 2007/03/04 12:15:39 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.6.6.1.4.1 2007/11/10 02:56:57 matt Exp $	*/
 
 #ifndef _EVBARM_TYPES_H_
 #define	_EVBARM_TYPES_H_
@@ -10,6 +10,8 @@
 #endif
 #define	__HAVE_DEVICE_REGISTER
 
-#define	__HAVE_GENERIC_TODR
+#ifdef ARM_GENERIC_TODR
+# define	__HAVE_GENERIC_TODR
+#endif
 
 #endif

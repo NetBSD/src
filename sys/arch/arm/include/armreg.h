@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.36.2.1 2007/02/21 18:36:02 snj Exp $	*/
+/*	$NetBSD: armreg.h,v 1.36.2.1.4.1 2007/11/10 02:56:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -314,6 +314,7 @@
 #define	CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
 #define	CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
 #define	CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
+#define	CPU_CT_xSIZE_P		(1U << 11)		/* page-color */
 
 /* Fault status register definitions */
 

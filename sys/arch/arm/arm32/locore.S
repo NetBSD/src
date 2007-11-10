@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.60.1 2007/11/10 02:56:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -211,6 +211,5 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
-
 
 /* End of locore.S */

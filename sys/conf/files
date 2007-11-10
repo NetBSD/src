@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819.2.5 2007/08/31 20:09:24 pavel Exp $
+#	$NetBSD: files,v 1.819.2.5.2.1 2007/11/10 02:57:00 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -260,6 +260,7 @@ define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
+define	mmcbus		{ }
 
 # audio device attributes
 #
@@ -1028,6 +1029,8 @@ define	pcibus	{[bus = -1]}		# PCI attachment
 define	tcbus	{ }			# TurboChannel attachment
 define	mcabus	{ }			# MicroChannel attachment
 define	usbus	{ }			# USB attachment
+define	usbfbus	{ }			# USB function attachment
+define	usbtbus { }			# USB transceiver attachment
 define	fwbus	{ }			# IEEE 1394 attachment
 define	vmebus	{ }			# VME bus attachment
 define	acpibus	{ }			# ACPI "bus" attachment
@@ -1232,6 +1235,12 @@ include "ufs/files.ufs"
 # UVM (virtual memory)
 #
 include "uvm/files.uvm"
+
+# Hardware clocks
+
+defparam opt_hwclock_machine.h	HWCLOCK_MACHINE
+file	kern/hwclock.c			hwclock
+
 
 #
 # Security models

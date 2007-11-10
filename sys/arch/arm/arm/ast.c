@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.7 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: ast.c,v 1.7.28.1 2007/11/10 02:56:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,8 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.7 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.7.28.1 2007/11/10 02:56:23 matt Exp $");
 
+#include "opt_cputypes.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -79,11 +80,17 @@ int astpending;
 void
 userret(struct lwp *l)
 {
+	struct cpu_info * const ci = curcpu();
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+#if defined(CPU_ARM11) || defined(CPU_ARM1136)
+	if (ci->ci_arm_cputype == CPU_ID_ARM1136JS
+	    || ci->ci_arm_cputype == CPU_ID_ARM1136JSR1)
+		__asm("mcr p15, 0, %0, c7, c10, 0" :: "r"(0));
+#endif
 }
 
 

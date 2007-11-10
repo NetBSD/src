@@ -1,8 +1,0 @@
-#!/bin/sh
-
-if [ -d /System/Library/DisabledStartupItems/Sendmail ]
-then
-	mv /System/Library/DisabledStartupItems/Sendmail /System/Library/StartupItems
-	rmdir /System/Library/DisabledStartupItems/Sendmail
-	rm -rf /System/Library/StartupItems/Postfix
-fi

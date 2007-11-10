@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.10 2006/04/26 06:52:09 gdamore Exp $
+#	$NetBSD: files.i2c,v 1.10.16.1 2007/11/10 02:57:02 matt Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -91,3 +91,8 @@ device	ddc
 define	ddc_read_edid
 attach	ddc at iic
 file	dev/i2c/ddc.c			ddc | ddc_read_edid
+
+# DS1672 Real Time Clock
+device	ds1672rtc
+attach	ds1672rtc at iic
+file	dev/i2c/ds1672.c		ds1672rtc

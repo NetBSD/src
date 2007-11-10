@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.44.12.1 2007/03/04 12:15:39 bouyer Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.44.12.1.4.1 2007/11/10 02:56:25 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -565,11 +565,7 @@ ENTRY(cpu_switch)
 	mov	r12, #0
 	cmp	r5, #0				/* No last vm? (switch_exit) */
 	beq	.Lcs_cache_purge_skipped	/* No, we can skip cache flsh */
-
-	mov	r2, #DOMAIN_CLIENT
-	cmp	r1, r2, lsl #(PMAP_DOMAIN_KERNEL * 2) /* Sw to kernel thread? */
-	beq	.Lcs_cache_purge_skipped	/* Yup. Don't flush cache */
-
+#ifdef PMAP_CACHE_VIVT
 	cmp	r5, r8				/* Same userland VM space? */
 	ldrneb	r12, [r5, #(CS_CACHE_ID)]	/* Last VM space cache state */
 
@@ -582,6 +578,7 @@ ENTRY(cpu_switch)
 	 */
 	tst	r12, #0xff			/* Test cs_cache_id */
 	beq	.Lcs_cache_purge_skipped	/* VM space is not in cache */
+#endif /* PMAP_CACHE_VIVT */
 
 	/*
 	 * Definately need to flush the cache.
@@ -591,6 +588,7 @@ ENTRY(cpu_switch)
 	strb	r2, [r5, #(CS_CACHE_ID)]
 	strb	r2, [r5, #(CS_CACHE_D)]
 
+#ifdef PMAP_CACHE_VIVT
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
@@ -602,6 +600,7 @@ ENTRY(cpu_switch)
 	mov	lr, pc
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 	ldmfd	sp!, {r0-r3}
+#endif
 
 .Lcs_cache_purge_skipped:
 	/* rem: r1 = new DACR */
