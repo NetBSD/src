@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.25 2007/11/05 10:05:47 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.26 2007/11/10 12:19:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.25 2007/11/05 10:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.26 2007/11/10 12:19:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,6 +637,11 @@ buf_malloc(size_t size)
 		if (buf_drain(1) > 0) {
 			mutex_exit(&bufcache_lock);
 			continue;
+		}
+
+		if (curlwp == uvm.pagedaemon_lwp) {
+			mutex_exit(&bufcache_lock);
+			return NULL;
 		}
 
 		/* Wait for buffers to arrive on the LRU queue */
@@ -1168,7 +1173,13 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	if (ISSET(bp->b_cflags, BC_LOCKED)) {
 		KASSERT(bp->b_bufsize >= size);
 	} else {
-		allocbuf(bp, size, preserve);
+		if (allocbuf(bp, size, preserve)) {
+			mutex_enter(&bufcache_lock);
+			LIST_REMOVE(bp, b_hash);
+			mutex_exit(&bufcache_lock);
+			brelse(bp, BC_INVAL);
+			return NULL;
+		}
 	}
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	return (bp);
@@ -1181,6 +1192,7 @@ buf_t *
 geteblk(int size)
 {
 	buf_t *bp;
+	int error;
 
 	mutex_enter(&bufcache_lock);
 	while ((bp = getnewbuf(0, 0, 0)) == NULL)
@@ -1190,7 +1202,8 @@ geteblk(int size)
 	LIST_INSERT_HEAD(&invalhash, bp, b_hash);
 	mutex_exit(&bufcache_lock);
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
-	allocbuf(bp, size, 0);
+	error = allocbuf(bp, size, 0);
+	KASSERT(error == 0);
 	return (bp);
 }
 
@@ -1202,7 +1215,7 @@ geteblk(int size)
  * start a write.  If the buffer grows, it's the callers
  * responsibility to fill out the buffer's additional contents.
  */
-void
+int
 allocbuf(buf_t *bp, int size, int preserve)
 {
 	vsize_t oldsize, desired_size;
@@ -1217,13 +1230,15 @@ allocbuf(buf_t *bp, int size, int preserve)
 
 	oldsize = bp->b_bufsize;
 	if (oldsize == desired_size)
-		return;
+		return 0;
 
 	/*
 	 * If we want a buffer of a different size, re-allocate the
 	 * buffer's memory; copy old content only if needed.
 	 */
 	addr = buf_malloc(desired_size);
+	if (addr == NULL)
+		return ENOMEM;
 	if (preserve)
 		memcpy(addr, bp->b_data, MIN(oldsize,desired_size));
 	if (bp->b_data != NULL)
@@ -1253,6 +1268,7 @@ allocbuf(buf_t *bp, int size, int preserve)
 		}
 	}
 	mutex_exit(&bufcache_lock);
+	return 0;
 }
 
 /*

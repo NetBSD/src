@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.8 2007/10/09 15:22:27 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.9 2007/11/10 12:19:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ extern	struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 __BEGIN_DECLS
-void	allocbuf(buf_t *, int, int);
+int	allocbuf(buf_t *, int, int);
 void	bawrite(buf_t *);
 void	bdirty(buf_t *);
 void	bdwrite(buf_t *);
