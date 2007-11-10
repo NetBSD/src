@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.26 2007/11/08 16:40:15 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.27 2007/11/10 18:36:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -124,6 +124,7 @@ struct psshfs_node {
 	int readcount;
 
 	time_t attrread;
+	char *symlink;
 	struct puffs_framebuf *getattr_pb;
 
 	char *fhand_r;
