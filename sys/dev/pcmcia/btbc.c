@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.8 2007/11/10 23:12:22 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.8 2007/11/10 23:12:22 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -107,9 +107,9 @@ static void btbc_receive(struct btbc_softc *, uint32_t);
 static void btbc_transmit(struct btbc_softc *);
 static int btbc_intr(void *);
 
-static void btbc_start(struct hci_unit *);
-static int btbc_enable(struct hci_unit *);
-static void btbc_disable(struct hci_unit *);
+static void btbc_start(device_t);
+static int btbc_enable(device_t);
+static void btbc_disable(device_t);
 
 CFATTACH_DECL_NEW(btbc, sizeof(struct btbc_softc),
     btbc_match, btbc_attach, btbc_detach, NULL);
@@ -143,7 +143,7 @@ btbc_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 static void
 btbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct btbc_softc *sc = (struct btbc_softc *)self;
+	struct btbc_softc *sc = device_private(self);
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int error;
@@ -162,8 +162,7 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcioh = cfe->iospace[0].handle;
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+	sc->sc_unit.hci_dev = self;
 	sc->sc_unit.hci_enable = btbc_enable;
 	sc->sc_unit.hci_disable = btbc_disable;
 	sc->sc_unit.hci_start_cmd = btbc_start;
@@ -186,10 +185,10 @@ btbc_attach(device_t parent, device_t self, void *aux)
 static int
 btbc_detach(device_t self, int flags)
 {
-	struct btbc_softc *sc = (struct btbc_softc *)self;
+	struct btbc_softc *sc = device_private(self);
 	int err = 0;
 
-	btbc_disable(&sc->sc_unit);
+	btbc_disable(sc->sc_dev);
 
 	if (sc->sc_powerhook) {
 		powerhook_disestablish(sc->sc_powerhook);
@@ -218,18 +217,17 @@ btbc_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BTBC_SLEEPING;
-			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BTBC_SLEEPING) {
-			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "waking up\n");
 			sc->sc_flags &= ~BTBC_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
-			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+			sc->sc_unit.hci_dev = sc->sc_dev;
 			sc->sc_unit.hci_enable = btbc_enable;
 			sc->sc_unit.hci_disable = btbc_disable;
 			sc->sc_unit.hci_start_cmd = btbc_start;
@@ -370,7 +368,7 @@ btbc_set_baudrate(struct btbc_softc *sc, int baud)
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &param);
 
 	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	btbc_start(unit);
+	btbc_start(sc->sc_dev);
 
 	return 0;
 }
@@ -548,7 +546,7 @@ btbc_transmit(struct btbc_softc *sc)
 	m = sc->sc_txp;
 	if (m == NULL) {
 		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		btbc_start(&sc->sc_unit);
+		btbc_start(sc->sc_dev);
 		return;
 	}
 
@@ -740,9 +738,10 @@ btbc_intr(void *arg)
  * we only send cmd packets that are clear to send
  */
 static void
-btbc_start(struct hci_unit *unit)
+btbc_start(device_t self)
 {
-	struct btbc_softc *sc = unit->hci_softc;
+	struct btbc_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
 	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
@@ -778,9 +777,10 @@ start:
 }
 
 static int
-btbc_enable(struct hci_unit *unit)
+btbc_enable(device_t self)
 {
-	struct btbc_softc *sc = unit->hci_softc;
+	struct btbc_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	int err;
 	uint8_t id, ctrl;
 
@@ -884,9 +884,10 @@ fail1:
 }
 
 static void
-btbc_disable(struct hci_unit *unit)
+btbc_disable(device_t self)
 {
-	struct btbc_softc *sc = unit->hci_softc;
+	struct btbc_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	if ((unit->hci_flags & BTF_RUNNING) == 0)
 		return;

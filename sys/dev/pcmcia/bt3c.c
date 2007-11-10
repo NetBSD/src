@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.13 2007/11/03 17:41:04 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.14 2007/11/10 23:12:22 plunky Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.13 2007/11/03 17:41:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.14 2007/11/10 23:12:22 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,9 +134,9 @@ static void bt3c_power(int, void *);
 CFATTACH_DECL_NEW(bt3c, sizeof(struct bt3c_softc),
     bt3c_match, bt3c_attach, bt3c_detach, NULL);
 
-static void bt3c_start(struct hci_unit *);
-static int bt3c_enable(struct hci_unit *);
-static void bt3c_disable(struct hci_unit *);
+static void bt3c_start(device_t);
+static int bt3c_enable(device_t);
+static void bt3c_disable(device_t);
 
 /**************************************************************************
  *
@@ -419,7 +419,7 @@ bt3c_transmit(struct bt3c_softc *sc)
 	m = sc->sc_txp;
 	if (m == NULL) {
 		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		bt3c_start(&sc->sc_unit);
+		bt3c_start(sc->sc_dev);
 		return;
 	}
 
@@ -703,9 +703,10 @@ out:
  * we only send cmd packets that are clear to send
  */
 static void
-bt3c_start(struct hci_unit *unit)
+bt3c_start(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
 	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
@@ -747,9 +748,10 @@ start:
  *	establish interrupts
  */
 static int
-bt3c_enable(struct hci_unit *unit)
+bt3c_enable(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	int err;
 
 	if (unit->hci_flags & BTF_RUNNING)
@@ -796,9 +798,10 @@ bad:
  *	free held packets
  */
 static void
-bt3c_disable(struct hci_unit *unit)
+bt3c_disable(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	if ((unit->hci_flags & BTF_RUNNING) == 0)
 		return;
@@ -879,8 +882,7 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+	sc->sc_unit.hci_dev = self;
 	sc->sc_unit.hci_enable = bt3c_enable;
 	sc->sc_unit.hci_disable = bt3c_disable;
 	sc->sc_unit.hci_start_cmd = bt3c_start;
@@ -908,7 +910,7 @@ bt3c_detach(device_t self, int flags)
 	struct bt3c_softc *sc = device_private(self);
 	int err = 0;
 
-	bt3c_disable(&sc->sc_unit);
+	bt3c_disable(self);
 
 	if (sc->sc_powerhook) {
 		powerhook_disestablish(sc->sc_powerhook);
@@ -938,18 +940,17 @@ bt3c_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BT3C_SLEEPING;
-			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BT3C_SLEEPING) {
-			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "waking up\n");
 			sc->sc_flags &= ~BT3C_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
-			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+			sc->sc_unit.hci_dev = sc->sc_dev;
 			sc->sc_unit.hci_enable = bt3c_enable;
 			sc->sc_unit.hci_disable = bt3c_disable;
 			sc->sc_unit.hci_start_cmd = bt3c_start;
