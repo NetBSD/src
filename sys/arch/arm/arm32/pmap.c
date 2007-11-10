@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157.24.1.4.2 2007/11/10 04:00:01 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157.24.1.4.3 2007/11/10 04:18:51 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.24.1.4.2 2007/11/10 04:00:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.24.1.4.3 2007/11/10 04:18:51 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3309,6 +3309,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep;
 	vaddr_t next_bucket;
+	vsize_t page_size = trunc_page(sva) + PAGE_SIZE - sva;
 
 	NPDEBUG(PDB_EXEC,
 	    printf("pmap_icache_sync_range: pm %p sva 0x%lx eva 0x%lx\n",
@@ -3330,10 +3331,10 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 		for (ptep = &l2b->l2b_kva[l2pte_index(sva)];
 		     sva < next_bucket;
-		     sva += PAGE_SIZE, ptep++) {
+		     sva += page_size, ptep++, page_size = PAGE_SIZE) {
 			if (l2pte_valid(*ptep)) {
 				cpu_icache_sync_range(sva,
-				    min(PAGE_SIZE, eva - sva));
+				    min(page_size, eva - sva));
 			}
 		}
 	}
