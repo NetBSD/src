@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.137 2007/11/09 16:58:19 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.138 2007/11/10 13:06:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -419,7 +419,6 @@ do {									\
 
 #define	MOWNER_ATTACH(mo)	LIST_INSERT_HEAD(&mowners, (mo), mo_link)
 #define	MOWNER_DETACH(mo)	LIST_REMOVE((mo), mo_link)
-#define MBUFTRACE_ASSERT(cond)	KASSERT(cond)
 #else
 #define _MOWNERINIT(m, type)		do { } while (/* CONSTCOND */ 0)
 #define	_MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
@@ -430,7 +429,6 @@ do {									\
 #define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
-#define MBUFTRACE_ASSERT(cond)		do { } while (/* CONSTCOND */ 0)
 #endif
 
 
