@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.366 2007/11/05 22:58:33 xtraeme Exp $
+.\"	$NetBSD: main,v 1.367 2007/11/10 07:28:17 marty Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1849,6 +1849,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Hubert Feyrer Ta Mt hubertf@NetBSD.org
 .It Ta Jason R. Fink Ta Mt jrf@NetBSD.org
 .It Ta Matt J. Fleming Ta Mt mjf@NetBSD.org
+.It Ta Marty Fouts Ta Mt marty@NetBSD.org
 .It Ta Liam J. Foy Ta Mt liamjfoy@NetBSD.org
 .It Ta Matt Fredette Ta Mt fredette@NetBSD.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@NetBSD.org
