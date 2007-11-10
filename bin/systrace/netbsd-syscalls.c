@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.23 2007/11/10 14:41:51 dsl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.23 2007/11/10 14:41:51 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $");
 #include "compat/mach/mach_syscall.h"
 #include "compat/netbsd32/netbsd32_syscall.h"
 #include "compat/osf1/osf1_syscall.h"
-#include "compat/pecoff/pecoff_syscall.h"
 #include "compat/sunos/sunos_syscall.h"
 #include "compat/sunos32/sunos32_syscall.h"
 #include "compat/svr4/svr4_syscall.h"
@@ -71,7 +70,6 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.22 2007/11/09 15:40:42 dsl Exp $");
 #include "compat/mach/mach_syscalls.c"
 #include "compat/netbsd32/netbsd32_syscalls.c"
 #include "compat/osf1/osf1_syscalls.c"
-#include "compat/pecoff/pecoff_syscalls.c"
 #include "compat/sunos/sunos_syscalls.c"
 #include "compat/sunos32/sunos32_syscalls.c"
 #include "compat/svr4/svr4_syscalls.c"
@@ -123,7 +121,7 @@ static const struct emulation emulations[] = {
 	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL },
 	{ "netbsd32",	netbsd32_syscallnames,	NETBSD32_SYS_MAXSYSCALL },
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },
-	{ "pecoff",	pecoff_syscallnames,	PECOFF_SYS_MAXSYSCALL },
+	{ "pecoff",	syscallnames,		SYS_MAXSYSCALL },
 	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL },
 	{ "sunos32",	sunos32_syscallnames,	SUNOS32_SYS_MAXSYSCALL },
 	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
