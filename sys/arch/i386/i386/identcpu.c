@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.78 2007/11/03 21:55:23 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.79 2007/11/10 20:06:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.78 2007/11/03 21:55:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.79 2007/11/10 20:06:23 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1411,7 +1411,7 @@ identifycpu(struct cpu_info *ci)
 		uint64_t last_tsc;
 
 		last_tsc = rdtsc();
-		delay(100000);
+		i8254_delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
 	}
 	/* XXX end XXX */
@@ -1658,6 +1658,5 @@ identifycpu(struct cpu_info *ci)
 	clockmod_init();
 #endif
 	x86_errata(ci, cpu_vendor);
-	x86_patch();
 
 }
