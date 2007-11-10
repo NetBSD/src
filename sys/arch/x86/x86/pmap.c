@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2007/11/07 00:23:17 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2007/11/10 20:06:25 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2007/11/07 00:23:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2007/11/10 20:06:25 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -143,6 +143,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2007/11/07 00:23:17 ad Exp $");
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
 
+/* XXX */
+void		atomic_inc_uint(volatile unsigned int *);
+unsigned int	atomic_dec_uint_nv(volatile unsigned int *);
 
 /*
  * general info:
@@ -1620,7 +1623,6 @@ pmap_create(void)
 void
 pmap_destroy(struct pmap *pmap)
 {
-	int refs;
 	int i;
 #ifdef DIAGNOSTIC
 	struct cpu_info *ci;
@@ -1631,10 +1633,7 @@ pmap_destroy(struct pmap *pmap)
 	 * drop reference count
 	 */
 
-	mutex_enter(&pmap->pm_lock);
-	refs = --pmap->pm_obj[0].uo_refs;
-	mutex_exit(&pmap->pm_lock);
-	if (refs > 0) {
+	if (atomic_dec_uint_nv((unsigned *)&pmap->pm_obj[0].uo_refs) > 0) {
 		return;
 	}
 
@@ -1651,6 +1650,8 @@ pmap_destroy(struct pmap *pmap)
 	/*
 	 * remove it from global list of pmaps
 	 */
+
+	KERNEL_LOCK(1, NULL);
 
 	mutex_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
@@ -1689,18 +1690,19 @@ pmap_destroy(struct pmap *pmap)
 	for (i = 0; i < PTP_LEVELS - 1; i++)
 		mutex_destroy(&pmap->pm_obj[i].vmobjlock);
 	pool_cache_put(&pmap_cache, pmap);
+
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
  *	Add a reference to the specified pmap.
  */
 
-void
+inline void
 pmap_reference(struct pmap *pmap)
 {
-	mutex_enter(&pmap->pm_lock);
-	pmap->pm_obj[0].uo_refs++;
-	mutex_exit(&pmap->pm_lock);
+
+	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
 }
 
 #if defined(PMAP_FORK)
@@ -1966,12 +1968,10 @@ pmap_load(void)
 	 * retry.
 	 */
 
-	KERNEL_LOCK(1, NULL);
 	ncsw = l->l_ncsw;
 	pmap_reference(pmap);
 	if (l->l_ncsw != ncsw) {
 		pmap_destroy(pmap);
-		KERNEL_UNLOCK_ONE(NULL);
 		goto retry;
 	}
 
@@ -2015,7 +2015,6 @@ pmap_load(void)
 	 */
 
 	pmap_destroy(oldpmap);
-	KERNEL_UNLOCK_ONE(NULL);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
 	}
