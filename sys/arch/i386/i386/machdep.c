@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.612 2007/11/10 20:06:24 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.613 2007/11/10 23:04:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.612 2007/11/10 20:06:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.613 2007/11/10 23:04:29 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -519,8 +519,8 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	l->l_md.md_tss_sel = tss_alloc(pcb);
-	memcpy(&l->l_md.md_fsd, &gdt[GUDATA_SEL], sizeof(l->l_md.md_fsd));
-	memcpy(&l->l_md.md_gsd, &gdt[GUDATA_SEL], sizeof(l->l_md.md_gsd));
+	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
@@ -1220,6 +1220,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
+	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);

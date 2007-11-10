@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2007/11/10 20:06:25 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2007/11/10 23:04:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2007/11/10 20:06:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2007/11/10 23:04:29 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -602,43 +602,34 @@ int
 x86_set_sdbase(void *arg, char which)
 {
 #ifdef i386
-	struct segment_descriptor *sd;
+	struct segment_descriptor sd;
 	vaddr_t base;
-	int error, sno;
-
-	switch (which) {
-	case 'f':
-		sd = (struct segment_descriptor *)&curlwp->l_md.md_fsd;
-		sno = GUFS_SEL;
-		break;
-	case 'g':
-		sd = (struct segment_descriptor *)&curlwp->l_md.md_gsd;
-		sno = GUGS_SEL;
-		break;
-	default:
-		panic("x86_set_sdbase");
-	}
+	int error;
 
 	error = copyin(arg, &base, sizeof(base));
 	if (error != 0)
 		return error;
 
-	/*
-	 * Only changing the base address and the selector is
-	 * thread private, so there is no need to disable ints
-	 * or preemption.
-	 */
-	sd->sd_lobase = base & 0xffffff;
-	sd->sd_hibase = (base >> 24) & 0xff;
-	sd->sd_lolimit = 0xffff;
-	sd->sd_hilimit = 0xf;
-	sd->sd_type = SDT_MEMRWA;
-	sd->sd_dpl = SEL_UPL;
-	sd->sd_p = 1;
-	sd->sd_xx = 0;
-	sd->sd_def32 = 1;
-	sd->sd_gran = 1;
-	memcpy(&gdt[sno], sd, sizeof(*sd));
+	sd.sd_lobase = base & 0xffffff;
+	sd.sd_hibase = (base >> 24) & 0xff;
+	sd.sd_lolimit = 0xffff;
+	sd.sd_hilimit = 0xf;
+	sd.sd_type = SDT_MEMRWA;
+	sd.sd_dpl = SEL_UPL;
+	sd.sd_p = 1;
+	sd.sd_xx = 0;
+	sd.sd_def32 = 1;
+	sd.sd_gran = 1;
+
+	crit_enter();
+	if (which == 'f') {
+		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+	} else /* which == 'g' */ {
+		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+	}
+	crit_exit();
 
 	return 0;
 #else
@@ -655,10 +646,10 @@ x86_get_sdbase(void *arg, char which)
 
 	switch (which) {
 	case 'f':
-		sd = (struct segment_descriptor *)&curlwp->l_md.md_fsd;
+		sd = (struct segment_descriptor *)&curpcb->pcb_fsd;
 		break;
 	case 'g':
-		sd = (struct segment_descriptor *)&curlwp->l_md.md_gsd;
+		sd = (struct segment_descriptor *)&curpcb->pcb_gsd;
 		break;
 	default:
 		panic("x86_get_sdbase");
