@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.60 2007/11/09 14:54:13 dsl Exp $
+#	$NetBSD: makesyscalls.sh,v 1.61 2007/11/10 13:22:11 dsl Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -302,8 +302,12 @@ function parseline() {
 		funcalias=""
 		end=NF
 	}
+	if ($f == "INDIR") {		# allow for "NOARG INDIR"
+		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
+		f++
+	}
 	if ($f == "MPSAFE") {		# allow for MP-safe syscalls
-		sycall_flags = sprintf("SYCALL_MPSAFE | %s", sycall_flags)
+		sycall_flags = "SYCALL_MPSAFE | " sycall_flags
 		f++
 	}
 	if ($f ~ /^[a-z0-9_]*$/) {	# allow syscall alias
@@ -390,7 +394,7 @@ function parseline() {
 	}
 	# must see another argument after varargs notice.
 	if (isvarargs) {
-		if (argc == varargc && $2 != "INDIR")
+		if (argc == varargc)
 			parserr($f, "argument definition")
 	} else
 		varargc = argc;
@@ -408,7 +412,7 @@ function printproto(wrap) {
 	    syscall) > sysnumhdr
 }
 
-function putent(nodefs, compatwrap) {
+function putent(type, compatwrap) {
 	# output syscall declaration for switch table.
 	if (compatwrap == "")
 		compatwrap_ = ""
@@ -429,9 +433,9 @@ function putent(nodefs, compatwrap) {
 		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
 	if (compatwrap == "")
-		wfn = sprintf("%s", funcname);
+		wfn = funcname;
 	else
-		wfn = sprintf("%s(%s)", compatwrap, funcname);
+		wfn = compatwrap "(" funcname ")";
 	printf("%s,\n\t    %s },", sycall_flags, wfn) > sysent
 	for (i = 0; i < (33 - length(wfn)) / 8; i++)
 		printf("\t") > sysent
@@ -442,38 +446,31 @@ function putent(nodefs, compatwrap) {
 	    > sysnamesbottom
 
 	# output syscall number of header, if appropriate
-	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
+	if (type == "STD" || type == "NOARGS" || type == "INDIR") {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printproto("")
-
-	} else if (nodefs == "COMPAT") {
+	} else if (type == "COMPAT") {
 		# Just define the syscall number with a comment.  These
 		# may be used by compatibility stubs in libc.
 		printproto(compatwrap_)
 	}
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && nodefs != "NOARGS") {
+	if (argc != 0 && type != "NOARGS") {
 		printf("\nstruct %s%s_args {\n", compatwrap_, funcname) \
 		    > sysarghdr
 		for (i = 1; i <= argc; i++)
 			printf("\tsyscallarg(%s) %s;\n", argtype[i],
 			    argname[i]) > sysarghdr
 		printf("};\n") > sysarghdr
-		if (nodefs != "INDIR") {
+		if (type != "INDIR") {
 			printf("check_syscall_args(%s%s)\n", compatwrap_,
 			    funcname) >sysarghdr
 		}
 	}
 }
-$2 == "STD" {
-	parseline()
-	putent("", "");
-	syscall++
-	next
-}
-$2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
+$2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
 	putent($2, "")
 	syscall++
