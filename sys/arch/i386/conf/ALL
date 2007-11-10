@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.135 2007/11/10 13:17:24 dsl Exp $
+# $NetBSD: ALL,v 1.136 2007/11/10 21:45:47 pooka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.135 $"
+#ident 		"ALL-$Revision: 1.136 $"
 
 maxusers	32		# estimated number of users
 
@@ -1496,6 +1496,9 @@ pseudo-device	swwdog
 
 # cmos(4) pseudo-device
 pseudo-device	cmos
+
+# Pass-to-Userspace Transporter
+pseudo-device	putter
 
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
