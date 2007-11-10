@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.37.24.1 2007/02/21 18:36:02 snj Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.37.24.1.4.1 2007/11/10 02:56:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -209,6 +209,7 @@ u_int	cpufunc_control		__P((u_int, u_int));
 void	cpufunc_domains		__P((u_int));
 u_int	cpufunc_faultstatus	__P((void));
 u_int	cpufunc_faultaddress	__P((void));
+void	cpufunc_sleep		__P((int));
 
 #ifdef CPU_ARM3
 u_int	arm3_control		__P((u_int, u_int));
@@ -343,7 +344,7 @@ void	arm10_context_switch	__P((void));
 void	arm10_setup		__P((char *));
 #endif
 
-#ifdef CPU_ARM11
+#if defined(CPU_ARM11) || defined(CPU_ARM1136)
 void	arm11_setttb		__P((u_int));
 
 void	arm11_tlb_flushID_SE	__P((u_int));
@@ -356,6 +357,8 @@ void	arm11_tlb_flushID	__P((void));
 void	arm11_tlb_flushI	__P((void));
 void	arm11_tlb_flushD	__P((void));
 void	arm11_tlb_flushD_SE	__P((u_int va));
+void	armv11_dcache_wbinv_all	__P((void));
+void	armv11_idcache_wbinv_all	__P((void));
 
 void	arm11_drain_writebuf	__P((void));
 #endif
@@ -375,7 +378,7 @@ void	armv5_ec_idcache_wbinv_all	__P((void));
 void	armv5_ec_idcache_wbinv_range	__P((vaddr_t, vsize_t));
 #endif
 
-#if defined (CPU_ARM10) || defined (CPU_ARM11)
+#if defined (CPU_ARM10)
 void	armv5_setttb		__P((u_int));
 
 void	armv5_icache_sync_all	__P((void));
@@ -393,6 +396,32 @@ extern unsigned armv5_dcache_sets_max;
 extern unsigned armv5_dcache_sets_inc;
 extern unsigned armv5_dcache_index_max;
 extern unsigned armv5_dcache_index_inc;
+#endif
+
+#if defined (CPU_ARM11) || defined(CPU_ARM1136)
+void	armv6_setttb		__P((u_int));
+
+void	armv6_icache_sync_all	__P((void));
+void	armv6_icache_sync_range	__P((vaddr_t, vsize_t));
+
+void	armv6_dcache_wbinv_all	__P((void));
+void	armv6_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	armv6_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	armv6_dcache_wb_range	__P((vaddr_t, vsize_t));
+
+void	armv6_idcache_wbinv_all	__P((void));
+void	armv6_idcache_wbinv_range __P((vaddr_t, vsize_t));
+#endif
+
+#if defined(CPU_ARM1136)
+void	arm1136_setttb			__P((u_int));
+void	arm1136_idcache_wbinv_all	__P((void));
+void	arm1136_dcache_wbinv_all	__P((void));
+void	arm1136_icache_sync_all		__P((void));
+void	arm1136_flush_prefetchbuf	__P((void));
+void	arm1136_icache_sync_range	__P((vaddr_t, vsize_t));
+void	arm1136_idcache_wbinv_range	__P((vaddr_t, vsize_t));
+void	arm1136_setup			__P((char *string));
 #endif
 
 #if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
@@ -490,6 +519,9 @@ __set_cpsr_c(u_int bic, u_int eor)
 
 #define restore_interrupts(old_cpsr)					\
 	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
+#define disint_stats_force(mask)
+#define disint_stats_irq(irqno)
+#define disint_stats_gpioirq(pin)
 #else /* ! __PROG32 */
 #define	disable_interrupts(mask)					\
 	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\
@@ -545,6 +577,7 @@ extern int	arm_picache_ways;
 extern int	arm_pdcache_size;	/* and unified */
 extern int	arm_pdcache_line_size;
 extern int	arm_pdcache_ways;
+extern int	arm_cache_prefer_mask;
 
 extern int	arm_pcache_type;
 extern int	arm_pcache_unified;
