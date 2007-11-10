@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.42 2007/10/21 19:27:12 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.43 2007/11/10 18:36:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.42 2007/10/21 19:27:12 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.43 2007/11/10 18:36:06 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -483,13 +483,17 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 {
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
-	char *linktmp = NULL;
+	struct psshfs_node *psn = pn->pn_data;
 	uint32_t count;
 
 	if (pctx->protover < 3) {
 		rv = EOPNOTSUPP;
 		goto out;
 	}
+
+	/* check if we can use a cached version */
+	if (psn->attrread && !REFRESHTIMEOUT(pctx, time(NULL) - psn->attrread))
+		goto copy;
 
 	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, PNPATH(pn));
 	GETRESPONSE(pb);
@@ -502,13 +506,17 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		goto out;
 	}
 
-	rv = psbuf_get_str(pb, &linktmp, (uint32_t *)linklen);
+	if (psn->symlink)
+		free(psn->symlink);
+	rv = psbuf_get_str(pb, &psn->symlink, NULL);
 	if (rv)
 		goto out;
-	(void) memcpy(linkvalue, linktmp, *linklen);
+
+ copy:
+	*linklen = strlen(psn->symlink);
+	(void) memcpy(linkvalue, psn->symlink, *linklen);
 
  out:
-	free(linktmp);
 	PSSHFSRETURN(rv);
 }
 
