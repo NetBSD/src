@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1078 2007/11/09 21:18:23 plunky Exp $
+#	$NetBSD: mi,v 1.1079 2007/11/10 07:43:07 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1830,6 +1830,7 @@
 ./usr/include/sys/kcore.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
 ./usr/include/sys/kgdb.h			comp-c-include
+./usr/include/sys/kmem.h			comp-c-include
 ./usr/include/sys/ksem.h			comp-c-include
 ./usr/include/sys/ksyms.h			comp-c-include
 ./usr/include/sys/ktrace.h			comp-c-include
