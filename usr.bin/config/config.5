@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.12 2007/11/09 23:41:08 cube Exp $
+.\" $NetBSD: config.5,v 1.13 2007/11/10 00:15:43 cube Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -563,6 +563,12 @@ for each defined sub-architecture
 .It
 .Pa arch/${MACHINE}/conf/files.${MACHINE}
 .El
+It also defines an attribute for the
+.Ar machine ,
+the
+.Ar arch
+and each of the
+.Ar subarch .
 .It Ic package Ar path
 Simpler version of:
 .Bd -literal -offset indent
