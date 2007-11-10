@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.48 2007/11/07 15:56:22 ad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.49 2007/11/10 18:29:36 ad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.48 2007/11/07 15:56:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.49 2007/11/10 18:29:36 ad Exp $");
 
 #include "ppp.h"
 
@@ -251,7 +251,9 @@ pppopen(dev_t dev, struct tty *tp)
     sc->sc_if.if_baudrate = tp->t_ospeed;
 
     tp->t_sc = (void *) sc;
+    mutex_spin_enter(&tty_lock);
     ttyflush(tp, FREAD | FWRITE);
+    mutex_spin_exit(&tty_lock);
 
     splx(s);
     return (0);
@@ -270,7 +272,9 @@ pppclose(struct tty *tp, int flag)
     int s;
 
     s = spltty();
+    mutex_spin_enter(&tty_lock);
     ttyflush(tp, FREAD|FWRITE);
+    mutex_spin_exit(&tty_lock);	/* XXX */
     ttyldisc_release(tp->t_linesw);
     tp->t_linesw = ttyldisc_default();
     sc = (struct ppp_softc *) tp->t_sc;

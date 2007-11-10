@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.5 2007/11/03 18:24:00 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.6 2007/11/10 18:29:37 ad Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.5 2007/11/03 18:24:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.6 2007/11/10 18:29:37 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -387,10 +387,12 @@ bcspopen(dev_t device __unused, struct tty *tp)
 		splx(s);
 		return EIO;
 	}
+
+	mutex_spin_enter(&tty_lock);
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
-
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);
 
 	splx(s);
 
@@ -419,7 +421,9 @@ bcspclose(struct tty *tp, int flag __unused)
 	MBUFQ_DRAIN(&sc->sc_dgq);
 	bcsp_sequencing_reset(sc);
 
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);	/* XXX */
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
