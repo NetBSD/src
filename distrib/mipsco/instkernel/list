@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.5 2002/05/08 21:44:53 lukem Exp $
-
-COPY	${DESTDIR}/usr/mdec/boot	boot
-COPY	${OBJDIR}/netbsd-INSTALL.gz	netbsd

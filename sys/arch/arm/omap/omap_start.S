@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_start.S,v 1.1.6.2 2007/02/21 18:27:18 snj Exp $ */
+/*	$NetBSD: omap_start.S,v 1.1.6.2.4.1 2007/11/10 02:56:50 matt Exp $ */
 
 /*
  * Machine dependant startup code for OMAP boards.
@@ -61,6 +61,33 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * Copyright (c) 2007 Danger Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Danger Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTERS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
 
 #include "assym.h"
@@ -92,6 +119,15 @@ _C_LABEL(omap_start):
 	 */
 	/* Build page table from scratch */
 	ldr	r0, Ltemp_l1_table
+	/* Page table address -> round_page(_end) */
+	mov	r1, #PAGE_SIZE
+	sub	r1, r1, #1
+	add	r0, r0, r1  
+ 	mvn	r1, r1	
+	and	r0, r0, r1 
+	ldr 	r1, =KERNEL_BASE_phys
+	add	r0, r0, r1 
+	sub 	r0, r0, #KERNEL_BASE
 	mov	r1, r0			/* Save the page table address. */
 	/* Zero the entire table so all virtual addresses are invalid. */
 	mov	r2, #L1_TABLE_SIZE	/* in bytes */
@@ -182,8 +218,8 @@ Lstart:
 Ll1_s_frame:
 	.word	L1_S_FRAME
 Ltemp_l1_table:
-	/* Put the temporary L1 translation table at the end of SDRAM. */
-	.word	KERNEL_BASE_phys + MEMSIZE_BYTES - L1_TABLE_SIZE
+	/* Put the temporary L1 translation table after the kernel. */
+	.word 	_end
 Lcpsr:
 	/* What we want to have the CPSR be when we jump to start. */
 	.word CPU_CONTROL_MMU_ENABLE | \
@@ -204,6 +240,10 @@ Lcpsr:
 	.word	attr					    ;
 
 mmu_init_table:
+	/* Map PA=VA WHOLE REGION*/
+	MMU_INIT(KERNEL_BASE_phys + L1_S_SIZE, KERNEL_BASE_phys + L1_S_SIZE,
+		(MEMSIZE_BYTES - 1) / L1_S_SIZE
+		, L1_S_PROTO|L1_S_AP(AP_KRW));
 	/* Map SDRAM where we're executing from VA==PA, read-only */
 	MMU_INIT(KERNEL_BASE_phys, KERNEL_BASE_phys,
 		1,
@@ -218,3 +258,5 @@ mmu_init_table:
 		L1_S_PROTO | L1_S_AP(AP_KRW))
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+
+

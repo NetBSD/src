@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap,v 1.4.6.5 2007/02/21 18:41:50 snj Exp $
+#	$NetBSD: files.omap,v 1.4.6.5.4.1 2007/11/10 02:56:43 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP CPU support
 # Based on xscale/files.pxa2x0
@@ -9,6 +9,15 @@ file	arch/arm/arm32/irq_dispatch.S
 
 # Memory size in megabytes
 defparam opt_omap.h				MEMSIZE
+defparam opt_omap.h				OMAP_EMIFF_PBASE OMAP_EMIFF_SIZE
+defflag opt_omap.h				OMAP_2430
+
+# OBIO
+# like tipb but no regs to program... just an attach point
+device obio { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+	     } : bus_space_generic
+attach obio at mainbus
+file	arch/arm/omap/omap_obio.c		obio needs-count
 
 # Texas Instruments Peripheral Bus.
 # addr: Address of the peripheral in the OMAP address space
@@ -28,6 +37,7 @@ device tipb { [addr=-1], [size=0], [intr=-1], [mult=1] } : bus_space_generic
 attach tipb at mainbus
 file	arch/arm/omap/omap_tipb.c		tipb
 defparam opt_omap.h				OMAP_TIPB_PBASE OMAP_TIPB_SIZE
+file	arch/arm/omap/omap_dma.c
 
 # Extended Memory Interface Slow
 # Same parameters as for TIPB, but with the addition of parameters to
@@ -84,22 +94,23 @@ device emifs { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0],
 	       [wrwst=0], [welen=0], [advhold=0], [btwst=0], [btmode=0]
 	     } : bus_space_generic
 attach emifs at mainbus
+defparam opt_omap.h				OMAP_EMIFS_PBASE OMAP_EMIFS_SIZE
 file	arch/arm/omap/omap_emifs.c		emifs
-file	arch/arm/omap/omap_nobyteacc_space.c	emifs
-file	arch/arm/omap/omap_nobyteacc_io.S	emifs
 defparam opt_omap.h				OMAP_TC_CLOCK_FREQ
 
 # OCP
 device ocp { [addr=-1], [size=0], [intr=-1], [mult=1]} : bus_space_generic
 attach ocp at mainbus
+defparam opt_omap.h				OMAP_OCP_T1_PBASE OMAP_OCP_T1_SIZE
+defparam opt_omap.h				OMAP_OCP_T2_PBASE OMAP_OCP_T2_SIZE
 file	arch/arm/omap/omap_ocp.c		ocp
 
 # TIPB/EMIFS/OCP common files
-file	arch/arm/omap/omap_space.c		tipb | emifs | ocp
-file	arch/arm/omap/omap_a2x_space.c		tipb | emifs | ocp
-file	arch/arm/omap/omap_a2x_io.S		tipb | emifs | ocp
-file	arch/arm/omap/omap_a4x_space.c		tipb | emifs | ocp
-file	arch/arm/xscale/pxa2x0_a4x_io.S		tipb | emifs | ocp
+file	arch/arm/omap/omap_space.c		obio | tipb | emifs | ocp
+file	arch/arm/omap/omap_a2x_space.c		obio | tipb | emifs | ocp
+file	arch/arm/omap/omap_a2x_io.S		obio | tipb | emifs | ocp
+file	arch/arm/omap/omap_a4x_space.c		obio | tipb | emifs | ocp
+file	arch/arm/xscale/pxa2x0_a4x_io.S		obio | tipb | emifs | ocp
 
 # NS16550 compatible serial ports
 attach com at tipb with omapuart
@@ -113,19 +124,102 @@ file	arch/arm/omap/omap_intr.c		omapintc
 device omap5912intc: omapintc
 attach omap5912intc at tipb
 file	arch/arm/omap/omap5912_intr.c		omap5912intc
+# OMAP2430 specific INTC controller code
+file	arch/arm/omap/omap2430_intr.c		omap_2430
 
-# MPU Timer
+# OMAP1 MPU Timer
 device omapmputmr
 attach omapmputmr at tipb
 file	arch/arm/omap/omap_mputmr.c		omapmputmr
 defparam opt_omap.h				OMAP_MPU_TIMER_CLOCK_FREQ
+
+# OMAP 2430 General Purpose Timer
+device omap2430mputmr
+file	arch/arm/omap/omap2430_mputmr.c		omap2430mputmr
+defparam opt_omap.h				OMAP_GP_TIMER_CLOCK_FREQ
+
+# OBIO/2430 GP Timer
+attach omap2430mputmr at obio with obiomputmr
+file	arch/arm/omap/obio_mputmr.c		obiomputmr
+
+# RTC
+device omaprtc
+attach omaprtc at tipb
+file arch/arm/omap/omap_rtc.c			omaprtc
+
+# Dual Mode (General Purpose) Timer
+device omapgptmr
+attach omapgptmr at obio
+file	arch/arm/omap/omap_gptmr.c		omapgptmr
+file	arch/arm/omap/omap_pwm.c		omapgptmr
 
 # OMAP GPIO Block
 device omapgpio
 attach omapgpio at tipb
 file  arch/arm/omap/omap_gpio.c       omapgpio	needs-count
 
-# RTC
-device omaprtc
-attach omaprtc at tipb
-file arch/arm/omap/omap_rtc.c			omaprtc
+# OMAP GPIO Bus
+device	omapiobus: gpiobus
+attach	omapiobus at tipb
+file	arch/arm/omap/omap_iobus.c		omapiobus
+
+# OMAP I2C controller
+device	omapi2c: i2cbus
+attach	omapi2c at tipb
+file	arch/arm/omap/omap_i2c.c		omapi2c
+defparam	opt_omap.h		OMAP_I2C_ADDRESS
+defparam	opt_omap.h		I2C_LOW_TIME_nSEC
+defparam	opt_omap.h		I2C_HIGH_TIME_nSEC
+
+#attach udc at tipb with omapudc
+#file	arch/arm/omap/omap_udc.c		omapudc
+
+# OMAP McBsp controller
+
+device	omapmcbsp
+attach	omapmcbsp at tipb
+file	arch/arm/omap/omap_mcbsp.c	omapmcbsp
+
+# Watchdog timers
+
+device omapwdt32k: sysmon_wdog
+file arch/arm/omap/omap_wdt.c			omapwdt32k needs-flag
+
+attach omapwdt32k at tipb with tipbwdt32k
+file arch/arm/omap/tipb_wdt.c			tipbwdt32k
+
+attach omapwdt32k at obio with obiowdt32k
+file arch/arm/omap/obio_wdt.c			obiowdt32k
+
+# Hardware clock and power management
+
+device omapdpll
+attach omapdpll at tipb
+device omapmpuclkm
+attach omapmpuclkm at tipb
+device omapulpd
+attach omapulpd at tipb
+device omapconfig
+attach omapconfig at tipb
+
+file arch/arm/omap/hwclock_omap1.c	hwclock
+defparam	opt_hwclock_machine.h		OMAP_CK_REF_SPEED
+
+# L3 Interconnect
+device L3i { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+	     } : bus_space_generic
+attach L3i at mainbus
+file	arch/arm/omap/omap_L3i.c			omap_2430
+
+# General Purpose Memory Controller
+# XXX some addl. chip select config parms may be desired here (e.g. timing)
+# XXX so far we just use the setup established by boot firmware
+device gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+	     } : bus_space_generic
+attach gpmc at mainbus
+file	arch/arm/omap/omap_gpmc.c		gpmc
+
+# these bus space methods are not bus-specific ...
+#
+file	arch/arm/omap/omap_nobyteacc_space.c	emifs | gpmc
+file	arch/arm/omap/omap_nobyteacc_io.S	emifs | gpmc

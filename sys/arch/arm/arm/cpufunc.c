@@ -1,10 +1,11 @@
-/*	$NetBSD: cpufunc.c,v 1.77.12.1 2007/02/21 18:36:03 snj Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.77.12.1.4.1 2007/11/10 02:56:23 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
  * arm9 support code Copyright (C) 2001 ARM Ltd
+ * arm11 support code Copyright (c) 2007 Danger Inc
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -46,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.77.12.1 2007/02/21 18:36:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.77.12.1.4.1 2007/11/10 02:56:23 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -96,6 +97,9 @@ int	arm_picache_ways;
 int	arm_pdcache_size;	/* and unified */
 int	arm_pdcache_line_size;
 int	arm_pdcache_ways;
+#if (ARM_MMU_V6) != 0
+int	arm_cache_prefer_mask;
+#endif
 
 int	arm_pcache_type;
 int	arm_pcache_unified;
@@ -501,7 +505,7 @@ struct cpu_functions armv5_ec_cpufuncs = {
 	cpufunc_nullop,			/* flush_brnchtgt_C	*/
 	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
 
-	(void *)cpufunc_nullop,		/* sleep		*/
+	cpufunc_sleep,			/* sleep		*/
 
 	/* Soft functions */
 
@@ -599,16 +603,16 @@ struct cpu_functions arm11_cpufuncs = {
 
 	/* Cache operations */
 
-	armv5_icache_sync_all,		/* icache_sync_all	*/
-	armv5_icache_sync_range,	/* icache_sync_range	*/
+	armv6_icache_sync_all,		/* icache_sync_all	*/
+	armv6_icache_sync_range,	/* icache_sync_range	*/
 
-	armv5_dcache_wbinv_all,		/* dcache_wbinv_all	*/
-	armv5_dcache_wbinv_range,	/* dcache_wbinv_range	*/
-/*XXX*/	armv5_dcache_wbinv_range,	/* dcache_inv_range	*/
-	armv5_dcache_wb_range,		/* dcache_wb_range	*/
+	armv6_dcache_wbinv_all,		/* dcache_wbinv_all	*/
+	armv6_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	armv6_dcache_inv_range,		/* dcache_inv_range	*/
+	armv6_dcache_wb_range,		/* dcache_wb_range	*/
 
-	armv5_idcache_wbinv_all,	/* idcache_wbinv_all	*/
-	armv5_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+	armv6_idcache_wbinv_all,	/* idcache_wbinv_all	*/
+	armv6_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -630,6 +634,64 @@ struct cpu_functions arm11_cpufuncs = {
 
 };
 #endif /* CPU_ARM11 */
+
+#ifdef CPU_ARM1136
+struct cpu_functions arm1136_cpufuncs = {
+	/* CPU functions */
+
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* Domain		*/
+	arm1136_setttb,			/* Setttb		*//*411920*/
+	cpufunc_faultstatus,		/* Faultstatus		*/
+	cpufunc_faultaddress,		/* Faultaddress		*/
+
+	/* TLB functions */
+
+	arm11_tlb_flushID,		/* tlb_flushID		*/
+	arm11_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	arm11_tlb_flushI,		/* tlb_flushI		*/
+	arm11_tlb_flushI_SE,		/* tlb_flushI_SE	*/
+	arm11_tlb_flushD,		/* tlb_flushD		*/
+	arm11_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	arm1136_icache_sync_all,	/* icache_sync_all	*//*411920*/
+	arm1136_icache_sync_range,	/* icache_sync_range	*//*371025*/
+
+	arm1136_dcache_wbinv_all,	/* dcache_wbinv_all	*//*411920*/
+	armv6_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	armv6_dcache_inv_range,		/* dcache_inv_range	*/
+	armv6_dcache_wb_range,		/* dcache_wb_range	*/
+
+	arm1136_idcache_wbinv_all,	/* idcache_wbinv_all	*//*411920*/
+	arm1136_idcache_wbinv_range,	/* idcache_wbinv_range	*//*371025*/
+
+	/* Other functions */
+
+	arm1136_flush_prefetchbuf,	/* flush_prefetchbuf	*/
+	arm11_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	arm11_context_switch,		/* context_switch	*/
+
+	arm1136_setup			/* cpu setup		*/
+
+};
+#endif /* CPU_ARM1136 */
 
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
@@ -872,7 +934,9 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined (CPU_ARM9E) || defined (CPU_ARM10) || defined (CPU_ARM11) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
+    defined(CPU_ARM1136)
+
 static void get_cachetype_cp15 __P((void));
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -921,6 +985,13 @@ get_cachetype_cp15()
 		} else {
 			arm_picache_ways = multiplier <<
 			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
+#if (ARM_MMU_V6) != 0
+			if (CPU_CT_xSIZE_P & isize)
+				arm_cache_prefer_mask |=
+				    __BIT(9 + CPU_CT_xSIZE_SIZE(isize)
+					  - CPU_CT_xSIZE_ASSOC(isize))
+				    - PAGE_SIZE;
+#endif
 		}
 		arm_picache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
 	}
@@ -936,6 +1007,13 @@ get_cachetype_cp15()
 	} else {
 		arm_pdcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
+#if (ARM_MMU_V6) != 0
+		if (CPU_CT_xSIZE_P & dsize)
+			arm_cache_prefer_mask |=
+			    __BIT(9 + CPU_CT_xSIZE_SIZE(dsize)
+				  - CPU_CT_xSIZE_ASSOC(dsize))
+			    - PAGE_SIZE;
+#endif
 	}
 	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
 
@@ -1108,6 +1186,7 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
+
 		return 0;
 	}
 #endif /* CPU_ARM9E || CPU_ARM10 */
@@ -1137,16 +1216,24 @@ set_cpufuncs()
 		cpufuncs = arm11_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv5_dcache_sets_max = 
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
-		    armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
-		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		pmap_pte_init_generic();
+		if (arm_cache_prefer_mask)
+			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
 		return 0;
 	}
 #endif /* CPU_ARM11 */
+#ifdef CPU_ARM1136
+	if (cputype == CPU_ID_ARM1136JS ||
+	    cputype == CPU_ID_ARM1136JSR1) {
+		cpufuncs = arm1136_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
+		get_cachetype_cp15();
+		pmap_pte_init_generic();
+		if (arm_cache_prefer_mask)
+			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
+		return 0;
+	}
+#endif /* CPU_ARM1136 */
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
@@ -1687,7 +1774,7 @@ late_abort_fixup(arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11)
+	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136)
 
 #define IGN	0
 #define OR	1
@@ -2082,7 +2169,7 @@ arm10_setup(args)
 }
 #endif	/* CPU_ARM9E || CPU_ARM10 */
 
-#ifdef CPU_ARM11
+#if defined(CPU_ARM11)
 struct cpu_option arm11_options[] = {
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2117,6 +2204,9 @@ arm11_setup(args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -2131,6 +2221,74 @@ arm11_setup(args)
 	cpu_idcache_wbinv_all();
 }
 #endif	/* CPU_ARM11 */
+
+#if defined(CPU_ARM1136)
+struct cpu_option arm11_options[] = {
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm1136.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm1136.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "arm1136.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "arm1136.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm1136_setup(args)
+	char *args;
+{
+	int cpuctrl, cpuctrl_wax;
+	uint32_t sbz=0;
+
+	cpuctrl =
+		CPU_CONTROL_MMU_ENABLE  |
+		CPU_CONTROL_DC_ENABLE   |
+		CPU_CONTROL_WBUF_ENABLE |
+		CPU_CONTROL_32BP_ENABLE |
+		CPU_CONTROL_32BD_ENABLE |
+		CPU_CONTROL_LABT_ENABLE |
+		CPU_CONTROL_SYST_ENABLE |
+		CPU_CONTROL_IC_ENABLE;
+
+	/*
+	 * "write as existing" bits
+	 * inverse of this is mask
+	 */
+	cpuctrl_wax =
+		(3 << 30) |
+		(1 << 29) |
+		(1 << 28) |
+		(3 << 26) |
+		(7 << 19) |	/* make sure we save bit 21 */
+		(1 << 17);
+
+#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
+	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
+#endif
+
+	cpuctrl = parse_cpu_options(args, arm11_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
+	/* Clear out the cache */
+	cpu_idcache_wbinv_all();
+
+	/* Now really make sure they are clean.  */
+	__asm volatile ("mcr\tp15, 0, %0, c7, c7, 0" : : "r"(sbz));
+
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
+	cpu_control(~cpuctrl_wax, cpuctrl);
+
+	/* And again. */
+	cpu_idcache_wbinv_all();
+}
+#endif	/* CPU_ARM1136 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {
