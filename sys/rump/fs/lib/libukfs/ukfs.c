@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.13 2007/11/07 12:08:45 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.14 2007/11/10 18:03:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -87,7 +87,7 @@ struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
-	struct ukfs *fs;
+	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
 	struct mount *mp;
 	int rv = 0;
@@ -118,7 +118,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 
  out:
 	if (rv) {
-		if (fs->ukfs_mp)
+		if (fs && fs->ukfs_mp)
 			rump_mnt_destroy(fs->ukfs_mp);
 		if (fs)
 			free(fs);
@@ -135,7 +135,7 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv |= rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
 		rv |= rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
 		assert(rv == 0);
 	}
