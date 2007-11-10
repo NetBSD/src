@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.55 2007/11/10 20:06:23 ad Exp $
+#	$NetBSD: genassym.cf,v 1.56 2007/11/10 23:04:28 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,8 +187,6 @@ define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
-define	L_MD_FSD		offsetof(struct lwp, l_md.md_fsd)
-define	L_MD_GSD		offsetof(struct lwp, l_md.md_gsd)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
@@ -219,6 +217,8 @@ define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
+define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
+define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
