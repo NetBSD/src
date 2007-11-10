@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.84 2007/11/01 20:33:57 dyoung Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.85 2007/11/10 00:14:32 dyoung Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.84 2007/11/01 20:33:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.85 2007/11/10 00:14:32 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1172,10 +1172,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			/*
 			 * Send message to routing daemon
 			 */
-			(void)memset(&sin6, 0, sizeof(sin6));
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_addr = ip6->ip6_src;
+			sockaddr_in6_init(&sin6, &ip6->ip6_src, 0, 0, 0);
 
 			im = NULL;
 			oim = NULL;
@@ -1233,12 +1230,10 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 
 			/* insert new entry at head of hash chain */
 			bzero(rt, sizeof(*rt));
-			rt->mf6c_origin.sin6_family = AF_INET6;
-			rt->mf6c_origin.sin6_len = sizeof(struct sockaddr_in6);
-			rt->mf6c_origin.sin6_addr = ip6->ip6_src;
-			rt->mf6c_mcastgrp.sin6_family = AF_INET6;
-			rt->mf6c_mcastgrp.sin6_len = sizeof(struct sockaddr_in6);
-			rt->mf6c_mcastgrp.sin6_addr = ip6->ip6_dst;
+			sockaddr_in6_init(&rt->mf6c_origin, &ip6->ip6_src,
+			    0, 0, 0);
+			sockaddr_in6_init(&rt->mf6c_mcastgrp, &ip6->ip6_dst,
+			    0, 0, 0);
 			rt->mf6c_expire = UPCALL_EXPIRE;
 			n6expire[hash]++;
 			rt->mf6c_parent = MF6C_INCOMPLETE_PARENT;
@@ -1576,10 +1571,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * Does not have to check source info, as it's alreay covered by 
 	 * ip6_input
 	 */
-	memset(&dst6, 0, sizeof(dst6));
-	dst6.sin6_family = AF_INET6;
-	dst6.sin6_len = sizeof(struct sockaddr_in6);
-	dst6.sin6_addr = ip6->ip6_dst;
+	sockaddr_in6_init(&dst6, &ip6->ip6_dst, 0, 0, 0);
 
 	IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 	if (in6m != NULL) {
@@ -1668,10 +1660,7 @@ register_send(struct ip6_hdr *ip6, struct mif6 *mif, struct mbuf *m)
 	/*
 	 * Send message to routing daemon
 	 */
-	(void)memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_addr = ip6->ip6_src;
+	sockaddr_in6_init(&sin6, &ip6->ip6_src, 0, 0, 0);
 
 	im6 = mtod(mm, struct mrt6msg *);
 	im6->im6_msgtype      = MRT6MSG_WHOLEPKT;
