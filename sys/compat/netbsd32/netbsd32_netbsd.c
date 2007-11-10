@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.129 2007/11/09 15:05:34 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.130 2007/11/10 18:55:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.129 2007/11/09 15:05:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.130 2007/11/10 18:55:42 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -123,8 +123,8 @@ const struct emul emul_netbsd32 = {
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
 	NULL,
-	netbsd32_SYS_syscall,
-	netbsd32_SYS_NSYSENT,
+	NETBSD32_SYS_syscall,
+	NETBSD32_SYS_NSYSENT,
 #endif
 	netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
