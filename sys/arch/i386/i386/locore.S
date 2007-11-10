@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.54 2007/11/10 20:06:24 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.55 2007/11/10 23:04:29 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -773,12 +773,12 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/* Restore thread-private %fs/%gs descriptors. */
-	movl	L_MD_FSD(%edi), %eax
-	movl	L_MD_FSD+4(%edi), %edx
+	movl	PCB_FSD(%ebx), %eax
+	movl	PCB_FSD+4(%ebx), %edx
 	movl	%eax, (GUFS_SEL*8)(%ecx)
 	movl	%edx, (GUFS_SEL*8+4)(%ecx)
-	movl	L_MD_GSD(%edi), %eax
-	movl	L_MD_GSD+4(%edi), %edx
+	movl	PCB_GSD(%ebx), %eax
+	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
 
