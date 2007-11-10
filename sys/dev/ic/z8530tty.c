@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.115 2007/11/07 15:56:17 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.116 2007/11/10 18:07:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.115 2007/11/07 15:56:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.116 2007/11/10 18:07:53 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -1048,20 +1048,19 @@ zsstart(tp)
 	u_char *tba;
 	int tbc;
 
-	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
-		goto out;
+		return;
 	if (zst->zst_tx_stopped)
-		goto out;
+		return;
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
-			wakeup((void *)&tp->t_outq);
+			cv_broadcast(&tp->t_outq.c_cv);
 		}
 		selwakeup(&tp->t_wsel);
 		if (tp->t_outq.c_cc == 0)
-			goto out;
+			return;
 	}
 
 	/* Grab the first contiguous region of buffer space. */
@@ -1079,7 +1078,7 @@ zsstart(tp)
 	if (zst->zst_tbc > 1) {
 		zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
 		mutex_spin_exit(&cs->cs_lock);
-		goto out;
+		return;
 	}
 #endif
 
@@ -1096,9 +1095,6 @@ zsstart(tp)
 	zst->zst_tba++;
 
 	mutex_spin_exit(&cs->cs_lock);
-out:
-	mutex_spin_exit(&tty_lock);
-	return;
 }
 
 /*
@@ -1870,7 +1866,6 @@ zstty_txsoft(zst, tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
-	mutex_spin_enter(&tty_lock);
 	mutex_spin_enter(&cs->cs_lock);
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
@@ -1878,7 +1873,6 @@ zstty_txsoft(zst, tp)
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
 	mutex_spin_exit(&cs->cs_lock);
-	mutex_spin_exit(&tty_lock);
 	(*tp->t_linesw->l_start)(tp);
 }
 
