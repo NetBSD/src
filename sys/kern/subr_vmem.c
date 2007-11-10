@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.27.2.8 2007/10/27 09:24:14 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.27.2.9 2007/11/10 12:14:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.8 2007/10/27 09:24:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.9 2007/11/10 12:14:38 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1154,17 +1154,13 @@ vmem_rehash_all(struct work *wk, void *dummy)
 	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
 		size_t desired;
 		size_t current;
-		int s;
 
-		s = splvm();
 		if (!VMEM_TRYLOCK(vm)) {
-			splx(s);
 			continue;
 		}
 		desired = vm->vm_nbusytag;
 		current = vm->vm_hashsize;
 		VMEM_UNLOCK(vm);
-		splx(s);
 
 		if (desired > VMEM_HASHSIZE_MAX) {
 			desired = VMEM_HASHSIZE_MAX;
@@ -1172,9 +1168,7 @@ vmem_rehash_all(struct work *wk, void *dummy)
 			desired = VMEM_HASHSIZE_MIN;
 		}
 		if (desired > current * 2 || desired * 2 < current) {
-			s = splvm();
 			vmem_rehash(vm, desired, VM_NOSLEEP);
-			splx(s);
 		}
 	}
 	mutex_exit(&vmem_list_lock);
