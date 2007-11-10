@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.205 2007/11/06 17:57:46 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.206 2007/11/10 17:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.205 2007/11/06 17:57:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.206 2007/11/10 17:45:10 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -644,11 +644,11 @@ setrunnable(struct lwp *l)
 	 * Set the LWP runnable.
 	 */
 	ci = sched_takecpu(l);
-	ci = l->l_cpu;
-	spc_lock(ci);
 	l->l_cpu = ci;
-	lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
-
+	if (l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex) {
+		lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
+		lwp_lock(l);
+	}
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
