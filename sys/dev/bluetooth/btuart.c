@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.10 2007/11/03 17:41:04 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.11 2007/11/10 18:29:37 ad Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.10 2007/11/03 17:41:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.11 2007/11/10 18:29:37 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1075,10 +1075,11 @@ bth4open(dev_t device __unused, struct tty *tp)
 		splx(s);
 		return EIO;
 	}
+	mutex_spin_enter(&tty_lock);
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
-
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);
 
 	splx(s);
 
@@ -1110,7 +1111,9 @@ bth4close(struct tty *tp, int flag __unused)
 	}
 
 	s = spltty();
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);	/* XXX */
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {

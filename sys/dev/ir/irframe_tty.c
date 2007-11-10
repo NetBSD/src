@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.45 2007/11/07 15:56:18 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.46 2007/11/10 18:29:37 ad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.45 2007/11/07 15:56:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.46 2007/11/10 18:29:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -298,7 +298,9 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	DPRINTF(("%s: set sc=%p\n", __FUNCTION__, sc));
 
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);
 
 	sc->sc_dongle = DONGLE_NONE;
 	sc->sc_dongle_private = 0;
@@ -324,7 +326,9 @@ irframetclose(struct tty *tp, int flag)
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
 	s = spltty();
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);	 /* XXX */
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
