@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235.2.9 2007/10/23 20:17:31 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.10 2007/11/10 12:32:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.9 2007/10/23 20:17:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.10 2007/11/10 12:32:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1108,7 +1108,8 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 
 retry:
 	if (vm_map_lock_try(map) == false) {
-		if (flags & UVM_FLAG_TRYLOCK) {
+		if ((flags & UVM_FLAG_TRYLOCK) != 0 &&
+		    (map->flags & VM_MAP_INTRSAFE) == 0) {
 			return EAGAIN;
 		}
 		vm_map_lock(map); /* could sleep here */
