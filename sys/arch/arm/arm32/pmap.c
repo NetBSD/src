@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157.24.1.4.1 2007/11/10 02:56:26 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157.24.1.4.2 2007/11/10 04:00:01 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.24.1.4.1 2007/11/10 02:56:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.24.1.4.2 2007/11/10 04:00:01 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3331,8 +3331,10 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		for (ptep = &l2b->l2b_kva[l2pte_index(sva)];
 		     sva < next_bucket;
 		     sva += PAGE_SIZE, ptep++) {
-			if (l2pte_valid(*ptep))
-				cpu_icache_sync_range(sva, PAGE_SIZE);
+			if (l2pte_valid(*ptep)) {
+				cpu_icache_sync_range(sva,
+				    min(PAGE_SIZE, eva - sva));
+			}
 		}
 	}
 
