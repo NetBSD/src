@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 2007/10/18 15:28:38 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.5 2007/11/10 20:06:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2007/10/18 15:28:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2007/11/10 20:06:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -477,6 +477,9 @@ cpu_init(ci)
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
 	cpus_running |= ci->ci_cpumask;
+#else
+	/* XXX */
+	x86_patch();
 #endif
 }
 
@@ -488,6 +491,9 @@ cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
+
+	/* Now that we know the number of CPUs, patch the text segment. */
+	x86_patch();
 
 	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
@@ -634,6 +640,11 @@ cpu_hatch(void *v)
 
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);
+
+	/* Beacuse the text may have been patched in x86_patch(). */
+	wbinvd();
+	x86_flush();
+
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_RUNNING)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);

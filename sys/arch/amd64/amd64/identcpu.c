@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.28 2007/11/10 20:06:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28 2007/11/10 20:06:23 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -95,7 +95,7 @@ identifycpu(struct cpu_info *ci)
 		vendor = CPUVENDOR_INTEL;
 
 	last_tsc = rdtsc();
-	delay(100000);
+	i8254_delay(100000);
 	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
 
 	amd_cpu_cacheinfo(ci);
@@ -162,7 +162,6 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 	x86_errata(ci, vendor);
-	x86_patch();
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();

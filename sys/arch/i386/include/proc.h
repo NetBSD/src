@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.31 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.32 2007/11/10 20:06:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -49,6 +49,8 @@ struct mdlwp {
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
 	volatile int md_astpending;	/* AST pending for this process */
+	int	md_fsd[2];		/* %fs descriptor */
+	int	md_gsd[2];		/* %gs descriptor */
 };
 
 /* md_flags */
