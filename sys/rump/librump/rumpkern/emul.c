@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.18 2007/11/04 19:52:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.19 2007/11/11 17:18:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ struct vm_map *kernel_map;
 int physmem;
 int doing_shutdown;
 int ncpu = 1;
+const int schedppq = 1;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
