@@ -35,7 +35,7 @@
 
 #include "defs.h"
 
- /* this struct keeps a note of all the info related to a virtual directory entry */
+/* this struct keeps a note of all the info related to a virtual directory entry */
 typedef struct virt_dirent_t {
 	char		*name;		/* entry name - used as key */
 	size_t		 namelen;	/* length of name */
@@ -43,6 +43,7 @@ typedef struct virt_dirent_t {
 	char		*tgt;		/* any symlink target */
 	size_t		 tgtlen;	/* length of symlink target */
 	uint8_t		 type;		/* entry type - file, dir, lnk */
+	ino_t		 ino;		/* inode number */
 } virt_dirent_t;
 
 /* this defines the list of virtual directory entries,
