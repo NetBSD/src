@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.12 2007/11/10 23:12:22 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.13 2007/11/11 12:59:04 plunky Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.12 2007/11/10 23:12:22 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.13 2007/11/11 12:59:04 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,18 +304,18 @@ bth4_firmload(struct btuart_softc *sc, char *filename,
 	char *buf;
 
 	if ((error = firmware_open(cd->cd_name, filename, &fh)) != 0) {
-		printf("firmware_open failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_open failed\n");
 		return error;
 	}
 	size = firmware_get_size(fh);
 	if ((buf = firmware_malloc(size)) != NULL) {
-		printf("firmware_malloc failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_malloc failed\n");
 		firmware_close(fh);
 		return ENOMEM;
 	}
 
 	if ((error = firmware_read(fh, 0, buf, size)) != 0)
-		printf("firmware_read failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_read failed\n");
 	if (error == 0)
 		error = (*func_firmload)(sc, size, buf);
 
@@ -390,8 +390,9 @@ init_ericsson(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: Ericsson_Set_UART_Baud_Rate failed:"
-			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "EricssonSetUARTBaudRate failed: Status 0x%02x\n",
+			    error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -541,8 +542,9 @@ init_csr(struct btuart_softc *sc)
 		 * instance, it might be a different HCI_EVENT_VENDOR packet.
 		 */
 		if (error != 0) {
-			printf("%s: CSR set UART speed failed: Status 0x%02x\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "CSR set UART speed failed: Status 0x%02x\n",
+			    error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -602,8 +604,9 @@ init_swave(struct btuart_softc *sc)
 		if (error != 0) {
 			if (m != NULL)
 				m_freem(m);
-			printf("%s: swave set baud rate command failed:"
-			    " error 0x%02x\n", device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "swave set baud rate command failed: error 0x%02x\n",
+			    error);
 			return error;
 		}
 		if (m != NULL) {
@@ -713,9 +716,9 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 		error = bth4_waitresp(sc, &m, opcode);
 		if (m != NULL) {
 			if (error != 0) {
-				printf("%s: stlc2500 firmware load failed:"
-				    " Status 0x%02x\n",
-				    device_xname(sc->sc_dev), error);
+				aprint_error_dev(sc->sc_dev,
+				    "stlc2500 firmware load failed: Status 0x%02x\n",
+				    error);
 				error = EFAULT;
 				break;
 			}
@@ -757,8 +760,9 @@ init_stlc2500(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: HCI_Read_Local_Version_Information failed:"
-			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Read_Local_Version_Information failed:"
+			    " Status 0x%02x\n", error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -788,9 +792,9 @@ init_stlc2500(struct btuart_softc *sc)
 		error = bth4_waitresp(sc, &m, opcode);
 		if (m != NULL) {
 			if (error != 0) {
-				printf("%s: HCI_Reset (%d) failed:"
-				    " Status 0x%02x\n",
-				    device_xname(sc->sc_dev), i, error);
+				aprint_error_dev(sc->sc_dev,
+				    "HCI_Reset (%d) failed: Status 0x%02x\n",
+				    i, error);
 				error = EFAULT;
 				m_freem(m);
 			}
@@ -813,8 +817,8 @@ init_stlc2500(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: failed: opcode 0xfc0f Status 0x%02x\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -826,7 +830,7 @@ init_stlc2500(struct btuart_softc *sc)
 	 * We do not know the beginning point of this character string.
 	 * Because it doesn't know the event of this packet.
 	 *
-	 * printf("%s: %s\n", device_xname(sc->sc_dev), ???);
+	 * aprint_error_dev(sc->sc_dev, "%s\n", ???);
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
@@ -853,8 +857,8 @@ init_stlc2500(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: failed: opcode 0xfc0f Status 0x%02x\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -875,8 +879,8 @@ init_stlc2500(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: HCI_Reset failed: Status 0x%02x\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Reset failed: Status 0x%02x\n", error);
 			error = EFAULT;
 			m_freem(m);
 		}
@@ -931,8 +935,9 @@ init_bcm2035(struct btuart_softc *sc)
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
 		if (error != 0) {
-			printf("%s: bcm2035 set baud rate failed:"
-			    " Status 0x%02x\n", device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "bcm2035 set baud rate failed: Status 0x%02x\n",
+			    error);
 			error = EFAULT;
 		}
 		m_freem(m);
@@ -1012,8 +1017,8 @@ bth4init_input(struct hci_unit *unit, struct mbuf *m)
 	    pktstr != NULL) {
 		aprint_error_dev(unit->hci_dev, "%s:", __FUNCTION__);
 		for (i = 0; i < m->m_len; i++)
-			printf(" %02x", *(rptr + i));
-		printf("\n");
+			aprint_error(" %02x", *(rptr + i));
+		aprint_error("\n");
 	}
 
 	if (*rptr == HCI_EVENT_PKT)
@@ -1067,7 +1072,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	cfdata->cf_unit = unit;
 	cfdata->cf_fstate = FSTATE_STAR;
 
-	printf("%s%d at tty major %d minor %d",
+	aprint_normal("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
 	sc = (struct btuart_softc *)config_attach_pseudo(cfdata);
 	if (sc == NULL) {
@@ -1106,7 +1111,7 @@ bth4close(struct tty *tp, int flag __unused)
 		sc->sc_input_event = bth4init_input;
 		splx(s);
 		if ((*sc->sc_bth4hci.init)(sc) != 0)
-			printf("%s: reset speed fail\n", device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev, "reset speed fail\n");
 	}
 
 	s = spltty();
@@ -1190,8 +1195,8 @@ bth4input(int c, struct tty *tp)
 			/* new packet */
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				printf("%s: out of memory\n",
-				    device_xname(sc->sc_dev));
+				aprint_error_dev(sc->sc_dev,
+				    "out of memory\n");
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -1206,8 +1211,8 @@ bth4input(int c, struct tty *tp)
 			/* extend mbuf */
 			MGET(m->m_next, M_DONTWAIT, MT_DATA);
 			if (m->m_next == NULL) {
-				printf("%s: out of memory\n",
-				    device_xname(sc->sc_dev));
+				aprint_error_dev(sc->sc_dev,
+				    "out of memory\n");
 				++sc->sc_unit.hci_stats.err_rx;
 				return 0;	/* (lost sync) */
 			}
@@ -1252,8 +1257,8 @@ bth4input(int c, struct tty *tp)
 			break;
 
 		default:
-			printf("%s: Unknown packet type=%#x!\n",
-			    device_xname(sc->sc_dev), c);
+			aprint_error_dev(sc->sc_dev,
+			    "Unknown packet type=%#x!\n", c);
 			sc->sc_unit.hci_stats.err_rx++;
 			m_freem(sc->sc_rxp);
 			sc->sc_rxp = NULL;
