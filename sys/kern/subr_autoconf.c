@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.120 2007/09/24 18:47:56 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.121 2007/11/11 23:22:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.120 2007/09/24 18:47:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.121 2007/11/11 23:22:24 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -147,7 +147,7 @@ extern const struct cfattachinit cfattachinit[];
  * List of cfdata tables.  We always have one such list -- the one
  * built statically when the kernel was configured.
  */
-struct cftablelist allcftables;
+struct cftablelist allcftables = TAILQ_HEAD_INITIALIZER(allcftables);
 static struct cftable initcftable;
 
 #define	ROOT ((device_t)NULL)
@@ -177,8 +177,10 @@ struct deferred_config {
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
 
-struct deferred_config_head deferred_config_queue;
-struct deferred_config_head interrupt_config_queue;
+struct deferred_config_head deferred_config_queue =
+	TAILQ_HEAD_INITIALIZER(deferred_config_queue);
+struct deferred_config_head interrupt_config_queue =
+	TAILQ_HEAD_INITIALIZER(interrupt_config_queue);
 
 static void config_process_deferred(struct deferred_config_head *, device_t);
 
@@ -188,11 +190,12 @@ struct finalize_hook {
 	int (*f_func)(device_t);
 	device_t f_dev;
 };
-static TAILQ_HEAD(, finalize_hook) config_finalize_list;
+static TAILQ_HEAD(, finalize_hook) config_finalize_list =
+	TAILQ_HEAD_INITIALIZER(config_finalize_list);
 static int config_finalize_done;
 
 /* list of all devices */
-struct devicelist alldevs;
+struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
 
 volatile int config_pending;		/* semaphore for mountroot */
 
@@ -341,14 +344,8 @@ config_init(void)
 		}
 	}
 
-	TAILQ_INIT(&allcftables);
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
-
-	TAILQ_INIT(&deferred_config_queue);
-	TAILQ_INIT(&interrupt_config_queue);
-	TAILQ_INIT(&config_finalize_list);
-	TAILQ_INIT(&alldevs);
 
 	config_initialized = 1;
 }

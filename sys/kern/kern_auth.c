@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.53 2007/11/07 00:23:20 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.54 2007/11/11 23:22:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.53 2007/11/07 00:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.54 2007/11/11 23:22:23 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,8 @@ static int kauth_cred_ctor(void *, void *, int);
 static void kauth_cred_dtor(void *, void *);
 
 /* List of scopes and its lock. */
-static SIMPLEQ_HEAD(, kauth_scope) scope_list;
+static SIMPLEQ_HEAD(, kauth_scope) scope_list =
+    SIMPLEQ_HEAD_INITIALIZER(scope_list);
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
@@ -796,7 +797,6 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 void
 kauth_init(void)
 {
-	SIMPLEQ_INIT(&scope_list);
 	rw_init(&kauth_lock);
 
 	kauth_cred_cache = pool_cache_init(sizeof(struct kauth_cred),
