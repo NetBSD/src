@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.1 2007/11/11 17:37:45 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.2 2007/11/11 19:53:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.1 2007/11/11 17:37:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2 2007/11/11 19:53:38 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.1 2007/11/11 17:37:45 jmcneill Exp $");
 #include <dev/audiovar.h>
 #include <dev/auconv.h>
 
+#include <dev/pad/padvar.h>
+#include <dev/pad/padvol.h>
+
 #define PADUNIT(x)	minor(x)
 
 extern struct cfdriver pad_cd;
@@ -66,26 +69,13 @@ typedef struct pad_block {
 	int		pb_len;
 } pad_block_t;
 
-typedef struct pad_softc {
-	struct device	sc_dev;
-
-	int		sc_open;
-	struct audio_encoding_set *sc_encodings;
-	void		(*sc_intr)(void *);
-	void		*sc_intrarg;
-
-	kcondvar_t	sc_condvar;
-	kmutex_t	sc_mutex;
-
-	struct audio_softc *sc_audiodev;
-	int		sc_blksize;
-
-#define PAD_BLKSIZE	1024
-#define PAD_BUFSIZE	65536
-	uint8_t		sc_audiobuf[PAD_BUFSIZE];
-	uint32_t	sc_buflen;
-	uint32_t	sc_rpos, sc_wpos;
-} pad_softc_t;
+enum {
+	PAD_OUTPUT_CLASS,
+	PAD_INPUT_CLASS,
+	PAD_OUTPUT_MASTER_VOLUME,
+	PAD_INPUT_DAC_VOLUME,
+	PAD_ENUM_LAST,
+};
 
 static int	pad_match(struct device *, struct cfdata *, void *);
 static void	pad_attach(struct device *, struct device *, void *);
@@ -277,6 +267,7 @@ pad_attach(struct device *parent, struct device *self, void *opaque)
 	cv_init(&sc->sc_condvar, device_xname(self));
 	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_AUDIO);
 
+	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
 	sc->sc_audiodev = (void *)audio_attach_mi(&pad_hw_if, sc, &sc->sc_dev);
@@ -395,6 +386,21 @@ pad_set_params(void *opaque, int setmode, int usemode,
 	    rec, true, rfil) < 0)
 		return EINVAL;
 
+	if (pfil->req_size > 0)
+		play = &pfil->filters[0].param;
+	switch (play->encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		if (play->precision == 16 && play->validbits == 16)
+			pfil->prepend(pfil, pad_vol_slinear16_le, play);
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		if (play->precision == 16 && play->validbits == 16)
+			pfil->prepend(pfil, pad_vol_slinear16_be, play);
+		break;
+	default:
+		break;
+	}
+
 	return 0;
 }
 
@@ -461,18 +467,75 @@ pad_getdev(void *opaque, struct audio_device *ret)
 static int
 pad_set_port(void *opaque, mixer_ctrl_t *mc)
 {
+	pad_softc_t *sc;
+
+	sc = (pad_softc_t *)opaque;
+
+	switch (mc->dev) {
+	case PAD_OUTPUT_MASTER_VOLUME:
+	case PAD_INPUT_DAC_VOLUME:
+		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		return 0;
+	}
+
 	return ENXIO;
 }
 
 static int
 pad_get_port(void *opaque, mixer_ctrl_t *mc)
 {
+	pad_softc_t *sc;
+
+	sc = (pad_softc_t *)opaque;
+
+	switch (mc->dev) {
+	case PAD_OUTPUT_MASTER_VOLUME:
+	case PAD_INPUT_DAC_VOLUME:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_swvol;
+		return 0;
+	}
+
 	return ENXIO;
 }
 
 static int
 pad_query_devinfo(void *opaque, mixer_devinfo_t *di)
 {
+	pad_softc_t *sc;
+
+	sc = (pad_softc_t *)opaque;
+
+	switch (di->index) {
+	case PAD_OUTPUT_CLASS:
+		di->mixer_class = PAD_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioCoutputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+	case PAD_INPUT_CLASS:
+		di->mixer_class = PAD_INPUT_CLASS;
+		strcpy(di->label.name, AudioCinputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+	case PAD_OUTPUT_MASTER_VOLUME:
+		di->mixer_class = PAD_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmaster);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case PAD_INPUT_DAC_VOLUME:
+		di->mixer_class = PAD_INPUT_CLASS;
+		strcpy(di->label.name, AudioNdac);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	}
+
 	return ENXIO;
 }
 
