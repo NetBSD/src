@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.21 2007/10/25 20:52:18 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.22 2007/11/11 14:48:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.21 2007/10/25 20:52:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.22 2007/11/11 14:48:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -751,6 +751,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	sblockloc = 0;
 	fstype = 0;
 
+	error = fstrans_mount(mp);
+	if (error)
+		return error;
+
 	/*
 	 * Try reading the superblock in each of its possible locations.
 	 */
@@ -982,7 +986,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= (IMNT_HAS_TRANS | IMNT_MPSAFE);
+	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1024,6 +1028,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif /* UFS_EXTATTR */
 	return (0);
 out:
+	fstrans_unmount(mp);
 	if (fs)
 		free(fs, M_UFSMNT);
 	devvp->v_specmountpoint = NULL;
