@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.10 2007/11/11 18:24:01 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.11 2007/11/11 18:30:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -173,7 +173,7 @@ acpi_md_sleep_prepare:
 	movq	r_rdi, %rdi
 	call	acpi_md_sleep_enter
 	/* acpi_md_sleep_enter only returns on failure. */
-	movl	-1,%eax
+	movl	$-1,%eax
 	ret
 
 	.data
