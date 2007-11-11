@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.43 2007/11/10 18:36:06 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.44 2007/11/11 18:06:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.43 2007/11/10 18:36:06 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.44 2007/11/11 18:06:35 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -491,9 +491,21 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		goto out;
 	}
 
-	/* check if we can use a cached version */
-	if (psn->attrread && !REFRESHTIMEOUT(pctx, time(NULL) - psn->attrread))
+	/*
+	 * check if we can use a cached version
+	 *
+	 * XXX: we might end up reading the same link multiple times
+	 * from the server if we get many requests at once, but that's
+	 * quite harmless as this routine is reentrant.
+	 */
+	if (psn->symlink && !REFRESHTIMEOUT(pctx, time(NULL) - psn->slread))
 		goto copy;
+
+	if (psn->symlink) {
+		free(psn->symlink);
+		psn->symlink = NULL;
+		psn->slread = 0;
+	}
 
 	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, PNPATH(pn));
 	GETRESPONSE(pb);
@@ -506,11 +518,10 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		goto out;
 	}
 
-	if (psn->symlink)
-		free(psn->symlink);
 	rv = psbuf_get_str(pb, &psn->symlink, NULL);
 	if (rv)
 		goto out;
+	psn->slread = time(NULL);
 
  copy:
 	*linklen = strlen(psn->symlink);

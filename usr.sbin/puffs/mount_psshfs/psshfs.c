@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.42 2007/11/08 17:49:43 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.43 2007/11/11 18:06:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.42 2007/11/08 17:49:43 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.43 2007/11/11 18:06:35 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -294,6 +294,7 @@ invalone(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 
 	psn->attrread = 0;
 	psn->dentread = 0;
+	psn->slread = 0;
 
 	return NULL;
 }
