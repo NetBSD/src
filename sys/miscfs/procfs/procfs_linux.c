@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.43 2007/11/07 00:23:37 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.44 2007/11/11 18:29:03 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.43 2007/11/07 00:23:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.44 2007/11/11 18:29:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,24 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 			break;
 		}
 	}
+#ifdef LINUX_USRSTACK32
+	if (strcmp(p->p_emul->e_name, "linux32") == 0 &&
+	    LINUX_USRSTACK32 < USRSTACK32)
+		*sstack = (unsigned long)LINUX_USRSTACK32;
+	else
+#endif
 #ifdef LINUX_USRSTACK
 	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
 	    LINUX_USRSTACK < USRSTACK)
-		*sstack = (unsigned long) LINUX_USRSTACK;
+		*sstack = (unsigned long)LINUX_USRSTACK;
 	else
 #endif
-		*sstack = (unsigned long) USRSTACK;
+#ifdef	USRSTACK32
+	if (strstr(p->p_emul->e_name, "32") != NULL)
+		*sstack = (unsigned long)USRSTACK32;
+	else
+#endif
+		*sstack = (unsigned long)USRSTACK;
 
 	/*
 	 * jdk 1.6 compares low <= addr && addr < high
