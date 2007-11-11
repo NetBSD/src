@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.117.14.5 2007/11/06 14:27:21 joerg Exp $	*/
+/*	$NetBSD: auich.c,v 1.117.14.6 2007/11/11 17:33:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.5 2007/11/06 14:27:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.6 2007/11/11 17:33:29 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1233,6 +1233,10 @@ auich_intr(void *v)
 #endif
 
 	sc = v;
+
+	if (!device_has_power(&sc->sc_dev))
+		return (0);
+
 	ret = 0;
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
