@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.367 2007/11/10 07:28:17 marty Exp $
+.\"	$NetBSD: main,v 1.368 2007/11/11 05:17:59 reed Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -515,7 +515,7 @@ imported Common Address Redundancy Protocol to allow multiple hosts to share a s
 ALTQ support for the PF packet filter.
 .It
 .Xr etherip 4 :
-new EtherIP tunneling device. Tt's able to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
+new EtherIP tunneling device to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
 .It
 .Xr ftpd 8
 can now run in standalone mode, instead of from
