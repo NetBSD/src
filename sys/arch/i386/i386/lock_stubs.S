@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7 2007/11/10 20:06:24 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.8 2007/11/11 01:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -347,7 +347,7 @@ LABEL(x86_lockpatch)
 	.long	lockpatch1, lockpatch2, lockpatch3, lockpatch4
 	.long	lockpatch5, lockpatch6, lockpatch7, lockpatch8
 	.long	lockpatch9, lockpatch10
-#ifdef FULL
+#if defined(FULL) && !defined(__XEN__)
 	.long	lockpatch11
 #endif
 	.long	0

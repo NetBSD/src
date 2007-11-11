@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.3 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.4 2007/11/11 01:27:43 ad Exp $	*/
 /*	NetBSD: segments.h,v 1.41 2004/03/05 11:33:27 junyoung Exp 	*/
 
 /*-
@@ -301,7 +301,9 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	NGDT		21
+#define	GUFS_SEL	21
+#define	GUGS_SEL	22
+#define	NGDT		23
 
 /*
  * Entries in the Local Descriptor Table (LDT)
