@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.9 2007/11/11 18:16:24 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.10 2007/11/11 18:24:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -109,7 +109,7 @@ acpi_md_sleep_exit:
 	ret
 
 	.p2align 2, 0x90
-	.type acpi_savecpu, @function
+	.type acpi_md_sleep_prepare, @function
 	.globl acpi_md_sleep_prepare
 acpi_md_sleep_prepare:
 	movq	%rbx,r_rbx
