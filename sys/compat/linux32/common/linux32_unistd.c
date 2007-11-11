@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.10.6.2 2007/10/31 23:14:04 joerg Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.10.6.3 2007/11/11 16:47:18 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.2 2007/10/31 23:14:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.3 2007/11/11 16:47:18 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -604,4 +604,176 @@ linux32_sys_setresgid(l, v, retval)
 	SCARG(&ua, sgid) = (SCARG(uap, sgid) == -1) ? -1 : SCARG(uap, sgid);
 
 	return linux_sys_setresgid(l, &ua, retval);
+}
+
+int
+linux32_sys_nice(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_nice_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
+	struct netbsd32_setpriority_args bsa;
+
+	SCARG(&bsa, which) = PRIO_PROCESS;
+	SCARG(&bsa, who) = 0;
+	SCARG(&bsa, prio) = SCARG(uap, incr);
+
+	return netbsd32_setpriority(l, &bsa, retval);
+}
+
+int
+linux32_sys_alarm(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_alarm_args /* {
+		syscallarg(unsigned int) secs;
+	} */ *uap = v;
+	struct linux_sys_alarm_args ua;
+
+	NETBSD32TO64_UAP(secs);
+
+	return linux_sys_alarm(l, &ua, retval);
+}
+
+int
+linux32_sys_fdatasync(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_fdatasync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct linux_sys_fdatasync_args ua;
+
+	NETBSD32TO64_UAP(fd);
+
+	return linux_sys_fdatasync(l, &ua, retval);
+}
+
+int
+linux32_sys_setfsuid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setfsuid_args /* {
+		syscallarg(uid_t) uid;
+	} */ *uap = v;
+	struct linux_sys_setfsuid_args ua;
+
+	NETBSD32TO64_UAP(uid);
+
+	return linux_sys_setfsuid(l, &ua, retval);
+}
+
+int
+linux32_sys_setreuid16(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setreuid16_args /* {
+		syscallarg(int) ruid;
+		syscallarg(int) euid;
+	} */ *uap = v;
+	struct sys_setreuid_args bsa;
+
+	if ((linux32_uid_t)SCARG(uap, ruid) == (linux32_uid_t)-1)
+		SCARG(&bsa, ruid) = (uid_t)-1;
+	else
+		SCARG(&bsa, ruid) = SCARG(uap, ruid);
+	if ((linux32_uid_t)SCARG(uap, euid) == (linux32_uid_t)-1)
+		SCARG(&bsa, euid) = (uid_t)-1;
+	else
+		SCARG(&bsa, euid) = SCARG(uap, euid);
+
+	return sys_setreuid(l, &bsa, retval);
+}
+
+int
+linux32_sys_setregid16(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setregid16_args /* {
+		syscallarg(int) rgid;
+		syscallarg(int) egid;
+	} */ *uap = v;
+	struct sys_setregid_args bsa;
+
+	if ((linux32_gid_t)SCARG(uap, rgid) == (linux32_gid_t)-1)
+		SCARG(&bsa, rgid) = (gid_t)-1;
+	else
+		SCARG(&bsa, rgid) = SCARG(uap, rgid);
+	if ((linux32_gid_t)SCARG(uap, egid) == (linux32_gid_t)-1)
+		SCARG(&bsa, egid) = (gid_t)-1;
+	else
+		SCARG(&bsa, egid) = SCARG(uap, egid);
+
+	return sys_setregid(l, &bsa, retval);
+}
+
+int
+linux32_sys_setresuid16(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setresuid16_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+		syscallarg(uid_t) suid;
+	} */ *uap = v;
+	struct linux32_sys_setresuid_args lsa;
+
+	if ((linux32_uid_t)SCARG(uap, ruid) == (linux32_uid_t)-1)
+		SCARG(&lsa, ruid) = (uid_t)-1;
+	else
+		SCARG(&lsa, ruid) = SCARG(uap, ruid);
+	if ((linux32_uid_t)SCARG(uap, euid) == (linux32_uid_t)-1)
+		SCARG(&lsa, euid) = (uid_t)-1;
+	else
+		SCARG(&lsa, euid) = SCARG(uap, euid);
+	if ((linux32_uid_t)SCARG(uap, suid) == (linux32_uid_t)-1)
+		SCARG(&lsa, suid) = (uid_t)-1;
+	else
+		SCARG(&lsa, suid) = SCARG(uap, euid);
+
+	return linux32_sys_setresuid(l, &lsa, retval);
+}
+
+int
+linux32_sys_setresgid16(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setresgid16_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+		syscallarg(gid_t) sgid;
+	} */ *uap = v;
+	struct linux32_sys_setresgid_args lsa;
+
+	if ((linux32_gid_t)SCARG(uap, rgid) == (linux32_gid_t)-1)
+		SCARG(&lsa, rgid) = (gid_t)-1;
+	else
+		SCARG(&lsa, rgid) = SCARG(uap, rgid);
+	if ((linux32_gid_t)SCARG(uap, egid) == (linux32_gid_t)-1)
+		SCARG(&lsa, egid) = (gid_t)-1;
+	else
+		SCARG(&lsa, egid) = SCARG(uap, egid);
+	if ((linux32_gid_t)SCARG(uap, sgid) == (linux32_gid_t)-1)
+		SCARG(&lsa, sgid) = (gid_t)-1;
+	else
+		SCARG(&lsa, sgid) = SCARG(uap, sgid);
+
+	return linux32_sys_setresgid(l, &lsa, retval);
 }

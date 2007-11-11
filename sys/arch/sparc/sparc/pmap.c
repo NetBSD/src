@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.317.8.1 2007/10/26 15:43:36 joerg Exp $ */
+/*	$NetBSD: pmap.c,v 1.317.8.2 2007/11/11 16:46:52 joerg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317.8.1 2007/10/26 15:43:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317.8.2 2007/11/11 16:46:52 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -455,8 +455,7 @@ vaddr_t prom_vend;
 /*
  * Memory pool for pmap structures.
  */
-static struct pool pmap_pmap_pool;
-static struct pool_cache pmap_pmap_pool_cache;
+static struct pool_cache pmap_cache;
 static int	pmap_pmap_pool_ctor(void *, void *, int);
 static void	pmap_pmap_pool_dtor(void *, void *);
 static struct pool segmap_pool;
@@ -4068,10 +4067,8 @@ pmap_init(void)
 	     ALIGN(NUREG * sizeof(struct regmap)) +
 	     sparc_ncpus * sizeof(int *) +	/* pm_reg_ptps */
 	     sparc_ncpus * sizeof(int);		/* pm_reg_ptps_pa */
-	pool_init(&pmap_pmap_pool, sz, 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
-			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
+	pool_cache_bootstrap(&pmap_cache, sz, 0, 0, 0, "pmappl", NULL,
+	    IPL_NONE, pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
 
 	sz = NSEGRG * sizeof (struct segmap);
 	pool_init(&segmap_pool, sz, 0, 0, 0, "segmap", NULL, IPL_NONE);
@@ -4347,7 +4344,7 @@ pmap_create(void)
 {
 	struct pmap *pm;
 
-	pm = pool_cache_get(&pmap_pmap_pool_cache, PR_WAITOK);
+	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
 	/*
 	 * Reset fields that are not preserved in the pmap cache pool.
@@ -4391,7 +4388,7 @@ pmap_destroy(struct pmap *pm)
 #ifdef DEBUG
 		pmap_quiet_check(pm);
 #endif
-		pool_cache_put(&pmap_pmap_pool_cache, pm);
+		pool_cache_put(&pmap_cache, pm);
 	}
 }
 

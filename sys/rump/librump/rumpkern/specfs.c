@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.10.2.5 2007/11/06 19:25:36 joerg Exp $	*/
+/*	$NetBSD: specfs.c,v 1.10.2.6 2007/11/11 16:48:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -193,7 +193,6 @@ rump_specstrategy(void *v)
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
 	off_t off;
-	int error;
 
 	assert(vp->v_type == VBLK);
 	sp = vp->v_data;
@@ -204,18 +203,65 @@ rump_specstrategy(void *v)
 	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
 
-	if (bp->b_flags & B_READ)
-		rumpuser_read(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
-	else {
-		rumpuser_write(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
+	/*
+	 * Do I/O.  We have different paths for async and sync I/O.
+	 * Async I/O is done by passing a request to rumpuser where
+	 * it is executed.  The rumpuser routine then calls
+	 * biodone() to signal any waiters in the kernel.  I/O's are
+	 * executed in series.  Technically executing them in parallel
+	 * would produce better results, but then we'd need either
+	 * more threads or posix aio.  Maybe worth investigating
+	 * this later.
+	 *
+	 * Synchronous I/O is done directly in the context mainly to
+	 * avoid unnecessary scheduling with the I/O thread.
+	 */
+	if (bp->b_flags & B_ASYNC) {
+		struct rumpuser_aio *rua;
+
+		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua->rua_fd = sp->rsp_fd;
+		rua->rua_data = bp->b_data;
+		rua->rua_dlen = bp->b_bcount;
+		rua->rua_off = off;
+		rua->rua_bp = bp;
+		rua->rua_op = bp->b_flags & B_READ;
+
+		rumpuser_mutex_enter(&rua_mtx);
+
+		/*
+		 * Check if our buffer is full.  Doing it this way
+		 * throttles the I/O a bit if we have a massive
+		 * async I/O burst.
+		 *
+		 * XXX: this actually leads to deadlocks with spl()
+		 * (caller maybe be at splbio() legally for async I/O),
+		 * so for now set N_AIOS high and FIXXXME some day.
+		 */
+		if ((rua_head+1) % N_AIOS == rua_tail) {
+			rumpuser_free(rua);
+			rumpuser_mutex_exit(&rua_mtx);
+			goto syncfallback;
+		}
+
+		/* insert into queue & signal */
+		rua_aios[rua_head] = rua;
+		rua_head = (rua_head+1) % (N_AIOS-1);
+		rumpuser_cv_signal(&rua_cv);
+		rumpuser_mutex_exit(&rua_mtx);
+	} else {
+ syncfallback:
+		if (bp->b_flags & B_READ) {
+			rumpuser_read(sp->rsp_fd, bp->b_data,
+			    bp->b_bcount, off, bp);
+		} else {
+			rumpuser_write(sp->rsp_fd, bp->b_data,
+			    bp->b_bcount, off, bp);
+		}
+		biowait(bp);
 	}
 
-#ifdef notyet
-	if ((bp->b_flags & B_ASYNC) == 0)
-#endif
-		biowait(bp);
-
-	return error;
+	return 0;
 }
 
 int

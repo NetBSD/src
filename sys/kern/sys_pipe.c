@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.85.6.1 2007/10/02 18:29:04 joerg Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.85.6.2 2007/11/11 16:48:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.85.6.1 2007/10/02 18:29:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.85.6.2 2007/11/11 16:48:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,15 +189,16 @@ static int pipe_loan_alloc(struct pipe *, int);
 static void pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
-static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
-    &pool_allocator_nointr, IPL_NONE);
-
 static krwlock_t pipe_peer_lock;
+static pool_cache_t pipe_cache;
 
 void
 pipe_init(void)
 {
 
+	pipe_cache = pool_cache_init(sizeof(struct pipe), 0, 0, 0, "pipepl",
+	    NULL, IPL_NONE, NULL, NULL, NULL);
+	KASSERT(pipe_cache != NULL);
 	rw_init(&pipe_peer_lock);
 }
 
@@ -304,7 +305,7 @@ pipe_create(struct pipe **pipep, int allockva)
 	struct pipe *pipe;
 	int error;
 
-	pipe = *pipep = pool_get(&pipe_pool, PR_WAITOK);
+	pipe = *pipep = pool_cache_get(pipe_cache, PR_WAITOK);
 
 	/* Initialize */
 	memset(pipe, 0, sizeof(struct pipe));
@@ -1343,7 +1344,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	cv_destroy(&pipe->pipe_cv);
 	cv_destroy(&pipe->pipe_lkcv);
 	seldestroy(&pipe->pipe_sel);
-	pool_put(&pipe_pool, pipe);
+	pool_cache_put(pipe_cache, pipe);
 }
 
 static void

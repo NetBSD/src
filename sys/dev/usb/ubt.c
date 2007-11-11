@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.24.10.1 2007/10/02 18:28:42 joerg Exp $	*/
+/*	$NetBSD: ubt.c,v 1.24.10.2 2007/11/11 16:47:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.24.10.1 2007/10/02 18:28:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.24.10.2 2007/11/11 16:47:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.24.10.1 2007/10/02 18:28:42 joerg Exp $");
 #undef DPRINTFN
 
 #ifdef UBT_DEBUG
-int	ubt_debug = UBT_DEBUG;
+int	ubt_debug = 0;
 
 #define DPRINTF(fmt, args...)		do {		\
 	if (ubt_debug)					\
@@ -240,18 +240,18 @@ struct ubt_softc {
  * Bluetooth unit/USB callback routines
  *
  */
-static int ubt_enable(struct hci_unit *);
-static void ubt_disable(struct hci_unit *);
+static int ubt_enable(device_ptr_t);
+static void ubt_disable(device_ptr_t);
 
-static void ubt_xmit_cmd_start(struct hci_unit *);
+static void ubt_xmit_cmd_start(device_ptr_t);
 static void ubt_xmit_cmd_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
 
-static void ubt_xmit_acl_start(struct hci_unit *);
+static void ubt_xmit_acl_start(device_ptr_t);
 static void ubt_xmit_acl_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
 
-static void ubt_xmit_sco_start(struct hci_unit *);
+static void ubt_xmit_sco_start(device_ptr_t);
 static void ubt_xmit_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
 static void ubt_xmit_sco_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
@@ -439,8 +439,7 @@ USB_ATTACH(ubt)
 	}
 
 	/* Attach HCI */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = USBDEVNAME(sc->sc_dev);
+	sc->sc_unit.hci_dev = USBDEV(sc->sc_dev);
 	sc->sc_unit.hci_enable = ubt_enable;
 	sc->sc_unit.hci_disable = ubt_disable;
 	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
@@ -557,7 +556,7 @@ USB_DETACH(ubt)
 int
 ubt_activate(device_ptr_t self, enum devact act)
 {
-	struct ubt_softc *sc = (struct ubt_softc *)self;
+	struct ubt_softc *sc = USBGETSOFTC(self);
 	int error = 0;
 
 	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
@@ -615,7 +614,7 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	for (i = 0 ; i < count ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface1, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor %d\n",
+			aprint_error("%s: could not read endpoint descriptor %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
 
 			return EIO;
@@ -657,14 +656,14 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 #ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
-		printf("%s: rd_size=%d exceeds MLEN\n",
+		aprint_error("%s: rd_size=%d exceeds MLEN\n",
 		    USBDEVNAME(sc->sc_dev), rd_size);
 
 		return EOVERFLOW;
 	}
 
 	if (wr_size > MLEN) {
-		printf("%s: wr_size=%d exceeds MLEN\n",
+		aprint_error("%s: wr_size=%d exceeds MLEN\n",
 		    USBDEVNAME(sc->sc_dev), wr_size);
 
 		return EOVERFLOW;
@@ -804,9 +803,10 @@ ubt_abortdealloc(struct ubt_softc *sc)
  * All of this will be called at the IPL_ we specified above
  */
 static int
-ubt_enable(struct hci_unit *unit)
+ubt_enable(device_ptr_t self)
 {
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = USBGETSOFTC(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	usbd_status err;
 	int i, error;
 
@@ -948,9 +948,10 @@ bad:
 }
 
 static void
-ubt_disable(struct hci_unit *unit)
+ubt_disable(device_ptr_t self)
 {
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = USBGETSOFTC(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	DPRINTFN(1, "sc=%p\n", sc);
 
@@ -963,9 +964,10 @@ ubt_disable(struct hci_unit *unit)
 }
 
 static void
-ubt_xmit_cmd_start(struct hci_unit *unit)
+ubt_xmit_cmd_start(device_ptr_t self)
 {
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = USBGETSOFTC(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	usb_device_request_t req;
 	usbd_status status;
 	struct mbuf *m;
@@ -981,7 +983,7 @@ ubt_xmit_cmd_start(struct hci_unit *unit)
 	KASSERT(m != NULL);
 
 	DPRINTFN(15, "%s: xmit CMD packet (%d bytes)\n",
-			unit->hci_devname, m->m_pkthdr.len);
+			USBDEVNAME(sc->sc_dev), m->m_pkthdr.len);
 
 	sc->sc_refcnt++;
 	unit->hci_flags |= BTF_XMIT_CMD;
@@ -996,7 +998,7 @@ ubt_xmit_cmd_start(struct hci_unit *unit)
 
 	usbd_setup_default_xfer(sc->sc_cmd_xfer,
 				sc->sc_udev,
-				unit,
+				sc,
 				UBT_CMD_TIMEOUT,
 				&req,
 				sc->sc_cmd_buf,
@@ -1021,12 +1023,12 @@ static void
 ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 			usbd_private_handle h, usbd_status status)
 {
-	struct hci_unit *unit = h;
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = h;
+	struct hci_unit *unit = &sc->sc_unit;
 	uint32_t count;
 
 	DPRINTFN(15, "%s: CMD complete status=%s (%d)\n",
-			unit->hci_devname, usbd_errstr(status), status);
+			USBDEVNAME(sc->sc_dev), usbd_errstr(status), status);
 
 	unit->hci_flags &= ~BTF_XMIT_CMD;
 
@@ -1053,13 +1055,14 @@ ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 	unit->hci_stats.cmd_tx++;
 	unit->hci_stats.byte_tx += count;
 
-	ubt_xmit_cmd_start(unit);
+	ubt_xmit_cmd_start(USBDEV(sc->sc_dev));
 }
 
 static void
-ubt_xmit_acl_start(struct hci_unit *unit)
+ubt_xmit_acl_start(device_ptr_t self)
 {
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = USBGETSOFTC(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 	usbd_status status;
 	int len;
@@ -1077,12 +1080,12 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 	KASSERT(m != NULL);
 
 	DPRINTFN(15, "%s: xmit ACL packet (%d bytes)\n",
-			unit->hci_devname, m->m_pkthdr.len);
+			USBDEVNAME(sc->sc_dev), m->m_pkthdr.len);
 
 	len = m->m_pkthdr.len - 1;
 	if (len > UBT_BUFSIZ_ACL) {
 		DPRINTF("%s: truncating ACL packet (%d => %d)!\n",
-			unit->hci_devname, len, UBT_BUFSIZ_ACL);
+			USBDEVNAME(sc->sc_dev), len, UBT_BUFSIZ_ACL);
 
 		len = UBT_BUFSIZ_ACL;
 	}
@@ -1095,7 +1098,7 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 
 	usbd_setup_xfer(sc->sc_aclwr_xfer,
 			sc->sc_aclwr_pipe,
-			unit,
+			sc,
 			sc->sc_aclwr_buf,
 			len,
 			USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
@@ -1119,11 +1122,11 @@ static void
 ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
-	struct hci_unit *unit = h;
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = h;
+	struct hci_unit *unit = &sc->sc_unit;
 
 	DPRINTFN(15, "%s: ACL complete status=%s (%d)\n",
-		unit->hci_devname, usbd_errstr(status), status);
+		USBDEVNAME(sc->sc_dev), usbd_errstr(status), status);
 
 	unit->hci_flags &= ~BTF_XMIT_ACL;
 
@@ -1147,13 +1150,13 @@ ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 			return;
 	}
 
-	ubt_xmit_acl_start(unit);
+	ubt_xmit_acl_start(USBDEV(sc->sc_dev));
 }
 
 static void
-ubt_xmit_sco_start(struct hci_unit *unit)
+ubt_xmit_sco_start(device_ptr_t self)
 {
-	struct ubt_softc *sc = unit->hci_softc;
+	struct ubt_softc *sc = USBGETSOFTC(self);
 	int i;
 
 	if (sc->sc_dying || sc->sc_scowr_size == 0)
@@ -1294,7 +1297,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 			return;
 	}
 
-	ubt_xmit_sco_start(&sc->sc_unit);
+	ubt_xmit_sco_start(USBDEV(sc->sc_dev));
 }
 
 /*
@@ -1569,7 +1572,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 			if (m == NULL) {
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory (xfer halted)\n",
+					aprint_error("%s: out of memory (xfer halted)\n",
 						USBDEVNAME(sc->sc_dev));
 
 					sc->sc_unit.hci_stats.err_rx++;

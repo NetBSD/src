@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.70.14.1 2007/11/11 16:47:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.14.1 2007/11/11 16:47:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,11 @@ USB_DETACH(ucom)
 	if (--sc->sc_refcnt >= 0) {
 		/* Wake up anyone waiting */
 		if (tp != NULL) {
+			mutex_spin_enter(&tty_lock);
 			CLR(tp->t_state, TS_CARR_ON);
 			CLR(tp->t_cflag, CLOCAL | MDMBUF);
 			ttyflush(tp, FREAD|FWRITE);
+			mutex_spin_exit(&tty_lock);
 		}
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));

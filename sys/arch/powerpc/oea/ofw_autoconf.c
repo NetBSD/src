@@ -1,5 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57.10.3 2007/10/26 15:42:50 joerg Exp $	*/
-
+/* $NetBSD: ofw_autoconf.c,v 1.2.2.2 2007/11/11 16:46:50 joerg Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -15,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
+ *      This product includes software developed by TooLs GmbH.
  * 4. The name of TooLs GmbH may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -32,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.10.3 2007/10/26 15:42:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.2.2.2 2007/11/11 16:46:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -55,39 +54,37 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.10.3 2007/10/26 15:42:50 joerg Exp
 #include <dev/ic/wdcvar.h>
 #include <dev/wsfb/genfbvar.h>
 
-void canonicalize_bootpath __P((void));
-void ofw_stack __P((void));
-
 extern char bootpath[256];
 char cbootpath[256];
-int    console_node = 0, console_instance = 0;
+int console_node = 0, console_instance = 0;
 
+#ifdef macppc
 volatile uint32_t *heathrow_FCR = NULL;
+#endif
 
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
-
 static void add_model_specifics(prop_dictionary_t);
 static void copyprops(int, prop_dictionary_t);
+static void canonicalize_bootpath(void);
 
 /*
  * Determine device configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
-
 	init_interrupt();
 	canonicalize_bootpath();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	(void)spl0();
+	genppc_cpu_configure();
 }
 
-void
-canonicalize_bootpath()
+static void
+canonicalize_bootpath(void)
 {
 	int node;
 	char *p, *lastp;
@@ -199,37 +196,6 @@ canonicalize_bootpath()
 	/* XXX Does this belong here, or device_register()? */
 	if ((p = strrchr(lastp, ',')) != NULL)
 		*p = '\0';
-}
-
-static int
-OF_to_intprop(prop_dictionary_t dict, int node, const char *ofname,
-    const char *propname)
-{
-	uint32_t prop;
-
-	if (OF_getprop(node, ofname, &prop, sizeof(prop)) != sizeof(prop))
-		return 0;
-
-	prop_dictionary_set_uint32(dict, propname, prop);
-	return 1;
-}
-
-static int
-OF_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
-    const char *propname)
-{
-	prop_data_t data;
-	int len;
-	uint8_t prop[256];
-
-	len = OF_getprop(node, ofname, prop, 256);
-	if (len < 1)
-		return 0;
-
-	data = prop_data_create_data(prop, len);
-	prop_dictionary_set(dict, propname, data);
-
-	return 1;
 }
 
 /*
@@ -411,59 +377,11 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-int
-OF_interpret(const char *cmd, int nargs, int nreturns, ...)
-{
-	va_list ap;
-	int i, len, status;
-	static struct {
-		const char *name;
-		uint32_t nargs;
-		uint32_t nreturns;
-		uint32_t slots[16];
-	} args = {
-		"interpret",
-		1,
-		2,
-	};
-
-	ofw_stack();
-	if (nreturns > 8)
-		return -1;
-	if ((len = strlen(cmd)) >= PAGE_SIZE)
-		return -1;
-	ofbcopy(cmd, OF_buf, len + 1);
-	i = 0;
-	args.slots[i] = (uint32_t)OF_buf;
-	args.nargs = nargs + 1;
-	args.nreturns = nreturns + 1;
-	va_start(ap, nreturns);
-	i++;
-	while (i < args.nargs) {
-		args.slots[i] = (uint32_t)va_arg(ap, uint32_t *);
-		i++;
-	}
-
-	if (openfirmware(&args) == -1)
-		return -1;
-	status = args.slots[i];
-	i++;
-
-	while (i < args.nargs + args.nreturns) {
-		*va_arg(ap, uint32_t *) = args.slots[i];
-		i++;
-	}
-	va_end(ap);
-	return status;
-}
-
 /*
  * Find OF-device corresponding to the PCI device.
  */
 int
-pcidev_to_ofdev(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pcidev_to_ofdev(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	int bus, dev, func;
 	u_int reg[5];
@@ -493,35 +411,6 @@ pcidev_to_ofdev(pc, tag)
 	return 0;
 }
 
-int
-getnodebyname(start, target)
-	int start;
-	const char *target;
-{
-	int node, next;
-	char name[64];
-
-	if (start == 0)
-		start = OF_peer(0);
-
-	for (node = start; node; node = next) {
-		memset(name, 0, sizeof name);
-		OF_getprop(node, "name", name, sizeof name - 1);
-		if (strcmp(name, target) == 0)
-			break;
-
-		if ((next = OF_child(node)) != 0)
-			continue;
-		while (node) {
-			if ((next = OF_peer(node)) != 0)
-				break;
-			node = OF_parent(node);
-		}
-	}
-
-	return node;
-}
-
 static void
 add_model_specifics(prop_dictionary_t dict)
 {
@@ -542,18 +431,18 @@ copyprops(int node, prop_dictionary_t dict)
 	uint32_t temp;
 
 	prop_dictionary_set_bool(dict, "is_console", 1);
-	if (!OF_to_intprop(dict, node, "width", "width")) {
+	if (!of_to_uint32_prop(dict, node, "width", "width")) {
 
 		OF_interpret("screen-width", 0, 1, &temp);
 		prop_dictionary_set_uint32(dict, "width", temp);
 	}
-	if (!OF_to_intprop(dict, console_node, "height", "height")) {
+	if (!of_to_uint32_prop(dict, console_node, "height", "height")) {
 
 		OF_interpret("screen-height", 0, 1, &temp);
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
-	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
-	if (!OF_to_intprop(dict, console_node, "depth", "depth")) {
+	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
+	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )
@@ -561,13 +450,13 @@ copyprops(int node, prop_dictionary_t dict)
 		 */
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
-	if (!OF_to_intprop(dict, console_node, "address", "address")) {
+	if (!of_to_uint32_prop(dict, console_node, "address", "address")) {
 		uint32_t fbaddr = 0;
 			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
-	OF_to_dataprop(dict, console_node, "EDID", "EDID");
+	of_to_dataprop(dict, console_node, "EDID", "EDID");
 	add_model_specifics(dict);
 
 	temp = 0;
@@ -587,4 +476,3 @@ of_set_palette(void *cookie, int index, int r, int g, int b)
 
 	OF_call_method_1("color!", ih, 4, r, g, b, index);
 }
-

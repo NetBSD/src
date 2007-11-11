@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.27.8.5 2007/11/06 21:16:23 joerg Exp $
+#	$NetBSD: files.ofppc,v 1.27.8.6 2007/11/11 16:46:48 joerg Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -22,7 +22,7 @@ defflag ukbd.h NO_UKBD_DEVICE
 defflag zstty.h NO_ZSTTY_DEVICE
 defflag ofb.h NO_OFB_DEVICE
 
-file	arch/ofppc/ofppc/autoconf.c
+file	arch/powerpc/oea/ofw_autoconf.c
 file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/powerpc/oea/ofwoea_machdep.c

@@ -1,4 +1,4 @@
-/*    $NetBSD: z8530var.h,v 1.7 2007/03/04 02:08:09 tsutsui Exp $ */
+/*    $NetBSD: z8530var.h,v 1.7.18.1 2007/11/11 16:46:58 joerg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,3 +162,5 @@ void  zs_write_data(struct zs_chanstate *, u_char);
  */
 #define ZSCN_PHYSADDR	0xe98004 /* for serial console */
 #define ZSMS_PHYSADDR	0xe98000 /* for mouse */
+
+#define	IPL_ZS	IPL_SERIAL

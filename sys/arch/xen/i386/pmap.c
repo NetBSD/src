@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29.8.2 2007/10/26 15:43:47 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29.8.3 2007/11/11 16:47:04 joerg Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.8.2 2007/10/26 15:43:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.8.3 2007/11/11 16:47:04 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -465,7 +465,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  * pool and cache that PDPs are allocated from
  */
 
-struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
 u_int pmap_pdp_cache_generation;
 
@@ -1266,10 +1265,8 @@ pmap_bootstrap(kva_start)
 	/*
 	 * initialize the PDE pool and cache.
 	 */
-	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
+	    NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...

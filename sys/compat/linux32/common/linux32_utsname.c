@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_utsname.c,v 1.3 2007/03/18 21:38:33 dsl Exp $ */
+/*	$NetBSD: linux32_utsname.c,v 1.3.8.1 2007/11/11 16:47:18 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.3 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.3.8.1 2007/11/11 16:47:18 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,16 +81,12 @@ linux32_sys_uname(l, v, retval)
 	struct linux_utsname luts;
 	struct linux_utsname *lp;
 
-	strncpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, linux32_release, sizeof(luts.l_release));
-	strncpy(luts.l_version, linux32_version, sizeof(luts.l_version));
-#ifdef LINUX_UNAME_ARCH
-	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
-#else  
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-#endif 
-	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
+	strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));
+	strlcpy(luts.l_version, linux32_version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+	strlcpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
        
 	lp = SCARG_P32(uap, up);
 
@@ -108,11 +104,11 @@ linux32_sys_oldolduname(l, v, retval)
         } */ *uap = v; 
         struct linux_oldoldutsname luts;
  
-        strncpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
-        strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-        strncpy(luts.l_release, linux32_release, sizeof(luts.l_release));
-        strncpy(luts.l_version, linux32_version, sizeof(luts.l_version));
-        strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+        strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
+        strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+        strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));
+        strlcpy(luts.l_version, linux32_version, sizeof(luts.l_version));
+        strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
  
         return copyout(&luts, SCARG_P32(uap, up), sizeof(luts));
 }
