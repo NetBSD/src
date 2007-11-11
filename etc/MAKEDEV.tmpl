@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.88 2007/11/03 19:33:36 gdt Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.89 2007/11/11 17:54:47 jmcneill Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -261,6 +261,7 @@
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
 #	nsmb*	SMB requester
 #	openfirm OpenFirmware accessor
+#	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
 #	pow*	power management device (x68k)
@@ -526,6 +527,7 @@ all)
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
+	makedev pad pad0 pad1 pad2 pad3
 	makedev bthub
 	makedev cfs
 	makedev puffs
@@ -549,6 +551,11 @@ audio)
 gpio)
 	makedev gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	lndev gpio0 gpio
+	;;
+
+pad)
+	makedev pad0 pad1 pad2 pad3
+	lndev pad0 pad
 	;;
 
 radio)
@@ -1285,6 +1292,11 @@ fcom*)
 
 openfirm)
 	mkdev openfirm c %openfirm_chr% 0 444
+	;;
+
+pad*)
+	unit=${i#pad}
+	mkdev pad$unit c %pad_chr% $unit 444
 	;;
 
 nvram)
