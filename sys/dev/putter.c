@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.2 2007/11/11 16:57:36 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.3 2007/11/11 19:49:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.2 2007/11/11 16:57:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.3 2007/11/11 19:49:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,10 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.2 2007/11/11 16:57:36 pooka Exp $");
 
 #include <dev/puttervar.h>
 
-#include <fs/puffs/puffs_sys.h> /* XXX: for transport format, goes away soon */
-
-#include <uvm/uvm_param.h>
-
+#include <fs/puffs/puffs_msgif.h> /* XXX: for frame headers, goes away soon */
 
 /*
  * putter instance structures.  these are always allocated and freed
@@ -71,16 +68,14 @@ struct putter_instance {
 
 	TAILQ_ENTRY(putter_instance) pi_entries;
 };
-#define PUTTER_EMBRYO ((void *)-1)	/* before mount	*/
-#define PUTTER_DEAD ((void *)-2)	/* goner	*/
+#define PUTTER_EMBRYO ((void *)-1)	/* before attach	*/
+#define PUTTER_DEAD ((void *)-2)	/* after detach		*/
 
 static TAILQ_HEAD(, putter_instance) putter_ilist
     = TAILQ_HEAD_INITIALIZER(putter_ilist);
 
 static int get_pi_idx(struct putter_instance *);
 
-#undef DPRINTF /* XXX puffs_sys */
-#undef DPRINTF_VERBOSE /* XXX puffs_sys */
 #ifdef DEBUG
 #ifndef PUTTERDEBUG
 #define PUTTERDEBUG
@@ -346,13 +341,11 @@ static int
 filt_putterioctl(struct knote *kn, long hint)
 {
 	struct putter_instance *pi = kn->kn_hook;
-	void *priv;
 	int error;
 
 	error = 0;
 	mutex_enter(&pi_mtx);
-	priv = pi->pi_private;
-	if (priv == PUTTER_EMBRYO || priv == PUTTER_DEAD)
+	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD)
 		error = 1;
 	mutex_exit(&pi_mtx);
 	if (error)
