@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2007/11/10 20:06:25 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2007/11/11 01:30:55 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2007/11/10 20:06:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2007/11/11 01:30:55 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1963,17 +1963,10 @@ pmap_load(void)
 	}
 
 	/*
-	 * grab a reference to the new pmap.  this may block.  if state
-	 * has changed out from underneath us, drop the reference and
-	 * retry.
+	 * grab a reference to the new pmap.
 	 */
 
-	ncsw = l->l_ncsw;
 	pmap_reference(pmap);
-	if (l->l_ncsw != ncsw) {
-		pmap_destroy(pmap);
-		goto retry;
-	}
 
 	/*
 	 * actually switch pmap.
@@ -2014,6 +2007,7 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
+	ncsw = l->l_ncsw;
 	pmap_destroy(oldpmap);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
