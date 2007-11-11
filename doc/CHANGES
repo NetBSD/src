@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.945 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.946 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -236,3 +236,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		and device storage. [plunky 20071109]
 	pad(4): Added the pseudo-audio device driver, for feeding back raw
 		PCM data to userland. [jmcneill 20071111]
+	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
+		controllers. [macallan 20071111]
