@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.8 2007/11/06 00:09:02 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.9 2007/11/11 18:16:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -34,8 +34,8 @@
 
 	.text
 	.p2align 2, 0x90
-	.globl acpi_restorecpu
-acpi_restorecpu:
+	.globl acpi_md_sleep_exit
+acpi_md_sleep_exit:
 
 	xorw	%ax,%ax
 	movw	%ax,%fs
@@ -110,8 +110,8 @@ acpi_restorecpu:
 
 	.p2align 2, 0x90
 	.type acpi_savecpu, @function
-	.globl acpi_savecpu
-acpi_savecpu:
+	.globl acpi_md_sleep_prepare
+acpi_md_sleep_prepare:
 	movq	%rbx,r_rbx
 	movq	%rcx,r_rcx
 	movq	%rdx,r_rdx
@@ -169,7 +169,11 @@ acpi_savecpu:
 
 	movq	(%rsp),%rax
 	movq	%rax,ret_addr
-	movq	$1,%rax
+
+	movq	r_rdi, %rdi
+	call	acpi_md_sleep_enter
+	/* acpi_md_sleep_enter only returns on failure. */
+	movl	-1,%eax
 	ret
 
 	.data
