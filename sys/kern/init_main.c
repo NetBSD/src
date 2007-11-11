@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311.4.7 2007/11/06 19:25:24 joerg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311.4.8 2007/11/11 16:47:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.7 2007/11/06 19:25:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.8 2007/11/11 16:47:57 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.7 2007/11/06 19:25:24 joerg Ex
 #include <sys/extent.h>
 #include <sys/disk.h>
 #include <sys/mqueue.h>
+#include <sys/msgbuf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -261,9 +262,9 @@ main(void)
 	struct cpu_info *ci;
 
 	l = &lwp0;
+#ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
-	l->l_proc = &proc0;
-	l->l_lid = 1;
+#endif
 
 	/*
 	 * XXX This is a temporary check to be removed before
@@ -365,6 +366,9 @@ main(void)
 	/* Initialize I/O statistics. */
 	iostat_init();
 
+	/* Initialize the log device. */
+	loginit();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -417,6 +421,10 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Initialize tty subsystem. */
+	tty_init();
+	ttyldisc_init();
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
@@ -693,7 +701,7 @@ check_console(struct lwp *l)
 /*
  * List of paths to try when searching for "init".
  */
-static const char *initpaths[] = {
+static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",

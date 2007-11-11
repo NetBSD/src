@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.7.6.1 2007/11/06 19:25:40 joerg Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.7.6.2 2007/11/11 16:48:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ void	turnstile_print(volatile void *, void (*)(const char *, ...));
 void	turnstile_unsleep(lwp_t *);
 void	turnstile_changepri(lwp_t *, pri_t);
 
-extern struct pool_cache turnstile_cache;
+extern pool_cache_t turnstile_cache;
 extern turnstile_t turnstile0;
 
 #endif	/* _KERNEL */

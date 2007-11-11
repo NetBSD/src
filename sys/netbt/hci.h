@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.10.6.2 2007/11/04 21:03:36 jmcneill Exp $	*/
+/*	$NetBSD: hci.h,v 1.10.6.3 2007/11/11 16:48:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.10.6.2 2007/11/04 21:03:36 jmcneill Exp $
+ * $Id: hci.h,v 1.10.6.3 2007/11/11 16:48:26 joerg Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2102,11 +2102,10 @@ struct hci_memo {
  * The Bluetooth HCI device unit structure
  */
 struct hci_unit {
-	void		*hci_softc;		/* ptr to device softc */
-	struct device	*hci_bthub;		/* bthub(4) handle */
+	device_t	 hci_dev;		/* bthci handle */
+	device_t	 hci_bthub;		/* bthub(4) handle */
 
 	/* device info */
-	const char	*hci_devname;		/* device name */
 	bdaddr_t	 hci_bdaddr;		/* device address */
 	uint16_t	 hci_flags;		/* see BTF_ above */
 
@@ -2132,17 +2131,12 @@ struct hci_unit {
 	 *
 	 * the device driver must supply these.
 	 */
-	int	(*hci_enable)		/* enable device */
-		(struct hci_unit *);
-	void	(*hci_disable)		/* disable device */
-		(struct hci_unit *);
-	void	(*hci_start_cmd)	/* initiate cmd output routine */
-		(struct hci_unit *);
-	void	(*hci_start_acl)	/* initiate acl output routine */
-		(struct hci_unit *);
-	void	(*hci_start_sco)	/* initiate sco output routine */
-		(struct hci_unit *);
-	ipl_cookie_t hci_ipl;		/* to block queue operations */
+	int	(*hci_enable)(device_t);	/* enable device */
+	void	(*hci_disable)(device_t);	/* disable device */
+	void	(*hci_start_cmd)(device_t);	/* initiate cmd output routine */
+	void	(*hci_start_acl)(device_t);	/* initiate acl output routine */
+	void	(*hci_start_sco)(device_t);	/* initiate sco output routine */
+	ipl_cookie_t	hci_ipl;		/* to block queue operations */
 
 	/* input queues */
 	void			*hci_rxint;	/* receive interrupt cookie */

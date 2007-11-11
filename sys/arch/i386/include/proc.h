@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.31 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.31.18.1 2007/11/11 16:46:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.

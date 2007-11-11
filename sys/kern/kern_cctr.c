@@ -1,4 +1,4 @@
-/* $NetBSD: kern_cctr.c,v 1.1.4.1 2007/10/26 15:48:27 joerg Exp $ */
+/* $NetBSD: kern_cctr.c,v 1.1.4.2 2007/11/11 16:47:58 joerg Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.4.1 2007/10/26 15:48:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.4.2 2007/11/11 16:47:58 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -190,7 +190,7 @@ cc_get_timecount(struct timecounter *tc)
  * it is called only for the PRIMARY cpu. all
  * other cpus are called via a broadcast IPI
  * calibration interval is 1 second - we call
- * the calobration code only every hz calls
+ * the calibration code only every hz calls
  */
 static void
 cc_calibrate(struct timecounter *tc)

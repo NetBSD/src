@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.117.6.1 2007/09/03 16:49:01 jmcneill Exp $	*/
+/*	$NetBSD: in.c,v 1.117.6.2 2007/11/11 16:48:29 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.117.6.1 2007/09/03 16:49:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.117.6.2 2007/11/11 16:48:29 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -652,7 +652,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 	struct sockaddr *sa;
 
 	/* sanity checks */
-	if (!data || !ifp) {
+	if (data == NULL || ifp == NULL) {
 		panic("invalid argument to in_lifaddr_ioctl");
 		/*NOTRECHED*/
 	}
@@ -757,14 +757,14 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
-			if (!cmp)
+			if (cmp == 0)
 				break;
 			candidate.s_addr = ((struct sockaddr_in *)&ifa->ifa_addr)->sin_addr.s_addr;
 			candidate.s_addr &= mask.s_addr;
 			if (candidate.s_addr == match.s_addr)
 				break;
 		}
-		if (!ifa)
+		if (ifa == NULL)
 			return EADDRNOTAVAIL;
 		ia = (struct in_ifaddr *)ifa;
 
@@ -1028,8 +1028,8 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&target->ia_ifa, (int)RTM_ADD, flags);
-	if (!error)
+	error = rtinit(&target->ia_ifa, RTM_ADD, flags);
+	if (error == 0)
 		target->ia_flags |= IFA_ROUTE;
 	return error;
 }
@@ -1072,11 +1072,11 @@ in_scrubprefix(struct in_ifaddr *target)
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
 		if ((ia->ia_flags & IFA_ROUTE) == 0) {
-			rtinit(&(target->ia_ifa), (int)RTM_DELETE,
+			rtinit(&target->ia_ifa, RTM_DELETE,
 			    rtinitflags(target));
 			target->ia_flags &= ~IFA_ROUTE;
 
-			error = rtinit(&ia->ia_ifa, (int)RTM_ADD,
+			error = rtinit(&ia->ia_ifa, RTM_ADD,
 			    rtinitflags(ia) | RTF_UP);
 			if (error == 0)
 				ia->ia_flags |= IFA_ROUTE;
@@ -1087,7 +1087,7 @@ in_scrubprefix(struct in_ifaddr *target)
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rtinit(&(target->ia_ifa), (int)RTM_DELETE, rtinitflags(target));
+	rtinit(&target->ia_ifa, RTM_DELETE, rtinitflags(target));
 	target->ia_flags &= ~IFA_ROUTE;
 	return 0;
 }
