@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.8 2007/11/10 23:12:22 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.8 2007/11/10 23:12:22 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -153,8 +153,7 @@ btbc_attach(device_t parent, device_t self, void *aux)
 
 	if ((error = pcmcia_function_configure(pa->pf,
 	    btbc_pcmcia_validate_config)) != 0) {
-		aprint_error("%s: configure failed, error=%d\n",
-		    self->dv_xname, error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 
@@ -402,8 +401,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* new packet */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -418,8 +417,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* extend mbuf */
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -471,8 +470,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				break;
 
 			default:
-				printf("%s: Unknown packet type=%#x!\n",
-					device_xname(sc->sc_dev), buf[i]);
+				aprint_error_dev(sc->sc_dev,
+				    "Unknown packet type=%#x!\n", buf[i]);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -717,13 +716,14 @@ btbc_intr(void *arg)
 		}
 
 		if (isr & 0x40) {	/* card eject ? */
-			printf("card eject?\n");
+			aprint_normal_dev(sc->sc_dev, "card eject?\n");
 			isr &= ~0x40;
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, 0x40);
 		}
 		if (isr != 0x00) {
-			printf("unknwon intrrupt: isr=0x%x\n", isr);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown interrupt: isr=0x%x\n", isr);
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, isr);
 		}

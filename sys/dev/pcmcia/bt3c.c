@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.14 2007/11/10 23:12:22 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.15 2007/11/11 12:59:02 plunky Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.14 2007/11/10 23:12:22 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.15 2007/11/11 12:59:02 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -279,8 +279,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				/* new packet */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -295,8 +295,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				/* extend mbuf */
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -344,8 +344,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				break;
 
 			default:
-				printf("%s: Unknown packet type=%#x!\n",
-					device_xname(sc->sc_dev), b);
+				aprint_error_dev(sc->sc_dev,
+				    "Unknown packet type=%#x!\n", b);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -476,8 +476,7 @@ bt3c_intr(void *arg)
 	if (control & BT3C_IOR_CNTL_INTR) {
 		isr = bt3c_read(sc, BT3C_ISR);
 		if ((isr & 0xff) == 0x7f) {
-			printf("%s: bt3c_intr got strange ISR=%04x\n",
-				device_xname(sc->sc_dev), isr);
+			aprint_error_dev(sc->sc_dev, "strange ISR=%04x\n", isr);
 		} else if ((isr & 0xff) != 0xff) {
 
 			if (isr & BT3C_ISR_RXRDY)
@@ -489,11 +488,11 @@ bt3c_intr(void *arg)
 #ifdef DIAGNOSTIC
 			if (isr & BT3C_ISR_ANTENNA) {
 				if (bt3c_read(sc, BT3C_CSR) & BT3C_CSR_ANTENNA)
-					printf("%s: Antenna Out\n",
-						device_xname(sc->sc_dev));
+					aprint_verbose_dev(sc->sc_dev,
+					    "Antenna Out\n");
 				else
-					printf("%s: Antenna In\n",
-						device_xname(sc->sc_dev));
+					aprint_verbose_dev(sc->sc_dev,
+					    "Antenna In\n");
 			}
 #endif
 
@@ -563,16 +562,15 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	err = firmware_open(cf->cf_name,
 			    BT3C_FIRMWARE_FILE, &fh);
 	if (err) {
-		printf("%s: Cannot open firmware %s/%s\n",
-		    device_xname(sc->sc_dev), cf->cf_name, BT3C_FIRMWARE_FILE);
+		aprint_error_dev(sc->sc_dev, "Cannot open firmware %s/%s\n",
+		    cf->cf_name, BT3C_FIRMWARE_FILE);
 		return err;
 	}
 
 	size = (size_t)firmware_get_size(fh);
 #ifdef DIAGNOSTIC
 	if (size > 10 * 1024) {	/* sanity check */
-		printf("%s: firmware file seems WAY too big!\n",
-			device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "insane firmware file size!\n");
 		firmware_close(fh);
 		return EFBIG;
 	}
@@ -583,8 +581,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 
 	err = firmware_read(fh, 0, buf, size);
 	if (err) {
-		printf("%s: Firmware read failed (%d)\n",
-				device_xname(sc->sc_dev), err);
+		aprint_error_dev(sc->sc_dev, "Firmware read failed (%d)\n", err);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.27 2007/11/10 23:12:22 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.28 2007/11/11 12:59:06 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.27 2007/11/10 23:12:22 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.28 2007/11/11 12:59:06 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -614,7 +614,7 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	for (i = 0 ; i < count ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface1, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor %d\n",
+			aprint_error("%s: could not read endpoint descriptor %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
 
 			return EIO;
@@ -656,14 +656,14 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 #ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
-		printf("%s: rd_size=%d exceeds MLEN\n",
+		aprint_error("%s: rd_size=%d exceeds MLEN\n",
 		    USBDEVNAME(sc->sc_dev), rd_size);
 
 		return EOVERFLOW;
 	}
 
 	if (wr_size > MLEN) {
-		printf("%s: wr_size=%d exceeds MLEN\n",
+		aprint_error("%s: wr_size=%d exceeds MLEN\n",
 		    USBDEVNAME(sc->sc_dev), wr_size);
 
 		return EOVERFLOW;
@@ -1572,7 +1572,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 			if (m == NULL) {
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory (xfer halted)\n",
+					aprint_error("%s: out of memory (xfer halted)\n",
 						USBDEVNAME(sc->sc_dev));
 
 					sc->sc_unit.hci_stats.err_rx++;
