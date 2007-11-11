@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.113 2007/11/06 19:13:49 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.114 2007/11/11 23:22:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.113 2007/11/06 19:13:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.114 2007/11/11 23:22:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -922,10 +922,6 @@ kmeminit(void)
 	/* Attach all of the statically-linked malloc types. */
 	__link_set_foreach(ksp, malloc_types)
 		malloc_type_attach(*ksp);
-
-#ifdef MALLOC_DEBUG
-	debug_malloc_init();
-#endif
 }
 
 #ifdef DDB
