@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.871 2007/11/11 16:58:02 pooka Exp $
+#	$NetBSD: files,v 1.872 2007/11/11 17:37:45 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1549,3 +1549,8 @@ define	onewire_bitbang
 include	"dev/gpio/files.gpio"
 
 include "dev/onewire/files.onewire"
+
+#
+# Pseudo audio device
+#
+include "dev/pad/files.pad"
