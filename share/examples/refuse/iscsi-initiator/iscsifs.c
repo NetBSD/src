@@ -345,14 +345,17 @@ iscsifs_getattr(const char *path, struct stat *st)
 	case 'f':
 		(void) memcpy(st, &iscsi.file, sizeof(*st));
 		sp = (struct stat *) ep->tgt;
-		st->st_ino = sp->st_ino;
 		st->st_size = sp->st_size;
 		break;
 	case 'l':
 		(void) memcpy(st, &iscsi.lnk, sizeof(*st));
 		st->st_size = ep->tgtlen;
 		break;
+	default:
+		warn("unknown directory type `%c'", ep->type);
+		return -ENOENT;
 	}
+	st->st_ino = ep->ino;
 	return 0;
 }
 
