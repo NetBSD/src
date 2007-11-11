@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.5 2007/09/16 15:02:07 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.6 2007/11/11 18:03:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.5 2007/09/16 15:02:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.6 2007/11/11 18:03:46 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -108,9 +108,9 @@ ahci_attach(struct ahci_softc *sc)
 
 	/* reset controller */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
-	delay(1000);
 	/* wait up to 1s for reset to complete */
 	for (i = 0; i < 1000; i++) {
+		delay(1000);
 		if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR) == 0)
 			break;
 	}
