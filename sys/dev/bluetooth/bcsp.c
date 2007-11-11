@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.6 2007/11/10 18:29:37 ad Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.7 2007/11/11 12:54:23 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.6 2007/11/10 18:29:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.7 2007/11/11 12:54:23 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,9 +162,9 @@ static void bcsp_input_le(struct hci_unit *, struct mbuf *);
 static void bcsp_le_timeout(void *);
 
 /* bluetooth hci functions */
-static int bcsp_enable(struct hci_unit *);
-static void bcsp_disable(struct hci_unit *);
-static void bcsp_start(struct hci_unit *);
+static int bcsp_enable(device_t);
+static void bcsp_disable(device_t);
+static void bcsp_start(device_t);
 
 #ifdef BCSP_DEBUG
 static void bcsp_packet_print(struct mbuf *m);
@@ -258,8 +258,7 @@ bcsp_attach(struct device *parent __unused, struct device *self,
 	MBUFQ_INIT(&sc->sc_dgq);
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = device_xname(self);
+	sc->sc_unit.hci_dev = self;
 	sc->sc_unit.hci_enable = bcsp_enable;
 	sc->sc_unit.hci_disable = bcsp_disable;
 	sc->sc_unit.hci_start_cmd = bcsp_start;
@@ -518,7 +517,7 @@ bcsp_slip_transmit(struct tty *tp)
 					break;
 
 				DPRINTFN(4, ("\n%s: slip transmit end\n",
-				    device_xname(sc->sc_dev));
+				    device_xname(sc->sc_dev)));
 
 				m = sc->sc_txp;
 				sc->sc_txp = NULL;
@@ -903,7 +902,7 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 		hdrp->flags |= BCSP_FLAGS_PROTOCOL_REL;		/* Reliable */
 		goto transmit;
 	}
-	bcsp_start(unit);
+	bcsp_start(sc->sc_dev);
 	if (sc->sc_mux_send_ack == true) {
 		m = bcsp_create_ackpkt();
 		if (m != NULL)
@@ -1396,7 +1395,7 @@ static const uint8_t confresp[] = BCSP_LE_CONFRESP;
 static int
 bcsp_start_le(struct hci_unit *unit)
 {
-	struct bcsp_softc *sc = unit->hci_softc;
+	struct bcsp_softc *sc = device_private(unit->hci_dev);
 
 	DPRINTF(("%s: start link-establish\n", device_xname(sc->sc_dev)));
 
@@ -1423,7 +1422,7 @@ bcsp_start_le(struct hci_unit *unit)
 static void
 bcsp_terminate_le(struct hci_unit *unit)
 {
-	struct bcsp_softc *sc = unit->hci_softc;
+	struct bcsp_softc *sc = device_private(unit->hci_dev);
 	struct mbuf *m;
 
 	/* terminate link-establishment */
@@ -1445,7 +1444,7 @@ bcsp_terminate_le(struct hci_unit *unit)
 static void
 bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
 {
-	struct bcsp_softc *sc = unit->hci_softc;
+	struct bcsp_softc *sc = device_private(unit->hci_dev);
 	uint32_t *rcvpkt;
 	int i;
 	const uint8_t *rplypkt;
@@ -1602,8 +1601,10 @@ bcsp_le_timeout(void *arg)
  * BlueCore Serial Protocol functions.
  */
 static int
-bcsp_enable(struct hci_unit *unit)
+bcsp_enable(device_t self)
 {
+	struct bcsp_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	if (unit->hci_flags & BTF_RUNNING)
 		return 0;
@@ -1615,9 +1616,10 @@ bcsp_enable(struct hci_unit *unit)
 }
 
 static void
-bcsp_disable(struct hci_unit *unit)
+bcsp_disable(device_t self)
 {
-	struct bcsp_softc *sc = unit->hci_softc;
+	struct bcsp_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	if ((unit->hci_flags & BTF_RUNNING) == 0)
 		return;
@@ -1636,9 +1638,10 @@ bcsp_disable(struct hci_unit *unit)
 }
 
 static void
-bcsp_start(struct hci_unit *unit)
+bcsp_start(device_t self)
 {
-	struct bcsp_softc *sc = unit->hci_softc;
+	struct bcsp_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
 	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
