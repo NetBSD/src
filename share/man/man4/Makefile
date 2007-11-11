@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.446 2007/10/29 00:42:28 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.447 2007/11/11 17:45:19 jmcneill Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -32,7 +32,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
 	njata.4 njs.4 \
 	nsclpcsio.4 nsphy.4 nsphyter.4 ntwoc.4 \
 	null.4 nsmb.4 oak.4 oosiop.4 opl.4 options.4 \
-	optiide.4 osiop.4 pas.4 pcdisplay.4 pciide.4 \
+	optiide.4 osiop.4 pad.4 pas.4 pcdisplay.4 pciide.4 \
 	pckbc.4 pckbd.4 pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
 	pdcide.4 pdcsata.4 piixide.4 piixpcib.4 piixpm.4 \
 	pim.4 plip.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 \
