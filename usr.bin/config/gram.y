@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.14 2007/11/10 00:15:43 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.15 2007/11/11 17:35:27 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -627,8 +627,9 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 	/*
 	 * Define attributes for all the given names
 	 */
-	if (defattr(machine, NULL, NULL, 0) != 0
-	    || defattr(machinearch, NULL, NULL, 0) != 0)
+	if (defattr(machine, NULL, NULL, 0) != 0 ||
+	    (machinearch != NULL &&
+	     defattr(machinearch, NULL, NULL, 0) != 0))
 		exit(1);
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
 		if (defattr(nv->nv_name, NULL, NULL, 0) != 0)
