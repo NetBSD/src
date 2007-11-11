@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.21 2007/11/07 00:25:39 njoly Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.22 2007/11/11 18:28:18 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -10,10 +10,9 @@
 #ifndef _LINUX32_SYS_SYSCALLARGS_H_
 #define	_LINUX32_SYS_SYSCALLARGS_H_
 
-#ifdef	syscallarg
-#undef	syscallarg
-#endif
+#define	LINUX32_SYS_MAXSYSARGS	8
 
+#undef	syscallarg
 #define	syscallarg(x)							\
 	union {								\
 		register32_t pad;						\
@@ -27,160 +26,197 @@
 		} be;							\
 	}
 
+#undef check_syscall_args
+#define check_syscall_args(call) \
+	typedef char call##_check_args[sizeof (struct call##_args) \
+		<= LINUX32_SYS_MAXSYSARGS * sizeof (register32_t) ? 1 : -1];
+
 struct linux32_sys_open_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) flags;
 	syscallarg(int) mode;
 };
+check_syscall_args(linux32_sys_open)
 
 struct linux32_sys_waitpid_args {
 	syscallarg(int) pid;
 	syscallarg(netbsd32_intp) status;
 	syscallarg(int) options;
 };
+check_syscall_args(linux32_sys_waitpid)
 
 struct linux32_sys_creat_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) mode;
 };
+check_syscall_args(linux32_sys_creat)
 
 struct linux32_sys_unlink_args {
 	syscallarg(const netbsd32_charp) path;
 };
+check_syscall_args(linux32_sys_unlink)
 
 struct linux32_sys_time_args {
 	syscallarg(linux32_timep_t) t;
 };
+check_syscall_args(linux32_sys_time)
 
 struct linux32_sys_mknod_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) mode;
 	syscallarg(int) dev;
 };
+check_syscall_args(linux32_sys_mknod)
 
 struct linux32_sys_lchown16_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
 };
+check_syscall_args(linux32_sys_lchown16)
 
 struct linux32_sys_break_args {
 	syscallarg(netbsd32_charp) nsize;
 };
+check_syscall_args(linux32_sys_break)
 
 struct linux32_sys_stime_args {
 	syscallarg(linux32_timep_t) t;
 };
+check_syscall_args(linux32_sys_stime)
 
 struct linux32_sys_alarm_args {
 	syscallarg(unsigned int) secs;
 };
+check_syscall_args(linux32_sys_alarm)
 
 struct linux32_sys_utime_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(linux32_utimbufp_t) times;
 };
+check_syscall_args(linux32_sys_utime)
 
 struct linux32_sys_nice_args {
 	syscallarg(int) incr;
 };
+check_syscall_args(linux32_sys_nice)
 
 struct linux32_sys_kill_args {
 	syscallarg(int) pid;
 	syscallarg(int) signum;
 };
+check_syscall_args(linux32_sys_kill)
 
 struct linux32_sys_rename_args {
 	syscallarg(const netbsd32_charp) from;
 	syscallarg(const netbsd32_charp) to;
 };
+check_syscall_args(linux32_sys_rename)
 
 struct linux32_sys_pipe_args {
 	syscallarg(netbsd32_intp) fd;
 };
+check_syscall_args(linux32_sys_pipe)
 
 struct linux32_sys_times_args {
 	syscallarg(linux32_tmsp_t) tms;
 };
+check_syscall_args(linux32_sys_times)
 
 struct linux32_sys_brk_args {
 	syscallarg(netbsd32_charp) nsize;
 };
+check_syscall_args(linux32_sys_brk)
 
 struct linux32_sys_signal_args {
 	syscallarg(int) signum;
 	syscallarg(linux32_handler_t) handler;
 };
+check_syscall_args(linux32_sys_signal)
 
 struct linux32_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(netbsd32_u_long) com;
 	syscallarg(netbsd32_charp) data;
 };
+check_syscall_args(linux32_sys_ioctl)
 
 struct linux32_sys_fcntl_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
 	syscallarg(netbsd32_voidp) arg;
 };
+check_syscall_args(linux32_sys_fcntl)
 
 struct linux32_sys_oldolduname_args {
 	syscallarg(linux32_oldold_utsnamep_t) up;
 };
+check_syscall_args(linux32_sys_oldolduname)
 
 struct linux32_sys_setreuid16_args {
 	syscallarg(int) ruid;
 	syscallarg(int) euid;
 };
+check_syscall_args(linux32_sys_setreuid16)
 
 struct linux32_sys_setregid16_args {
 	syscallarg(int) rgid;
 	syscallarg(int) egid;
 };
+check_syscall_args(linux32_sys_setregid16)
 
 struct linux32_sys_setrlimit_args {
 	syscallarg(u_int) which;
 	syscallarg(netbsd32_orlimitp_t) rlp;
 };
+check_syscall_args(linux32_sys_setrlimit)
 
 struct linux32_sys_getrlimit_args {
 	syscallarg(u_int) which;
 	syscallarg(netbsd32_orlimitp_t) rlp;
 };
+check_syscall_args(linux32_sys_getrlimit)
 
 struct linux32_sys_gettimeofday_args {
 	syscallarg(netbsd32_timevalp_t) tp;
 	syscallarg(netbsd32_timezonep_t) tzp;
 };
+check_syscall_args(linux32_sys_gettimeofday)
 
 struct linux32_sys_settimeofday_args {
 	syscallarg(netbsd32_timevalp_t) tp;
 	syscallarg(netbsd32_timezonep_t) tzp;
 };
+check_syscall_args(linux32_sys_settimeofday)
 
 struct linux32_sys_getgroups16_args {
 	syscallarg(int) gidsetsize;
 	syscallarg(linux32_gidp_t) gidset;
 };
+check_syscall_args(linux32_sys_getgroups16)
 
 struct linux32_sys_setgroups16_args {
 	syscallarg(int) gidsetsize;
 	syscallarg(linux32_gidp_t) gidset;
 };
+check_syscall_args(linux32_sys_setgroups16)
 
 struct linux32_sys_oldselect_args {
 	syscallarg(linux32_oldselectp_t) lsp;
 };
+check_syscall_args(linux32_sys_oldselect)
 
 struct linux32_sys_readlink_args {
 	syscallarg(const netbsd32_charp) name;
 	syscallarg(netbsd32_charp) buf;
 	syscallarg(int) count;
 };
+check_syscall_args(linux32_sys_readlink)
 
 struct linux32_sys_swapon_args {
 	syscallarg(netbsd32_charp) name;
 };
+check_syscall_args(linux32_sys_swapon)
 
 struct linux32_sys_reboot_args {
 	syscallarg(int) magic1;
@@ -188,42 +224,50 @@ struct linux32_sys_reboot_args {
 	syscallarg(int) cmd;
 	syscallarg(netbsd32_voidp) arg;
 };
+check_syscall_args(linux32_sys_reboot)
 
 struct linux32_sys_old_mmap_args {
 	syscallarg(linux32_oldmmapp) lmp;
 };
+check_syscall_args(linux32_sys_old_mmap)
 
 struct linux32_sys_truncate_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(netbsd32_long) length;
 };
+check_syscall_args(linux32_sys_truncate)
 
 struct linux32_sys_fchown16_args {
 	syscallarg(int) fd;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
 };
+check_syscall_args(linux32_sys_fchown16)
 
 struct linux32_sys_getpriority_args {
 	syscallarg(int) which;
 	syscallarg(int) who;
 };
+check_syscall_args(linux32_sys_getpriority)
 
 struct linux32_sys_setpriority_args {
 	syscallarg(int) which;
 	syscallarg(int) who;
 	syscallarg(int) prio;
 };
+check_syscall_args(linux32_sys_setpriority)
 
 struct linux32_sys_statfs_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(linux32_statfsp) sp;
 };
+check_syscall_args(linux32_sys_statfs)
 
 struct linux32_sys_socketcall_args {
 	syscallarg(int) what;
 	syscallarg(netbsd32_voidp) args;
 };
+check_syscall_args(linux32_sys_socketcall)
 
 struct linux32_sys_wait4_args {
 	syscallarg(int) pid;
@@ -231,33 +275,40 @@ struct linux32_sys_wait4_args {
 	syscallarg(int) options;
 	syscallarg(netbsd32_rusagep_t) rusage;
 };
+check_syscall_args(linux32_sys_wait4)
 
 struct linux32_sys_swapoff_args {
 	syscallarg(const netbsd32_charp) path;
 };
+check_syscall_args(linux32_sys_swapoff)
 
 struct linux32_sys_sysinfo_args {
 	syscallarg(linux32_sysinfop_t) arg;
 };
+check_syscall_args(linux32_sys_sysinfo)
 
 struct linux32_sys_sigreturn_args {
 	syscallarg(linux32_sigcontextp_t) scp;
 };
+check_syscall_args(linux32_sys_sigreturn)
 
 struct linux32_sys_clone_args {
 	syscallarg(int) flags;
 	syscallarg(netbsd32_voidp) stack;
 };
+check_syscall_args(linux32_sys_clone)
 
 struct linux32_sys_uname_args {
 	syscallarg(linux32_utsnamep) up;
 };
+check_syscall_args(linux32_sys_uname)
 
 struct linux32_sys_mprotect_args {
 	syscallarg(netbsd32_voidp) addr;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(int) prot;
 };
+check_syscall_args(linux32_sys_mprotect)
 
 struct linux32_sys_llseek_args {
 	syscallarg(int) fd;
@@ -266,12 +317,14 @@ struct linux32_sys_llseek_args {
 	syscallarg(netbsd32_caddr_t) res;
 	syscallarg(int) whence;
 };
+check_syscall_args(linux32_sys_llseek)
 
 struct linux32_sys_getdents_args {
 	syscallarg(int) fd;
 	syscallarg(linux32_direntp_t) dent;
 	syscallarg(unsigned int) count;
 };
+check_syscall_args(linux32_sys_getdents)
 
 struct linux32_sys_select_args {
 	syscallarg(int) nfds;
@@ -280,29 +333,35 @@ struct linux32_sys_select_args {
 	syscallarg(netbsd32_fd_setp_t) exceptfds;
 	syscallarg(netbsd32_timevalp_t) timeout;
 };
+check_syscall_args(linux32_sys_select)
 
 struct linux32_sys_fdatasync_args {
 	syscallarg(int) fd;
 };
+check_syscall_args(linux32_sys_fdatasync)
 
 struct linux32_sys___sysctl_args {
 	syscallarg(linux32___sysctlp_t) lsp;
 };
+check_syscall_args(linux32_sys___sysctl)
 
 struct linux32_sys_sched_getparam_args {
 	syscallarg(pid_t) pid;
 	syscallarg(linux32_sched_paramp_t) sp;
 };
+check_syscall_args(linux32_sys_sched_getparam)
 
 struct linux32_sys_sched_setscheduler_args {
 	syscallarg(pid_t) pid;
 	syscallarg(int) policy;
 	syscallarg(const linux32_sched_paramp_t) sp;
 };
+check_syscall_args(linux32_sys_sched_setscheduler)
 
 struct linux32_sys_sched_getscheduler_args {
 	syscallarg(pid_t) pid;
 };
+check_syscall_args(linux32_sys_sched_getscheduler)
 
 struct linux32_sys_mremap_args {
 	syscallarg(netbsd32_voidp) old_address;
@@ -310,22 +369,26 @@ struct linux32_sys_mremap_args {
 	syscallarg(netbsd32_size_t) new_size;
 	syscallarg(netbsd32_u_long) flags;
 };
+check_syscall_args(linux32_sys_mremap)
 
 struct linux32_sys_setresuid16_args {
 	syscallarg(uid_t) ruid;
 	syscallarg(uid_t) euid;
 	syscallarg(uid_t) suid;
 };
+check_syscall_args(linux32_sys_setresuid16)
 
 struct linux32_sys_setresgid16_args {
 	syscallarg(gid_t) rgid;
 	syscallarg(gid_t) egid;
 	syscallarg(gid_t) sgid;
 };
+check_syscall_args(linux32_sys_setresgid16)
 
 struct linux32_sys_rt_sigreturn_args {
 	syscallarg(linux32_ucontextp_t) ucp;
 };
+check_syscall_args(linux32_sys_rt_sigreturn)
 
 struct linux32_sys_rt_sigaction_args {
 	syscallarg(int) signum;
@@ -333,6 +396,7 @@ struct linux32_sys_rt_sigaction_args {
 	syscallarg(linux32_sigactionp_t) osa;
 	syscallarg(netbsd32_size_t) sigsetsize;
 };
+check_syscall_args(linux32_sys_rt_sigaction)
 
 struct linux32_sys_rt_sigprocmask_args {
 	syscallarg(int) how;
@@ -340,22 +404,26 @@ struct linux32_sys_rt_sigprocmask_args {
 	syscallarg(linux32_sigsetp_t) oset;
 	syscallarg(netbsd32_size_t) sigsetsize;
 };
+check_syscall_args(linux32_sys_rt_sigprocmask)
 
 struct linux32_sys_rt_sigsuspend_args {
 	syscallarg(linux32_sigsetp_t) unewset;
 	syscallarg(netbsd32_size_t) sigsetsize;
 };
+check_syscall_args(linux32_sys_rt_sigsuspend)
 
 struct linux32_sys_chown16_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
 };
+check_syscall_args(linux32_sys_chown16)
 
 struct linux32_sys_ugetrlimit_args {
 	syscallarg(int) which;
 	syscallarg(netbsd32_orlimitp_t) rlp;
 };
+check_syscall_args(linux32_sys_ugetrlimit)
 
 struct linux32_sys_mmap2_args {
 	syscallarg(netbsd32_u_long) addr;
@@ -365,53 +433,63 @@ struct linux32_sys_mmap2_args {
 	syscallarg(int) fd;
 	syscallarg(linux32_off_t) offset;
 };
+check_syscall_args(linux32_sys_mmap2)
 
 struct linux32_sys_stat64_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(linux32_stat64p) sp;
 };
+check_syscall_args(linux32_sys_stat64)
 
 struct linux32_sys_lstat64_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(linux32_stat64p) sp;
 };
+check_syscall_args(linux32_sys_lstat64)
 
 struct linux32_sys_fstat64_args {
 	syscallarg(int) fd;
 	syscallarg(linux32_stat64p) sp;
 };
+check_syscall_args(linux32_sys_fstat64)
 
 struct linux32_sys_setresuid_args {
 	syscallarg(uid_t) ruid;
 	syscallarg(uid_t) euid;
 	syscallarg(uid_t) suid;
 };
+check_syscall_args(linux32_sys_setresuid)
 
 struct linux32_sys_setresgid_args {
 	syscallarg(gid_t) rgid;
 	syscallarg(gid_t) egid;
 	syscallarg(gid_t) sgid;
 };
+check_syscall_args(linux32_sys_setresgid)
 
 struct linux32_sys_setfsuid_args {
 	syscallarg(uid_t) uid;
 };
+check_syscall_args(linux32_sys_setfsuid)
 
 struct linux32_sys_getdents64_args {
 	syscallarg(int) fd;
 	syscallarg(linux32_dirent64p_t) dent;
 	syscallarg(unsigned int) count;
 };
+check_syscall_args(linux32_sys_getdents64)
 
 struct linux32_sys_fcntl64_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
 	syscallarg(netbsd32_voidp) arg;
 };
+check_syscall_args(linux32_sys_fcntl64)
 
 struct linux32_sys_exit_group_args {
 	syscallarg(int) error_code;
 };
+check_syscall_args(linux32_sys_exit_group)
 
 /*
  * System call prototypes.
