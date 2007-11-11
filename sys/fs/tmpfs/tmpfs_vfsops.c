@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.27.2.4 2007/11/06 21:16:24 joerg Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.27.2.5 2007/11/11 16:47:56 joerg Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,11 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.2.4 2007/11/06 21:16:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.2.5 2007/11/11 16:47:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.2.4 2007/11/06 21:16:24 joerg 
 #include <sys/proc.h>
 
 #include <fs/tmpfs/tmpfs.h>
+
+MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
+MALLOC_JUSTDEFINE(M_TMPFSTMP, "tmpfs temp", "tmpfs temporary structures");
 
 /* --------------------------------------------------------------------- */
 
@@ -104,12 +107,10 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		tmp = VFS_TO_TMPFS(mp);
 
 		args->ta_version = TMPFS_ARGS_VERSION;
-		mutex_enter(&tmp->tm_lock);
 		args->ta_nodes_max = tmp->tm_nodes_max;
 		args->ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
-		root = tmp->tm_root;
-		mutex_exit(&tmp->tm_lock);
 
+		root = tmp->tm_root;
 		args->ta_root_uid = root->tn_uid;
 		args->ta_root_gid = root->tn_gid;
 		args->ta_root_mode = root->tn_mode;
@@ -151,15 +152,14 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
-	tmp = kmem_alloc(sizeof(struct tmpfs_mount), KM_SLEEP);
-	if (tmp == NULL)
-		return ENOMEM;
+	tmp = (struct tmpfs_mount *)malloc(sizeof(struct tmpfs_mount),
+	    M_TMPFSMNT, M_WAITOK);
+	KASSERT(tmp != NULL);
 
 	tmp->tm_nodes_max = nodes;
-	tmp->tm_nodes_cnt = 0;
-	LIST_INIT(&tmp->tm_nodes);
-
-	mutex_init(&tmp->tm_lock, MUTEX_DEFAULT, IPL_NONE);
+	tmp->tm_nodes_last = 2;
+	LIST_INIT(&tmp->tm_nodes_used);
+	LIST_INIT(&tmp->tm_nodes_avail);
 
 	tmp->tm_pages_max = pages;
 	tmp->tm_pages_used = 0;
@@ -181,7 +181,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE;
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
@@ -225,7 +224,10 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * a directory, we free all its directory entries.  Note that after
 	 * freeing a node, it will automatically go to the available list,
 	 * so we will later have to iterate over it to release its items. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
+	node = LIST_FIRST(&tmp->tm_nodes_used);
+	while (node != NULL) {
+		struct tmpfs_node *next;
+
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
@@ -241,7 +243,18 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 			}
 		}
 
+		next = LIST_NEXT(node, tn_entries);
 		tmpfs_free_node(tmp, node);
+		node = next;
+	}
+	node = LIST_FIRST(&tmp->tm_nodes_avail);
+	while (node != NULL) {
+		struct tmpfs_node *next;
+
+		next = LIST_NEXT(node, tn_entries);
+		LIST_REMOVE(node, tn_entries);
+		TMPFS_POOL_PUT(&tmp->tm_node_pool, node);
+		node = next;
 	}
 
 	tmpfs_pool_destroy(&tmp->tm_dirent_pool);
@@ -251,8 +264,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	KASSERT(tmp->tm_pages_used == 0);
 
 	/* Throw away the tmpfs_mount structure. */
-	mutex_destroy(&tmp->tm_lock);
-	kmem_free(tmp, sizeof(*tmp));
+	free(mp->mnt_data, M_TMPFSMNT);
 	mp->mnt_data = NULL;
 
 	return 0;
@@ -306,23 +318,18 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
 
-	mutex_enter(&tmp->tm_lock);
-	if (tfh.tf_id >= tmp->tm_nodes_max) {
-		mutex_exit(&tmp->tm_lock);
+	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
-	}
 
 	found = false;
-	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
+	LIST_FOREACH(node, &tmp->tm_nodes_used, tn_entries) {
 		if (node->tn_id == tfh.tf_id &&
 		    node->tn_gen == tfh.tf_gen) {
 			found = true;
 			break;
 		}
 	}
-	mutex_exit(&tmp->tm_lock);
 
-	/* XXXAD nothing to prevent 'node' from being removed. */
 	return found ? tmpfs_alloc_vp(mp, node, vpp) : EINVAL;
 }
 
@@ -356,12 +363,11 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 static int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
-	fsfilcnt_t freenodes;
+	fsfilcnt_t freenodes, usednodes;
 	struct tmpfs_mount *tmp;
+	struct tmpfs_node *dummy;
 
 	tmp = VFS_TO_TMPFS(mp);
-
-	mutex_enter(&tmp->tm_lock);
 
 	sbp->f_iosize = sbp->f_frsize = sbp->f_bsize = PAGE_SIZE;
 
@@ -369,14 +375,18 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_bavail = sbp->f_bfree = TMPFS_PAGES_AVAIL(tmp);
 	sbp->f_bresvd = 0;
 
-	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_cnt,
+	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_last,
 	    TMPFS_PAGES_AVAIL(tmp) * PAGE_SIZE / sizeof(struct tmpfs_node));
+	LIST_FOREACH(dummy, &tmp->tm_nodes_avail, tn_entries)
+		freenodes++;
 
-	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
+	usednodes = 0;
+	LIST_FOREACH(dummy, &tmp->tm_nodes_used, tn_entries)
+		usednodes++;
+
+	sbp->f_files = freenodes + usednodes;
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
-
-	mutex_exit(&tmp->tm_lock);
 
 	copy_statvfs_info(sbp, mp);
 
@@ -400,6 +410,8 @@ static void
 tmpfs_init(void)
 {
 
+	malloc_type_attach(M_TMPFSMNT);
+	malloc_type_attach(M_TMPFSTMP);
 }
 
 /* --------------------------------------------------------------------- */
@@ -408,6 +420,8 @@ static void
 tmpfs_done(void)
 {
 
+	malloc_type_detach(M_TMPFSTMP);
+	malloc_type_detach(M_TMPFSMNT);
 }
 
 /* --------------------------------------------------------------------- */

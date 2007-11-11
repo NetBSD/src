@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.14.2.4 2007/11/04 21:03:48 jmcneill Exp $	*/
+/*	$NetBSD: rump.c,v 1.14.2.5 2007/11/11 16:48:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,8 @@ struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
 
+kmutex_t rump_giantlock;
+
 struct fakeblk {
 	char path[MAXPATHLEN];
 	LIST_ENTRY(fakeblk) entries;
@@ -98,6 +100,8 @@ rump_init()
 	rump_sleepers_init();
 	rumpuser_thrinit();
 
+	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+
 	/* aieeeedondest */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    rump_aiodone_worker, NULL, 0, 0, 0))
@@ -118,6 +122,8 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
+
+	mount_initspecific(mp);
 
 	return mp;
 }
@@ -149,6 +155,7 @@ void
 rump_mnt_destroy(struct mount *mp)
 {
 
+	mount_finispecific(mp);
 	rumpuser_free(mp);
 }
 
@@ -487,6 +494,17 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
+/*ARGSUSED*/
+void
+rump_vfs_syncwait(struct mount *mp)
+{
+	int n;
+
+	n = buf_syncwait();
+	if (n)
+		printf("syncwait: unsynced buffers: %d\n", n);
+}
+
 void
 rump_bioops_sync()
 {
@@ -540,6 +558,44 @@ rump_get_curlwp()
 	return l;
 }
 
+int
+rump_splfoo()
+{
+
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
+		rumpuser_rw_enter(&rumpspl, 0);
+		rumpuser_set_ipl(RUMPUSER_IPL_SPLFOO);
+	}
+
+	return 0;
+}
+
+static void
+rump_intr_enter(void)
+{
+
+	rumpuser_set_ipl(RUMPUSER_IPL_INTR);
+	rumpuser_rw_enter(&rumpspl, 1);
+}
+
+static void
+rump_intr_exit(void)
+{
+
+	rumpuser_rw_exit(&rumpspl);
+	rumpuser_clear_ipl(RUMPUSER_IPL_INTR);
+}
+
+void
+rump_splx(int dummy)
+{
+
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
+		rumpuser_clear_ipl(RUMPUSER_IPL_SPLFOO);
+		rumpuser_rw_exit(&rumpspl);
+	}
+}
+
 void
 rump_biodone(void *arg, size_t count, int error)
 {
@@ -548,5 +604,8 @@ rump_biodone(void *arg, size_t count, int error)
 	bp->b_resid = bp->b_bcount - count;
 	KASSERT(bp->b_resid >= 0);
 	bp->b_error = error;
+
+	rump_intr_enter();
 	biodone(bp);
+	rump_intr_exit();
 }

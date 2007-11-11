@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12.8.1 2007/10/26 15:42:49 joerg Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.12.8.2 2007/11/11 16:46:42 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -51,9 +51,6 @@ struct confargs {
 /* there are in locore.S */
 void ofbcopy(const void *, void *, size_t);
 int badaddr(volatile void *, int);
-
-/* these are in autoconf.c */
-int getnodebyname(int, const char *);
 
 /* these are in clock.c */
 void calc_delayconst(void);

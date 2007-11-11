@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.1.2.2 2007/10/31 23:14:16 joerg Exp $	*/
+/*	$NetBSD: locks.c,v 1.1.2.3 2007/11/11 16:48:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,8 @@
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
+
+#include "rump_private.h"
 
 #include "rumpuser.h"
 
@@ -158,4 +160,24 @@ cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+/* kernel biglock, only for vnode_if */
+
+void
+_kernel_lock(int nlocks, struct lwp *l)
+{
+
+	KASSERT(nlocks == 1);
+	mutex_enter(&rump_giantlock);
+}
+
+void
+_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+{
+
+	KASSERT(nlocks == 1);
+	mutex_exit(&rump_giantlock);
+	if (countp)
+		*countp = 1;
 }

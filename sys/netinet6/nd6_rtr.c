@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.66.4.2 2007/11/04 21:03:45 jmcneill Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.66.4.3 2007/11/11 16:48:36 joerg Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.66.4.2 2007/11/04 21:03:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.66.4.3 2007/11/11 16:48:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,9 +316,8 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 			}
 
 			bzero(&pr, sizeof(pr));
-			pr.ndpr_prefix.sin6_family = AF_INET6;
-			pr.ndpr_prefix.sin6_len = sizeof(pr.ndpr_prefix);
-			pr.ndpr_prefix.sin6_addr = pi->nd_opt_pi_prefix;
+			sockaddr_in6_init(&pr.ndpr_prefix,
+			    &pi->nd_opt_pi_prefix, 0, 0, 0);
 			pr.ndpr_ifp = (struct ifnet *)m->m_pkthdr.rcvif;
 
 			pr.ndpr_raf_onlink = (pi->nd_opt_pi_flags_reserved &
@@ -1633,15 +1632,8 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 		return (EEXIST);
 	}
 
-	bzero(&sa6, sizeof(sa6));
-	sa6.sin6_family = AF_INET6;
-	sa6.sin6_len = sizeof(sa6);
-	bcopy(&pr->ndpr_prefix.sin6_addr, &sa6.sin6_addr,
-	    sizeof(struct in6_addr));
-	bzero(&mask6, sizeof(mask6));
-	mask6.sin6_family = AF_INET6;
-	mask6.sin6_len = sizeof(sa6);
-	bcopy(&pr->ndpr_mask, &mask6.sin6_addr, sizeof(struct in6_addr));
+	sockaddr_in6_init(&sa6, &pr->ndpr_prefix.sin6_addr, 0, 0, 0);
+	sockaddr_in6_init(&mask6, &pr->ndpr_mask, 0, 0, 0);
 	error = rtrequest(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
 	    (struct sockaddr *)&mask6, 0, &rt);
 	if (error == 0) {
@@ -1773,10 +1765,8 @@ in6_ifadd(struct nd_prefixctl *pr, int mcast)
 	 * for safety.
 	 */
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
-	ifra.ifra_addr.sin6_family = AF_INET6;
-	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
+	sockaddr_in6_init(&ifra.ifra_addr, &pr->ndpr_prefix.sin6_addr, 0, 0, 0);
 	/* prefix */
-	ifra.ifra_addr.sin6_addr = pr->ndpr_prefix.sin6_addr;
 	ifra.ifra_addr.sin6_addr.s6_addr32[0] &= mask.s6_addr32[0];
 	ifra.ifra_addr.sin6_addr.s6_addr32[1] &= mask.s6_addr32[1];
 	ifra.ifra_addr.sin6_addr.s6_addr32[2] &= mask.s6_addr32[2];
@@ -1793,10 +1783,7 @@ in6_ifadd(struct nd_prefixctl *pr, int mcast)
 	    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
 
 	/* new prefix mask. */
-	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_prefixmask.sin6_family = AF_INET6;
-	bcopy(&mask, &ifra.ifra_prefixmask.sin6_addr,
-	    sizeof(ifra.ifra_prefixmask.sin6_addr));
+	sockaddr_in6_init(&ifra.ifra_prefixmask, &mask, 0, 0, 0);
 
 	/* lifetimes */
 	ifra.ifra_lifetime.ia6t_vltime = pr->ndpr_vltime;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.17.4.1 2007/09/03 16:47:50 jmcneill Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.17.4.2 2007/11/11 16:47:06 joerg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.1 2007/09/03 16:47:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.2 2007/11/11 16:47:06 joerg Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -667,7 +667,7 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	}
 
 	if (m)
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 

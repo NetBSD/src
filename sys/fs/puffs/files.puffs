@@ -1,10 +1,9 @@
-#	$NetBSD: files.puffs,v 1.2.22.1 2007/10/02 18:28:52 joerg Exp $
+#	$NetBSD: files.puffs,v 1.2.22.2 2007/11/11 16:47:50 joerg Exp $
 
 deffs	PUFFS
 
 file	fs/puffs/puffs_msgif.c		puffs
 file	fs/puffs/puffs_node.c		puffs
 file	fs/puffs/puffs_subr.c		puffs
-file	fs/puffs/puffs_transport.c	puffs
 file	fs/puffs/puffs_vfsops.c		puffs
 file	fs/puffs/puffs_vnops.c		puffs

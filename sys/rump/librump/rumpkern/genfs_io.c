@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.2.2.5 2007/11/06 19:25:36 joerg Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.2.2.6 2007/11/11 16:48:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -199,13 +199,12 @@ genfs_getpages(void *v)
 		bp->b_blkno = bn;
 		bp->b_lblkno = 0;
 		bp->b_flags = B_READ | B_BUSY;
+		bp->b_vp = vp;
 
 		if (async) {
 			bp->b_flags |= B_ASYNC | B_CALL;
 			bp->b_iodone = uvm_aio_biodone;
 		}
-
-		bp->b_vp = vp;
 
 		VOP_STRATEGY(devvp, bp);
 		if (bp->b_error)

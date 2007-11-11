@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.80.6.1 2007/10/26 15:48:56 joerg Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.80.6.2 2007/11/11 16:48:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.80.6.1 2007/10/26 15:48:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.80.6.2 2007/11/11 16:48:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.80.6.1 2007/10/26 15:48:56 joerg E
 
 void procfs_hashins(struct pfsnode *);
 void procfs_hashrem(struct pfsnode *);
-struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *);
+struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *, int);
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
@@ -177,7 +177,9 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	struct vnode *vp;
 	int error;
 
-	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
+ retry:
+	*vpp = procfs_hashget(pid, pfs_type, fd, mp, LK_EXCLUSIVE);
+	if (*vpp != NULL)
 		return (0);
 
 	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
@@ -187,15 +189,14 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 
 	mutex_enter(&pfs_hashlock);
-	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL) {
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp, 0)) != NULL) {
 		mutex_exit(&pfs_hashlock);
 		ungetnewvnode(vp);
 		FREE(pfs, M_TEMP);
-		return (0);
+		goto retry;
 	}
 
 	vp->v_data = pfs;
-
 	pfs->pfs_pid = pid;
 	pfs->pfs_type = pfs_type;
 	pfs->pfs_vnode = vp;
@@ -205,7 +206,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 
 	switch (pfs_type) {
 	case PFSroot:	/* /proc = dr-xr-xr-x */
-		vp->v_vflag = VV_ROOT;
+		vp->v_vflag |= VV_ROOT;
 		/*FALLTHROUGH*/
 	case PFSproc:	/* /proc/N = dr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
@@ -229,9 +230,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 			struct file *fp;
 			struct vnode *vxp;
 
-			mutex_enter(&p->p_mutex);
 			fp = fd_getfile(p->p_fd, pfs->pfs_fd);
-			mutex_exit(&p->p_mutex);
 			if (fp == NULL) {
 				error = EBADF;
 				goto bad;
@@ -326,6 +325,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
  bad:
 	mutex_exit(&pfs_hashlock);
 	FREE(pfs, M_TEMP);
+	vp->v_data = NULL;
 	ungetnewvnode(vp);
 	return (error);
 }
@@ -598,11 +598,12 @@ procfs_hashdone()
 }
 
 struct vnode *
-procfs_hashget(pid, type, fd, mp)
+procfs_hashget(pid, type, fd, mp, flags)
 	pid_t pid;
 	pfstype type;
 	int fd;
 	struct mount *mp;
+	int flags;
 {
 	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;
@@ -615,10 +616,14 @@ loop:
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
-			simple_lock(&vp->v_interlock);
-			mutex_exit(&pfs_ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
+		    	if (flags == 0) {
+				mutex_exit(&pfs_ihash_lock);
+			} else {
+				simple_lock(&vp->v_interlock);
+				mutex_exit(&pfs_ihash_lock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return (vp);
 		}
 	}
@@ -669,14 +674,25 @@ procfs_revoke_vnodes(p, arg)
 	if (!(p->p_flag & PK_SUGID))
 		return;
 
+	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(p->p_pid)];
 	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
 		pnext = LIST_NEXT(pfs, pfs_hash);
+		simple_lock(&vp->v_interlock);
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
-		    vp->v_mount == mp)
+		    vp->v_mount == mp) {
+		    	vp->v_usecount++;
+		    	simple_unlock(&vp->v_interlock);
+			mutex_exit(&pfs_ihash_lock);
 			VOP_REVOKE(vp, REVOKEALL);
+			vrele(vp);
+			mutex_enter(&pfs_ihash_lock);
+		} else {
+			simple_unlock(&vp->v_interlock);
+		}
 	}
+	mutex_exit(&pfs_ihash_lock);
 }
 
 int
@@ -691,12 +707,8 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 		tp = &proc0;
 	else if ((tp = p_find(pid, PFIND_LOCKED)) == NULL)
 		error = notfound;
-
-	if (tp != NULL) {
-		mutex_enter(&tp->p_mutex);
-		error = proc_addref(tp);
-		mutex_exit(&tp->p_mutex);
-	}
+	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
+		error = EBUSY;
 
 	mutex_exit(&proclist_lock);
 
@@ -707,9 +719,8 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 void
 procfs_proc_unlock(struct proc *p)
 {
-	mutex_enter(&p->p_mutex);
-	proc_delref(p);
-	mutex_exit(&p->p_mutex);
+
+	rw_exit(&p->p_reflock);
 }
 
 int

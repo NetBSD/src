@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.1.2.3 2007/11/04 21:03:48 jmcneill Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.1.2.4 2007/11/11 16:48:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
 #include <sys/queue.h>
 
 #include "rump_private.h"
+#include "rumpuser.h"
 
 struct ltsleeper {
 	wchan_t id;
@@ -48,16 +49,29 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
 	struct ltsleeper lts;
+	int iplrecurse;
 
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
 	mutex_enter(&sleepermtx);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
+
+	/* release spl */
+	iplrecurse = rumpuser_whatis_ipl();
+	while (iplrecurse--)
+		rumpuser_rw_exit(&rumpspl);
+
 	/* protected by sleepermtx */
 	if (slock)
 		simple_unlock(slock);
 	cv_wait(&lts.cv, &sleepermtx);
+
+	/* retake ipl */
+	iplrecurse = rumpuser_whatis_ipl();
+	while (iplrecurse--)
+		rumpuser_rw_enter(&rumpspl, 0);
+
 	LIST_REMOVE(&lts, entries);
 	mutex_exit(&sleepermtx);
 

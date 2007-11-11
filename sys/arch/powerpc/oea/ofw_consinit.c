@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.1.6.3 2007/11/06 19:25:06 joerg Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.1.6.4 2007/11/11 16:46:50 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.6.3 2007/11/06 19:25:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.6.4 2007/11/11 16:46:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.6.3 2007/11/06 19:25:06 joerg E
 
 #include "akbd.h"
 #include "adbkbd.h"
+#include "wsdisplay.h"
 #include "ofb.h"
 #include "isa.h"
 
@@ -210,7 +211,7 @@ cninit_kd(void)
 	 * Attach the console output now (so we can see debugging messages,
 	 * if any).
 	 */
-#if NOFB > 0
+#if NWSDISPLAY > 0
 	ofb_cnattach();
 #endif
 

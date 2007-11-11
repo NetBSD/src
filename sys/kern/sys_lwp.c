@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.23.2.4 2007/11/06 19:25:34 joerg Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.23.2.5 2007/11/11 16:48:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.23.2.4 2007/11/06 19:25:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.23.2.5 2007/11/11 16:48:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,4 +733,78 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		uvm_kick_scheduler();
 
 	return 0;
+}
+
+int
+sys__lwp_setname(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_setname_args /* {
+		syscallarg(lwpid_t)		target;
+		syscallarg(const char *)	name;
+	} */ *uap = v;
+	char *name, *oname;
+	proc_t *p;
+	lwp_t *t;
+	int error;
+
+	name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
+	if (name == NULL)
+		return ENOMEM;
+	error = copyinstr(SCARG(uap, name), name, MAXCOMLEN, NULL);
+	switch (error) {
+	case ENAMETOOLONG:
+	case 0:
+		name[MAXCOMLEN - 1] = '\0';
+		break;
+	default:
+		kmem_free(name, MAXCOMLEN);
+		return error;
+	}
+
+	p = curproc;
+	mutex_enter(&p->p_smutex);
+	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
+		mutex_exit(&p->p_smutex);
+		kmem_free(name, MAXCOMLEN);
+		return ESRCH;
+	}
+	lwp_lock(t);
+	oname = t->l_name;
+	t->l_name = name;
+	lwp_unlock(t);
+	mutex_exit(&p->p_smutex);
+
+	if (oname != NULL)
+		kmem_free(oname, MAXCOMLEN);
+
+	return 0;
+}
+
+int
+sys__lwp_getname(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_getname_args /* {
+		syscallarg(lwpid_t)		target;
+		syscallarg(char *)		name;
+		syscallarg(size_t)		len;
+	} */ *uap = v;
+	char name[MAXCOMLEN];
+	proc_t *p;
+	lwp_t *t;
+
+	p = curproc;
+	mutex_enter(&p->p_smutex);
+	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
+		mutex_exit(&p->p_smutex);
+		return ESRCH;
+	}
+	lwp_lock(t);
+	if (t->l_name == NULL)
+		name[0] = '\0';
+	else
+		strcpy(name, t->l_name);
+	lwp_unlock(t);
+	mutex_exit(&p->p_smutex);
+
+	return copyoutstr(name, SCARG(uap, name), SCARG(uap, len), NULL);
 }

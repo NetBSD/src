@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.96.4.2 2007/10/26 15:49:30 joerg Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.96.4.3 2007/11/11 16:48:55 joerg Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.4.2 2007/10/26 15:49:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.4.3 2007/11/11 16:48:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1224,11 +1224,11 @@ softdep_initialize()
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
-	max_softdeps = desiredvnodes * 4;
-	pagedep_hashtbl = hashinit(desiredvnodes / 5, HASH_LIST, M_PAGEDEP,
+	max_softdeps = desiredvnodes / 4;
+	pagedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_PAGEDEP,
 	    M_WAITOK, &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
-	inodedep_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_INODEDEP,
+	inodedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_INODEDEP,
 	    M_WAITOK, &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
 	newblk_hashtbl = hashinit(64, HASH_LIST, M_NEWBLK, M_WAITOK,

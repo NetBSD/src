@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.26.16.1 2007/11/06 21:16:23 joerg Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.16.2 2007/11/11 16:47:54 joerg Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -223,9 +223,6 @@ struct tmpfs_node {
 	 * allocated for it or it has been reclaimed). */
 	struct vnode *		tn_vnode;
 
-	/* Lock on tn_vnode. */
-	kmutex_t		tn_vlock;
-
 	/* Pointer to the node returned by tmpfs_lookup() after doing a
 	 * delete or a rename lookup; its value is only valid in these two
 	 * situations.  In case we were looking up . or .., it holds a null
@@ -296,9 +293,6 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
  * Internal representation of a tmpfs mount point.
  */
 struct tmpfs_mount {
-	/* Lock on global data */
-	kmutex_t		tm_lock;
-
 	/* Maximum number of memory pages available for use by the file
 	 * system, set during mount time.  This variable must never be
 	 * used directly as it may be bigger than the current amount of
@@ -325,10 +319,23 @@ struct tmpfs_mount {
 	/* Number of nodes currently allocated.  This number only grows.
 	 * When it reaches tm_nodes_max, no more new nodes can be allocated.
 	 * Of course, the old, unused ones can be reused. */
-	ino_t			tm_nodes_cnt;
+	ino_t			tm_nodes_last;
 
-	/* Node list. */
-	struct tmpfs_node_list	tm_nodes;
+	/* Nodes are organized in two different lists.  The used list
+	 * contains all nodes that are currently used by the file system;
+	 * i.e., they refer to existing files.  The available list contains
+	 * all nodes that are currently available for use by new files.
+	 * Nodes must be kept in this list (instead of deleting them)
+	 * because we need to keep track of their generation number (tn_gen
+	 * field).
+	 *
+	 * Note that nodes are lazily allocated: if the available list is
+	 * empty and we have enough space to create more nodes, they will be
+	 * created and inserted in the used list.  Once these are released,
+	 * they will go into the available list, remaining alive until the
+	 * file system is unmounted. */
+	struct tmpfs_node_list	tm_nodes_used;
+	struct tmpfs_node_list	tm_nodes_avail;
 
 	/* Pools used to store file system meta data.  These are not shared
 	 * across several instances of tmpfs for the reasons described in

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.3.2.5 2007/11/06 19:25:36 joerg Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.3.2.6 2007/11/11 16:48:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -52,6 +52,8 @@
 struct lwp;
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
+
+extern kmutex_t rump_giantlock;
 
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
