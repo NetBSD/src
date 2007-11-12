@@ -1,4 +1,4 @@
-/*	$NetBSD: puttervar.h,v 1.1 2007/11/10 21:45:05 pooka Exp $	*/
+/*	$NetBSD: puttervar.h,v 1.1 2007/11/12 14:30:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
