@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.11 2007/11/11 18:30:15 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.12 2007/11/12 12:06:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -86,15 +86,7 @@ acpi_md_sleep_exit:
 	movq	r_rsp,%rsp
 
 	movq	r_rbx,%rbx
-	movq	r_rcx,%rcx
-	movq	r_rdx,%rdx
 	movq	r_rbp,%rbp
-	movq	r_rsi,%rsi
-	movq	r_rdi,%rdi
-	movq	r_r8,%r8
-	movq	r_r9,%r9
-	movq	r_r10,%r10
-	movq	r_r11,%r11
 	movq	r_r12,%r12
 	movq	r_r13,%r13
 	movq	r_r14,%r14
@@ -113,15 +105,7 @@ acpi_md_sleep_exit:
 	.globl acpi_md_sleep_prepare
 acpi_md_sleep_prepare:
 	movq	%rbx,r_rbx
-	movq	%rcx,r_rcx
-	movq	%rdx,r_rdx
 	movq	%rbp,r_rbp
-	movq	%rsi,r_rsi
-	movq	%rdi,r_rdi
-	movq	%r8,r_r8
-	movq	%r9,r_r9
-	movq	%r10,r_r10
-	movq	%r11,r_r11
 	movq	%r12,r_r12
 	movq	%r13,r_r13
 	movq	%r14,r_r14
@@ -170,7 +154,6 @@ acpi_md_sleep_prepare:
 	movq	(%rsp),%rax
 	movq	%rax,ret_addr
 
-	movq	r_rdi, %rdi
 	call	acpi_md_sleep_enter
 	/* acpi_md_sleep_enter only returns on failure. */
 	movl	$-1,%eax
@@ -197,21 +180,13 @@ r_gs_kernelbase_h:
 r_msr_efer:
 		.long	0
 r_rbx:		.quad	0
-r_rcx:		.quad	0
-r_rdx:		.quad	0
 r_rbp:		.quad	0
-r_rsi:		.quad	0
-r_rdi:		.quad	0
 r_rsp:		.quad	0
-r_rfl:		.quad	0
-r_r8:		.quad	0
-r_r9:		.quad	0
-r_r10:		.quad	0
-r_r11:		.quad	0
 r_r12:		.quad	0
 r_r13:		.quad	0
 r_r14:		.quad	0
 r_r15:		.quad	0
+r_rfl:		.quad	0
 
 	.globl acpi_wakeup_cr0
 acpi_wakeup_cr0:
@@ -230,9 +205,5 @@ r_gdt:		.word	0
 r_idt:		.word	0
 		.quad	0
 
-	.globl acpi_wakeup_ret_addr
-acpi_wakeup_ret_addr:
 ret_addr:	.quad	0
-
-.globl r_save_gdt
 r_save_gdt:	.quad	0
