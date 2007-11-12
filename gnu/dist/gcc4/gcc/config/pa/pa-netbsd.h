@@ -80,6 +80,9 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #define LINK_SPEC NETBSD_LINK_SPEC_ELF
 
+/* NetBSD profiling functions don't need gcc to allocate counters.  */
+#define NO_DEFERRED_PROFILE_COUNTERS 1
+
 /* Define the strings used for the special svr4 .type and .size directives.
    These strings generally do not vary from one system running svr4 to
    another, but if a given system (e.g. m88k running svr) needs to use
