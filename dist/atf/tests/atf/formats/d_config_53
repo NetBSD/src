@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-config; version="1"
+
+foo = "Correct value" # With comment.
+
+bar = # A comment.
+
+baz = "Last variable"
+
+# End of file.

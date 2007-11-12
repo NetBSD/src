@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-tcs; version="1"
+
+tcs-count: 1
+tc-start: foo
+tc-end: foo, passed
+tc-start: bar
+tc-end: bar, passed

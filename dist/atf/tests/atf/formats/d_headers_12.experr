@@ -1,0 +1,12 @@
+2: Unexpected token `b'; expected `:'
+3: Unexpected token `<<NEWLINE>>'; expected a textual value
+4: Unexpected token `<<NEWLINE>>'; expected an attribute name
+5: Unexpected token `<<NEWLINE>>'; expected `='
+6: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+7: Missing double quotes before end of line
+8: Missing double quotes before end of line
+9: Unexpected token `<<NEWLINE>>'; expected an attribute name
+10: Unexpected token `<<NEWLINE>>'; expected `='
+11: Unexpected token `<<NEWLINE>>'; expected word or quoted string
+12: Missing double quotes before end of line
+13: Missing double quotes before end of line
