@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1083 2007/11/12 16:39:37 pooka Exp $
+#	$NetBSD: mi,v 1.1084 2007/11/12 23:12:00 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1860,6 +1860,7 @@
 ./usr/include/sys/lock.h			comp-c-include
 ./usr/include/sys/lockf.h			comp-c-include
 ./usr/include/sys/lwp.h				comp-c-include
+./usr/include/sys/lwpctl.h			comp-c-include
 ./usr/include/sys/malloc.h			comp-c-include
 ./usr/include/sys/mallocvar.h			comp-c-include
 ./usr/include/sys/map.h				comp-obsolete		obsolete
