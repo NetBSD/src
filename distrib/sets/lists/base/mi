@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.726 2007/11/09 21:18:22 plunky Exp $
+# $NetBSD: mi,v 1.727 2007/11/12 14:57:35 jmmv Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1324,6 +1324,11 @@
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
+./usr/share/atf					base-atf-share
+./usr/share/atf/atf.config.subr			base-atf-share
+./usr/share/atf/atf.footer.subr			base-atf-share
+./usr/share/atf/atf.header.subr			base-atf-share
+./usr/share/atf/atf.init.subr			base-atf-share
 ./usr/share/calendar				base-calendar-share
 ./usr/share/calendar/calendar.birthday		base-calendar-share	share
 ./usr/share/calendar/calendar.christian		base-calendar-share	share
