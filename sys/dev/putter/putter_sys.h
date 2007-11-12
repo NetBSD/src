@@ -1,4 +1,4 @@
-/*	$NetBSD: puttervar.h,v 1.1 2007/11/12 14:30:56 pooka Exp $	*/
+/*	$NetBSD: putter_sys.h,v 1.1 2007/11/12 16:39:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,15 +28,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_PUTTER_H_
-#define _SYS_PUTTER_H_
+#ifndef _DEV_PUTTER_PUTTERSYS_H_
+#define _DEV_PUTTER_PUTTERSYS_H_
 
 #include <sys/param.h>
-#include <sys/select.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/queue.h>
-#include <sys/pool.h>
+#include <sys/proc.h>
+
+#include <dev/putter/putter.h>
 
 struct putter_ops {
 	int	(*pop_getout)(void *, size_t, int, uint8_t **,size_t *,void **);
@@ -52,4 +50,4 @@ struct putter_instance	*putter_attach(pid_t, int, void *,
 void			putter_detach(struct putter_instance *);
 void			putter_notify(struct putter_instance *);
 
-#endif /* _SYS_PUTTER_H_ */
+#endif /* _DEV_PUTTER_PUTTERSYS_H_ */

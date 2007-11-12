@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.15 2007/10/31 16:09:09 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.16 2007/11/12 16:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.15 2007/10/31 16:09:09 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.16 2007/11/12 16:39:35 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -66,24 +66,25 @@ puffs_req_makeget(struct puffs_usermount *pu, size_t buflen, int maxops)
 int
 puffs_req_loadget(struct puffs_getreq *pgr)
 {
-	struct puffs_frame pfr;
+	struct putter_hdr pth;
 	uint8_t *buf;
 	size_t rlen;
 	int fd = pgr->pgr_pu->pu_fd;
 
 	assert(pgr->pgr_buf == NULL);
 
-	if (read(fd, &pfr, sizeof(struct puffs_frame)) == -1) {
+	if (read(fd, &pth, sizeof(struct putter_hdr)) == -1) {
 		if (errno == EWOULDBLOCK)
 			return 0;
 		return -1;
 	}
-	buf = malloc(pfr.pfr_alloclen);
+	buf = malloc(PUFFS_MSG_MAXSIZE); /* XXX */
 	assert(buf != NULL); /* XXX: a bit more grace here, thanks */
-	memcpy(buf, &pfr, sizeof(pfr));
+	memcpy(buf, &pth, sizeof(pth));
 
-	rlen = pfr.pfr_len - sizeof(pfr);
-	if (read(fd, buf + sizeof(pfr), rlen) != rlen) { /* XXX */
+	/* LINTED */
+	rlen = pth.pth_framelen - sizeof(pth);
+	if (read(fd, buf + sizeof(pth), rlen) != rlen) { /* XXX */
 		free(buf);
 		return -1;
 	}
@@ -149,9 +150,9 @@ puffs_req_put(struct puffs_putreq *ppr, struct puffs_req *preq)
 	ssize_t n;
 
 	/* LINTED conversion is benign, says author; may revisit */
-	preq->preq_frhdr.pfr_len = preq->preq_buflen;
-	n = write(ppr->ppr_pu->pu_fd, preq, preq->preq_frhdr.pfr_len);
-	assert(n == preq->preq_frhdr.pfr_len);
+	preq->preq_pth.pth_framelen = preq->preq_buflen;
+	n = write(ppr->ppr_pu->pu_fd, preq, preq->preq_pth.pth_framelen);
+	assert(n == preq->preq_pth.pth_framelen);
 }
 
 /*
