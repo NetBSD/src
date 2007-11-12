@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.79 2007/11/10 20:06:23 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.80 2007/11/12 18:44:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.79 2007/11/10 20:06:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.80 2007/11/12 18:44:43 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1657,6 +1657,4 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
-	x86_errata(ci, cpu_vendor);
-
 }
