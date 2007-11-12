@@ -1,4 +1,4 @@
-/*	$NetBSD: putter_sys.h,v 1.1 2007/11/12 16:39:33 pooka Exp $	*/
+/*	$NetBSD: putter_sys.h,v 1.2 2007/11/12 17:42:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@ struct putter_ops {
 	int	(*pop_getout)(void *, size_t, int, uint8_t **,size_t *,void **);
 	void	(*pop_releaseout)(void *, void *, int);
 	size_t	(*pop_waitcount)(void *);
-	int	(*pop_dispatch)(void *, uint8_t *);
+	int	(*pop_dispatch)(void *, struct putter_hdr *);
 	int	(*pop_close)(void *);
 };
 

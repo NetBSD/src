@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.60 2007/11/10 21:45:07 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.61 2007/11/12 17:42:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -245,7 +245,7 @@ MALLOC_DECLARE(M_PUFFS);
 
 int	puffs_msgif_getout(void *, size_t, int, uint8_t **, size_t *, void **);
 void	puffs_msgif_releaseout(void *, void *, int);
-int	puffs_msgif_dispatch(void *, uint8_t *);
+int	puffs_msgif_dispatch(void *, struct putter_hdr *);
 size_t	puffs_msgif_waitcount(void *);
 int	puffs_msgif_close(void *);
 
