@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.946 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.947 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -238,3 +238,16 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		PCM data to userland. [jmcneill 20071111]
 	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
 		controllers. [macallan 20071111]
+	atf: Initial import of the Automated Testing Framework, version 0.3.
+		Provides a framework to easily define and run test cases for
+		the NetBSD operating system.  Work until 0.1 sponsored by
+		Google Summer of Code 2007 and mentored by martin.
+		[jmmv 20071112]
+	sysinst: Add support to install the new tests.tgz set.
+		[jmmv 20071112]
+	tests: Converted the regress/bin tree to use ATF and migrated it
+		to tests/util.  [jmmv 20071112]
+	tests: Converted the regress/sys/fs/tmpfs tree to use ATF and
+		migrated it to tests/fs/tmpfs.  [jmmv 20071112]
+	tests: Converted the regress/games tree to use ATF and migrated it
+		to tests/games.  [jmmv 20071112]
