@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.155 2007/06/03 21:07:33 uwe Exp $
+#	$NetBSD: bsd.sys.mk,v 1.156 2007/11/12 14:54:43 jmmv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -106,6 +106,8 @@ HOST_RANLIB?=	ranlib
 
 HOST_LN?=	ln
 
+HOST_SED?=	sed
+
 .if !empty(HOST_CYGWIN)
 HOST_SH?=	/usr/bin/bash
 .else
@@ -122,6 +124,7 @@ STRIP?=		strip
 AWK?=		awk
 
 TOOL_ASN1_COMPILE?=	asn1_compile
+TOOL_ATF_COMPILE?=	atf-compile
 TOOL_CAP_MKDB?=		cap_mkdb
 TOOL_CAT?=		cat
 TOOL_CKSUM?=		cksum
