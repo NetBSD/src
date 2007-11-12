@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.348 2007/11/12 15:06:46 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.349 2007/11/12 15:09:26 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1082,6 +1082,12 @@
 ./usr/share/zoneinfo/Pacific
 ./usr/share/zoneinfo/US
 ./usr/tests
+./usr/tests/atf
+./usr/tests/atf/formats
+./usr/tests/atf/sh_interface
+./usr/tests/atf/test_programs
+./usr/tests/atf/tools
+./usr/tests/atf/units
 ./var
 ./var/account
 ./var/at
