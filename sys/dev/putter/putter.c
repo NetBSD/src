@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.1 2007/11/12 14:30:56 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.2 2007/11/12 16:39:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.1 2007/11/12 14:30:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.2 2007/11/12 16:39:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.1 2007/11/12 14:30:56 pooka Exp $");
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
-#include <dev/putter/puttervar.h>
-
-#include <fs/puffs/puffs_msgif.h> /* XXX: for frame headers, goes away soon */
+#include <dev/putter/putter_sys.h>
 
 /*
  * putter instance structures.  these are always allocated and freed
@@ -90,6 +88,8 @@ static int putterdebug = 0;
 #define DPRINTF(x)
 #define DPRINTF_VERBOSE(x)
 #endif
+
+#define PUTTER_CLONER 0x7ffff
 
 /*
  * public init / deinit
@@ -185,12 +185,12 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
 	struct putter_instance *pi = fp->f_data;
-	struct puffs_frame pfr;
+	struct putter_hdr pth;
 	uint8_t *buf;
 	size_t frsize;
 	int error;
 
-	DPRINTF(("puffs_fop_write (%p): writing response, resid %zu\n",
+	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
 	    pi->pi_private, uio->uio_resid));
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
@@ -198,29 +198,29 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
 		return ENOENT;
 	}
 
-	error = uiomove(&pfr, sizeof(struct puffs_frame), uio);
+	error = uiomove(&pth, sizeof(struct putter_hdr), uio);
 	if (error)
 		return error;
 
 	/* Sorry mate, the kernel doesn't buffer. */
-	frsize = pfr.pfr_len - sizeof(struct puffs_frame);
+	frsize = pth.pth_framelen - sizeof(struct putter_hdr);
 	if (uio->uio_resid < frsize)
 		return EINVAL;
 
-	buf = kmem_alloc(frsize + sizeof(struct puffs_frame), KM_SLEEP);
-	memcpy(buf, &pfr, sizeof(pfr));
-	error = uiomove(buf+sizeof(struct puffs_frame), frsize, uio);
+	buf = kmem_alloc(frsize + sizeof(struct putter_hdr), KM_SLEEP);
+	memcpy(buf, &pth, sizeof(pth));
+	error = uiomove(buf+sizeof(struct putter_hdr), frsize, uio);
 	if (error == 0) {
 		pi->pi_pop->pop_dispatch(pi->pi_private, buf);
 	}
-	kmem_free(buf, frsize + sizeof(struct puffs_frame));
+	kmem_free(buf, frsize + sizeof(struct putter_hdr));
 
 	return error;
 }
 
 /*
  * Poll query interface.  The question is only if an event
- * can be read from us (and by read I mean ioctl... ugh).
+ * can be read from us.
  */
 #define PUTTERPOLL_EVSET (POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI)
 static int
@@ -406,7 +406,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	 * XXX: decide on some security model and check permissions
 	 */
 
-	if (minor(dev) != PUFFS_CLONER)
+	if (minor(dev) != PUTTER_CLONER)
 		return ENXIO;
 
 	if ((error = falloc(l, &fp, &fd)) != 0)
@@ -416,7 +416,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
-	if (idx == PUFFS_CLONER) {
+	if (idx == PUTTER_CLONER) {
 		mutex_exit(&pi_mtx);
 		kmem_free(pi, sizeof(struct putter_instance));
 		FILE_UNUSE(fp, l);
@@ -511,8 +511,8 @@ get_pi_idx(struct putter_instance *pi_i)
 
 	i = 0;
 	TAILQ_FOREACH(pi, &putter_ilist, pi_entries) {
-		if (i == PUFFS_CLONER)
-			return PUFFS_CLONER;
+		if (i == PUTTER_CLONER)
+			return PUTTER_CLONER;
 		if (i != pi->pi_idx)
 			break;
 		i++;

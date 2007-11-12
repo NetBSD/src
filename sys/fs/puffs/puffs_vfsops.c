@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.67 2007/11/12 14:30:56 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.68 2007/11/12 16:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.67 2007/11/12 14:30:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.68 2007/11/12 16:39:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.67 2007/11/12 14:30:56 pooka Exp 
 #include <sys/fstrans.h>
 #include <sys/proc.h>
 
-#include <dev/putter/puttervar.h>
+#include <dev/putter/putter_sys.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>

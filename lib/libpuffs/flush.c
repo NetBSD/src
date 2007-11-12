@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.12 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.13 2007/11/12 16:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.12 2007/10/11 19:41:14 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.13 2007/11/12 16:39:35 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -62,8 +62,8 @@ doflush(struct puffs_usermount *pu, void *cookie, int op,
 	struct puffs_flush pf;
 	ssize_t n;
 
-	pf.pf_frhdr.pfr_len = sizeof(struct puffs_flush);
-	pf.pf_frhdr.pfr_type = PUFFSOP_FLUSH;
+	pf.pf_req.preq_pth.pth_framelen = sizeof(struct puffs_flush);
+	pf.pf_req.preq_opclass = PUFFSOP_FLUSH;
 
 	pf.pf_op = op;
 	pf.pf_cookie = cookie;
