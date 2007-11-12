@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.947 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.948 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -251,3 +251,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		migrated it to tests/fs/tmpfs.  [jmmv 20071112]
 	tests: Converted the regress/games tree to use ATF and migrated it
 		to tests/games.  [jmmv 20071112]
+	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
