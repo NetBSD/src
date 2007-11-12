@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.3 2007/11/11 19:49:11 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.1 2007/11/12 14:30:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.3 2007/11/11 19:49:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.1 2007/11/12 14:30:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.3 2007/11/11 19:49:11 pooka Exp $");
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
-#include <dev/puttervar.h>
+#include <dev/putter/puttervar.h>
 
 #include <fs/puffs/puffs_msgif.h> /* XXX: for frame headers, goes away soon */
 
