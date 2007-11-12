@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.55 2007/11/12 16:39:34 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.56 2007/11/12 17:42:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.55 2007/11/12 16:39:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.56 2007/11/12 17:42:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -732,7 +732,7 @@ puffs_msgif_waitcount(void *this)
  * XXX: locking with this one?
  */
 static void
-puffs_msgif_incoming(void *this, struct puffs_req *preq)
+puffsop_msg(void *this, struct puffs_req *preq)
 {
 	struct puffs_mount *pmp = this;
 	struct putter_hdr *pth = &preq->preq_pth;
@@ -944,18 +944,24 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 }
 
 int
-puffs_msgif_dispatch(void *this, uint8_t *buf)
+puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 {
 	struct puffs_mount *pmp = this;
-	struct puffs_req *preq = (struct puffs_req *)buf;
+	struct puffs_req *preq = (struct puffs_req *)pth;
+
+	/* XXX: need to send error to userspace */
+	if (pth->pth_framelen < sizeof(struct puffs_req))
+		return EINVAL; /* E2SMALL */
 
 	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
 	case PUFFSOP_VN:
 	case PUFFSOP_VFS:
-		puffs_msgif_incoming(pmp, preq);
+		puffsop_msg(pmp, preq);
 		break;
 	case PUFFSOP_FLUSH:
-		puffsop_flush(pmp, (void *)buf);
+		if (pth->pth_framelen != sizeof(struct puffs_flush))
+			return EINVAL;
+		puffsop_flush(pmp, (struct puffs_flush *)preq);
 		break;
 	case PUFFSOP_SUSPEND:
 		puffsop_suspend(pmp);
