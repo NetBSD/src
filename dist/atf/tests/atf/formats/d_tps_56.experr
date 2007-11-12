@@ -1,0 +1,7 @@
+6: Unexpected token `passe'; expected passed, failed or skipped
+8: Unexpected token `,'; expected new line
+10: Unexpected token `<<NEWLINE>>'; expected `,'
+12: Empty reason for failed test case result
+14: Unexpected token `<<NEWLINE>>'; expected `,'
+16: Empty reason for skipped test case result
+17: Unexpected token `tp-end'; expected start of test case
