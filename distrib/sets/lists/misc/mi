@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 2007/10/19 03:00:33 dogcow Exp $
+# $NetBSD: mi,v 1.147 2007/11/12 15:01:52 jmmv Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -606,6 +606,9 @@
 ./usr/share/examples/amd/master			misc-obsolete		obsolete
 ./usr/share/examples/amd/net			misc-amd-examples	share
 ./usr/share/examples/apm/script			misc-amd-examples	share
+./usr/share/examples/atf			misc-atf-examples	share
+./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share
+./usr/share/examples/atf/tests-results.css	misc-atf-examples	share
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
@@ -833,3 +836,10 @@
 ./usr/share/misc/na.postal			misc-reference-share	share
 ./usr/share/misc/zipcodes			misc-reference-share	share
 ./usr/share/postfix				misc-obsolete		obsolete
+./usr/share/xml					misc-xml-share		share
+./usr/share/xml/atf				misc-atf-share		share
+./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share
+./usr/share/xml/catalog				misc-xml-share		share
+./usr/share/xsl					misc-xml-share		share
+./usr/share/xsl/atf				misc-atf-share		share
+./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share
