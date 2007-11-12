@@ -47,7 +47,7 @@
 #include <netinet/in.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 #include "parameters.h"
 #include "conffile.h"
 #include "md5.c"

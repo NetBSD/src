@@ -178,7 +178,7 @@ errors to standard output.
 If you need more fine grained debugging, modify the Makefile to turn on the 
 compilation flag CONFIG_ISCSI_DEBUG. Then run "make clean," and then "make."  
 You can select which type of debugging statements get printed by modifying 
-util.h 
+iscsiutil.h 
 
 -------------------------------------
 Interoperability with Cisco Initiator

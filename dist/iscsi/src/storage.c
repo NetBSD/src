@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.7 2007/11/03 09:44:06 agc Exp $ */
+/* $NetBSD: storage.c,v 1.8 2007/11/12 23:25:42 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -49,7 +49,7 @@
 #include <unistd.h>
 
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "target.h"
 #include "device.h"
 

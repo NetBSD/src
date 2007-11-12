@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.12 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.13 2007/11/12 23:25:41 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -46,7 +46,7 @@
 #include <unistd.h>
 
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "target.h"
 #include "device.h"
 

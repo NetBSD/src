@@ -37,7 +37,7 @@
 #include <linux/module.h>
 #include "iscsi.h"
 #include "iscsi.c"
-#include "util.h"
+#include "iscsiutil.h"
 #include "util.c"
 #include "target.h"
 #include "target.c"
