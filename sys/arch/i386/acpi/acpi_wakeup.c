@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.19 2007/10/28 17:38:05 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.20 2007/11/12 12:08:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.19 2007/10/28 17:38:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.20 2007/11/12 12:08:46 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -180,11 +180,13 @@ extern uint32_t acpi_wakeup_ds;
 extern uint32_t acpi_wakeup_cr0;
 extern uint32_t acpi_wakeup_cr4;
 /* XXX shut gcc up */
-extern int		acpi_savecpu(void) __attribute__((__returns_twice__));
-extern int		acpi_restorecpu(void);
+extern int	acpi_md_sleep_prepare(int state);
+extern int	acpi_md_sleep_exit(void);
 
-int
-acpi_md_sleep(int state)
+void	acpi_md_sleep_enter(int);
+
+void
+acpi_md_sleep_enter(int state)
 {
 #define WAKECODE_FIXUP(offset, type, val) do	{		\
 	type	*addr;						\
@@ -200,8 +202,56 @@ acpi_md_sleep(int state)
 
 	ACPI_STATUS			status;
 	ACPI_TABLE_FACS			*facs;
-	int				s, ret = 0;
 	paddr_t				tmp_pdir;
+
+	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
+
+	/* Execute Sleep */
+	bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
+	WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
+	WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
+
+	WAKECODE_FIXUP(WAKEUP_r_cr0, uint32_t, acpi_wakeup_cr0);
+	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
+	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, acpi_wakeup_cr4);
+
+	WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
+
+	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
+
+	WAKECODE_FIXUP(WAKEUP_r_ds,  uint16_t, acpi_wakeup_ds);
+
+	ACPI_FLUSH_CPU_CACHE();
+
+	if (state == ACPI_STATE_S4) {
+		status = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
+		if (ACPI_FAILURE(status)) {
+			printf("acpi: S4BIOS not supported: cannot load FACS\n");
+			return;
+		}
+		if (facs == NULL ||
+		    (facs->Flags & ACPI_FACS_S4_BIOS_PRESENT) == 0) {
+			printf("acpi: S4BIOS not supported: not present");
+			return;
+		}
+		status = enter_s4_with_bios();
+	} else {
+		status = AcpiEnterSleepState(state);
+	}
+
+	if (ACPI_FAILURE(status)) {
+		printf("acpi: AcpiEnterSleepState failed: %s\n",
+		       AcpiFormatException(status));
+		return;
+	}
+
+	for (;;) ;
+}
+
+int
+acpi_md_sleep(int state)
+{
+	int				s, ret = 0;
 
 	KASSERT(acpi_wakeup_paddr != 0);
 	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
@@ -224,10 +274,6 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	status = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
-	if (ACPI_FAILURE(status))
-		facs = NULL;
-
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
 #ifdef MULTIPROCESSOR
@@ -235,66 +281,33 @@ acpi_md_sleep(int state)
 	x86_broadcast_ipi(X86_IPI_HALT);
 #endif
 
-	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
-
 	s = splipi();
 	npxsave_cpu(curcpu(), 1);
 	splx(s);
 
 	s = splhigh();
 	x86_disable_intr();
-	if (acpi_savecpu()) {
-		/* Execute Sleep */
-		bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
-		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
-		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
-		WAKECODE_FIXUP(WAKEUP_r_cr0, uint32_t, acpi_wakeup_cr0);
-		WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
-		WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, acpi_wakeup_cr4);
+	if (acpi_md_sleep_prepare(state))
+		goto out;
 
-		WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
+	/* Execute Wakeup */
 
-		WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_restorecpu);
-
-		WAKECODE_FIXUP(WAKEUP_r_ds,  uint16_t, acpi_wakeup_ds);
-
-		ACPI_FLUSH_CPU_CACHE();
-
-		if (state == ACPI_STATE_S4 && facs != NULL &&
-		    facs->Flags & ACPI_FACS_S4_BIOS_PRESENT) {
-			status = enter_s4_with_bios();
-		} else {
-			status = AcpiEnterSleepState(state);
-		}
-
-		if (ACPI_FAILURE(status)) {
-			printf("acpi: AcpiEnterSleepState failed: %s\n",
-			       AcpiFormatException(status));
-			ret = -1;
-			goto out;
-		}
-
-		for (;;) ;
-	} else {
-		/* Execute Wakeup */
-
-		npxinit(&cpu_info_primary);
-		i8259_reinit();
+	npxinit(&cpu_info_primary);
+	i8259_reinit();
 #if NLAPIC > 0
-		lapic_enable();
-		lapic_initclocks();
+	lapic_enable();
+	lapic_initclocks();
 #endif
 #if NIOAPIC > 0
-		ioapic_reenable();
-		lapic_set_lvt();
+	ioapic_reenable();
+	lapic_set_lvt();
 #endif
 
-		initrtclock(TIMER_FREQ);
-		inittodr(time_second);
+	initrtclock(TIMER_FREQ);
+	inittodr(time_second);
 
-		AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
-	}
+	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 
 out:
 	x86_enable_intr();
