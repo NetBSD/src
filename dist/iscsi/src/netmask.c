@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.8 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.9 2007/11/12 23:25:42 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -45,7 +45,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 
 enum {
 	NETMASK_BUFFER_SIZE = 256
