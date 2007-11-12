@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.1.50.1 2007/08/03 22:17:10 jmcneill Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.1.50.2 2007/11/12 19:25:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@ struct pchb_softc {
 	int sc_rnd_i;
 	uint32_t sc_rnd_ax;
 
-	struct pci_conf_state sc_pciconf;
 	pcireg_t sc_pciconfext[48];
 };
 
