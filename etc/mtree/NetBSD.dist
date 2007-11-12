@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.351 2007/11/12 15:18:07 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.352 2007/11/12 15:19:45 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1090,6 +1090,7 @@
 ./usr/tests/atf/units
 ./usr/tests/fs
 ./usr/tests/fs/tmpfs
+./usr/tests/games
 ./usr/tests/util
 ./usr/tests/util/df
 ./usr/tests/util/ps
