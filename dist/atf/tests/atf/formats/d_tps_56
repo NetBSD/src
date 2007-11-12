@@ -1,0 +1,17 @@
+Content-Type: application/X-atf-tps; version="2"
+
+tps-count: 1
+tp-start: foo, 1
+tc-start: foo
+tc-end: foo, passe
+tc-start: foo
+tc-end: foo, passed,
+tc-start: bar
+tc-end: bar, failed
+tc-start: bar
+tc-end: bar, failed,
+tc-start: baz
+tc-end: baz, skipped
+tc-start: baz
+tc-end: baz, skipped,
+tp-end: foo
