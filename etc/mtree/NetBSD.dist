@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.346 2007/11/12 15:02:58 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.347 2007/11/12 15:04:03 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -347,6 +347,7 @@
 ./usr/share/dict/papers
 ./usr/share/dict/special
 ./usr/share/doc
+./usr/share/doc/atf
 ./usr/share/doc/groff
 ./usr/share/doc/groff/mom
 ./usr/share/doc/html

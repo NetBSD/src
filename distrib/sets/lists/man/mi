@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1035 2007/11/12 15:00:03 jmmv Exp $
+# $NetBSD: mi,v 1.1036 2007/11/12 15:04:02 jmmv Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -52,6 +52,7 @@
 ./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat
+./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
@@ -713,6 +714,7 @@
 ./usr/share/man/cat4/atari/ms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atari/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ate.0			man-sys-catman		.cat
+./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat
 ./usr/share/man/cat4/ath.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atppc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/attimer.0			man-sys-catman		.cat
@@ -1608,6 +1610,7 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
+./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat
 ./usr/share/man/cat5/audit-packages.conf.0	man-pkgutil-catman	.cat
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
@@ -1774,6 +1777,7 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
+./usr/share/man/cat7/atf.0			man-atf-catman		.cat
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	crypto,.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
@@ -2558,6 +2562,7 @@
 ./usr/share/man/man1/atf-format.1		man-atf-man		.man
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man
 ./usr/share/man/man1/atf-run.1			man-atf-man		.man
+./usr/share/man/man1/atf-test-program.1		man-atf-man		.man
 ./usr/share/man/man1/atf-version.1		man-atf-man		.man
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
@@ -3219,6 +3224,7 @@
 ./usr/share/man/man4/atari/ms.4			man-sys-man		.man
 ./usr/share/man/man4/atari/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/ate.4			man-sys-man		.man
+./usr/share/man/man4/atf-test-case.4		man-cat-man		.man
 ./usr/share/man/man4/ath.4			man-sys-man		.man
 ./usr/share/man/man4/atppc.4			man-sys-man		.man
 ./usr/share/man/man4/attimer.4			man-sys-man		.man
@@ -4114,6 +4120,7 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
+./usr/share/man/man5/atf-formats.5		man-atf-man		.man
 ./usr/share/man/man5/audit-packages.conf.5	man-pkgutil-man		.man
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
@@ -4280,6 +4287,7 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man		.man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
+./usr/share/man/man7/atf.7			man-atf-man		.man
 ./usr/share/man/man7/des_modes.7		man-reference-man	crypto,.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/hier.7			man-reference-man	.man
