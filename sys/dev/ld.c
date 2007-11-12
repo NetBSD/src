@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.50 2007/10/08 16:41:10 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.51 2007/11/12 14:45:23 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.50 2007/10/08 16:41:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.51 2007/11/12 14:45:23 xtraeme Exp $");
 
 #include "rnd.h"
 
@@ -383,7 +383,7 @@ static int
 ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
-	int part, unit, error;
+	int s, part, unit, error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
@@ -529,7 +529,44 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 		return (dkwedge_list(&sc->sc_dk, dkwl, l));
 	    }
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
 
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(sc->sc_bufq),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+		struct bufq_state *new, *old;
+
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+
+		if (dks->dks_param != NULL)
+			return EINVAL;
+
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error)
+			return error;
+
+		s = splbio();
+		old = sc->sc_bufq;
+		bufq_move(new, old);
+		sc->sc_bufq = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
+	    }
 	default:
 		error = ENOTTY;
 		break;
