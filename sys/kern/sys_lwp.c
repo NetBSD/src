@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.29 2007/11/07 00:56:27 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.30 2007/11/12 23:11:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.29 2007/11/07 00:56:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.30 2007/11/12 23:11:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.29 2007/11/07 00:56:27 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/sleepq.h>
+#include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -743,9 +744,13 @@ sys__lwp_setname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *)	name;
 	} */ *uap = v;
 	char *name, *oname;
+	lwpid_t target;
 	proc_t *p;
 	lwp_t *t;
 	int error;
+
+	if ((target = SCARG(uap, target)) == 0)
+		target = l->l_lid;
 
 	name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
 	if (name == NULL)
@@ -763,7 +768,7 @@ sys__lwp_setname(struct lwp *l, void *v, register_t *retval)
 
 	p = curproc;
 	mutex_enter(&p->p_smutex);
-	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
+	if ((t = lwp_find(p, target)) == NULL) {
 		mutex_exit(&p->p_smutex);
 		kmem_free(name, MAXCOMLEN);
 		return ESRCH;
@@ -789,12 +794,16 @@ sys__lwp_getname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t)		len;
 	} */ *uap = v;
 	char name[MAXCOMLEN];
+	lwpid_t target;
 	proc_t *p;
 	lwp_t *t;
 
+	if ((target = SCARG(uap, target)) == 0)
+		target = l->l_lid;
+
 	p = curproc;
 	mutex_enter(&p->p_smutex);
-	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
+	if ((t = lwp_find(p, target)) == NULL) {
 		mutex_exit(&p->p_smutex);
 		return ESRCH;
 	}
@@ -807,4 +816,22 @@ sys__lwp_getname(struct lwp *l, void *v, register_t *retval)
 	mutex_exit(&p->p_smutex);
 
 	return copyoutstr(name, SCARG(uap, name), SCARG(uap, len), NULL);
+}
+
+int
+sys__lwp_ctl(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_ctl_args /* {
+		syscallarg(int)			features;
+		syscallarg(struct lwpctl **)	address;
+	} */ *uap = v;
+	int error, features;
+	vaddr_t vaddr;
+
+	features = SCARG(uap, features);
+	if ((features & ~LWPCTL_FEATURE_CURCPU) != 0)
+		return ENODEV;
+	if ((error = lwp_ctl_alloc(&vaddr)) != 0)
+		return error;
+	return copyout(&vaddr, SCARG(uap, address), sizeof(void *));
 }

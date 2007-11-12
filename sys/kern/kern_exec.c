@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.252 2007/11/07 00:23:20 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.253 2007/11/12 23:11:58 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.252 2007/11/07 00:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.253 2007/11/12 23:11:58 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.252 2007/11/07 00:23:20 ad Exp $");
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
+#include <sys/lwpctl.h>
 
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
@@ -622,6 +623,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&p->p_smutex);
 	}
 	KDASSERT(p->p_nlwps == 1);
+
+	/* Destroy any lwpctl info. */
+	if (p->p_lwpctl != NULL)
+		lwp_ctl_exit();
 
 	/* This is now LWP 1 */
 	l->l_lid = 1;

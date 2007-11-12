@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.179 2007/11/09 14:57:33 dsl Exp $
+	$NetBSD: syscalls.master,v 1.180 2007/11/12 23:11:59 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -666,8 +666,9 @@
 				const char *name); }
 324	STD 		{ int sys__lwp_getname(lwpid_t target, \
 				char *name, size_t len); }
-; Syscalls 325-339 reserved for LWP syscalls.
-325	UNIMPL
+325	STD 		{ int sys__lwp_ctl(int features, \
+				struct lwpctl **address); }
+; Syscalls 326-339 reserved for LWP syscalls.
 326	UNIMPL
 327	UNIMPL
 328	UNIMPL
