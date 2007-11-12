@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.345 2007/11/12 15:01:52 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.346 2007/11/12 15:02:58 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -27,6 +27,7 @@
 ./etc/X11/xinit
 ./etc/X11/xserver
 ./etc/X11/xsm
+./etc/atf
 ./etc/cgd			mode=0700
 ./etc/bluetooth
 ./etc/defaults
