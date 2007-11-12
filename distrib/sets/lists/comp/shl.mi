@@ -1,7 +1,8 @@
-# $NetBSD: shl.mi,v 1.59 2007/11/04 23:28:17 tls Exp $
+# $NetBSD: shl.mi,v 1.60 2007/11/12 14:56:26 jmmv Exp $
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
+./usr/lib/libatf_pic.a				comp-atf-piclib
 ./usr/lib/libbind9_pic.a			comp-bind-piclib
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
