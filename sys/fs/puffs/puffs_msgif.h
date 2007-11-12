@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.59 2007/10/21 14:28:05 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.60 2007/11/12 16:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -42,14 +42,9 @@
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 
-#include <uvm/uvm_prot.h>
+#include <dev/putter/putter.h>
 
-/* XXX: sanitize */
-struct puffs_frame {
-	uint32_t	pfr_len;
-	uint32_t	pfr_type;
-	uint32_t	pfr_alloclen;
-};
+#include <uvm/uvm_prot.h>
 
 #define PUFFSOP_VFS		0x01	/* read/write	*/
 #define PUFFSOP_VN		0x02	/* read/write	*/
@@ -105,7 +100,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	22
+#define PUFFSVERSION	23
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -155,22 +150,14 @@ struct puffs_kargs {
 
 #define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
 
-/*
- * This is the device minor number for the cloning device.  Make it
- * a high number "just in case", even though we don't want to open
- * any specific devices currently.
- */
-#define PUFFS_CLONER 0x7ffff
-
 struct puffs_req {
-	struct puffs_frame	preq_frhdr;
-
-	uint16_t		preq_opclass;
-	uint16_t		preq_optype;
+	struct putter_hdr	preq_pth;
 
 	uint64_t		preq_id;
 	void			*preq_cookie;
 
+	uint16_t		preq_opclass;
+	uint16_t		preq_optype;
 	int			preq_rv;
 
 	uint32_t		preq_setbacks;
@@ -186,23 +173,6 @@ struct puffs_req {
 	 */
 	size_t  		preq_buflen;
 	uint8_t	preq_buf[0] __aligned(ALIGNBYTES+1);
-};
-
-struct puffs_reqh_get {
-	void	*phg_buf;	/* user buffer		*/
-	size_t	phg_buflen;	/* user buffer length	*/
-
-	int	phg_nops;	/* max ops user wants / number delivered */
-	int	phg_more;	/* advisory: more ops available? */
-};
-
-struct puffs_reqh_put {
-	int		php_nops;	/* ops available / ops handled */
-
-	/* these describe the first request */
-	uint64_t	php_id;		/* request id */
-	void		*php_buf;	/* user buffer address */
-	size_t		php_buflen;	/* user buffer length, hdr NOT incl. */
 };
 
 #define PUFFS_SETBACK_INACT_N1	0x01	/* set VOP_INACTIVE for node 1 */
@@ -226,7 +196,7 @@ struct puffs_reqh_put {
 
 /* XXX: needs restructuring */
 struct puffs_flush {
-	struct puffs_frame	pf_frhdr;
+	struct puffs_req	pf_req;
 
 	void			*pf_cookie;
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.729 2007/11/12 15:02:58 jmmv Exp $
+# $NetBSD: mi,v 1.730 2007/11/12 16:39:36 pooka Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -775,6 +775,7 @@
 ./usr/include/dev/pci				base-c-usr
 ./usr/include/dev/pckbc				base-c-usr
 ./usr/include/dev/pcmcia			base-c-usr
+./usr/include/dev/putter			base-c-usr
 ./usr/include/dev/raidframe			base-c-usr
 ./usr/include/dev/rcons				base-obsolete		obsolete
 ./usr/include/dev/sbus				base-c-usr
