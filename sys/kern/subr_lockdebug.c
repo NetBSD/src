@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.14 2007/11/12 06:07:43 matt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.15 2007/11/12 06:14:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.14 2007/11/12 06:07:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.15 2007/11/12 06:14:57 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -103,9 +103,9 @@ typedef struct lockdebug {
 
 typedef _TAILQ_HEAD(lockdebuglist, struct lockdebug, volatile) lockdebuglist_t;
 
-lockdebuglk_t		ld_sleeper_lk = { .lk_lock = __SIMPLELOCK_UNLOCKED };
-lockdebuglk_t		ld_spinner_lk = { .lk_lock = __SIMPLELOCK_UNLOCKED };
-lockdebuglk_t		ld_free_lk = { .lk_lock = __SIMPLELOCK_UNLOCKED };
+lockdebuglk_t		ld_sleeper_lk;
+lockdebuglk_t		ld_spinner_lk;
+lockdebuglk_t		ld_free_lk;
 lockdebuglk_t		ld_mem_lk[LD_MLOCKS];
 
 lockdebuglist_t		ld_mem_list[LD_MLISTS];
@@ -199,6 +199,10 @@ lockdebug_init(void)
 {
 	lockdebug_t *ld;
 	int i;
+
+	__cpu_simple_lock_init(&ld_sleeper_lk.lk_lock);
+	__cpu_simple_lock_init(&ld_spinner_lk.lk_lock);
+	__cpu_simple_lock_init(&ld_free_lk.lk_lock);
 
 	ld = ld_prime;
 	ld_table[0] = ld;
