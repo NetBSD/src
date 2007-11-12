@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1034 2007/11/11 17:45:18 jmcneill Exp $
+# $NetBSD: mi,v 1.1035 2007/11/12 15:00:03 jmmv Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -46,6 +46,13 @@
 ./usr/share/man/cat1/at.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atari/edahdi.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/atari/msconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat
+./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
 ./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
@@ -2545,6 +2552,13 @@
 ./usr/share/man/man1/at.1			man-cron-man		.man
 ./usr/share/man/man1/atari/edahdi.1		man-sysutil-man		.man
 ./usr/share/man/man1/atari/msconfig.1		man-sysutil-man		.man
+./usr/share/man/man1/atf-cleanup.1		man-atf-man		.man
+./usr/share/man/man1/atf-compile.1		man-atf-man		.man
+./usr/share/man/man1/atf-config.1		man-atf-man		.man
+./usr/share/man/man1/atf-format.1		man-atf-man		.man
+./usr/share/man/man1/atf-report.1		man-atf-man		.man
+./usr/share/man/man1/atf-run.1			man-atf-man		.man
+./usr/share/man/man1/atf-version.1		man-atf-man		.man
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
 ./usr/share/man/man1/audioctl.1			man-audio-man		.man
