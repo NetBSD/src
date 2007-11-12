@@ -7,13 +7,12 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bzero.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.2 2007/11/12 18:41:59 ad Exp $")
 #endif
 
 ENTRY(bzero)
 	movq	%rsi,%rdx
 
-	cld				/* set fill direction forward */
 	xorq	%rax,%rax		/* set fill data to 0 */
 
 	/*
