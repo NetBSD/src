@@ -7,7 +7,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: memset.S,v 1.2 2007/11/12 18:41:59 ad Exp $")
 #endif
 
 ENTRY(memset)
@@ -15,8 +15,6 @@ ENTRY(memset)
 	andq	$0xff,%rax
 	movq	%rdx,%rcx
 	movq	%rdi,%r11
-
-	cld				/* set fill direction forward */
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
