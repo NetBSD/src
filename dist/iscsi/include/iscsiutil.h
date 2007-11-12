@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _UTIL_H_
-#define _UTIL_H_
+#ifndef _ISCSIUTIL_H_
+#define _ISCSIUTIL_H_
 
 #include "config.h"
 
@@ -486,4 +486,4 @@ enum {
 
 int		allow_netmask(const char *, const char *);
 
-#endif				/* _UTIL_H_ */
+#endif				/* _ISCSIUTIL_H_ */

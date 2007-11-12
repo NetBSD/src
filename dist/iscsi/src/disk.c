@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.31 2007/11/06 15:59:10 agc Exp $ */
+/* $NetBSD: disk.c,v 1.32 2007/11/12 23:25:41 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -116,7 +116,7 @@
 
 #include "iscsi.h"
 #include "compat.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "device.h"
 #include "target.h"
 #include "defs.h"
