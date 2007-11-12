@@ -1,0 +1,8 @@
+got_ntcs(1)
+got_tc_start(a-test)
+got_stdout_line(first stdout line)
+got_stderr_line(first stderr line)
+got_stdout_line(second stdout line)
+got_stderr_line(second stderr line)
+got_tc_end(passed)
+got_eof()

@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-tcs; version="1"
+
+tcs-count: 3
+tc-start: first-test
+tc-end: first-test, passed
+tc-start: second-test
+tc-end: second-test, skipped, Testing skipped reason
+tc-start: third-test
+tc-end: third-test, failed, Testing failed reason

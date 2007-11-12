@@ -1,0 +1,995 @@
+#
+# Automated Testing Framework (atf)
+#
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this
+#    software must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+# CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# File: atf.footer.subr
+#
+#   This file provides the test program's entry point and auxiliary
+#   functions used during testing.
+#
+
+# ------------------------------------------------------------------------
+# GLOBAL VARIABLES
+# ------------------------------------------------------------------------
+
+# Values of configuration variables obtained from atf-config.
+Atf_Cleanup=$(atf-config -t atf_libexecdir)/atf-cleanup
+Atf_Format=$(atf-config -t atf_libexecdir)/atf-format
+
+# List of blocked signals, to be processed when unblocked.
+Held_Signals=
+
+# A boolean variable that indicates whether we are parsing a test case's
+# head or not.
+Parsing_Head=false
+
+# The file descriptor on which the test program will print the results of
+# the test cases.
+Results_Fd=1
+
+# The file to which the test case will print its result.
+Results_File=
+
+# The test program's source directory: i.e. where its auxiliary data files
+# and helper utilities can be found.  Defaults to the current directory
+# but can be overriden through the '-s' flag.
+Source_Dir=$(pwd)
+
+# Indicates the test case we are currently processing.
+Test_Case=
+
+# The list of all test cases provided by the test program.
+# Subset of ${Defined_Test_Cases}.
+Test_Cases=
+
+# The test case's work directory.
+Work_Dir=
+
+# ------------------------------------------------------------------------
+# PUBLIC INTERFACE
+# ------------------------------------------------------------------------
+
+#
+# atf_add_test_case tc-name
+#
+#   Adds the given test case to the list of test cases that form the test
+#   program.  The name provided here must be accompanied by two functions
+#   named after it: <tc-name>_head and <tc-name>_body, and optionally by
+#   a <tc-name>_cleanup function.
+#
+atf_add_test_case()
+{
+    _atf_is_tc_defined "${1}" || \
+        _atf_error 128 "Test case ${1} was not correctly defined by" \
+                       "this test program"
+    Test_Cases="${Test_Cases} ${1}"
+}
+
+#
+# atf_check cmd expcode expout experr
+#
+#   Executes a command and checks its error code, stdout and stderr against
+#   the expected values for each.
+#
+#   'expcode' specifies the numeric error code the program is supposed to
+#   return.
+#
+#   'expout' is one of 'expout', 'ignore', 'null' or 'stdout'.  The meaning
+#   of these parameters is as follows:
+#       expout - What the command writes to the stdout channel must match
+#                exactly what is found in the 'expout' file.
+#       ignore - The test does not check what the command writes to the
+#                stdout channel.
+#       null   - The command must not write anything to the stdout channel.
+#       stdout - What the command writes to the stdout channel is written
+#                to a 'stdout' file, available for further inspection.
+#
+#   'experr' is one of 'experr', 'ignore', 'null' or 'stderr'.  The meaning
+#   of these parameters is the same as their corresponding ones in the
+#   stdout case.
+#
+atf_check()
+{
+    test ${#} -eq 4 || atf_fail "Incorrect number of parameters"
+
+    _cmd="${1}"
+    _expcode="${2}"
+    _expout="${3}"
+    _experr="${4}"
+
+    echo "Checking command [${_cmd}]"
+
+    # Sanity-check the expout parameter and prepare the work directory for
+    # the test.
+    case ${_expout} in
+    expout)
+        test -f ${Work_Dir}/expout || atf_fail "No expout file found"
+        ;;
+    ignore)
+        ;;
+    null)
+        ;;
+    stdout)
+        ;;
+    *)
+        atf_fail "Invalid value in atf_check's expout parameter"
+        ;;
+    esac
+
+    # Sanity-check the experr parameter and prepare the work directory for
+    # the test.
+    case ${_experr} in
+    experr)
+        test -f ${Work_Dir}/experr || atf_fail "No experr file found"
+        ;;
+    ignore)
+        ;;
+    null)
+        ;;
+    stderr)
+        ;;
+    *)
+        atf_fail "Invalid value in atf_check's experr parameter"
+        ;;
+    esac
+
+    # Run the command and capture its error code, output and error
+    # channels.
+    ( eval ${_cmd} >${Work_Dir}/aux-stdout 2>${Work_Dir}/aux-stderr )
+    _code=${?}
+
+    # Check the command's error code.
+    if [ ${_code} -ne ${_expcode} ]; then
+        echo "stdout:"
+        cat aux-stdout
+        echo "stderr:"
+        cat aux-stderr
+        atf_fail "Exit code ${_code} does not match the expected" \
+                 "code ${_expcode}"
+    fi
+
+    # Check what the command wrote to stdout.
+    case ${_expout} in
+    expout)
+        if cmp -s ${Work_Dir}/expout ${Work_Dir}/aux-stdout; then
+            :
+        else
+            echo "stdout:"
+            diff -u ${Work_Dir}/expout ${Work_Dir}/aux-stdout
+            atf_fail "stdout does not match"
+        fi
+        ;;
+    ignore)
+        ;;
+    null)
+        touch ${Work_Dir}/empty-file
+        if cmp -s ${Work_Dir}/empty-file ${Work_Dir}/aux-stdout; then
+            :
+        else
+            echo "stdout:"
+            cat ${Work_Dir}/aux-stdout
+            atf_fail "stdout was not silent"
+        fi
+        ;;
+    stdout)
+        test -f ${Work_Dir}/stdout && rm -f ${Work_Dir}/stdout
+        test -f ${Work_Dir}/stdout && \
+            atf_fail "Could not delete stale stdout file"
+        mv ${Work_Dir}/aux-stdout ${Work_Dir}/stdout
+        ;;
+    *)
+        _atf_error 128 "Internal error in the atf_check function"
+        ;;
+    esac
+
+    # Check what the command wrote to stderr.
+    case ${_experr} in
+    experr)
+        if cmp -s ${Work_Dir}/experr ${Work_Dir}/aux-stderr; then
+            :
+        else
+            echo "stderr:"
+            diff -u ${Work_Dir}/experr ${Work_Dir}/aux-stderr
+            atf_fail "stderr does not match"
+        fi
+        ;;
+    ignore)
+        ;;
+    null)
+        touch ${Work_Dir}/empty-file
+        if cmp -s ${Work_Dir}/empty-file ${Work_Dir}/aux-stderr; then
+            :
+        else
+            echo "stderr:"
+            cat ${Work_Dir}/aux-stderr
+            atf_fail "stderr was not silent"
+        fi
+        ;;
+    stderr)
+        test -f ${Work_Dir}/stderr && rm -f ${Work_Dir}/stderr
+        test -f ${Work_Dir}/stderr && \
+            atf_fail "Could not delete stale stderr file"
+        mv ${Work_Dir}/aux-stderr ${Work_Dir}/stderr
+        ;;
+    *)
+        _atf_error 128 "Internal error in the atf_check function"
+        ;;
+    esac
+}
+
+#
+# atf_check_equal expr1 expr2
+#
+#   Checks that expr1's value matches expr2's and, if not, raises an
+#   error.  Ideally expr1 and expr2 should be provided quoted (not
+#   expanded) so that the error message is helpful; otherwise it will
+#   only show the values, not the expressions themselves.
+#
+atf_check_equal()
+{
+    eval _val1=\"${1}\"
+    eval _val2=\"${2}\"
+    test "${_val1}" = "${_val2}" || \
+        atf_fail "${1} != ${2} (${_val1} != ${_val2})"
+}
+
+#
+# atf_config_get varname [defvalue]
+#
+#   Prints the value of a configuration variable.  If it is not
+#   defined, prints the given default value.
+#
+atf_config_get()
+{
+    _varname="__tc_config_var_$(_atf_normalize ${1})"
+    if [ ${#} -eq 1 ]; then
+        eval _value=\"\${${_varname}-__unset__}\"
+        [ "${_value}" = __unset__ ] && \
+            _atf_error 1 "Could not find configuration variable \`${1}'"
+        echo ${_value}
+    elif [ ${#} -eq 2 ]; then
+        eval echo \${${_varname}-${2}}
+    else
+        _atf_error 1 "Incorrect number of parameters for atf_config_get"
+    fi
+}
+
+#
+# atf_config_has varname
+#
+#   Returns a boolean indicating if the given configuration variable is
+#   defined or not.
+#
+atf_config_has()
+{
+    _varname="__tc_config_var_$(_atf_normalize ${1})"
+    eval _value=\"\${${_varname}-__unset__}\"
+    [ "${_value}" != __unset__ ]
+}
+
+#
+# atf_fail msg1 [.. msgN]
+#
+#   Makes the test case fail with the given error message.  Multiple
+#   words can be provided, in which case they are joined by a single
+#   blank space.
+#
+atf_fail()
+{
+    echo "failed, ${*}" >>${Results_File}
+    exit 1
+}
+
+#
+# atf_get varname
+#
+#   Prints the value of a test case-specific variable.  Given that one
+#   should not get the value of non-existent variables, it is fine to
+#   always use this function as 'val=$(atf_get var)'.
+#
+atf_get()
+{
+    eval echo \${__tc_var_${Test_Case}_$(_atf_normalize ${1})}
+}
+
+#
+# atf_get_srcdir
+#
+#   Prints the value of the test case's source directory.
+#
+atf_get_srcdir()
+{
+    _atf_internal_get srcdir
+}
+
+#
+# atf_pass msg1 [.. msgN]
+#
+#   Makes the test case pass.  Shouldn't be used in general, as a test
+#   case that does not explicitly fail is assumed to pass.
+#
+atf_pass()
+{
+    echo "passed" >>${Results_File}
+    exit 0
+}
+
+#
+# atf_require_prog prog
+#
+#   Checks that the given program name (either provided as an absolute
+#   path or as a plain file name) can be found.  If it is not available,
+#   automatically skips the test case with an appropriate message.
+#
+#   Relative paths are not allowed because the test case cannot predict
+#   where it will be executed from.
+#
+atf_require_prog()
+{
+    _prog=
+    case ${1} in
+    /*)
+        _prog="${1}"
+        [ -x ${_prog} ] || \
+            atf_skip "The required program ${1} could not be found"
+        ;;
+    */*)
+        _atf_error 128 "atf_require_prog does not accept relative" \
+                       "path names \`${1}'"
+        ;;
+    *)
+        _prog=$(_atf_find_in_path "${1}")
+        [ -n "${_prog}" ] || \
+            atf_skip "The required program ${1} could not be found" \
+                     "in the PATH"
+        ;;
+    esac
+}
+
+#
+# atf_set varname val1 [.. valN]
+#
+#   Sets the test case's variable 'varname' to the specified values
+#   which are concatenated using a single blank space.  This function
+#   is supposed to be called form the test case's head only.
+#
+atf_set()
+{
+    ${Parsing_Head} || \
+        _atf_error 128 "atf_set called from the test case's body"
+
+    _var=$(_atf_normalize ${1}); shift
+    eval __tc_var_${Test_Case}_${_var}=\"\${*}\"
+}
+
+#
+# atf_skip msg1 [.. msgN]
+#
+#   Skips the test case because of the reason provided.  Multiple words
+#   can be given, in which case they are joined by a single blank space.
+#
+atf_skip()
+{
+    echo "skipped, ${*}" >>${Results_File}
+    exit 0
+}
+
+# ------------------------------------------------------------------------
+# PRIVATE INTERFACE
+# ------------------------------------------------------------------------
+
+#
+# _atf_config_set varname val1 [.. valN]
+#
+#   Sets the test case's private variable 'varname' to the specified
+#   values which are concatenated using a single blank space.
+#
+_atf_config_set()
+{
+    _var=$(_atf_normalize ${1}); shift
+    eval __tc_config_var_${_var}=\"\${*}\"
+}
+
+#
+# _atf_config_set_str varname=val
+#
+#   Sets the test case's private variable 'varname' to the specified
+#   value.  The parameter is of the form 'varname=val'.
+#
+_atf_config_set_from_str()
+{
+    _oldifs=${IFS}
+    IFS='='
+    set -- ${*}
+    _var=${1}
+    shift
+    _val="${@}"
+    IFS=${_oldifs}
+    _atf_config_set "${_var}" "${_val}"
+}
+
+#
+# _atf_echo [-l indent] [-t tag] [msg1 [.. msgN]]
+#
+#   Prints a formatted message using atf-format(1).  See its manual
+#   page for details on the syntax of this function.
+#
+_atf_echo()
+{
+    ${Atf_Format} "${@}"
+}
+
+#
+# _atf_ensure_boolean var
+#
+#   Ensures that the test case defined the variable 'var' to a boolean
+#   value.
+#
+_atf_ensure_boolean()
+{
+    _atf_ensure_not_empty ${1}
+
+    case $(atf_get ${1}) in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee])
+        atf_set ${1} true
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee])
+        atf_set ${1} false
+        ;;
+    *)
+        _atf_error 128 "Invalid value for boolean variable \`${1}'"
+        ;;
+    esac
+}
+
+#
+# _atf_ensure_not_empty var
+#
+#   Ensures that the test case defined the variable 'var' to a non-empty
+#   value.
+#
+_atf_ensure_not_empty()
+{
+    [ -n "$(atf_get ${1})" ] || \
+        _atf_error 128 "Undefined or empty variable \`${1}'"
+}
+
+#
+# _atf_error error_code [msg1 [.. msgN]]
+#
+#   Prints the given error message (which can be composed of multiple
+#   arguments, in which case are joined by a single space) and exits
+#   with the specified error code.
+#
+#   This must not be used by test programs themselves (hence making
+#   the function private) to indicate a test case's failure.  They
+#   have to use the atf_fail function.
+#
+_atf_error()
+{
+    _error_code="${1}"; shift
+
+    _atf_echo -r -t "${Prog_Name}: " "ERROR:" "$@" 1>&2
+    exit ${_error_code}
+}
+
+#
+# _atf_expand_glob glob
+#
+#   Prints all test case identifiers that match the provided glob
+#   pattern.  The results are sorted alphabetically.
+#
+_atf_expand_glob()
+{
+    _glob="${1}"
+    _matched=""
+    set -- ${Test_Cases}
+    while [ ${#} -gt 0 ]; do
+        case "${1}" in
+        ${_glob}) _matched="${_matched} ${1}" ;;
+        *) ;;
+        esac
+
+        shift
+    done
+
+    set -- ${_matched}
+    {
+        while [ ${#} -gt 0 ]; do
+            echo ${1}
+            shift
+        done
+    } | sort
+}
+
+#
+# _atf_get_bool varname
+#
+#   Evaluates a test case-specific variable as a boolean and returns its
+#   value.
+#
+_atf_get_bool()
+{
+    eval $(atf_get ${1})
+}
+
+#
+# _atf_init_output [tc1 .. tcN]
+#
+#   Initializes the descriptor where we will send the test case's
+#   results.
+#
+_atf_init_output()
+{
+    echo "Content-Type: application/X-atf-tcs; version=\"1\"" \
+        >&${Results_Fd}
+    echo "" >&${Results_Fd}
+    echo "tcs-count: ${#}" >&${Results_Fd}
+}
+
+#
+# _atf_internal_get varname
+#
+#   Prints the value of a test case-specific internal variable.  Given
+#   that one should not get the value of non-existent variables, it is
+#   fine to always use this function as 'val=$(_atf_internal_get var)'.
+#
+_atf_internal_get()
+{
+    eval echo \${__tc_internal_var_${Test_Case}_${1}}
+}
+
+#
+# _atf_internal_set varname val1 [.. valN]
+#
+#   Sets the test case's private variable 'varname' to the specified
+#   values which are concatenated using a single blank space.
+#
+_atf_internal_set()
+{
+    _var=${1}; shift
+    eval __tc_internal_var_${Test_Case}_${_var}=\"\${*}\"
+}
+
+#
+# _atf_list_tcs [tc1 .. tcN]
+#
+#   Describes all given test cases and prints the list to the standard
+#   output.
+#
+_atf_list_tcs()
+{
+    # Calculate the length of the longest test case name.  Needed for
+    # correct indentation later on.
+    _maxlen=0
+    for _tc in ${*}; do
+        if [ ${#_tc} -gt ${_maxlen} ]; then
+            _maxlen=${#_tc}
+        fi
+    done
+
+    # Print the list of test cases.
+    _maxlen=$((${_maxlen} + 4))
+    for _tc in ${*}; do
+        _atf_parse_head ${_tc}
+        _atf_echo -t ${_tc} -l ${_maxlen} $(atf_get descr)
+    done
+}
+
+#
+# _atf_normalize str
+#
+#   Normalizes a string so that it is a valid shell variable name.
+#
+_atf_normalize()
+{
+    echo ${1} | tr .- __
+}
+
+#
+# _atf_parse_head tcname
+#
+#   Evaluates a test case's head to gather its variables and prepares the
+#   test program to run it.
+#
+_atf_parse_head()
+{
+    ${Parsing_Head} && _atf_error 128 "_atf_parse_head called recursively"
+    Parsing_Head=true
+
+    Test_Case="${1}"
+
+    atf_set ident "${1}"
+    ${1}_head
+    _atf_ensure_not_empty descr
+    _atf_ensure_not_empty ident
+    test $(atf_get ident) = "${1}" || \
+        _atf_error 128 "Test case redefined ident"
+
+    Parsing_Head=false
+}
+
+#
+# _atf_parse_props tc
+#
+#   Runs a test case's body but, before that, handles the default
+#   properties.  This function must be run in a subshell because the
+#   test case is designed to abruptly exit the shell when any of
+#   atf_pass, atf_skip or atf_fail are executed.
+#
+_atf_run_body()
+{
+    HOME=$(pwd)
+    export HOME
+    unset LANG
+    unset LC_ALL
+    unset LC_COLLATE
+    unset LC_CTYPE
+    unset LC_MESSAGES
+    unset LC_MONETARY
+    unset LC_NUMERIC
+    unset LC_TIME
+    unset TZ
+
+    umask 0022
+
+    _vars="$(atf_get require.config)"
+    if [ -n "${_vars}" ]; then
+        for _v in ${_vars}; do
+            if ! atf_config_has ${_v}; then
+                atf_skip "Required configuration variable ${_v} not defined"
+            fi
+        done
+    fi
+
+    _progs="$(atf_get require.progs)"
+    if [ -n "${_progs}" ]; then
+        for _p in ${_progs}; do
+            atf_require_prog ${_p}
+        done
+    fi
+
+    case $(atf_get require.user) in
+    root)
+        [ $(id -u) -eq 0 ] || \
+            atf_skip "Requires root privileges"
+        ;;
+    unprivileged)
+        [ $(id -u) -ne 0 ] || \
+            atf_skip "Requires an unprivileged user"
+        ;;
+    "")
+        ;;
+    *)
+        _atf_error 128 "Invalid value in the require.user property"
+        ;;
+    esac
+
+    # Restore all signals to their default behavior for the child process.
+    if [ ${SH_TRAP_DASH} = yes ]; then
+        trap -- -
+    else
+        # We don't have an easy way to reset all signals to their default
+        # behavior, so simply revert those that we modified.
+        trap SIGHUP SIGINT SIGTERM
+    fi
+
+    ${1}_body
+}
+
+#
+# _atf_run_tc tc nrest
+#
+#   Runs the specified test case.  Prints its exit status to the
+#   standard output and returns a boolean indicating if the test was
+#   successful or not.  The 'nrest' parameter indicates how many test
+#   cases are left for execution.
+#
+_atf_run_tc()
+{
+    _atf_parse_head ${1}
+
+    # Block some signals while we mess with temporary files so that we can
+    # clean them up later on.
+    Held_Signals=
+    trap _atf_sighup_handler SIGHUP
+    trap _atf_sigint_handler SIGINT
+    trap _atf_sigterm_handler SIGTERM
+
+    echo "tc-start: ${Test_Case}" >&${Results_Fd}
+
+    _atf_internal_set srcdir "${Source_Dir}"
+
+    Results_File=$(mktemp $(atf_config_get workdir)/atf.XXXXXX)
+
+    Work_Dir=$(mktemp -d $(atf_config_get workdir)/atf.XXXXXX)
+    if [ ${?} -eq 0 ]; then
+        ( cd ${Work_Dir} ; _atf_run_body ${1} ; atf_pass )
+        _ret=$?
+        ( cd ${Work_Dir} ; ${1}_cleanup )
+        if [ ${2} -gt 1 ]; then
+            echo __atf_tc_separator__
+            echo __atf_tc_separator__ 1>&2
+        fi
+        ${Atf_Cleanup} ${Work_Dir}
+    else
+        ( atf_fail "Could not create the work directory" )
+        _ret=${?}
+    fi
+    Work_Dir=
+
+    # Set a default exit status if the test case did not report any.
+    if [ -z "$(cat ${Results_File})" ]; then
+        if [ -n "${Held_Signals}" ]; then
+            ( atf_fail "Test case was interrupted by${Held_Signals}" )
+        else
+            ( atf_fail "Test case did not report any status; bogus test" )
+        fi
+    fi
+
+    # Print the result of the test case and clean up the temporary file.
+    echo "tc-end: ${Test_Case}, $(cat ${Results_File})" >&${Results_Fd}
+    rm -f ${Results_File}
+    Results_File=
+
+    Test_Case=
+
+    # Restore blocked signals and process them.
+    trap - SIGHUP SIGINT SIGTERM
+    for s in ${Held_Signals}; do
+        kill -s ${s} $$
+    done
+
+    return ${_ret}
+}
+
+#
+# _atf_run_tcs [tc1 .. tcN]
+#
+#   Executes all the given test cases.  Returns 0 if all tests were
+#   successful, or 1 otherwise.
+#
+_atf_run_tcs()
+{
+    # Now check that the base work directory exists.  We do not want to
+    # bother creating it.
+    [ -d $(atf_config_get workdir) ] || \
+        _atf_error 1 "Cannot find the work directory" \
+                     "\`$(atf_config_get workdir)'"
+
+    _atf_init_output "${@}"
+
+    _ok=true
+    while [ ${#} -gt 0 ]; do
+        _atf_run_tc ${1} ${#} || _ok=false
+        shift
+    done
+
+    ${_ok}
+}
+
+#
+# _atf_sighup_handler
+#
+#   Handler for the SIGHUP signal that registers its occurrence so that
+#   it can be processed at a later stage.
+#
+_atf_sighup_handler()
+{
+    Held_Signals="${Held_Signals} SIGHUP"
+}
+
+#
+# _atf_sigint_handler
+#
+#   Handler for the SIGINT signal that registers its occurrence so that
+#   it can be processed at a later stage.
+#
+_atf_sigint_handler()
+{
+    Held_Signals="${Held_Signals} SIGINT"
+}
+
+#
+# _atf_sigterm_handler
+#
+#   Handler for the SIGTERM signal that registers its occurrence so that
+#   it can be processed at a later stage.
+#
+_atf_sigterm_handler()
+{
+    Held_Signals="${Held_Signals} SIGTERM"
+}
+
+#
+# _atf_syntax_error msg1 [.. msgN]
+#
+#   Formats and prints a syntax error message and terminates the
+#   program prematurely.
+#
+_atf_syntax_error()
+{
+    _atf_echo -r -t "${Prog_Name}: " "ERROR: ${@}" 1>&2
+    _atf_echo -r -t "${Prog_Name}: " "Type \`${Prog_Name} -h' for more" \
+                                     "details." 1>&2
+    exit 1
+}
+
+#
+# _atf_is_tc_defined tc-name
+#
+#   Returns a boolean indicating if the given test case was defined by the
+#   test program or not.
+#
+_atf_is_tc_defined()
+{
+    for _tc in ${Defined_Test_Cases}; do
+        [ ${_tc} = ${1} ] && return 0
+    done
+    return 1
+}
+
+#
+# _atf_usage
+#
+#   Prints usage information and exits the program.
+#
+_atf_usage()
+{
+    _atf_echo -t "Usage: " "${Prog_Name} [options] [test_case1" \
+                           "[.. test_caseN]]"
+    echo
+    _atf_echo "This is an independent atf test program."
+    echo
+    _atf_echo "Available options:"
+    _atf_echo -t "    -h              " "Shows this help message"
+    _atf_echo -t "    -l              " "List test cases and their purpose"
+    _atf_echo -t "    -r fd           " "The file descriptor to which the" \
+                                        "test program will send the results" \
+                                        "of the test cases"
+    _atf_echo -t "    -s srcdir       " "Directory where the test's data" \
+                                        "files are located"
+    _atf_echo -t "    -v var=value    " "Sets the configuration variable" \
+                                        "\`var' to \`value'"
+    echo
+    _atf_echo "For more details please see atf-test-program(1) and atf(7)."
+    exit 0
+}
+
+#
+# _atf_warning [msg1 [.. msgN]]
+#
+#   Prints the given warning message (which can be composed of multiple
+#   arguments, in which case are joined by a single space).
+#
+#   This must not be used by test programs themselves (hence making
+#   the function private).
+#
+_atf_warning()
+{
+    _atf_echo -r -t "${Prog_Name}: " "WARNING:" "$@" 1>&2
+}
+
+#
+# main [options] [test_case1 [.. test_caseN]]
+#
+#   Test program's entry point.
+#
+main()
+{
+    # The test program's base directory where it will put temporary files.
+    _atf_config_set workdir $(atf-config -t atf_workdir)
+
+    # Process command-line options first.
+    _lflag=false
+    while getopts :hlr:s:v: arg; do
+        case ${arg} in
+        h)
+            _atf_usage
+            # NOTREACHED
+            ;;
+
+        l)
+            _lflag=true
+            ;;
+
+        r)
+            Results_Fd=${OPTARG}
+            ;;
+
+        s)
+            Source_Dir=${OPTARG}
+            ;;
+
+        v)
+            _atf_config_set_from_str "${OPTARG}"
+            ;;
+
+        \?)
+            _atf_syntax_error "Unknown option -${OPTARG}."
+            # NOTREACHED
+            ;;
+        esac
+    done
+    shift `expr ${OPTIND} - 1`
+
+    # First of all, make sure that the source directory is correct.  It
+    # doesn't matter if the user did not change it, because the default
+    # value may not work.  (TODO: It possibly should, even though it is
+    # not a big deal because atf-run deals with this.)
+    [ -f ${Source_Dir}/${Prog_Name} ] || \
+        _atf_error 1 "Cannot find the test program in the source" \
+                     "directory \`${Source_Dir}'"
+
+    # Set some global variables useful to the user.  Not specific to the
+    # test case because they may be needed during initialization too.
+    # XXX I'm not too fond on this though.  Sure, it is very useful in some
+    # situations -- such as in NetBSD's fs/tmpfs/* tests where each test
+    # program includes a helper subroutines file -- but there are also
+    # other, maybe better ways to achieve the same.  Because, for example,
+    # at the moment it is not possible to detect failures in the inclusion
+    # and report them nicely.  Plus this change is difficult to implement
+    # in the current C++ API.
+    _atf_internal_set srcdir "${Source_Dir}"
+
+    # Call the test program's hook to register all available test cases.
+    atf_init_test_cases
+
+    # Set _tcs to the test cases to run.
+    if [ ${#} -gt 0 ]; then
+        # Expand glob patterns and report erroneous test cases.
+        _tcs=
+        while [ ${#} -gt 0 ]; do
+            _matches=$(_atf_expand_glob "${1}")
+            [ ${#_matches} -eq 0 ] &&
+                _atf_error 1 "Unknown test case \`${1}'"
+
+            _tcs="${_tcs} ${_matches}"
+            shift
+        done
+    else
+        _tcs=${Test_Cases}
+    fi
+
+    # Run or list test cases, restricting them to _tcs.
+    if `${_lflag}`; then
+        _atf_list_tcs ${_tcs}
+    else
+        _atf_run_tcs ${_tcs}
+    fi
+}
+
+# vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

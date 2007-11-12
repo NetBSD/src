@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp: t_parsers
+tp: t_writers

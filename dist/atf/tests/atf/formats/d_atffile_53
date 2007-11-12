@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: foo = "Correct value" # With comment.
+
+prop: bar = # A comment.
+
+prop: baz = "Last variable"
+
+# End of file.
