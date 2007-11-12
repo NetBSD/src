@@ -37,7 +37,7 @@
 
 
 #include "osd.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "compat.h"
 #include "osd_ops.h"
 

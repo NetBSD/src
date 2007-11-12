@@ -70,18 +70,18 @@ iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o o
 # Dependencies
 #
 
-osd_ops.o: $(INCLUDE)/util.h $(INCLUDE)/osd.h $(INCLUDE)/osd_ops.h osd_ops.c
-util.o: util.c $(INCLUDE)/util.h
-parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/util.h md5.c 
-usocktest.o: usocktest.c $(INCLUDE)/util.h
-disk.o: disk.c  $(INCLUDE)/device.h $(INCLUDE)/util.h $(INCLUDE)/iscsi.h
-osd.o: osd.c $(INCLUDE)/osd.h $(INCLUDE)/device.h $(INCLUDE)/util.h $(INCLUDE)/iscsi.h
-iscsi.o: iscsi.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h
-iscsi-harness.o: iscsi-harness.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/osd.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h $(INCLUDE)/parameters.h $(INCLUDE)/osd_ops.h
-utarget.o: utarget.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/target.h $(INCLUDE)/device.h
-tests.o: tests.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h
-target.o: target.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/target.h $(INCLUDE)/parameters.h
-initiator.o: initiator.c $(INCLUDE)/iscsi.h $(INCLUDE)/util.h $(INCLUDE)/initiator.h $(INCLUDE)/parameters.h
+osd_ops.o: $(INCLUDE)/iscsiutil.h $(INCLUDE)/osd.h $(INCLUDE)/osd_ops.h osd_ops.c
+util.o: util.c $(INCLUDE)/iscsiutil.h
+parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/iscsiutil.h md5.c 
+usocktest.o: usocktest.c $(INCLUDE)/iscsiutil.h
+disk.o: disk.c  $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
+osd.o: osd.c $(INCLUDE)/osd.h $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
+iscsi.o: iscsi.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h
+iscsi-harness.o: iscsi-harness.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/osd.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h $(INCLUDE)/parameters.h $(INCLUDE)/osd_ops.h
+utarget.o: utarget.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/target.h $(INCLUDE)/device.h
+tests.o: tests.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/initiator.h $(INCLUDE)/tests.h
+target.o: target.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/target.h $(INCLUDE)/parameters.h
+initiator.o: initiator.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/initiator.h $(INCLUDE)/parameters.h
 
 #
 # Util

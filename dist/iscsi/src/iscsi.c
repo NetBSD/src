@@ -52,7 +52,7 @@
 #endif
            
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 
 
 /*
