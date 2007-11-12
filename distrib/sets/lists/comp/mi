@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1079 2007/11/10 07:43:07 yamt Exp $
+#	$NetBSD: mi,v 1.1080 2007/11/12 14:56:25 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -103,6 +103,25 @@
 ./usr/include/arpa/telnet.h			comp-c-include
 ./usr/include/arpa/tftp.h			comp-c-include
 ./usr/include/assert.h				comp-c-include
+./usr/include/atf				comp-atf-include
+./usr/include/atf.hpp				comp-atf-include
+./usr/include/atf/application.hpp		comp-atf-include
+./usr/include/atf/atffile.hpp			comp-atf-include
+./usr/include/atf/config.hpp			comp-atf-include
+./usr/include/atf/env.hpp			comp-atf-include
+./usr/include/atf/exceptions.hpp		comp-atf-include
+./usr/include/atf/expand.hpp			comp-atf-include
+./usr/include/atf/formats.hpp			comp-atf-include
+./usr/include/atf/fs.hpp			comp-atf-include
+./usr/include/atf/io.hpp			comp-atf-include
+./usr/include/atf/macros.hpp			comp-atf-include
+./usr/include/atf/parser.hpp			comp-atf-include
+./usr/include/atf/sanity.hpp			comp-atf-include
+./usr/include/atf/tests.hpp			comp-atf-include
+./usr/include/atf/text.hpp			comp-atf-include
+./usr/include/atf/ui.hpp			comp-atf-include
+./usr/include/atf/user.hpp			comp-atf-include
+./usr/include/atf/utils.hpp			comp-atf-include
 ./usr/include/bfd				comp-obsolete		obsolete
 ./usr/include/bfd/ansidecl.h			comp-obsolete		obsolete
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
@@ -2071,6 +2090,8 @@
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libatf.a				comp-atf-lib
+./usr/lib/libatf_p.a				comp-atf-lib
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile

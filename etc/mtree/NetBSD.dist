@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.342 2007/10/17 23:04:10 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.343 2007/11/12 14:56:25 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -224,6 +224,7 @@
 ./usr/include/adosfs
 ./usr/include/altq
 ./usr/include/arpa
+./usr/include/atf
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
