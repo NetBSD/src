@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.192 2007/11/07 15:56:21 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.193 2007/11/12 23:11:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.192 2007/11/07 15:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.193 2007/11/12 23:11:59 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -114,8 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.192 2007/11/07 15:56:21 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
-
 #include <sys/cpu.h>
+#include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -237,6 +237,10 @@ exit1(struct lwp *l, int rv)
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
+
+	/* Destroy any lwpctl info. */
+	if (p->p_lwpctl != NULL)
+		lwp_ctl_exit();
 
 	/* Destroy all AIO works */
 	aio_exit(p, p->p_aio);

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.283 2007/11/07 00:39:10 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.284 2007/11/12 23:12:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -162,6 +162,9 @@
 #endif
 #ifndef MAXCPUS
 #define	MAXCPUS			32
+#endif
+#ifndef MAX_LWP_PER_PROC
+#define	MAX_LWP_PER_PROC	8000
 #endif
 
 /*
