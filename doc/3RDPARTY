@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.566 2007/11/11 00:36:54 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.567 2007/11/12 14:53:32 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -50,6 +50,21 @@ Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
 Check src/usr.sbin/amd/include/config.h is correct after import.
+
+Package:	Automated Testing Framework (ATF)
+Version:	0.0-not-released
+Current Vers:	0.0-not-released
+Maintainer:	Julio M. Merino Vidal <jmmv@NetBSD.org>
+Archive site:	ftp://unknown.example.net/
+Home page:	http://unknown.example.net/
+Mailing List:	unknown@example.net
+Responsible:	jmmv
+License:	The NetBSD Foundation's license (BSD 4-clause)
+Notes:
+The source files are in dist/atf.
+Given that the primary goal of ATF is to provide a testing framework for
+NetBSD, no local changes should be ever needed.  Always direct them to the
+maintainer for integration in official releases.
 
 Package:	ath-hal
 Version:	0.9.17.2
