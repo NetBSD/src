@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.344 2007/11/12 14:57:35 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.345 2007/11/12 15:01:52 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -435,6 +435,7 @@
 ./usr/share/examples
 ./usr/share/examples/amd
 ./usr/share/examples/apm
+./usr/share/examples/atf
 ./usr/share/examples/dhcp
 ./usr/share/examples/emul
 ./usr/share/examples/emul/linux
@@ -1047,6 +1048,10 @@
 ./usr/share/tmac
 ./usr/share/tmac/mdoc
 ./usr/share/tmac/mm
+./usr/share/xml
+./usr/share/xml/atf
+./usr/share/xsl
+./usr/share/xsl/atf
 ./usr/share/vi
 ./usr/share/vi/catalog
 ./usr/share/wscons
