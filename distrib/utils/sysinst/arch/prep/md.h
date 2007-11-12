@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2006/04/05 16:55:06 garbled Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2007/11/12 15:07:36 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  *
  * i386 has the  MD set kern first, because generic kernels are  too
  * big to fit on install floppies. i386 does not yet include the x sets. 
