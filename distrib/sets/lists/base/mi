@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.728 2007/11/12 15:00:02 jmmv Exp $
+# $NetBSD: mi,v 1.729 2007/11/12 15:02:58 jmmv Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -71,6 +71,7 @@
 ./etc/X11/xinit					base-x11-root
 ./etc/X11/xserver				base-x11-root
 ./etc/X11/xsm					base-x11-root
+./etc/atf					base-atf-bin
 ./etc/cgd					base-sys-root
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.345 2007/07/14 19:53:52 adrianp Exp $
+#	$NetBSD: Makefile,v 1.346 2007/11/12 15:02:57 jmmv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -326,7 +326,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
 	    	/dev/null ${DESTDIR}${file}
 .endfor
-.for subdir in . defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
+.for subdir in . atf defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
