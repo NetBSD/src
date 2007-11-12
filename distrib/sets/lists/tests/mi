@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.3 2007/11/12 15:13:58 jmmv Exp $
+# $NetBSD: mi,v 1.4 2007/11/12 15:18:07 jmmv Exp $
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/tests					tests-base-tests
 ./usr/tests/Atffile				tests-base-tests
@@ -219,6 +219,38 @@
 ./usr/tests/atf/units/t_text			tests-atf-tests
 ./usr/tests/atf/units/t_user			tests-atf-tests
 ./usr/tests/atf/units/t_utils			tests-atf-tests
+./usr/tests/fs					tests-fs-tests
+./usr/tests/fs/Atffile				tests-fs-tests
+./usr/tests/fs/h_funcs.subr			tests-fs-tests
+./usr/tests/fs/tmpfs				tests-fs-tests
+./usr/tests/fs/tmpfs/Atffile			tests-fs-tests
+./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests
+./usr/tests/fs/tmpfs/h_tools			tests-fs-tests
+./usr/tests/fs/tmpfs/t_create			tests-fs-tests
+./usr/tests/fs/tmpfs/t_devices			tests-fs-tests
+./usr/tests/fs/tmpfs/t_dots			tests-fs-tests
+./usr/tests/fs/tmpfs/t_exec			tests-fs-tests
+./usr/tests/fs/tmpfs/t_id_gen			tests-fs-tests
+./usr/tests/fs/tmpfs/t_link			tests-fs-tests
+./usr/tests/fs/tmpfs/t_mkdir			tests-fs-tests
+./usr/tests/fs/tmpfs/t_mknod			tests-fs-tests
+./usr/tests/fs/tmpfs/t_mount			tests-fs-tests
+./usr/tests/fs/tmpfs/t_pipes			tests-fs-tests
+./usr/tests/fs/tmpfs/t_read_write		tests-fs-tests
+./usr/tests/fs/tmpfs/t_readdir			tests-fs-tests
+./usr/tests/fs/tmpfs/t_remove			tests-fs-tests
+./usr/tests/fs/tmpfs/t_rename			tests-fs-tests
+./usr/tests/fs/tmpfs/t_rmdir			tests-fs-tests
+./usr/tests/fs/tmpfs/t_setattr			tests-fs-tests
+./usr/tests/fs/tmpfs/t_sizes			tests-fs-tests
+./usr/tests/fs/tmpfs/t_sockets			tests-fs-tests
+./usr/tests/fs/tmpfs/t_statvfs			tests-fs-tests
+./usr/tests/fs/tmpfs/t_symlink			tests-fs-tests
+./usr/tests/fs/tmpfs/t_times			tests-fs-tests
+./usr/tests/fs/tmpfs/t_trail_slash		tests-fs-tests
+./usr/tests/fs/tmpfs/t_truncate			tests-fs-tests
+./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests
+./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/df				tests-util-tests
