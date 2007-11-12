@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.2 2007/11/12 16:39:33 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.3 2007/11/12 17:42:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.2 2007/11/12 16:39:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.3 2007/11/12 17:42:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -211,7 +211,8 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
 	memcpy(buf, &pth, sizeof(pth));
 	error = uiomove(buf+sizeof(struct putter_hdr), frsize, uio);
 	if (error == 0) {
-		pi->pi_pop->pop_dispatch(pi->pi_private, buf);
+		pi->pi_pop->pop_dispatch(pi->pi_private,
+		    (struct putter_hdr *)buf);
 	}
 	kmem_free(buf, frsize + sizeof(struct putter_hdr));
 
