@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.58 2007/05/17 01:50:49 hubertf Exp $	*/
+/*	$NetBSD: md.h,v 1.59 2007/11/12 15:07:35 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.58 2007/10/21 20:21:02 pavel Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.59 2007/11/12 15:07:33 jmmv Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -728,6 +728,9 @@ message set_man_pages
 
 message set_misc
 {Inne}
+
+message set_tests
+{Test programs}
 
 message set_text_tools
 {Narzedzia Przetwarzania Tekstu}
