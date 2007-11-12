@@ -1,7 +1,10 @@
-/*	$NetBSD: suspend.c,v 1.7 2007/11/12 16:39:35 pooka Exp $	*/
+/*	$NetBSD: putter.h,v 1.1 2007/11/12 16:39:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by the
+ * Research Foundation of Helsinki University of Technology
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,40 +28,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if !defined(lint)
-__RCSID("$NetBSD: suspend.c,v 1.7 2007/11/12 16:39:35 pooka Exp $");
-#endif /* !lint */
-
-/*
- * File system suspension
- */
+#ifndef _DEV_PUTTER_PUTTER_H_
+#define _DEV_PUTTER_PUTTER_H_
 
 #include <sys/types.h>
 
-#include <dev/puttervar.h>
+struct putter_hdr {
+	uint64_t	pth_framelen;
+};
 
-#include <assert.h>
-#include <errno.h>
-#include <puffs.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "puffs_priv.h"
-
-/*ARGSUSED*/
-int
-puffs_fs_suspend(struct puffs_usermount *pu)
-{
-	struct puffs_req preq;
-	size_t n;
-
-	preq.preq_pth.pth_framelen = sizeof(struct putter_hdr);
-	preq.preq_opclass = PUFFSOP_SUSPEND;
-
-	n = write(pu->pu_fd, &preq, sizeof(preq));
-
-	/* XXX */
-	assert(n == sizeof(preq));
-	return 0;
-}
+#endif /* _SYS_PUTTER_PUTTER_H_ */
