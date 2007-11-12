@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.70 2006/12/18 20:08:48 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.71 2007/11/12 16:04:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.70 2006/12/18 20:08:48 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.71 2007/11/12 16:04:55 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -694,7 +694,7 @@ get_crashtime(void)
 	if (KREAD(kd_dump, dump_nl[X_TIME_SECOND].n_value, &dumptime) != 0) {
 		if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dtime) != 0) {
 			if (verbose)
-				syslog(LOG_WARNING, "kvm_read: %s (and _time_seconf is not defined also)", kvm_geterr(kd_dump));
+				syslog(LOG_WARNING, "kvm_read: %s (and _time_second is not defined also)", kvm_geterr(kd_dump));
 			return (0);
 		}
 		dumptime = dtime.tv_sec;
