@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.49 2007/11/10 18:29:36 ad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.50 2007/11/12 14:20:40 ad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.49 2007/11/10 18:29:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.50 2007/11/12 14:20:40 ad Exp $");
 
 #include "ppp.h"
 
@@ -888,14 +888,13 @@ static void
 pppasyncctlp(struct ppp_softc *sc)
 {
     struct tty *tp;
-    int s;
 
     /* Put a placeholder byte in canq for ttselect()/ttnread(). */
-    s = spltty();
+    mutex_spin_enter(&tty_lock);
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);
     ttwakeup(tp);
-    splx(s);
+    mutex_spin_exit(&tty_lock);
 }
 
 /*
