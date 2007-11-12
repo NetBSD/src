@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.1 2006/03/30 15:45:42 shige Exp $ */
+/* $NetBSD: md.h,v 1.2 2007/11/12 15:07:35 jmmv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,7 @@
 
 /*
  *  Default filesets to fetch and install during installation or upgrade.
- *  The standard sets are: base etc comp games man misc text
+ *  The standard sets are: base etc comp games man misc tests text
  */
 #define SET_KERNEL_1_NAME	"kern-ALCHEMY"
 #define SET_KERNEL_2_NAME	"kern-AR531X"
