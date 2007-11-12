@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2007/11/12 15:13:59 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2007/11/12 15:18:18 jmmv Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	atf util
+SUBDIR=	atf fs util
 
 .include <bsd.test.mk>
 .include <bsd.subdir.mk>
