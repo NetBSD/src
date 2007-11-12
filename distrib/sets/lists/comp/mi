@@ -1,9 +1,10 @@
-#	$NetBSD: mi,v 1.1080 2007/11/12 14:56:25 jmmv Exp $
+#	$NetBSD: mi,v 1.1081 2007/11/12 15:00:02 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
 ./usr/bin/asa					comp-fortran-bin
+./usr/bin/atf-compile				comp-atf-bin
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		bfd
 ./usr/bin/c89					comp-c-bin
