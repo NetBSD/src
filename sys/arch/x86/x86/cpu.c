@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2007/11/10 20:06:25 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2007/11/12 18:44:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2007/11/10 20:06:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2007/11/12 18:44:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -334,6 +334,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_errata();
 		break;
 
 	case CPU_ROLE_BP:
@@ -354,6 +355,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
+		x86_errata();
 		break;
 
 	case CPU_ROLE_AP:
@@ -619,7 +621,7 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s;
+	int s, i;
 
 #ifdef __x86_64__
 	cpu_init_msrs(ci);
@@ -638,8 +640,11 @@ cpu_hatch(void *v)
 	lapic_enable();
 	lapic_initclocks();
 
-	while ((ci->ci_flags & CPUF_GO) == 0)
-		delay(10);
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		/* Don't use delay, boot CPU may be patching the text. */
+		for (i = 10000; i != 0; i--)
+			x86_pause();
+	}
 
 	/* Beacuse the text may have been patched in x86_patch(). */
 	wbinvd();
@@ -672,6 +677,7 @@ cpu_hatch(void *v)
 #endif
 	x86_enable_intr();
 	splx(s);
+	x86_errata();
 
 	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    (long)ci->ci_cpuid);
