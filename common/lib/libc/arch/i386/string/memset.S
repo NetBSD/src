@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2006/04/07 12:07:55 yamt Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 2007/11/12 18:41:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.2 2006/04/07 12:07:55 yamt Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3 2007/11/12 18:41:59 ad Exp $")
 #endif
 
 #ifdef BZERO
@@ -54,8 +54,6 @@ ENTRY(memset)
 
 	pushl	%edi
 	movl	8(%esp),%edi
-
-	cld				/* set fill direction forward */
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
