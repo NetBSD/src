@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.14 2007/11/06 14:27:10 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.15 2007/11/12 18:56:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.14 2007/11/06 14:27:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.15 2007/11/12 18:56:56 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,6 @@ struct lpcib_softc {
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
-	struct pci_conf_state	sc_pciconf;
 
 	struct pci_attach_args	sc_pa;
 	int			sc_has_rcba;
