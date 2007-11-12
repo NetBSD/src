@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.51 2007/11/12 14:45:23 xtraeme Exp $	*/
+/*	$NetBSD: ld.c,v 1.52 2007/11/12 19:01:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.51 2007/11/12 14:45:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.52 2007/11/12 19:01:07 xtraeme Exp $");
 
 #include "rnd.h"
 
@@ -383,7 +383,7 @@ static int
 ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
-	int s, part, unit, error;
+	int part, unit, error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
@@ -533,10 +533,10 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 	    {
 		struct disk_strategy *dks = (void *)addr;
 
-		s = splbio();
+		mutex_enter(&sc->sc_mutex);
 		strlcpy(dks->dks_name, bufq_getstrategyname(sc->sc_bufq),
 		    sizeof(dks->dks_name));
-		splx(s);
+		mutex_exit(&sc->sc_mutex);
 		dks->dks_paramlen = 0;
 
 		return 0;
@@ -558,11 +558,11 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		if (error)
 			return error;
 
-		s = splbio();
+		mutex_enter(&sc->sc_mutex);
 		old = sc->sc_bufq;
 		bufq_move(new, old);
 		sc->sc_bufq = new;
-		splx(s);
+		mutex_exit(&sc->sc_mutex);
 		bufq_free(old);
 
 		return 0;
