@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.6 2007/11/13 15:57:13 ad Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.7 2007/11/13 17:20:09 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.6 2007/11/13 15:57:13 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.7 2007/11/13 17:20:09 ad Exp $");
 
 #include <errno.h>
 #include <stddef.h>
@@ -66,8 +66,12 @@ __strong_alias(__libc_rwlock_destroy,pthread_rwlock_destroy)
 static inline int
 rw_cas(pthread_rwlock_t *ptr, uintptr_t *o, uintptr_t n)
 {
+	uintptr_t oldv;
 
-	return pthread__atomic_cas_ptr(&ptr->ptr_owner, (void **)o, (void *)n);
+	oldv = *o;
+	*o = (uintptr_t)pthread__atomic_cas_ptr(&ptr->ptr_owner, (void *)oldv,
+	    (void *)n);
+	return *o == oldv;
 }
 
 int

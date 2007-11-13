@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.87 2007/11/13 15:57:10 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.88 2007/11/13 17:20:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.87 2007/11/13 15:57:10 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.88 2007/11/13 17:20:09 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
+#include <sys/lwpctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -68,22 +69,24 @@ static int	pthread__cmp(struct __pthread_st *, struct __pthread_st *);
 RB_PROTOTYPE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
 
-static void	pthread__create_tramp(void *(*)(void *), void *);
+static void	pthread__create_tramp(pthread_t, void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
 static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
+static void	pthread__fork_callback(void);
 
 void	pthread__init(void);
 
 int pthread__started;
-
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
 pthread_queue_t pthread__allqueue;
 
 static pthread_attr_t pthread_default_attr;
+static lwpctl_t pthread__dummy_lwpctl = { .lc_curcpu = LWPCTL_CPU_NONE };
+static pthread_t pthread__first;
 
 enum {
 	DIAGASSERT_ABORT =	1<<0,
@@ -191,6 +194,13 @@ pthread__init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
+	/*
+	 * Don't need lwpctl if running on a uniprocessor.
+	 * Just use the dummy block.
+	 */
+	if (pthread__concurrency > 1)
+		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl);
+
 	/* Start subsystems */
 	PTHREAD_MD_INIT
 	pthread__debug_init();
@@ -218,14 +228,27 @@ pthread__init(void)
 		}
 	}
 
-
 	/* Tell libc that we're here and it should role-play accordingly. */
+	pthread__first = first;
+	pthread_atfork(NULL, NULL, pthread__fork_callback);
 	__isthreaded = 1;
+}
+
+static void
+pthread__fork_callback(void)
+{
+
+	/* lwpctl state is not copied across fork. */
+	if (pthread__concurrency > 1) {
+		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU,
+		    &pthread__first->pt_lwpctl);
+	}
 }
 
 static void
 pthread__child_callback(void)
 {
+
 	/*
 	 * Clean up data structures that a forked child process might
 	 * trip over. Note that if threads have been created (causing
@@ -268,6 +291,8 @@ pthread__initthread(pthread_t t)
 	t->pt_signalled = 0;
 	t->pt_havespecific = 0;
 	t->pt_early = NULL;
+	t->pt_lwpctl = &pthread__dummy_lwpctl;
+	t->pt_blocking = 0;
 
 	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
 	pthread_mutex_init(&t->pt_lock, NULL);
@@ -339,8 +364,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
 			if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
 				/* Still running? */
-				if (_lwp_kill(newthread->pt_lid, 0) == 0 ||
-				    errno != ESRCH) {
+				if (newthread->pt_lwpctl->lc_curcpu !=
+				    LWPCTL_CPU_EXITED &&
+				    (_lwp_kill(newthread->pt_lid, 0) == 0 ||
+				    errno != ESRCH)) {
 					pthread_mutex_lock(
 					    &pthread__deadqueue_lock);
 					PTQ_INSERT_TAIL(&pthread__deadqueue,
@@ -388,8 +415,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * Create the new LWP.
 	 */
 	pthread__scrubthread(newthread, name, nattr.pta_flags);
-	makecontext(&newthread->pt_uc, pthread__create_tramp, 2,
-	    startfunc, arg);
+	makecontext(&newthread->pt_uc, pthread__create_tramp, 3,
+	    newthread, startfunc, arg);
 
 	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
@@ -413,10 +440,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 
 static void
-pthread__create_tramp(void *(*start)(void *), void *arg)
+pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 {
-	pthread_t self;
 	void *retval;
+
+#ifdef PTHREAD__HAVE_THREADREG
+	/* Set up identity register. */
+	pthread__threadreg_set(self);
+#endif
 
 	/*
 	 * Throw away some stack in a feeble attempt to reduce cache
@@ -426,15 +457,21 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 	 * that pt_lid may not be set by this point, but we don't
 	 * care.
 	 */
-	self = pthread__self();
 	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
 
 	if (self->pt_name != NULL) {
 		pthread_mutex_lock(&self->pt_lock);
 		if (self->pt_name != NULL)
-			(void)_lwp_setname(_lwp_self(), self->pt_name);
+			(void)_lwp_setname(0, self->pt_name);
 		pthread_mutex_unlock(&self->pt_lock);
 	}
+
+	/*
+	 * Don't need lwpctl if running on a uniprocessor.
+	 * Just use the dummy block.
+	 */
+	if (pthread__concurrency > 1)
+		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl);
 
 	retval = (*start)(arg);
 
@@ -947,6 +984,14 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	/* Clear the willpark flag, since we're about to block. */
 	self->pt_willpark = 0;
 
+	/*
+	 * For non-interlocked release of mutexes we need a store
+	 * barrier before incrementing pt_blocking away from zero. 
+	 * This is provided by the caller (it will release an
+	 * interlock, or do an explicit barrier).
+	 */
+	self->pt_blocking++;
+
 	/* 
 	 * Kernels before 4.99.27 can't park and unpark in one step,
 	 * so take care of it now if on an old kernel.
@@ -1034,6 +1079,7 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 		pthread__spinunlock(self, lock);
 	}
 	self->pt_early = NULL;
+	self->pt_blocking--;
 
 	return rv;
 }
@@ -1260,6 +1306,11 @@ pthread__initmain(pthread_t *newt)
 	}
 
 	*newt = t;
+
+#ifdef PTHREAD__HAVE_THREADREG
+	/* Set up identity register. */
+	pthread__threadreg_set(t);
+#endif
 }
 
 static int

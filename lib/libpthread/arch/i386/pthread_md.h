@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.10 2007/09/24 12:19:40 skrll Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.11 2007/11/13 17:20:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -183,5 +183,46 @@ pthread__sp(void)
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
 #define	PTHREAD__HAVE_ATOMIC
+/* #define	PTHREAD__HAVE_THREADREG */ 
+
+void	pthread__threadreg_set(pthread_t);
+
+static inline pthread_t
+pthread__threadreg_get(void)
+{
+	pthread_t self;
+
+	__asm volatile("movl %%gs:0, %0"
+		: "=r" (self)
+		:);
+
+	return self;
+}
+
+static inline void *
+pthread__atomic_cas_ptr(volatile void *ptr, const void *old, const void *new)
+{
+	volatile uintptr_t *cast = ptr;
+	void *ret;
+
+	__asm __volatile ("lock; cmpxchgl %2, %1"
+		: "=a" (ret), "=m" (*cast)
+		: "r" (new), "m" (*cast), "0" (old));
+
+	return ret;
+}
+
+static inline void *
+pthread__atomic_cas_ptr_ni(volatile void *ptr, const void *old, const void *new)
+{
+	volatile uintptr_t *cast = ptr;
+	void *ret;
+
+	__asm __volatile ("cmpxchgl %2, %1"
+		: "=a" (ret), "=m" (*cast)
+		: "r" (new), "m" (*cast), "0" (old));
+
+	return ret;
+}
 
 #endif /* _LIB_PTHREAD_I386_MD_H */

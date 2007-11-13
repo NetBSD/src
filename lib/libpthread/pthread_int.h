@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.60 2007/11/13 15:57:11 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.61 2007/11/13 17:20:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -130,6 +130,8 @@ struct	__pthread_st {
 	 * on other CPUs will access this data frequently.
 	 */
 	int		pt_dummy1 __aligned(128);
+	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
+	volatile int	pt_blocking;	/* Blocking in userspace */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
 	volatile int	pt_sleeponq;	/* On a sleep queue */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
@@ -252,17 +254,15 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	_INITCONTEXT_U_MD(ucp)						\
 	} while (/*CONSTCOND*/0)
 
-#ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
-#define pthread__id(reg) (reg)
-#else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
 	((pthread_t) (((vaddr_t)(sp)) & pthread__threadmask))
 
-#define pthread__id_reg() pthread__sp()
+#ifdef PTHREAD__HAVE_THREADREG
+#define	pthread__self()		pthread__threadreg_get()
+#else
+#define pthread__self() 	(pthread__id(pthread__sp()))
 #endif
-
-#define pthread__self() (pthread__id(pthread__id_reg()))
 
 #define pthread__abort()						\
 	pthread__assertfunc(__FILE__, __LINE__, __func__, "unreachable")
@@ -286,14 +286,14 @@ void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 
-int	pthread__atomic_cas_ptr(volatile void *, void **, void *) PTHREAD_HIDE;
-void	*pthread__atomic_swap_ptr(volatile void *, void *) PTHREAD_HIDE;
+void	*pthread__atomic_cas_ptr(volatile void *, const void *, const void *) PTHREAD_HIDE;
+void	*pthread__atomic_swap_ptr(volatile void *, const void *) PTHREAD_HIDE;
+void	pthread__atomic_or_ulong(volatile unsigned long *, unsigned long) PTHREAD_HIDE;
 void	pthread__membar_full(void) PTHREAD_HIDE;
 void	pthread__membar_producer(void) PTHREAD_HIDE;
 void	pthread__membar_consumer(void) PTHREAD_HIDE;
 
 int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
-int	pthread__mutex_catchup(pthread_mutex_t *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
