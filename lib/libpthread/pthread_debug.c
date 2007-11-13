@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.13 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.14 2007/11/13 15:57:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.13 2007/08/16 12:01:49 ad Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.14 2007/11/13 15:57:11 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -77,10 +77,10 @@ pthread__debug_init(void)
 {
 	time_t t;
 
-	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
+	if (pthread__getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
 		atexit(pthread__debug_printcounters);
 
-	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
+	if (pthread__getenv("PTHREAD_DEBUGLOG") != NULL) {
 		t = time(NULL);
 		debugbuf = pthread__debuglog_init(0);
 		linebuf = calloc(1000, sizeof(struct linebuf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.5 2007/09/21 16:24:45 ad Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.6 2007/11/13 15:57:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.5 2007/09/21 16:24:45 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.6 2007/11/13 15:57:13 ad Exp $");
 
 #include <errno.h>
 #include <stddef.h>
@@ -147,14 +147,14 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		 * Grab the interlock.  Once we have that, we
 		 * can adjust the waiter bits and sleep queue.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
 		 * then we may not need to sleep and should spin again.
 		 */
 		if (!rw_cas(ptr, &owner, owner | RW_HAS_WAITERS)) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+			pthread__spinunlock(self, &ptr->ptr_interlock);
 			continue;
 		}
 
@@ -165,7 +165,7 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &ptr->ptr_rblocked;
 		self->pt_early = pthread__rwlock_early;
-		pthread_spinunlock(&ptr->ptr_interlock);
+		pthread__spinunlock(self, &ptr->ptr_interlock);
 
 		error = pthread__park(self, &ptr->ptr_interlock,
 		    &ptr->ptr_rblocked, ts, 0, &ptr->ptr_rblocked);
@@ -260,7 +260,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		 * Grab the interlock.  Once we have that, we
 		 * can adjust the waiter bits and sleep queue.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
@@ -268,7 +268,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		 */
 		if (!rw_cas(ptr, &owner,
 		    owner | RW_HAS_WAITERS | RW_WRITE_WANTED)) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+			pthread__spinunlock(self, &ptr->ptr_interlock);
 			continue;
 		}
 
@@ -278,7 +278,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &ptr->ptr_wblocked;
 		self->pt_early = pthread__rwlock_early;
-		pthread_spinunlock(&ptr->ptr_interlock);
+		pthread__spinunlock(self, &ptr->ptr_interlock);
 
 		error = pthread__park(self, &ptr->ptr_interlock,
 		    &ptr->ptr_wblocked, ts, 0, &ptr->ptr_wblocked);
@@ -422,10 +422,10 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		 * the waiter bits.  We must check to see if there are
 		 * still waiters before proceeding.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 		owner = (uintptr_t)ptr->ptr_owner;
 		if ((owner & RW_HAS_WAITERS) == 0) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+			pthread__spinunlock(self, &ptr->ptr_interlock);
 			continue;
 		}
 
@@ -498,7 +498,7 @@ pthread__rwlock_early(void *obj)
 	pthread_t self;
 	u_int off;
 
-	self = pthread_self();
+	self = pthread__self();
 
 	switch (self->pt_rwlocked) {
 	case _RW_WANT_READ:
