@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.201 2007/11/09 14:54:13 dsl Exp $	*/
+/*	$NetBSD: systm.h,v 1.202 2007/11/13 22:14:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -491,16 +491,6 @@ do {						\
 #else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
-#endif
-
-#if defined(DEBUG)
-#define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
-#define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
-void _kernel_lock_assert_locked(void);
-void _kernel_lock_assert_unlocked(void);
-#else
-#define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
-#define	KERNEL_LOCK_ASSERT_UNLOCKED()	/* nothing */
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
