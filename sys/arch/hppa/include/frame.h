@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2007/04/07 08:35:13 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2007/11/13 15:53:17 skrll Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -36,8 +36,6 @@
 
 #ifndef _HPPA_FRAME_H_
 #define _HPPA_FRAME_H_
-
-#include <machine/reg.h>
 
 /*
  * Call frame definitions
