@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.29 2007/11/12 18:44:42 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.30 2007/11/13 18:41:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29 2007/11/12 18:44:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.30 2007/11/13 18:41:59 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -59,7 +59,6 @@ int cpu_vendor;
 void
 identifycpu(struct cpu_info *ci)
 {
-	u_int64_t last_tsc;
 	u_int32_t val;
 	char buf[512];
 	u_int32_t brand[12], descs[4];
@@ -94,10 +93,7 @@ identifycpu(struct cpu_info *ci)
 	else if (strstr(cpu_model, "AMD") == NULL)
 		cpu_vendor = CPUVENDOR_INTEL;
 
-	last_tsc = rdtsc();
-	i8254_delay(100000);
-	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-
+	cpu_get_tsc_freq(ci);
 	amd_cpu_cacheinfo(ci);
 
 	aprint_normal("%s: %s", ci->ci_dev->dv_xname, cpu_model);

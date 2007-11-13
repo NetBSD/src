@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.6 2007/11/12 18:44:43 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.7 2007/11/13 18:42:00 ad Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2007/11/12 18:44:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2007/11/13 18:42:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -668,6 +668,7 @@ cpu_hatch(void *v)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
+	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
 #ifdef i386
@@ -893,3 +894,18 @@ cpu_init_msrs(struct cpu_info *ci)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 #endif	/* __x86_64__ */
+
+void
+cpu_get_tsc_freq(struct cpu_info *ci)
+{
+	uint64_t last_tsc;
+	u_int junk[4];
+
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		/* Serialize. */
+		x86_cpuid(0, junk);
+		last_tsc = rdtsc();
+		i8254_delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+}
