@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.20 2006/10/16 03:01:36 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.21 2007/11/13 17:25:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.20 2006/10/16 03:01:36 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.21 2007/11/13 17:25:43 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ readsb(int listerr)
 	sblock.e2fs_ngdb = howmany(sblock.e2fs_ncg,
 		sblock.e2fs_bsize / sizeof(struct ext2_gd));
 	sblock.e2fs_ipb = sblock.e2fs_bsize / sizeof(struct ext2fs_dinode);
-	sblock.e2fs_itpg = sblock.e2fs.e2fs_ipg/sblock.e2fs_ipb;
+	sblock.e2fs_itpg = howmany(sblock.e2fs.e2fs_ipg, sblock.e2fs_ipb);
 
 	/*
 	 * Compute block size that the filesystem is based on,
@@ -332,6 +332,11 @@ readsb(int listerr)
 	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
 
+	if (sblock.e2fs_ncg == 1) {
+		/* no alternate superblock; assume it's okay */
+		havesb = 1;
+		return (1);
+	}
 	getblk(&asblk, 1 * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock,
 		(long)SBSIZE);
 	if (asblk.b_errs)
