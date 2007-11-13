@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.5 2007/09/27 17:53:05 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.1 2007/11/13 15:21:20 ad Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.5 2007/09/27 17:53:05 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.1 2007/11/13 15:21:20 ad Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -49,14 +49,13 @@ extern int xprintf(const char *fmt, ...);
 #endif
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-static void __guard_setup(void) __attribute__((__constructor__, __used__));
 static void __fail(const char *);
 void __stack_chk_fail(void);
 void __chk_fail(void);
 void __stack_chk_fail_local(void);
+void __guard_setup(void);
 
-/*LINTED used*/
-static void
+void
 __guard_setup(void)
 {
 	int mib[2];
