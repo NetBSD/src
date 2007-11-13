@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35 2006/03/28 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.35.42.1 2007/11/13 15:58:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35.42.1 2007/11/13 15:58:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ zs_config(zsc, zs, vector, pclk)
 		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 
 		/*
 		 * If we're the console, copy the channel state, and

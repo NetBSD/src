@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.137 2007/09/19 04:33:44 dyoung Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.137.4.1 2007/11/13 16:02:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.137 2007/09/19 04:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.137.4.1 2007/11/13 16:02:52 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -431,12 +431,11 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 		}
 		/*
-		 * Compute window scaling to request:
-		 * XXX: This should be moved to tcp_output(),
-		 * and should be based on the actual MSS.
+		 * Compute window scaling to request.
+		 * XXX: This should be moved to tcp_output().
 		 */
 		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-		    (0x1 << tp->request_r_scale) < tcp_minmss)
+		    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
 			tp->request_r_scale++;
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;

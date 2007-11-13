@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2007/08/15 22:13:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2007/11/13 16:03:17 bouyer Exp $
 #
 
 .include <bsd.own.mk>
 
 LIB=		rumpuser
 
-SRCS=		rumpuser.c
+SRCS=		rumpuser.c rumpuser_pth.c
 
 RUMPKERNEL=	no
 

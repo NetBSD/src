@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1.10.1 2007/10/25 22:36:13 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.1.10.2 2007/11/13 15:58:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@ extern struct pic_ops *isa_pic;
 extern int isa_pcmciamask;
 
 /* prototypes from isa_machdep.c */
-int map_isa_ioregs(void);
-uint8_t isa_inb(uint32_t addr);
-void isa_outb(uint32_t addr, uint8_t val);
+int map_isa_ioregs(uint32_t);
+uint8_t isa_inb(uint32_t);
+void isa_outb(uint32_t, uint8_t);
 
 /* function mappings */
 #define isa_attach_hook(p, s, iaa)					\

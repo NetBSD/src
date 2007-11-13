@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.28 2007/09/24 00:42:15 rumble Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.28.2.1 2007/11/13 16:01:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.28 2007/09/24 00:42:15 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.28.2.1 2007/11/13 16:01:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -420,7 +420,7 @@ static void
 tmpfs_done(void)
 {
 
-	malloc_type_attach(M_TMPFSTMP);
+	malloc_type_detach(M_TMPFSTMP);
 	malloc_type_detach(M_TMPFSMNT);
 }
 

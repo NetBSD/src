@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.65.24.1 2007/11/13 16:02:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65.24.1 2007/11/13 16:02:14 bouyer Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
@@ -76,6 +77,23 @@ sys_reboot(struct lwp *l, void *v, register_t *retval)
 	cpu_reboot(SCARG(uap, opt), bootstr);
 	return (0);
 }
+
+/*
+ * Pull in the indirect syscall functions here.
+ * They are only actually used if the ports syscall entry code
+ * doesn't special-case SYS_SYSCALL and SYS___SYSCALL
+ *
+ * In some cases the generated code for the two functions is identical,
+ * but there isn't a MI way of determining that - so we don't try.
+ */
+
+#define SYS_SYSCALL sys_syscall
+#include "sys_syscall.c"
+#undef SYS_SYSCALL
+
+#define SYS_SYSCALL sys___syscall
+#include "sys_syscall.c"
+#undef SYS_SYSCALL
 
 #ifdef SYSCALL_DEBUG
 #define	SCDEBUG_CALLS		0x0001	/* show calls */

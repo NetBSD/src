@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.116.2.1 2007/10/25 22:40:06 bouyer Exp $ */
+/*	$NetBSD: if_gre.c,v 1.116.2.2 2007/11/13 16:02:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116.2.1 2007/10/25 22:40:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116.2.2 2007/11/13 16:02:46 bouyer Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.116.2.1 2007/10/25 22:40:06 bouyer Exp 
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <sys/intr.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -807,7 +808,7 @@ shutdown:
 	if (sc->sc_soparm.sp_fd != -1) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		gre_upcall_remove(so);
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 		mutex_exit(&sc->sc_mtx);
 		fdrelease(l, sc->sc_soparm.sp_fd);
@@ -830,7 +831,7 @@ shutdown:
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		FILE_UNUSE(fp, NULL);
 		so = (struct socket *)fp->f_data;
-		sc->sc_si = softintr_establish(IPL_SOFTNET, greintr, sc);
+		sc->sc_si = softint_establish(SOFTINT_NET, greintr, sc);
 		gre_upcall_add(so, sc);
 		if ((ifp->if_flags & IFF_UP) == 0) {
 			GRE_DPRINTF(sc, "%s: down\n", __func__);
@@ -1006,7 +1007,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		sc->sc_oflow_ev.ev_count++;
 		m_freem(m);
 	} else
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
   end:
 	if (error)
 		ifp->if_oerrors++;

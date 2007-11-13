@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.8 2007/10/06 07:21:04 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.8.2.1 2007/11/13 16:02:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.8 2007/10/06 07:21:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.8.2.1 2007/11/13 16:02:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,11 @@ enum sensors {
 	SENSOR_CURRENT_POTENCY,
 	SENSOR_CURRENT_RESISTANCE,
 	SENSOR_BATTERY0_CAPACITY,
-	SENSOR_BATTERY0_STATE,
+	SENSOR_BATTERY0_CAPSTATE,
+	SENSOR_BATTERY0_CHARGESTATE,
 	SENSOR_BATTERY1_CAPACITY,
-	SENSOR_BATTERY1_STATE,
+	SENSOR_BATTERY1_CAPSTATE,
+	SENSOR_BATTERY1_CHARGESTATE,
 	SENSOR_POWER_LED,
 	SENSOR_TECHNOLOGY,
 	SENSOR_MASTER_DISK,
@@ -138,21 +140,27 @@ envsys2_initsensors(struct envsys2_softc *sc)
 		   "Battery0 capacity");
 
 	/*
-	 * We want to monitor for state changes in a battery state, so
-	 * that when its state has been changed, we will be notified.
+	 * We want to monitor for state changes in battery capacity
+	 * sensors, so that its state has been changed, we will be notified.
 	 */
-	INITSENSOR(SENSOR_BATTERY0_STATE, ENVSYS_BATTERY_STATE,
+	INITSENSOR(SENSOR_BATTERY0_CAPSTATE, ENVSYS_BATTERY_CAPACITY,
 		   "Battery0 state");
-	sc->sc_sensor[SENSOR_BATTERY0_STATE].monitor = true;
-	sc->sc_sensor[SENSOR_BATTERY0_STATE].flags = ENVSYS_FMONSTCHANGED;
+	sc->sc_sensor[SENSOR_BATTERY0_CAPSTATE].monitor = true;
+	sc->sc_sensor[SENSOR_BATTERY0_CAPSTATE].flags = ENVSYS_FMONSTCHANGED;
+
+	INITSENSOR(SENSOR_BATTERY0_CHARGESTATE, ENVSYS_BATTERY_CHARGE,
+		   "Battery0 charging");
 
 	INITSENSOR(SENSOR_BATTERY1_CAPACITY, ENVSYS_SAMPHOUR,
 		   "Battery1 capacity");
 
-	INITSENSOR(SENSOR_BATTERY1_STATE, ENVSYS_BATTERY_STATE,
+	INITSENSOR(SENSOR_BATTERY1_CAPSTATE, ENVSYS_BATTERY_CAPACITY,
 		   "Battery1 state");
-	sc->sc_sensor[SENSOR_BATTERY1_STATE].monitor = true;
-	sc->sc_sensor[SENSOR_BATTERY1_STATE].flags = ENVSYS_FMONSTCHANGED;
+	sc->sc_sensor[SENSOR_BATTERY1_CAPSTATE].monitor = true;
+	sc->sc_sensor[SENSOR_BATTERY1_CAPSTATE].flags = ENVSYS_FMONSTCHANGED;
+
+	INITSENSOR(SENSOR_BATTERY1_CHARGESTATE, ENVSYS_BATTERY_CHARGE,
+		   "Battery1 charging");
 
 	INITSENSOR(SENSOR_POWER_LED, ENVSYS_INDICATOR, "Power Led");
 
@@ -249,8 +257,11 @@ envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* enable percentage display */
 		edata->flags |= ENVSYS_FPERCENT;
 		break;
-	case SENSOR_BATTERY0_STATE:
-		edata->value_cur = ENVSYS_BATTERY_STATE_NORMAL;
+	case SENSOR_BATTERY0_CAPSTATE:
+		edata->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
+		break;
+	case SENSOR_BATTERY0_CHARGESTATE:
+		edata->value_cur = 1;
 		break;
 	case SENSOR_BATTERY1_CAPACITY:
 		/* Battery1 in Ah */
@@ -259,8 +270,11 @@ envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->flags |= ENVSYS_FVALID_MAX;
 		edata->flags |= ENVSYS_FPERCENT;
 		break;
-	case SENSOR_BATTERY1_STATE:
-		edata->value_cur = ENVSYS_BATTERY_STATE_CRITICAL;
+	case SENSOR_BATTERY1_CAPSTATE:
+		edata->value_cur = ENVSYS_BATTERY_CAPACITY_CRITICAL;
+		break;
+	case SENSOR_BATTERY1_CHARGESTATE:
+		edata->value_cur = 0;
 		break;
 	case SENSOR_POWER_LED:
 		/*

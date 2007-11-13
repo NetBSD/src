@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 2007/09/01 21:31:55 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.132.4.1 2007/11/13 15:58:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2007/09/01 21:31:55 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132.4.1 2007/11/13 15:58:24 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -266,7 +266,6 @@ userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
@@ -543,7 +542,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		/*
 		 * Don't go stepping into a RAS.
 		 */
-		if (!LIST_EMPTY(&p->p_raslist) &&
+		if (p->p_raslist != NULL &&
 		    (ras_lookup(p, (void *)fp->f_pc) != (void *)-1))
 			goto out;
 		fp->f_sr &= ~PSL_T;

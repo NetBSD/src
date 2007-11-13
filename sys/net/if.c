@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.202 2007/10/11 20:47:27 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.202.2.1 2007/11/13 16:02:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.202 2007/10/11 20:47:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.202.2.1 2007/11/13 16:02:45 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -287,8 +287,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	addrlen = ifp->if_addrlen;
 	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
-	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	memset(ifa, 0, ifasize);
+	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
 
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
@@ -405,8 +404,7 @@ if_attach(struct ifnet *ifp)
 		/* grow ifnet_addrs */
 		m = oldlim * sizeof(struct ifaddr *);
 		n = if_indexlim * sizeof(struct ifaddr *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK);
-		memset(q, 0, n);
+		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifnet_addrs != NULL) {
 			memcpy(q, ifnet_addrs, m);
 			free((void *)ifnet_addrs, M_IFADDR);
@@ -416,8 +414,7 @@ if_attach(struct ifnet *ifp)
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK);
-		memset(q, 0, n);
+		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifindex2ifnet != NULL) {
 			memcpy(q, (void *)ifindex2ifnet, m);
 			free((void *)ifindex2ifnet, M_IFADDR);

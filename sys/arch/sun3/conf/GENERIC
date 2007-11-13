@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.139 2007/07/18 15:48:49 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.139.10.1 2007/11/13 15:59:54 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.139 $"
+#ident		"GENERIC-$Revision: 1.139.10.1 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -39,12 +39,7 @@ options 	KTRACE		# system call tracing
 #options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level

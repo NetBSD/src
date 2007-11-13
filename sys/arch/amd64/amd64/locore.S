@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27.2.3 2007/10/26 13:46:50 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.27.2.4 2007/11/13 15:58:05 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -240,7 +240,7 @@ _C_LABEL(lapic_isr):
 	.space  NBPG-LAPIC_ISR
 #endif
 
-	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
+	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
@@ -256,7 +256,7 @@ _C_LABEL(cpu_feature2):	.long	0	# feature flags from 'cpuid'
 					#   instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
-_C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
+_C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
 _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
@@ -395,7 +395,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
-	movl	$RELOC(cpu_vendor),%ebp
+	movl	$RELOC(cpu_vendorname),%ebp
 	movl	%ebx,(%ebp)
 	movl	%edx,4(%ebp)
 	movl	%ecx,8(%ebp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.36 2007/04/23 20:10:50 pooka Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.36.12.1 2007/11/13 16:03:34 bouyer Exp $	*/
 
 /*
  *
@@ -178,20 +178,12 @@ struct vm_page *uvm_pageratop(vaddr_t);
 vaddr_t	uvm_pagermapin(struct vm_page **, int, int);
 void	uvm_pagermapout(vaddr_t, int);
 
+extern size_t pager_map_size;
+
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
 #define	UVMPAGER_MAPIN_READ	0x02	/* device -> host */
 #define	UVMPAGER_MAPIN_WRITE	0x00	/* host -> device (pseudo flag) */
-
-/*
- * XXX
- * this is needed until the device strategy interface
- * is changed to do physically-addressed i/o.
- */
-
-#ifndef PAGER_MAP_SIZE
-#define PAGER_MAP_SIZE       (16 * 1024 * 1024)
-#endif
 
 #endif /* _KERNEL */
 
