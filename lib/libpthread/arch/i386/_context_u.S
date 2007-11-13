@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.6 2007/11/13 15:57:14 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.7 2007/11/13 17:20:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -101,26 +101,17 @@ STUB(_swapcontext_u_xmm)
 	movl	8(%esp), %ecx
 	SETC
 
-STUB(pthread__atomic_cas_ptr)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	movl	12(%esp), %edx
-	movl	(%eax), %eax
-	lock
-	cmpxchgl %edx, (%ecx)
-	jnz	1f
-	mov	$1, %eax
-	ret
-1:
-	mov	8(%esp), %edx
-	mov	%eax, (%edx)
-	mov	$0, %eax
-	ret
-
 STUB(pthread__atomic_swap_ptr)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%ecx)
+	ret
+
+STUB(pthread__atomic_or_ulong)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax
+	lock
+	orl	%eax, (%ecx)
 	ret
 
 STUB(pthread__membar_full)
@@ -130,7 +121,7 @@ STUB(pthread__membar_full)
 
 STUB(pthread__membar_producer)
 	/* A store is enough */
-	movl	$0, -4(%esp)
+	addl	$0, -4(%esp)
 	ret
 
 STUB(pthread__membar_consumer)
