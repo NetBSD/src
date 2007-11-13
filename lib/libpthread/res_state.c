@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.4 2004/06/03 19:32:27 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.5 2007/11/13 15:57:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.4 2004/06/03 19:32:27 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.5 2007/11/13 15:57:14 ad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static void
 res_state_debug(const char *msg, void *p)
 {
 	char buf[512];
-	pthread_t self = pthread_self();
+	pthread_t self = pthread__self();
 	int len = snprintf(buf, sizeof(buf), "%p: %s %p\n", self, msg, p);
 
 	(void)write(STDOUT_FILENO, buf, (size_t)len);

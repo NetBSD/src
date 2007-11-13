@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.59 2007/10/16 15:21:54 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.60 2007/11/13 15:57:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,12 @@
 #include <lwp.h>
 #include <signal.h>
 
+#ifdef __GNUC__
+#define	PTHREAD_HIDE	__attribute__ ((visibility("hidden")))
+#else
+#define	PTHREAD_HIDE	/* nothing */
+#endif
+
 #define PTHREAD_KEYS_MAX 	256
 #define	PTHREAD__UNPARK_MAX	32
 
@@ -79,14 +85,20 @@ struct pthread_attr_private {
 	size_t ptap_guardsize;
 };
 
+struct pthread_lock_ops {
+	void	(*plo_init)(__cpu_simple_lock_t *);
+	int	(*plo_try)(__cpu_simple_lock_t *);
+	void	(*plo_unlock)(__cpu_simple_lock_t *);
+	void	(*plo_lock)(__cpu_simple_lock_t *);
+};
+
 struct	__pthread_st {
+	pthread_t	pt_self;	/* Must be first. */
 	unsigned int	pt_magic;	/* Magic number */
-	int		pt_num;		/* ID XXX should die */
 	int		pt_state;	/* running, blocked, etc. */
 	pthread_mutex_t	pt_lock;	/* lock on state */
 	int		pt_flags;	/* see PT_FLAG_* below */
 	int		pt_cancel;	/* Deferred cancellation */
-	int		pt_spinlocks;	/* Number of spinlocks held. */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	void		*pt_exitval;	/* Read by pthread_join() */
@@ -94,6 +106,7 @@ struct	__pthread_st {
 	int		pt_willpark;	/* About to park */
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	void		*pt_unparkhint;	/* Hint for the above */
+	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
 
 	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
 	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
@@ -136,12 +149,6 @@ struct	__pthread_st {
 	ucontext_t	pt_uc;
 };
 
-struct pthread_lock_ops {
-	void	(*plo_init)(__cpu_simple_lock_t *);
-	int	(*plo_try)(__cpu_simple_lock_t *);
-	void	(*plo_unlock)(__cpu_simple_lock_t *);
-};
-
 /* Thread states */
 #define PT_STATE_RUNNING	1
 #define PT_STATE_ZOMBIE		5
@@ -179,44 +186,58 @@ extern int 	pthread__unpark_max;
 #define _UC_USER_BIT		30
 #define _UC_USER		(1LU << _UC_USER_BIT)
 
-void	pthread_init(void)  __attribute__ ((__constructor__));
-
 /* Utility functions */
-void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
-			    pthread_queue_t *threadq);
-void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
-			pthread_queue_t *queue, pthread_t target);
-int	pthread__park(pthread_t self, pthread_spin_t *lock,
-		      pthread_queue_t *threadq,
-		      const struct timespec *abs_timeout,
-		      int cancelpt, const void *hint);
+void	pthread__unpark_all(pthread_t, pthread_spin_t *, pthread_queue_t *)
+			    PTHREAD_HIDE;
+void	pthread__unpark(pthread_t, pthread_spin_t *, pthread_queue_t *,
+			pthread_t) PTHREAD_HIDE;
+int	pthread__park(pthread_t, pthread_spin_t *, pthread_queue_t *,
+		      const struct timespec *, int, const void *)
+		      PTHREAD_HIDE;
 
 /* Internal locking primitives */
-void	pthread__lockprim_init(void);
-void	pthread_lockinit(pthread_spin_t *);
-void	pthread_spinlock(pthread_spin_t *);
-int	pthread_spintrylock(pthread_spin_t *);
-void	pthread_spinunlock(pthread_spin_t *);
+void	pthread__lockprim_init(void) PTHREAD_HIDE;
+void	pthread_lockinit(pthread_spin_t *) PTHREAD_HIDE;
+
+static inline void
+pthread__spinlock(pthread_t self, pthread_spin_t *lock)
+{
+	if (__predict_true((*self->pt_lockops.plo_try)(lock)))
+		return;
+	(*self->pt_lockops.plo_lock)(lock);
+}
+
+static inline int
+pthread__spintrylock(pthread_t self, pthread_spin_t *lock)
+{
+	return (*self->pt_lockops.plo_try)(lock);
+}
+
+static inline void
+pthread__spinunlock(pthread_t self, pthread_spin_t *lock)
+{
+	(*self->pt_lockops.plo_unlock)(lock);
+}
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
-int	pthread__simple_locked_p(__cpu_simple_lock_t *);
+int	pthread__simple_locked_p(__cpu_simple_lock_t *) PTHREAD_HIDE;
 #define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
 #define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
 #define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
 
 #ifndef _getcontext_u
-int	_getcontext_u(ucontext_t *);
+int	_getcontext_u(ucontext_t *) PTHREAD_HIDE;
 #endif
 #ifndef _setcontext_u
-int	_setcontext_u(const ucontext_t *);
+int	_setcontext_u(const ucontext_t *) PTHREAD_HIDE;
 #endif
 #ifndef _swapcontext_u
-int	_swapcontext_u(ucontext_t *, const ucontext_t *);
+int	_swapcontext_u(ucontext_t *, const ucontext_t *) PTHREAD_HIDE;
 #endif
 
-void	pthread__testcancel(pthread_t);
-int	pthread__find(pthread_t);
+void	pthread__testcancel(pthread_t) PTHREAD_HIDE;
+int	pthread__find(pthread_t) PTHREAD_HIDE;
 
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
@@ -258,20 +279,21 @@ int	pthread__find(pthread_t);
 	} 								\
         } while (/*CONSTCOND*/0)
 
-void	pthread__destroy_tsd(pthread_t self);
-void	pthread__assertfunc(const char *file, int line, const char *function,
-		const char *expr);
-void	pthread__errorfunc(const char *file, int line, const char *function,
-		const char *msg);
+void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
+void	pthread__assertfunc(const char *, int, const char *, const char *)
+			    PTHREAD_HIDE;
+void	pthread__errorfunc(const char *, int, const char *, const char *)
+			   PTHREAD_HIDE;
+char	*pthread__getenv(const char *) PTHREAD_HIDE;
 
-int	pthread__atomic_cas_ptr(volatile void *, void **, void *);
-void	*pthread__atomic_swap_ptr(volatile void *, void *);
-void	pthread__membar_full(void);
-void	pthread__membar_producer(void);
-void	pthread__membar_consumer(void);
+int	pthread__atomic_cas_ptr(volatile void *, void **, void *) PTHREAD_HIDE;
+void	*pthread__atomic_swap_ptr(volatile void *, void *) PTHREAD_HIDE;
+void	pthread__membar_full(void) PTHREAD_HIDE;
+void	pthread__membar_producer(void) PTHREAD_HIDE;
+void	pthread__membar_consumer(void) PTHREAD_HIDE;
 
-int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *);
-int	pthread__mutex_catchup(pthread_mutex_t *);
+int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
+int	pthread__mutex_catchup(pthread_mutex_t *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */

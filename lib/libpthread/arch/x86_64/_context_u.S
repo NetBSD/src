@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.7 2007/09/11 16:07:15 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.8 2007/11/13 15:57:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include <machine/asm.h>
 #include "assym.h"
+
+#define	STUB(n)		ENTRY(n); .hidden _C_LABEL(n)
 
 #define GETC \
 	movq	(%rsp), %r11					; \
@@ -119,24 +121,24 @@
 	popq	%rax						; \
 	lretqm(128)
 
-ENTRY(_getcontext_u)
+STUB(_getcontext_u)
 	GETC
 	leaq	8(%rsp), %r11
 	movq	%r11, (UC_REGS + _REG_URSP * 8)(%rdi)
 	xorl	%eax, %eax
 	ret
 
-ENTRY(_setcontext_u)					
+STUB(_setcontext_u)					
 	SETC
 
-ENTRY(_swapcontext_u)
+STUB(_swapcontext_u)
 	GETC
 	leaq	8(%rsp),%rax
 	movq	%rax, (UC_REGS + _REG_URSP * 8)(%rdi)
 	movq	%rsi, %rdi
 	SETC
 
-ENTRY(pthread__atomic_cas_ptr)
+STUB(pthread__atomic_cas_ptr)
 	movq	(%rsi), %rax
 	lock
 	cmpxchgq %rdx, (%rdi)
@@ -148,22 +150,22 @@ ENTRY(pthread__atomic_cas_ptr)
 	movq	$0, %rax
 	ret
 
-ENTRY(pthread__atomic_swap_ptr)
+STUB(pthread__atomic_swap_ptr)
 	movq	%rsi, %rax
 	xchgq	%rax, (%rdi)
 	ret
 
-ENTRY(pthread__membar_full)
+STUB(pthread__membar_full)
 	lock
 	addq	$0, -8(%rsp)
 	ret
 
-ENTRY(pthread__membar_producer)
+STUB(pthread__membar_producer)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
 
-ENTRY(pthread__membar_consumer)
+STUB(pthread__membar_consumer)
 	lock
 	addq	$0, -8(%rsp)
 	ret

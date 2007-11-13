@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.86 2007/11/07 00:55:22 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.87 2007/11/13 15:57:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.86 2007/11/07 00:55:22 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.87 2007/11/13 15:57:10 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -60,13 +60,6 @@ __RCSID("$NetBSD: pthread.c,v 1.86 2007/11/07 00:55:22 ad Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-#ifdef PTHREAD_MAIN_DEBUG
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
-
-
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
 RB_HEAD(__pthread__alltree, __pthread_st) pthread__alltree;
 
@@ -81,6 +74,8 @@ static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
+
+void	pthread__init(void);
 
 int pthread__started;
 
@@ -124,6 +119,7 @@ __strong_alias(__libc_thr_create,pthread_create)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 __strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)
+__strong_alias(__libc_thr_init,pthread__init)
 
 /*
  * Static library kludge.  Place a reference to a symbol any library
@@ -148,7 +144,7 @@ void *pthread__static_lib_binder[] = {
  * spinlock counts for mutexes is an internal example).
  */
 void
-pthread_init(void)
+pthread__init(void)
 {
 	pthread_t first;
 	char *p;
@@ -199,7 +195,7 @@ pthread_init(void)
 	PTHREAD_MD_INIT
 	pthread__debug_init();
 
-	for (p = getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
+	for (p = pthread__getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
 		switch (*p) {
 		case 'a':
 			pthread__diagassert |= DIAGASSERT_ABORT;
@@ -253,7 +249,6 @@ pthread__start(void)
 	 * fork() before creating any threads. 
 	 */
 	pthread_atfork(NULL, NULL, pthread__child_callback);
-	SDPRINTF(("(pthread__start %p) Started.\n", pthread__self()));
 }
 
 
@@ -263,8 +258,8 @@ static void
 pthread__initthread(pthread_t t)
 {
 
+	t->pt_self = t;
 	t->pt_magic = PT_MAGIC;
-	t->pt_spinlocks = 0;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
 	t->pt_sleeponq = 0;
@@ -274,6 +269,7 @@ pthread__initthread(pthread_t t)
 	t->pt_havespecific = 0;
 	t->pt_early = NULL;
 
+	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	PTQ_INIT(&t->pt_joiners);
@@ -402,8 +398,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		flag |= LWP_DETACHED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
-		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
-		    strerror(errno)));
 		free(name);
 		newthread->pt_state = PT_STATE_DEAD;
 		pthread_mutex_lock(&pthread__deadqueue_lock);
@@ -412,13 +406,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		return ret;
 	}
 
-	/* XXX must die */
-	newthread->pt_num = newthread->pt_lid;
-
-	SDPRINTF(("(pthread_create %p) new thread %p (name %p, lid %d).\n",
-		  pthread__self(), newthread, newthread->pt_name,
-		  (int)newthread->pt_lid));
-	
 	*thread = newthread;
 
 	return 0;
@@ -470,9 +457,6 @@ pthread_suspend_np(pthread_t thread)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 #endif
-	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p.\n",
-	    pthread__self(), thread));
-
 	if (_lwp_suspend(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -486,9 +470,6 @@ pthread_resume_np(pthread_t thread)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 #endif
-	SDPRINTF(("(pthread_resume_np %p) Resume thread %p.\n",
-	    pthread__self(), thread));
-
 	if (_lwp_continue(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -502,8 +483,6 @@ pthread_exit(void *retval)
 	char *name;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_exit %p) status %p, flags %x, cancel %d\n",
-		  self, retval, self->pt_flags, self->pt_cancel));
 
 	/* Disable cancellability. */
 	pthread_mutex_lock(&self->pt_lock);
@@ -555,7 +534,6 @@ pthread_join(pthread_t thread, void **valptr)
 	char *name;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_join %p) Joining %p.\n", self, thread));
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -596,7 +574,6 @@ pthread_join(pthread_t thread, void **valptr)
 	pthread_mutex_lock(&pthread__deadqueue_lock);
 	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
 	pthread_mutex_unlock(&pthread__deadqueue_lock);
-	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
 	if (name != NULL)
 		free(name);
 	return 0;
@@ -895,8 +872,6 @@ pthread__assertfunc(const char *file, int line, const char *function,
 	char buf[1024];
 	int len;
 
-	SDPRINTF(("(af)\n"));
-
 	/*
 	 * snprintf should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
@@ -969,8 +944,6 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	int rv, error;
 	void *obj;
 
-	SDPRINTF(("(pthread__park %p) queue %p enter\n", self, queue));
-
 	/* Clear the willpark flag, since we're about to block. */
 	self->pt_willpark = 0;
 
@@ -1035,8 +1008,6 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 				break;
 			default:
 				OOPS("_lwp_park failed");
-				SDPRINTF(("(pthread__park %p) syscall rv=%d\n",
-				    self, rv));	
 				break;
 			}
 		}
@@ -1051,7 +1022,7 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * without holding any locks.
 	 */
 	if (__predict_false(self->pt_sleeponq)) {
-		pthread_spinlock(lock);
+		pthread__spinlock(self, lock);
 		if (self->pt_sleeponq) {
 			PTQ_REMOVE(queue, self, pt_sleep);
 			obj = self->pt_sleepobj;
@@ -1060,11 +1031,9 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 			if (obj != NULL && self->pt_early != NULL)
 				(*self->pt_early)(obj);
 		}
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 	}
 	self->pt_early = NULL;
-
-	SDPRINTF(("(pthread__park %p) queue %p exit\n", self, queue));
 
 	return rv;
 }
@@ -1076,12 +1045,9 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	int rv;
 
 	if (target == NULL) {
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 		return;
 	}
-
-	SDPRINTF(("(pthread__unpark %p) queue %p target %p\n",
-	    self, queue, target));
 
 	/*
 	 * Easy: the thread has already been removed from
@@ -1096,7 +1062,7 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	 * to the thread in pthread__park() before the unpark
 	 * operation is set in motion.
 	 */
-	pthread_spinunlock(lock);
+	pthread__spinunlock(self, lock);
 
 	/*
 	 * If the calling thread is about to block, defer
@@ -1108,8 +1074,6 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	} else {
 		rv = _lwp_unpark(target->pt_lid, queue);
 		if (rv != 0 && errno != EALREADY && errno != EINTR) {
-			SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
-			    self, rv));
 			OOPS("_lwp_unpark failed");
 		}
 	}
@@ -1124,7 +1088,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 	void *wakeobj;
 
 	if (PTQ_EMPTY(queue) && self->pt_nwaiters == 0) {
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 		return;
 	}
 
@@ -1161,8 +1125,6 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			thread->pt_sleeponq = 0;
 			self->pt_waiters[n++] = thread->pt_lid;
 			PTQ_REMOVE(queue, thread, pt_sleep);
-			SDPRINTF(("(pthread__unpark_all %p) queue %p "
-			    "unpark %p\n", self, queue, thread));
 		}
 
 		/*
@@ -1173,7 +1135,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 		 */
 		switch (n) {
 		case 0:
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			return;
 		case 1:
 			/*
@@ -1181,7 +1143,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * defer unparking the target until _lwp_park()
 			 * is called.
 			 */
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			if (self->pt_willpark && self->pt_unpark == 0) {
 				self->pt_unpark = self->pt_waiters[0];
 				self->pt_unparkhint = queue;
@@ -1190,8 +1152,6 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], queue);
 			if (rv != 0 && errno != EALREADY && errno != EINTR) {
 				OOPS("_lwp_unpark failed");
-				SDPRINTF(("(pthread__unpark_all %p) "
-				    "syscall rv=%d\n", self, rv));
 			}
 			return;
 		default:
@@ -1210,17 +1170,15 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * marked to be woken (sleepobj == NULL).
 			 */
 			wakeobj = NULL;
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
 			    queue);
 			if (rv != 0 && errno != EINTR) {
 				OOPS("_lwp_unpark_all failed");
-				SDPRINTF(("(pthread__unpark_all %p) "
-				    "syscall rv=%d\n", self, rv));
 			}
 			break;
 		}
-		pthread_spinlock(lock);
+		pthread__spinlock(self, lock);
 	}
 }
 
@@ -1269,8 +1227,9 @@ pthread__initmain(pthread_t *newt)
 	ret = getrlimit(RLIMIT_STACK, &slimit);
 	if (ret == -1)
 		err(1, "Couldn't get stack resource consumption limits");
-	value = getenv("PTHREAD_STACKSIZE");
-	if (value) {
+
+	value = pthread__getenv("PTHREAD_STACKSIZE");
+	if (value != NULL) {
 		pthread__stacksize = atoi(value) * 1024;
 		if (pthread__stacksize > slimit.rlim_cur)
 			pthread__stacksize = (size_t)slimit.rlim_cur;
@@ -1344,4 +1303,15 @@ pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
 }
 RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
+
+/* Because getenv() wants to use locks. */
+char *
+pthread__getenv(const char *name)
+{
+	extern char *__findenv(const char *, int *);
+	int off;
+
+	return __findenv(name, &off);
+}
+
 
