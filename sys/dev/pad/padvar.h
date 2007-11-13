@@ -1,11 +1,8 @@
-/*	$NetBSD: pecoff_misc.c,v 1.19 2007/04/23 21:22:29 dsl Exp $	*/
+/* $NetBSD: padvar.h,v 1.1.2.2 2007/11/13 16:32:18 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *        This product includes software developed by Jared D. McNeill.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,26 +32,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.19 2007/04/23 21:22:29 dsl Exp $");
+#ifndef _SYS_DEV_PAD_PADVAR_H
+#define _SYS_DEV_PAD_PADVAR_H
 
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
-#include "opt_compat_43.h"
+typedef struct pad_softc {
+	struct device	sc_dev;
 
-#include "fs_lfs.h"
-#include "fs_nfs.h"
-#endif
+	int		sc_open;
+	struct audio_encoding_set *sc_encodings;
+	void		(*sc_intr)(void *);
+	void		*sc_intrarg;
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/fcntl.h>
-#include <sys/proc.h>
+	kcondvar_t	sc_condvar;
+	kmutex_t	sc_mutex;
 
-#include <sys/syscallargs.h>
+	struct audio_softc *sc_audiodev;
+	int		sc_blksize;
 
-#include <compat/common/compat_util.h>
-#include <compat/pecoff/pecoff_syscallargs.h>
+#define PAD_BLKSIZE	1024
+#define PAD_BUFSIZE	65536
+	uint8_t		sc_audiobuf[PAD_BUFSIZE];
+	uint32_t	sc_buflen;
+	uint32_t	sc_rpos, sc_wpos;
+
+	u_int		sc_swvol;
+} pad_softc_t;
+
+#endif /* !_SYS_DEV_PAD_PADVAR_H */

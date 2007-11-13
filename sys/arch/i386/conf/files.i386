@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.315.2.1 2007/10/25 22:35:48 bouyer Exp $
+#	$NetBSD: files.i386,v 1.315.2.2 2007/11/13 15:58:31 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -50,18 +50,18 @@ defflag			NOREDZONE
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 # Beep on halt
-defflag opt_beep.h		BEEP_ONHALT
-defparam opt_beep.h		BEEP_ONHALT_COUNT=3
-defparam opt_beep.h		BEEP_ONHALT_PITCH=1500
-defparam opt_beep.h		BEEP_ONHALT_PERIOD=250
+defflag 	opt_beep.h		BEEP_ONHALT
+defparam 	opt_beep.h		BEEP_ONHALT_COUNT=3
+defparam 	opt_beep.h		BEEP_ONHALT_PITCH=1500
+defparam 	opt_beep.h		BEEP_ONHALT_PERIOD=250
 
 # Multiboot support
-defflag opt_multiboot.h		MULTIBOOT
-obsolete defparam		MULTIBOOT_SYMTAB_SPACE
-file	arch/i386/i386/multiboot.c	multiboot
+defflag 	opt_multiboot.h		MULTIBOOT
+obsolete 	defparam		MULTIBOOT_SYMTAB_SPACE
+file 	arch/i386/i386/multiboot.c	multiboot
 
 # PowerNow K7
-defflag			POWERNOW_K7
+defflag 	POWERNOW_K7
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/busfunc.S
@@ -74,7 +74,6 @@ file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
-file	arch/x86/x86/idle_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
@@ -83,7 +82,6 @@ file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	arch/x86/x86/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
@@ -133,9 +131,9 @@ define	bios32
 file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 # i386 specific mainbus attributes
-define apmbus {}
-define pnpbiosbus {}
-define vesabiosbus {}
+define	apmbus {}
+define	pnpbiosbus {}
+define	vesabiosbus {}
 
 #
 # System bus types
@@ -156,7 +154,6 @@ include "dev/wsfb/files.wsfb"
 
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
-file 	arch/x86/pci/agp_machdep.c	agp
 file	arch/i386/pci/pcibios.c		pcibios
 file	arch/i386/pci/pci_intr_fixup.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/piix.c		pcibios & pci_intr_fixup
@@ -172,16 +169,8 @@ file	arch/i386/pci/pci_addr_fixup.c	pci_addr_fixup
 defparam		PCI_CONF_MODE
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
-device 	aapic
-attach 	aapic at pci
-file 	arch/x86/pci/aapic.c			aapic
-
-# PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
-	      agp_via
-attach	pchb at pci
-file	arch/i386/pci/pchb.c		pchb			needs-flag
-file	arch/x86/pci/pchb_rnd.c		pchb & rnd
+# x86 specific PCI hardware
+include "arch/x86/pci/files.pci"
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
 device	elansc: sysmon_wdog, gpiobus
@@ -219,15 +208,6 @@ attach	pceb at pci
 file	arch/i386/pci/pceb.c		pceb
 
 # PCI-ISA bridges
-device	pcib: isabus
-attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib
-
-# PCI-LPC bridges
-device	ichlpcib: acpipmtimer, isabus, sysmon_wdog
-attach	ichlpcib at pci
-file 	arch/x86/pci/ichlpcib.c 	ichlpcib
-
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
@@ -352,12 +332,6 @@ attach	apm at apmbus with apmbios: bioscall
 file	arch/i386/i386/apmbios.c	apmbios	needs-flag
 file	arch/i386/i386/apmcall.S	apmbios
 
-# CPUS
-
-device cpu
-attach cpu at cpubus
-file	arch/x86/x86/cpu.c		cpu
-
 # XBox LED & system support
 file	arch/i386/xbox/xbox.c			xbox
 
@@ -365,8 +339,8 @@ file	arch/i386/xbox/xbox.c			xbox
 file	arch/i386/xbox/xboxlcd.c		xbox
 
 # XBox framebuffer support
-device xboxfb: wsemuldisplaydev, rasops32, vcons
-attach xboxfb at pci
+device	xboxfb: wsemuldisplaydev, rasops32, vcons
+attach	xboxfb at pci
 file	arch/i386/xbox/xboxfb.c			xboxfb needs-flag
 
 #
@@ -524,24 +498,24 @@ attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
-attach vesabios at vesabiosbus
+attach	vesabios at vesabiosbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
 defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
-attach vesafb at vesabios
+device	vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
+attach	vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
-defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
-defflag opt_vesafb.h	VESAFB_PM
+defparam 	opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag 	opt_vesafb.h	VESAFB_PM
 
-device vesatext
-attach vesatext at vesabios
+device	vesatext
+attach	vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
 
 # AMD PowerNow K7
-file   arch/i386/i386/powernow_k7.c	powernow_k7
+file	arch/i386/i386/powernow_k7.c	powernow_k7
 
 # AMD Geode LX Security Block
 device	glxsb: opencrypto

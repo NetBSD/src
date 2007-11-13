@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.14.2 2007/10/25 22:35:32 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.14.3 2007/11/13 15:58:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.14.2 2007/10/25 22:35:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.14.3 2007/11/13 15:58:08 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -569,7 +569,7 @@ faultcommon:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		if (LIST_EMPTY(&p->p_raslist) ||
+		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;

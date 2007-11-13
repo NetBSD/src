@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.12.6.1 2007/10/25 22:40:11 bouyer Exp $	*/
+/*	$NetBSD: rump.c,v 1.12.6.2 2007/11/13 16:03:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
@@ -49,6 +50,8 @@ struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
 
+kmutex_t rump_giantlock;
+
 struct fakeblk {
 	char path[MAXPATHLEN];
 	LIST_ENTRY(fakeblk) entries;
@@ -56,28 +59,53 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
+static void
+rump_aiodone_worker(struct work *wk, void *dummy)
+{
+	struct buf *bp = (struct buf *)wk;
+
+	KASSERT(&bp->b_work == wk);
+	bp->b_iodone(bp);
+}
+
 void
 rump_init()
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 
-	curlwp = &lwp0;
+	l = &lwp0;
+	p = &rump_proc;
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+	p->p_pid = 0;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+	l->l_lid = 1;
+
 	rumpvm_init();
 
-	curlwp->l_proc = &rump_proc;
-	curlwp->l_cred = rump_cred;
-	rump_proc.p_stats = &rump_stats;
-	rump_proc.p_cwdi = &rump_cwdi;
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	rump_proc.p_limit = &rump_limits;
 
 	/* should be "enough" */
 	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
+
+	rump_sleepers_init();
+	rumpuser_thrinit();
+
+	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+
+	/* aieeeedondest */
+	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+	    rump_aiodone_worker, NULL, 0, 0, 0))
+		panic("aiodoned");
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
@@ -94,6 +122,8 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
+
+	mount_initspecific(mp);
 
 	return mp;
 }
@@ -125,6 +155,7 @@ void
 rump_mnt_destroy(struct mount *mp)
 {
 
+	mount_finispecific(mp);
 	rumpuser_free(mp);
 }
 
@@ -463,10 +494,118 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
+/*ARGSUSED*/
+void
+rump_vfs_syncwait(struct mount *mp)
+{
+	int n;
+
+	n = buf_syncwait();
+	if (n)
+		printf("syncwait: unsynced buffers: %d\n", n);
+}
+
 void
 rump_bioops_sync()
 {
 
 	if (bioopsp)
 		bioopsp->io_sync(NULL);
+}
+
+struct lwp *
+rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+{
+	struct lwp *l;
+	struct proc *p;
+
+	l = kmem_alloc(sizeof(struct lwp), KM_SLEEP);
+	p = kmem_alloc(sizeof(struct proc), KM_SLEEP);
+	p->p_stats = &rump_stats;
+	p->p_cwdi = &rump_cwdi;
+	p->p_limit = &rump_limits;
+        p->p_pid = pid;
+	l->l_cred = rump_cred;
+	l->l_proc = p;
+        l->l_lid = lid;
+
+	if (set)
+		rumpuser_set_curlwp(l);
+
+	return l;
+}
+
+void
+rump_clear_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	kmem_free(l->l_proc, sizeof(struct proc));
+	kmem_free(l, sizeof(struct lwp));
+	rumpuser_set_curlwp(NULL);
+}
+
+struct lwp *
+rump_get_curlwp()
+{
+	struct lwp *l;
+
+	l = rumpuser_get_curlwp();
+	if (l == NULL)
+		l = &lwp0;
+
+	return l;
+}
+
+int
+rump_splfoo()
+{
+
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
+		rumpuser_rw_enter(&rumpspl, 0);
+		rumpuser_set_ipl(RUMPUSER_IPL_SPLFOO);
+	}
+
+	return 0;
+}
+
+static void
+rump_intr_enter(void)
+{
+
+	rumpuser_set_ipl(RUMPUSER_IPL_INTR);
+	rumpuser_rw_enter(&rumpspl, 1);
+}
+
+static void
+rump_intr_exit(void)
+{
+
+	rumpuser_rw_exit(&rumpspl);
+	rumpuser_clear_ipl(RUMPUSER_IPL_INTR);
+}
+
+void
+rump_splx(int dummy)
+{
+
+	if (rumpuser_whatis_ipl() != RUMPUSER_IPL_INTR) {
+		rumpuser_clear_ipl(RUMPUSER_IPL_SPLFOO);
+		rumpuser_rw_exit(&rumpspl);
+	}
+}
+
+void
+rump_biodone(void *arg, size_t count, int error)
+{
+	struct buf *bp = arg;
+
+	bp->b_resid = bp->b_bcount - count;
+	KASSERT(bp->b_resid >= 0);
+	bp->b_error = error;
+
+	rump_intr_enter();
+	biodone(bp);
+	rump_intr_exit();
 }

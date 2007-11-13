@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.11 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.11.50.1 2007/11/13 16:01:10 bouyer Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.11 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.11.50.1 2007/11/13 16:01:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,7 @@ of_decode_int(p)
  *	None.
  */
 int
-of_compatible(phandle, strings)
-	int phandle;
-	const char * const *strings;
+of_compatible(int phandle, const char * const *strings)
 {
 	int len, allocated, rv;
 	char *buf;
@@ -175,10 +173,7 @@ out:
  *	either case, the contents of 'buf' will be NUL-terminated.
  */
 int
-of_packagename(phandle, buf, bufsize)
-	int phandle;
-	char *buf;
-	int bufsize;
+of_packagename(int phandle, char *buf, int bufsize)
 {
 	char *pbuf;
 	const char *lastslash;
@@ -208,4 +203,92 @@ of_packagename(phandle, buf, bufsize)
 
 	free(pbuf, M_TEMP);
 	return (rv);
+}
+
+/* 
+ * Find the first child of a given node that matches name. Does not recurse.
+ */
+int
+of_find_firstchild_byname(int node, const char *name)
+{
+	char namex[32]; 
+	int nn;
+ 
+	for (nn = OF_child(node); nn; nn = OF_peer(nn)) {
+		memset(namex, 0, sizeof(namex));
+		if (OF_getprop(nn, "name", namex, sizeof(namex)) == -1)
+			continue;
+		if (strcmp(name, namex) == 0)
+			return nn;
+	}
+	return -1;
+}
+
+/*
+ * Find a give node by name.  Recurses, and seems to walk upwards too.
+ */
+
+int
+of_getnode_byname(int start, const char *target)
+{
+	int node, next;
+	char name[64];
+
+	if (start == 0)
+		start = OF_peer(0);
+
+	for (node = start; node; node = next) {
+		memset(name, 0, sizeof name);
+		OF_getprop(node, "name", name, sizeof name - 1);
+		if (strcmp(name, target) == 0)
+			break;
+
+		if ((next = OF_child(node)) != 0)
+			continue;
+
+		while (node) {
+			if ((next = OF_peer(node)) != 0)
+				break;
+			node = OF_parent(node);
+		}
+	}
+
+	/* XXX is this correct? */
+	return node;
+}
+
+/*
+ * Create a uint32_t integer property from an OFW node property.
+ */
+
+boolean_t
+of_to_uint32_prop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	uint32_t prop;
+
+	if (OF_getprop(node, ofname, &prop, sizeof(prop)) != sizeof(prop))
+		return FALSE;
+
+	return(prop_dictionary_set_uint32(dict, propname, prop));
+}
+
+/*
+ * Create a data property from an OFW node property.  Max size of 256bytes.
+ */
+
+boolean_t
+of_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	prop_data_t data;
+	int len;
+	uint8_t prop[256];
+
+	len = OF_getprop(node, ofname, prop, 256);
+	if (len < 1)
+		return FALSE;
+
+	data = prop_data_create_data(prop, len);
+	return(prop_dictionary_set(dict, propname, data));
 }

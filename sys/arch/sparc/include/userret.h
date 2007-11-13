@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.6 2007/05/17 14:51:29 yamt Exp $ */
+/*	$NetBSD: userret.h,v 1.6.14.1 2007/11/13 15:59:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,8 +86,6 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 	 */
 	if (p->p_stflag & PST_PROFIL)
 		addupc_task(l, pc, (int)(p->p_sticks - oticks));
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
 /*

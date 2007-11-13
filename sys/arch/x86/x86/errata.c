@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.10.2.1 2007/10/17 21:38:19 bouyer Exp $	*/
+/*	$NetBSD: errata.c,v 1.10.2.2 2007/11/13 16:00:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.1 2007/10/17 21:38:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.2 2007/11/13 16:00:22 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -274,16 +274,19 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 }
 
 void
-x86_errata(struct cpu_info *ci, int vendor)
+x86_errata(void)
 {
+	struct cpu_info *ci;
 	uint32_t descs[4];
 	errata_t *e, *ex;
 	cpurev_t rev;
 	int i, j, upgrade;
 	static int again;
 
-	if (vendor != CPUVENDOR_AMD)
+	if (cpu_vendor != CPUVENDOR_AMD)
 		return;
+
+	ci = curcpu();
 
 	x86_cpuid(0x80000001, descs);
 
@@ -331,10 +334,9 @@ x86_errata(struct cpu_info *ci, int vendor)
 #else	/* defined(I686_CPU) || defined(__x86_64__) */
 
 void
-x86_errata(struct cpu_info *ci, int vendor)
+x86_errata(void)
 {
-	(void)ci;
-	(void)vendor;
+
 }
 
 #endif	/* defined(I686_CPU) || defined(__x86_64__) */

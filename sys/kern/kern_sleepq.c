@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.17 2007/10/14 14:23:12 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.17.2.1 2007/11/13 16:02:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.17 2007/10/14 14:23:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.17.2.1 2007/11/13 16:02:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -171,13 +171,9 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		sched_enqueue(l, false);
 		pri = lwp_eprio(l);
 		/* XXX This test is not good enough! */
-		if ((pri < spc->spc_curpriority && pri < PUSER) ||
-#ifdef MULTIPROCESSOR
-		   ci->ci_curlwp == ci->ci_data.cpu_idlelwp) {
-#else
-		   curlwp == ci->ci_data.cpu_idlelwp) {
-#endif
-			cpu_need_resched(ci, RESCHED_IMMED);
+		if (pri > spc->spc_curpriority) {
+			cpu_need_resched(ci,
+			    (pri >= PRI_KERNEL ? RESCHED_IMMED : 0));
 		}
 		spc_unlock(ci);
 		return 0;
@@ -199,7 +195,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
-			if (lwp_eprio(l2) > pri) {
+			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
@@ -220,8 +216,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
  *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
  */
 void
-sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
-	       syncobj_t *sobj)
+sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
@@ -234,7 +229,6 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 	l->l_sleepq = sq;
 	l->l_wmesg = wmesg;
 	l->l_slptime = 0;
-	l->l_priority = pri;
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
 
@@ -298,12 +292,10 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
-			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() */
 			mutex_enter(&p->p_smutex);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(&p->p_smutex);
-			KERNEL_UNLOCK_LAST(l);
 		}
 	}
 
@@ -455,9 +447,17 @@ sleepq_abort(kmutex_t *mtx, int unlock)
 void
 sleepq_changepri(lwp_t *l, pri_t pri)
 {
+	sleepq_t *sq = l->l_sleepq;
+	pri_t opri;
 
-	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
-	l->l_usrpri = pri;
+	KASSERT(lwp_locked(l, sq->sq_mutex));
+
+	opri = lwp_eprio(l);
+	l->l_priority = pri;
+	if (lwp_eprio(l) != opri) {
+		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		sleepq_insert(sq, l, l->l_syncobj);
+	}
 }
 
 void

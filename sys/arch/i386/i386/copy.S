@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4.6.1 2007/10/25 22:35:49 bouyer Exp $	*/
+/*	$NetBSD: copy.S,v 1.4.6.2 2007/11/13 15:58:32 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@ ENTRY(fillw)
 	movw	%ax,%cx
 	rorl	$16,%eax
 	movw	%cx,%ax
-	cld
 	movl	16(%esp),%ecx
 	shrl	%ecx			# do longwords
 	rep
@@ -137,7 +136,7 @@ ENTRY(kcopy)
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
 	jb	1f
-	cld				# nope, copy forward
+	# nope, copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
@@ -297,7 +296,6 @@ ENTRY(i386_copyout)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/* bcopy(%esi, %edi, %eax); */
-	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
@@ -339,7 +337,6 @@ ENTRY(i486_copyout)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/* bcopy(%esi, %edi, %eax); */
-	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
@@ -392,7 +389,6 @@ ENTRY(i386_copyin)
 	ja	_C_LABEL(copy_efault)
 
 	/* bcopy(%esi, %edi, %eax); */
-	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
@@ -535,7 +531,6 @@ ENTRY(copyoutstr)
 	movl	%eax,20(%esp)
 
 1:	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	2f
@@ -590,7 +585,6 @@ ENTRY(copyinstr)
 	movl	%eax,20(%esp)
 
 1:	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	2f
@@ -647,7 +641,6 @@ ENTRY(copystr)
 	movl	16(%esp),%edi		# edi = to
 	movl	20(%esp),%edx		# edx = maxlen
 	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	4f

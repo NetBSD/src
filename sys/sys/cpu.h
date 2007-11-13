@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2007/10/01 22:14:23 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.2.1 2007/11/13 16:03:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -39,6 +39,11 @@ struct cpu_info;
 void cpu_idle(void);
 #endif
 
+/*
+ * cpu_need_resched() must always be called with the target CPU
+ * locked (via spc_lock() or another route), unless called locally.
+ * If called locally, the caller need only be at IPL_SCHED.
+ */
 #ifndef cpu_need_resched
 void cpu_need_resched(struct cpu_info *, int);
 #endif
@@ -52,12 +57,13 @@ void cpu_need_resched(struct cpu_info *, int);
     (void)cii, ci = curcpu(); ci != NULL; ci = NULL
 #endif
 
-lwp_t	*cpu_switchto(lwp_t *, lwp_t *);
+lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(cpuid_t);
 int	cpu_setonline(struct cpu_info *, bool);
+bool	cpu_intr_p(void);
 
 extern kmutex_t cpu_lock;
-
+  
 static inline u_int
 cpu_index(struct cpu_info *ci)
 {

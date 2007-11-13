@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61 2007/08/15 12:07:31 ad Exp $
+	$NetBSD: syscalls.master,v 1.61.6.1 2007/11/13 16:00:44 bouyer Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -64,7 +64,8 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	INDIR		{ int sys_syscall(int number, ...); }
+0	INDIR		{ int netbsd32_sys_syscall(int code, \
+			    ... register32_t args[NETBSD32_SYS_MAXSYSARGS]); }
 1	STD		{ void netbsd32_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	STD		{ netbsd32_ssize_t netbsd32_read(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte); }
@@ -294,7 +295,8 @@
 195	STD		{ int netbsd32_setrlimit(int which, const netbsd32_rlimitp_t rlp); }
 196	COMPAT_12	{ int netbsd32_getdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
 197	STD		{ netbsd32_voidp netbsd32_mmap(netbsd32_voidp addr, netbsd32_size_t len, int prot, int flags, int fd, netbsd32_long pad, off_t pos); }
-198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
+198	INDIR		{ quad_t netbsd32_sys___syscall(quad_t code, \
+			    ... register32_t args[NETBSD32_SYS_MAXSYSARGS]); }
 199	STD		{ off_t netbsd32_lseek(int fd, int pad, off_t offset, int whence); }
 200	STD		{ int netbsd32_truncate(const netbsd32_charp path, int pad, off_t length); }
 201	STD		{ int netbsd32_ftruncate(int fd, int pad, off_t length); }

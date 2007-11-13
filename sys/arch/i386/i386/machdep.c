@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.608.2.1 2007/10/25 22:35:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.608.2.2 2007/11/13 15:58:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.608.2.1 2007/10/25 22:35:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.608.2.2 2007/11/13 15:58:33 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -264,7 +264,7 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 
 /*
@@ -519,6 +519,8 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	l->l_md.md_tss_sel = tss_alloc(pcb);
+	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
@@ -723,8 +725,8 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
@@ -1218,10 +1220,12 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
+	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -2435,52 +2439,6 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
-#ifdef MULTIPROCESSOR
-		if (immed && ci != curcpu()) {
-			x86_send_ipi(ci, 0);
-		}
-#endif
-	} else {
-#ifdef MULTIPROCESSOR
-		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
-		    ci != curcpu())
-			x86_send_ipi(ci, 0);
-#endif
-	}
-}
-
-void
-cpu_signotify(struct lwp *l)
-{
-
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
-}
-
-void
-cpu_need_proftick(struct lwp *l)
-{
-
-	KASSERT(l->l_cpu == curcpu());
-
-	l->l_pflag |= LP_OWEUPC;
-	aston(l);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.233 2007/10/08 18:02:59 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.233.2.1 2007/11/13 16:01:36 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.233 2007/10/08 18:02:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.233.2.1 2007/11/13 16:01:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -159,7 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.233 2007/10/08 18:02:59 ad Exp 
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/systm.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
@@ -169,6 +168,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.233 2007/10/08 18:02:59 ad Exp 
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
+
+#include <prop/proplib.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -237,6 +238,8 @@ const struct cdevsw raid_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
+
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that...
 */
@@ -300,6 +303,7 @@ static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
+static void rf_set_properties(struct raid_softc *, RF_Raid_t *);
 
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
@@ -413,7 +417,6 @@ rf_autoconfig(struct device *self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
-	int i;
 
 	if (raidautoconfig == 0)
 		return (0);
@@ -435,10 +438,6 @@ rf_autoconfig(struct device *self)
 	 * This gets done in rf_buildroothack().
 	 */
 	rf_buildroothack(config_sets);
-
-	for (i = 0; i < numraid; i++)
-		if (raidPtrs[i] != NULL && raidPtrs[i]->valid)
-			dkwedge_discover(&raid_softc[i].sc_dkdev);
 
 	return 1;
 }
@@ -1870,13 +1869,18 @@ raidinit(RF_Raid_t *raidPtr)
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
 
-	disk_init(&rs->sc_dkdev, rs->sc_xname, NULL);
+	disk_init(&rs->sc_dkdev, rs->sc_xname, &rf_dkdriver);
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
+
+	dkwedge_discover(&rs->sc_dkdev);
+
+	rf_set_properties(rs, raidPtr);
+
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 /* wake up the daemon & tell it to get us a spare table
@@ -3609,4 +3613,32 @@ raid_detach(struct device *self, int flags)
 	return 0;
 }
 
-
+static void
+rf_set_properties(struct raid_softc *rs, RF_Raid_t *raidPtr)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	disk_info = prop_dictionary_create();
+	geom = prop_dictionary_create();
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+				   raidPtr->totalSectors);
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   raidPtr->bytesPerSector);
+	
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   raidPtr->Layout.dataSectorsPerStripe);
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   4 * raidPtr->numCol);
+	
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	   raidPtr->totalSectors / (raidPtr->Layout.dataSectorsPerStripe *
+	   (4 * raidPtr->numCol)));
+				   
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+	prop_dictionary_set(device_properties(rs->sc_dev),
+			    "disk-info", disk_info);
+	odisk_info = rs->sc_dkdev.dk_info;
+	rs->sc_dkdev.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}

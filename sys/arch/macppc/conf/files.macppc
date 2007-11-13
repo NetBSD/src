@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.16.1 2007/10/25 22:35:58 bouyer Exp $
+#	$NetBSD: files.macppc,v 1.84.16.2 2007/11/13 15:58:42 bouyer Exp $
 #
 # macppc-specific configuration info
 
@@ -11,7 +11,7 @@ include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
 include "arch/powerpc/pic/files.ipi"
 
-file arch/macppc/macppc/autoconf.c
+file arch/powerpc/oea/ofw_autoconf.c
 file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
 file arch/macppc/macppc/interrupts.c
@@ -119,6 +119,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
 include "dev/usb/files.usb"
+include "dev/bluetooth/files.bluetooth"
 
 device ibmcpc: pcibus
 attach ibmcpc at mainbus

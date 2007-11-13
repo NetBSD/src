@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.51.2.1 2007/10/25 22:35:50 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.51.2.2 2007/11/13 15:58:33 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -755,9 +755,9 @@ ENTRY(cpu_switchto)
 	/* Switch TSS.  Reset "task busy" flag before loading. */
 	movl	%cr3,%eax
 	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
-	movl	CPUVAR(GDT),%eax
+	movl	CPUVAR(GDT),%ecx
 	movl	L_MD_TSS_SEL(%edi),%edx
-	andl	$~0x0200,4(%eax,%edx, 1)
+	andl	$~0x0200,4(%ecx,%edx, 1)
 	ltr	%dx
 
 	/* Set curlwp. */
@@ -771,6 +771,16 @@ ENTRY(cpu_switchto)
 	movl	L_PROC(%edi),%eax
 	cmpl	$0,P_RASLIST(%eax)
 	jne	5f
+
+	/* Restore thread-private %fs/%gs descriptors. */
+	movl	PCB_FSD(%ebx), %eax
+	movl	PCB_FSD+4(%ebx), %edx
+	movl	%eax, (GUFS_SEL*8)(%ecx)
+	movl	%edx, (GUFS_SEL*8+4)(%ecx)
+	movl	PCB_GSD(%ebx), %eax
+	movl	PCB_GSD+4(%ebx), %edx
+	movl	%eax, (GUGS_SEL*8)(%ecx)
+	movl	%edx, (GUGS_SEL*8+4)(%ecx)
 
 	/*
 	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2007/09/01 21:31:56 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.131.4.1 2007/11/13 15:59:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2007/09/01 21:31:56 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.4.1 2007/11/13 15:59:55 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -227,8 +227,6 @@ userret(struct lwp *l, struct trapframe *tf, u_quad_t oticks)
 		addupc_task(l, tf->tf_pc,
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

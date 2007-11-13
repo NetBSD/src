@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3.2.1 2007/10/25 22:36:47 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.3.2.2 2007/11/13 16:00:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.1 2007/10/25 22:36:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.2 2007/11/13 16:00:21 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -334,6 +334,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_errata();
 		break;
 
 	case CPU_ROLE_BP:
@@ -354,6 +355,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
+		x86_errata();
 		break;
 
 	case CPU_ROLE_AP:
@@ -477,6 +479,9 @@ cpu_init(ci)
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
 	cpus_running |= ci->ci_cpumask;
+#else
+	/* XXX */
+	x86_patch();
 #endif
 }
 
@@ -488,6 +493,9 @@ cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
+
+	/* Now that we know the number of CPUs, patch the text segment. */
+	x86_patch();
 
 	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
@@ -613,7 +621,7 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s;
+	int s, i;
 
 #ifdef __x86_64__
 	cpu_init_msrs(ci);
@@ -632,8 +640,16 @@ cpu_hatch(void *v)
 	lapic_enable();
 	lapic_initclocks();
 
-	while ((ci->ci_flags & CPUF_GO) == 0)
-		delay(10);
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		/* Don't use delay, boot CPU may be patching the text. */
+		for (i = 10000; i != 0; i--)
+			x86_pause();
+	}
+
+	/* Beacuse the text may have been patched in x86_patch(). */
+	wbinvd();
+	x86_flush();
+
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_RUNNING)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
@@ -661,6 +677,7 @@ cpu_hatch(void *v)
 #endif
 	x86_enable_intr();
 	splx(s);
+	x86_errata();
 
 	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    (long)ci->ci_cpuid);

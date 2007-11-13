@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.303 2007/10/11 19:53:42 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.303.2.1 2007/11/13 16:02:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.303 2007/10/11 19:53:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.303.2.1 2007/11/13 16:02:38 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1175,7 +1175,8 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	vp->v_vnlock = NULL;
 	simple_lock(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vp->v_iflag &= ~(VI_XLOCK|VV_LOCKSWORK);
+	vp->v_iflag &= ~VI_XLOCK;
+	vp->v_vflag &= ~VV_LOCKSWORK;
 	if (vp->v_iflag & VI_XWANT) {
 		vp->v_iflag &= ~VI_XWANT;
 		simple_unlock(&vp->v_interlock);
@@ -1613,7 +1614,7 @@ vfs_shutdown(void)
 
 	printf("syncing disks... ");
 
-	/* remove user process from run queue */
+	/* remove user processes from run queue */
 	suspendsched();
 	(void) spl0();
 
