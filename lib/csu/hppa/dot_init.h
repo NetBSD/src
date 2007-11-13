@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.4 2007/05/15 16:51:38 skrll Exp $ */
+/* $NetBSD: dot_init.h,v 1.5 2007/11/13 08:41:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Nick Hudson
@@ -35,7 +35,6 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-#include <machine/asm.h>
 
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
