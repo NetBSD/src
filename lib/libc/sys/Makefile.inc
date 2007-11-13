@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.179 2007/11/12 23:11:58 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.180 2007/11/13 15:21:19 ad Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -21,9 +21,6 @@ LSRCS+=		${_LSRC}
 DPSRCS+=	${_LSRC:MLintSys*.c}
 CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
-
-# for -fstack-protector
-SRCS+=	stack_protector.c
 
 # glue to offer userland wrappers for some syscalls
 SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c

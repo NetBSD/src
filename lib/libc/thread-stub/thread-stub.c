@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.14 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.15 2007/11/13 15:21:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.14 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.15 2007/11/13 15:21:20 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -73,6 +73,20 @@ do {					\
 #else
 #define	CHECK_NOT_THREADED()	/* nothing */
 #endif
+
+/* libpthread init */
+
+void	__libc_thr_init(void);
+void	__libc_thr_init_stub(void);
+
+__weak_alias(__libc_thr_init,__libc_thr_init_stub)
+
+void
+__libc_thr_init_stub(void)
+{
+
+	/* nothing, may be overridden by libpthread */
+}
 
 /* mutexes */
 
