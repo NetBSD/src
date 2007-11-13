@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.2 2007/09/10 11:34:06 skrll Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.3 2007/11/13 15:57:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.2 2007/09/10 11:34:06 skrll Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.3 2007/11/13 15:57:14 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -96,13 +96,15 @@ pthread_spin_destroy(pthread_spinlock_t *lock)
 int
 pthread_spin_lock(pthread_spinlock_t *lock)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
 		return EINVAL;
 #endif
 
-	while (pthread__simple_lock_try(&lock->pts_spin) == 0) {
+	self = pthread__self();
+	while (pthread__spintrylock(self, &lock->pts_spin) == 0) {
 		pthread__smt_pause();
 	}
 
@@ -112,28 +114,31 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 int
 pthread_spin_trylock(pthread_spinlock_t *lock)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
 		return EINVAL;
 #endif
 
-	if (pthread__simple_lock_try(&lock->pts_spin) == 0)
+	self = pthread__self();
+	if (pthread__spintrylock(self, &lock->pts_spin) == 0)
 		return EBUSY;
-
 	return 0;
 }
 
 int
 pthread_spin_unlock(pthread_spinlock_t *lock)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
 		return EINVAL;
 #endif
 
-	pthread__simple_unlock(&lock->pts_spin);
+	self = pthread__self();
+	pthread__spinunlock(self, &lock->pts_spin);
 
 	return 0;
 }
