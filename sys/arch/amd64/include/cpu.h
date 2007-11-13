@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.2.3 2007/11/13 15:58:10 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.2.4 2007/11/13 18:15:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -295,7 +295,7 @@ void	child_trampoline(void);
 
 #ifdef XEN
 void	startrtclock(void);
-void	xen_delay(int);
+void	xen_delay(unsigned int);
 void	xen_initclocks(void);
 #else
 /* clock.c */
