@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xenamd64,v 1.1.2.1 2007/10/17 21:38:21 bouyer Exp $
+#	$NetBSD: Makefile.xenamd64,v 1.1.2.2 2007/11/13 18:15:10 bouyer Exp $
 #	NetBSD: Makefile.amd64,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -101,7 +101,7 @@ LINKFORMAT=	-z
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-busfunc.o netbsd32_sigcode.o: assym.h
+busfunc.o cpufunc.o netbsd32_sigcode.o: assym.h
 clock.o: config_time.h
 
 

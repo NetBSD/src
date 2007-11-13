@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.14.28.1 2007/10/17 21:08:14 bouyer Exp $
+#	$NetBSD: files.compat,v 1.14.28.2 2007/11/13 18:15:09 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -56,6 +56,9 @@ defflag	opt_xbox.h			XXXXBOX
 
 #Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD
+
+# Intel On Die Temperature sensor
+defflag opt_intel_coretemp.h		XXXINTEL_CORETEMP
 
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	XXPOWERNOW_K8
