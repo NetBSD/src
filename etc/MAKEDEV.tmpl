@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.89 2007/11/11 17:54:47 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.90 2007/11/13 13:14:25 pooka Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -265,7 +265,7 @@
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
 #	pow*	power management device (x68k)
-#	puffs	Pass-to-Userspace Framework File System
+#	putter	Pass-to-Userspace Transporter
 #	px*	PixelStamp Xserver access
 #	radio*	radio devices
 #	random	Random number generator
@@ -530,7 +530,7 @@ all)
 	makedev pad pad0 pad1 pad2 pad3
 	makedev bthub
 	makedev cfs
-	makedev puffs
+	makedev putter
 	makedev local # do this last
 	;;
 
@@ -1695,8 +1695,10 @@ fw*)
 	done
 	;;
 
-puffs)
-	mkdev puffs c %puffs_chr% 0x7ffff 600
+# create putter device and symlinks for all subsystems using it
+putter)
+	mkdev putter c %putter_chr% 0 600
+	lndev putter puffs 
 	;;
 
 midevend)
