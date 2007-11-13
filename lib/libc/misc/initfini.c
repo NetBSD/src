@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.1 2007/11/13 15:21:20 ad Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.2 2007/11/13 15:33:55 ad Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,11 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: initfini.c,v 1.2 2007/11/13 15:33:55 ad Exp $");
+
+#ifdef _LIBC
+#include "namespace.h"
+#endif
+
 static void	__libc_init(void) __attribute__((__constructor__, __used__));
 
 void	__guard_setup(void);
 void	__libc_thr_init(void);
 
+/* LINTED used */
 static void
 __libc_init(void)
 {
