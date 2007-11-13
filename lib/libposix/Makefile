@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/18 04:31:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2007/11/13 10:22:15 he Exp $
 
 LIB=	posix
 
@@ -8,6 +8,7 @@ LIB=	posix
 LLIBS=
 
 CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys
 .if exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH})
 ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH}
 .elif exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_CPU})
