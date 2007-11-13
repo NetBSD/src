@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.3 2007/11/12 17:42:13 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.4 2007/11/13 13:11:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.3 2007/11/12 17:42:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4 2007/11/13 13:11:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -88,8 +88,6 @@ static int putterdebug = 0;
 #define DPRINTF(x)
 #define DPRINTF_VERBOSE(x)
 #endif
-
-#define PUTTER_CLONER 0x7ffff
 
 /*
  * public init / deinit
@@ -403,13 +401,6 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct file *fp;
 	int error, fd, idx;
 
-	/*
-	 * XXX: decide on some security model and check permissions
-	 */
-
-	if (minor(dev) != PUTTER_CLONER)
-		return ENXIO;
-
 	if ((error = falloc(l, &fp, &fd)) != 0)
 		return error;
 
@@ -417,20 +408,13 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
-	if (idx == PUTTER_CLONER) {
-		mutex_exit(&pi_mtx);
-		kmem_free(pi, sizeof(struct putter_instance));
-		FILE_UNUSE(fp, l);
-		ffree(fp);
-		return EBUSY;
-	}
 
 	pi->pi_pid = l->l_proc->p_pid;
 	pi->pi_idx = idx;
-	selinit(&pi->pi_sel);
 	pi->pi_curput = NULL;
 	pi->pi_curres = 0;
 	pi->pi_curopaq = NULL;
+	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
 	DPRINTF(("puttercdopen: registered embryonic pmp for pid: %d\n",
@@ -510,10 +494,10 @@ get_pi_idx(struct putter_instance *pi_i)
 	struct putter_instance *pi;
 	int i;
 
+	KASSERT(mutex_owned(&pi_mtx));
+
 	i = 0;
 	TAILQ_FOREACH(pi, &putter_ilist, pi_entries) {
-		if (i == PUTTER_CLONER)
-			return PUTTER_CLONER;
 		if (i != pi->pi_idx)
 			break;
 		i++;
