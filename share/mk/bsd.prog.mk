@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.223 2007/11/12 15:04:35 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.224 2007/11/13 13:57:53 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -307,7 +307,7 @@ ${_P}.ro: ${OBJS.${_P}} ${DPADD}
 	${LD} -r -dc -o ${.TARGET} ${OBJS.${_P}}
 
 .if defined(_PROGDEBUG.${_P})
-${_PROGDEBUG}.${_P}: ${_P}
+${_PROGDEBUG.${_P}}: ${_P}
 	${_MKTARGET_CREATE}
 	${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}}
 	${OBJCOPY} -R .gnu_debuglink --add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
