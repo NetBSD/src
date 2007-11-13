@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.5 2007/11/07 19:31:10 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.6 2007/11/13 19:17:31 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.5 2007/11/07 19:31:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.6 2007/11/13 19:17:31 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,6 +172,7 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
 			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			ofppc_init_comcons();
 		}
 	}
 
