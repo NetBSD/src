@@ -1,7 +1,7 @@
-/* 	$NetBSD: cpuvar.h,v 1.17 2007/11/12 18:44:43 ad Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.18 2007/11/13 18:42:00 ad Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -127,6 +127,8 @@ int	via_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
+
+void	cpu_get_tsc_freq(struct cpu_info *);
 
 extern int cpu_vendor;
 

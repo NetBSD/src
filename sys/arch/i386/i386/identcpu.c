@@ -1,7 +1,7 @@
-/*	$NetBSD: identcpu.c,v 1.80 2007/11/12 18:44:43 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.81 2007/11/13 18:42:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.80 2007/11/12 18:44:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.81 2007/11/13 18:42:00 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1401,21 +1401,13 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 * XXX this needs to run on the CPU being probed..
+	 * CPU speed in MHz.  We will re-run this on the CPU
+	 * itself in cpu_hatch() (first time around, we use the
+	 * value from the boot CPU to cover all CPUs).
 	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		uint64_t last_tsc;
-
-		last_tsc = rdtsc();
-		i8254_delay(100000);
-		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-	}
-	/* XXX end XXX */
-#endif
+	cpu_get_tsc_freq(ci);
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
