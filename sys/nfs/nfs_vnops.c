@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.258 2007/11/07 00:23:39 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.259 2007/11/13 11:37:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.258 2007/11/07 00:23:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.259 2007/11/13 11:37:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -823,7 +823,7 @@ nfs_lookup(v)
 		VREF(dvp);
 		*vpp = dvp;
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-				cnp->cn_flags |= SAVENAME;
+			cnp->cn_flags |= SAVENAME;
 		return 0;
 	}
 
