@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.78 2007/11/12 23:11:59 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.79 2007/11/13 08:38:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.78 2007/11/12 23:11:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.79 2007/11/13 08:38:06 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1494,8 +1494,10 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 			return ENOMEM;
 		}
 		lcp = kmem_alloc(LWPCTL_LCPAGE_SZ, KM_SLEEP);
-		if (lcp == NULL)
+		if (lcp == NULL) {
+			mutex_exit(&lp->lp_lock);
 			return ENOMEM;
+		}
 		/*
 		 * Wire the next page down in kernel space.  Since this
 		 * is a new mapping, we must add a reference.
