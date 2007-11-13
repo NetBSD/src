@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.4 2007/11/13 16:00:24 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.5 2007/11/13 19:19:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.4 2007/11/13 16:00:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.5 2007/11/13 19:19:41 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1845,6 +1845,14 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	 * so mark recursive entry invalid
 	 */
 	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_u;
+	/*
+	 * PDP constructed this way won't be for kernel,
+	 * hence we don't put kernel mappings on Xen.
+	 * But we need to make pmap_create() happy, so put a dummy (without
+	 * PG_V) value at the right place.
+	 */
+	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
+	     (unsigned long)-1 & PG_FRAME;
 #else
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 	/* put in recursive PDE to map the PTEs */
