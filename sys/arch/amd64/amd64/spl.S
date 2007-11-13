@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.4.3 2007/10/25 23:59:22 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.4.4 2007/11/13 15:58:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -144,7 +144,7 @@ LABEL(spllower_end)
 #endif
 
 /*
- * void	amd64_spllower(int s);
+ * void	cx8_spllower(int s);
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
@@ -153,7 +153,7 @@ LABEL(spllower_end)
  */
 	.align	64
 
-ENTRY(amd64_spllower)
+ENTRY(cx8_spllower)
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%edi			/* new level is lower? */
 	pushq	%rbx
@@ -175,11 +175,11 @@ ENTRY(amd64_spllower)
 	ret
 2:
 	popq	%rbx
-LABEL(amd64_spllower_patch)
+LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 
 	.align	64
-LABEL(amd64_spllower_end)
+LABEL(cx8_spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -199,7 +199,7 @@ LABEL(amd64_spllower_end)
  * (see pmap_tlb_shootnow).
  */
 	nop
-	.align	4	/* Avoid confusion with amd64_spllower_end */
+	.align	4	/* Avoid confusion with cx8_spllower_end */
 
 IDTVEC(spllower)
 	pushq	%rbx

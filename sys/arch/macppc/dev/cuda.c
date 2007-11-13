@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.3.30.1 2007/10/25 22:35:59 bouyer Exp $ */
+/*	$NetBSD: cuda.c,v 1.3.30.2 2007/11/13 15:58:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3.30.1 2007/10/25 22:35:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3.30.2 2007/11/13 15:58:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ cuda_attach(struct device *parent, struct device *dev, void *aux)
 	int node, i, child;
 	char name[32];
 
-	node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
+	node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (node)
 		OF_getprop(node, "interrupts", &irq, 4);
 

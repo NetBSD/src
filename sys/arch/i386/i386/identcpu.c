@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.75.2.1 2007/10/17 21:08:14 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.75.2.2 2007/11/13 15:58:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.75.2.1 2007/10/17 21:08:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.75.2.2 2007/11/13 15:58:33 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
+#include "opt_intel_coretemp.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 #include "opt_xen.h"
@@ -1413,7 +1414,7 @@ identifycpu(struct cpu_info *ci)
 		uint64_t last_tsc;
 
 		last_tsc = rdtsc();
-		delay(100000);
+		i8254_delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
 	}
 	/* XXX end XXX */
@@ -1651,6 +1652,11 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* ENHANCED_SPEEDSTEP */
 
+#ifdef INTEL_CORETEMP
+	if (cpu_vendor == CPUVENDOR_INTEL && ci->ci_cpuid_level >= 0x06)
+		coretemp_register(ci);
+#endif
+
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
 	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
 		switch (CPUID2FAMILY(ci->ci_signature)) {
@@ -1673,9 +1679,4 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
-#ifndef XEN
-	x86_errata(ci, cpu_vendor);
-	x86_patch();
-#endif
-
 }

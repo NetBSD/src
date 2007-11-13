@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.3 2007/10/08 17:26:40 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.3.2.1 2007/11/13 16:02:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  *	state from a remote CPU.  Where these update operations are so
  *	rare or the access to the per-CPU data so frequent that the cost
  *	of using locking or atomic operations to provide coherency is
- *	prohobitive, another way must be found.
+ *	prohibitive, another way must be found.
  *
  *	Cross calls help to solve these types of problem by allowing
  *	any CPU in the system to request that an arbitrary function be
@@ -71,6 +71,9 @@
  *	CPU, and so has exclusive access to the CPU.  Since this facility
  *	is heavyweight, it's expected that it will not be used often.
  *
+ *	Cross calls must not allocate memory, as the pagedaemon uses
+ *	them (and memory allocation may need to wait on the pagedaemon).
+ *
  * Future directions
  *
  *	Add a low-overhead mechanism to run cross calls in interrupt
@@ -78,7 +81,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.3 2007/10/08 17:26:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.3.2.1 2007/11/13 16:02:24 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.3 2007/10/08 17:26:40 ad Exp $");
 #include <sys/evcnt.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
-
-#define	PRI_XCALL	0
 
 static void	xc_thread(void *);
 static uint64_t	xc_lowpri(u_int, xcfunc_t, void *, void *, struct cpu_info *);

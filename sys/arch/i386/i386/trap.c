@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.221 2007/09/27 22:43:15 xtraeme Exp $	*/
+/*	$NetBSD: trap.c,v 1.221.2.1 2007/11/13 15:58:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221 2007/09/27 22:43:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.2.1 2007/11/13 15:58:34 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -708,7 +708,7 @@ copyfault:
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
-		if (LIST_EMPTY(&p->p_raslist) ||
+		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_eip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;

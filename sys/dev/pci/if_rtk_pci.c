@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.32.14.1 2007/10/25 22:39:03 bouyer Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.32.14.2 2007/11/13 16:01:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.14.1 2007/10/25 22:39:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.14.2 2007/11/13 16:01:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ static const struct rtk_type rtk_pci_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-static int	rtk_pci_match(struct device *, struct cfdata *, void *);
-static void	rtk_pci_attach(struct device *, struct device *, void *);
+static int	rtk_pci_match(device_t, struct cfdata *, void *);
+static void	rtk_pci_attach(device_t, device_t, void *);
 static void	rtk_pci_powerhook(int, void *);
 
 CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
@@ -131,7 +131,7 @@ rtk_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-rtk_pci_match(struct device *parent, struct cfdata *match,
+rtk_pci_match(device_t parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -147,9 +147,9 @@ rtk_pci_match(struct device *parent, struct cfdata *match,
  * setup and ethernet/BPF attach.
  */
 static void
-rtk_pci_attach(struct device *parent, struct device *self, void *aux)
+rtk_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
+	struct rtk_pci_softc *psc = device_private(self);
 	struct rtk_softc *sc = &psc->sc_rtk;
 	pcireg_t command;
 	struct pci_attach_args *pa = aux;
@@ -170,7 +170,10 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic("rtk_pci_attach: impossible");
 	}
-	printf(": %s (rev. 0x%02x)\n", t->rtk_name, PCI_REVISION(pa->pa_class));
+
+	aprint_naive("\n");
+	aprint_normal(": %s (rev. 0x%02x)\n",
+		      t->rtk_name, PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Handle power management nonsense.
@@ -187,8 +190,8 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
 
 			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			aprint_normal_dev(self,
+			    "chip is in D%d power mode -- setting to D0\n",
 			    command & PCI_PMCSR_STATE_MASK);
 			command &= ~PCI_PMCSR_STATE_MASK;
 			pci_conf_write(pc, pa->pa_tag,
@@ -228,39 +231,38 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->rtk_btag = memt;
 		sc->rtk_bhandle = memh;
 	} else {
-		aprint_error("%s: can't map registers\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, rtk_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
 	if (t->rtk_basetype == RTK_8129)
 		sc->sc_quirk |= RTKQ_8129;
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	psc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	psc->sc_powerhook = powerhook_establish(device_xname(self),
 	    rtk_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish pci power hook\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+			"WARNING: unable to establish pci power hook\n");
 
 	rtk_attach(sc);
 }

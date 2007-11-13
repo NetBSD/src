@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.24.12.1 2007/10/25 22:40:08 bouyer Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.24.12.2 2007/11/13 16:02:58 bouyer Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.24.12.1 2007/10/25 22:40:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.24.12.2 2007/11/13 16:02:58 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -65,11 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.24.12.1 2007/10/25 22:40:08 bouyer
 
 #include <net/net_osdep.h>
 
-static void *deflate_alloc __P((void *, u_int, u_int));
-static void deflate_free __P((void *, void *));
-static int deflate_common __P((struct mbuf *, struct mbuf *, size_t *, int));
-static int deflate_compress __P((struct mbuf *, struct mbuf *, size_t *));
-static int deflate_decompress __P((struct mbuf *, struct mbuf *, size_t *));
+static void *deflate_alloc(void *, u_int, u_int);
+static void deflate_free(void *, void *);
+static int deflate_common(struct mbuf *, struct mbuf *, size_t *, int);
+static int deflate_compress(struct mbuf *, struct mbuf *, size_t *);
+static int deflate_decompress(struct mbuf *, struct mbuf *, size_t *);
 
 /*
  * We need to use default window size (2^15 = 32Kbytes as of writing) for

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12.2.2 2007/10/25 23:59:21 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.12.2.3 2007/11/13 15:58:04 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
 define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
 define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
 define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
-define  LINUX32_SYS_exit		LINUX32_SYS_exit
+define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
 endif
 
 ifdef XEN

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.11.10.1 2007/10/25 22:38:04 bouyer Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.11.10.2 2007/11/13 16:01:05 bouyer Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdev.c,v 1.49 2007/03/16 05:39:33 simokawa Exp $
+ * $FreeBSD: src/sys/dev/firewire/fwdev.c,v 1.52 2007/06/06 14:31:36 simokawa Exp $
  *
  */
 
@@ -124,7 +124,7 @@ struct cdevsw firewire_cdevsw = {
 	.d_mmap =	fw_mmap,
 	.d_strategy =	fw_strategy,
 	.d_name =	"fw",
-	.d_flags =	D_MEM | D_NEEDGIANT
+	.d_flags =	D_MEM
 #else
 #define CDEV_MAJOR 127
 	fw_open, fw_close, fw_read, fw_write, fw_ioctl,
@@ -233,8 +233,18 @@ FW_OPEN(fw)
 
 	FWDEV_OPEN_START;
 
-	if (dev->si_drv1 != NULL)
+	FW_GLOCK(sc->fc);
+	if (dev->si_drv1 != NULL) {
+		FW_GUNLOCK(sc->fc);
 		return (EBUSY);
+	}
+	/* set dummy value for allocation */
+	dev->si_drv1 = (void *)-1;
+	FW_GUNLOCK(sc->fc);
+
+	dev->si_drv1 = malloc(sizeof(struct fw_drv1), M_FW, M_WAITOK | M_ZERO);
+	if (dev->si_drv1 == NULL)
+		return (ENOMEM);
 
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500000
 	if ((dev->si_flags & SI_NAMED) == 0) {
@@ -246,10 +256,6 @@ FW_OPEN(fw)
 			"fw%d.%d", unit, sub);
 	}
 #endif
-
-	dev->si_drv1 = malloc(sizeof(struct fw_drv1), M_FW, M_WAITOK | M_ZERO);
-	if (dev->si_drv1 == NULL)
-		return (ENOMEM);
 
 	d = (struct fw_drv1 *)dev->si_drv1;
 	d->fc = sc->fc;
@@ -336,14 +342,18 @@ fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	struct fw_pkt *fp;
 	const struct tcode_info *tinfo;
 
+	FW_GLOCK(d->fc);
 	while ((xfer = STAILQ_FIRST(&d->rq)) == NULL && err == 0)
-		err = tsleep(&d->rq, FWPRI, "fwra", 0);
+		err = fw_msleep(&d->rq, FW_GMTX(d->fc), FWPRI, "fwra", 0);
 
-	if (err != 0)
+	if (err != 0) {
+		FW_GUNLOCK(d->fc);
 		return (err);
+	}
 
 	s = splfw();
 	STAILQ_REMOVE_HEAD(&d->rq, link);
+	FW_GUNLOCK(xfer->fc);
 	splx(s);
 	fp = &xfer->recv.hdr;
 #if 0 /* for GASP ?? */
@@ -361,7 +371,9 @@ out:
 	fwb = (struct fw_bind *)xfer->sc;
 	fw_xfer_unload(xfer);
 	xfer->recv.pay_len = PAGE_SIZE;
+	FW_GLOCK(xfer->fc);
 	STAILQ_INSERT_TAIL(&fwb->xferlist, xfer, link);
+	FW_GUNLOCK(xfer->fc);
 	return (err);
 }
 
@@ -389,6 +401,7 @@ FW_READ(fw)
 	if (ir->buf == NULL)
 		return (EIO);
 
+	FW_GLOCK(fc);
 readloop:
 	if (ir->stproc == NULL) {
 		/* iso bulkxfer */
@@ -405,15 +418,17 @@ readloop:
 		if (slept == 0) {
 			slept = 1;
 			ir->flag |= FWXFERQ_WAKEUP;
-			err = tsleep(ir, FWPRI, "fw_read", hz);
+			err = fw_msleep(ir, FW_GMTX(fc), FWPRI, "fw_read", hz);
 			ir->flag &= ~FWXFERQ_WAKEUP;
 			if (err == 0)
 				goto readloop;
 		} else if (slept == 1)
 			err = EIO;
+		FW_GUNLOCK(fc);
 		return err;
 	} else if(ir->stproc != NULL) {
 		/* iso bulkxfer */
+		FW_GUNLOCK(fc);
 		fp = (struct fw_pkt *)fwdma_v_addr(ir->buf, 
 				ir->stproc->poffset + ir->queued);
 		if(fc->irx_post != NULL)
@@ -434,6 +449,7 @@ readloop:
 		}
 		if (uio->uio_resid >= ir->psize) {
 			slept = -1;
+			FW_GLOCK(fc);
 			goto readloop;
 		}
 	}
@@ -470,13 +486,13 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 
 	xfer->fc = d->fc;
 	xfer->sc = NULL;
-	xfer->hand = fw_asy_callback;
+	xfer->hand = fw_xferwake;
 	xfer->send.spd = 2 /* XXX */;
 
 	if ((err = fw_asyreq(xfer->fc, -1, xfer)))
 		goto out;
 
-	if ((err = tsleep(xfer, FWPRI, "fwwa", 0)))
+	if ((err = fw_xferwait(xfer)))
 		goto out;
 
 	if (xfer->resp != 0) {
@@ -484,8 +500,10 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 		goto out;
 	}
 
-	if (xfer->state == FWXF_RCVD) {
+	if (xfer->flag == FWXF_RCVD) {
+		FW_GLOCK(xfer->fc);
 		STAILQ_INSERT_TAIL(&d->rq, xfer, link);
+		FW_GUNLOCK(xfer->fc);
 		return (0);
 	}
 
@@ -514,6 +532,8 @@ FW_WRITE(fw)
 
 	if (it->buf == NULL)
 		return (EIO);
+
+	FW_GLOCK(fc);
 isoloop:
 	if (it->stproc == NULL) {
 		it->stproc = STAILQ_FIRST(&it->stfree);
@@ -524,18 +544,21 @@ isoloop:
 			it->queued = 0;
 		} else if (slept == 0) {
 			slept = 1;
+#if 0   /* XXX to avoid lock recursion */
 			err = fc->itx_enable(fc, it->dmach);
 			if (err)
-				return err;
-			err = tsleep(it, FWPRI, "fw_write", hz);
+				goto out;
+#endif
+			err = fw_msleep(it, FW_GMTX(fc), FWPRI, "fw_write", hz);
 			if (err)
-				return err;
+				goto out;
 			goto isoloop;
 		} else {
 			err = EIO;
-			return err;
+			goto out;
 		}
 	}
+	FW_GUNLOCK(fc);
 	fp = (struct fw_pkt *)fwdma_v_addr(it->buf,
 			it->stproc->poffset + it->queued);
 	err = uiomove((void *)fp, sizeof(struct fw_isohdr), uio);
@@ -551,8 +574,13 @@ isoloop:
 	}
 	if (uio->uio_resid >= sizeof(struct fw_isohdr)) {
 		slept = 0;
+		FW_GLOCK(fc);
 		goto isoloop;
 	}
+	return err;
+
+out:
+	FW_GUNLOCK(fc);
 	return err;
 }
 
@@ -564,7 +592,9 @@ fw_hand(struct fw_xfer *xfer)
 
 	fwb = (struct fw_bind *)xfer->sc;
 	d = (struct fw_drv1 *)fwb->sc;
+	FW_GLOCK(xfer->fc);
 	STAILQ_INSERT_TAIL(&d->rq, xfer, link);
+	FW_GUNLOCK(xfer->fc);
 	wakeup(&d->rq);
 }
 
@@ -605,19 +635,17 @@ FW_IOCTL(fw)
 	switch (cmd) {
 	case FW_STSTREAM:
 		if (it == NULL) {
-			for (i = 0; i < fc->nisodma; i ++) {
-				it = fc->it[i];
-				if ((it->flag & FWXFERQ_OPEN) == 0)
-					 break;
-	                }	
-			if (i >= fc->nisodma) {
+			i = fw_open_isodma(fc, /* tx */1);
+			if (i < 0) {
 				err = EBUSY;
 				break;
 			}
+			it = fc->it[i];
 			err = fwdev_allocbuf(fc, it, &d->bufreq.tx);
-			if (err)
+			if (err) {
+				it->flag &= ~FWXFERQ_OPEN;
 				break;
-			it->flag |=  FWXFERQ_OPEN;
+			}
 		}
 		it->flag &= ~0xff;
 		it->flag |= (0x3f & ichreq->ch);
@@ -633,19 +661,17 @@ FW_IOCTL(fw)
 		break;
 	case FW_SRSTREAM:
 		if (ir == NULL) {
-			for (i = 0; i < fc->nisodma; i ++) {
-				ir = fc->ir[i];
-				if ((ir->flag & FWXFERQ_OPEN) == 0)
-					break;
-			}	
-			if (i >= fc->nisodma) {
+			i = fw_open_isodma(fc, /* tx */0);
+			if (i < 0) {
 				err = EBUSY;
 				break;
 			}
+			ir = fc->ir[i];
 			err = fwdev_allocbuf(fc, ir, &d->bufreq.rx);
-			if (err)
+			if (err) {
+				ir->flag &= ~FWXFERQ_OPEN;
 				break;
-			ir->flag |=  FWXFERQ_OPEN;
+			}
 		}
 		ir->flag &= ~0xff;
 		ir->flag |= (0x3f & ichreq->ch);
@@ -699,8 +725,7 @@ FW_IOCTL(fw)
 			fwdev = fw_noderesolve_eui64(fc,
 						&asyreq->req.dst.eui);
 			if (fwdev == NULL) {
-				device_printf(fc->bdev,
-					"cannot find node\n");
+				fw_printf(fc->bdev, "cannot find node\n");
 				err = EINVAL;
 				goto out;
 			}
@@ -719,11 +744,11 @@ FW_IOCTL(fw)
 			bcopy((char *)fp + tinfo->hdr_len,
 			    (void *)xfer->send.payload, pay_len);
 		xfer->send.spd = asyreq->req.sped;
-		xfer->hand = fw_asy_callback;
+		xfer->hand = fw_xferwake;
 
 		if ((err = fw_asyreq(fc, -1, xfer)) != 0)
 			goto out;
-		if ((err = tsleep(xfer, FWPRI, "asyreq", hz)) != 0)
+		if ((err = fw_xferwait(xfer)) != 0)
 			goto out;
 		if (xfer->resp != 0) {
 			err = EIO;
@@ -777,7 +802,7 @@ out:
 			err = EINVAL;
 			break;
 		}
-		fwb = (struct fw_bind *)malloc(sizeof (struct fw_bind), M_FW, M_NOWAIT);
+		fwb = (struct fw_bind *)malloc(sizeof (struct fw_bind), M_FW, M_WAITOK);
 		if(fwb == NULL){
 			err = ENOMEM;
 			break;
@@ -918,15 +943,15 @@ fwdev_makedev(struct firewire_softc *sc)
 #if defined(__DragonFly__)
 	int unit;
 
-	unit = device_get_unit(sc->fc->bdev);
+	unit = fw_get_unit(sc->fc->bdev);
 	cdevsw_add(&firewire_cdevsw, FW_UNITMASK, FW_UNIT(unit));
 #elif __FreeBSD_version < 500000
 	cdevsw_add(&firewire_cdevsw);
 #else
-	DEV_T d;
+	fw_dev_t d;
 	int unit;
 
-	unit = device_get_unit(sc->fc->bdev);
+	unit = fw_get_unit(sc->fc->bdev);
 	sc->dev = make_dev(&firewire_cdevsw, MAKEMINOR(0, unit, 0),
 			UID_ROOT, GID_OPERATOR, 0660,
 			"fw%d.%d", unit, 0);
@@ -950,7 +975,7 @@ fwdev_destroydev(struct firewire_softc *sc)
 #if defined(__DragonFly__)
 	int unit;
 
-	unit = device_get_unit(sc->fc->bdev);
+	unit = fw_get_unit(sc->fc->bdev);
 	cdevsw_remove(&firewire_cdevsw, FW_UNITMASK, FW_UNIT(unit));
 #elif __FreeBSD_version < 500000
 	cdevsw_remove(&firewire_cdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2007/08/05 22:28:06 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.12.1 2007/11/13 16:03:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,9 +34,14 @@
 
 struct cpu_info {
         struct cpu_data ci_data;
+	cpuid_t ci_cpuid;
 };
 
 extern struct cpu_info rump_cpu;
 #define curcpu() (&rump_cpu)
+#define cpu_number() 0 /* XXX: good enuf? */
+
+struct lwp *rump_get_curlwp(void); /* XXX */
+#define curlwp rump_get_curlwp()
 
 #endif /* _SYS_RUMP_CPU_H_ */

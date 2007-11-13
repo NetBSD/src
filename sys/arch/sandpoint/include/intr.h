@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.12.28.1 2007/10/25 22:36:40 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.28.2 2007/11/13 15:59:10 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,21 +42,17 @@
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
-#include <powerpc/softintr.h>
-#include <machine/cpu.h>
-#include <sys/device.h>
 
-void init_intr_ivr(void);
-void init_intr_openpic(void);
 void enable_intr(void);
 void disable_intr(void);
 
-#define	ICU_LEN			64	/* XXX */
+extern int imask[];
 
-#define	IRQ_SLAVE		2
-#define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
-#define	I8259_INTR_NUM		16
-#define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
+#define	ICU_LEN			64
+#define IRQ_SLAVE		2
+
+#define I8259_ICU		16
+#define OPENPIC_ICU		26
 
 #endif /* !_LOCORE */
 

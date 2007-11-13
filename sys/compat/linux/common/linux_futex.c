@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.7.34.1 2007/10/25 22:36:57 bouyer Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.7.34.2 2007/11/13 16:00:36 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7.34.1 2007/10/25 22:36:57 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7.34.2 2007/11/13 16:00:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -40,8 +40,9 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7.34.1 2007/10/25 22:36:57 bouyer 
 #include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
-#include <sys/malloc.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -54,7 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.7.34.1 2007/10/25 22:36:57 bouyer 
 struct futex;
 
 struct waiting_proc {
-	struct lwp *wp_l;
+	kcondvar_t wp_futex_cv;
 	struct futex *wp_new_futex;
 	TAILQ_ENTRY(waiting_proc) wp_list;
 };
@@ -66,21 +67,24 @@ struct futex {
 };
 
 static LIST_HEAD(futex_list, futex) futex_list;
-static struct lock *futex_lock = NULL;
+static kmutex_t *futex_lock = NULL;
 
-#define FUTEX_LOCK (void)lockmgr(futex_lock, LK_EXCLUSIVE, NULL)
-#define FUTEX_UNLOCK (void)lockmgr(futex_lock, LK_RELEASE, NULL)
+#define FUTEX_LOCK	mutex_enter(futex_lock);
+#define FUTEX_UNLOCK	mutex_exit(futex_lock);
+
+#ifdef DEBUG_LINUX_FUTEX
+#define FUTEXPRINTF(a) printf a
+#else
+#define FUTEXPRINTF(a)
+#endif
 
 static struct futex *futex_get(void *);
 static void futex_put(struct futex *);
-static int futex_sleep(struct futex *, struct lwp *, unsigned long);
+static int futex_sleep(struct futex *, unsigned int);
 static int futex_wake(struct futex *, int, struct futex *);
 
 int
-linux_sys_futex(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_futex(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_futex_args /* {
 		syscallarg(int *) uaddr;
@@ -96,13 +100,12 @@ linux_sys_futex(l, v, retval)
 	int error = 0;
 	struct futex *f;
 	struct futex *newf;
-	int timeout_hz;
+	int timeout_hz = 0;
 
 	/* First time use */
-	if (futex_lock == NULL) {
-		futex_lock = malloc(sizeof(struct lock), 
-		    M_EMULDATA, M_WAITOK);
-		lockinit(futex_lock, PZERO|PCATCH, "lockfutex", 0, 0);
+	if (__predict_false(futex_lock == NULL)) {
+		futex_lock = kmem_alloc(sizeof(kmutex_t), KM_SLEEP);
+		mutex_init(futex_lock, MUTEX_DEFAULT, IPL_NONE);
 		FUTEX_LOCK;
 		LIST_INIT(&futex_list);
 		FUTEX_UNLOCK;
@@ -121,38 +124,24 @@ linux_sys_futex(l, v, retval)
 			if ((error = copyin(SCARG(uap, timeout), 
 			    &timeout, sizeof(timeout))) != 0)
 				return error;
+			error = itimespecfix(&timeout);
+			if (error)
+				return error;
+			timeout_hz = tstohz(&timeout);
 		}
 
-#ifdef DEBUG_LINUX_FUTEX
-		printf("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
+		FUTEXPRINTF(("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
 		    "*uaddr = %d, timeout = %d.%09ld\n", 
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
-		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec); 
-#endif
-		timeout_hz =
-		    mstohz(timeout.tv_sec * 1000 + timeout.tv_nsec / 1000000);
-
-		/*
-		 * If the user process requests a non null timeout, 
-		 * make sure we do not turn it into an infinite 
-		 * timeout because timeout_hz gets null.
-		 * 
-		 * We use a minimal timeout of 1/hz. Mayve it would
-		 * make sense to just return ETIMEDOUT without sleeping.
-		 */
-		if (((timeout.tv_sec != 0) || (timeout.tv_nsec != 0)) &&
-		    (timeout_hz == 0)) 
-			timeout_hz = 1;
+		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec));
 
 		f = futex_get(SCARG(uap, uaddr));
-		ret = futex_sleep(f, l, timeout_hz);
+		ret = futex_sleep(f, timeout_hz);
 		futex_put(f);
 
-#ifdef DEBUG_LINUX_FUTEX
-		printf("FUTEX_WAIT %d.%d: uaddr = %p, "
+		FUTEXPRINTF(("FUTEX_WAIT %d.%d: uaddr = %p, "
 		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
-		    SCARG(uap, uaddr), ret); 
-#endif
+		    SCARG(uap, uaddr), ret));
 
 		switch (ret) {
 		case EWOULDBLOCK:	/* timeout */
@@ -162,16 +151,12 @@ linux_sys_futex(l, v, retval)
 			return EINTR;
 			break;
 		case 0:			/* FUTEX_WAKE received */
-#ifdef DEBUG_LINUX_FUTEX
-			printf("FUTEX_WAIT %d.%d: uaddr = %p, got FUTEX_WAKE\n",
-			    l->l_proc->p_pid, l->l_lid, SCARG(uap, uaddr)); 
-#endif
+			FUTEXPRINTF(("FUTEX_WAIT %d.%d: uaddr = %p, got it\n",
+			    l->l_proc->p_pid, l->l_lid, SCARG(uap, uaddr)));
 			return 0;
 			break;
 		default:
-#ifdef DEBUG_LINUX_FUTEX
-			printf("FUTEX_WAIT: unexpected ret = %d\n", ret);
-#endif
+			FUTEXPRINTF(("FUTEX_WAIT: unexpected ret = %d\n", ret));
 			break;
 		}
 
@@ -184,11 +169,9 @@ linux_sys_futex(l, v, retval)
 		 * corresponding to the same mapped memory in the sleeping 
 		 * and the waker process.
 		 */
-#ifdef DEBUG_LINUX_FUTEX
-		printf("FUTEX_WAKE %d.%d: uaddr = %p, val = %d\n", 
-		    l->l_proc->p_pid, l->l_lid, 
-		    SCARG(uap, uaddr), SCARG(uap, val)); 
-#endif
+		FUTEXPRINTF(("FUTEX_WAKE %d.%d: uaddr = %p, val = %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    SCARG(uap, uaddr), SCARG(uap, val)));
 		f = futex_get(SCARG(uap, uaddr));
 		*retval = futex_wake(f, SCARG(uap, val), NULL);
 		futex_put(f);
@@ -209,24 +192,22 @@ linux_sys_futex(l, v, retval)
 		*retval = futex_wake(f, SCARG(uap, val), newf);
 		futex_put(f);
 		futex_put(newf);
-		
 		break;
 
 	case LINUX_FUTEX_FD:
-		printf("linux_sys_futex: unimplemented op %d\n", 
-		    SCARG(uap, op));
+		FUTEXPRINTF(("linux_sys_futex: unimplemented op %d\n", 
+		    SCARG(uap, op)));
 		break;
 	default:
-		printf("linux_sys_futex: unknown op %d\n", 
-		    SCARG(uap, op));
+		FUTEXPRINTF(("linux_sys_futex: unknown op %d\n", 
+		    SCARG(uap, op)));
 		break;
 	}
 	return 0;
 }
 
 static struct futex *
-futex_get(uaddr)
-	void *uaddr;
+futex_get(void *uaddr)
 {
 	struct futex *f;
 
@@ -241,7 +222,7 @@ futex_get(uaddr)
 	FUTEX_UNLOCK;
 
 	/* Not found, create it */
-	f = malloc(sizeof(*f), M_EMULDATA, M_WAITOK);
+	f = kmem_zalloc(sizeof(*f), KM_SLEEP);
 	f->f_uaddr = uaddr;
 	f->f_refcount = 1;
 	TAILQ_INIT(&f->f_waiting_proc);
@@ -253,65 +234,45 @@ futex_get(uaddr)
 }
 
 static void 
-futex_put(f)
-	struct futex *f;
+futex_put(struct futex *f)
 {
 	f->f_refcount--;
 	if (f->f_refcount == 0) {
 		FUTEX_LOCK;
 		LIST_REMOVE(f, f_list);
 		FUTEX_UNLOCK;
-		free(f, M_EMULDATA);
+		kmem_free(f, sizeof(*f));
 	}
 
 	return;
 }
 
 static int 
-futex_sleep(f, l, timeout)
-	struct futex *f;
-	struct lwp *l;
-	unsigned long timeout;
+futex_sleep(struct futex *f, unsigned int timeout)
 {
 	struct waiting_proc *wp;
 	int ret;
 
-	wp = malloc(sizeof(*wp), M_EMULDATA, M_WAITOK);
-	wp->wp_l = l;
-	wp->wp_new_futex = NULL;
+	wp = kmem_zalloc(sizeof(*wp), KM_SLEEP);
+	cv_init(&wp->wp_futex_cv, "lnxftxcv");
+
 	FUTEX_LOCK;
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
-	FUTEX_UNLOCK;
-
-#ifdef DEBUG_LINUX_FUTEX
-	printf("FUTEX --> %d.%d tlseep timeout = %ld\n", l->l_proc->p_pid,
-	    l->l_lid, timeout);
-#endif
-	ret = tsleep(wp, PCATCH|PZERO, "linuxfutex", timeout);
-#ifdef DEBUG_LINUX_FUTEX
-	printf("FUTEX -> %d.%d tsleep returns %d\n", 
-	    l->l_proc->p_pid, l->l_lid, ret);
-#endif
-
-	FUTEX_LOCK;
+	ret = cv_timedwait_sig(&wp->wp_futex_cv, futex_lock, timeout);
 	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
 	FUTEX_UNLOCK;
 
 	if ((ret == 0) && (wp->wp_new_futex != NULL)) {
-		ret = futex_sleep(wp->wp_new_futex, l, timeout);
+		ret = futex_sleep(wp->wp_new_futex, timeout);
 		futex_put(wp->wp_new_futex); /* futex_get called in wakeup */
 	}
 
-	free(wp, M_EMULDATA);
-
+	kmem_free(wp, sizeof(*wp));
 	return ret;
 }
 
 static int
-futex_wake(f, n, newf)
-	struct futex *f;
-	int n;
-	struct futex *newf;
+futex_wake(struct futex *f, int n, struct futex *newf)
 {
 	struct waiting_proc *wp;
 	int count = 0; 
@@ -319,14 +280,14 @@ futex_wake(f, n, newf)
 	FUTEX_LOCK;
 	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
 		if (count <= n) {
-			wakeup(wp);
+			cv_broadcast(&wp->wp_futex_cv);
 			count++;
 		} else {
-			if (newf != NULL) {
-				/* futex_put called after tsleep */
-				wp->wp_new_futex = futex_get(newf->f_uaddr);
-				wakeup(wp);
-			}
+			if (newf == NULL)
+				continue;
+			/* futex_put called after tsleep */
+			wp->wp_new_futex = futex_get(newf->f_uaddr);
+			cv_broadcast(&wp->wp_futex_cv);
 		}
 	}
 	FUTEX_UNLOCK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.346.2.1 2007/10/25 22:37:10 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.346.2.2 2007/11/13 16:00:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.346.2.1 2007/10/25 22:37:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.346.2.2 2007/11/13 16:00:53 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -254,6 +254,8 @@ static const struct wd_quirk {
 	/* Attempt to catch all seagate drives larger than 200GB */
 	{ "ST3[2-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
 	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3[1-9][0-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
+	  WD_QUIRK_FORCE_LBA48 },
 	{ NULL,
 	  0 }
 };
@@ -299,8 +301,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	int i, blank;
 	char tbuf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
-	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
+	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 	callout_init(&wd->sc_restart_ch, 0);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
@@ -761,10 +763,10 @@ wddone(void *v)
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
-	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_XFERS);
 	int nblks;
 
+	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
+	    DEBUG_XFERS);
 	if (bp == NULL)
 		return;
 	bp->b_resid = wd->sc_wdc_bio.bcount;
@@ -877,9 +879,9 @@ wdrestart(void *v)
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
 	int s;
+
 	ATADEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
-
 	s = splbio();
 	__wdstart(v, bp);
 	splx(s);
@@ -1761,6 +1763,7 @@ wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
 int
 wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 {
+
 	switch (wd->atabus->ata_get_params(wd->drvp, flags, params)) {
 	case CMD_AGAIN:
 		return 1;
@@ -1929,6 +1932,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 void
 wd_shutdown(void *arg)
 {
+
 	struct wd_softc *wd = arg;
 	wd_flushcache(wd, AT_POLL);
 }

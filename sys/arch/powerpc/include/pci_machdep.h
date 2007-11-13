@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.10.1 2007/10/25 22:36:27 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.10.2 2007/11/13 15:59:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct genppc_pci_chipset {
 	u_int32_t	*pc_addr;
 	u_int32_t	*pc_data;
 	int		pc_node;
+	int		pc_ihandle;
 	int		pc_bus;
 	bus_space_tag_t	pc_memt;
 	bus_space_tag_t	pc_iot;
@@ -157,6 +158,14 @@ pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
 void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
+/* generic OFW method PCI functions */
+void genppc_pci_ofmethod_attach_hook(struct device *, struct device *,
+    struct pcibus_attach_args *);
+pcitag_t genppc_pci_ofmethod_make_tag(void *, int, int, int);
+pcireg_t genppc_pci_ofmethod_conf_read(void *, pcitag_t, int);
+void genppc_pci_ofmethod_conf_write(void *, pcitag_t, int, pcireg_t);
+void genppc_pci_ofmethod_decompose_tag(void *, pcitag_t, int *, int *, int *);
+
 /* XXX for now macppc needs its own pci_bus_dma_tag */
 #ifndef macppc
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
@@ -167,7 +176,7 @@ extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 int genofw_find_picnode(int);
 void genofw_find_ofpics(int);
 void genofw_fixup_picnode_offsets(void);
-void genofw_setup_pciintr_map(struct genppc_pci_chipset_businfo *, int);
+void genofw_setup_pciintr_map(void *, struct genppc_pci_chipset_businfo *, int);
 int genofw_find_node_by_devfunc(int, int, int, int);
 int genofw_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int genofw_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);

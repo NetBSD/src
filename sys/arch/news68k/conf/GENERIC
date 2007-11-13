@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2007/06/25 13:22:45 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.89.14.1 2007/11/13 15:58:53 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.89.14.1 $"
 
 maxusers	8
 
@@ -37,12 +37,7 @@ options 	KTRACE			# system call tracing support
 #options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options 	SEMMNI=10		# number of semaphore identifiers
-#options 	SEMMNS=60		# number of semaphores in system
-#options 	SEMUME=10		# max number of undo entries per process
-#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support

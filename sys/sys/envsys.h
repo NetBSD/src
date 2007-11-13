@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.17 2007/10/07 04:11:15 xtraeme Exp $ */
+/* $NetBSD: envsys.h,v 1.17.2.1 2007/11/13 16:03:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define ENVSYS_MAXSENSORS	512
 #define ENVSYS_DESCLEN		32
 
-/* struct used by a device sensor */
+/* struct used by a sensor */
 struct envsys_data {
 	uint32_t	sensor;		/* sensor number */
 	uint32_t	units;		/* type of sensor */
@@ -86,7 +86,8 @@ enum envsys_units {
 	ENVSYS_INDICATOR,		/* Indicator */
 	ENVSYS_INTEGER,			/* Integer */
 	ENVSYS_DRIVE,			/* Drive */
-	ENVSYS_BATTERY_STATE,		/* Battery state */
+	ENVSYS_BATTERY_CAPACITY,	/* Battery capacity */
+	ENVSYS_BATTERY_CHARGE,		/* Battery charging/discharging */
 	ENVSYS_NSENSORS
 };
 
@@ -115,12 +116,12 @@ enum envsys_drive_states {
 	ENVSYS_DRIVE_PFAIL		/* drive is degraded */
 };
 
-/* sensor battery states */
-enum envsys_battery_states {
-	ENVSYS_BATTERY_STATE_NORMAL	= 1,	/* normal cap in battery */
-	ENVSYS_BATTERY_STATE_WARNING,		/* warning cap in battery */
-	ENVSYS_BATTERY_STATE_CRITICAL,		/* critical cap in battery */
-	ENVSYS_BATTERY_STATE_LOW		/* low cap in battery */
+/* sensor battery capacity states */
+enum envsys_battery_capacity_states {
+	ENVSYS_BATTERY_CAPACITY_NORMAL	= 1,	/* normal cap in battery */
+	ENVSYS_BATTERY_CAPACITY_WARNING,	/* warning cap in battery */
+	ENVSYS_BATTERY_CAPACITY_CRITICAL,	/* critical cap in battery */
+	ENVSYS_BATTERY_CAPACITY_LOW		/* low cap in battery */
 };
 
 /* sensor flags */
@@ -140,9 +141,9 @@ enum envsys_battery_states {
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNOTVALID 	0x00001000	/* sensor is invalid */
 
-#define ENVSYS_GETDICTIONARY		_IOWR('E', 0, struct plistref)
-#define ENVSYS_SETDICTIONARY		_IOWR('E', 1, struct plistref)
-#define ENVSYS_REMOVEPROPS		_IOWR('E', 2, struct plistref)
+#define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
+#define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)
+#define ENVSYS_REMOVEPROPS	_IOWR('E', 2, struct plistref)
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA

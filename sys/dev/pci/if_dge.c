@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.16.6.1 2007/10/25 22:38:58 bouyer Exp $ */
+/*	$NetBSD: if_dge.c,v 1.16.6.2 2007/11/13 16:01:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.16.6.1 2007/10/25 22:38:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.16.6.2 2007/11/13 16:01:17 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -607,7 +607,7 @@ dge_freebuf(struct mbuf *m, void *buf, size_t size, void *arg)
 	SLIST_INSERT_HEAD(&sc->sc_buglist, entry, rb_entry);
 
 	if (__predict_true(m != NULL))
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 #endif

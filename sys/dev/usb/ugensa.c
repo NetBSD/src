@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.10 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.10.16.1 2007/11/13 16:01:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>

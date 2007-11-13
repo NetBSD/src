@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.72 2007/09/22 18:40:24 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.72.4.1 2007/11/13 15:59:33 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2007/09/22 18:40:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72.4.1 2007/11/13 15:59:33 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -373,9 +373,9 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_printf(" ctx: %p cpuset %x",
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
-	db_printf("\npmap:%p wchan:%p pri:%d upri:%d\n",
+	db_printf("\npmap:%p wchan:%p pri:%d epri:%d\n",
 		  p->p_vmspace->vm_map.pmap,
-		  l->l_wchan, l->l_priority, l->l_usrpri);
+		  l->l_wchan, l->l_priority, lwp_eprio(l));
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));

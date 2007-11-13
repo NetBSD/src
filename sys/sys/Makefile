@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.98 2007/09/23 11:45:11 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.98.4.1 2007/11/13 16:03:19 bouyer Exp $
 
 .include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
-	bootblock.h bswap.h buf.h \
-	callout.h cdefs.h cdefs_aout.h \
+	bitops.h bootblock.h bswap.h buf.h \
+	callback.h callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	cpuio.h device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
 	disklabel_gpt.h \
@@ -17,8 +17,8 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	float_ieee754.h fstypes.h gcq.h gmon.h gpio.h hash.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
-	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
-	lkm.h localedef.h lock.h lockf.h lwp.h \
+	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
+	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
 	md5.h midiio.h mman.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \

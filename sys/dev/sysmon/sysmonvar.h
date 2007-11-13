@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.19 2007/10/10 23:25:40 xtraeme Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.19.2.1 2007/11/13 16:01:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -99,7 +99,6 @@ int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
 
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
-struct	sysmon_envsys *sysmon_envsys_find(const char *);
 
 void	sysmon_envsys_init(void);
 

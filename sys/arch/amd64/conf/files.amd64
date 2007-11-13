@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.44.2.1 2007/10/25 22:35:33 bouyer Exp $
+#	$NetBSD: files.amd64,v 1.44.2.2 2007/11/13 15:58:09 bouyer Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -33,7 +33,6 @@ file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
-file	arch/x86/x86/idle_machdep.c
 #
 # XXXfvdl write the optimized versions for these.
 #
@@ -44,7 +43,6 @@ file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
-file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/syscall.c
@@ -91,10 +89,6 @@ device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
-device cpu
-attach cpu at cpubus
-file	arch/x86/x86/cpu.c		cpu
-
 include "dev/wsfb/files.wsfb"
 
 #
@@ -106,33 +100,9 @@ include "dev/wsfb/files.wsfb"
 include	"dev/pci/files.pci"
 defparam			PCI_CONF_MODE
 include "dev/pci/files.agp"
-file	arch/x86/pci/agp_machdep.c	agp
 
-# PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus, agp_i810, agp_intel, agp_sis, agp_via, agp_amd, agp_ali, agp_amd64
-attach	pchb at pci
-file	arch/amd64/pci/pchb.c			pchb		needs-flag
-file	arch/x86/pci/pchb_rnd.c			pchb & rnd
-
-# PCI-ISA bridges
-device	pcib: isabus
-attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib | amdpcib | ichlpcib
-
-device 	amdpcib {} : isabus
-attach 	amdpcib at pci
-file 	arch/amd64/pci/amdpcib.c		amdpcib
-
-attach 	hpet at amdpcib with amdpcib_hpet
-file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
-
-device  ichlpcib: acpipmtimer, isabus, sysmon_wdog
-attach  ichlpcib at pci
-file    arch/x86/pci/ichlpcib.c 		ichlpcib
-
-device 	aapic
-attach 	aapic at pci
-file 	arch/x86/pci/aapic.c			aapic
+# x86 specific PCI hardware
+include "arch/x86/pci/files.pci"
 
 #
 # ISA or ISA+PCI drivers
@@ -141,7 +111,7 @@ file 	arch/x86/pci/aapic.c			aapic
 include	"dev/isa/files.isa"
 
 # PC clock
-file	arch/x86/isa/clock.c			isa
+file 	arch/x86/isa/clock.c 			isa
 
 # TSC timecounter support
 file	arch/x86/x86/tsc.c

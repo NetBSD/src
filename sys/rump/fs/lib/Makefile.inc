@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2007/08/07 21:33:14 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.3.12.1 2007/11/13 16:03:11 bouyer Exp $
 #
 
 MKPRIVATELIB=	yes
@@ -14,5 +14,6 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 CFLAGS+=	-ffreestanding
 CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
 CPPFLAGS+=	-D_KERNEL -DDIAGNOSTIC -I${NETBSDSRCDIR}/common/include
+CPPFLAGS+=	-D_RUMPKERNEL
 CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
 .endif

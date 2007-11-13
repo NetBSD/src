@@ -227,7 +227,7 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DRIVER, IPL_NONE)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DRIVER, IPL_TTY)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)

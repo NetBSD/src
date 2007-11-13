@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.h,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: bthidev.h,v 1.3.30.1 2007/11/13 16:00:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -43,8 +43,8 @@
 #ifdef _KERNEL
 /* HID device header */
 struct bthidev {
-	struct device	 sc_dev;
-	struct device	*sc_parent;
+	device_t	 sc_dev;
+	device_t	 sc_parent;
 
 	int		 sc_id;		/* report id */
 	int		 sc_len;	/* report len */

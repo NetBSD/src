@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.65 2007/10/11 23:04:21 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.65.2.1 2007/11/13 16:01:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65 2007/10/11 23:04:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65.2.1 2007/11/13 16:01:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -43,10 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65 2007/10/11 23:04:21 pooka Exp 
 #include <sys/fstrans.h>
 #include <sys/proc.h>
 
-#include <lib/libkern/libkern.h>
+#include <dev/putter/putter_sys.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <nfs/nfsproto.h> /* for fh sizes */
 
@@ -63,6 +65,14 @@ MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
 int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
 
+static struct putter_ops puffs_putter = {
+	.pop_getout	= puffs_msgif_getout,
+	.pop_releaseout	= puffs_msgif_releaseout,
+	.pop_waitcount	= puffs_msgif_waitcount,
+	.pop_dispatch	= puffs_msgif_dispatch,
+	.pop_close	= puffs_msgif_close,
+};
+
 int
 puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	    struct lwp *l)
@@ -72,6 +82,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	char fstype[_VFS_NAMELEN];
 	char *p;
 	int error = 0, i;
+	pid_t mntpid = l->l_proc->p_pid;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
@@ -229,7 +240,8 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	 * If it doesn't know about anyone with our pid/fd having the
 	 * device open, punt
 	 */
-	if (puffs_setpmp(l->l_proc->p_pid, args->pa_fd, pmp)) {
+	if ((pmp->pmp_pi
+	    = putter_attach(mntpid, args->pa_fd, pmp, &puffs_putter)) == NULL) {
 		error = ENOENT;
 		goto out;
 	}
@@ -329,7 +341,7 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (error == 0 || force) {
 		/* tell waiters & other resources to go unwait themselves */
 		puffs_userdead(pmp);
-		puffs_nukebypmp(pmp);
+		putter_detach(pmp->pmp_pi);
 
 		/*
 		 * Wait until there are no more users for the mount resource.
@@ -694,7 +706,6 @@ puffs_init()
 
 	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
 	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
-	puffs_transport_init();
 	puffs_msgif_init();
 }
 
@@ -703,7 +714,6 @@ puffs_done()
 {
 
 	puffs_msgif_destroy();
-	puffs_transport_destroy();
 	pool_destroy(&puffs_pnpool);
 
 	malloc_type_detach(M_PUFFS);

@@ -1,9 +1,23 @@
-#	$NetBSD: GENERIC.NOACPI,v 1.1 2007/05/17 01:50:48 hubertf Exp $
+#	$NetBSD: GENERIC.NOACPI,v 1.1.26.1 2007/11/13 15:58:30 bouyer Exp $
 #
 #	GENERIC.NOACPI -- GENERIC without ACPI
+#
+# This kernel is intended for older machines without working ACPI
+# and Laptops.  It includes APM and PCIBIOS based fixing of PCI
+# configuration issues.
 #
 
 include "arch/i386/conf/GENERIC"
 
 no acpi0 at mainbus0
 no ioapic* at mainbus?
+
+apm*	at mainbus0			# Advanced power management
+
+options 	PCIBIOS			# PCI BIOS support
+options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
+options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
+
+options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing

@@ -1,9 +1,10 @@
-/*	$NetBSD: machdep.c,v 1.92.14.1 2007/10/25 22:36:15 bouyer Exp $	*/
-
-/*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+/*	$NetBSD: machdep.c,v 1.92.14.2 2007/11/13 15:58:59 bouyer Exp $	*/
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,24 +16,27 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.14.1 2007/10/25 22:36:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.14.2 2007/11/13 15:58:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.14.1 2007/10/25 22:36:15 bouyer Exp
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 
-
 struct pmap ofw_pmap;
 char bootpath[256];
 
@@ -65,10 +68,7 @@ void	ofppc_bootstrap_console(void);
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	/* Initialize the bootstrap console. */
-	ofppc_bootstrap_console();
 	ofwoea_initppc(startkernel, endkernel, args);
-	map_isa_ioregs();
 }
 
 void
@@ -77,13 +77,13 @@ cpu_startup(void)
 	oea_startup(NULL);
 }
 
-/*
+
 void
 consinit(void)
 {
 	ofwoea_consinit();
 }
-*/
+
 
 void
 dumpsys(void)
@@ -94,6 +94,7 @@ dumpsys(void)
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
+void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
@@ -118,6 +119,9 @@ cpu_reboot(int howto, char *what)
 		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
+
+	rtas_reboot();
+
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
 			printf("boot string too large, ignored\n");
@@ -137,74 +141,3 @@ cpu_reboot(int howto, char *what)
 		*ap1 = 0;
 	ppc_boot(str);
 }
-
-/*
- * XXX
- * The following code is subject to die at a later date.  This is the only
- * remaining code in this file subject to the Tools GmbH copyright.
- */
-
-void
-consinit()
-{
-
-	(*cn_tab->cn_probe)(cn_tab);
-}
-
-void	ofcons_cnprobe(struct consdev *);
-int	ofppc_cngetc(dev_t);
-void	ofppc_cnputc(dev_t, int);
-
-struct consdev ofppc_bootcons = {
-	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
-	    NULL, NULL, makedev(0,0), 1,
-};
-
-int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
-int	ofppc_stdin_phandle, ofppc_stdout_phandle;
-
-void
-ofppc_bootstrap_console(void)
-{
-	int chosen;
-	char data[4];
-
-	chosen = OF_finddevice("/chosen");
-
-	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdin_ihandle = of_decode_int(data);
-	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
-
-	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdout_ihandle = of_decode_int(data);
-	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
-
-	cn_tab = &ofppc_bootcons;
-
- nocons:
-	return;
-}
-
-int
-ofppc_cngetc(dev_t dev)
-{
-	u_char ch = '\0';
-	int l;
-
-	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return (-1);
-
-	return (ch);
-}
-
-void
-ofppc_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(ofppc_stdout_ihandle, &ch, 1);
-}
-

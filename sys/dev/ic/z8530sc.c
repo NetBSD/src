@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.23 2007/03/04 06:02:04 christos Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.23.20.1 2007/11/13 16:01:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.23 2007/03/04 06:02:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.23.20.1 2007/11/13 16:01:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,6 +271,12 @@ zs_loadchannelregs(cs)
 	zs_write_reg(cs, 1, reg[1]);
 }
 
+void
+zs_lock_init(struct zs_chanstate *cs)
+{
+
+	mutex_init(&cs->cs_lock, MUTEX_NODEBUG, IPL_ZS);
+}
 
 /*
  * ZS hardware interrupt.  Scan all ZS channels.  NB: we know here that
@@ -295,8 +301,8 @@ zsc_intr_hard(arg)
 	cs = zsc->zsc_cs[0];
 
 	/* Lock both channels */
-	simple_lock(&cs->cs_lock);
-	simple_lock(&zsc->zsc_cs[1]->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
+	mutex_spin_enter(&zsc->zsc_cs[1]->cs_lock);
 	/* Note: only channel A has an RR3 */
 	rr3 = zs_read_reg(cs, 3);
 
@@ -319,7 +325,7 @@ zsc_intr_hard(arg)
 	}
 
 	/* Done with channel A */
-	simple_unlock(&cs->cs_lock);
+	mutex_spin_exit(&cs->cs_lock);
 
 	/* Now look at channel B. */
 	cs = zsc->zsc_cs[1];
@@ -333,7 +339,7 @@ zsc_intr_hard(arg)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
 
-	simple_unlock(&cs->cs_lock);
+	mutex_spin_exit(&cs->cs_lock);
 
 	/* Note: caller will check cs_x->cs_softreq and DTRT. */
 	return (rr3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.4.2 2007/10/25 23:59:23 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.4.3 2007/11/13 16:00:17 bouyer Exp $	*/
 
 /*
  *
@@ -176,7 +176,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };
 
 /*

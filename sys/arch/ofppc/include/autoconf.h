@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5.88.1 2007/10/25 22:36:12 bouyer Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.88.2 2007/11/13 15:58:58 bouyer Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -29,6 +29,7 @@ void resettodr(void);
 void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);
+void init_interrupt(void);
 
 int ofb_cnattach(void);
 #endif /* _KERNEL */

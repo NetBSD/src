@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.1 2007/03/08 14:26:27 njoly Exp $ */
+/* $NetBSD: amdpcib.c,v 1.1.10.2 2007/11/13 16:00:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.1 2007/03/08 14:26:27 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.1.10.2 2007/11/13 16:00:18 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -56,7 +56,8 @@ CFATTACH_DECL(amdpcib, sizeof(struct amdpcib_softc), amdpcib_match,
     amdpcib_attach, NULL, NULL);
 
 static int
-amdpcib_match(struct device *parent, struct cfdata *match, void *aux) {
+amdpcib_match(struct device *parent, struct cfdata *match, void *aux)
+{
 	struct pci_attach_args *pa = aux;
 
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD) &&
@@ -67,7 +68,8 @@ amdpcib_match(struct device *parent, struct cfdata *match, void *aux) {
 }
 
 static void
-amdpcib_attach(struct device *parent, struct device *self, void *aux) {
+amdpcib_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct amdpcib_softc *sc;
 	struct pci_attach_args *pa;
 
@@ -80,7 +82,8 @@ amdpcib_attach(struct device *parent, struct device *self, void *aux) {
 }
 
 static int
-amdpcib_search(device_t parent, cfdata_t cf, const int *locs, void *aux) {
+amdpcib_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
 
 	if (config_match(parent, cf, aux))
 		config_attach_loc(parent, cf, locs, aux, NULL);

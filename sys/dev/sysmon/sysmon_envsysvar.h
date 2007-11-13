@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.20.2.1 2007/10/25 22:39:45 bouyer Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.20.2.2 2007/11/13 16:01:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -44,7 +44,7 @@ enum sme_description_types {
 	SME_DESC_UNITS = 1,
 	SME_DESC_STATES,
 	SME_DESC_DRIVE_STATES,
-	SME_DESC_BATTERY_STATES
+	SME_DESC_BATTERY_CAPACITY
 };
 
 #ifdef ENVSYS_DEBUG
@@ -76,8 +76,8 @@ typedef struct sme_event {
 	int			snum;		/* sensor number */
 	int			evsent;		/* event already sent */
 	int 			see_flags;	/* see above */
-	bool			refreshed;	/* data was refreshed */
 #define SME_EVENT_WORKING	0x0001 		/* This event is busy */
+#define SME_EVENT_REFRESHED	0x0002		/* sensor already refreshed */
 } sme_event_t;
 
 /* struct by a sysmon envsys event set by a driver */
@@ -114,6 +114,7 @@ int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 prop_dictionary_t sme_sensor_dictionary_get(prop_array_t, const char *);
+struct	sysmon_envsys *sysmon_envsys_find(const char *);
 
 /* functions to handle sysmon envsys events */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *, const char *,

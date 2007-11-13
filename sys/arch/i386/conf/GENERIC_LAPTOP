@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.246 2007/09/11 21:59:10 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.246.4.1 2007/11/13 15:58:30 bouyer Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.246 $"
+#ident 		"GENERIC-$Revision: 1.246.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -74,12 +74,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -359,7 +354,7 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
-piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -372,7 +367,7 @@ agp* 	at pchb?
 
 # ISA bus support
 #isa0	at ichlpcib?
-isa0	at piixpcib?
+#isa0	at piixpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pcib?
@@ -503,6 +498,9 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+# Intel Core's on-die Thermal sensor
+options 	INTEL_CORETEMP
 
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller

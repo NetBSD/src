@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.48.6.1 2007/10/25 22:38:46 bouyer Exp $	*/
+/*	$NetBSD: agp.c,v 1.48.6.2 2007/11/13 16:01:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48.6.1 2007/10/25 22:38:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48.6.2 2007/11/13 16:01:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,11 @@ const struct agp_product {
 	  NULL,			agp_ali_attach },
 #endif
 
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AGP8151_DEV,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
 #if NAGP_AMD > 0
 	{ PCI_VENDOR_AMD,	-1,
 	  agp_amd_match,	agp_amd_attach },
@@ -157,6 +162,10 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965Q_HB,
 	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965PM_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965G_HB,
+	  NULL,			agp_i810_attach },
 #endif
 
 #if NAGP_INTEL > 0
@@ -164,27 +173,26 @@ const struct agp_product {
 	  NULL,			agp_intel_attach },
 #endif
 
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_755,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_760,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
 #if NAGP_SIS > 0
 	{ PCI_VENDOR_SIS,	-1,
 	  NULL,			agp_sis_attach },
 #endif
 
-#if NAGP_VIA > 0
-	{ PCI_VENDOR_VIATECH,	-1,
-	  NULL,			agp_via_attach },
-#endif
-
 #if NAGP_AMD64 > 0
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AGP8151_DEV,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_755,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_760,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
-	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8M800_0,
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8T890_0,
@@ -193,6 +201,11 @@ const struct agp_product {
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8HTB,
 	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_VIA > 0
+	{ PCI_VENDOR_VIATECH,	-1,
+	  NULL,			agp_via_attach },
 #endif
 
 	{ 0,			0,

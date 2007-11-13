@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.9 2007/09/24 01:40:38 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.9.2.1 2007/11/13 16:03:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@ static int rump_specclose(void *);
 static int rump_specfsync(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
+static int rump_specsimpleul(void *);
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
@@ -61,6 +62,8 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
+	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
+	{ &vop_putpages_desc, rump_specsimpleul },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
@@ -189,35 +192,90 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
-	ssize_t rv;
 	off_t off;
-	int error;
 
 	assert(vp->v_type == VBLK);
 	sp = vp->v_data;
 
 	off = bp->b_blkno << DEV_BSHIFT;
-	printf("specstrategy: 0x%x bytes %s off 0x%" PRIx64
+	DPRINTF(("specstrategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
 	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
-	    off, off, (off + bp->b_bcount));
-	if (bp->b_flags & B_READ)
-		rv = rumpuser_pread(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
-	else {
-		int dummy;
-		rv = rumpuser_pwrite(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    off, &error);
-		if ((bp->b_flags & B_ASYNC) == 0)
-			rumpuser_fsync(sp->rsp_fd, &dummy);
+	    off, off, (off + bp->b_bcount)));
+
+	/*
+	 * Do I/O.  We have different paths for async and sync I/O.
+	 * Async I/O is done by passing a request to rumpuser where
+	 * it is executed.  The rumpuser routine then calls
+	 * biodone() to signal any waiters in the kernel.  I/O's are
+	 * executed in series.  Technically executing them in parallel
+	 * would produce better results, but then we'd need either
+	 * more threads or posix aio.  Maybe worth investigating
+	 * this later.
+	 *
+	 * Synchronous I/O is done directly in the context mainly to
+	 * avoid unnecessary scheduling with the I/O thread.
+	 */
+	if (bp->b_flags & B_ASYNC) {
+		struct rumpuser_aio *rua;
+
+		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua->rua_fd = sp->rsp_fd;
+		rua->rua_data = bp->b_data;
+		rua->rua_dlen = bp->b_bcount;
+		rua->rua_off = off;
+		rua->rua_bp = bp;
+		rua->rua_op = bp->b_flags & B_READ;
+
+		rumpuser_mutex_enter(&rua_mtx);
+
+		/*
+		 * Check if our buffer is full.  Doing it this way
+		 * throttles the I/O a bit if we have a massive
+		 * async I/O burst.
+		 *
+		 * XXX: this actually leads to deadlocks with spl()
+		 * (caller maybe be at splbio() legally for async I/O),
+		 * so for now set N_AIOS high and FIXXXME some day.
+		 */
+		if ((rua_head+1) % N_AIOS == rua_tail) {
+			rumpuser_free(rua);
+			rumpuser_mutex_exit(&rua_mtx);
+			goto syncfallback;
+		}
+
+		/* insert into queue & signal */
+		rua_aios[rua_head] = rua;
+		rua_head = (rua_head+1) % (N_AIOS-1);
+		rumpuser_cv_signal(&rua_cv);
+		rumpuser_mutex_exit(&rua_mtx);
+	} else {
+ syncfallback:
+		if (bp->b_flags & B_READ) {
+			rumpuser_read(sp->rsp_fd, bp->b_data,
+			    bp->b_bcount, off, bp);
+		} else {
+			rumpuser_write(sp->rsp_fd, bp->b_data,
+			    bp->b_bcount, off, bp);
+		}
+		biowait(bp);
 	}
 
-	bp->b_error = 0;
-	if (rv == -1)
-		bp->b_error = error;
-	else
-		bp->b_resid = bp->b_bcount - rv;
-	biodone(bp);
+	return 0;
+}
 
-	return error;
+int
+rump_specsimpleul(void *v)
+{
+	struct vop_generic_args *ap = v;
+	struct vnode *vp;
+	int offset;
+
+	offset = ap->a_desc->vdesc_vp_offsets[0];
+	KASSERT(offset != VDESC_NO_OFFSET);
+
+	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+	simple_unlock(&vp->v_interlock);
+
+	return 0;
 }

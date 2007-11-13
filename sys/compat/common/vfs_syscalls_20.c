@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.18 2007/10/10 20:42:21 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.18.2.1 2007/11/13 16:00:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.18 2007/10/10 20:42:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.18.2.1 2007/11/13 16:00:34 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -246,7 +246,7 @@ compat_20_sys_getfsstat(l, v, retval)
 			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
-		mutex_exit(&mountlist_lock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}

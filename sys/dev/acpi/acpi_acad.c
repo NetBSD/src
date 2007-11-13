@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.26.2.1 2007/10/25 22:37:06 bouyer Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.26.2.2 2007/11/13 16:00:51 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.26.2.1 2007/10/25 22:37:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.26.2.2 2007/11/13 16:00:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,7 @@ acpiacad_init_envsys(device_t dv)
 	sc->sc_data[0].sensor = 0;
 	sc->sc_data[0].state = ENVSYS_SVALID;
 	sc->sc_data[0].units = ENVSYS_INDICATOR;
-	snprintf(sc->sc_data[0].desc, sizeof(sc->sc_data->desc),
-	    "%s %s", device_xname(dv), "connected");
+ 	strlcpy(sc->sc_data[0].desc, "connected", sizeof(sc->sc_data[0].desc));
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_name = device_xname(dv);

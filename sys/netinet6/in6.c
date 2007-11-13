@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.133.4.1 2007/11/13 16:02:53 bouyer Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.133 2007/09/16 18:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.133.4.1 2007/11/13 16:02:53 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -154,12 +154,8 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	struct rtentry *nrt = NULL;
 	int e;
 
-	bzero(&lo_sa, sizeof(lo_sa));
-	bzero(&all1_sa, sizeof(all1_sa));
-	lo_sa.sin6_family = all1_sa.sin6_family = AF_INET6;
-	lo_sa.sin6_len = all1_sa.sin6_len = sizeof(struct sockaddr_in6);
-	lo_sa.sin6_addr = in6addr_loopback;
-	all1_sa.sin6_addr = in6mask128;
+	sockaddr_in6_init(&all1_sa, &in6mask128, 0, 0, 0);
+	sockaddr_in6_init(&lo_sa, &in6addr_loopback, 0, 0, 0);
 
 	/*
 	 * We specify the address itself as the gateway, and set the
@@ -1093,18 +1089,13 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		in6m_sol = imm->i6mm_maddr;
 
-		bzero(&mltmask, sizeof(mltmask));
-		mltmask.sin6_len = sizeof(struct sockaddr_in6);
-		mltmask.sin6_family = AF_INET6;
-		mltmask.sin6_addr = in6mask32;
+		sockaddr_in6_init(&mltmask, &in6mask32, 0, 0, 0);
 
 		/*
 		 * join link-local all-nodes address
 		 */
-		bzero(&mltaddr, sizeof(mltaddr));
-		mltaddr.sin6_len = sizeof(struct sockaddr_in6);
-		mltaddr.sin6_family = AF_INET6;
-		mltaddr.sin6_addr = in6addr_linklocal_allnodes;
+		sockaddr_in6_init(&mltaddr, &in6addr_linklocal_allnodes,
+		    0, 0, 0);
 		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0)
 			goto cleanup; /* XXX: should not fail */
 
@@ -1864,7 +1855,7 @@ ip6_sprintf(const struct in6_addr *addr)
  * Determine if an address is on a local network.
  */
 int
-in6_localaddr(struct in6_addr *in6)
+in6_localaddr(const struct in6_addr *in6)
 {
 	struct in6_ifaddr *ia;
 

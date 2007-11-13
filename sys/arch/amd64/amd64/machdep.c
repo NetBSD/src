@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.5 2007/10/26 13:46:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.6 2007/11/13 15:58:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.5 2007/10/26 13:46:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.6 2007/11/13 15:58:06 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -271,10 +271,10 @@ extern  vaddr_t first_bt_vaddr;
 #endif
 
 #ifndef XEN
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 #else /* XEN */
-void (*delay_func)(int) = xen_delay;
+void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
@@ -1950,51 +1950,6 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
-#ifdef MULTIPROCESSOR
-		if (immed && ci != curcpu()) {
-			x86_send_ipi(ci, 0);
-		}
-#endif
-	} else {
-#ifdef MULTIPROCESSOR
-		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
-		    ci != curcpu())
-			x86_send_ipi(ci, 0);
-#endif
-	}
-}
-
-void
-cpu_signotify(struct lwp *l)
-{
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
-}
-
-void
-cpu_need_proftick(struct lwp *l)
-{
-
-	KASSERT(l->l_cpu == curcpu());
-
-	l->l_pflag |= LP_OWEUPC;
-	aston(l);
 }
 
 #ifndef XEN

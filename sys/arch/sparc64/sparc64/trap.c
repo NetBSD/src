@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2007/05/17 14:51:32 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.143.14.1 2007/11/13 15:59:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2007/05/17 14:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143.14.1 2007/11/13 15:59:52 bouyer Exp $");
 
 #define NEW_FPSTATE
 
@@ -795,7 +795,7 @@ badtrap:
 		break;
 
 	case T_BREAKPOINT:
-		if (LIST_EMPTY(&p->p_raslist) ||
+		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)(intptr_t)tf->tf_pc) == (void *)-1)) {
 			sig = SIGTRAP;
 			KSI_INIT_TRAP(&ksi);

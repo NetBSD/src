@@ -1,9 +1,10 @@
-/*	$NetBSD: lock_stub.c,v 1.9 2007/09/22 11:26:42 pooka Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.8.2 2007/11/13 16:03:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,89 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/mutex.h>
-#include <sys/rwlock.h>
+#ifndef _SYS_RUMP_MUTEX_H_
+#define _SYS_RUMP_MUTEX_H_
 
-void
-mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
-{
+struct kmutex {
+	struct rumpuser_mtx *kmtx_mtx;
+};
 
-	return;
-}
-
-void
-mutex_destroy(kmutex_t *mtx)
-{
-
-	return;
-}
-
-void
-mutex_enter(kmutex_t *mtx)
-{
-
-	return;
-}
-
-void
-mutex_exit(kmutex_t *mtx)
-{
-
-	return;
-}
-
-int
-mutex_owned(kmutex_t *mtx)
-{
-
-	return 1;
-}
-
-#define RW_UNLOCKED -1 /* XXX */
-
-void
-rw_init(krwlock_t *rw)
-{
-
-	rw->rw_locked = RW_UNLOCKED;
-}
-
-void
-rw_destroy(krwlock_t *rw)
-{
-
-}
-
-void
-rw_enter(krwlock_t *rw, const krw_t op)
-{
-
-	KASSERT(rw->rw_locked == RW_UNLOCKED);
-	rw->rw_locked = op;
-}
-
-void
-rw_exit(krwlock_t *rw)
-{
-
-	KASSERT(rw->rw_locked != RW_UNLOCKED);
-	rw->rw_locked = RW_UNLOCKED;
-}
-
-int
-rw_lock_held(krwlock_t *rw)
-{
-
-	return rw->rw_locked != RW_UNLOCKED;
-}
-
-int
-rw_tryupgrade(krwlock_t *rw)
-{
-
-	KASSERT(rw->rw_locked == RW_READER);
-	rw->rw_locked = RW_WRITER;
-
-	return 1;
-}
+#endif /* _SYS_RUMP_MUTEX_H_ */

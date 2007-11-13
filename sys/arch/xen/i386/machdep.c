@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.2.1 2007/10/17 21:08:16 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.2 2007/11/13 16:00:26 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.1 2007/10/17 21:08:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.2 2007/11/13 16:00:26 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -263,11 +263,11 @@ extern	paddr_t avail_start, avail_end;
 extern	paddr_t pmap_pa_start, pmap_pa_end;
 
 #ifdef ISA_CLOCK
-void (*delay_func)(int) = i8254_delay;
+void (*delay_func)(unsigned int) = i8254_delay;
 void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 #else
-void (*delay_func)(int) = xen_delay;
+void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
@@ -2369,51 +2369,6 @@ void
 cpu_initclocks()
 {
 	(*initclock_func)();
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
-#ifdef MULTIPROCESSOR
-		if (immed && ci != curcpu()) {
-			x86_send_ipi(ci, 0);
-		}
-#endif
-	} else {
-#ifdef MULTIPROCESSOR
-		if (ci != curcpu())
-			x86_send_ipi(ci, 0);
-#endif
-	}
-}
-
-void
-cpu_signotify(struct lwp *l)
-{
-
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
-}
-
-void
-cpu_need_proftick(struct lwp *l)
-{
-
-	KASSERT(l->l_cpu == curcpu());
-
-	l->l_pflag |= LP_OWEUPC;
-	aston(l);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.14.2.1 2007/10/25 22:40:11 bouyer Exp $	*/
+/*	$NetBSD: emul.c,v 1.14.2.2 2007/11/13 16:03:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,7 @@
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <machine/stdarg.h>
 
@@ -65,14 +66,15 @@ struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
 int physmem;
+int doing_shutdown;
+int ncpu = 1;
+const int schedppq = 1;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
-
-struct lwp *curlwp;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -109,6 +111,16 @@ log(int level, const char *fmt, ...)
 
 void
 uprintf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+printf_nolog(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -155,12 +167,18 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	uint8_t *b = buf;
 	size_t cnt;
+	int rv;
 
 	if (uio->uio_vmspace != UIO_VMSPACE_SYS)
 		panic("%s: vmspace != UIO_VMSPACE_SYS", __func__);
 
-	if (buf == RUMP_UBC_MAGIC_WINDOW)
-		return rump_ubc_magic_uiomove(n, uio);
+	/*
+	 * See if rump ubc code claims the offset.  This is of course
+	 * a blatant violation of abstraction levels, but let's keep
+	 * me simple & stupid for now.
+	 */
+	if (rump_ubc_magic_uiomove(buf, n, uio, &rv, NULL))
+		return rv;
 
 	while (n && uio->uio_resid) {
 		iov = uio->uio_iov;
@@ -221,20 +239,6 @@ getmicrouptime(struct timeval *tvp)
 	rumpuser_gettimeofday(tvp, &error);
 }
 
-int
-ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
-	volatile struct simplelock *slock)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-wakeup(wchan_t ident)
-{
-
-}
-
 void
 malloc_type_attach(struct malloc_type *type)
 {
@@ -254,7 +258,7 @@ __wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
-	rv = rumpuser_malloc(size, flags * (M_CANFAIL | M_NOWAIT));
+	rv = rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
@@ -309,24 +313,67 @@ bdev_type(dev_t dev)
 	return D_DISK;
 }
 
+struct kthdesc {
+	void (*f)(void *);
+	void *arg;
+	struct lwp *mylwp;
+};
+
+static lwpid_t curlid = 2;
+
+static void *
+threadbouncer(void *arg)
+{
+	struct kthdesc *k = arg;
+	void (*f)(void *);
+	void *thrarg;
+
+	f = k->f;
+	thrarg = k->arg;
+	rumpuser_set_curlwp(k->mylwp);
+	kmem_free(k, sizeof(struct kthdesc));
+
+	f(thrarg);
+	panic("unreachable, should kthread_exit()");
+}
+
 int
 kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	void (*func)(void *), void *arg, lwp_t **newlp, const char *fmt, ...)
 {
+	struct kthdesc *k;
+	struct lwp *l;
+	int rv;
 
+	KASSERT(fmt != NULL);
+	if (ci != NULL)
+		panic("%s: bounded threads not supported", __func__);
+
+	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
+	k->f = func;
+	k->arg = arg;
+	k->mylwp = l = rump_setup_curlwp(0, curlid++, 0);
+	rv = rumpuser_thread_create(threadbouncer, k);
+	if (rv)
+		return rv;
+
+	if (newlp)
+		*newlp = l;
 	return 0;
 }
 
 void
-workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
+kthread_exit(int ecode)
 {
 
+	rumpuser_thread_exit();
 }
 
 void
 callout_init(callout_t *c, u_int flags)
 {
 
+	panic("%s: not implemented", __func__);
 }
 
 void

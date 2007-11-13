@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.852 2007/09/25 17:14:11 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.852.2.1 2007/11/13 15:58:29 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.852 $"
+#ident 		"GENERIC-$Revision: 1.852.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -56,7 +56,7 @@ options 	POWERNOW_K8
 #options	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
-# options 	INTEL_ONDEMAND_CLOCKMOD
+#options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -96,12 +96,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -438,9 +433,11 @@ elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
 
 # PCI bridges
+#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+#hpet* 	at amdpcib?
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
-piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
+#piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
@@ -460,8 +457,9 @@ eisa0	at mainbus?
 eisa0	at pceb?
 
 # ISA bus support
+#isa0 	at amdpcib?
 #isa0	at ichlpcib?
-isa0	at piixpcib?
+#isa0	at piixpcib?
 #isa0	at gscpcib?
 #isa0	at viapcib?
 isa0	at mainbus?
@@ -610,6 +608,9 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
+
+# Intel Core's on-die Thermal sensor
+options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
@@ -1473,6 +1474,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# pseudo audio device driver
+pseudo-device	pad
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.3 2007/10/09 18:27:00 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.3.2.1 2007/11/13 16:02:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.3 2007/10/09 18:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.3.2.1 2007/11/13 16:02:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,7 +80,8 @@ static u_int			mq_def_maxmsg = 32;
 
 static kmutex_t			mqlist_mtx;
 static struct pool		mqmsg_poll;
-static LIST_HEAD(, mqueue)	mqueue_head;
+static LIST_HEAD(, mqueue)	mqueue_head =
+	LIST_HEAD_INITIALIZER(mqueue_head);
 
 static int	mq_close_fop(struct file *, struct lwp *);
 
@@ -99,7 +100,6 @@ mqueue_sysinit(void)
 	pool_init(&mqmsg_poll, MQ_DEF_MSGSIZE, 0, 0, 0,
 	    "mqmsg_poll", &pool_allocator_nointr, IPL_NONE);
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
-	LIST_INIT(&mqueue_head);
 }
 
 /*

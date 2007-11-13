@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2007/08/14 15:56:15 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.2.12.1 2007/11/13 16:03:10 bouyer Exp $
 #
 
 NOMAN=		1
@@ -8,7 +8,8 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/rump/fs/lib/libp2k -I${NETBSDSRCDIR}/sys
 .ifndef RUMPFS_NOFSLIB
 LDADD+=		${RUMPFSLD_P2K} ${RUMPFSLD_UKFS} ${LIBUTIL} ${LIBPUFFS}
 .endif
-LDADD+=		-L${LIBRUMPDIR} -lrump
+LDADD+=		-L${LIBRUMPDIR} -Wl,--whole-archive -lrump \
+		-Wl,--no-whole-archive -lpthread
 
 RUMPKERNEL=		no
 INSTALL_FILE=		: not today

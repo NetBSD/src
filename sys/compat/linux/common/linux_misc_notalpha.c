@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.94.12.1 2007/10/25 22:36:58 bouyer Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.94.12.2 2007/11/13 16:00:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.94.12.1 2007/10/25 22:36:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.94.12.2 2007/11/13 16:00:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ linux_sys_alarm(l, v, retval)
 }
 #endif /* !COMPAT_LINUX32 */
 
-#if !defined(__amd64__) || defined(COMPAT_LINUX32)
+#if !defined(__amd64__)
 int
 linux_sys_nice(l, v, retval)
 	struct lwp *l;
@@ -205,7 +205,7 @@ linux_sys_nice(l, v, retval)
 	SCARG(&bsa, prio) = SCARG(uap, incr);
         return sys_setpriority(l, &bsa, retval);
 }
-#endif /* !__amd64__ || COMPAT_LINUX32 */
+#endif /* !__amd64__ */
 
 #ifndef COMPAT_LINUX32
 #ifndef __amd64__

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.2.2 2007/10/25 22:35:34 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.2.3 2007/11/13 15:58:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@ struct cpu_info {
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
-	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
@@ -249,7 +249,7 @@ extern void cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -265,8 +265,8 @@ extern int cpu;
 extern int cpu_feature;
 extern int cpu_feature2;
 extern int cpu_id;
-extern char cpu_vendor[];
 extern int cpuid_level;
+extern char cpu_vendorname[];
 
 /* identcpu.c */
 
@@ -301,7 +301,7 @@ void	xen_initclocks(void);
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #endif

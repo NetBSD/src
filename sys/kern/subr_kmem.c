@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.16 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.16.12.1 2007/11/13 16:02:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.16 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.16.12.1 2007/11/13 16:02:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
 #include <sys/kmem.h>
 #include <sys/vmem.h>
 #include <sys/debug.h>
+#include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -136,6 +137,7 @@ kmem_free(void *p, size_t size)
 {
 
 	FREECHECK_IN(&kmem_freecheck, p);
+	LOCKDEBUG_MEM_CHECK(p, size);
 	kmem_poison_fill(p, size);
 	vmem_free(kmem_arena, (vmem_addr_t)p, size);
 }

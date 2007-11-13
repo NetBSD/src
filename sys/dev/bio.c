@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.1 2007/05/01 17:20:11 bouyer Exp $ */
+/*	$NetBSD: bio.c,v 1.1.24.1 2007/11/13 16:00:49 bouyer Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.1 2007/05/01 17:20:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.1.24.1 2007/11/13 16:00:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -77,13 +77,13 @@ bioattach(int nunits)
 int
 bioopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	return (0);
+	return 0;
 }
 
 int
 bioclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	return (0);
+	return 0;
 }
 
 int
@@ -102,14 +102,14 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 		error = kauth_authorize_device_passthru(l->l_cred, dev,
 		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF, addr);
 		if (error)
-			return (error);
+			return error;
 		break;
 	case BIOCBLINK:
 	case BIOCSETSTATE:
 		error = kauth_authorize_device_passthru(l->l_cred, dev,
 		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF, addr);
 		if (error)
-			return (error);
+			return error;
 		break;
 	case BIOCALARM: {
 		struct bioc_alarm *alarm = (struct bioc_alarm *)addr;
@@ -121,13 +121,13 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 			error = kauth_authorize_device_passthru(l->l_cred, dev,
 			    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF, addr);
 			if (error)
-				return (error);
+				return error;
 			break;
 		case BIOC_GASTATUS:
 			error = kauth_authorize_device_passthru(l->l_cred, dev,
 			    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF, addr);
 			if (error)
-				return (error);
+				return error;
 			break;
 		default:
 			return EINVAL;
@@ -143,10 +143,10 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 		locate = (struct bio_locate *)addr;
 		error = copyinstr(locate->bl_name, name, 16, NULL);
 		if (error != 0)
-			return (error);
+			return error;
 		locate->bl_cookie = bio_lookup(name);
 		if (locate->bl_cookie == NULL)
-			return (ENOENT);
+			return ENOENT;
 		break;
 
 	default:
@@ -154,14 +154,14 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 		mutex_enter(&bio_lock);
 		if (!bio_validate(common->bc_cookie)) {
 			mutex_exit(&bio_lock);
-			return (ENOENT);
+			return ENOENT;
 		}
 		mutex_exit(&bio_lock);
-		error =  bio_delegate_ioctl(
+		error = bio_delegate_ioctl(
 		    (struct bio_mapping *)common->bc_cookie, cmd, addr);
-		return (error);
+		return error;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -169,15 +169,16 @@ bio_register(struct device *dev, int (*ioctl)(struct device *, u_long, void *))
 {
 	struct bio_mapping *bm;
 
-	MALLOC(bm, struct bio_mapping *, sizeof *bm, M_DEVBUF, M_NOWAIT);
+	bm = (struct bio_mapping *)malloc(sizeof(*bm), M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (bm == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	bm->bm_dev = dev;
 	bm->bm_ioctl = ioctl;
 	mutex_enter(&bio_lock);
 	LIST_INSERT_HEAD(&bios, bm, bm_link);
 	mutex_exit(&bio_lock);
-	return (0);
+	return 0;
 }
 
 void
@@ -206,11 +207,11 @@ bio_lookup(char *name)
 	LIST_FOREACH(bm, &bios, bm_link) {
 		if (strcmp(name, bm->bm_dev->dv_xname) == 0) {
 			mutex_exit(&bio_lock);
-			return (bm);
+			return bm;
 		}
 	}
 	mutex_exit(&bio_lock);
-	return (NULL);
+	return NULL;
 }
 
 int
@@ -218,17 +219,16 @@ bio_validate(void *cookie)
 {
 	struct bio_mapping *bm;
 
-	LIST_FOREACH(bm, &bios, bm_link) {
-		if (bm == cookie) {
-			return (1);
-		}
-	}
-	return (0);
+	LIST_FOREACH(bm, &bios, bm_link)
+		if (bm == cookie)
+			return 1;
+
+	return 0;
 }
 
 int
 bio_delegate_ioctl(struct bio_mapping *bm, u_long cmd, void *addr)
 {
 	
-	return (bm->bm_ioctl(bm->bm_dev, cmd, addr));
+	return bm->bm_ioctl(bm->bm_dev, cmd, addr);
 }

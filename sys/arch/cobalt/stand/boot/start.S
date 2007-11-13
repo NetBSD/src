@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.4 2007/07/25 14:11:06 tsutsui Exp $	*/
+/*	$NetBSD: start.S,v 1.4.10.1 2007/11/13 15:58:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ LEAF(start)
 	jal	_C_LABEL(main)			# main(unsigned int)
 	move	a1, s1				# restore argv
 
-XLEAF(_xtt)
+XLEAF(_rtt)
 	jal	_C_LABEL(cpu_reboot)		# failed, reboot
 	nop
 END(start)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.129 2007/10/08 14:08:26 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.129.2.1 2007/11/13 16:02:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.129 2007/10/08 14:08:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.129.2.1 2007/11/13 16:02:27 bouyer Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -149,9 +149,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&proclist_lock);
 
 	/* "A foolish consistency..." XXX */
-	if (req == PT_TRACE_ME)
+	if (req == PT_TRACE_ME) {
 		t = p;
-	else {
+		mutex_enter(&t->p_mutex);
+	} else {
 		/* Find the process we're supposed to be operating on. */
 		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
 			mutex_exit(&proclist_lock);
@@ -159,10 +160,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		}
 
 		/* XXX elad - this should be in pfind(). */
+		mutex_enter(&t->p_mutex);
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    t, NULL, NULL, NULL);
 		if (error) {
 			mutex_exit(&proclist_lock);
+			mutex_exit(&t->p_mutex);
 			return (ESRCH);
 		}
 	}
@@ -171,12 +174,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * Grab a reference on the process to prevent it from execing or
 	 * exiting.
 	 */
-	mutex_enter(&t->p_mutex);
-	error = proc_addref(t);
-	if (error != 0) {
-		mutex_exit(&t->p_mutex);
+	if (!rw_tryenter(&t->p_reflock, RW_READER)) {
 		mutex_exit(&proclist_lock);
-		return error;
+		mutex_exit(&t->p_mutex);
+		return EBUSY;
 	}
 
 	/* Make sure we can operate on it. */
@@ -320,8 +321,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (error != 0) {
 		mutex_exit(&proclist_lock);
-		proc_delref(t);
 		mutex_exit(&t->p_mutex);
+		rw_exit(&t->p_reflock);
 		return error;
 	}
 
@@ -420,15 +421,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		case PIOD_WRITE_D:
 		case PIOD_WRITE_I:
-#if defined(__HAVE_RAS)
 			/*
 			 * Can't write to a RAS
 			 */
-			if (!LIST_EMPTY(&t->p_raslist) &&
-			    (ras_lookup(t, SCARG(uap, addr)) != (void *)-1)) {
+			if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
 				return (EACCES);
 			}
-#endif
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
@@ -743,16 +741,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (lt != NULL)
 		lwp_delref(lt);
-
 	if (pheld) {
-		proc_delref(t);
 		mutex_exit(&t->p_mutex);
 		mutex_exit(&proclist_lock);
-	} else {
-		mutex_enter(&t->p_mutex);
-		proc_delref(t);
-		mutex_exit(&t->p_mutex);
 	}
+	rw_exit(&t->p_reflock);
 
 	return error;
 }

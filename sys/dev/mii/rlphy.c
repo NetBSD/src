@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.16.2.1 2007/10/25 22:38:39 bouyer Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.16.2.2 2007/11/13 16:01:10 bouyer Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.16.2.1 2007/10/25 22:38:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.16.2.2 2007/11/13 16:01:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,7 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
+	aprint_naive("\n");
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
 		rsc->sc_rtl8201l = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,

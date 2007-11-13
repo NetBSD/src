@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.51.6.1 2007/10/17 21:08:24 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.51.6.2 2007/11/13 16:00:30 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.51.6.1 2007/10/17 21:08:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.51.6.2 2007/11/13 16:00:30 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -674,7 +674,7 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	xennet_rx_push_buffer(sc, id);
 
 	if (m != NULL) {
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	}
 }
 

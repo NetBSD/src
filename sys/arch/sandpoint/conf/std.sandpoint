@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.11.54.1 2007/10/25 22:36:39 bouyer Exp $
+#	$NetBSD: std.sandpoint,v 1.11.54.2 2007/11/13 15:59:10 bouyer Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
@@ -18,4 +18,3 @@ options 	PIC_I8259
 options 	INTSTK=0x2000
 
 makeoptions	TEXTADDR=0x90000
-makeoptions	NEED_SREC=yes
