@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.79 2007/11/13 08:38:06 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.80 2007/11/13 11:38:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.79 2007/11/13 08:38:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.80 2007/11/13 11:38:35 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -227,6 +227,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.79 2007/11/13 08:38:06 yamt Exp $");
 #include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 
 struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
