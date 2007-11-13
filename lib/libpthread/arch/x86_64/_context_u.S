@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.8 2007/11/13 15:57:14 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.9 2007/11/13 17:20:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,21 +138,15 @@ STUB(_swapcontext_u)
 	movq	%rsi, %rdi
 	SETC
 
-STUB(pthread__atomic_cas_ptr)
-	movq	(%rsi), %rax
-	lock
-	cmpxchgq %rdx, (%rdi)
-	jnz	1f
-	movq	$1, %rax
-	ret
-1:
-	movq	%rax, (%rsi)
-	movq	$0, %rax
-	ret
-
 STUB(pthread__atomic_swap_ptr)
 	movq	%rsi, %rax
+	lock
 	xchgq	%rax, (%rdi)
+	ret
+
+STUB(pthread__atomic_or_ulong)
+	lock
+	orq	%rsi, (%rdi)
 	ret
 
 STUB(pthread__membar_full)
