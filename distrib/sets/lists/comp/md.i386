@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.100 2007/10/18 15:30:44 yamt Exp $
+# $NetBSD: md.i386,v 1.101 2007/11/14 17:59:44 ad Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -51,7 +51,7 @@
 ./usr/include/i386/npx.h			comp-c-include
 ./usr/include/i386/param.h			comp-c-include
 ./usr/include/i386/pcb.h			comp-c-include
-./usr/include/i386/pccons.h			comp-c-include
+./usr/include/i386/pccons.h			comp-obsolete		obsolete
 ./usr/include/i386/pio.h			comp-c-include
 ./usr/include/i386/pmap.h			comp-c-include
 ./usr/include/i386/pmc.h			comp-c-include
