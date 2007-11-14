@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.7 2007/11/13 18:42:00 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.8 2007/11/14 14:59:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2007/11/13 18:42:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2007/11/14 14:59:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -614,8 +614,6 @@ cpu_boot_secondary(ci)
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
- *
- * XXX should share some of this with init386 in machdep.c
  */
 void
 cpu_hatch(void *v)
@@ -630,16 +628,8 @@ cpu_hatch(void *v)
 	cpu_feature &= ci->ci_feature_flags;
 	cpu_feature2 &= ci->ci_feature2_flags;
 
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_PRESENT)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
-
+	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	ci->ci_flags |= CPUF_PRESENT;
-
-	lapic_enable();
-	lapic_initclocks();
-
 	while ((ci->ci_flags & CPUF_GO) == 0) {
 		/* Don't use delay, boot CPU may be patching the text. */
 		for (i = 10000; i != 0; i--)
@@ -650,15 +640,14 @@ cpu_hatch(void *v)
 	wbinvd();
 	x86_flush();
 
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_RUNNING)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
+	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
-	lapic_set_lvt();
 	gdt_init_cpu(ci);
+	lapic_enable();
+	lapic_set_lvt();
+	lapic_initclocks();
 
 #ifdef i386
 	npxinit(ci);
