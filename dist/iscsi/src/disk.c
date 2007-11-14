@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.32 2007/11/12 23:25:41 agc Exp $ */
+/* $NetBSD: disk.c,v 1.33 2007/11/14 19:58:06 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -1210,6 +1210,35 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
+
+#if 0
+	case MODE_SELECT_10:
+		/* XXX still to do */
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_10\n");
+		args->status = SCSI_SUCCESS;
+		args->length = 0;
+		break;
+
+	case MODE_SENSE_10:
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_10\n");
+
+		cp = data = args->send_data;
+		len = ISCSI_MODE_SENSE_LEN	/* XXX check me */
+		mode_data_len = len + 3	/* XXX check me */
+
+		(void) memset(cp, 0x0, mode_data_len);
+
+		*((uint16_t *) (void *)cp) = (uint16_t) ISCSI_HTONS((uint16_t) mode_data_len);
+		cp[2] = 0;	/* medium type */
+		cp[3] = 0;	/* device-specific parameter */
+		cp[4] = (cdb[1] & LONG_LBA_ACCEPTED) ? 0x01 : 0;
+		*((uint16_t *) (void *)(cp + 6)) = (uint16_t) ISCSI_HTONS((uint16_t) 8);
+
+		args->input = 1;
+		args->length = (unsigned)(len);	/* XXX check me */
+		args->status = SCSI_SUCCESS;
+		break;
+#endif
 
 	case PERSISTENT_RESERVE_IN:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PERSISTENT_RESERVE_IN\n");
