@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.25 2007/10/26 13:24:41 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.26 2007/11/14 14:50:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25 2007/10/26 13:24:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.26 2007/11/14 14:50:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -183,7 +183,7 @@ lapic_set_lvt()
 				i82489_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
-			
+
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
@@ -245,7 +245,6 @@ u_int32_t lapic_delaytab[26];
 void
 lapic_clockintr(void *arg, struct intrframe *frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 #ifndef __HAVE_TIMECOUNTER
 	static int microset_iter; /* call cc_microset once/sec */
 #endif /* __HAVE_TIMECOUNTER */
@@ -336,7 +335,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		}
 	}
 #endif /* !__HAVE_TIMECOUNTER */
-#endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)frame);
 }
@@ -409,12 +407,12 @@ lapic_calibrate_timer(ci)
 	startapic = lapic_gettick();
 
 	for (i=0; i<hz; i++) {
-		DELAY(2);
+		i8254_delay(2);
 		do {
 			tick1 = gettick();
 			apic1 = lapic_gettick();
 		} while (tick1 < starttick);
-		DELAY(2);
+		i8254_delay(2);
 		do {
 			tick2 = gettick();
 			apic2 = lapic_gettick();
@@ -555,7 +553,7 @@ x86_ipi_init(target)
 
 	i82489_icr_wait();
 
-	delay(10000);
+	i8254_delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
