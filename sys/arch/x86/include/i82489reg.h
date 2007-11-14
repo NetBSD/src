@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.2 2007/11/14 14:45:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 #	define LAPIC_DLMODE_NMI		0x00000400
 #	define LAPIC_DLMODE_INIT	0x00000500
 #	define LAPIC_DLMODE_STARTUP	0x00000600
+#	define LAPIC_DLMODE_EXTINT	0x00000700
 
 #	define LAPIC_DSTMODE_LOG	0x00000800
 
