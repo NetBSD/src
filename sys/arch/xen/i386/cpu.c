@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2007/10/17 19:58:18 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2007/11/14 17:55:01 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2007/10/17 19:58:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2007/11/14 17:55:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -496,7 +496,6 @@ cpu_init(ci)
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
 
-#if defined(I686_CPU)
 	/*
 	 * On a P6 or above, enable global TLB caching if the
 	 * hardware supports it.
@@ -514,8 +513,6 @@ cpu_init(ci)
 		mtrr_init_cpu(ci);
 	}
 #endif
-#endif
-#if defined(I686_CPU)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
@@ -528,7 +525,6 @@ cpu_init(ci)
 		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
-#endif /* I686_CPU */
 #ifdef MTRR
 	if (strcmp((char *)(ci->ci_vendor), "AuthenticAMD") == 0) {
 		/*
@@ -704,10 +700,8 @@ cpu_hatch(void *v)
 	enable_intr();
 
 	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
-#endif
 	splx(s);
 }
 
