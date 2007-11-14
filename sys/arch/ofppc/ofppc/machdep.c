@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.8.3 2007/11/04 21:03:06 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.8.4 2007/11/14 19:04:13 joerg Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.8.3 2007/11/04 21:03:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.8.4 2007/11/14 19:04:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,8 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.8.3 2007/11/04 21:03:06 jmcneill Ex
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
+
 struct pmap ofw_pmap;
 char bootpath[256];
+extern int console_node;
 
 void ofwppc_batinit(void);
 void	ofppc_bootstrap_console(void);
@@ -140,4 +148,56 @@ cpu_reboot(int howto, char *what)
 	if (ap[-2] == '-')
 		*ap1 = 0;
 	ppc_boot(str);
+}
+
+/*
+ */
+
+#define divrnd(n, q)	(((n)*2/(q)+1)/2)
+
+void
+ofppc_init_comcons(void)
+{
+#if (NCOM > 0)
+	char name[64];
+	uint32_t reg[2], comfreq;
+	uint8_t dll, dlm;
+	int speed, rate, err;
+	bus_space_tag_t tag = &genppc_isa_io_space_tag;
+
+	/* if we have a serial cons, we have work to do */
+	memset(name, 0, sizeof(name));
+	OF_getprop(console_node, "device_type", name, sizeof(name));
+	if (strcmp(name, "serial") != 0)
+		return;
+
+	if (OF_getprop(console_node, "reg", reg, sizeof(reg)) == -1)
+		return;
+
+	if (OF_getprop(console_node, "clock-frequency", &comfreq, 4) == -1)
+		comfreq = 0;
+
+	if (comfreq == 0)
+		comfreq = COM_FREQ;
+
+	isa_outb(reg[1] + com_cfcr, LCR_DLAB);
+	dll = isa_inb(reg[1] + com_dlbl);
+	dlm = isa_inb(reg[1] + com_dlbh);
+	rate = dll | (dlm << 8);
+	isa_outb(reg[1] + com_cfcr, LCR_8BITS);
+	speed = divrnd((comfreq / 16), rate);
+	err = speed - (speed + 150)/300 * 300;
+	speed -= err;
+	if (err < 0)
+		err = -err;
+	if (err > 50)
+		speed = 9600;
+
+	/* Now we can attach the comcons */
+	aprint_verbose("Switching to COM console at speed %d", speed);
+	if (comcnattach(tag, reg[1], speed, comfreq, COM_TYPE_NORMAL,
+	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+		panic("Can't init serial console");
+	aprint_verbose("\n");
+#endif /*NCOM*/
 }

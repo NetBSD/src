@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.96.6.2 2007/10/26 15:44:07 joerg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.96.6.3 2007/11/14 19:04:22 joerg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.6.2 2007/10/26 15:44:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.6.3 2007/11/14 19:04:22 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -713,7 +713,7 @@ db_get_list_type(const char *name)
 				break;
 			}
 
-		} else if (error == CMD_FOUND){
+		} else if (error == CMD_FOUND) {
 			/*
 			 * partial match, search will continue, but
 			 * note current result in case we won't
@@ -721,7 +721,7 @@ db_get_list_type(const char *name)
 			 */
 			if (cmd->flag == CS_SHOW)
 				ret = DDB_SHOW_CMD;
-			if (cmd->flag == CS_MACH)
+			else if (cmd->flag == CS_MACH)
 				ret = DDB_MACH_CMD;
 			else
 				ret = DDB_BASE_CMD;

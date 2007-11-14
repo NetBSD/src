@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.23.14.1 2007/11/11 16:47:34 joerg Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.23.14.2 2007/11/14 19:04:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.23.14.1 2007/11/11 16:47:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.23.14.2 2007/11/14 19:04:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ void
 zs_lock_init(struct zs_chanstate *cs)
 {
 
-	mutex_init(&cs->cs_lock, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&cs->cs_lock, MUTEX_NODEBUG, IPL_ZS);
 }
 
 /*

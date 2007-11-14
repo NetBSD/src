@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1.6.4 2007/11/06 19:25:08 joerg Exp $ */
+/* $NetBSD: main.c,v 1.1.6.5 2007/11/14 19:04:14 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -314,14 +314,9 @@ void
 _wb(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbst 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -331,14 +326,9 @@ void
 _wbinv(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbf 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -350,21 +340,32 @@ _inv(adr, siz)
 {
 	uint32_t off, bnd;
 
-	/*
-	 * NB - if adr and/or adr + siz are not cache line
-	 * aligned, cache contents of the 1st and last cache line
-	 * which do not belong to the invalidating range will be
-	 * lost siliently. It's caller's responsibility to wb()
-	 * them in the case.
-	 */
-	asm volatile ("eieio");
 	off = adr & (dcache_line_size - 1);
 	adr -= off;
 	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
-	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
+	asm volatile ("eieio");
+	if (off != 0) {
+		/* wbinv() leading unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(adr));
+		if (siz < dcache_line_size)
+			goto done;
+		adr += dcache_line_size;
+		siz -= dcache_line_size;
+	}
+	bnd = adr + siz;
+	off = bnd & (dcache_line_size - 1);
+	if (off != 0) {
+		/* wbinv() trailing unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(bnd)); /* it's OK */
+		if (siz < dcache_line_size)
+			goto done;
+		siz -= off;
+	}
+	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size) {
+		/* inv() intermediate dcache lines if ever */
 		asm volatile ("dcbi 0,%0" :: "r"(adr));
+	}
+  done:
 	asm volatile ("sync");
 }
 

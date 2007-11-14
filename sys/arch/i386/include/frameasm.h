@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.7.22.1 2007/10/26 15:42:38 joerg Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.7.22.2 2007/11/14 19:04:13 joerg Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -63,6 +63,7 @@
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
 	movl	%eax,%fs	; \
+	cld			; \
 	TLOG
 
 /*

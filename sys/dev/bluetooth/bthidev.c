@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.9.6.2 2007/11/11 16:47:31 joerg Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.9.6.3 2007/11/14 19:04:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.9.6.2 2007/11/11 16:47:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.9.6.3 2007/11/14 19:04:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -623,7 +623,7 @@ bthidev_int_connected(void *arg)
 	sc->sc_flags &= ~BTHID_CONNECTING;
 	sc->sc_state = BTHID_OPEN;
 
-	aprint_verbose_dev(sc->sc_dev, "connected\n");
+	aprint_normal_dev(sc->sc_dev, "connected\n");
 }
 
 /*
@@ -646,7 +646,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_int == NULL) {
-		aprint_verbose_dev(sc->sc_dev, "disconnected\n");
+		aprint_normal_dev(sc->sc_dev, "disconnected\n");
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
@@ -678,7 +678,7 @@ bthidev_int_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_ctl == NULL) {
-		aprint_verbose_dev(sc->sc_dev, "disconnected\n");
+		aprint_normal_dev(sc->sc_dev, "disconnected\n");
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)

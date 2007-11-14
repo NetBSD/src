@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.4 2007/11/11 16:47:45 joerg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.5 2007/11/14 19:04:35 joerg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.4 2007/11/11 16:47:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.5 2007/11/14 19:04:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -159,7 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.4 2007/11/11 16:47:45 joe
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/systm.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>

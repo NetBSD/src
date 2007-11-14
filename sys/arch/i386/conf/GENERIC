@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.839.4.9 2007/11/04 21:02:57 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.839.4.10 2007/11/14 19:04:08 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.839.4.9 $"
+#ident 		"GENERIC-$Revision: 1.839.4.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -1478,6 +1478,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# pseudo audio device driver
+pseudo-device	pad
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

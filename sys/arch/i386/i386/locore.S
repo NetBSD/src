@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48.8.4 2007/11/11 16:46:31 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.48.8.5 2007/11/14 19:04:11 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -767,11 +767,6 @@ ENTRY(cpu_switchto)
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
 
-	/* Is this process using RAS (restartable atomic sequences)? */
-	movl	L_PROC(%edi),%eax
-	cmpl	$0,P_RASLIST(%eax)
-	jne	5f
-
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	PCB_FSD(%ebx), %eax
 	movl	PCB_FSD+4(%ebx), %edx
@@ -781,6 +776,11 @@ ENTRY(cpu_switchto)
 	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+
+	/* Is this process using RAS (restartable atomic sequences)? */
+	movl	L_PROC(%edi),%eax
+	cmpl	$0,P_RASLIST(%eax)
+	jne	5f
 
 	/*
 	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.

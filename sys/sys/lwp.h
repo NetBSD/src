@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.62.6.5 2007/11/06 19:25:38 joerg Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.62.6.6 2007/11/14 19:04:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ struct lwp {
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
+	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
+	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.9 2007/11/14 15:39:45 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.10 2007/11/14 19:04:16 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.9 2007/11/14 15:39:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.10 2007/11/14 19:04:16 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -185,7 +185,7 @@ lapic_set_lvt(void)
 				i82489_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
-			
+
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
@@ -249,7 +249,6 @@ extern u_int i8254_get_timecount(struct timecounter *);
 void
 lapic_clockintr(void *arg, struct intrframe *frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 #if defined(TIMECOUNTER_DEBUG)
 	static u_int last_count[X86_MAXPROCS],
 		     last_delta[X86_MAXPROCS],
@@ -320,7 +319,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		last_tscdelta[cid] = tsc_delta;
 	}
 #endif /* TIMECOUNTER_DEBUG */
-#endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)frame);
 }
@@ -328,7 +326,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 void
 lapic_initclocks(void)
 {
-
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
 	 *
@@ -380,12 +377,12 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	startapic = lapic_gettick();
 
 	for (i=0; i<hz; i++) {
-		DELAY(2);
+		i8254_delay(2);
 		do {
 			tick1 = gettick();
 			apic1 = lapic_gettick();
 		} while (tick1 < starttick);
-		DELAY(2);
+		i8254_delay(2);
 		do {
 			tick2 = gettick();
 			apic2 = lapic_gettick();
@@ -519,7 +516,7 @@ x86_ipi_init(int target)
 
 	i82489_icr_wait();
 
-	delay(10000);
+	i8254_delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);

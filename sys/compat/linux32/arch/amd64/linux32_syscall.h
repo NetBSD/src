@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.17.6.4 2007/11/11 16:47:15 joerg Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.17.6.5 2007/11/14 19:04:19 joerg Exp $ */
 
 /*
  * System call numbers.
@@ -9,6 +9,8 @@
 
 #ifndef _LINUX32_SYS_SYSCALL_H_
 #define	_LINUX32_SYS_SYSCALL_H_
+
+#define	LINUX32_SYS_MAXSYSARGS	8
 
 /* syscall: "syscall" ret: "int" args: */
 #define	LINUX32_SYS_syscall	0

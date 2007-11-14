@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.229.6.1 2007/10/26 15:44:08 joerg Exp $
+#	$NetBSD: DEVNAMES,v 1.229.6.2 2007/11/14 19:04:22 joerg Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -963,6 +963,7 @@ osiop			MI
 otgsc			amiga
 otgsc			amigappc
 panel			cobalt
+pad			MI
 par			amiga
 par			amigappc
 par			x68k

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.6 2007/10/29 02:57:18 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.7 2007/11/14 19:04:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -260,8 +260,8 @@ extern int cpu;
 extern int cpu_feature;
 extern int cpu_feature2;
 extern int cpu_id;
-extern char cpu_vendor[];
 extern int cpuid_level;
+extern char cpu_vendorname[];
 
 /* identcpu.c */
 

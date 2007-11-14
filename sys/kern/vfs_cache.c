@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.70.6.1 2007/11/11 16:48:18 joerg Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.70.6.2 2007/11/14 19:04:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.70.6.1 2007/11/11 16:48:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.70.6.2 2007/11/14 19:04:47 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -83,7 +83,8 @@ LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long	ncvhash;			/* size of hash table - 1 */
 #define	NCVHASH(vp)		(((uintptr_t)(vp) >> 3) & ncvhash)
 
-TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
+TAILQ_HEAD(, namecache) nclruhead =		/* LRU chain */
+	TAILQ_HEAD_INITIALIZER(nclruhead);
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 static pool_cache_t namecache_cache;
@@ -535,7 +536,6 @@ nchinit(void)
 	KASSERT(namecache_cache != NULL);
 
 	mutex_init(&namecache_lock, MUTEX_DEFAULT, IPL_NONE);
-	TAILQ_INIT(&nclruhead);
 	nchashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
 	ncvhashtbl =

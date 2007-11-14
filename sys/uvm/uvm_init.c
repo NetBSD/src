@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.28.4.1 2007/09/03 16:49:16 jmcneill Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.28.4.2 2007/11/14 19:04:57 joerg Exp $	*/
 
 /*
  *
@@ -39,10 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.28.4.1 2007/09/03 16:49:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.28.4.2 2007/11/14 19:04:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/debug.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
@@ -133,6 +134,10 @@ uvm_init(void)
 	 */
 
 	kmeminit();
+
+#ifdef DEBUG
+	debug_init();
+#endif
 
 	/*
 	 * step 7: init all pagers and the pager_map.

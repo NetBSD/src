@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.12 2007/11/04 21:02:51 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.153.8.13 2007/11/14 19:04:03 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.12 $"
+#ident 		"GENERIC-$Revision: 1.153.8.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Intel Enhanced Speedstep for EM64T CPUs
 options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE
+#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
@@ -1027,6 +1027,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# pseudo audio device driver
+pseudo-device	pad
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
