@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.14.6.2 2007/11/06 19:25:18 joerg Exp $	*/
+/*	$NetBSD: firewire.c,v 1.14.6.3 2007/11/14 19:26:54 joerg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -562,6 +562,11 @@ FW_ATTACH(firewire)
 	/* bus_reset */
 	fw_busreset(fc, FWBUSNOTREADY);
 	fc->ibr(fc);
+
+#ifdef __NetBSD__
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+#endif
 
 	FW_ATTACH_RETURN(0);
 }
