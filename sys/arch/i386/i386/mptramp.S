@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.11 2007/10/18 15:28:35 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.12 2007/11/14 14:45:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -191,8 +191,7 @@ _TRMP_LABEL(mp_startup)
 
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
 	shrl	$LAPIC_ID_SHIFT,%ecx
-	leal	0(,%ecx,4),%ecx
-	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	_C_LABEL(cpu_info)(,%ecx,4),%ecx
 	
 	HALTT(0x7, %ecx)
 
