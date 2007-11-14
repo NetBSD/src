@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.1.2.2 2007/11/11 16:47:27 joerg Exp $	*/
+/*	$NetBSD: putter.c,v 1.4.2.2 2007/11/14 19:04:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.1.2.2 2007/11/11 16:47:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.2 2007/11/14 19:04:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,12 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.1.2.2 2007/11/11 16:47:27 joerg Exp $")
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
-#include <dev/puttervar.h>
-
-#include <fs/puffs/puffs_sys.h> /* XXX: for transport format, goes away soon */
-
-#include <uvm/uvm_param.h>
-
+#include <dev/putter/putter_sys.h>
 
 /*
  * putter instance structures.  these are always allocated and freed
@@ -71,16 +66,14 @@ struct putter_instance {
 
 	TAILQ_ENTRY(putter_instance) pi_entries;
 };
-#define PUTTER_EMBRYO ((void *)-1)	/* before mount	*/
-#define PUTTER_DEAD ((void *)-2)	/* goner	*/
+#define PUTTER_EMBRYO ((void *)-1)	/* before attach	*/
+#define PUTTER_DEAD ((void *)-2)	/* after detach		*/
 
 static TAILQ_HEAD(, putter_instance) putter_ilist
     = TAILQ_HEAD_INITIALIZER(putter_ilist);
 
 static int get_pi_idx(struct putter_instance *);
 
-#undef DPRINTF /* XXX puffs_sys */
-#undef DPRINTF_VERBOSE /* XXX puffs_sys */
 #ifdef DEBUG
 #ifndef PUTTERDEBUG
 #define PUTTERDEBUG
@@ -88,7 +81,7 @@ static int get_pi_idx(struct putter_instance *);
 #endif
 
 #ifdef PUTTERDEBUG
-int putterdebug = 1;
+static int putterdebug = 0;
 #define DPRINTF(x) if (putterdebug > 0) printf x
 #define DPRINTF_VERBOSE(x) if (putterdebug > 1) printf x
 #else
@@ -190,12 +183,12 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
 	struct putter_instance *pi = fp->f_data;
-	struct puffs_frame pfr;
+	struct putter_hdr pth;
 	uint8_t *buf;
 	size_t frsize;
 	int error;
 
-	DPRINTF(("puffs_fop_write (%p): writing response, resid %zu\n",
+	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
 	    pi->pi_private, uio->uio_resid));
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
@@ -203,29 +196,30 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
 		return ENOENT;
 	}
 
-	error = uiomove(&pfr, sizeof(struct puffs_frame), uio);
+	error = uiomove(&pth, sizeof(struct putter_hdr), uio);
 	if (error)
 		return error;
 
 	/* Sorry mate, the kernel doesn't buffer. */
-	frsize = pfr.pfr_len - sizeof(struct puffs_frame);
+	frsize = pth.pth_framelen - sizeof(struct putter_hdr);
 	if (uio->uio_resid < frsize)
 		return EINVAL;
 
-	buf = kmem_alloc(frsize + sizeof(struct puffs_frame), KM_SLEEP);
-	memcpy(buf, &pfr, sizeof(pfr));
-	error = uiomove(buf+sizeof(struct puffs_frame), frsize, uio);
+	buf = kmem_alloc(frsize + sizeof(struct putter_hdr), KM_SLEEP);
+	memcpy(buf, &pth, sizeof(pth));
+	error = uiomove(buf+sizeof(struct putter_hdr), frsize, uio);
 	if (error == 0) {
-		pi->pi_pop->pop_dispatch(pi->pi_private, buf);
+		pi->pi_pop->pop_dispatch(pi->pi_private,
+		    (struct putter_hdr *)buf);
 	}
-	kmem_free(buf, frsize + sizeof(struct puffs_frame));
+	kmem_free(buf, frsize + sizeof(struct putter_hdr));
 
 	return error;
 }
 
 /*
  * Poll query interface.  The question is only if an event
- * can be read from us (and by read I mean ioctl... ugh).
+ * can be read from us.
  */
 #define PUTTERPOLL_EVSET (POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI)
 static int
@@ -346,13 +340,11 @@ static int
 filt_putterioctl(struct knote *kn, long hint)
 {
 	struct putter_instance *pi = kn->kn_hook;
-	void *priv;
 	int error;
 
 	error = 0;
 	mutex_enter(&pi_mtx);
-	priv = pi->pi_private;
-	if (priv == PUTTER_EMBRYO || priv == PUTTER_DEAD)
+	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD)
 		error = 1;
 	mutex_exit(&pi_mtx);
 	if (error)
@@ -409,13 +401,6 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct file *fp;
 	int error, fd, idx;
 
-	/*
-	 * XXX: decide on some security model and check permissions
-	 */
-
-	if (minor(dev) != PUFFS_CLONER)
-		return ENXIO;
-
 	if ((error = falloc(l, &fp, &fd)) != 0)
 		return error;
 
@@ -423,20 +408,13 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
-	if (idx == PUFFS_CLONER) {
-		mutex_exit(&pi_mtx);
-		kmem_free(pi, sizeof(struct putter_instance));
-		FILE_UNUSE(fp, l);
-		ffree(fp);
-		return EBUSY;
-	}
 
 	pi->pi_pid = l->l_proc->p_pid;
 	pi->pi_idx = idx;
-	selinit(&pi->pi_sel);
 	pi->pi_curput = NULL;
 	pi->pi_curres = 0;
 	pi->pi_curopaq = NULL;
+	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
 	DPRINTF(("puttercdopen: registered embryonic pmp for pid: %d\n",
@@ -516,10 +494,10 @@ get_pi_idx(struct putter_instance *pi_i)
 	struct putter_instance *pi;
 	int i;
 
+	KASSERT(mutex_owned(&pi_mtx));
+
 	i = 0;
 	TAILQ_FOREACH(pi, &putter_ilist, pi_entries) {
-		if (i == PUFFS_CLONER)
-			return PUFFS_CLONER;
 		if (i != pi->pi_idx)
 			break;
 		i++;

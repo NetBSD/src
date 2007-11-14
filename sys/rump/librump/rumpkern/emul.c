@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.16.2.3 2007/11/04 21:03:47 jmcneill Exp $	*/
+/*	$NetBSD: emul.c,v 1.16.2.4 2007/11/14 19:04:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ struct vm_map *kernel_map;
 int physmem;
 int doing_shutdown;
 int ncpu = 1;
+const int schedppq = 1;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.39.6.2 2007/11/11 16:48:22 joerg Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.39.6.3 2007/11/14 19:04:48 joerg Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39.6.2 2007/11/11 16:48:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39.6.3 2007/11/14 19:04:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,24 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 			break;
 		}
 	}
+#ifdef LINUX_USRSTACK32
+	if (strcmp(p->p_emul->e_name, "linux32") == 0 &&
+	    LINUX_USRSTACK32 < USRSTACK32)
+		*sstack = (unsigned long)LINUX_USRSTACK32;
+	else
+#endif
 #ifdef LINUX_USRSTACK
 	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
 	    LINUX_USRSTACK < USRSTACK)
-		*sstack = (unsigned long) LINUX_USRSTACK;
+		*sstack = (unsigned long)LINUX_USRSTACK;
 	else
 #endif
-		*sstack = (unsigned long) USRSTACK;
+#ifdef	USRSTACK32
+	if (strstr(p->p_emul->e_name, "32") != NULL)
+		*sstack = (unsigned long)USRSTACK32;
+	else
+#endif
+		*sstack = (unsigned long)USRSTACK;
 
 	/*
 	 * jdk 1.6 compares low <= addr && addr < high
@@ -548,8 +559,6 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	struct statvfs *sfs;
 	int error = 0;
 
-	/* XXX elad - may need filtering. */
-
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -584,7 +593,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		mutex_exit(&mountlist_lock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}

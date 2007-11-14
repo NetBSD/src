@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.10 2007/11/11 16:48:04 joerg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.11 2007/11/14 19:04:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.10 2007/11/11 16:48:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.11 2007/11/14 19:04:42 joerg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.10 2007/11/11 16:48:04 joerg 
 #include <sys/lockdebug.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
+#include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -519,17 +520,23 @@ mi_switch(lwp_t *l)
 		if (!returning)
 			pmap_deactivate(l);
 
+		/* Update status for lwpctl, if present. */
+	        if (l->l_lwpctl != NULL)
+			l->l_lwpctl->lc_curcpu = LWPCTL_CPU_NONE;
+
 		/* Switch to the new LWP.. */
 		l->l_ncsw++;
 		l->l_flag &= ~LW_RUNNING;
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		prevlwp = cpu_switchto(l, newl, returning);
+		ci = curcpu();
+
 		/*
 		 * .. we have switched away and are now back so we must
 		 * be the new curlwp.  prevlwp is who we replaced.
 		 */
 		if (prevlwp != NULL) {
-			curcpu()->ci_mtx_oldspl = oldspl;
+			ci->ci_mtx_oldspl = oldspl;
 			lwp_unlock(prevlwp);
 		} else {
 			splx(oldspl);
@@ -538,6 +545,10 @@ mi_switch(lwp_t *l)
 		/* Restore VM context. */
 		pmap_activate(l);
 		retval = 1;
+
+		/* Update status for lwpctl, if present. */
+	        if (l->l_lwpctl != NULL)
+			l->l_lwpctl->lc_curcpu = (short)ci->ci_data.cpu_index;
 	} else {
 		/* Nothing to do - just unlock and return. */
 		mutex_spin_exit(spc->spc_mutex);
@@ -547,7 +558,7 @@ mi_switch(lwp_t *l)
 
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
-	KASSERT(l->l_cpu == curcpu());
+	KASSERT(l->l_cpu == ci);
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, restore context.
@@ -565,7 +576,7 @@ mi_switch(lwp_t *l)
 	 */
 	SYSCALL_TIME_WAKEUP(l);
 	KASSERT(curlwp == l);
-	KDASSERT(l->l_cpu == curcpu());
+	KDASSERT(l->l_cpu == ci);
 	LOCKDEBUG_BARRIER(NULL, 1);
 
 	return retval;

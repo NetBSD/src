@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.885.6.10 2007/10/31 23:14:08 joerg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.885.6.11 2007/11/14 19:04:30 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.885.6.9 2007/10/28 20:11:05 joerg Exp
+ *	NetBSD: pcidevs,v 1.885.6.10 2007/10/31 23:14:07 joerg Exp
  */
 
 /*
@@ -3106,6 +3106,43 @@
 #define	PCI_PRODUCT_NVIDIA_MCP67_HDA_1	0x055c		/* nForce MCP67 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP67_HDA_2	0x055d		/* nForce MCP67 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP67_IDE	0x0560		/* nForce MCP67 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_IDE	0x056c		/* nForce MCP73 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_IDE	0x0759		/* nForce MCP77 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_1	0x0774		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_2	0x0775		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_3	0x0776		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_4	0x0777		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_SMB	0x07d8		/* nForce MCP73 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN1	0x07dc		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN2	0x07dd		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN3	0x07de		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN4	0x07df		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_1	0x07f0		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_2	0x07f1		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_3	0x07f2		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_4	0x07f3		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_5	0x07f4		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_6	0x07f5		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_7	0x07f6		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_8	0x07f7		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_9	0x07f8		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_10	0x07f9		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_11	0x07fa		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_12	0x07fb		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HDA_1	0x07fc		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HDA_2	0x07fd		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_1	0x0ad0		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_2	0x0ad1		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_3	0x0ad2		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_4	0x0ad3		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_5	0x0ad4		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_6	0x0ad5		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_7	0x0ad6		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_8	0x0ad7		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_9	0x0ad8		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_10	0x0ad9		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* nForce MCP77 AHCI Controller */
 
 /* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */

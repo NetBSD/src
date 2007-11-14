@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.8.6.4 2007/11/06 19:25:33 joerg Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.8.6.5 2007/11/14 19:04:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.8.6.4 2007/11/06 19:25:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.8.6.5 2007/11/14 19:04:44 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -109,10 +109,10 @@ lockdebuglk_t		ld_free_lk;
 lockdebuglk_t		ld_mem_lk[LD_MLOCKS];
 
 lockdebuglist_t		ld_mem_list[LD_MLISTS];
-lockdebuglist_t		ld_sleepers;
-lockdebuglist_t		ld_spinners;
-lockdebuglist_t		ld_free;
-lockdebuglist_t		ld_all;
+lockdebuglist_t		ld_sleepers = TAILQ_HEAD_INITIALIZER(ld_sleepers);
+lockdebuglist_t		ld_spinners = TAILQ_HEAD_INITIALIZER(ld_spinners);
+lockdebuglist_t		ld_free = TAILQ_HEAD_INITIALIZER(ld_free);
+lockdebuglist_t		ld_all = TAILQ_HEAD_INITIALIZER(ld_all);
 int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
@@ -203,11 +203,6 @@ lockdebug_init(void)
 	__cpu_simple_lock_init(&ld_sleeper_lk.lk_lock);
 	__cpu_simple_lock_init(&ld_spinner_lk.lk_lock);
 	__cpu_simple_lock_init(&ld_free_lk.lk_lock);
-
-	TAILQ_INIT(&ld_free);
-	TAILQ_INIT(&ld_all);
-	TAILQ_INIT(&ld_sleepers);
-	TAILQ_INIT(&ld_spinners);
 
 	ld = ld_prime;
 	ld_table[0] = ld;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.40.4.6 2007/11/11 16:47:50 joerg Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.40.4.7 2007/11/14 19:04:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.6 2007/11/11 16:47:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.7 2007/11/14 19:04:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.6 2007/11/11 16:47:50 joerg E
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include <dev/puttervar.h>
+#include <dev/putter/putter_sys.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -630,15 +630,22 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 			puffs_msgpark_release(park);
 			continue;
 		}
-
-		/* check size */
 		preq = park->park_preq;
+
+#if 0
+		/* check size */
+		/*
+		 * XXX: this check is not valid for now, we don't know
+		 * the size of the caller's input buffer.  i.e. this
+		 * will most likely go away
+		 */
 		if (maxsize < preq->preq_frhdr.pfr_len) {
 			DPRINTF(("buffer too small\n"));
 			puffs_msgpark_release(park);
 			error = E2BIG;
 			break;
 		}
+#endif
 
 		DPRINTF(("returning\n"));
 
@@ -665,10 +672,8 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
 
 	if (error == 0) {
 		*data = (uint8_t *)preq;
-		preq->preq_frhdr.pfr_len = park->park_copylen;
-		preq->preq_frhdr.pfr_alloclen = park->park_maxlen;
-		preq->preq_frhdr.pfr_type = preq->preq_opclass; /* yay! */
-		*dlen = preq->preq_frhdr.pfr_len;
+		preq->preq_pth.pth_framelen = park->park_copylen;
+		*dlen = preq->preq_pth.pth_framelen;
 		*parkptr = park;
 	}
 
@@ -727,11 +732,10 @@ puffs_msgif_waitcount(void *this)
  * XXX: locking with this one?
  */
 static void
-puffs_msgif_incoming(void *this, void *buf)
+puffsop_msg(void *this, struct puffs_req *preq)
 {
 	struct puffs_mount *pmp = this;
-	struct puffs_req *preq = buf;
-	struct puffs_frame *pfr = &preq->preq_frhdr;
+	struct putter_hdr *pth = &preq->preq_pth;
 	struct puffs_msgpark *park;
 	int release, wgone;
 
@@ -756,9 +760,10 @@ puffs_msgif_incoming(void *this, void *buf)
 
 	mutex_enter(&park->park_mtx);
 	puffs_msgpark_reference(park);
-	if (pfr->pfr_len > park->park_maxlen) {
+	if (pth->pth_framelen > park->park_maxlen) {
 		DPRINTF(("puffs_msgif_income: invalid buffer length: "
-		    "%zu (req %" PRIu64 ", \n", pfr->pfr_len, preq->preq_id));
+		    "%" PRIu64 " (req %" PRIu64 ", \n", pth->pth_framelen,
+		    preq->preq_id));
 		park->park_preq->preq_rv = EPROTO;
 		cv_signal(&park->park_cv);
 		puffs_msgpark_release(park);
@@ -780,11 +785,11 @@ puffs_msgif_incoming(void *this, void *buf)
 		if (park->park_flags & PARKFLAG_CALL) {
 			DPRINTF(("puffs_msgif_income: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
-			park->park_done(pmp, buf, park->park_donearg);
+			park->park_done(pmp, preq, park->park_donearg);
 			release = 2;
 		} else {
 			/* XXX: yes, I know */
-			memcpy(park->park_preq, buf, pfr->pfr_len);
+			memcpy(park->park_preq, preq, pth->pth_framelen);
 			release = 1;
 		}
 	}
@@ -939,18 +944,24 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 }
 
 int
-puffs_msgif_dispatch(void *this, uint8_t *buf)
+puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 {
 	struct puffs_mount *pmp = this;
-	struct puffs_frame *pfr = (struct puffs_frame *)buf;
+	struct puffs_req *preq = (struct puffs_req *)pth;
 
-	switch (PUFFSOP_OPCLASS(pfr->pfr_type)) {
+	/* XXX: need to send error to userspace */
+	if (pth->pth_framelen < sizeof(struct puffs_req))
+		return EINVAL; /* E2SMALL */
+
+	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
 	case PUFFSOP_VN:
 	case PUFFSOP_VFS:
-		puffs_msgif_incoming(pmp, buf);
+		puffsop_msg(pmp, preq);
 		break;
 	case PUFFSOP_FLUSH:
-		puffsop_flush(pmp, (void *)buf);
+		if (pth->pth_framelen != sizeof(struct puffs_flush))
+			return EINVAL;
+		puffsop_flush(pmp, (struct puffs_flush *)preq);
 		break;
 	case PUFFSOP_SUSPEND:
 		puffsop_suspend(pmp);

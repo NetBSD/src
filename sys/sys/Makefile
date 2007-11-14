@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94.6.6 2007/11/11 16:48:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.94.6.7 2007/11/14 19:04:51 joerg Exp $
 
 .include <bsd.sys.mk>
 
@@ -18,7 +18,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
 	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
-	lkm.h localedef.h lock.h lockf.h lwp.h \
+	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
 	md5.h midiio.h mman.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \

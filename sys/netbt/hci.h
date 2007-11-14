@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.10.6.3 2007/11/11 16:48:26 joerg Exp $	*/
+/*	$NetBSD: hci.h,v 1.10.6.4 2007/11/14 19:04:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.10.6.3 2007/11/11 16:48:26 joerg Exp $
+ * $Id: hci.h,v 1.10.6.4 2007/11/14 19:04:49 joerg Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2021,6 +2021,8 @@ struct btreq {
  **************************************************************************/
 
 #ifdef _KERNEL
+
+#include <sys/device.h>
 
 struct l2cap_channel;
 struct mbuf;
