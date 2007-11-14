@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.13 2007/11/06 14:27:36 joerg Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.14 2007/11/14 02:19:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.13 2007/11/06 14:27:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.14 2007/11/14 02:19:29 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,12 +135,12 @@ pnp_system_resume(void)
 }
 
 bool
-pnp_system_suspend(bool ignore_errors)
+pnp_system_suspend(void)
 {
 	int depth, maxdepth;
 	device_t curdev;
 
-	if (!pnp_check_system_drivers() && !ignore_errors)
+	if (!pnp_check_system_drivers())
 		return false;
 
 	/*
@@ -182,6 +182,48 @@ pnp_system_suspend(bool ignore_errors)
 	printf(".\n");
 
 	return true;
+}
+
+void
+pnp_system_shutdown(void)
+{
+	int depth, maxdepth;
+	device_t curdev;
+
+	if (!pnp_check_system_drivers())
+		delay(2000000);
+
+	printf("Shutting down devices:");
+
+	maxdepth = 0;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (curdev->dv_depth > maxdepth)
+			maxdepth = curdev->dv_depth;
+	}
+
+	for (depth = maxdepth; depth >= 0; --depth) {
+		TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist, dv_list) {
+			if (curdev->dv_depth != depth)
+				continue;
+			if (!device_is_active(curdev))
+				continue;
+
+			printf(" %s", device_xname(curdev));
+
+			if (!device_pnp_is_registered(curdev))
+				continue;
+			if (!device_pnp_class_suspend(curdev)) {
+				printf("(failed)");
+				continue;
+			}
+			if (!device_pnp_driver_suspend(curdev)) {
+				printf("(failed)");
+				continue;
+			}
+		}
+	}
+
+	printf(".\n");
 }
 
 bool

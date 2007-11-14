@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.6 2007/11/06 14:27:37 joerg Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.7 2007/11/14 02:19:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -75,7 +75,8 @@ bool		pnp_set_platform(const char *, const char *);
 const char	*pnp_get_platform(const char *);
 
 bool		pnp_system_resume(void);
-bool		pnp_system_suspend(bool);
+bool		pnp_system_suspend(void);
+void		pnp_system_shutdown(void);
 
 bool		pnp_device_register(device_t,
 		    bool (*)(device_t),
