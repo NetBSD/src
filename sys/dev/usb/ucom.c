@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.70.14.1 2007/11/11 16:47:49 joerg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.70.14.2 2007/11/14 19:04:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.14.1 2007/11/11 16:47:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.14.2 2007/11/14 19:04:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1060,7 +1060,9 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		/* Send something to wake upper layer */
 		s = spltty();
 		(*rint)('\n', tp);
+		mutex_spin_enter(&tty_lock);	/* XXX */
 		ttwakeup(tp);
+		mutex_spin_exit(&tty_lock);	/* XXX */
 		splx(s);
 		return;
 	}

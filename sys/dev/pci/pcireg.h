@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.54.6.1 2007/10/01 05:37:53 joerg Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.54.6.2 2007/11/14 19:04:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -750,7 +750,7 @@ struct pci_rom {
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
 
 /*
- * 
+ * Common PCI register for PCI transmit handling.
  */
 #define	PCI_RETRY_TIMEOUT_REG		0x40
 #define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00

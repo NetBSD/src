@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.17.2.2 2007/11/06 19:25:37 joerg Exp $	*/
+/*	$NetBSD: vfs.c,v 1.17.2.3 2007/11/14 19:04:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -327,8 +327,13 @@ namei(struct nameidata *ndp)
 int
 relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
+	int error;
 
-	return VOP_LOOKUP(dvp, vpp, cnp);
+	error = VOP_LOOKUP(dvp, vpp, cnp);
+	if (error && error != EJUSTRETURN)
+		return error;
+
+	return 0;
 }
 
 /*

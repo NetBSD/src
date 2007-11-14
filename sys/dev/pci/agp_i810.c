@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.10 2007/11/06 14:27:20 joerg Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.11 2007/11/14 19:04:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.10 2007/11/06 14:27:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.11 2007/11/14 19:04:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,8 @@ static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 static bool agp_i810_resume(device_t);
+static int agp_i810_init(struct agp_softc *);
+
 static int agp_i810_init(struct agp_softc *);
 
 static struct agp_methods agp_i810_methods = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4.8.1 2007/10/26 15:42:10 joerg Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4.8.2 2007/11/14 19:04:04 joerg Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -27,7 +27,8 @@
 	movq	%rbx,TF_RBX(%rsp)	; \
 	movq	%rdx,TF_RDX(%rsp)	; \
 	movq	%rcx,TF_RCX(%rsp)	; \
-	movq	%rax,TF_RAX(%rsp)
+	movq	%rax,TF_RAX(%rsp)	; \
+	cld
 
 #define	INTR_RESTORE_GPRS \
 	movq	TF_R15(%rsp),%r15	; \
