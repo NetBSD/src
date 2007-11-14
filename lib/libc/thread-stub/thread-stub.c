@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.15 2007/11/13 15:21:20 ad Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.16 2007/11/14 19:28:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.15 2007/11/13 15:21:20 ad Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.16 2007/11/14 19:28:23 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -353,6 +353,7 @@ int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
 void	__libc_thr_exit_stub(void *);
 int	*__libc_thr_errno_stub(void);
 int	__libc_thr_setcancelstate_stub(int, int *);
+int	__libc_thr_equal_stub(pthread_t, pthread_t);
 
 __weak_alias(__libc_thr_once,__libc_thr_once_stub)
 __weak_alias(__libc_thr_sigsetmask,__libc_thr_sigsetmask_stub)
@@ -362,6 +363,7 @@ __weak_alias(__libc_thr_create,__libc_thr_create_stub)
 __weak_alias(__libc_thr_exit,__libc_thr_exit_stub)
 __weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
 __weak_alias(__libc_thr_setcancelstate,__libc_thr_setcancelstate_stub)
+__weak_alias(__libc_thr_equal,__libc_thr_equal_stub)
 
 
 int
@@ -440,6 +442,14 @@ __libc_thr_setcancelstate_stub(int new, int *old)
 	CHECK_NOT_THREADED();
 
 	return (0);
+}
+
+int
+__libc_thr_equal_stub(pthread_t t1, pthread_t t2)
+{
+
+	/* assert that t1=t2=pthread_self() */
+	return (t1 == t2);
 }
 
 int *

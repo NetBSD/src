@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.88 2007/11/13 17:20:09 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.89 2007/11/14 19:28:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.88 2007/11/13 17:20:09 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.89 2007/11/14 19:28:23 drochner Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -122,6 +122,7 @@ __strong_alias(__libc_thr_create,pthread_create)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 __strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)
+__strong_alias(__libc_thr_equal,pthread_equal)
 __strong_alias(__libc_thr_init,pthread__init)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.21 2005/03/21 17:55:07 kleink Exp $	*/
+/*	$NetBSD: pthread.h,v 1.22 2007/11/14 19:28:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -346,12 +346,14 @@ int	__libc_thr_once(pthread_once_t *, void (*)(void));
 pthread_t	__libc_thr_self(void);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	__libc_thr_setcancelstate(int, int *);
+int	__libc_thr_equal(pthread_t, pthread_t);
 __END_DECLS
 
 #define	pthread_once			__libc_thr_once
 #define	pthread_self			__libc_thr_self
 #define	pthread_exit			__libc_thr_exit
 #define	pthread_setcancelstate		__libc_thr_setcancelstate
+#define pthread_equal			__libc_thr_equal
 
 #endif /* __LIBPTHREAD_SOURCE__ */
 
