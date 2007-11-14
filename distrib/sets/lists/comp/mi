@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1085 2007/11/13 22:46:01 he Exp $
+#	$NetBSD: mi,v 1.1086 2007/11/14 21:51:16 jmmv Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2403,6 +2403,11 @@
 ./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
+./usr/libdata/debug/usr/bin/atf-compile.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/bin/atf-config.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/bin/atf-report.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/bin/atf-run.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
@@ -2777,6 +2782,8 @@
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
