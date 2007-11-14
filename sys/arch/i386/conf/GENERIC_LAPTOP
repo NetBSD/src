@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.253 2007/11/04 14:34:22 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.254 2007/11/14 17:54:57 ad Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,15 +8,9 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.253 $"
+#ident 		"GENERIC-$Revision: 1.254 $"
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 
 makeoptions	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
@@ -406,15 +400,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
-
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
