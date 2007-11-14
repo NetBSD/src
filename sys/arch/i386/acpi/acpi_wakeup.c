@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.2.20 2007/11/12 12:08:46 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.21 2007/11/14 15:42:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.20 2007/11/12 12:08:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.21 2007/11/14 15:42:40 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -297,11 +297,11 @@ acpi_md_sleep(int state)
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();
+	lapic_set_lvt();
 	lapic_initclocks();
 #endif
 #if NIOAPIC > 0
 	ioapic_reenable();
-	lapic_set_lvt();
 #endif
 
 	initrtclock(TIMER_FREQ);
