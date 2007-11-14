@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.11 2007/11/13 17:20:09 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.12 2007/11/14 17:20:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.11 2007/11/13 17:20:09 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.12 2007/11/14 17:20:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -193,14 +193,12 @@ pthread__mutex_pause(void)
  * makes this thread yield if the target is calling sched_yield().
  */
 NOINLINE static void *
-pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner, uintptr_t mask)
+pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 {
 	pthread_t thread;
 
 	for (;; owner = ptm->ptm_owner) {
 		thread = (pthread_t)MUTEX_OWNER(owner);
-		if (((uintptr_t)owner & mask) != 0)
-			break;
 		if (thread == NULL)
 			break;
 		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
@@ -240,12 +238,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 	}
 
 	for (;; owner = ptm->ptm_owner) {
-		/*
-		 * Spin while the owner is running, but block if the
-		 * mutex is so heavily contested that there are existing
-		 * waiters.
-		 */
-		owner = pthread__mutex_spin(ptm, owner, MUTEX_WAITERS_BIT);
+		/* Spin while the owner is running. */
+		owner = pthread__mutex_spin(ptm, owner);
 
 		/* If it has become free, try to acquire it again. */
 		while (MUTEX_OWNER(owner) == 0) {
@@ -305,7 +299,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 				 * that the holder is running again.
 				 */
 				pthread__membar_full();
-				owner = pthread__mutex_spin(ptm, owner, 0);
+				owner = pthread__mutex_spin(ptm, owner);
 			}
 		}
 
