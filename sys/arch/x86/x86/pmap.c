@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.5 2007/11/13 19:19:41 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.6 2007/11/14 21:42:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.5 2007/11/13 19:19:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.6 2007/11/14 21:42:37 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -1891,10 +1891,13 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 void
 pmap_pdp_dtor(void *arg, void *object)
 {
+	int s = splvm();
 	/* Set page RW again */
 	pt_entry_t *pte = kvtopte((vaddr_t)object);
-	pmap_pte_set(pte, *pte | PG_RW);
-	pmap_pte_flush();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), *pte | PG_RW);
+	xpq_queue_invlpg((vaddr_t)object);
+	xpq_flush_queue();
+	splx(s);
 }
 #endif  /* XEN */
 
