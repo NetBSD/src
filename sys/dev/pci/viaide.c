@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.46 2007/11/14 12:30:48 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.46 2007/11/14 12:30:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,6 +504,8 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_MCP61_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP65_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP67_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP73_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP77_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}
