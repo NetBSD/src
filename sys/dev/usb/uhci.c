@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.209.2.6 2007/11/07 01:14:18 joerg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.209.2.7 2007/11/14 02:15:43 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.6 2007/11/07 01:14:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209.2.7 2007/11/14 02:15:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,6 @@ struct uhci_pipe {
 Static void		uhci_globalreset(uhci_softc_t *);
 Static usbd_status	uhci_portreset(uhci_softc_t*, int);
 Static void		uhci_reset(uhci_softc_t *);
-Static void		uhci_shutdown(void *v);
 Static usbd_status	uhci_run(uhci_softc_t *, int run);
 Static uhci_soft_td_t  *uhci_alloc_std(uhci_softc_t *);
 Static void		uhci_free_std(uhci_softc_t *, uhci_soft_td_t *);
@@ -544,10 +543,6 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
-#endif
-
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
@@ -588,10 +583,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	if (rv != 0)
 		return (rv);
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	/* Free all xfers associated with this HC. */
 	for (;;) {
@@ -704,28 +695,6 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	}
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
-}
-
-/*
- * Shut down the controller when the system is going down.
- */
-void
-uhci_shutdown(void *v)
-{
-	uhci_softc_t *sc = v;
-	int s;
-
-	DPRINTF(("uhci_shutdown: stopping the HC\n"));
-
-	/*
-	 * Use polling mode to prevent the interrupts shutting
-	 * us down before we shut them down.
-	 */
-	s = splhardusb();
-	sc->sc_bus.use_polling++;
-	uhci_run(sc, 0); /* stop the controller */
-	sc->sc_bus.use_polling--;
-	splx(s);
 }
 
 /*
