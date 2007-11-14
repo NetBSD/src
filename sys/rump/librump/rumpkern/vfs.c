@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.19 2007/11/06 12:14:37 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.20 2007/11/14 15:01:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -327,8 +327,13 @@ namei(struct nameidata *ndp)
 int
 relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
+	int error;
 
-	return VOP_LOOKUP(dvp, vpp, cnp);
+	error = VOP_LOOKUP(dvp, vpp, cnp);
+	if (error && error != EJUSTRETURN)
+		return error;
+
+	return 0;
 }
 
 /*
