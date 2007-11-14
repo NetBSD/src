@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.138 2007/11/12 08:42:40 njoly Exp $
+# $NetBSD: ALL,v 1.139 2007/11/14 17:54:56 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,15 +17,12 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.138 $"
+#ident 		"ALL-$Revision: 1.139 $"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
+# CPU support.
 options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -506,15 +503,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-# Keyboard layout configuration for pccons
-options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
-
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller

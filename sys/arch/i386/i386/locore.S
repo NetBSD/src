@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.56 2007/11/13 18:20:18 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.57 2007/11/14 17:54:59 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -111,7 +111,6 @@
  */
 
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"

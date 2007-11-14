@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.118 2007/10/17 19:54:42 garbled Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.119 2007/11/14 17:54:57 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -23,12 +23,6 @@ makeoptions	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
 makeoptions	COPTS="-Os"
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -264,15 +258,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller

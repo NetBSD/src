@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.7 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.8 2007/11/14 17:54:59 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -190,13 +190,7 @@ ENTRY(kcopy)
 #if defined(I386_CPU)
 #define	DEFAULT_COPYOUT		_C_LABEL(i386_copyout)
 #define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
-#elif defined(I486_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
-#elif defined(I586_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
-#elif defined(I686_CPU)
+#else
 #define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
 #define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
 #endif
@@ -312,7 +306,6 @@ ENTRY(i386_copyout)
 	ret
 #endif /* I386_CPU */
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 /* LINTSTUB: Func: int i486_copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(i486_copyout)
 	pushl	%esi
@@ -351,7 +344,6 @@ ENTRY(i486_copyout)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * int copyin(const void *from, void *to, size_t len);
@@ -363,8 +355,6 @@ ENTRY(copyin)
 	DO_DEFERRED_SWITCH
 	jmp	*_C_LABEL(copyin_func)
 
-#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
-    defined(I686_CPU)
 /* LINTSTUB: Func: int i386_copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(i386_copyin)
 	pushl	%esi
@@ -404,7 +394,6 @@ ENTRY(i386_copyin)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
 /* LINTSTUB: Ignore */
 NENTRY(copy_efault)
@@ -451,10 +440,8 @@ ENTRY(copyoutstr)
 	movl	20(%esp),%edx		# edx = maxlen
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
 	jne	5f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	/* Compute number of bytes in first page. */
 	movl	%edi,%eax
@@ -516,7 +503,6 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 #endif /* I386_CPU */
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 5:	GET_CURPCB(%eax)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
 	/*
@@ -549,7 +535,6 @@ ENTRY(copyoutstr)
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * int copyinstr(const void *from, void *to, size_t maxlen, size_t *lencopied);
@@ -781,10 +766,8 @@ ENTRY(suword)
 	ja	_C_LABEL(fusuaddrfault)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
 	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	GET_CURPCB(%eax)
 	movl	$3f,PCB_ONFAULT(%eax)
@@ -829,10 +812,8 @@ ENTRY(susword)
 	ja	_C_LABEL(fusuaddrfault)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
 	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	GET_CURPCB(%eax)
 	movl	$3f,PCB_ONFAULT(%eax)
@@ -882,10 +863,8 @@ ENTRY(suswintr)
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
 	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -917,10 +896,8 @@ ENTRY(subyte)
 	ja	_C_LABEL(fusuaddrfault)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
 	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	GET_CURPCB(%eax)
 	movl	$3f,PCB_ONFAULT(%eax)

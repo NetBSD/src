@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2007/11/11 01:30:55 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $	*/
 
 /*
  *
@@ -108,11 +108,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2007/11/11 01:30:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $");
 
-#ifndef __x86_64__
-#include "opt_cputype.h"
-#endif
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -487,7 +484,7 @@ extern vaddr_t lo32_paddr;
 
 extern int end;
 
-#if defined(I586_CPU)
+#ifdef i386
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
 #endif
@@ -1099,13 +1096,10 @@ pmap_bootstrap(vaddr_t kva_start)
 #else /* defined(__x86_64__) */
 	virtual_avail += PAGE_SIZE; pte++;
 	avail_start += PAGE_SIZE;
-#endif /* defined(__x86_64__) */
-
-#if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
-#endif
+#endif /* defined(__x86_64__) */
 
 #ifdef _LP64
 	/*
