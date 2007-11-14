@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.8 2007/11/14 12:12:27 xtraeme Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.9 2007/11/14 12:42:20 xtraeme Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.8 2007/11/14 12:12:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.9 2007/11/14 12:42:20 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,6 +122,7 @@ nfsmbc_match(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_NVIDIA_MCP61_SMB:
 		case PCI_PRODUCT_NVIDIA_MCP65_SMB:
 		case PCI_PRODUCT_NVIDIA_MCP67_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP73_SMB:
 			return 1;
 		}
 	}
