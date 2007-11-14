@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.33 2007/10/17 19:54:44 garbled Exp $
+# $NetBSD: XEN2_DOM0,v 1.34 2007/11/14 17:54:58 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -17,7 +17,6 @@ options 	DOM0OPS
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
-options 	I686_CPU
 makeoptions	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
