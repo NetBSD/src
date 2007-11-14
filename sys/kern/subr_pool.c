@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.135 2007/11/10 07:29:28 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.136 2007/11/14 11:14:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.135 2007/11/10 07:29:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.136 2007/11/14 11:14:13 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2062,6 +2062,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pc->pc_nfull = 0;
 	pc->pc_contended = 0;
 	pc->pc_refcnt = 0;
+	pc->pc_freecheck = NULL;
 
 	/* Allocate per-CPU caches. */
 	memset(pc->pc_cpus, 0, sizeof(pc->pc_cpus));
@@ -2212,6 +2213,14 @@ pool_cache_reclaim(pool_cache_t pc)
 	return pool_reclaim(&pc->pc_pool);
 }
 
+static void
+pool_cache_destruct_object1(pool_cache_t pc, void *object)
+{
+
+	(*pc->pc_dtor)(pc->pc_arg, object);
+	pool_put(&pc->pc_pool, object);
+}
+
 /*
  * pool_cache_destruct_object:
  *
@@ -2222,8 +2231,9 @@ void
 pool_cache_destruct_object(pool_cache_t pc, void *object)
 {
 
-	(*pc->pc_dtor)(pc->pc_arg, object);
-	pool_put(&pc->pc_pool, object);
+	FREECHECK_IN(&pc->pc_freecheck, object);
+
+	pool_cache_destruct_object1(pc, object);
 }
 
 /*
@@ -2243,7 +2253,7 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 
 		for (i = 0; i < pcg->pcg_avail; i++) {
 			object = pcg->pcg_objects[i].pcgo_va;
-			pool_cache_destruct_object(pc, object);
+			pool_cache_destruct_object1(pc, object);
 		}
 
 		pool_put(&pcgpool, pcg);
