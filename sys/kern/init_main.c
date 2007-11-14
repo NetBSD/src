@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.327 2007/11/07 16:51:28 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.328 2007/11/14 11:04:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.327 2007/11/07 16:51:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.328 2007/11/14 11:04:07 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -164,7 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.327 2007/11/07 16:51:28 matt Exp $")
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
@@ -287,10 +286,6 @@ main(void)
 	kernel_lock_init();
 
 	uvm_init();
-
-#ifdef DEBUG
-	debug_init();
-#endif
 
 	kmem_init();
 
