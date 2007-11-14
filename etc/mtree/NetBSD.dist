@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.352 2007/11/12 15:19:45 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.353 2007/11/14 20:37:53 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -329,6 +329,17 @@
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
 ./usr/libdata/debug/usr/sbin
+./usr/libdata/debug/usr/tests
+./usr/libdata/debug/usr/tests/atf
+./usr/libdata/debug/usr/tests/atf/formats
+./usr/libdata/debug/usr/tests/atf/test_programs
+./usr/libdata/debug/usr/tests/atf/tools
+./usr/libdata/debug/usr/tests/atf/units
+./usr/libdata/debug/usr/tests/fs
+./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/util
+./usr/libdata/debug/usr/tests/util/df
+./usr/libdata/debug/usr/tests/util/systrace
 ./usr/libdata/firmware
 ./usr/libdata/lint
 ./usr/libexec
