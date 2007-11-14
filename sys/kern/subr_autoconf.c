@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.121 2007/11/11 23:22:24 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.122 2007/11/14 19:45:45 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,8 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.121 2007/11/11 23:22:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.122 2007/11/14 19:45:45 ad Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -389,6 +390,11 @@ configure(void)
 	initclocks();
 
 	cold = 0;	/* clocks are running, we're warm now! */
+
+#if defined(MULTIPROCESSOR)
+	/* Boot the secondary processors. */
+	cpu_boot_secondary_processors();
+#endif
 
 	/*
 	 * Now callback to finish configuration for devices which want
