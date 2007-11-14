@@ -28,19 +28,17 @@ INSTALL= @INSTALL@
 PREFIX= @prefix@
 
 INCLUDE = ../include
-BIN = ../bin
 
 #
 # Compilation Targets
 #
 
-TARGETS = $(BIN) $(BIN)/iscsi-target # $(BIN)/osd
-INITIATORS= $(BIN)/iscsi-harness 
+TARGETS = iscsi-target # osd
+INITIATORS= iscsifs
 
-all: $(TARGETS) ${INITIATORS}
+all: $(TARGETS)
 
-$(BIN):
-	-mkdir $(BIN)
+all-initiator: ${INITIATORS}
 
 #
 # User-level Targets
@@ -48,10 +46,6 @@ $(BIN):
 COMPATOBJS= strlcpy.o snprintf.o strtoll.o uuid.o
 
 USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o ${COMPATOBJS}
-$(BIN)/osd: osd-target.c osd.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o $(BIN)/osd
-$(BIN)/iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o $(BIN)/iscsi-target
 iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
 	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o iscsi-target
 osd: osd-target.c osd.c $(USER_TARGET_OBJS)
@@ -61,10 +55,8 @@ osd: osd-target.c osd.c $(USER_TARGET_OBJS)
 # Test harness (initiators)
 #
 
-$(BIN)/iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
-	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o $(BIN)/iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS}
-iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
-	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS}
+iscsifs: iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o
+	$(CC) iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o -o iscsifs ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -lfuse
 
 #
 # Dependencies
@@ -88,8 +80,4 @@ initiator.o: initiator.c $(INCLUDE)/iscsi.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/in
 #
 
 clean: 
-	rm -f $(INITIATORS) $(BIN)/* $(TESTS) osd *.o
-
-test: ${TARGETS}
-	../bin/iscsi-target & (sleep 1; ../bin/iscsi-harness -n 3 -h localhost; pkill iscsi-target)
-	../bin/osd & (sleep 1; ../bin/iscsi-harness -n 3 -h localhost; pkill uosd)
+	rm -f $(INITIATORS) $(TARGETS) *.o *.core
