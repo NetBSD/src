@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.328 2007/11/14 11:04:07 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.329 2007/11/14 19:45:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.328 2007/11/14 11:04:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.329 2007/11/14 19:45:44 ad Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_posix.h"
@@ -547,12 +546,10 @@ main(void)
 
 	/*
 	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.  Note we don't
-	 * need to lock this semaphore, since we haven't booted any
-	 * secondary processors, yet.
+	 * them to finish any deferred autoconfiguration.
 	 */
 	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", 0);
+		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -657,11 +654,6 @@ main(void)
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
-
-#if defined(MULTIPROCESSOR)
-	/* Boot the secondary processors. */
-	cpu_boot_secondary_processors();
-#endif
 
 	/* Initialize exec structures */
 	exec_init(1);
