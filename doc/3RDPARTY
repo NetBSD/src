@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.567 2007/11/12 14:53:32 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.568 2007/11/14 06:16:16 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -318,7 +318,7 @@ When updating GDB, it is imperative to test that:
 
 Package:	gettext
 Version:	0.14.4
-Current Vers:	0.14.5
+Current Vers:	0.17
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
