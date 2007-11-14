@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.40.46.3 2007/11/06 14:27:34 joerg Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.46.4 2007/11/14 02:15:44 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -176,8 +176,6 @@ typedef struct uhci_softc {
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
-
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	device_ptr_t sc_child;		/* /dev/usb# device */
