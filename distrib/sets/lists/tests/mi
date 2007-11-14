@@ -1,18 +1,18 @@
-# $NetBSD: mi,v 1.6 2007/11/14 20:37:54 jmmv Exp $
+# $NetBSD: mi,v 1.7 2007/11/14 22:36:27 jmmv Exp $
 ./etc/mtree/set.tests				tests-sys-root
-./usr/libdata/debug/usr/tests						tests-base-debug	debug
-./usr/libdata/debug/usr/tests/atf					tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/formats				tests-atf-debug		debug
+./usr/libdata/debug/usr/tests						tests-base-debug
+./usr/libdata/debug/usr/tests/atf					tests-atf-debug
+./usr/libdata/debug/usr/tests/atf/formats				tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/formats/h_parsers.debug		tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/formats/t_writers.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/test_programs				tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/test_programs				tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/tools					tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/tools					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/tools/h_fail.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/tools/h_misc.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/tools/h_mode.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/tools/h_pass.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/units					tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/units					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/units/t_config.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_env.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_expand.debug			tests-atf-debug		debug
@@ -24,13 +24,13 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_text.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/fs					tests-fs-debug		debug
-./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/fs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
-./usr/libdata/debug/usr/tests/util					tests-util-debug	debug
-./usr/libdata/debug/usr/tests/util/df					tests-util-debug	debug
+./usr/libdata/debug/usr/tests/util					tests-util-debug
+./usr/libdata/debug/usr/tests/util/df					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
-./usr/libdata/debug/usr/tests/util/systrace				tests-util-debug	debug
+./usr/libdata/debug/usr/tests/util/systrace				tests-util-debug
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-util-debug	debug
 ./usr/tests					tests-base-tests
 ./usr/tests/Atffile				tests-base-tests
