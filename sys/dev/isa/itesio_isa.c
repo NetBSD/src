@@ -1,5 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.1 2007/11/15 12:53:42 xtraeme Exp $ */
-/*	Derived from $NetBSD: itesio_isa.c,v 1.1 2007/11/15 12:53:42 xtraeme Exp $	*/
+/*	$NetBSD: itesio_isa.c,v 1.2 2007/11/15 13:09:07 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.1 2007/11/15 12:53:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.2 2007/11/15 13:09:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

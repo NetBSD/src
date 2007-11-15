@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.1 2007/11/15 12:53:43 xtraeme Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.2 2007/11/15 13:09:07 xtraeme Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -27,8 +27,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_ISA_ITVAR_H
-#define _DEV_ISA_ITVAR_H
+#ifndef _DEV_ISA_ITESIO_ISAVAR_H
+#define _DEV_ISA_ITESIO_ISAVAR_H
 
 #define IT_NUM_SENSORS	15
 
@@ -140,4 +140,4 @@ struct itesio_softc {
 	uint8_t sc_devrev;
 };
 
-#endif /* _DEV_ISA_ITVAR_H_ */
+#endif /* _DEV_ISA_ITSIO_ISAVAR_H_ */
