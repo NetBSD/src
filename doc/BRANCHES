@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.217 2007/11/08 20:15:48 joerg Exp $
+#	$NetBSD: BRANCHES,v 1.218 2007/11/15 14:44:50 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -550,7 +550,7 @@ Description:	implement and evaluate lazy mapping of mbuf external data pages
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base5
+Base Tag:	yamt-lazymbuf-base7
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
