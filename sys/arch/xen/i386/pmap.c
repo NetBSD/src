@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12.2.4 2007/10/27 11:29:08 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12.2.5 2007/11/15 11:43:45 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.2.4 2007/10/27 11:29:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.2.5 2007/11/15 11:43:45 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -465,7 +465,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  * pool and cache that PDPs are allocated from
  */
 
-struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
 u_int pmap_pdp_cache_generation;
 
@@ -477,10 +476,8 @@ void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
-#if defined(I586_CPU)
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
-#endif
 
 
 /*
@@ -1222,11 +1219,9 @@ pmap_bootstrap(kva_start)
 	idt_paddr = avail_start;			/* steal a page */
 	avail_start += PAGE_SIZE;
 
-#if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE;
-#endif
 
 	/*
 	 * now we reserve some VM for mapping pages when doing a crash dump
@@ -1266,10 +1261,8 @@ pmap_bootstrap(kva_start)
 	/*
 	 * initialize the PDE pool and cache.
 	 */
-	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
+	    NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -2485,9 +2478,7 @@ pmap_pageidlezero(pa)
 	bool rv = true;
 	int *ptr;
 	int *ep;
-#if defined(I686_CPU)
 	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
-#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
@@ -2511,19 +2502,15 @@ pmap_pageidlezero(pa)
 			rv = false;
 			break;
 		}
-#if defined(I686_CPU)
 		if (cpu_features & CPUID_SSE2)
 			__asm volatile ("movnti %1, %0" :
 			    "=m"(*ptr) : "r" (0));
 		else
-#endif /* defined(I686_CPU) */
 			*ptr = 0;
 	}
 
-#if defined(I686_CPU)
 	if (cpu_features & CPUID_SSE2)
 		__asm volatile ("sfence" ::: "memory");
-#endif /* defined(I686_CPU) */       
 
 	PTE_CLEAR(zpte, maptp);				/* zap! */
 	return (rv);

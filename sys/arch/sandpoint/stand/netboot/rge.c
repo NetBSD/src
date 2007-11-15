@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.3.2.2 2007/10/27 11:28:26 yamt Exp $ */
+/* $NetBSD: rge.c,v 1.3.2.3 2007/11/15 11:43:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -59,15 +58,17 @@
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *rge_init(void *);
+void *rge_init(unsigned, void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
 
-#define T0_OWN		0x80000000
+#define T0_OWN		0x80000000	/* loaded for HW to send */
 #define T0_EOR		0x40000000	/* end of ring */
 #define T0_FS		0x20000000	/* first descriptor */
 #define T0_LS		0x10000000	/* last descriptor */
@@ -79,7 +80,7 @@ int rge_recv(void *, char *, unsigned, unsigned);
 #define T1_TAGC		0x00020000	/* insert VTAG */
 #define T1_VTAG		0x0000ffff	/* VTAG value */
 
-#define R0_OWN		0x80000000	/* empty for HW to load */
+#define R0_OWN		0x80000000	/* empty for HW to load anew */
 #define R0_EOR		0x40000000	/* end mark to form a ring */
 #define R0_BUFLEN	0x00003ff8	/* max frag. size to receive */
 /* RX status upon Rx completed */
@@ -153,9 +154,9 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc *TxD;
-	struct desc *RxD;
-	uint8_t *rxstore[2];
+	struct desc TxD;
+	struct desc RxD[2];
+	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
 	unsigned tcr, rcr;
@@ -166,21 +167,20 @@ static void rge_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-rge_init(void *cookie)
+rge_init(unsigned tag, void *data)
 {
-	unsigned tag, val, buf;
+	unsigned val;
 	struct local *l;
 	struct desc *TxD, *RxD;
-	uint8_t *en = cookie;
+	uint8_t *en = data;
 
-	if (pcifinddev(0x10ec, 0x8169, &tag) != 0) {
-		printf("rge NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x10ec && PCI_PRODUCT(val) != 0x8169)
 		return NULL;
-	}
 
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, 256);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use PCI mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	CSR_WRITE_1(l, RGE_CR, CR_RESET);
 	do {
@@ -189,7 +189,7 @@ rge_init(void *cookie)
 
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, RGE_IDR0);
 	en[1] = CSR_READ_1(l, RGE_IDR1);
 	en[2] = CSR_READ_1(l, RGE_IDR2);
@@ -201,21 +201,13 @@ rge_init(void *cookie)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
-	buf = (unsigned)alloc(sizeof(struct desc) * 3 + 256);
-	buf &= ~0xff; /* 256B alignment required */
-	memset((void *)buf, 0, sizeof(struct desc) * 3);
-	l->TxD = TxD = (struct desc *)buf;
-	l->RxD = RxD = &TxD[1];
-	buf = (unsigned)alloc(FRAMESIZE * 2 + 8);
-	buf &= ~07; /* 8B alignment required */
-	l->rxstore[0] = (uint8_t *)buf;
-	l->rxstore[1] = (uint8_t *)(buf + FRAMESIZE);
+	TxD = &l->TxD;
+	RxD = &l->RxD[0];
 	RxD[0].xd0 = htole32(R0_OWN | FRAMESIZE);
 	RxD[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[0].xd0 = htole32(R0_OWN | R0_EOR | FRAMESIZE);
+	RxD[1].xd0 = htole32(R0_OWN | R0_EOR | FRAMESIZE);
 	RxD[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
-	wbinv(TxD, sizeof(struct desc));
-	wbinv(RxD, sizeof(struct desc) * 2);
+	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
 	l->tcr = (03 << 24) | (07 << 8);
@@ -243,7 +235,7 @@ rge_send(void *dev, char *buf, unsigned len)
 	unsigned loop;
 
 	wbinv(buf, len);
-	TxD = l->TxD;
+	TxD = &l->TxD;
 	TxD->xd2 = htole32(VTOPHYS(buf));
 	TxD->xd1 = 0;
 	TxD->xd0 = htole32(T0_OWN|T0_EOR|T0_FS|T0_LS| (len & T0_FRMASK));

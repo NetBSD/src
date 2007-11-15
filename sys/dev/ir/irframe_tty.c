@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.29.2.3 2007/09/03 14:35:30 yamt Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.29.2.4 2007/11/15 11:44:14 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29.2.3 2007/09/03 14:35:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29.2.4 2007/11/15 11:44:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -298,7 +298,9 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	DPRINTF(("%s: set sc=%p\n", __FUNCTION__, sc));
 
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);
 
 	sc->sc_dongle = DONGLE_NONE;
 	sc->sc_dongle_private = 0;
@@ -324,7 +326,9 @@ irframetclose(struct tty *tp, int flag)
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
 	s = spltty();
+	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
+	mutex_spin_exit(&tty_lock);	 /* XXX */
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
@@ -628,7 +632,6 @@ irframet_read(void *h, struct uio *uio, int flag)
 int
 irt_putc(struct tty *tp, int c)
 {
-	int s;
 	int error;
 
 #if IRFRAMET_DEBUG
@@ -638,18 +641,18 @@ irt_putc(struct tty *tp, int c)
 #endif
 	if (tp->t_outq.c_cc > tp->t_hiwat) {
 		irframetstart(tp);
-		s = spltty();
+		mutex_spin_enter(&tty_lock);
 		/*
 		 * This can only occur if FLUSHO is set in t_lflag,
 		 * or if ttstart/oproc is synchronous (or very fast).
 		 */
 		if (tp->t_outq.c_cc <= tp->t_hiwat) {
-			splx(s);
+			mutex_spin_exit(&tty_lock);
 			goto go;
 		}
 		SET(tp->t_state, TS_ASLEEP);
-		error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
-		splx(s);
+		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		mutex_spin_exit(&tty_lock);
 		if (error)
 			return (error);
 	}

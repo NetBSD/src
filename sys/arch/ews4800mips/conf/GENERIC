@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.4 2007/09/03 14:24:45 yamt Exp $
+# $NetBSD: GENERIC,v 1.9.6.5 2007/11/15 11:42:42 yamt Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.9.6.4 $"
+#ident		"GENERIC-$Revision: 1.9.6.5 $"
 
 maxusers	16
 
@@ -49,11 +49,7 @@ options 	KTRACE			# system call tracing ktrace(1)
 options 	SYSVMSG			# System V-like message queues
 options 	SYSVSEM			# System V-like semaphores
 options 	SEMMNI=10		# number of semaphore identifiers
-#options 	SEMMNS=60		# number of semaphores in system
-#options 	SEMUME=10		# max number of undo entries per process
-#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM			# loadable kernel modules

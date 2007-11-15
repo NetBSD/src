@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.1.8.6 2007/10/27 11:26:30 yamt Exp $
+# $NetBSD: XEN2_DOMU,v 1.1.8.7 2007/11/15 11:42:53 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -14,7 +14,6 @@ maxusers	32		# estimated number of users
 options 	XEN
 #options 	DOM0OPS
 
-options 	I686_CPU
 makeoptions	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation

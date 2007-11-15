@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.8.4.2 2007/09/03 14:36:19 yamt Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.8.4.3 2007/11/15 11:44:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -238,6 +238,13 @@
 #define AGP_I965_GMADR			0x18
 
 #define AGP_I965_GTT			0x80000
+
+/*
+ * Config registers for G33
+ */
+#define AGP_G33_PGTBL_SIZE_MASK		(3U << 8)
+#define AGP_G33_PGTBL_SIZE_1M		(1U << 8)
+#define AGP_G33_PGTBL_SIZE_2M		(2U << 8)
 
 /*
  * AMD64 GART registers

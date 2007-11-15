@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.4.2.2 2007/10/27 11:28:25 yamt Exp $ */
+/* $NetBSD: nvt.c,v 1.4.2.3 2007/11/15 11:43:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -59,12 +58,13 @@
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va)		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *nvt_init(void *);
+void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
 
@@ -171,22 +171,20 @@ static void nvt_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-nvt_init(void *cookie)
+nvt_init(unsigned tag, void *data)
 {
-	unsigned tag, val;
+	unsigned val;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
 
-	if (pcifinddev(0x1106, 0x3106, &tag) != 0
-	    || pcifinddev(0x1106, 0x3053, &tag) != 0) {
-		printf("nvt NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3053)
 		return NULL;
-	}
 
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VR_CTL1, val);
@@ -197,7 +195,7 @@ nvt_init(void *cookie)
 	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, VR_PAR0);
 	en[1] = CSR_READ_1(l, VR_PAR1);
 	en[2] = CSR_READ_1(l, VR_PAR2);
@@ -219,8 +217,7 @@ nvt_init(void *cookie)
 	RxD[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
 	RxD[1].xd2 = htole32(FRAMESIZE << 16);
 	RxD[1].xd3 = htole32(&RxD[0]);
-	wbinv(TxD, sizeof(struct desc));
-	wbinv(RxD, 2 * sizeof(struct desc));
+	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
 	/* speed and duplexity can be seen in MIISR and MII 20 */

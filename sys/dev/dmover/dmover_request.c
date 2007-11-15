@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_request.c,v 1.1.28.1 2007/09/03 14:33:35 yamt Exp $	*/
+/*	$NetBSD: dmover_request.c,v 1.1.28.2 2007/11/15 11:44:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.1.28.1 2007/09/03 14:33:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.1.28.2 2007/11/15 11:44:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -50,8 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_request.c,v 1.1.28.1 2007/09/03 14:33:35 yamt
 
 #include <dev/dmover/dmovervar.h>
 
-struct pool dmover_request_pool;
-struct pool_cache dmover_request_cache;
+pool_cache_t dmover_request_cache;
 
 static int initialized;
 static struct simplelock initialized_slock = SIMPLELOCK_INITIALIZER;
@@ -59,19 +58,28 @@ static struct simplelock initialized_slock = SIMPLELOCK_INITIALIZER;
 void
 dmover_request_initialize(void)
 {
+	pool_cache_t pc;
 	int s;
+
+	if (initialized == 0) {
+		pc = pool_cache_init(sizeof(struct dmover_request), 0, 0, 0,
+		        "dmreq", NULL, IPL_BIO, NULL, NULL, NULL);
+	} else {
+		pc = NULL;
+	}
 
 	s = splbio();
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
-		pool_init(&dmover_request_pool, sizeof(struct dmover_request),
-		    0, 0, 0, "dmreq", NULL, IPL_BIO);
-		pool_cache_init(&dmover_request_cache, &dmover_request_pool,
-		    NULL, NULL, NULL);
+		dmover_request_cache = pc;
+		pc = NULL;
 		initialized = 1;
 	}
 	simple_unlock(&initialized_slock);
 	splx(s);
+
+	if (pc != NULL)
+		pool_cache_destroy(pc);
 }
 
 /*
@@ -83,24 +91,12 @@ struct dmover_request *
 dmover_request_alloc(struct dmover_session *dses, dmover_buffer *inbuf)
 {
 	struct dmover_request *dreq;
-	int s, inputs = dses->dses_ninputs;
+	int inputs = dses->dses_ninputs;
 
-	if (__predict_false(initialized == 0)) {
-		int error;
+	if (__predict_false(initialized == 0))
+		return (NULL);
 
-		s = splbio();
-		simple_lock(&initialized_slock);
-		error = (initialized == 0);
-		simple_unlock(&initialized_slock);
-		splx(s);
-
-		if (error)
-			return (NULL);
-	}
-
-	s = splbio();
-	dreq = pool_cache_get(&dmover_request_cache, PR_NOWAIT);
-	splx(s);
+	dreq = pool_cache_get(dmover_request_cache, PR_NOWAIT);
 	if (dreq == NULL)
 		return (NULL);
 
@@ -111,9 +107,7 @@ dmover_request_alloc(struct dmover_session *dses, dmover_buffer *inbuf)
 			inbuf = malloc(sizeof(dmover_buffer) * inputs,
 			    M_DEVBUF, M_NOWAIT);
 			if (inbuf == NULL) {
-				s = splbio();
-				pool_cache_put(&dmover_request_cache, dreq);
-				splx(s);
+				pool_cache_put(dmover_request_cache, dreq);
 				return (NULL);
 			}
 		}
@@ -134,12 +128,9 @@ dmover_request_alloc(struct dmover_session *dses, dmover_buffer *inbuf)
 void
 dmover_request_free(struct dmover_request *dreq)
 {
-	int s;
 
 	if (dreq->dreq_flags & __DMOVER_REQ_INBUF_FREE)
 		free(dreq->dreq_inbuf, M_DEVBUF);
 
-	s = splbio();
-	pool_cache_put(&dmover_request_cache, dreq);
-	splx(s);
+	pool_cache_put(dmover_request_cache, dreq);
 }

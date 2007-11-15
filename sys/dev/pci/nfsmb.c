@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.6.2.3 2007/10/27 11:33:19 yamt Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.6.2.4 2007/11/15 11:44:23 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.6.2.3 2007/10/27 11:33:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.6.2.4 2007/11/15 11:44:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,13 @@ nfsmbc_match(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS:
 		case PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS:
+		case PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS:
 		case PCI_PRODUCT_NVIDIA_MCP04_SMBUS:
+		case PCI_PRODUCT_NVIDIA_MCP55_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP61_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP65_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP67_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP73_SMB:
 			return 1;
 		}
 	}

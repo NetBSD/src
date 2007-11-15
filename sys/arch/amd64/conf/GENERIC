@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55.2.5 2007/10/27 11:25:07 yamt Exp $
+# $NetBSD: GENERIC,v 1.55.2.6 2007/11/15 11:42:32 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55.2.5 $"
+#ident 		"GENERIC-$Revision: 1.55.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -56,12 +56,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -72,7 +67,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Intel Enhanced Speedstep for EM64T CPUs
 options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE
+#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
@@ -101,6 +96,9 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	SYSCALL_STATS	# per syscall counts
+#options 	SYSCALL_TIMES	# per syscall times
+#options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
 options 	COMPAT_15	# compatibility with NetBSD 1.5,
@@ -396,6 +394,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
+
+# Intel Core's on-die Thermal sensor
+options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
@@ -1027,6 +1028,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# pseudo audio device driver
+pseudo-device	pad
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.6.2.3 2007/10/27 11:31:03 yamt Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.6.2.4 2007/11/15 11:44:09 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.3 2007/10/27 11:31:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.4 2007/11/15 11:44:09 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -98,9 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.3 2007/10/27 11:31:03 yamt Exp $")
 #include <sys/queue.h>
 #include <sys/gcq.h>
 #include <sys/lock.h>
-
-#include <sys/bus.h>
+#include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -1218,7 +1218,7 @@ slhci_detach(struct slhci_softc *sc, int flags)
 	while (t->flags & (F_RESET|F_CALLBACK))
 		tsleep(&sc, PPAUSE, "slhci_detach", hz);
 
-	softintr_disestablish(sc->sc_cb_softintr);
+	softint_disestablish(sc->sc_cb_softintr);
 
 	ret = 0;
 
@@ -2496,7 +2496,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 
 	if (!(t->flags & F_CALLBACK)) {
 		t->flags |= F_CALLBACK;
-		softintr_schedule(sc->sc_cb_softintr);
+		softint_schedule(sc->sc_cb_softintr);
 	}
 }
 
@@ -2663,7 +2663,7 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 	/* It is not safe to call the soft interrupt directly as 
 	 * usb_schedsoftintr does in the use_polling case (due to locking).  
 	 */
-	sc->sc_cb_softintr = softintr_establish(IPL_SOFTUSB, 
+	sc->sc_cb_softintr = softint_establish(SOFTINT_NET, 
 	    slhci_callback_entry, sc);
 
 #ifdef SLHCI_DEBUG

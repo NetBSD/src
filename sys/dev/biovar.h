@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.1.18.2 2007/09/03 14:33:10 yamt Exp $ */
+/*	$NetBSD: biovar.h,v 1.1.18.3 2007/11/15 11:44:00 yamt Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -47,8 +47,7 @@ struct bio_locate {
 };
 
 #ifdef _KERNEL
-int	bio_register(struct device *, int (*)(struct device *, u_long,
-    void *));
+int	bio_register(struct device *, int (*)(struct device *, u_long, void *));
 void	bio_unregister(struct device *);
 #endif
 
@@ -66,10 +65,10 @@ struct bioc_inq {
 struct bioc_disk {
 	void		*bd_cookie;
 
-	u_int16_t	bd_channel;
-	u_int16_t	bd_target;
-	u_int16_t	bd_lun;
-	u_int16_t	bd_other_id;	/* unused for now  */
+	uint16_t	bd_channel;
+	uint16_t	bd_target;
+	uint16_t	bd_lun;
+	uint16_t	bd_other_id;	/* unused for now  */
 
 	int		bd_volid;	/* associate with volume */
 	int		bd_diskid;	/* virtual disk */
@@ -90,7 +89,7 @@ struct bioc_disk {
 #define BIOC_SDSCRUB_S		"Scrubbing"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
-	size_t		bd_size;	/* size of the disk */
+	uint64_t	bd_size;	/* size of the disk */
 
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
@@ -104,7 +103,7 @@ struct bioc_vol {
 	int		bv_volid;	/* volume id */
 
 	int16_t		bv_percent;	/* percent done operation */
-	u_int16_t	bv_seconds;	/* seconds of progress so far */
+	uint16_t	bv_seconds;	/* seconds of progress so far */
 
 	int		bv_status;	/* current status */
 #define BIOC_SVONLINE		0x00
@@ -121,7 +120,7 @@ struct bioc_vol {
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	size_t		bv_size;	/* size of the disk */
+	uint64_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
 	int		bv_nodisk;	/* nr of drives */
 
@@ -145,8 +144,8 @@ struct bioc_alarm {
 #define BIOCBLINK _IOWR('B', 36, struct bioc_blink)
 struct bioc_blink {
 	void		*bb_cookie;
-	u_int16_t	bb_channel;
-	u_int16_t	bb_target;
+	uint16_t	bb_channel;
+	uint16_t	bb_target;
 
 	int		bb_status;	/* current status */
 #define BIOC_SBUNBLINK		0x00	/* disable blinking */
@@ -157,10 +156,10 @@ struct bioc_blink {
 #define BIOCSETSTATE _IOWR('B', 37, struct bioc_setstate)
 struct bioc_setstate {
 	void		*bs_cookie;
-	u_int16_t	bs_channel;
-	u_int16_t	bs_target;
-	u_int16_t	bs_lun;
-	u_int16_t	bs_other_id;	/* unused for now  */
+	uint16_t	bs_channel;
+	uint16_t	bs_target;
+	uint16_t	bs_lun;
+	uint16_t	bs_other_id;	/* unused for now  */
 
 	int		bs_status;	/* change to this status */
 #define BIOC_SSONLINE		0x00	/* online disk */
@@ -174,8 +173,8 @@ struct bioc_setstate {
 struct bioc_createraid {
 	void		*bc_cookie;
 	char		*bc_dev_list;
-	u_int16_t	bc_dev_list_len;
-	u_int16_t	bc_level;
+	uint16_t	bc_dev_list_len;
+	uint16_t	bc_level;
 };
 
 /* kernel and userspace defines */

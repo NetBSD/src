@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.3.16.2 2006/12/30 20:46:05 yamt Exp $
+#	$NetBSD: INSTALL.MP,v 1.3.16.3 2007/11/15 11:42:49 yamt Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.
@@ -15,7 +15,6 @@ options 	MPVERBOSE
 options 	DEBUG
 options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 
-no options	I486_CPU
 no makeoptions	CPUFLAGS
 makeoptions	CPUFLAGS="-march=pentium -mtune=i486"
 makeoptions	COPTS="-Os"

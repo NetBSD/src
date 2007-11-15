@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mman.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $ */
+/*	$NetBSD: linux32_mman.c,v 1.1.16.5 2007/11/15 11:43:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.1.16.5 2007/11/15 11:43:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,8 +82,6 @@ linux32_sys_old_mmap(l, v, retval)
 
 	NETBSD32TOP_UAP(lmp, struct linux_oldmmap);
 	return linux_sys_old_mmap(l, &ua, retval);
-
-	return 0;
 }
 
 int

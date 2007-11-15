@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.6.6.4 2007/10/27 11:26:29 yamt Exp $
+# $NetBSD: XBOX,v 1.6.6.5 2007/11/15 11:42:52 yamt Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -6,9 +6,6 @@
 include 	"arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-options 	I686_CPU
 
 options 	REALBASEMEM=639		# size of base memory (in KB)
 options 	REALEXTMEM=60416	# size of extended memory (in KB)

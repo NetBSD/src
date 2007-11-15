@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.93.2.3 2007/10/27 11:33:23 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.93.2.4 2007/11/15 11:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.3 2007/10/27 11:33:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.4 2007/11/15 11:44:24 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -824,3 +824,17 @@ pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
 
 CFATTACH_DECL2(pci, sizeof(struct pci_softc),
     pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
+
+void
+pci_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = pci_conf_read(pc, tag, PCI_RETRY_TIMEOUT_REG);
+	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
+	pci_conf_write(pc, tag, PCI_RETRY_TIMEOUT_REG, retry);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10.8.3 2007/09/03 14:30:27 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.8.4 2007/11/15 11:43:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.3 2007/09/03 14:30:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.4 2007/11/15 11:43:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -178,7 +178,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;

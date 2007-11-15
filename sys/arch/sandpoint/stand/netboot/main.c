@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3.2.2 2007/10/27 11:28:24 yamt Exp $ */
+/* $NetBSD: main.c,v 1.3.2.3 2007/11/15 11:43:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,13 +47,13 @@
 
 #include "globals.h"
 
-uint8_t en[6];	/* NIC macaddr, fill by netif_init() */
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
 
-extern char bootfile[];			/* filled by DHCP */
-const char rootdev[] = "fxp";		/* Intel 82559 */
+extern char bootfile[];	/* filled by DHCP */
+char rootdev[4];	/* NIF nickname, filled by netif_init() */
+uint8_t en[6];		/* NIC macaddr, fill by netif_init() */
 
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
@@ -82,7 +82,7 @@ int brdtype;
 void
 main()
 {
-	int howto;
+	int n, b, d, f, howto;
 	unsigned memsize, tag;
 	unsigned long marks[MARK_MAX];
 	struct btinfo_memory bi_mem;
@@ -90,6 +90,7 @@ main()
 	struct btinfo_clock bi_clk;
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
+	unsigned lnif[1][2];
 
 	/* determine SDRAM size */
 	memsize = mpc107memsize();
@@ -103,19 +104,25 @@ main()
 	case BRD_ENCOREPP1:
 		printf("Encore PP1"); break;
 	}
-	printf(", %dMB SDRAM", memsize >> 20);
-	if (pcifinddev(0x8086, 0x1209, &tag) == 0
-	    || pcifinddev(0x8086, 0x1229, &tag) == 0) {
-		int b, d, f;
-		pcidecomposetag(tag, &b, &d, &f);
-		printf(", Intel i82559 NIC %02d:%02d:%02d", b, d, f);
+	printf(", %dMB SDRAM, ", memsize >> 20);
+	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
+	if (n == 0) {
+		tag = ~0;
+		printf("no NIC found\n");
 	}
-	printf("\n");
+	else {
+		tag = lnif[0][1];
+		pcidecomposetag(tag, &b, &d, &f);
+		printf("%04x.%04x NIC %02d:%02d:%02d\n",
+		    PCI_VENDOR(lnif[0][0]), PCI_PRODUCT(lnif[0][0]),
+		    b, d, f);
+	}
 
 	pcisetup();
 	pcifixup();
 
-	netif_init();
+	if (netif_init(tag) == 0)
+		printf("no NIC device driver is found\n");
 
 	printf("Try NFS load /netbsd\n");
 	marks[MARK_START] = 0;
@@ -307,14 +314,9 @@ void
 _wb(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbst 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -324,14 +326,9 @@ void
 _wbinv(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbf 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -343,25 +340,34 @@ _inv(adr, siz)
 {
 	uint32_t off, bnd;
 
-	/*
-	 * NB - if adr and/or adr + siz are not cache line
-	 * aligned, cache contents of the 1st and last cache line
-	 * which do not belong to the invalidating range will be
-	 * lost siliently. It's caller's responsibility to wb()
-	 * them in the case.
-	 */
-	asm volatile ("eieio");
 	off = adr & (dcache_line_size - 1);
 	adr -= off;
 	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
-	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
+	asm volatile ("eieio");
+	if (off != 0) {
+		/* wbinv() leading unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(adr));
+		if (siz < dcache_line_size)
+			goto done;
+		adr += dcache_line_size;
+		siz -= dcache_line_size;
+	}
+	bnd = adr + siz;
+	off = bnd & (dcache_line_size - 1);
+	if (off != 0) {
+		/* wbinv() trailing unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(bnd)); /* it's OK */
+		if (siz < dcache_line_size)
+			goto done;
+		siz -= off;
+	}
+	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size) {
+		/* inv() intermediate dcache lines if ever */
 		asm volatile ("dcbi 0,%0" :: "r"(adr));
+	}
+  done:
 	asm volatile ("sync");
 }
-
-#include <dev/ic/mpc106reg.h>
 
 unsigned
 mpc107memsize()
@@ -373,6 +379,11 @@ mpc107memsize()
 	if (brdtype == BRD_ENCOREPP1) {
 		/* the brd's PPCBOOT looks to have erroneous values */
 		unsigned tbl[] = {
+#define MPC106_MEMSTARTADDR1	0x80
+#define MPC106_EXTMEMSTARTADDR1	0x88
+#define MPC106_MEMENDADDR1	0x90
+#define MPC106_EXTMEMENDADDR1	0x98
+#define MPC106_MEMEN		0xa0
 #define	BK0_S	0x00000000
 #define	BK0_E	(128 << 20) - 1
 #define BK1_S	0x3ff00000
@@ -611,6 +622,36 @@ pcifixup()
 				irq, STEER(steer, 0x8));
 		}
 
+#if 1
+		/*
+		 * //// IDE fixup ////
+		 * - "native mode" (ide 0x09)
+		 * - use primary only (ide 0x40)
+		 */
+
+		/* ide: 0x09 - programming interface; 1000'SsPp */
+		val = pcicfgread(ide, 0x08) & 0xffff00ff;
+		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+		/* ide: 0x40 - use primary only */
+		val = pcicfgread(ide, 0x40);
+		pcicfgwrite(ide, 0x40, val | 0x02);
+
+		/*
+		 * //// USBx2, audio, and modem fixup ////
+		 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
+		 * - disable AC97 audio and MC97 modem (pcib 0x85)
+		 */
+
+		/* pcib: 0x48 - disable USB #0 at function 2 */
+		val = pcicfgread(pcib, 0x48);
+		pcicfgwrite(pcib, 0x48, val | 04);
+
+		/* pcib: 0x85 - disable USB #1 at function 3 */
+		/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
+		val = pcicfgread(pcib, 0x84);
+		pcicfgwrite(pcib, 0x84, val | 0x1c00);
+#else
 		/*
 		 * //// IDE fixup ////
 		 * - "compatiblity mode" (ide 0x09)
@@ -637,7 +678,7 @@ pcifixup()
 		/* ide: 0x3d/3c - turn off PCI pin/line */
 		val = pcicfgread(ide, 0x3c) & 0xffff0000;
 		pcicfgwrite(ide, 0x3c, val);
-
+#endif
 		/*
 		 * //// fxp fixup ////
 		 * - use PCI pin A line 25 (fxp 0x3d/3c)

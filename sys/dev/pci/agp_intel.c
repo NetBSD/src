@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.15.2.4 2007/10/27 11:32:31 yamt Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.15.2.5 2007/11/15 11:44:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.15.2.4 2007/10/27 11:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.15.2.5 2007/11/15 11:44:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
 static void agp_intel_powerhook(int, void *);
+static int agp_intel_init(struct agp_softc *);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -114,7 +115,6 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa= aux;
 	struct agp_intel_softc *isc;
 	struct agp_gatt *gatt;
-	pcireg_t reg;
 	u_int32_t value;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
@@ -189,6 +189,16 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	isc->gatt = gatt;
+
+	return agp_intel_init(sc);
+}
+
+static int
+agp_intel_init(struct agp_softc *sc)
+{
+	struct agp_intel_softc *isc = sc->as_chipc;
+	struct agp_gatt *gatt = isc->gatt;
+	pcireg_t reg;
 
 	/* Install the gatt. */
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ATTBASE,

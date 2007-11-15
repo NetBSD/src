@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3.16.1 2007/02/26 09:06:41 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.3.16.2 2007/11/15 11:42:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 	.align	NBPG	/* let's fit 'em on a single page */
 
 #define	FUSUX(name)				  \
-LEAF_ENTRY(name)				! \
+LEAF_ENTRY_NOPROFILE(name)			! \
 	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
 	comb,>>= %arg0, %t1, fusubadaddr	! \
 	ldil	L%curlwp, %t1			! \
@@ -134,7 +134,7 @@ EXIT(name)
 	stw	%r0, U_PCB+PCB_ONFAULT(%t1)	! \
 EXIT(name)
 
-LEAF_ENTRY(fusufault)
+LEAF_ENTRY_NOPROFILE(fusufault)
 	stw	%r0, U_PCB+PCB_ONFAULT(%t1)
 ALTENTRY(fusubadaddr)
 	bv	0(%rp)
@@ -152,7 +152,7 @@ SUX(suswintr, sth)
 
 	.align	64
 
-LEAF_ENTRY(_copy_on_fault)
+LEAF_ENTRY_NOPROFILE(_copy_on_fault)
 	/* reset fault handler */
 	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
 ALTENTRY(copy_on_fault)

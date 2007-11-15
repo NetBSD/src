@@ -1,9 +1,10 @@
-/*	$NetBSD: lock_stub.c,v 1.8.4.3 2007/10/27 11:36:23 yamt Exp $	*/
+/*	$NetBSD: putter_sys.h,v 1.2.4.2 2007/11/15 11:44:30 yamt Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Research Foundation of Helsinki University of Technology
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,89 +28,26 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _DEV_PUTTER_PUTTERSYS_H_
+#define _DEV_PUTTER_PUTTERSYS_H_
+
 #include <sys/param.h>
-#include <sys/mutex.h>
-#include <sys/rwlock.h>
+#include <sys/proc.h>
 
-void
-mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
-{
+#include <dev/putter/putter.h>
 
-	return;
-}
+struct putter_ops {
+	int	(*pop_getout)(void *, size_t, int, uint8_t **,size_t *,void **);
+	void	(*pop_releaseout)(void *, void *, int);
+	size_t	(*pop_waitcount)(void *);
+	int	(*pop_dispatch)(void *, struct putter_hdr *);
+	int	(*pop_close)(void *);
+};
 
-void
-mutex_destroy(kmutex_t *mtx)
-{
+struct putter_instance;
+struct putter_instance	*putter_attach(pid_t, int, void *,
+				       struct putter_ops *);
+void			putter_detach(struct putter_instance *);
+void			putter_notify(struct putter_instance *);
 
-	return;
-}
-
-void
-mutex_enter(kmutex_t *mtx)
-{
-
-	return;
-}
-
-void
-mutex_exit(kmutex_t *mtx)
-{
-
-	return;
-}
-
-int
-mutex_owned(kmutex_t *mtx)
-{
-
-	return 1;
-}
-
-#define RW_UNLOCKED -1 /* XXX */
-
-void
-rw_init(krwlock_t *rw)
-{
-
-	rw->rw_locked = RW_UNLOCKED;
-}
-
-void
-rw_destroy(krwlock_t *rw)
-{
-
-}
-
-void
-rw_enter(krwlock_t *rw, const krw_t op)
-{
-
-	KASSERT(rw->rw_locked == RW_UNLOCKED);
-	rw->rw_locked = op;
-}
-
-void
-rw_exit(krwlock_t *rw)
-{
-
-	KASSERT(rw->rw_locked != RW_UNLOCKED);
-	rw->rw_locked = RW_UNLOCKED;
-}
-
-int
-rw_lock_held(krwlock_t *rw)
-{
-
-	return rw->rw_locked != RW_UNLOCKED;
-}
-
-int
-rw_tryupgrade(krwlock_t *rw)
-{
-
-	KASSERT(rw->rw_locked == RW_READER);
-	rw->rw_locked = RW_WRITER;
-
-	return 1;
-}
+#endif /* _DEV_PUTTER_PUTTERSYS_H_ */

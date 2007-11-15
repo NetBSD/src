@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149.2.5 2007/09/03 14:44:19 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.6 2007/11/15 11:45:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.5 2007/09/03 14:44:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.6 2007/11/15 11:45:20 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1839,7 +1839,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (time_second - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
+	    (time_second - np->n_attrstamp) >= nfs_attrtimeo(nmp, np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -3021,3 +3021,26 @@ nfsrv_copyfh(nfsrvfh_t *fh1, const nfsrvfh_t *fh2)
 	memcpy(NFSRVFH_DATA(fh1), NFSRVFH_DATA(fh2), size);
 }
 #endif /* defined(NFSSERVER) */
+
+#if defined(NFS)
+/*
+ * Set the attribute timeout based on how recently the file has been modified.
+ */
+
+time_t
+nfs_attrtimeo(struct nfsmount *nmp, struct nfsnode *np)
+{
+	time_t timeo;
+
+	if ((nmp->nm_flag & NFSMNT_NOAC) != 0)
+		return 0;
+
+	if (((np)->n_flag & NMODIFIED) != 0)
+		return NFS_MINATTRTIMO;
+
+	timeo = (time_second - np->n_mtime.tv_sec) / 10;
+	timeo = max(timeo, NFS_MINATTRTIMO);
+	timeo = min(timeo, NFS_MAXATTRTIMO);
+	return timeo;
+}
+#endif /* defined(NFS) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.22.2.4 2007/09/03 14:44:06 yamt Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.22.2.5 2007/11/15 11:45:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.22.2.4 2007/09/03 14:44:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.22.2.5 2007/11/15 11:45:18 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -899,7 +899,7 @@ again:
 				goto respond;
 			}
 			tpcb = sototpcb(so);
-			insque(tpcb, parent_tpcb);
+			iso_insque(tpcb, parent_tpcb);
 
 			/*
 			 * Stash the addresses in the net level pcb

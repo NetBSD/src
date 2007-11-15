@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.88.2.5 2007/10/27 11:35:23 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.88.2.6 2007/11/15 11:44:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.88.2.5 2007/10/27 11:35:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.88.2.6 2007/11/15 11:44:42 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.88.2.5 2007/10/27 11:35:23 yamt Exp 
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
@@ -325,7 +326,7 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
-	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
+	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	simple_lock(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
@@ -684,12 +685,20 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (panicstr != NULL)
 		return;
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
-	if (CURCPU_IDLE_P()) {
+	if (CURCPU_IDLE_P() && !cold) {
 		panic("assert_sleepable: idle");
 	}
 }
 #endif
 
+/*
+ * rump doesn't need the kernel lock so force it out.  We cannot
+ * currently easily include it for compilation because of
+ * a) SPINLOCK_* b) mb_write().  They are defined in different
+ * places / way for each arch, so just simply do not bother to
+ * fight a lot for no gain (i.e. pain but still no gain).
+ */
+#ifndef _RUMPKERNEL
 /*
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
@@ -878,25 +887,4 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	if (countp != NULL)
 		*countp = olocks;
 }
-
-#if defined(DEBUG)
-/*
- * Assert that the kernel lock is held.
- */
-void
-_kernel_lock_assert_locked(void)
-{
-
-	if (!__SIMPLELOCK_LOCKED_P(&kernel_lock) ||
-	    curcpu()->ci_biglock_count == 0)
-		_KERNEL_LOCK_ABORT("not locked");
-}
-
-void
-_kernel_lock_assert_unlocked()
-{
-
-	if (curcpu()->ci_biglock_count != 0)
-		_KERNEL_LOCK_ABORT("locked");
-}
-#endif
+#endif /* !_RUMPKERNEL */

@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.5.2.2 2007/10/27 11:28:28 yamt Exp $ */
+/* $NetBSD: vge.c,v 1.5.2.3 2007/11/15 11:43:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -59,45 +58,48 @@
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va)		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *vge_init(void *);
+void *vge_init(unsigned, void *);
 int vge_send(void *, char *, unsigned);
 int vge_recv(void *, char *, unsigned, unsigned);
 
 #define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define R0_FLMASK	0x3fff0000	/* frame length */
+/* RX status upon Rx completed */
 #define R0_RXOK		(1U << 15)
 #define R0_MAR		(1U << 13)	/* multicast frame */
 #define R0_BAR		(1U << 12)	/* broadcast frame */
-#define R0_PHY		(1U << 11)	/* unicast frame */
-#define R0_VTAG		(1U << 10)	/* VTAG indicator */
-#define R0_STP		(1U << 9)	/* first frame segment */
+#define R0_PHY		(1U << 11)	/* unicast frame */	 
+#define R0_VTAG		(1U << 10)	/* VTAG indicator */	
+#define R0_STP		(1U << 9)	/* first frame segment */	
 #define R0_EDP		(1U << 8)	/* last frame segment */
 #define R0_DETAG	(1U << 7)	/* VTAG has removed */
-#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */
-#define R0_SYME		(1U << 5)	/* symbol error */
-#define R0_LENE		(1U << 4)	/* frame length error */
+#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */ 
+#define R0_SYME		(1U << 5)	/* symbol error */   
+#define R0_LENE		(1U << 4)	/* frame length error */	
 #define R0_CSUME	(1U << 3)	/* TCP/IP bad csum */
 #define R0_FAE		(1U << 2)	/* frame alignment error */
-#define R0_CRCE		(1U << 1)	/* CRC error */
-#define R0_VIDM		(1U << 0)	/* VTAG filter miss */
+#define R0_CRCE		(1U << 1)	/* CRC error */	      
+#define R0_VIDM		(1U << 0)	/* VTAG filter miss */		
 #define R1_IPOK		(1U << 22)	/* IP csum was fine */
-#define R1_TUPOK	(1U << 21)	/* TCP/UDP csum was fine */
+#define R1_TUPOK	(1U << 21)	/* TCP/UDP csum was fine */	
 #define R1_FRAG		(1U << 20)	/* fragmented IP */
 #define R1_CKSMZO	(1U << 19)	/* UDP csum field was zero */
-#define R1_IPKT		(1U << 18)	/* frame was IPv4 */
-#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */
-#define R1_UPKT		(1U << 16)	/* frame was UDPv4 */
-#define R_FLMASK	0x00007ffd	/* Rx segment buffer length */
+#define R1_IPKT		(1U << 18)	/* frame was IPv4 */ 
+#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */  
+#define R1_UPKT		(1U << 16)	/* frame was UDPv4 */		
+#define R3_IC		(1U << 31)	/* post Rx interrupt */
+#define R_FLMASK	0x00003ffd	/* Rx segment buffer length */	
 
-#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
-#define T0_FLMASK	0x7fff0000	/* segment length */
-#define T0_TERR		(1U << 15)	/* Tx error summary */
-#define T0_UDF		(1U << 12)	/* found link down when Tx */
-#define T0_SHDN		(1U << 10)	/* transfer was shutdowned */
+#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */	
+#define T0_TERR		(1U << 15)	/* Tx error summary */		
+#define T0_UDF		(1U << 12)	/* found link down when Tx */	
+#define T0_SHDN		(1U << 10)	/* transfer was shutdowned */	
 #define T0_CRS		(1U << 9)	/* found carrier sense lost */
 #define T0_CDH		(1U << 8)	/* heartbeat check failure */
 #define T0_ABT		(1U << 7)	/* excessive collision Tx abort */
@@ -118,7 +120,7 @@ int vge_recv(void *, char *, unsigned, unsigned);
 #define T1_PRIO		0x0000e000	/* VLAN priority value */
 #define T1_CFI		(1U << 12)	/* VLAN CFI */
 #define T1_VID		0x00000fff	/* VLAN ID 11:0 */
-#define T_FLMASK	0x00007fff	/* Tx segment length */
+#define T_FLMASK	0x00003fff	/* Tx frame/segment length */
 
 struct tdesc {
 	uint32_t t0, t1;
@@ -190,9 +192,9 @@ struct rdesc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct tdesc *TxD;
-	struct rdesc *RxD;
-	uint8_t *rxstore[2];
+	struct tdesc TxD;
+	struct rdesc RxD[2];
+	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
 	unsigned rcr, ctl0;
@@ -203,22 +205,21 @@ static void vge_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 
 void *
-vge_init(void *cookie)
+vge_init(unsigned tag, void *data)
 {
-	unsigned tag, val, buf, i, loop, chipgcr;
+	unsigned val, i, loop, chipgcr;
 	struct local *l;
 	struct tdesc *TxD;
 	struct rdesc *RxD;
 	uint8_t *en;
 
-	if (pcifinddev(0x1106, 0x3119, &tag) != 0) {
-		printf("vge NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3119)
 		return NULL;
-	}
 
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, 256);   /* tdesc alignment */
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VGE_CTL1, val);
@@ -229,7 +230,7 @@ vge_init(void *cookie)
 	l->phy = CSR_READ_1(l, VGE_MIICFG) & 0x1f;
 	mii_initphy(l);
 
-	en = cookie;
+	en = data;
 	en[0] = CSR_READ_1(l, VGE_PAR0);
 	en[1] = CSR_READ_1(l, VGE_PAR1);
 	en[2] = CSR_READ_1(l, VGE_PAR2);
@@ -241,17 +242,8 @@ vge_init(void *cookie)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
-	val = (sizeof(struct tdesc) + 2 * sizeof(struct rdesc));
-	buf = (unsigned)alloc(val + 256);
-	buf &= ~0xff; /* 256B alignment required */
-	memset((void *)buf, 0, val);
-	l->TxD = TxD = (struct tdesc *)buf;
-	l->RxD = RxD = (struct rdesc *)&TxD[1];
-	buf = (unsigned)alloc(2 * FRAMESIZE + 8);
-	buf &= ~07; /* 8B alignment */
-	l->rxstore[0] = (uint8_t *)buf;
-	l->rxstore[1] = (uint8_t *)(buf + FRAMESIZE);
-
+	TxD = &l->TxD;
+	RxD = &l->RxD[0];
 	RxD[0].r0 = htole32(R0_OWN);
 	RxD[0].r1 = 0;
 	RxD[0].r2 = htole32(VTOPHYS(l->rxstore[0]));
@@ -326,11 +318,12 @@ vge_send(void *dev, char *buf, unsigned len)
 	int loop;
 	
 	wbinv(buf, len);
-	TxD = l->TxD;
+	len = (len & T_FLMASK);
+	TxD = &l->TxD;
 	TxD->tf[0].lo = htole32(VTOPHYS(buf));
-	TxD->tf[0].hi = htole32(1 << 16);
+	TxD->tf[0].hi = htole32(len << 16);
 	TxD->t1 = htole32(T1_SOF | T1_EOF | 1 << 28);
-	TxD->t0 = htole32(T0_OWN);
+	TxD->t0 = htole32(T0_OWN | len << 16);
 	wbinv(TxD, sizeof(struct tdesc));
 	loop = 100;
 	do {

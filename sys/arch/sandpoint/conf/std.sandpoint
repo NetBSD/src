@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.9.16.2 2007/10/27 11:28:15 yamt Exp $
+#	$NetBSD: std.sandpoint,v 1.9.16.3 2007/11/15 11:43:19 yamt Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
@@ -18,4 +18,3 @@ options 	PIC_I8259
 options 	INTSTK=0x2000
 
 makeoptions	TEXTADDR=0x90000
-makeoptions	NEED_SREC=yes

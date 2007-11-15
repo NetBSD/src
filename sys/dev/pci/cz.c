@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.32.2.3 2007/09/03 14:36:46 yamt Exp $	*/
+/*	$NetBSD: cz.c,v 1.32.2.4 2007/11/15 11:44:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32.2.3 2007/09/03 14:36:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.32.2.4 2007/11/15 11:44:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,7 +739,9 @@ cz_intr(void *arg)
 				/*
 				 * Do wakeup stuff here.
 				 */
+				mutex_spin_enter(&tty_lock); /* XXX */
 				ttwakeup(tp);
+				mutex_spin_exit(&tty_lock); /* XXX */
 				wakeup(tp);
 			}
 			break;
@@ -760,7 +762,9 @@ cz_intr(void *arg)
 				/*
 				 * Do wakeup stuff here.
 				 */
+				mutex_spin_enter(&tty_lock); /* XXX */
 				ttwakeup(tp);
+				mutex_spin_exit(&tty_lock); /* XXX */
 				wakeup(tp);
 			}
 			break;
@@ -808,7 +812,9 @@ cz_intr(void *arg)
 			 * flags set. So TTY_FE by itself works.
 			 */
 			(*tp->t_linesw->l_rint)(TTY_FE, tp);
+			mutex_spin_enter(&tty_lock); /* XXX */
 			ttwakeup(tp);
+			mutex_spin_exit(&tty_lock); /* XXX */
 			wakeup(tp);
 			break;
 

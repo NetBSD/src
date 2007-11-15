@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.8.4 2007/09/03 14:30:44 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.8.5 2007/11/15 11:43:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -185,6 +185,7 @@ _getsr(void)
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
 #define splzs()		splraise6()
 #define splserial()	splraise6()
+#define	IPL_ZS		IPL_SERIAL
 
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()

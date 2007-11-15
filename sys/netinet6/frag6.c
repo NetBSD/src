@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.26.16.4 2007/09/03 14:43:17 yamt Exp $	*/
+/*	$NetBSD: frag6.c,v 1.26.16.5 2007/11/15 11:45:09 yamt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26.16.4 2007/09/03 14:43:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26.16.5 2007/11/15 11:45:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,26 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26.16.4 2007/09/03 14:43:17 yamt Exp $")
 
 #include <net/net_osdep.h>
 
-/*
- * Define it to get a correct behavior on per-interface statistics.
- * You will need to perform an extra routing table lookup, per fragment,
- * to do it.  This may, or may not be, a performance hit.
- */
-#define IN6_IFSTAT_STRICT
-
-static void frag6_enq __P((struct ip6asfrag *, struct ip6asfrag *));
-static void frag6_deq __P((struct ip6asfrag *));
-static void frag6_insque __P((struct ip6q *, struct ip6q *));
-static void frag6_remque __P((struct ip6q *));
-static void frag6_freef __P((struct ip6q *));
+static void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
+static void frag6_deq(struct ip6asfrag *);
+static void frag6_insque(struct ip6q *, struct ip6q *);
+static void frag6_remque(struct ip6q *);
+static void frag6_freef(struct ip6q *);
 
 static int ip6q_locked;
 u_int frag6_nfragpackets;
 u_int frag6_nfrags;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
 
-static inline int ip6q_lock_try __P((void));
-static inline void ip6q_unlock __P((void));
+static inline int ip6q_lock_try(void);
+static inline void ip6q_unlock(void);
 
 static inline int
 ip6q_lock_try()
@@ -186,13 +179,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	int first_frag = 0;
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
 	struct ifnet *dstifp;
-#ifdef IN6_IFSTAT_STRICT
 	static struct route ro;
 	union {
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-#endif
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(ip6f, struct ip6_frag *, m, offset, sizeof(*ip6f));
@@ -200,17 +191,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 
 	dstifp = NULL;
-#ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
 	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
 	rtcache_lookup(&ro, &u.dst);
 	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
 		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
-#else
-	/* we are violating the spec, this is not the destination interface */
-	if ((m->m_flags & M_PKTHDR) != 0)
-		dstifp = m->m_pkthdr.rcvif;
-#endif
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
