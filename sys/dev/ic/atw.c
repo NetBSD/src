@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.130 2007/10/19 11:59:48 ad Exp $  */
+/*	$NetBSD: atw.c,v 1.131 2007/11/15 22:49:46 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.130 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.131 2007/11/15 22:49:46 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3173,10 +3173,7 @@ atw_rxintr(struct atw_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
-		if (rate0 >= sizeof(rate_tbl) / sizeof(rate_tbl[0]))
-			rate = 0;
-		else
-			rate = rate_tbl[rate0];
+		rate = (rate0 < __arraycount(rate_tbl)) ? rate_tbl[rate0] : 0;
 
 		/* The RSSI comes straight from a register in the
 		 * baseband processor.  I know that for the RF3000,
