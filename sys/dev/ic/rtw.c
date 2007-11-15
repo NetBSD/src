@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.91 2007/10/19 12:00:00 ad Exp $ */
+/* $NetBSD: rtw.c,v 1.92 2007/11/15 22:55:50 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.91 2007/10/19 12:00:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.92 2007/11/15 22:55:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1345,6 +1345,10 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	uint32_t ctl, octl, obuf;
 	struct rtw_rxdesc *rd = &rdb->rdb_desc[idx];
 
+	/* sync the mbuf before the descriptor */
+	bus_dmamap_sync(rdb->rdb_dmat, rs->rs_dmamap, 0,
+	    rs->rs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+
 	obuf = rd->rd_buf;
 	rd->rd_buf = htole32(rs->rs_dmamap->dm_segs[0].ds_addr);
 
@@ -1363,10 +1367,6 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	    ("%s: rd %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, rd,
 	     le32toh(obuf), le32toh(rd->rd_buf), le32toh(octl),
 	     le32toh(rd->rd_ctl)));
-
-	/* sync the mbuf */
-	bus_dmamap_sync(rdb->rdb_dmat, rs->rs_dmamap, 0,
-	    rs->rs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* sync the descriptor */
 	bus_dmamap_sync(rdb->rdb_dmat, rdb->rdb_dmamap,
@@ -1722,7 +1722,7 @@ rtw_reset_oactive(struct rtw_softc *sc)
 }
 
 /* Collect transmitted packets. */
-static inline void
+static void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
     struct rtw_txdesc_blk *tdb, int force)
 {
@@ -3350,11 +3350,12 @@ rtw_start(struct ifnet *ifp)
 			}
 			td = &tdb->tdb_desc[desc];
 			td->td_ctl0 = htole32(ctl0);
-			if (i != 0)
-				td->td_ctl0 |= htole32(RTW_TXCTL0_OWN);
 			td->td_ctl1 = htole32(ctl1);
 			td->td_buf = htole32(dmamap->dm_segs[i].ds_addr);
 			td->td_len = htole32(dmamap->dm_segs[i].ds_len);
+			td->td_next = htole32(RTW_NEXT_DESC(tdb, desc));
+			if (i != 0)
+				td->td_ctl0 |= htole32(RTW_TXCTL0_OWN);
 			lastdesc = desc;
 #ifdef RTW_DEBUG
 			rtw_print_txdesc(sc, "load", ts, tdb, desc);
