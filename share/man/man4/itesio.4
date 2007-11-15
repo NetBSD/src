@@ -1,4 +1,4 @@
-.\"	$NetBSD: it.4,v 1.5 2007/07/05 16:00:39 xtraeme Exp $
+.\"	$NetBSD: itesio.4,v 1.1 2007/11/15 12:53:40 xtraeme Exp $
 .\"     $OpenBSD: it.4,v 1.7 2006/03/29 14:10:51 jsg Exp $
 .\"
 .\" Copyright (c) 2006-2007 Juan Romero Pardines <juan@xtrarom.org>
@@ -26,21 +26,19 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 4, 2007
-.Dt IT 4
+.Dt ITSIO 4
 .Os
 .Sh NAME
 .Nm it
-.Nd ITE IT8705F, IT8712F, IT8716F and SiS950 hardware monitors
+.Nd ITE IT87xxF and compatibles Super I/O
 .Sh SYNOPSIS
-.Cd "it0 at isa? port 0x290"
+.Cd "itsio0 at isa? port 0x2e"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the
-.Tn IT8705F , IT8712F , IT8716F
-and
-.Tn SiS950
-hardware monitors to be used with the
+driver provides support for the Hardware monitor part of the
+.Tn IT87xxF
+and compatibles Super I/O to be used with the
 .Xr envsys 4
 interface.
 .Pp
@@ -68,14 +66,6 @@ driver has 15 sensors:
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr envstat 8
-.Sh NOTES
-By default the
-.Nm
-driver uses the port address
-.Tn 0x290
-but another manufacturers are known to use
-.Tn 0xc00 or 0xd00
-port addresses.
 .Sh HISTORY
 The
 .Nm
