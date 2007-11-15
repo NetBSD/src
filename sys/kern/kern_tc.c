@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.23 2007/11/15 22:28:05 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.24 2007/11/15 23:16:55 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.23 2007/11/15 22:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.24 2007/11/15 23:16:55 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -275,10 +275,8 @@ binuptime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		*bt = th->th_offset;
 		bintime_addx(bt, th->th_scale * tc_delta(th));
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -341,9 +339,7 @@ getbinuptime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		*bt = th->th_offset;
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -357,9 +353,7 @@ getnanouptime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		bintime2timespec(&th->th_offset, tsp);
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -373,9 +367,7 @@ getmicrouptime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		bintime2timeval(&th->th_offset, tvp);
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -389,9 +381,7 @@ getbintime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		*bt = th->th_offset;
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 	bintime_add(bt, &timebasebin);
 }
@@ -406,9 +396,7 @@ getnanotime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		*tsp = th->th_nanotime;
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -422,9 +410,7 @@ getmicrotime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		mb_read();
 		*tvp = th->th_microtime;
-		mb_read();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -464,7 +450,8 @@ tc_init(struct timecounter *tc)
 	 * worse since this timecounter may not be monotonous.
 	 */
 	if (tc->tc_quality >= 0 && (tc->tc_quality > timecounter->tc_quality ||
-	    tc->tc_frequency > timecounter->tc_frequency)) {
+	    (tc->tc_quality == timecounter->tc_quality &&
+	    tc->tc_frequency > timecounter->tc_frequency))) {
 		(void)tc->tc_get_timecount(tc);
 		(void)tc->tc_get_timecount(tc);
 		timecounter = tc;
@@ -648,6 +635,16 @@ tc_windup(void)
 	time_uptime = th->th_offset.sec;
 	mb_write();
 	timehands = th;
+
+	/*
+	 * Force users of the old timehand to move on.  This is
+	 * necessary for MP systems; we need to ensure that the
+	 * consumers will move away from the old timehand before
+	 * we begin updating it again when we eventually wrap
+	 * around.
+	 */
+	if (++tho->th_generation == 0)
+		tho->th_generation = 1;
 }
 
 /*
