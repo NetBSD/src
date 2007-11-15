@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.14 2007/11/15 11:45:32 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.15 2007/11/15 14:39:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct _m_ext_storage {
 	kmutex_t ext_lock;
-	int ext_refcnt;
+	unsigned int ext_refcnt;
 	int ext_flags;
 	char *ext_buf;			/* start of buffer */
 	void (*ext_free)		/* free routine if not the usual */
