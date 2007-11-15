@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.14 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.15 2007/11/15 12:59:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -81,6 +81,7 @@
  * Inode 3 to 10 are reserved in ext2fs.
  */
 #define	EXT2_ROOTINO ((ino_t)2)
+#define	EXT2_RESIZEINO ((ino_t)7)
 #define EXT2_FIRSTINO ((ino_t)11)
 
 /*
