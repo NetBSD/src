@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.22 2007/11/15 20:12:04 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.23 2007/11/15 22:28:05 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.22 2007/11/15 20:12:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.23 2007/11/15 22:28:05 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -134,6 +134,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 
 	if (!cold)
 		mutex_enter(&time_lock);
+	error = EINVAL;
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
@@ -142,8 +143,8 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		(void)newtc->tc_get_timecount(newtc);
 		timecounter = newtc;
 		error = 0;
-	} else
-		error = EINVAL;
+		break;
+	}
 	if (!cold)
 		mutex_exit(&time_lock);
 	return error;
