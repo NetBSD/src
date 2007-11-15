@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2007/11/14 17:55:01 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2007/11/15 19:18:34 ad Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,9 +61,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2007/11/14 17:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2007/11/15 19:18:34 ad Exp $");
 
-#include "opt_cputype.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #include "opt_lockdebug.h"
@@ -4011,24 +4010,6 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			__cpu_simple_unlock(&pq->pq_slock);
 			continue;
 		}
-
-#ifdef I386_CPU
-		/*
-		 * i386 CPUs can't invalidate a single VA, only
-		 * flush the entire TLB, so don't bother allocating
-		 * jobs for them -- just queue a `flushu'.
-		 *
-		 * XXX note that this can be executed for non-i386
-		 * when called * early (before identifycpu() has set
-		 * cpu_class)
-		 */
-		if (cpu_class == CPUCLASS_386) {
-			pq->pq_flushu++;
-			*cpumaskp |= 1U << ci->ci_cpuid;
-			__cpu_simple_unlock(&pq->pq_slock);
-			continue;
-		}
-#endif
 
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
