@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.23 2007/11/13 13:50:18 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.24 2007/11/15 12:59:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -169,7 +169,7 @@ struct ext2fs {
 	u_int32_t  e2fs_algo;		/* For compression */
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
-	u_int16_t  pad1;
+	u_int16_t  e2fs_reserved_ngdb; /* # of reserved gd blocks for resize */
 	u_int32_t  reserved2[204];
 };
 
@@ -203,6 +203,7 @@ struct m_ext2fs {
 
 /* compatible/incompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_RESIZE		0x0010
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
