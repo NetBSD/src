@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.17 2007/11/15 13:59:39 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.18 2007/11/15 14:00:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.17 2007/11/15 13:59:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.18 2007/11/15 14:00:51 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1461,7 +1461,6 @@ m_getptr(struct mbuf *m, int loc, int *off)
  * m_ext_free: release a reference to the mbuf external storage.
  *
  * => free the mbuf m itsself as well.
- * => called at splvm.
  */
 
 void
