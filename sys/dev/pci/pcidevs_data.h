@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.914 2007/11/14 12:27:35 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.915 2007/11/15 04:34:23 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.914 2007/11/14 12:27:18 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.915 2007/11/15 04:33:50 manu Exp
  */
 
 /*
@@ -6528,8 +6528,8 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88EC042",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_CO55,
-	    "Yukon 88ECO55",
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C055,
+	    "Yukon 88EC055",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
