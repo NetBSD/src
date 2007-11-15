@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.28.4.4 2007/09/03 14:41:55 yamt Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.28.4.5 2007/11/15 11:45:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.4 2007/09/03 14:41:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.5 2007/11/15 11:45:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ procfs_control(curl, l, op, sig, pfs)
 		 * Wait for the target process to stop.
 		 */
 		while (l->l_stat != LSSTOP && P_ZOMBIE(p)) {
-			error = tsleep(l, PWAIT|PCATCH, "procfsx", 0);
+			error = tsleep(l, PWAIT|PCATCH, "procfsx", hz);
 			if (error)
 				break;
 		}

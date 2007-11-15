@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.28.2.3 2007/09/03 14:32:47 yamt Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.28.2.4 2007/11/15 11:43:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.28.2.3 2007/09/03 14:32:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.28.2.4 2007/11/15 11:43:56 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.28.2.3 2007/09/03 14:32:47 yamt Ex
 
 #include <compat/pecoff/pecoff_exec.h>
 #include <compat/pecoff/pecoff_util.h>
-#include <compat/pecoff/pecoff_syscall.h>
 
 int pecoff_signature (struct lwp *l, struct vnode *vp,
 		      struct pecoff_dos_filehdr *dp);

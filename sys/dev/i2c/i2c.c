@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.3.12.4 2007/09/03 14:34:03 yamt Exp $	*/
+/*	$NetBSD: i2c.c,v 1.3.12.5 2007/11/15 11:44:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -109,11 +109,8 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
-	i2c_addr_t addr;
 	i2c_tag_t ic;
 	int rv;
-	int found = 0;
-	uint8_t cmd = 0, val;
 
 	aprint_naive(": I2C bus\n");
 	aprint_normal(": I2C bus\n");
@@ -131,7 +128,12 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	if (rv)
 		printf("%s: unable to create intr thread\n", ic->ic_devname);
 
+#if notyet
 	if (sc->sc_type == I2C_TYPE_SMBUS) {
+		int found = 0;
+		i2c_addr_t addr;
+		uint8_t cmd = 0, val;
+
 		for (addr = 0x0; addr < 0x80; addr++) {
 			iic_acquire_bus(ic, 0);
 			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
@@ -148,6 +150,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 			aprint_normal("%s: no devices found", ic->ic_devname);
 		aprint_normal("\n");
 	}
+#endif
 
 	/*
 	 * Attach all i2c devices described in the kernel

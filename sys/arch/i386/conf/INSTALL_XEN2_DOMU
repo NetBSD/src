@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.6 2007/10/27 11:26:26 yamt Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.7 2007/11/15 11:42:50 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -16,9 +16,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-options 	I686_CPU
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation

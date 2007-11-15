@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.3.8.2 2007/09/03 14:44:53 yamt Exp $	*/
+/*	$NetBSD: lfs.c,v 1.3.8.3 2007/11/15 11:45:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
 
-	rv = p2k_run_fs(MOUNT_LFS, argv[0], argv[1], mntflags | MNT_RDONLY,
+	rv = p2k_run_fs(MOUNT_LFS, argv[0], argv[1], mntflags,
 	    &args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");

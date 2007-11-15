@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.18.3 2007/10/27 11:35:24 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.18.4 2007/11/15 11:44:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.18.3 2007/10/27 11:35:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.18.4 2007/11/15 11:44:43 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -314,11 +314,18 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	switch (type) {
 	case MUTEX_ADAPTIVE:
-	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
 		break;
+	case MUTEX_DEFAULT:
 	case MUTEX_DRIVER:
-		type = (ipl == IPL_NONE ? MUTEX_ADAPTIVE : MUTEX_SPIN);
+		switch (ipl) {
+		case IPL_NONE:
+			type = MUTEX_ADAPTIVE;
+			break;
+		default:
+			type = MUTEX_SPIN;
+			break;
+		}
 		break;
 	default:
 		break;
@@ -331,7 +338,6 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
 		break;
 	case MUTEX_ADAPTIVE:
-	case MUTEX_DEFAULT:
 		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
 		    (uintptr_t)__builtin_return_address(0));
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
@@ -595,7 +601,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   or preempted).
 		 *
 		 * o At any given time, MUTEX_SET_WAITERS() can only ever
-		 *   be in progress on one CPU in the system - guarenteed
+		 *   be in progress on one CPU in the system - guaranteed
 		 *   by the turnstile chain lock.
 		 *
 		 * o No other operations other than MUTEX_SET_WAITERS()

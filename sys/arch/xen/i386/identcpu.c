@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.6.2.3 2007/10/27 11:29:07 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.6.2.4 2007/11/15 11:43:44 yamt Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6.2.3 2007/10/27 11:29:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6.2.4 2007/11/15 11:43:44 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -587,13 +587,11 @@ void
 winchip_cpu_setup(ci)
 	struct cpu_info *ci;
 {
-#if defined(I586_CPU)
 	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
 		cpu_feature &= ~CPUID_TSC;
 		printf("WARNING: WinChip C6: broken TSC disabled\n");
 	}
-#endif
 }
 
 void
@@ -1240,36 +1238,6 @@ identifycpu(struct cpu_info *ci)
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
-#error No CPU classes configured.
-#endif
-#ifndef I686_CPU
-	case CPUCLASS_686:
-		printf(n_support, "Pentium Pro");
-#ifdef I586_CPU
-		printf(n_lower, "i586");
-		cpu_class = CPUCLASS_586;
-		break;
-#endif
-#endif
-#ifndef I586_CPU
-	case CPUCLASS_586:
-		printf(n_support, "Pentium");
-#ifdef I486_CPU
-		printf(n_lower, "i486");
-		cpu_class = CPUCLASS_486;
-		break;
-#endif
-#endif
-#ifndef I486_CPU
-	case CPUCLASS_486:
-		printf(n_support, "i486");
-#ifdef I386_CPU
-		printf(n_lower, "i386");
-		cpu_class = CPUCLASS_386;
-		break;
-#endif
-#endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
 		printf(n_support, "i386");
@@ -1284,21 +1252,11 @@ identifycpu(struct cpu_info *ci)
 	 * might have.
 	 */
 	switch (cpu_class) {
-#if defined(I686_CPU)
 	case CPUCLASS_686:
-		copyout_func = i486_copyout;
-		break;
-#endif
-#if defined(I586_CPU)
 	case CPUCLASS_586:
-		copyout_func = i486_copyout;
-		break;
-#endif
-#if defined(I486_CPU)
 	case CPUCLASS_486:
 		copyout_func = i486_copyout;
 		break;
-#endif
 	default:
 		/* We just inherit the default i386 versions. */
 		break;
@@ -1316,7 +1274,6 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-#if defined(I686_CPU)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
@@ -1335,5 +1292,4 @@ identifycpu(struct cpu_info *ci)
 		}
 	} else
 		i386_use_fxsave = 0;
-#endif /* I686_CPU */
 }

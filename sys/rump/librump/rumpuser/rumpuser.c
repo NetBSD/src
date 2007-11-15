@@ -1,9 +1,10 @@
-/*	$NetBSD: rumpuser.c,v 1.6.6.3 2007/10/27 11:36:25 yamt Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.6.6.4 2007/11/15 11:45:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by Google Summer of Code
+ * and the Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,8 +47,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
@@ -152,18 +154,42 @@ rumpuser_fsync(int fd, int *error)
 	DOCALL(int, fsync(fd));
 }
 
-ssize_t
-rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
+void
+rumpuser_read(int fd, void *data, size_t size, off_t offset,
+	void *biodonecookie)
 {
+	ssize_t rv;
+	int error;
 
-	DOCALL(ssize_t, (pread(fd, data, size, offset)));
+	error = 0;
+	rv = pread(fd, data, size, offset);
+
+	/* check against <0 instead of ==-1 to get typing below right */
+	if (rv < 0) {
+		error = errno;
+		rv = 0;
+	}
+
+	rump_biodone(biodonecookie, rv, error);
 }
 
-ssize_t
-rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
+void
+rumpuser_write(int fd, const void *data, size_t size, off_t offset,
+	void *biodonecookie)
 {
+	ssize_t rv;
+	int error;
 
-	DOCALL(ssize_t, (pwrite(fd, data, size, offset)));
+	error = 0;
+	rv = pwrite(fd, data, size, offset);
+
+	/* check against <0 instead of ==-1 to get typing below right */
+	if (rv < 0) {
+		error = errno;
+		rv = 0;
+	}
+
+	rump_biodone(biodonecookie, rv, error);
 }
 
 int

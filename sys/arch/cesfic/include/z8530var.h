@@ -1,4 +1,4 @@
-/* $NetBSD: z8530var.h,v 1.1.40.1 2007/09/03 14:23:49 yamt Exp $ */
+/* $NetBSD: z8530var.h,v 1.1.40.2 2007/11/15 11:42:38 yamt Exp $ */
 
 #include <dev/ic/z8530sc.h>
 
@@ -19,3 +19,5 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* Interrupt priority for the SCC chip; needs to match ZSHARD_PRI. */
 #define splzs()		spl4()
+#define	IPL_ZS		IPL_HIGH
+

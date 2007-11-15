@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.4.2.2 2007/10/27 11:35:34 yamt Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.4.2.3 2007/11/15 11:44:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.4.2.2 2007/10/27 11:35:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.4.2.3 2007/11/15 11:44:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.4.2.2 2007/10/27 11:35:34 yamt Exp 
 #include <sys/evcnt.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
-
-#define	PRI_XCALL	0
 
 static void	xc_thread(void *);
 static uint64_t	xc_lowpri(u_int, xcfunc_t, void *, void *, struct cpu_info *);

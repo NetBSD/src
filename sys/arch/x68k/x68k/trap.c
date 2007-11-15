@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75.2.4 2007/09/03 14:31:17 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.75.2.5 2007/11/15 11:43:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75.2.4 2007/09/03 14:31:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75.2.5 2007/11/15 11:43:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -274,7 +274,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

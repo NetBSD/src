@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.21.12.3 2007/09/03 14:44:05 yamt Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.21.12.4 2007/11/15 11:45:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -160,6 +160,8 @@ int iso_eqtype (struct iso_addr *, struct iso_addr *);
 struct iso_ifaddr *iso_localifa (const struct sockaddr_iso *);
 int iso_nlctloutput (int, int, void *, struct mbuf *);
 void dump_isoaddr(const struct sockaddr_iso *);
+void iso_insque(void *, void *);
+void iso_remque(void *);
 
 /* iso_chksum.c */
 int iso_check_csum (struct mbuf *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7.6.1 2007/11/15 11:43:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,3 +116,4 @@ int zs_get_speed(struct zs_chanstate *);
 void (*zs_delay)(void);
 
 #define splzs()		splserial()
+#define	IPL_ZS		IPL_SERIAL

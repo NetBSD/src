@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.16.2.3 2007/10/27 11:34:22 yamt Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.16.2.4 2007/11/15 11:44:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -44,7 +44,7 @@ enum sme_description_types {
 	SME_DESC_UNITS = 1,
 	SME_DESC_STATES,
 	SME_DESC_DRIVE_STATES,
-	SME_DESC_BATTERY_STATES
+	SME_DESC_BATTERY_CAPACITY
 };
 
 #ifdef ENVSYS_DEBUG
@@ -114,6 +114,7 @@ int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 prop_dictionary_t sme_sensor_dictionary_get(prop_array_t, const char *);
+struct	sysmon_envsys *sysmon_envsys_find(const char *);
 
 /* functions to handle sysmon envsys events */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *, const char *,

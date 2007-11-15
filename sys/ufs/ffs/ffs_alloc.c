@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.84.2.5 2007/10/27 11:36:41 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.84.2.6 2007/11/15 11:45:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.84.2.5 2007/10/27 11:36:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.84.2.6 2007/11/15 11:45:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1520,6 +1520,7 @@ gotit:
 	 * Check to see if we need to initialize more inodes.
 	 */
 	initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
+	ibp = NULL;
 	if (fs->fs_magic == FS_UFS2_MAGIC &&
 	    ipref + INOPB(fs) > initediblk &&
 	    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
@@ -1536,7 +1537,6 @@ gotit:
 			dp2->di_gen = (arc4random() & INT32_MAX) / 2 + 1;
 			dp2++;
 		}
-		bawrite(ibp);
 		initediblk += INOPB(fs);
 		cgp->cg_initediblk = ufs_rw32(initediblk, needswap);
 	}
@@ -1557,6 +1557,8 @@ gotit:
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
 	bdwrite(bp);
+	if (ibp != NULL)
+		bawrite(ibp);
 	return (cg * fs->fs_ipg + ipref);
  fail:
 	brelse(bp, 0);

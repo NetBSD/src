@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.3.6.5 2007/10/27 11:32:56 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.3.6.6 2007/11/15 11:44:21 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ static const struct msk_product {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_CO55 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C055 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
@@ -685,7 +685,7 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
 
 	if (__predict_true(m != NULL))
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.16.2.5 2007/10/27 11:35:11 yamt Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.16.2.6 2007/11/15 11:44:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -74,8 +74,6 @@ extern int puffsdebug; /* puffs_subr.c */
 #define VPTOPP(vp) ((struct puffs_node *)(vp)->v_data)
 #define VPTOPNC(vp) (((struct puffs_node *)(vp)->v_data)->pn_cookie)
 #define VPTOPUFFSMP(vp) ((struct puffs_mount*)((struct puffs_node*)vp->v_data))
-#define FPTOPMP(fp) (((struct puffs_instance *)fp->f_data)->pi_pmp)
-#define FPTOPI(fp) ((struct puffs_instance *)fp->f_data)
 
 /* we don't pass the kernel overlay to userspace */
 #define PUFFS_TOFHSIZE(s) ((s)==0 ? (s) : (s)+4)
@@ -129,7 +127,7 @@ struct puffs_mount {
 	vsize_t				pmp_root_vsize;
 	dev_t				pmp_root_rdev;
 
-	struct selinfo			*pmp_sel;	/* in puffs_instance */
+	struct putter_instance		*pmp_pi;
 
 	unsigned int			pmp_refcount;
 	kcondvar_t			pmp_refcount_cv;
@@ -190,9 +188,6 @@ struct puffs_node {
 
 typedef void (*parkdone_fn)(struct puffs_mount *, struct puffs_req *, void *);
 
-void	puffs_transport_init(void);
-void	puffs_transport_destroy(void);
-
 struct puffs_msgpark;
 void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
@@ -242,14 +237,7 @@ void	puffs_updatenode(struct vnode *, int);
 #define PUFFS_UPDATEMTIME	0x04
 #define PUFFS_UPDATESIZE	0x08
 
-int	puffs_setpmp(pid_t, int, struct puffs_mount *);
-void	puffs_nukebypmp(struct puffs_mount *);
-
-void		puffs_userdead(struct puffs_mount *);
-
-/* get/put called by ioctl handler */
-int	puffs_getop(struct puffs_mount *, struct puffs_reqh_get *, int);
-int	puffs_putop(struct puffs_mount *, struct puffs_reqh_put *);
+void	puffs_userdead(struct puffs_mount *);
 
 extern int (**puffs_vnodeop_p)(void *);
 
@@ -257,7 +245,9 @@ MALLOC_DECLARE(M_PUFFS);
 
 int	puffs_msgif_getout(void *, size_t, int, uint8_t **, size_t *, void **);
 void	puffs_msgif_releaseout(void *, void *, int);
-void	puffs_msgif_incoming(void *, void *);
+int	puffs_msgif_dispatch(void *, struct putter_hdr *);
+size_t	puffs_msgif_waitcount(void *);
+int	puffs_msgif_close(void *);
 
 static __inline int
 checkerr(struct puffs_mount *pmp, int error, const char *str)

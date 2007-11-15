@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.11.2.3 2007/09/03 14:26:24 yamt Exp $	*/
+/*	$NetBSD: trap.S,v 1.11.2.4 2007/11/15 11:42:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -717,11 +717,11 @@ os_hpmc:
  * Otherwise, we set up the kernel context, move onto the 
  * emergency stack, and call hppa_machine_check.
  */
-ENTRY(os_toc, 0)
+ENTRY_NOPROFILE(os_toc, 0)
 	/* This loads %arg0 and nullifies the next instruction. */
 	addi,tr	T_INTERRUPT, %r0, %arg0
 EXIT(os_toc)
-ENTRY(TLABEL(hpmc),0)
+ENTRY_NOPROFILE(TLABEL(hpmc),0)
 ALTENTRY(os_hpmc_cont)
 	ldi	T_HPMC, %arg0
 	
@@ -837,7 +837,7 @@ EXIT(TLABEL(hpmc))
  * emulate FPU coprocessor, and dispatch accordingly.
  */
 	.export TLABEL(emu), entry
-LEAF_ENTRY(TLABEL(emu))
+LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 
 	/*
 	 * Save %arg0 and load it with the instruction
@@ -1014,7 +1014,7 @@ EXIT(TLABEL(emu))
  * or
  * void hppa_fpu_swap(struct pcb *out, NULL);
  */
-LEAF_ENTRY(hppa_fpu_swap)
+LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 
 	/*
 	 * Note that this function must work in 
@@ -1195,7 +1195,7 @@ EXIT(hppa_fpu_swap)
  * int desidhash_s(void)
  */
 	.align	64
-LEAF_ENTRY(desidhash_s)
+LEAF_ENTRY_NOPROFILE(desidhash_s)
 ALTENTRY(desidhash_x)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
@@ -1215,7 +1215,7 @@ EXIT(desidhash_s)
  * int desidhash_t(void)
  */
 	.align	64
-LEAF_ENTRY(desidhash_t)
+LEAF_ENTRY_NOPROFILE(desidhash_t)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
 	depi	0, DR0_PCXT_IHE, 1, %t1
@@ -1502,7 +1502,7 @@ $flush_writable_itlb_t:
  * int
  * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
  */
-LEAF_ENTRY(ibtlb_l)
+LEAF_ENTRY_NOPROFILE(ibtlb_l)
 	rsm	(PSW_R|PSW_I), %t4
 
 	bv	0(%rp)
@@ -1513,7 +1513,7 @@ EXIT(ibtlb_l)
  * int
  * pbtlb_l(int i)
  */
-LEAF_ENTRY(pbtlb_l)
+LEAF_ENTRY_NOPROFILE(pbtlb_l)
 	; DR_PAGE0
 	rsm	(PSW_R|PSW_I), %t4
 	ldil	L%0xc041, %t1
@@ -1531,7 +1531,7 @@ EXIT(pbtlb_l)
 /*
  * int desidhash_l(void)
  */
-LEAF_ENTRY(desidhash_l)
+LEAF_ENTRY_NOPROFILE(desidhash_l)
 	MFCPU_C(DR_CPUCFG,22)	/* t1 */
 	depi	0, DR0_PCXL_L2IHASH_EN, 2, %t1	/* + DR0_PCXL_L2DHASH_EN */
 	depi	0, DR0_PCXL_L2IHPMC, 1, %t1	/* don't reset */
@@ -1864,7 +1864,7 @@ $tlb_missend:
 
 	.align	64
 	.export	TLABEL(all), entry
-ENTRY(TLABEL(all),0)
+ENTRY_NOPROFILE(TLABEL(all),0)
 	/* r1 still has trap type */
 
 	/*
@@ -2204,7 +2204,7 @@ EXIT(TLABEL(all))
 
 	.align	32
 	.export	TLABEL(ibrk), entry
-ENTRY(TLABEL(ibrk),0)
+ENTRY_NOPROFILE(TLABEL(ibrk),0)
 	mtctl	%t1, %tr2
 	mtctl	%t2, %tr3
 

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.16.2.4 2007/10/27 11:30:01 yamt Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.16.2.5 2007/11/15 11:44:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.16.2.4 2007/10/27 11:30:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.16.2.5 2007/11/15 11:44:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,8 +589,8 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 	}
 #define INITDATA(index, unit, string) \
 	sc->sc_data[index].units = unit;				   \
-	snprintf(sc->sc_data[index].desc, sizeof(sc->sc_data[index].desc), \
-	    "%s %s", sc->sc_dev.dv_xname, string);
+	strlcpy(sc->sc_data[index].desc, string,			   \
+	    sizeof(sc->sc_data[index].desc));
 
 	INITDATA(ATZ_SENSOR_TEMP, ENVSYS_STEMP, "temperature");
 

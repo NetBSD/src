@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.16.2.3 2007/10/27 11:35:30 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.16.2.4 2007/11/15 11:44:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.3 2007/10/27 11:35:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.4 2007/11/15 11:44:45 yamt Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -217,9 +217,9 @@ callout_barrier(callout_impl_t *c)
 		ci->ci_data.cpu_callout_nwait++;
 		callout_ev_block.ev_count++;
 
+		l->l_kpriority = true;
 		sleepq_enter(&callout_sleepq, l);
-		sleepq_enqueue(&callout_sleepq, sched_kpri(l), ci,
-		    "callout", &sleep_syncobj);
+		sleepq_enqueue(&callout_sleepq, ci, "callout", &sleep_syncobj);
 		sleepq_block(0, false);
 		mutex_spin_enter(&callout_lock);
 	}

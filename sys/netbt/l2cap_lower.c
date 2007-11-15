@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.2.4 2007/11/15 11:45:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.2.4 2007/11/15 11:45:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,7 +119,7 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	hdr.dcid = le16toh(hdr.dcid);
 
 	DPRINTFN(5, "(%s) received packet (%d bytes)\n",
-		    link->hl_unit->hci_devname, hdr.length);
+		    device_xname(link->hl_unit->hci_dev), hdr.length);
 
 	if (hdr.length != m->m_pkthdr.len)
 		goto failed;
@@ -142,7 +142,7 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	}
 
 	DPRINTF("(%s) dropping %d L2CAP data bytes for unknown CID #%d\n",
-		link->hl_unit->hci_devname, hdr.length, hdr.dcid);
+		device_xname(link->hl_unit->hci_dev), hdr.length, hdr.dcid);
 
 failed:
 	m_freem(m);

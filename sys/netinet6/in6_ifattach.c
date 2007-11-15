@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.61.12.4 2007/09/03 14:43:28 yamt Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.61.12.5 2007/11/15 11:45:10 yamt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.61.12.4 2007/09/03 14:43:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.61.12.5 2007/11/15 11:45:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +67,13 @@ callout_t in6_tmpaddrtimer_ch;
 
 
 #if 0
-static int get_hostid_ifid __P((struct ifnet *, struct in6_addr *));
+static int get_hostid_ifid(struct ifnet *, struct in6_addr *);
 #endif
-static int get_rand_ifid __P((struct ifnet *, struct in6_addr *));
-static int generate_tmp_ifid __P((u_int8_t *, const u_int8_t *, u_int8_t *));
-static int get_ifid __P((struct ifnet *, struct ifnet *, struct in6_addr *));
-static int in6_ifattach_linklocal __P((struct ifnet *, struct ifnet *));
-static int in6_ifattach_loopback __P((struct ifnet *));
+static int get_rand_ifid(struct ifnet *, struct in6_addr *);
+static int generate_tmp_ifid(u_int8_t *, const u_int8_t *, u_int8_t *);
+static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
+static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
+static int in6_ifattach_loopback(struct ifnet *);
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
@@ -563,9 +563,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	if (in6_setscope(&ifra.ifra_addr.sin6_addr, ifp, NULL))
 		return -1;
 
-	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_prefixmask.sin6_family = AF_INET6;
-	ifra.ifra_prefixmask.sin6_addr = in6mask64;
+	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask64, 0, 0, 0);
 	/* link-local addresses should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -658,21 +656,15 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 */
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
 
-	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_prefixmask.sin6_family = AF_INET6;
-	ifra.ifra_prefixmask.sin6_addr = in6mask128;
+	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask128, 0, 0, 0);
 
 	/*
 	 * Always initialize ia_dstaddr (= broadcast address) to loopback
 	 * address.  Follows IPv4 practice - see in_ifinit().
 	 */
-	ifra.ifra_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_dstaddr.sin6_family = AF_INET6;
-	ifra.ifra_dstaddr.sin6_addr = in6addr_loopback;
+	sockaddr_in6_init(&ifra.ifra_dstaddr, &in6addr_loopback, 0, 0, 0);
 
-	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_addr.sin6_family = AF_INET6;
-	ifra.ifra_addr.sin6_addr = in6addr_loopback;
+	sockaddr_in6_init(&ifra.ifra_addr, &in6addr_loopback, 0, 0, 0);
 
 	/* the loopback  address should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.24.4.2 2007/09/03 14:41:33 yamt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.24.4.3 2007/11/15 11:44:59 yamt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -116,9 +116,13 @@ typedef struct ustar_struct {
  * kind of block buffering, so we optimize for the slowest device.
  */
 
+#ifndef USTAR_SECT_PER_CYL
+#define USTAR_SECT_PER_CYL	(18 * 2)
+#endif
+
 typedef struct ust_active_struct {
 	ustar_t	uas_active;
-	char	uas_1cyl[18 * 2 * 512];
+	char	uas_1cyl[USTAR_SECT_PER_CYL * 512];
 	ustoffs	uas_volsize;		/* XXX this is hardwired now */
 	ustoffs	uas_windowbase;		/* relative to volume 0 */
 	ustoffs	uas_filestart;		/* relative to volume 0 */

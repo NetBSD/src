@@ -1,7 +1,7 @@
-/*	$NetBSD: identcpu.c,v 1.19.2.5 2007/10/27 11:26:36 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.19.2.6 2007/11/15 11:42:55 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.5 2007/10/27 11:26:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.6 2007/11/15 11:42:55 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
+#include "opt_intel_coretemp.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 
@@ -641,12 +642,10 @@ cyrix6x86_cpu_setup(ci)
 void
 winchip_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I586_CPU)
 	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
 		disable_tsc(ci);
 	}
-#endif
 }
 
 void
@@ -1400,21 +1399,13 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 * XXX this needs to run on the CPU being probed..
+	 * CPU speed in MHz.  We will re-run this on the CPU
+	 * itself in cpu_hatch() (first time around, we use the
+	 * value from the boot CPU to cover all CPUs).
 	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		uint64_t last_tsc;
-
-		last_tsc = rdtsc();
-		delay(100000);
-		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-	}
-	/* XXX end XXX */
-#endif
+	cpu_get_tsc_freq(ci);
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
@@ -1524,36 +1515,6 @@ identifycpu(struct cpu_info *ci)
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
-#error No CPU classes configured.
-#endif
-#ifndef I686_CPU
-	case CPUCLASS_686:
-		aprint_error(n_support, "Pentium Pro");
-#ifdef I586_CPU
-		aprint_error(n_lower, "i586");
-		cpu_class = CPUCLASS_586;
-		break;
-#endif
-#endif
-#ifndef I586_CPU
-	case CPUCLASS_586:
-		aprint_error(n_support, "Pentium");
-#ifdef I486_CPU
-		aprint_error(n_lower, "i486");
-		cpu_class = CPUCLASS_486;
-		break;
-#endif
-#endif
-#ifndef I486_CPU
-	case CPUCLASS_486:
-		aprint_error(n_support, "i486");
-#ifdef I386_CPU
-		aprint_error(n_lower, "i386");
-		cpu_class = CPUCLASS_386;
-		break;
-#endif
-#endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
 		aprint_error(n_support, "i386");
@@ -1568,21 +1529,15 @@ identifycpu(struct cpu_info *ci)
 	 * might have.
 	 */
 	switch (cpu_class) {
-#if defined(I686_CPU)
 	case CPUCLASS_686:
 		copyout_func = i486_copyout;
 		break;
-#endif
-#if defined(I586_CPU)
 	case CPUCLASS_586:
 		copyout_func = i486_copyout;
 		break;
-#endif
-#if defined(I486_CPU)
 	case CPUCLASS_486:
 		copyout_func = i486_copyout;
 		break;
-#endif
 	default:
 		/* We just inherit the default i386 versions. */
 		break;
@@ -1600,7 +1555,6 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-#if defined(I686_CPU)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
@@ -1617,7 +1571,6 @@ identifycpu(struct cpu_info *ci)
 			i386_has_sse2 = 1;
 	} else
 		i386_use_fxsave = 0;
-#endif /* I686_CPU */
 
 #ifdef ENHANCED_SPEEDSTEP
 	if (cpu_feature2 & CPUID2_EST) {
@@ -1628,6 +1581,11 @@ identifycpu(struct cpu_info *ci)
 			    cpuname);
 	}
 #endif /* ENHANCED_SPEEDSTEP */
+
+#ifdef INTEL_CORETEMP
+	if (cpu_vendor == CPUVENDOR_INTEL && ci->ci_cpuid_level >= 0x06)
+		coretemp_register(ci);
+#endif
 
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
 	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
@@ -1651,7 +1609,4 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
-	x86_errata(ci, cpu_vendor);
-	x86_patch();
-
 }

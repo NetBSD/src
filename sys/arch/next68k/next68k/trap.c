@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.2.4 2007/09/03 14:28:31 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.2.5 2007/11/15 11:43:12 yamt Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.4 2007/09/03 14:28:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.5 2007/11/15 11:43:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -279,7 +279,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

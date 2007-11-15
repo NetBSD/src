@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248.2.5 2007/10/27 11:35:18 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248.2.6 2007/11/15 11:44:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.5 2007/10/27 11:35:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.6 2007/11/15 11:44:37 yamt Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_posix.h"
@@ -130,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.5 2007/10/27 11:35:18 yamt Exp
 #include <sys/extent.h>
 #include <sys/disk.h>
 #include <sys/mqueue.h>
+#include <sys/msgbuf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -163,7 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.5 2007/10/27 11:35:18 yamt Exp
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
@@ -261,9 +260,9 @@ main(void)
 	struct cpu_info *ci;
 
 	l = &lwp0;
+#ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
-	l->l_proc = &proc0;
-	l->l_lid = 1;
+#endif
 
 	/*
 	 * XXX This is a temporary check to be removed before
@@ -286,10 +285,6 @@ main(void)
 	kernel_lock_init();
 
 	uvm_init();
-
-#ifdef DEBUG
-	debug_init();
-#endif
 
 	kmem_init();
 
@@ -365,6 +360,9 @@ main(void)
 	/* Initialize I/O statistics. */
 	iostat_init();
 
+	/* Initialize the log device. */
+	loginit();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -417,6 +415,10 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Initialize tty subsystem. */
+	tty_init();
+	ttyldisc_init();
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
@@ -544,12 +546,10 @@ main(void)
 
 	/*
 	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.  Note we don't
-	 * need to lock this semaphore, since we haven't booted any
-	 * secondary processors, yet.
+	 * them to finish any deferred autoconfiguration.
 	 */
 	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", 0);
+		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -640,25 +640,20 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PVM, 0, NULL, uvm_pageout,
+	if (kthread_create(PRI_PGDAEMON, 0, NULL, uvm_pageout,
 	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PRI_IOFLUSH, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PRI_VM, IPL_BIO, 0))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
-
-#if defined(MULTIPROCESSOR)
-	/* Boot the secondary processors. */
-	cpu_boot_secondary_processors();
-#endif
 
 	/* Initialize exec structures */
 	exec_init(1);
@@ -693,7 +688,7 @@ check_console(struct lwp *l)
 /*
  * List of paths to try when searching for "init".
  */
-static const char *initpaths[] = {
+static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",

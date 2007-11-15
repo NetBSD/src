@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.7.2.2 2007/10/27 11:28:27 yamt Exp $ */
+/* $NetBSD: tlp.c,v 1.7.2.3 2007/11/15 11:43:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -55,12 +54,13 @@
 #define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *tlp_init(void *);
+void *tlp_init(unsigned, void *);
 int tlp_send(void *, char *, unsigned);
 int tlp_recv(void *, char *, unsigned, unsigned);
 
@@ -111,7 +111,7 @@ struct desc {
 struct local {
 	struct desc TxD;
 	struct desc RxD[2];
-	uint8_t txstore[FRAMESIZE];
+	uint8_t txstore[192];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, omr, rx;
 	unsigned sromsft;
@@ -127,23 +127,22 @@ static void mii_initphy(struct local *);
 #endif
 
 void *
-tlp_init(void *cookie)
+tlp_init(unsigned tag, void *data)
 {
-	unsigned tag, val;
+	unsigned val, i;
 	struct local *l;
 	struct desc *TxD, *RxD;
 	uint8_t *en;
-	unsigned *p;
+	uint32_t *p;
 
-	if (pcifinddev(0x1011, 0x0009, &tag) != 0) {
-		/* genuine DE500 */
-		printf("tlp NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	/* genuine DE500 */
+	if (PCI_VENDOR(val) != 0x1011 && PCI_PRODUCT(val) != 0x0009)
 		return NULL;
-	}
 	
 	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CSR_READ(l, TLP_BMR);
 	CSR_WRITE(l, TLP_BMR, val | BMR_RST);
@@ -158,7 +157,7 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_IEN, 0);
 
 	size_srom(l);
-	en = cookie;
+	en = data;
 	val = read_srom(l, 20/2+0); en[0] = val; en[1] = val >> 8;
 	val = read_srom(l, 20/2+1); en[2] = val; en[3] = val >> 8;
 	val = read_srom(l, 20/2+2); en[4] = val; en[5] = val >> 8;
@@ -180,17 +179,18 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_TRBA, VTOPHYS(TxD));
 	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
 
-	/* "setup packet" to have own station address */
+	/* "setup frame" to have own station address */
 	TxD = &l->TxD;
 	TxD->xd3 = htole32(VTOPHYS(TxD));
 	TxD->xd2 = htole32(VTOPHYS(l->txstore));
-	TxD->xd1 = htole32(T1_SET | T1_TER);
+	TxD->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
 	TxD->xd0 = htole32(T0_OWN);
-	p = (unsigned *)l->txstore;
-	memset(p, 0, FRAMESIZE);
+	p = (uint32_t *)l->txstore;
 	p[0] = en[1] << 8 | en[0];
 	p[1] = en[3] << 8 | en[2];
 	p[2] = en[5] << 8 | en[4];
+	for (i = 1; i < 16; i++)
+		memcpy(&p[3 * i], &p[0], 3 * sizeof(p[0]));
 
 	/* make sure the entire descriptors transfered to memory */
 	wbinv(l, sizeof(struct local));
@@ -292,45 +292,47 @@ size_srom(struct local *l)
 #define CS  	(1U << 0)	/* hold chip select */
 #define CLK	(1U << 1)	/* clk bit */
 #define D1	(1U << 2)	/* bit existence */
-#define D0	0		/* bit absence */
 #define VV 	(1U << 3)	/* taken 0/1 from SEEPROM */
 
 static int
 read_srom(struct local *l, int off)
 {
-	unsigned idx, val, x1, x0, cnt, bit, ret;
+	unsigned data, v, i;
 
-	idx = off & 0xff;		/* A7-A0 */
-	idx |= R110 << l->sromsft;	/* 110 for READ */
+	data = off & 0xff;		/* A7-A0 */
+	data |= R110 << l->sromsft;	/* 110 for READ */
 
-	val = SROM_RD | SROM_SR;
-	CSR_WRITE(l, TLP_APROM, val);
-	val |= CS;			/* hold CS */
-	CSR_WRITE(l, TLP_APROM, val);
+	v = SROM_RD | SROM_SR;
+	CSR_WRITE(l, TLP_APROM, v);
+	v |= CS;			/* hold CS */
+	CSR_WRITE(l, TLP_APROM, v);
 
-	x1 = val | D1;			/* 1 */
-	x0 = val | D0;			/* 0 */
 	/* instruct R110 op. at off in MSB first order */
-	for (cnt = (1 << (l->sromsft + 2)); cnt > 0; cnt >>= 1) {
-		bit = (idx & cnt) ? x1 : x0;
-		CSR_WRITE(l, TLP_APROM, bit);
+	for (i = (1 << (l->sromsft + 2)); i != 0; i >>= 1) {
+		if (data & i)
+			v |= D1;
+		else
+			v &= ~D1;
+		CSR_WRITE(l, TLP_APROM, v);
 		DELAY(10);
-		CSR_WRITE(l, TLP_APROM, bit | CLK);
+		CSR_WRITE(l, TLP_APROM, v | CLK);
 		DELAY(10);
 	}
-	/* read 16bit quantity in MSB first order */
-	ret = 0;
-	for (cnt = 16; cnt > 0; cnt--) {
-		CSR_WRITE(l, TLP_APROM, val);
-		DELAY(10);
-		CSR_WRITE(l, TLP_APROM, val | CLK);
-		DELAY(10);
-		ret = (ret << 1) | !!(CSR_READ(l, TLP_APROM) & VV);
-	}
-	val &= ~CS; /* turn off chip select */
-	CSR_WRITE(l, TLP_APROM, val);
+	v &= ~D1;
 
-	return ret;
+	/* read 16bit quantity in MSB first order */
+	data = 0;
+	for (i = 0; i < 16; i++) {
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(10);
+		CSR_WRITE(l, TLP_APROM, v | CLK);
+		DELAY(10);
+		data = (data << 1) | !!(CSR_READ(l, TLP_APROM) & VV);
+	}
+	/* turn off chip select */
+	CSR_WRITE(l, TLP_APROM, 0);
+
+	return data;
 }
 
 #if 0

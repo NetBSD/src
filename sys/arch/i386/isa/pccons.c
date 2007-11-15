@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.172.2.4 2007/10/27 11:26:47 yamt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.172.2.5 2007/11/15 11:43:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.172.2.4 2007/10/27 11:26:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.172.2.5 2007/11/15 11:43:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -979,11 +979,15 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
+		mutex_spin_enter(&tty_lock);
 		ttyflush(tp, FREAD);
+		mutex_spin_exit(&tty_lock);
 		return (0);
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
+		mutex_spin_enter(&tty_lock);
 		ttyflush(tp, FREAD);
+		mutex_spin_exit(&tty_lock);
 		return (0);
 	case CONSOLE_X_BELL:
 		/*

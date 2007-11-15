@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.1.2.4 2007/11/15 11:45:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.2.3 2007/09/03 14:42:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.2.4 2007/11/15 11:45:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -131,7 +131,8 @@ l2cap_request_alloc(struct l2cap_channel *chan, uint8_t code)
 	req->lr_link = link;
 
 	callout_init(&req->lr_rtx, 0);
-	callout_reset(&req->lr_rtx, l2cap_response_timeout*hz, l2cap_rtx, req);
+	callout_setfunc(&req->lr_rtx, l2cap_rtx, req);
+	callout_schedule(&req->lr_rtx, l2cap_response_timeout * hz);
 
 	TAILQ_INSERT_TAIL(&link->hl_reqs, req, lr_next);
 
@@ -165,6 +166,8 @@ l2cap_request_free(struct l2cap_req *req)
 	callout_stop(&req->lr_rtx);
 	if (callout_invoking(&req->lr_rtx))
 		return;
+
+	callout_destroy(&req->lr_rtx);
 
 	TAILQ_REMOVE(&link->hl_reqs, req, lr_next);
 	pool_put(&l2cap_req_pool, req);

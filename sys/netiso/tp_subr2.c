@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.27.2.3 2007/09/03 14:44:08 yamt Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.27.2.4 2007/11/15 11:45:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.27.2.3 2007/09/03 14:44:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.27.2.4 2007/11/15 11:45:19 yamt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -656,7 +656,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 		 * level options or done a pcbconnect and XXXXXXX'edly apply
 		 * to both inpcb's and isopcb's
 		 */
-		remque(isop_new);
+		iso_remque(isop_new);
 		free(isop_new, M_PCB);
 		tpcb->tp_npcb = (void *) isop;
 		tpcb->tp_netservice = ISO_CONS;

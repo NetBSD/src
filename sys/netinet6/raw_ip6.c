@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72.2.5 2007/10/27 11:36:14 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72.2.6 2007/11/15 11:45:15 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.5 2007/10/27 11:36:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.6 2007/11/15 11:45:15 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -163,10 +163,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	bzero(&rip6src, sizeof(rip6src));
-	rip6src.sin6_len = sizeof(struct sockaddr_in6);
-	rip6src.sin6_family = AF_INET6;
-	rip6src.sin6_addr = ip6->ip6_src;
+	sockaddr_in6_init(&rip6src, &ip6->ip6_src, 0, 0, 0);
 	if (sa6_recoverscope(&rip6src) != 0) {
 		/* XXX: should be impossible. */
 		m_freem(m);
@@ -294,7 +291,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
-	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
+	void (*notify)(struct in6pcb *, int) = in6_rtchange;
 	int nxt;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -562,9 +559,7 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 
 	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
 		/* need to fiddle w/ opt(IPPROTO_IPV6, IPV6_CHECKSUM)? */
-		if (optname != SO_NOHEADER)
-			return ip6_ctloutput(op, so, level, optname, mp);
-		else if (op == PRCO_GETOPT) {
+		if (op == PRCO_GETOPT) {
 			*mp = m_intopt(so, 1);
 			return 0;
 		} else if (*mp == NULL || (*mp)->m_len < sizeof(int))
@@ -805,11 +800,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 				break;
 			}
 			/* XXX */
-			bzero(&tmp, sizeof(tmp));
-			tmp.sin6_family = AF_INET6;
-			tmp.sin6_len = sizeof(struct sockaddr_in6);
-			bcopy(&in6p->in6p_faddr, &tmp.sin6_addr,
-			    sizeof(struct in6_addr));
+			sockaddr_in6_init(&tmp, &in6p->in6p_faddr, 0, 0, 0);
 			dst = &tmp;
 		} else {
 			if (nam == NULL) {

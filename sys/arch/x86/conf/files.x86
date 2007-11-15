@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.13.2.5 2007/10/27 11:28:53 yamt Exp $
+#	$NetBSD: files.x86,v 1.13.2.6 2007/11/15 11:43:38 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -13,6 +13,9 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 # Intel Enhanced Speedstep
 defflag 			ENHANCED_SPEEDSTEP
 defflag	opt_est.h		EST_FREQ_USERWRITE
+
+# Intel On Die Temperature sensor
+defflag	opt_intel_coretemp.h	INTEL_CORETEMP:	sysmon_envsys
 
 # Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
@@ -48,7 +51,6 @@ file	arch/x86/x86/i8259.c
 file	arch/x86/x86/idle_machdep.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
-file	arch/x86/x86/lock_machdep.c	lockdebug
 file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
@@ -85,6 +87,9 @@ file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
 # Intel Enhanced Speedstep
 file	arch/x86/x86/est.c		enhanced_speedstep
 file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
+
+# Intel On-Die Temperature sensor
+file	arch/x86/x86/coretemp.c 	intel_coretemp
 
 # IPMI device
 device	ipmi: sysmon_envsys, sysmon_wdog

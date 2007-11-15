@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21.2.3 2007/09/03 14:28:18 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.21.2.4 2007/11/15 11:43:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21.2.3 2007/09/03 14:28:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21.2.4 2007/11/15 11:43:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -229,7 +229,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 			zsc_args.hwflags = 0;
 		}
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_defcflag = zs_def_cflag;
 
 		cs->cs_channel = channel;

@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.2.2.2 2007/10/27 11:27:31 yamt Exp $ */
+/* $NetBSD: pegasospci.c,v 1.2.2.3 2007/11/15 11:43:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.2.2 2007/10/27 11:27:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.2.3 2007/11/15 11:43:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.2.2 2007/10/27 11:27:31 yamt Exp 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
+#include <machine/pegasosreg.h>
 
 struct pegasospci_softc {
 	struct device sc_dev;
@@ -61,22 +62,25 @@ struct pegasospci_softc {
 
 static void pegasospci_attach(struct device *, struct device *, void *);
 static int pegasospci_match(struct device *, struct cfdata *, void *);
+static pcireg_t pegasospci_indirect_conf_read(void *, pcitag_t, int);
+static void pegasospci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 
 CFATTACH_DECL(pegasospci, sizeof(struct pegasospci_softc),
     pegasospci_match, pegasospci_attach, NULL, NULL);
 
 extern struct genppc_pci_chipset *genppc_pct;
+static u_int32_t *pciagp_magic;
 
 static void
 pegasospci_get_chipset_tag(pci_chipset_tag_t pc)
 {
 	pc->pc_conf_v = (void *)pc;
 
-	pc->pc_attach_hook = genppc_pci_ofmethod_attach_hook;
+	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
 	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
-	pc->pc_make_tag = genppc_pci_ofmethod_make_tag;
-	pc->pc_conf_read = genppc_pci_ofmethod_conf_read;
-	pc->pc_conf_write = genppc_pci_ofmethod_conf_write;
+	pc->pc_make_tag = genppc_pci_indirect_make_tag;
+	pc->pc_conf_read = genppc_pci_indirect_conf_read;
+	pc->pc_conf_write = genppc_pci_indirect_conf_write;
 
 	pc->pc_intr_v = (void *)pc;
 
@@ -87,7 +91,7 @@ pegasospci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
-	pc->pc_decompose_tag = genppc_pci_ofmethod_decompose_tag;
+	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
 	pc->pc_conf_hook = genofw_pci_conf_hook;
 
 	pc->pc_addr = 0;
@@ -133,9 +137,8 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	struct genppc_pci_chipset_businfo *pbi;
-	int i, isprim = 0, node = ca->ca_node;
+	int isprim = 0, node = ca->ca_node;
 	uint32_t reg[2], busrange[2];
-	char buf[64];
 
 	aprint_normal("\n");
 
@@ -168,30 +171,33 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
-			map_isa_ioregs();
+			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			ofppc_init_comcons();
 		}
-		/* If we are, regarless of isa above, now we wire up interrupt
-		 * controllers.  We had to wait because of ISA.
-		 */
-		ofppc_setup_pics();
 	}
 
 	pegasospci_get_chipset_tag(pc);
-	i = OF_package_to_path(node, buf, sizeof(buf)-1);
-	if (i < 0)
-		panic("Cannot find path for PCI device\n");
-	if (i < sizeof(buf)-1)
-		buf[i] = '\0';
-	pc->pc_ihandle = OF_open(buf);
-	if (pc->pc_ihandle == 0)
-		panic("Cannot open PCI device node\n");
 
 	pc->pc_node = node;
-	pc->pc_addr = mapiodev(reg[0] + 0xcf8, 4);
-	pc->pc_data = mapiodev(reg[0] + 0xcfc, 4);
 	pc->pc_bus = busrange[0];
 	pc->pc_iot = &sc->sc_iot;
 	pc->pc_memt = &sc->sc_memt;
+
+	/* XXX Warning, the mapiodevs will go away if this region is later
+	 * bus space initted or mapped
+	 */
+	if (isprim) {
+		/* Pegasos2: primary PCI host (33MHz) @ 0x80000000 */
+		pc->pc_addr = mapiodev(PEGASOS2_PCI0_ADDR, 4);
+		pc->pc_data = mapiodev(PEGASOS2_PCI0_DATA, 4);
+	} else {
+		/* Pegasos2: second PCI host (66MHz) @ 0xc0000000 */
+		pc->pc_addr = mapiodev(PEGASOS2_PCI1_ADDR, 4);
+		pc->pc_data = mapiodev(PEGASOS2_PCI1_DATA, 4);
+		pciagp_magic = mapiodev(PEGASOS2_AGP_MAGIC, 8);
+		pc->pc_conf_read = pegasospci_indirect_conf_read;
+		pc->pc_conf_write = pegasospci_indirect_conf_write;
+	}
 
 	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
 	    M_DEVBUF, M_NOWAIT);
@@ -213,11 +219,43 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	/* XXX
-	 * Currently I cannot get this method to work on the pegasos
-	 * secondary PCI bus.  This is unacceptable, but for the short term,
-	 * will have to suffice.
-	 */
-	if (isprim)
-		config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static pcireg_t
+pegasospci_indirect_conf_read(void *cookie, pcitag_t tag, int reg)
+{
+	pci_chipset_tag_t pc = cookie;
+	pcireg_t data;
+	int s;
+
+	s = splhigh();
+
+	out32rb(pciagp_magic, PEGASOS2_AGP_MAGIC_COOKIE);
+	out32rb(pc->pc_addr, tag | reg);
+	data = in32rb(pc->pc_data);
+	out32rb(pc->pc_addr, 0);
+	out32rb(pciagp_magic + 1, PEGASOS2_AGP_MAGIC_COOKIE);
+
+	splx(s);
+
+	return data;
+}
+
+static void
+pegasospci_indirect_conf_write(void *cookie, pcitag_t tag, int reg,
+    pcireg_t data)
+{
+	pci_chipset_tag_t pc = cookie;
+	int s;
+
+	s = splhigh();
+
+	out32rb(pciagp_magic, PEGASOS2_AGP_MAGIC_COOKIE);
+	out32rb(pc->pc_addr, tag | reg);
+	out32rb(pc->pc_data, data);
+	out32rb(pc->pc_addr, 0);
+	out32rb(pciagp_magic + 1, PEGASOS2_AGP_MAGIC_COOKIE);
+
+	splx(s);
 }

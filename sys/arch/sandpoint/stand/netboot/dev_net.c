@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.3.2.2 2007/10/27 11:28:22 yamt Exp $ */
+/* $NetBSD: dev_net.c,v 1.3.2.3 2007/11/15 11:43:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,14 +37,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <net/if.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 #include <lib/libsa/bootp.h>
 #include <lib/libsa/nfs.h>
 
@@ -56,6 +54,9 @@ static int netdev_opens;
 int net_open(struct open_file *, ...);
 int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+
+int netif_open(void *);
+int netif_close(int);
 
 int
 net_open(struct open_file *f, ...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.21 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.21.6.1 2007/11/15 11:44:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ struct zs_chanstate {
 	void   *cs_private;		/* sub-driver data pointer */
 	struct zsops *cs_ops;
 
-	struct simplelock cs_lock;	/* per channel lock */
+	kmutex_t cs_lock;		/* per channel lock */
 
 	int	cs_brg_clk;		/* BAUD Rate Generator clock
 					 * (usually PCLK / 16) */
@@ -202,6 +202,7 @@ void	zs_iflush(struct zs_chanstate *);
 void	zs_loadchannelregs(struct zs_chanstate *);
 int 	zs_set_speed(struct zs_chanstate *, int);
 int 	zs_set_modes(struct zs_chanstate *, int);
+void	zs_lock_init(struct zs_chanstate *);
 
 int zs_check_kgdb(struct zs_chanstate *, int);
 

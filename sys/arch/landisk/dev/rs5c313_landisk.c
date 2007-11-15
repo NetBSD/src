@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313_landisk.c,v 1.1.12.2 2006/12/30 20:46:21 yamt Exp $	*/
+/*	$NetBSD: rs5c313_landisk.c,v 1.1.12.3 2007/11/15 11:43:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.1.12.2 2006/12/30 20:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.1.12.3 2007/11/15 11:43:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.1.12.2 2006/12/30 20:46:21 yam
 
 
 /* autoconf glue */
-static int rs5c313_landisk_match(struct device *, struct cfdata *, void *);
-static void rs5c313_landisk_attach(struct device *, struct device *, void *);
+static int rs5c313_landisk_match(device_t, struct cfdata *, void *);
+static void rs5c313_landisk_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(rs5c313_landisk, sizeof(struct rs5c313_softc),
     rs5c313_landisk_match, rs5c313_landisk_attach, NULL, NULL);
@@ -63,7 +63,7 @@ static void rtc_clk(struct rs5c313_softc *, int);
 static int  rtc_read(struct rs5c313_softc *);
 static void rtc_write(struct rs5c313_softc *, int);
 
-struct rs5c313_ops rs5c313_landisk_ops = {
+static struct rs5c313_ops rs5c313_landisk_ops = {
 	.rs5c313_op_begin = rtc_begin,
 	.rs5c313_op_ce    = rtc_ce,
 	.rs5c313_op_clk   = rtc_clk,
@@ -77,7 +77,7 @@ struct rs5c313_ops rs5c313_landisk_ops = {
 
 
 static int
-rs5c313_landisk_match(struct device *parent, struct cfdata *cf, void *aux)
+rs5c313_landisk_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	static int matched = 0;
 
@@ -90,9 +90,9 @@ rs5c313_landisk_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-rs5c313_landisk_attach(struct device *parent, struct device *self, void *aux)
+rs5c313_landisk_attach(device_t parent, device_t self, void *aux)
 {
-	struct rs5c313_softc *sc = (void *)self;
+	struct rs5c313_softc *sc = device_private(self);
 
 	sc->sc_ops = &rs5c313_landisk_ops;
 	rs5c313_attach(sc);

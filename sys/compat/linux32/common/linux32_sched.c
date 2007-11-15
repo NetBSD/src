@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $ */
+/*	$NetBSD: linux32_sched.c,v 1.1.16.5 2007/11/15 11:43:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.1.16.5 2007/11/15 11:43:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,6 +92,22 @@ linux32_sys_clone(l, v, retval)
 }
 
 int
+linux32_sys_sched_getscheduler(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_sched_getscheduler_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct linux_sys_sched_getscheduler_args ua;
+
+	NETBSD32TO64_UAP(pid);
+
+	return linux_sys_sched_getscheduler(l, &ua, retval);
+}
+
+int
 linux32_sys_sched_setscheduler(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -129,3 +145,18 @@ linux32_sys_sched_getparam(l, v, retval)
 	return linux_sys_sched_getparam(l, &ua, retval);
 }
 
+int
+linux32_sys_exit_group(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_exit_group_args /* {
+		syscallarg(int) error_code;
+	} */ *uap = v;
+	struct linux_sys_exit_group_args ua;
+
+	NETBSD32TO64_UAP(error_code);
+
+	return linux_sys_exit_group(l, &ua, retval);
+}

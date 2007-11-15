@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.4.2.2 2007/10/27 11:28:27 yamt Exp $ */
+/* $NetBSD: sip.c,v 1.4.2.3 2007/11/15 11:43:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
  
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
  
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-
-#include <dev/pci/if_sipreg.h>
 
 #include "globals.h"
 
@@ -57,23 +54,61 @@
 #define CSR_READ(l, r)		in32rb((l)->csr+(r))
 #define CSR_WRITE(l, r, v) 	out32rb((l)->csr+(r), (v))
 #define VTOPHYS(va) 		(uint32_t)(va)
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
-void *sip_init(void *);
+void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
 
+#define XD1_OWN		(1U << 31)
+
 struct desc {
 	uint32_t xd0, xd1, xd2;
+	uint32_t hole;
 };
+
+#define SIP_CR		0x00
+#define  CR_RST		(1U << 8)	/* software reset */
+#define  CR_RXR		(1U << 5)	/* Rx abort and reset */
+#define  CR_TXR		(1U << 4)	/* Tx abort and reset */
+#define  CR_RXD		(1U << 3)	/* graceful Rx stop */
+#define  CR_RXE		(1U << 2)	/* run and activate Rx */
+#define  CR_TXD		(1U << 1)	/* graceful Tx stop */
+#define  CR_TXE		(1U << 0)	/* run and activate Tx */
+#define SIP_CFG		0x04
+#define SIP_MEAR	0x08
+#define  MEAR_EESEL	(1U << 3)	/* SEEP chipselect */
+#define  MEAR_EECLK	(1U << 2)	/* clock */
+#define  MEAR_EEDO	(1U << 1)	/* bit retrieve */
+#define  MEAR_EEDI	(1U << 0)	/* bit feed */
+#define SIP_IMR		0x14
+#define SIP_IER		0x18
+#define SIP_TXDP	0x20
+#define SIP_TXCFG	0x24
+#define  TXCFG_CSI	(1U << 31)
+#define  TXCFG_HBI	(1U << 30)
+#define  TXCFG_ATP	(1U << 28)
+#define  TXCFG_DMA256	0x300000
+#define SIP_RXDP	0x30
+#define SIP_RXCFG	0x34
+#define  RXCFG_ATX	(1U << 28)
+#define  RXCFG_DMA256	0x300000
+#define SIP_RFCR	0x48
+#define  RFCR_RFEN	(1U << 31)	/* activate Rx filter */
+#define  RFCR_APM	(1U << 27)	/* accept perfect match */
+#define SIP_RFDR	0x4c
+#define SIP_MIBC	0x5c
+#define SIP_BMCR	0x80
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t store[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
@@ -83,28 +118,28 @@ static int read_eeprom(struct local *, int);
 static unsigned sip_mii_read(struct local *, int, int);
 static void sip_mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
+static void mii_dealan(struct local *, unsigned);
 
 /* Table and macro to bit-reverse an octet. */
 static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 void *
-sip_init(void *cookie)
+sip_init(unsigned tag, void *data)
 {
-	unsigned tag, val, i, txcfg, rxcfg;
+	unsigned val, i, txc, rxc;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint16_t eedata[4], *ee;
 	uint8_t *en;
 
-	if (pcifinddev(0x100b, 0x0020, &tag) != 0) {
-		printf("sip NIC not found\n");
+	val = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(val) != 0x100b && PCI_PRODUCT(val) != 0x0020)
 		return NULL;
-	}
 
-	l = alloc(sizeof(struct local));
+	l = ALLOC(struct local, sizeof(struct desc));
 	memset(l, 0, sizeof(struct local));
-	l->csr = pcicfgread(tag, 0x14); /* use mem space */
+	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	CSR_WRITE(l, SIP_IER, 0);
 	CSR_WRITE(l, SIP_IMR, 0);
@@ -116,7 +151,7 @@ sip_init(void *cookie)
 
 	mii_initphy(l);
 
-	ee = eedata; en = cookie;
+	ee = eedata; en = data;
 	ee[0] = read_eeprom(l, 6);
 	ee[1] = read_eeprom(l, 7);
 	ee[2] = read_eeprom(l, 8);
@@ -136,32 +171,52 @@ sip_init(void *cookie)
 	for (i = 0; i < 6; i++)
 		en[i] = bbr(en[i]);
 #if 1
-	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
+	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x, ",
 		en[0], en[1], en[2], en[3], en[4], en[5]);
+	printf("PHY %d (%04x.%04x)\n", l->phy,
+	   sip_mii_read(l, l->phy, 2), sip_mii_read(l, l->phy, 3));
+
+	mii_dealan(l, 5);
+	/*
+	 * speed and duplexity are found in CFG
+	 */
+	i = CSR_READ(l, SIP_CFG);
+	printf("%s", (i & (1U << 30)) ? "100Mbps" : "10Mbps");
+	if (i & (1U << 29))
+		printf("-FDX");
+	printf("\n");
 #endif
 
-	TxD = &l->TxD;
-	TxD->xd0 = htole32(VTOPHYS(TxD));
-	RxD = l->RxD;
-	RxD[0].xd0 = htole32(VTOPHYS(&RxD[1]));
-	RxD[0].xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-	RxD[0].xd2 = htole32(VTOPHYS(l->store[0]));
-	RxD[1].xd0 = htole32(VTOPHYS(&RxD[0]));
-	RxD[1].xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-	RxD[1].xd2 = htole32(VTOPHYS(l->store[1]));
+	txd = &l->txd;
+	txd->xd0 = htole32(VTOPHYS(txd));
+	rxd = l->rxd;
+	rxd[0].xd0 = htole32(VTOPHYS(&rxd[1]));
+	rxd[0].xd1 = htole32(XD1_OWN | FRAMESIZE);
+	rxd[0].xd2 = htole32(VTOPHYS(l->store[0]));
+	rxd[1].xd0 = htole32(VTOPHYS(&rxd[0]));
+	rxd[1].xd1 = htole32(XD1_OWN | FRAMESIZE);
+	rxd[1].xd2 = htole32(VTOPHYS(l->store[1]));
 	l->rx = 0;
 
 	wbinv(l, sizeof(struct local));
-	CSR_WRITE(l, SIP_TXDP, VTOPHYS(TxD));
-	CSR_WRITE(l, SIP_RXDP, VTOPHYS(RxD));
+	CSR_WRITE(l, SIP_TXDP, VTOPHYS(txd));
+	CSR_WRITE(l, SIP_RXDP, VTOPHYS(rxd));
 
-	txcfg = TXCFG_ATP | TXCFG_MXDMA_256;
-	rxcfg = RXCFG_MXDMA_256;
-	txcfg |= TXCFG_CSI | TXCFG_HBI;
-	rxcfg |= RXCFG_ATX;
-	CSR_WRITE(l, SIP_TXCFG, txcfg);
-	CSR_WRITE(l, SIP_RXCFG, rxcfg);
-	CSR_WRITE(l, SIP_CR, CR_RXE | CR_TXE);
+	CSR_WRITE(l, SIP_RFCR, 0);
+	CSR_WRITE(l, SIP_RFDR, (en[1] << 8) | en[0]);
+	CSR_WRITE(l, SIP_RFCR, 2);
+	CSR_WRITE(l, SIP_RFDR, (en[3] << 8) | en[2]);
+	CSR_WRITE(l, SIP_RFCR, 4);
+	CSR_WRITE(l, SIP_RFDR, (en[5] << 8) | en[4]);
+	CSR_WRITE(l, SIP_RFCR, RFCR_RFEN | RFCR_APM);
+
+	txc = TXCFG_ATP | TXCFG_DMA256 | 0x1002;
+	rxc = RXCFG_DMA256 | 0x20;
+	txc |= TXCFG_CSI | TXCFG_HBI;
+	rxc |= RXCFG_ATX;
+	CSR_WRITE(l, SIP_TXCFG, txc);
+	CSR_WRITE(l, SIP_RXCFG, rxc);
+	CSR_WRITE(l, SIP_CR, 0);
 
 	return l;
 }
@@ -170,23 +225,21 @@ int
 sip_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	unsigned loop;
 
-	if (len > 1520)
-		printf("sip_send: len > 1520 (%u)\n", len);
-
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(CMDSTS_OWN | (len & 0x7ff));
-	wbinv(TxD, sizeof(struct desc));
+	txd = &l->txd;
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(XD1_OWN | (len & 0x7ff));
+	wbinv(txd, sizeof(struct desc));
+	CSR_WRITE(l, SIP_CR, CR_TXE);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd1) & CMDSTS_OWN) == 0)
+		if ((le32toh(txd->xd1) & XD1_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -198,20 +251,21 @@ int
 sip_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	time_t bound;
 	unsigned rxstat;
 	uint8_t *ptr;
 	int len;
 
 	bound = 1000 * timo;
+	CSR_WRITE(l, SIP_CR, CR_RXE);
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd1);
-		if ((rxstat & CMDSTS_OWN) == 0)
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd1);
+		if ((rxstat & XD1_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
 	} while (bound-- > 0);
@@ -219,8 +273,8 @@ printf("recving with %u sec. timeout\n", timo);
 	return -1;
   gotone:
 	if (rxstat & 0x07ff0000) {
-		RxD->xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
@@ -231,9 +285,10 @@ printf("recving with %u sec. timeout\n", timo);
 	ptr = l->store[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->xd1 = htole32(CMDSTS_OWN | FRAMESIZE);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
+	CSR_WRITE(l, SIP_CR, CR_RXD);
 	return len;
 }
 
@@ -242,64 +297,57 @@ read_eeprom(l, loc)
 	struct local *l;
 	int loc;
 {
-	int reg, data, x;
+#define R110 06 /* SEEPROM READ op. */
+	unsigned data, v, i;
 
-	reg = EROMAR_EECS;
-	CSR_WRITE(l, SIP_EROMAR, reg);
+	/* hold chip select */
+	v = MEAR_EESEL;
+	CSR_WRITE(l, SIP_MEAR, v);
 
-	/* Shift in the READ opcode. */
-	for (x = 3; x > 0; x--) {
-		if (SIP_EEPROM_OPC_READ & (1 << (x - 1)))
-			reg |= EROMAR_EEDI;
+	data = (R110 << 6) | (loc & 0x3f); /* 6 bit addressing */
+	/* instruct R110 op. at loc in MSB first order */
+	for (i = (1 << 8); i != 0; i >>= 1) {
+		if (data & i)
+			v |= MEAR_EEDI;
 		else
-			reg &= ~EROMAR_EEDI;
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
+			v &= ~MEAR_EEDI;
+		CSR_WRITE(l, SIP_MEAR, v);
+		CSR_WRITE(l, SIP_MEAR, v | MEAR_EECLK);
 		DELAY(4);
-		CSR_WRITE(l, SIP_EROMAR, reg);
+		CSR_WRITE(l, SIP_MEAR, v);
 		DELAY(4);
 	}
-
-	/* Shift in address. */
-	for (x = 6; x > 0; x--) {
-		if (loc & (1 << (x - 1)))
-			reg |= EROMAR_EEDI;
-		else
-			reg &= ~EROMAR_EEDI;
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
-		DELAY(4);
-		CSR_WRITE(l, SIP_EROMAR, reg);
-		DELAY(4);
-	}
-
-	/* Shift out data. */
-	reg = EROMAR_EECS;
+	v = MEAR_EESEL;
+	/* read 16bit quantity in MSB first order */
 	data = 0;
-	for (x = 16; x > 0; x--) {
-		CSR_WRITE(l, SIP_EROMAR,
-		    reg | EROMAR_EESK);
+	for (i = 0; i < 16; i++) {
+		CSR_WRITE(l, SIP_MEAR, v | MEAR_EECLK);
 		DELAY(4);
-		if (CSR_READ(l, SIP_EROMAR) & EROMAR_EEDO)
-			data |= (1 << (x - 1));
-		CSR_WRITE(l, SIP_EROMAR, reg);
+		data = (data << 1) | !!(CSR_READ(l, SIP_MEAR) & MEAR_EEDO);
+		CSR_WRITE(l, SIP_MEAR, v);
 		DELAY(4);
 	}
-
-	/* Clear CHIP SELECT. */
-	CSR_WRITE(l, SIP_EROMAR, 0);
+	/* turn off chip select */
+	CSR_WRITE(l, SIP_MEAR, 0);
 	DELAY(4);
 	return data;
 }
 
-#define	MII_BMCR	0x00 	/* Basic mode control register (rw) */
-#define	 BMCR_RESET	0x8000	/* reset */
-#define	 BMCR_AUTOEN	0x1000	/* autonegotiation enable */
-#define	 BMCR_ISO	0x0400	/* isolate */
-#define	 BMCR_STARTNEG	0x0200	/* restart autonegotiation */
-#define	MII_BMSR	0x01	/* Basic mode status register (ro) */
+#define MII_BMCR	0x00 	/* Basic mode control register (rw) */
+#define  BMCR_RESET	0x8000	/* reset */
+#define  BMCR_AUTOEN	0x1000	/* autonegotiation enable */
+#define  BMCR_ISO	0x0400	/* isolate */
+#define  BMCR_STARTNEG	0x0200	/* restart autonegotiation */
+#define MII_BMSR	0x01	/* Basic mode status register (ro) */
+#define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
+#define  BMSR_LINK	0x0004	/* Link status */
+#define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
+#define  ANAR_TX	0x0080	/* local device supports 100bTx */
+#define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
+#define  ANAR_10	0x0020	/* local device supports 10bT */
+#define  ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 
 unsigned
 sip_mii_read(struct local *l, int phy, int reg)
@@ -307,7 +355,7 @@ sip_mii_read(struct local *l, int phy, int reg)
 	unsigned val;
 
 	do {
-		val = CSR_READ(l, 0x80 + (reg << 2));
+		val = CSR_READ(l, SIP_BMCR + (reg << 2));
 	} while (reg == MII_BMSR && val == 0);
 	return val & 0xffff;
 }
@@ -316,7 +364,7 @@ void
 sip_mii_write(struct local *l, int phy, int reg, int val)
 {
 
-	CSR_WRITE(l, 0x80 + (reg << 2), val);
+	CSR_WRITE(l, SIP_BMCR + (reg << 2), val);
 }
 
 void
@@ -356,29 +404,26 @@ mii_initphy(l)
 	l->bmsr = sts;
 }
 
-#if 0
-
 void
-mii_makean(l, timo)
+mii_dealan(l, timo)
 	struct local *l;
 	unsigned timo;
 {
 	unsigned anar, bound;
 
 	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
-	mii_write(l, l->phy, MII_ANAR, anar);
-	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	sip_mii_write(l, l->phy, MII_ANAR, anar);
+	sip_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	l->anlpar = 0;
 	bound = getsecs() + timo;
 	do {
-		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
-		   mii_read(l, l->phy, MII_BMSR); /* read twice */
+		l->bmsr = sip_mii_read(l, l->phy, MII_BMSR) |
+		   sip_mii_read(l, l->phy, MII_BMSR); /* read twice */
 		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
-			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
+			l->anlpar = sip_mii_read(l, l->phy, MII_ANLPAR);
 			break;
 		}
 		DELAY(10 * 1000);
 	} while (getsecs() < bound);
 	return;
 }
-#endif

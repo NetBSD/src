@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.12.2.3 2007/10/27 11:36:24 yamt Exp $	*/
+/*	$NetBSD: vfs.c,v 1.12.2.4 2007/11/15 11:45:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,6 +84,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
+	vp->v_usecount = 1;
+	simple_lock_init(&vp->v_interlock);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 
 	uobj = &vp->v_uobj;
@@ -129,7 +131,10 @@ vget(struct vnode *vp, int lockflag)
 {
 
 	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, lockflag & LK_TYPE_MASK);
+		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
+	if (lockflag & LK_INTERLOCK)
+		simple_unlock(&vp->v_interlock);
+
 	return 0;
 }
 
@@ -182,7 +187,8 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
 
-	if (vp->v_data != (void *)1) {
+	if (vp->v_usecount == 1) {
+		vp->v_usecount = 0;
 		simple_lock(&vp->v_interlock);
 		if (inter_lkp)
 			simple_unlock(inter_lkp);
@@ -191,7 +197,6 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 		VOP_INACTIVE(vp, l);
 
 		VOP_RECLAIM(vp, l);
-		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	}
 
@@ -267,6 +272,7 @@ makevnode(struct stat *sb, const char *path)
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
+	simple_lock_init(&vp->v_interlock);
 
 	return vp;
 }
@@ -321,8 +327,13 @@ namei(struct nameidata *ndp)
 int
 relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
+	int error;
 
-	return VOP_LOOKUP(dvp, vpp, cnp);
+	error = VOP_LOOKUP(dvp, vpp, cnp);
+	if (error && error != EJUSTRETURN)
+		return error;
+
+	return 0;
 }
 
 /*

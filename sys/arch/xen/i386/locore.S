@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11.2.5 2007/10/27 11:29:07 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.2.6 2007/11/15 11:43:44 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -208,9 +208,7 @@
 	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
-#ifdef I586_CPU
 	.globl	_C_LABEL(idt)
-#endif
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0

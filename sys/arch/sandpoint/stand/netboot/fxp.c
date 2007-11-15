@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.2.4.2 2007/10/27 11:28:23 yamt Exp $ */
+/* $NetBSD: fxp.c,v 1.2.4.3 2007/11/15 11:43:20 yamt Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -73,7 +73,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -101,10 +100,11 @@
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->iobase+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->iobase+(r))
 #define VTOPHYS(va) 		(uint32_t)(va)
-#define wb(adr, siz)		_wb(VTOPHYS(adr), (uint32_t)(siz))
+#define DEVTOV(pa) 		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
+#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
 struct txdesc {
 	volatile uint16_t cb_status;
@@ -130,14 +130,13 @@ struct rxdesc {
 }; /* 16B rfa */
 
 struct local {
-	struct txdesc TxD;
-	struct rxdesc *RxD;
+	struct txdesc txd;
 	uint8_t store[sizeof(struct rxdesc) + FRAMESIZE];
 	unsigned iobase;
 	unsigned eeprom_addr;
 };
 
-void *fxp_init(void *);
+void *fxp_init(unsigned, void *);
 int fxp_send(void *, char *, unsigned);
 int fxp_recv(void *, char *, unsigned, unsigned);
 static void autosize_eeprom(struct local *);
@@ -181,24 +180,23 @@ static struct fxp_cb_config store_cbc;
 static struct fxp_cb_ias store_cbi;
 
 void *
-fxp_init(void *cookie)
+fxp_init(unsigned tag, void *data)
 {
 	struct local *sc;
-	uint8_t *en = cookie;
+	uint8_t *en = data;
 	struct fxp_cb_config *cbp = &store_cbc;
 	struct fxp_cb_ias *cb_ias = &store_cbi;
 	struct rxdesc *rfa;
-	unsigned tag, v, i;
+	unsigned v, i;
 
-	if (pcifinddev(0x8086, 0x1209, &tag) != 0
-	    && pcifinddev(0x8086, 0x1229, &tag) != 0) {
-		printf("fxp NIC not found\n");
+	v = pcicfgread(tag, PCI_ID_REG);
+	if (PCI_VENDOR(v) != 0x8086 ||
+		    (PCI_PRODUCT(v) != 0x1209 && PCI_PRODUCT(v) != 0x1229))
 		return NULL;
-	}
 
-	sc = alloc(sizeof(struct local));
+	sc = ALLOC(struct local, sizeof(struct txdesc));
 	memset(sc, 0, sizeof(struct local));
-	sc->iobase = pcicfgread(tag, 0x10);
+	sc->iobase = DEVTOV(pcicfgread(tag, 0x10)); /* use mem space */
 
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(100);	
@@ -316,10 +314,9 @@ fxp_init(void *cookie)
 	rfa->actual_size = 0;
 	rfa->size = htole16(sizeof(sc->store) - sizeof(struct rxdesc));
 	wbinv(rfa, sizeof(sc->store));
-	sc->RxD = rfa;
 
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, VTOPHYS(sc->RxD));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, VTOPHYS(rfa));
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
 	return sc;
@@ -329,34 +326,34 @@ int
 fxp_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct txdesc *TxD;
+	struct txdesc *txd;
 	int loop;
 
 	if (len > 1520)
 		printf("fxp_send: len > 1520 (%u)\n", len);
 
-	TxD = &l->TxD;
-	TxD->cb_status = 0;
-	TxD->cb_command =
+	txd = &l->txd;
+	txd->cb_status = 0;
+	txd->cb_command =
 	    htole16(FXP_CB_COMMAND_XMIT|FXP_CB_COMMAND_SF|FXP_CB_COMMAND_EL);
-	TxD->link_addr = -1;
-	TxD->tbd_array_addr = htole32(VTOPHYS(&TxD->tx_buf_addr0));
-	TxD->tx_buf_addr0 = htole32(VTOPHYS(buf));
-	TxD->tx_buf_size0 = htole32(len);
-	TxD->byte_count = htole16(0x8000);
-	TxD->tx_threshold = 0x20;
-	TxD->tbd_number = 1;
+	txd->link_addr = -1;
+	txd->tbd_array_addr = htole32(VTOPHYS(&txd->tx_buf_addr0));
+	txd->tx_buf_addr0 = htole32(VTOPHYS(buf));
+	txd->tx_buf_size0 = htole32(len);
+	txd->byte_count = htole16(0x8000);
+	txd->tx_threshold = 0x20;
+	txd->tbd_number = 1;
 	wbinv(buf, len);
-	wbinv(TxD, sizeof(*TxD));
+	wbinv(txd, sizeof(*txd));
 
 	fxp_scb_wait(l);
-	CSR_WRITE_4(l, FXP_CSR_SCB_GENERAL, VTOPHYS(TxD));
+	CSR_WRITE_4(l, FXP_CSR_SCB_GENERAL, VTOPHYS(txd));
 	CSR_WRITE_1(l, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	
 	loop = 10000;
-	while (!(le16toh(TxD->cb_status) & FXP_CB_STATUS_C) && --loop > 0) {
+	while (!(le16toh(txd->cb_status) & FXP_CB_STATUS_C) && --loop > 0) {
 		DELAY(1);
-		inv(TxD, sizeof(struct txdesc));
+		inv(txd, sizeof(struct txdesc));
 	}
 	if (loop == 0)
 		printf("send timeout\n");
@@ -386,7 +383,7 @@ fxp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 	errno = 0;
 	return -1;
   gotone:
-	rfa = l->RxD;
+	rfa = (struct rxdesc *)l->store;
 	inv(rfa, sizeof(l->store)); /* whole including received frame */
 	if ((le16toh(rfa->rfa_status) & FXP_RFA_STATUS_C) == 0)
 		return 0;

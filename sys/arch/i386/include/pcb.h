@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.37.16.2 2007/09/03 14:26:48 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.37.16.3 2007/11/15 11:42:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@ struct pcb {
 /*
  * Software pcb (extension)
  */
+	int	pcb_fsd[2];		/* %fs descriptor */
+	int	pcb_gsd[2];		/* %gs descriptor */
 	void *	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */

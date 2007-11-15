@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.7.16.2 2007/10/27 11:35:32 yamt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.7.16.3 2007/11/15 11:44:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.7.16.2 2007/10/27 11:35:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.7.16.3 2007/11/15 11:44:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -107,7 +107,7 @@ static int bdevsw_attach(const char *, const struct bdevsw *, int *);
 static int cdevsw_attach(const char *, const struct cdevsw *, int *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
-static kmutex_t devsw_lock;
+kmutex_t devsw_lock;
 
 void
 devsw_init(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.4.2 2007/10/27 11:36:29 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.4.3 2007/11/15 11:45:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,14 +45,17 @@
 
 struct cpu_info;
 
-/* Boot-time initalization. */
-void	softint_init(struct cpu_info *);
-
 /* Public interface. */
 void	*softint_establish(u_int, void (*)(void *), void *);
 void	softint_disestablish(void *);
 void	softint_schedule(void *);
+
+/* MI hooks. */
+void	softint_init(struct cpu_info *);
+lwp_t	*softint_picklwp(void);
+void	softint_overlay(void);
 void	softint_block(lwp_t *);
+pri_t	softint_kpri(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);

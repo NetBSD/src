@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_var.h,v 1.6.18.1 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: mld6_var.h,v 1.6.18.2 2007/11/15 11:45:14 yamt Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
 /* denotes that the MLD max response delay field specifies time in milliseconds */
 #define MLD_TIMER_SCALE	1000
 
-void	mld_init __P((void));
-void	mld_input __P((struct mbuf *, int));
+void	mld_init(void);
+void	mld_input(struct mbuf *, int);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_MLD6_VAR_H_ */

@@ -1,9 +1,10 @@
-/*	$NetBSD: lock.c,v 1.1.6.3 2007/10/27 11:36:23 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.10.2 2007/11/15 11:45:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,65 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/lock.h>
+#ifndef _SYS_RUMP_MUTEX_H_
+#define _SYS_RUMP_MUTEX_H_
 
-/* oh sweet crackmgr, what would I do without you? */
-int
-lockmgr(struct lock *lock, u_int flags, struct simplelock *slock)
-{
-	u_int lktype = flags & LK_TYPE_MASK;
+struct kmutex {
+	struct rumpuser_mtx *kmtx_mtx;
+};
 
-	switch (lktype) {
-	case LK_SHARED:
-	case LK_EXCLUSIVE:
-		lock->lk_flags = lktype;
-		lock->lk_recurselevel++;
-		break;
-
-	case LK_RELEASE:
-		assert(lock->lk_flags != 0);
-		if (--lock->lk_recurselevel == 0)
-			lock->lk_flags = 0;
-		break;
-
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-		assert(lock->lk_flags == LK_SHARED);
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-
-	case LK_DOWNGRADE:
-		assert(lock->lk_flags == LK_EXCLUSIVE);
-		lock->lk_flags = LK_SHARED;
-		break;
-
-	case LK_DRAIN:
-		lock->lk_flags = LK_EXCLUSIVE;
-		break;
-	}
-
-	return 0;
-}
-
-void
-lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
-	int flags)
-{
-
-	lock->lk_flags = 0;
-}
-
-int
-lockstatus(struct lock *lock)
-{
-
-	return lock->lk_flags;
-}
-
-void
-lockmgr_printinfo(struct lock *lock)
-{
-
-	return;
-}
+#endif /* _SYS_RUMP_MUTEX_H_ */

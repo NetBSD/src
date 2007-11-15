@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.92.2.3 2007/09/03 14:46:26 yamt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.92.2.4 2007/11/15 11:45:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -109,7 +109,6 @@ void	free(void *, struct malloc_type *);
 #ifdef MALLOC_DEBUG
 int	debug_malloc(unsigned long, struct malloc_type *, int, void **);
 int	debug_free(void *, struct malloc_type *);
-void	debug_malloc_init(void);
 
 void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);

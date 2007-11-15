@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.722.2.5 2007/10/27 11:29:52 yamt Exp $
+#	$NetBSD: files,v 1.722.2.6 2007/11/15 11:43:58 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -315,7 +315,7 @@ include "dev/videomode/files.videomode"
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
 #
-define	arc
+define	arcnet
 define	atm
 define	eco
 define	ether
@@ -803,7 +803,7 @@ file	dev/ic/rrunner.c		esh			needs-flag
 
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 #
-device	bah: ifnet, arc, arp
+device	bah: ifnet, arcnet, arp
 file	dev/ic/smc90cx6.c		bah
 
 # OPL2/OPL3 FM synth driver
@@ -1225,6 +1225,10 @@ file	kern/kern_drvctl.c		drvctl
 # cpu control
 defpseudo cpuctl
 
+# pass-to-userspace transporter
+defpseudo putter
+file	dev/putter/putter.c		putter
+
 #
 # File systems
 #
@@ -1451,7 +1455,7 @@ file	net/bpf.c			bpfilter		needs-flag
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
-file	net/if_arcsubr.c		arc			needs-flag
+file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
@@ -1545,3 +1549,8 @@ define	onewire_bitbang
 include	"dev/gpio/files.gpio"
 
 include "dev/onewire/files.onewire"
+
+#
+# Pseudo audio device
+#
+include "dev/pad/files.pad"

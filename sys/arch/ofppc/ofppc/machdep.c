@@ -1,9 +1,10 @@
-/*	$NetBSD: machdep.c,v 1.87.16.4 2007/10/27 11:27:29 yamt Exp $	*/
-
-/*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+/*	$NetBSD: machdep.c,v 1.87.16.5 2007/11/15 11:43:14 yamt Exp $	*/
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,24 +16,27 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.4 2007/10/27 11:27:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.5 2007/11/15 11:43:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,9 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87.16.4 2007/10/27 11:27:29 yamt Exp $
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
 
 struct pmap ofw_pmap;
 char bootpath[256];
+extern int console_node;
 
 void ofwppc_batinit(void);
 void	ofppc_bootstrap_console(void);
@@ -65,8 +76,6 @@ void	ofppc_bootstrap_console(void);
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	/* Initialize the bootstrap console. */
-	ofppc_bootstrap_console();
 	ofwoea_initppc(startkernel, endkernel, args);
 }
 
@@ -76,13 +85,13 @@ cpu_startup(void)
 	oea_startup(NULL);
 }
 
-/*
+
 void
 consinit(void)
 {
 	ofwoea_consinit();
 }
-*/
+
 
 void
 dumpsys(void)
@@ -142,72 +151,53 @@ cpu_reboot(int howto, char *what)
 }
 
 /*
- * XXX
- * The following code is subject to die at a later date.  This is the only
- * remaining code in this file subject to the Tools GmbH copyright.
  */
 
-void
-consinit()
-{
-
-	(*cn_tab->cn_probe)(cn_tab);
-}
-
-void	ofcons_cnprobe(struct consdev *);
-int	ofppc_cngetc(dev_t);
-void	ofppc_cnputc(dev_t, int);
-
-struct consdev ofppc_bootcons = {
-	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
-	    NULL, NULL, makedev(0,0), 1,
-};
-
-int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
-int	ofppc_stdin_phandle, ofppc_stdout_phandle;
+#define divrnd(n, q)	(((n)*2/(q)+1)/2)
 
 void
-ofppc_bootstrap_console(void)
+ofppc_init_comcons(void)
 {
-	int chosen;
-	char data[4];
+#if (NCOM > 0)
+	char name[64];
+	uint32_t reg[2], comfreq;
+	uint8_t dll, dlm;
+	int speed, rate, err;
+	bus_space_tag_t tag = &genppc_isa_io_space_tag;
 
-	chosen = OF_finddevice("/chosen");
+	/* if we have a serial cons, we have work to do */
+	memset(name, 0, sizeof(name));
+	OF_getprop(console_node, "device_type", name, sizeof(name));
+	if (strcmp(name, "serial") != 0)
+		return;
 
-	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdin_ihandle = of_decode_int(data);
-	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
+	if (OF_getprop(console_node, "reg", reg, sizeof(reg)) == -1)
+		return;
 
-	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdout_ihandle = of_decode_int(data);
-	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
+	if (OF_getprop(console_node, "clock-frequency", &comfreq, 4) == -1)
+		comfreq = 0;
 
-	cn_tab = &ofppc_bootcons;
+	if (comfreq == 0)
+		comfreq = COM_FREQ;
 
- nocons:
-	return;
+	isa_outb(reg[1] + com_cfcr, LCR_DLAB);
+	dll = isa_inb(reg[1] + com_dlbl);
+	dlm = isa_inb(reg[1] + com_dlbh);
+	rate = dll | (dlm << 8);
+	isa_outb(reg[1] + com_cfcr, LCR_8BITS);
+	speed = divrnd((comfreq / 16), rate);
+	err = speed - (speed + 150)/300 * 300;
+	speed -= err;
+	if (err < 0)
+		err = -err;
+	if (err > 50)
+		speed = 9600;
+
+	/* Now we can attach the comcons */
+	aprint_verbose("Switching to COM console at speed %d", speed);
+	if (comcnattach(tag, reg[1], speed, comfreq, COM_TYPE_NORMAL,
+	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+		panic("Can't init serial console");
+	aprint_verbose("\n");
+#endif /*NCOM*/
 }
-
-int
-ofppc_cngetc(dev_t dev)
-{
-	u_char ch = '\0';
-	int l;
-
-	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return (-1);
-
-	return (ch);
-}
-
-void
-ofppc_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(ofppc_stdout_ihandle, &ch, 1);
-}
-

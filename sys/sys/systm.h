@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.5 2007/10/27 11:36:35 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.6 2007/11/15 11:45:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -125,6 +125,7 @@ extern int nsysent;
 #endif
 
 #define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
+#define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)
@@ -490,16 +491,6 @@ do {						\
 #else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
-#endif
-
-#if defined(DEBUG)
-#define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
-#define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
-void _kernel_lock_assert_locked(void);
-void _kernel_lock_assert_unlocked(void);
-#else
-#define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
-#define	KERNEL_LOCK_ASSERT_UNLOCKED()	/* nothing */
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)

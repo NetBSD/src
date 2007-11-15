@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.109.2.5 2007/10/27 11:36:10 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.109.2.6 2007/11/15 11:45:09 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.5 2007/10/27 11:36:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.6 2007/11/15 11:45:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -130,7 +130,7 @@ extern int icmp6_nodeinfo;
  */
 struct icmp6_mtudisc_callback {
 	LIST_ENTRY(icmp6_mtudisc_callback) mc_list;
-	void (*mc_func) __P((struct in6_addr *));
+	void (*mc_func)(struct in6_addr *);
 };
 
 LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
@@ -152,22 +152,22 @@ static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
 static int icmp6_redirect_hiwat = -1;
 static int icmp6_redirect_lowat = -1;
 
-static void icmp6_errcount __P((struct icmp6errstat *, int, int));
-static int icmp6_rip6_input __P((struct mbuf **, int));
-static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
-static const char *icmp6_redirect_diag __P((struct in6_addr *,
-	struct in6_addr *, struct in6_addr *));
-static struct mbuf *ni6_input __P((struct mbuf *, int));
-static struct mbuf *ni6_nametodns __P((const char *, int, int));
-static int ni6_dnsmatch __P((const char *, int, const char *, int));
-static int ni6_addrs __P((struct icmp6_nodeinfo *, struct mbuf *,
-			  struct ifnet **, char *));
-static int ni6_store_addrs __P((struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
-				struct ifnet *, int));
-static int icmp6_notify_error __P((struct mbuf *, int, int, int));
-static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
-static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
-static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
+static void icmp6_errcount(struct icmp6errstat *, int, int);
+static int icmp6_rip6_input(struct mbuf **, int);
+static int icmp6_ratelimit(const struct in6_addr *, const int, const int);
+static const char *icmp6_redirect_diag(struct in6_addr *,
+	struct in6_addr *, struct in6_addr *);
+static struct mbuf *ni6_input(struct mbuf *, int);
+static struct mbuf *ni6_nametodns(const char *, int, int);
+static int ni6_dnsmatch(const char *, int, const char *, int);
+static int ni6_addrs(struct icmp6_nodeinfo *, struct mbuf *,
+			  struct ifnet **, char *);
+static int ni6_store_addrs(struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
+				struct ifnet *, int);
+static int icmp6_notify_error(struct mbuf *, int, int, int);
+static struct rtentry *icmp6_mtudisc_clone(struct sockaddr *);
+static void icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
+static void icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
 
 
 void
@@ -238,7 +238,7 @@ icmp6_errcount(struct icmp6errstat *stat, int type, int code)
  * Register a Path MTU Discovery callback.
  */
 void
-icmp6_mtudisc_callback_register(void (*func) __P((struct in6_addr *)))
+icmp6_mtudisc_callback_register(void (*func)(struct in6_addr *))
 {
 	struct icmp6_mtudisc_callback *mc;
 
@@ -888,7 +888,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 
 	/* Detect the upper level protocol */
 	{
-		void (*ctlfunc) __P((int, struct sockaddr *, void *));
+		void (*ctlfunc)(int, struct sockaddr *, void *);
 		u_int8_t nxt = eip6->ip6_nxt;
 		int eoff = off + sizeof(struct icmp6_hdr) +
 			sizeof(struct ip6_hdr);
@@ -1037,7 +1037,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			ip6cp.ip6c_cmdarg = (void *)&notifymtu;
 		}
 
-		ctlfunc = (void (*) __P((int, struct sockaddr *, void *)))
+		ctlfunc = (void (*)(int, struct sockaddr *, void *))
 			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
 			(void) (*ctlfunc)(code, (struct sockaddr *)&icmp6dst,
@@ -1926,11 +1926,13 @@ icmp6_reflect(struct mbuf *m, size_t off)
 {
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
-	struct in6_ifaddr *ia;
+	const struct in6_ifaddr *ia;
+	const struct ip6aux *ip6a;
 	int plen;
 	int type, code;
 	struct ifnet *outif = NULL;
-	struct in6_addr origdst, *src = NULL;
+	struct in6_addr origdst;
+	const struct in6_addr *src = NULL;
 
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
@@ -1994,26 +1996,27 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * procedure of an outgoing packet of our own, in which case we need
 	 * to search in the ifaddr list.
 	 */
-	if (!IN6_IS_ADDR_MULTICAST(&origdst)) {
-		if ((ia = ip6_getdstifaddr(m))) {
-			if (!(ia->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)))
-				src = &ia->ia_addr.sin6_addr;
-		} else {
-			struct sockaddr_in6 d;
+	if (IN6_IS_ADDR_MULTICAST(&origdst))
+		;
+	else if ((ip6a = ip6_getdstifaddr(m)) != NULL) {
+		if ((ip6a->ip6a_flags &
+		     (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
+			src = &ip6a->ip6a_src;
+	} else {
+		union {
+			struct sockaddr_in6 sin6;
+			struct sockaddr sa;
+		} u;
 
-			bzero(&d, sizeof(d));
-			d.sin6_family = AF_INET6;
-			d.sin6_len = sizeof(d);
-			d.sin6_addr = origdst;
-			ia = (struct in6_ifaddr *)
-			    ifa_ifwithaddr((struct sockaddr *)&d);
-			if (ia &&
-			    !(ia->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY))) {
-				src = &ia->ia_addr.sin6_addr;
-			}
-		}
+		sockaddr_in6_init(&u.sin6, &origdst, 0, 0, 0);
+
+		ia = (struct in6_ifaddr *)ifa_ifwithaddr(&u.sa);
+
+		if (ia == NULL)
+			;
+		else if ((ia->ia6_flags &
+			 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
+			src = &ia->ia_addr.sin6_addr;
 	}
 
 	if (src == NULL) {
