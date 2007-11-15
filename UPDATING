@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.165 2007/10/28 18:13:38 jmmv Exp $
+$NetBSD: UPDATING,v 1.166 2007/11/15 12:53:43 xtraeme Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20071115:
+	The it(4) driver has been renamed to itesio(4) and the old port
+	argument specified in the kernel configuration file is not valid
+	anymore. The itesio(4) driver now uses the Super I/O address port
+	rather than the EC address port. Please update your kernel
+	configuration file appropiately or see GENERIC for more details.
 
 20071028:
 	The pccons(4) driver has been removed from the NetBSD/shark port.
