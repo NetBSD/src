@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.2 2007/11/15 13:09:07 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.3 2007/11/15 13:23:13 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.2 2007/11/15 13:09:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.3 2007/11/15 13:23:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ itesio_isa_match(device_t parent, struct cfdata *match, void *aux)
 		ia->ia_ndrq = 0;
 		return 1;
 	default:
-		printf("itesio: unknown iTE Super I/O chip (cr=0x%x)\n", cr);
 		return 0;
 	}
 }
