@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.18 2007/11/15 14:00:51 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.19 2007/11/15 14:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.18 2007/11/15 14:00:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.19 2007/11/15 14:41:03 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -149,14 +149,25 @@ static inline void
 mcl_inc_reference(struct mbuf *m)
 {
 
+#if defined(__i386__) || defined(__x86_64__)
+	void atomic_inc_uint(volatile unsigned int *);
+
+	atomic_inc_uint(&m->m_ext.ext_refcnt);
+#else
 	MEXT_LOCK(m);
 	m->m_ext.ext_refcnt++;
 	MEXT_UNLOCK(m);
+#endif
 }
 
 static inline bool
 mcl_dec_and_test_reference(struct mbuf *m)
 {
+#if defined(__i386__) || defined(__x86_64__)
+	unsigned int atomic_dec_uint_nv(volatile unsigned int *);
+
+	return atomic_dec_uint_nv(&m->m_ext.ext_refcnt) == 0;
+#else
 	bool gotzero;
 
 	MEXT_LOCK(m);
@@ -166,6 +177,7 @@ mcl_dec_and_test_reference(struct mbuf *m)
 	MEXT_UNLOCK(m);
 
 	return gotzero;
+#endif
 }
 
 #define	MCLADDREFERENCE(o, n)						\
