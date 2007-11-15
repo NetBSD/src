@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.21 2007/10/21 14:55:09 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.22 2007/11/15 20:12:04 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21 2007/10/21 14:55:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.22 2007/11/15 20:12:04 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -132,26 +132,21 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
-	/* XXX locking */
-
+	if (!cold)
+		mutex_enter(&time_lock);
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
-
 		/* Warm up new timecounter. */
 		(void)newtc->tc_get_timecount(newtc);
 		(void)newtc->tc_get_timecount(newtc);
-
 		timecounter = newtc;
-
-		/* XXX unlock */
-
-		return (0);
-	}
-
-	/* XXX unlock */
-
-	return (EINVAL);
+		error = 0;
+	} else
+		error = EINVAL;
+	if (!cold)
+		mutex_exit(&time_lock);
+	return error;
 }
 
 static int
@@ -174,8 +169,7 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 	needed = 0;
 	left = *oldlenp;
 
-	/* XXX locking */
-
+	mutex_enter(&time_lock);
 	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
 		if (where == NULL) {
 			needed += sizeof(buf);  /* be conservative */
@@ -186,6 +180,7 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 			if (left < slen + 1)
 				break;
 			/* XXX use sysctl_copyout? (from sysctl_hw_disknames) */
+			/* XXX copyout with held lock. */
 			error = copyout(buf, where, slen + 1);
 			spc = " ";
 			where += slen;
@@ -193,8 +188,7 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 			left -= slen;
 		}
 	}
-
-	/* XXX unlock */
+	mutex_exit(&time_lock);
 
 	*oldlenp = needed;
 	return (error);
@@ -459,8 +453,8 @@ tc_init(struct timecounter *tc)
 		    tc->tc_quality);
 	}
 
-	s = splclock();
-
+	mutex_enter(&time_lock);
+	s = splsched();
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -468,20 +462,15 @@ tc_init(struct timecounter *tc)
 	 * Even though we run on the dummy counter, switching here may be
 	 * worse since this timecounter may not be monotonous.
 	 */
-	if (tc->tc_quality < 0)
-		goto out;
-	if (tc->tc_quality < timecounter->tc_quality)
-		goto out;
-	if (tc->tc_quality == timecounter->tc_quality &&
-	    tc->tc_frequency < timecounter->tc_frequency)
-		goto out;
-	(void)tc->tc_get_timecount(tc);
-	(void)tc->tc_get_timecount(tc);
-	timecounter = tc;
-	tc_windup();
-
- out:
+	if (tc->tc_quality >= 0 && (tc->tc_quality > timecounter->tc_quality ||
+	    tc->tc_frequency > timecounter->tc_frequency)) {
+		(void)tc->tc_get_timecount(tc);
+		(void)tc->tc_get_timecount(tc);
+		timecounter = tc;
+		tc_windup();
+	}
 	splx(s);
+	mutex_exit(&time_lock);
 }
 
 /* Report the frequency of the current timecounter. */
@@ -660,64 +649,6 @@ tc_windup(void)
 	timehands = th;
 }
 
-#ifdef __FreeBSD__
-/* Report or change the active timecounter hardware. */
-static int
-sysctl_kern_timecounter_hardware(SYSCTL_HANDLER_ARGS)
-{
-	char newname[32];
-	struct timecounter *newtc, *tc;
-	int error;
-
-	tc = timecounter;
-	strlcpy(newname, tc->tc_name, sizeof(newname));
-
-	error = sysctl_handle_string(oidp, &newname[0], sizeof(newname), req);
-	if (error != 0 || req->newptr == NULL ||
-	    strcmp(newname, tc->tc_name) == 0)
-		return (error);
-
-	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
-		if (strcmp(newname, newtc->tc_name) != 0)
-			continue;
-
-		/* Warm up new timecounter. */
-		(void)newtc->tc_get_timecount(newtc);
-		(void)newtc->tc_get_timecount(newtc);
-
-		timecounter = newtc;
-		return (0);
-	}
-	return (EINVAL);
-}
-
-SYSCTL_PROC(_kern_timecounter, OID_AUTO, hardware, CTLTYPE_STRING | CTLFLAG_RW,
-    0, 0, sysctl_kern_timecounter_hardware, "A", "");
-
-
-/* Report or change the active timecounter hardware. */
-static int
-sysctl_kern_timecounter_choice(SYSCTL_HANDLER_ARGS)
-{
-	char buf[32], *spc;
-	struct timecounter *tc;
-	int error;
-
-	spc = "";
-	error = 0;
-	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
-		sprintf(buf, "%s%s(%d)",
-		    spc, tc->tc_name, tc->tc_quality);
-		error = SYSCTL_OUT(req, buf, strlen(buf));
-		spc = " ";
-	}
-	return (error);
-}
-
-SYSCTL_PROC(_kern_timecounter, OID_AUTO, choice, CTLTYPE_STRING | CTLFLAG_RD,
-    0, 0, sysctl_kern_timecounter_choice, "A", "");
-#endif /* __FreeBSD__ */
-
 /*
  * RFC 2783 PPS-API implementation.
  */
@@ -893,9 +824,6 @@ pps_event(struct pps_state *pps, int event)
  */
 
 static int tc_tick;
-#ifdef __FreeBSD__
-SYSCTL_INT(_kern_timecounter, OID_AUTO, tick, CTLFLAG_RD, &tc_tick, 0, "");
-#endif /* __FreeBSD__ */
 
 void
 tc_ticktock(void)
@@ -934,7 +862,4 @@ inittimecounter(void)
 	(void)timecounter->tc_get_timecount(timecounter);
 }
 
-#ifdef __FreeBSD__
-SYSINIT(timecounter, SI_SUB_CLOCKS, SI_ORDER_SECOND, inittimecounter, NULL)
-#endif /* __FreeBSD__ */
 #endif /* __HAVE_TIMECOUNTER */
