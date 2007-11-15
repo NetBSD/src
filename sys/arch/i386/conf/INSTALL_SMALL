@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.137 2007/11/14 17:54:58 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.138 2007/11/15 19:18:32 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -25,9 +25,6 @@ options 	MEMORY_DISK_ROOT_SIZE=3900	# size of memory disk, in blocks
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
-
-# CPU support.
-options 	I386_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation

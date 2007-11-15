@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.223 2007/10/24 14:50:39 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.224 2007/11/15 19:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223 2007/10/24 14:50:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.224 2007/11/15 19:18:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223 2007/10/24 14:50:39 ad Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
 #include "opt_kvm86.h"
-#include "opt_cputype.h"
 #include "opt_kstack_dr0.h"
 
 #include <sys/param.h>
@@ -128,9 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223 2007/10/24 14:50:39 ad Exp $");
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
-#if defined(I386_CPU)
-int trapwrite(unsigned);
-#endif
 
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -768,39 +764,6 @@ trapsignal:
 	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
-
-#if defined(I386_CPU)
-
-#ifdef MULTIPROCESSOR
-/* XXX XXX XXX */
-#endif
-/*
- * Compensate for 386 brain damage (missing URKR)
- */
-int
-trapwrite(addr)
-	unsigned addr;
-{
-	vaddr_t va;
-	struct proc *p;
-	struct vmspace *vm;
-
-	va = trunc_page((vaddr_t)addr);
-	if (va >= VM_MAXUSER_ADDRESS)
-		return 1;
-
-	p = curproc;
-	vm = p->p_vmspace;
-
-	if (uvm_fault(&vm->vm_map, va, VM_PROT_WRITE) != 0)
-		return 1;
-
-	if ((void *)va >= vm->vm_maxsaddr)
-		uvm_grow(p, va);
-
-	return 0;
-}
-#endif /* I386_CPU */
 
 /* 
  * Start a new LWP
