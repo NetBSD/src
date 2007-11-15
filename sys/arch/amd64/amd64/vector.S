@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.4.4 2007/10/25 23:59:22 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.5 2007/11/15 19:20:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1055,7 +1055,7 @@ NENTRY(hypervisor_callback)
 	INTRENTRY
 	# sti??
 	movq	%rsp, %rdi
-	addq	$8, %rdi; /* don't forget if_ppl */
+	subq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	1f
@@ -1072,7 +1072,7 @@ NENTRY(failsafe_callback)
 	pushq	$T_ASTFLT
 	INTRENTRY
 	movq	%rsp, %rdi
-	addq	$8, %rdi; /* don't forget if_ppl */
+	subq	$8, %rdi; /* don't forget if_ppl */
 	call xen_failsafe_handler
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
