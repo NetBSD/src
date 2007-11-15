@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2007/11/14 17:55:01 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2007/11/15 19:18:34 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -103,7 +103,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"

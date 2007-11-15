@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.82 2007/11/14 17:54:59 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.83 2007/11/15 19:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.82 2007/11/14 17:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.83 2007/11/15 19:18:33 ad Exp $");
 
-#include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_intel_coretemp.h"
@@ -1274,11 +1273,6 @@ transmeta_cpu_setup(struct cpu_info *ci)
 		tmx86_has_longrun = 1;
 }
 
-static const char n_support[] __attribute__((__unused__)) =
-    "NOTICE: this kernel does not support %s CPU class\n";
-static const char n_lower[] __attribute__((__unused__)) =
-    "NOTICE: lowering CPU class to %s\n";
-
 void
 identifycpu(struct cpu_info *ci)
 {
@@ -1510,37 +1504,8 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
 	}
 
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-	switch (cpu_class) {
-#ifndef I386_CPU
-	case CPUCLASS_386:
-		aprint_error(n_support, "i386");
-		panic("no appropriate CPU class available");
-#endif
-	default:
-		break;
-	}
-
-	/*
-	 * Now plug in optimized versions of various routines we
-	 * might have.
-	 */
-	switch (cpu_class) {
-	case CPUCLASS_686:
-		copyout_func = i486_copyout;
-		break;
-	case CPUCLASS_586:
-		copyout_func = i486_copyout;
-		break;
-	case CPUCLASS_486:
-		copyout_func = i486_copyout;
-		break;
-	default:
-		/* We just inherit the default i386 versions. */
-		break;
+	if (cpu_class == CPUCLASS_386) {
+		panic("NetBSD requires an 80486 or later processor");
 	}
 
 	if (cpu == CPU_486DLC) {

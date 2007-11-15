@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.16 2007/11/14 17:55:01 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17 2007/11/15 19:18:34 ad Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,9 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.16 2007/11/14 17:55:01 ad Exp $");
-
-#include "opt_cputype.h"
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17 2007/11/15 19:18:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1233,33 +1231,8 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
 	}
 
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-	switch (cpu_class) {
-#ifndef I386_CPU
-	case CPUCLASS_386:
-		printf(n_support, "i386");
-		panic("no appropriate CPU class available");
-#endif
-	default:
-		break;
-	}
-
-	/*
-	 * Now plug in optimized versions of various routines we
-	 * might have.
-	 */
-	switch (cpu_class) {
-	case CPUCLASS_686:
-	case CPUCLASS_586:
-	case CPUCLASS_486:
-		copyout_func = i486_copyout;
-		break;
-	default:
-		/* We just inherit the default i386 versions. */
-		break;
+	if (cpu_class == CPUCLASS_386) {
+		panic("NetBSD requires an 80486 or later processor");
 	}
 
 	if (cpu == CPU_486DLC) {
