@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.116 2007/07/05 20:03:00 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.117 2007/11/15 00:55:02 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -594,10 +594,6 @@ get_bootmodel(void)
 #if defined(SET_KERNEL_TINY)
 	if (strstr(ut.version, "TINY") != NULL)
 		return SET_KERNEL_TINY;
-#endif
-#if defined(SET_KERNEL_LAPTOP)
-	if (strstr(ut.version, "LAPTOP") != NULL)
-		return SET_KERNEL_LAPTOP;
 #endif
 #if defined(SET_KERNEL_PS2)
 	if (strstr(ut.version, "PS2") != NULL)
