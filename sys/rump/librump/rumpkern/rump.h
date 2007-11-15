@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.15.2.2 2007/09/03 14:45:34 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.15.2.3 2007/11/15 11:45:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,10 +46,13 @@ typedef struct kauth_cred *kauth_cred_t;
 #endif
 
 struct lwp;
-extern struct lwp *curlwp;
 
 #include "rumpvnode_if.h"
 #include "rumpdefs.h"
+
+#ifndef curlwp
+#define curlwp rump_get_curlwp()
+#endif
 
 void	rump_init(void);
 struct mount	*rump_mnt_init(struct vfsops *, int);
@@ -110,7 +113,15 @@ int	rump_vfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	rump_vfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
+void	rump_vfs_syncwait(struct mount *);
 
 void	rump_bioops_sync(void);
+
+struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
+struct lwp	*rump_get_curlwp(void);
+void		rump_clear_curlwp(void);
+
+int	rump_splfoo(void);
+void	rump_splx(int);
 
 #endif /* _SYS_RUMP_H_ */

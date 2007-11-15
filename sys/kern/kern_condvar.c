@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.3.4.4 2007/10/27 11:35:20 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.3.4.5 2007/11/15 11:44:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.4 2007/10/27 11:35:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.5 2007/11/15 11:44:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,12 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.4 2007/10/27 11:35:20 yamt Ex
 #include <sys/sleepq.h>
 
 static void	cv_unsleep(lwp_t *);
-static void	cv_changepri(lwp_t *, pri_t);
 
 static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	cv_unsleep,
-	cv_changepri,
+	sleepq_changepri,
 	sleepq_lendpri,
 	syncobj_noowner,
 };
@@ -110,13 +109,14 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	sleepq_t *sq;
 
 	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
-	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
+	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	l->l_cv_signalled = 0;
+	l->l_kpriority = true;
 	sq = sleeptab_lookup(&sleeptab, cv);
 	cv->cv_waiters++;
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, sched_kpri(l), cv, cv->cv_wmesg, &cv_syncobj);
+	sleepq_enqueue(sq, cv, cv->cv_wmesg, &cv_syncobj);
 	mutex_exit(mtx);
 
 	return sq;
@@ -166,29 +166,6 @@ cv_unsleep(lwp_t *l)
 	cv->cv_waiters--;
 
 	sleepq_unsleep(l);
-}
-
-/*
- * cv_changepri:
- *
- *	Adjust the real (user) priority of an LWP blocked on a CV.
- */
-static void
-cv_changepri(lwp_t *l, pri_t pri)
-{
-	sleepq_t *sq = l->l_sleepq;
-	pri_t opri;
-
-	KASSERT(lwp_locked(l, sq->sq_mutex));
-
-	opri = lwp_eprio(l);
-	l->l_usrpri = pri;
-	l->l_priority = sched_kpri(l);
-
-	if (lwp_eprio(l) != opri) {
-		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
-		sleepq_insert(sq, l, l->l_syncobj);
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.4.14.2 2007/02/26 09:12:17 yamt Exp $ */
+/* $NetBSD: userret.h,v 1.4.14.3 2007/11/15 11:45:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
-	struct proc *p;
+	struct cpu_info *ci;
 
 	LOCKDEBUG_BARRIER(NULL, 0);
 
@@ -96,13 +96,12 @@ mi_userret(struct lwp *l)
 	 * etc.  Note that the event must be flagged BEFORE any AST is
 	 * posted as we are reading unlocked.
 	 */
-	p = l->l_proc;
-	if ((l->l_flag & LW_USERRET) != 0)
+	ci = l->l_cpu;
+	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0)
 		lwp_userret(l);
 
-	/* XXXSMP unlocked */
-	l->l_priority = l->l_usrpri;
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
+	l->l_kpriority = false;
+	ci->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
 #endif	/* !_SYS_USERRET_H_ */

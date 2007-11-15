@@ -1,11 +1,8 @@
-/*	$NetBSD: pecoff_misc.c,v 1.10.4.4 2007/09/03 14:32:47 yamt Exp $	*/
+/* $NetBSD: padvol.h,v 1.1.6.2 2007/11/15 11:44:17 yamt Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *        This product includes software developed by Jared D. McNeill.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,26 +32,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.10.4.4 2007/09/03 14:32:47 yamt Exp $");
+#ifndef _SYS_DEV_PAD_PADVOL_H
+#define _SYS_DEV_PAD_PADVOL_H
 
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
-#include "opt_compat_43.h"
+stream_filter_t *	pad_vol_slinear16_le(struct audio_softc *,
+			    const audio_params_t *, const audio_params_t *);
+stream_filter_t *	pad_vol_slinear16_be(struct audio_softc *,
+			    const audio_params_t *, const audio_params_t *);
 
-#include "fs_lfs.h"
-#include "fs_nfs.h"
-#endif
+#define PAD_DEFINE_FILTER(name)						\
+	static int							\
+	name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int);	\
+	stream_filter_t * name(struct audio_softc *,			\
+	    const audio_params_t *, const audio_params_t *);		\
+	stream_filter_t *						\
+	name(struct audio_softc *sc, const audio_params_t *from,	\
+	    const audio_params_t *to)					\
+	{								\
+		return pad_filter_factory(sc, name##_fetch_to);		\
+	}								\
+	static int							\
+	name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,	\
+	    int max_used)
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/fcntl.h>
-#include <sys/proc.h>
-
-#include <sys/syscallargs.h>
-
-#include <compat/common/compat_util.h>
-#include <compat/pecoff/pecoff_syscallargs.h>
+#endif /* !_SYS_DEV_PAD_PADVOL_H */

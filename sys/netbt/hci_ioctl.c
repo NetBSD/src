@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.1.2.4 2007/02/26 09:11:42 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.1.2.5 2007/11/15 11:45:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.4 2007/02/26 09:11:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.5 2007/11/15 11:45:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -64,7 +64,7 @@ hci_dump(void)
 	SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
 		printf("UNIT %s: flags 0x%4.4x, "
 			"num_cmd=%d, num_acl=%d, num_sco=%d\n",
-			unit->hci_devname, unit->hci_flags,
+			device_xname(unit->hci_dev), unit->hci_flags,
 			unit->hci_num_cmd_pkts,
 			unit->hci_num_acl_pkts,
 			unit->hci_num_sco_pkts);
@@ -176,8 +176,8 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCZBTSTATS:
 	case SIOCSBTSCOMTU:
 		SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
-			if (strncmp(unit->hci_devname, btr->btr_name,
-			    HCI_DEVNAME_SIZE) == 0)
+			if (strncmp(device_xname(unit->hci_dev),
+			    btr->btr_name, HCI_DEVNAME_SIZE) == 0)
 				break;
 		}
 
@@ -206,7 +206,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCGBTINFO:	/* get unit info */
 	case SIOCGBTINFOA:	/* get info by address */
 		memset(btr, 0, sizeof(struct btreq));
-		strlcpy(btr->btr_name, unit->hci_devname, HCI_DEVNAME_SIZE);
+		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);
 		bdaddr_copy(&btr->btr_bdaddr, &unit->hci_bdaddr);
 
 		btr->btr_flags = unit->hci_flags;

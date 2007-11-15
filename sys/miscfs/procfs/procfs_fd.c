@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.5.18.3 2007/02/26 09:11:30 yamt Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.5.18.4 2007/11/15 11:45:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.18.3 2007/02/26 09:11:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.18.4 2007/11/15 11:45:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,7 @@ procfs_dofd(
 	struct file *fp;
 	off_t offs;
 
-	mutex_enter(&p->p_mutex);
 	fp = fd_getfile(p->p_fd, pfs->pfs_fd);
-	mutex_exit(&p->p_mutex);
 	if (fp == NULL)
 		return (EBADF);
 

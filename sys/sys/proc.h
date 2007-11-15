@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.201.2.5 2007/10/27 11:36:32 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.201.2.6 2007/11/15 11:45:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -219,10 +219,9 @@ struct proc {
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
-	kcondvar_t	p_refcv;	/* p: reference count CV */
+	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
 	kcondvar_t	p_waitcv;	/* s: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* s: wait, stop CV on LWPs */
-	int		p_refcnt;	/* p: ref count for procfs etc */
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
@@ -246,7 +245,8 @@ struct proc {
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* s: S* process status. */
-	char		p_pad1[3];
+	char		p_trace_enabled; /* Cached by some syscall_intern() */
+	char		p_pad1[2];
 
 	pid_t		p_pid;		/* (: Process identifier. */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
@@ -298,6 +298,7 @@ struct proc {
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
 	sigpend_t	p_sigpend;	/* s: pending signals */
+	struct lcproc	*p_lwpctl;	/* s: _lwp_ctl() information */
 
 /*
  * End area that is zeroed on creation
@@ -466,7 +467,12 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
 
-#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+}
 #define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */

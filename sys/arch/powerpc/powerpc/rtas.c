@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.1.6.3 2007/10/27 11:28:04 yamt Exp $ */
+/*	$NetBSD: rtas.c,v 1.1.6.4 2007/11/15 11:43:18 yamt Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.6.3 2007/10/27 11:28:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.6.4 2007/11/15 11:43:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,6 +18,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.6.3 2007/10/27 11:28:04 yamt Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
+#include <machine/autoconf.h>
 
 struct rtas_softc *rtas0_softc;
 
@@ -95,12 +96,9 @@ CFATTACH_DECL(rtas, sizeof (struct rtas_softc),
 
 static int
 rtas_match(struct device *parent, struct cfdata *match, void *aux) {
-	struct ofbus_attach_args *oba = aux;
+	struct confargs *ca = aux;
 
-	if (strcmp(oba->oba_busname, "ofw"))
-		return 0;
-
-	if (strcmp(oba->oba_ofname, "rtas"))
+	if (strcmp(ca->ca_name, "rtas"))
 		return 0;
 
 	return 1;
@@ -108,9 +106,9 @@ rtas_match(struct device *parent, struct cfdata *match, void *aux) {
 
 static void
 rtas_attach(struct device *parent, struct device *self, void *aux) {
-	struct ofbus_attach_args *oba = aux;
+	struct confargs *ca = aux;
 	struct rtas_softc *sc = (struct rtas_softc *) self;
-	int ph = oba->oba_phandle;
+	int ph = ca->ca_node;
 	int ih;
 	int rtas_size;
 	int rtas_entry;

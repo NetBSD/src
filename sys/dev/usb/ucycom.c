@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.10.6.4 2007/09/03 14:39:10 yamt Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.10.6.5 2007/11/15 11:44:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.10.6.4 2007/09/03 14:39:10 yamt Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.10.6.5 2007/11/15 11:44:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,9 +238,11 @@ ucycom_detach(struct device *self, int flags)
 
 	s = splusb();
 	if (tp != NULL) {
+		mutex_spin_enter(&tty_lock);
 		CLR(tp->t_state, TS_CARR_ON);
 		CLR(tp->t_cflag, CLOCAL | MDMBUF);
 		ttyflush(tp, FREAD|FWRITE);
+		mutex_spin_exit(&tty_lock);
 	}
 	/* Wait for processes to go away. */
 	usb_detach_wait(USBDEV(sc->sc_hdev.sc_dev));

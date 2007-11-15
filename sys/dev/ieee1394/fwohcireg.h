@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.13.16.2 2007/09/03 14:35:28 yamt Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.13.16.3 2007/11/15 11:44:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwohcireg.h,v 1.22 2005/05/20 12:37:16 marius Exp $
+ * $FreeBSD: src/sys/dev/firewire/fwohcireg.h,v 1.23 2007/04/30 14:06:30 simokawa Exp $
  *
  */
 #define		PCI_CBMEM		PCIR_BAR(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.2.4 2007/09/03 14:29:04 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.5 2007/11/15 11:43:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -60,7 +60,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.4 2007/09/03 14:29:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.5 2007/11/15 11:43:18 yamt Exp $");
 
 void
 child_return(void *arg)
@@ -78,7 +78,6 @@ child_return(void *arg)
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ktrsysret(SYS_fork, 0, 0);
 	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 #endif
 

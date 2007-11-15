@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.23.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.23.2.3 2007/11/15 11:44:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 #include <sys/fcntl.h>
 #include <sys/systm.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/disk.h>

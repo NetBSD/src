@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.27.2.3 2007/10/27 11:34:20 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.27.2.4 2007/11/15 11:44:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27.2.3 2007/10/27 11:34:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27.2.4 2007/11/15 11:44:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,7 +75,8 @@ static int sme_events_timeout = 10;
 static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
 #define SME_EVTIMO 	(sme_events_timeout * hz)
 
-static int sme_event_check_low_power(void);
+static bool sme_event_check_low_power(void);
+static bool sme_battery_critical(envsys_data_t *);
 
 /*
  * sysctl(9) stuff to handle the refresh value in the callout
@@ -598,10 +599,10 @@ do {									\
 			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
 			state = ENVSYS_DRIVE_ONLINE;
 			break;
-		case ENVSYS_BATTERY_STATE:
+		case ENVSYS_BATTERY_CAPACITY:
 			sdt =
-			    sme_get_description_table(SME_DESC_BATTERY_STATES);
-			state = ENVSYS_BATTERY_STATE_NORMAL;
+			    sme_get_description_table(SME_DESC_BATTERY_CAPACITY);
+			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		default:
 			panic("%s: invalid units for ENVSYS_FMONSTCHANGED",
@@ -649,18 +650,17 @@ out:
 	mutex_exit(&sme_mtx);
 }
 
-static int
+static bool
 sme_event_check_low_power(void)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	int i, batteries_cnt, batteries_discharged;
-	bool acadapter_on, acadapter_sensor_found;
-
-	acadapter_on = acadapter_sensor_found = false;
-	batteries_cnt = batteries_discharged = 0;
+	int i;
+	bool battery, batterycap, batterycharge;
 
 	KASSERT(mutex_owned(&sme_mtx));
+
+	battery = batterycap = batterycharge = false;
 
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
 		if (sme->sme_class == SME_CLASS_ACADAPTER)
@@ -670,50 +670,59 @@ sme_event_check_low_power(void)
 	 * No AC Adapter devices were found, do nothing.
 	 */
 	if (!sme)
-		return 0;
+		return false;
 
+	/*
+	 * If there's an AC Adapter connected, there's no need
+	 * to continue...
+	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
 		if (edata->units == ENVSYS_INDICATOR) {
-			acadapter_sensor_found = true;
-			if (edata->value_cur) {
-				acadapter_on = true;
-				break;
-			}
+			if (edata->value_cur)
+				return false;
 		}
 	}
+
 	/*
-	 * There's an AC Adapter device connected or there wasn't
-	 * any sensor capable of returning its state.
+	 * Check for battery devices and its state.
 	 */
-	if (acadapter_on || !acadapter_sensor_found)
-		return 0;
-
-#define IS_BATTERY_DISCHARGED()						\
-do {									\
-	if (((edata->units == ENVSYS_BATTERY_STATE) &&			\
-	    ((edata->value_cur == ENVSYS_BATTERY_STATE_CRITICAL) ||	\
-	     (edata->value_cur == ENVSYS_BATTERY_STATE_LOW)))) {	\
-		batteries_discharged++;					\
-		break;							\
-	}								\
-} while (/* CONSTCOND */ 0)
-
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
-		if (sme->sme_class == SME_CLASS_BATTERY) {
-			batteries_cnt++;
-			for (i = 0; i < sme->sme_nsensors; i++) {
-				edata = &sme->sme_sensor_data[i];
-				IS_BATTERY_DISCHARGED();
+		if (sme->sme_class != SME_CLASS_BATTERY)
+			continue;
+
+		/*
+		 * We've found a battery device...
+		 */
+		battery = true;
+		for (i = 0; i < sme->sme_nsensors; i++) {
+			edata = &sme->sme_sensor_data[i];
+			if (edata->units == ENVSYS_BATTERY_CAPACITY) {
+				batterycap = true;
+				if (!sme_battery_critical(edata))
+					return false;
+			} else if (edata->units == ENVSYS_BATTERY_CHARGE) {
+				batterycharge = true;
+				if (edata->value_cur)
+					return false;
 			}
 		}
 	}
+	if (!battery || !batterycap || !batterycharge)
+		return false;
 
 	/*
-	 * All batteries are discharged?
+	 * All batteries in low/critical capacity and discharging.
 	 */
-	if (batteries_cnt == batteries_discharged)
-		return 1;
+	return true;
+}
 
-	return 0;
+static bool
+sme_battery_critical(envsys_data_t *edata)
+{
+	if (edata->value_cur == ENVSYS_BATTERY_CAPACITY_CRITICAL ||
+	    edata->value_cur == ENVSYS_BATTERY_CAPACITY_LOW)
+		return true;
+
+	return false;
 }

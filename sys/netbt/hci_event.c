@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.1.2.5 2007/10/27 11:36:05 yamt Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.1.2.6 2007/11/15 11:45:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1.2.5 2007/10/27 11:36:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1.2.6 2007/11/15 11:45:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,8 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 
 	KASSERT(hdr.type == HCI_EVENT_PKT);
 
-	DPRINTFN(1, "(%s) event %s\n", unit->hci_devname, hci_eventstr(hdr.event));
+	DPRINTFN(1, "(%s) event %s\n",
+	    device_xname(unit->hci_dev), hci_eventstr(hdr.event));
 
 	switch(hdr.event) {
 	case HCI_EVENT_COMMAND_STATUS:
@@ -252,7 +253,7 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 	m_adj(m, sizeof(ep));
 
 	DPRINTFN(1, "(%s) opcode (%03x|%04x) status = 0x%x num_cmd_pkts = %d\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.status,
 		ep.num_cmd_pkts);
@@ -289,7 +290,7 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 	m_adj(m, sizeof(ep));
 
 	DPRINTFN(1, "(%s) opcode (%03x|%04x) num_cmd_pkts = %d\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.num_cmd_pkts);
 
@@ -366,10 +367,9 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 			}
 		} else {
 			/* XXX need to issue Read_Buffer_Size or Reset? */
-			printf("%s: unknown handle %d! "
-				"(losing track of %d packet buffer%s)\n",
-				unit->hci_devname, handle,
-				num, (num == 1 ? "" : "s"));
+			aprint_error_dev(unit->hci_dev,
+			    "unknown handle %d! (losing track of %d packet buffer%s)\n",
+			    handle, num, (num == 1 ? "" : "s"));
 		}
 	}
 
@@ -496,7 +496,7 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 
 	DPRINTFN(1, "(%s) %s connection complete for "
 		"%02x:%02x:%02x:%02x:%02x:%02x status %#x\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		(ep.link_type == HCI_LINK_ACL ? "ACL" : "SCO"),
 		ep.bdaddr.b[5], ep.bdaddr.b[4], ep.bdaddr.b[3],
 		ep.bdaddr.b[2], ep.bdaddr.b[1], ep.bdaddr.b[0],
@@ -554,14 +554,14 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 		err = hci_send_cmd(unit, HCI_CMD_WRITE_LINK_POLICY_SETTINGS,
 						&cp, sizeof(cp));
 		if (err)
-			printf("%s: Warning, could not write link policy\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "Warning, could not write link policy\n");
 
 		err = hci_send_cmd(unit, HCI_CMD_READ_CLOCK_OFFSET,
 				    &cp.con_handle, sizeof(cp.con_handle));
 		if (err)
-			printf("%s: Warning, could not read clock offset\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "Warning, could not read clock offset\n");
 
 		err = hci_acl_setmode(link);
 		if (err == EINPROGRESS)
@@ -951,7 +951,7 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 	wakeup(unit);
 
 	DPRINTFN(1, "%s: lmp_mask %4.4x, acl_mask %4.4x, sco_mask %4.4x\n",
-		unit->hci_devname, unit->hci_lmp_mask,
+		device_xname(unit->hci_dev), unit->hci_lmp_mask,
 		unit->hci_acl_mask, unit->hci_sco_mask);
 }
 

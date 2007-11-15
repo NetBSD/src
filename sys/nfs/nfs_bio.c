@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.128.4.5 2007/10/27 11:36:16 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.128.4.6 2007/11/15 11:45:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128.4.5 2007/10/27 11:36:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.128.4.6 2007/11/15 11:45:20 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	 * Then force a getattr rpc to ensure that you have up to date
 	 * attributes.
 	 * NB: This implies that cache data can be read when up to
-	 * NFS_ATTRTIMEO seconds out of date. If you find that you need current
+	 * nfs_attrtimeo seconds out of date. If you find that you need current
 	 * attributes this could be forced by setting n_attrstamp to 0 before
 	 * the VOP_GETATTR() call.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34.2.5 2007/10/27 11:26:37 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.34.2.6 2007/11/15 11:42:56 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -111,7 +111,6 @@
  */
 
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
@@ -755,9 +754,9 @@ ENTRY(cpu_switchto)
 	/* Switch TSS.  Reset "task busy" flag before loading. */
 	movl	%cr3,%eax
 	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
-	movl	CPUVAR(GDT),%eax
+	movl	CPUVAR(GDT),%ecx
 	movl	L_MD_TSS_SEL(%edi),%edx
-	andl	$~0x0200,4(%eax,%edx, 1)
+	andl	$~0x0200,4(%ecx,%edx, 1)
 	ltr	%dx
 
 	/* Set curlwp. */
@@ -766,6 +765,16 @@ ENTRY(cpu_switchto)
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
+
+	/* Restore thread-private %fs/%gs descriptors. */
+	movl	PCB_FSD(%ebx), %eax
+	movl	PCB_FSD+4(%ebx), %edx
+	movl	%eax, (GUFS_SEL*8)(%ecx)
+	movl	%edx, (GUFS_SEL*8+4)(%ecx)
+	movl	PCB_GSD(%ebx), %eax
+	movl	PCB_GSD+4(%ebx), %edx
+	movl	%eax, (GUGS_SEL*8)(%ecx)
+	movl	%edx, (GUGS_SEL*8+4)(%ecx)
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.16.4 2007/10/27 11:25:03 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.3.16.5 2007/11/15 11:42:29 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
 define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
 define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
 define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
-define  LINUX32_SYS_exit		LINUX32_SYS_exit
+define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
 endif
 
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)

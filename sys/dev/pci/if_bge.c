@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.90.2.5 2007/10/27 11:32:49 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.90.2.6 2007/11/15 11:44:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.90.2.5 2007/10/27 11:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.90.2.6 2007/11/15 11:44:20 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -826,7 +826,7 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	SLIST_INSERT_HEAD(&sc->bge_jfree_listhead, entry, jpool_entries);
 
 	if (__predict_true(m != NULL))
-  		pool_cache_put(&mbpool_cache, m);
+  		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: specificdata.h,v 1.2.8.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: specificdata.h,v 1.2.8.3 2007/11/15 11:45:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _SYS_SPECIFICDATA_H_
 #define	_SYS_SPECIFICDATA_H_
 
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 typedef unsigned int specificdata_key_t;
 typedef void (*specificdata_dtor_t)(void *);
@@ -48,7 +48,7 @@ typedef struct specificdata_container *specificdata_container_t;
 
 typedef struct {
 	specificdata_container_t specdataref_container;
-	struct simplelock specdataref_slock;
+	kmutex_t specdataref_lock;
 } specificdata_reference;
 
 specificdata_domain_t	specificdata_domain_create(void);

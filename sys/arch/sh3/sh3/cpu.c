@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6.16.2 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6.16.3 2007/11/15 11:43:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6.16.2 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6.16.3 2007/11/15 11:43:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 #define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 
-	printf(": HITACHI SH%d %d.%02d MHz PCLOCK %d.%02d MHz\n",
+	aprint_naive("\n");
+	aprint_normal(": SH%d %d.%02d MHz PCLOCK %d.%02d MHz\n",
 	       CPU_IS_SH3 ? 3 : 4,
 	       MHZ(sh_clock_get_cpuclock()),
 	       MHZ(sh_clock_get_pclock()));

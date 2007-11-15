@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.S,v 1.2 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: fpemu.S,v 1.2.16.1 2007/11/15 11:42:45 yamt Exp $	*/
 
 /*	$OpenBSD: fpemu.S,v 1.4 2001/03/29 02:18:45 mickey Exp $	*/
 
@@ -85,7 +85,7 @@ $fpemu_stack:
 /*
  * fpu_emulate(iir)
  */
-LEAF_ENTRY(fpu_emulate)
+LEAF_ENTRY_NOPROFILE(fpu_emulate)
 
 	extru	%arg0, 22, 2, %arg3
 	extru	%arg0, 18, 3, %r31

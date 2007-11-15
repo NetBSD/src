@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.5.6.3 2006/12/30 20:47:22 yamt Exp $ */
+/* $NetBSD: tsc.c,v 1.5.6.4 2007/11/15 11:43:43 yamt Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5.6.3 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5.6.4 2007/11/15 11:43:43 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -152,7 +152,7 @@ init_TSC(void)
 
 	do {
 		tscval[0] = rdtsc();
-		DELAY(100000);
+		i8254_delay(100000);
 		tscval[1] = rdtsc();
 	} while (tscval[1] < tscval[0]);
 

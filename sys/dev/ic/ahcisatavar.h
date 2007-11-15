@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.1.20.2 2007/09/03 14:34:14 yamt Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.1.20.3 2007/11/15 11:44:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -97,5 +97,10 @@ struct ahci_softc {
     
 
 void ahci_attach(struct ahci_softc *);
+void ahci_enable_intrs(struct ahci_softc *);
+int  ahci_reset(struct ahci_softc *);
+void ahci_setup_ports(struct ahci_softc *);
+void ahci_reprobe_drives(struct ahci_softc *);
 
 int  ahci_intr(void *);
+

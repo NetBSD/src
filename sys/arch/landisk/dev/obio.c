@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1.12.3 2007/10/27 11:26:58 yamt Exp $	*/
+/*	$NetBSD: obio.c,v 1.1.12.4 2007/11/15 11:43:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.12.3 2007/10/27 11:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.12.4 2007/11/15 11:43:01 yamt Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -66,17 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.12.3 2007/10/27 11:26:58 yamt Exp $");
 
 #include "locators.h"
 
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_match(device_t, struct cfdata *, void *);
+static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(struct device *, struct cfdata *,
-		    const int *, void *);
+static int	obio_search(device_t, struct cfdata *, const int *, void *);
 
 CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 static int
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct obiobus_attach_args *oba = aux;
 
@@ -87,12 +86,13 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct obio_softc *sc = device_private(self);
 	struct obiobus_attach_args *oba = aux;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = oba->oba_iot;
 	sc->sc_memt = oba->oba_memt;
@@ -106,13 +106,13 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-obio_search(struct device *parent, struct cfdata *cf,
+obio_search(device_t parent, struct cfdata *cf,
     const int *ldesc, void *aux)
 {
 	struct obio_io res_io[1];
 	struct obio_iomem res_mem[1];
 	struct obio_irq res_irq[1];
-	struct obio_softc *sc = (struct obio_softc *)parent;
+	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args oa;
 	int tryagain;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.15.2.2 2007/09/03 14:29:02 yamt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.15.2.3 2007/11/15 11:43:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.15.2.2 2007/09/03 14:29:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.15.2.3 2007/11/15 11:43:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,6 +645,52 @@ void
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.oldfunc;
+}
+
+int
+OF_interpret(const char *cmd, int nargs, int nreturns, ...)
+{
+	va_list ap;
+	int i, len, status;
+	static struct {
+		const char *name;
+		uint32_t nargs;
+		uint32_t nreturns;
+		uint32_t slots[16];
+	} args = {
+		"interpret",
+		1,
+		2,
+	};
+
+	ofw_stack();
+	if (nreturns > 8)
+		return -1;
+	if ((len = strlen(cmd)) >= PAGE_SIZE)
+		return -1;
+	ofbcopy(cmd, OF_buf, len + 1);
+	i = 0;
+	args.slots[i] = (uint32_t)OF_buf;
+	args.nargs = nargs + 1;
+	args.nreturns = nreturns + 1;
+	va_start(ap, nreturns);
+	i++;
+	while (i < args.nargs) {
+		args.slots[i] = (uint32_t)va_arg(ap, uint32_t *);
+		i++;
+	}
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	status = args.slots[i];
+	i++;
+
+	while (i < args.nargs + args.nreturns) {
+		*va_arg(ap, uint32_t *) = args.slots[i];
+		i++;
+	}
+	va_end(ap);
+	return status;
 }
 
 /*

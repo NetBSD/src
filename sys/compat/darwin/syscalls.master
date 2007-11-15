@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28.4.3 2007/09/03 14:31:57 yamt Exp $
+	$NetBSD: syscalls.master,v 1.28.4.4 2007/11/15 11:43:50 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -65,7 +65,8 @@
 
 %%
 
-0	INDIR		{ int sys_syscall(int number, ...); }
+0	NOARGS INDIR	{ int sys_syscall(int code, \
+			    ... register_t args[DARWIN_SYS_MAXSYSARGS]); }
 1	NOARGS		{ void sys_exit(int rval); }
 2	STD		{ int darwin_sys_fork(void); }
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }

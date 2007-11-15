@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.62.2.5 2007/10/27 11:35:41 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.62.2.6 2007/11/15 11:44:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.5 2007/10/27 11:35:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.6 2007/11/15 11:44:57 yamt Exp $");
 
 #include "opt_systrace.h"
 #include "opt_magiclinks.h"
@@ -74,8 +74,7 @@ struct pathname_internal {
 
 int vfs_magiclinks = MAGICLINKS;
 
-struct pool pnbuf_pool;		/* pathname buffer pool */
-struct pool_cache pnbuf_cache;	/* pathname buffer cache */
+pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
 /*
  * Substitute replacement text for 'magic' strings in symlinks.

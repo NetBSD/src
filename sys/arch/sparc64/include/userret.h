@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.5.12.3 2007/02/26 09:08:25 yamt Exp $ */
+/*	$NetBSD: userret.h,v 1.5.12.4 2007/11/15 11:43:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -76,8 +76,6 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 	 */
 	if (p->p_stflag & PST_PROFIL)
 		addupc_task(l, pc, (int)(p->p_sticks - oticks));
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 static __inline void share_fpu(struct lwp *, struct trapframe64 *);

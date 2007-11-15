@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.10.2.6 2007/10/27 11:35:16 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.10.2.7 2007/11/15 11:44:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.10.2.6 2007/10/27 11:35:16 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.10.2.7 2007/11/15 11:44:37 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1307,6 +1307,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 		if (vat_node) {
 			vput(vat_node->vnode);
 			udf_dispose_node(vat_node);
+			vat_node = NULL;
 		}
 		vat_loc--;	/* walk backwards */
 	} while (vat_loc >= early_vat_loc);

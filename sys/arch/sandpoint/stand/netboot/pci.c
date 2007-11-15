@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.3.2.2 2007/10/27 11:28:25 yamt Exp $ */
+/* $NetBSD: pci.c,v 1.3.2.3 2007/11/15 11:43:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,12 +37,8 @@
  */
 
 #include <sys/param.h>
+
 #include <lib/libsa/stand.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h> 
-
-#include "globals.h"
 
 /*
  * "Map B" layout
@@ -51,20 +47,23 @@
  * (0xfec0'0000) and CONFIG_DATA (0xfee0'0000).
  */
 #define PCI_MEMBASE	0x80000000
-#define	PCI_MEMLIMIT	0xfbffffff	/* EUMB is next to this */
+#define PCI_MEMLIMIT	0xfbffffff	/* EUMB is next to this */
 #define PCI_IOBASE	0x00001000	/* reserves room for via 686B */
-#define	PCI_IOLIMIT	0x000fffff
-#define	CONFIG_ADDR	0xfec00000
-#define	CONFIG_DATA	0xfee00000
+#define PCI_IOLIMIT	0x000fffff
+#define CONFIG_ADDR	0xfec00000
+#define CONFIG_DATA	0xfee00000
 
 #define MAXNDEVS 32
 
-static unsigned cfgread(unsigned, unsigned, unsigned, unsigned);
-static void cfgwrite(unsigned, unsigned, unsigned, unsigned, unsigned);
-static int _pcifinddev(unsigned, unsigned, unsigned, unsigned *);
-static void busprobe(unsigned);
-static void devicemap(unsigned, unsigned, unsigned);
-static void deviceinit(unsigned, unsigned, unsigned);
+#include "globals.h"
+
+static unsigned cfgread(int, int, int, int);
+static void cfgwrite(int, int, int, int, unsigned);
+static void busprobe(int);
+static void deviceinit(int, int, int);
+static void devicemap(int, int, int);
+static int _pcifinddev(unsigned, unsigned, int, unsigned *);
+static int _pcilookup(unsigned, unsigned [][2], int, int, int);
 
 unsigned memstart, memlimit;
 unsigned iostart, iolimit;
@@ -87,6 +86,7 @@ unsigned
 pcimaketag(b, d, f)
 	int b, d, f;
 {
+
 	return (1U << 31) | (b << 16) | (d << 11) | (f << 8);
 }
 
@@ -95,6 +95,7 @@ pcidecomposetag(tag, b, d, f)
 	unsigned tag;
 	int *b, *d, *f;
 {
+
 	if (b != NULL)
 		*b = (tag >> 16) & 0xff;
 	if (d != NULL)
@@ -109,37 +110,52 @@ pcifinddev(vend, prod, tag)
 	unsigned vend, prod;
 	unsigned *tag;
 {
+
 	return _pcifinddev(vend, prod, 0, tag);
+} 
+
+int
+pcilookup(type, list, max)
+	unsigned type;
+	unsigned list[][2];
+	int max;
+{
+
+	return _pcilookup(type, list, 0, 0, max);
 }
 
 unsigned
 pcicfgread(tag, off)
-	unsigned tag, off;
+	unsigned tag;
+	int off;
 {
 	unsigned cfg;
 	
-	cfg = tag | (off &~ 3);
+	cfg = tag | (off &~ 03);
 	iohtole32(CONFIG_ADDR, cfg);
 	return iole32toh(CONFIG_DATA);
 }
 
 void
 pcicfgwrite(tag, off, val)
-	unsigned tag, off, val;
+	unsigned tag;
+	int off;
+	unsigned val;
 {
 	unsigned cfg;
 
-	cfg = tag | (off &~ 3);
+	cfg = tag | (off &~ 03);
 	iohtole32(CONFIG_ADDR, cfg);
 	iohtole32(CONFIG_DATA, val);
 }
 
 static unsigned
 cfgread(b, d, f, off)
-	unsigned b, d, f, off;
+	int b, d, f, off;
 {
 	unsigned cfg;
 	
+	off &= ~03;
 	cfg = (1U << 31) | (b << 16) | (d << 11) | (f << 8) | off | 0;
 	iohtole32(CONFIG_ADDR, cfg);
 	return iole32toh(CONFIG_DATA);
@@ -147,62 +163,22 @@ cfgread(b, d, f, off)
 
 static void
 cfgwrite(b, d, f, off, val)
-	unsigned b, d, f, off, val;
+	int b, d, f, off;
+	unsigned val;
 {
 	unsigned cfg;
 
+	off &= ~03;
 	cfg = (1U << 31) | (b << 16) | (d << 11) | (f << 8) | off | 0;
 	iohtole32(CONFIG_ADDR, cfg);
 	iohtole32(CONFIG_DATA, val);
 }
 
-static int _maxbus;
-
-static int
-_pcifinddev(vend, prod, bus, tag)
-	unsigned vend, prod, bus;
-	unsigned *tag;
-{
-	unsigned device, function, nfunctions;
-	unsigned pciid, bhlcr;
-
-	for (device = 0; device < MAXNDEVS; device++) {
-		pciid = cfgread(bus, device, 0, PCI_ID_REG);
-		if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
-			continue;
-		if (PCI_VENDOR(pciid) == 0)
-			continue;
-		if ((cfgread(bus, device, 0, 0x08) >> 16) == 0x0604) {
-			/* exploring bus beyond PCI-PCI bridge */
-			_maxbus = (bus += 1);
-			if (_pcifinddev(vend, prod, bus, tag) == 0)
-				return 0;
-			continue;
-		}
-		bhlcr = cfgread(bus, device, 0, PCI_BHLC_REG);
-		nfunctions = (PCI_HDRTYPE_MULTIFN(bhlcr)) ? 8 : 1;
-		for (function = 0; function < nfunctions; function++) {
-			pciid = cfgread(bus, device, function, PCI_ID_REG);
-			if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
-				continue;
-			if (PCI_VENDOR(pciid) == 0)
-				continue;
-			if (PCI_VENDOR(pciid) == vend
-			    && PCI_PRODUCT(pciid) == prod) {
-				*tag = pcimaketag(bus, device, function);
-				return 0;
-			}
-		}
-	}
-	*tag = ~0;
-	return -1;
-}
-
 static void
 busprobe(bus)
-	unsigned bus;
+	int bus;
 {
-	unsigned device, function, nfunctions;
+	int device, function, nfunctions;
 	unsigned pciid, bhlcr;
 
 	for (device = 0; device < MAXNDEVS; device++) {
@@ -227,18 +203,18 @@ busprobe(bus)
 
 static void
 deviceinit(bus, dev, func)
-	unsigned bus, dev, func;
+	int bus, dev, func;
 {
 	unsigned val;
 
 	/* 0x00 */
 	printf("%02d:%02d:%02d:", bus, dev, func);
 	val = cfgread(bus, dev, func, 0x00);
-	printf(" chip %04x,%04x", val & 0xffff, val>>16);
+	printf(" chip %04x.%04x", val & 0xffff, val>>16);
 	val = cfgread(bus, dev, func, 0x2c);
-	printf(" card %04x,%04x", val & 0xffff, val>>16);
+	printf(" card %04x.%04x", val & 0xffff, val>>16);
 	val = cfgread(bus, dev, func, 0x08);
-	printf(" rev %02x class %02x,%02x,%02x",
+	printf(" rev %02x class %02x.%02x.%02x",
 		val & 0xff, (val>>24), (val>>16) & 0xff, (val>>8) & 0xff);
 	val = cfgread(bus, dev, func, 0x0c);
 	printf(" hdr %02x\n", (val>>16) & 0xff);
@@ -255,7 +231,7 @@ deviceinit(bus, dev, func)
 	devicemap(bus, dev, func);
 
 	/* descending toward PCI-PCI bridge */
-	if ((cfgread(bus, dev, func, 0x08) >> 16) == 0x0604) {
+	if ((cfgread(bus, dev, func, 0x08) >> 16) == PCI_CLASS_PPB) {
 		unsigned new;
 
 		/* 0x18 */
@@ -293,7 +269,7 @@ deviceinit(bus, dev, func)
 
 static void
 devicemap(bus, dev, func)
-	unsigned bus, dev, func;
+	int bus, dev, func;
 {
 	unsigned val, maxbar, mapr, req, mapbase, size;
 
@@ -350,4 +326,91 @@ devicemap(bus, dev, func)
 		}
 printf("%s base %x size %x\n", (val & 01) ? "i/o" : "mem", mapbase, size);
 	}
+}
+
+static int
+_pcifinddev(vend, prod, bus, tag)
+	unsigned vend, prod;
+	int bus;
+	unsigned *tag;
+{
+	unsigned device, function, nfunctions;
+	unsigned pciid, bhlcr, class;
+
+	for (device = 0; device < MAXNDEVS; device++) {
+		pciid = cfgread(bus, device, 0, PCI_ID_REG);
+		if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
+			continue;
+		if (PCI_VENDOR(pciid) == 0)
+			continue;
+		class = cfgread(bus, device, 0, PCI_CLASS_REG);
+		if ((class >> 16) == PCI_CLASS_PPB) {
+			/* exploring bus beyond PCI-PCI bridge */
+			if (_pcifinddev(vend, prod, bus + 1, tag) == 0)
+				return 0;
+			continue;
+		}
+		bhlcr = cfgread(bus, device, 0, PCI_BHLC_REG);
+		nfunctions = (PCI_HDRTYPE_MULTIFN(bhlcr)) ? 8 : 1;
+		for (function = 0; function < nfunctions; function++) {
+			pciid = cfgread(bus, device, function, PCI_ID_REG);
+			if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
+				continue;
+			if (PCI_VENDOR(pciid) == 0)
+				continue;
+			if (PCI_VENDOR(pciid) == vend
+			    && PCI_PRODUCT(pciid) == prod) {
+				*tag = pcimaketag(bus, device, function);
+				return 0;
+			}
+		}
+	}
+	*tag = ~0;
+	return -1;
+}
+
+static int
+_pcilookup(type, list, bus, index, limit)
+	unsigned type;
+	unsigned list[][2];
+	int bus, index, limit;
+{
+	int device, function, nfunctions;
+	unsigned pciid, bhlcr, class;
+	
+	for (device = 0; device < MAXNDEVS; device++) {
+		pciid = cfgread(bus, device, 0, PCI_ID_REG);
+		if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
+			continue;
+		if (PCI_VENDOR(pciid) == 0)
+			continue;
+		class = cfgread(bus, device, 0, PCI_CLASS_REG);
+		if ((class >> 16) == PCI_CLASS_PPB) {
+			/* exploring bus beyond PCI-PCI bridge */
+			index = _pcilookup(type, list, bus + 1, index, limit);
+			if (index >= limit)
+				goto out;
+			continue;
+		}
+		bhlcr = cfgread(bus, device, 0, PCI_BHLC_REG);
+		nfunctions = (PCI_HDRTYPE_MULTIFN(bhlcr)) ? 8 : 1;
+		for (function = 0; function < nfunctions; function++) {
+			pciid = cfgread(bus, device, function, PCI_ID_REG);
+			if (PCI_VENDOR(pciid) == PCI_VENDOR_INVALID)
+				continue;
+			if (PCI_VENDOR(pciid) == 0)
+				continue;
+			class = cfgread(bus, device, function, PCI_CLASS_REG);
+			if ((class >> 16) == type) {
+				list[index][0] = pciid;
+				list[index][1] = 
+				     pcimaketag(bus, device, function);
+				index += 1;
+				if (index >= limit)
+					goto out;
+			}
+		}
+	}
+  out:
+	return index;
 }
