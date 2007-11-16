@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.9 2007/11/15 19:18:33 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.10 2007/11/16 01:37:58 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -141,8 +141,10 @@ ENTRY(kcopy)
 	movsl
 	movl	24(%esp),%ecx
 	andl	$3,%ecx			# any bytes left?
+	jz	0f
 	rep
 	movsb
+0:
 
 	GET_CURPCB(%edx)		# XXX save curpcb?
 	popl	PCB_ONFAULT(%edx)
@@ -190,15 +192,17 @@ ENTRY(kcopy)
 
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
+	DO_DEFERRED_SWITCH
+
+	GET_CURPCB(%edx)
 	pushl	%esi
 	pushl	%edi
-	pushl	$0
-
-	DO_DEFERRED_SWITCH
+	pushl	$0	/* PCB_ONFAULT(%edx) */
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -209,20 +213,17 @@ ENTRY(copyout)
 	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
-
-	GET_CURPCB(%edx)
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
-
-	/* bcopy(%esi, %edi, %eax); */
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
 	movsl
+	andl	$3,%eax
+	jz	1f
 	movl	%eax,%ecx
-	andl	$3,%ecx
 	rep
 	movsb
-
+1:
+	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
@@ -239,15 +240,15 @@ ENTRY(copyout)
 ENTRY(copyin)
 	DO_DEFERRED_SWITCH
 
+	GET_CURPCB(%edx)
 	pushl	%esi
 	pushl	%edi
-	GET_CURPCB(%eax)
-	pushl	$0
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
+	pushl	$0	/* PCB_ONFAULT(%edx) */ 
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -259,17 +260,16 @@ ENTRY(copyin)
 	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
-
-	/* bcopy(%esi, %edi, %eax); */
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
 	movsl
+	andl	$3,%eax
+	jz	1f
 	movl	%eax,%ecx
-	andl	$3,%ecx
 	rep
 	movsb
-
+1:
 	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
