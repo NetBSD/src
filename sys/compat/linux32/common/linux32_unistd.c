@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.13 2007/11/07 00:24:31 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.14 2007/11/16 12:56:50 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.13 2007/11/07 00:24:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.14 2007/11/16 12:56:50 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,27 +110,6 @@ linux32_sys_llseek(l, v, retval)
 
 	return linux_sys_llseek(l, &ua, retval);
 }
-
-int
-linux32_sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_readlink_args /* {
-		syscallarg(const netbsd32_charp) name;
-		syscallarg(netbsd32_charp) buf;
-		syscallarg(int) count;
-	} */ *uap = v;
-	struct linux_sys_readlink_args ua;
-
-	NETBSD32TOP_UAP(name, const char);
-	NETBSD32TOP_UAP(buf, char)
-	NETBSD32TO64_UAP(count);
-
-	return linux_sys_readlink(l, &ua, retval);
-}
-
 
 int
 linux32_sys_select(l, v, retval)
