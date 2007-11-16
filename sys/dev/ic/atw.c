@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.131 2007/11/15 22:49:46 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.132 2007/11/16 04:58:38 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.131 2007/11/15 22:49:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.132 2007/11/16 04:58:38 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1357,7 +1357,7 @@ atw_init(struct ifnet *ifp)
 				goto out;
 			}
 		} else
-			ATW_INIT_RXDESC(sc, i);
+			atw_init_rxdesc(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -2626,7 +2626,7 @@ atw_add_rxbuf(struct atw_softc *sc, int idx)
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	ATW_INIT_RXDESC(sc, idx);
+	atw_init_rxdesc(sc, idx);
 
 	return (0);
 }
@@ -3088,7 +3088,7 @@ atw_rxintr(struct atw_softc *sc)
 		ATW_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = le32toh(sc->sc_rxdescs[i].ar_stat);
-		rssi0 = le32toh(sc->sc_rxdescs[i].ar_rssi);
+		rssi0 = le32toh(sc->sc_rxdescs[i].ar_ctlrssi);
 		rate0 = __SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
 		if (rxstat & ATW_RXSTAT_OWN)
@@ -3140,7 +3140,7 @@ atw_rxintr(struct atw_softc *sc)
 			PRINTERR(ATW_RXSTAT_CRC32E, "FCS error");
 			PRINTERR(ATW_RXSTAT_ICVE, "WEP ICV error");
 #undef PRINTERR
-			ATW_INIT_RXDESC(sc, i);
+			atw_init_rxdesc(sc, i);
 			continue;
 		}
 
@@ -3161,7 +3161,7 @@ atw_rxintr(struct atw_softc *sc)
 		m = rxs->rxs_mbuf;
 		if (atw_add_rxbuf(sc, i) != 0) {
 			ifp->if_ierrors++;
-			ATW_INIT_RXDESC(sc, i);
+			atw_init_rxdesc(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
@@ -3181,6 +3181,7 @@ atw_rxintr(struct atw_softc *sc)
 		 * bits.  Mask those off.
 		 *
 		 * TBD Treat other basebands.
+		 * TBD Use short-preamble bit and such in RF3000_RXSTAT.
 		 */
 		if (sc->sc_bbptype == ATW_BBPTYPE_RFMD)
 			rssi = rssi0 & RF3000_RSSI_MASK;
@@ -3513,8 +3514,6 @@ atw_start(struct ifnet *ifp)
 			tap->at_rate = rate;
 			tap->at_chan_freq = htole16(ic->ic_curchan->ic_freq);
 			tap->at_chan_flags = htole16(ic->ic_curchan->ic_flags);
-
-			/* TBD tap->at_flags */
 
 			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
 			    tap->at_ihdr.it_len, m0);
