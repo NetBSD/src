@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.25 2007/11/16 06:06:15 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.26 2007/11/16 23:51:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -283,6 +283,13 @@ struct atw_softc {
 	uint8_t		sc_rev;
 	uint8_t		sc_rf3000_options1;
 	uint8_t		sc_rf3000_options2;
+
+	struct evcnt	sc_recv_ev;
+	struct evcnt	sc_crc16e_ev;
+	struct evcnt	sc_crc32e_ev;
+	struct evcnt	sc_icve_ev;
+	struct evcnt	sc_sfde_ev;
+	struct evcnt	sc_sige_ev;
 
 	struct callout	sc_scan_ch;
 	union {
