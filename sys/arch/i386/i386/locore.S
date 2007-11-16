@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.4.8 2007/10/23 20:13:02 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.4.9 2007/11/16 20:31:20 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -902,10 +902,9 @@ syscall1:
 	pushl	$4f
 	call	_C_LABEL(printf)
 	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	pushl	$IPL_NONE
+	call	_C_LABEL(spllower)
+	addl	$4,%esp
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
