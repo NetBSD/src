@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.24 2007/11/16 08:00:16 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.25 2007/11/16 08:18:33 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -119,11 +119,6 @@ extern	kcondvar_t sme_callout_cv;	/* to wait for the callout handler */
  * linked list for the sysmon envsys devices.
  */
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
-
-/* 
- * linked list for the sysmon envsys events.
- */
-LIST_HEAD(, sme_event) sme_events_list;
 
 /* 
  * functions to handle sysmon envsys devices.
