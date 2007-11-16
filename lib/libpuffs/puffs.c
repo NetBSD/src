@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.74 2007/11/06 15:09:08 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.75 2007/11/16 18:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.74 2007/11/06 15:09:08 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.75 2007/11/16 18:35:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -343,11 +343,69 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 }
 
 int
+puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
+{
+	ssize_t n;
+	int parent, value, fd;
+
+	if (pipe(pu->pu_dpipe) == -1)
+		return -1;
+
+	switch (fork()) {
+	case -1:
+		return -1;
+	case 0:
+		parent = 0;
+		break;
+	default:
+		parent = 1;
+		break;
+	}
+	pu->pu_state |= PU_PUFFSDAEMON;
+
+	if (parent) {
+		n = read(pu->pu_dpipe[0], &value, sizeof(int));
+		if (n == -1)
+			err(1, "puffs_daemon");
+		assert(n == sizeof(value));
+		if (value) {
+			errno = value;
+			err(1, "puffs_daemon");
+		}
+		exit(0);
+	} else {
+		if (setsid() == -1)
+			goto fail;
+
+		if (!nochdir)
+			chdir("/");
+
+		if (!noclose) {
+			fd = open(_PATH_DEVNULL, O_RDWR, 0);
+			if (fd == -1)
+				goto fail;
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > STDERR_FILENO)
+				close(fd);
+		}
+		return 0;
+	}
+
+ fail:
+	n = write(pu->pu_dpipe[1], &errno, sizeof(int));
+	assert(n == 4);
+	return -1;
+}
+
+int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	void *cookie)
 {
 	char rp[MAXPATHLEN];
-	int rv, fd;
+	ssize_t n;
+	int rv, fd, sverrno;
 
 #if 1
 	/* XXXkludgehere */
@@ -385,9 +443,18 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
+	sverrno = errno;
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
+	if (pu->pu_state & PU_PUFFSDAEMON) {
+		n = write(pu->pu_dpipe[1], &sverrno, sizeof(int));
+		assert(n == 4);
+		close(pu->pu_dpipe[0]);
+		close(pu->pu_dpipe[1]);
+	}
+
+	errno = sverrno;
 	return rv;
 }
 

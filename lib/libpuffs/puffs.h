@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.93 2007/11/05 17:55:23 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.94 2007/11/16 18:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -432,6 +432,7 @@ struct puffs_usermount *_puffs_init(int, struct puffs_ops *, const char *,
 int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
 int		puffs_exit(struct puffs_usermount *, int);
 int		puffs_mainloop(struct puffs_usermount *);
+int		puffs_daemon(struct puffs_usermount *, int, int);
 
 
 int	puffs_getselectable(struct puffs_usermount *);
