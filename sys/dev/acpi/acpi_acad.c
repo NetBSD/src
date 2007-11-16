@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.28 2007/11/02 19:21:29 plunky Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.29 2007/11/16 08:00:13 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.28 2007/11/02 19:21:29 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.29 2007/11/16 08:00:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ struct acpiacad_softc {
 	int sc_status;			/* status changed/not changed */
 	int sc_notifysent;		/* notify message sent */
 
-	struct sysmon_envsys sc_sysmon;
+	struct sysmon_envsys *sc_sme;
 	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
-	struct envsys_data sc_data[1];
+	envsys_data_t sc_sensor;
 
 	kmutex_t sc_mtx;
 };
@@ -93,7 +93,7 @@ static void acpiacad_get_status(void *);
 static void acpiacad_clear_status(struct acpiacad_softc *);
 static void acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void acpiacad_init_envsys(device_t);
-static int acpiacad_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void acpiacad_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /*
  * acpiacad_match:
@@ -175,14 +175,14 @@ acpiacad_get_status(void *arg)
 	if (sc->sc_status != status) {
 		sc->sc_status = status;
 		if (status)
-			sc->sc_data[0].value_cur = 1;
+			sc->sc_sensor.value_cur = 1;
 		else
-			sc->sc_data[0].value_cur = 0;
+			sc->sc_sensor.value_cur = 0;
 		AACAD_SET(sc, AACAD_F_STCHANGED);
 		sc->sc_notifysent = 0;
 	}
 
-	sc->sc_data[0].state = ENVSYS_SVALID;
+	sc->sc_sensor.state = ENVSYS_SVALID;
 	AACAD_SET(sc, AACAD_F_AVAILABLE);
 	/*
 	 * If status has changed, send the event.
@@ -206,7 +206,7 @@ acpiacad_get_status(void *arg)
 static void
 acpiacad_clear_status(struct acpiacad_softc *sc)
 {
-	sc->sc_data[0].state = ENVSYS_SINVALID;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 	AACAD_CLEAR(sc, AACAD_F_AVAILABLE);
 	AACAD_CLEAR(sc, AACAD_F_STCHANGED);
 }
@@ -272,30 +272,34 @@ acpiacad_init_envsys(device_t dv)
 {
 	struct acpiacad_softc *sc = device_private(dv);
 
-	sc->sc_data[0].sensor = 0;
-	sc->sc_data[0].state = ENVSYS_SVALID;
-	sc->sc_data[0].units = ENVSYS_INDICATOR;
- 	strlcpy(sc->sc_data[0].desc, "connected", sizeof(sc->sc_data[0].desc));
+	sc->sc_sme = sysmon_envsys_create();
+	sc->sc_sensor.state = ENVSYS_SVALID;
+	sc->sc_sensor.units = ENVSYS_INDICATOR;
+ 	strlcpy(sc->sc_sensor.desc, "connected", sizeof(sc->sc_sensor.desc));
 
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_name = device_xname(dv);
-	sc->sc_sysmon.sme_cookie = dv;
-	sc->sc_sysmon.sme_gtredata = acpiacad_gtredata;
-	sc->sc_sysmon.sme_nsensors = 1;
-	sc->sc_sysmon.sme_class = SME_CLASS_ACADAPTER;
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+		aprint_error_dev(dv, "unable to add sensor\n");
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	sc->sc_sme->sme_name = device_xname(dv);
+	sc->sc_sme->sme_cookie = dv;
+	sc->sc_sme->sme_refresh = acpiacad_refresh;
+	sc->sc_sme->sme_class = SME_CLASS_ACADAPTER;
+
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(dv, "unable to register with sysmon\n");
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
 }
 
-static int
-acpiacad_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+acpiacad_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	device_t dv = sme->sme_cookie;
 	struct acpiacad_softc *sc = device_private(dv);
 
 	if (!AACAD_ISSET(sc, AACAD_F_AVAILABLE))
 		acpiacad_get_status(dv);
-
-	return 0;
 }
