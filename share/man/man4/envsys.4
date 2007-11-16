@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.37 2007/11/03 23:05:56 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.38 2007/11/16 08:00:12 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 1, 2007
+.Dd November 13, 2007
 .Dt ENVSYS 4
 .Os
 .Sh NAME
@@ -81,14 +81,18 @@ is used to receive the global dictionary that is being used in
 the kernel by the
 .Xr sysmon_envsys 9
 framework. It will contain an array of dictionaries per device
-and one dictionary per sensor, each of them with its own
-characteristics and values.
+and one dictionary per sensor plus another special dictionary that
+contains the properties for a device. Each sensor dictionary will have 
+their own characteristics and values.
 .Pp
 The following XML property list represents a virtual device
 .Dq device0
 with one sensor
 .Dq sensor0
-and all available properties set on it:
+and all available properties set on it, plus another sensor for
+the
+.Dq device-properties
+dictionary (which contains specific properties for a device):
 .Pp
 .Bd -literal
 \&\*[Lt]key\&\*[Gt]device0\&\*[Lt]\&/key\&\*[Gt]
@@ -136,6 +140,13 @@ and all available properties set on it:
 		\&\*[Lt]string\&\*[Gt]Ampere hour\&\*[Lt]\&/string\&\*[Gt]
 		\&\*[Lt]key\&\*[Gt]want-percentage\&\*[Lt]\&/key\&\*[Gt]
 		\&\*[Lt]true\&/\&\*[Gt]
+	\&\*[Lt]\&/dict\&\*[Gt]
+	\&\*[Lt]dict\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]dict\&\*[Gt]
+			\&\*[Lt]key\&\*[Gt]refresh-timeout\&\*[Lt]\&/key\&\*[Gt]
+			\&\*[Lt]integer\&\*[Gt]0xa\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]\&/dict\&\*[Gt]
 	\&\*[Lt]\&/dict\&\*[Gt]
 \&\*[Lt]\&/array\&\*[Gt]
 .Ed
@@ -237,7 +248,8 @@ processed by the
 .Nm
 framework. Only a set of predefined keywords are recognized by
 the kernel part. The following is the property list representation
-of a dictionary with all recognized and required keywords:
+of a dictionary with all recognized and required keywords that
+a sensor understands:
 .Bd -literal
 \&\*[Lt]dict\&\*[Gt]
 	\&\*[Lt]key\&\*[Gt]description\&\*[Lt]\&/key\&\*[Gt]
@@ -250,6 +262,21 @@ of a dictionary with all recognized and required keywords:
 	\&\*[Lt]integer\&\*[Gt]3400\&\*[Lt]\&/integer\&\*[Gt]
 	\&\*[Lt]key\&\*[Gt]critical-min\&\*[Lt]\&/key\&\*[Gt]
 	\&\*[Lt]integer\&\*[Gt]2800\&\*[Lt]\&/integer\&\*[Gt]
+\&\*[Lt]\&/dict\&\*[Gt]
+.Ed
+.Pp
+Also if some properties in a device need to be changed, the
+.Dq device-properties
+dictionary must be used. At this moment only the
+.Dq refresh-timeout
+property is understood. This has the following structure:
+.Bd -literal
+\&\*[Lt]dict\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]dict\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]refresh-timeout\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]0xa\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]\&/dict\&\*[Gt]
 \&\*[Lt]\&/dict\&\*[Gt]
 .Ed
 .Pp
@@ -270,7 +297,7 @@ should have the following structure:
 			...
 		\&\*[Lt]\&/dict\&\*[Gt]
 		...
-		Another dictionary for other sensor
+		Another dictionary for device-properties or sensor
 		...
 	\&\*[Lt]\&/array\&\*[Gt]
 	...

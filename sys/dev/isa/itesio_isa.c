@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.3 2007/11/15 13:23:13 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.4 2007/11/16 08:00:15 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,21 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.3 2007/11/15 13:23:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4 2007/11/16 08:00:15 xtraeme Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/errno.h>
-#include <sys/conf.h>
-#include <sys/envsys.h>
-#include <sys/time.h>
 
 #include <sys/bus.h>
-#include <sys/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -96,7 +88,7 @@ static void	itesio_setup_sensors(struct itesio_softc *);
 static void	itesio_refresh_temp(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_volts(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_fans(struct itesio_softc *, envsys_data_t *);
-static int	itesio_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void	itesio_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /* rfact values for voltage sensors */
 static const int itesio_vrfact[] = {
@@ -218,25 +210,28 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	itesio_ecwritereg(sc, ITESIO_EC_BEEPEER, cr);
 #endif
 
-	/* Initialize sensors */
-	for (i = 0; i < IT_NUM_SENSORS; ++i) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
-	}
-
+	/*
+	 * Initialize and attach sensors.
+	 */
 	itesio_setup_sensors(sc);
-
+	sc->sc_sme = sysmon_envsys_create();
+	for (i = 0; i < IT_NUM_SENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 	/*
 	 * Hook into the system monitor.
 	 */
-	sc->sc_sysmon.sme_name = device_xname(self);
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = itesio_gtredata;
-	sc->sc_sysmon.sme_nsensors = IT_NUM_SENSORS;
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = itesio_refresh;
 	
-	if (sysmon_envsys_register(&sc->sc_sysmon)) {
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
+		sysmon_envsys_destroy(sc->sc_sme);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 	}
 	sc->sc_hwmon_enabled = true;
@@ -248,7 +243,7 @@ itesio_isa_detach(device_t self, int flags)
 	struct itesio_softc *sc = device_private(self);
 
 	if (sc->sc_hwmon_enabled)
-		sysmon_envsys_unregister(&sc->sc_sysmon);
+		sysmon_envsys_unregister(sc->sc_sme);
 	if (sc->sc_hwmon_mapped)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 	return 0;
@@ -319,35 +314,35 @@ itesio_setup_sensors(struct itesio_softc *sc)
 
 	/* temperatures */
 	for (i = 0; i < IT_VOLTSTART_IDX; i++)
-		sc->sc_data[i].units = ENVSYS_STEMP;
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
-	COPYDESCR(sc->sc_data[0].desc, "CPU Temp");
-	COPYDESCR(sc->sc_data[1].desc, "System Temp");
-	COPYDESCR(sc->sc_data[2].desc, "Aux Temp");
+	COPYDESCR(sc->sc_sensor[0].desc, "CPU Temp");
+	COPYDESCR(sc->sc_sensor[1].desc, "System Temp");
+	COPYDESCR(sc->sc_sensor[2].desc, "Aux Temp");
 
 	/* voltages */
 	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
-		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
-		sc->sc_data[i].flags = ENVSYS_FCHANGERFACT;
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
+		sc->sc_sensor[i].flags = ENVSYS_FCHANGERFACT;
 	}
 
-	COPYDESCR(sc->sc_data[3].desc, "VCORE_A");
-	COPYDESCR(sc->sc_data[4].desc, "VCORE_B");
-	COPYDESCR(sc->sc_data[5].desc, "+3.3V");
-	COPYDESCR(sc->sc_data[6].desc, "+5V");
-	COPYDESCR(sc->sc_data[7].desc, "+12V");
-	COPYDESCR(sc->sc_data[8].desc, "-12V");
-	COPYDESCR(sc->sc_data[9].desc, "-5V");
-	COPYDESCR(sc->sc_data[10].desc, "STANDBY");
-	COPYDESCR(sc->sc_data[11].desc, "VBAT");
+	COPYDESCR(sc->sc_sensor[3].desc, "VCORE_A");
+	COPYDESCR(sc->sc_sensor[4].desc, "VCORE_B");
+	COPYDESCR(sc->sc_sensor[5].desc, "+3.3V");
+	COPYDESCR(sc->sc_sensor[6].desc, "+5V");
+	COPYDESCR(sc->sc_sensor[7].desc, "+12V");
+	COPYDESCR(sc->sc_sensor[8].desc, "-12V");
+	COPYDESCR(sc->sc_sensor[9].desc, "-5V");
+	COPYDESCR(sc->sc_sensor[10].desc, "STANDBY");
+	COPYDESCR(sc->sc_sensor[11].desc, "VBAT");
 
 	/* fans */
 	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++)
-		sc->sc_data[i].units = ENVSYS_SFANRPM;
+		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 
-	COPYDESCR(sc->sc_data[12].desc, "CPU Fan");
-	COPYDESCR(sc->sc_data[13].desc, "System Fan");
-	COPYDESCR(sc->sc_data[14].desc, "Aux Fan");
+	COPYDESCR(sc->sc_sensor[12].desc, "CPU Fan");
+	COPYDESCR(sc->sc_sensor[13].desc, "System Fan");
+	COPYDESCR(sc->sc_sensor[14].desc, "Aux Fan");
 }
 #undef COPYDESCR
 
@@ -471,8 +466,8 @@ itesio_refresh_fans(struct itesio_softc *sc, envsys_data_t *edata)
 	}
 }
 
-static int              
-itesio_gtredata(struct sysmon_envsys *sme, struct envsys_data *edata)
+static void
+itesio_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 {
 	struct itesio_softc *sc = sme->sme_cookie;
 
@@ -483,6 +478,4 @@ itesio_gtredata(struct sysmon_envsys *sme, struct envsys_data *edata)
 		itesio_refresh_volts(sc, edata);
 	else
 		itesio_refresh_fans(sc, edata);
-
-	return 0;
 }
