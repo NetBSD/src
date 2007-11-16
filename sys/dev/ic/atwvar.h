@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.23 2007/03/04 06:01:50 christos Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.24 2007/11/16 04:58:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -166,14 +166,13 @@ struct atw_rx_radiotap_header {
 	u_int8_t				ar_antsignal;
 } __attribute__((__packed__));
 
-#define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
-				 (1 << IEEE80211_RADIOTAP_RATE) | \
+#define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_RATE) | \
 				 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct atw_tx_radiotap_header {
 	struct ieee80211_radiotap_header	at_ihdr;
-	u_int8_t				at_flags;
 	u_int8_t				at_rate;
+	u_int8_t				at_pad;
 	u_int16_t				at_chan_freq;
 	u_int16_t				at_chan_flags;
 } __attribute__((__packed__));
@@ -401,26 +400,26 @@ do {									\
  * field is only 11 bits, we must subtract 1 from the length to avoid
  * having it truncated to 0!
  */
-#define	ATW_INIT_RXDESC(sc, x)						\
-do {									\
-	struct atw_rxsoft *__rxs = &sc->sc_rxsoft[(x)];			\
-	struct atw_rxdesc *__rxd = &sc->sc_rxdescs[(x)];		\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
-									\
-	__rxd->ar_buf1 =						\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
-	__rxd->ar_buf2 =	/* for descriptor chaining */		\
-	    htole32(ATW_CDRXADDR((sc), ATW_NEXTRX((x))));		\
-	__rxd->ar_ctl =							\
-	    htole32(__SHIFTIN(((__m->m_ext.ext_size - 1) & ~0x3U),	\
-	                   ATW_RXCTL_RBS1_MASK) |			\
-		    0 /* ATW_RXCTL_RCH */ |				\
-	    ((x) == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));		\
-	__rxd->ar_stat = htole32(ATW_RXSTAT_OWN);			\
-	            							\
-	ATW_CDRXSYNC((sc), (x),						\
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
-} while (0)
+static inline void
+atw_init_rxdesc(struct atw_softc *sc, int x)
+{
+	struct atw_rxsoft *rxs = &sc->sc_rxsoft[x];
+	struct atw_rxdesc *rxd = &sc->sc_rxdescs[x];
+	struct mbuf *m = rxs->rxs_mbuf;
+
+	rxd->ar_buf1 =
+	    htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
+	rxd->ar_buf2 =	/* for descriptor chaining */
+	    htole32(ATW_CDRXADDR((sc), ATW_NEXTRX(x)));
+	rxd->ar_ctlrssi =
+	    htole32(__SHIFTIN(((m->m_ext.ext_size - 1) & ~0x3U),
+	                   ATW_RXCTL_RBS1_MASK) |
+		    0 /* ATW_RXCTL_RCH */ |
+	    (x == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));
+	rxd->ar_stat = htole32(ATW_RXSTAT_OWN);
+
+	ATW_CDRXSYNC((sc), x, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+}
 
 /* country codes from ADM8211 SROM */
 #define	ATW_COUNTRY_FCC 0		/* USA 1-11 */
