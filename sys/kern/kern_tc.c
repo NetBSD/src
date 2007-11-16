@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.24 2007/11/15 23:16:55 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.25 2007/11/16 01:21:24 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.24 2007/11/15 23:16:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.25 2007/11/16 01:21:24 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -27,6 +27,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.24 2007/11/15 23:16:55 ad Exp $");
 #include <sys/timex.h>
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -96,6 +97,8 @@ time_t time_uptime = 1;
 static struct bintime timebasebin;
 
 static int timestepwarnings;
+
+extern kmutex_t time_lock;
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
