@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "opt_xen.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -26,12 +28,15 @@
 #include <xen/xen.h>
 #include <machine/cpufunc.h>
 
+#include <dev/isa/isareg.h>
+#include <machine/isa_machdep.h>
+
 extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
-static vaddr_t xen_arch_pmap_bootstrap(vaddr_t);
+static vaddr_t xen_arch_pmap_bootstrap(void);
 static void xen_bt_set_readonly (vaddr_t);
-static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int);
+static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int, int);
 
 /* How many PDEs ? */
 #if L2_SLOT_KERNBASE > 0
@@ -46,17 +51,17 @@ static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int);
  * we get rid of Xen pagetables
  */
 
-vaddr_t xen_pmap_bootstrap (vaddr_t);
+vaddr_t xen_pmap_bootstrap (void);
 
-vaddr_t xen_pmap_bootstrap (vaddr_t first_avail) 
+vaddr_t
+xen_pmap_bootstrap() 
 {
-	printk("xen_pmap_bootstrap first_avail=0x%lx\n", first_avail);
+	printk("xen_pmap_bootstrap\n");
 	/* Make machine to physical mapping available */
 	xpmap_phys_to_machine_mapping = (paddr_t *) xen_start_info.mfn_list;
  
 	/* Round first_avail to PAGE_SIZE */
-	first_avail = round_page (first_avail);  
-	return xen_arch_pmap_bootstrap(first_avail);
+	return xen_arch_pmap_bootstrap();
 }
 
 
@@ -65,14 +70,11 @@ vaddr_t xen_pmap_bootstrap (vaddr_t first_avail)
  */
 
 static vaddr_t
-xen_arch_pmap_bootstrap(vaddr_t first_avail)
+xen_arch_pmap_bootstrap()
 {
-	int count;
+	int count, iocount = 0;
 	vaddr_t bootstrap_tables, init_tables;
 
-	printk("xen_arch_pmap_bootstrap(%lx)\n", first_avail);
-
-	/* XXX: using old xen_start_info seems broken, use Xen PGD instead */
 	init_tables = xen_start_info.pt_base;
 	printk("xen_arch_pmap_bootstrap init_tables=0x%lx\n", init_tables);
 
@@ -83,35 +85,33 @@ xen_arch_pmap_bootstrap(vaddr_t first_avail)
 	/* Calculate how many tables we need */
 	count = TABLE_L2_ENTRIES;
 
+#ifdef DOM0OPS
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		/* space for ISA I/O mem */
+		iocount = IOM_SIZE / PAGE_SIZE;
+	}
+#endif
+
 	/* 
 	 * Xen space we'll reclaim may not be enough for our new page tables,
 	 * move bootstrap tables if necessary
 	 */
 
-	if (bootstrap_tables < init_tables + ((count + 3) * PAGE_SIZE))
-		bootstrap_tables = init_tables + ((count + 3) * PAGE_SIZE);
+	if (bootstrap_tables < init_tables + ((count+3+iocount) * PAGE_SIZE))
+		bootstrap_tables = init_tables +
+					((count+3+iocount) * PAGE_SIZE);
 
-	HYPERVISOR_shared_info = 0;
-	xencons_interface = 0;
-	xenstore_interface = 0;
 	/* Create temporary tables */
 	xen_bootstrap_tables(xen_start_info.pt_base, bootstrap_tables,
-		xen_start_info.nr_pt_frames, count);
+		xen_start_info.nr_pt_frames, count, 0);
 
 	/* get vaddr space for the shared info and the console pages */
-	HYPERVISOR_shared_info = (struct shared_info *)first_avail;
-	first_avail += PAGE_SIZE;
-	if ((xen_start_info.flags & SIF_INITDOMAIN) == 0) {
-		xencons_interface = (struct xencons_interface *)first_avail;
-		first_avail += PAGE_SIZE;
-		xenstore_interface = (struct xenstore_domain_interface *)first_avail;
-		first_avail += PAGE_SIZE;
-	}
 
 	/* Create final tables */
-	xen_bootstrap_tables(bootstrap_tables, first_avail, count + 3, count);
+	xen_bootstrap_tables(bootstrap_tables, init_tables,
+	    count + 3, count, 1);
 
-	return (first_avail + ((count + 3) * PAGE_SIZE));
+	return (init_tables + ((count + 3) * PAGE_SIZE));
 }
 
 
@@ -125,7 +125,7 @@ xen_arch_pmap_bootstrap(vaddr_t first_avail)
 
 static void
 xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
-	int old_count, int new_count)
+	int old_count, int new_count, int final)
 {
 	pd_entry_t *pdtpe, *pde, *pte;
 	pd_entry_t *cur_pgd, *bt_pgd;
@@ -139,11 +139,28 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	text_end = ((vaddr_t)&__data_start) & ~PAGE_MASK;
 	/*
 	 * size of R/W area after kernel text:
-	 * table pages
-	 * UAREA 
-	 * dummy user PGD
+	 *  xencons_interface (if present)
+	 *  xenstore_interface (if present)
+	 *  table pages (new_count + 3 entries)
+	 *  UAREA 
+	 *  dummy user PGD
+	 * extra mappings (only when final is true):
+	 *  HYPERVISOR_shared_info
+	 *  ISA I/O mem (if needed)
 	 */
-	map_end = new_pgd + (((new_count + 3) + UPAGES + 1) * NBPG);
+	map_end = new_pgd + ((new_count + 3 + UPAGES + 1) * NBPG);
+	if (final) {
+		HYPERVISOR_shared_info = (struct shared_info *)map_end;
+		map_end += NBPG;
+	}
+#ifdef DOM0OPS
+	if (final && (xen_start_info.flags & SIF_INITDOMAIN)) {
+		/* ISA I/O mem */
+		atdevbase = map_end;
+		map_end += IOM_SIZE;
+	}
+#endif /* DOM0OPS */
+
 	printk("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n", text_end,
 	map_end);
 
@@ -203,16 +220,27 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				pte[pl1_pi(page)] = xen_start_info.shared_info;
 				printk("HYPERVISOR_shared_info va 0x%lx pte 0x%lx\n", HYPERVISOR_shared_info, pte[pl1_pi(page)]);
 			}
-			if (page == (vaddr_t)xencons_interface) {
+			if (xpmap_ptom_masked(page - KERNBASE) ==
+			    (xen_start_info.console_mfn << PAGE_SHIFT)) {
+				xencons_interface = (void *)page;
 				pte[pl1_pi(page)] =
 				    (xen_start_info.console_mfn << PAGE_SHIFT);
 				printk("xencons_interface va 0x%lx pte 0x%lx\n", xencons_interface, pte[pl1_pi(page)]);
 			}
-			if (page == (vaddr_t)xenstore_interface) {
+			if (xpmap_ptom_masked(page - KERNBASE) ==
+			    (xen_start_info.store_mfn << PAGE_SHIFT)) {
+				xenstore_interface = (void *)page;
 				pte[pl1_pi(page)] =
 				    (xen_start_info.store_mfn << PAGE_SHIFT);
 				printk("xenstore_interface va 0x%lx pte 0x%lx\n", xenstore_interface, pte[pl1_pi(page)]);
 			}
+#ifdef DOM0OPS
+			if (page >= (vaddr_t)atdevbase &&
+			    page < (vaddr_t)atdevbase + IOM_SIZE) {
+				pte[pl1_pi(page)] =
+				    IOM_BEGIN + (page - (vaddr_t)atdevbase);
+			}
+#endif
 			pte[pl1_pi(page)] |= PG_u | PG_V;
 			if (page < text_end) {
 				/* map kernel text RO */

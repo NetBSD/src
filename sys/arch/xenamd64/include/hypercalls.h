@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.1.2.1 2007/10/17 21:38:22 bouyer Exp $ */
+/* $NetBSD: hypercalls.h,v 1.1.2.2 2007/11/16 17:18:05 bouyer Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -271,7 +271,7 @@ HYPERVISOR_console_io(
 static inline int
 HYPERVISOR_physdev_op(void *op)
 {
-	return _hypercall1(int, physdev_op_compat, &op);
+	return _hypercall1(int, physdev_op_compat, op);
 }
 
 static inline int
@@ -380,6 +380,14 @@ HYPERVISOR_kexec_op(
 	unsigned long op, void *args)
 {
 	return _hypercall2(int, kexec_op, op, args);
+}
+
+static inline int
+HYPERVISOR_dom0_op(
+	dom0_op_t *dom0_op)
+{
+	dom0_op->interface_version = DOM0_INTERFACE_VERSION;
+	return _hypercall1(int, dom0_op, dom0_op);
 }
 
 #endif /* __HYPERCALL_H__ */

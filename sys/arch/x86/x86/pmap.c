@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.6 2007/11/14 21:42:37 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.7 2007/11/16 17:18:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.6 2007/11/14 21:42:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.7 2007/11/16 17:18:03 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -451,6 +451,8 @@ vaddr_t first_bt_vaddr;
 static paddr_t xen_dummy_user_pgd;
 /* Currently active user PGD (can't use rcr3()) */
 static paddr_t xen_current_user_pgd = 0;
+paddr_t pmap_pa_start; /* PA of first physical page for this domain */
+paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #endif
 
 
@@ -949,9 +951,17 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pte = vtopte(va);
 	else
 		pte = kvtopte(va);
-
-	npte =
-	    pmap_pa2pte(pa) | protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
+#ifdef DOM0OPS
+	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
+#ifdef DEBUG
+		/* printf("pmap_kenter_pa: pa 0x%lx for va 0x%lx outside range\n",
+		    pa, va); */
+#endif /* DEBUG */
+		npte = pa;
+	} else
+#endif /* DOM0OPS */
+		npte = pmap_pa2pte(pa);
+	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
 	/* XXX For now... */
@@ -2795,7 +2805,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		 */
 
 		if ((opte & PG_PVLIST) == 0) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 			if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 				panic("pmap_remove_ptes: managed page without "
 				      "PG_PVLIST for 0x%lx", startva);
@@ -2880,7 +2890,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	 */
 
 	if ((opte & PG_PVLIST) == 0) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
@@ -3503,11 +3513,18 @@ pmap_collect(struct pmap *pmap)
  * => must be done "now" ... no lazy-evaluation
  * => we set pmap => pv_head locking
  */
-
+#ifdef XEN
+int
+pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
+	   vm_prot_t prot, int flags, int domid)
+{
+#else /* XEN */
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	   int flags)
 {
+	paddr_t ma = pa;
+#endif /* XEN */
 	pt_entry_t *ptes, opte, npte;
 	pt_entry_t *ptep;
 	pd_entry_t **pdes;
@@ -3533,9 +3550,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
 	    !pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]))
 		panic("pmap_enter: missing kernel PTP for va %lx!", va);
-#endif
+#endif /* DIAGNOSTIC */
+#ifdef XEN
+	KASSERT(domid == DOMID_SELF || pa == 0);
+#endif /* XEN */
 
-	npte = pmap_pa2pte(pa) | protection_codes[prot] | PG_V;
+	npte = ma | protection_codes[prot] | PG_V;
 	if (wired)
 	        npte |= PG_W;
 	if (va < VM_MAXUSER_ADDRESS)
@@ -3585,7 +3605,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 * map to the same PA as the one we want to map ?
 	 */
 
-	if (pmap_valid_entry(opte) && (pmap_pte2pa(opte) == pa)) {
+	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == ma)) {
 
 		/*
 		 * first, calculate pm_stats updates.  resident count will not
@@ -3598,7 +3618,16 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
-		opte = pmap_pte_testset(ptep, npte);
+#ifdef XEN
+		if (domid != DOMID_SELF) {
+			int s = splvm();
+			opte = *ptep;
+			xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
+			    npte, domid);
+			splx(s);
+		} else
+#endif /* XEN */
+			opte = pmap_pte_testset(ptep, npte);
 
 		/*
 		 * if this is on the PVLIST, sync R/M bit
@@ -3620,8 +3649,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		}
 		goto shootdown_now;
 	}
-
-	pg = PHYS_TO_VM_PAGE(pa);
+#ifdef XEN
+	if (domid != DOMID_SELF)
+		pg = NULL;
+	else
+#endif
+		pg = PHYS_TO_VM_PAGE(pa);
 	if (pg != NULL) {
 		/* This is a managed page */
 		npte |= PG_PVLIST;
@@ -3705,7 +3738,16 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		mutex_spin_exit(&new_pvh->pvh_lock);
 	}
 
-	opte = pmap_pte_testset(ptep, npte);   /* zap! */
+#ifdef XEN
+	if (domid != DOMID_SELF) {
+		int s = splvm();
+		opte = *ptep;
+		xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
+		    npte, domid);
+		splx(s);
+	} else
+#endif /* XEN */
+		opte = pmap_pte_testset(ptep, npte);   /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
@@ -3730,6 +3772,22 @@ out:
 
 	return error;
 }
+
+#ifdef XEN
+int
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+{
+        paddr_t ma;
+
+	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
+		ma = pa; /* XXX hack */
+	} else {
+		ma = xpmap_ptom(pa);
+	}
+
+	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
+}
+#endif /* XEN */
 
 static bool
 pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)

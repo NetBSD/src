@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12.4.5 2007/11/15 19:20:30 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.12.4.6 2007/11/16 17:18:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -970,6 +970,11 @@ _C_LABEL(xenev_stubs):
  * Soft interrupt handlers
  */
 
+#ifdef XEN
+#define EVCNTL(x) _C_LABEL(x) + EV_EVCNTL
+#endif
+
+
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
   	STI(si,di)
@@ -977,9 +982,11 @@ IDTVEC(softserial)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
-	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
 #ifndef XEN
+	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
 	incq	IS_EVCNT(%r12)
+#else
+	incq	EVCNTL(softserial_evtcnt)
 #endif
 	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
 	call	_C_LABEL(softintr_dispatch)
@@ -996,9 +1003,11 @@ IDTVEC(softnet)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
-	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
 #ifndef XEN
+	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
 	incq    IS_EVCNT(%r12)
+#else
+	incq	EVCNTL(softnet_evtcnt)
 #endif
 
 	xorq	%r12,%r12
@@ -1028,9 +1037,11 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
-	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
 #ifndef XEN
+	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
 	incq	IS_EVCNT(%r12)
+#else
+	incq	EVCNTL(softclock_evtcnt)
 #endif
 
 	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
@@ -1042,6 +1053,23 @@ IDTVEC(softclock)
 	jmp	*%r13
 
 #ifdef XEN
+#ifdef DOM0OPS
+IDTVEC(softxenevt)
+	movl	$IPL_SOFTXENEVT, CPUVAR(ILEVEL)
+  	STI(si,di)
+	incl	CPUVAR(IDEPTH)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintlock)
+#endif
+	incq	EVCNTL(softxenevt_evtcnt)
+
+	call	_C_LABEL(xenevt_notify)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(x86_softintunlock)		
+#endif
+	decl	CPUVAR(IDEPTH)
+	jmp	*%r13
+#endif /* DOM0OPS */
 
 # Xen callbacks
 

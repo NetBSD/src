@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.6 2007/11/13 15:58:06 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.7 2007/11/16 17:18:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.6 2007/11/13 15:58:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.7 2007/11/16 17:18:01 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -268,6 +268,7 @@ struct vm_map *phys_map = NULL;
 extern	paddr_t avail_start, avail_end;
 #ifdef XEN
 extern  vaddr_t first_bt_vaddr;
+extern  paddr_t pmap_pa_start, pmap_pa_end;
 #endif
 
 #ifndef XEN
@@ -397,7 +398,11 @@ x86_64_switch_context(struct pcb *new)
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_tss.tss_iobase & SEL_RPL;
+		if ((new->pcb_tss.tss_iobase & SEL_RPL) == 0)
+			physop.u.set_iopl.iopl = 1;
+		else
+			physop.u.set_iopl.iopl =
+			    (new->pcb_tss.tss_iobase & SEL_RPL);
 		HYPERVISOR_physdev_op(&physop);
 	}
 }
@@ -1159,8 +1164,10 @@ init_x86_64(paddr_t first_avail)
 	/* Determine physical address space */
 	avail_start = first_avail;
 	avail_end = xen_start_info.nr_pages << PAGE_SHIFT;
-	__PRINTK(("avail_start 0x%lx avail_end 0x%lx\n",
-	    avail_start, avail_end));
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
+	pmap_pa_end = avail_end;
+	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
+	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */
 
 #ifdef MULTIPROCESSOR
