@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.16 2007/10/19 11:59:39 ad Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.17 2007/11/16 18:46:23 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.16 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.17 2007/11/16 18:46:23 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -128,8 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.16 2007/10/19 11:59:39 ad Exp $
  */
 #define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
 #define	RTW_PCI_MMBA		0x14	/* memory mapped base */
-
-#define	RTW_LATTIMER	0x50
 
 struct rtw_cardbus_softc {
 	struct rtw_softc sc_rtw;	/* real RTL8180 softc */
@@ -457,58 +455,37 @@ void
 rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
 	struct rtw_softc *sc = &csc->sc_rtw;
+	cardbustag_t tag = csc->sc_tag;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbusreg_t bhlc, csr, lattimer;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t reg;
-	int pmreg;
 
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
-	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
-#if 1 /* XXX Probably not right for CardBus. */
-		if (reg == 3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-#endif
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    pmreg + 4, 0);
-		}
+	(void)cardbus_setpowerstate(device_xname(&sc->sc_dev), ct, tag,
+	    PCI_PWR_D0);
+
+	/* I believe the datasheet tries to warn us that the RTL8180
+	 * wants for 16 (0x10) to divide the latency timer.
+	 */
+	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+	lattimer = rounddown(PCI_LATTIMER(bhlc), 0x10);
+	if (PCI_LATTIMER(bhlc) != lattimer) {
+		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
 	}
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
-	    csc->sc_bar_val);
+	cardbus_conf_write(cc, cf, tag, csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
-	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    reg);
-
-	/*
-	 * Make sure the latency timer is set to some reasonable
-	 * value.
-	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < RTW_LATTIMER) {
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (RTW_LATTIMER << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
-	}
+	csr = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+	csr |= csc->sc_csr;
+	csr |= CARDBUS_COMMAND_PARITY_ENABLE | CARDBUS_COMMAND_SERR_ENABLE;
+	cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG, csr);
 }
