@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.57 2007/10/11 19:41:14 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.58 2007/11/16 20:32:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.57 2007/10/11 19:41:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.58 2007/11/16 20:32:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -180,4 +180,22 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 		uflags |= PUFFS_UPDATEMTIME;
 
 	puffs_updatenode(vp, uflags);
+}
+
+void
+puffs_senderr(struct puffs_mount *pmp, int type, int error,
+	const char *str, void *cookie)
+{
+	struct puffs_msgpark *park;
+	struct puffs_error *perr;
+
+	puffs_msgmem_alloc(sizeof(struct puffs_error), &park, (void**)&perr, 1);
+	puffs_msg_setfaf(park);
+	puffs_msg_setinfo(park, PUFFSOP_ERROR, type, cookie);
+
+	perr->perr_error = error;
+	strlcpy(perr->perr_str, str, sizeof(perr->perr_str));
+
+	puffs_msg_enqueue(pmp, park);
+	puffs_msgmem_release(park);
 }
