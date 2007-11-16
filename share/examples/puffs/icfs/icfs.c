@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.7 2007/11/05 17:54:31 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.8 2007/11/16 18:39:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -213,8 +213,8 @@ main(int argc, char *argv[])
 	puffs_set_pathtransform(pu, icpathxform);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");

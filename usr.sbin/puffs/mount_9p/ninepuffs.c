@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.21 2007/11/06 15:09:08 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.22 2007/11/16 18:39:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.21 2007/11/06 15:09:08 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.22 2007/11/16 18:39:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -216,8 +216,8 @@ main(int argc, char *argv[])
 		err(1, "puffs_framebuf_addfd");
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
