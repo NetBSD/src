@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.6.10.2 2007/11/16 17:18:04 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.6.10.3 2007/11/16 17:29:59 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -620,7 +620,8 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	xbdi->xbdi_size = dpart.part->p_size;
 	printf("xbd backend: attach device %s%d%c (size %ld) "
 	    "for domain %d\n", devname, DISKUNIT(xbdi->xbdi_dev),
-	    DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size, xbdi->xbdi_domid);
+	    DISKPART(xbdi->xbdi_dev) + 'a', (long)xbdi->xbdi_size,
+	    xbdi->xbdi_domid);
 
 again:
 	xbt = xenbus_transaction_start();
