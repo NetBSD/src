@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.320 2007/11/07 00:23:16 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.321 2007/11/16 23:46:20 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.320 2007/11/07 00:23:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2007/11/16 23:46:20 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3084,6 +3084,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	}
 
 	pmap_page_upload();
+	curlwp = &lwp0;
 }
 
 #if defined(SUN4) || defined(SUN4C)
