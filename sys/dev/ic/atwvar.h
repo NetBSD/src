@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.24 2007/11/16 04:58:39 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.25 2007/11/16 06:06:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -159,11 +159,11 @@ enum atw_bbptype { ATW_BBPTYPE_INTERSIL = 0, ATW_BBPTYPE_RFMD  = 1,
 
 struct atw_rx_radiotap_header {
 	struct ieee80211_radiotap_header	ar_ihdr;
-	u_int8_t				ar_flags;
-	u_int8_t				ar_rate;
-	u_int16_t				ar_chan_freq;
-	u_int16_t				ar_chan_flags;
-	u_int8_t				ar_antsignal;
+	uint8_t					ar_flags;
+	uint8_t					ar_rate;
+	uint16_t				ar_chan_freq;
+	uint16_t				ar_chan_flags;
+	uint8_t					ar_antsignal;
 } __attribute__((__packed__));
 
 #define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_RATE) | \
@@ -171,10 +171,10 @@ struct atw_rx_radiotap_header {
 
 struct atw_tx_radiotap_header {
 	struct ieee80211_radiotap_header	at_ihdr;
-	u_int8_t				at_rate;
-	u_int8_t				at_pad;
-	u_int16_t				at_chan_freq;
-	u_int16_t				at_chan_flags;
+	uint8_t					at_rate;
+	uint8_t					at_pad;
+	uint16_t				at_chan_freq;
+	uint16_t				at_chan_flags;
 } __attribute__((__packed__));
 
 enum atw_revision {
