@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.33 2007/11/10 18:36:06 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.34 2007/11/16 14:25:47 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.33 2007/11/10 18:36:06 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.34 2007/11/16 14:25:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -253,7 +253,7 @@ getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
 		 * If so, invalidate page cache.  This is the only
 		 * sensible place we can do this in.
 		 */
-		if (psn->attrread)
+		if (pn->pn_va.va_mtime.tv_sec != PUFFS_VNOVAL)
 			if (pn->pn_va.va_mtime.tv_sec != va.va_mtime.tv_sec)
 				puffs_inval_pagecache_node(pu, pn);
 
