@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.35 2007/11/16 15:10:06 jmmv Exp $        */
+/*      $NetBSD: subr.c,v 1.36 2007/11/16 15:53:47 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.35 2007/11/16 15:10:06 jmmv Exp $");
+__RCSID("$NetBSD: subr.c,v 1.36 2007/11/16 15:53:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -65,6 +65,26 @@ allocdirs(struct psshfs_node *psn)
 	memset(psn->dir + oldtot, 0, ENTRYCHUNK * sizeof(struct psshfs_dir));
 
 	psn->da = erealloc(psn->da, psn->denttot * sizeof(struct delayattr));
+}
+
+static void
+setpnva(struct puffs_usermount *pu, struct puffs_node *pn,
+	const struct vattr *vap)
+{
+	struct psshfs_node *psn = pn->pn_data;
+
+	/*
+	 * Check if the file was modified from below us.
+	 * If so, invalidate page cache.  This is the only
+	 * sensible place we can do this in.
+	 */
+	if (pn->pn_va.va_mtime.tv_sec != PUFFS_VNOVAL)
+		if (pn->pn_va.va_mtime.tv_sec != vap->va_mtime.tv_sec
+		    && pn->pn_va.va_type == VREG)
+			puffs_inval_pagecache_node(pu, pn);
+
+	puffs_setvattr(&pn->pn_va, vap);
+	psn->attrread = time(NULL);
 }
 
 struct psshfs_dir *
@@ -134,8 +154,7 @@ readdir_getattr_resp(struct puffs_usermount *pu,
 	if (pdir->entry) {
 		psn_targ = pdir->entry->pn_data;
 
-		puffs_setvattr(&pdir->entry->pn_va, &va);
-		psn_targ->attrread = time(NULL);
+		setpnva(pu, pdir->entry, &va);
 	} else {
 		puffs_setvattr(&pdir->va, &va);
 		pdir->attrread = time(NULL);
@@ -248,17 +267,7 @@ getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
 				return rv;
 		}
 
-		/*
-		 * Check if the file was modified from below us.
-		 * If so, invalidate page cache.  This is the only
-		 * sensible place we can do this in.
-		 */
-		if (pn->pn_va.va_mtime.tv_sec != PUFFS_VNOVAL)
-			if (pn->pn_va.va_mtime.tv_sec != va.va_mtime.tv_sec)
-				puffs_inval_pagecache_node(pu, pn);
-
-		puffs_setvattr(&pn->pn_va, &va);
-		psn->attrread = time(NULL);
+		setpnva(pu, pn, &va);
 	}
 
 	return 0;
@@ -410,9 +419,8 @@ makenode(struct puffs_usermount *pu, struct puffs_node *parent,
 		free(psn);
 		return NULL;
 	}
-	puffs_setvattr(&pn->pn_va, &pd->va);
-	psn->attrread = pd->attrread;
-	puffs_setvattr(&pn->pn_va, vap);
+	setpnva(pu, pn, &pd->va);
+	setpnva(pu, pn, vap);
 
 	pd->entry = pn;
 	psn->parent = parent;
