@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.5 2007/11/05 17:54:32 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.6 2007/11/16 18:39:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.5 2007/11/05 17:54:32 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.6 2007/11/16 18:39:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -285,8 +285,8 @@ main(int argc, char *argv[])
 		errx(1, "domount");
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");

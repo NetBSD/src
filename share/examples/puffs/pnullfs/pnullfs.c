@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.15 2007/11/05 17:54:31 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.16 2007/11/16 18:39:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -112,8 +112,8 @@ main(int argc, char *argv[])
 	puffs_stat2vattr(&pn_root->pn_va, &sb);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
