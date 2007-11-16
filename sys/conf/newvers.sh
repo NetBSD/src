@@ -1,6 +1,6 @@
-/bin/sh -
+#!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.50 2007/11/16 20:01:48 skrll Exp $
+#	$NetBSD: newvers.sh,v 1.51 2007/11/16 21:48:19 skrll Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
