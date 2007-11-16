@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.1 2007/10/29 00:42:29 xtraeme Exp $ */
+/* $NetBSD: coretemp.c,v 1.2 2007/11/16 08:00:13 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1 2007/10/29 00:42:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.2 2007/11/16 08:00:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -50,13 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1 2007/10/29 00:42:29 xtraeme Exp $")
 
 struct coretemp_softc {
 	struct cpu_info		*sc_ci;
-	struct sysmon_envsys 	sc_sme;
-	envsys_data_t 		sc_sensor[1];
+	struct sysmon_envsys 	*sc_sme;
+	envsys_data_t 		sc_sensor;
 	char			sc_dvname[32];
 	int 			sc_tjmax;
 };
 
-static int	coretemp_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	coretemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	coretemp_refresh_xcall(void *, void *);
 
 void
@@ -123,31 +123,34 @@ coretemp_register(struct cpu_info *ci)
 	/*
 	 * Only a temperature sensor and monitor for a critical state.
 	 */
-	sc->sc_sensor[0].sensor = 0;
-	sc->sc_sensor[0].units = ENVSYS_STEMP;
-	sc->sc_sensor[0].state = ENVSYS_SVALID;
-	sc->sc_sensor[0].flags = ENVSYS_FMONCRITICAL;
-	sc->sc_sensor[0].monitor = true;
-	(void)snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
+	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
+	sc->sc_sensor.monitor = true;
+	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
 	    "cpu%d temperature", (int)ci->ci_cpuid);
+
+	sc->sc_sme = sysmon_envsys_create();
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
 	/*
 	 * Hook into the system monitor.
 	 */
-	sc->sc_sme.sme_name = sc->sc_dvname;
-	sc->sc_sme.sme_sensor_data = sc->sc_sensor;
-	sc->sc_sme.sme_cookie = sc;
-	sc->sc_sme.sme_gtredata = coretemp_refresh;
-	sc->sc_sme.sme_nsensors = 1;
+	sc->sc_sme->sme_name = sc->sc_dvname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = coretemp_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sme)) {
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dvname);
+		sysmon_envsys_destroy(sc->sc_sme);
 		kmem_free(sc, sizeof(*sc));
 	}
 }
 
-static int
+static void
 coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct coretemp_softc *sc = sme->sme_cookie;
@@ -160,8 +163,6 @@ coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		    sc, edata, sc->sc_ci);
 	else
 		coretemp_refresh_xcall(sc, edata);
-
-	return 0;
 }
 
 static void
