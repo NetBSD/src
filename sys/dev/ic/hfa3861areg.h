@@ -1,5 +1,5 @@
-/* $NetBSD: hfa3861areg.h,v 1.2 2007/11/16 04:31:34 dyoung Exp $ */
-/* $Id: hfa3861areg.h,v 1.2 2007/11/16 04:31:34 dyoung Exp $ */
+/* $NetBSD: hfa3861areg.h,v 1.3 2007/11/16 04:52:36 dyoung Exp $ */
+/* $Id: hfa3861areg.h,v 1.3 2007/11/16 04:52:36 dyoung Exp $ */
 /*
  * Copyright (c) 2007 David Young.  All rights reserved.
  *
@@ -36,6 +36,25 @@
 
 /* Register set for the Intersil HFA3861A. */
 
+#define	HFA3861A_CR5	0x0a	/* Tx signal field, read-write */
+#define	HFA3861A_CR5_RSVD0	__BITS(7, 4)	/* reserved, set to 0 */
+#define	HFA3861A_CR5_SHORTPRE	__BIT(3)	/* 0: long preamble,
+						 * 1: short preamble
+						 */
+#define	HFA3861A_CR5_RSVD1	__BIT(2)	/* reserved, set to 0 */
+#define	HFA3861A_CR5_RATE_MASK	__BITS(1, 0)	/* Tx data rate */
+/* 1, 2, 5.5, and 11 Mbps */
+#define	HFA3861A_CR5_RATE_1	__SHIFTIN(0, HFA3861A_CR5_RATE_MASK)
+#define	HFA3861A_CR5_RATE_2	__SHIFTIN(1, HFA3861A_CR5_RATE_MASK)
+#define	HFA3861A_CR5_RATE_5	__SHIFTIN(2, HFA3861A_CR5_RATE_MASK)
+#define	HFA3861A_CR5_RATE_11	__SHIFTIN(3, HFA3861A_CR5_RATE_MASK)
+
+#define	HFA3861A_CR6	0x0c	/* Tx service field: copied directly to 802.11
+				 * PLCP header
+				 */
+#define	HFA3861A_CR7	0x0e	/* Tx length, hi: microseconds Tx duration */
+#define	HFA3861A_CR8	0x10	/* Tx length, lo: microseconds Tx duration */
+
 #define	HFA3861A_CR49	0x62	/* Read-only register mux control */
 #define	HFA3861A_CR49_SEL	__BIT(7)	/* 0: read-only register set 'b'
 						 * 1: read-only register set 'a'
@@ -48,8 +67,8 @@
 #define	HFA3861A_CR62_RSSI	__BITS(7, 0)	/* RSSI, sets 'a' & 'b' */
 
 #define	HFA3861A_CR63	0x80	/* Rx status, read-only */
-#define	HFA3861A_CR63_SIGNAL	__BITS(7, 6)	/* signal field value,
-						 * sets 'a' & 'b' */
+#define	HFA3861A_CR63_SIGNAL_MASK	__BITS(7, 6)	/* signal field value,
+							 * sets 'a' & 'b' */
 /* 1 Mbps */
 #define	HFA3861A_CR63_SIGNAL_1MBPS	__SHIFTIN(0, HFA3861A_CR63_SIGNAL)
 /* 2 Mbps */
