@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.18 2007/11/16 04:58:39 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.19 2007/11/16 05:53:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -941,6 +941,12 @@ struct atw_txdesc {
 						 * (?)
 						 */
 #define ATW_TXSTAT_ARC_MASK	__BITS(11,0)	/* accumulated retry count */
+
+#define ATW_TXSTAT_ERRMASK	(ATW_TXSTAT_TUF | ATW_TXSTAT_TLT | \
+				 ATW_TXSTAT_TRT | ATW_TXSTAT_TRO | \
+				 ATW_TXSTAT_SOFBR)
+#define ATW_TXSTAT_FMT	"\20\31ATW_TXSTAT_SOFBR\32ATW_TXSTAT_TRO"	\
+			"\33ATW_TXSTAT_TUF\34ATW_TXSTAT_TRT\35ATW_TXSTAT_TLT"
 
 #define ATW_TXFLAG_IC		__BIT(31)	/* interrupt on completion */
 #define ATW_TXFLAG_LS		__BIT(30)	/* packet's last descriptor */
