@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.17 2007/11/05 23:57:32 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.18 2007/11/16 08:00:13 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.17 2007/11/05 23:57:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.18 2007/11/16 08:00:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct aiboost_comp {
 struct aiboost_softc {
 	struct acpi_devnode *sc_node;	/* ACPI devnode */
 	struct aiboost_comp *sc_aitemp, *sc_aivolt, *sc_aifan;
-	struct sysmon_envsys sc_sme;
+	struct sysmon_envsys *sc_sme;
 	envsys_data_t *sc_sensor;
 	kmutex_t sc_mtx;
 };
@@ -74,7 +74,7 @@ static int	aiboost_get_value(ACPI_HANDLE, const char *, UINT32);
 
 /* sysmon_envsys(9) glue */
 static void	aiboost_setup_sensors(struct aiboost_softc *);
-static int	aiboost_refresh_sensors(struct sysmon_envsys *,
+static void	aiboost_refresh_sensors(struct sysmon_envsys *,
 					envsys_data_t *);
 
 /* autoconf(9) glue */
@@ -110,7 +110,7 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	struct aiboost_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_HANDLE *handl;
-	int i, maxsens;
+	int i, maxsens, error = 0;
 
 	sc->sc_node = aa->aa_node;
 	handl = sc->sc_node->ad_handle;
@@ -134,32 +134,45 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	maxsens = sc->sc_aivolt->num + sc->sc_aitemp->num + sc->sc_aifan->num;
 	DPRINTF(("%s: maxsens=%d\n", __func__, maxsens));
 
+	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t) * maxsens,
 	    KM_NOSLEEP);
 	if (!sc->sc_sensor)
 		return;
 
-	for (i = 0; i < maxsens; i++) {
-		sc->sc_sensor[i].sensor = i;
-		sc->sc_sensor[i].state = ENVSYS_SVALID;
-	}
-
+	/*
+	 * Set properties in sensors.
+	 */
 	aiboost_setup_sensors(sc);
 
 	/*
-	 * Hook into the system monitor.
+	 * Add the sensors into the sysmon_envsys device.
 	 */
-	sc->sc_sme.sme_name = device_xname(self);
-	sc->sc_sme.sme_sensor_data = sc->sc_sensor;
-	sc->sc_sme.sme_cookie = sc;
-	sc->sc_sme.sme_gtredata = aiboost_refresh_sensors;
-	sc->sc_sme.sme_nsensors = maxsens;
-
-	if (sysmon_envsys_register(&sc->sc_sme)) {
-		aprint_error_dev(self, "unable to register with sysmon\n");
-		kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
-		mutex_destroy(&sc->sc_mtx);
+	for (i = 0; i < maxsens; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i]))
+			goto bad;
 	}
+
+	/*
+	 * Register the sysmon_envsys device.
+	 */
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = aiboost_refresh_sensors;
+
+	if ((error = sysmon_envsys_register(sc->sc_sme))) {
+		aprint_error_dev(self, "unable to register with sysmon "
+		    "(error=%d)\n", error);
+		goto bad;
+	}
+
+	return;
+
+bad:
+	kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
+	sysmon_envsys_destroy(sc->sc_sme);
+	mutex_destroy(&sc->sc_mtx);
 }
 
 #define COPYDESCR(x, y)				\
@@ -204,7 +217,7 @@ aiboost_setup_sensors(struct aiboost_softc *sc)
 	}
 }
 
-static int
+static void
 aiboost_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct aiboost_softc *sc = sme->sme_cookie;
@@ -257,7 +270,6 @@ aiboost_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->state = ENVSYS_SVALID;
 out:
 	mutex_exit(&sc->sc_mtx);
-	return 0;
 }
 
 static int

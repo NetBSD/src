@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.2 2007/11/15 13:09:07 xtraeme Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.3 2007/11/16 08:00:15 xtraeme Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -129,8 +129,8 @@ struct itesio_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct sysmon_envsys sc_sysmon;
-	envsys_data_t sc_data[IT_NUM_SENSORS];
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[IT_NUM_SENSORS];
 	
 	uint16_t sc_hwmon_baseaddr;
 	bool sc_hwmon_mapped;
