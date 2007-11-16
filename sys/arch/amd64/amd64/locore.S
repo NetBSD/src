@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20.4.5 2007/10/23 20:11:37 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.4.6 2007/11/16 20:31:19 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -893,10 +893,8 @@ syscall_return:
 	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	movl	$IPL_NONE,%edi
+	call	_C_LABEL(spllower)
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
@@ -996,10 +994,8 @@ iret_return:
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	movl	$IPL_NONE,%edi
+	call	_C_LABEL(spllower)
 	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */

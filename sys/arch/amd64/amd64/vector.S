@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.6.7 2007/10/23 20:11:40 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.8 2007/11/16 20:31:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -253,10 +253,8 @@ calltrap:
 	movl	%ebx,%edx
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	%ebx,CPUVAR(ILEVEL)
+	movl	%ebx,%edi
+	call	_C_LABEL(spllower)
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
