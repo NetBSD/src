@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.6.32.1 2007/11/16 17:18:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.32.1 2007/11/16 17:18:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Ex
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)

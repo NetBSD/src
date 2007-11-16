@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12.2.3 2007/11/13 15:58:04 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.12.2.4 2007/11/16 17:18:00 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -295,8 +295,7 @@ define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
 define	IS_RECURSE      offsetof(struct iplsource, ipl_recurse)
 define	IS_RESUME       offsetof(struct iplsource, ipl_resume)
 define	IS_HANDLERS     offsetof(struct iplsource, ipl_handlers)
-define	EV_EVCNTLO	offsetof(struct evcnt, ev_count)
-define	EV_EVCNTHI	offsetof(struct evcnt, ev_count)+4
+define	EV_EVCNTL	offsetof(struct evcnt, ev_count)
 else
 define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
 define	IS_RESUME	offsetof(struct intrsource, is_resume)
@@ -316,6 +315,9 @@ define	IPL_IPI			IPL_IPI
 define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
 define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+ifdef XEN
+define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
+endif
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8.4.4 2007/11/13 15:58:07 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.4.5 2007/11/16 17:18:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -141,7 +141,7 @@ ENTRY(spllower)
 	.align	64
 LABEL(spllower_end)
 
-#endif
+#endif /* !XEN */
 
 /*
  * void	cx8_spllower(int s);

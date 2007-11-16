@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27.2.4 2007/11/13 15:58:05 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.27.2.5 2007/11/16 17:18:00 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -756,7 +756,6 @@ start:
 	subq	$8, %rax
 	movq	%rax, %rsp
 
-	movq	%rbx, %rdi
 	call	xen_pmap_bootstrap
 
 	/*
