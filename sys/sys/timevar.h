@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.16 2007/11/15 20:12:04 ad Exp $	*/
+/*	$NetBSD: timevar.h,v 1.17 2007/11/16 01:21:24 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -67,7 +67,6 @@
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
-#include <sys/mutex.h>
 
 /*
  * Structure used to manage timers in a process.
@@ -194,7 +193,6 @@ int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
 
-extern kmutex_t time_lock;
 #ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */
 extern time_t time_uptime;	/* system uptime in seconds */
