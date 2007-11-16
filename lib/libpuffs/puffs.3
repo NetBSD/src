@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.32 2007/11/06 15:09:07 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.33 2007/11/16 18:35:10 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 6, 2007
+.Dd November 16, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -75,6 +75,8 @@
 .Fn puffs_ml_setloopfn "struct puffs_usermount *pu" "puffs_ml_loop_fn lfn"
 .Ft void
 .Fn puffs_ml_settimeout "struct puffs_usermount *pu" "struct timespec *ts"
+.Ft int
+.Fn puffs_daemon "struct puffs_usermount *pu" "int nochdir" "int noclose"
 .Ft int
 .Fn puffs_mainloop "struct puffs_usermount *pu"
 .Sh DESCRIPTION
@@ -413,6 +415,13 @@ is
 This can be used to roughly control how often the loop callback
 .Fn lfn
 is called
+.It Fn puffs_daemon pu nochdir noclose
+Detach from the console like
+.Fn daemon 3 .
+This call synchronizes with
+.Fn puffs_mount
+and the foreground process does not exit before the file system mount
+call has returned from the kernel.
 .It Fn puffs_mainloop pu flags
 Handle all requests automatically until the file system is unmounted.
 It returns 0 if the file system was succesfully unmounted or \-1 if it
