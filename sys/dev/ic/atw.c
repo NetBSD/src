@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.133 2007/11/16 05:53:16 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.134 2007/11/16 23:51:02 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.133 2007/11/16 05:53:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.134 2007/11/16 23:51:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -201,6 +201,8 @@ void	atw_watchdog(struct ifnet *);
 /* Device attachment */
 void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
+static void atw_evcnt_attach(struct atw_softc *);
+static void atw_evcnt_detach(struct atw_softc *);
 
 /* Rx/Tx process */
 int	atw_add_rxbuf(struct atw_softc *, int);
@@ -828,6 +830,8 @@ atw_attach(struct atw_softc *sc)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
+
+	atw_evcnt_attach(sc);
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = atw_newstate;
@@ -1521,8 +1525,13 @@ atw_tune(struct atw_softc *sc)
 	DELAY(atw_nar_delay);
 	ATW_WRITE(sc, ATW_RDR, 0x1);
 
-	if (rc == 0)
+	if (rc == 0) {
 		sc->sc_cur_chan = chan;
+		sc->sc_rxtap.ar_chan_freq = sc->sc_txtap.at_chan_freq =
+		    htole16(ic->ic_curchan->ic_freq);
+		sc->sc_rxtap.ar_chan_flags = sc->sc_txtap.at_chan_flags =
+		    htole16(ic->ic_curchan->ic_flags);
+	}
 
 	return rc;
 }
@@ -2027,7 +2036,7 @@ atw_filter_setup(struct atw_softc *sc)
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		atw_idle(sc, ATW_NAR_SR);
 
-	sc->sc_opmode &= ~(ATW_NAR_PR|ATW_NAR_MM);
+	sc->sc_opmode &= ~(ATW_NAR_PB|ATW_NAR_PR|ATW_NAR_MM);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* XXX in scan mode, do not filter packets.  Maybe this is
@@ -2035,7 +2044,7 @@ atw_filter_setup(struct atw_softc *sc)
 	 */
 	if (ic->ic_state == IEEE80211_S_SCAN ||
 	    (ifp->if_flags & IFF_PROMISC) != 0) {
-		sc->sc_opmode |= ATW_NAR_PR;
+		sc->sc_opmode |= ATW_NAR_PR | ATW_NAR_PB;
 		goto allmulti;
 	}
 
@@ -2774,6 +2783,8 @@ atw_detach(struct atw_softc *sc)
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
 
+	atw_evcnt_detach(sc);
+
 	return (0);
 }
 
@@ -3117,28 +3128,21 @@ atw_rxintr(struct atw_softc *sc)
 		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
-	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
-		 * error.
 		 */
-
-		if ((rxstat & ATW_RXSTAT_ES) != 0 &&
-		    ((sc->sc_ec.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		     (rxstat & (ATW_RXSTAT_DE | ATW_RXSTAT_SFDE |
-		                ATW_RXSTAT_SIGE | ATW_RXSTAT_CRC16E |
-				ATW_RXSTAT_RXTOE | ATW_RXSTAT_CRC32E |
-				ATW_RXSTAT_ICVE)) != 0)) {
+		if ((rxstat & (ATW_RXSTAT_DE | ATW_RXSTAT_RXTOE)) != 0) {
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
 				    sc->sc_dev.dv_xname, str)
 			ifp->if_ierrors++;
 			PRINTERR(ATW_RXSTAT_DE, "descriptor error");
+			PRINTERR(ATW_RXSTAT_RXTOE, "time-out");
+#if 0
 			PRINTERR(ATW_RXSTAT_SFDE, "PLCP SFD error");
 			PRINTERR(ATW_RXSTAT_SIGE, "PLCP signal error");
 			PRINTERR(ATW_RXSTAT_CRC16E, "PLCP CRC16 error");
-			PRINTERR(ATW_RXSTAT_RXTOE, "time-out");
-			PRINTERR(ATW_RXSTAT_CRC32E, "FCS error");
 			PRINTERR(ATW_RXSTAT_ICVE, "WEP ICV error");
+#endif
 #undef PRINTERR
 			atw_init_rxdesc(sc, i);
 			continue;
@@ -3161,15 +3165,13 @@ atw_rxintr(struct atw_softc *sc)
 		m = rxs->rxs_mbuf;
 		if (atw_add_rxbuf(sc, i) != 0) {
 			ifp->if_ierrors++;
-			atw_init_rxdesc(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+			atw_init_rxdesc(sc, i);
 			continue;
 		}
 
 		ifp->if_ipackets++;
-		if (sc->sc_opmode & ATW_NAR_PR)
-			len -= IEEE80211_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
@@ -3194,17 +3196,42 @@ atw_rxintr(struct atw_softc *sc)
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 			tap->ar_rate = rate;
-			tap->ar_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			tap->ar_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			/* TBD verify units are dB */
 			tap->ar_antsignal = (int)rssi;
-			/* TBD tap->ar_flags */
+			if (sc->sc_opmode & ATW_NAR_PR)
+				tap->ar_flags = IEEE80211_RADIOTAP_F_FCS;
+			else
+				tap->ar_flags = 0;
 
-			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
-			    tap->ar_ihdr.it_len, m);
+			if ((rxstat & ATW_RXSTAT_CRC32E) != 0)
+				tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
+
+			bpf_mtap2(sc->sc_radiobpf, tap,
+			    sizeof(sc->sc_rxtapu), m);
  		}
- #endif /* NBPFILTER > 0 */
+#endif /* NBPFILTER > 0 */
+
+		sc->sc_recv_ev.ev_count++;
+
+		if ((rxstat & (ATW_RXSTAT_CRC16E|ATW_RXSTAT_CRC32E|ATW_RXSTAT_ICVE|ATW_RXSTAT_SFDE|ATW_RXSTAT_SIGE)) != 0) {
+			if (rxstat & ATW_RXSTAT_CRC16E)
+				sc->sc_crc16e_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_CRC32E)
+				sc->sc_crc32e_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_ICVE)
+				sc->sc_icve_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_SFDE)
+				sc->sc_sfde_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_SIGE)
+				sc->sc_sige_ev.ev_count++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			continue;
+		}
+
+		if (sc->sc_opmode & ATW_NAR_PR)
+			m_adj(m, -IEEE80211_CRC_LEN);
 
 		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);
@@ -3366,6 +3393,34 @@ atw_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ic);
 }
 
+static void
+atw_evcnt_detach(struct atw_softc *sc)
+{
+	evcnt_detach(&sc->sc_sige_ev);
+	evcnt_detach(&sc->sc_sfde_ev);
+	evcnt_detach(&sc->sc_icve_ev);
+	evcnt_detach(&sc->sc_crc32e_ev);
+	evcnt_detach(&sc->sc_crc16e_ev);
+	evcnt_detach(&sc->sc_recv_ev);
+}
+
+static void
+atw_evcnt_attach(struct atw_softc *sc)
+{
+	evcnt_attach_dynamic(&sc->sc_recv_ev, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_if.if_xname, "recv");
+	evcnt_attach_dynamic(&sc->sc_crc16e_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "CRC16 error");
+	evcnt_attach_dynamic(&sc->sc_crc32e_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "CRC32 error");
+	evcnt_attach_dynamic(&sc->sc_icve_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "ICV error");
+	evcnt_attach_dynamic(&sc->sc_sfde_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP SFD error");
+	evcnt_attach_dynamic(&sc->sc_sige_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP Signal Field error");
+}
+
 #ifdef ATW_DEBUG
 static void
 atw_dump_pkt(struct ifnet *ifp, struct mbuf *m0)
@@ -3505,11 +3560,9 @@ atw_start(struct ifnet *ifp)
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
-			tap->at_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			tap->at_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
-			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
-			    tap->at_ihdr.it_len, m0);
+			bpf_mtap2(sc->sc_radiobpf, tap,
+			    sizeof(sc->sc_txtapu), m0);
 		}
 #endif /* NBPFILTER > 0 */
 
