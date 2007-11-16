@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.6.4 2007/10/23 20:11:39 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.6.5 2007/11/16 20:35:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -301,9 +301,12 @@ IDTVEC(softintr)
  *	%rax		prevlwp from cpu_switchto()
  */
 NENTRY(softintr_ret)
-	movl	CPUVAR(ILEVEL),%edx
+	cmpl	$-1, CPUVAR(MTX_COUNT)	/* preserve priority until return: */
+	jne	1f			/*   keep IPL raised if this is */
+	movl	CPUVAR(ILEVEL),%edx	/*   the last spin mutex held  */
+	movl	%edx,CPUVAR(MTX_OLDSPL)	/*   by the current CPU. */
+1:
 	movq	L_MUTEX(%rax),%rdi	/* %eax from cpu_switchto */
-	movl	%edx,CPUVAR(MTX_OLDSPL)	/* preserve priority until return */
 	call	_C_LABEL(mutex_spin_exit)/* unlock the old LWP */
 	cli
 	jmp	*%r13			/* back to splx/doreti */

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.8 2007/10/23 20:13:04 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.9 2007/11/16 20:35:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -313,9 +313,12 @@ IDTVEC(softintr)
  *	%eax		prevlwp from cpu_switchto()
  */
 NENTRY(softintr_ret)
-	movl	CPUVAR(ILEVEL),%edx
+	cmpl	$-1, CPUVAR(MTX_COUNT)	/* preserve priority until return: */
+	jne	1f			/*   keep IPL raised if this is */
+	movl	CPUVAR(ILEVEL),%edx	/*   the last spin mutex held  */
+	movl	%edx,CPUVAR(MTX_OLDSPL)	/*   by the current CPU. */
+1:
 	pushl	L_MUTEX(%eax)		/* %eax from cpu_switchto */
-	movl	%edx,CPUVAR(MTX_OLDSPL)	/* preserve priority until return */
 	call	_C_LABEL(mutex_spin_exit)/* unlock the old LWP */
 	addl	$4,%esp
 	cli
